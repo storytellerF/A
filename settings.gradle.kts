@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 rootProject.name = "A"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
@@ -11,8 +13,12 @@ pluginManagement {
             }
         }
         mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
         gradlePluginPortal()
     }
+}
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
 
 dependencyResolutionManagement {
@@ -25,9 +31,16 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
+        maven("https://jitpack.io")
     }
 }
 
 include(":composeApp")
 include(":server")
 include(":shared")
+include(":cli")
+include(":backend")
+include(":client-lib")
+include(":bot-lib")
+include(":builtin-bot")
