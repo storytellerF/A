@@ -17,12 +17,11 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 databases
-config-data
+deploy/config-data
 elastic
 *.env
 !dev.env
-logstash_ingest_data
-filebeat_ingest_data
+deploy/logstash_ingest_data
+deploy/filebeat_ingest_data
 server/test-data
-docker-context
-!docker-context/Dockerfile
+deploy/*.jar

@@ -1,6 +1,6 @@
 services:
   web:
-    build: docker-context
+    build: .
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
     profiles:
