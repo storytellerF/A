@@ -1,0 +1,1 @@
+sh gradlew server:buildFatJar

@@ -1,3 +1,20 @@
+FROM openjdk:17-jdk AS builder
+
+RUN microdnf install findutils
+
+WORKDIR /app
+
+COPY . .
+
+RUN sed -i 's/\r$//' scripts/build-server.sh
+RUN sed -i 's/\r$//' gradlew
+
+RUN sh scripts/build-server.sh
+
 FROM koyeb/docker-compose
 
-COPY . /app
+WORKDIR /app
+
+COPY --from=builder /app/server/build/libs/*-all.jar .
+
+COPY . .
