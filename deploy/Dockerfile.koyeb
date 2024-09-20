@@ -15,12 +15,14 @@ FROM koyeb/docker-compose
 
 WORKDIR /app
 
-COPY --from=builder /app/server/build/libs/*-all.jar .
-
-COPY ./mini.env .
+COPY *.env .
 
 ENV COMPOSE_PROFILES=db,media,web
 
-COPY ./deploy .
+COPY deploy .
 
-CMD export $(grep -v '^#' ./mini.env | xargs) && docker compose up
+COPY scripts/build-koyeb.sh .
+
+COPY --from=builder /app/server/build/libs/*-all.jar .
+
+CMD sh ./build-koyeb.sh
