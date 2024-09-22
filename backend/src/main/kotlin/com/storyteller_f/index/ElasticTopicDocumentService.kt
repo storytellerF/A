@@ -57,7 +57,7 @@ private suspend fun <T> useElasticClient(
     block: suspend ElasticsearchAsyncClient.() -> T
 ): T {
     val sslContext = TransportUtils
-        .sslContextFromHttpCaCrt(ElasticConnection::class.java.classLoader.getResourceAsStream("ca.crt"))
+        .sslContextFromHttpCaCrt(ElasticConnection::class.java.classLoader!!.getResourceAsStream("ca.crt"))
 
     val credsProv = BasicCredentialsProvider()
     credsProv.setCredentials(

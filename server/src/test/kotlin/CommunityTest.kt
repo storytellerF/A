@@ -40,13 +40,6 @@ import kotlin.test.assertTrue
 
 class CommunityTest {
     @Test
-    fun `test mdbook`() {
-        File("C:\\Users\\Administrator\\Projects\\A\\spec").list()?.forEach {
-            val name = it.split(".").first()
-            println("- [$name](./$name.md)")
-        }
-    }
-    @Test
     fun `test create topic in community`() = test { client ->
         session {
             //insert community
@@ -152,7 +145,6 @@ fun test(block: suspend (HttpClient) -> Unit) {
         backend = Backend(
             Config(
                 DatabaseConnection("jdbc:h2:mem:regular;DB_CLOSE_DELAY=-1;", "org.h2.Driver", "", ""),
-                null,
                 newHmacSha512()
             ),
             LuceneTopicDocumentService(path),

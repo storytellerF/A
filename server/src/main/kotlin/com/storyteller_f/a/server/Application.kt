@@ -28,8 +28,9 @@ lateinit var backend: Backend
 fun main(args: Array<String>) {
     SnowflakeFactory.setMachine(0)
 
-    backend = buildBackendFromEnv(readEnv())
-    val serverPort = System.getenv("SERVER_PORT").toInt()
+    val map = readEnv()
+    backend = buildBackendFromEnv(map)
+    val serverPort = (map["SERVER_PORT"] as String).toInt()
     val extraArgs = arrayOf("-port=$serverPort")
     DatabaseFactory.init(backend.config.databaseConnection)
     EngineMain.main(args + extraArgs)
