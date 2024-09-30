@@ -1,47 +1,51 @@
 package com.storyteller_f.a.server
 
+import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.common.checkParameter
 import com.storyteller_f.a.server.service.*
-import com.storyteller_f.shared.obj.NewTopic
+import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.OKey
-import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 
-fun Routing.protectedContent() {
-    bindProtectedRoomRoute()
-    bindProtectedCommunityRoute()
-    bindProtectedTopicRoute()
+fun Route.protectedContent(backend: Backend) {
+    bindProtectedRoomRoute(backend)
+    bindProtectedCommunityRoute(backend)
+    bindProtectedTopicRoute(backend)
     webSocket("/link") {
-        webSocketContent()
+        webSocketContent(backend)
     }
 }
 
-private fun Routing.bindProtectedTopicRoute() {
+private fun Route.bindProtectedTopicRoute(backend: Backend) {
     route("/topic") {
         post {
             usePrincipal {
-                addTopicAtCommunity(it)
+                addTopicAtCommunity(it, backend)
             }
         }
         get("/{id}/snapshot") {
             usePrincipal { id ->
                 checkParameter<OKey, TopicSnapshotPack> { topicId ->
-                    getTopicSnapshot(id, topicId)
+                    getTopicSnapshot(id, topicId, backend)
                 }
             }
         }
     }
 }
 
-private fun Routing.bindProtectedCommunityRoute() {
+private fun Route.bindProtectedCommunityRoute(backend: Backend) {
     route("/community") {
         get("/joined") {
             usePrincipal {
-                searchJoinedCommunities(it)
+                pagination<CommunityInfo, OKey>({
+                    it.id.toString()
+                }) { pre, next, size ->
+                    searchJoinedCommunities(it, backend, pre, next, size)
+                }
             }
         }
         post("/{id}/join") {
@@ -56,11 +60,11 @@ private fun Routing.bindProtectedCommunityRoute() {
 }
 
 
-private fun Routing.bindProtectedRoomRoute() {
+private fun Route.bindProtectedRoomRoute(backend: Backend) {
     route("/room") {
         get("/joined") {
             usePrincipal {
-                searchJoinedRooms(it)
+                searchJoinedRooms(it, backend = backend)
             }
         }
         post("/{id}/join") {

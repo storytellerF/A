@@ -16,17 +16,28 @@ inline fun <reified R : Any, reified T : Any> Parameters.checkParameter(
     name: String,
     block: (T) -> Result<R?>
 ): Result<R?> {
+    val v = runCatching {
+        val value = getOrFailCompact<T>(name)
+        value
+    }
+    return when {
+        v.isSuccess -> block(v.getOrThrow())
+        else -> Result.failure(v.exceptionOrNull()!!)
+    }
+}
+
+inline fun <reified T : Any> Parameters.getOrFailCompact(name: String): T {
     val value = if (T::class == ULong::class) {
         getOrFail<String>(name).toULong() as T
     } else {
         getOrFail<T>(name)
     }
-    return block(value)
+    return value
 }
 
 inline fun <reified T : Any, reified R : Any> RoutingContext.checkQueryParameter(
     name: String = "id",
     block: (T) -> Result<R?>
 ): Result<R?> {
-    return call.request.queryParameters.checkParameter<R, T>(name, block)
+    return call.queryParameters.checkParameter<R, T>(name, block)
 }

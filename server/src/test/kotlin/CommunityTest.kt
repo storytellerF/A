@@ -1,14 +1,10 @@
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.Backend
-import com.storyteller_f.Config
-import com.storyteller_f.DatabaseConnection
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.a.server.backend
 import com.storyteller_f.a.server.service.toUserInfo
-import com.storyteller_f.index.LuceneTopicDocumentService
-import com.storyteller_f.media.FileSystemMediaService
+import com.storyteller_f.buildBackendFromEnv
 import com.storyteller_f.naming.NameService
+import com.storyteller_f.readEnv
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -18,7 +14,9 @@ import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.OKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.tables.*
+import com.storyteller_f.tables.Community
+import com.storyteller_f.tables.User
+import com.storyteller_f.tables.createUser
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -30,7 +28,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
-import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
@@ -80,18 +77,16 @@ class CommunityTest {
 
     @Test
     fun `test topic snapshot`() {
-        runBlocking {
-            test { client ->
-                session {
-                    val communityId = createCommunity()
-                    client.joinCommunity(communityId)
-                    val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").body<TopicInfo>()
-                    val pack = client.getTopicSnapshot(topicInfo.id).body<TopicSnapshotPack>()
-                    assertEquals("true", client.verifySnapshot(pack).bodyAsText())
-                }
+        test { client ->
+            session {
+                val communityId = createCommunity()
+                client.joinCommunity(communityId)
+                val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").body<TopicInfo>()
+                val pack = client.getTopicSnapshot(topicInfo.id).body<TopicSnapshotPack>()
+                assertEquals("true", client.verifySnapshot(pack).bodyAsText())
             }
-
         }
+
     }
 
     private suspend fun createCommunity(): OKey {
@@ -105,6 +100,7 @@ class CommunityTest {
     @Test
     fun `test hmac`() {
         runBlocking {
+            val backend = buildBackendFromEnv(readEnv())
             val hmacKey = backend.config.hmacKey
             val s = hmacSign(hmacKey, "text")
             assertTrue(hmacVerify(hmacKey, s, "text"))
@@ -141,16 +137,8 @@ fun test(block: suspend (HttpClient) -> Unit) {
     SnowflakeFactory.setMachine(0)
     testApplication {
         addProvider()
-        val path = Paths.get("./test-data/index-test")
-        backend = Backend(
-            Config(
-                DatabaseConnection("jdbc:h2:mem:regular;DB_CLOSE_DELAY=-1;", "org.h2.Driver", "", ""),
-                newHmacSha512()
-            ),
-            LuceneTopicDocumentService(path),
-            FileSystemMediaService(),
-            NameService()
-        )
+        val path = Paths.get("../deploy/lucene-data/index")
+        val backend = buildBackendFromEnv(readEnv())
         DatabaseFactory.init(backend.config.databaseConnection)
         environment {
             config = MapApplicationConfig(

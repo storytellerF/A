@@ -7,7 +7,7 @@ import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 abstract class BaseTable : Table() {
     val id = ulong("id")
-    val createdTime = datetime("created_time")
+    val createdTime = datetime("created_time").index()
 
     override val primaryKey = PrimaryKey(id)
 }

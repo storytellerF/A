@@ -1,8 +1,8 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.a.server.backend
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.hmacSign
 import com.storyteller_f.shared.hmacVerify
@@ -10,7 +10,6 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.NewTopic
-import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.obj.TopicSnapshot
 import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.OKey
@@ -24,37 +23,37 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 
 
-suspend fun RoutingContext.addTopicAtCommunity(uid: OKey): Result<TopicInfo?> {
+suspend fun RoutingContext.addTopicAtCommunity(uid: OKey, backend: Backend): Result<TopicInfo?> {
     val newTopic = call.receive<NewTopic>()
     return when (newTopic.parentType) {
 
         ObjectType.COMMUNITY -> {
             if (newTopic.content is TopicContent.Encrypted) {
-                Result.failure(ForbiddenException("社区不接受加密数据"))
+                Result.failure(ForbiddenException("Community only accept unencrypted content."))
             } else {
                 addTopicIntoCommunity(
                     newTopic.parentId, uid,
-                    (newTopic.content as TopicContent.Plain).plain, newTopic.parentId, ObjectType.COMMUNITY
+                    (newTopic.content as TopicContent.Plain).plain, newTopic.parentId, ObjectType.COMMUNITY, backend
                 )
             }
         }
 
         ObjectType.TOPIC -> {
-            addTopicIntoTopic(newTopic.parentId, uid, (newTopic.content as TopicContent.Plain).plain)
+            addTopicIntoTopic(newTopic.parentId, uid, (newTopic.content as TopicContent.Plain).plain, backend)
         }
 
-        else -> Result.failure(ForbiddenException("错误的parentType ${newTopic.parentType}"))
+        else -> Result.failure(ForbiddenException("invalid parentType: ${newTopic.parentType}"))
     }
 }
 
-suspend fun addTopicIntoTopic(parentTopicId: OKey, uid: OKey, content: String): Result<TopicInfo?> {
+suspend fun addTopicIntoTopic(parentTopicId: OKey, uid: OKey, content: String, backend: Backend): Result<TopicInfo?> {
     val topic = DatabaseFactory.queryNotNull({
         rootId to rootType
     }) {
         Topic.findById(parentTopicId)
     }
     return if (topic != null && topic.second == ObjectType.COMMUNITY) {
-        addTopicIntoCommunity(topic.first, uid, content, parentTopicId, ObjectType.TOPIC)
+        addTopicIntoCommunity(topic.first, uid, content, parentTopicId, ObjectType.TOPIC, backend)
     } else {
         Result.failure(ForbiddenException())
     }
@@ -65,7 +64,8 @@ suspend fun addTopicIntoCommunity(
     uid: OKey,
     content: String,
     id: OKey,
-    type: ObjectType
+    type: ObjectType,
+    backend: Backend
 ): Result<TopicInfo?> {
     if (isCommunityJoined(communityId, uid)) {
         val newId = SnowflakeFactory.nextId()
@@ -86,7 +86,7 @@ suspend fun addTopicIntoCommunity(
         }
         return Result.success(info)
     } else {
-        return Result.failure(ForbiddenException("未加入此社区"))
+        return Result.failure(ForbiddenException("Permission denied."))
     }
 }
 
@@ -105,7 +105,7 @@ fun Topic.toTopicInfo(): TopicInfo {
 }
 
 
-suspend fun getTopicSnapshot(id: OKey, topicId: OKey): Result<TopicSnapshotPack?> {
+suspend fun getTopicSnapshot(id: OKey, topicId: OKey, backend: Backend): Result<TopicSnapshotPack?> {
     return runCatching {
         DatabaseFactory.queryNotNull(User::toUserInfo) {
             User.findById(id)
@@ -117,7 +117,7 @@ suspend fun getTopicSnapshot(id: OKey, topicId: OKey): Result<TopicSnapshotPack?
             }?.let {
                 val (isPrivate) = isPrivateChat(ObjectType.TOPIC, topicId)
                 if (!isPrivate) {
-                    getTopicSnapshot(topicId, it, creatorInfo)
+                    getTopicSnapshot(topicId, it, creatorInfo, backend)
                 } else {
                     null
                 }
@@ -129,7 +129,8 @@ suspend fun getTopicSnapshot(id: OKey, topicId: OKey): Result<TopicSnapshotPack?
 private suspend fun getTopicSnapshot(
     topicId: OKey,
     it: TopicInfo,
-    creatorInfo: UserInfo
+    creatorInfo: UserInfo,
+    backend: Backend
 ): TopicSnapshotPack? {
     return backend.topicDocumentService.getDocument(listOf(topicId)).firstOrNull()?.let { content ->
         DatabaseFactory.queryNotNull(User::toUserInfo) {
@@ -145,13 +146,13 @@ private suspend fun getTopicSnapshot(
                 topicModifiedTime = it.lastModifiedTime,
                 capturedTime = now()
             )
-            val hash = calcHash(snapshot)
+            val hash = calcHash(snapshot, backend)
             TopicSnapshotPack(snapshot, hash)
         }
     }
 }
 
-suspend fun calcHash(snapshot: TopicSnapshot): String {
+suspend fun calcHash(snapshot: TopicSnapshot, backend: Backend): String {
     val input = getSnapshotInput(snapshot)
     val hmacKey = backend.config.hmacKey
     return hmacSign(hmacKey, input)
@@ -182,7 +183,8 @@ private fun getSnapshotInput(snapshot: TopicSnapshot): String {
 
 suspend fun getTopic(
     topicId: OKey,
-    it: OKey?
+    it: OKey?,
+    backend: Backend
 ): Result<TopicInfo?> {
     val (isPrivateChat, roomId) = isPrivateChat(ObjectType.TOPIC, topicId)
     return if (!isPrivateChat || it != null && isRoomJoined(roomId, it)) {
@@ -203,61 +205,75 @@ suspend fun getTopic(
 }
 
 
-suspend fun RoutingContext.verifySnapshot() = runCatching {
+suspend fun RoutingContext.verifySnapshot(backend: Backend) = runCatching {
     val pack = call.receive<TopicSnapshotPack>()
     val hmacKey = backend.config.hmacKey
     hmacVerify(hmacKey, pack.hash, getSnapshotInput(pack.snapshot))
 }
 
 
-suspend fun getTopics(parentId: OKey, parentType: ObjectType, uid: OKey? = null): Result<ServerResponse<TopicInfo>> {
-    val data = DatabaseFactory.dbQuery {
-        Topics
-            .select(Topics.fields)
-            .where {
-                Topics.parentId eq parentId and (Topics.parentType eq parentType)
-            }
-            .orderBy(Topics.createdTime, SortOrder.DESC)
-            .map {
-                Topic.wrapRow(it).toTopicInfo()
-            }
-    }
-    val (isPrivateChat, roomId) = isPrivateChat(parentType, parentId)
-    val topicContents = when {
-        !isPrivateChat -> {
-            backend.topicDocumentService.getDocument(data.map {
-                it.id
-            }).mapNotNull {
-                it?.let { it1 -> TopicContent.Plain(it1.content) }
-            }
-        }
-
-        uid != null && isRoomJoined(roomId, uid) -> {
-            DatabaseFactory.dbQuery {
-                getEncryptedTopicContent(data.map {
-                    it.id
-                }, uid)
-            }
-
-        }
-
-        else -> {
-            return Result.failure(ForbiddenException())
-        }
-    }
-
-    return Result.success(
-        ServerResponse(
-            data.mapIndexed { index, l ->
-                topicContents[index].let {
-                    l.copy(content = it)
+suspend fun getTopics(
+    parentId: OKey,
+    parentType: ObjectType,
+    uid: OKey? = null,
+    backend: Backend,
+    pre: OKey?,
+    next: OKey?,
+    size: Int
+): Result<Pair<List<TopicInfo>, Long>> {
+    return runCatching {
+        val data = DatabaseFactory.dbQuery {
+            Topics
+                .select(Topics.fields)
+                .where {
+                    Topics.parentId eq parentId and (Topics.parentType eq parentType)
                 }
-            }, 10
-        )
-    )
+                .orderBy(Topics.createdTime, SortOrder.DESC)
+                .map {
+                    Topic.wrapRow(it).toTopicInfo()
+                }
+        }
+        val count = DatabaseFactory.count {
+            Topics
+                .select(Topics.fields)
+                .where {
+                    Topics.parentId eq parentId and (Topics.parentType eq parentType)
+                }
+        }
+        val (isPrivateChat, roomId) = isPrivateChat(parentType, parentId)
+        val topicContents = when {
+            !isPrivateChat -> {
+                backend.topicDocumentService.getDocument(data.map {
+                    it.id
+                }).mapNotNull {
+                    it?.let { it1 -> TopicContent.Plain(it1.content) }
+                }
+            }
+
+            uid != null && isRoomJoined(roomId, uid) -> {
+                DatabaseFactory.dbQuery {
+                    getEncryptedTopicContent(data.map {
+                        it.id
+                    }, uid)
+                }
+
+            }
+
+            else -> {
+                return Result.failure(ForbiddenException())
+            }
+        }
+
+        data.mapIndexed { index, l ->
+            topicContents[index].let {
+                l.copy(content = it)
+            }
+        } to count
+    }
+
 }
 
-class ForbiddenException(message: String = "非法操作") : Exception(message)
+class ForbiddenException(message: String = "Invalid operation") : Exception(message)
 
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -273,8 +289,8 @@ fun getEncryptedTopicContent(topicId: List<OKey>, uid: OKey?): List<TopicContent
         EncryptedTopicKey.wrapRow(it)
     }.groupBy {
         it.topicId
-    }.mapValues {
-        it.value.map {
+    }.mapValues { listEntry ->
+        listEntry.value.map {
             it.uid to it.encryptedAes.toHexString()
         }
     }

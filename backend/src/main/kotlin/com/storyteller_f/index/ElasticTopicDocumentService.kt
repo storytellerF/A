@@ -7,13 +7,15 @@ import co.elastic.clients.transport.rest_client.RestClientTransport
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.ElasticConnection
 import com.storyteller_f.shared.type.OKey
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.withContext
 import org.apache.http.HttpHost
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.elasticsearch.client.RestClient
-import java.io.File
+import java.io.FileInputStream
 
 class ElasticTopicDocumentService(private val connection: ElasticConnection) : TopicDocumentService {
     override suspend fun saveDocument(topics: List<TopicDocument>) {
@@ -56,8 +58,11 @@ private suspend fun <T> useElasticClient(
     elasticConnection: ElasticConnection,
     block: suspend ElasticsearchAsyncClient.() -> T
 ): T {
+    val crtStream = withContext(Dispatchers.IO) {
+        FileInputStream(elasticConnection.certFile)
+    }
     val sslContext = TransportUtils
-        .sslContextFromHttpCaCrt(ElasticConnection::class.java.classLoader!!.getResourceAsStream("ca.crt"))
+        .sslContextFromHttpCaCrt(crtStream)
 
     val credsProv = BasicCredentialsProvider()
     credsProv.setCredentials(

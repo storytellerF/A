@@ -1,9 +1,7 @@
 package com.storyteller_f.tables
 
-import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
 import com.storyteller_f.shared.type.OKey
-import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 

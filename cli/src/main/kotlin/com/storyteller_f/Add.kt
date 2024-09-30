@@ -3,6 +3,7 @@ package com.storyteller_f
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.obj.AddRoom
@@ -11,6 +12,7 @@ import com.storyteller_f.shared.obj.AddTopic
 import com.storyteller_f.shared.type.OKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.Tuple4
+import com.storyteller_f.shared.type.Tuple5
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
@@ -21,7 +23,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
@@ -78,13 +79,14 @@ class Add : Subcommand("add", "add entry") {
     private suspend fun addRooms(addTaskValue: AddTaskValue, parentDir: File?) {
         val l = addTaskValue.roomData ?: return
         val data = l.map {
+            val id = SnowflakeFactory.nextId()
             val icon = it.icon
             if (icon == null) {
-                it to null
+                Triple(it, null, id)
             } else {
                 val p = "icon/${Uuid.random()}"
                 backend.mediaService.upload("apic", listOf(p to File(parentDir, icon).absolutePath))
-                it to p
+                Triple(it, p, id)
             }
         }
         DatabaseFactory.dbQuery {
@@ -95,7 +97,8 @@ class Add : Subcommand("add", "add entry") {
             }.groupBy {
                 it.aid
             }
-            val idList = Rooms.batchInsert(data) { (it, p) ->
+            val idList = Rooms.batchInsert(data) { (it, p, id) ->
+                this[Rooms.id] = id
                 this[Rooms.aid] = it.id
                 this[Rooms.icon] = p
                 this[Rooms.name] = it.name
@@ -189,7 +192,7 @@ class Add : Subcommand("add", "add entry") {
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)
-    private fun insertTopicBaseLevel(
+    private suspend fun insertTopicBaseLevel(
         u: List<AddTopic>,
         userList: Map<String, List<User>>,
         roomList: Map<String, List<Room>>
@@ -198,20 +201,22 @@ class Add : Subcommand("add", "add entry") {
             0u
         }
         val topLevelTopic = u.mapIndexed { index, addTopic ->
+            val id = SnowflakeFactory.nextId()
             val level = addTopic.level
             val parent = addTopic.parent
             if (parent == null || parent == 0 || level == null || level == 0) {
                 addTopic to index
-                Triple(addTopic, index, 0)
+                Tuple4(addTopic, index, 0, id)
             } else {
-                Triple(addTopic, index, level)
+                Tuple4(addTopic, index, level, id)
             }
         }.groupBy {
-            it.third
+            it.data3
         }
+        //从最顶层开始
         topLevelTopic.keys.sorted().forEach { level ->
             val list = topLevelTopic[level].orEmpty()
-            val subIds = Topics.batchInsert(list) { (first, index, _) ->
+            val subIds = Topics.batchInsert(list) { (first, index, _, id) ->
                 this[Topics.author] = userList[first.author]!!.first().id
                 this[Topics.createdTime] = now()
                 this[Topics.rootId] = roomList[first.room]!!.first().id
@@ -219,11 +224,12 @@ class Add : Subcommand("add", "add entry") {
                 this[Topics.parentId] =
                     if (level == 0) roomList[first.room]!!.first().id else ids[index - first.parent!!]
                 this[Topics.parentType] = if (level == 0) ObjectType.ROOM else ObjectType.TOPIC
+                this[Topics.id] = id
             }.map {
                 it[Topics.id]
             }
             subIds.forEachIndexed { index, l ->
-                ids[list[index].second] = l
+                ids[list[index].data2] = l
             }
         }
         return ids
@@ -302,8 +308,13 @@ class Add : Subcommand("add", "add entry") {
         val communityList = u.mapNotNull {
             it.community
         }.distinct().map {
-            Community.wrapRow(findCommunityByAId(it)!!).let {
-                it.id to it.aid
+            val rowCommunity = findCommunityByAId(it)
+            if (rowCommunity == null) {
+                throw Exception("$it not found")
+            } else {
+                Community.wrapRow(rowCommunity).let {
+                    it.id to it.aid
+                }
             }
         }.groupBy {
             it.second
@@ -311,20 +322,25 @@ class Add : Subcommand("add", "add entry") {
         val ids = ULongArray(u.size) {
             0u
         }
+        //保存top 之前的层级关系
         val topLevelTopic = u.mapIndexed { index, addTopic ->
+            val id = SnowflakeFactory.nextId()
             val level = addTopic.level
             val parent = addTopic.parent
             if (parent == null || parent == 0 || level == null || level == 0) {
-                Triple(addTopic, index, 0)
+                Tuple4(addTopic, index, 0, id)
             } else {
-                Triple(addTopic, index, level)
+                Tuple4(addTopic, index, level, id)
             }
         }.groupBy {
-            it.third
+            it.data3
         }
+        //从最顶层开始
         topLevelTopic.keys.sorted().forEach { level ->
+            //添加对应层级的topic
             val list = topLevelTopic[level].orEmpty()
-            val subIds = Topics.batchInsert(list) { (first, index, _) ->
+            val subIds = Topics.batchInsert(list) { (first, index, _, id) ->
+                this[Topics.id] = id
                 this[Topics.author] = userList[first.author]!!.first().id
                 this[Topics.createdTime] = now()
                 this[Topics.rootId] = communityList[first.community]!!.first().first
@@ -335,8 +351,9 @@ class Add : Subcommand("add", "add entry") {
             }.map {
                 it[Topics.id]
             }
-            subIds.forEachIndexed { index, l ->
-                ids[list[index].second] = l
+            //添加完成之后，保存对应的topicId，索引是topic 在初始索引的位置
+            subIds.forEachIndexed { index, topicId ->
+                ids[list[index].data2] = topicId
             }
         }
         backend.topicDocumentService.saveDocument(
@@ -362,27 +379,31 @@ class Add : Subcommand("add", "add entry") {
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun addUsers(addTaskValue: AddTaskValue, parentDir: File?) {
-        val l = addTaskValue.userData ?: return
-        val data = l.map {
+        val userList = addTaskValue.userData ?: return
+        val data = userList.map {
+            val id = SnowflakeFactory.nextId()
             val derPublicKey =
                 getDerPublicKeyFromPrivateKey(File(parentDir, it.privateKey).readText().replace("\r\n", "\n"))
             val ad = calcAddress(derPublicKey)
             val icon = it.icon
             if (icon == null) {
-                Tuple4(it, null, derPublicKey, ad)
+                Tuple5(it, null, derPublicKey, ad, id)
             } else {
                 val p = "icon/${Uuid.random()}"
                 val absolutePath = File(parentDir, icon).absolutePath
                 backend.mediaService.upload("apic", listOf(p to absolutePath))
-                Tuple4(it, null, derPublicKey, ad)
+                Tuple5(it, null, derPublicKey, ad, id)
             }
         }
         DatabaseFactory.dbQuery {
-            Users.batchInsert(data) { (pair, p, pub, ad) ->
-                this[Users.publicKey] = pub
-                this[Users.address] = ad
+            Users.batchInsert(data) { (pair, userIcon, pubKey, address, id) ->
+                this[Users.id] = id
                 this[Users.aid] = pair.id
-                this[Users.icon] = p
+                this[Users.icon] = userIcon
+                this[Users.nickname] = backend.nameService.parse(id)
+                this[Users.publicKey] = pubKey
+                this[Users.address] = address
+                this[Users.createdTime] = now()
             }
         }
     }
@@ -390,49 +411,46 @@ class Add : Subcommand("add", "add entry") {
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun addCommunity(addTaskValue: AddTaskValue, parentDir: File?) {
         val data = addTaskValue.communityData!!.map {
+            val id = SnowflakeFactory.nextId()
             val icon = it.icon
             if (icon == null) {
-                it to null
+                Triple(it, null, id)
             } else {
                 val p = "icon/${Uuid.random()}"
                 backend.mediaService.upload("apic", listOf(p to File(parentDir, icon).absolutePath))
-                it to p
+                Triple(it, p, id)
             }
         }
         DatabaseFactory.dbQuery {
-            val systemId = User.wrapRow(
-                Users.select(Users.id).where {
-                    Users.aid eq "System"
-                }.first()
-            ).id
-            Communities.batchInsert(data) { (it, p) ->
+            val systemId = Users.select(Users.id).where {
+                Users.aid eq "System"
+            }.first()[Users.id]
+
+            Communities.batchInsert(data) { (it, communityIcon, id) ->
+                this[Communities.id] = id
+                this[Communities.aid] = it.id
                 this[Communities.name] = it.name
-                this[Communities.icon] = p
+                this[Communities.icon] = communityIcon
                 this[Communities.createdTime] = now()
                 this[Communities.owner] = systemId
-                this[Communities.aid] = it.id
             }
             data.forEach { (first) ->
                 val users = first.users.orEmpty()
                 val id = first.id
-                val id1 = Community.wrapRow(
-                    Communities.select(Communities.id).where {
-                        Communities.aid eq id
-                    }.first()
-                ).id
+                val id1 = Communities.select(Communities.id).where {
+                    Communities.aid eq id
+                }.first()[Communities.id]
                 userJoinCommunity(users, id1)
             }
         }
     }
 
-    private fun userJoinCommunity(users: List<String>, id1: OKey) {
+    private fun userJoinCommunity(users: List<String>, communityId: OKey) {
         users.forEach {
-            val value = User.wrapRow(
-                Users.select(Users.id).where {
-                    Users.aid eq it
-                }.first()
-            ).id
-            createCommunityJoin(value, id1)
+            val userId = Users.select(Users.id).where {
+                Users.aid eq it
+            }.first()[Users.id]
+            createCommunityJoin(userId, communityId)
         }
     }
 }

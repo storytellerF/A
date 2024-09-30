@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.selectAll
 object CommunityJoins : Table() {
     val uid = ulong("uid").index()
     val communityId = ulong("community_id").index()
-    val joinTime = datetime("join_time")
+    val joinTime = datetime("join_time").index()
 
     init {
         index("community-join-main", true, uid, communityId)

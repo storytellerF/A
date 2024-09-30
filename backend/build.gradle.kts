@@ -71,16 +71,3 @@ tasks.processResources.dependsOn(copyTask)
 buildConfig {
     buildConfigField<Boolean>("IS_PROD", isProd)
 }
-
-val certFilePath = Properties().apply {
-    load(FileInputStream(File(rootDir, "${flavor}.env")))
-}["CERT_FILE"] as? String
-
-val copyCertTask = tasks.register("CopyCertFile", Copy::class) {
-    group = "copy"
-    if (!certFilePath.isNullOrEmpty())
-        from(certFilePath)
-    into(layout.buildDirectory.dir("copied-ca/resources"))
-}
-
-tasks.processResources.dependsOn(copyCertTask)

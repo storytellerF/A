@@ -1,6 +1,7 @@
 package com.storyteller_f.a.server
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
@@ -27,19 +28,19 @@ import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 val messageResponseFlow = MutableSharedFlow<Pair<RoomFrame, OKey>>()
 val sharedFlow = messageResponseFlow.asSharedFlow()
 
-suspend fun DefaultWebSocketServerSession.webSocketContent() {
+suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend) {
     val job = launch {
         sharedFlow.collect { (frame, uid) ->
             call.application.log.info("new frame $frame $uid")
             try {
                 if (frame is RoomFrame.Message) {
                     val newTopic = frame.newTopic
-                    val newTopicInfo = addTopicAtRoom(newTopic, uid)
+                    val newTopicInfo = addTopicAtRoom(newTopic, uid, backend = backend)
                     newTopicInfo.onSuccess {
                         val newFrame: RoomFrame = RoomFrame.NewTopicInfo(it)
                         sendSerialized(newFrame)
                     }.onFailure {
-                        val message = it.message ?: "错误"
+                        val message = it.message ?: "unknown error"
                         val data: RoomFrame = RoomFrame.Error(message)
                         sendSerialized(data)
                     }
@@ -71,7 +72,8 @@ suspend fun DefaultWebSocketServerSession.webSocketContent() {
 
 private suspend fun addTopicAtRoom(
     newTopic: NewTopic,
-    uid: OKey
+    uid: OKey,
+    backend: Backend
 ): Result<TopicInfo> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
@@ -81,7 +83,7 @@ private suspend fun addTopicAtRoom(
                 Topic.findById(newTopic.parentId)
             }
             if (roomInfo != null && roomInfo.second == ObjectType.ROOM) {
-                addTopicIntoRoom(roomInfo, uid, newTopic)
+                addTopicIntoRoom(roomInfo, uid, newTopic, backend = backend)
             } else {
                 Result.failure(ForbiddenException())
             }
@@ -91,7 +93,8 @@ private suspend fun addTopicAtRoom(
             addTopicIntoRoom(
                 newTopic.parentId to newTopic.parentType,
                 uid,
-                newTopic
+                newTopic,
+                backend
             )
         }
 
@@ -104,7 +107,8 @@ private suspend fun addTopicAtRoom(
 private suspend fun addTopicIntoRoom(
     roomInfo: Pair<OKey, ObjectType>,
     uid: OKey,
-    newTopic: NewTopic
+    newTopic: NewTopic,
+    backend: Backend
 ): Result<TopicInfo> {
     val roomId = roomInfo.first
     return if (isRoomJoined(roomId, uid)) {
@@ -127,9 +131,9 @@ private suspend fun addTopicIntoRoom(
         when {
             !isPrivateChat -> {
                 if (content is TopicContent.Plain) {
-                    Result.success(savePlainTopicContent(topic, content))
+                    Result.success(savePlainTopicContent(topic, content, backend = backend))
                 } else {
-                    Result.failure(ForbiddenException("非私聊必须传递明文"))
+                    Result.failure(ForbiddenException("Public room only accept unencrypted content."))
                 }
             }
 
@@ -143,16 +147,17 @@ private suspend fun addTopicIntoRoom(
                 )
             }
 
-            else -> Result.failure(ForbiddenException("私有聊天室不能传递明文，且需要提供所有成员的加密密钥"))
+            else -> Result.failure(ForbiddenException("Private room only accept encrypted content."))
         }
     } else {
-        Result.failure(ForbiddenException("未加入聊天室不可以发布消息"))
+        Result.failure(ForbiddenException("Can't publish content before join room."))
     }
 }
 
 private suspend fun savePlainTopicContent(
     topic: Topic,
-    content: TopicContent.Plain
+    content: TopicContent.Plain,
+    backend: Backend
 ): TopicInfo {
     return DatabaseFactory.dbQuery {
         val newTopicId = Topic.new(topic)

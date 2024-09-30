@@ -32,7 +32,7 @@ class Community(
             )
         }
 
-        fun find(function: SqlExpressionBuilder.() -> Op<Boolean>): SizedIterable<ResultRow> {
+        fun find(function: SqlExpressionBuilder.() -> Op<Boolean>): Query {
             return Communities.selectAll().where(function)
         }
 

@@ -32,6 +32,7 @@ suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> R
 
 suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (OKey?) -> Result<R?>) {
     val uid = call.principal<CustomPrincipal>()?.uid
+    //有可能存在bug 导致block 抛出异常，所以需要进行一次try catch
     try {
         block(uid).onSuccess {
             when (it) {

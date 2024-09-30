@@ -1,7 +1,7 @@
 package com.storyteller_f.a.server.service
 
+import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.a.server.backend
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.OKey
@@ -12,7 +12,7 @@ fun User.toUserInfo(): UserInfo {
     return UserInfo(id, address, 0, aid, nickname, null)
 }
 
-fun toFinalUserInfo(p: Pair<UserInfo, String?>): UserInfo {
+fun toFinalUserInfo(p: Pair<UserInfo, String?>, backend: Backend): UserInfo {
     val (userInfo, icon) = p
     val avatar = backend.mediaService.get("apic", listOf(icon)).firstOrNull()?.let {
         MediaInfo(it)
@@ -22,11 +22,12 @@ fun toFinalUserInfo(p: Pair<UserInfo, String?>): UserInfo {
 
 
 suspend fun RoutingContext.getUser(
-    it: OKey
+    it: OKey,
+    backend: Backend
 ) = runCatching {
     DatabaseFactory.queryNotNull({
         toUserInfo() to icon
     }) {
         User.findById(it)
-    }?.let(::toFinalUserInfo)
+    }?.let { toFinalUserInfo(it, backend) }
 }

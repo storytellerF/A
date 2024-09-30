@@ -107,12 +107,13 @@ HMAC_KEY=${HMAC_KEY}
 EOF
 
 RUN sed -i 's/\r$//' scripts/build-server.sh
+RUN sed -i 's/\r$//' scripts/build-cli.sh
 RUN sed -i 's/\r$//' gradlew
 RUN sed -i 's/buildkonfig.flavor=dev/buildkonfig.flavor=generated-mini/' gradle.properties
 RUN sed -i 's/server.prod=false/server.prod=true/' gradle.properties
 
 RUN --mount=type=cache,target=/root/.gradle \
-    sh scripts/build-server.sh
+    sh scripts/build-server.sh && sh scripts/build-cli.sh
 
 FROM koyeb/docker-compose
 
@@ -187,6 +188,7 @@ COPY deploy .
 
 COPY scripts .
 
-COPY --from=builder /app/server/build/libs/*-all.jar .
+COPY --from=builder /app/server/build/libs/*-all.jar ./build
+COPY --from=builder /app/cli/build/distributions/cli.zip ./build
 
 CMD sh ./build-koyeb.sh

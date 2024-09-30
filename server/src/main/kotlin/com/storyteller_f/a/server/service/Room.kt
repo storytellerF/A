@@ -1,7 +1,7 @@
 package com.storyteller_f.a.server.service
 
+import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.a.server.backend
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.OKey
@@ -25,7 +25,7 @@ suspend fun RoutingContext.getRoomPubKeys(
         ServerResponse(data, 10)
     }
 } else {
-    Result.failure(ForbiddenException("未加入私有聊天室"))
+    Result.failure(ForbiddenException("Permission denied."))
 }
 
 
@@ -46,7 +46,7 @@ suspend fun RoutingContext.joinRoom(
 }
 
 
-suspend fun searchRooms(word: String, uid: OKey?): Result<ServerResponse<RoomInfo>> {
+suspend fun searchRooms(word: String, uid: OKey?, backend: Backend): Result<ServerResponse<RoomInfo>> {
     return runCatching {
         roomsResponse(DatabaseFactory.dbQuery {
             val baseJoin = Rooms.join(CommunityRooms, JoinType.INNER, Rooms.id, CommunityRooms.roomId)
@@ -68,11 +68,11 @@ suspend fun searchRooms(word: String, uid: OKey?): Result<ServerResponse<RoomInf
                         baseOp
                     }
             }.map(::mapRoomInfo)
-        })
+        }, backend)
     }
 }
 
-suspend fun searchJoinedRooms(uid: OKey): Result<ServerResponse<RoomInfo>> {
+suspend fun searchJoinedRooms(uid: OKey, backend: Backend): Result<ServerResponse<RoomInfo>> {
     return runCatching {
         roomsResponse(DatabaseFactory.dbQuery {
             RoomJoins.join(Rooms, JoinType.INNER, RoomJoins.roomId, Rooms.id)
@@ -83,7 +83,7 @@ suspend fun searchJoinedRooms(uid: OKey): Result<ServerResponse<RoomInfo>> {
                 }.map {
                     mapRoomInfo(it)
                 }
-        })
+        }, backend)
     }
 }
 
@@ -94,7 +94,7 @@ fun mapRoomInfo(it: ResultRow): Pair<RoomInfo, String?> {
     return room.toRoomInfo(joinedTime, communityId) to room.icon
 }
 
-suspend fun searchRoomInCommunity(communityId: OKey, uid: OKey?): Result<ServerResponse<RoomInfo>> {
+suspend fun searchRoomInCommunity(communityId: OKey, uid: OKey?, backend: Backend): Result<ServerResponse<RoomInfo>> {
     return runCatching {
         roomsResponse(DatabaseFactory.dbQuery {
             val join = Rooms.join(CommunityRooms, JoinType.INNER, Rooms.id, CommunityRooms.roomId)
@@ -118,7 +118,7 @@ suspend fun searchRoomInCommunity(communityId: OKey, uid: OKey?): Result<ServerR
                 room.toRoomInfo(joinedTime, communityId) to room.icon
             }
 
-        })
+        }, backend = backend)
     }
 }
 
@@ -133,7 +133,7 @@ private fun Room.toRoomInfo(joinedTime: LocalDateTime?, communityId: OKey? = nul
     communityId
 )
 
-suspend fun getRoom(roomId: OKey, uid: OKey?): Result<RoomInfo?> {
+suspend fun getRoom(roomId: OKey, uid: OKey?, backend: Backend): Result<RoomInfo?> {
     return runCatching {
         DatabaseFactory.dbQuery {
             val baseJoin = Rooms.join(CommunityRooms, JoinType.LEFT, Rooms.id, CommunityRooms.roomId)
@@ -163,7 +163,7 @@ suspend fun getRoom(roomId: OKey, uid: OKey?): Result<RoomInfo?> {
     }
 }
 
-private fun roomsResponse(list: List<Pair<RoomInfo, String?>>): ServerResponse<RoomInfo> {
+private fun roomsResponse(list: List<Pair<RoomInfo, String?>>, backend: Backend): ServerResponse<RoomInfo> {
     val icons = backend.mediaService.get("apic", list.map {
         it.second
     })

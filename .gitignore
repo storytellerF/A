@@ -17,11 +17,9 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 databases
-deploy/config-data
+deploy/es_ca
 elastic
 *.env
+!dev.win.env
 !dev.env
-deploy/logstash_ingest_data
-deploy/filebeat_ingest_data
-server/test-data
-deploy/*.jar
+deploy/*_data

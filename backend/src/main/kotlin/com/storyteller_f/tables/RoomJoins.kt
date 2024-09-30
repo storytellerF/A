@@ -11,7 +11,7 @@ import kotlin.text.insert
 object RoomJoins : Table() {
     val uid = ulong("uid").index()
     val roomId = ulong("room_id").index()
-    val joinTime = datetime("join_time")
+    val joinTime = datetime("join_time").index()
 
     init {
         index("room-join-main", true, uid, roomId)

@@ -1,3 +1,38 @@
+volumes:
+  bw-data:
+  minio-data:
+  certs:
+    driver: local
+    driver_opts:
+      type: ${CERTS_DIR:+none}
+      o: ${CERTS_DIR:+bind}
+      device: ${CERTS_DIR}
+  esdata01:
+    driver: local
+  kibanadata:
+    driver: local
+  metricbeatdata01:
+    driver: local
+  filebeatdata01:
+    driver: local
+  logstashdata01:
+    driver: local
+
+networks:
+  bw-universe:
+    name: bw-universe
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.20.30.0/24
+  bw-services:
+    name: bw-services
+  bw-docker:
+    name: bw-docker
+  elastic:
+    name: elastic
+    external: false
+
 services:
   web:
     build: .
@@ -70,6 +105,7 @@ services:
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
       interval: 1s
+      start_period: 5s
     networks:
       - bw-services
     profiles:
@@ -97,7 +133,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_NAME}
       MINIO_ROOT_PASSWORD: ${MINIO_PASS}
     healthcheck:
-      test: ["CMD-SHELL", "curl -I http://localhost:9000/minio/health/live"]
+      test: [ "CMD-SHELL", "curl -I http://localhost:9000/minio/health/live" ]
     networks:
       - bw-services
     profiles:
@@ -157,6 +193,8 @@ services:
       interval: 1s
       timeout: 5s
       retries: 120
+    networks:
+      - elastic
     profiles:
       - es
 
@@ -172,8 +210,6 @@ services:
       - esdata01:/usr/share/elasticsearch/data
     ports:
       - ${ES_PORT}:9200
-    networks:
-      - elastic
     environment:
       - node.name=es01
       - cluster.name=${CLUSTER_NAME}
@@ -208,6 +244,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+    networks:
+      - elastic
     profiles:
       - es
 
@@ -223,8 +261,6 @@ services:
       - kibanadata:/usr/share/kibana/data
     ports:
       - ${KIBANA_PORT}:5601
-    networks:
-      - elastic
     environment:
       - SERVERNAME=kibana
       - ELASTICSEARCH_HOSTS=https://es01:9200
@@ -247,6 +283,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+    networks:
+      - elastic
     profiles:
       - es
 
@@ -258,8 +296,6 @@ services:
         condition: service_healthy
     image: docker.elastic.co/beats/metricbeat:${STACK_VERSION}
     user: root
-    networks:
-      - elastic
     volumes:
       - certs:/usr/share/metricbeat/certs
       - metricbeatdata01:/usr/share/metricbeat/data
@@ -276,6 +312,8 @@ services:
       - LOGSTASH_HOSTS=http://logstash01:9600
     command:
       - --strict.perms=false
+    networks:
+      - elastic
     profiles:
       - es
 
@@ -285,8 +323,6 @@ services:
         condition: service_healthy
     image: docker.elastic.co/beats/filebeat:${STACK_VERSION}
     user: root
-    networks:
-      - elastic
     volumes:
       - certs:/usr/share/filebeat/certs
       - filebeatdata01:/usr/share/filebeat/data
@@ -302,6 +338,8 @@ services:
       - LOGSTASH_HOSTS=http://logstash01:9600
     command:
       - --strict.perms=false
+    networks:
+      - elastic
     profiles:
       - es
 
@@ -315,8 +353,6 @@ services:
     labels:
       co.elastic.logs/module: logstash
     user: root
-    networks:
-      - elastic
     volumes:
       - certs:/usr/share/logstash/certs
       - logstashdata01:/usr/share/logstash/data
@@ -327,36 +363,7 @@ services:
       - ELASTIC_USER=${ELASTIC_NAME}
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - ELASTIC_HOSTS=https://es01:9200
+    networks:
+      - elastic
     profiles:
       - es
-
-volumes:
-  bw-data:
-  minio-data:
-  certs:
-    driver: local
-  esdata01:
-    driver: local
-  kibanadata:
-    driver: local
-  metricbeatdata01:
-    driver: local
-  filebeatdata01:
-    driver: local
-  logstashdata01:
-    driver: local
-
-networks:
-  bw-universe:
-    name: bw-universe
-    ipam:
-      driver: default
-      config:
-        - subnet: 10.20.30.0/24
-  bw-services:
-    name: bw-services
-  bw-docker:
-    name: bw-docker
-  elastic:
-    name: elastic
-    external: false

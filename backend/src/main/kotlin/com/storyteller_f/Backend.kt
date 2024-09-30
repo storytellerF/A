@@ -3,6 +3,7 @@ package com.storyteller_f
 import com.storyteller_f.index.ElasticTopicDocumentService
 import com.storyteller_f.index.LuceneTopicDocumentService
 import com.storyteller_f.index.TopicDocumentService
+import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.media.MediaService
 import com.storyteller_f.media.MinIoMediaService
 import com.storyteller_f.naming.NameService
@@ -47,27 +48,29 @@ fun buildBackendFromEnv(map: Map<out Any, Any>): Backend {
     val hmac = map["HMAC_KEY"] as String
 
     val config = Config(databaseConnection, hmac)
-    val path = Paths.get("./index/")
+    val path = Paths.get("../deploy/lucene-data/index")
     return Backend(
         config,
         elasticConnection1?.let { ElasticTopicDocumentService(it) } ?: LuceneTopicDocumentService(path),
-        MinIoMediaService(minIoConnection),
+        minIoConnection?.let { MinIoMediaService(it) } ?: FileSystemMediaService(),
         NameService()
     )
 }
 
-private fun minIoConnection(properties: Map<out Any, Any>): MinIoConnection {
+private fun minIoConnection(properties: Map<out Any, Any>): MinIoConnection? {
     val url = properties["MINIO_URL"] as String
     val name = properties["MINIO_NAME"] as String
     val pass = properties["MINIO_PASS"] as String
+    if (url.isBlank()) return null
     return MinIoConnection(url, name, pass)
 }
 
 private fun elasticConnection(properties: Map<out Any, Any>): ElasticConnection? {
-    val certFile = properties["CERT_FILE"] as? String ?: return null
+    val certFile = properties["CERT_FILE"] as String
     val url = properties["ELASTIC_URL"] as String
     val name = properties["ELASTIC_NAME"] as String
     val pass = properties["ELASTIC_PASSWORD"] as String
+    if (certFile.isBlank() || url.isBlank()) return null
     return ElasticConnection(url, certFile, name, pass)
 }
 

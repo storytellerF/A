@@ -1,6 +1,7 @@
 package com.storyteller_f.a.server.auth
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.*
 import com.storyteller_f.a.server.BuildConfig
@@ -16,7 +17,6 @@ import io.ktor.http.*
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.http.content.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -25,7 +25,7 @@ import io.ktor.server.sessions.*
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-data class CustomCredential(val id: OKey, val sig: String) : Credential
+data class CustomCredential(val id: OKey, val sig: String)
 
 private fun HttpAuthHeader.Parameterized.customCredential(): CustomCredential? {
     val id = parameters.firstOrNull {
@@ -41,17 +41,17 @@ private fun HttpAuthHeader.Parameterized.customCredential(): CustomCredential? {
     }
 }
 
-class CustomPrincipal(val uid: OKey) : Principal
+data class CustomPrincipal(val uid: OKey)
 
 inline fun AuthenticationConfig.custom(
     name: String? = null,
     configure: CustomAuthProvider.Config.() -> Unit
 ) {
-    val provider = CustomAuthProvider.Config(name).apply(configure).buildProvider()
+    val provider = CustomAuthProvider(CustomAuthProvider.Config(name).apply(configure))
     register(provider)
 }
 
-typealias CustomValidator = suspend (UserSession, ApplicationCall, CustomCredential?) -> Principal?
+typealias CustomValidator = suspend (UserSession, ApplicationCall, CustomCredential?) -> Any?
 typealias CustomChallenge = suspend (UserSession, ApplicationCall) -> Unit
 
 class CustomAuthProvider(private val config: Config) : AuthenticationProvider(config) {
@@ -60,9 +60,6 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
 
         lateinit var validateFunction: CustomValidator
         lateinit var challengeFunction: CustomChallenge
-        fun buildProvider(): CustomAuthProvider {
-            return CustomAuthProvider(this)
-        }
 
         fun validate(f: CustomValidator) {
             validateFunction = f
@@ -106,9 +103,9 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
     }
 }
 
-fun Application.configureAuth() {
+fun Application.configureAuth(backend: Backend) {
     install(Authentication) {
-        custom("custom-session") {
+        custom {
             validate { session, call, credential ->
                 when {
                     credential != null -> call.checkApiRequest(credential, session)
@@ -123,11 +120,11 @@ fun Application.configureAuth() {
         }
     }
     routing {
-        authenticate("custom-session") {
-            protectedContent()
+        authenticate {
+            protectedContent(backend)
         }
-        authenticate("custom-session", optional = true) {
-            unProtectedContent()
+        authenticate(optional = true) {
+            unProtectedContent(backend)
         }
 
         get("/get_data") {
@@ -135,11 +132,11 @@ fun Application.configureAuth() {
         }
 
         post("/sign_up") {
-            signUp()
+            signUp(backend)
         }
 
         post("/sign_in") {
-            signIn()
+            signIn(backend)
         }
 
         get("/ping") {
@@ -149,7 +146,7 @@ fun Application.configureAuth() {
 
 }
 
-private suspend fun RoutingContext.signIn() {
+private suspend fun RoutingContext.signIn(backend: Backend) {
     val pack = call.receive<SignInPack>()
     val data = call.getData()
     val f = finalData(data)
@@ -163,7 +160,7 @@ private suspend fun RoutingContext.signIn() {
     if (userTriple != null) {
         val (info, icon, publicKey) = userTriple
         if (verify(publicKey, pack.sig, f)) {
-            call.respond(toFinalUserInfo(info to icon))
+            call.respond(toFinalUserInfo(info to icon, backend = backend))
         } else {
             call.respond(HttpStatusCode.BadRequest)
         }
@@ -172,7 +169,7 @@ private suspend fun RoutingContext.signIn() {
     }
 }
 
-private suspend fun RoutingContext.signUp() {
+private suspend fun RoutingContext.signUp(backend: Backend) {
     val pack = call.receive<SignUpPack>()
     val data = call.getData()
     val f = finalData(data)
@@ -191,7 +188,7 @@ private suspend fun RoutingContext.signUp() {
                 it.toUserInfo() to null
             }) {
                 createUser(User(null, pack.pk, ad, null, name, newId, now()))
-            }.let(::toFinalUserInfo))
+            }.let { toFinalUserInfo(it, backend) })
         }
     } else {
         call.respond(HttpStatusCode.BadRequest)
@@ -235,9 +232,9 @@ private suspend fun ApplicationCall.verifySignature(
 
     sig.isNotBlank() && session.data.isNotBlank() -> {
         DatabaseFactory.first({
-            it[Users.publicKey]
-        }, {
             it
+        }, {
+            it[Users.publicKey]
         }) {
             Users.select(Users.publicKey).where {
                 Users.id eq id

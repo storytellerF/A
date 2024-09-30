@@ -11,7 +11,6 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.ktor.server.auth.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -23,13 +22,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.Duration
 
-lateinit var backend: Backend
+
 
 fun main(args: Array<String>) {
     SnowflakeFactory.setMachine(0)
 
     val map = readEnv()
-    backend = buildBackendFromEnv(map)
+    val backend = buildBackendFromEnv(map)
     val serverPort = (map["SERVER_PORT"] as String).toInt()
     val extraArgs = arrayOf("-port=$serverPort")
     DatabaseFactory.init(backend.config.databaseConnection)
@@ -37,7 +36,7 @@ fun main(args: Array<String>) {
 }
 
 @Serializable
-sealed interface UserSession : Principal {
+sealed interface UserSession {
     @Serializable
     @SerialName("pending")
     data class Pending(
@@ -53,6 +52,9 @@ sealed interface UserSession : Principal {
 
 @Suppress("unused")
 fun Application.module() {
+    val map = readEnv()
+    val backend = buildBackendFromEnv(map)
+
     install(ContentNegotiation) {
         json()
     }
@@ -77,5 +79,5 @@ fun Application.module() {
             cookie.maxAgeInSeconds = 3600
         }
     }
-    configureAuth()
+    configureAuth(backend)
 }
