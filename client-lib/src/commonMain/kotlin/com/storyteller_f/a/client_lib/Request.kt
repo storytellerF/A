@@ -19,6 +19,7 @@ suspend fun HttpClient.requestRoomKeys(id: OKey) =
     get("/room/$id/pub-keys").body<ServerResponse<Pair<OKey, String>>>()
 
 suspend fun HttpClient.joinRoom(id: OKey) = post("/room/$id/join")
+
 suspend fun HttpClient.joinCommunity(id: OKey) = post("/community/$id/join")
 
 suspend fun HttpClient.getRoomTopics(
@@ -27,20 +28,31 @@ suspend fun HttpClient.getRoomTopics(
 ) = get("/room/$roomId/topics?start=${loadKey ?: 0}").body<ServerResponse<TopicInfo>>()
 
 suspend fun HttpClient.getCommunityInfo(id: OKey) = get("/community/$id").body<CommunityInfo>()
+
 suspend fun HttpClient.getCommunityTopics(communityId: OKey, size: Int) =
     get("/community/$communityId/topics?size=$size").body<ServerResponse<TopicInfo>>()
 
 suspend fun HttpClient.getCommunityRooms(communityId: OKey) =
     get("/community/$communityId/rooms").body<ServerResponse<RoomInfo>>()
 
-suspend fun HttpClient.getJoinCommunities() = get("/community/joined").body<ServerResponse<CommunityInfo>>()
+suspend fun HttpClient.getJoinCommunities(nextCommunityId: OKey?, size: Int) = get("/community/joined") {
+    url {
+        parameters.append("size", size.toString())
+        if (nextCommunityId != null) {
+            parameters.append("nextPageToken", nextCommunityId.toString())
+        }
+    }
+}.body<ServerResponse<CommunityInfo>>()
+
 suspend fun HttpClient.getWorldTopics() = get("/world").body<ServerResponse<TopicInfo>>()
+
 suspend fun HttpClient.getUserInfo(id: OKey) = get("/user/$id").body<UserInfo>()
 
 suspend fun HttpClient.getTopicTopics(topicId: OKey) =
-   get("/topic/$topicId/topics").body<ServerResponse<TopicInfo>>()
+    get("/topic/$topicId/topics").body<ServerResponse<TopicInfo>>()
 
 suspend fun HttpClient.getTopicInfo(id: OKey) = get("/topic/$id").body<TopicInfo>()
+
 suspend fun HttpClient.getJoinedRooms() = get("/room/joined").body<ServerResponse<RoomInfo>>()
 
 suspend fun HttpClient.createNewTopic(

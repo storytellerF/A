@@ -86,31 +86,19 @@ suspend fun searchJoinedCommunities(
     size: Int
 ): Result<Pair<List<CommunityInfo>, Long>> {
     return runCatching {
-        val list = DatabaseFactory.query({
-            it.map { (community, joinTime) ->
-                Triple(community.toCommunityIfo(joinTime), community.icon, community.poster)
-            }
+        val list = DatabaseFactory.mapQuery({ (community, joinTime) ->
+            Triple(community.toCommunityIfo(joinTime), community.icon, community.poster)
+        }, {
+            val community = Community.wrapRow(it)
+            val joinTime = it[CommunityJoins.joinTime]
+            community to joinTime
         }) {
             val query = Communities.join(CommunityJoins, JoinType.INNER, Communities.id, CommunityJoins.communityId)
                 .select(Communities.fields + CommunityJoins.joinTime)
                 .where {
                     CommunityJoins.uid eq uid
                 }
-            if (next != null) {
-                query.andWhere {
-                    Communities.id less next
-                }
-            } else if (pre != null) {
-                query.andWhere {
-                    Communities.id greater pre
-                }
-            }
             query.bindPaginationQuery(Communities, pre, next, size)
-                .map { row ->
-                    val community = Community.wrapRow(row)
-                    val joinTime = row[CommunityJoins.joinTime]
-                    community to joinTime
-                }
         }
         val count = DatabaseFactory.dbQuery {
             Communities.join(CommunityJoins, JoinType.INNER, Communities.id, CommunityJoins.communityId)

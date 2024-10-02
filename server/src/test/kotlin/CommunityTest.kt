@@ -85,12 +85,44 @@ class CommunityTest {
 
     }
 
+    @Test
+    fun `test communities pagination`() {
+        test { client ->
+            val communities = buildList {
+                repeat(10) {
+                    val newId = SnowflakeFactory.nextId()
+                    val id = DatabaseFactory.dbQuery {
+                        Community.new(Community("aid$it", "name", null, 0u, null, newId, now()))
+                    }
+                    add(id)
+                }
+            }
+            session(client) {
+                communities.forEach {
+                    client.joinCommunity(it)
+                }
+                var lastCommunityId: OKey? = null
+                var sum = 0L
+                while (true) {
+                    val res = client.getJoinCommunities(lastCommunityId, 3)
+                    val pagination = res.pagination!!
+                    lastCommunityId = pagination.nextPageToken?.toULong()
+                    sum += res.data.size
+                    if (lastCommunityId == null) {
+                        assertEquals(pagination.total, sum)
+                        break
+                    }
+                }
+            }
+
+        }
+    }
+
     private suspend fun createCommunity(): OKey {
         val newId = SnowflakeFactory.nextId()
-        val communityId = DatabaseFactory.dbQuery {
-            Community.new(Community("11", "test", null, 0u, null, newId, now()))
+        return DatabaseFactory.dbQuery {
+            Community.new(Community("aid", "name", null, 0u, null, newId, now()))
         }
-        return communityId
     }
 
     @Test

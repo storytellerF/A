@@ -310,10 +310,8 @@ suspend fun isPrivateChat(parentType: ObjectType, parentId: OKey): Pair<Boolean,
     val b1 = parentType == ObjectType.TOPIC
     return when {
         b1 -> {
-            DatabaseFactory.query({
-                it?.let {
-                    it.rootId to it.rootType
-                }
+            DatabaseFactory.queryNotNull({
+                rootId to rootType
             }) {
                 Topic.findById(parentId)
             }?.let { (rootId, rootType) ->

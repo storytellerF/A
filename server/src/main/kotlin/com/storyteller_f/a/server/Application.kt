@@ -16,6 +16,7 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
 import kotlinx.coroutines.runBlocking
@@ -48,6 +49,11 @@ fun Application.module() {
     }
     install(CallLogging) {
         level = Level.INFO
+        format { call ->
+            val status = call.response.status()
+            val httpMethod = call.request.httpMethod.value
+            "Status: $status, HTTP method: $httpMethod, Url: ${call.request.uri}"
+        }
     }
     install(CallId) {
         header(HttpHeaders.XRequestId)
