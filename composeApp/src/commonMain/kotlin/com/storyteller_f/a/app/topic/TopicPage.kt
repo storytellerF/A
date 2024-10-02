@@ -114,7 +114,7 @@ class TopicNestedViewModel(topicId: OKey) : PagingViewModel<Int, TopicInfo>({
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun processEncryptedTopic(info: ServerResponse<TopicInfo>): ServerResponse<TopicInfo> {
-    val key = getDerPrivateKey((LoginViewModel.state.value as ClientSession.PrivateKeyLogin).privateKey)
+    val key = getDerPrivateKey((LoginViewModel.state.value as ClientSession.PrivateKeySignIn).privateKey)
     val uid = LoginViewModel.user.value!!.id
     return info.copy(info.data.map { topicInfo ->
         val content = topicInfo.content

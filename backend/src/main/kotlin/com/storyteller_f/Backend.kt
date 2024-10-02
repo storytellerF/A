@@ -35,43 +35,55 @@ fun readEnv(): MutableMap<out Any, out Any> {
     return map
 }
 
-fun buildBackendFromEnv(map: Map<out Any, Any>): Backend {
+fun buildBackendFromEnv(env: Map<out Any, Any>): Backend {
 
-    println("load env: ${map["COMPOSE_PROJECT_NAME"]}")
+    println("load env: ${env["COMPOSE_PROJECT_NAME"]}")
 
-    val databaseConnection = databaseConnection(map)
+    val databaseConnection = databaseConnection(env)
 
-    val elasticConnection1 = elasticConnection(map)
-
-    val minIoConnection = minIoConnection(map)
-
-    val hmac = map["HMAC_KEY"] as String
+    val hmac = env["HMAC_KEY"] as String
 
     val config = Config(databaseConnection, hmac)
-    val path = Paths.get("../deploy/lucene-data/index")
+
+    val topicDocumentService = topicDocumentService(env)
+    val mediaService = mediaService(env)
+
     return Backend(
         config,
-        elasticConnection1?.let { ElasticTopicDocumentService(it) } ?: LuceneTopicDocumentService(path),
-        minIoConnection?.let { MinIoMediaService(it) } ?: FileSystemMediaService(),
+        topicDocumentService,
+        mediaService,
         NameService()
     )
 }
 
-private fun minIoConnection(properties: Map<out Any, Any>): MinIoConnection? {
-    val url = properties["MINIO_URL"] as String
-    val name = properties["MINIO_NAME"] as String
-    val pass = properties["MINIO_PASS"] as String
-    if (url.isBlank()) return null
-    return MinIoConnection(url, name, pass)
+private fun mediaService(map: Map<out Any, Any>): MediaService {
+    return when (map["MEDIA_SERVICE"]) {
+        "minio" -> {
+            val url = map["MINIO_URL"] as String
+            val name = map["MINIO_NAME"] as String
+            val pass = map["MINIO_PASS"] as String
+            MinIoMediaService(MinIoConnection(url, name, pass))
+        }
+        "filesystem" -> FileSystemMediaService()
+        else -> throw Exception("unsupported media service type ${map["MEDIA_SERVICE"]}")
+    }
 }
 
-private fun elasticConnection(properties: Map<out Any, Any>): ElasticConnection? {
-    val certFile = properties["CERT_FILE"] as String
-    val url = properties["ELASTIC_URL"] as String
-    val name = properties["ELASTIC_NAME"] as String
-    val pass = properties["ELASTIC_PASSWORD"] as String
-    if (certFile.isBlank() || url.isBlank()) return null
-    return ElasticConnection(url, certFile, name, pass)
+private fun topicDocumentService(
+    map: Map<out Any, Any>,
+): TopicDocumentService {
+    val path = Paths.get("../deploy/lucene-data/index")
+    return when(val type = map["SEARCH_SERVICE"]) {
+        "elastic" -> {
+            val certFile = map["CERT_FILE"] as String
+            val url = map["ELASTIC_URL"] as String
+            val name = map["ELASTIC_NAME"] as String
+            val pass = map["ELASTIC_PASSWORD"] as String
+            ElasticTopicDocumentService(ElasticConnection(url, certFile, name, pass))
+        }
+        "lucene" -> LuceneTopicDocumentService(path)
+        else -> throw Exception("unsupported search service type $type")
+    }
 }
 
 private fun databaseConnection(properties: Map<out Any, Any>): DatabaseConnection {

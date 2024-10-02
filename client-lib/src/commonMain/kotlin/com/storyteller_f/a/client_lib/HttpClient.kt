@@ -16,6 +16,7 @@ import kotlinx.serialization.json.Json
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
 fun HttpClientConfig<*>.defaultClientConfigure() {
+    expectSuccess = true
     install(Auth) {
         custom {
 

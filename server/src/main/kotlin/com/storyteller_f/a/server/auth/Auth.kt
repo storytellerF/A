@@ -179,7 +179,7 @@ private suspend fun RoutingContext.signUp(backend: Backend) {
                     Users.publicKey eq pack.pk
                 }
             }) {
-            call.respond(HttpStatusCode.BadRequest)
+            call.respond(HttpStatusCode.BadRequest, "User exists.")
         } else {
             val ad = calcAddress(pack.pk)
             val newId = SnowflakeFactory.nextId()
@@ -191,7 +191,7 @@ private suspend fun RoutingContext.signUp(backend: Backend) {
             }.let { toFinalUserInfo(it, backend) })
         }
     } else {
-        call.respond(HttpStatusCode.BadRequest)
+        call.respond(HttpStatusCode.BadRequest, "Verify failed.")
     }
 }
 

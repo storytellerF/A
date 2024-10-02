@@ -1,7 +1,6 @@
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.a.server.service.toUserInfo
 import com.storyteller_f.buildBackendFromEnv
 import com.storyteller_f.naming.NameService
 import com.storyteller_f.readEnv
@@ -15,8 +14,6 @@ import com.storyteller_f.shared.type.OKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Community
-import com.storyteller_f.tables.User
-import com.storyteller_f.tables.createUser
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -33,18 +30,18 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertTrue
 
 class CommunityTest {
     @Test
     fun `test create topic in community`() = test { client ->
-        session {
+        session(client) {
             //insert community
             val communityId = createCommunity()
-            kotlin.run {
+            assertFails {
                 val response = client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello")
                 assertEquals(HttpStatusCode.Forbidden, response.status)
-                assertEquals("未加入此社区", response.bodyAsText())
             }
             //加入社区
             client.joinCommunity(communityId)
@@ -57,16 +54,15 @@ class CommunityTest {
                 assertEquals(HttpStatusCode.OK, response.status)
             }
             //测试上传加密话题
-            kotlin.run {
-                val response = client.post("/topic") {
+            assertFails {
+                client.post("/topic") {
                     contentType(ContentType.Application.Json)
                     setBody(NewTopic(ObjectType.COMMUNITY, communityId, TopicContent.Encrypted("", emptyMap())))
                 }
-                assertEquals(HttpStatusCode.Forbidden, response.status)
             }
             //添加话题到子话题
             kotlin.run {
-                val topicId = client.getCommunityTopics(communityId).data.first().id
+                val topicId = client.getCommunityTopics(communityId, 10).data.first().id
                 val new = client.createNewTopic(ObjectType.TOPIC, topicId, "test").body<TopicInfo>()
                 assertEquals(ObjectType.COMMUNITY, new.rootType)
                 assertEquals(communityId, new.rootId)
@@ -78,7 +74,7 @@ class CommunityTest {
     @Test
     fun `test topic snapshot`() {
         test { client ->
-            session {
+            session(client) {
                 val communityId = createCommunity()
                 client.joinCommunity(communityId)
                 val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").body<TopicInfo>()
@@ -125,6 +121,7 @@ class CommunityTest {
 
 @Suppress("unused")
 fun Application.module() {
+    log.info("Hello from test!")
     routing {
         get {
             call.respond(HttpStatusCode.OK, "Hello, world!")
@@ -156,15 +153,14 @@ fun test(block: suspend (HttpClient) -> Unit) {
     }
 }
 
-suspend fun session(block: suspend () -> Unit) {
+suspend fun session(client: HttpClient, block: suspend () -> Unit) {
     val priKey = generateKeyPair()
     val pubKey = getDerPublicKeyFromPrivateKey(priKey)
-    val add = calcAddress(pubKey)
-    val id = SnowflakeFactory.nextId()
-    val userInfo = DatabaseFactory.query(User::toUserInfo) {
-        createUser(User(null, pubKey, add, null, "test", id, now()))
-    }
-    LoginViewModel.updateState(ClientSession.LoginSuccess(priKey, pubKey, add))
+    val address = calcAddress(pubKey)
+    val data = finalData(client.getData())
+    val sign = signature(priKey, data)
+    val userInfo = client.sign(true, pubKey, sign, address)
+    LoginViewModel.updateState(ClientSession.LoginSuccess(priKey, pubKey, address))
     LoginViewModel.updateUser(userInfo)
     block()
 }

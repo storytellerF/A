@@ -27,8 +27,8 @@ suspend fun HttpClient.getRoomTopics(
 ) = get("/room/$roomId/topics?start=${loadKey ?: 0}").body<ServerResponse<TopicInfo>>()
 
 suspend fun HttpClient.getCommunityInfo(id: OKey) = get("/community/$id").body<CommunityInfo>()
-suspend fun HttpClient.getCommunityTopics(communityId: OKey) =
-    get("/community/$communityId/topics").body<ServerResponse<TopicInfo>>()
+suspend fun HttpClient.getCommunityTopics(communityId: OKey, size: Int) =
+    get("/community/$communityId/topics?size=$size").body<ServerResponse<TopicInfo>>()
 
 suspend fun HttpClient.getCommunityRooms(communityId: OKey) =
     get("/community/$communityId/rooms").body<ServerResponse<RoomInfo>>()
@@ -57,14 +57,14 @@ suspend fun HttpClient.createNewTopic(
 suspend fun HttpClient.sign(
     isSignUp: Boolean,
     publicKey: String,
-    sig: String,
-    ad: String
-) = post(if (isSignUp) "/sign_in" else "/sign_up") {
+    signature: String,
+    address: String
+) = post(if (isSignUp) "/sign_up" else "/sign_in") {
     contentType(ContentType.Application.Json)
     if (isSignUp) {
-        setBody(SignUpPack(publicKey, sig))
+        setBody(SignUpPack(publicKey, signature))
     } else {
-        setBody(SignInPack(ad, sig))
+        setBody(SignInPack(address, signature))
     }
 }.body<UserInfo>()
 

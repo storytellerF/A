@@ -44,10 +44,3 @@ fun findRoomByAId(aid: String): ResultRow? {
     }.limit(1).firstOrNull()
 }
 
-fun getUserPubKeysInRoom(it: OKey) = Users.join(RoomJoins, JoinType.INNER, Users.id, RoomJoins.uid)
-    .select(Users.id, Users.publicKey)
-    .where {
-        RoomJoins.roomId eq it
-    }.map {
-        it[Users.id] to it[Users.publicKey]
-    }

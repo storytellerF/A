@@ -74,7 +74,7 @@ fun SelectLoginPage(loginNav: LoginNav) {
         Column(verticalArrangement = Arrangement.spacedBy(40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("Login", style = MaterialTheme.typography.headlineMedium)
             OutlinedButton({
-                LoginViewModel.state.value = ClientSession.PrivateKeyLogin("")
+                LoginViewModel.state.value = ClientSession.PrivateKeySignIn("")
                 loginNav.gotoPrivateKey()
             }, shape = ButtonDefaults.outlinedShape) {
                 Text("Input Private Key")

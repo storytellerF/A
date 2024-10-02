@@ -3,9 +3,9 @@ package com.storyteller_f.a.server
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.common.checkParameter
+import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.OKey
 import io.ktor.server.routing.*
@@ -76,9 +76,14 @@ private fun Route.bindProtectedRoomRoute(backend: Backend) {
         }
         get("/{id}/pub-keys") {
             usePrincipal { id ->
-                checkParameter<OKey, ServerResponse<Pair<OKey, String>>>("id") {
-                    getRoomPubKeys(it, id)
+                pagination<Pair<OKey, String>, OKey>({
+                    it.first.toString()
+                }) { pre, next , size ->
+                    checkParameter<OKey, Pair<List<Pair<OKey, String>>, Long>>("id") {
+                        getRoomPubKeys(it, id, pre, next, size)
+                    }
                 }
+
             }
         }
     }

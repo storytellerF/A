@@ -5,16 +5,12 @@ import com.storyteller_f.a.server.auth.omitPrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.checkParameter
 import com.storyteller_f.a.server.common.checkQueryParameter
-import com.storyteller_f.a.server.common.getOrFailCompact
+import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.Pagination
-import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.OKey
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
-import io.ktor.util.converters.*
-import io.ktor.util.reflect.*
 
 
 fun Route.unProtectedContent(backend: Backend) {
@@ -39,58 +35,6 @@ fun Route.unProtectedContent(backend: Backend) {
     bindUserRoute(backend)
 }
 
-inline fun <T, reified PageTokenType : Any> RoutingContext.pagination(
-    nextKeyBuilder: (T) -> String,
-    block: (PageTokenType?, PageTokenType?, Int) -> Result<Pair<List<T>, Long>?>
-): Result<ServerResponse<T>?> {
-    val v = kotlin.runCatching {
-        val size = call.queryParameters.getOrFailCompact<Int>("size")
-
-        require(size > 0) {
-            "Invalid query size"
-        }
-        val nextPageToken = call.queryParameters["nextPageToken"]
-        val prePageToken = call.queryParameters["prePageToken"]
-
-        require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) {
-            "Invalid query"
-        }
-        val (parsedPrePageToken, parsedNextPageToken) = if (!nextPageToken.isNullOrBlank()) {
-            null to if (PageTokenType::class == ULong::class) {
-                nextPageToken.toULong() as PageTokenType
-            } else {
-                DefaultConversionService.fromValue(nextPageToken, PageTokenType::class) as PageTokenType
-            }
-        } else if (!prePageToken.isNullOrBlank()) {
-            if (PageTokenType::class == ULong::class) {
-                prePageToken.toULong() as PageTokenType
-            } else {
-                DefaultConversionService.fromValue(prePageToken, PageTokenType::class) as PageTokenType
-            } to null
-        } else {
-            null to null
-        }
-        Triple(parsedPrePageToken, parsedNextPageToken, size)
-    }
-    return when {
-        v.isSuccess -> {
-            val (prePageToken, nextPageToken, size) = v.getOrThrow()
-            block(prePageToken, nextPageToken, size).map {
-                it?.let { (list, count) ->
-                    val next = if (size == list.size) nextKeyBuilder(list.last())
-                    else null
-                    val pre = if (list.isNotEmpty()) nextKeyBuilder(list.first())
-                    else null
-                    ServerResponse(list, Pagination(next, pre, count))
-                }
-
-            }
-        }
-
-        else -> Result.failure(v.exceptionOrNull()!!)
-    }
-
-}
 
 private fun Route.bindUserRoute(backend: Backend) {
     route("/user") {
@@ -142,16 +86,26 @@ private fun Route.bindCommunityRoute(backend: Backend) {
     route("/community") {
         get("/{id}/topics") {
             omitPrincipal {
-                checkParameter<OKey, ServerResponse<TopicInfo>>("id") {
-                    getTopics(it, ObjectType.COMMUNITY, backend = backend, p = p, n = n, s = s)
+                pagination<TopicInfo, OKey>({
+                    ""
+                }) { p, n, size ->
+                    checkParameter<OKey, Pair<List<TopicInfo>, Long>>("id") {
+                        getTopics(it, ObjectType.COMMUNITY, backend = backend, preTopicId = p, nextTopicId = n, size = size)
+                    }
                 }
+
             }
         }
         get("/{id}/rooms") {
             usePrincipalOrNull { uid ->
-                checkParameter<OKey, ServerResponse<RoomInfo>>("id") {
-                    searchRoomInCommunity(it, uid, backend)
+                pagination<RoomInfo, OKey>({
+                    ""
+                }) { p, n, size ->
+                    checkParameter<OKey, Pair<List<RoomInfo>, Long>>("id") {
+                        searchRoomInCommunity(it, uid, backend, p, n, size)
+                    }
                 }
+
             }
         }
 
@@ -180,9 +134,14 @@ private fun Route.bindRoomRoute(backend: Backend) {
     route("/room") {
         get("/{id}/topics") {
             usePrincipalOrNull { uid ->
-                checkParameter<OKey, ServerResponse<TopicInfo>>("id") {
-                    getTopics(it, ObjectType.ROOM, uid, backend, p, n, s)
+                pagination<TopicInfo, OKey>({
+                    ""
+                }) { p, n, size ->
+                    checkParameter<OKey, Pair<List<TopicInfo>, Long>>("id") {
+                        getTopics(it, ObjectType.ROOM, uid, backend, p, n, size)
+                    }
                 }
+
             }
         }
 
@@ -195,9 +154,14 @@ private fun Route.bindRoomRoute(backend: Backend) {
         }
         get("/search") {
             usePrincipalOrNull { id ->
-                checkQueryParameter<String, ServerResponse<RoomInfo>>("word") {
-                    searchRooms(it, id, backend)
+                pagination<RoomInfo, OKey>({
+                    it.id.toString()
+                }) { p, n, size ->
+                    checkQueryParameter<String, Pair<List<RoomInfo>, Long>>("word") {
+                        searchRooms(it, id, backend, p, n, size)
+                    }
                 }
+
             }
         }
     }

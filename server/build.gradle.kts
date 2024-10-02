@@ -13,18 +13,19 @@ application {
 }
 
 dependencies {
+    runtimeOnly(libs.logback)
+
     implementation(libs.cryptography.provider.jdk)
     implementation(projects.shared)
     implementation(projects.backend)
-    runtimeOnly(libs.logback)
     implementation(libs.bundles.ktor.server)
     implementation(libs.minio)
+    implementation(libs.ktoml.core)
 
     testImplementation(projects.clientLib)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.h2)
-    implementation(libs.ktoml.core)
     testImplementation(libs.jimfs)
 }
 

@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.map
 sealed interface ClientSession {
     data object LoginNone : ClientSession
     data object SignUpNone : ClientSession
-    data class PrivateKeyLogin(val privateKey: String) :
+    data class PrivateKeySignIn(val privateKey: String) :
         ClientSession
 
     data class PrivateKeySignUp(val privateKey: String) : ClientSession
@@ -20,7 +20,7 @@ object LoginViewModel {
     val state = MutableStateFlow<ClientSession>(ClientSession.LoginNone)
     val privateKey = state.map {
         when (it) {
-            is ClientSession.PrivateKeyLogin -> it.privateKey
+            is ClientSession.PrivateKeySignIn -> it.privateKey
 
             is ClientSession.PrivateKeySignUp -> it.privateKey
 
@@ -44,8 +44,8 @@ object LoginViewModel {
     fun updatePrivateKey(pemPrivateKey: String) {
         Napier.v("$pemPrivateKey ${state.value}", tag = "ClientAuth")
         when (state.value) {
-            is ClientSession.PrivateKeyLogin -> {
-                state.value = ClientSession.PrivateKeyLogin(pemPrivateKey)
+            is ClientSession.PrivateKeySignIn -> {
+                state.value = ClientSession.PrivateKeySignIn(pemPrivateKey)
             }
 
             is ClientSession.PrivateKeySignUp -> {

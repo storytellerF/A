@@ -68,18 +68,6 @@ object DatabaseFactory {
     suspend fun <T, R> query(transform: (T) -> R, block: suspend () -> T): R =
         dbQuery { transform(block()) }
 
-    /**
-     * 带有transform
-     */
-    suspend fun <T, R, R1> query(
-        transform: (R1) -> R,
-        typeTransform: (T) -> R1,
-        block: suspend () -> SizedIterable<T>
-    ): List<R> =
-        dbQuery {
-            block().map(typeTransform).map(transform)
-        }
-
 
     /**
      * 处理可能查询不到数据的问题
@@ -88,6 +76,24 @@ object DatabaseFactory {
         query({
             it?.let { transform(it) }
         }) { block() }
+
+    /**
+     * 带有transform
+     */
+    suspend fun <T, R> mapQuery(transform: (T) -> R, block: suspend () -> SizedIterable<T>): List<R> =
+        dbQuery { block().map(transform) }
+
+    /**
+     * 带有transform
+     */
+    suspend fun <T, R, R1> mapQuery(
+        transform: (R1) -> R,
+        typeTransform: (T) -> R1,
+        block: suspend () -> SizedIterable<T>
+    ): List<R> =
+        dbQuery {
+            block().map(typeTransform).map(transform)
+        }
 
     /**
      * 查询第一个符合条件的数据

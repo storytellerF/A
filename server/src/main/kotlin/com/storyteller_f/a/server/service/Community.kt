@@ -2,14 +2,13 @@ package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.a.server.common.bindPaginationQuery
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.OKey
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
-import io.ktor.server.routing.*
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.selectAll
 
@@ -43,7 +42,7 @@ suspend fun getCommunity(communityId: OKey, backend: Backend): Result<CommunityI
 
 }
 
-suspend fun RoutingContext.joinCommunity(
+suspend fun joinCommunity(
     id: OKey,
     it: OKey
 ) = runCatching {
@@ -62,22 +61,13 @@ suspend fun searchCommunities(
     size: Int
 ): Result<Pair<List<CommunityInfo>, Long>> {
     return runCatching {
-        val list = DatabaseFactory.query({ community ->
+        val list = DatabaseFactory.mapQuery({ community ->
             Triple(community.toCommunityIfo(null), community.icon, community.poster)
         }, Community::wrapRow) {
             val query = Community.find {
                 Communities.name like "%$word%"
             }
-            if (nextPageToken != null) {
-                query.andWhere {
-                    Communities.id less nextPageToken
-                }
-            } else if (prePageToken != null) {
-                query.andWhere {
-                    Communities.id greater prePageToken
-                }
-            }
-            query.orderBy(Communities.id, SortOrder.DESC).limit(size)
+            query.bindPaginationQuery(Communities, prePageToken, nextPageToken, size)
         }
         val count = DatabaseFactory.count {
             Community.find {
@@ -115,9 +105,7 @@ suspend fun searchJoinedCommunities(
                     Communities.id greater pre
                 }
             }
-            query
-                .limit(size)
-                .orderBy(Communities.id, SortOrder.DESC)
+            query.bindPaginationQuery(Communities, pre, next, size)
                 .map { row ->
                     val community = Community.wrapRow(row)
                     val joinTime = row[CommunityJoins.joinTime]

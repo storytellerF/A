@@ -3,6 +3,7 @@ package com.storyteller_f.a.server.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.a.server.common.bindPaginationQuery
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.hmacSign
 import com.storyteller_f.shared.hmacVerify
@@ -18,7 +19,6 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 
@@ -217,21 +217,17 @@ suspend fun getTopics(
     parentType: ObjectType,
     uid: OKey? = null,
     backend: Backend,
-    pre: OKey?,
-    next: OKey?,
+    preTopicId: OKey?,
+    nextTopicId: OKey?,
     size: Int
 ): Result<Pair<List<TopicInfo>, Long>> {
     return runCatching {
-        val data = DatabaseFactory.dbQuery {
+        val data = DatabaseFactory.mapQuery(Topic::toTopicInfo, Topic::wrapRow) {
             Topics
                 .select(Topics.fields)
                 .where {
                     Topics.parentId eq parentId and (Topics.parentType eq parentType)
-                }
-                .orderBy(Topics.createdTime, SortOrder.DESC)
-                .map {
-                    Topic.wrapRow(it).toTopicInfo()
-                }
+                }.bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
         }
         val count = DatabaseFactory.count {
             Topics
