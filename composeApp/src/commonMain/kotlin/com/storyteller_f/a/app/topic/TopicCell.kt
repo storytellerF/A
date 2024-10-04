@@ -26,6 +26,7 @@ import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownCodeFence
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import com.storyteller_f.a.app.common.StateView2
 import com.storyteller_f.a.app.community.CommunityRefCell
 import com.storyteller_f.a.app.compontents.ReactionRow
 import com.storyteller_f.a.app.compontents.TextUnitToPx
@@ -34,6 +35,8 @@ import com.storyteller_f.a.app.compontents.buildTexPainter
 import com.storyteller_f.a.app.room.RoomRefCell
 import com.storyteller_f.a.app.user.UserRefCell
 import com.storyteller_f.a.app.user.UserViewModel
+import com.storyteller_f.a.client_lib.LoadingHandler
+import com.storyteller_f.a.client_lib.LoadingState
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
@@ -117,20 +120,18 @@ fun TopicRefCell(topicId: OKey, onClick: (OKey) -> Unit) {
     val viewModel = viewModel(TopicViewModel::class, keys = listOf("topic", topicId)) {
         TopicViewModel(topicId)
     }
-    val data by viewModel.handler.data.collectAsState()
-    data?.let {
-        TopicRefCellContent(it, onClick, topicId, data)
-    } ?: Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
+
+    StateView2(viewModel.handler) {
+        TopicRefCellContent(it, onClick, topicId)
     }
 }
+
 
 @Composable
 private fun TopicRefCellContent(
     it: TopicInfo,
     onClick: (OKey) -> Unit,
     topicId: OKey,
-    data: TopicInfo?
 ) {
     val author = it.author
     val authorViewModel = viewModel(UserViewModel::class, keys = listOf("user", author)) {
@@ -149,7 +150,7 @@ private fun TopicRefCellContent(
             Text("${authorInfo?.nickname} :")
         }
         Text(
-            (data?.content as? TopicContent.Plain)?.plain.toString(),
+            (it.content as? TopicContent.Plain)?.plain.toString(),
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1
         )
@@ -278,7 +279,7 @@ fun TopicContentField(
         )
     } else if (content1 is TopicContent.DecryptFailed) {
         Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-            Text("无权查看")
+            Text("Permission denied")
         }
     }
 

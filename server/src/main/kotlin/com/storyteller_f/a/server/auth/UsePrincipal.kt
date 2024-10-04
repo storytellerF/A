@@ -41,10 +41,11 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (O
                 else -> call.respond(it)
             }
         }.onFailure {
+            application.log.error(it)
             respondError(it)
         }
     } catch (e: Exception) {
-        application.log.error(e)
+        application.log.error("Catch", e)
     }
 
 }

@@ -38,12 +38,12 @@ fun WorldPage(onClick: (OKey, ObjectType) -> Unit) {
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class WorldViewModel : PagingViewModel<Int, TopicInfo>({
+class WorldViewModel : PagingViewModel<OKey, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getWorldTopics(null, 10)
+            client.getWorldTopics(it, 10)
         }.map {
-            APagingData(it.data, null)
+            APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
 
     }

@@ -25,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.common.CenterBox
@@ -250,7 +251,10 @@ private fun ProjectDialogInternal() {
                 )
             }
             Column {
-                ButtonNav(Icons.Default.DesignServices, "设计文档")
+                val uriHandler = LocalUriHandler.current
+                ButtonNav(Icons.Default.DesignServices, "设计文档") {
+                    uriHandler.openUri("https://storytellerf.github.io/aspec/")
+                }
             }
         }
     }

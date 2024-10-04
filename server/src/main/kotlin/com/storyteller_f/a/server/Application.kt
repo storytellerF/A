@@ -22,43 +22,52 @@ import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.io.File
 import java.time.Duration
+import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
     SnowflakeFactory.setMachine(0)
 
     val map = readEnv()
 
-    val preSetScript = map["PRE_SET_SCRIPT"] as String
-    val workingDir = map["PRE_SET_WORKING_DIR"] as String
-    if (preSetScript.isNotBlank() && workingDir.isNotBlank()) {
-        val scriptArray = preSetScript.split(" ").map {
-            if (it.startsWith("~")) {
-                val home = System.getProperty("user.home")
-                home + it.substring(1)
-            } else {
-                it
+    val preSetEnable = (map["PRE_SET_ENABLE"] as String).toBoolean()
+    if (preSetEnable) {
+        val preSetScript = map["PRE_SET_SCRIPT"] as String
+        val workingDir = map["PRE_SET_WORKING_DIR"] as String
+        if (preSetScript.isNotBlank() && workingDir.isNotBlank()) {
+            val scriptArray = preSetScript.split(" ").map {
+                if (it.startsWith("~")) {
+                    val home = System.getProperty("user.home")
+                    home + it.substring(1)
+                } else {
+                    it
+                }
             }
-        }
-        val file = File(workingDir)
-        println("exec pre set: ${scriptArray.joinToString(" ")}. working dir: ${file.canonicalPath}")
+            val file = File(workingDir)
+            println("exec pre set: ${scriptArray.joinToString(" ")}. working dir: ${file.canonicalPath}")
 
-        val start = ProcessBuilder(scriptArray).directory(file).start()
-        try {
-            val code = start.waitFor()
-            val input = start.inputStream.bufferedReader().readText()
-            if (code != 0) {
-                val error = start.errorStream.bufferedReader().readText()
-                println("pre set failed. code: $code")
-                println("input: $input")
-                println("error: $error")
-            } else {
-                println("flush success.")
-                println("input: $input")
+            val start = ProcessBuilder(scriptArray).directory(file).start()
+            try {
+                val code = start.waitFor()
+                val input = start.inputStream.bufferedReader().readText()
+                if (code != 0) {
+                    val error = start.errorStream.bufferedReader().readText()
+                    println("pre set failed. code: $code")
+                    println("input: $input")
+                    println("error: $error")
+                } else {
+                    val error = start.errorStream.bufferedReader().readText()
+                    println("flush success.")
+                    println("input: $input")
+                    println("error: $error")
+                }
+            } finally {
+                start.destroy()
             }
-        } finally {
-            start.destroy()
-        }
 
+        } else {
+            println("pre set config failure")
+            exitProcess(1)
+        }
     }
 
     val backend = buildBackendFromEnv(map)

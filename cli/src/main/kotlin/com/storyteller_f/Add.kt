@@ -64,7 +64,7 @@ class Add : Subcommand("add", "add entry") {
                     }
                 }
                 Napier.i {
-                    "add done."
+                    "add done $jsonFilePath."
                 }
             } catch (e: Exception) {
                 Napier.i(e) {

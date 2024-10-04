@@ -19,9 +19,7 @@ fun Route.unProtectedContent(backend: Backend) {
             pagination<TopicInfo, ULong>({
                 it.id.toString()
             }) { prePageToken, nextPageToken, size ->
-                runCatching {
-                    searchWorld(backend, prePageToken, nextPageToken, size)
-                }
+                searchWorld(backend, prePageToken, nextPageToken, size)
             }
         }
     }
@@ -90,7 +88,14 @@ private fun Route.bindCommunityRoute(backend: Backend) {
                     ""
                 }) { p, n, size ->
                     checkParameter<OKey, Pair<List<TopicInfo>, Long>>("id") {
-                        getTopics(it, ObjectType.COMMUNITY, backend = backend, preTopicId = p, nextTopicId = n, size = size)
+                        getTopics(
+                            it,
+                            ObjectType.COMMUNITY,
+                            backend = backend,
+                            preTopicId = p,
+                            nextTopicId = n,
+                            size = size
+                        )
                     }
                 }
 

@@ -36,13 +36,19 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import moe.tlaster.precompose.PreComposeApp
-import moe.tlaster.precompose.navigation.NavHost
+import moe.tlaster.precompose.navigation.*
 import moe.tlaster.precompose.navigation.path
-import moe.tlaster.precompose.navigation.rememberNavigator
+
+object StaticObj {
+    init {
+        Napier.base(DebugAntilog())
+    }
+}
 
 @OptIn(ExperimentalCoilApi::class)
 @Composable
 fun App() {
+    StaticObj
     AppTheme(dynamicColor = false) {
         setSingletonImageLoaderFactory {
             getAsyncImageLoader(it)
@@ -92,19 +98,19 @@ fun App() {
                     LoginPage(appNav::gotoHome)
                 }
                 scene("/community/{communityId}") {
-                    val communityId = it.path<OKey>("communityId", null)
+                    val communityId = it.path2<OKey>("communityId", null)
                     if (communityId != null)
                         CommunityPage(communityId, {
                             appNav.gotoTopicCompose(COMMUNITY, communityId)
                         }, onClick)
                 }
                 scene("/room/{roomId}") {
-                    val roomId = it.path<OKey>("roomId", null)
+                    val roomId = it.path2<OKey>("roomId", null)
                     if (roomId != null)
                         RoomPage(roomId, onClick)
                 }
                 scene("/topic/{topicId}") {
-                    val topicId = it.path<OKey>("topicId", null)
+                    val topicId = it.path2<OKey>("topicId", null)
                     if (topicId != null)
                         TopicPage(topicId, onClick)
                 }
@@ -114,7 +120,7 @@ fun App() {
                             t.ordinal == it
                         }
                     }
-                    val objectId = it.path<OKey>("objectId")
+                    val objectId = it.path2<OKey>("objectId")
                     if (objectType != null && objectId != null) {
                         TopicComposePage(objectType, objectId) {
                             navigator.goBack()
@@ -135,8 +141,6 @@ val client by lazy {
     getClient {
         defaultClientConfigure()
         setupRequest()
-    }.also {
-        Napier.base(DebugAntilog())
     }
 }
 
@@ -162,7 +166,6 @@ val clientWs by lazy {
 }
 
 const val BASE_URL = BuildKonfig.SERVER_URL
-const val WEB_SOCKET_URL = BuildKonfig.WS_SERVER_URL
 
 fun HttpClientConfig<*>.setupRequest() {
     defaultRequest {
@@ -188,4 +191,9 @@ interface AppNav {
     fun gotoHome()
 
     fun gotoTopicCompose(objectType: ObjectType, objectId: OKey)
+}
+
+inline fun <reified T> BackStackEntry.path2(path: String, default: T? = null): T? {
+    val value = pathMap[path] ?: return default
+    return if (T::class == OKey::class) value.toULong() as T else convertValue(value)
 }

@@ -10,7 +10,7 @@ import com.storyteller_f.shared.type.OKey
 import com.storyteller_f.tables.*
 import org.jetbrains.exposed.sql.selectAll
 
-suspend fun searchWorld(backend: Backend, preTopicId: OKey?, nextTopicId: ULong?, size: Int): Pair<List<TopicInfo>, Long> {
+suspend fun searchWorld(backend: Backend, preTopicId: OKey?, nextTopicId: ULong?, size: Int) = runCatching {
     val data = DatabaseFactory.mapQuery(Topic::toTopicInfo, Topic::wrapRow) {
         val query = Topics
             .select(Topics.fields)
@@ -29,7 +29,7 @@ suspend fun searchWorld(backend: Backend, preTopicId: OKey?, nextTopicId: ULong?
     val topicContents = backend.topicDocumentService.getDocument(data.map {
         it.id
     })
-    return Pair(data.mapIndexedNotNull { i, t ->
+    Pair(data.mapIndexedNotNull { i, t ->
         topicContents[i]?.let {
             t.copy(content = TopicContent.Plain(it.content))
         }

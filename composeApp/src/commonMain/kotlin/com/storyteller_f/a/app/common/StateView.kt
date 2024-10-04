@@ -168,3 +168,29 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
     }
 }
 
+
+@Composable
+fun <T: Any> StateView2(handler: LoadingHandler<T?>, content: @Composable (T) -> Unit) {
+    val data by handler.data.collectAsState()
+    val state by handler.state.collectAsState()
+    when (val localState = state) {
+        null, is LoadingState.Loading -> Box(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+
+        is LoadingState.Error -> Box(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(localState.e.message.toString())
+        }
+        else -> {
+            data?.let {
+                content(it)
+            }
+        }
+    }
+}

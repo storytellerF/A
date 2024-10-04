@@ -66,12 +66,12 @@ fun MyCommunitiesPage(onClick: (OKey) -> Unit) {
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class MyCommunitiesViewModel : PagingViewModel<Int, CommunityInfo>({
+class MyCommunitiesViewModel : PagingViewModel<OKey, CommunityInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getJoinCommunities(null, 10)
+            client.getJoinCommunities(it, 10)
         }.map {
-            APagingData(it.data, null)
+            APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
 
     }

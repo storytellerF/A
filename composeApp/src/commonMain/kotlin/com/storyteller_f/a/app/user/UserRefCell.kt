@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.client_lib.getUserInfo
 import com.storyteller_f.a.app.common.SimpleViewModel
+import com.storyteller_f.a.app.common.StateView2
 import com.storyteller_f.a.app.common.serviceCatching
 import com.storyteller_f.a.app.topic.UserHeadRow
 import com.storyteller_f.shared.model.UserInfo
@@ -25,11 +26,15 @@ fun UserRefCell(modifier: Modifier = Modifier, userId: OKey) {
     val viewModel = viewModel(UserViewModel::class, keys = listOf("user", userId)) {
         UserViewModel(userId)
     }
-    val data by viewModel.handler.data.collectAsState()
 
-    Box(modifier.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp)).padding(10.dp)) {
-        UserHeadRow(data)
+    StateView2(viewModel.handler) {
+        Box(
+            modifier.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp)).padding(10.dp)
+        ) {
+            UserHeadRow(it)
+        }
     }
+
 }
 
 class UserViewModel(private val userId: OKey) : SimpleViewModel<UserInfo>() {

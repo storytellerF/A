@@ -15,7 +15,7 @@ fun main(args: Array<String>) {
     backend = buildBackendFromEnv(readEnv())
     Napier.base(DebugAntilog())
     log {
-        args.joinToString(",")
+        args.contentToString()
     }
     val argParser = ArgParser("ACli")
     argParser.subcommands(Add(), CleanCommand())
