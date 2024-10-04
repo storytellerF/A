@@ -72,7 +72,7 @@ private fun mediaService(map: Map<out Any, Any>): MediaService {
 private fun topicDocumentService(
     map: Map<out Any, Any>,
 ): TopicDocumentService {
-    val path = Paths.get("../deploy/lucene-data/index")
+    val path = Paths.get("../deploy/lucene_data/index")
     return when(val type = map["SEARCH_SERVICE"]) {
         "elastic" -> {
             val certFile = map["CERT_FILE"] as String

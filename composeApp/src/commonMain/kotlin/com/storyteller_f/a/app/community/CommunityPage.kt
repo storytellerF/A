@@ -75,7 +75,7 @@ class CommunityViewModel(private val communityId: OKey) : SimpleViewModel<Commun
 class CommunityTopicsViewModel(private val communityId: OKey) : PagingViewModel<Int, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getCommunityTopics(communityId)
+            client.getCommunityTopics(communityId, 10)
         }.map {
             APagingData(it.data, null)
         }

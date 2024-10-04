@@ -1,13 +1,11 @@
 package com.storyteller_f.a.server
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.buildBackendFromEnv
 import com.storyteller_f.readEnv
-import com.storyteller_f.shared.type.OKey
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
@@ -20,22 +18,54 @@ import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
+import java.io.File
 import java.time.Duration
-
-
 
 fun main(args: Array<String>) {
     SnowflakeFactory.setMachine(0)
 
     val map = readEnv()
+
+    val preSetScript = map["PRE_SET_SCRIPT"] as String
+    val workingDir = map["PRE_SET_WORKING_DIR"] as String
+    if (preSetScript.isNotBlank() && workingDir.isNotBlank()) {
+        val scriptArray = preSetScript.split(" ").map {
+            if (it.startsWith("~")) {
+                val home = System.getProperty("user.home")
+                home + it.substring(1)
+            } else {
+                it
+            }
+        }
+        val file = File(workingDir)
+        println("exec pre set: ${scriptArray.joinToString(" ")}. working dir: ${file.canonicalPath}")
+
+        val start = ProcessBuilder(scriptArray).directory(file).start()
+        try {
+            val code = start.waitFor()
+            val input = start.inputStream.bufferedReader().readText()
+            if (code != 0) {
+                val error = start.errorStream.bufferedReader().readText()
+                println("pre set failed. code: $code")
+                println("input: $input")
+                println("error: $error")
+            } else {
+                println("flush success.")
+                println("input: $input")
+            }
+        } finally {
+            start.destroy()
+        }
+
+    }
+
     val backend = buildBackendFromEnv(map)
     val serverPort = (map["SERVER_PORT"] as String).toInt()
     val extraArgs = arrayOf("-port=$serverPort")
     DatabaseFactory.init(backend.config.databaseConnection)
+
     EngineMain.main(args + extraArgs)
 }
 

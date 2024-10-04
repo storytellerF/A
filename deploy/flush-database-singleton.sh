@@ -1,7 +1,6 @@
 set -e
-sh gradlew cli:installDist
-cli_path=cli/build/install/cli/bin/cli
-base=$1
+cli_path=$1
+base=$2
 sh $cli_path clean
 if [ -f "$base/data/pre_set_user.json" ]; then
   sh $cli_path add $base/data/pre_set_user.json

@@ -44,7 +44,14 @@ suspend fun HttpClient.getJoinCommunities(nextCommunityId: OKey?, size: Int) = g
     }
 }.body<ServerResponse<CommunityInfo>>()
 
-suspend fun HttpClient.getWorldTopics() = get("/world").body<ServerResponse<TopicInfo>>()
+suspend fun HttpClient.getWorldTopics(nextTopicId: OKey?, size: Int) = get("/world") {
+    url {
+        parameters.append("size", size.toString())
+        if (nextTopicId != null) {
+            parameters.append("nextPageToken", nextTopicId.toString())
+        }
+    }
+}.body<ServerResponse<TopicInfo>>()
 
 suspend fun HttpClient.getUserInfo(id: OKey) = get("/user/$id").body<UserInfo>()
 

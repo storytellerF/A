@@ -25,6 +25,7 @@ import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 import java.io.File
+import kotlin.system.exitProcess
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -33,7 +34,12 @@ class Add : Subcommand("add", "add entry") {
     private val jsonFilePath by argument(ArgType.String, "json", "json data file path")
 
     override fun execute() {
-        if (!checkInputPath(jsonFilePath)) return
+        if (!File(jsonFilePath).exists()) {
+            Napier.i {
+                "$jsonFilePath not exists."
+            }
+            exitProcess(1)
+        }
         addProvider()
         DatabaseFactory.init(backend.config.databaseConnection)
         Napier.i {
@@ -47,11 +53,15 @@ class Add : Subcommand("add", "add entry") {
         val parentDir = jsonFile.parentFile
         runBlocking {
             try {
-                when (addTaskValue.type) {
+                when (val type = addTaskValue.type) {
                     "community" -> addCommunity(addTaskValue, parentDir)
                     "user" -> addUsers(addTaskValue, parentDir)
                     "topic" -> addTopics(addTaskValue, parentDir)
                     "room" -> addRooms(addTaskValue, parentDir)
+                    else -> {
+                        println("unrecognized type $type")
+                        exitProcess(2)
+                    }
                 }
                 Napier.i {
                     "add done."

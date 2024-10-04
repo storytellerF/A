@@ -166,7 +166,7 @@ fun test(block: suspend (HttpClient) -> Unit) {
     SnowflakeFactory.setMachine(0)
     testApplication {
         addProvider()
-        val path = Paths.get("../deploy/lucene-data/index")
+        val path = Paths.get("../deploy/lucene_data/index")
         val backend = buildBackendFromEnv(readEnv())
         DatabaseFactory.init(backend.config.databaseConnection)
         environment {

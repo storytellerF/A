@@ -1,1 +1,1 @@
-sh gradlew cli:distZip
+sh gradlew cli:distZip cli:distTar

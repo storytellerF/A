@@ -3,6 +3,7 @@ volumes:
   minio-data:
   certs:
     driver: local
+    external: false
     driver_opts:
       type: ${CERTS_DIR:+none}
       o: ${CERTS_DIR:+bind}
@@ -31,7 +32,6 @@ networks:
     name: bw-docker
   elastic:
     name: elastic
-    external: false
 
 services:
   web:

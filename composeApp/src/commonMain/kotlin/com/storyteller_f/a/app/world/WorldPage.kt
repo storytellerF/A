@@ -41,7 +41,7 @@ fun WorldPage(onClick: (OKey, ObjectType) -> Unit) {
 class WorldViewModel : PagingViewModel<Int, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getWorldTopics()
+            client.getWorldTopics(null, 10)
         }.map {
             APagingData(it.data, null)
         }

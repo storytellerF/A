@@ -69,7 +69,7 @@ fun MyCommunitiesPage(onClick: (OKey) -> Unit) {
 class MyCommunitiesViewModel : PagingViewModel<Int, CommunityInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getJoinCommunities()
+            client.getJoinCommunities(null, 10)
         }.map {
             APagingData(it.data, null)
         }
