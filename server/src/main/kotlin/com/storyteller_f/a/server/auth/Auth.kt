@@ -108,6 +108,7 @@ fun Application.configureAuth(backend: Backend) {
         custom {
             validate { session, call, credential ->
                 when {
+                    session is UserSession.Success -> CustomPrincipal(session.id)
                     credential != null -> call.checkApiRequest(credential, session)
                     BuildConfig.IS_PROD -> null
                     else -> checkDevWsLink(call)

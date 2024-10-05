@@ -84,7 +84,7 @@ class RoomTopicsViewModel(roomId: OKey) : PagingViewModel<OKey, TopicInfo>({
     )
 
 }, RoomTopicsRemoteMediator("topics$roomId") { loadKey ->
-    processEncryptedTopic(client.getRoomTopics(roomId, loadKey))
+    processEncryptedTopic(client.getRoomTopics(roomId, loadKey, 20))
 })
 
 @OptIn(ExperimentalPagingApi::class)
@@ -236,7 +236,7 @@ private fun ColumnScope.RoomPageInternal(
         items(
             count = items.itemCount,
             key = items.itemKey { topicInfo ->
-                topicInfo.id
+                topicInfo.id.toString()
             },
             contentType = items.itemContentType()
         ) { index ->

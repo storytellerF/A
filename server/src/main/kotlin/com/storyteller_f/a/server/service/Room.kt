@@ -125,18 +125,31 @@ suspend fun searchRooms(
     }
 }
 
-suspend fun searchJoinedRooms(uid: OKey, backend: Backend): Result<Pair<List<RoomInfo>, Long>> {
+suspend fun searchJoinedRooms(
+    uid: OKey,
+    backend: Backend,
+    preRoomId: OKey?,
+    nextRoomId: OKey?,
+    size: Int
+): Result<Pair<List<RoomInfo>, Long>> {
     return runCatching {
-        roomsResponse(DatabaseFactory.dbQuery {
+        val list = DatabaseFactory.mapQuery(::mapRoomInfo) {
             RoomJoins.join(Rooms, JoinType.INNER, RoomJoins.roomId, Rooms.id)
                 .join(CommunityRooms, JoinType.LEFT, RoomJoins.roomId, CommunityRooms.roomId)
                 .select(Rooms.fields + RoomJoins.joinTime + CommunityRooms.communityId)
                 .where {
                     RoomJoins.uid eq uid
-                }.map {
-                    mapRoomInfo(it)
+                }.bindPaginationQuery(Rooms, preRoomId, nextRoomId, size)
+        }
+        val count = DatabaseFactory.count {
+            RoomJoins.join(Rooms, JoinType.INNER, RoomJoins.roomId, Rooms.id)
+                .join(CommunityRooms, JoinType.LEFT, RoomJoins.roomId, CommunityRooms.roomId)
+                .selectAll()
+                .where {
+                    RoomJoins.uid eq uid
                 }
-        }, backend) to 10L
+        }
+        roomsResponse(list, backend) to count
     }
 }
 

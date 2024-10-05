@@ -62,4 +62,10 @@ object LoginViewModel {
         state.value = newState
     }
 
+    fun logout() {
+        state.value = ClientSession.LoginNone
+        user.value = null
+        session = null
+    }
+
 }

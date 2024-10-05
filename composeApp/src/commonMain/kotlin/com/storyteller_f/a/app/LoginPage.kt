@@ -16,6 +16,7 @@ import com.russhwolf.settings.set
 import com.storyteller_f.a.client_lib.getData
 import com.storyteller_f.a.client_lib.sign
 import com.storyteller_f.a.app.common.CenterBox
+import com.storyteller_f.a.app.compontents.EventDialog
 import com.storyteller_f.a.app.compontents.MeasureTextLineCount
 import com.storyteller_f.a.app.compontents.rememberEventState
 import com.storyteller_f.a.app.compontents.use
@@ -146,6 +147,7 @@ fun InputPrivateKeyPage(onLoginSuccess: () -> Unit) {
 
         }
     }
+    EventDialog(messageState)
 }
 
 

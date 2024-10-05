@@ -142,7 +142,7 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
         is LoadStateError -> {
             item {
                 Column(modifier = Modifier.fillMaxWidth().height(100.dp)) {
-                    Text(text = refreshState.error.message.toString())
+                    Text(text = refreshState.error.message ?: refreshState.error.stackTraceToString())
                     Button({
                         items.refresh()
                     }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
@@ -154,7 +154,7 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
 
         is LoadStateNotLoading -> {
             items(items.itemCount, key = items.itemKey {
-                it.id
+                it.id.toString()
             }, contentType = items.itemContentType()) {
                 content(items[it])
             }

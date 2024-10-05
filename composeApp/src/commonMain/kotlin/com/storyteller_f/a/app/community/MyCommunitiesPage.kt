@@ -42,7 +42,7 @@ fun MyCommunitiesPage(onClick: (OKey) -> Unit) {
                 items(
                     count = items.itemCount,
                     key = items.itemKey {
-                        it.id
+                        it.id.toString()
                     },
                     span = {
                         if (items[it]?.poster != null) {

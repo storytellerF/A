@@ -38,12 +38,12 @@ fun MyRoomsPage(onClick: (OKey) -> Unit) {
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class MyRoomsViewModel : PagingViewModel<Int, RoomInfo>({
+class MyRoomsViewModel : PagingViewModel<OKey, RoomInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getJoinedRooms()
+            client.getJoinedRooms(10, it)
         }.map {
-            APagingData(it.data, null)
+            APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
 
     }
@@ -63,7 +63,7 @@ fun RoomList(
             items(
                 count = items.itemCount,
                 key = items.itemKey {
-                    it.id
+                    it.id.toString()
                 },
                 contentType = items.itemContentType()
             ) { index ->

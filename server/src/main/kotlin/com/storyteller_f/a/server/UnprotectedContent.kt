@@ -52,7 +52,7 @@ private fun Route.bindTopicRoute(backend: Backend) {
         get("/{id}/topics") {
             usePrincipalOrNull { uid ->
                 pagination<TopicInfo, OKey>({
-                    ""
+                    it.id.toString()
                 }) { p, n, s ->
                     checkParameter<OKey, Pair<List<TopicInfo>, Long>>("id") {
                         getTopics(it, ObjectType.TOPIC, uid, backend, p, n, s)
@@ -85,7 +85,7 @@ private fun Route.bindCommunityRoute(backend: Backend) {
         get("/{id}/topics") {
             omitPrincipal {
                 pagination<TopicInfo, OKey>({
-                    ""
+                    it.id.toString()
                 }) { p, n, size ->
                     checkParameter<OKey, Pair<List<TopicInfo>, Long>>("id") {
                         getTopics(
@@ -104,7 +104,7 @@ private fun Route.bindCommunityRoute(backend: Backend) {
         get("/{id}/rooms") {
             usePrincipalOrNull { uid ->
                 pagination<RoomInfo, OKey>({
-                    ""
+                    it.id.toString()
                 }) { p, n, size ->
                     checkParameter<OKey, Pair<List<RoomInfo>, Long>>("id") {
                         searchRoomInCommunity(it, uid, backend, p, n, size)
@@ -140,10 +140,10 @@ private fun Route.bindRoomRoute(backend: Backend) {
         get("/{id}/topics") {
             usePrincipalOrNull { uid ->
                 pagination<TopicInfo, OKey>({
-                    ""
-                }) { p, n, size ->
+                    it.id.toString()
+                }) { pre, next, size ->
                     checkParameter<OKey, Pair<List<TopicInfo>, Long>>("id") {
-                        getTopics(it, ObjectType.ROOM, uid, backend, p, n, size)
+                        getTopics(it, ObjectType.ROOM, uid, backend, pre, next, size)
                     }
                 }
 

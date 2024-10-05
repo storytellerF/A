@@ -72,12 +72,12 @@ class CommunityViewModel(private val communityId: OKey) : SimpleViewModel<Commun
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class CommunityTopicsViewModel(private val communityId: OKey) : PagingViewModel<Int, TopicInfo>({
+class CommunityTopicsViewModel(private val communityId: OKey) : PagingViewModel<OKey, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
             client.getCommunityTopics(communityId, 10)
         }.map {
-            APagingData(it.data, null)
+            APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
 
     }

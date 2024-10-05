@@ -24,8 +24,13 @@ suspend fun HttpClient.joinCommunity(id: OKey) = post("/community/$id/join")
 
 suspend fun HttpClient.getRoomTopics(
     roomId: OKey,
-    loadKey: OKey?
-) = get("/room/$roomId/topics?start=${loadKey ?: 0}").body<ServerResponse<TopicInfo>>()
+    nextTopicId: OKey?,
+    size: Int,
+) = get("/room/$roomId/topics?start=${nextTopicId ?: 0}") {
+    url {
+        appendPagingQueryParams(size, nextTopicId)
+    }
+}.body<ServerResponse<TopicInfo>>()
 
 suspend fun HttpClient.getCommunityInfo(id: OKey) = get("/community/$id").body<CommunityInfo>()
 
@@ -37,12 +42,16 @@ suspend fun HttpClient.getCommunityRooms(communityId: OKey) =
 
 suspend fun HttpClient.getJoinCommunities(nextCommunityId: OKey?, size: Int) = get("/community/joined") {
     url {
-        parameters.append("size", size.toString())
-        if (nextCommunityId != null) {
-            parameters.append("nextPageToken", nextCommunityId.toString())
-        }
+        appendPagingQueryParams(size, nextCommunityId)
     }
 }.body<ServerResponse<CommunityInfo>>()
+
+private fun URLBuilder.appendPagingQueryParams(size: Int, nextCommunityId: OKey?) {
+    parameters.append("size", size.toString())
+    if (nextCommunityId != null) {
+        parameters.append("nextPageToken", nextCommunityId.toString())
+    }
+}
 
 suspend fun HttpClient.getWorldTopics(nextTopicId: OKey?, size: Int) = get("/world") {
     url {
@@ -55,12 +64,20 @@ suspend fun HttpClient.getWorldTopics(nextTopicId: OKey?, size: Int) = get("/wor
 
 suspend fun HttpClient.getUserInfo(id: OKey) = get("/user/$id").body<UserInfo>()
 
-suspend fun HttpClient.getTopicTopics(topicId: OKey) =
-    get("/topic/$topicId/topics").body<ServerResponse<TopicInfo>>()
+suspend fun HttpClient.getTopicTopics(topicId: OKey, nextTopicId: OKey?, size: Int) =
+    get("/topic/$topicId/topics") {
+        url {
+            appendPagingQueryParams(size, nextTopicId)
+        }
+    }.body<ServerResponse<TopicInfo>>()
 
 suspend fun HttpClient.getTopicInfo(id: OKey) = get("/topic/$id").body<TopicInfo>()
 
-suspend fun HttpClient.getJoinedRooms() = get("/room/joined").body<ServerResponse<RoomInfo>>()
+suspend fun HttpClient.getJoinedRooms(size: Int, nextRoomId: OKey?) = get("/room/joined") {
+    url {
+        appendPagingQueryParams(size, nextRoomId)
+    }
+}.body<ServerResponse<RoomInfo>>()
 
 suspend fun HttpClient.createNewTopic(
     objectType: ObjectType,

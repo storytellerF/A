@@ -6,6 +6,7 @@ import com.storyteller_f.a.server.common.checkParameter
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.OKey
 import io.ktor.server.routing.*
@@ -64,7 +65,11 @@ private fun Route.bindProtectedRoomRoute(backend: Backend) {
     route("/room") {
         get("/joined") {
             usePrincipal {
-                searchJoinedRooms(it, backend = backend)
+                pagination<RoomInfo, OKey>({
+                    ""
+                }) { pre, next, size ->
+                    searchJoinedRooms(it, backend = backend, pre, next, size)
+                }
             }
         }
         post("/{id}/join") {

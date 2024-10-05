@@ -100,12 +100,12 @@ class TopicViewModel(private val topicId: OKey) : SimpleViewModel<TopicInfo>() {
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class TopicNestedViewModel(topicId: OKey) : PagingViewModel<Int, TopicInfo>({
+class TopicNestedViewModel(topicId: OKey) : PagingViewModel<OKey, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
-            processEncryptedTopic(client.getTopicTopics(topicId))
+            processEncryptedTopic(client.getTopicTopics(topicId, it, 10))
         }.map {
-            APagingData(it.data, null)
+            APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
 
     }
@@ -114,11 +114,14 @@ class TopicNestedViewModel(topicId: OKey) : PagingViewModel<Int, TopicInfo>({
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun processEncryptedTopic(info: ServerResponse<TopicInfo>): ServerResponse<TopicInfo> {
-    val key = getDerPrivateKey((LoginViewModel.state.value as ClientSession.PrivateKeySignIn).privateKey)
-    val uid = LoginViewModel.user.value!!.id
+    val value = LoginViewModel.state.value
+    val uid = LoginViewModel.user.value?.id
+    val key = if (value is ClientSession.LoginSuccess) getDerPrivateKey(value.privateKey) else null
     return info.copy(info.data.map { topicInfo ->
         val content = topicInfo.content
-        if (content is TopicContent.Encrypted) {
+        if (content !is TopicContent.Encrypted || uid == null || key == null) {
+            topicInfo
+        } else {
             val s = content.encryptedKey[uid]
             topicInfo.copy(content = if (s != null) {
                 runCatching {
@@ -136,8 +139,6 @@ suspend fun processEncryptedTopic(info: ServerResponse<TopicInfo>): ServerRespon
                 TopicContent.DecryptFailed("auth failed")
             }
             )
-        } else {
-            topicInfo
         }
     })
 }

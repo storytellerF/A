@@ -41,6 +41,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.bcprov.jdk18on)
             implementation(libs.bcpkix.jdk18on)
+            implementation(libs.cryptography.provider.jdk)
         }
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
@@ -53,6 +54,7 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.bcprov.jdk18on)
             implementation(libs.bcpkix.jdk18on)
+            implementation(libs.cryptography.provider.jdk)
         }
     }
 }
