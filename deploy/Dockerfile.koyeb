@@ -226,12 +226,14 @@ ENV PRE_SET_ENCRYPTED_PASSWORD=$PRE_SET_ENCRYPTED_PASSWORD
 
 WORKDIR /app
 
+RUN mkdir -p build
+
 COPY deploy .
 
 COPY scripts ./scripts
 
 COPY --from=builder /app/server/build/libs/*-all.jar ./build
-COPY --from=builder /app/cli/build/distributions/cli.tar ./build
+COPY --from=builder /app/cli/build/distributions/cli.* ./build
 COPY --from=builder /app/data ./pre_set_data
 
 CMD sh ./scripts/build-koyeb.sh
