@@ -1,0 +1,40 @@
+FROM openjdk:17-jdk AS builder
+
+#1
+
+RUN microdnf install findutils unzip
+
+WORKDIR /app
+
+COPY . .
+
+#2
+
+RUN sed -i 's/\r$//' scripts/build-server.sh
+RUN sed -i 's/\r$//' scripts/build-cli.sh
+RUN sed -i 's/\r$//' gradlew
+RUN sed -i 's/buildkonfig.flavor=dev/buildkonfig.flavor=generated-mini/' gradle.properties
+RUN sed -i 's/server.prod=false/server.prod=true/' gradle.properties
+
+RUN --mount=type=cache,target=/root/.gradle \
+    sh scripts/build-server.sh && sh scripts/build-cli.sh
+
+RUN sh scripts/download_data.sh $PRE_SET_ENCRYPTED_URI $PRE_SET_ENCRYPTED_PASSWORD
+
+FROM koyeb/docker-compose
+
+#1
+
+WORKDIR /app
+
+RUN mkdir -p build
+
+COPY deploy .
+
+COPY scripts ./scripts
+
+COPY --from=builder /app/server/build/libs/*-all.jar ./build
+COPY --from=builder /app/cli/build/distributions/cli.* ./build
+COPY --from=builder /app/data ./pre_set_data
+
+CMD sh ./scripts/build-koyeb.sh
