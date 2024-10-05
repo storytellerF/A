@@ -56,32 +56,7 @@ fun App() {
         PreComposeApp {
             val navigator = rememberNavigator()
             val appNav = remember {
-                object : AppNav {
-                    override fun gotoLogin() {
-                        navigator.navigate("/login")
-                    }
-
-                    override fun gotoRoom(roomId: OKey) {
-                        navigator.navigate("/room/$roomId")
-                    }
-
-                    override fun gotoCommunity(communityId: OKey) {
-                        navigator.navigate("/community/$communityId")
-                    }
-
-                    override fun gotoTopic(topicId: OKey) {
-                        navigator.navigate("/topic/$topicId")
-                    }
-
-                    override fun gotoHome() {
-                        navigator.navigate("/home")
-                    }
-
-                    override fun gotoTopicCompose(objectType: ObjectType, objectId: OKey) {
-                        navigator.navigate("/topic-compose/${objectType.ordinal}/$objectId")
-                    }
-
-                }
+                newAppNav(navigator)
             }
             val onClick = { id: OKey, type: ObjectType ->
                 when (type) {
@@ -132,6 +107,33 @@ fun App() {
         }
 
     }
+}
+
+private fun newAppNav(navigator: Navigator) = object : AppNav {
+    override fun gotoLogin() {
+        navigator.navigate("/login")
+    }
+
+    override fun gotoRoom(roomId: OKey) {
+        navigator.navigate("/room/$roomId")
+    }
+
+    override fun gotoCommunity(communityId: OKey) {
+        navigator.navigate("/community/$communityId")
+    }
+
+    override fun gotoTopic(topicId: OKey) {
+        navigator.navigate("/topic/$topicId")
+    }
+
+    override fun gotoHome() {
+        navigator.navigate("/home")
+    }
+
+    override fun gotoTopicCompose(objectType: ObjectType, objectId: OKey) {
+        navigator.navigate("/topic-compose/${objectType.ordinal}/$objectId")
+    }
+
 }
 
 fun getAsyncImageLoader(context: PlatformContext) =

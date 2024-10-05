@@ -29,6 +29,17 @@ fun main(args: Array<String>) {
 
     val map = readEnv()
 
+    processPreSetData(map)
+
+    val backend = buildBackendFromEnv(map)
+    val serverPort = (map["SERVER_PORT"] as String).toInt()
+    val extraArgs = arrayOf("-port=$serverPort")
+    DatabaseFactory.init(backend.config.databaseConnection)
+
+    EngineMain.main(args + extraArgs)
+}
+
+private fun processPreSetData(map: MutableMap<out Any, out Any>) {
     val preSetEnable = (map["PRE_SET_ENABLE"] as String).toBoolean()
     if (preSetEnable) {
         val preSetScript = map["PRE_SET_SCRIPT"] as String
@@ -69,13 +80,6 @@ fun main(args: Array<String>) {
             exitProcess(1)
         }
     }
-
-    val backend = buildBackendFromEnv(map)
-    val serverPort = (map["SERVER_PORT"] as String).toInt()
-    val extraArgs = arrayOf("-port=$serverPort")
-    DatabaseFactory.init(backend.config.databaseConnection)
-
-    EngineMain.main(args + extraArgs)
 }
 
 @Suppress("unused")

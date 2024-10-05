@@ -74,17 +74,6 @@ class Add : Subcommand("add", "add entry") {
         }
     }
 
-    private fun checkInputPath(jsonFilePath: String): Boolean {
-        return if (!File(jsonFilePath).exists()) {
-            Napier.e {
-                "json not found"
-            }
-            false
-        } else {
-            true
-        }
-    }
-
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun addRooms(addTaskValue: AddTaskValue, parentDir: File?) {
         val l = addTaskValue.roomData ?: return
@@ -320,7 +309,7 @@ class Add : Subcommand("add", "add entry") {
         }.distinct().map {
             val rowCommunity = findCommunityByAId(it)
             if (rowCommunity == null) {
-                throw Exception("$it not found")
+                error("$it not found")
             } else {
                 Community.wrapRow(rowCommunity).let {
                     it.id to it.aid

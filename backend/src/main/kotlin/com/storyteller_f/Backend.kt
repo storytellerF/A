@@ -65,7 +65,7 @@ private fun mediaService(map: Map<out Any, Any>): MediaService {
             MinIoMediaService(MinIoConnection(url, name, pass))
         }
         "filesystem" -> FileSystemMediaService()
-        else -> throw Exception("unsupported media service type ${map["MEDIA_SERVICE"]}")
+        else -> throw UnsupportedOperationException("unsupported media service type ${map["MEDIA_SERVICE"]}")
     }
 }
 
@@ -82,7 +82,7 @@ private fun topicDocumentService(
             ElasticTopicDocumentService(ElasticConnection(url, certFile, name, pass))
         }
         "lucene" -> LuceneTopicDocumentService(path)
-        else -> throw Exception("unsupported search service type $type")
+        else -> throw UnsupportedOperationException("unsupported search service type $type")
     }
 }
 
