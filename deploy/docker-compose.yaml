@@ -34,12 +34,12 @@ networks:
     name: elastic
 
 services:
-  web:
+  server:
     build: .
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
     profiles:
-      - web
+      - server
     networks:
       - bw-services
     depends_on:

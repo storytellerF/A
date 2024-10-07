@@ -25,6 +25,7 @@ import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
+import com.storyteller_f.shared.model.LoginUser
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.signature
 import kotlinx.coroutines.launch
@@ -132,8 +133,7 @@ fun InputPrivateKeyPage(onLoginSuccess: () -> Unit) {
                                 val publicKey = getDerPublicKeyFromPrivateKey(privateKey)
                                 val ad = calcAddress(publicKey)
                                 val u = client.sign(isSignUp, publicKey, sig, ad)
-                                LoginViewModel.state.value =
-                                    ClientSession.LoginSuccess(privateKey, publicKey, ad)
+                                LoginViewModel.updateState(ClientSession.LoginSuccess(privateKey, publicKey, ad))
                                 LoginViewModel.updateSession(data, sig)
                                 LoginViewModel.updateUser(u)
                                 storeToStorage()
@@ -150,36 +150,27 @@ fun InputPrivateKeyPage(onLoginSuccess: () -> Unit) {
     EventDialog(messageState)
 }
 
-
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 fun restoreFromStorage() {
-    val privateKey = settings.get<String>("p")
-    val publicKey = settings.get<String>("pk")
-    val address = settings.get<String>("ad")
-    val signature = settings.get<String>("signature")
-    val data = settings.get<String>("data")
-    val userInfo = settings.decodeValueOrNull(UserInfo.serializer(), "user")
-    if (privateKey != null && publicKey != null
-        && userInfo != null
-        && data != null
-        && signature != null
-        && address != null
-    ) {
-        LoginViewModel.updateState(ClientSession.LoginSuccess(privateKey, publicKey, address))
-        LoginViewModel.updateUser(userInfo)
-        LoginViewModel.updateSession(data, signature)
-    }
+    val loginUser = settings.decodeValueOrNull(LoginUser.serializer(), "login_user") ?: return
+    val privateKey = loginUser.privateKey
+    val publicKey = loginUser.publicKey
+    val address = loginUser.address
+    val signature = loginUser.signature
+    val data = loginUser.data
+    val userInfo = loginUser.user
+    LoginViewModel.updateState(ClientSession.LoginSuccess(privateKey, publicKey, address))
+    LoginViewModel.updateUser(userInfo)
+    LoginViewModel.updateSession(data, signature)
 }
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 fun storeToStorage() {
     val state = LoginViewModel.state.value as ClientSession.LoginSuccess
-    settings["p"] = state.privateKey
-    settings["pk"] = state.publicKey
-    settings["ad"] = state.address
-    settings["data"] = LoginViewModel.session?.first
-    settings["signature"] = LoginViewModel.session?.second
-    settings.encodeValue(UserInfo.serializer(), "user", LoginViewModel.user.value!!)
+    val session = LoginViewModel.session ?: return
+    val user = LoginViewModel.user.value ?: return
+    val loginUser = LoginUser(state.privateKey, state.publicKey, state.address, session.second, session.first, user)
+    settings.encodeValue(LoginUser.serializer(), "login_user", loginUser)
 }
 
 const val PRIVATE_KEY_PLACEHOLDER = """-----BEGIN PRIVATE KEY-----

@@ -11,11 +11,12 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compontents.ButtonNav
-import com.storyteller_f.a.app.compontents.DialogContainer
-import com.storyteller_f.a.app.compontents.UserIcon
+import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
 import org.jetbrains.compose.resources.stringResource
@@ -23,6 +24,9 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun UserDialogInternal(userInfo: UserInfo) {
+    val alertDialogState by remember {
+        mutableStateOf<AlertDialogState?>(null)
+    }
     DialogContainer {
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -39,10 +43,15 @@ fun UserDialogInternal(userInfo: UserInfo) {
         Column {
             ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
             ButtonNav(Icons.Default.Close, stringResource(Res.string.logout)) {
-                LoginViewModel.logout()
             }
         }
     }
+    CustomAlertDialog(alertDialogState, {
+        alertDialogState
+    }) {
+        LoginViewModel.logout()
+    }
+
 }
 
 

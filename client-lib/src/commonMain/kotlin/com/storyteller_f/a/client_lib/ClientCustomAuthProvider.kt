@@ -29,7 +29,7 @@ class ClientCustomAuthProvider : AuthProvider {
             val data = auth.blob
             val localData = LoginViewModel.session?.first
             if (data != localData) {
-                LoginViewModel.updateSession(data, "")
+                LoginViewModel.updateSession(data, null)
             }
         }
         return auth.authScheme == "Custom" && auth is HttpAuthHeader.Single

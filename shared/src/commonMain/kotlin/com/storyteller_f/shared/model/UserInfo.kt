@@ -17,3 +17,13 @@ data class UserInfo(
     }
 
 }
+
+@Serializable
+data class LoginUser(
+    val privateKey: String,
+    val publicKey: String,
+    val address: String,
+    val signature: String?,
+    val data: String,
+    val user: UserInfo
+)
