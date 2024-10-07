@@ -14,6 +14,8 @@ RUN sh scripts/manual-download-docker-image.sh
 
 FROM koyeb/docker-compose
 
+RUN apk add --no-cache git
+
 #1
 
 WORKDIR /app
