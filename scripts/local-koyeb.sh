@@ -8,5 +8,4 @@ docker run \
   --privileged \
   -d \
   -p 8811:8811 \
-  -v koyeb-docker:/var/lib/docker \
   local-koyeb

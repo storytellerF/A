@@ -122,7 +122,7 @@ services:
     profiles:
       - db
   minio:
-    image: quay.io/minio/minio
+    image: minio/minio
     ports:
       - ${MINIO_PORT}:9000
       - ${MINIO_PORT_CONSOLE}:9001
