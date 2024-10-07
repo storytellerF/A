@@ -35,7 +35,11 @@ networks:
 
 services:
   server:
-    build: ..
+    build:
+      context: ..
+      args:
+        IS_PROD: ${IS_PROD}
+        FLAVOR: ${FLAVOR}
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
     profiles:
@@ -283,6 +287,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+      start_period: 15s
     networks:
       - elastic
     profiles:

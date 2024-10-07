@@ -21,7 +21,6 @@ while IFS='=' read -r key value; do
         env_keys+=("$key")
     fi
 done < "$env_file"
-echo ${#env_keys[@]}
 # 验证 env_keys 和 env_filter_keys 是否按顺序匹配
 if [ ${#env_keys[@]} -ne ${#env_filter_keys[@]} ]; then
     echo "env 和 env-filter 文件中的变量数量不匹配!"

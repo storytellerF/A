@@ -22,9 +22,6 @@ COPY . .
 
 #2
 
-RUN sed -i 's/buildkonfig.flavor=dev/buildkonfig.flavor=generated-mini/' gradle.properties
-RUN sed -i 's/server.prod=false/server.prod=true/' gradle.properties
-
 COPY --from=builder /app/data ./deploy/pre_set_data
 COPY --from=builder /app/deploy/docker-images ./deploy/docker-images
 
