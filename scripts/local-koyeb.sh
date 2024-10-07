@@ -1,4 +1,5 @@
 set -e
+sh scripts/patch-koyeb-env.sh
 args=$(grep -v '^#' ./mini.env | grep -v '^$' | awk -F '=' '{print "--build-arg " $1 "=\"" $2 "\""}' ORS=' ')
 eval docker build "$args" \
   -f deploy/Dockerfile.koyeb \

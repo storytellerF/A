@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xe
+set -e
 echo $#
 # 检查参数个数
 if [ "$#" -ne 2 ]; then

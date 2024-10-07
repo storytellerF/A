@@ -1,25 +1,16 @@
-FROM openjdk:17-jdk AS builder
+FROM ubuntu AS builder
+
+RUN apt update && apt install curl unzip jq -y
 
 #1
 
-RUN microdnf install findutils unzip
-
 WORKDIR /app
 
-COPY . .
-
-#2
-
-RUN sed -i 's/\r$//' scripts/build-server.sh
-RUN sed -i 's/\r$//' scripts/build-cli.sh
-RUN sed -i 's/\r$//' gradlew
-RUN sed -i 's/buildkonfig.flavor=dev/buildkonfig.flavor=generated-mini/' gradle.properties
-RUN sed -i 's/server.prod=false/server.prod=true/' gradle.properties
-
-RUN --mount=type=cache,target=/root/.gradle \
-    sh scripts/build-server.sh && sh scripts/build-cli.sh
+COPY scripts ./scripts
 
 RUN sh scripts/download_data.sh $PRE_SET_ENCRYPTED_URI $PRE_SET_ENCRYPTED_PASSWORD
+
+RUN sh scripts/manual-download-docker-image.sh
 
 FROM koyeb/docker-compose
 
@@ -27,14 +18,14 @@ FROM koyeb/docker-compose
 
 WORKDIR /app
 
-RUN mkdir -p build
+COPY . .
 
-COPY deploy .
+#2
 
-COPY scripts ./scripts
+RUN sed -i 's/buildkonfig.flavor=dev/buildkonfig.flavor=generated-mini/' gradle.properties
+RUN sed -i 's/server.prod=false/server.prod=true/' gradle.properties
 
-COPY --from=builder /app/server/build/libs/*-all.jar ./build
-COPY --from=builder /app/cli/build/distributions/cli.* ./build
-COPY --from=builder /app/data ./pre_set_data
+COPY --from=builder /app/data ./deploy/pre_set_data
+COPY --from=builder /app/deploy/docker-images ./deploy/docker-images
 
 CMD sh ./scripts/build-koyeb.sh
