@@ -46,11 +46,6 @@ services:
       - server
     networks:
       - bw-services
-    depends_on:
-      db:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
 
   bunkerweb:
     image: bunkerity/bunkerweb:${BUNKER_VERSION}
