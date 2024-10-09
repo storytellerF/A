@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/root/.gradle \
 
 FROM ubuntu
 
-RUN apt update && apt install openjdk-17 -y
+RUN apt update && apt install openjdk-17-jre -y
 
 RUN mkdir /app
 
