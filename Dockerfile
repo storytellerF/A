@@ -1,9 +1,9 @@
-FROM openjdk:17-jdk AS builder
+FROM ubuntu AS builder
 
 ARG IS_PROD
 ARG FLAVOR
 
-RUN microdnf install findutils unzip
+RUN apt update && apt install openjdk-17-jdk -y
 
 WORKDIR /app
 
@@ -19,9 +19,9 @@ RUN sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 RUN --mount=type=cache,target=/root/.gradle \
     sh scripts/build-server.sh && sh scripts/build-cli.sh
 
-FROM openjdk:17
+FROM ubuntu
 
-RUN microdnf install findutils
+RUN apt update && apt install openjdk-17 -y
 
 RUN mkdir /app
 
