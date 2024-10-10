@@ -23,3 +23,4 @@ elastic
 !dev.win.env
 !dev.env
 deploy/*_data
+deploy/docker-images
