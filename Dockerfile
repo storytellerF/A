@@ -1,9 +1,7 @@
-FROM ubuntu AS builder
+FROM eclipse-temurin:17 AS builder
 
 ARG IS_PROD
 ARG FLAVOR
-
-RUN apt update && apt install openjdk-17-jdk -y
 
 WORKDIR /app
 
@@ -19,9 +17,7 @@ RUN sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 RUN --mount=type=cache,target=/root/.gradle \
     sh scripts/build-server.sh && sh scripts/build-cli.sh
 
-FROM ubuntu
-
-RUN apt update && apt install openjdk-17-jre -y
+FROM eclipse-temurin:17
 
 RUN mkdir /app
 
