@@ -27,4 +27,7 @@ COPY . .
 COPY --from=builder /app/data ./deploy/pre_set_data
 COPY --from=builder /app/deploy/docker-images ./deploy/docker-images
 
+RUN --mount=type=cache,target=/root/.gradle \
+    sh scripts/build-server.sh && sh scripts/build-cli.sh
+
 CMD sh ./scripts/build-koyeb.sh
