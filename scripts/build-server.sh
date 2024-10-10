@@ -1,1 +1,1 @@
-sh gradlew server:buildFatJar
+sh gradlew server:buildFatJar --no-daemon
