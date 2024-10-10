@@ -98,7 +98,7 @@ RUN sh scripts/manual-download-docker-image.sh
 
 FROM koyeb/docker-compose
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git openjdk17-jdk
 
 ARG IS_PROD
 ENV IS_PROD=$IS_PROD
