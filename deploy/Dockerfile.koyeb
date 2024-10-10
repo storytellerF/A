@@ -6,6 +6,8 @@ ARG IS_PROD
 ENV IS_PROD=$IS_PROD
 ARG FLAVOR
 ENV FLAVOR=$FLAVOR
+ARG BUILD_ON_HOST
+ENV BUILD_ON_HOST=$BUILD_ON_HOST
 ARG COMPOSE_PROFILES
 ENV COMPOSE_PROFILES=$COMPOSE_PROFILES
 ARG COMPOSE_PROJECT_NAME
@@ -104,6 +106,8 @@ ARG IS_PROD
 ENV IS_PROD=$IS_PROD
 ARG FLAVOR
 ENV FLAVOR=$FLAVOR
+ARG BUILD_ON_HOST
+ENV BUILD_ON_HOST=$BUILD_ON_HOST
 ARG COMPOSE_PROFILES
 ENV COMPOSE_PROFILES=$COMPOSE_PROFILES
 ARG COMPOSE_PROJECT_NAME
@@ -193,6 +197,7 @@ COPY . .
 COPY <<EOF ./generated-mini.env
 IS_PROD=${IS_PROD}
 FLAVOR=${FLAVOR}
+BUILD_ON_HOST=${BUILD_ON_HOST}
 COMPOSE_PROFILES=${COMPOSE_PROFILES}
 COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}
 SEARCH_SERVICE=${SEARCH_SERVICE}
@@ -239,7 +244,9 @@ EOF
 COPY --from=builder /app/data ./deploy/pre_set_data
 COPY --from=builder /app/deploy/docker-images ./deploy/docker-images
 
+ENV IS_HOST=TRUE
+
 RUN --mount=type=cache,target=/root/.gradle \
-    sh scripts/build-server.sh && sh scripts/build-cli.sh
+    sh scripts/build-server-on-condition.sh
 
 CMD sh ./scripts/build-koyeb.sh

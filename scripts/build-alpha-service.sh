@@ -1,5 +1,5 @@
 set -e
-#sh scripts/build-server-for-docker.sh
+sh IS_HOST=true scripts/build-server_on_condition.sh
 cd deploy
 mkdir -p es_ca
 docker compose --env-file ../alpha.env up -d --build

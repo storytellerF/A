@@ -3,3 +3,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  prebulid-server:
+    depends_on:
+      db:
+        condition: service_healthy

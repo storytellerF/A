@@ -2,6 +2,7 @@ FROM eclipse-temurin:17 AS builder
 
 ARG IS_PROD
 ARG FLAVOR
+ARG BUILD_ON_HOST
 
 WORKDIR /app
 
@@ -14,8 +15,10 @@ RUN sed -i 's/\r$//' gradlew
 RUN sed -i "s/buildkonfig.flavor=dev/buildkonfig.flavor=${FLAVOR}/" gradle.properties
 RUN sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 
+ENV IS_HOST=false
+
 RUN --mount=type=cache,target=/root/.gradle \
-    sh scripts/build-server.sh && sh scripts/build-cli.sh
+    sh build-server-on-condition.sh
 
 FROM eclipse-temurin:17
 
