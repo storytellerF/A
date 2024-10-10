@@ -1,0 +1,9 @@
+services:
+  server:
+    image: a-server:latest
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    profiles:
+      - server
+    networks:
+      - bw-services

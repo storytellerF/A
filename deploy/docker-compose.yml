@@ -48,14 +48,6 @@ services:
       - server
     networks:
       - bw-services
-  prebuild-server:
-    image: a-server:latest
-    ports:
-      - ${SERVER_PORT}:${SERVER_PORT}
-    profiles:
-      - prebuild-server
-    networks:
-      - bw-services
 
   bunkerweb:
     image: bunkerity/bunkerweb:${BUNKER_VERSION}
