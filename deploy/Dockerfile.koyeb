@@ -244,7 +244,7 @@ EOF
 COPY --from=builder /app/data ./deploy/pre_set_data
 COPY --from=builder /app/deploy/docker-images ./deploy/docker-images
 
-ENV IS_HOST=TRUE
+ENV IS_HOST=true
 
 RUN --mount=type=cache,target=/root/.gradle \
     sh scripts/build-server-on-condition.sh

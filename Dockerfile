@@ -18,7 +18,7 @@ RUN sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 ENV IS_HOST=false
 
 RUN --mount=type=cache,target=/root/.gradle \
-    sh build-server-on-condition.sh
+    sh scripts/build-server-on-condition.sh
 
 FROM eclipse-temurin:17
 
