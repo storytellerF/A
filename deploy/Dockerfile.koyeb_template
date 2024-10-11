@@ -1,6 +1,6 @@
-FROM koyeb/docker-compose
+FROM openjdk:17-jdk AS builder
 
-RUN apk add --no-cache git openjdk17-jdk curl unzip jq
+RUN microdnf install curl unzip jq
 
 #1
 
@@ -18,5 +18,13 @@ ENV IS_HOST=true
 
 RUN --mount=type=cache,target=/root/.gradle \
     sh scripts/build-server-on-condition.sh
+
+FROM koyeb/docker-compose
+
+#1
+
+WORKDIR /app
+
+COPY --from=builder /app/* .
 
 CMD sh ./scripts/build-koyeb.sh
