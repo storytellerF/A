@@ -1,6 +1,9 @@
-FROM openjdk:17-jdk AS builder
+FROM ubuntu AS builder
 
-RUN microdnf install curl unzip jq
+#RUN apt-get update && apt-get install -y openjdk-17-jdk curl unzip jq
+
+RUN apt-get update
+RUN apt-get install -y openjdk-17-jdk curl unzip jq
 
 #1
 
@@ -25,6 +28,6 @@ FROM koyeb/docker-compose
 
 WORKDIR /app
 
-COPY --from=builder /app/* .
+COPY --from=builder /app .
 
 CMD sh ./scripts/build-koyeb.sh

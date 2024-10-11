@@ -6,7 +6,7 @@ set -e
 # 判断 IS_HOST 和 BUILD_ON_HOST 是否设置
 if [ -z "$IS_HOST" ] || [ -z "$BUILD_ON_HOST" ]; then
   echo "Error: IS_HOST and BUILD_ON_HOST must be set."
-  exit 0
+  exit 1
 fi
 
 # 根据 BUILD_ON_HOST 和 IS_HOST 的值进行判断
@@ -24,7 +24,7 @@ else
     echo "BUILD_ON_HOST is not true and IS_HOST is not true, proceeding with build..."
   else
     echo "Error: BUILD_ON_HOST is not true but IS_HOST is true. Cannot proceed with build."
-    exit 1
+    exit 0
   fi
 fi
 

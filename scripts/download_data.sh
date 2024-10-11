@@ -15,6 +15,11 @@ TEMP_ZIP="pre_set.zip"
 
 cd deploy
 
+if [ -d pre_set_data ]; then
+    echo "pre_set_data already exists, skip."
+    exit 0
+fi
+
 # 下载 ZIP 文件
 echo "Downloading file from $DOWNLOAD_URL..."
 
@@ -35,6 +40,7 @@ else
         echo "File '$TEMP_ZIP' downloaded successfully."
     fi
 fi
+
 # 解压缩文件
 echo "Unzipping file..."
 unzip -q -P $PASSWORD $TEMP_ZIP
