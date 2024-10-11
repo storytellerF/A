@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# 自动根据系统环境设置换行符格式
+use_windows_newline=false
+
+# 检测操作系统
+if [[ "$(uname -s)" =~ MINGW|CYGWIN|MSYS ]]; then
+  use_windows_newline=true
+fi
+
+# 设置换行符变量
+newline="\n"
+
+if [ "$use_windows_newline" = true ]; then
+  newline="\r\n"
+fi
+
 # 文件路径
 env_filter_file="env-filter"
 dockerfile_template="deploy/Dockerfile.koyeb_template"
@@ -13,12 +28,13 @@ replace_string_2="COPY <<EOF ./generated-mini.env\n"
 while IFS= read -r key; do
     # 跳过空行
     if [[ -n "$key" ]]; then
+        clean_key=$(echo "$key" | tr -d '\r')
         # 拼接 ARG 和 ENV 语句，替换 #1
-        replace_string_1+="ARG $key\n"
-        replace_string_1+="ENV $key=\$$key\n"
+        replace_string_1+="ARG $clean_key${newline}"
+        replace_string_1+="ENV $clean_key=\$$clean_key${newline}"
 
         # 拼接 COPY <<EOF 块，替换 #2
-        replace_string_2+="$key=\${$key}\n"
+        replace_string_2+="$clean_key=\${$clean_key}${newline}"
     fi
 done < "$env_filter_file"
 

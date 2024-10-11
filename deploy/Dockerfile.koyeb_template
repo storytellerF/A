@@ -1,20 +1,6 @@
-FROM ubuntu AS builder
-
-RUN apt update && apt install curl unzip jq -y
-
-#1
-
-WORKDIR /app
-
-COPY scripts ./scripts
-
-RUN sh scripts/download_data.sh $PRE_SET_ENCRYPTED_URI $PRE_SET_ENCRYPTED_PASSWORD
-
-RUN sh scripts/manual-download-docker-image.sh
-
 FROM koyeb/docker-compose
 
-RUN apk add --no-cache git openjdk17-jdk
+RUN apk add --no-cache git openjdk17-jdk curl unzip jq
 
 #1
 
@@ -24,8 +10,9 @@ COPY . .
 
 #2
 
-COPY --from=builder /app/data ./deploy/pre_set_data
-COPY --from=builder /app/deploy/docker-images ./deploy/docker-images
+RUN sh scripts/download_data.sh $PRE_SET_ENCRYPTED_URI $PRE_SET_ENCRYPTED_PASSWORD
+
+RUN bash scripts/manual-download-docker-image.sh
 
 ENV IS_HOST=true
 

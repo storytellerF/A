@@ -1,6 +1,27 @@
+#!/bin/bash
+
 set -e
 mkdir -p deploy/docker-images
-curl -o download-image.sh https://raw.githubusercontent.com/moby/moby/master/contrib/download-frozen-image-v2.sh
+
+# 要下载的文件
+file="scripts/download-image.sh"
+url="https://raw.githubusercontent.com/moby/moby/master/contrib/download-frozen-image-v2.sh"
+
+# 判断文件是否已经存在
+if [ -f "$file" ]; then
+  echo "File '$file' already exists, skipping download."
+else
+  echo "File '$file' does not exist, downloading..."
+  curl -o "$file" "$url"
+
+  # 检查下载是否成功
+  if [ $? -eq 0 ]; then
+    echo "File '$file' downloaded successfully."
+  else
+    echo "Failed to download '$file'."
+    exit 1
+  fi
+fi
 
 # 函数：下载镜像并保存为 tar 文件
 download_and_save() {
@@ -15,7 +36,7 @@ download_and_save() {
     echo "Downloading and saving image $IMAGE_NAME:$IMAGE_TAG..."
 
     # 下载镜像到指定文件夹
-    bash download-image.sh "$IMAGE_NAME" "$IMAGE_TAG"
+    bash $file "$IMAGE_NAME" "$IMAGE_TAG"
 
     # 打包镜像到 .tar 文件
     tar -C "$IMAGE_NAME" -cf "$OUTPUT_PATH" .

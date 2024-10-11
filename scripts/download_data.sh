@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-echo $#
 # 检查参数个数
 if [ "$#" -ne 2 ]; then
     echo "Usage: $0 <download_url> <password>"
@@ -12,21 +11,32 @@ DOWNLOAD_URL=$1
 PASSWORD=$2
 
 # 临时文件名
-TEMP_ZIP="downloaded_file.zip"
+TEMP_ZIP="pre_set.zip"
+
+cd deploy
 
 # 下载 ZIP 文件
 echo "Downloading file from $DOWNLOAD_URL..."
-curl -L -o $TEMP_ZIP $DOWNLOAD_URL
 
-# 检查是否下载成功
-if [ $? -ne 0 ]; then
-    echo "Download failed!"
-    exit 1
+# 检查文件是否已经存在
+if [ -f "$TEMP_ZIP" ]; then
+    echo "File '$TEMP_ZIP' already exists, skipping download."
+else
+    echo "File '$TEMP_ZIP' does not exist, downloading..."
+
+    # 下载 ZIP 文件
+    curl -L -o "$TEMP_ZIP" "$DOWNLOAD_URL"
+
+    # 检查下载是否成功
+    if [ $? -ne 0 ]; then
+        echo "Download failed!"
+        exit 1
+    else
+        echo "File '$TEMP_ZIP' downloaded successfully."
+    fi
 fi
-
 # 解压缩文件
 echo "Unzipping file..."
-unzip -h
 unzip -q -P $PASSWORD $TEMP_ZIP
 
 # 检查解压是否成功
@@ -36,6 +46,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # 删除临时 ZIP 文件
-rm -f $TEMP_ZIP
+#rm -f $TEMP_ZIP
 
 echo "File downloaded and unzipped successfully!"
+
+mv data pre_set_data
