@@ -45,7 +45,7 @@ private fun processPreSetData(map: MutableMap<out Any, out Any>) {
         val preSetScript = map["PRE_SET_SCRIPT"] as String
         val workingDir = map["PRE_SET_WORKING_DIR"] as String
         if (preSetScript.isNotBlank() && workingDir.isNotBlank()) {
-            val scriptArray = preSetScript.split(" ").map {
+            val scriptArray = preSetScript.trim('\'').split(" ").map {
                 if (it.startsWith("~")) {
                     val home = System.getProperty("user.home")
                     home + it.substring(1)
@@ -53,7 +53,7 @@ private fun processPreSetData(map: MutableMap<out Any, out Any>) {
                     it
                 }
             }
-            val file = File(workingDir)
+            val file = File(workingDir.trim('\''))
             println("exec pre set: ${scriptArray.joinToString(" ")}. working dir: ${file.canonicalPath}")
 
             val start = ProcessBuilder(scriptArray).directory(file).start()

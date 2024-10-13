@@ -10,9 +10,9 @@ if [ -z "$IS_HOST" ] || [ -z "$BUILD_ON_HOST" ]; then
 fi
 
 # 根据 BUILD_ON_HOST 和 IS_HOST 的值进行判断
-if [ "$BUILD_ON_HOST" == "true" ]; then
+if [ "$BUILD_ON_HOST" = "true" ]; then
   # 如果 BUILD_ON_HOST 是 true，判断 IS_HOST 是否为 true
-  if [ "$IS_HOST" == "true" ]; then
+  if [ "$IS_HOST" = "true" ]; then
     echo "Both BUILD_ON_HOST and IS_HOST are true, proceeding with build..."
   else
     echo "Error: BUILD_ON_HOST is true but IS_HOST is not true. Cannot proceed with build."

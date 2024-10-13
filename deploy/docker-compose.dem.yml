@@ -7,11 +7,3 @@ services:
         condition: service_healthy
       es01:
         condition: service_healthy
-  prebuild-server:
-    depends_on:
-      db:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      es01:
-        condition: service_healthy

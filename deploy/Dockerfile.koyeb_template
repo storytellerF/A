@@ -1,9 +1,11 @@
 FROM ubuntu AS builder
 
-#RUN apt-get update && apt-get install -y openjdk-17-jdk curl unzip jq
-
 RUN apt-get update
-RUN apt-get install -y openjdk-17-jdk curl unzip jq
+RUN apt-get install -y --no-install-recommends \
+    openjdk-17-jdk \
+    curl \
+    unzip \
+    jq
 
 #1
 
@@ -13,7 +15,12 @@ COPY . .
 
 #2
 
-RUN sh scripts/download_data.sh $PRE_SET_ENCRYPTED_URI $PRE_SET_ENCRYPTED_PASSWORD
+RUN sed -i 's/\r$//' scripts/* && \
+    sed -i 's/\r$//' gradlew && \
+    sed -i "s/buildkonfig.flavor=dev/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
+    sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
+
+RUN bash scripts/download_data.sh $PRE_SET_ENCRYPTED_URI $PRE_SET_ENCRYPTED_PASSWORD
 
 RUN bash scripts/manual-download-docker-image.sh
 
@@ -23,6 +30,8 @@ RUN --mount=type=cache,target=/root/.gradle \
     sh scripts/build-server-on-condition.sh
 
 FROM koyeb/docker-compose
+
+RUN apk add --no-cache git
 
 #1
 

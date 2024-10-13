@@ -7,23 +7,31 @@ env_filter_file=$1
 # 读取 env-filter 文件中的 keys，存储到数组中
 env_filter_keys=()
 while IFS= read -r line; do
+    # 去除 Windows 换行符
+    line=$(echo "$line" | tr -d '\r')
+
     # 跳过空行
     if [[ -n "$line" ]]; then
         env_filter_keys+=("$line")
     fi
 done < "$env_filter_file"
 
+
 # 读取 env 文件中的 keys
 env_keys=()
 while IFS='=' read -r key value; do
+    # 去除 Windows 换行符
+    key=$(echo "$key" | tr -d '\r')
+
     # 跳过空行和以 # 开头的注释行
-    if [[ -n "$key" && "$key" != \#* ]]; then
+    if [[ -n "$key" && "$key" != \#* && "$key" =~ [^[:space:]] ]]; then
         env_keys+=("$key")
     fi
 done < "$env_file"
+
 # 验证 env_keys 和 env_filter_keys 是否按顺序匹配
 if [ ${#env_keys[@]} -ne ${#env_filter_keys[@]} ]; then
-    echo "env 和 env-filter 文件中的变量数量不匹配!"
+    echo "env $env_file 和 env-filter 文件中的变量数量不匹配! ${#env_keys[@]} - ${#env_filter_keys[@]}"
     exit 1
 fi
 

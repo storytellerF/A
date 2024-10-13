@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # 指定包含 .env 文件的目录
 env_dir='.'
 

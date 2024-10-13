@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # 自动根据系统环境设置换行符格式
 use_windows_newline=false
 

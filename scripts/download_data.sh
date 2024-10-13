@@ -1,4 +1,3 @@
-#!/bin/bash
 set -e
 # 检查参数个数
 if [ "$#" -ne 2 ]; then

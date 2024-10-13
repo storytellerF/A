@@ -2,15 +2,10 @@ set -e
 cli_path=$1
 base=$2
 sh $cli_path clean
-if [ -f "$base/pre_set_user.json" ]; then
-  sh $cli_path add $base/pre_set_user.json
-fi
-if [ -f "$base/pre_set_community.json" ]; then
-  sh $cli_path add $base/pre_set_community.json
-fi
-if [ -f "$base/pre_set_room.json" ]; then
-  sh $cli_path add $base/pre_set_room.json
-fi
-if [ -f "$base/pre_set_topic.json" ]; then
-  sh $cli_path add $base/pre_set_topic.json
-fi
+
+# Traverse and add all JSON files from the directory
+for json_file in "$base"/*.json; do
+  if [ -f "$json_file" ]; then
+    sh $cli_path add "$json_file"
+  fi
+done

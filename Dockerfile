@@ -8,12 +8,10 @@ WORKDIR /app
 
 COPY . .
 
-RUN sed -i 's/\r$//' scripts/build-server.sh
-RUN sed -i 's/\r$//' scripts/build-cli.sh
-RUN sed -i 's/\r$//' gradlew
-
-RUN sed -i "s/buildkonfig.flavor=dev/buildkonfig.flavor=${FLAVOR}/" gradle.properties
-RUN sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
+RUN sed -i 's/\r$//' scripts/* && \
+    sed -i 's/\r$//' gradlew && \
+    sed -i "s/buildkonfig.flavor=dev/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
+    sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 
 ENV IS_HOST=false
 
