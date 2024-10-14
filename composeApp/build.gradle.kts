@@ -2,6 +2,7 @@ import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.util.*
 
 plugins {
@@ -107,6 +108,11 @@ kotlin {
     }
 }
 
+val signPath: String? = System.getenv("storyteller_f_sign_path")
+val signKey: String? = System.getenv("storyteller_f_sign_key")
+val signAlias: String? = System.getenv("storyteller_f_sign_alias")
+val signStorePassword: String? = System.getenv("storyteller_f_sign_store_password")
+val signKeyPassword: String? = System.getenv("storyteller_f_sign_key_password")
 android {
     namespace = "com.storyteller_f.a"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -122,6 +128,23 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+    signingConfigs {
+        val signStorePath = if (signPath != null) {
+            File(signPath)
+        } else if (signKey != null) {
+            layout.buildDirectory.file("signing/signing_key.jks").get().asFile
+        } else {
+            null
+        }
+        if (signStorePath != null && signAlias != null && signStorePassword != null && signKeyPassword != null) {
+            create("release") {
+                keyAlias = signAlias
+                keyPassword = signKeyPassword
+                storeFile = signStorePath
+                storePassword = signStorePassword
+            }
+        }
+    }
     packaging {
         resources {
             excludes += listOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/versions/9/OSGI-INF/MANIFEST.MF")
@@ -135,6 +158,9 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            val releaseSignConfig = signingConfigs.findByName("release")
+            if (releaseSignConfig != null)
+                signingConfig = releaseSignConfig
         }
     }
     compileOptions {
@@ -184,3 +210,42 @@ buildkonfig {
         buildConfigField(BOOLEAN, "IS_PROD", isProd.toString(), const = true)
     }
 }
+
+
+val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
+    group = "signing"
+    doLast {
+        if (signKey != null) {
+            // 定义输出文件路径 (如密钥存储文件)
+            val outputFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
+
+            outputFile.parentFile?.let {
+                if (!it.exists()) {
+                    if (!it.mkdirs()) {
+                        throw Exception("mkdirs falied: $it")
+                    }
+                }
+            }
+            if (!outputFile.exists()) {
+                if (!outputFile.createNewFile()) {
+                    throw Exception("create failed: $outputFile")
+                }
+            }
+            // 将 Base64 解码为字节
+            val decodedBytes = Base64.getDecoder().decode(signKey)
+
+            // 将解码后的字节写入文件
+            FileOutputStream(outputFile).use { it.write(decodedBytes) }
+
+            println("Base64 decoded and written to: $outputFile")
+        } else {
+            println("skip decodeBase64ToStoreFile")
+        }
+
+    }
+
+}
+
+//afterEvaluate {
+//    tasks.getByName("packageRelease").dependsOn(decodeBase64ToStoreFileTask)
+//}

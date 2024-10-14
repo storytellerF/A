@@ -82,7 +82,7 @@ private fun topicDocumentService(
             ElasticTopicDocumentService(ElasticConnection(url, certFile, name, pass))
         }
         "lucene" -> LuceneTopicDocumentService(path)
-        else -> throw UnsupportedOperationException("unsupported search service type $type")
+        else -> throw UnsupportedOperationException("unsupported search service type [$type]")
     }
 }
 

@@ -52,7 +52,7 @@ subprojects {
         detektPlugins("io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors:$detektVersion")
     }
 
-    tasks.withType<Detekt>().configureEach {
+    tasks.withType<Detekt> {
         reports {
             xml.required = true
             html.required = true
@@ -64,6 +64,7 @@ subprojects {
         basePath = rootDir.absolutePath
         finalizedBy(detektReportMergeSarif)
     }
+
     detektReportMergeSarif {
         input.from(
             tasks.withType<Detekt>().map { it.sarifReportFile })
