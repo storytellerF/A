@@ -12,3 +12,6 @@ for file in "$env_dir"/*.env; do
     echo "No .env files found in the directory."
   fi
 done
+
+echo "Processing .env"
+sh scripts/check-env-filter.sh env-filter ./server/src/test/resources/.env

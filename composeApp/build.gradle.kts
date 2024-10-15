@@ -113,6 +113,7 @@ val signKey: String? = System.getenv("storyteller_f_sign_key")
 val signAlias: String? = System.getenv("storyteller_f_sign_alias")
 val signStorePassword: String? = System.getenv("storyteller_f_sign_store_password")
 val signKeyPassword: String? = System.getenv("storyteller_f_sign_key_password")
+val generatedJksFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
 android {
     namespace = "com.storyteller_f.a"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -132,7 +133,7 @@ android {
         val signStorePath = if (signPath != null) {
             File(signPath)
         } else if (signKey != null) {
-            layout.buildDirectory.file("signing/signing_key.jks").get().asFile
+            generatedJksFile
         } else {
             null
         }
@@ -217,7 +218,7 @@ val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
     doLast {
         if (signKey != null) {
             // 定义输出文件路径 (如密钥存储文件)
-            val outputFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
+            val outputFile = generatedJksFile
 
             outputFile.parentFile?.let {
                 if (!it.exists()) {
@@ -246,6 +247,6 @@ val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
 
 }
 
-//afterEvaluate {
-//    tasks.getByName("packageRelease").dependsOn(decodeBase64ToStoreFileTask)
-//}
+afterEvaluate {
+    tasks.getByName("packageRelease").dependsOn(decodeBase64ToStoreFileTask)
+}

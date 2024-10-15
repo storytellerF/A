@@ -20,30 +20,21 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-      - name: Build with Gradle
-        run: ./gradlew build
+      - name: Prepare env
+        run: |
+          chmod +x scripts/generate-mini-env-for-app.sh
+          ./scripts/generate-mini-env-for-app.sh https://respectable-jobie-anabn-3d54150c.koyeb.app
 
-      - name: rename
+      - name: Build app
+        run: |
+          chmod +x gradlew
+          ./gradlew build
+
+      - name: Rename
         run: mv composeApp/build/outputs/apk/*.apk composeApp/build/outputs/apk/A-release.apk
-
-      - uses: noriban/sign-android-release@v3
-        name: Sign app APK
-        # ID used to access action output
-        id: sign_app
-        with:
-          releaseDirectory: composeApp/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.ALIAS }}
-          keyStorePassword: ${{ secrets.STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-        env:
-          # override default build-tools version (29.0.3) -- optional
-          BUILD_TOOLS_VERSION: "35.0.0"
 
       # Example use of `signedReleaseFile` output -- not needed
       - uses: actions/upload-artifact@v3
         with:
           name: Signed app bundle
-          path: ${{steps.sign_app.outputs.signedReleaseFile}}
+          path: composeApp/build/outputs/apk/release/A-release.apk

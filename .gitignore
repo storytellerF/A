@@ -22,6 +22,7 @@ elastic
 *.env
 !dev.win.env
 !dev.env
+!server/src/test/resources/.env
 deploy/*_data
 deploy/docker-images
 scripts/download-image.sh
