@@ -31,9 +31,8 @@ jobs:
           ./gradlew build
 
       - name: Rename
-        run: mv composeApp/build/outputs/apk/*.apk composeApp/build/outputs/apk/A-release.apk
+        run: mv composeApp/build/outputs/apk/release/*.apk composeApp/build/outputs/apk/release/A-release.apk
 
-      # Example use of `signedReleaseFile` output -- not needed
       - uses: actions/upload-artifact@v3
         with:
           name: Signed app bundle
