@@ -1,5 +1,6 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
+import com.project.starter.easylauncher.filter.ColorRibbonFilter
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -176,6 +177,20 @@ android {
     }
 }
 
+val flavor = project.findProperty("buildkonfig.flavor") as String
+val isProd = project.findProperty("server.prod") == true
+
+easylauncher {
+    buildTypes {
+        register("debug") {
+            filters(greenRibbonFilter("debug"), chromeLike(label = flavor))
+        }
+        register("release") {
+            filters(chromeLike(label = flavor))
+        }
+    }
+}
+
 compose.desktop {
     application {
         mainClass = "MainKt"
@@ -190,9 +205,6 @@ compose.desktop {
 
 buildkonfig {
     packageName = "com.storyteller_f.a.app"
-    val flavor = project.findProperty("buildkonfig.flavor")
-    val isProd = project.findProperty("server.prod") == true
-
     val properties = Properties().apply {
         val file = layout.projectDirectory.file("../${flavor}.env").asFile
         load(FileInputStream(file))
