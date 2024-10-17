@@ -12,7 +12,6 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.selectAll
 
-
 object Topics : BaseTable() {
     val author = ulong("author").index()
     val parentId = ulong("parent_id")
@@ -68,7 +67,6 @@ class Topic(
             assert(info.id == newTopicId)
             return newTopicId
         }
-
     }
 }
 
@@ -77,4 +75,3 @@ fun findTopicById(id: OKey): ResultRow? {
         Topics.id eq id
     }.limit(1).firstOrNull()
 }
-

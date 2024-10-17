@@ -53,7 +53,6 @@ object LoginViewModel {
             }
 
             else -> {
-
             }
         }
     }
@@ -67,5 +66,4 @@ object LoginViewModel {
         user.value = null
         session = null
     }
-
 }

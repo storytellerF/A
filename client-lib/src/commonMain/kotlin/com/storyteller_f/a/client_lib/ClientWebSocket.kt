@@ -7,7 +7,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-
 @OptIn(DelicateCoroutinesApi::class)
 class ClientWebSocket(
     val buildConnection: suspend () -> DefaultClientWebSocketSession,
@@ -61,7 +60,6 @@ class ClientWebSocket(
             connectionHandler.data.value = null
             connectionHandler.state.value = LoadingState.Error(e)
         }
-
     }
 
     private fun startListenerWebSocket(session: DefaultClientWebSocketSession) {

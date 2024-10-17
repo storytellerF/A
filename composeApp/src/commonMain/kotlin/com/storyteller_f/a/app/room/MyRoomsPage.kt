@@ -20,13 +20,12 @@ import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.client
-import com.storyteller_f.a.client_lib.getJoinedRooms
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.utils.safeFirstUnicode
+import com.storyteller_f.a.client_lib.getJoinedRooms
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.OKey
 import moe.tlaster.precompose.viewmodel.viewModel
-
 
 @Composable
 fun MyRoomsPage(onClick: (OKey) -> Unit) {
@@ -45,7 +44,6 @@ class MyRoomsViewModel : PagingViewModel<OKey, RoomInfo>({
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
-
     }
 })
 
@@ -98,7 +96,6 @@ fun RoomCell(roomInfo: RoomInfo?, onClick: (OKey) -> Unit = {}) {
             showDialog = false
         }
     }
-
 }
 
 @Composable

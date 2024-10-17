@@ -6,7 +6,6 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 
-
 object DatabaseFactory {
 
     private fun connect(connection: DatabaseConnection) {
@@ -42,7 +41,6 @@ object DatabaseFactory {
         }
     }
 
-
     fun clean() {
         transaction {
             SchemaUtils.drop(
@@ -67,7 +65,6 @@ object DatabaseFactory {
      */
     suspend fun <T, R> query(transform: (T) -> R, block: suspend () -> T): R =
         dbQuery { transform(block()) }
-
 
     /**
      * 处理可能查询不到数据的问题

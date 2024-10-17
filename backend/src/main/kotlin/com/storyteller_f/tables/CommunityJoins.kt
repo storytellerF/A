@@ -17,7 +17,6 @@ object CommunityJoins : Table() {
     }
 }
 
-
 suspend fun isCommunityJoined(communityId: OKey, uid: OKey) = !DatabaseFactory.empty {
     CommunityJoins.selectAll().where {
         CommunityJoins.communityId eq communityId and (CommunityJoins.uid eq uid)

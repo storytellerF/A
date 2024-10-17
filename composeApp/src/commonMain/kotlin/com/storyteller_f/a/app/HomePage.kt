@@ -44,7 +44,6 @@ import kotlinx.coroutines.launch
 import moe.tlaster.precompose.navigation.*
 import moe.tlaster.precompose.navigation.transition.NavTransition
 
-
 @Composable
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
 fun HomePage(appNav: AppNav, onClick: (OKey, ObjectType) -> Unit = { _, _ -> }) {
@@ -97,7 +96,6 @@ fun HomePage(appNav: AppNav, onClick: (OKey, ObjectType) -> Unit = { _, _ -> }) 
 }
 
 class NavRoute(val path: String, val icon: ImageVector, val label: String)
-
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -158,7 +156,6 @@ fun CustomBottomNav(
             }, label = {
                 Text(it.label)
             })
-
         }
     }
 }
@@ -180,7 +177,8 @@ private fun HomeContent(
                 pauseTransition = fadeOut(),
                 resumeTransition = fadeIn() + slideInVertically {
                     it / 4
-                })
+                }
+            )
         }) {
             scene("/world") {
                 WorldPage(onClick)
@@ -207,7 +205,6 @@ private fun HomePager(
     pagerState: PagerState,
     onClick: (OKey, ObjectType) -> Unit
 ) {
-
     HorizontalPager(pagerState, modifier) {
         when (it) {
             0 -> WorldPage(onClick)

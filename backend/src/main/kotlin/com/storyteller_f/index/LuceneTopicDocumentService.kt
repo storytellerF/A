@@ -17,12 +17,14 @@ class LuceneTopicDocumentService(private val path: Path) : TopicDocumentService 
     override suspend fun saveDocument(topics: List<TopicDocument>) {
         FSDirectory.open(path).use {
             IndexWriter(FSDirectory.open(path), IndexWriterConfig(analyzer)).use { writer ->
-                writer.addDocuments(topics.map {
-                    val doc = Document()
-                    doc.add(LongField("id", it.id.toLong(), Field.Store.YES))
-                    doc.add(TextField("content", it.content, Field.Store.YES))
-                    doc
-                })
+                writer.addDocuments(
+                    topics.map {
+                        val doc = Document()
+                        doc.add(LongField("id", it.id.toLong(), Field.Store.YES))
+                        doc.add(TextField("content", it.content, Field.Store.YES))
+                        doc
+                    }
+                )
             }
         }
     }

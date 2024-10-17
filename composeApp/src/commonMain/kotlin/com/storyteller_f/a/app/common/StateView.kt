@@ -22,11 +22,10 @@ import app.cash.paging.LoadStateNotLoading
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
-import com.storyteller_f.shared.model.Identifiable
 import com.storyteller_f.a.client_lib.LoadingHandler
 import com.storyteller_f.a.client_lib.LoadingState
+import com.storyteller_f.shared.model.Identifiable
 import kotlinx.coroutines.delay
-
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -42,7 +41,7 @@ fun <T : Any> StateView(
     })
     val refresh = pagingItems.loadState.refresh
     LaunchedEffect(key1 = refreshing, key2 = refresh) {
-        //增加延时，确保真正进入刷新状态
+        // 增加延时，确保真正进入刷新状态
         delay(REFRESH_AFTER)
         if (refreshing && refresh !is LoadStateLoading) refreshing = false
     }
@@ -55,7 +54,6 @@ fun <T : Any> StateView(
 }
 
 const val REFRESH_AFTER = 300L
-
 
 private fun LoadState?.toLoadingState(count: Int) = when (this) {
     null -> null
@@ -89,9 +87,13 @@ fun StateView(state: LoadingState?, refresh: () -> Unit, content: @Composable ()
             }
         }
 
-        is LoadingState.Done -> if (state.itemCount == 0) CenterBox {
-            Text(text = "empty")
-        } else content()
+        is LoadingState.Done -> if (state.itemCount == 0) {
+            CenterBox {
+                Text(text = "empty")
+            }
+        } else {
+            content()
+        }
     }
 }
 
@@ -158,19 +160,19 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
             }, contentType = items.itemContentType()) {
                 content(items[it])
             }
-            if (items.loadState.append is LoadStateLoading)
+            if (items.loadState.append is LoadStateLoading) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().height(100.dp)) {
                         CircularProgressIndicator()
                     }
                 }
+            }
         }
     }
 }
 
-
 @Composable
-fun <T: Any> StateView2(handler: LoadingHandler<T?>, content: @Composable (T) -> Unit) {
+fun <T : Any> StateView2(handler: LoadingHandler<T?>, content: @Composable (T) -> Unit) {
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
     when (val localState = state) {

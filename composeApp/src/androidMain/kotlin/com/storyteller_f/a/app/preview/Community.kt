@@ -15,7 +15,6 @@ import com.storyteller_f.shared.utils.now
 import kotlinx.serialization.json.Json
 import java.io.File
 
-
 @Preview
 @Composable
 private fun PreviewCommunity(@PreviewParameter(CommunityProvider::class) communityInfo: CommunityInfo) {
@@ -27,7 +26,6 @@ private fun PreviewCommunity(@PreviewParameter(CommunityProvider::class) communi
 private fun PreviewCommunityPage() {
     Column {
         CustomSearchBar {
-
         }
         CustomBottomNav(null, navRoutes = communityNavRoutes())
     }
@@ -44,5 +42,4 @@ private class CommunityProvider : PreviewParameterProvider<CommunityInfo> {
                 })
             }
         }
-
 }

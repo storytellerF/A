@@ -22,18 +22,20 @@ import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 
-
 suspend fun RoutingContext.addTopicAtCommunity(uid: OKey, backend: Backend): Result<TopicInfo?> {
     val newTopic = call.receive<NewTopic>()
     return when (newTopic.parentType) {
-
         ObjectType.COMMUNITY -> {
             if (newTopic.content is TopicContent.Encrypted) {
                 Result.failure(ForbiddenException("Community only accept unencrypted content."))
             } else {
                 addTopicIntoCommunity(
-                    newTopic.parentId, uid,
-                    (newTopic.content as TopicContent.Plain).plain, newTopic.parentId, ObjectType.COMMUNITY, backend
+                    newTopic.parentId,
+                    uid,
+                    (newTopic.content as TopicContent.Plain).plain,
+                    newTopic.parentId,
+                    ObjectType.COMMUNITY,
+                    backend
                 )
             }
         }
@@ -103,7 +105,6 @@ fun Topic.toTopicInfo(): TopicInfo {
         lastModifiedTime = now(),
     )
 }
-
 
 suspend fun getTopicSnapshot(id: OKey, topicId: OKey, backend: Backend): Result<TopicSnapshotPack?> {
     return runCatching {
@@ -180,7 +181,6 @@ private fun getSnapshotInput(snapshot: TopicSnapshot): String {
     return input
 }
 
-
 suspend fun getTopic(
     topicId: OKey,
     it: OKey?,
@@ -204,13 +204,11 @@ suspend fun getTopic(
     }
 }
 
-
 suspend fun RoutingContext.verifySnapshot(backend: Backend) = runCatching {
     val pack = call.receive<TopicSnapshotPack>()
     val hmacKey = backend.config.hmacKey
     hmacVerify(hmacKey, pack.hash, getSnapshotInput(pack.snapshot))
 }
-
 
 suspend fun getTopics(
     parentId: OKey,
@@ -252,7 +250,6 @@ suspend fun getTopics(
                         it.id
                     }, uid)
                 }
-
             }
 
             else -> {
@@ -266,11 +263,9 @@ suspend fun getTopics(
             }
         } to count
     }
-
 }
 
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)
-
 
 @OptIn(ExperimentalStdlibApi::class)
 fun getEncryptedTopicContent(topicId: List<OKey>, uid: OKey?): List<TopicContent.Encrypted> {

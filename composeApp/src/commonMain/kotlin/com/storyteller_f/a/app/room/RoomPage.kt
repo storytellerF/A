@@ -82,7 +82,6 @@ class RoomTopicsViewModel(roomId: OKey) : PagingViewModel<OKey, TopicInfo>({
             }.getOrNull()
         }
     )
-
 }, RoomTopicsRemoteMediator("topics$roomId") { loadKey ->
     processEncryptedTopic(client.getRoomTopics(roomId, loadKey, 20))
 })
@@ -122,7 +121,6 @@ class RoomTopicsRemoteMediator(
             }
         }
         return try {
-
             val response = networkService(loadKey)
             if (loadType == LoadType.REFRESH) {
                 database.deleteCollection(collectionName)
@@ -135,7 +133,8 @@ class RoomTopicsRemoteMediator(
                             rawId
                         } else {
                             "0$rawId"
-                        }, Json.encodeToString(it)
+                        },
+                        Json.encodeToString(it)
                     )
                 )
             }
@@ -152,7 +151,6 @@ class RoomTopicsRemoteMediator(
             MediatorResult.Error(e)
         }
     }
-
 }
 
 class RoomViewModel(private val roomId: OKey) : SimpleViewModel<RoomInfo>() {
@@ -174,7 +172,6 @@ class RoomViewModel(private val roomId: OKey) : SimpleViewModel<RoomInfo>() {
             }
         }
     }
-
 }
 
 @Composable
@@ -259,8 +256,9 @@ private fun ColumnScope.RoomPageInternal(
 class RoomKeysViewModel(private val id: OKey, private: Boolean) : SimpleViewModel<List<Pair<OKey, String>>>() {
 
     init {
-        if (private)
+        if (private) {
             load()
+        }
     }
 
     override suspend fun loadInternal() {
@@ -298,7 +296,6 @@ private fun InputGroup(
             sendMessage(roomInfo, roomId, input, scrollToNew, keyState, keyData, notifyError)
         })
     }
-
 }
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -312,7 +309,6 @@ private fun sendMessage(
     notifyError: (String) -> Unit
 ) {
     if (roomInfo != null) {
-
         clientWs.useWebSocket {
             val content = if (roomInfo.isPrivate) {
                 if (keyState !is LoadingState.Done || keyData == null) {
@@ -399,11 +395,12 @@ fun InputGroupInternal(
         ) {
             Button({
                 scope.launch {
-                    if (roomId != null)
+                    if (roomId != null) {
                         dialogState.use {
                             client.joinRoom(roomId)
                             bus.send(OnRoomJoined(roomId))
                         }
+                    }
                 }
             }) {
                 Text("Join")
@@ -420,7 +417,8 @@ fun RoomDialogInternal(roomInfo: RoomInfo) {
         Row(
             modifier = Modifier.fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
-                .padding(8.dp), Arrangement.spacedBy(12.dp)
+                .padding(8.dp),
+            Arrangement.spacedBy(12.dp)
         ) {
             RoomIcon(roomInfo, size = 50.dp)
             Column {

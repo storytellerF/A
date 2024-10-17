@@ -20,7 +20,6 @@ fun toFinalUserInfo(p: Pair<UserInfo, String?>, backend: Backend): UserInfo {
     return userInfo.copy(avatar = avatar)
 }
 
-
 suspend fun RoutingContext.getUser(
     it: OKey,
     backend: Backend

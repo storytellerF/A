@@ -4,7 +4,6 @@ import com.storyteller_f.BaseTable
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.OKey
-import com.storyteller_f.tables.Communities
 import io.ktor.server.routing.*
 import io.ktor.util.converters.*
 import org.jetbrains.exposed.sql.Query
@@ -12,7 +11,6 @@ import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.andWhere
-
 
 inline fun <T, reified PageTokenType : Any> RoutingContext.pagination(
     nextKeyBuilder: (T) -> String,
@@ -52,19 +50,23 @@ inline fun <T, reified PageTokenType : Any> RoutingContext.pagination(
             val (prePageToken, nextPageToken, size) = v.getOrThrow()
             block(prePageToken, nextPageToken, size).map {
                 it?.let { (list, count) ->
-                    val next = if (size == list.size) nextKeyBuilder(list.last())
-                    else null
-                    val pre = if (list.isNotEmpty()) nextKeyBuilder(list.first())
-                    else null
+                    val next = if (size == list.size) {
+                        nextKeyBuilder(list.last())
+                    } else {
+                        null
+                    }
+                    val pre = if (list.isNotEmpty()) {
+                        nextKeyBuilder(list.first())
+                    } else {
+                        null
+                    }
                     ServerResponse(list, Pagination(next, pre, count))
                 }
-
             }
         }
 
         else -> Result.failure(v.exceptionOrNull()!!)
     }
-
 }
 
 fun Query.bindPaginationQuery(table: BaseTable, prePageToken: OKey?, nextPageToken: OKey?, size: Int): Query {

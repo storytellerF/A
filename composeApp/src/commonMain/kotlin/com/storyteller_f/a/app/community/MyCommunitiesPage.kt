@@ -24,7 +24,6 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.OKey
 import moe.tlaster.precompose.viewmodel.viewModel
 
-
 @Composable
 fun MyCommunitiesPage(onClick: (OKey) -> Unit) {
     val viewModel = viewModel(MyCommunitiesViewModel::class) {
@@ -62,7 +61,6 @@ fun MyCommunitiesPage(onClick: (OKey) -> Unit) {
             }
         }
     }
-
 }
 
 @OptIn(ExperimentalPagingApi::class)
@@ -73,10 +71,8 @@ class MyCommunitiesViewModel : PagingViewModel<OKey, CommunityInfo>({
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
-
     }
 })
-
 
 @Composable
 fun CommunityConstrains(modifier: Modifier = Modifier, content: @Composable (Int, Int, Int) -> Unit) {
@@ -90,12 +86,14 @@ fun CommunityConstrains(modifier: Modifier = Modifier, content: @Composable (Int
 
 @Composable
 fun CommunityGrid(communityInfo: CommunityInfo?, onClick: (OKey) -> Unit = {}) {
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .aspectRatio(3f / 4)
-        .clickable {
-            communityInfo?.let { onClick(it.id) }
-        }) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(3f / 4)
+            .clickable {
+                communityInfo?.let { onClick(it.id) }
+            }
+    ) {
         Box(
             modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(14.dp))
                 .fillMaxSize()
@@ -118,7 +116,6 @@ fun CommunityGrid(communityInfo: CommunityInfo?, onClick: (OKey) -> Unit = {}) {
     }
 }
 
-
 @Composable
 fun CommunityCell(communityInfo: CommunityInfo?, onClick: (OKey) -> Unit = {}) {
     Row(
@@ -139,5 +136,4 @@ fun CommunityCell(communityInfo: CommunityInfo?, onClick: (OKey) -> Unit = {}) {
             MaterialTheme.typography.labelSmall.fontSize
         )
     }
-
 }

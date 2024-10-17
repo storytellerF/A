@@ -36,7 +36,6 @@ fun readEnv(): MutableMap<out Any, out Any> {
 }
 
 fun buildBackendFromEnv(env: Map<out Any, Any>): Backend {
-
     println("load env: ${env["COMPOSE_PROJECT_NAME"]}")
 
     val databaseConnection = databaseConnection(env)
@@ -73,7 +72,7 @@ private fun topicDocumentService(
     map: Map<out Any, Any>,
 ): TopicDocumentService {
     val path = Paths.get("../deploy/lucene_data/index")
-    return when(val type = map["SEARCH_SERVICE"]) {
+    return when (val type = map["SEARCH_SERVICE"]) {
         "elastic" -> {
             val certFile = map["CERT_FILE"] as String
             val url = map["ELASTIC_URL"] as String

@@ -9,9 +9,7 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.selectAll
-
 
 fun Community.toCommunityIfo(
     joinTime: LocalDateTime?
@@ -39,7 +37,6 @@ suspend fun getCommunity(communityId: OKey, backend: Backend): Result<CommunityI
             info.copy(icon = getMediaInfo(iconUrl), poster = getMediaInfo(coverUrl))
         }
     }
-
 }
 
 suspend fun joinCommunity(
@@ -51,7 +48,6 @@ suspend fun joinCommunity(
     }
     Unit
 }
-
 
 suspend fun searchCommunities(
     word: String,
@@ -124,4 +120,3 @@ private fun parseCommunityList(
         communityPair.first.copy(icon = getMediaInfo(first), poster = getMediaInfo(second))
     }
 }
-

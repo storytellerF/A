@@ -31,7 +31,6 @@ private class CommunitiesProvider : PreviewParameterProvider<List<CommunityInfo>
                 })
             }
         }
-
 }
 
 @Preview
@@ -51,10 +50,11 @@ private fun PreviewCommunities(@PreviewParameter(CommunitiesProvider::class) com
                     GridItemSpan(itemSpan)
                 }
             }) {
-                if (it.poster != null)
+                if (it.poster != null) {
                     CommunityGrid(it)
-                else
+                } else {
                     CommunityCell(it)
+                }
             }
         }
     }

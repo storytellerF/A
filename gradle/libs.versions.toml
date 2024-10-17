@@ -9,6 +9,7 @@ bcprovJdk18on = "1.78.1"
 coil = "3.0.0-alpha08"
 compose-plugin = "1.6.11"
 couchbaseLite = "3.1.3-1.1.0"
+detektVersion = "1.23.7"
 emoji-reader = "2.0.6"
 h2 = "2.2.224"
 jimfs = "1.3.0"
@@ -53,6 +54,9 @@ coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor", version.ref
 couchbase-lite = { module = "dev.kotbase:couchbase-lite", version.ref = "couchbaseLite" }
 couchbase-lite-ktx = { module = "dev.kotbase:couchbase-lite-ktx", version.ref = "couchbaseLite" }
 couchbase-lite-paging = { module = "dev.kotbase:couchbase-lite-paging", version.ref = "couchbaseLite" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detektVersion" }
+detekt-rules-libraries = { module = "io.gitlab.arturbosch.detekt:detekt-rules-libraries", version.ref = "detektVersion" }
+detekt-rules-ruleauthors = { module = "io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors", version.ref = "detektVersion" }
 emoji-reader-jvm = { module = "com.github.YvesCheung.EmojiReader:lib-jvm", version.ref = "emoji-reader" }
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
 jimfs = { module = "com.google.jimfs:jimfs", version.ref = "jimfs" }

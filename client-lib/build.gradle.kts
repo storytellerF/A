@@ -8,32 +8,38 @@ plugins {
     alias(libs.plugins.androidLibrary)
 }
 
+val buildIosTarget = project.findProperty("target.ios") == true
+val buildWasmTarget = project.findProperty("target.wasm") == true
 kotlin {
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser {
-            commonWebpackConfig {
-                devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
-                    static = (static ?: mutableListOf()).apply {
-                        // Serve sources to debug inside browser
-                        add(project.projectDir.path)
+    if (buildWasmTarget) {
+        @OptIn(ExperimentalWasmDsl::class)
+        wasmJs {
+            browser {
+                commonWebpackConfig {
+                    devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
+                        static = (static ?: mutableListOf()).apply {
+                            // Serve sources to debug inside browser
+                            add(project.projectDir.path)
+                        }
                     }
                 }
             }
         }
     }
-    
+
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-    
+
+    if (buildIosTarget) {
+        iosX64()
+        iosArm64()
+        iosSimulatorArm64()
+    }
+
     jvm()
     
     sourceSets {
@@ -48,8 +54,10 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.ktor.client.java)
         }
-        iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
+        if (buildIosTarget) {
+            iosMain.dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
         }
     }
 }

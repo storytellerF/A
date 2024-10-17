@@ -95,8 +95,6 @@ class TopicViewModel(private val topicId: OKey) : SimpleViewModel<TopicInfo>() {
             }
         }
     }
-
-
 }
 
 @OptIn(ExperimentalPagingApi::class)
@@ -107,10 +105,8 @@ class TopicNestedViewModel(topicId: OKey) : PagingViewModel<OKey, TopicInfo>({
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
-
     }
 })
-
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun processEncryptedTopic(info: ServerResponse<TopicInfo>): ServerResponse<TopicInfo> {
@@ -123,21 +119,22 @@ suspend fun processEncryptedTopic(info: ServerResponse<TopicInfo>): ServerRespon
             topicInfo
         } else {
             val s = content.encryptedKey[uid]
-            topicInfo.copy(content = if (s != null) {
-                runCatching {
-                    decrypt(
-                        key,
-                        content.encrypted.hexToByteArray(),
-                        s.hexToByteArray()
-                    )
-                }.fold(onSuccess = {
-                    TopicContent.Plain(it)
-                }, onFailure = {
-                    TopicContent.DecryptFailed(it.message.toString())
-                })
-            } else {
-                TopicContent.DecryptFailed("auth failed")
-            }
+            topicInfo.copy(
+                content = if (s != null) {
+                    runCatching {
+                        decrypt(
+                            key,
+                            content.encrypted.hexToByteArray(),
+                            s.hexToByteArray()
+                        )
+                    }.fold(onSuccess = {
+                        TopicContent.Plain(it)
+                    }, onFailure = {
+                        TopicContent.DecryptFailed(it.message.toString())
+                    })
+                } else {
+                    TopicContent.DecryptFailed("auth failed")
+                }
             )
         }
     })

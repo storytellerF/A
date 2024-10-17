@@ -81,7 +81,9 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
             val cause =
                 if (credential == null) {
                     AuthenticationFailedCause.NoCredentials
-                } else AuthenticationFailedCause.InvalidCredentials
+                } else {
+                    AuthenticationFailedCause.InvalidCredentials
+                }
 
             @Suppress("NAME_SHADOWING")
             context.challenge("CustomChallengeKey", cause) { challenge, call ->
@@ -144,7 +146,6 @@ fun Application.configureAuth(backend: Backend) {
             call.respondText("pong")
         }
     }
-
 }
 
 private suspend fun RoutingContext.signIn(backend: Backend) {
@@ -210,9 +211,7 @@ private suspend fun ApplicationCall.checkApiRequest(
         is UserSession.Pending -> {
             verifySignature(sig, id, session)
         }
-
     }
-
 }
 
 private suspend fun ApplicationCall.verifySignature(
@@ -253,7 +252,6 @@ private suspend fun ApplicationCall.verifySignature(
                 null
             }
         }
-
     }
 
     else -> {
@@ -281,7 +279,6 @@ private suspend fun checkDevWsLink(call: ApplicationCall): CustomPrincipal? {
         null
     }
 }
-
 
 private fun ApplicationCall.getData(): String {
     val (_, data) = getSession()
@@ -322,4 +319,3 @@ private fun ApplicationCall.getSession(): Pair<UserSession, String> {
         }
     }
 }
-

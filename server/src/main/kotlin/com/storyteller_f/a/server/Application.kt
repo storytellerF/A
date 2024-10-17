@@ -74,7 +74,6 @@ private fun processPreSetData(map: MutableMap<out Any, out Any>) {
             } finally {
                 start.destroy()
             }
-
         } else {
             println("pre set config failure")
             exitProcess(1)

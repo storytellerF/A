@@ -17,7 +17,6 @@ class ObjectTypeColumnType : ColumnType<ObjectType>() {
     override fun notNullValueToDB(value: ObjectType): Any {
         return value.name
     }
-
 }
 
 fun Table.objectType(name: String) = registerColumn(name, ObjectTypeColumnType())

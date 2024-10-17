@@ -4,7 +4,6 @@ import io.ktor.http.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
 
-
 inline fun <reified T : Any, reified R : Any> RoutingContext.checkParameter(
     name: String = "id",
     block: (T) -> Result<R?>

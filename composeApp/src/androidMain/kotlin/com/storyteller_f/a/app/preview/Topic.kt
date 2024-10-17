@@ -56,7 +56,6 @@ private class TopicPagePreviewProvider : PreviewParameterProvider<Pair<TopicInfo
 fun PreviewTopic(@PreviewParameter(TopicPagePreviewProvider::class) param: Pair<TopicInfo, List<TopicInfo>>) {
     val topic = param.first
     Column {
-
         CustomSearchBar {
             Icon(Icons.Default.Topic, "topic", modifier = Modifier.clickable {
             })

@@ -11,7 +11,6 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.util.logging.*
 
-
 suspend inline fun <reified R : Any> RoutingContext.usePrincipal(block: (OKey) -> Result<R?>) {
     usePrincipalOrNull {
         if (it != null) {
@@ -32,7 +31,7 @@ suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> R
 
 suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (OKey?) -> Result<R?>) {
     val uid = call.principal<CustomPrincipal>()?.uid
-    //有可能存在bug 导致block 抛出异常，所以需要进行一次try catch
+    // 有可能存在bug 导致block 抛出异常，所以需要进行一次try catch
     try {
         block(uid).onSuccess {
             when (it) {
@@ -47,7 +46,6 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (O
     } catch (e: Exception) {
         application.log.error("Catch", e)
     }
-
 }
 
 suspend fun RoutingContext.respondError(e: Throwable) {
@@ -56,7 +54,8 @@ suspend fun RoutingContext.respondError(e: Throwable) {
         is UnauthorizedException -> call.respond(HttpStatusCode.Unauthorized)
         is MissingRequestParameterException, is ParameterConversionException, is ContentTransformationException ->
             call.respond(
-                HttpStatusCode.BadRequest, e.localizedMessage
+                HttpStatusCode.BadRequest,
+                e.localizedMessage
             )
 
         else -> call.respond(HttpStatusCode.InternalServerError, e.localizedMessage ?: e.toString())

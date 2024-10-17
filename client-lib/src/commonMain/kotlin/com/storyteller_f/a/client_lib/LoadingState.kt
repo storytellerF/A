@@ -20,7 +20,9 @@ class LoadingHandler<T>(val refresh: () -> Unit) {
             if (res != null) {
                 data.value = res
                 state.loaded()
-            } else state.error("nil")
+            } else {
+                state.error("nil")
+            }
         }.onFailure {
             state.error(it)
         }
@@ -31,7 +33,6 @@ class LoadingHandler<T>(val refresh: () -> Unit) {
         state.value = LoadingState.Done()
     }
 }
-
 
 fun MutableStateFlow<LoadingState?>.loaded() {
     value = LoadingState.Done()

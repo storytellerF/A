@@ -212,7 +212,7 @@ class Add : Subcommand("add", "add entry") {
         }.groupBy {
             it.data3
         }
-        //从最顶层开始
+        // 从最顶层开始
         topLevelTopic.keys.sorted().forEach { level ->
             val list = topLevelTopic[level].orEmpty()
             val subIds = Topics.batchInsert(list) { (first, index, _, id) ->
@@ -321,7 +321,7 @@ class Add : Subcommand("add", "add entry") {
         val ids = ULongArray(u.size) {
             0u
         }
-        //保存top 之前的层级关系
+        // 保存top 之前的层级关系
         val topLevelTopic = u.mapIndexed { index, addTopic ->
             val id = SnowflakeFactory.nextId()
             val level = addTopic.level
@@ -334,9 +334,9 @@ class Add : Subcommand("add", "add entry") {
         }.groupBy {
             it.data3
         }
-        //从最顶层开始
+        // 从最顶层开始
         topLevelTopic.keys.sorted().forEach { level ->
-            //添加对应层级的topic
+            // 添加对应层级的topic
             val list = topLevelTopic[level].orEmpty()
             val subIds = Topics.batchInsert(list) { (first, index, _, id) ->
                 this[Topics.id] = id
@@ -350,7 +350,7 @@ class Add : Subcommand("add", "add entry") {
             }.map {
                 it[Topics.id]
             }
-            //添加完成之后，保存对应的topicId，索引是topic 在初始索引的位置
+            // 添加完成之后，保存对应的topicId，索引是topic 在初始索引的位置
             subIds.forEachIndexed { index, topicId ->
                 ids[list[index].data2] = topicId
             }

@@ -82,7 +82,7 @@ private val darkScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDark,
 )
 //
-//private val mediumContrastLightColorScheme = lightColorScheme(
+// private val mediumContrastLightColorScheme = lightColorScheme(
 //    primary = primaryLightMediumContrast,
 //    onPrimary = onPrimaryLightMediumContrast,
 //    primaryContainer = primaryContainerLightMediumContrast,
@@ -118,9 +118,9 @@ private val darkScheme = darkColorScheme(
 //    surfaceContainer = surfaceContainerLightMediumContrast,
 //    surfaceContainerHigh = surfaceContainerHighLightMediumContrast,
 //    surfaceContainerHighest = surfaceContainerHighestLightMediumContrast,
-//)
+// )
 //
-//private val highContrastLightColorScheme = lightColorScheme(
+// private val highContrastLightColorScheme = lightColorScheme(
 //    primary = primaryLightHighContrast,
 //    onPrimary = onPrimaryLightHighContrast,
 //    primaryContainer = primaryContainerLightHighContrast,
@@ -156,9 +156,9 @@ private val darkScheme = darkColorScheme(
 //    surfaceContainer = surfaceContainerLightHighContrast,
 //    surfaceContainerHigh = surfaceContainerHighLightHighContrast,
 //    surfaceContainerHighest = surfaceContainerHighestLightHighContrast,
-//)
+// )
 //
-//private val mediumContrastDarkColorScheme = darkColorScheme(
+// private val mediumContrastDarkColorScheme = darkColorScheme(
 //    primary = primaryDarkMediumContrast,
 //    onPrimary = onPrimaryDarkMediumContrast,
 //    primaryContainer = primaryContainerDarkMediumContrast,
@@ -194,9 +194,9 @@ private val darkScheme = darkColorScheme(
 //    surfaceContainer = surfaceContainerDarkMediumContrast,
 //    surfaceContainerHigh = surfaceContainerHighDarkMediumContrast,
 //    surfaceContainerHighest = surfaceContainerHighestDarkMediumContrast,
-//)
+// )
 //
-//private val highContrastDarkColorScheme = darkColorScheme(
+// private val highContrastDarkColorScheme = darkColorScheme(
 //    primary = primaryDarkHighContrast,
 //    onPrimary = onPrimaryDarkHighContrast,
 //    primaryContainer = primaryContainerDarkHighContrast,
@@ -232,7 +232,7 @@ private val darkScheme = darkColorScheme(
 //    surfaceContainer = surfaceContainerDarkHighContrast,
 //    surfaceContainerHigh = surfaceContainerHighDarkHighContrast,
 //    surfaceContainerHighest = surfaceContainerHighestDarkHighContrast,
-//)
+// )
 
 @Immutable
 data class ColorFamily(
@@ -243,7 +243,10 @@ data class ColorFamily(
 )
 
 val unspecified_scheme = ColorFamily(
-    Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified
+    Color.Unspecified,
+    Color.Unspecified,
+    Color.Unspecified,
+    Color.Unspecified
 )
 
 @Composable
@@ -264,4 +267,3 @@ fun AppTheme(
         content = content
     )
 }
-

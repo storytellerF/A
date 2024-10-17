@@ -37,30 +37,30 @@ class CommunityTest {
     @Test
     fun `test create topic in community`() = test { client ->
         session(client) {
-            //insert community
+            // insert community
             val communityId = createCommunity()
             assertFails {
                 val response = client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello")
                 assertEquals(HttpStatusCode.Forbidden, response.status)
             }
-            //加入社区
+            // 加入社区
             client.joinCommunity(communityId)
-            val communityInfo = client.get("/community/${communityId}").body<CommunityInfo>()
-            //验证加入成功
+            val communityInfo = client.get("/community/$communityId").body<CommunityInfo>()
+            // 验证加入成功
             assertTrue(communityInfo.isJoined)
-            //再次发起创建话题
+            // 再次发起创建话题
             kotlin.run {
                 val response = client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello")
                 assertEquals(HttpStatusCode.OK, response.status)
             }
-            //测试上传加密话题
+            // 测试上传加密话题
             assertFails {
                 client.post("/topic") {
                     contentType(ContentType.Application.Json)
                     setBody(NewTopic(ObjectType.COMMUNITY, communityId, TopicContent.Encrypted("", emptyMap())))
                 }
             }
-            //添加话题到子话题
+            // 添加话题到子话题
             kotlin.run {
                 val topicId = client.getCommunityTopics(communityId, 10).data.first().id
                 val new = client.createNewTopic(ObjectType.TOPIC, topicId, "test").body<TopicInfo>()
@@ -68,7 +68,6 @@ class CommunityTest {
                 assertEquals(communityId, new.rootId)
             }
         }
-
     }
 
     @Test
@@ -82,7 +81,6 @@ class CommunityTest {
                 assertEquals("true", client.verifySnapshot(pack).bodyAsText())
             }
         }
-
     }
 
     @Test
@@ -114,7 +112,6 @@ class CommunityTest {
                     }
                 }
             }
-
         }
     }
 

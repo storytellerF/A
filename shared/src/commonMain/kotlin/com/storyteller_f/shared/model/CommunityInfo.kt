@@ -17,4 +17,3 @@ data class CommunityInfo(
 ) {
     val isJoined get() = joinTime != null
 }
-

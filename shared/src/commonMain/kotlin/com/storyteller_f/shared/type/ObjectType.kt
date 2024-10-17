@@ -5,5 +5,3 @@ enum class ObjectType {
     ROOM,
     TOPIC
 }
-
-

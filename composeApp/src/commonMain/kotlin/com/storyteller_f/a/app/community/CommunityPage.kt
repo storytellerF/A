@@ -53,8 +53,9 @@ class CommunityViewModel(private val communityId: OKey) : SimpleViewModel<Commun
         viewModelScope.launch {
             for (i in bus) {
                 if (i is OnCommunityJoined) {
-                    if (i.communityId == communityId)
+                    if (i.communityId == communityId) {
                         handler.refresh()
+                    }
                 }
             }
         }
@@ -67,8 +68,6 @@ class CommunityViewModel(private val communityId: OKey) : SimpleViewModel<Commun
             }
         }
     }
-
-
 }
 
 @OptIn(ExperimentalPagingApi::class)
@@ -79,10 +78,8 @@ class CommunityTopicsViewModel(private val communityId: OKey) : PagingViewModel<
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
-
     }
 })
-
 
 @OptIn(ExperimentalPagingApi::class)
 class CommunityRoomsViewModel(private val communityId: OKey) : PagingViewModel<Int, RoomInfo>({
@@ -92,10 +89,8 @@ class CommunityRoomsViewModel(private val communityId: OKey) : PagingViewModel<I
         }.map {
             APagingData(it.data, null)
         }
-
     }
 })
-
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -141,10 +136,8 @@ fun CommunityPage(
             }
 
             CommunityPageInternal(pagerState, communityId, onClick)
-
         }
     }
-
 }
 
 @Composable
@@ -193,7 +186,7 @@ fun communityNavRoutes(): List<NavRoute> {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityDialog(communityInfo: CommunityInfo?, showDialog: Boolean, dismiss: () -> Unit) {
-    if (communityInfo != null && showDialog)
+    if (communityInfo != null && showDialog) {
         BasicAlertDialog(
             {
                 dismiss()
@@ -201,6 +194,7 @@ fun CommunityDialog(communityInfo: CommunityInfo?, showDialog: Boolean, dismiss:
         ) {
             CommunityDialogInternal(communityInfo)
         }
+    }
 }
 
 @Composable
@@ -220,9 +214,9 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo) {
         Column {
             val scope = rememberCoroutineScope()
             val eventState = rememberEventState()
-            if (communityInfo.isJoined)
+            if (communityInfo.isJoined) {
                 ButtonNav(Icons.Default.Close, "Exit Community")
-            else
+            } else {
                 ButtonNav(Icons.Default.AddHome, "Join Community") {
                     scope.launch {
                         eventState.use {
@@ -231,6 +225,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo) {
                         }
                     }
                 }
+            }
             EventDialog(eventState)
         }
     }

@@ -15,7 +15,6 @@ data class UserInfo(
     companion object {
         val EMPTY = UserInfo(0u, "", 0, "", "", null)
     }
-
 }
 
 @Serializable

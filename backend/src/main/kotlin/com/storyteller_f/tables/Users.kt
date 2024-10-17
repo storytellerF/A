@@ -14,8 +14,13 @@ object Users : BaseTable() {
 }
 
 class User(
-    val aid: String?, val publicKey: String, val address: String, val icon: String?, val nickname: String,
-    id: OKey, createdTime: LocalDateTime
+    val aid: String?,
+    val publicKey: String,
+    val address: String,
+    val icon: String?,
+    val nickname: String,
+    id: OKey,
+    createdTime: LocalDateTime
 ) :
     BaseObj(id, createdTime) {
     companion object {
@@ -48,7 +53,6 @@ fun findUserByAId(aid: String): ResultRow? {
         Users.aid eq aid
     }.limit(1).firstOrNull()
 }
-
 
 fun createUser(
     user: User
