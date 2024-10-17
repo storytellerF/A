@@ -13,8 +13,6 @@ import com.russhwolf.settings.get
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.russhwolf.settings.set
-import com.storyteller_f.a.client_lib.getData
-import com.storyteller_f.a.client_lib.sign
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.compontents.EventDialog
 import com.storyteller_f.a.app.compontents.MeasureTextLineCount
@@ -22,17 +20,17 @@ import com.storyteller_f.a.app.compontents.rememberEventState
 import com.storyteller_f.a.app.compontents.use
 import com.storyteller_f.a.client_lib.ClientSession
 import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.getData
+import com.storyteller_f.a.client_lib.sign
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
 import com.storyteller_f.shared.model.LoginUser
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.signature
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import moe.tlaster.precompose.navigation.NavHost
 import moe.tlaster.precompose.navigation.rememberNavigator
-
 
 @Composable
 fun LoginPage(onLoginSuccess: () -> Unit) {
@@ -51,7 +49,6 @@ fun LoginPage(onLoginSuccess: () -> Unit) {
             override fun gotoLogin() {
                 navigator.navigate("/select_login")
             }
-
         }
     }
     Surface {
@@ -67,7 +64,6 @@ fun LoginPage(onLoginSuccess: () -> Unit) {
             }
         }
     }
-
 }
 
 @Composable
@@ -144,7 +140,6 @@ fun InputPrivateKeyPage(onLoginSuccess: () -> Unit) {
                     Text(if (isSignUp) "Start SignUp" else "Start Login")
                 }
             }
-
         }
     }
     EventDialog(messageState)
@@ -201,7 +196,6 @@ interface LoginNav {
             override fun gotoLogin() {
                 TODO("Not yet implemented")
             }
-
         }
     }
 }

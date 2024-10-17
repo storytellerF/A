@@ -9,7 +9,6 @@ import com.storyteller_f.tables.*
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
-
 suspend fun getRoomPubKeys(
     roomId: OKey,
     userId: OKey,
@@ -51,7 +50,6 @@ suspend fun getRoomPubKeys(
     Result.failure(ForbiddenException("Permission denied."))
 }
 
-
 suspend fun joinRoom(
     room: OKey,
     id: OKey
@@ -67,7 +65,6 @@ suspend fun joinRoom(
         Unit
     }
 }
-
 
 suspend fun searchRooms(
     word: String,
@@ -209,7 +206,6 @@ suspend fun searchRoomInCommunity(
                         CommunityRooms.communityId eq communityId
                     }
             }
-
         }
         roomsResponse(list, backend = backend) to count
     }

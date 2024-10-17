@@ -3,7 +3,6 @@ package com.storyteller_f.tables
 import com.storyteller_f.*
 import com.storyteller_f.shared.type.OKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.selectAll
 
@@ -15,7 +14,11 @@ object Rooms : BaseTable() {
 }
 
 class Room(
-    val aid: String, val name: String, val icon: String?, val creator: OKey, id: OKey,
+    val aid: String,
+    val name: String,
+    val icon: String?,
+    val creator: OKey,
+    id: OKey,
     createdTime: LocalDateTime
 ) : BaseObj(id, createdTime) {
     companion object {
@@ -43,4 +46,3 @@ fun findRoomByAId(aid: String): ResultRow? {
         Rooms.aid eq aid
     }.limit(1).firstOrNull()
 }
-

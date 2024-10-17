@@ -6,8 +6,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.storyteller_f.a.app.BuildKonfig
 import com.storyteller_f.a.app.user.UserDialogInternal
-import com.storyteller_f.shared.obj.AddTaskValue
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.AddTaskValue
 import kotlinx.serialization.json.Json
 import java.io.File
 
@@ -22,7 +22,6 @@ private class UserInfoPreviewProvider : PreviewParameterProvider<UserInfo> {
                 })
             }
         }
-
 }
 
 @Preview

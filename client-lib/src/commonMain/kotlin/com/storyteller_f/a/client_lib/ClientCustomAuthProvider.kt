@@ -9,7 +9,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.auth.*
 
-
 class ClientCustomAuthProvider : AuthProvider {
 
     @Deprecated("Please use sendWithoutRequest function instead", ReplaceWith("TODO(\"Not yet implemented\")"))
@@ -56,7 +55,6 @@ class ClientCustomAuthProvider : AuthProvider {
             })
         }
     }
-
 }
 
 fun HttpRequestBuilder.addRequestHeaders(
@@ -81,4 +79,3 @@ fun AuthConfig.custom(block: CustomAuthConfig.() -> Unit) {
     CustomAuthConfig().apply(block)
     providers.add(ClientCustomAuthProvider())
 }
-

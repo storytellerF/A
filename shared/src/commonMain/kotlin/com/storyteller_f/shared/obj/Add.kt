@@ -28,9 +28,9 @@ data class AddTopic(
     val room: String? = null,
     val author: String,
     val type: String? = null,
-    //用于指定直接父项的偏移，用于话题的评论
+    // 用于指定直接父项的偏移，用于话题的评论
     val parent: Int? = null,
-    //指定父项时需要根据level 的顺序插入
+    // 指定父项时需要根据level 的顺序插入
     val level: Int? = null,
 )
 

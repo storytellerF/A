@@ -21,7 +21,6 @@ import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
 import org.jetbrains.compose.resources.stringResource
 
-
 @Composable
 fun UserDialogInternal(userInfo: UserInfo) {
     val alertDialogState by remember {
@@ -31,7 +30,8 @@ fun UserDialogInternal(userInfo: UserInfo) {
         Row(
             modifier = Modifier.fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
-                .padding(8.dp), Arrangement.spacedBy(12.dp)
+                .padding(8.dp),
+            Arrangement.spacedBy(12.dp)
         ) {
             UserIcon(userInfo, size = 50.dp)
             Column {
@@ -51,9 +51,7 @@ fun UserDialogInternal(userInfo: UserInfo) {
     }) {
         LoginViewModel.logout()
     }
-
 }
-
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)

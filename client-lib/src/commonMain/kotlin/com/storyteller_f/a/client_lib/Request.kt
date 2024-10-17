@@ -106,7 +106,7 @@ suspend fun HttpClient.sign(
 
 suspend fun HttpClient.getData() = get("/get_data").bodyAsText()
 
-suspend fun HttpClient.getTopicSnapshot(topicId: OKey) = get("/topic/${topicId}/snapshot")
+suspend fun HttpClient.getTopicSnapshot(topicId: OKey) = get("/topic/$topicId/snapshot")
 
 suspend fun HttpClient.verifySnapshot(pack: TopicSnapshotPack) = post("/topic/verify-snapshot") {
     contentType(ContentType.Application.Json)

@@ -4,9 +4,8 @@ import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.common.bindPaginationQuery
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.tables.*
 import org.jetbrains.exposed.sql.selectAll
 
@@ -35,4 +34,3 @@ suspend fun searchWorld(backend: Backend, preTopicId: OKey?, nextTopicId: ULong?
         }
     }, count)
 }
-

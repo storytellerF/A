@@ -15,7 +15,12 @@ object Communities : BaseTable() {
 }
 
 class Community(
-    val aid: String, val name: String, val icon: String?, val owner: OKey, val poster: String?, id: OKey,
+    val aid: String,
+    val name: String,
+    val icon: String?,
+    val owner: OKey,
+    val poster: String?,
+    id: OKey,
     createdTime: LocalDateTime
 ) :
     BaseObj(id, createdTime) {
@@ -53,7 +58,6 @@ class Community(
             assert(id == community.id)
             return id
         }
-
     }
 }
 

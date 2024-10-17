@@ -9,13 +9,13 @@ import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.russhwolf.settings.Settings
-import com.storyteller_f.a.client_lib.ClientWebSocket
 import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.community.CommunityPage
 import com.storyteller_f.a.app.room.RoomPage
 import com.storyteller_f.a.app.topic.TopicComposePage
 import com.storyteller_f.a.app.topic.TopicPage
 import com.storyteller_f.a.app.ui.theme.AppTheme
+import com.storyteller_f.a.client_lib.ClientWebSocket
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.addRequestHeaders
 import com.storyteller_f.a.client_lib.defaultClientConfigure
@@ -66,46 +66,55 @@ fun App() {
                 }
             }
             NavHost(navigator, initialRoute = "/home") {
-                scene("/home") {
-                    HomePage(appNav, onClick)
-                }
-                scene("/login") {
-                    LoginPage(appNav::gotoHome)
-                }
-                scene("/community/{communityId}") {
-                    val communityId = it.path2<OKey>("communityId", null)
-                    if (communityId != null)
-                        CommunityPage(communityId, {
-                            appNav.gotoTopicCompose(COMMUNITY, communityId)
-                        }, onClick)
-                }
-                scene("/room/{roomId}") {
-                    val roomId = it.path2<OKey>("roomId", null)
-                    if (roomId != null)
-                        RoomPage(roomId, onClick)
-                }
-                scene("/topic/{topicId}") {
-                    val topicId = it.path2<OKey>("topicId", null)
-                    if (topicId != null)
-                        TopicPage(topicId, onClick)
-                }
-                scene("/topic-compose/{objectType}/{objectId}") {
-                    val objectType = it.path<Int>("objectType")?.let {
-                        ObjectType.entries.first { t ->
-                            t.ordinal == it
-                        }
-                    }
-                    val objectId = it.path2<OKey>("objectId")
-                    if (objectType != null && objectId != null) {
-                        TopicComposePage(objectType, objectId) {
-                            navigator.goBack()
-                        }
-                    }
-                }
+                buildRootNav(appNav, onClick, navigator)
             }
-
         }
+    }
+}
 
+private fun RouteBuilder.buildRootNav(
+    appNav: AppNav,
+    onClick: (OKey, ObjectType) -> Unit,
+    navigator: Navigator
+) {
+    scene("/home") {
+        HomePage(appNav, onClick)
+    }
+    scene("/login") {
+        LoginPage(appNav::gotoHome)
+    }
+    scene("/community/{communityId}") {
+        val communityId = it.path2<OKey>("communityId", null)
+        if (communityId != null) {
+            CommunityPage(communityId, {
+                appNav.gotoTopicCompose(COMMUNITY, communityId)
+            }, onClick)
+        }
+    }
+    scene("/room/{roomId}") {
+        val roomId = it.path2<OKey>("roomId", null)
+        if (roomId != null) {
+            RoomPage(roomId, onClick)
+        }
+    }
+    scene("/topic/{topicId}") {
+        val topicId = it.path2<OKey>("topicId", null)
+        if (topicId != null) {
+            TopicPage(topicId, onClick)
+        }
+    }
+    scene("/topic-compose/{objectType}/{objectId}") {
+        val objectType = it.path<Int>("objectType")?.let {
+            ObjectType.entries.first { t ->
+                t.ordinal == it
+            }
+        }
+        val objectId = it.path2<OKey>("objectId")
+        if (objectType != null && objectId != null) {
+            TopicComposePage(objectType, objectId) {
+                navigator.goBack()
+            }
+        }
     }
 }
 
@@ -133,7 +142,6 @@ private fun newAppNav(navigator: Navigator) = object : AppNav {
     override fun gotoTopicCompose(objectType: ObjectType, objectId: OKey) {
         navigator.navigate("/topic-compose/${objectType.ordinal}/$objectId")
     }
-
 }
 
 fun getAsyncImageLoader(context: PlatformContext) =
@@ -176,7 +184,6 @@ fun HttpClientConfig<*>.setupRequest() {
 }
 
 val bus = Channel<Any> {
-
 }
 
 val settings = Settings()

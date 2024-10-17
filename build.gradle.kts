@@ -10,7 +10,7 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
-    id("io.gitlab.arturbosch.detekt").version("1.23.1")
+    id("io.gitlab.arturbosch.detekt").version("1.23.7")
 }
 
 val detektReportMergeSarif by tasks.registering(ReportMergeTask::class) {
@@ -22,8 +22,8 @@ subprojects {
         // The directories where detekt looks for source files.
         // Defaults to `files("src/main/java", "src/test/java", "src/main/kotlin", "src/test/kotlin")`.
         source.setFrom(
-            "src/main/java",
             "src/main/kotlin",
+            "src/test/kotlin",
             "src/commonMain/kotlin",
             "src/desktopMain/kotlin",
             "src/iosMain/kotlin",
@@ -42,17 +42,17 @@ subprojects {
         // Specify the base path for file paths in the formatted reports.
         // If not set, all file paths reported will be absolute file path.
         basePath = projectDir.absolutePath
+
+        buildUponDefaultConfig = true
     }
 
     dependencies {
-        val detektVersion = "1.23.1"
-
-        detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$detektVersion")
-        detektPlugins("io.gitlab.arturbosch.detekt:detekt-rules-libraries:$detektVersion")
-        detektPlugins("io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors:$detektVersion")
+        detektPlugins(rootProject.libs.detekt.formatting)
+        detektPlugins(rootProject.libs.detekt.rules.libraries)
+        detektPlugins(rootProject.libs.detekt.rules.ruleauthors)
     }
 
-    tasks.withType<Detekt> {
+    tasks.withType<Detekt>().configureEach {
         reports {
             xml.required = true
             html.required = true
@@ -60,7 +60,6 @@ subprojects {
             sarif.required = true
             md.required = true
         }
-        autoCorrect = true
         basePath = rootDir.absolutePath
         finalizedBy(detektReportMergeSarif)
     }

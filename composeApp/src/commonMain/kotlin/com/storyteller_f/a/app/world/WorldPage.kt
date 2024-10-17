@@ -19,14 +19,13 @@ import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.client
-import com.storyteller_f.a.client_lib.getWorldTopics
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.topic.TopicCell
+import com.storyteller_f.a.client_lib.getWorldTopics
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.OKey
 import com.storyteller_f.shared.type.ObjectType
 import moe.tlaster.precompose.viewmodel.viewModel
-
 
 @Composable
 fun WorldPage(onClick: (OKey, ObjectType) -> Unit) {
@@ -45,7 +44,6 @@ class WorldViewModel : PagingViewModel<OKey, TopicInfo>({
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
-
     }
 })
 

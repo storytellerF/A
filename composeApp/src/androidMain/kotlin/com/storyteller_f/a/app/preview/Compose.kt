@@ -22,16 +22,13 @@ private class ContentListProvider : PreviewParameterProvider<String> {
                     it.content
                 })
             }
-
         }
-
 }
 
 @Preview(showSystemUi = true)
 @Composable
 private fun PreviewTopicEdit(@PreviewParameter(ContentListProvider::class) content: String) {
     EditTopicPage(content) {
-
     }
 }
 

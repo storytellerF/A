@@ -26,7 +26,6 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readString
 import kotlinx.serialization.json.Json
 
-
 private class MessageListProvider : PreviewParameterProvider<List<TopicInfo>> {
     override val values: Sequence<List<TopicInfo>>
         get() = sequence {
@@ -68,12 +67,10 @@ private fun PreviewRoom(@PreviewParameter(MessageListProvider::class) topicInfos
             wsState = LoadingState.Done(),
             isSending = false,
             sendMessage = {
-
             }
         )
     }
 }
-
 
 private class RoomsProvider : PreviewParameterProvider<RoomInfo> {
     override val values: Sequence<RoomInfo>
@@ -90,7 +87,6 @@ private class RoomsProvider : PreviewParameterProvider<RoomInfo> {
                 })
             }
         }
-
 }
 
 @Preview
@@ -111,7 +107,6 @@ private fun PreviewInputGroup() {
         wsState = LoadingState.Done(),
         isSending = false,
         sendMessage = {
-
         }
     )
 }

@@ -3,10 +3,10 @@ package com.storyteller_f.a.server
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.service.ForbiddenException
 import com.storyteller_f.a.server.service.toTopicInfo
+import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.NewTopic
@@ -49,7 +49,6 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend) {
                 val newFrame: RoomFrame = RoomFrame.Error(e.message.toString())
                 sendSerialized(newFrame)
             }
-
         }
     }
 
@@ -67,7 +66,6 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend) {
             return
         }
     }
-
 }
 
 private suspend fun addTopicAtRoom(
@@ -203,4 +201,3 @@ private fun isKeyVerified(roomId: OKey, encryptedAes: Map<OKey, String>): Boolea
     }.toSet()
     return toSet.minus(encryptedAes.keys).isEmpty()
 }
-

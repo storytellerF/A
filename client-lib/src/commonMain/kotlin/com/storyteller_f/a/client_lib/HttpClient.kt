@@ -19,7 +19,6 @@ fun HttpClientConfig<*>.defaultClientConfigure() {
     expectSuccess = true
     install(Auth) {
         custom {
-
         }
     }
     install(ContentNegotiation) {

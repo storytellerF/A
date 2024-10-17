@@ -54,12 +54,10 @@ private fun Route.bindProtectedCommunityRoute(backend: Backend) {
                 checkParameter<OKey, Unit>("id") {
                     joinCommunity(id, it)
                 }
-
             }
         }
     }
 }
-
 
 private fun Route.bindProtectedRoomRoute(backend: Backend) {
     route("/room") {
@@ -83,12 +81,11 @@ private fun Route.bindProtectedRoomRoute(backend: Backend) {
             usePrincipal { id ->
                 pagination<Pair<OKey, String>, OKey>({
                     it.first.toString()
-                }) { pre, next , size ->
+                }) { pre, next, size ->
                     checkParameter<OKey, Pair<List<Pair<OKey, String>>, Long>>("id") {
                         getRoomPubKeys(it, id, pre, next, size)
                     }
                 }
-
             }
         }
     }

@@ -35,8 +35,6 @@ import com.storyteller_f.a.app.compontents.buildTexPainter
 import com.storyteller_f.a.app.room.RoomRefCell
 import com.storyteller_f.a.app.user.UserRefCell
 import com.storyteller_f.a.app.user.UserViewModel
-import com.storyteller_f.a.client_lib.LoadingHandler
-import com.storyteller_f.a.client_lib.LoadingState
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
@@ -49,7 +47,6 @@ import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
 
-
 @Composable
 fun TopicCell(
     topicInfo: TopicInfo?,
@@ -57,7 +54,6 @@ fun TopicCell(
     showAvatar: Boolean = true,
     onClick: (OKey, ObjectType) -> Unit = { _, _ -> }
 ) {
-
     if (topicInfo != null) {
         val author = topicInfo.author
         val authorViewModel = viewModel(UserViewModel::class, keys = listOf("user", author)) {
@@ -83,12 +79,17 @@ fun TopicCellInternal(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         val avatarSize = 40.dp
-        if (showAvatar)
+        if (showAvatar) {
             UserHeadRow(authorInfo, avatarSize)
+        }
         Column(
-            if (contentAlignAvatar) Modifier else Modifier.fillMaxWidth().padding(horizontal = avatarSize)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
-                .padding(18.dp),
+            if (contentAlignAvatar) {
+                Modifier
+            } else {
+                Modifier.fillMaxWidth().padding(horizontal = avatarSize)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
+                    .padding(18.dp)
+            },
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             TopicContentField(
@@ -126,7 +127,6 @@ fun TopicRefCell(topicId: OKey, onClick: (OKey) -> Unit) {
     }
 }
 
-
 @Composable
 private fun TopicRefCellContent(
     it: TopicInfo,
@@ -156,7 +156,6 @@ private fun TopicRefCellContent(
         )
     }
 }
-
 
 @Composable
 fun CustomCodeFence(modal: MarkdownComponentModel, content: String, onClick: (OKey, ObjectType) -> Unit) {
@@ -282,5 +281,4 @@ fun TopicContentField(
             Text("Permission denied")
         }
     }
-
 }

@@ -9,7 +9,6 @@ import com.storyteller_f.a.app.compontents.EventAlertDialog
 @Composable
 private fun PreviewLoading() {
     EventAlertDialog(DialogState.Loading) {
-
     }
 }
 
@@ -17,6 +16,5 @@ private fun PreviewLoading() {
 @Composable
 private fun PreviewError() {
     EventAlertDialog(DialogState.Error(Exception("Error 404"))) {
-
     }
 }

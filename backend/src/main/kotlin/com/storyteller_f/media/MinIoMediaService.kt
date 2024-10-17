@@ -14,7 +14,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override fun get(bucketName: String, objList: List<String?>) : List<String?> {
+    override fun get(bucketName: String, objList: List<String?>): List<String?> {
         return useMinIoClient(connection) {
             objList.map {
                 getIconInMioIo(bucketName, it)
@@ -69,4 +69,3 @@ private fun MinioClient.getIconInMioIo(bucketName: String, objName: String?): St
             .build()
     )
 }
-

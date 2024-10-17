@@ -41,7 +41,6 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?) {
         Text("pub: ${topicInfo.lastModifiedTime}")
         Column {
             ButtonNav(Icons.Default.Add, "Snapshot") {
-
             }
         }
     }

@@ -97,7 +97,6 @@ class CustomQueryPagingSource<RowType : Identifiable>(
             }
             PagingSourceLoadResultError(e)
         }
-
     }
 
     private fun removeAllToken() {
@@ -106,5 +105,4 @@ class CustomQueryPagingSource<RowType : Identifiable>(
         }
         map.clear()
     }
-
 }

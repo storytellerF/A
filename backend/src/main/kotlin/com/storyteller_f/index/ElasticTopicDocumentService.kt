@@ -40,7 +40,6 @@ class ElasticTopicDocumentService(private val connection: ElasticConnection) : T
             }.map {
                 it.await().source()
             }
-
         }
     }
 
@@ -51,7 +50,6 @@ class ElasticTopicDocumentService(private val connection: ElasticConnection) : T
             }
         }
     }
-
 }
 
 private suspend fun <T> useElasticClient(
@@ -66,7 +64,8 @@ private suspend fun <T> useElasticClient(
 
     val credsProv = BasicCredentialsProvider()
     credsProv.setCredentials(
-        AuthScope.ANY, UsernamePasswordCredentials(elasticConnection.name, elasticConnection.pass)
+        AuthScope.ANY,
+        UsernamePasswordCredentials(elasticConnection.name, elasticConnection.pass)
     )
     return RestClient
         .builder(HttpHost.create(elasticConnection.url))
@@ -76,7 +75,8 @@ private suspend fun <T> useElasticClient(
         }
         .build().use { restClient ->
             RestClientTransport(
-                restClient, JacksonJsonpMapper().apply {
+                restClient,
+                JacksonJsonpMapper().apply {
                     objectMapper().registerKotlinModule()
                 }
             ).use { transport ->

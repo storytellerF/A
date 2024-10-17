@@ -13,7 +13,8 @@ abstract class PagingViewModel<K : Any, V : Any>(
 ) :
     ViewModel() {
     val flow = Pager(
-        PagingConfig(pageSize = 20), remoteMediator = remoteMediator,
+        PagingConfig(pageSize = 20),
+        remoteMediator = remoteMediator,
     ) {
         sourceBuilder()
     }.flow
@@ -52,9 +53,7 @@ class SimplePagingSource<KEY : Any, DATUM : Any>(val service: suspend (KEY?) -> 
         return service(params.key).loadResult()
     }
 
-
     override fun getRefreshKey(state: PagingState<KEY, DATUM>): KEY? {
         return null
     }
-
 }

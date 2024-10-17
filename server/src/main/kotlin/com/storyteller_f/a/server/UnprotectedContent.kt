@@ -12,7 +12,6 @@ import com.storyteller_f.shared.type.OKey
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 
-
 fun Route.unProtectedContent(backend: Backend) {
     get("/world") {
         omitPrincipal {
@@ -33,7 +32,6 @@ fun Route.unProtectedContent(backend: Backend) {
     bindUserRoute(backend)
 }
 
-
 private fun Route.bindUserRoute(backend: Backend) {
     route("/user") {
         get("/{id}") {
@@ -43,7 +41,6 @@ private fun Route.bindUserRoute(backend: Backend) {
                 }
             }
         }
-
     }
 }
 
@@ -58,7 +55,6 @@ private fun Route.bindTopicRoute(backend: Backend) {
                         getTopics(it, ObjectType.TOPIC, uid, backend, p, n, s)
                     }
                 }
-
             }
         }
 
@@ -75,10 +71,8 @@ private fun Route.bindTopicRoute(backend: Backend) {
                 verifySnapshot(backend)
             }
         }
-
     }
 }
-
 
 private fun Route.bindCommunityRoute(backend: Backend) {
     route("/community") {
@@ -98,7 +92,6 @@ private fun Route.bindCommunityRoute(backend: Backend) {
                         )
                     }
                 }
-
             }
         }
         get("/{id}/rooms") {
@@ -110,7 +103,6 @@ private fun Route.bindCommunityRoute(backend: Backend) {
                         searchRoomInCommunity(it, uid, backend, p, n, size)
                     }
                 }
-
             }
         }
 
@@ -146,7 +138,6 @@ private fun Route.bindRoomRoute(backend: Backend) {
                         getTopics(it, ObjectType.ROOM, uid, backend, pre, next, size)
                     }
                 }
-
             }
         }
 
@@ -166,7 +157,6 @@ private fun Route.bindRoomRoute(backend: Backend) {
                         searchRooms(it, id, backend, p, n, size)
                     }
                 }
-
             }
         }
     }

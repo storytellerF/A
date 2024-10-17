@@ -28,7 +28,6 @@ class SignatureTest {
                 val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr)
                 assertTrue(verify(derPublicKeyStr, s, data), "check failed")
             }
-
         }
     }
 
@@ -52,7 +51,6 @@ class SignatureTest {
                 val decrypted = decrypt(getDerPrivateKey(privateKeyStr), encrypted, encryptedAes)
                 assertEquals(data, decrypted)
             }
-
         }
     }
 }

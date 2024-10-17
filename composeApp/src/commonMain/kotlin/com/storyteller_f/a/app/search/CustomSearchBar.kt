@@ -23,7 +23,6 @@ fun CustomSearchBar(leadingIcon: @Composable () -> Unit) {
         SearchBar(query, {
             query = it
         }, {
-
         }, active, {
             active = it
         }, trailingIcon = {
@@ -31,7 +30,6 @@ fun CustomSearchBar(leadingIcon: @Composable () -> Unit) {
         }, leadingIcon = {
             leadingIcon()
         }, modifier = Modifier.align(Alignment.Center)) {
-
         }
     }
 }

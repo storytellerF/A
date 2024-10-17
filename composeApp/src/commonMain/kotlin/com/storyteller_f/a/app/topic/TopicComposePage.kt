@@ -13,9 +13,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.client
-import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.a.app.compontents.EventDialog
 import com.storyteller_f.a.app.compontents.rememberEventState
+import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.type.OKey
 import com.storyteller_f.shared.type.ObjectType
@@ -38,7 +38,6 @@ fun TopicComposePage(objectType: ObjectType, objectId: OKey, backPrePage: () -> 
     val tabs = listOf("Edit", "Preview")
     Scaffold(topBar = {
         TopAppBar({
-
         }, actions = {
             IconButton({
                 val c = input.trim()
@@ -80,11 +79,9 @@ fun TopicComposePage(objectType: ObjectType, objectId: OKey, backPrePage: () -> 
                 }
             }
         }
-
     }
     EventDialog(messageState)
 }
-
 
 @Composable
 fun PreviewTopicPage(input: String) {

@@ -1,6 +1,5 @@
 package com.storyteller_f.shared
 
-
 import org.bouncycastle.jcajce.provider.digest.Keccak
 import org.bouncycastle.jce.interfaces.ECPrivateKey
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -42,7 +41,6 @@ fun readPrivateKeyFromPEMString(pemString: String): PrivateKey {
 
         else -> throw IllegalArgumentException("Unsupported PEM object: " + any.javaClass)
     }
-
 }
 
 // 从私钥中生成公钥
@@ -74,7 +72,6 @@ actual suspend fun calcAddress(derPublicKeyStr: String): String {
 }
 
 actual suspend fun encrypt(data: String): Pair<ByteArray, ByteArray> {
-
     // 生成AES密钥
     val keyGen = KeyGenerator.getInstance("AES", "BC")
     keyGen.init(256) // 使用256位密钥
@@ -84,7 +81,6 @@ actual suspend fun encrypt(data: String): Pair<ByteArray, ByteArray> {
     val aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "BC")
     val iv = ByteArray(aesCipher.getBlockSize())
     val ivSpec = IvParameterSpec(iv)
-
 
     // 待加密的数据
     val plaintextBytes = data.toByteArray()
@@ -103,11 +99,9 @@ actual suspend fun decrypt(derPrivateKeyStr: String, encrypted: ByteArray, encry
     val keyFactory = KeyFactory.getInstance("EC", "BC")
     val privateKey = keyFactory.generatePrivate(privateKeySpec)
 
-
     val rsaCipher = Cipher.getInstance("ECIES", "BC")
     rsaCipher.init(Cipher.DECRYPT_MODE, privateKey)
     val aesKeyBytes = rsaCipher.doFinal(encryptedAesKey)
-
 
     // 将解密后的AES密钥转换为SecretKey对象
     val aesKey = SecretKeySpec(aesKeyBytes, "AES")
@@ -129,7 +123,6 @@ actual suspend fun encryptAesKey(derPublicKeyStr: String, aesKey: ByteArray): By
     val keySpec = X509EncodedKeySpec(publicKeyBytes)
     val keyFactory = KeyFactory.getInstance("EC", "BC")
     val publicKey = keyFactory.generatePublic(keySpec)
-
 
     val rsaCipher = Cipher.getInstance("ECIES", "BC")
     rsaCipher.init(Cipher.ENCRYPT_MODE, publicKey)
