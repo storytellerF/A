@@ -168,18 +168,12 @@ android {
         }
     }
     flavorDimensions += "server"
-    productFlavors {
-        create(flavorTaskName) {
-            applicationIdSuffix = ".$flavorId"
-            dimension = "server"
-            versionNameSuffix = "-$flavorId"
-        }
-    }
     buildTypes {
         getByName("debug") {
-            applicationIdSuffix = ".debug"
+            applicationIdSuffix = ".$flavorId.debug"
         }
         getByName("release") {
+            applicationIdSuffix = ".$flavorId"
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -201,14 +195,12 @@ android {
 }
 
 easylauncher {
-    productFlavors {
-        register(flavorTaskName) {
-            filters(chromeLike(label = flavor))
-        }
-    }
     buildTypes {
         register("debug") {
-            filters(greenRibbonFilter("debug"))
+            filters(chromeLike(label = flavor), greenRibbonFilter("debug"))
+        }
+        register("release") {
+            filters(chromeLike(label = flavor))
         }
     }
 }
@@ -282,5 +274,5 @@ val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
 }
 
 afterEvaluate {
-    tasks["package${flavorTaskName.uppercaseFirstChar()}Release"]?.dependsOn(decodeBase64ToStoreFileTask)
+    tasks["packageRelease"]?.dependsOn(decodeBase64ToStoreFileTask)
 }
