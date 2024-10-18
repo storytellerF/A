@@ -154,7 +154,7 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
             }
         }
 
-        is LoadStateNotLoading -> {
+        else -> {
             items(items.itemCount, key = items.itemKey {
                 it.id.toString()
             }, contentType = items.itemContentType()) {

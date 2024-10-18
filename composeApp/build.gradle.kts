@@ -1,5 +1,7 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
+import com.google.common.base.CaseFormat
+import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -18,6 +20,11 @@ plugins {
 
 val buildIosTarget = project.findProperty("target.ios") == true
 val buildWasmTarget = project.findProperty("target.wasm") == true
+val flavor = project.findProperty("buildkonfig.flavor") as String
+val flavorTaskName = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_CAMEL).convert(flavor)!!
+val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavor)!!
+val isProd = project.findProperty("server.prod") == true
+
 kotlin {
     if (buildWasmTarget) {
         @OptIn(ExperimentalWasmDsl::class)
@@ -160,6 +167,14 @@ android {
             excludes += listOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/versions/9/OSGI-INF/MANIFEST.MF")
         }
     }
+    flavorDimensions += "server"
+    productFlavors {
+        create(flavorTaskName) {
+            applicationIdSuffix = ".$flavorId"
+            dimension = "server"
+            versionNameSuffix = "-$flavorId"
+        }
+    }
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".debug"
@@ -185,16 +200,15 @@ android {
     }
 }
 
-val flavor = project.findProperty("buildkonfig.flavor") as String
-val isProd = project.findProperty("server.prod") == true
-
 easylauncher {
+    productFlavors {
+        register(flavorTaskName) {
+            filters(chromeLike(label = flavor))
+        }
+    }
     buildTypes {
         register("debug") {
-            filters(greenRibbonFilter("debug"), chromeLike(label = flavor))
-        }
-        register("release") {
-            filters(chromeLike(label = flavor))
+            filters(greenRibbonFilter("debug"))
         }
     }
 }
@@ -268,5 +282,5 @@ val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
 }
 
 afterEvaluate {
-    tasks.getByName("packageRelease").dependsOn(decodeBase64ToStoreFileTask)
+    tasks["package${flavorTaskName.uppercaseFirstChar()}Release"]?.dependsOn(decodeBase64ToStoreFileTask)
 }
