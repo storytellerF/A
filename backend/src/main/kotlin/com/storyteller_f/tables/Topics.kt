@@ -3,7 +3,7 @@ package com.storyteller_f.tables
 import com.storyteller_f.BaseObj
 import com.storyteller_f.BaseTable
 import com.storyteller_f.objectType
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
@@ -27,13 +27,13 @@ object Topics : BaseTable() {
 }
 
 class Topic(
-    val author: OKey,
-    val parentId: OKey,
+    val author: PrimaryKey,
+    val parentId: PrimaryKey,
     val parentType: ObjectType,
-    val rootId: OKey,
+    val rootId: PrimaryKey,
     val rootType: ObjectType,
     val lastModifiedTime: LocalDateTime?,
-    id: OKey,
+    id: PrimaryKey,
     createdTime: LocalDateTime
 ) : BaseObj(id, createdTime) {
     companion object {
@@ -50,11 +50,11 @@ class Topic(
             )
         }
 
-        fun findById(topicId: OKey): Topic? {
+        fun findById(topicId: PrimaryKey): Topic? {
             return findTopicById(topicId)?.let(::wrapRow)
         }
 
-        fun new(info: Topic): OKey {
+        fun new(info: Topic): PrimaryKey {
             val newTopicId = Topics.insert {
                 it[id] = info.id
                 it[author] = info.author
@@ -70,7 +70,7 @@ class Topic(
     }
 }
 
-fun findTopicById(id: OKey): ResultRow? {
+fun findTopicById(id: PrimaryKey): ResultRow? {
     return Topics.selectAll().where {
         Topics.id eq id
     }.limit(1).firstOrNull()

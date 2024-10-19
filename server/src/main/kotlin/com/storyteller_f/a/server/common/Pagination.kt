@@ -3,13 +3,11 @@ package com.storyteller_f.a.server.common
 import com.storyteller_f.BaseTable
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.server.routing.*
 import io.ktor.util.converters.*
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.andWhere
 
 inline fun <T, reified PageTokenType : Any> RoutingContext.pagination(
@@ -69,7 +67,7 @@ inline fun <T, reified PageTokenType : Any> RoutingContext.pagination(
     }
 }
 
-fun Query.bindPaginationQuery(table: BaseTable, prePageToken: OKey?, nextPageToken: OKey?, size: Int): Query {
+fun Query.bindPaginationQuery(table: BaseTable, prePageToken: PrimaryKey?, nextPageToken: PrimaryKey?, size: Int): Query {
     if (nextPageToken != null) {
         andWhere {
             table.id less nextPageToken

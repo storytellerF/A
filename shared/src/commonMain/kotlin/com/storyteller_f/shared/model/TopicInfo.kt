@@ -1,6 +1,6 @@
 package com.storyteller_f.shared.model
 
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
@@ -9,12 +9,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TopicInfo(
-    override val id: OKey,
+    override val id: PrimaryKey,
     val content: TopicContent,
-    val author: OKey,
-    val rootId: OKey,
+    val author: PrimaryKey,
+    val rootId: PrimaryKey,
     val rootType: ObjectType,
-    val parentId: OKey,
+    val parentId: PrimaryKey,
     val parentType: ObjectType,
     val createdTime: LocalDateTime,
     val lastModifiedTime: LocalDateTime?,
@@ -42,7 +42,7 @@ sealed interface TopicContent {
 
     @Serializable
     @SerialName("encrypted")
-    data class Encrypted(val encrypted: String, val encryptedKey: Map<OKey, String>) : TopicContent
+    data class Encrypted(val encrypted: String, val encryptedKey: Map<PrimaryKey, String>) : TopicContent
 
     @Serializable
     @SerialName("decrypted-failed")

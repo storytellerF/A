@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.client
@@ -16,11 +15,11 @@ import com.storyteller_f.a.app.common.serviceCatching
 import com.storyteller_f.a.app.topic.UserHeadRow
 import com.storyteller_f.a.client_lib.getUserInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
-fun UserRefCell(modifier: Modifier = Modifier, userId: OKey) {
+fun UserRefCell(modifier: Modifier = Modifier, userId: PrimaryKey) {
     val viewModel = viewModel(UserViewModel::class, keys = listOf("user", userId)) {
         UserViewModel(userId)
     }
@@ -34,7 +33,7 @@ fun UserRefCell(modifier: Modifier = Modifier, userId: OKey) {
     }
 }
 
-class UserViewModel(private val userId: OKey) : SimpleViewModel<UserInfo>() {
+class UserViewModel(private val userId: PrimaryKey) : SimpleViewModel<UserInfo>() {
     init {
         load()
     }

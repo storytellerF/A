@@ -9,7 +9,7 @@ import com.storyteller_f.shared.*
 import com.storyteller_f.shared.obj.AddRoom
 import com.storyteller_f.shared.obj.AddTaskValue
 import com.storyteller_f.shared.obj.AddTopic
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.Tuple4
 import com.storyteller_f.shared.type.Tuple5
@@ -119,7 +119,7 @@ class Add : Subcommand("add", "add entry") {
 
     private fun roomJoinCommunity(
         l: List<AddRoom>,
-        idList: List<OKey>
+        idList: List<PrimaryKey>
     ): List<ResultRow> {
         val communities = l.mapNotNull {
             it.community
@@ -444,7 +444,7 @@ class Add : Subcommand("add", "add entry") {
         }
     }
 
-    private fun userJoinCommunity(users: List<String>, communityId: OKey) {
+    private fun userJoinCommunity(users: List<String>, communityId: PrimaryKey) {
         users.forEach {
             val userId = Users.select(Users.id).where {
                 Users.aid eq it

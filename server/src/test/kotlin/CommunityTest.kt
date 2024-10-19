@@ -10,7 +10,7 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.TopicSnapshotPack
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Community
@@ -99,7 +99,7 @@ class CommunityTest {
                 communities.forEach {
                     client.joinCommunity(it)
                 }
-                var lastCommunityId: OKey? = null
+                var lastCommunityId: PrimaryKey? = null
                 var sum = 0L
                 while (true) {
                     val res = client.getJoinCommunities(lastCommunityId, 3)
@@ -115,7 +115,7 @@ class CommunityTest {
         }
     }
 
-    private suspend fun createCommunity(): OKey {
+    private suspend fun createCommunity(): PrimaryKey {
         val newId = SnowflakeFactory.nextId()
         return DatabaseFactory.dbQuery {
             Community.new(Community("aid", "name", null, 0u, null, newId, now()))

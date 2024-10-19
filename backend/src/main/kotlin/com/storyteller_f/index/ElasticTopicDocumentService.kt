@@ -6,7 +6,7 @@ import co.elastic.clients.transport.TransportUtils
 import co.elastic.clients.transport.rest_client.RestClientTransport
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.ElasticConnection
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -30,7 +30,7 @@ class ElasticTopicDocumentService(private val connection: ElasticConnection) : T
         }
     }
 
-    override suspend fun getDocument(idList: List<OKey>): List<TopicDocument?> {
+    override suspend fun getDocument(idList: List<PrimaryKey>): List<TopicDocument?> {
         return useElasticClient(connection) {
             idList.map { id ->
                 get({

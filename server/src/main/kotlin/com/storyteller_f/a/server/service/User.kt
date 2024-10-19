@@ -4,7 +4,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.User
 import io.ktor.server.routing.*
 
@@ -21,7 +21,7 @@ fun toFinalUserInfo(p: Pair<UserInfo, String?>, backend: Backend): UserInfo {
 }
 
 suspend fun RoutingContext.getUser(
-    it: OKey,
+    it: PrimaryKey,
     backend: Backend
 ) = runCatching {
     DatabaseFactory.queryNotNull({

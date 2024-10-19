@@ -4,7 +4,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.common.bindPaginationQuery
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import kotlinx.datetime.LocalDateTime
@@ -24,7 +24,7 @@ fun Community.toCommunityIfo(
     joinTime
 )
 
-suspend fun getCommunity(communityId: OKey, backend: Backend): Result<CommunityInfo?> {
+suspend fun getCommunity(communityId: PrimaryKey, backend: Backend): Result<CommunityInfo?> {
     return runCatching {
         DatabaseFactory.first({ item ->
             Triple(item.toCommunityIfo(now()), item.icon, item.poster)
@@ -40,8 +40,8 @@ suspend fun getCommunity(communityId: OKey, backend: Backend): Result<CommunityI
 }
 
 suspend fun joinCommunity(
-    id: OKey,
-    it: OKey
+    id: PrimaryKey,
+    it: PrimaryKey
 ) = runCatching {
     DatabaseFactory.dbQuery {
         createCommunityJoin(id, it)
@@ -52,8 +52,8 @@ suspend fun joinCommunity(
 suspend fun searchCommunities(
     word: String,
     backend: Backend,
-    prePageToken: OKey?,
-    nextPageToken: OKey?,
+    prePageToken: PrimaryKey?,
+    nextPageToken: PrimaryKey?,
     size: Int
 ): Result<Pair<List<CommunityInfo>, Long>> {
     return runCatching {
@@ -75,10 +75,10 @@ suspend fun searchCommunities(
 }
 
 suspend fun searchJoinedCommunities(
-    uid: OKey,
+    uid: PrimaryKey,
     backend: Backend,
-    pre: OKey?,
-    next: OKey?,
+    pre: PrimaryKey?,
+    next: PrimaryKey?,
     size: Int
 ): Result<Pair<List<CommunityInfo>, Long>> {
     return runCatching {

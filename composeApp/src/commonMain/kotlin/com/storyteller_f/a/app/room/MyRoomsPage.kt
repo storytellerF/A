@@ -24,11 +24,11 @@ import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.a.client_lib.getJoinedRooms
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
-fun MyRoomsPage(onClick: (OKey) -> Unit) {
+fun MyRoomsPage(onClick: (PrimaryKey) -> Unit) {
     val viewModel = viewModel(MyRoomsViewModel::class) {
         MyRoomsViewModel()
     }
@@ -37,7 +37,7 @@ fun MyRoomsPage(onClick: (OKey) -> Unit) {
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class MyRoomsViewModel : PagingViewModel<OKey, RoomInfo>({
+class MyRoomsViewModel : PagingViewModel<PrimaryKey, RoomInfo>({
     SimplePagingSource {
         serviceCatching {
             client.getJoinedRooms(10, it)
@@ -50,7 +50,7 @@ class MyRoomsViewModel : PagingViewModel<OKey, RoomInfo>({
 @Composable
 fun RoomList(
     items: LazyPagingItems<RoomInfo>,
-    onClick: (OKey) -> Unit
+    onClick: (PrimaryKey) -> Unit
 ) {
     StateView(items) {
         LazyColumn(
@@ -72,7 +72,7 @@ fun RoomList(
 }
 
 @Composable
-fun RoomCell(roomInfo: RoomInfo?, onClick: (OKey) -> Unit = {}) {
+fun RoomCell(roomInfo: RoomInfo?, onClick: (PrimaryKey) -> Unit = {}) {
     var showDialog by remember {
         mutableStateOf(false)
     }

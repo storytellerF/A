@@ -115,7 +115,7 @@ services:
   adminer:
     image: adminer
     ports:
-      - ${DATABASE_FRONT}:8080
+      - ${DATABASE_FRONT_PORT}:8080
     depends_on:
       db:
         condition: service_healthy

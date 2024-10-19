@@ -23,12 +23,12 @@ import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.topic.TopicCell
 import com.storyteller_f.a.client_lib.getWorldTopics
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
-fun WorldPage(onClick: (OKey, ObjectType) -> Unit) {
+fun WorldPage(onClick: (PrimaryKey, ObjectType) -> Unit) {
     val viewModel = viewModel(WorldViewModel::class) {
         WorldViewModel()
     }
@@ -37,7 +37,7 @@ fun WorldPage(onClick: (OKey, ObjectType) -> Unit) {
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class WorldViewModel : PagingViewModel<OKey, TopicInfo>({
+class WorldViewModel : PagingViewModel<PrimaryKey, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
             client.getWorldTopics(it, 10)
@@ -50,7 +50,7 @@ class WorldViewModel : PagingViewModel<OKey, TopicInfo>({
 @Composable
 fun TopicList(
     items: LazyPagingItems<TopicInfo>,
-    onClick: (OKey, ObjectType) -> Unit
+    onClick: (PrimaryKey, ObjectType) -> Unit
 ) {
     StateView(items) {
         LazyColumn(

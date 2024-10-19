@@ -5,6 +5,8 @@ import org.bouncycastle.jce.interfaces.ECPrivateKey
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECPrivateKeySpec
 import org.bouncycastle.jce.spec.ECPublicKeySpec
+import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
+import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.util.encoders.Hex
@@ -24,6 +26,14 @@ import javax.crypto.spec.SecretKeySpec
 fun addProvider() {
     Security.removeProvider("BC")
     Security.addProvider(BouncyCastleProvider())
+    Security.addProvider(BouncyCastleJsseProvider())
+//    Security.addProvider(BouncyCastlePQCProvider())
+//    Security.getProviders().forEach {
+//        println(it.name)
+//        it.services.forEach {
+//            println("service ${it.type} ${it.algorithm} ${it.className}")
+//        }
+//    }
 }
 
 @Throws(IOException::class)

@@ -1,7 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -19,7 +19,7 @@ class User(
     val address: String,
     val icon: String?,
     val nickname: String,
-    id: OKey,
+    id: PrimaryKey,
     createdTime: LocalDateTime
 ) :
     BaseObj(id, createdTime) {
@@ -36,7 +36,7 @@ class User(
             )
         }
 
-        fun findById(it: OKey): User? {
+        fun findById(it: PrimaryKey): User? {
             return find {
                 Users.id eq it
             }.limit(1).firstOrNull()?.let(::wrapRow)

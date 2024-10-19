@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
@@ -48,6 +49,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.bcprov.jdk18on)
             implementation(libs.bcpkix.jdk18on)
+//            implementation(libs.bctls.jdk18on)
             implementation(libs.cryptography.provider.jdk)
         }
         commonMain.dependencies {

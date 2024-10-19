@@ -1,11 +1,11 @@
 package com.storyteller_f.shared.model
 
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserInfo(
-    override val id: OKey,
+    override val id: PrimaryKey,
     val address: String,
     val acg: Long,
     val aid: String?,

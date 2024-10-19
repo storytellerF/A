@@ -21,11 +21,11 @@ import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.utils.lcm
 import com.storyteller_f.a.client_lib.getJoinCommunities
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
-fun MyCommunitiesPage(onClick: (OKey) -> Unit) {
+fun MyCommunitiesPage(onClick: (PrimaryKey) -> Unit) {
     val viewModel = viewModel(MyCommunitiesViewModel::class) {
         MyCommunitiesViewModel()
     }
@@ -64,7 +64,7 @@ fun MyCommunitiesPage(onClick: (OKey) -> Unit) {
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class MyCommunitiesViewModel : PagingViewModel<OKey, CommunityInfo>({
+class MyCommunitiesViewModel : PagingViewModel<PrimaryKey, CommunityInfo>({
     SimplePagingSource {
         serviceCatching {
             client.getJoinCommunities(it, 10)
@@ -85,7 +85,7 @@ fun CommunityConstrains(modifier: Modifier = Modifier, content: @Composable (Int
 }
 
 @Composable
-fun CommunityGrid(communityInfo: CommunityInfo?, onClick: (OKey) -> Unit = {}) {
+fun CommunityGrid(communityInfo: CommunityInfo?, onClick: (PrimaryKey) -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -117,7 +117,7 @@ fun CommunityGrid(communityInfo: CommunityInfo?, onClick: (OKey) -> Unit = {}) {
 }
 
 @Composable
-fun CommunityCell(communityInfo: CommunityInfo?, onClick: (OKey) -> Unit = {}) {
+fun CommunityCell(communityInfo: CommunityInfo?, onClick: (PrimaryKey) -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

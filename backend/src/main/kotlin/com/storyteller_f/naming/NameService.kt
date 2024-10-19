@@ -1,6 +1,6 @@
 package com.storyteller_f.naming
 
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 
 class NameService {
     private val nameMap = mutableMapOf<Int, Int>()
@@ -28,7 +28,7 @@ class NameService {
     }
 
     // 将数字转换为自定义字符集表示的字符串
-    private fun numberToCustomCharset(num: OKey): String {
+    private fun numberToCustomCharset(num: PrimaryKey): String {
         val base = countList.last().toULong()
 
         var number = num

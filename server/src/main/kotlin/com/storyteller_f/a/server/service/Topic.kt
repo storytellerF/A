@@ -13,7 +13,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.TopicSnapshot
 import com.storyteller_f.shared.obj.TopicSnapshotPack
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
@@ -22,7 +22,7 @@ import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 
-suspend fun RoutingContext.addTopicAtCommunity(uid: OKey, backend: Backend): Result<TopicInfo?> {
+suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend): Result<TopicInfo?> {
     val newTopic = call.receive<NewTopic>()
     return when (newTopic.parentType) {
         ObjectType.COMMUNITY -> {
@@ -48,7 +48,7 @@ suspend fun RoutingContext.addTopicAtCommunity(uid: OKey, backend: Backend): Res
     }
 }
 
-suspend fun addTopicIntoTopic(parentTopicId: OKey, uid: OKey, content: String, backend: Backend): Result<TopicInfo?> {
+suspend fun addTopicIntoTopic(parentTopicId: PrimaryKey, uid: PrimaryKey, content: String, backend: Backend): Result<TopicInfo?> {
     val topic = DatabaseFactory.queryNotNull({
         rootId to rootType
     }) {
@@ -62,10 +62,10 @@ suspend fun addTopicIntoTopic(parentTopicId: OKey, uid: OKey, content: String, b
 }
 
 suspend fun addTopicIntoCommunity(
-    communityId: OKey,
-    uid: OKey,
+    communityId: PrimaryKey,
+    uid: PrimaryKey,
     content: String,
-    id: OKey,
+    id: PrimaryKey,
     type: ObjectType,
     backend: Backend
 ): Result<TopicInfo?> {
@@ -106,7 +106,7 @@ fun Topic.toTopicInfo(): TopicInfo {
     )
 }
 
-suspend fun getTopicSnapshot(id: OKey, topicId: OKey, backend: Backend): Result<TopicSnapshotPack?> {
+suspend fun getTopicSnapshot(id: PrimaryKey, topicId: PrimaryKey, backend: Backend): Result<TopicSnapshotPack?> {
     return runCatching {
         DatabaseFactory.queryNotNull(User::toUserInfo) {
             User.findById(id)
@@ -128,7 +128,7 @@ suspend fun getTopicSnapshot(id: OKey, topicId: OKey, backend: Backend): Result<
 }
 
 private suspend fun getTopicSnapshot(
-    topicId: OKey,
+    topicId: PrimaryKey,
     it: TopicInfo,
     creatorInfo: UserInfo,
     backend: Backend
@@ -182,8 +182,8 @@ private fun getSnapshotInput(snapshot: TopicSnapshot): String {
 }
 
 suspend fun getTopic(
-    topicId: OKey,
-    it: OKey?,
+    topicId: PrimaryKey,
+    it: PrimaryKey?,
     backend: Backend
 ): Result<TopicInfo?> {
     val (isPrivateChat, roomId) = isPrivateChat(ObjectType.TOPIC, topicId)
@@ -211,12 +211,12 @@ suspend fun RoutingContext.verifySnapshot(backend: Backend) = runCatching {
 }
 
 suspend fun getTopics(
-    parentId: OKey,
+    parentId: PrimaryKey,
     parentType: ObjectType,
-    uid: OKey? = null,
+    uid: PrimaryKey? = null,
     backend: Backend,
-    preTopicId: OKey?,
-    nextTopicId: OKey?,
+    preTopicId: PrimaryKey?,
+    nextTopicId: PrimaryKey?,
     size: Int
 ): Result<Pair<List<TopicInfo>, Long>> {
     return runCatching {
@@ -268,7 +268,7 @@ suspend fun getTopics(
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)
 
 @OptIn(ExperimentalStdlibApi::class)
-fun getEncryptedTopicContent(topicId: List<OKey>, uid: OKey?): List<TopicContent.Encrypted> {
+fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey?): List<TopicContent.Encrypted> {
     val aesMap = EncryptedTopicKeys.selectAll().where {
         val op = EncryptedTopicKeys.topicId inList topicId
         if (uid != null) {
@@ -301,7 +301,7 @@ fun getEncryptedTopicContent(topicId: List<OKey>, uid: OKey?): List<TopicContent
     }
 }
 
-suspend fun isPrivateChat(parentType: ObjectType, parentId: OKey): Pair<Boolean, OKey> {
+suspend fun isPrivateChat(parentType: ObjectType, parentId: PrimaryKey): Pair<Boolean, PrimaryKey> {
     val b1 = parentType == ObjectType.TOPIC
     return when {
         b1 -> {

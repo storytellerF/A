@@ -89,7 +89,7 @@ fun StateView(state: LoadingState?, refresh: () -> Unit, content: @Composable ()
 
         is LoadingState.Done -> if (state.itemCount == 0) {
             CenterBox {
-                Text(text = "empty")
+                Text(text = "No content yet.")
             }
         } else {
             content()

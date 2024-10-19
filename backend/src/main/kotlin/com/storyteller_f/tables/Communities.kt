@@ -1,7 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
@@ -18,9 +18,9 @@ class Community(
     val aid: String,
     val name: String,
     val icon: String?,
-    val owner: OKey,
+    val owner: PrimaryKey,
     val poster: String?,
-    id: OKey,
+    id: PrimaryKey,
     createdTime: LocalDateTime
 ) :
     BaseObj(id, createdTime) {
@@ -41,7 +41,7 @@ class Community(
             return Communities.selectAll().where(function)
         }
 
-        fun findById(id: OKey): Query {
+        fun findById(id: PrimaryKey): Query {
             return Communities.selectAll().where {
                 Communities.id eq id
             }
@@ -68,8 +68,8 @@ fun findCommunityByAId(aid: String): ResultRow? {
 }
 
 fun createCommunityJoin(
-    id: OKey,
-    community: OKey
+    id: PrimaryKey,
+    community: PrimaryKey
 ) = CommunityJoins.insert {
     it[joinTime] = now()
     it[uid] = id

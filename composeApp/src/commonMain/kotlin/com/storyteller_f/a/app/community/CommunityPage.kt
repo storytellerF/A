@@ -38,16 +38,16 @@ import com.storyteller_f.a.client_lib.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import kotlinx.coroutines.launch
 import moe.tlaster.precompose.viewmodel.viewModel
 import moe.tlaster.precompose.viewmodel.viewModelScope
 import org.jetbrains.compose.resources.stringResource
 
-data class OnCommunityJoined(val communityId: OKey)
+data class OnCommunityJoined(val communityId: PrimaryKey)
 
-class CommunityViewModel(private val communityId: OKey) : SimpleViewModel<CommunityInfo>() {
+class CommunityViewModel(private val communityId: PrimaryKey) : SimpleViewModel<CommunityInfo>() {
     init {
         load()
         viewModelScope.launch {
@@ -71,7 +71,7 @@ class CommunityViewModel(private val communityId: OKey) : SimpleViewModel<Commun
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class CommunityTopicsViewModel(private val communityId: OKey) : PagingViewModel<OKey, TopicInfo>({
+class CommunityTopicsViewModel(private val communityId: PrimaryKey) : PagingViewModel<PrimaryKey, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
             client.getCommunityTopics(communityId, 10)
@@ -82,7 +82,7 @@ class CommunityTopicsViewModel(private val communityId: OKey) : PagingViewModel<
 })
 
 @OptIn(ExperimentalPagingApi::class)
-class CommunityRoomsViewModel(private val communityId: OKey) : PagingViewModel<Int, RoomInfo>({
+class CommunityRoomsViewModel(private val communityId: PrimaryKey) : PagingViewModel<Int, RoomInfo>({
     SimplePagingSource {
         serviceCatching {
             client.getCommunityRooms(communityId)
@@ -95,9 +95,9 @@ class CommunityRoomsViewModel(private val communityId: OKey) : PagingViewModel<I
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CommunityPage(
-    communityId: OKey,
+    communityId: PrimaryKey,
     onClickAddTopic: () -> Unit,
-    onClick: (OKey, ObjectType) -> Unit
+    onClick: (PrimaryKey, ObjectType) -> Unit
 ) {
     val model = viewModel(CommunityViewModel::class, keys = listOf("community", communityId)) {
         CommunityViewModel(communityId)
@@ -144,8 +144,8 @@ fun CommunityPage(
 @OptIn(ExperimentalFoundationApi::class)
 private fun CommunityPageInternal(
     pagerState: PagerState,
-    communityId: OKey,
-    onClick: (OKey, ObjectType) -> Unit
+    communityId: PrimaryKey,
+    onClick: (PrimaryKey, ObjectType) -> Unit
 ) {
     HorizontalPager(pagerState) {
         when (it) {

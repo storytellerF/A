@@ -11,7 +11,7 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.RoomFrame
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
@@ -25,7 +25,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 
-val messageResponseFlow = MutableSharedFlow<Pair<RoomFrame, OKey>>()
+val messageResponseFlow = MutableSharedFlow<Pair<RoomFrame, PrimaryKey>>()
 val sharedFlow = messageResponseFlow.asSharedFlow()
 
 suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend) {
@@ -70,7 +70,7 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend) {
 
 private suspend fun addTopicAtRoom(
     newTopic: NewTopic,
-    uid: OKey,
+    uid: PrimaryKey,
     backend: Backend
 ): Result<TopicInfo> {
     return when (newTopic.parentType) {
@@ -103,8 +103,8 @@ private suspend fun addTopicAtRoom(
 }
 
 private suspend fun addTopicIntoRoom(
-    roomInfo: Pair<OKey, ObjectType>,
-    uid: OKey,
+    roomInfo: Pair<PrimaryKey, ObjectType>,
+    uid: PrimaryKey,
     newTopic: NewTopic,
     backend: Backend
 ): Result<TopicInfo> {
@@ -174,7 +174,7 @@ private suspend fun savePlainTopicContent(
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun saveEncryptedTopicContent(
     topic: Topic,
-    encryptedAes: Map<OKey, String>,
+    encryptedAes: Map<PrimaryKey, String>,
     encryptedContent: String
 ) = DatabaseFactory.dbQuery {
     val newTopicId = Topic.new(topic)
@@ -191,7 +191,7 @@ suspend fun saveEncryptedTopicContent(
     topic.toTopicInfo()
 }
 
-private fun isKeyVerified(roomId: OKey, encryptedAes: Map<OKey, String>): Boolean {
+private fun isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Boolean {
     val toSet = RoomJoins.selectAll().where {
         RoomJoins.roomId eq roomId
     }.map {

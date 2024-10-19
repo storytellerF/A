@@ -38,7 +38,7 @@ import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.world.WorldPage
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import kotlinx.coroutines.launch
 import moe.tlaster.precompose.navigation.*
@@ -46,7 +46,7 @@ import moe.tlaster.precompose.navigation.transition.NavTransition
 
 @Composable
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
-fun HomePage(appNav: AppNav, onClick: (OKey, ObjectType) -> Unit = { _, _ -> }) {
+fun HomePage(appNav: AppNav, onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }) {
     val size = calculateWindowSizeClass()
     val messageState = rememberEventState()
     val homeNavs = listOf(
@@ -59,7 +59,7 @@ fun HomePage(appNav: AppNav, onClick: (OKey, ObjectType) -> Unit = { _, _ -> }) 
         when (size.widthSizeClass) {
             WindowWidthSizeClass.Compact -> {
                 Column(
-                    Modifier.fillMaxWidth().statusBarsPadding(),
+                    Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     CustomSearchBar {
@@ -128,7 +128,7 @@ fun CustomRailNav(
     navRoutes: List<NavRoute>,
     navigate: (String) -> Unit = {}
 ) {
-    NavigationRail {
+    NavigationRail(modifier = Modifier.padding(horizontal = 8.dp)) {
         navRoutes.forEach {
             NavigationRailItem(currentEntry?.path == it.path, {
                 navigate(it.path)
@@ -165,9 +165,12 @@ private fun HomeContent(
     navigator: Navigator,
     modifier: Modifier,
     appNav: AppNav,
-    onClick: (OKey, ObjectType) -> Unit
+    onClick: (PrimaryKey, ObjectType) -> Unit
 ) {
     Column(modifier = modifier) {
+        CustomSearchBar {
+            ProjectIcon()
+        }
         NavHost(navigator, initialRoute = "/world", modifier = modifier, navTransition = remember {
             NavTransition(
                 createTransition = fadeIn() + slideInVertically {
@@ -203,7 +206,7 @@ private fun HomePager(
     modifier: Modifier,
     appNav: AppNav,
     pagerState: PagerState,
-    onClick: (OKey, ObjectType) -> Unit
+    onClick: (PrimaryKey, ObjectType) -> Unit
 ) {
     HorizontalPager(pagerState, modifier) {
         when (it) {
