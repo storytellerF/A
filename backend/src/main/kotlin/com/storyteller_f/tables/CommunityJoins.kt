@@ -1,7 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
@@ -17,7 +17,7 @@ object CommunityJoins : Table() {
     }
 }
 
-suspend fun isCommunityJoined(communityId: OKey, uid: OKey) = !DatabaseFactory.empty {
+suspend fun isCommunityJoined(communityId: PrimaryKey, uid: PrimaryKey) = !DatabaseFactory.empty {
     CommunityJoins.selectAll().where {
         CommunityJoins.communityId eq communityId and (CommunityJoins.uid eq uid)
     }

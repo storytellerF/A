@@ -8,10 +8,12 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.websocket.*
+import io.ktor.client.request.HttpRequestPipeline
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import kotlin.time.Duration.Companion.seconds
 
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
@@ -36,7 +38,7 @@ fun HttpClientConfig<*>.defaultClientConfigure() {
     }
     install(HttpCookies)
     install(WebSockets) {
-        pingInterval = 20_000
+        pingInterval = 2.seconds
         contentConverter = KotlinxWebsocketSerializationConverter(Json)
     }
     install(HttpRequestRetry) {

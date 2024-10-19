@@ -38,7 +38,7 @@ import com.storyteller_f.a.app.user.UserViewModel
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -52,7 +52,7 @@ fun TopicCell(
     topicInfo: TopicInfo?,
     contentAlignAvatar: Boolean = true,
     showAvatar: Boolean = true,
-    onClick: (OKey, ObjectType) -> Unit = { _, _ -> }
+    onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }
 ) {
     if (topicInfo != null) {
         val author = topicInfo.author
@@ -70,7 +70,7 @@ fun TopicCellInternal(
     showAvatar: Boolean,
     authorInfo: UserInfo?,
     contentAlignAvatar: Boolean,
-    onClick: (OKey, ObjectType) -> Unit = { _, _ -> }
+    onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }
 ) {
     Column(
         modifier = Modifier.clickable {
@@ -117,7 +117,7 @@ fun UserHeadRow(userInfo: UserInfo?, avatarSize: Dp = 40.dp) {
 }
 
 @Composable
-fun TopicRefCell(topicId: OKey, onClick: (OKey) -> Unit) {
+fun TopicRefCell(topicId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
     val viewModel = viewModel(TopicViewModel::class, keys = listOf("topic", topicId)) {
         TopicViewModel(topicId)
     }
@@ -130,8 +130,8 @@ fun TopicRefCell(topicId: OKey, onClick: (OKey) -> Unit) {
 @Composable
 private fun TopicRefCellContent(
     it: TopicInfo,
-    onClick: (OKey) -> Unit,
-    topicId: OKey,
+    onClick: (PrimaryKey) -> Unit,
+    topicId: PrimaryKey,
 ) {
     val author = it.author
     val authorViewModel = viewModel(UserViewModel::class, keys = listOf("user", author)) {
@@ -158,7 +158,7 @@ private fun TopicRefCellContent(
 }
 
 @Composable
-fun CustomCodeFence(modal: MarkdownComponentModel, content: String, onClick: (OKey, ObjectType) -> Unit) {
+fun CustomCodeFence(modal: MarkdownComponentModel, content: String, onClick: (PrimaryKey, ObjectType) -> Unit) {
     val children = modal.node.children
     val langOffset = children.indexOfFirst {
         it.type == MarkdownTokenTypes.FENCE_LANG
@@ -182,7 +182,7 @@ private fun RefBlock(
     children: List<ASTNode>,
     langOffset: Int,
     content: String,
-    onClick: (OKey, ObjectType) -> Unit
+    onClick: (PrimaryKey, ObjectType) -> Unit
 ): Unit? {
     val textInNode = readFenceContent(children, langOffset, content)
     val uri = Uri.parse(textInNode)
@@ -261,7 +261,7 @@ private fun readFenceContent(
 fun TopicContentField(
     content1: TopicContent?,
     modifier: Modifier = Modifier,
-    onClick: (OKey, ObjectType) -> Unit = { _, _ -> }
+    onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }
 ) {
     if (content1 is TopicContent.Plain) {
         Markdown(

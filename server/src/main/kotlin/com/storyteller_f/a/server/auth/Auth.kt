@@ -8,7 +8,7 @@ import com.storyteller_f.a.server.BuildConfig
 import com.storyteller_f.a.server.service.toFinalUserInfo
 import com.storyteller_f.a.server.service.toUserInfo
 import com.storyteller_f.shared.*
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.User
 import com.storyteller_f.tables.Users
@@ -25,7 +25,7 @@ import io.ktor.server.sessions.*
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-data class CustomCredential(val id: OKey, val sig: String)
+data class CustomCredential(val id: PrimaryKey, val sig: String)
 
 private fun HttpAuthHeader.Parameterized.customCredential(): CustomCredential? {
     val id = parameters.firstOrNull {
@@ -41,7 +41,7 @@ private fun HttpAuthHeader.Parameterized.customCredential(): CustomCredential? {
     }
 }
 
-data class CustomPrincipal(val uid: OKey)
+data class CustomPrincipal(val uid: PrimaryKey)
 
 inline fun AuthenticationConfig.custom(
     name: String? = null,
@@ -216,7 +216,7 @@ private suspend fun ApplicationCall.checkApiRequest(
 
 private suspend fun ApplicationCall.verifySignature(
     sig: String,
-    id: OKey,
+    id: PrimaryKey,
     session: UserSession.Pending
 ) = when {
     !BuildConfig.IS_PROD && sig == id.toString() -> {
@@ -261,7 +261,7 @@ private suspend fun ApplicationCall.verifySignature(
 
 private fun ApplicationCall.saveSuccessSession(
     session: UserSession.Pending,
-    id: OKey
+    id: PrimaryKey
 ) {
     sessions.set<UserSession>(UserSession.Success(session.data, session.remote, id))
 }

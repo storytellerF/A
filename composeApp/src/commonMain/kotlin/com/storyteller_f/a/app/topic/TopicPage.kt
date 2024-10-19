@@ -28,12 +28,12 @@ import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ServerResponse
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
-fun TopicPage(topicId: OKey, onClick: (OKey, ObjectType) -> Unit) {
+fun TopicPage(topicId: PrimaryKey, onClick: (PrimaryKey, ObjectType) -> Unit) {
     val viewModel = viewModel(TopicViewModel::class, keys = listOf("topic", topicId)) {
         TopicViewModel(topicId)
     }
@@ -83,7 +83,7 @@ fun TopicPage(topicId: OKey, onClick: (OKey, ObjectType) -> Unit) {
     }
 }
 
-class TopicViewModel(private val topicId: OKey) : SimpleViewModel<TopicInfo>() {
+class TopicViewModel(private val topicId: PrimaryKey) : SimpleViewModel<TopicInfo>() {
     init {
         load()
     }
@@ -98,7 +98,7 @@ class TopicViewModel(private val topicId: OKey) : SimpleViewModel<TopicInfo>() {
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class TopicNestedViewModel(topicId: OKey) : PagingViewModel<OKey, TopicInfo>({
+class TopicNestedViewModel(topicId: PrimaryKey) : PagingViewModel<PrimaryKey, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
             processEncryptedTopic(client.getTopicTopics(topicId, it, 10))

@@ -8,7 +8,7 @@ import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.TopicSnapshotPack
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 
@@ -30,7 +30,7 @@ private fun Route.bindProtectedTopicRoute(backend: Backend) {
         }
         get("/{id}/snapshot") {
             usePrincipal { id ->
-                checkParameter<OKey, TopicSnapshotPack> { topicId ->
+                checkParameter<PrimaryKey, TopicSnapshotPack> { topicId ->
                     getTopicSnapshot(id, topicId, backend)
                 }
             }
@@ -42,7 +42,7 @@ private fun Route.bindProtectedCommunityRoute(backend: Backend) {
     route("/community") {
         get("/joined") {
             usePrincipal {
-                pagination<CommunityInfo, OKey>({
+                pagination<CommunityInfo, PrimaryKey>({
                     it.id.toString()
                 }) { pre, next, size ->
                     searchJoinedCommunities(it, backend, pre, next, size)
@@ -51,7 +51,7 @@ private fun Route.bindProtectedCommunityRoute(backend: Backend) {
         }
         post("/{id}/join") {
             usePrincipal { id ->
-                checkParameter<OKey, Unit>("id") {
+                checkParameter<PrimaryKey, Unit>("id") {
                     joinCommunity(id, it)
                 }
             }
@@ -63,7 +63,7 @@ private fun Route.bindProtectedRoomRoute(backend: Backend) {
     route("/room") {
         get("/joined") {
             usePrincipal {
-                pagination<RoomInfo, OKey>({
+                pagination<RoomInfo, PrimaryKey>({
                     ""
                 }) { pre, next, size ->
                     searchJoinedRooms(it, backend = backend, pre, next, size)
@@ -72,17 +72,17 @@ private fun Route.bindProtectedRoomRoute(backend: Backend) {
         }
         post("/{id}/join") {
             usePrincipal { id ->
-                checkParameter<OKey, Unit>("id") {
+                checkParameter<PrimaryKey, Unit>("id") {
                     joinRoom(it, id)
                 }
             }
         }
         get("/{id}/pub-keys") {
             usePrincipal { id ->
-                pagination<Pair<OKey, String>, OKey>({
+                pagination<Pair<PrimaryKey, String>, PrimaryKey>({
                     it.first.toString()
                 }) { pre, next, size ->
-                    checkParameter<OKey, Pair<List<Pair<OKey, String>>, Long>>("id") {
+                    checkParameter<PrimaryKey, Pair<List<Pair<PrimaryKey, String>>, Long>>("id") {
                         getRoomPubKeys(it, id, pre, next, size)
                     }
                 }

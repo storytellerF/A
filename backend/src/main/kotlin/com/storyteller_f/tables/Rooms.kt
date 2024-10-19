@@ -1,7 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.selectAll
@@ -17,8 +17,8 @@ class Room(
     val aid: String,
     val name: String,
     val icon: String?,
-    val creator: OKey,
-    id: OKey,
+    val creator: PrimaryKey,
+    id: PrimaryKey,
     createdTime: LocalDateTime
 ) : BaseObj(id, createdTime) {
     companion object {
@@ -35,7 +35,7 @@ class Room(
     }
 }
 
-fun findRoomById(id: OKey): ResultRow? {
+fun findRoomById(id: PrimaryKey): ResultRow? {
     return Rooms.selectAll().where {
         Rooms.id eq id
     }.limit(1).firstOrNull()

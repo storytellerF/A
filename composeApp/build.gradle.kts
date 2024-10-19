@@ -1,7 +1,8 @@
+@file:OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import com.google.common.base.CaseFormat
-import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -21,7 +22,6 @@ plugins {
 val buildIosTarget = project.findProperty("target.ios") == true
 val buildWasmTarget = project.findProperty("target.wasm") == true
 val flavor = project.findProperty("buildkonfig.flavor") as String
-val flavorTaskName = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_CAMEL).convert(flavor)!!
 val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavor)!!
 val isProd = project.findProperty("server.prod") == true
 
@@ -50,7 +50,10 @@ kotlin {
 //        compilerOptions {
 //            jvmTarget.set(JvmTarget.JVM_11)
 //        }
-        compilations.all { kotlinOptions { jvmTarget = "11" } }
+        compilations.all {
+            @Suppress("DEPRECATION")
+            kotlinOptions { jvmTarget = "11" }
+        }
     }
 
     jvm("desktop")
@@ -139,7 +142,7 @@ android {
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
 
     defaultConfig {
-        applicationId = "com.storyteller_f.a"
+        applicationId = "com.storyteller_f.a.$flavorId"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -170,10 +173,12 @@ android {
     flavorDimensions += "server"
     buildTypes {
         getByName("debug") {
-            applicationIdSuffix = ".$flavorId.debug"
+            applicationIdSuffix = ".debug"
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         getByName("release") {
-            applicationIdSuffix = ".$flavorId"
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

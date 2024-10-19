@@ -1,6 +1,6 @@
 package com.storyteller_f.index
 
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.*
 import org.apache.lucene.index.DirectoryReader
@@ -29,7 +29,7 @@ class LuceneTopicDocumentService(private val path: Path) : TopicDocumentService 
         }
     }
 
-    override suspend fun getDocument(idList: List<OKey>): List<TopicDocument?> {
+    override suspend fun getDocument(idList: List<PrimaryKey>): List<TopicDocument?> {
         return FSDirectory.open(path).use {
             DirectoryReader.open(it).use { reader ->
                 val searcher = IndexSearcher(reader)

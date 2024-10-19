@@ -6,7 +6,7 @@ import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.obj.TopicSnapshotPack
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -14,46 +14,46 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
-suspend fun HttpClient.requestRoomInfo(id: OKey) = get("/room/$id").body<RoomInfo>()
-suspend fun HttpClient.requestRoomKeys(id: OKey) =
-    get("/room/$id/pub-keys").body<ServerResponse<Pair<OKey, String>>>()
+suspend fun HttpClient.requestRoomInfo(id: PrimaryKey) = get("room/$id").body<RoomInfo>()
+suspend fun HttpClient.requestRoomKeys(id: PrimaryKey) =
+    get("room/$id/pub-keys").body<ServerResponse<Pair<PrimaryKey, String>>>()
 
-suspend fun HttpClient.joinRoom(id: OKey) = post("/room/$id/join")
+suspend fun HttpClient.joinRoom(id: PrimaryKey) = post("room/$id/join")
 
-suspend fun HttpClient.joinCommunity(id: OKey) = post("/community/$id/join")
+suspend fun HttpClient.joinCommunity(id: PrimaryKey) = post("community/$id/join")
 
 suspend fun HttpClient.getRoomTopics(
-    roomId: OKey,
-    nextTopicId: OKey?,
+    roomId: PrimaryKey,
+    nextTopicId: PrimaryKey?,
     size: Int,
-) = get("/room/$roomId/topics?start=${nextTopicId ?: 0}") {
+) = get("room/$roomId/topics?start=${nextTopicId ?: 0}") {
     url {
         appendPagingQueryParams(size, nextTopicId)
     }
 }.body<ServerResponse<TopicInfo>>()
 
-suspend fun HttpClient.getCommunityInfo(id: OKey) = get("/community/$id").body<CommunityInfo>()
+suspend fun HttpClient.getCommunityInfo(id: PrimaryKey) = get("community/$id").body<CommunityInfo>()
 
-suspend fun HttpClient.getCommunityTopics(communityId: OKey, size: Int) =
-    get("/community/$communityId/topics?size=$size").body<ServerResponse<TopicInfo>>()
+suspend fun HttpClient.getCommunityTopics(communityId: PrimaryKey, size: Int) =
+    get("community/$communityId/topics?size=$size").body<ServerResponse<TopicInfo>>()
 
-suspend fun HttpClient.getCommunityRooms(communityId: OKey) =
-    get("/community/$communityId/rooms").body<ServerResponse<RoomInfo>>()
+suspend fun HttpClient.getCommunityRooms(communityId: PrimaryKey) =
+    get("community/$communityId/rooms").body<ServerResponse<RoomInfo>>()
 
-suspend fun HttpClient.getJoinCommunities(nextCommunityId: OKey?, size: Int) = get("/community/joined") {
+suspend fun HttpClient.getJoinCommunities(nextCommunityId: PrimaryKey?, size: Int) = get("community/joined") {
     url {
         appendPagingQueryParams(size, nextCommunityId)
     }
 }.body<ServerResponse<CommunityInfo>>()
 
-private fun URLBuilder.appendPagingQueryParams(size: Int, nextCommunityId: OKey?) {
+private fun URLBuilder.appendPagingQueryParams(size: Int, nextCommunityId: PrimaryKey?) {
     parameters.append("size", size.toString())
     if (nextCommunityId != null) {
         parameters.append("nextPageToken", nextCommunityId.toString())
     }
 }
 
-suspend fun HttpClient.getWorldTopics(nextTopicId: OKey?, size: Int) = get("/world") {
+suspend fun HttpClient.getWorldTopics(nextTopicId: PrimaryKey?, size: Int) = get("world") {
     url {
         parameters.append("size", size.toString())
         if (nextTopicId != null) {
@@ -62,18 +62,18 @@ suspend fun HttpClient.getWorldTopics(nextTopicId: OKey?, size: Int) = get("/wor
     }
 }.body<ServerResponse<TopicInfo>>()
 
-suspend fun HttpClient.getUserInfo(id: OKey) = get("/user/$id").body<UserInfo>()
+suspend fun HttpClient.getUserInfo(id: PrimaryKey) = get("user/$id").body<UserInfo>()
 
-suspend fun HttpClient.getTopicTopics(topicId: OKey, nextTopicId: OKey?, size: Int) =
-    get("/topic/$topicId/topics") {
+suspend fun HttpClient.getTopicTopics(topicId: PrimaryKey, nextTopicId: PrimaryKey?, size: Int) =
+    get("topic/$topicId/topics") {
         url {
             appendPagingQueryParams(size, nextTopicId)
         }
     }.body<ServerResponse<TopicInfo>>()
 
-suspend fun HttpClient.getTopicInfo(id: OKey) = get("/topic/$id").body<TopicInfo>()
+suspend fun HttpClient.getTopicInfo(id: PrimaryKey) = get("topic/$id").body<TopicInfo>()
 
-suspend fun HttpClient.getJoinedRooms(size: Int, nextRoomId: OKey?) = get("/room/joined") {
+suspend fun HttpClient.getJoinedRooms(size: Int, nextRoomId: PrimaryKey?) = get("room/joined") {
     url {
         appendPagingQueryParams(size, nextRoomId)
     }
@@ -81,10 +81,10 @@ suspend fun HttpClient.getJoinedRooms(size: Int, nextRoomId: OKey?) = get("/room
 
 suspend fun HttpClient.createNewTopic(
     objectType: ObjectType,
-    objectId: OKey,
+    objectId: PrimaryKey,
     input: String
 ): HttpResponse {
-    return post("/topic") {
+    return post("topic") {
         contentType(ContentType.Application.Json)
         setBody(NewTopic(objectType, objectId, TopicContent.Plain(input)))
     }
@@ -95,7 +95,7 @@ suspend fun HttpClient.sign(
     publicKey: String,
     signature: String,
     address: String
-) = post(if (isSignUp) "/sign_up" else "/sign_in") {
+) = post(if (isSignUp) "sign_up" else "sign_in") {
     contentType(ContentType.Application.Json)
     if (isSignUp) {
         setBody(SignUpPack(publicKey, signature))
@@ -104,11 +104,11 @@ suspend fun HttpClient.sign(
     }
 }.body<UserInfo>()
 
-suspend fun HttpClient.getData() = get("/get_data").bodyAsText()
+suspend fun HttpClient.getData() = get("get_data").bodyAsText()
 
-suspend fun HttpClient.getTopicSnapshot(topicId: OKey) = get("/topic/$topicId/snapshot")
+suspend fun HttpClient.getTopicSnapshot(topicId: PrimaryKey) = get("topic/$topicId/snapshot")
 
-suspend fun HttpClient.verifySnapshot(pack: TopicSnapshotPack) = post("/topic/verify-snapshot") {
+suspend fun HttpClient.verifySnapshot(pack: TopicSnapshotPack) = post("topic/verify-snapshot") {
     contentType(ContentType.Application.Json)
     setBody(pack)
 }

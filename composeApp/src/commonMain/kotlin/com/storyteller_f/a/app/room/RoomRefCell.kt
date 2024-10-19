@@ -1,13 +1,12 @@
 package com.storyteller_f.a.app.room
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import com.storyteller_f.a.app.common.StateView2
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
-fun RoomRefCell(roomId: OKey, onClick: (OKey) -> Unit) {
+fun RoomRefCell(roomId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
     val viewModel = viewModel(RoomViewModel::class, keys = listOf("room", roomId)) {
         RoomViewModel(roomId)
     }

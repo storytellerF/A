@@ -3,7 +3,7 @@ package com.storyteller_f.a.app.common
 import androidx.paging.PagingState
 import app.cash.paging.*
 import com.storyteller_f.shared.model.Identifiable
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import kotbase.*
 import kotbase.ktx.*
@@ -29,10 +29,10 @@ fun getOrCreateCollection(collectionName: String) =
 class CustomQueryPagingSource<RowType : Identifiable>(
     private val select: Select,
     collectionName: String,
-    private val queryProvider: From.(OKey?) -> LimitRouter,
+    private val queryProvider: From.(PrimaryKey?) -> LimitRouter,
     private val mapMapper: ((Map<String, Any?>) -> RowType?)? = null,
     private val jsonStringMapper: ((String) -> RowType?)? = null,
-) : PagingSource<OKey, RowType>() {
+) : PagingSource<PrimaryKey, RowType>() {
 
     private val collection = getOrCreateCollection(collectionName)
 
@@ -44,7 +44,7 @@ class CustomQueryPagingSource<RowType : Identifiable>(
         }
     }
 
-    override fun getRefreshKey(state: PagingState<OKey, RowType>): OKey? {
+    override fun getRefreshKey(state: PagingState<PrimaryKey, RowType>): PrimaryKey? {
         return null
     }
 
@@ -56,11 +56,11 @@ class CustomQueryPagingSource<RowType : Identifiable>(
         }
     }
 
-    val map = mutableMapOf<OKey, ListenerToken>()
+    val map = mutableMapOf<PrimaryKey, ListenerToken>()
 
     override suspend fun load(
-        params: PagingSourceLoadParams<OKey>
-    ): PagingSourceLoadResult<OKey, RowType> {
+        params: PagingSourceLoadParams<PrimaryKey>
+    ): PagingSourceLoadResult<PrimaryKey, RowType> {
         val key = params.key
         if (key == null) {
             removeAllToken()

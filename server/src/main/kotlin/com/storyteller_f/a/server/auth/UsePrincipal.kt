@@ -1,7 +1,7 @@
 package com.storyteller_f.a.server.auth
 
 import com.storyteller_f.a.server.service.ForbiddenException
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -11,7 +11,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.util.logging.*
 
-suspend inline fun <reified R : Any> RoutingContext.usePrincipal(block: (OKey) -> Result<R?>) {
+suspend inline fun <reified R : Any> RoutingContext.usePrincipal(block: (PrimaryKey) -> Result<R?>) {
     usePrincipalOrNull {
         if (it != null) {
             block(it)
@@ -29,7 +29,7 @@ suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> R
     }
 }
 
-suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (OKey?) -> Result<R?>) {
+suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (PrimaryKey?) -> Result<R?>) {
     val uid = call.principal<CustomPrincipal>()?.uid
     // 有可能存在bug 导致block 抛出异常，所以需要进行一次try catch
     try {
@@ -62,7 +62,7 @@ suspend fun RoutingContext.respondError(e: Throwable) {
     }
 }
 
-inline fun <reified R : Any> DefaultWebSocketServerSession.usePrincipalOrNull(block: (OKey?) -> R?) {
+inline fun <reified R : Any> DefaultWebSocketServerSession.usePrincipalOrNull(block: (PrimaryKey?) -> R?) {
     val uid = call.principal<CustomPrincipal>()?.uid
     if (uid == null) {
         block(null)

@@ -42,7 +42,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ServerResponse
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.websocket.*
@@ -58,10 +58,10 @@ import moe.tlaster.precompose.viewmodel.viewModelScope
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
-data class OnRoomJoined(val id: OKey)
+data class OnRoomJoined(val id: PrimaryKey)
 
 @OptIn(ExperimentalPagingApi::class)
-class RoomTopicsViewModel(roomId: OKey) : PagingViewModel<OKey, TopicInfo>({
+class RoomTopicsViewModel(roomId: PrimaryKey) : PagingViewModel<PrimaryKey, TopicInfo>({
     CustomQueryPagingSource(
         select = select(all()),
         collectionName = "topics$roomId",
@@ -89,9 +89,9 @@ class RoomTopicsViewModel(roomId: OKey) : PagingViewModel<OKey, TopicInfo>({
 @OptIn(ExperimentalPagingApi::class)
 class RoomTopicsRemoteMediator(
     private val collectionName: String,
-    val networkService: suspend (OKey?) -> ServerResponse<TopicInfo>
+    val networkService: suspend (PrimaryKey?) -> ServerResponse<TopicInfo>
 ) :
-    RemoteMediator<OKey, TopicInfo>() {
+    RemoteMediator<PrimaryKey, TopicInfo>() {
     private val scope = database.defaultScope
     private val collection
         get() = scope.getCollection(collectionName) ?: database.createCollection(
@@ -100,7 +100,7 @@ class RoomTopicsRemoteMediator(
 
     override suspend fun load(
         loadType: LoadType,
-        state: PagingState<OKey, TopicInfo>
+        state: PagingState<PrimaryKey, TopicInfo>
     ): MediatorResult {
         Napier.v(tag = "pagination") {
             "mediator load $loadType"
@@ -153,7 +153,7 @@ class RoomTopicsRemoteMediator(
     }
 }
 
-class RoomViewModel(private val roomId: OKey) : SimpleViewModel<RoomInfo>() {
+class RoomViewModel(private val roomId: PrimaryKey) : SimpleViewModel<RoomInfo>() {
     init {
         load()
         viewModelScope.launch {
@@ -175,7 +175,7 @@ class RoomViewModel(private val roomId: OKey) : SimpleViewModel<RoomInfo>() {
 }
 
 @Composable
-fun RoomPage(roomId: OKey, onClick: (OKey, ObjectType) -> Unit) {
+fun RoomPage(roomId: PrimaryKey, onClick: (PrimaryKey, ObjectType) -> Unit) {
     val viewModel = viewModel(RoomTopicsViewModel::class, keys = listOf("room-topics", roomId)) {
         RoomTopicsViewModel(roomId)
     }
@@ -221,7 +221,7 @@ fun RoomPage(roomId: OKey, onClick: (OKey, ObjectType) -> Unit) {
 private fun ColumnScope.RoomPageInternal(
     lazyListState: LazyListState,
     items: LazyPagingItems<TopicInfo>,
-    onClick: (OKey, ObjectType) -> Unit
+    onClick: (PrimaryKey, ObjectType) -> Unit
 ) {
     LazyColumn(
         state = lazyListState,
@@ -253,7 +253,7 @@ private fun ColumnScope.RoomPageInternal(
     }
 }
 
-class RoomKeysViewModel(private val id: OKey, private: Boolean) : SimpleViewModel<List<Pair<OKey, String>>>() {
+class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean) : SimpleViewModel<List<Pair<PrimaryKey, String>>>() {
 
     init {
         if (private) {
@@ -273,7 +273,7 @@ class RoomKeysViewModel(private val id: OKey, private: Boolean) : SimpleViewMode
 
 @Composable
 private fun InputGroup(
-    roomId: OKey,
+    roomId: PrimaryKey,
     roomInfo: RoomInfo?,
     notifyError: (String) -> Unit,
     scrollToNew: () -> Unit
@@ -301,11 +301,11 @@ private fun InputGroup(
 @OptIn(ExperimentalStdlibApi::class)
 private fun sendMessage(
     roomInfo: RoomInfo?,
-    roomId: OKey,
+    roomId: PrimaryKey,
     input: String,
     scrollToNew: () -> Unit,
     keyState: LoadingState?,
-    keyData: List<Pair<OKey, String>>?,
+    keyData: List<Pair<PrimaryKey, String>>?,
     notifyError: (String) -> Unit
 ) {
     if (roomInfo != null) {
@@ -343,7 +343,7 @@ private fun sendMessage(
 fun InputGroupInternal(
     input: String,
     updateInput: (String) -> Unit,
-    roomId: OKey?,
+    roomId: PrimaryKey?,
     isJoined: Boolean,
     wsState: LoadingState?,
     isSending: Boolean,

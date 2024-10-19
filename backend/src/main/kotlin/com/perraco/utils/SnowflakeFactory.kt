@@ -6,7 +6,7 @@
 
 package com.perraco.utils
 
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.yield
@@ -79,7 +79,7 @@ object SnowflakeFactory {
 
     private val lock = Mutex()
 
-    suspend fun nextId(): OKey {
+    suspend fun nextId(): PrimaryKey {
         return lock.withLock {
             nextIdInternal()
         }
@@ -90,7 +90,7 @@ object SnowflakeFactory {
      * @return The generated Snowflake ID in the configured base alphanumeric string.
      * @throws IllegalStateException If the system clock has moved backwards, breaking the ID sequence.
      */
-    private suspend fun nextIdInternal(): OKey {
+    private suspend fun nextIdInternal(): PrimaryKey {
         var currentTimestampMs: Long = newTimestamp()
 
         // Check for invalid system clock settings.
@@ -128,7 +128,7 @@ object SnowflakeFactory {
      * @param id The Snowflake ID to parse.
      * @return SnowflakeData containing the ID segments.
      */
-    fun parse(id: OKey): SnowflakeData {
+    fun parse(id: PrimaryKey): SnowflakeData {
         // Extract the machine ID segment.
         val machineIdSegment = (id shr SEQUENCE_BITS) and MAX_MACHINE_ID.toULong()
 

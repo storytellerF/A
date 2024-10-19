@@ -1,6 +1,6 @@
 package com.storyteller_f.a.server.auth
 
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -15,5 +15,5 @@ sealed interface UserSession {
 
     @Serializable
     @SerialName("success")
-    data class Success(val data: String, val remote: String, val id: OKey) : UserSession
+    data class Success(val data: String, val remote: String, val id: PrimaryKey) : UserSession
 }

@@ -17,13 +17,13 @@ import com.storyteller_f.a.app.compontents.EventDialog
 import com.storyteller_f.a.app.compontents.rememberEventState
 import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun TopicComposePage(objectType: ObjectType, objectId: OKey, backPrePage: () -> Unit) {
+fun TopicComposePage(objectType: ObjectType, objectId: PrimaryKey, backPrePage: () -> Unit) {
     var input by remember {
         mutableStateOf("")
     }

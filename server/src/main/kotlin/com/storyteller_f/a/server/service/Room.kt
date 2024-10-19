@@ -4,16 +4,16 @@ import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.common.bindPaginationQuery
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.type.OKey
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.*
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
 suspend fun getRoomPubKeys(
-    roomId: OKey,
-    userId: OKey,
-    pre: OKey?,
-    next: OKey?,
+    roomId: PrimaryKey,
+    userId: PrimaryKey,
+    pre: PrimaryKey?,
+    next: PrimaryKey?,
     size: Int
 ) = if (isRoomJoined(roomId, userId)) {
     runCatching {
@@ -51,8 +51,8 @@ suspend fun getRoomPubKeys(
 }
 
 suspend fun joinRoom(
-    room: OKey,
-    id: OKey
+    room: PrimaryKey,
+    id: PrimaryKey
 ) = runCatching {
     if (DatabaseFactory.dbQuery {
             checkRoomIsPrivate(room)
@@ -68,10 +68,10 @@ suspend fun joinRoom(
 
 suspend fun searchRooms(
     word: String,
-    uid: OKey?,
+    uid: PrimaryKey?,
     backend: Backend,
-    preRoomId: OKey?,
-    nextRoomId: OKey?,
+    preRoomId: PrimaryKey?,
+    nextRoomId: PrimaryKey?,
     size: Int
 ): Result<Pair<List<RoomInfo>, Long>> {
     return runCatching {
@@ -123,10 +123,10 @@ suspend fun searchRooms(
 }
 
 suspend fun searchJoinedRooms(
-    uid: OKey,
+    uid: PrimaryKey,
     backend: Backend,
-    preRoomId: OKey?,
-    nextRoomId: OKey?,
+    preRoomId: PrimaryKey?,
+    nextRoomId: PrimaryKey?,
     size: Int
 ): Result<Pair<List<RoomInfo>, Long>> {
     return runCatching {
@@ -158,11 +158,11 @@ fun mapRoomInfo(it: ResultRow): Pair<RoomInfo, String?> {
 }
 
 suspend fun searchRoomInCommunity(
-    communityId: OKey,
-    uid: OKey?,
+    communityId: PrimaryKey,
+    uid: PrimaryKey?,
     backend: Backend,
-    preRoomId: OKey?,
-    nextRoomId: OKey?,
+    preRoomId: PrimaryKey?,
+    nextRoomId: PrimaryKey?,
     size: Int
 ): Result<Pair<List<RoomInfo>, Long>> {
     return runCatching {
@@ -211,7 +211,7 @@ suspend fun searchRoomInCommunity(
     }
 }
 
-private fun Room.toRoomInfo(joinedTime: LocalDateTime?, communityId: OKey? = null) = RoomInfo(
+private fun Room.toRoomInfo(joinedTime: LocalDateTime?, communityId: PrimaryKey? = null) = RoomInfo(
     id,
     name,
     aid,
@@ -222,7 +222,7 @@ private fun Room.toRoomInfo(joinedTime: LocalDateTime?, communityId: OKey? = nul
     communityId
 )
 
-suspend fun getRoom(roomId: OKey, uid: OKey?, backend: Backend): Result<RoomInfo?> {
+suspend fun getRoom(roomId: PrimaryKey, uid: PrimaryKey?, backend: Backend): Result<RoomInfo?> {
     return runCatching {
         DatabaseFactory.dbQuery {
             val baseJoin = Rooms.join(CommunityRooms, JoinType.LEFT, Rooms.id, CommunityRooms.roomId)
