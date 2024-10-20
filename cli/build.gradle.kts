@@ -6,10 +6,6 @@ plugins {
 group = "com.storyteller_f"
 version = "unspecified"
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(projects.shared)
     testImplementation(kotlin("test"))
