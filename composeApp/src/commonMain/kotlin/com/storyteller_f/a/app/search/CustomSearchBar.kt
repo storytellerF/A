@@ -2,8 +2,7 @@ package com.storyteller_f.a.app.search
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SearchBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,16 +19,42 @@ fun CustomSearchBar(leadingIcon: @Composable () -> Unit) {
         mutableStateOf(false)
     }
     Box(modifier = Modifier.fillMaxWidth()) {
-        SearchBar(query, {
-            query = it
-        }, {
-        }, active, {
-            active = it
-        }, trailingIcon = {
-            MyIcon(40.dp)
-        }, leadingIcon = {
-            leadingIcon()
-        }, modifier = Modifier.align(Alignment.Center)) {
+        val onActiveChange = { newValue: Boolean ->
+            active = newValue
         }
+
+        SearchBar(
+            inputField = {
+                SearchBarDefaults.InputField(
+                    query = query,
+                    onQueryChange = {
+                        query = it
+                    },
+                    onSearch = {
+                    },
+                    expanded = active,
+                    onExpandedChange = onActiveChange,
+                    enabled = true,
+                    placeholder = null,
+                    leadingIcon = {
+                        leadingIcon()
+                    },
+                    trailingIcon = {
+                        MyIcon(40.dp)
+                    },
+                    interactionSource = null,
+                )
+            },
+            expanded = active,
+            onExpandedChange = onActiveChange,
+            modifier = Modifier.align(Alignment.Center),
+            shape = SearchBarDefaults.inputFieldShape,
+            colors = SearchBarDefaults.colors(),
+            tonalElevation = SearchBarDefaults.TonalElevation,
+            shadowElevation = SearchBarDefaults.ShadowElevation,
+            windowInsets = SearchBarDefaults.windowInsets,
+            content = {
+            },
+        )
     }
 }

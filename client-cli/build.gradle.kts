@@ -5,7 +5,7 @@ plugins {
     application
 }
 application {
-    mainClass.set("example.MainKt")
+    mainClass.set("com.storyteller_f.client_cli.MainKt")
 }
 dependencies {
     implementation(libs.mosaic.runtime)

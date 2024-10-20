@@ -1,4 +1,4 @@
-package example
+package com.storyteller_f.client_cli
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect

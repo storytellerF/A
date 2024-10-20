@@ -67,7 +67,12 @@ inline fun <T, reified PageTokenType : Any> RoutingContext.pagination(
     }
 }
 
-fun Query.bindPaginationQuery(table: BaseTable, prePageToken: PrimaryKey?, nextPageToken: PrimaryKey?, size: Int): Query {
+fun Query.bindPaginationQuery(
+    table: BaseTable,
+    prePageToken: PrimaryKey?,
+    nextPageToken: PrimaryKey?,
+    size: Int
+): Query {
     if (nextPageToken != null) {
         andWhere {
             table.id less nextPageToken

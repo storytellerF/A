@@ -54,7 +54,6 @@ class LuceneTopicDocumentService(private val path: Path) : TopicDocumentService 
                     null
                 }
             }
-
         }
     }
 

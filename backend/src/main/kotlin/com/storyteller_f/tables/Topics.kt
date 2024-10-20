@@ -3,8 +3,8 @@ package com.storyteller_f.tables
 import com.storyteller_f.BaseObj
 import com.storyteller_f.BaseTable
 import com.storyteller_f.objectType
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
