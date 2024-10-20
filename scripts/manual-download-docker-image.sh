@@ -44,7 +44,7 @@ download_and_save() {
 }
 
 # 调用函数下载和保存各个镜像
-download_and_save "eclipse-temurin" "eclipse-temurin:17" "deploy/docker-images/eclipse-temurin.tar"
+download_and_save "eclipse-temurin" "eclipse-temurin:21" "deploy/docker-images/eclipse-temurin.tar"
 download_and_save "postgres" "postgres:latest" "deploy/docker-images/postgres.tar"
 download_and_save "adminer" "adminer:latest" "deploy/docker-images/adminer.tar"
 download_and_save "minio" "minio/minio:latest" "deploy/docker-images/minio.tar"

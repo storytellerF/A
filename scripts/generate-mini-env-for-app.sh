@@ -23,9 +23,9 @@ WS_SERVER_URL=${URL}${newline}
 EOF
 
 if [[ "$(uname)" == "Darwin" ]]; then
-    sed -i '' "s/buildkonfig.flavor=dev/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
+    sed -i '' "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
       sed -i '' "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 else
-    sed -i "s/buildkonfig.flavor=dev/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
+    sed -i "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
       sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 fi

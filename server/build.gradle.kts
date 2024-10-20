@@ -12,6 +12,10 @@ application {
     mainClass.set("com.storyteller_f.a.server.ApplicationKt")
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 dependencies {
     runtimeOnly(libs.logback)
 
@@ -33,4 +37,8 @@ val isProd = project.findProperty("server.prod") == true
 
 buildConfig {
     buildConfigField<Boolean>("IS_PROD", isProd)
+}
+
+tasks.withType<JavaExec> {
+    jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }

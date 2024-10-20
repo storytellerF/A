@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17 AS builder
+FROM eclipse-temurin:21 AS builder
 
 ARG IS_PROD
 ARG FLAVOR
@@ -10,7 +10,7 @@ COPY . .
 
 RUN sed -i 's/\r$//' scripts/* && \
     sed -i 's/\r$//' gradlew && \
-    sed -i "s/buildkonfig.flavor=dev/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
+    sed -i "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
     sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 
 ENV IS_HOST=false
@@ -18,7 +18,7 @@ ENV IS_HOST=false
 RUN --mount=type=cache,target=/root/.gradle \
     sh scripts/build-server-on-condition.sh
 
-FROM eclipse-temurin:17
+FROM eclipse-temurin:21
 
 RUN mkdir /app
 
