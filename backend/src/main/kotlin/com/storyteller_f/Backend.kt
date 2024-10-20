@@ -7,6 +7,7 @@ import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.media.MediaService
 import com.storyteller_f.media.MinIoMediaService
 import com.storyteller_f.naming.NameService
+import io.github.aakira.napier.Napier
 import java.nio.file.Paths
 import java.util.*
 
@@ -63,6 +64,7 @@ private fun mediaService(map: Map<out Any, Any>): MediaService {
             val pass = map["MINIO_PASS"] as String
             MinIoMediaService(MinIoConnection(url, name, pass))
         }
+
         "filesystem" -> FileSystemMediaService()
         else -> throw UnsupportedOperationException("unsupported media service type ${map["MEDIA_SERVICE"]}")
     }
@@ -79,7 +81,16 @@ private fun topicDocumentService(
             val pass = map["ELASTIC_PASSWORD"] as String
             ElasticTopicDocumentService(ElasticConnection(url, certFile, name, pass))
         }
-        "lucene" -> LuceneTopicDocumentService(Paths.get("../deploy/lucene_data/index"))
+
+        "lucene" -> {
+            val luceneBase = map["LUCENE_BASE_PATH"] as String
+            val path = Paths.get(luceneBase.removeSurrounding("'"), "lucene_data/index")
+            Napier.i {
+                "lucene path $path"
+            }
+            LuceneTopicDocumentService(path)
+        }
+
         else -> throw UnsupportedOperationException("unsupported search service type [$type]")
     }
 }

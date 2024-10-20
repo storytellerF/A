@@ -2,7 +2,7 @@ FROM ubuntu AS builder
 
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
-    openjdk-17-jdk \
+    openjdk-21-jdk \
     curl \
     unzip \
     jq
@@ -19,6 +19,8 @@ ARG COMPOSE_PROJECT_NAME
 ENV COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME
 ARG SEARCH_SERVICE
 ENV SEARCH_SERVICE=$SEARCH_SERVICE
+ARG LUCENE_BASE_PATH
+ENV LUCENE_BASE_PATH=$LUCENE_BASE_PATH
 ARG STACK_VERSION
 ENV STACK_VERSION=$STACK_VERSION
 ARG CLUSTER_NAME
@@ -106,6 +108,7 @@ BUILD_ON_HOST=${BUILD_ON_HOST}
 COMPOSE_PROFILES=${COMPOSE_PROFILES}
 COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}
 SEARCH_SERVICE=${SEARCH_SERVICE}
+LUCENE_BASE_PATH=${LUCENE_BASE_PATH}
 STACK_VERSION=${STACK_VERSION}
 CLUSTER_NAME=${CLUSTER_NAME}
 LICENSE=${LICENSE}
@@ -148,7 +151,7 @@ EOF
 
 RUN sed -i 's/\r$//' scripts/* && \
     sed -i 's/\r$//' gradlew && \
-    sed -i "s/buildkonfig.flavor=dev/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
+    sed -i "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
     sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 
 RUN bash scripts/download_data.sh $PRE_SET_ENCRYPTED_URI $PRE_SET_ENCRYPTED_PASSWORD
@@ -176,6 +179,8 @@ ARG COMPOSE_PROJECT_NAME
 ENV COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME
 ARG SEARCH_SERVICE
 ENV SEARCH_SERVICE=$SEARCH_SERVICE
+ARG LUCENE_BASE_PATH
+ENV LUCENE_BASE_PATH=$LUCENE_BASE_PATH
 ARG STACK_VERSION
 ENV STACK_VERSION=$STACK_VERSION
 ARG CLUSTER_NAME

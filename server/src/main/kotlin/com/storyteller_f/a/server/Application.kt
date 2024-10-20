@@ -21,8 +21,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.io.File
-import java.time.Duration
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
     SnowflakeFactory.setMachine(0)
@@ -106,8 +106,8 @@ fun Application.module() {
         }
     }
     install(WebSockets) {
-        pingPeriod = Duration.ofSeconds(15)
-        timeout = Duration.ofSeconds(15)
+        pingPeriod = 15.seconds
+        timeout = 15.seconds
         maxFrameSize = Long.MAX_VALUE
         masking = false
         contentConverter = KotlinxWebsocketSerializationConverter(Json)

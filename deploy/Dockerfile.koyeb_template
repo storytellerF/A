@@ -2,7 +2,7 @@ FROM ubuntu AS builder
 
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
-    openjdk-17-jdk \
+    openjdk-21-jdk \
     curl \
     unzip \
     jq
@@ -17,7 +17,7 @@ COPY . .
 
 RUN sed -i 's/\r$//' scripts/* && \
     sed -i 's/\r$//' gradlew && \
-    sed -i "s/buildkonfig.flavor=dev/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
+    sed -i "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
     sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 
 RUN bash scripts/download_data.sh $PRE_SET_ENCRYPTED_URI $PRE_SET_ENCRYPTED_PASSWORD

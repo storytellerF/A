@@ -8,4 +8,6 @@ docker run \
   --privileged \
   -d \
   -p 8811:8811 \
+  -p 5432:5432 \
+  -p 8812:8812 \
   local-koyeb
