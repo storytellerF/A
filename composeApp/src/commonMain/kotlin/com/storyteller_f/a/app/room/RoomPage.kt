@@ -42,8 +42,8 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ServerResponse
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.websocket.*
 import kotbase.Expression
@@ -253,7 +253,8 @@ private fun ColumnScope.RoomPageInternal(
     }
 }
 
-class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean) : SimpleViewModel<List<Pair<PrimaryKey, String>>>() {
+class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean) :
+    SimpleViewModel<List<Pair<PrimaryKey, String>>>() {
 
     init {
         if (private) {

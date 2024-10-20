@@ -13,8 +13,8 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.TopicSnapshot
 import com.storyteller_f.shared.obj.TopicSnapshotPack
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.ktor.server.request.*
@@ -48,7 +48,12 @@ suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend
     }
 }
 
-suspend fun addTopicIntoTopic(parentTopicId: PrimaryKey, uid: PrimaryKey, content: String, backend: Backend): Result<TopicInfo?> {
+suspend fun addTopicIntoTopic(
+    parentTopicId: PrimaryKey,
+    uid: PrimaryKey,
+    content: String,
+    backend: Backend
+): Result<TopicInfo?> {
     val topic = DatabaseFactory.queryNotNull({
         rootId to rootType
     }) {

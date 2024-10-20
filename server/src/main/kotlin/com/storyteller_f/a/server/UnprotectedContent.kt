@@ -8,8 +8,8 @@ import com.storyteller_f.a.server.common.checkQueryParameter
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.server.routing.*
 
 fun Route.unProtectedContent(backend: Backend) {

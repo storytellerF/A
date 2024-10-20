@@ -1,12 +1,11 @@
 package com.storyteller_f.shared
 
+import android.annotation.SuppressLint
 import org.bouncycastle.jcajce.provider.digest.Keccak
 import org.bouncycastle.jce.interfaces.ECPrivateKey
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECPrivateKeySpec
 import org.bouncycastle.jce.spec.ECPublicKeySpec
-import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.util.encoders.Hex
@@ -26,7 +25,7 @@ import javax.crypto.spec.SecretKeySpec
 fun addProvider() {
     Security.removeProvider("BC")
     Security.addProvider(BouncyCastleProvider())
-    Security.addProvider(BouncyCastleJsseProvider())
+//    Security.addProvider(BouncyCastleJsseProvider())
 //    Security.addProvider(BouncyCastlePQCProvider())
 //    Security.getProviders().forEach {
 //        println(it.name)
@@ -81,6 +80,7 @@ actual suspend fun calcAddress(derPublicKeyStr: String): String {
     return Hex.toHexString(digest)
 }
 
+@SuppressLint("DeprecatedProvider")
 actual suspend fun encrypt(data: String): Pair<ByteArray, ByteArray> {
     // 生成AES密钥
     val keyGen = KeyGenerator.getInstance("AES", "BC")
@@ -100,6 +100,7 @@ actual suspend fun encrypt(data: String): Pair<ByteArray, ByteArray> {
     return aesCipher.doFinal(plaintextBytes) to aesKey.encoded
 }
 
+@SuppressLint("DeprecatedProvider")
 @OptIn(ExperimentalStdlibApi::class)
 actual suspend fun decrypt(derPrivateKeyStr: String, encrypted: ByteArray, encryptedAesKey: ByteArray): String {
     val privateKeyBytes = derPrivateKeyStr.hexToByteArray()
@@ -126,6 +127,7 @@ actual suspend fun decrypt(derPrivateKeyStr: String, encrypted: ByteArray, encry
     return String(aesCipher.doFinal(encrypted))
 }
 
+@SuppressLint("DeprecatedProvider")
 @OptIn(ExperimentalStdlibApi::class)
 actual suspend fun encryptAesKey(derPublicKeyStr: String, aesKey: ByteArray): ByteArray {
     val publicKeyBytes = derPublicKeyStr.hexToByteArray()

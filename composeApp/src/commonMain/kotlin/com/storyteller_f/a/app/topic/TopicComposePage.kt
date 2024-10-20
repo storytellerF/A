@@ -17,8 +17,8 @@ import com.storyteller_f.a.app.compontents.EventDialog
 import com.storyteller_f.a.app.compontents.rememberEventState
 import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)

@@ -52,7 +52,7 @@ kotlin {
 //        }
         compilations.all {
             @Suppress("DEPRECATION")
-            kotlinOptions { jvmTarget = "11" }
+            kotlinOptions { jvmTarget = "21" }
         }
     }
 
@@ -174,9 +174,6 @@ android {
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".debug"
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         getByName("release") {
             isMinifyEnabled = true
@@ -188,8 +185,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         compose = true
