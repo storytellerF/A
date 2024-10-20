@@ -26,7 +26,6 @@ dependencies {
     api(libs.exposed.json)
     api(libs.exposed.money)
     implementation(projects.shared)
-    implementation(libs.bcprov.jdk18on)
     implementation(libs.minio)
     implementation(libs.elasticsearch.java)
     implementation(libs.jackson.module.kotlin)
