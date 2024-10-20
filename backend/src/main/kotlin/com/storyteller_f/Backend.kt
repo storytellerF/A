@@ -71,7 +71,6 @@ private fun mediaService(map: Map<out Any, Any>): MediaService {
 private fun topicDocumentService(
     map: Map<out Any, Any>,
 ): TopicDocumentService {
-    val path = Paths.get("../deploy/lucene_data/index")
     return when (val type = map["SEARCH_SERVICE"]) {
         "elastic" -> {
             val certFile = map["CERT_FILE"] as String
@@ -80,7 +79,7 @@ private fun topicDocumentService(
             val pass = map["ELASTIC_PASSWORD"] as String
             ElasticTopicDocumentService(ElasticConnection(url, certFile, name, pass))
         }
-        "lucene" -> LuceneTopicDocumentService(path)
+        "lucene" -> LuceneTopicDocumentService(Paths.get("../deploy/lucene_data/index"))
         else -> throw UnsupportedOperationException("unsupported search service type [$type]")
     }
 }
