@@ -20,7 +20,8 @@ dockerfile_output="deploy/Dockerfile.koyeb"
 
 # 初始化两个空字符串来存储结果
 replace_string_1=""
-replace_string_2="COPY <<EOF ./generated-mini.env\n"
+replace_string_2="COPY <<EOF ./\${FLAVOR}.env\n"
+replace_string_3=""
 
 # 读取 env-filter 文件中的 keys，生成 ARG 和 ENV 语句，同时生成 COPY 环境变量
 while IFS= read -r key; do
@@ -33,6 +34,8 @@ while IFS= read -r key; do
 
         # 拼接 COPY <<EOF 块，替换 #2
         replace_string_2+="$clean_key=\${$clean_key}${newline}"
+
+        replace_string_3+="ARG $clean_key${newline}"
     fi
 done < "$env_filter_file"
 
@@ -40,6 +43,6 @@ done < "$env_filter_file"
 replace_string_2+="EOF\n"
 
 # 使用 sed 替换 dockerfile 模板中的 #1 和 #2
-sed -e "s|#1|$replace_string_1|" -e "s|#2|$replace_string_2|" "$dockerfile_template" > "$dockerfile_output"
+sed -e "s|#1|$replace_string_1|" -e "s|#2|$replace_string_2|" -e "s|#3|$replace_string_3|" "$dockerfile_template" > "$dockerfile_output"
 
 echo "Dockerfile 已生成: $dockerfile_output"
