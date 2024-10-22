@@ -7,7 +7,10 @@ RUN apt-get install -y --no-install-recommends \
     unzip \
     jq
 
-#1
+#3
+
+#override
+ENV FLAVOR=generated-${FLAVOR}
 
 WORKDIR /app
 
@@ -34,6 +37,9 @@ FROM koyeb/docker-compose
 RUN apk add --no-cache git
 
 #1
+
+#override
+ENV FLAVOR=generated-${FLAVOR}
 
 WORKDIR /app
 
