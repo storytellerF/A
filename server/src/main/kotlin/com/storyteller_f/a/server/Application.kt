@@ -40,10 +40,10 @@ fun main(args: Array<String>) {
 }
 
 private fun processPreSetData(map: MutableMap<out Any, out Any>) {
-    val preSetEnable = (map["PRE_SET_ENABLE"] as String).toBoolean()
+    val preSetEnable = (map["PRESET_ENABLE"] as String).toBoolean()
     if (preSetEnable) {
-        val preSetScript = map["PRE_SET_SCRIPT"] as String
-        val workingDir = map["PRE_SET_WORKING_DIR"] as String
+        val preSetScript = map["PRESET_SCRIPT"] as String
+        val workingDir = map["PRESET_WORKING_DIR"] as String
         if (preSetScript.isNotBlank() && workingDir.isNotBlank()) {
             val scriptArray = preSetScript.trim('\'').split(" ").map {
                 if (it.startsWith("~")) {
