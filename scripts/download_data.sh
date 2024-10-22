@@ -10,12 +10,12 @@ DOWNLOAD_URL=$1
 PASSWORD=$2
 
 # 临时文件名
-TEMP_ZIP="pre_set.zip"
+TEMP_ZIP="preset.zip"
 
 cd deploy
 
-if [ -d pre_set_data ]; then
-    echo "pre_set_data already exists, skip."
+if [ -d preset_data ]; then
+    echo "preset_data already exists, skip."
     exit 0
 fi
 
@@ -55,4 +55,4 @@ fi
 
 echo "File downloaded and unzipped successfully!"
 
-mv data pre_set_data
+mv data preset_data

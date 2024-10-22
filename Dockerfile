@@ -25,7 +25,7 @@ RUN mkdir /app
 WORKDIR /app
 COPY --from=builder /app/server/build/libs/*-all.jar ./ktor-server.jar
 COPY --from=builder /app/cli/build/distributions/cli.tar ./cli.tar
-COPY --from=builder /app/deploy/pre_set_data ./pre_set_data
+COPY --from=builder /app/deploy/preset_data ./preset_data
 COPY ./scripts/flush-database-singleton.sh .
 RUN tar -xf ./cli.tar
 

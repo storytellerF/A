@@ -20,7 +20,7 @@ RUN sed -i 's/\r$//' scripts/* && \
     sed -i "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
     sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 
-RUN bash scripts/download_data.sh $PRE_SET_ENCRYPTED_URI $PRE_SET_ENCRYPTED_PASSWORD
+RUN bash scripts/download_data.sh $PRESET_ENCRYPTED_URI $PRESET_ENCRYPTED_PASSWORD
 
 RUN bash scripts/manual-download-docker-image.sh
 
