@@ -7,11 +7,11 @@ for file in "$env_dir"/*.env; do
   if [[ -f "$file" ]]; then
     echo "Processing $file..."
     # 执行脚本
-    sh scripts/check-env-filter.sh env-filter "$file"
+    sh scripts/tool_scripts/check-env-filter.sh env-filter "$file"
   else
     echo "No .env files found in the directory."
   fi
 done
 
 echo "Processing .env"
-sh scripts/check-env-filter.sh env-filter ./server/src/test/resources/.env
+sh scripts/tool_scripts/check-env-filter.sh env-filter ./server/src/test/resources/.env

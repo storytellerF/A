@@ -53,8 +53,6 @@ sourceSets {
 }
 
 val flavor = project.findProperty("buildkonfig.flavor")
-val isProd = project.findProperty("server.prod") == true
-
 
 val copyTask = tasks.register("CopyNewEnv", Copy::class) {
     group = "copy"
@@ -67,6 +65,3 @@ val copyTask = tasks.register("CopyNewEnv", Copy::class) {
 
 tasks.processResources.dependsOn(copyTask)
 
-buildConfig {
-    buildConfigField<Boolean>("IS_PROD", isProd)
-}

@@ -112,7 +112,7 @@ fun Application.configureAuth(backend: Backend) {
                 when {
                     session is UserSession.Success -> CustomPrincipal(session.id)
                     credential != null -> call.checkApiRequest(credential, session)
-                    BuildConfig.IS_PROD -> null
+                    backend.config.isProd -> null
                     else -> checkDevWsLink(call)
                 }
             }
@@ -144,6 +144,10 @@ fun Application.configureAuth(backend: Backend) {
 
         get("/ping") {
             call.respondText("pong")
+        }
+
+        get {
+            call.respondText("${backend.config.flavor} ${backend.config.isProd}")
         }
     }
 }
