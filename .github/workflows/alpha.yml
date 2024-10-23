@@ -22,8 +22,8 @@ jobs:
 
       - name: Prepare env
         run: |
-          chmod +x scripts/generate-mini-env-for-app.sh
-          ./scripts/generate-mini-env-for-app.sh https://respectable-jobie-anabn-3d54150c.koyeb.app
+          chmod +x scripts/tool_scripts/generate-mini-env-for-app.sh
+          ./scripts/tool_scripts/generate-mini-env-for-app.sh https://respectable-jobie-anabn-3d54150c.koyeb.app
 
       - name: Build app
         run: |

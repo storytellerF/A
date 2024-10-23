@@ -18,19 +18,19 @@ COPY . .
 
 #2
 
-RUN sed -i 's/\r$//' scripts/* && \
-    sed -i 's/\r$//' gradlew && \
-    sed -i "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
-    sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
+RUN find scripts/ -type f -name "*.sh" -exec sed -i 's/\r$//' {} + && \
+    sed -i 's/\r$//' gradlew
 
-RUN bash scripts/download_data.sh $PRESET_ENCRYPTED_URI $PRESET_ENCRYPTED_PASSWORD
+RUN bash scripts/download_scripts/download_data.sh $PRESET_ENCRYPTED_URI $PRESET_ENCRYPTED_PASSWORD
 
-RUN bash scripts/manual-download-docker-image.sh
+RUN bash scripts/download_scripts/manual-download-docker-image.sh
 
+#mock host environment
 ENV IS_HOST=true
+ENV IS_DOCKER=false
 
 RUN --mount=type=cache,target=/root/.gradle \
-    sh scripts/build-server-on-condition.sh
+    sh scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
 
 FROM koyeb/docker-compose
 
@@ -45,4 +45,4 @@ WORKDIR /app
 
 COPY --from=builder /app .
 
-CMD sh ./scripts/build-koyeb.sh
+CMD sh ./scripts/service_scripts/start-compose-in-koyeb.sh

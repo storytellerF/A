@@ -6,4 +6,4 @@ if [ -z "$base" ]; then
   echo "Error: base parameter is not specified."
   exit 1
 fi
-sh scripts/flush-database-singleton.sh $cli_path $base
+sh scripts/tool_scripts/flush-database-singleton.sh $cli_path $base

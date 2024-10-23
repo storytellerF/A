@@ -20,19 +20,21 @@ class Backend(
 
 class Config(
     val databaseConnection: DatabaseConnection,
-    val hmacKey: String
+    val hmacKey: String,
+    val isProd: Boolean,
+    val flavor: String
 )
 
 data class ElasticConnection(val url: String, val certFile: String, val name: String, val pass: String)
 data class MinIoConnection(val url: String, val user: String, val pass: String)
 data class DatabaseConnection(val uri: String, val driver: String, val user: String, val password: String)
 
-fun readEnv(): MutableMap<out Any, out Any> {
+fun readEnv(): Map<out Any, Any> {
     val map = ClassLoader.getSystemClassLoader().getResourceAsStream(".env")?.use {
         Properties().apply {
             load(it)
         }
-    } ?: System.getenv()
+    }.orEmpty()
     return map
 }
 
@@ -43,7 +45,10 @@ fun buildBackendFromEnv(env: Map<out Any, Any>): Backend {
 
     val hmac = env["HMAC_KEY"] as String
 
-    val config = Config(databaseConnection, hmac)
+    val isProd = (env["IS_PROD"] as String).toBoolean()
+    val flavor = env["FLAVOR"] as String
+
+    val config = Config(databaseConnection, hmac, isProd, flavor)
 
     val topicDocumentService = topicDocumentService(env)
     val mediaService = mediaService(env)

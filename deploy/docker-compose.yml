@@ -42,6 +42,7 @@ services:
         FLAVOR: ${FLAVOR}
         IS_HOST: false
         BUILD_ON_HOST: ${BUILD_ON_HOST}
+        BUILD_ON_DOCKER: ${BUILD_ON_DOCKER}
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
     profiles:
