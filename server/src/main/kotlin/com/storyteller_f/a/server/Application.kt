@@ -39,7 +39,7 @@ fun main(args: Array<String>) {
     EngineMain.main(args + extraArgs)
 }
 
-private fun processPreSetData(map: MutableMap<out Any, out Any>) {
+private fun processPreSetData(map: Map<out Any, Any>) {
     val preSetEnable = (map["PRESET_ENABLE"] as String).toBoolean()
     if (preSetEnable) {
         val preSetScript = map["PRESET_SCRIPT"] as String
