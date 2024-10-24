@@ -8,6 +8,8 @@ import com.storyteller_f.media.MediaService
 import com.storyteller_f.media.MinIoMediaService
 import com.storyteller_f.naming.NameService
 import io.github.aakira.napier.Napier
+import java.io.File
+import java.io.FileInputStream
 import java.nio.file.Paths
 import java.util.*
 
@@ -34,8 +36,22 @@ fun readEnv(): Map<out Any, Any> {
         Properties().apply {
             load(it)
         }
-    }.orEmpty()
-    return map
+    }
+    return if (map != null) {
+        map
+    } else {
+        val userHome = System.getProperty("user.home")
+        val envFile = File(userHome, ".config/a.env")
+        if (envFile.exists()) {
+            FileInputStream(envFile).use {
+                Properties().apply {
+                    load(it)
+                }
+            }
+        } else {
+            System.getenv()
+        }
+    }
 }
 
 fun buildBackendFromEnv(env: Map<out Any, Any>): Backend {
