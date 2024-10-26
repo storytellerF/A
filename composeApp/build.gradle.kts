@@ -15,8 +15,8 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
-    id("com.codingfeline.buildkonfig") version "0.15.1"
-    id("com.starter.easylauncher") version "6.4.0"
+    alias(libs.plugins.buildconfig)
+    alias(libs.plugins.easylauncher)
 }
 
 val buildIosTarget = project.findProperty("target.ios") == true
@@ -170,7 +170,6 @@ android {
             excludes += listOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/versions/9/OSGI-INF/MANIFEST.MF")
         }
     }
-    flavorDimensions += "server"
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".debug"

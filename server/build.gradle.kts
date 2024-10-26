@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.ktor)
     alias(libs.plugins.serialization)
     application
-    id("com.github.gmazzo.buildconfig") version "5.4.0"
+    alias(libs.plugins.kotlinBuildConfig)
 }
 
 group = "com.storyteller_f.a"
