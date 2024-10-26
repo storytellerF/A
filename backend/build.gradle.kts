@@ -4,7 +4,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinJvm)
-    id("com.github.gmazzo.buildconfig") version "5.4.0"
+    alias(libs.plugins.kotlinBuildConfig)
 }
 
 group = "com.storyteller_f"

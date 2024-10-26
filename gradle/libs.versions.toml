@@ -42,6 +42,9 @@ precompose = "1.6.2"
 slf4jSimple = "2.0.13"
 sqliteJdbc = "3.46.0.0"
 uriKmp = "0.0.18"
+easylauncher = "6.4.0"
+buildconfig = "0.15.1"
+kotlin_buildconfig = "5.4.0"
 
 
 [libraries]
@@ -135,6 +138,9 @@ kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+easylauncher = { id = "com.starter.easylauncher", version.ref = "easylauncher" }
+buildconfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildconfig" }
+kotlinBuildConfig = { id = "com.github.gmazzo.buildconfig", version.ref = "kotlin_buildconfig" }
 
 [bundles]
 ktor-client = ["ktor-client-content-negotiation", "ktor-client-core", "ktor-serialization-kotlinx-json", "ktor-client-auth", "ktor-client-logging", "ktor-client-websockets"]
