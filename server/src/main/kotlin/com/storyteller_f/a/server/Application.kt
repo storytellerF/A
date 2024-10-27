@@ -62,7 +62,7 @@ private fun processPreSetData(map: Map<out Any, Any>) {
                 val input = start.inputStream.bufferedReader().readText()
                 if (code != 0) {
                     val error = start.errorStream.bufferedReader().readText()
-                    println("pre set failed. code: $code")
+                    println("preset failed. code: $code")
                     println("input: $input")
                     println("error: $error")
                 } else {
@@ -75,7 +75,7 @@ private fun processPreSetData(map: Map<out Any, Any>) {
                 start.destroy()
             }
         } else {
-            println("pre set config failure")
+            println("preset config failure")
             exitProcess(1)
         }
     }

@@ -1,18 +1,24 @@
 FROM eclipse-temurin:21 AS builder
 
+#^3
 ARG IS_PROD
 ARG FLAVOR
 ARG BUILD_ON_HOST
 ARG BUILD_ON_DOCKER
+#!3
+
+#3
 
 WORKDIR /app
 
 COPY . .
 
+#2
+
 RUN find scripts/ -type f -name "*.sh" -exec sed -i 's/\r$//' {} + && \
     sed -i 's/\r$//' gradlew
 
-ENV IS_HOST=false
+ENV IS_LOCAL_HOST=false
 ENV IS_DOCKER=true
 
 RUN --mount=type=cache,target=/root/.gradle \
@@ -25,8 +31,8 @@ RUN mkdir /app
 WORKDIR /app
 COPY --from=builder /app/server/build/libs/*-all.jar ./ktor-server.jar
 COPY --from=builder /app/cli/build/distributions/cli.tar ./cli.tar
-COPY --from=builder /app/deploy/preset_data ./preset_data
-COPY scripts/tool_scripts/flush-database-singleton.sh .
+COPY --from=builder /app/deploy/preset_data ./deploy/preset_data
+COPY scripts/tool_scripts/flush-database-singleton.sh ./scripts/tool_scripts/flush-database-singleton.sh
 RUN tar -xf ./cli.tar
 
 ENTRYPOINT ["java","-jar","./ktor-server.jar"]

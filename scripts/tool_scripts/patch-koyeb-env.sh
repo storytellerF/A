@@ -1,3 +1,5 @@
+#!/bin/bash
+set -e
 # 自动根据系统环境设置换行符格式
 use_windows_newline=false
 
@@ -15,8 +17,12 @@ fi
 
 # 文件路径
 env_filter_file="env-filter"
-dockerfile_template="deploy/Dockerfile.koyeb_template"
-dockerfile_output="deploy/Dockerfile.koyeb"
+dockerfile_template=$1
+if [ -z "$dockerfile_template" ]; then
+  echo "Error: dockerfile_template is not specified."
+  exit 1
+fi
+dockerfile_output="${dockerfile_template}.patched"
 
 # 初始化两个空字符串来存储结果
 replace_string_1=""
@@ -42,7 +48,18 @@ done < "$env_filter_file"
 # 完成 COPY 块的 EOF 部分
 replace_string_2+="EOF\n"
 
+replace_string_3+="#override${newline}"
+replace_string_3+="ENV FLAVOR=generated-\${FLAVOR}"
+
 # 使用 sed 替换 dockerfile 模板中的 #1 和 #2
 sed -e "s|#1|$replace_string_1|" -e "s|#2|$replace_string_2|" -e "s|#3|$replace_string_3|" "$dockerfile_template" > "$dockerfile_output"
+
+ed -s "./$dockerfile_output" <<EOF
+/#^3/+,/#!3/-d
+/#^3/a
+#patched
+.
+wq
+EOF
 
 echo "Dockerfile 已生成: $dockerfile_output"
