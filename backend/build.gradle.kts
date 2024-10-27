@@ -19,6 +19,7 @@ dependencies {
     api(libs.exposed.core)
     api(libs.exposed.dao)
     implementation(libs.pgjdbc.ng)
+    implementation(libs.postgresql)
     implementation(libs.napier)
     api(libs.exposed.crypt)
     api(libs.exposed.jdbc)
@@ -54,7 +55,7 @@ sourceSets {
 
 val flavor = project.findProperty("buildkonfig.flavor")
 
-val copyTask = tasks.register("CopyNewEnv", Copy::class) {
+val copyTask = tasks.register("CopyEnv", Copy::class) {
     group = "copy"
     from("../${flavor}.env")
     into(layout.buildDirectory.dir("copied/resources"))

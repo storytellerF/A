@@ -1,5 +1,5 @@
 set -e
-sh scripts/tool_scripts/check-all-env.sh
+bash scripts/tool_scripts/check-all-env.sh
 
 sh scripts/build_scripts/build-server-for-docker.sh
 cd deploy
