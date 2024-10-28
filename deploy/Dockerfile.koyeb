@@ -18,8 +18,6 @@ COPY . .
 RUN find scripts/ -type f -name "*.sh" -exec sed -i 's/\r$//' {} + && \
     sed -i 's/\r$//' gradlew
 
-RUN bash scripts/download_scripts/download_data.sh $PRESET_ENCRYPTED_URI $PRESET_ENCRYPTED_PASSWORD
-
 RUN bash scripts/download_scripts/manual-download-docker-image.sh
 
 #mock host environment

@@ -15,8 +15,10 @@ COPY . .
 
 #2
 
-RUN find scripts/ -type f -name "*.sh" -exec sed -i 's/\r$//' {} + && \
+RUN find scripts/ -type f \( -name "*.sh" -o -name "*.js" \) -exec sed -i 's/\r$//' {} + && \
     sed -i 's/\r$//' gradlew
+
+RUN bash scripts/download_scripts/download_data.sh $PRESET_ENCRYPTED_URI $PRESET_ENCRYPTED_PASSWORD
 
 ENV IS_LOCAL_HOST=false
 ENV IS_DOCKER=true

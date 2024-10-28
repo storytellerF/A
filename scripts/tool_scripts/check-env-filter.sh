@@ -29,12 +29,6 @@ while IFS='=' read -r key value; do
     fi
 done < "$env_file"
 
-# 验证 env_keys 和 env_filter_keys 是否按顺序匹配
-if [ ${#env_keys[@]} -ne ${#env_filter_keys[@]} ]; then
-    echo "env $env_file 和 env-filter 文件中的变量数量不匹配! ${#env_keys[@]} - ${#env_filter_keys[@]}"
-    exit 1
-fi
-
 # 按行对比
 for i in "${!env_keys[@]}"; do
     if [ "${env_keys[$i]}" != "${env_filter_keys[$i]}" ]; then
@@ -42,5 +36,26 @@ for i in "${!env_keys[@]}"; do
         exit 1
     fi
 done
+
+
+
+# 验证 env_keys 和 env_filter_keys 是否按顺序匹配
+if [ ${#env_keys[@]} -ne ${#env_filter_keys[@]} ]; then
+    echo "env $env_file 和 env-filter 文件中的变量数量不匹配! ${#env_keys[@]} - ${#env_filter_keys[@]}"
+    echo "Only in env:"
+    for item in "${env_keys[@]}"; do
+      if [[ ! " ${env_filter_keys[@]} " =~ " ${item} " ]]; then
+        echo "$item"
+      fi
+    done
+
+    echo "Only in env-filter:"
+    for item in "${env_filter_keys[@]}"; do
+      if [[ ! " ${env_keys[@]} " =~ " ${item} " ]]; then
+        echo "$item"
+      fi
+    done
+    exit 1
+fi
 
 echo "环境变量与 env-filter 中的定义完全按顺序匹配!"
