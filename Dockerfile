@@ -1,5 +1,8 @@
 FROM eclipse-temurin:21 AS builder
 
+RUN apt-get update && apt-get install -y \
+    unzip
+
 #^3
 ARG IS_PROD
 ARG FLAVOR
