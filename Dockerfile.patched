@@ -1,5 +1,8 @@
 FROM eclipse-temurin:21 AS builder
 
+RUN apt-get update && apt-get install -y \
+    unzip
+
 #^3
 #patched
 #!3
@@ -50,6 +53,7 @@ ARG PRESET_WORKING_DIR
 ARG PRESET_SCRIPT
 ARG PRESET_ENCRYPTED_URI
 ARG PRESET_ENCRYPTED_PASSWORD
+ARG PUSH_TOKEN
 #override
 ENV FLAVOR=generated-${FLAVOR}
 
@@ -104,10 +108,11 @@ PRESET_WORKING_DIR=${PRESET_WORKING_DIR}
 PRESET_SCRIPT=${PRESET_SCRIPT}
 PRESET_ENCRYPTED_URI=${PRESET_ENCRYPTED_URI}
 PRESET_ENCRYPTED_PASSWORD=${PRESET_ENCRYPTED_PASSWORD}
+PUSH_TOKEN=${PUSH_TOKEN}
 EOF
 
 
-RUN find scripts/ -type f -name "*.sh" -exec sed -i 's/\r$//' {} + && \
+RUN find scripts/ -type f \( -name "*.sh" -o -name "*.js" \) -exec sed -i 's/\r$//' {} + && \
     sed -i 's/\r$//' gradlew
 
 RUN bash scripts/download_scripts/download_data.sh $PRESET_ENCRYPTED_URI $PRESET_ENCRYPTED_PASSWORD
