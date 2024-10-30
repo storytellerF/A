@@ -6,9 +6,8 @@ on:
 
 jobs:
   build:
-
+    environment: koyeb
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,20 +19,10 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Prepare env
-        run: |
-          chmod +x scripts/tool_scripts/generate-mini-env-for-app.sh
-          ./scripts/tool_scripts/generate-mini-env-for-app.sh https://respectable-jobie-anabn-3d54150c.koyeb.app
-
       - name: Build app
-        run: |
-          chmod +x gradlew
-          ./gradlew build
-
-      - name: Rename
-        run: mv composeApp/build/outputs/apk/release/*.apk composeApp/build/outputs/apk/release/A-release.apk
+        run: sh scripts/build_scripts/build-service-on-ci.sh
 
       - uses: actions/upload-artifact@v4
         with:
           name: Signed app bundle
-          path: composeApp/build/outputs/apk/release/A-release.apk
+          path: build/outputs/apk/release/
