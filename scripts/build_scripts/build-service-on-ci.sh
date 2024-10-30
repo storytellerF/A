@@ -1,6 +1,6 @@
 set -e
 
-sh scripts/tool_scripts/save-env.sh $FLAVOR
+bash scripts/tool_scripts/save-env.sh $FLAVOR
 
 sh scripts/tool_scripts/modify-flavor.sh $FLAVOR true
 
