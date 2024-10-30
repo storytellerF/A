@@ -20,7 +20,7 @@ jobs:
           cache: gradle
 
       - name: Build app
-        run: sh scripts/build_scripts/build-service-on-ci.sh
+        run: sh scripts/build_scripts/build-service-on-ci.sh koyeb
 
       - uses: actions/upload-artifact@v4
         with:
