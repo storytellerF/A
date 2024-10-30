@@ -2,7 +2,7 @@ if [ -z "$FLAVOR" ]; then
   echo "FLAVOR must set."
   exit 1
 fi
-export FLAVOR=generated-$FLAVOR
+export FLAVOR=saved-$FLAVOR
 OUTPUT_FILE="$FLAVOR.env"
 
 # 定义 env-filter 文件名
