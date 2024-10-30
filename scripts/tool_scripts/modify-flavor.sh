@@ -1,3 +1,4 @@
+#!/bin/bash
 FLAVOR=$1
 IS_PROD=$2
 

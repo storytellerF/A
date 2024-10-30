@@ -1,3 +1,4 @@
+#!/bin/bash
 keytool -importcert \
   -file http_ca.crt \
   -keystore my_keystore.jks \

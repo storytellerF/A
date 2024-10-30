@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 sh scripts/tool_scripts/patch-koyeb-env.sh ./Dockerfile
 args=$(grep -v '^#' ./koyeb.env | grep -v '^$' | awk -F '=' '{print "--build-arg " $1 "=\"" $2 "\""}' ORS=' ')

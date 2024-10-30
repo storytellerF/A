@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 FLAVOR=alpha
 sh scripts/build_scripts/build-all-in-flavor.sh $FLAVOR true

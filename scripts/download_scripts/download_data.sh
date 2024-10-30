@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 # 检查参数个数
 if [ "$#" -ne 2 ]; then
@@ -42,10 +43,9 @@ fi
 
 # 解压缩文件
 echo "Unzipping file..."
-unzip -q -P $PASSWORD $TEMP_ZIP
 
 # 检查解压是否成功
-if [ $? -ne 0 ]; then
+if ! unzip -q -P "$PASSWORD" $TEMP_ZIP; then
     echo "Unzip failed! Check if the password is correct."
     exit 1
 fi

@@ -1,3 +1,4 @@
+#!/bin/bash
 # 检查是否传递了命令作为参数
 if [ -z "$1" ]; then
   echo "Error: No command provided."
@@ -12,7 +13,7 @@ while true; do
   echo "Executing: $COMMAND"
 
   # 执行命令
-  $COMMAND
+  eval "$COMMAND"
 
   result=$?
   # 检查命令执行是否成功（返回码为0表示成功）

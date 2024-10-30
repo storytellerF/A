@@ -1,3 +1,5 @@
+#!/bin/sh
+
 set -e
 FLAVOR=$1
 IS_PROD=$2
@@ -7,6 +9,6 @@ if [ -z "$FLAVOR" ] || [ -z "$IS_PROD" ]; then
   exit 1
 fi
 
-sh scripts/tool_scripts/modify-flavor.sh $FLAVOR $IS_PROD
+sh scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$IS_PROD"
 
 sh scripts/build_scripts/build-server-on-condition.sh
