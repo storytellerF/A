@@ -3,7 +3,7 @@ IS_PROD=$2
 
 if [ -z "$FLAVOR" ] || [ -z "$IS_PROD" ]; then
   echo "FLAVOR and IS_PROD must be set"
-  exet 1
+  exit 1
 fi
 
 if [[ "$(uname)" == "Darwin" ]]; then

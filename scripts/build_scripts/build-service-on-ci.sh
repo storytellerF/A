@@ -4,7 +4,7 @@ FLAVOR=$1
 FLAVOR=$1
 if [ -z "$FLAVOR" ]; then
   echo "FLAVOR must be set"
-  exet 1
+  exit 1
 fi
 
 sh save-env.sh $FLAVOR
