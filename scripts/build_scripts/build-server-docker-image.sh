@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 DOCKER_IMAGE_NAME=$1
 if [ -z "$DOCKER_IMAGE_NAME" ]; then
@@ -10,4 +11,4 @@ IS_HOST=true \
   BUILD_ON_HOST=true \
   BUILD_ON_DOCKER=false \
   sh scripts/build_scripts/build-all-in-flavor.sh alpha true
-docker build -t $DOCKER_IMAGE_NAME .
+docker build -t "$DOCKER_IMAGE_NAME" .

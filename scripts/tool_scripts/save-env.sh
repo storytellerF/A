@@ -1,3 +1,4 @@
+#!/bin/bash
 export FLAVOR=saved-$FLAVOR
 OUTPUT_FILE="$FLAVOR.env"
 
@@ -20,9 +21,9 @@ while IFS= read -r key; do
 
   # 如果值中包含空格，则用引号包裹
   if echo "$value" | grep -q ' '; then
-      echo "$upper_key=\"$value\"" >> $OUTPUT_FILE
+      echo "$upper_key=\"$value\"" >> "$OUTPUT_FILE"
   else
-      echo "$upper_key=$value" >> $OUTPUT_FILE
+      echo "$upper_key=$value" >> "$OUTPUT_FILE"
   fi
 done < "$env_filter_file"
 

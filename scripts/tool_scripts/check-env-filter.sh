@@ -19,7 +19,7 @@ done < "$env_filter_file"
 
 # 读取 env 文件中的 keys
 env_keys=()
-while IFS='=' read -r key value; do
+while IFS='=' read -r key; do
     # 去除 Windows 换行符
     key=$(echo "$key" | tr -d '\r')
 
@@ -42,20 +42,37 @@ done
 # 验证 env_keys 和 env_filter_keys 是否按顺序匹配
 if [ ${#env_keys[@]} -ne ${#env_filter_keys[@]} ]; then
     echo "env $env_file 和 env-filter 文件中的变量数量不匹配! ${#env_keys[@]} - ${#env_filter_keys[@]}"
+
     echo "Only in env:"
     for item in "${env_keys[@]}"; do
-      if [[ ! " ${env_filter_keys[@]} " =~ " ${item} " ]]; then
-        echo "$item"
-      fi
+        found=false
+        for filter_item in "${env_filter_keys[@]}"; do
+            if [[ "$item" == "$filter_item" ]]; then
+                found=true
+                break
+            fi
+        done
+        if [ "$found" = false ]; then
+            echo "$item"
+        fi
     done
 
     echo "Only in env-filter:"
     for item in "${env_filter_keys[@]}"; do
-      if [[ ! " ${env_keys[@]} " =~ " ${item} " ]]; then
-        echo "$item"
-      fi
+        found=false
+        for key_item in "${env_keys[@]}"; do
+            if [[ "$item" == "$key_item" ]]; then
+                found=true
+                break
+            fi
+        done
+        if [ "$found" = false ]; then
+            echo "$item"
+        fi
     done
+
     exit 1
 fi
+
 
 echo "环境变量与 env-filter 中的定义完全按顺序匹配!"

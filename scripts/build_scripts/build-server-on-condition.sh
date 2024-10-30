@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 
 if [ -z "$IS_LOCAL_HOST" ] || [ -z "$IS_DOCKER" ] || [ -z "$BUILD_ON_LOCAL_HOST" ] || [ -z "$BUILD_ON_DOCKER" ]; then

@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 bash scripts/tool_scripts/check-all-env.sh
 sh gradlew server:buildFatJar --no-daemon

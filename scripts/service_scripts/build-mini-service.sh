@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 PUSH_TO_REMOTE_URI=$1
 REMOTE_CERT_FILE=$2

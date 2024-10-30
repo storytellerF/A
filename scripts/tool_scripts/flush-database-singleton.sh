@@ -1,3 +1,4 @@
+#!/bin/sh
 set -e
 cli_path=$1
 base=$2
@@ -7,7 +8,7 @@ if [ -z "$base" ] || [ -z "$cli_path" ]; then
   exit 1
 fi
 
-sh $cli_path clean
+sh "$cli_path" clean
 
 echo "clean result is $?"
 

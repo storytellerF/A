@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 FLAVOR=$1
 
@@ -6,4 +7,4 @@ if [ -z "$FLAVOR" ]; then
   exit 1
 fi
 
-sh scripts/service_scripts/build-$FLAVOR-service.sh
+sh "scripts/service_scripts/build-$FLAVOR-service.sh"

@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 mkdir -p deploy/docker-images
 
@@ -10,10 +11,9 @@ if [ -f "$file" ]; then
   echo "File '$file' already exists, skipping download."
 else
   echo "File '$file' does not exist, downloading..."
-  curl -o "$file" "$url"
 
   # 检查下载是否成功
-  if [ $? -eq 0 ]; then
+  if ! curl -o "$file" "$url"; then
     echo "File '$file' downloaded successfully."
   else
     echo "Failed to download '$file'."
@@ -23,9 +23,9 @@ fi
 
 # 函数：下载镜像并保存为 tar 文件
 download_and_save() {
-  IMAGE_NAME=$1        # Docker 镜像名称（例如：postgres, eclipse-temurin 等）
-  IMAGE_TAG=$2         # Docker 镜像标签（例如：postgres:latest）
-  OUTPUT_PATH=$3       # 保存 .tar 文件的路径
+  IMAGE_NAME=$1  # Docker 镜像名称（例如：postgres, eclipse-temurin 等）
+  IMAGE_TAG=$2   # Docker 镜像标签（例如：postgres:latest）
+  OUTPUT_PATH=$3 # 保存 .tar 文件的路径
 
   # 检查文件是否存在
   if [ -f "$OUTPUT_PATH" ]; then
