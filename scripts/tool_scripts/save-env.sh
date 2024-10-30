@@ -1,7 +1,3 @@
-if [ -z "$FLAVOR" ]; then
-  echo "FLAVOR must set."
-  exit 1
-fi
 export FLAVOR=saved-$FLAVOR
 OUTPUT_FILE="$FLAVOR.env"
 
