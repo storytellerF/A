@@ -19,7 +19,7 @@ done < "$env_filter_file"
 
 # 读取 env 文件中的 keys
 env_keys=()
-while IFS='=' read -r key; do
+while IFS='=' read -r key value; do
     # 去除 Windows 换行符
     key=$(echo "$key" | tr -d '\r')
 
