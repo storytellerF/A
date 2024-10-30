@@ -7,11 +7,11 @@ if [ -z "$FLAVOR" ]; then
   exit 1
 fi
 
-sh save-env.sh $FLAVOR
+sh scripts/tool_scripts/save-env.sh $FLAVOR
 
-sh modify-flavor.sh $FLAVOR true
+sh scripts/tool_scripts/modify-flavor.sh $FLAVOR true
 
-sh gradlew build
+sh gradlew composeApp:build
 
 mkdir -p "build/outputs/apk/release"
 
