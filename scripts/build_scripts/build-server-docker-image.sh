@@ -10,5 +10,5 @@ IS_HOST=true \
   IS_DOCKER=false \
   BUILD_ON_HOST=true \
   BUILD_ON_DOCKER=false \
-  sh scripts/build_scripts/build-all-in-flavor.sh alpha true
+  ./scripts/build_scripts/build-all-in-flavor.sh alpha true
 docker build -t "$DOCKER_IMAGE_NAME" .

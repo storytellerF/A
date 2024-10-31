@@ -9,6 +9,6 @@ if [ -z "$FLAVOR" ] || [ -z "$IS_PROD" ]; then
   exit 1
 fi
 
-sh scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$IS_PROD"
+./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$IS_PROD"
 
-sh scripts/build_scripts/build-server-on-condition.sh
+./scripts/build_scripts/build-server-on-condition.sh

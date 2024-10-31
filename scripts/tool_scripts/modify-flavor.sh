@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 FLAVOR=$1
 IS_PROD=$2
 
@@ -7,7 +7,7 @@ if [ -z "$FLAVOR" ] || [ -z "$IS_PROD" ]; then
   exit 1
 fi
 
-if [[ "$(uname)" == "Darwin" ]]; then
+if [ "$(uname)" = "Darwin" ]; then
     sed -i '' "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
       sed -i '' "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
 else

@@ -45,10 +45,10 @@ while IFS= read -r line; do
 
   if [[ "$key" == *"KEY"* || "$key" == *"PASS"* || "$key" == *"PASSWORD"* ]]; then
     # 保存到 secret
-    sh scripts/tool_scripts/exec-until-success.sh gh secret set "$key" -b "$value" -R "$REPO" -e "$ENVIRONMENT"
+    ./scripts/tool_scripts/exec-until-success.sh gh secret set "$key" -b "$value" -R "$REPO" -e "$ENVIRONMENT"
   else
     # 保存到 variable
-    sh scripts/tool_scripts/exec-until-success.sh gh variable set "$key" -b "$value" -R "$REPO" -e "$ENVIRONMENT"
+    ./scripts/tool_scripts/exec-until-success.sh gh variable set "$key" -b "$value" -R "$REPO" -e "$ENVIRONMENT"
   fi
 
   sleep 2

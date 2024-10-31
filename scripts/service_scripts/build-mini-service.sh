@@ -11,7 +11,7 @@ if [ -z "$PUSH_TO_REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_C
      IS_DOCKER=false \
      BUILD_ON_HOST=true \
      BUILD_ON_DOCKER=false \
-     sh scripts/build_scripts/build-all-in-flavor.sh $FLAVOR true
+     ./scripts/build_scripts/build-all-in-flavor.sh $FLAVOR true
    docker compose --env-file ../$FLAVOR.env \
      -f docker-compose.yml \
      -f docker-compose.d.yml \
@@ -21,6 +21,6 @@ else
     IS_DOCKER=false \
     BUILD_ON_HOST=true \
     BUILD_ON_DOCKER=false \
-    sh scripts/build_scripts/build-all-in-flavor.sh $FLAVOR true
-  sh scripts/service_scripts/start-service-on-remote.sh $PUSH_TO_REMOTE_URI $REMOTE_CERT_FILE "$REMOTE_COMMAND $FLAVOR"
+    ./scripts/build_scripts/build-all-in-flavor.sh $FLAVOR true
+  ./scripts/service_scripts/start-service-on-remote.sh $PUSH_TO_REMOTE_URI $REMOTE_CERT_FILE "$REMOTE_COMMAND $FLAVOR"
 fi

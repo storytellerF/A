@@ -29,9 +29,9 @@ while IFS= read -r line; do
     export "$key"="$value"
 done < $TEMP_FILE
 
-bash scripts/tool_scripts/save-env.sh
+./scripts/tool_scripts/save-env.sh
 
-sh scripts/tool_scripts/modify-flavor.sh "saved-$FLAVOR" true
+./scripts/tool_scripts/modify-flavor.sh "saved-$FLAVOR" true
 
 sh gradlew composeApp:build
 
