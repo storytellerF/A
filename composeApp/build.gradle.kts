@@ -127,7 +127,7 @@ kotlin {
     }
 }
 
-fun getenv(key: String) : String {
+fun getenv(key: String) : String? {
     return System.getenv(key) ?: System.getenv(key.uppercase())
 }
 
