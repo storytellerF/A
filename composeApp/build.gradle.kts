@@ -127,11 +127,15 @@ kotlin {
     }
 }
 
-val signPath: String? = System.getenv("storyteller_f_sign_path")
-val signKey: String? = System.getenv("storyteller_f_sign_key")
-val signAlias: String? = System.getenv("storyteller_f_sign_alias")
-val signStorePassword: String? = System.getenv("storyteller_f_sign_store_password")
-val signKeyPassword: String? = System.getenv("storyteller_f_sign_key_password")
+fun getenv(key: String) : String {
+    return System.getenv(key) ?: System.getenv(key.uppercase())
+}
+
+val signPath: String? = getenv("storyteller_f_sign_path")
+val signKey: String? = getenv("storyteller_f_sign_key")
+val signAlias: String? = getenv("storyteller_f_sign_alias")
+val signStorePassword: String? = getenv("storyteller_f_sign_store_password")
+val signKeyPassword: String? = getenv("storyteller_f_sign_key_password")
 val generatedJksFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
 android {
     namespace = "com.storyteller_f.a"

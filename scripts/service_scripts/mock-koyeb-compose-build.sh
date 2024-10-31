@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
-sh scripts/tool_scripts/patch-koyeb-env.sh
+./scripts/tool_scripts/patch-koyeb-env.sh
 args=$(grep -v '^#' ./mini.env | grep -v '^$' | awk -F '=' '{print "--build-arg " $1 "=\"" $2 "\""}' ORS=' ')
 eval docker build "$args" \
-  -f deploy/Dockerfile.koyeb \
+  -f deploy/Dockerfile.koyeb.patched \
   -t local-koyeb .
 docker run \
   --privileged \

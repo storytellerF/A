@@ -26,4 +26,4 @@ else
 fi
 
 mkdir -p deploy/build
-sh scripts/build_scripts/build-server.sh && sh scripts/build_scripts/build-cli.sh
+./scripts/build_scripts/build-server.sh && ./scripts/build_scripts/build-cli.sh

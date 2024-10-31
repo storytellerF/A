@@ -113,13 +113,13 @@ EOF
 RUN find scripts/ -type f \( -name "*.sh" -o -name "*.js" \) -exec sed -i 's/\r$//' {} + && \
     sed -i 's/\r$//' gradlew
 
-RUN bash scripts/download_scripts/download_data.sh $PRESET_ENCRYPTED_URI $PRESET_ENCRYPTED_PASSWORD
+RUN ./scripts/download_scripts/download_data.sh $PRESET_ENCRYPTED_URI $PRESET_ENCRYPTED_PASSWORD
 
 ENV IS_LOCAL_HOST=false
 ENV IS_DOCKER=true
 
 RUN --mount=type=cache,target=/root/.gradle \
-    sh scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
+    ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
 
 FROM eclipse-temurin:21
 

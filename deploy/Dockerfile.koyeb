@@ -18,14 +18,14 @@ COPY . .
 RUN find scripts/ -type f -name "*.sh" -exec sed -i 's/\r$//' {} + && \
     sed -i 's/\r$//' gradlew
 
-RUN bash scripts/download_scripts/manual-download-docker-image.sh
+RUN ./scripts/download_scripts/manual-download-docker-image.sh
 
 #mock host environment
 ENV IS_HOST=true
 ENV IS_DOCKER=false
 
 RUN --mount=type=cache,target=/root/.gradle \
-    sh scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
+    ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
 
 FROM koyeb/docker-compose
 
