@@ -6,8 +6,11 @@ RUN apt-get update && apt-get install -y \
 #^3
 ARG IS_PROD
 ARG FLAVOR
-ARG BUILD_ON_HOST
+ARG BUILD_ON_LOCAL_HOST
+ARG BUILD_ON_REMOTE_HOST
 ARG BUILD_ON_DOCKER
+ARG PRESET_ENCRYPTED_URI
+ARG PRESET_ENCRYPTED_PASSWORD
 #!3
 
 #3
@@ -24,6 +27,7 @@ RUN find scripts/ -type f \( -name "*.sh" -o -name "*.js" \) -exec sed -i 's/\r$
 RUN ./scripts/download_scripts/download_data.sh $PRESET_ENCRYPTED_URI $PRESET_ENCRYPTED_PASSWORD
 
 ENV IS_LOCAL_HOST=false
+ENV IS_REMOTE_HOST=false
 ENV IS_DOCKER=true
 
 RUN --mount=type=cache,target=/root/.gradle \

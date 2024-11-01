@@ -28,3 +28,4 @@ deploy/docker-images
 scripts/download-image.sh
 deploy/preset.zip
 node_modules
+bin
