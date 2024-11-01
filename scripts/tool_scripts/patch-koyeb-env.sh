@@ -49,7 +49,7 @@ done < "$env_filter_file"
 replace_string_2+="EOF\n"
 
 replace_string_3+="#override${newline}"
-replace_string_3+="ENV FLAVOR=generated-\${FLAVOR}"
+replace_string_3+="ENV FLAVOR=(\${FLAVOR})"
 
 # 使用 sed 替换 dockerfile 模板中的 #1 和 #2
 sed -e "s|#1|$replace_string_1|" -e "s|#2|$replace_string_2|" -e "s|#3|$replace_string_3|" "$dockerfile_template" > "$dockerfile_output"
