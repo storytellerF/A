@@ -1,5 +1,5 @@
 #!/bin/bash
-export FLAVOR="[$FLAVOR]"
+export FLAVOR="s-$FLAVOR"
 OUTPUT_FILE="$FLAVOR.env"
 
 # 定义 env-filter 文件名

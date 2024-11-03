@@ -31,10 +31,10 @@ done < $TEMP_FILE
 
 ./scripts/tool_scripts/save-env.sh
 
-./scripts/tool_scripts/modify-flavor.sh "[$FLAVOR]" true
+./scripts/tool_scripts/modify-flavor.sh "s_$FLAVOR" true
 
 sh gradlew composeApp:build
 
 mkdir -p "build/outputs/apk/release"
 
-mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/[$FLAVOR].apk"
+mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/s-$FLAVOR.apk"
