@@ -31,7 +31,7 @@ done < $TEMP_FILE
 
 ./scripts/tool_scripts/save-env.sh
 
-./scripts/tool_scripts/modify-flavor.sh "s_$FLAVOR" true
+./scripts/tool_scripts/modify-flavor.sh "s-$FLAVOR" true
 
 sh gradlew composeApp:build
 
