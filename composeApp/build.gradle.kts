@@ -153,12 +153,10 @@ android {
         versionName = "1.0"
     }
     signingConfigs {
-        val signStorePath = if (signPath != null) {
-            File(signPath)
-        } else if (signKey != null) {
-            generatedJksFile
-        } else {
-            null
+        val signStorePath = when {
+            signPath != null -> File(signPath)
+            signKey != null -> generatedJksFile
+            else -> null
         }
         if (signStorePath != null && signAlias != null && signStorePassword != null && signKeyPassword != null) {
             create("release") {

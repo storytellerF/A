@@ -7,4 +7,4 @@ if [ -z "$FLAVOR" ]; then
   exit 1
 fi
 
-sh "scripts/service_scripts/build-$FLAVOR-service.sh"
+sh "scripts/service_scripts/build-service.sh $FLAVOR"

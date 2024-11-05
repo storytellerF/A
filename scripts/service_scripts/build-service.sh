@@ -25,9 +25,19 @@ while IFS= read -r line; do
 done <"$FLAVOR.env"
 
 if [ -z "$PUSH_TO_REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_COMMAND" ]; then
-  IS_DOCKER=false \
-    ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
-  "./scripts/service_scripts/start-$FLAVOR-compose.sh"
+  if [ "$IS_LOCAL_HOST" = "true" ]; then
+    # 在本地启动
+    IS_DOCKER=false \
+      ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
+    "./scripts/service_scripts/start-$FLAVOR-compose.sh"
+  else
+    # 在远程主机上启动
+    # load image
+    docker load -i "/tmp/A/$FLAVOR.image.tar"
+    # 使用预构建镜像构建服务
+    "./scripts/service_scripts/start-$FLAVOR-compose.sh" true
+  fi
+
 else
   IS_DOCKER=false \
     ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
