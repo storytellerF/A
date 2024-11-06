@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: koyeb
+    environment: mini
     env:
       # this will take the entire vars context configured in the repository > environments
       # setting and convert it to JSON so we can automatically assign all the values to the
@@ -25,10 +25,13 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Build app
-        run: ./scripts/build_scripts/build-service-on-ci.sh koyeb
+      - name: Build mini service
+        run: ./scripts/build_scripts/build-service-on-ci.sh
+
+      - name: Build koyeb app
+        run: ./scripts/build_scripts/build-app-on-ci.sh https://respectable-jobie-anabn-3d54150c.koyeb.app/server/ koyeb
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Signed app bundle
+          name: Signed A Bundle
           path: build/outputs/apk/release/

@@ -8,7 +8,8 @@ fi
 
 IS_HOST=true \
   IS_DOCKER=false \
-  BUILD_ON_HOST=true \
+  BUILD_ON_LOCAL_HOST=true \
+  BUILD_ON_REMOTE_HOST=false \
   BUILD_ON_DOCKER=false \
   ./scripts/build_scripts/build-all-in-flavor.sh alpha true
 docker build -t "$DOCKER_IMAGE_NAME" .

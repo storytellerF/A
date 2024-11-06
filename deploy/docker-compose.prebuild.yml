@@ -1,6 +1,7 @@
 services:
   server:
     image: a-server:latest
+    build: !reset null
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
     profiles:
