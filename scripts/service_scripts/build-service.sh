@@ -42,6 +42,6 @@ else
   IS_DOCKER=false \
     ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
   args=$(grep -v '^#' "$FLAVOR".env | grep -v '^$' | awk -F '=' '{print "--build-arg " $1 "=\"" $2 "\""}' ORS=' ')
-  ./scripts/tool_scripts/exec-until-success.sh docker build "$args" -t "a-server:latest" .
+  ./scripts/tool_scripts/exec-until-success.sh docker build --platform linux/amd64 "$args" -t "a-server:latest" .
   ./scripts/service_scripts/start-service-on-remote.sh "$PUSH_TO_REMOTE_URI" "$REMOTE_CERT_FILE" "$REMOTE_COMMAND $FLAVOR"
 fi
