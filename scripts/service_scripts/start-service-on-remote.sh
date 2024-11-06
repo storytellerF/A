@@ -9,7 +9,7 @@ if [ -z "$PUSH_TO_REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ]; then
 fi
 
 # 定义要保存的文件名
-FILE="build/images/$FLAVOR.tar"
+FILE="build/images/$FLAVOR.image.tar"
 IMAGE_NAME="a-server:latest"
 
 # 检查文件是否存在
