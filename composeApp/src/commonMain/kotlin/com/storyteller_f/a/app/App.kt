@@ -155,15 +155,9 @@ val client by lazy {
     }
 }
 
-val wsClient by lazy {
-    getClient {
-        defaultWSClientConfigure()
-    }
-}
-
 val clientWs by lazy {
     ClientWebSocket({
-        wsClient.webSocketSession(BuildKonfig.WS_SERVER_URL + "link") {
+        client.webSocketSession(BuildKonfig.WS_SERVER_URL + "link") {
             addRequestHeaders(LoginViewModel.session?.first)
         }
     }) {

@@ -7,6 +7,7 @@ import co.elastic.clients.transport.rest_client.RestClientTransport
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.ElasticConnection
 import com.storyteller_f.shared.type.PrimaryKey
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -15,6 +16,7 @@ import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.elasticsearch.client.RestClient
+import java.io.File
 import java.io.FileInputStream
 
 class ElasticTopicDocumentService(private val connection: ElasticConnection) : TopicDocumentService {
@@ -57,6 +59,7 @@ private suspend fun <T> useElasticClient(
     block: suspend ElasticsearchAsyncClient.() -> T
 ): T {
     val crtStream = withContext(Dispatchers.IO) {
+        Napier.i(message = "cert path ${File(elasticConnection.certFile).canonicalPath}")
         FileInputStream(elasticConnection.certFile)
     }
     val sslContext = TransportUtils
