@@ -16,8 +16,19 @@ fun Route.protectedContent(backend: Backend) {
     bindProtectedRoomRoute(backend)
     bindProtectedCommunityRoute(backend)
     bindProtectedTopicRoute(backend)
+    bindProtectedUserRoute()
     webSocket("/link") {
         webSocketContent(backend)
+    }
+}
+
+private fun Route.bindProtectedUserRoute() {
+    route("/user") {
+        post("/update") {
+            usePrincipal { id ->
+                updateUser(id)
+            }
+        }
     }
 }
 
@@ -51,7 +62,7 @@ private fun Route.bindProtectedCommunityRoute(backend: Backend) {
         }
         post("/{id}/join") {
             usePrincipal { id ->
-                checkParameter<PrimaryKey, Unit>("id") {
+                checkParameter<PrimaryKey, Boolean>("id") {
                     joinCommunity(id, it)
                 }
             }

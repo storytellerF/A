@@ -14,8 +14,10 @@ import com.storyteller_f.a.app.common.StateView2
 import com.storyteller_f.a.app.common.serviceCatching
 import com.storyteller_f.a.app.topic.UserHeadRow
 import com.storyteller_f.a.client_lib.getUserInfo
+import com.storyteller_f.a.client_lib.getUserInfoByAid
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
+import io.ktor.client.*
 import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
@@ -33,7 +35,29 @@ fun UserRefCell(modifier: Modifier = Modifier, userId: PrimaryKey) {
     }
 }
 
-class UserViewModel(private val userId: PrimaryKey) : SimpleViewModel<UserInfo>() {
+@Composable
+fun UserRefCell(modifier: Modifier = Modifier, userAid: String) {
+    val viewModel = viewModel(UserViewModel::class, keys = listOf("user", userAid)) {
+        UserViewModel(userAid)
+    }
+
+    StateView2(viewModel.handler) {
+        Box(
+            modifier.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp)).padding(10.dp)
+        ) {
+            UserHeadRow(it)
+        }
+    }
+}
+
+class UserViewModel(private val requestInfo: suspend HttpClient.() -> UserInfo) : SimpleViewModel<UserInfo>() {
+    constructor(userId: PrimaryKey) : this({
+        getUserInfo(userId)
+    })
+    constructor(userAid: String) : this({
+        getUserInfoByAid(userAid)
+    })
+
     init {
         load()
     }
@@ -41,7 +65,7 @@ class UserViewModel(private val userId: PrimaryKey) : SimpleViewModel<UserInfo>(
     override suspend fun loadInternal() {
         handler.request {
             serviceCatching {
-                client.getUserInfo(userId)
+                requestInfo(client)
             }
         }
     }

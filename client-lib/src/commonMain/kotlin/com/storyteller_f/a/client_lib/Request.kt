@@ -15,6 +15,13 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 
 suspend fun HttpClient.requestRoomInfo(id: PrimaryKey) = get("room/$id").body<RoomInfo>()
+
+suspend fun HttpClient.requestRoomInfoByAid(aid: String) = get("room") {
+    url {
+        parameters.append("aid", aid)
+    }
+}.body<RoomInfo>()
+
 suspend fun HttpClient.requestRoomKeys(id: PrimaryKey) =
     get("room/$id/pub-keys").body<ServerResponse<Pair<PrimaryKey, String>>>()
 
@@ -33,6 +40,12 @@ suspend fun HttpClient.getRoomTopics(
 }.body<ServerResponse<TopicInfo>>()
 
 suspend fun HttpClient.getCommunityInfo(id: PrimaryKey) = get("community/$id").body<CommunityInfo>()
+
+suspend fun HttpClient.getCommunityInfoByAid(aid: String) = get("community", {
+    url {
+        parameters.append("aid", aid)
+    }
+}).body<CommunityInfo>()
 
 suspend fun HttpClient.getCommunityTopics(communityId: PrimaryKey, size: Int) =
     get("community/$communityId/topics?size=$size").body<ServerResponse<TopicInfo>>()
@@ -64,6 +77,17 @@ suspend fun HttpClient.getWorldTopics(nextTopicId: PrimaryKey?, size: Int) = get
 
 suspend fun HttpClient.getUserInfo(id: PrimaryKey) = get("user/$id").body<UserInfo>()
 
+suspend fun HttpClient.updateUserInfo(newUserInfo: UserInfo) = post("user/update") {
+    contentType(ContentType.Application.Json)
+    setBody(newUserInfo)
+}.body<Int>()
+
+suspend fun HttpClient.getUserInfoByAid(aid: String) = get("user", {
+    url {
+        parameters.append("aid", aid)
+    }
+}).body<UserInfo>()
+
 suspend fun HttpClient.getTopicTopics(topicId: PrimaryKey, nextTopicId: PrimaryKey?, size: Int) =
     get("topic/$topicId/topics") {
         url {
@@ -72,6 +96,12 @@ suspend fun HttpClient.getTopicTopics(topicId: PrimaryKey, nextTopicId: PrimaryK
     }.body<ServerResponse<TopicInfo>>()
 
 suspend fun HttpClient.getTopicInfo(id: PrimaryKey) = get("topic/$id").body<TopicInfo>()
+
+suspend fun HttpClient.getTopicInfoByAid(aid: String) = get("topic") {
+    url {
+        parameters.append("aid", aid)
+    }
+}.body<TopicInfo>()
 
 suspend fun HttpClient.getJoinedRooms(size: Int, nextRoomId: PrimaryKey?) = get("room/joined") {
     url {

@@ -58,6 +58,10 @@ suspend fun RoutingContext.respondError(e: Throwable) {
                 e.localizedMessage
             )
 
+        is BadRequestException -> call.respond(
+            HttpStatusCode.BadRequest,
+            e.localizedMessage
+        )
         else -> call.respond(HttpStatusCode.InternalServerError, e.localizedMessage ?: e.toString())
     }
 }

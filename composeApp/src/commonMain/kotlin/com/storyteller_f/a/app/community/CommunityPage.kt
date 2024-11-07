@@ -31,15 +31,13 @@ import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.room.RoomList
 import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.world.TopicList
-import com.storyteller_f.a.client_lib.getCommunityInfo
-import com.storyteller_f.a.client_lib.getCommunityRooms
-import com.storyteller_f.a.client_lib.getCommunityTopics
-import com.storyteller_f.a.client_lib.joinCommunity
+import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import io.ktor.client.*
 import kotlinx.coroutines.launch
 import moe.tlaster.precompose.viewmodel.viewModel
 import moe.tlaster.precompose.viewmodel.viewModelScope
@@ -47,13 +45,22 @@ import org.jetbrains.compose.resources.stringResource
 
 data class OnCommunityJoined(val communityId: PrimaryKey)
 
-class CommunityViewModel(private val communityId: PrimaryKey) : SimpleViewModel<CommunityInfo>() {
+class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> CommunityInfo) :
+    SimpleViewModel<CommunityInfo>() {
+    constructor(communityId: PrimaryKey) : this({
+        getCommunityInfo(communityId)
+    })
+
+    constructor(communityAid: String) : this({
+        getCommunityInfoByAid(communityAid)
+    })
+
     init {
         load()
         viewModelScope.launch {
             for (i in bus) {
                 if (i is OnCommunityJoined) {
-                    if (i.communityId == communityId) {
+                    if (i.communityId == handler.data.value?.id) {
                         handler.refresh()
                     }
                 }
@@ -64,7 +71,7 @@ class CommunityViewModel(private val communityId: PrimaryKey) : SimpleViewModel<
     override suspend fun loadInternal() {
         handler.request {
             serviceCatching {
-                client.getCommunityInfo(communityId)
+                requestInfo(client)
             }
         }
     }

@@ -14,3 +14,13 @@ fun RoomRefCell(roomId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
         RoomCell(it, onClick)
     }
 }
+
+@Composable
+fun RoomRefCell(roomAid: String, onClick: (PrimaryKey) -> Unit) {
+    val viewModel = viewModel(RoomViewModel::class, keys = listOf("room", roomAid)) {
+        RoomViewModel(roomAid)
+    }
+    StateView2(viewModel.handler) {
+        RoomCell(it, onClick)
+    }
+}

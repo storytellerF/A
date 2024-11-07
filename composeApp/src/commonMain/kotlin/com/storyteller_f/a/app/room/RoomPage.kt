@@ -45,6 +45,7 @@ import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
+import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import kotbase.Expression
 import kotbase.MutableDocument
@@ -153,12 +154,19 @@ class RoomTopicsRemoteMediator(
     }
 }
 
-class RoomViewModel(private val roomId: PrimaryKey) : SimpleViewModel<RoomInfo>() {
+class RoomViewModel(private val requestInfo: suspend HttpClient.() -> RoomInfo) : SimpleViewModel<RoomInfo>() {
+    constructor(roomId: PrimaryKey) : this({
+        requestRoomInfo(roomId)
+    })
+    constructor(roomAid: String) : this({
+        requestRoomInfoByAid(roomAid)
+    })
+
     init {
         load()
         viewModelScope.launch {
             for (i in bus) {
-                if (i is OnRoomJoined && i.id == roomId) {
+                if (i is OnRoomJoined && i.id == handler.data.value?.id) {
                     handler.refresh()
                 }
             }
@@ -168,7 +176,7 @@ class RoomViewModel(private val roomId: PrimaryKey) : SimpleViewModel<RoomInfo>(
     override suspend fun loadInternal() {
         handler.request {
             serviceCatching {
-                client.requestRoomInfo(roomId)
+                requestInfo(client)
             }
         }
     }
