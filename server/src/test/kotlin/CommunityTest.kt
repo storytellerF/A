@@ -4,36 +4,36 @@ import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.buildBackendFromEnv
 import com.storyteller_f.naming.NameService
 import com.storyteller_f.readEnv
-import com.storyteller_f.shared.*
+import com.storyteller_f.shared.hmacSign
+import com.storyteller_f.shared.hmacVerify
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.newHmacSha512
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Community
-import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.config.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
-import java.nio.file.Paths
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.deleteRecursively
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertTrue
 
 class CommunityTest {
+    @Test
+    fun `test get community`() = test { client ->
+        val communityId = createCommunity()
+        val community = client.getCommunityInfo(communityId)
+        assertEquals(communityId, client.getCommunityInfoByAid(community.aid).id)
+    }
+
     @Test
     fun `test create topic in community`() = test { client ->
         session(client) {
@@ -146,50 +146,4 @@ class CommunityTest {
             println(NameService().parse(SnowflakeFactory.nextId()))
         }
     }
-}
-
-@Suppress("unused")
-fun Application.module() {
-    log.info("Hello from test!")
-    routing {
-        get {
-            call.respond(HttpStatusCode.OK, "Hello, world!")
-        }
-    }
-}
-
-@OptIn(ExperimentalPathApi::class)
-fun test(block: suspend (HttpClient) -> Unit) {
-    SnowflakeFactory.setMachine(0)
-    testApplication {
-        addProvider()
-        val path = Paths.get("../deploy/lucene_data/index")
-        val backend = buildBackendFromEnv(readEnv())
-        DatabaseFactory.init(backend.config.databaseConnection)
-        environment {
-            config = MapApplicationConfig(
-                "ktor.application.modules.0" to "CommunityTestKt.module",
-                "ktor.application.modules.1" to "com.storyteller_f.a.server.ApplicationKt.module",
-                "ktor.application.modules.size" to "2"
-            )
-        }
-        val client = createClient {
-            defaultClientConfigure()
-        }
-        block(client)
-        path.deleteRecursively()
-        DatabaseFactory.clean()
-    }
-}
-
-suspend fun session(client: HttpClient, block: suspend () -> Unit) {
-    val priKey = generateKeyPair()
-    val pubKey = getDerPublicKeyFromPrivateKey(priKey)
-    val address = calcAddress(pubKey)
-    val data = finalData(client.getData())
-    val sign = signature(priKey, data)
-    val userInfo = client.sign(true, pubKey, sign, address)
-    LoginViewModel.updateState(ClientSession.LoginSuccess(priKey, pubKey, address))
-    LoginViewModel.updateUser(userInfo)
-    block()
 }

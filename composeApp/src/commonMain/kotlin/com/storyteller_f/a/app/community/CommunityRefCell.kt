@@ -14,3 +14,13 @@ fun CommunityRefCell(communityId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
         CommunityCell(it, onClick)
     }
 }
+
+@Composable
+fun CommunityRefCell(communityAid: String, onClick: (PrimaryKey) -> Unit) {
+    val viewModel = viewModel(CommunityViewModel::class, keys = listOf("community", communityAid)) {
+        CommunityViewModel(communityAid)
+    }
+    StateView2(viewModel.handler) {
+        CommunityCell(it, onClick)
+    }
+}

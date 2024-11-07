@@ -6,6 +6,7 @@ import com.storyteller_f.a.server.common.bindPaginationQuery
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.*
+import io.ktor.server.plugins.*
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -167,8 +168,8 @@ suspend fun searchRoomInCommunity(
 ): Result<Pair<List<RoomInfo>, Long>> {
     return runCatching {
         val list = DatabaseFactory.mapQuery({
-            val joinedTime = it.getOrNull(RoomJoins.joinTime)
-            val room = Room.wrapRow(it)
+            val joinedTime = getOrNull(RoomJoins.joinTime)
+            val room = Room.wrapRow(this)
             room.toRoomInfo(joinedTime, communityId) to room.icon
         }) {
             val join = Rooms.join(CommunityRooms, JoinType.INNER, Rooms.id, CommunityRooms.roomId)
@@ -222,15 +223,25 @@ private fun Room.toRoomInfo(joinedTime: LocalDateTime?, communityId: PrimaryKey?
     communityId
 )
 
-suspend fun getRoom(roomId: PrimaryKey, uid: PrimaryKey?, backend: Backend): Result<RoomInfo?> {
+suspend fun getRoom(roomId: PrimaryKey?, roomAid: String?, uid: PrimaryKey?, backend: Backend): Result<RoomInfo?> {
+    if (roomId == null && roomAid == null) {
+        return Result.failure(BadRequestException("roomId or roomAid must be set."))
+    }
     return runCatching {
-        DatabaseFactory.dbQuery {
+        DatabaseFactory.first({
+            this
+        }, ::mapRoomInfo) {
             val baseJoin = Rooms.join(CommunityRooms, JoinType.LEFT, Rooms.id, CommunityRooms.roomId)
             val baseOp = Op.build {
-                Rooms.id eq roomId
+                if (roomId != null) {
+                    Rooms.id eq roomId
+                } else {
+                    Rooms.aid eq roomAid!!
+                }
             }
             val baseFields = Rooms.fields + CommunityRooms.communityId
             if (uid != null) {
+                // 检查用户是否加入，查询加入时间
                 baseJoin
                     .join(RoomJoins, JoinType.INNER, Rooms.id, RoomJoins.roomId)
                     .select(baseFields + RoomJoins.joinTime)
@@ -243,7 +254,7 @@ suspend fun getRoom(roomId: PrimaryKey, uid: PrimaryKey?, backend: Backend): Res
                     .where {
                         baseOp
                     }
-            }.map(::mapRoomInfo).firstOrNull()
+            }
         }?.let {
             val (info, iconName) = it
             val icon = backend.mediaService.get("apic", listOf(iconName)).firstOrNull()

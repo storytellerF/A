@@ -9,6 +9,8 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.selectAll
 
 fun Community.toCommunityIfo(
@@ -26,27 +28,39 @@ fun Community.toCommunityIfo(
 
 suspend fun getCommunity(communityId: PrimaryKey, backend: Backend): Result<CommunityInfo?> {
     return runCatching {
-        DatabaseFactory.first({ item ->
-            Triple(item.toCommunityIfo(now()), item.icon, item.poster)
-        }, {
-            Community.wrapRow(it)
-        }) {
+        getCommunityInternal(backend) {
             Community.findById(communityId)
-        }?.let { (info, iconName, coverName) ->
-            val (iconUrl, coverUrl) = backend.mediaService.get("apic", listOf(iconName, coverName))
-            info.copy(icon = getMediaInfo(iconUrl), poster = getMediaInfo(coverUrl))
         }
     }
 }
 
+suspend fun getCommunityByAid(communityAid: String, backend: Backend): Result<CommunityInfo?> {
+    return runCatching {
+        getCommunityInternal(backend) {
+            Community.find {
+                Communities.aid eq communityAid
+            }
+        }
+    }
+}
+
+private suspend fun getCommunityInternal(backend: Backend, searchCommunity: suspend () -> SizedIterable<ResultRow>) =
+    DatabaseFactory.first({
+        Triple(toCommunityIfo(now()), icon, poster)
+    }, {
+        Community.wrapRow(it)
+    }, searchCommunity)?.let { (info, iconName, coverName) ->
+        val (iconUrl, coverUrl) = backend.mediaService.get("apic", listOf(iconName, coverName))
+        info.copy(icon = getMediaInfo(iconUrl), poster = getMediaInfo(coverUrl))
+    }
+
 suspend fun joinCommunity(
-    id: PrimaryKey,
-    it: PrimaryKey
+    uid: PrimaryKey,
+    communityId: PrimaryKey
 ) = runCatching {
     DatabaseFactory.dbQuery {
-        createCommunityJoin(id, it)
-    }
-    Unit
+        createCommunityJoin(uid, communityId)
+    }.insertedCount > 0
 }
 
 suspend fun searchCommunities(
@@ -57,8 +71,8 @@ suspend fun searchCommunities(
     size: Int
 ): Result<Pair<List<CommunityInfo>, Long>> {
     return runCatching {
-        val list = DatabaseFactory.mapQuery({ community ->
-            Triple(community.toCommunityIfo(null), community.icon, community.poster)
+        val list = DatabaseFactory.mapQuery({
+            Triple(toCommunityIfo(null), icon, poster)
         }, Community::wrapRow) {
             val query = Community.find {
                 Communities.name like "%$word%"
@@ -82,7 +96,8 @@ suspend fun searchJoinedCommunities(
     size: Int
 ): Result<Pair<List<CommunityInfo>, Long>> {
     return runCatching {
-        val list = DatabaseFactory.mapQuery({ (community, joinTime) ->
+        val list = DatabaseFactory.mapQuery({
+            val (community, joinTime) = this
             Triple(community.toCommunityIfo(joinTime), community.icon, community.poster)
         }, {
             val community = Community.wrapRow(it)

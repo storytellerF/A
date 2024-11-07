@@ -156,8 +156,8 @@ private suspend fun RoutingContext.signIn(backend: Backend) {
     val pack = call.receive<SignInPack>()
     val data = call.getData()
     val f = finalData(data)
-    val userTriple = DatabaseFactory.first({ user ->
-        Triple(user.toUserInfo(), user.icon, user.publicKey)
+    val userTriple = DatabaseFactory.first({
+        Triple(toUserInfo(), icon, publicKey)
     }, User::wrapRow) {
         User.find {
             Users.address eq pack.ad
@@ -191,7 +191,7 @@ private suspend fun RoutingContext.signUp(backend: Backend) {
             val newId = SnowflakeFactory.nextId()
             val name = backend.nameService.parse(newId)
             call.respond(DatabaseFactory.query({
-                it.toUserInfo() to null
+                toUserInfo() to null
             }) {
                 createUser(User(null, pack.pk, ad, null, name, newId, now()))
             }.let { toFinalUserInfo(it, backend) })
@@ -236,7 +236,7 @@ private suspend fun ApplicationCall.verifySignature(
 
     sig.isNotBlank() && session.data.isNotBlank() -> {
         DatabaseFactory.first({
-            it
+            this
         }, {
             it[Users.publicKey]
         }) {

@@ -63,7 +63,7 @@ object DatabaseFactory {
     /**
      * 带有transform
      */
-    suspend fun <T, R> query(transform: (T) -> R, block: suspend () -> T): R =
+    suspend fun <T, R> query(transform: T.() -> R, block: suspend () -> T): R =
         dbQuery { transform(block()) }
 
     /**
@@ -71,20 +71,20 @@ object DatabaseFactory {
      */
     suspend fun <T, R : Any?> queryNotNull(transform: T.() -> R?, block: suspend () -> T?): R? =
         query({
-            it?.let { transform(it) }
+            this?.let { transform(it) }
         }) { block() }
 
     /**
      * 带有transform
      */
-    suspend fun <T, R> mapQuery(transform: (T) -> R, block: suspend () -> SizedIterable<T>): List<R> =
+    suspend fun <T, R> mapQuery(transform: T.() -> R, block: suspend () -> SizedIterable<T>): List<R> =
         dbQuery { block().map(transform) }
 
     /**
      * 带有transform
      */
     suspend fun <T, R, R1> mapQuery(
-        transform: (R1) -> R,
+        transform: R1.() -> R,
         typeTransform: (T) -> R1,
         block: suspend () -> SizedIterable<T>
     ): List<R> =
@@ -99,7 +99,7 @@ object DatabaseFactory {
      * @param typeTransform 主要用于将ResultRow 转换成普通数据
      */
     suspend fun <T, R, R1> first(
-        transform: (R1) -> T,
+        transform: R1.() -> T,
         typeTransform: (R) -> R1,
         block: suspend () -> SizedIterable<R>
     ): T? = dbQuery {

@@ -47,6 +47,17 @@ import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
 
+class TopicRoute(val pattern: String, val builder: @Composable () -> Unit)
+
+// private val ROUTE = mutableListOf(
+//    TopicRoute("/topic/{id}") {
+//    },
+//    TopicRoute("/root/{id}") {
+//    },
+//    TopicRoute("/community/{id}") {
+//    }
+// )
+
 @Composable
 fun TopicCell(
     topicInfo: TopicInfo?,
@@ -123,7 +134,18 @@ fun TopicRefCell(topicId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
     }
 
     StateView2(viewModel.handler) {
-        TopicRefCellContent(it, onClick, topicId)
+        TopicRefCellContent(it, onClick)
+    }
+}
+
+@Composable
+fun TopicRefCell(topicAid: String, onClick: (PrimaryKey) -> Unit) {
+    val viewModel = viewModel(TopicViewModel::class, keys = listOf("topic", topicAid)) {
+        TopicViewModel(topicAid)
+    }
+
+    StateView2(viewModel.handler) {
+        TopicRefCellContent(it, onClick)
     }
 }
 
@@ -131,7 +153,6 @@ fun TopicRefCell(topicId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
 private fun TopicRefCellContent(
     it: TopicInfo,
     onClick: (PrimaryKey) -> Unit,
-    topicId: PrimaryKey,
 ) {
     val author = it.author
     val authorViewModel = viewModel(UserViewModel::class, keys = listOf("user", author)) {
@@ -141,7 +162,7 @@ private fun TopicRefCellContent(
     Row(
         modifier = Modifier.fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(4.dp)).clickable {
-                onClick(topicId)
+                onClick(it.id)
             }.padding(10.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -187,22 +208,55 @@ private fun RefBlock(
     val textInNode = readFenceContent(children, langOffset, content)
     val uri = Uri.parse(textInNode)
     return if (uri.pathSegments.size == 2) {
-        val id = uri.pathSegments[1].toULong()
         val p1 = uri.pathSegments[0]
         when (p1) {
-            "topic" -> TopicRefCell(id) {
-                onClick(it, ObjectType.TOPIC)
+            "topic" -> {
+                val id = uri.pathSegments[1].toULongOrNull()
+                if (id != null) {
+                    TopicRefCell(id) {
+                        onClick(it, ObjectType.TOPIC)
+                    }
+                } else {
+                    TopicRefCell(uri.pathSegments[1]) {
+                        onClick(it, ObjectType.TOPIC)
+                    }
+                }
             }
 
-            "room" -> RoomRefCell(roomId = id) {
-                onClick(it, ObjectType.ROOM)
+            "room" -> {
+                val id = uri.pathSegments[1].toULongOrNull()
+                if (id != null) {
+                    RoomRefCell(id) {
+                        onClick(it, ObjectType.ROOM)
+                    }
+                } else {
+                    RoomRefCell(uri.pathSegments[1]) {
+                        onClick(it, ObjectType.ROOM)
+                    }
+                }
             }
 
-            "community" -> CommunityRefCell(communityId = id) {
-                onClick(it, ObjectType.COMMUNITY)
+            "community" -> {
+                val id = uri.pathSegments[1].toULongOrNull()
+                if (id != null) {
+                    CommunityRefCell(id) {
+                        onClick(it, ObjectType.COMMUNITY)
+                    }
+                } else {
+                    CommunityRefCell(uri.pathSegments[1]) {
+                        onClick(it, ObjectType.COMMUNITY)
+                    }
+                }
             }
 
-            "user" -> UserRefCell(userId = id)
+            "user" -> {
+                val id = uri.pathSegments[1].toULongOrNull()
+                if (id != null) {
+                    UserRefCell(userId = id)
+                } else {
+                    UserRefCell(userAid = uri.pathSegments[1])
+                }
+            }
 
             else -> null
         }

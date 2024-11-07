@@ -7,7 +7,10 @@ import com.storyteller_f.a.server.common.checkParameter
 import com.storyteller_f.a.server.common.checkQueryParameter
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
-import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.server.routing.*
@@ -34,6 +37,13 @@ fun Route.unProtectedContent(backend: Backend) {
 
 private fun Route.bindUserRoute(backend: Backend) {
     route("/user") {
+        get {
+            omitPrincipal {
+                checkQueryParameter<String, UserInfo>("aid") {
+                    getUserByAid(it, backend)
+                }
+            }
+        }
         get("/{id}") {
             omitPrincipal {
                 checkParameter<PrimaryKey, UserInfo>("id") {
@@ -113,6 +123,13 @@ private fun Route.bindCommunityRoute(backend: Backend) {
                 }
             }
         }
+        get {
+            omitPrincipal {
+                checkQueryParameter<String, CommunityInfo>("aid") {
+                    getCommunityByAid(it, backend)
+                }
+            }
+        }
         get("/search") {
             omitPrincipal {
                 pagination<CommunityInfo, PrimaryKey>({
@@ -129,6 +146,13 @@ private fun Route.bindCommunityRoute(backend: Backend) {
 
 private fun Route.bindRoomRoute(backend: Backend) {
     route("/room") {
+        get {
+            usePrincipalOrNull { uid ->
+                checkQueryParameter<String, RoomInfo> {
+                    getRoom(null, it, uid, backend)
+                }
+            }
+        }
         get("/{id}/topics") {
             usePrincipalOrNull { uid ->
                 pagination<TopicInfo, PrimaryKey>({
@@ -144,7 +168,7 @@ private fun Route.bindRoomRoute(backend: Backend) {
         get("/{roomId}") {
             usePrincipalOrNull { uid ->
                 checkParameter<PrimaryKey, RoomInfo>("roomId") {
-                    getRoom(it, uid, backend)
+                    getRoom(it, null, uid, backend)
                 }
             }
         }
