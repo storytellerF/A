@@ -47,11 +47,19 @@ suspend fun HttpClient.getCommunityInfoByAid(aid: String) = get("community", {
     }
 }).body<CommunityInfo>()
 
-suspend fun HttpClient.getCommunityTopics(communityId: PrimaryKey, size: Int) =
-    get("community/$communityId/topics?size=$size").body<ServerResponse<TopicInfo>>()
+suspend fun HttpClient.getCommunityTopics(communityId: PrimaryKey, nextTopicId: PrimaryKey?, size: Int) =
+    get("community/$communityId/topics") {
+        url {
+            appendPagingQueryParams(size, nextTopicId)
+        }
+    }.body<ServerResponse<TopicInfo>>()
 
-suspend fun HttpClient.getCommunityRooms(communityId: PrimaryKey) =
-    get("community/$communityId/rooms").body<ServerResponse<RoomInfo>>()
+suspend fun HttpClient.getCommunityRooms(communityId: PrimaryKey, nextRoomId: PrimaryKey?, size: Int) =
+    get("community/$communityId/rooms") {
+        url {
+            appendPagingQueryParams(size, nextRoomId)
+        }
+    }.body<ServerResponse<RoomInfo>>()
 
 suspend fun HttpClient.getJoinCommunities(nextCommunityId: PrimaryKey?, size: Int) = get("community/joined") {
     url {
@@ -59,10 +67,10 @@ suspend fun HttpClient.getJoinCommunities(nextCommunityId: PrimaryKey?, size: In
     }
 }.body<ServerResponse<CommunityInfo>>()
 
-private fun URLBuilder.appendPagingQueryParams(size: Int, nextCommunityId: PrimaryKey?) {
+private fun URLBuilder.appendPagingQueryParams(size: Int, nextId: PrimaryKey?) {
     parameters.append("size", size.toString())
-    if (nextCommunityId != null) {
-        parameters.append("nextPageToken", nextCommunityId.toString())
+    if (nextId != null) {
+        parameters.append("nextPageToken", nextId.toString())
     }
 }
 

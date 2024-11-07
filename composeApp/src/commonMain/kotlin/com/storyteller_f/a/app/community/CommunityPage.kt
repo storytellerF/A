@@ -85,7 +85,7 @@ class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Commu
 class CommunityTopicsViewModel(private val communityId: PrimaryKey) : PagingViewModel<PrimaryKey, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getCommunityTopics(communityId, 10)
+            client.getCommunityTopics(communityId, it, 10)
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
@@ -93,12 +93,12 @@ class CommunityTopicsViewModel(private val communityId: PrimaryKey) : PagingView
 })
 
 @OptIn(ExperimentalPagingApi::class)
-class CommunityRoomsViewModel(private val communityId: PrimaryKey) : PagingViewModel<Int, RoomInfo>({
+class CommunityRoomsViewModel(private val communityId: PrimaryKey) : PagingViewModel<PrimaryKey, RoomInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getCommunityRooms(communityId)
+            client.getCommunityRooms(communityId, it, 10)
         }.map {
-            APagingData(it.data, null)
+            APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
         }
     }
 })

@@ -315,7 +315,7 @@ suspend fun isPrivateChat(parentType: ObjectType, parentId: PrimaryKey): Pair<Bo
             }) {
                 Topic.findById(parentId)
             }?.let { (rootId, rootType) ->
-                if (rootType == ObjectType.ROOM && checkRoomIsPrivate(rootId)) {
+                if (rootType == ObjectType.ROOM && DatabaseFactory.dbQuery { checkRoomIsPrivate(rootId) }) {
                     true to rootId
                 } else {
                     false to 0u
@@ -323,7 +323,9 @@ suspend fun isPrivateChat(parentType: ObjectType, parentId: PrimaryKey): Pair<Bo
             }!!
         }
 
-        parentType == ObjectType.ROOM && checkRoomIsPrivate(parentId) -> {
+        parentType == ObjectType.ROOM && DatabaseFactory.dbQuery {
+            checkRoomIsPrivate(parentId)
+        } -> {
             true to parentId
         }
 
