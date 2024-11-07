@@ -33,7 +33,7 @@ done < $TEMP_FILE
 
 ./scripts/tool_scripts/modify-flavor.sh "s-$FLAVOR" true
 
-sh gradlew composeApp:build
+./gradlew composeApp:build
 
 mkdir -p "build/outputs/apk/release"
 

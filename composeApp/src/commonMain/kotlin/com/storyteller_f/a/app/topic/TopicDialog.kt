@@ -9,12 +9,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.user.UserViewModel
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import moe.tlaster.precompose.viewmodel.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

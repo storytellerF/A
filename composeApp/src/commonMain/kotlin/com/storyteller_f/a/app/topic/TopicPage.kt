@@ -17,6 +17,7 @@ import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
+import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.ReactionRow
 import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.client_lib.*
@@ -28,7 +29,6 @@ import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.client.*
-import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
 fun TopicPage(topicId: PrimaryKey, onClick: (PrimaryKey, ObjectType) -> Unit) {

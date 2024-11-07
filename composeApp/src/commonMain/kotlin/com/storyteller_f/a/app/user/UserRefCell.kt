@@ -12,13 +12,13 @@ import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.SimpleViewModel
 import com.storyteller_f.a.app.common.StateView2
 import com.storyteller_f.a.app.common.serviceCatching
+import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.topic.UserHeadRow
 import com.storyteller_f.a.client_lib.getUserInfo
 import com.storyteller_f.a.client_lib.getUserInfoByAid
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.client.*
-import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
 fun UserRefCell(modifier: Modifier = Modifier, userId: PrimaryKey) {
