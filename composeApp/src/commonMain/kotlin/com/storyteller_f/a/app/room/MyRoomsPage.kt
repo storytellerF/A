@@ -21,11 +21,11 @@ import app.cash.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
+import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.a.client_lib.getJoinedRooms
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
-import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
 fun MyRoomsPage(onClick: (PrimaryKey) -> Unit) {

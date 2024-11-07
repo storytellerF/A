@@ -2,8 +2,8 @@ package com.storyteller_f.a.app.community
 
 import androidx.compose.runtime.Composable
 import com.storyteller_f.a.app.common.StateView2
+import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.shared.type.PrimaryKey
-import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
 fun CommunityRefCell(communityId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {

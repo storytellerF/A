@@ -99,8 +99,8 @@ kotlin {
             implementation(projects.clientLib)
 
             implementation(libs.material3.window.size)
+            implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.precompose)
-            implementation(libs.precompose.viewmodel)
             //network
             implementation(libs.bundles.ktor.client)
             implementation(libs.paging.common)
@@ -127,7 +127,7 @@ kotlin {
     }
 }
 
-fun getenv(key: String) : String? {
+fun getenv(key: String): String? {
     return System.getenv(key) ?: System.getenv(key.uppercase())
 }
 

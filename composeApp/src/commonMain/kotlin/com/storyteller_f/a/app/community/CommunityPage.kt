@@ -20,6 +20,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.CustomBottomNav
@@ -39,9 +44,8 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.client.*
 import kotlinx.coroutines.launch
-import moe.tlaster.precompose.viewmodel.viewModel
-import moe.tlaster.precompose.viewmodel.viewModelScope
 import org.jetbrains.compose.resources.stringResource
+import kotlin.reflect.KClass
 
 data class OnCommunityJoined(val communityId: PrimaryKey)
 

@@ -18,6 +18,7 @@ jlatexmathAndroid = "0.2.0"
 kotlinxCoroutinesCore = "1.9.0"
 kotlinxDatetime = "0.6.1"
 ktomlCore = "0.5.1"
+lifecycleViewmodelCompose = "2.8.7"
 luceneCore = "10.0.0"
 mosaicRuntime = "0.14.0"
 multiplatformCryptoLibsodiumBindings = "0.9.2"
@@ -38,8 +39,7 @@ multiplatformSettingsNoArg = "1.2.0"
 pagingCommon = "3.3.0-alpha02-0.5.1"
 pgjdbcNg = "0.8.9"
 postgresql = "42.7.2"
-precomposeViewmodel = "1.6.2"
-precompose = "1.6.2"
+precompose = "1.7.0-alpha03"
 slf4jSimple = "2.0.13"
 sqliteJdbc = "3.46.0.0"
 uriKmp = "0.0.18"
@@ -49,6 +49,7 @@ kotlin_buildconfig = "5.4.0"
 
 
 [libraries]
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 bcpkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bcprovJdk18on" }
 bcprov-jdk18on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bcprovJdk18on" }
 bctls-jdk18on = { module = "org.bouncycastle:bctls-jdk18on", version.ref = "bcprovJdk18on" }
@@ -125,7 +126,6 @@ paging-common = { module = "app.cash.paging:paging-common", version.ref = "pagin
 paging-compose-common = { module = "app.cash.paging:paging-compose-common", version.ref = "pagingCommon" }
 pgjdbc-ng = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng", version.ref = "pgjdbcNg" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
-precompose-viewmodel = { module = "moe.tlaster:precompose-viewmodel", version.ref = "precomposeViewmodel" }
 precompose = { module = "moe.tlaster:precompose", version.ref = "precompose" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }

@@ -28,6 +28,7 @@ import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.storyteller_f.a.app.common.StateView2
 import com.storyteller_f.a.app.community.CommunityRefCell
+import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.ReactionRow
 import com.storyteller_f.a.app.compontents.TextUnitToPx
 import com.storyteller_f.a.app.compontents.UserIcon
@@ -42,7 +43,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import moe.tlaster.precompose.viewmodel.viewModel
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode

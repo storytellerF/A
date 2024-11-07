@@ -1,10 +1,10 @@
 package com.storyteller_f.a.app.common
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.*
 import io.github.aakira.napier.Napier
-import moe.tlaster.precompose.viewmodel.ViewModel
-import moe.tlaster.precompose.viewmodel.viewModelScope
 
 @OptIn(ExperimentalPagingApi::class)
 abstract class PagingViewModel<K : Any, V : Any>(

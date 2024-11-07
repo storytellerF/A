@@ -22,7 +22,6 @@ import com.storyteller_f.a.app.utils.lcm
 import com.storyteller_f.a.client_lib.getJoinCommunities
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.PrimaryKey
-import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
 fun MyCommunitiesPage(onClick: (PrimaryKey) -> Unit) {

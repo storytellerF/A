@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
@@ -29,6 +30,7 @@ import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.clientWs
 import com.storyteller_f.a.app.common.*
+import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.topic.TopicCell
@@ -54,8 +56,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import moe.tlaster.precompose.viewmodel.viewModel
-import moe.tlaster.precompose.viewmodel.viewModelScope
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
