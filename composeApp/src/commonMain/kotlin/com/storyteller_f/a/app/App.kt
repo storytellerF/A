@@ -19,6 +19,7 @@ import com.storyteller_f.a.client_lib.ClientWebSocket
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.addRequestHeaders
 import com.storyteller_f.a.client_lib.defaultClientConfigure
+import com.storyteller_f.a.client_lib.defaultWSClientConfigure
 import com.storyteller_f.a.client_lib.getClient
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
@@ -154,9 +155,15 @@ val client by lazy {
     }
 }
 
+val wsClient by lazy {
+    getClient {
+        defaultWSClientConfigure()
+    }
+}
+
 val clientWs by lazy {
     ClientWebSocket({
-        client.webSocketSession("/link") {
+        wsClient.webSocketSession(BuildKonfig.WS_SERVER_URL + "link") {
             addRequestHeaders(LoginViewModel.session?.first)
         }
     }) {

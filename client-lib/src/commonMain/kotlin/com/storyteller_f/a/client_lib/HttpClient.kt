@@ -36,6 +36,33 @@ fun HttpClientConfig<*>.defaultClientConfigure() {
         level = LogLevel.HEADERS
     }
     install(HttpCookies)
+    install(HttpRequestRetry) {
+        retryIf { request, response ->
+            response.status == HttpStatusCode.Unauthorized && request.headers["cookie"].isNullOrEmpty()
+        }
+    }
+}
+
+fun HttpClientConfig<*>.defaultWSClientConfigure() {
+    expectSuccess = true
+    install(Auth) {
+        custom {
+        }
+    }
+    install(ContentNegotiation) {
+        json(Json {
+            ignoreUnknownKeys = true
+        })
+    }
+    install(Logging) {
+        logger = object : Logger {
+            override fun log(message: String) {
+                Napier.v(tag = "WS Client", throwable = null, message = message)
+            }
+        }
+        level = LogLevel.HEADERS
+    }
+    install(HttpCookies)
     install(WebSockets) {
         pingInterval = 2.seconds
         contentConverter = KotlinxWebsocketSerializationConverter(Json)
