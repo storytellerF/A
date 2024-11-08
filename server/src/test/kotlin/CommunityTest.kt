@@ -62,7 +62,7 @@ class CommunityTest {
             }
             // 添加话题到子话题
             kotlin.run {
-                val topicId = client.getCommunityTopics(communityId, 10).data.first().id
+                val topicId = client.getCommunityTopics(communityId, null, 10).data.first().id
                 val new = client.createNewTopic(ObjectType.TOPIC, topicId, "test").body<TopicInfo>()
                 assertEquals(ObjectType.COMMUNITY, new.rootType)
                 assertEquals(communityId, new.rootId)
