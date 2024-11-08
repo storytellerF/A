@@ -19,7 +19,6 @@ import com.storyteller_f.a.client_lib.ClientWebSocket
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.addRequestHeaders
 import com.storyteller_f.a.client_lib.defaultClientConfigure
-import com.storyteller_f.a.client_lib.defaultWSClientConfigure
 import com.storyteller_f.a.client_lib.getClient
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
