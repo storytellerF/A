@@ -25,16 +25,9 @@ SERVER_URL=${URL}${newline}
 WS_SERVER_URL=${URL}${newline}
 EOF
 
-TEMP_FILE=./temp
+./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$IS_PROD"
 
-# Pipe the JSON string into jq
-echo "$SECRETS_CONTEXT" | 
-# Convert JSON object into an array of key-value pairs
-jq -r 'to_entries | 
-# Map over each key-value pair
-.[] | 
-# Format each pair as "KEY=VALUE" and append it all to the environment file
-"\(.key)=\(.value)"' >> $TEMP_FILE
+TEMP_FILE=./temp
 
 while IFS= read -r line; do
     # Ignore empty lines and comments
@@ -42,12 +35,6 @@ while IFS= read -r line; do
     IFS='=' read -r key value <<< "$line"
     export "$key"="$value"
 done < $TEMP_FILE
-
-ls
-
-echo $FLAVOR
-
-./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$IS_PROD"
 
 ./gradlew composeApp:build
 

@@ -24,9 +24,11 @@ fi
 
 ./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "mkdir -p a-server"
 
-echo "put $FILE /tmp/A/$FLAVOR.image.tar" | sftp -i "$REMOTE_CERT_FILE" -P 422 "$PUSH_TO_REMOTE_URI"
+echo "put $FILE ./a-server/$FLAVOR.image.tar" | sftp -i "$REMOTE_CERT_FILE" -P 422 "$PUSH_TO_REMOTE_URI"
 
-md=$(md5sum $FILE)
-ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "echo "d41d8cd98f00b204e9800998ecf8427e  /tmp/A/$FLAVOR.image.tar" | md5sum -c -"
+./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "mv ./a-server/* /tmp/A"
+
+md=$(md5sum "$FILE")
+ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "echo ""$md"  "/tmp/A/$FLAVOR.image.tar"" | md5sum -c -"
 
 ./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "$REMOTE_COMMAND"
