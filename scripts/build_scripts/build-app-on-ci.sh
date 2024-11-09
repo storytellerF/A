@@ -43,6 +43,10 @@ while IFS= read -r line; do
     export "$key"="$value"
 done < $TEMP_FILE
 
+ls
+
+echo $FLAVOR
+
 ./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$IS_PROD"
 
 ./gradlew composeApp:build
