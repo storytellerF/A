@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 URL=$1
 FLAVOR=$2
 FLAVOR="g-$FLAVOR"
