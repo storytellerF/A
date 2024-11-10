@@ -1,5 +1,6 @@
 package com.storyteller_f.shared.model
 
+import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
@@ -16,18 +17,20 @@ data class TopicInfo(
     val rootType: ObjectType,
     val parentId: PrimaryKey,
     val parentType: ObjectType,
+    val hasJoined: Boolean,
     val createdTime: LocalDateTime,
-    val lastModifiedTime: LocalDateTime?,
+    val lastModifiedTime: LocalDateTime?
 ) : Identifiable {
     companion object {
         val EMPTY = TopicInfo(
-            0u,
+            DEFAULT_PRIMARY_KEY,
             TopicContent.Plain(""),
-            0u,
-            0u,
+            DEFAULT_PRIMARY_KEY,
+            DEFAULT_PRIMARY_KEY,
             ObjectType.TOPIC,
-            0u,
+            DEFAULT_PRIMARY_KEY,
             ObjectType.TOPIC,
+            false,
             now(),
             now()
         )

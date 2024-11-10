@@ -4,6 +4,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
+import com.storyteller_f.a.server.auth.getRateLimitKey
 import com.storyteller_f.buildBackendFromEnv
 import com.storyteller_f.readEnv
 import io.ktor.http.*
@@ -14,6 +15,7 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.ratelimit.RateLimit
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
@@ -118,5 +120,14 @@ fun Application.module() {
             cookie.maxAgeInSeconds = 3600
         }
     }
+    if (backend.config.isProd)
+        install(RateLimit) {
+            global {
+                rateLimiter(limit = 20, refillPeriod = 1.seconds)
+                requestKey { call ->
+                    call.getRateLimitKey()
+                }
+            }
+        }
     configureAuth(backend)
 }

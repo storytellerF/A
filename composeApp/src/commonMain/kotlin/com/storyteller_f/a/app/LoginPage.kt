@@ -14,9 +14,7 @@ import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.russhwolf.settings.set
 import com.storyteller_f.a.app.common.CenterBox
-import com.storyteller_f.a.app.compontents.EventDialog
 import com.storyteller_f.a.app.compontents.MeasureTextLineCount
-import com.storyteller_f.a.app.compontents.rememberEventState
 import com.storyteller_f.a.app.compontents.use
 import com.storyteller_f.a.client_lib.ClientSession
 import com.storyteller_f.a.client_lib.LoginViewModel
@@ -108,7 +106,6 @@ fun InputPrivateKeyPage(onLoginSuccess: () -> Unit) {
     val privateKey by LoginViewModel.privateKey.collectAsState("")
     val isSignUp by LoginViewModel.isSignUp.collectAsState(false)
     val scope = rememberCoroutineScope()
-    val messageState = rememberEventState()
 
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -122,7 +119,7 @@ fun InputPrivateKeyPage(onLoginSuccess: () -> Unit) {
                 Button({
                     if (privateKey.isNotBlank()) {
                         scope.launch {
-                            messageState.use(onLoginSuccess) {
+                            globalDialogState.use(onLoginSuccess) {
                                 val data = client.getData()
                                 val f = finalData(data)
                                 val sig = signature(privateKey, f)
@@ -142,7 +139,6 @@ fun InputPrivateKeyPage(onLoginSuccess: () -> Unit) {
             }
         }
     }
-    EventDialog(messageState)
 }
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)

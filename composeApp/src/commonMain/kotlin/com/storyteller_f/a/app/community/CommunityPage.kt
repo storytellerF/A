@@ -21,7 +21,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.CustomBottomNav
@@ -30,6 +29,7 @@ import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.*
+import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.room.RoomList
 import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.world.TopicList
@@ -104,13 +104,13 @@ class CommunityRoomsViewModel(private val communityId: PrimaryKey) : PagingViewM
 fun CommunityPage(
     communityId: PrimaryKey,
     onClickAddTopic: () -> Unit,
+    onLogin: () -> Unit,
     onClick: (PrimaryKey, ObjectType) -> Unit
 ) {
     val model = viewModel(CommunityViewModel::class, keys = listOf("community", communityId)) {
         CommunityViewModel(communityId)
     }
     val community by model.handler.data.collectAsState()
-    val eventState = rememberEventState()
     val navs = communityNavRoutes()
     val pagerState = rememberPagerState {
         2
@@ -121,7 +121,7 @@ fun CommunityPage(
             if (community?.isJoined == true) {
                 onClickAddTopic()
             } else {
-                eventState.showMessage("Not joined!")
+                globalDialogState.showMessage("Not joined!")
             }
         }) {
             Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add))
@@ -138,7 +138,7 @@ fun CommunityPage(
         Column(
             modifier = Modifier.padding(paddingValues).consumeWindowInsets(WindowInsets.statusBars),
         ) {
-            CustomSearchBar {
+            CustomSearchBar(onLogin) {
                 CommunityIcon(community, 40.dp)
             }
 
@@ -220,20 +220,18 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo) {
         }
         Column {
             val scope = rememberCoroutineScope()
-            val eventState = rememberEventState()
             if (communityInfo.isJoined) {
                 ButtonNav(Icons.Default.Close, "Exit Community")
             } else {
                 ButtonNav(Icons.Default.AddHome, "Join Community") {
                     scope.launch {
-                        eventState.use {
+                        globalDialogState.use {
                             client.joinCommunity(communityId)
                             bus.send(OnCommunityJoined(communityId))
                         }
                     }
                 }
             }
-            EventDialog(eventState)
         }
     }
 }

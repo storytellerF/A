@@ -110,9 +110,6 @@ private suspend fun addTopicIntoRoom(
 ): Result<TopicInfo> {
     val roomId = roomInfo.first
     return if (isRoomJoined(roomId, uid)) {
-        val isPrivateChat = DatabaseFactory.dbQuery {
-            checkRoomIsPrivate(roomId)
-        }
         val content = newTopic.content
         val newId = SnowflakeFactory.nextId()
         val topic = Topic(
@@ -127,7 +124,9 @@ private suspend fun addTopicIntoRoom(
         )
 
         when {
-            !isPrivateChat -> {
+            DatabaseFactory.dbQuery {
+                !checkRoomIsPrivate(roomId)
+            } -> {
                 if (content is TopicContent.Plain) {
                     Result.success(savePlainTopicContent(topic, content, backend = backend))
                 } else {

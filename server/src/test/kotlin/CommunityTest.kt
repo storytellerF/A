@@ -12,6 +12,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.newHmacSha512
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.TopicSnapshotPack
+import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
@@ -90,7 +91,7 @@ class CommunityTest {
                 repeat(10) {
                     val newId = SnowflakeFactory.nextId()
                     val id = DatabaseFactory.dbQuery {
-                        Community.new(Community("aid$it", "name", null, 0u, null, newId, now()))
+                        Community.new(Community("aid$it", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
                     }
                     add(id)
                 }
@@ -118,7 +119,7 @@ class CommunityTest {
     private suspend fun createCommunity(): PrimaryKey {
         val newId = SnowflakeFactory.nextId()
         return DatabaseFactory.dbQuery {
-            Community.new(Community("aid", "name", null, 0u, null, newId, now()))
+            Community.new(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
         }
     }
 

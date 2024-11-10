@@ -16,9 +16,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.eygraber.uri.Uri
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
@@ -26,15 +24,11 @@ import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownCodeFence
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
-import com.storyteller_f.a.app.common.StateView2
 import com.storyteller_f.a.app.common.viewModel
-import com.storyteller_f.a.app.community.CommunityRefCell
 import com.storyteller_f.a.app.compontents.ReactionRow
 import com.storyteller_f.a.app.compontents.TextUnitToPx
-import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.compontents.buildTexPainter
-import com.storyteller_f.a.app.room.RoomRefCell
-import com.storyteller_f.a.app.user.UserRefCell
+import com.storyteller_f.a.app.user.UserRow
 import com.storyteller_f.a.app.user.UserViewModel
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -46,17 +40,6 @@ import kotlinx.coroutines.withContext
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
-
-class TopicRoute(val pattern: String, val builder: @Composable () -> Unit)
-
-// private val ROUTE = mutableListOf(
-//    TopicRoute("/topic/{id}") {
-//    },
-//    TopicRoute("/root/{id}") {
-//    },
-//    TopicRoute("/community/{id}") {
-//    }
-// )
 
 @Composable
 fun TopicCell(
@@ -84,14 +67,11 @@ fun TopicCellInternal(
     onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }
 ) {
     Column(
-        modifier = Modifier.clickable {
-            onClick(topicInfo.id, ObjectType.TOPIC)
-        },
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         val avatarSize = 40.dp
         if (showAvatar) {
-            UserHeadRow(authorInfo, avatarSize)
+            UserRow(authorInfo, avatarSize)
         }
         Column(
             if (contentAlignAvatar) {
@@ -105,76 +85,13 @@ fun TopicCellInternal(
         ) {
             TopicContentField(
                 topicInfo.content,
-                onClick = onClick
+                onClick = {
+                    onClick(topicInfo.id, ObjectType.TOPIC)
+                },
+                onFenceClick = onClick
             )
             ReactionRow()
         }
-    }
-}
-
-@Composable
-fun UserHeadRow(userInfo: UserInfo?, avatarSize: Dp = 40.dp) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        UserIcon(userInfo, avatarSize)
-        Column {
-            userInfo?.let { Text(it.nickname) }
-        }
-    }
-}
-
-@Composable
-fun TopicRefCell(topicId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(TopicViewModel::class, keys = listOf("topic", topicId)) {
-        TopicViewModel(topicId)
-    }
-
-    StateView2(viewModel.handler) {
-        TopicRefCellContent(it, onClick)
-    }
-}
-
-@Composable
-fun TopicRefCell(topicAid: String, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(TopicViewModel::class, keys = listOf("topic", topicAid)) {
-        TopicViewModel(topicAid)
-    }
-
-    StateView2(viewModel.handler) {
-        TopicRefCellContent(it, onClick)
-    }
-}
-
-@Composable
-private fun TopicRefCellContent(
-    it: TopicInfo,
-    onClick: (PrimaryKey) -> Unit,
-) {
-    val author = it.author
-    val authorViewModel = viewModel(UserViewModel::class, keys = listOf("user", author)) {
-        UserViewModel(author)
-    }
-    val authorInfo by authorViewModel.handler.data.collectAsState()
-    Row(
-        modifier = Modifier.fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(4.dp)).clickable {
-                onClick(it.id)
-            }.padding(10.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        authorInfo?.let {
-            Text("${authorInfo?.nickname} :")
-        }
-        Text(
-            (it.content as? TopicContent.Plain)?.plain.toString(),
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1
-        )
     }
 }
 
@@ -204,64 +121,10 @@ private fun RefBlock(
     langOffset: Int,
     content: String,
     onClick: (PrimaryKey, ObjectType) -> Unit
-): Unit? {
+) {
     val textInNode = readFenceContent(children, langOffset, content)
-    val uri = Uri.parse(textInNode)
-    return if (uri.pathSegments.size == 2) {
-        val p1 = uri.pathSegments[0]
-        when (p1) {
-            "topic" -> {
-                val id = uri.pathSegments[1].toULongOrNull()
-                if (id != null) {
-                    TopicRefCell(id) {
-                        onClick(it, ObjectType.TOPIC)
-                    }
-                } else {
-                    TopicRefCell(uri.pathSegments[1]) {
-                        onClick(it, ObjectType.TOPIC)
-                    }
-                }
-            }
-
-            "room" -> {
-                val id = uri.pathSegments[1].toULongOrNull()
-                if (id != null) {
-                    RoomRefCell(id) {
-                        onClick(it, ObjectType.ROOM)
-                    }
-                } else {
-                    RoomRefCell(uri.pathSegments[1]) {
-                        onClick(it, ObjectType.ROOM)
-                    }
-                }
-            }
-
-            "community" -> {
-                val id = uri.pathSegments[1].toULongOrNull()
-                if (id != null) {
-                    CommunityRefCell(id) {
-                        onClick(it, ObjectType.COMMUNITY)
-                    }
-                } else {
-                    CommunityRefCell(uri.pathSegments[1]) {
-                        onClick(it, ObjectType.COMMUNITY)
-                    }
-                }
-            }
-
-            "user" -> {
-                val id = uri.pathSegments[1].toULongOrNull()
-                if (id != null) {
-                    UserRefCell(userId = id)
-                } else {
-                    UserRefCell(userAid = uri.pathSegments[1])
-                }
-            }
-
-            else -> null
-        }
-    } else {
-        null
+    TopicRoute.parseRefUri(textInNode).let {
+        it.first?.let { it1 -> it1(it.second, onClick) }
     }
 }
 
@@ -315,18 +178,21 @@ private fun readFenceContent(
 fun TopicContentField(
     content1: TopicContent?,
     modifier: Modifier = Modifier,
-    onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }
+    onClick: (() -> Unit)? = null,
+    onFenceClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }
 ) {
     if (content1 is TopicContent.Plain) {
         Markdown(
             content1.plain,
-            modifier = modifier,
+            modifier = modifier.clickable(onClick != null) {
+                onClick?.invoke()
+            },
             colors = markdownColor(),
             typography = markdownTypography(),
             imageTransformer = Coil3ImageTransformerImpl,
             components = markdownComponents(codeFence = { model ->
                 CustomCodeFence(model, content1.plain) { id, type ->
-                    onClick(id, type)
+                    onFenceClick(id, type)
                 }
             })
         )

@@ -1,5 +1,6 @@
 package com.storyteller_f.a.app.common
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
@@ -22,6 +23,7 @@ import app.cash.paging.LoadStateNotLoading
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
+import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.client_lib.LoadingHandler
 import com.storyteller_f.a.client_lib.LoadingState
 import com.storyteller_f.shared.model.Identifiable
@@ -107,13 +109,14 @@ fun CenterBox(content: @Composable () -> Unit) {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun <T> StateView(handler: LoadingHandler<T?>, content: @Composable (T) -> Unit) {
+fun <T> StateView(handler: LoadingHandler<T?>, extraRefresh: () -> Unit = {}, content: @Composable (T) -> Unit) {
     val state by handler.state.collectAsState()
     val data by handler.data.collectAsState()
     var refreshing by remember { mutableStateOf(false) }
     val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
         refreshing = true
         handler.refresh()
+        extraRefresh()
     })
     LaunchedEffect(key1 = refreshing, key2 = state) {
         delay(REFRESH_AFTER)
@@ -122,6 +125,7 @@ fun <T> StateView(handler: LoadingHandler<T?>, content: @Composable (T) -> Unit)
     Box(modifier = Modifier.pullRefresh(refreshState)) {
         StateView(state, refresh = {
             handler.refresh()
+            extraRefresh()
         }) {
             data?.let {
                 content(it)
@@ -135,7 +139,7 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
     when (val refreshState = items.loadState.refresh) {
         is LoadStateLoading -> {
             item {
-                Box(modifier = Modifier.fillMaxWidth().height(100.dp)) {
+                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
@@ -162,7 +166,7 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
             }
             if (items.loadState.append is LoadStateLoading) {
                 item {
-                    Box(modifier = Modifier.fillMaxWidth().height(100.dp)) {
+                    Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
@@ -172,26 +176,35 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
 }
 
 @Composable
-fun <T : Any> StateView2(handler: LoadingHandler<T?>, content: @Composable (T) -> Unit) {
+fun <T : Any> RefCellStateView(
+    handler: LoadingHandler<T?>,
+    modifier: Modifier = Modifier,
+    content: @Composable (T) -> Unit
+) {
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
-    when (val localState = state) {
-        null, is LoadingState.Loading -> Box(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
+    Box(modifier = modifier) {
+        when (val localState = state) {
+            null, is LoadingState.Loading -> Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
 
-        is LoadingState.Error -> Box(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(localState.e.message.toString())
-        }
-        else -> {
-            data?.let {
-                content(it)
+            is LoadingState.Error -> Box(
+                modifier = Modifier.fillMaxWidth().clickable {
+                    globalDialogState.showError(localState.e)
+                }.padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(localState.e.message.toString(), modifier = Modifier.fillMaxHeight(), maxLines = 1)
+            }
+
+            else -> {
+                data?.let {
+                    content(it)
+                }
             }
         }
     }

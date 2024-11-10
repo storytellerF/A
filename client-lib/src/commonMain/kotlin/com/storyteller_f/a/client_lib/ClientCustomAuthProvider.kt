@@ -16,7 +16,7 @@ class ClientCustomAuthProvider : AuthProvider {
         get() = true
 
     override suspend fun addRequestHeaders(request: HttpRequestBuilder, authHeader: HttpAuthHeader?) {
-        Napier.v("addRequestHeaders", tag = "ClientAuth")
+        Napier.v("addRequestHeaders ${authHeader != null}", tag = "ClientAuth")
         if (authHeader is HttpAuthHeader.Single) {
             request.addRequestHeaders(authHeader.blob)
         }

@@ -9,4 +9,6 @@
     <string name="add">Add</string>
     <string name="topics">Topics</string>
     <string name="rooms">Rooms</string>
+    <string name="nyi">not yet implemented</string>
+    <string name="success">Success</string>
 </resources>

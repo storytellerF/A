@@ -323,3 +323,11 @@ private fun ApplicationCall.getSession(): Pair<UserSession, String> {
         }
     }
 }
+
+fun ApplicationCall.getRateLimitKey(): Comparable<*> {
+    val session = getSession().first
+    return when (session) {
+        is UserSession.Success -> session.id
+        is UserSession.Pending -> session.remote
+    }
+}

@@ -11,6 +11,7 @@ object Rooms : BaseTable() {
     val name = varchar("name", ROOM_NAME_LENGTH).index()
     val icon = varchar("icon", ICON_LENGTH).nullable()
     val creator = ulong("creator").index()
+    val communityId = ulong("community_id").index().nullable()
 }
 
 class Room(
@@ -18,6 +19,7 @@ class Room(
     val name: String,
     val icon: String?,
     val creator: PrimaryKey,
+    val communityId: PrimaryKey?,
     id: PrimaryKey,
     createdTime: LocalDateTime
 ) : BaseObj(id, createdTime) {
@@ -28,6 +30,7 @@ class Room(
                 row[Rooms.name],
                 row[Rooms.icon],
                 row[Rooms.creator],
+                row[Rooms.communityId],
                 row[Rooms.id],
                 row[Rooms.createdTime]
             )
@@ -45,4 +48,11 @@ fun findRoomByAId(aid: String): ResultRow? {
     return Rooms.selectAll().where {
         Rooms.aid eq aid
     }.limit(1).firstOrNull()
+}
+
+fun checkRoomIsPrivate(roomId: PrimaryKey): Boolean {
+    val room = findRoomById(roomId)?.let {
+        Room.wrapRow(it)
+    }
+    return room?.communityId == null
 }

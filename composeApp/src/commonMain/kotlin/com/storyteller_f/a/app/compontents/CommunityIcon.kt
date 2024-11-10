@@ -38,7 +38,6 @@ fun CommunityIcon(communityInfo: CommunityInfo?, iconSize: Dp = 40.dp) {
                     showDialog = true
                 },
             contentAlignment = Alignment.Center
-
         ) {
             CharSequenceText(communityInfo?.name?.safeFirstUnicode() ?: "")
         }

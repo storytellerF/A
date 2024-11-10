@@ -11,6 +11,8 @@ import coil3.util.DebugLogger
 import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.community.CommunityPage
+import com.storyteller_f.a.app.compontents.EventDialog
+import com.storyteller_f.a.app.compontents.EventState
 import com.storyteller_f.a.app.room.RoomPage
 import com.storyteller_f.a.app.topic.TopicComposePage
 import com.storyteller_f.a.app.topic.TopicPage
@@ -22,9 +24,7 @@ import com.storyteller_f.a.client_lib.defaultClientConfigure
 import com.storyteller_f.a.client_lib.getClient
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.ObjectType.COMMUNITY
-import com.storyteller_f.shared.type.ObjectType.ROOM
-import com.storyteller_f.shared.type.ObjectType.TOPIC
+import com.storyteller_f.shared.type.ObjectType.*
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
@@ -45,6 +45,8 @@ object StaticObj {
     }
 }
 
+val globalDialogState = EventState()
+
 @OptIn(ExperimentalCoilApi::class)
 @Composable
 fun App() {
@@ -53,6 +55,7 @@ fun App() {
         setSingletonImageLoaderFactory {
             getAsyncImageLoader(it)
         }
+        EventDialog(globalDialogState)
         PreComposeApp {
             val navigator = rememberNavigator()
             val appNav = remember {
@@ -63,6 +66,8 @@ fun App() {
                     COMMUNITY -> appNav.gotoCommunity(id)
                     ROOM -> appNav.gotoRoom(id)
                     TOPIC -> appNav.gotoTopic(id)
+                    USER -> {
+                    }
                 }
             }
             NavHost(navigator, initialRoute = "/home") {
@@ -86,7 +91,7 @@ private fun RouteBuilder.buildRootNav(
     scene("/community/{communityId}") {
         val communityId = it.path2<PrimaryKey>("communityId", null)
         if (communityId != null) {
-            CommunityPage(communityId, {
+            CommunityPage(communityId, appNav::gotoLogin, {
                 appNav.gotoTopicCompose(COMMUNITY, communityId)
             }, onClick)
         }
@@ -94,13 +99,13 @@ private fun RouteBuilder.buildRootNav(
     scene("/room/{roomId}") {
         val roomId = it.path2<PrimaryKey>("roomId", null)
         if (roomId != null) {
-            RoomPage(roomId, onClick)
+            RoomPage(roomId, appNav::gotoLogin, onClick)
         }
     }
     scene("/topic/{topicId}") {
         val topicId = it.path2<PrimaryKey>("topicId", null)
         if (topicId != null) {
-            TopicPage(topicId, onClick)
+            TopicPage(topicId, appNav::gotoLogin, onClick)
         }
     }
     scene("/topic-compose/{objectType}/{objectId}") {

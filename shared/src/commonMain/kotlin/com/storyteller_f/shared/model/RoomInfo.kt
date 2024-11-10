@@ -1,6 +1,8 @@
 package com.storyteller_f.shared.model
 
+import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
@@ -17,4 +19,8 @@ data class RoomInfo(
 ) : Identifiable {
     val isPrivate get() = communityId == null
     val isJoined get() = joinedTime != null
+
+    companion object {
+        val EMPTY = RoomInfo(DEFAULT_PRIMARY_KEY, "", "", DEFAULT_PRIMARY_KEY, null, now(), null)
+    }
 }

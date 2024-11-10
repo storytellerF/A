@@ -4,14 +4,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compontents.MyIcon
+import com.storyteller_f.a.app.compontents.UserIcon
+import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.shared.model.UserInfo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomSearchBar(leadingIcon: @Composable () -> Unit) {
+fun CustomSearchBar(onLogin: () -> Unit, leadingIcon: @Composable () -> Unit) {
     var query by remember {
         mutableStateOf("")
     }
@@ -40,7 +43,8 @@ fun CustomSearchBar(leadingIcon: @Composable () -> Unit) {
                         leadingIcon()
                     },
                     trailingIcon = {
-                        MyIcon(40.dp)
+                        val userInfo by LoginViewModel.user.collectAsState<UserInfo?>()
+                        UserIcon(userInfo, 40.dp, onLogin)
                     },
                     interactionSource = null,
                 )

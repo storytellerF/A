@@ -152,7 +152,7 @@ fun DialogContainer(block: @Composable ColumnScope.() -> Unit) {
     }
 }
 
-class AlertDialogState(val title: String, val message: String)
+class AlertDialogState(val title: String?, val message: String)
 
 @Composable
 fun CustomAlertDialog(state: AlertDialogState?, dismiss: () -> Unit, onClick: () -> Unit) {
@@ -160,11 +160,14 @@ fun CustomAlertDialog(state: AlertDialogState?, dismiss: () -> Unit, onClick: ()
         androidx.compose.material.AlertDialog({
             dismiss()
         }, title = {
-            Text(state.title)
+            state.title?.let {
+                Text(it)
+            }
         }, text = {
-            Text(state.title)
+            Text(state.message)
         }, confirmButton = {
             Button({
+                dismiss()
                 onClick()
             }) {
                 Text("Yes")

@@ -148,7 +148,7 @@ private fun Route.bindRoomRoute(backend: Backend) {
     route("/room") {
         get {
             usePrincipalOrNull { uid ->
-                checkQueryParameter<String, RoomInfo> {
+                checkQueryParameter<String, RoomInfo>("aid") {
                     getRoom(null, it, uid, backend)
                 }
             }

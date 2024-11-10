@@ -11,21 +11,29 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.russhwolf.settings.ExperimentalSettingsApi
+import com.russhwolf.settings.serialization.removeValue
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.shared.model.LoginUser
 import com.storyteller_f.shared.model.UserInfo
+import kotlinx.serialization.ExperimentalSerializationApi
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 @Composable
 fun UserDialogInternal(userInfo: UserInfo) {
-    val alertDialogState by remember {
+    var alertDialogState by remember {
         mutableStateOf<AlertDialogState?>(null)
     }
+    val my by LoginViewModel.user.collectAsState()
     DialogContainer {
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -41,15 +49,19 @@ fun UserDialogInternal(userInfo: UserInfo) {
         }
 
         Column {
-            ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
-            ButtonNav(Icons.Default.Close, stringResource(Res.string.logout)) {
+            if (my?.id == userInfo.id) {
+                ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
+                ButtonNav(Icons.Default.Close, stringResource(Res.string.logout)) {
+                    alertDialogState = AlertDialogState(null, "Are you sure to logout?")
+                }
             }
         }
     }
     CustomAlertDialog(alertDialogState, {
-        alertDialogState
+        alertDialogState = null
     }) {
         LoginViewModel.logout()
+        com.storyteller_f.a.app.settings.removeValue<LoginUser>("login_user")
     }
 }
 
