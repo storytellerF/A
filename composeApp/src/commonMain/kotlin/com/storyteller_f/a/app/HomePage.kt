@@ -31,8 +31,6 @@ import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.community.MyCommunitiesPage
 import com.storyteller_f.a.app.compontents.ButtonNav
-import com.storyteller_f.a.app.compontents.EventDialog
-import com.storyteller_f.a.app.compontents.rememberEventState
 import com.storyteller_f.a.app.room.MyRoomsPage
 import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.world.WorldPage
@@ -48,7 +46,6 @@ import moe.tlaster.precompose.navigation.transition.NavTransition
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
 fun HomePage(appNav: AppNav, onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }) {
     val size = calculateWindowSizeClass()
-    val messageState = rememberEventState()
     val homeNavs = listOf(
         NavRoute("/world", Icons.Default.Public, "world"),
         NavRoute("/communities", Icons.Default.Diversity3, "communities"),
@@ -62,7 +59,7 @@ fun HomePage(appNav: AppNav, onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ 
                     Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    CustomSearchBar {
+                    CustomSearchBar(appNav::gotoLogin) {
                         ProjectIcon()
                     }
                     val pagerState = rememberPagerState {
@@ -87,12 +84,11 @@ fun HomePage(appNav: AppNav, onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ 
                     CustomRailNav(currentEntry, homeNavs) {
                         navigator.navigate(it, NavOptions(launchSingleTop = true))
                     }
-                    HomeContent(navigator, modifier = Modifier.weight(1f), appNav, onClick)
+                    HomeNavHost(navigator, modifier = Modifier.weight(1f), appNav::gotoLogin, onClick)
                 }
             }
         }
     }
-    EventDialog(messageState)
 }
 
 class NavRoute(val path: String, val icon: ImageVector, val label: String)
@@ -161,14 +157,14 @@ fun CustomBottomNav(
 }
 
 @Composable
-private fun HomeContent(
+private fun HomeNavHost(
     navigator: Navigator,
     modifier: Modifier,
-    appNav: AppNav,
+    onLogin: () -> Unit,
     onClick: (PrimaryKey, ObjectType) -> Unit
 ) {
     Column(modifier = modifier) {
-        CustomSearchBar {
+        CustomSearchBar(onLogin) {
             ProjectIcon()
         }
         NavHost(navigator, initialRoute = "/world", modifier = modifier, navTransition = remember {
@@ -187,13 +183,17 @@ private fun HomeContent(
                 WorldPage(onClick)
             }
             scene("/communities") {
-                UserHost(appNav::gotoLogin) {
-                    MyCommunitiesPage(appNav::gotoCommunity)
+                UserHost(onLogin) {
+                    MyCommunitiesPage {
+                        onClick(it, ObjectType.COMMUNITY)
+                    }
                 }
             }
             scene("/rooms") {
-                UserHost(appNav::gotoLogin) {
-                    MyRoomsPage(appNav::gotoRoom)
+                UserHost(onLogin) {
+                    MyRoomsPage {
+                        onClick(it, ObjectType.ROOM)
+                    }
                 }
             }
         }

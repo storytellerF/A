@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
@@ -74,11 +75,16 @@ fun TopicList(
 fun Pill(text: String, icon: ImageVector) {
     Row(
         modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(20.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(horizontal = 10.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Icon(icon, contentDescription = text, tint = MaterialTheme.colorScheme.onSecondaryContainer)
-        Text(text, color = MaterialTheme.colorScheme.onSecondaryContainer)
+        Icon(
+            icon,
+            contentDescription = text,
+            modifier = Modifier.size(15.dp),
+            tint = MaterialTheme.colorScheme.onSecondaryContainer
+        )
+        Text(text, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 12.sp)
     }
 }

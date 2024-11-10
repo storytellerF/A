@@ -1,7 +1,19 @@
 package com.storyteller_f.a.app.community
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import com.storyteller_f.a.app.common.StateView2
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.common.RefCellStateView
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.shared.type.PrimaryKey
 
@@ -10,9 +22,7 @@ fun CommunityRefCell(communityId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
     val viewModel = viewModel(CommunityViewModel::class, keys = listOf("community", communityId)) {
         CommunityViewModel(communityId)
     }
-    StateView2(viewModel.handler) {
-        CommunityCell(it, onClick)
-    }
+    CommunityRefCellInternal(viewModel, onClick)
 }
 
 @Composable
@@ -20,7 +30,25 @@ fun CommunityRefCell(communityAid: String, onClick: (PrimaryKey) -> Unit) {
     val viewModel = viewModel(CommunityViewModel::class, keys = listOf("community", communityAid)) {
         CommunityViewModel(communityAid)
     }
-    StateView2(viewModel.handler) {
-        CommunityCell(it, onClick)
+    CommunityRefCellInternal(viewModel, onClick)
+}
+
+@Composable
+private fun CommunityRefCellInternal(viewModel: CommunityViewModel, onClick: (PrimaryKey) -> Unit) {
+    val communityInfo by viewModel.handler.data.collectAsState()
+    val shape = RoundedCornerShape(10.dp)
+    RefCellStateView(
+        viewModel.handler,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(70.dp)
+            .background(MaterialTheme.colorScheme.secondaryContainer, shape)
+            .clip(shape)
+            .clickable {
+                communityInfo?.let { onClick(it.id) }
+            }
+            .padding(10.dp)
+    ) {
+        CommunityCell(it, true, onClick)
     }
 }

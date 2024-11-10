@@ -11,7 +11,6 @@ import com.storyteller_f.a.app.community.communityNavRoutes
 import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.AddTaskValue
-import com.storyteller_f.shared.utils.now
 import kotlinx.serialization.json.Json
 import java.io.File
 
@@ -25,7 +24,8 @@ private fun PreviewCommunity(@PreviewParameter(CommunityProvider::class) communi
 @Composable
 private fun PreviewCommunityPage() {
     Column {
-        CustomSearchBar {
+        CustomSearchBar({
+        }) {
         }
         CustomBottomNav(null, navRoutes = communityNavRoutes())
     }
@@ -38,7 +38,7 @@ private class CommunityProvider : PreviewParameterProvider<CommunityInfo> {
             if (f.exists()) {
                 val value = Json.decodeFromString<AddTaskValue>(f.readText())
                 yieldAll(value.communityData.orEmpty().map {
-                    CommunityInfo(0u, "", it.name, 0u, now(), null, null, now())
+                    CommunityInfo.EMPTY.copy(name = it.name)
                 })
             }
         }

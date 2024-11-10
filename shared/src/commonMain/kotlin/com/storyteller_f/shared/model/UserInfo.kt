@@ -1,5 +1,6 @@
 package com.storyteller_f.shared.model
 
+import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.serialization.Serializable
 
@@ -13,7 +14,7 @@ data class UserInfo(
     val avatar: MediaInfo?
 ) : Identifiable {
     companion object {
-        val EMPTY = UserInfo(0u, "", 0, "", "", null)
+        val EMPTY = UserInfo(DEFAULT_PRIMARY_KEY, "", 0, "", "", null)
     }
 }
 

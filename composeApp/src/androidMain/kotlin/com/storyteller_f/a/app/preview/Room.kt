@@ -14,12 +14,10 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.room.InputGroupInternal
 import com.storyteller_f.a.app.room.RoomCell
 import com.storyteller_f.a.app.topic.TopicCell
-import com.storyteller_f.a.client_lib.LoadingState
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.AddTaskValue
-import com.storyteller_f.shared.utils.now
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -58,15 +56,11 @@ private fun PreviewRoom(@PreviewParameter(MessageListProvider::class) topicInfos
                 TopicCell(it, false)
             }
         }
-        val roomInfo = RoomInfo(0u, "", "", 0u, null, now(), null)
+        val roomInfo = RoomInfo.EMPTY
         InputGroupInternal(
             "test",
             {},
-            roomInfo.id,
-            roomInfo.isJoined,
-            wsState = LoadingState.Done(),
-            isSending = false,
-            sendMessage = {
+            {
             }
         )
     }
@@ -83,7 +77,7 @@ private class RoomsProvider : PreviewParameterProvider<RoomInfo> {
                 val content = SystemFileSystem.source(p).buffered().readString()
                 val value = Json.decodeFromString<AddTaskValue>(content)
                 yieldAll(value.roomData.orEmpty().map {
-                    RoomInfo(0u, it.name, "", 0u, null, now())
+                    RoomInfo.EMPTY.copy(name = it.name)
                 })
             }
         }
@@ -98,15 +92,11 @@ private fun PreviewRooms(@PreviewParameter(RoomsProvider::class) roomInfo: RoomI
 @Preview
 @Composable
 private fun PreviewInputGroup() {
-    val roomInfo = RoomInfo(0u, "", "", 0u, null, now(), null)
+    val roomInfo = RoomInfo.EMPTY
     InputGroupInternal(
         "test",
         {},
-        roomInfo.id,
-        roomInfo.isJoined,
-        wsState = LoadingState.Done(),
-        isSending = false,
-        sendMessage = {
+        {
         }
     )
 }

@@ -18,7 +18,7 @@ private class UserInfoPreviewProvider : PreviewParameterProvider<UserInfo> {
             if (f.exists()) {
                 val value = Json.decodeFromString<AddTaskValue>(f.readText())
                 yieldAll(value.userData.orEmpty().map {
-                    UserInfo(0u, "", 0, it.id, it.name, null)
+                    UserInfo.EMPTY.copy(aid = it.id, nickname = it.name)
                 })
             }
         }

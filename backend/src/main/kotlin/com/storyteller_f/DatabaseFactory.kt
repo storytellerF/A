@@ -30,7 +30,6 @@ object DatabaseFactory {
             SchemaUtils.create(
                 Communities,
                 CommunityJoins,
-                CommunityRooms,
                 EncryptedTopics,
                 EncryptedTopicKeys,
                 Rooms,
@@ -46,7 +45,6 @@ object DatabaseFactory {
             SchemaUtils.drop(
                 Communities,
                 CommunityJoins,
-                CommunityRooms,
                 EncryptedTopics,
                 EncryptedTopicKeys,
                 Rooms,

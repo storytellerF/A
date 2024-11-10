@@ -1,5 +1,6 @@
 package com.storyteller_f.naming
 
+import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.PrimaryKey
 
 class NameService {
@@ -33,10 +34,10 @@ class NameService {
 
         var number = num
 
-        assert(num > 0u)
+        assert(num > DEFAULT_PRIMARY_KEY)
 
         val result = StringBuilder()
-        while (number > 0u) {
+        while (number > DEFAULT_PRIMARY_KEY) {
             val remainder = (number % base).toInt()
             val i = countList.indexOfFirst {
                 it > remainder

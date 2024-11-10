@@ -65,33 +65,35 @@ fun RoomList(
                 },
                 contentType = items.itemContentType()
             ) { index ->
-                RoomCell(items[index], onClick)
+                RoomCell(items[index], false, onClick)
             }
         }
     }
 }
 
 @Composable
-fun RoomCell(roomInfo: RoomInfo?, onClick: (PrimaryKey) -> Unit = {}) {
+fun RoomCell(roomInfo: RoomInfo?, customBackground: Boolean = false, onClick: (PrimaryKey) -> Unit = {}) {
     var showDialog by remember {
         mutableStateOf(false)
     }
     Row(
-        modifier = Modifier.fillMaxWidth()
-            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
-            .clickable {
-                if (roomInfo != null) {
-                    onClick(roomInfo.id)
+        modifier = when {
+            customBackground -> Modifier
+
+            else -> Modifier.fillMaxWidth()
+                .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
+                .clickable {
+                    roomInfo?.let { onClick(it.id) }
                 }
-            }
-            .padding(10.dp)
+                .padding(10.dp)
+        }
     ) {
         RoomIcon(roomInfo)
         Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(roomInfo?.name.orEmpty(), color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
     }
-    if (showDialog && roomInfo != null) {
+    if (roomInfo != null) {
         RoomDialog(showDialog, roomInfo) {
             showDialog = false
         }

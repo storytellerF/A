@@ -42,14 +42,20 @@ postgresql = "42.7.2"
 precompose = "1.7.0-alpha03"
 slf4jSimple = "2.0.13"
 sqliteJdbc = "3.46.0.0"
+uiTestJunit4Android = "1.7.5"
 uriKmp = "0.0.18"
 easylauncher = "6.4.0"
 buildconfig = "0.15.1"
 kotlin_buildconfig = "5.4.0"
-
+espresso-core = "3.6.1"
+androidx-test-ext-junit = "1.2.1"
 
 [libraries]
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
+androidx-ui-test-junit4-android = { module = "androidx.compose.ui:ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
+androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "uiTestJunit4Android" }
 bcpkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bcprovJdk18on" }
 bcprov-jdk18on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bcprovJdk18on" }
 bctls-jdk18on = { module = "org.bouncycastle:bctls-jdk18on", version.ref = "bcprovJdk18on" }
@@ -115,6 +121,7 @@ ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", versio
 ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
 ktor-server-call-id = { module = "io.ktor:ktor-server-call-id", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
+ktor-server-rate-limit = { module = "io.ktor:ktor-server-rate-limit", version.ref = "ktor" }
 ktor-server-sessions = { module = "io.ktor:ktor-server-sessions", version.ref = "ktor" }
 material3-window-size = { module = "dev.chrisbanes.material3:material3-window-size-class-multiplatform", version.ref = "material3WindowSizeClassMultiplatform" }
 minio = { module = "io.minio:minio", version.ref = "minio" }
@@ -146,5 +153,5 @@ kotlinBuildConfig = { id = "com.github.gmazzo.buildconfig", version.ref = "kotli
 
 [bundles]
 ktor-client = ["ktor-client-content-negotiation", "ktor-client-core", "ktor-serialization-kotlinx-json", "ktor-client-auth", "ktor-client-logging", "ktor-client-websockets"]
-ktor-server = ["ktor-server-netty", "ktor-server-core", "ktor-server-content-negotiation", "ktor-serialization-kotlinx-json", "ktor-server-auth", "ktor-server-sessions", "ktor-server-websockets", "ktor-server-call-id", "ktor-server-call-logging"]
+ktor-server = ["ktor-server-netty", "ktor-server-core", "ktor-server-content-negotiation", "ktor-serialization-kotlinx-json", "ktor-server-auth", "ktor-server-sessions", "ktor-server-websockets", "ktor-server-call-id", "ktor-server-call-logging", "ktor-server-rate-limit"]
 coil = ["coil", "coil-compose", "coil-compose-core", "coil-network-ktor"]

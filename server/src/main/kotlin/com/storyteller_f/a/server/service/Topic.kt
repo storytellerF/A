@@ -15,8 +15,10 @@ import com.storyteller_f.shared.obj.TopicSnapshot
 import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.Tuple5
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
+import com.storyteller_f.tables.checkRoomIsPrivate
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.and
@@ -24,77 +26,33 @@ import org.jetbrains.exposed.sql.selectAll
 
 suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend): Result<TopicInfo?> {
     val newTopic = call.receive<NewTopic>()
-    return when (newTopic.parentType) {
-        ObjectType.COMMUNITY -> {
-            if (newTopic.content is TopicContent.Encrypted) {
-                Result.failure(ForbiddenException("Community only accept unencrypted content."))
-            } else {
-                addTopicIntoCommunity(
-                    newTopic.parentId,
-                    uid,
-                    (newTopic.content as TopicContent.Plain).plain,
-                    newTopic.parentId,
-                    ObjectType.COMMUNITY,
-                    backend
-                )
+    if (newTopic.content is TopicContent.Encrypted) {
+        return Result.failure(ForbiddenException("Community only accept unencrypted content."))
+    }
+    val content = (newTopic.content as TopicContent.Plain).plain
+    return checkRootWritePermission(newTopic.parentType, newTopic.parentId, uid)?.let { (t, p, hasWrite) ->
+        if (hasWrite) {
+            val newId = SnowflakeFactory.nextId()
+            val topic = Topic(
+                author = uid,
+                parentId = newTopic.parentId,
+                parentType = newTopic.parentType,
+                rootId = p,
+                rootType = t,
+                lastModifiedTime = now(),
+                id = newId,
+                createdTime = now(),
+            )
+            val info = DatabaseFactory.dbQuery {
+                val newTopicId = Topic.new(topic)
+                backend.topicDocumentService.saveDocument(listOf(TopicDocument(newTopicId, content)))
+                topic.toTopicInfo()
             }
+            return Result.success(info)
+        } else {
+            Result.failure(ForbiddenException("Permission denied."))
         }
-
-        ObjectType.TOPIC -> {
-            addTopicIntoTopic(newTopic.parentId, uid, (newTopic.content as TopicContent.Plain).plain, backend)
-        }
-
-        else -> Result.failure(ForbiddenException("invalid parentType: ${newTopic.parentType}"))
-    }
-}
-
-suspend fun addTopicIntoTopic(
-    parentTopicId: PrimaryKey,
-    uid: PrimaryKey,
-    content: String,
-    backend: Backend
-): Result<TopicInfo?> {
-    val topic = DatabaseFactory.queryNotNull({
-        rootId to rootType
-    }) {
-        Topic.findById(parentTopicId)
-    }
-    return if (topic != null && topic.second == ObjectType.COMMUNITY) {
-        addTopicIntoCommunity(topic.first, uid, content, parentTopicId, ObjectType.TOPIC, backend)
-    } else {
-        Result.failure(ForbiddenException())
-    }
-}
-
-suspend fun addTopicIntoCommunity(
-    communityId: PrimaryKey,
-    uid: PrimaryKey,
-    content: String,
-    id: PrimaryKey,
-    type: ObjectType,
-    backend: Backend
-): Result<TopicInfo?> {
-    if (isCommunityJoined(communityId, uid)) {
-        val newId = SnowflakeFactory.nextId()
-        val topic = Topic(
-            author = uid,
-            parentId = id,
-            parentType = type,
-            rootId = communityId,
-            rootType = ObjectType.COMMUNITY,
-            lastModifiedTime = now(),
-            id = newId,
-            createdTime = now(),
-        )
-        val info = DatabaseFactory.dbQuery {
-            val newTopicId = Topic.new(topic)
-            backend.topicDocumentService.saveDocument(listOf(TopicDocument(newTopicId, content)))
-            topic.toTopicInfo()
-        }
-        return Result.success(info)
-    } else {
-        return Result.failure(ForbiddenException("Permission denied."))
-    }
+    } ?: Result.success(null)
 }
 
 fun Topic.toTopicInfo(): TopicInfo {
@@ -106,6 +64,7 @@ fun Topic.toTopicInfo(): TopicInfo {
         rootType = rootType,
         parentId = parentId,
         parentType = parentType,
+        hasJoined = false,
         createdTime = createdTime,
         lastModifiedTime = now(),
     )
@@ -121,11 +80,12 @@ suspend fun getTopicSnapshot(id: PrimaryKey, topicId: PrimaryKey, backend: Backe
             }) {
                 Topic.findById(topicId)
             }?.let {
-                val (isPrivate) = isPrivateChat(ObjectType.TOPIC, topicId)
-                if (!isPrivate) {
-                    getTopicSnapshot(topicId, it, creatorInfo, backend)
-                } else {
-                    null
+                checkRootReadPermission(ObjectType.TOPIC, topicId, id)?.let { (_, _, hasRead) ->
+                    if (hasRead) {
+                        getTopicSnapshot(topicId, it, creatorInfo, backend)
+                    } else {
+                        null
+                    }
                 }
             }
         }
@@ -188,25 +148,27 @@ private fun getSnapshotInput(snapshot: TopicSnapshot): String {
 
 suspend fun getTopic(
     topicId: PrimaryKey,
-    it: PrimaryKey?,
+    uid: PrimaryKey?,
     backend: Backend
 ): Result<TopicInfo?> {
-    val (isPrivateChat, roomId) = isPrivateChat(ObjectType.TOPIC, topicId)
-    return if (!isPrivateChat || it != null && isRoomJoined(roomId, it)) {
-        Result.success(DatabaseFactory.queryNotNull(Topic::toTopicInfo) {
-            Topic.findById(topicId)
-        }?.let { info ->
-            if (isPrivateChat) {
-                info.copy(content = DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), it) }.first())
-            } else {
-                backend.topicDocumentService.getDocument(listOf(topicId)).firstOrNull()?.content?.let {
-                    info.copy(content = TopicContent.Plain(it))
+    return checkRootReadPermission(ObjectType.TOPIC, topicId, uid)?.let { (_, _, hasRead, hasJoined, isPrivate) ->
+        if (hasRead) {
+            Result.success(DatabaseFactory.queryNotNull(Topic::toTopicInfo) {
+                Topic.findById(topicId)
+            }?.let { info ->
+                if (isPrivate) {
+                    DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }.firstOrNull()
+                        ?.let { id -> info.copy(content = id) }
+                } else {
+                    backend.topicDocumentService.getDocument(listOf(topicId)).firstOrNull()?.content?.let {
+                        info.copy(content = TopicContent.Plain(it))
+                    }
                 }
-            }
-        })
-    } else {
-        Result.failure(ForbiddenException())
-    }
+            }?.copy(hasJoined = hasJoined))
+        } else {
+            Result.failure(ForbiddenException())
+        }
+    } ?: Result.success(null)
 }
 
 suspend fun RoutingContext.verifySnapshot(backend: Backend) = runCatching {
@@ -239,33 +201,33 @@ suspend fun getTopics(
                     Topics.parentId eq parentId and (Topics.parentType eq parentType)
                 }
         }
-        val (isPrivateChat, roomId) = isPrivateChat(parentType, parentId)
-        val topicContents = when {
-            !isPrivateChat -> {
-                backend.topicDocumentService.getDocument(data.map {
-                    it.id
-                }).mapNotNull {
-                    it?.let { it1 -> TopicContent.Plain(it1.content) }
-                }
-            }
-
-            uid != null && isRoomJoined(roomId, uid) -> {
-                DatabaseFactory.dbQuery {
-                    getEncryptedTopicContent(data.map {
+        val topicContents = checkRootReadPermission(parentType, parentId, uid)?.let { (_, _, hasRead, _, isPrivate) ->
+            when {
+                !isPrivate -> {
+                    backend.topicDocumentService.getDocument(data.map {
                         it.id
-                    }, uid)
+                    }).mapNotNull {
+                        it?.let { it1 -> TopicContent.Plain(it1.content) }
+                    }
                 }
-            }
 
-            else -> {
-                return Result.failure(ForbiddenException())
+                hasRead -> {
+                    DatabaseFactory.dbQuery {
+                        getEncryptedTopicContent(data.map {
+                            it.id
+                        }, uid)
+                    }
+                }
+
+                else -> {
+                    return Result.failure(ForbiddenException())
+                }
             }
         }
-
         data.mapIndexed { index, l ->
-            topicContents[index].let {
+            topicContents?.get(index)?.let {
                 l.copy(content = it)
-            }
+            } ?: l
         } to count
     }
 }
@@ -306,31 +268,109 @@ fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey?): List<
     }
 }
 
-suspend fun isPrivateChat(parentType: ObjectType, parentId: PrimaryKey): Pair<Boolean, PrimaryKey> {
-    val b1 = parentType == ObjectType.TOPIC
-    return when {
-        b1 -> {
+suspend fun checkRootReadPermission(
+    parentType: ObjectType,
+    parentId: PrimaryKey,
+    uid: PrimaryKey?,
+): Tuple5<ObjectType, PrimaryKey, Boolean, Boolean, Boolean>? {
+    return when (parentType) {
+        ObjectType.TOPIC -> {
             DatabaseFactory.queryNotNull({
                 rootId to rootType
             }) {
                 Topic.findById(parentId)
             }?.let { (rootId, rootType) ->
-                if (rootType == ObjectType.ROOM && DatabaseFactory.dbQuery { checkRoomIsPrivate(rootId) }) {
-                    true to rootId
+                if (rootType != ObjectType.ROOM) {
+                    Tuple5(rootType, rootId, true, uid?.let {
+                        DatabaseFactory.dbQuery {
+                            isCommunityJoined(rootId, uid)
+                        }
+                    } == true, false)
                 } else {
-                    false to 0u
+                    val hasJoined = uid?.let {
+                        DatabaseFactory.dbQuery { isRoomJoined(rootId, uid) }
+                    } == true
+                    val isPrivate = DatabaseFactory.dbQuery { checkRoomIsPrivate(rootId) }
+                    if (isPrivate) {
+                        Tuple5(
+                            rootType,
+                            rootId,
+                            hasJoined,
+                            hasJoined,
+                            true
+                        )
+                    } else {
+                        Tuple5(rootType, rootId, true, hasJoined, false)
+                    }
                 }
-            }!!
+            }
         }
 
-        parentType == ObjectType.ROOM && DatabaseFactory.dbQuery {
-            checkRoomIsPrivate(parentId)
-        } -> {
-            true to parentId
+        ObjectType.ROOM -> {
+            val hasJoined = uid?.let {
+                DatabaseFactory.dbQuery {
+                    isRoomJoined(parentId, it)
+                }
+            } == true
+            val isPrivate = DatabaseFactory.dbQuery {
+                checkRoomIsPrivate(parentId)
+            }
+            if (isPrivate) {
+                Tuple5(parentType, parentId, hasJoined, hasJoined, true)
+            } else {
+                Tuple5(parentType, parentId, true, hasJoined, false)
+            }
         }
 
-        else -> {
-            false to 0u
+        ObjectType.COMMUNITY -> {
+            val hasJoined = uid?.let {
+                DatabaseFactory.dbQuery {
+                    isCommunityJoined(parentId, it)
+                }
+            } == true
+            Tuple5(parentType, parentId, true, hasJoined, false)
         }
+
+        ObjectType.USER -> TODO()
+    }
+}
+
+suspend fun checkRootWritePermission(
+    parentType: ObjectType,
+    parentId: PrimaryKey,
+    uid: PrimaryKey,
+): Triple<ObjectType, PrimaryKey, Boolean>? {
+    return when (parentType) {
+        ObjectType.TOPIC -> {
+            DatabaseFactory.queryNotNull({
+                rootId to rootType
+            }) {
+                Topic.findById(parentId)
+            }?.let { (rootId, rootType) ->
+                if (rootType == ObjectType.ROOM) {
+                    Triple(rootType, rootId, DatabaseFactory.dbQuery {
+                        isRoomJoined(rootId, uid)
+                    })
+                } else {
+                    Triple(rootType, rootId, DatabaseFactory.dbQuery {
+                        isCommunityJoined(rootId, uid)
+                    })
+                }
+            }
+        }
+
+        ObjectType.ROOM -> {
+            Triple(parentType, parentId, DatabaseFactory.dbQuery {
+                isRoomJoined(parentId, uid)
+            })
+        }
+
+        ObjectType.COMMUNITY -> {
+            Triple(parentType, parentId, DatabaseFactory.dbQuery {
+                isCommunityJoined(parentId, uid)
+            })
+        }
+
+        ObjectType.USER -> TODO()
     }
 }

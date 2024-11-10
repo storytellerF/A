@@ -16,16 +16,19 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.user.UserDialog
-import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
-fun UserIcon(userInfo: UserInfo?, size: Dp = 40.dp) {
+fun UserIcon(userInfo: UserInfo?, size: Dp = 40.dp, onClickWhenUserIsNull: () -> Unit = {}) {
     var showMyDialog by remember {
         mutableStateOf(false)
     }
     val onClick = {
-        showMyDialog = true
+        if (userInfo == null) {
+            onClickWhenUserIsNull()
+        } else {
+            showMyDialog = true
+        }
     }
     val url = userInfo?.avatar?.url
     if (url != null) {
@@ -46,10 +49,4 @@ fun UserIcon(userInfo: UserInfo?, size: Dp = 40.dp) {
     UserDialog(userInfo, showMyDialog) {
         showMyDialog = false
     }
-}
-
-@Composable
-fun MyIcon(size: Dp) {
-    val userInfo by LoginViewModel.user.collectAsState()
-    UserIcon(userInfo, size)
 }

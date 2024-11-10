@@ -3,6 +3,7 @@ package com.storyteller_f.a.app.common
 import androidx.paging.PagingState
 import app.cash.paging.*
 import com.storyteller_f.shared.model.Identifiable
+import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import kotbase.*
@@ -81,7 +82,7 @@ class CustomQueryPagingSource<RowType : Identifiable>(
                         else -> task.complete(results.toObjects())
                     }
                 }
-            map[key ?: (0u)] = listenerToken
+            map[key ?: (DEFAULT_PRIMARY_KEY)] = listenerToken
             val data = task.await()
             Napier.v(tag = "pagination") {
                 "source nextKey = ${data.lastOrNull()?.id} ${data.size}"

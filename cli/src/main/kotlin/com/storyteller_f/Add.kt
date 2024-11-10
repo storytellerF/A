@@ -6,9 +6,9 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.*
-import com.storyteller_f.shared.obj.AddRoom
 import com.storyteller_f.shared.obj.AddTaskValue
 import com.storyteller_f.shared.obj.AddTopic
+import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.Tuple4
@@ -21,7 +21,6 @@ import kotlinx.cli.ExperimentalCli
 import kotlinx.cli.Subcommand
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 import java.io.File
@@ -96,11 +95,19 @@ class Add : Subcommand("add", "add entry") {
             }.groupBy {
                 it.aid
             }
+            val communities = l.mapNotNull {
+                it.community
+            }.distinct().map {
+                Community.wrapRow(findCommunityByAId(it)!!)
+            }.groupBy {
+                it.aid
+            }
             val idList = Rooms.batchInsert(data) { (it, p, id) ->
                 this[Rooms.id] = id
                 this[Rooms.aid] = it.id
                 this[Rooms.icon] = p
                 this[Rooms.name] = it.name
+                this[Rooms.communityId] = communities[it.community]?.first()?.id
                 this[Rooms.creator] = list[it.admin]!!.first().id
                 this[Rooms.createdTime] = now()
             }.map {
@@ -113,32 +120,6 @@ class Add : Subcommand("add", "add entry") {
                     this[RoomJoins.joinTime] = now()
                 }
             }
-            roomJoinCommunity(l, idList)
-        }
-    }
-
-    private fun roomJoinCommunity(
-        l: List<AddRoom>,
-        idList: List<PrimaryKey>
-    ): List<ResultRow> {
-        val communities = l.mapNotNull {
-            it.community
-        }.distinct().map {
-            Community.wrapRow(findCommunityByAId(it)!!)
-        }.groupBy {
-            it.aid
-        }
-        return CommunityRooms.batchInsert(
-            l.mapIndexedNotNull { index, addRoom ->
-                if (addRoom.community != null) {
-                    addRoom to index
-                } else {
-                    null
-                }
-            }
-        ) { (first, second) ->
-            this[CommunityRooms.roomId] = idList[second]
-            this[CommunityRooms.communityId] = communities[first.community]!!.first().id
         }
     }
 
@@ -197,7 +178,7 @@ class Add : Subcommand("add", "add entry") {
         roomList: Map<String, List<Room>>
     ): ULongArray {
         val ids = ULongArray(u.size) {
-            0u
+            DEFAULT_PRIMARY_KEY
         }
         val topLevelTopic = u.mapIndexed { index, addTopic ->
             val id = SnowflakeFactory.nextId()
@@ -319,7 +300,7 @@ class Add : Subcommand("add", "add entry") {
             it.second
         }
         val ids = ULongArray(u.size) {
-            0u
+            DEFAULT_PRIMARY_KEY
         }
         // 保存top 之前的层级关系
         val topLevelTopic = u.mapIndexed { index, addTopic ->

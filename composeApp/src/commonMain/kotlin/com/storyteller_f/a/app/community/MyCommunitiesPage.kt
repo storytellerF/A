@@ -54,7 +54,7 @@ fun MyCommunitiesPage(onClick: (PrimaryKey) -> Unit) {
                     val communityInfo = items[index]
                     when {
                         communityInfo?.poster != null -> CommunityGrid(communityInfo, onClick)
-                        else -> CommunityCell(communityInfo, onClick)
+                        else -> CommunityCell(communityInfo, false, onClick)
                     }
                 }
             }
@@ -116,15 +116,22 @@ fun CommunityGrid(communityInfo: CommunityInfo?, onClick: (PrimaryKey) -> Unit =
 }
 
 @Composable
-fun CommunityCell(communityInfo: CommunityInfo?, onClick: (PrimaryKey) -> Unit = {}) {
+fun CommunityCell(
+    communityInfo: CommunityInfo?,
+    customBackground: Boolean = false,
+    onClick: (PrimaryKey) -> Unit = {}
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
-            .clickable {
-                communityInfo?.id?.let { onClick(it) }
-            }
-            .padding(10.dp),
+        modifier = when {
+            customBackground -> Modifier
+            else -> Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
+                .clickable {
+                    communityInfo?.id?.let { onClick(it) }
+                }
+                .padding(10.dp)
+        },
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         CommunityIcon(communityInfo, 50.dp)
@@ -132,7 +139,7 @@ fun CommunityCell(communityInfo: CommunityInfo?, onClick: (PrimaryKey) -> Unit =
             communityInfo?.name.orEmpty(),
             Modifier,
             MaterialTheme.colorScheme.onSecondaryContainer,
-            MaterialTheme.typography.labelSmall.fontSize
+            MaterialTheme.typography.labelMedium.fontSize
         )
     }
 }

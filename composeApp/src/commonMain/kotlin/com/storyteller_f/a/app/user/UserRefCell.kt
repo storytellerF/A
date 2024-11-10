@@ -1,72 +1,81 @@
 package com.storyteller_f.a.app.user
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.common.SimpleViewModel
-import com.storyteller_f.a.app.common.StateView2
-import com.storyteller_f.a.app.common.serviceCatching
+import com.storyteller_f.a.app.common.RefCellStateView
 import com.storyteller_f.a.app.common.viewModel
-import com.storyteller_f.a.app.topic.UserHeadRow
-import com.storyteller_f.a.client_lib.getUserInfo
-import com.storyteller_f.a.client_lib.getUserInfoByAid
+import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
-import io.ktor.client.*
 
 @Composable
-fun UserRefCell(modifier: Modifier = Modifier, userId: PrimaryKey) {
+fun UserRefCell(userId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
     val viewModel = viewModel(UserViewModel::class, keys = listOf("user", userId)) {
         UserViewModel(userId)
     }
 
-    StateView2(viewModel.handler) {
-        Box(
-            modifier.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp)).padding(10.dp)
-        ) {
-            UserHeadRow(it)
-        }
-    }
+    UserRefCellInternal(viewModel, onClick)
 }
 
 @Composable
-fun UserRefCell(modifier: Modifier = Modifier, userAid: String) {
+fun UserRefCell(userAid: String, onClick: (PrimaryKey) -> Unit) {
     val viewModel = viewModel(UserViewModel::class, keys = listOf("user", userAid)) {
         UserViewModel(userAid)
     }
 
-    StateView2(viewModel.handler) {
-        Box(
-            modifier.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp)).padding(10.dp)
-        ) {
-            UserHeadRow(it)
-        }
+    UserRefCellInternal(viewModel, onClick)
+}
+
+@Composable
+private fun UserRefCellInternal(viewModel: UserViewModel, onClick: (PrimaryKey) -> Unit) {
+    val userInfo by viewModel.handler.data.collectAsState()
+    val shape = RoundedCornerShape(10.dp)
+    RefCellStateView(
+        viewModel.handler,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            .background(MaterialTheme.colorScheme.secondaryContainer, shape)
+            .clip(shape)
+            .clickable {
+                userInfo?.let {
+                    onClick(it.id)
+                }
+            }
+            .padding(10.dp)
+    ) {
+        UserRow(it)
     }
 }
 
-class UserViewModel(private val requestInfo: suspend HttpClient.() -> UserInfo) : SimpleViewModel<UserInfo>() {
-    constructor(userId: PrimaryKey) : this({
-        getUserInfo(userId)
-    })
-    constructor(userAid: String) : this({
-        getUserInfoByAid(userAid)
-    })
-
-    init {
-        load()
-    }
-
-    override suspend fun loadInternal() {
-        handler.request {
-            serviceCatching {
-                requestInfo(client)
-            }
+@Composable
+fun UserRow(userInfo: UserInfo?, avatarSize: Dp = 40.dp) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        UserIcon(userInfo, avatarSize)
+        Column {
+            userInfo?.let { Text(it.nickname) }
         }
     }
 }

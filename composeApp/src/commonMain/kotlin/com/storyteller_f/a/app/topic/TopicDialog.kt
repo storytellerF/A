@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.DialogContainer
+import com.storyteller_f.a.app.user.UserRow
 import com.storyteller_f.a.app.user.UserViewModel
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
@@ -37,7 +38,7 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
 @Composable
 fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?) {
     DialogContainer {
-        UserHeadRow(authorInfo)
+        UserRow(authorInfo)
         Text("pub: ${topicInfo.lastModifiedTime}")
         Column {
             ButtonNav(Icons.Default.Add, "Snapshot") {

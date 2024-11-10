@@ -13,8 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.compontents.EventDialog
-import com.storyteller_f.a.app.compontents.rememberEventState
+import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.type.ObjectType
@@ -33,7 +32,6 @@ fun TopicComposePage(objectType: ObjectType, objectId: PrimaryKey, backPrePage: 
     var selected by remember {
         mutableIntStateOf(0)
     }
-    val messageState = rememberEventState()
     val coroutineScope = rememberCoroutineScope()
     val tabs = listOf("Edit", "Preview")
     Scaffold(topBar = {
@@ -47,7 +45,7 @@ fun TopicComposePage(objectType: ObjectType, objectId: PrimaryKey, backPrePage: 
                             client.createNewTopic(objectType, objectId, input)
                             backPrePage()
                         } catch (e: Exception) {
-                            messageState.showError(e)
+                            globalDialogState.showError(e)
                         }
                     }
                 }
@@ -80,7 +78,6 @@ fun TopicComposePage(objectType: ObjectType, objectId: PrimaryKey, backPrePage: 
             }
         }
     }
-    EventDialog(messageState)
 }
 
 @Composable
