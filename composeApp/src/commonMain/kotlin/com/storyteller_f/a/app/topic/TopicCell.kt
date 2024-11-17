@@ -24,6 +24,7 @@ import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownCodeFence
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.ReactionRow
 import com.storyteller_f.a.app.compontents.TextUnitToPx
@@ -34,7 +35,6 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.markdown.MarkdownTokenTypes
@@ -45,8 +45,7 @@ import org.intellij.markdown.ast.getTextInNode
 fun TopicCell(
     topicInfo: TopicInfo?,
     contentAlignAvatar: Boolean = true,
-    showAvatar: Boolean = true,
-    onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }
+    showAvatar: Boolean = true
 ) {
     if (topicInfo != null) {
         val author = topicInfo.author
@@ -54,7 +53,7 @@ fun TopicCell(
             UserViewModel(author)
         }
         val authorInfo by authorViewModel.handler.data.collectAsState()
-        TopicCellInternal(topicInfo, showAvatar, authorInfo, contentAlignAvatar, onClick)
+        TopicCellInternal(topicInfo, showAvatar, authorInfo, contentAlignAvatar)
     }
 }
 
@@ -63,9 +62,10 @@ fun TopicCellInternal(
     topicInfo: TopicInfo,
     showAvatar: Boolean,
     authorInfo: UserInfo?,
-    contentAlignAvatar: Boolean,
-    onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }
+    contentAlignAvatar: Boolean
 ) {
+    val appNav = LocalAppNav.current
+    val onClick = appNav::goto
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -87,8 +87,7 @@ fun TopicCellInternal(
                 topicInfo.content,
                 onClick = {
                     onClick(topicInfo.id, ObjectType.TOPIC)
-                },
-                onFenceClick = onClick
+                }
             )
             ReactionRow()
         }
@@ -96,7 +95,7 @@ fun TopicCellInternal(
 }
 
 @Composable
-fun CustomCodeFence(modal: MarkdownComponentModel, content: String, onClick: (PrimaryKey, ObjectType) -> Unit) {
+fun CustomCodeFence(modal: MarkdownComponentModel, content: String) {
     val children = modal.node.children
     val langOffset = children.indexOfFirst {
         it.type == MarkdownTokenTypes.FENCE_LANG
@@ -104,7 +103,7 @@ fun CustomCodeFence(modal: MarkdownComponentModel, content: String, onClick: (Pr
     val lang = children.getOrNull(langOffset)?.getTextInNode(content)
     (when {
         listOf("com.storyteller_f.a", "c.s.a", "csa").contains(lang) -> {
-            RefBlock(children, langOffset, content, onClick)
+            RefBlock(children, langOffset, content)
         }
 
         lang == "math" -> {
@@ -119,12 +118,12 @@ fun CustomCodeFence(modal: MarkdownComponentModel, content: String, onClick: (Pr
 private fun RefBlock(
     children: List<ASTNode>,
     langOffset: Int,
-    content: String,
-    onClick: (PrimaryKey, ObjectType) -> Unit
+    content: String
 ) {
+    val appNav = LocalAppNav.current
     val textInNode = readFenceContent(children, langOffset, content)
     TopicRoute.parseRefUri(textInNode).let {
-        it.first?.let { it1 -> it1(it.second, onClick) }
+        it.first?.let { it1 -> it1(it.second, appNav) }
     }
 }
 
@@ -178,22 +177,19 @@ private fun readFenceContent(
 fun TopicContentField(
     content1: TopicContent?,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
-    onFenceClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }
+    onClick: (() -> Unit)? = null
 ) {
     if (content1 is TopicContent.Plain) {
         Markdown(
             content1.plain,
-            modifier = modifier.clickable(onClick != null) {
+            modifier = modifier.fillMaxWidth().clickable(onClick != null) {
                 onClick?.invoke()
             },
             colors = markdownColor(),
             typography = markdownTypography(),
             imageTransformer = Coil3ImageTransformerImpl,
             components = markdownComponents(codeFence = { model ->
-                CustomCodeFence(model, content1.plain) { id, type ->
-                    onFenceClick(id, type)
-                }
+                CustomCodeFence(model, content1.plain)
             })
         )
     } else if (content1 is TopicContent.DecryptFailed) {

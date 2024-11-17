@@ -6,10 +6,12 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 abstract class BaseTable : Table() {
-    val id = ulong("id")
+    val id = customPrimaryKey("id")
     val createdTime = datetime("created_time").index()
 
     override val primaryKey = PrimaryKey(id)
 }
 
 abstract class BaseObj(val id: PrimaryKey, val createdTime: LocalDateTime)
+
+fun Table.customPrimaryKey(name: String) = long(name)

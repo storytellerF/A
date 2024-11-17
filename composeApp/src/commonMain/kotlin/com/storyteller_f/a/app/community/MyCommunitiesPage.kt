@@ -15,6 +15,7 @@ import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.CommunityIcon
@@ -22,9 +23,10 @@ import com.storyteller_f.a.app.utils.lcm
 import com.storyteller_f.a.client_lib.getJoinCommunities
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 
 @Composable
-fun MyCommunitiesPage(onClick: (PrimaryKey) -> Unit) {
+fun MyCommunitiesPage() {
     val viewModel = viewModel(MyCommunitiesViewModel::class) {
         MyCommunitiesViewModel()
     }
@@ -53,8 +55,8 @@ fun MyCommunitiesPage(onClick: (PrimaryKey) -> Unit) {
                 ) { index ->
                     val communityInfo = items[index]
                     when {
-                        communityInfo?.poster != null -> CommunityGrid(communityInfo, onClick)
-                        else -> CommunityCell(communityInfo, false, onClick)
+                        communityInfo?.poster != null -> CommunityGrid(communityInfo)
+                        else -> CommunityCell(communityInfo, false)
                     }
                 }
             }
@@ -68,7 +70,7 @@ class MyCommunitiesViewModel : PagingViewModel<PrimaryKey, CommunityInfo>({
         serviceCatching {
             client.getJoinCommunities(it, 10)
         }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
+            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
         }
     }
 })
@@ -84,13 +86,14 @@ fun CommunityConstrains(modifier: Modifier = Modifier, content: @Composable (Int
 }
 
 @Composable
-fun CommunityGrid(communityInfo: CommunityInfo?, onClick: (PrimaryKey) -> Unit = {}) {
+fun CommunityGrid(communityInfo: CommunityInfo?) {
+    val appNav = LocalAppNav.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(3f / 4)
             .clickable {
-                communityInfo?.let { onClick(it.id) }
+                communityInfo?.let { appNav.gotoCommunity(it.id) }
             }
     ) {
         Box(
@@ -118,9 +121,9 @@ fun CommunityGrid(communityInfo: CommunityInfo?, onClick: (PrimaryKey) -> Unit =
 @Composable
 fun CommunityCell(
     communityInfo: CommunityInfo?,
-    customBackground: Boolean = false,
-    onClick: (PrimaryKey) -> Unit = {}
+    customBackground: Boolean = false
 ) {
+    val appNav = LocalAppNav.current
     Row(
         modifier = when {
             customBackground -> Modifier
@@ -128,7 +131,7 @@ fun CommunityCell(
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
                 .clickable {
-                    communityInfo?.id?.let { onClick(it) }
+                    communityInfo?.id?.let { appNav.gotoCommunity(it) }
                 }
                 .padding(10.dp)
         },

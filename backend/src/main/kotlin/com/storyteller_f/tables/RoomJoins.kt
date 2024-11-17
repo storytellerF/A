@@ -1,6 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.customPrimaryKey
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
@@ -8,8 +9,8 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 object RoomJoins : Table() {
-    val uid = ulong("uid").index()
-    val roomId = ulong("room_id").index()
+    val uid = customPrimaryKey("uid").index()
+    val roomId = customPrimaryKey("room_id").index()
     val joinTime = datetime("join_time").index()
 
     init {
@@ -25,9 +26,15 @@ class RoomJoin(val uid: PrimaryKey, val roomId: PrimaryKey, val joinTime: LocalD
     }
 }
 
-suspend fun isRoomJoined(roomId: PrimaryKey, uid: PrimaryKey) = !DatabaseFactory.empty {
-    RoomJoins.selectAll().where {
-        RoomJoins.roomId eq roomId and (RoomJoins.uid eq uid)
+suspend fun isRoomJoined(roomId: PrimaryKey, uid: PrimaryKey?) = if (uid == null) {
+    Result.success(false)
+} else {
+    DatabaseFactory.isEmpty {
+        RoomJoins.selectAll().where {
+            RoomJoins.roomId eq roomId and (RoomJoins.uid eq uid)
+        }
+    }.map {
+        !it
     }
 }
 

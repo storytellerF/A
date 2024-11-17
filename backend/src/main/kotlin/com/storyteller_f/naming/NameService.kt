@@ -5,14 +5,17 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 class NameService {
     private val nameMap = mutableMapOf<Int, Int>()
+
+    // 存储合集累加的个数
     private val countList = mutableListOf<Int>()
 
     init {
         this::class.java.classLoader.getResourceAsStream("charset")!!.bufferedReader().use {
             it.readText().split("\n").filterIndexed { index, element ->
-                index != 0 && !element.startsWith("//")
+                !element.startsWith("//")
             }.map {
                 val split = it.trim().split(Regex("[ \\t]"))
+                // 个数以及范围
                 split[1].dropLast(1).toInt() to split[2].split("-")
             }.fold(0) { acc, i ->
                 val count = acc + i.first
@@ -24,13 +27,13 @@ class NameService {
         }
     }
 
-    fun parse(id: ULong): String {
+    fun parse(id: Long): String {
         return numberToCustomCharset(id)
     }
 
     // 将数字转换为自定义字符集表示的字符串
     private fun numberToCustomCharset(num: PrimaryKey): String {
-        val base = countList.last().toULong()
+        val base = countList.last().toLong()
 
         var number = num
 

@@ -3,12 +3,16 @@ package com.storyteller_f.a.server.auth
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.a.server.*
 import com.storyteller_f.a.server.BuildConfig
+import com.storyteller_f.a.server.protectedContent
 import com.storyteller_f.a.server.service.toFinalUserInfo
 import com.storyteller_f.a.server.service.toUserInfo
+import com.storyteller_f.a.server.unProtectedContent
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKey
+import com.storyteller_f.shared.utils.downgrade
+import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.User
 import com.storyteller_f.tables.Users
@@ -25,17 +29,31 @@ import io.ktor.server.sessions.*
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-data class CustomCredential(val id: PrimaryKey, val sig: String)
+sealed class CustomCredential(open val sig: String) {
+    data class IdCredential(val id: PrimaryKey, override val sig: String) : CustomCredential(sig)
+    data class AidCredential(val aid: String, override val sig: String) : CustomCredential(sig)
+}
 
 private fun HttpAuthHeader.Parameterized.customCredential(): CustomCredential? {
-    val id = parameters.firstOrNull {
-        it.name == "id"
-    }?.value?.toULong()
     val sig = parameters.firstOrNull {
         it.name == "sig"
     }?.value
-    return if (id != null && sig != null) {
-        CustomCredential(id, sig)
+    return if (sig != null) {
+        val id = parameters.firstOrNull {
+            it.name == "id"
+        }?.value?.toLong()
+        if (id != null) {
+            CustomCredential.IdCredential(id, sig)
+        } else {
+            val aid = parameters.firstOrNull {
+                it.name == "aid"
+            }?.value
+            if (aid != null) {
+                CustomCredential.AidCredential(aid, sig)
+            } else {
+                null
+            }
+        }
     } else {
         null
     }
@@ -109,11 +127,15 @@ fun Application.configureAuth(backend: Backend) {
     install(Authentication) {
         custom {
             validate { session, call, credential ->
-                when {
-                    session is UserSession.Success -> CustomPrincipal(session.id)
-                    credential != null -> call.checkApiRequest(credential, session)
-                    backend.config.isProd -> null
-                    else -> checkDevWsLink(call)
+                when (session) {
+                    is UserSession.Success -> CustomPrincipal(session.id)
+                    is UserSession.Pending -> {
+                        when {
+                            credential != null -> call.checkApiRequest(credential, session)
+                            backend.config.isProd -> null
+                            else -> checkDevWsLink(call)
+                        }
+                    }
                 }
             }
             challenge { _, call ->
@@ -163,15 +185,16 @@ private suspend fun RoutingContext.signIn(backend: Backend) {
             Users.address eq pack.ad
         }
     }
-    if (userTriple != null) {
-        val (info, icon, publicKey) = userTriple
+    userTriple.downgrade {
+        BadRequestException("user not found")
+    }.onSuccess { (info, icon, publicKey) ->
         if (verify(publicKey, pack.sig, f)) {
             call.respond(toFinalUserInfo(info to icon, backend = backend))
         } else {
-            call.respond(HttpStatusCode.BadRequest)
+            call.respond(HttpStatusCode.BadRequest, "verify failed.")
         }
-    } else {
-        call.respond(HttpStatusCode.BadRequest)
+    }.onFailure {
+        call.respond(HttpStatusCode.BadRequest, it.message.toString())
     }
 }
 
@@ -180,21 +203,29 @@ private suspend fun RoutingContext.signUp(backend: Backend) {
     val data = call.getData()
     val f = finalData(data)
     if (verify(pack.pk, pack.sig, f)) {
-        if (!DatabaseFactory.empty {
-                User.find {
-                    Users.publicKey eq pack.pk
+        DatabaseFactory.isEmpty {
+            User.find {
+                Users.publicKey eq pack.pk
+            }
+        }.mapResult { bool ->
+            if (bool) {
+                val ad = calcAddress(pack.pk)
+                val newId = SnowflakeFactory.nextId()
+                val name = backend.nameService.parse(newId)
+                DatabaseFactory.query({
+                    toUserInfo() to null
+                }) {
+                    createUser(User(null, pack.pk, ad, null, name, newId, now()))
+                }.mapResult { value ->
+                    toFinalUserInfo(value, backend)
                 }
-            }) {
-            call.respond(HttpStatusCode.BadRequest, "User exists.")
-        } else {
-            val ad = calcAddress(pack.pk)
-            val newId = SnowflakeFactory.nextId()
-            val name = backend.nameService.parse(newId)
-            call.respond(DatabaseFactory.query({
-                toUserInfo() to null
-            }) {
-                createUser(User(null, pack.pk, ad, null, name, newId, now()))
-            }.let { toFinalUserInfo(it, backend) })
+            } else {
+                Result.failure(BadRequestException("User exists."))
+            }
+        }.onSuccess {
+            call.respond(it)
+        }.onFailure { exception ->
+            call.respond(HttpStatusCode.BadRequest, exception.message.toString())
         }
     } else {
         call.respond(HttpStatusCode.BadRequest, "Verify failed.")
@@ -203,63 +234,53 @@ private suspend fun RoutingContext.signUp(backend: Backend) {
 
 private suspend fun ApplicationCall.checkApiRequest(
     credential: CustomCredential,
-    session: UserSession
+    session: UserSession.Pending
 ): CustomPrincipal? {
     val sig = credential.sig
-    val id = credential.id
-    return when (session) {
-        is UserSession.Success -> {
-            CustomPrincipal(session.id)
-        }
-
-        is UserSession.Pending -> {
-            verifySignature(sig, id, session)
-        }
-    }
-}
-
-private suspend fun ApplicationCall.verifySignature(
-    sig: String,
-    id: PrimaryKey,
-    session: UserSession.Pending
-) = when {
-    !BuildConfig.IS_PROD && sig == id.toString() -> {
-        if (DatabaseFactory.dbQuery {
-                User.findById(id) != null
-            }) {
-            saveSuccessSession(session, id)
-            CustomPrincipal(id)
-        } else {
-            null
-        }
-    }
-
-    sig.isNotBlank() && session.data.isNotBlank() -> {
-        DatabaseFactory.first({
-            this
-        }, {
-            it[Users.publicKey]
-        }) {
-            Users.select(Users.publicKey).where {
-                Users.id eq id
-            }
-        }?.let { pubKey ->
-            if (verify(
-                    pubKey,
-                    sig,
-                    finalData(session.data)
-                )
-            ) {
+    @Suppress("KotlinConstantConditions")
+    return when {
+        !BuildConfig.IS_PROD && credential is CustomCredential.IdCredential && sig == credential.id.toString() -> {
+            val id = credential.id
+            if (DatabaseFactory.dbQuery {
+                    User.findById(id) != null
+                }.getOrNull() == true) {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             } else {
                 null
             }
         }
-    }
 
-    else -> {
-        null
+        sig.isNotBlank() && session.data.isNotBlank() -> {
+            DatabaseFactory.first({
+                this
+            }, {
+                it[Users.publicKey] to it[Users.id]
+            }) {
+                Users.select(listOf(Users.publicKey, Users.id)).where {
+                    when (credential) {
+                        is CustomCredential.AidCredential -> Users.aid eq credential.aid
+                        is CustomCredential.IdCredential -> Users.id eq credential.id
+                    }
+                }
+            }.getOrNull()?.let { (pubKey, id) ->
+                if (verify(
+                        pubKey,
+                        sig,
+                        finalData(session.data)
+                    )
+                ) {
+                    saveSuccessSession(session, id)
+                    CustomPrincipal(id)
+                } else {
+                    null
+                }
+            }
+        }
+
+        else -> {
+            null
+        }
     }
 }
 
@@ -273,12 +294,12 @@ private fun ApplicationCall.saveSuccessSession(
 private suspend fun checkDevWsLink(call: ApplicationCall): CustomPrincipal? {
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
-        val id = did.toULong()
+        val id = did.toPrimaryKey()
         DatabaseFactory.queryNotNull({
             CustomPrincipal(id)
         }) {
             User.findById(id)
-        }
+        }.getOrNull()
     } else {
         null
     }

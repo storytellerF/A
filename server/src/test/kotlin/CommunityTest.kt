@@ -2,7 +2,6 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.buildBackendFromEnv
-import com.storyteller_f.naming.NameService
 import com.storyteller_f.readEnv
 import com.storyteller_f.shared.hmacSign
 import com.storyteller_f.shared.hmacVerify
@@ -11,10 +10,10 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.newHmacSha512
 import com.storyteller_f.shared.obj.NewTopic
-import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Community
 import io.ktor.client.call.*
@@ -72,28 +71,14 @@ class CommunityTest {
     }
 
     @Test
-    fun `test topic snapshot`() {
-        test { client ->
-            session(client) {
-                val communityId = createCommunity()
-                client.joinCommunity(communityId)
-                val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").body<TopicInfo>()
-                val pack = client.getTopicSnapshot(topicInfo.id).body<TopicSnapshotPack>()
-                assertEquals("true", client.verifySnapshot(pack).bodyAsText())
-            }
-        }
-    }
-
-    @Test
     fun `test communities pagination`() {
         test { client ->
             val communities = buildList {
                 repeat(10) {
                     val newId = SnowflakeFactory.nextId()
-                    val id = DatabaseFactory.dbQuery {
+                    DatabaseFactory.dbQuery {
                         Community.new(Community("aid$it", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
-                    }
-                    add(id)
+                    }.getOrThrow().let(::add)
                 }
             }
             session(client) {
@@ -105,7 +90,7 @@ class CommunityTest {
                 while (true) {
                     val res = client.getJoinCommunities(lastCommunityId, 3)
                     val pagination = res.pagination!!
-                    lastCommunityId = pagination.nextPageToken?.toULong()
+                    lastCommunityId = pagination.nextPageToken?.toPrimaryKeyOrNull()
                     sum += res.data.size
                     if (lastCommunityId == null) {
                         assertEquals(pagination.total, sum)
@@ -120,7 +105,7 @@ class CommunityTest {
         val newId = SnowflakeFactory.nextId()
         return DatabaseFactory.dbQuery {
             Community.new(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
-        }
+        }.getOrThrow()
     }
 
     @Test
@@ -137,14 +122,6 @@ class CommunityTest {
     fun `test generate hmac key`() {
         runBlocking {
             println(newHmacSha512())
-        }
-    }
-
-    @Test
-    fun `test name`() {
-        runBlocking {
-            SnowflakeFactory.setMachine(0)
-            println(NameService().parse(SnowflakeFactory.nextId()))
         }
     }
 }

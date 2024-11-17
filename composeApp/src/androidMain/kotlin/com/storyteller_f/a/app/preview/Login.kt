@@ -13,6 +13,5 @@ private fun PreviewLogin() {
 @Preview
 @Composable
 private fun PreviewPrivateKey() {
-    InputPrivateKeyPage {
-    }
+    InputPrivateKeyPage()
 }

@@ -120,14 +120,15 @@ fun Application.module() {
             cookie.maxAgeInSeconds = 3600
         }
     }
-    if (backend.config.isProd)
+    if (backend.config.isProd) {
         install(RateLimit) {
             global {
-                rateLimiter(limit = 20, refillPeriod = 1.seconds)
+                rateLimiter(limit = 10, refillPeriod = 1.seconds)
                 requestKey { call ->
                     call.getRateLimitKey()
                 }
             }
         }
+    }
     configureAuth(backend)
 }

@@ -1,22 +1,23 @@
 package com.storyteller_f.a.app.topic
 
 import androidx.compose.runtime.Composable
+import com.storyteller_f.a.app.AppNav
 import com.storyteller_f.a.app.community.CommunityRefCell
 import com.storyteller_f.a.app.room.RoomRefCell
 import com.storyteller_f.a.app.user.UserRefCell
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 
 class TopicRoute(
     val pattern: String,
-    val builder: @Composable (Map<String, String>, onClick: (PrimaryKey, ObjectType) -> Unit) -> Unit
+    val builder: @Composable (Map<String, String>, appNav: AppNav) -> Unit
 ) {
     companion object {
         fun parseRefUri(
             string: String
         ): Pair<@Composable ((
             Map<String, String>,
-            (PrimaryKey, ObjectType) -> Unit
+            AppNav
         ) -> Unit)?, MutableMap<String, String>> {
             val target = string.split("/")
             val map = mutableMapOf<String, String>()
@@ -47,59 +48,59 @@ class TopicRoute(
 }
 
 val ROUTE = mutableListOf(
-    TopicRoute("/topic/{id}") { params, onClick ->
-        params["id"]?.toULongOrNull()?.let {
+    TopicRoute("/topic/{id}") { params, appNav ->
+        params["id"]?.toPrimaryKeyOrNull()?.let {
             TopicRefCell(it) {
-                onClick(it, ObjectType.TOPIC)
+                appNav.goto(it, ObjectType.TOPIC)
             }
         }
     },
-    TopicRoute("/topic/a/{aid}") { params, onClick ->
+    TopicRoute("/topic/a/{aid}") { params, appNav ->
         params["aid"]?.let {
             TopicRefCell(it) {
-                onClick(it, ObjectType.TOPIC)
+                appNav.goto(it, ObjectType.TOPIC)
             }
         }
     },
-    TopicRoute("/room/{id}") { params, onClick ->
-        params["id"]?.toULongOrNull()?.let {
+    TopicRoute("/room/{id}") { params, appNav ->
+        params["id"]?.toPrimaryKeyOrNull()?.let {
             RoomRefCell(it) {
-                onClick(it, ObjectType.ROOM)
+                appNav.goto(it, ObjectType.ROOM)
             }
         }
     },
-    TopicRoute("/room/a/{aid}") { params, onClick ->
+    TopicRoute("/room/a/{aid}") { params, appNav ->
         params["aid"]?.let {
             RoomRefCell(it) {
-                onClick(it, ObjectType.ROOM)
+                appNav.goto(it, ObjectType.ROOM)
             }
         }
     },
-    TopicRoute("/community/{id}") { params, onClick ->
-        params["id"]?.toULongOrNull()?.let {
+    TopicRoute("/community/{id}") { params, appNav ->
+        params["id"]?.toPrimaryKeyOrNull()?.let {
             CommunityRefCell(it) {
-                onClick(it, ObjectType.COMMUNITY)
+                appNav.goto(it, ObjectType.COMMUNITY)
             }
         }
     },
-    TopicRoute("/community/a/{aid}") { params, onClick ->
+    TopicRoute("/community/a/{aid}") { params, appNav ->
         params["aid"]?.let {
             CommunityRefCell(it) {
-                onClick(it, ObjectType.COMMUNITY)
+                appNav.goto(it, ObjectType.COMMUNITY)
             }
         }
     },
-    TopicRoute("/user/{id}") { params, onClick ->
-        params["id"]?.toULongOrNull()?.let {
+    TopicRoute("/user/{id}") { params, appNav ->
+        params["id"]?.toPrimaryKeyOrNull()?.let {
             UserRefCell(it) {
-                onClick(it, ObjectType.USER)
+                appNav.goto(it, ObjectType.USER)
             }
         }
     },
-    TopicRoute("/user/a/{aid}") { params, onClick ->
+    TopicRoute("/user/a/{aid}") { params, appNav ->
         params["aid"]?.let {
             UserRefCell(it) {
-                onClick(it, ObjectType.USER)
+                appNav.goto(it, ObjectType.USER)
             }
         }
     }

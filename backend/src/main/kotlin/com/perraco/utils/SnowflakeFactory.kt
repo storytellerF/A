@@ -117,9 +117,9 @@ object SnowflakeFactory {
 
         // Construct the ID.
 
-        return (lastTimestampMs.toULong() shl (MACHINE_ID_BITS + SEQUENCE_BITS)) or
-            (machineId!!.toULong() shl SEQUENCE_BITS) or
-            sequence.toULong()
+        return (lastTimestampMs.toLong() shl (MACHINE_ID_BITS + SEQUENCE_BITS)) or
+            (machineId!!.toLong() shl SEQUENCE_BITS) or
+            sequence.toLong()
     }
 
     /**
@@ -130,7 +130,7 @@ object SnowflakeFactory {
      */
     fun parse(id: PrimaryKey): SnowflakeData {
         // Extract the machine ID segment.
-        val machineIdSegment = (id shr SEQUENCE_BITS) and MAX_MACHINE_ID.toULong()
+        val machineIdSegment = (id shr SEQUENCE_BITS) and MAX_MACHINE_ID.toLong()
 
         // Extract the timestamp segment.
         val timestampMs: Long = (id shr (MACHINE_ID_BITS + SEQUENCE_BITS)).toLong()

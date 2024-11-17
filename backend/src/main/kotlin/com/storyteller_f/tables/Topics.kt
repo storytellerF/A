@@ -2,6 +2,7 @@ package com.storyteller_f.tables
 
 import com.storyteller_f.BaseObj
 import com.storyteller_f.BaseTable
+import com.storyteller_f.customPrimaryKey
 import com.storyteller_f.objectType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -13,10 +14,10 @@ import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.selectAll
 
 object Topics : BaseTable() {
-    val author = ulong("author").index()
-    val parentId = ulong("parent_id")
+    val author = customPrimaryKey("author").index()
+    val parentId = customPrimaryKey("parent_id")
     val parentType = objectType("parent_type")
-    val rootId = ulong("root_id")
+    val rootId = customPrimaryKey("root_id")
     val rootType = objectType("root_type")
     val lastModifiedTime = datetime("last_modified_time").nullable()
 

@@ -25,7 +25,9 @@ fun test(block: suspend (HttpClient) -> Unit) {
     testApplication {
         addProvider()
         val path = Paths.get("../deploy/lucene_data/index")
+        path.deleteRecursively()
         val backend = buildBackendFromEnv(readEnv())
+        DatabaseFactory.clean(backend.config.databaseConnection)
         DatabaseFactory.init(backend.config.databaseConnection)
         environment {
             config = MapApplicationConfig(

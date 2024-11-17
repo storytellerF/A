@@ -150,14 +150,14 @@ class Add : Subcommand("add", "add entry") {
         val roomList = u.mapNotNull {
             it.room
         }.distinct().map {
-            Room.wrapRow(findRoomByAId(it)!!)
+            Room.wrapRow(Room.findRoomByAId(it)!!)
         }.groupBy {
             it.aid
         }
         val ids = insertTopicBaseLevel(u, userList, roomList)
         // 检查聊天室是属于社区的还是私有的
         val roomIsPrivate = roomList.mapValues { (_, value) ->
-            checkRoomIsPrivate(value.first().id)
+            checkRoomIsPrivate(value.first().id).getOrThrow()
         }
         val topicsPrivate = u.mapIndexedNotNull { i, addTopic ->
             if (roomIsPrivate[addTopic.room] == true) {
@@ -176,8 +176,8 @@ class Add : Subcommand("add", "add entry") {
         u: List<AddTopic>,
         userList: Map<String, List<User>>,
         roomList: Map<String, List<Room>>
-    ): ULongArray {
-        val ids = ULongArray(u.size) {
+    ): LongArray {
+        val ids = LongArray(u.size) {
             DEFAULT_PRIMARY_KEY
         }
         val topLevelTopic = u.mapIndexed { index, addTopic ->
@@ -220,7 +220,7 @@ class Add : Subcommand("add", "add entry") {
         u: List<AddTopic>,
         roomIsPrivate: Map<String, Boolean>,
         parentDir: File,
-        ids: ULongArray
+        ids: LongArray
     ) {
         val topicsPublic = u.mapIndexedNotNull { i, addTopic ->
             if (roomIsPrivate[addTopic.room] != true) {
@@ -241,7 +241,7 @@ class Add : Subcommand("add", "add entry") {
     private suspend fun insertEncryptedTopic(
         topicsPrivate: List<Pair<AddTopic, Int>>,
         parentDir: File,
-        ids: ULongArray,
+        ids: LongArray,
         u: List<AddTopic>
     ) {
         val rooms = u.mapNotNull {
@@ -299,7 +299,7 @@ class Add : Subcommand("add", "add entry") {
         }.groupBy {
             it.second
         }
-        val ids = ULongArray(u.size) {
+        val ids = LongArray(u.size) {
             DEFAULT_PRIMARY_KEY
         }
         // 保存top 之前的层级关系

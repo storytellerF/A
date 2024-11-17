@@ -1,11 +1,12 @@
 package com.storyteller_f.tables
 
+import com.storyteller_f.customPrimaryKey
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
 
 object EncryptedTopics : Table() {
-    val topicId = ulong("topic_id")
+    val topicId = customPrimaryKey("topic_id")
     val content = blob("content")
 
     override val primaryKey = PrimaryKey(topicId)
@@ -20,8 +21,8 @@ class EncryptedTopic(val topicId: PrimaryKey, val content: ByteArray) {
 }
 
 object EncryptedTopicKeys : Table() {
-    val topicId = ulong("topic_id")
-    val uid = ulong("uid")
+    val topicId = customPrimaryKey("topic_id")
+    val uid = customPrimaryKey("uid")
     val encryptedAes = blob("encrypted_aes")
 }
 

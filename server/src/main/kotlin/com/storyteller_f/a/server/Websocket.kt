@@ -13,10 +13,13 @@ import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.ktor.server.application.*
 import io.ktor.server.websocket.*
+import io.ktor.util.logging.error
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -35,17 +38,23 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend) {
             try {
                 if (frame is RoomFrame.Message) {
                     val newTopic = frame.newTopic
-                    val newTopicInfo = addTopicAtRoom(newTopic, uid, backend = backend)
-                    newTopicInfo.onSuccess {
-                        val newFrame: RoomFrame = RoomFrame.NewTopicInfo(it)
-                        sendSerialized(newFrame)
+                    addTopicAtRoom(newTopic, uid, backend = backend).onSuccess {
+                        if (it == null) {
+                            val data: RoomFrame = RoomFrame.Error("not found")
+                            sendSerialized(data)
+                        } else {
+                            val newFrame: RoomFrame = RoomFrame.NewTopicInfo(it)
+                            sendSerialized(newFrame)
+                        }
                     }.onFailure {
                         val message = it.message ?: "unknown error"
+                        call.application.log.error(it)
                         val data: RoomFrame = RoomFrame.Error(message)
                         sendSerialized(data)
                     }
                 }
             } catch (e: Exception) {
+                call.application.log.error(e)
                 val newFrame: RoomFrame = RoomFrame.Error(e.message.toString())
                 sendSerialized(newFrame)
             }
@@ -72,18 +81,15 @@ private suspend fun addTopicAtRoom(
     newTopic: NewTopic,
     uid: PrimaryKey,
     backend: Backend
-): Result<TopicInfo> {
+): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            val roomInfo = DatabaseFactory.queryNotNull({
+            DatabaseFactory.queryNotNull({
                 rootId to rootType
             }) {
                 Topic.findById(newTopic.parentId)
-            }
-            if (roomInfo != null && roomInfo.second == ObjectType.ROOM) {
-                addTopicIntoRoom(roomInfo, uid, newTopic, backend = backend)
-            } else {
-                Result.failure(ForbiddenException())
+            }.mapResultNotNull { (id, type) ->
+                addTopicAtRoom(newTopic.copy(parentId = id, parentType = type), uid, backend)
             }
         }
 
@@ -107,47 +113,48 @@ private suspend fun addTopicIntoRoom(
     uid: PrimaryKey,
     newTopic: NewTopic,
     backend: Backend
-): Result<TopicInfo> {
+): Result<TopicInfo?> {
     val roomId = roomInfo.first
-    return if (isRoomJoined(roomId, uid)) {
-        val content = newTopic.content
-        val newId = SnowflakeFactory.nextId()
-        val topic = Topic(
-            uid,
-            roomId,
-            ObjectType.ROOM,
-            newTopic.parentId,
-            newTopic.parentType,
-            now(),
-            newId,
-            now()
-        )
+    return isRoomJoined(roomId, uid).mapResult { bool ->
+        if (bool) {
+            val content = newTopic.content
+            val newId = SnowflakeFactory.nextId()
+            val topic = Topic(
+                uid,
+                roomId,
+                ObjectType.ROOM,
+                newTopic.parentId,
+                newTopic.parentType,
+                now(),
+                newId,
+                now()
+            )
 
-        when {
-            DatabaseFactory.dbQuery {
-                !checkRoomIsPrivate(roomId)
-            } -> {
-                if (content is TopicContent.Plain) {
-                    Result.success(savePlainTopicContent(topic, content, backend = backend))
+            checkRoomIsPrivate(roomId).mapResult { isPrivate ->
+                if (isPrivate) {
+                    when {
+                        content !is TopicContent.Encrypted -> Result.failure(
+                            ForbiddenException("Private room only accept encrypted content.")
+                        )
+
+                        isKeyVerified(roomId, content.encryptedKey).getOrNull() == true -> saveEncryptedTopicContent(
+                            topic,
+                            content.encryptedKey,
+                            content.encrypted
+                        )
+
+                        else -> Result.failure(ForbiddenException("Private room only accept encrypted content."))
+                    }
                 } else {
-                    Result.failure(ForbiddenException("Public room only accept unencrypted content."))
+                    when (content) {
+                        is TopicContent.Plain -> savePlainTopicContent(topic, content, backend = backend)
+                        else -> Result.failure(ForbiddenException("Public room only accept unencrypted content."))
+                    }
                 }
             }
-
-            content is TopicContent.Encrypted && isKeyVerified(roomId, content.encryptedKey) -> {
-                Result.success(
-                    saveEncryptedTopicContent(
-                        topic,
-                        content.encryptedKey,
-                        content.encrypted
-                    )
-                )
-            }
-
-            else -> Result.failure(ForbiddenException("Private room only accept encrypted content."))
+        } else {
+            Result.failure(ForbiddenException("Can't publish content before join room."))
         }
-    } else {
-        Result.failure(ForbiddenException("Can't publish content before join room."))
     }
 }
 
@@ -155,7 +162,7 @@ private suspend fun savePlainTopicContent(
     topic: Topic,
     content: TopicContent.Plain,
     backend: Backend
-): TopicInfo {
+): Result<TopicInfo> {
     return DatabaseFactory.dbQuery {
         val newTopicId = Topic.new(topic)
         backend.topicDocumentService.saveDocument(
@@ -187,16 +194,19 @@ suspend fun saveEncryptedTopicContent(
         this[EncryptedTopicKeys.encryptedAes] =
             ExposedBlob(encryptedAes[it]!!.hexToByteArray())
     }
-    topic.toTopicInfo()
+    topic.toTopicInfo().copy(content = TopicContent.Encrypted(encryptedContent, encryptedAes))
 }
 
-private fun isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Boolean {
-    val toSet = RoomJoins.selectAll().where {
-        RoomJoins.roomId eq roomId
-    }.map {
-        RoomJoin.wrapRow(it)
-    }.map {
-        it.uid
-    }.toSet()
-    return toSet.minus(encryptedAes.keys).isEmpty()
+private suspend fun isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Result<Boolean> {
+    return DatabaseFactory.mapQuery({
+        RoomJoin.wrapRow(this)
+    }) {
+        RoomJoins.selectAll().where {
+            RoomJoins.roomId eq roomId
+        }
+    }.map { value ->
+        value.map {
+            it.uid
+        }.toSet().minus(encryptedAes.keys).isEmpty()
+    }
 }

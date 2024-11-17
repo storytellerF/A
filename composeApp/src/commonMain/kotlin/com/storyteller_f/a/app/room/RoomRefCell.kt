@@ -53,6 +53,6 @@ private fun RoomRefCellInternal(viewModel: RoomViewModel, onClick: (PrimaryKey) 
             }
             .padding(10.dp)
     ) {
-        RoomCell(it, true, onClick)
+        RoomCell(it, true)
     }
 }

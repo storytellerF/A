@@ -1,6 +1,8 @@
 package com.storyteller_f.a.app
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -16,6 +18,7 @@ import com.storyteller_f.a.app.compontents.EventState
 import com.storyteller_f.a.app.room.RoomPage
 import com.storyteller_f.a.app.topic.TopicComposePage
 import com.storyteller_f.a.app.topic.TopicPage
+import com.storyteller_f.a.app.topic.processEncryptedTopic
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.client_lib.ClientWebSocket
 import com.storyteller_f.a.client_lib.LoginViewModel
@@ -26,6 +29,7 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.ObjectType.*
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKey
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
@@ -47,6 +51,10 @@ object StaticObj {
 
 val globalDialogState = EventState()
 
+val LocalAppNav = compositionLocalOf {
+    AppNav.EMPTY
+}
+
 @OptIn(ExperimentalCoilApi::class)
 @Composable
 fun App() {
@@ -55,57 +63,46 @@ fun App() {
         setSingletonImageLoaderFactory {
             getAsyncImageLoader(it)
         }
-        EventDialog(globalDialogState)
-        PreComposeApp {
-            val navigator = rememberNavigator()
-            val appNav = remember {
-                newAppNav(navigator)
-            }
-            val onClick = { id: PrimaryKey, type: ObjectType ->
-                when (type) {
-                    COMMUNITY -> appNav.gotoCommunity(id)
-                    ROOM -> appNav.gotoRoom(id)
-                    TOPIC -> appNav.gotoTopic(id)
-                    USER -> {
-                    }
+        val navigator = rememberNavigator()
+        val appNav = remember {
+            newAppNav(navigator)
+        }
+        CompositionLocalProvider(LocalAppNav provides appNav) {
+            EventDialog(globalDialogState)
+            PreComposeApp {
+                NavHost(navigator, initialRoute = "/home") {
+                    buildRootNav(navigator)
                 }
-            }
-            NavHost(navigator, initialRoute = "/home") {
-                buildRootNav(appNav, onClick, navigator)
             }
         }
     }
 }
 
 private fun RouteBuilder.buildRootNav(
-    appNav: AppNav,
-    onClick: (PrimaryKey, ObjectType) -> Unit,
     navigator: Navigator
 ) {
     scene("/home") {
-        HomePage(appNav, onClick)
+        HomePage()
     }
     scene("/login") {
-        LoginPage(appNav::gotoHome)
+        LoginPage()
     }
     scene("/community/{communityId}") {
         val communityId = it.path2<PrimaryKey>("communityId", null)
         if (communityId != null) {
-            CommunityPage(communityId, appNav::gotoLogin, {
-                appNav.gotoTopicCompose(COMMUNITY, communityId)
-            }, onClick)
+            CommunityPage(communityId)
         }
     }
     scene("/room/{roomId}") {
         val roomId = it.path2<PrimaryKey>("roomId", null)
         if (roomId != null) {
-            RoomPage(roomId, appNav::gotoLogin, onClick)
+            RoomPage(roomId)
         }
     }
     scene("/topic/{topicId}") {
         val topicId = it.path2<PrimaryKey>("topicId", null)
         if (topicId != null) {
-            TopicPage(topicId, appNav::gotoLogin, onClick)
+            TopicPage(topicId)
         }
     }
     scene("/topic-compose/{objectType}/{objectId}") {
@@ -166,15 +163,15 @@ val clientWs by lazy {
         }
     }) {
         if (it is RoomFrame.NewTopicInfo) {
-            val topicInfo = it.topicInfo
-            getOrCreateCollection("topics").save(
+            val info = processEncryptedTopic(listOf(it.topicInfo)).first()
+            getOrCreateCollection("topics${info.parentId}").save(
                 MutableDocument(
-                    topicInfo.id.toString(),
-                    Json.encodeToString(topicInfo)
+                    info.id.toString(),
+                    Json.encodeToString(info)
                 )
             )
             Napier.v(tag = "pagination") {
-                "save document $topicInfo"
+                "save document $info"
             }
         }
     }
@@ -203,9 +200,50 @@ interface AppNav {
     fun gotoHome()
 
     fun gotoTopicCompose(objectType: ObjectType, objectId: PrimaryKey)
+
+    fun goto(id: PrimaryKey, type: ObjectType) {
+        when (type) {
+            COMMUNITY -> gotoCommunity(id)
+            ROOM -> gotoRoom(id)
+            TOPIC -> gotoTopic(id)
+            USER -> {
+            }
+        }
+    }
+
+    companion object {
+        val EMPTY = object : AppNav {
+            override fun gotoLogin() {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoRoom(roomId: PrimaryKey) {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoCommunity(communityId: PrimaryKey) {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoTopic(topicId: PrimaryKey) {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoHome() {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoTopicCompose(
+                objectType: ObjectType,
+                objectId: PrimaryKey
+            ) {
+                TODO("Not yet implemented")
+            }
+        }
+    }
 }
 
 inline fun <reified T> BackStackEntry.path2(path: String, default: T? = null): T? {
     val value = pathMap[path] ?: return default
-    return if (T::class == PrimaryKey::class) value.toULong() as T else convertValue(value)
+    return if (T::class == PrimaryKey::class) value.toPrimaryKey() as T else convertValue(value)
 }

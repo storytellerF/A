@@ -24,6 +24,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.CustomBottomNav
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.NavRoute
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
@@ -31,14 +32,15 @@ import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.room.RoomList
+import com.storyteller_f.a.app.room.TopicsViewModel
 import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.world.TopicList
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import io.ktor.client.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -78,23 +80,12 @@ class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Commu
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class CommunityTopicsViewModel(private val communityId: PrimaryKey) : PagingViewModel<PrimaryKey, TopicInfo>({
-    SimplePagingSource {
-        serviceCatching {
-            client.getCommunityTopics(communityId, it, 10)
-        }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
-        }
-    }
-})
-
-@OptIn(ExperimentalPagingApi::class)
 class CommunityRoomsViewModel(private val communityId: PrimaryKey) : PagingViewModel<PrimaryKey, RoomInfo>({
     SimplePagingSource {
         serviceCatching {
             client.getCommunityRooms(communityId, it, 10)
         }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
+            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
         }
     }
 })
@@ -102,11 +93,9 @@ class CommunityRoomsViewModel(private val communityId: PrimaryKey) : PagingViewM
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CommunityPage(
-    communityId: PrimaryKey,
-    onClickAddTopic: () -> Unit,
-    onLogin: () -> Unit,
-    onClick: (PrimaryKey, ObjectType) -> Unit
+    communityId: PrimaryKey
 ) {
+    val appNav = LocalAppNav.current
     val model = viewModel(CommunityViewModel::class, keys = listOf("community", communityId)) {
         CommunityViewModel(communityId)
     }
@@ -119,7 +108,7 @@ fun CommunityPage(
     Scaffold(floatingActionButton = {
         FloatingActionButton(onClick = {
             if (community?.isJoined == true) {
-                onClickAddTopic()
+                appNav.gotoTopicCompose(ObjectType.COMMUNITY, communityId)
             } else {
                 globalDialogState.showMessage("Not joined!")
             }
@@ -134,15 +123,15 @@ fun CommunityPage(
                 })
             }
         }
-    }) { paddingValues ->
+    }) {
         Column(
-            modifier = Modifier.padding(paddingValues).consumeWindowInsets(WindowInsets.statusBars),
+            modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
         ) {
-            CustomSearchBar(onLogin) {
+            CustomSearchBar {
                 CommunityIcon(community, 40.dp)
             }
 
-            CommunityPageInternal(pagerState, communityId, onClick)
+            CommunityPageInternal(pagerState, communityId)
         }
     }
 }
@@ -151,20 +140,19 @@ fun CommunityPage(
 @OptIn(ExperimentalFoundationApi::class)
 private fun CommunityPageInternal(
     pagerState: PagerState,
-    communityId: PrimaryKey,
-    onClick: (PrimaryKey, ObjectType) -> Unit
+    communityId: PrimaryKey
 ) {
     HorizontalPager(pagerState) {
         when (it) {
             0 -> {
                 val viewModel = viewModel(
-                    CommunityTopicsViewModel::class,
+                    TopicsViewModel::class,
                     keys = listOf("community-topics", communityId)
                 ) {
-                    CommunityTopicsViewModel(communityId)
+                    TopicsViewModel(communityId, ObjectType.COMMUNITY)
                 }
                 val items = viewModel.flow.collectAsLazyPagingItems()
-                TopicList(items, onClick)
+                TopicList(items)
             }
 
             else -> {
@@ -173,9 +161,7 @@ private fun CommunityPageInternal(
                         CommunityRoomsViewModel(communityId)
                     }
                 val items = viewModel.flow.collectAsLazyPagingItems()
-                RoomList(items) { roomId ->
-                    onClick(roomId, ObjectType.ROOM)
-                }
+                RoomList(items)
             }
         }
     }

@@ -15,10 +15,13 @@ import com.storyteller_f.shared.obj.TopicSnapshot
 import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.Tuple5
+import com.storyteller_f.shared.utils.mapNotNull
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import com.storyteller_f.tables.checkRoomIsPrivate
+import com.storyteller_f.types.PaginationResult
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.and
@@ -30,7 +33,7 @@ suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend
         return Result.failure(ForbiddenException("Community only accept unencrypted content."))
     }
     val content = (newTopic.content as TopicContent.Plain).plain
-    return checkRootWritePermission(newTopic.parentType, newTopic.parentId, uid)?.let { (t, p, hasWrite) ->
+    return checkRootWritePermission(newTopic.parentType, newTopic.parentId, uid).mapResultNotNull { (t, p, hasWrite) ->
         if (hasWrite) {
             val newId = SnowflakeFactory.nextId()
             val topic = Topic(
@@ -43,16 +46,15 @@ suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend
                 id = newId,
                 createdTime = now(),
             )
-            val info = DatabaseFactory.dbQuery {
+            DatabaseFactory.dbQuery {
                 val newTopicId = Topic.new(topic)
                 backend.topicDocumentService.saveDocument(listOf(TopicDocument(newTopicId, content)))
-                topic.toTopicInfo()
+                topic.toTopicInfo().copy(content = TopicContent.Plain(content))
             }
-            return Result.success(info)
         } else {
             Result.failure(ForbiddenException("Permission denied."))
         }
-    } ?: Result.success(null)
+    }
 }
 
 fun Topic.toTopicInfo(): TopicInfo {
@@ -71,22 +73,20 @@ fun Topic.toTopicInfo(): TopicInfo {
 }
 
 suspend fun getTopicSnapshot(id: PrimaryKey, topicId: PrimaryKey, backend: Backend): Result<TopicSnapshotPack?> {
-    return runCatching {
-        DatabaseFactory.queryNotNull(User::toUserInfo) {
-            User.findById(id)
-        }?.let { creatorInfo ->
-            DatabaseFactory.queryNotNull({
-                toTopicInfo()
-            }) {
-                Topic.findById(topicId)
-            }?.let {
-                checkRootReadPermission(ObjectType.TOPIC, topicId, id)?.let { (_, _, hasRead) ->
-                    if (hasRead) {
-                        getTopicSnapshot(topicId, it, creatorInfo, backend)
-                    } else {
-                        null
-                    }
+    return DatabaseFactory.queryNotNull(User::toUserInfo) {
+        User.findById(id)
+    }.mapResultNotNull { creatorInfo ->
+        checkRootReadPermission(ObjectType.TOPIC, topicId, id).mapResultNotNull { (_, _, hasRead) ->
+            if (hasRead) {
+                DatabaseFactory.queryNotNull({
+                    toTopicInfo()
+                }) {
+                    Topic.findById(topicId)
+                }.mapResultNotNull { value ->
+                    getTopicSnapshot(topicId, value, creatorInfo, backend)
                 }
+            } else {
+                Result.failure(ForbiddenException("Permission denied."))
             }
         }
     }
@@ -97,25 +97,28 @@ private suspend fun getTopicSnapshot(
     it: TopicInfo,
     creatorInfo: UserInfo,
     backend: Backend
-): TopicSnapshotPack? {
-    return backend.topicDocumentService.getDocument(listOf(topicId)).firstOrNull()?.let { content ->
-        DatabaseFactory.queryNotNull(User::toUserInfo) {
-            User.findById(it.author)
-        }?.let { authorInfo ->
-            val snapshot = TopicSnapshot(
-                authorAddress = if (authorInfo.aid == null) authorInfo.address else null,
-                authorAid = authorInfo.aid,
-                content = content.content,
-                creatorAddress = if (creatorInfo.aid == null) creatorInfo.address else null,
-                creatorAid = creatorInfo.aid,
-                topicCreatedTime = it.createdTime,
-                topicModifiedTime = it.lastModifiedTime,
-                capturedTime = now()
-            )
-            val hash = calcHash(snapshot, backend)
-            TopicSnapshotPack(snapshot, hash)
+): Result<TopicSnapshotPack?> {
+    return backend.topicDocumentService.getDocument(listOf(topicId)).map { value -> value.firstOrNull() }
+        .mapResultNotNull { documents ->
+            DatabaseFactory.queryNotNull(User::toUserInfo) {
+                User.findById(it.author)
+            }.map { value ->
+                value?.let { authorInfo ->
+                    val snapshot = TopicSnapshot(
+                        authorAddress = if (authorInfo.aid == null) authorInfo.address else null,
+                        authorAid = authorInfo.aid,
+                        content = documents.content,
+                        creatorAddress = if (creatorInfo.aid == null) creatorInfo.address else null,
+                        creatorAid = creatorInfo.aid,
+                        topicCreatedTime = it.createdTime,
+                        topicModifiedTime = it.lastModifiedTime,
+                        capturedTime = now()
+                    )
+                    val hash = calcHash(snapshot, backend)
+                    TopicSnapshotPack(snapshot, hash)
+                }
+            }
         }
-    }
 }
 
 suspend fun calcHash(snapshot: TopicSnapshot, backend: Backend): String {
@@ -151,24 +154,33 @@ suspend fun getTopic(
     uid: PrimaryKey?,
     backend: Backend
 ): Result<TopicInfo?> {
-    return checkRootReadPermission(ObjectType.TOPIC, topicId, uid)?.let { (_, _, hasRead, hasJoined, isPrivate) ->
+    return checkRootReadPermission(
+        ObjectType.TOPIC,
+        topicId,
+        uid
+    ).mapResultNotNull { (_, _, hasRead, hasJoined, isPrivate) ->
         if (hasRead) {
-            Result.success(DatabaseFactory.queryNotNull(Topic::toTopicInfo) {
+            DatabaseFactory.queryNotNull(Topic::toTopicInfo) {
                 Topic.findById(topicId)
-            }?.let { info ->
+            }.mapResultNotNull { info ->
                 if (isPrivate) {
-                    DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }.firstOrNull()
-                        ?.let { id -> info.copy(content = id) }
+                    DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }.map { value ->
+                        value.firstOrNull()?.let { id -> info.copy(content = id) }
+                    }
                 } else {
-                    backend.topicDocumentService.getDocument(listOf(topicId)).firstOrNull()?.content?.let {
-                        info.copy(content = TopicContent.Plain(it))
+                    backend.topicDocumentService.getDocument(listOf(topicId)).map { value ->
+                        value.firstOrNull()?.content?.let {
+                            info.copy(content = TopicContent.Plain(it))
+                        }
                     }
                 }
-            }?.copy(hasJoined = hasJoined))
+            }.mapNotNull { value ->
+                value.copy(hasJoined = hasJoined)
+            }
         } else {
             Result.failure(ForbiddenException())
         }
-    } ?: Result.success(null)
+    }
 }
 
 suspend fun RoutingContext.verifySnapshot(backend: Backend) = runCatching {
@@ -185,50 +197,44 @@ suspend fun getTopics(
     preTopicId: PrimaryKey?,
     nextTopicId: PrimaryKey?,
     size: Int
-): Result<Pair<List<TopicInfo>, Long>> {
-    return runCatching {
-        val data = DatabaseFactory.mapQuery(Topic::toTopicInfo, Topic::wrapRow) {
-            Topics
-                .select(Topics.fields)
-                .where {
-                    Topics.parentId eq parentId and (Topics.parentType eq parentType)
-                }.bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
+): Result<PaginationResult<TopicInfo>?> {
+    val baseQuery = Topics
+        .select(Topics.fields)
+        .where {
+            Topics.parentId eq parentId and (Topics.parentType eq parentType)
         }
-        val count = DatabaseFactory.count {
-            Topics
-                .select(Topics.fields)
-                .where {
-                    Topics.parentId eq parentId and (Topics.parentType eq parentType)
-                }
-        }
-        val topicContents = checkRootReadPermission(parentType, parentId, uid)?.let { (_, _, hasRead, _, isPrivate) ->
-            when {
-                !isPrivate -> {
-                    backend.topicDocumentService.getDocument(data.map {
+    return DatabaseFactory.mapQuery(Topic::toTopicInfo, Topic::wrapRow) {
+        baseQuery.bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
+    }.mapResult { data ->
+        DatabaseFactory.count {
+            baseQuery
+        }.mapResult { count ->
+            checkRootReadPermission(parentType, parentId, uid).mapResultNotNull { (_, _, hasRead, _, isPrivate) ->
+                when {
+                    !isPrivate -> backend.topicDocumentService.getDocument(data.map {
                         it.id
-                    }).mapNotNull {
-                        it?.let { it1 -> TopicContent.Plain(it1.content) }
+                    }).map {
+                        it.mapNotNull {
+                            it?.let { it1 -> TopicContent.Plain(it1.content) }
+                        }
                     }
-                }
 
-                hasRead -> {
-                    DatabaseFactory.dbQuery {
+                    hasRead -> DatabaseFactory.dbQuery {
                         getEncryptedTopicContent(data.map {
                             it.id
                         }, uid)
                     }
-                }
 
-                else -> {
-                    return Result.failure(ForbiddenException())
+                    else -> Result.failure(ForbiddenException())
                 }
+            }.map { topicContents ->
+                PaginationResult(data.mapIndexed { index, l ->
+                    topicContents?.get(index)?.let {
+                        l.copy(content = it)
+                    } ?: l
+                }, count)
             }
         }
-        data.mapIndexed { index, l ->
-            topicContents?.get(index)?.let {
-                l.copy(content = it)
-            } ?: l
-        } to count
     }
 }
 
@@ -268,67 +274,42 @@ fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey?): List<
     }
 }
 
+data class RootReadPermission(
+    val type: ObjectType,
+    val id: PrimaryKey,
+    val hasRead: Boolean,
+    val hasJoined: Boolean,
+    val isPrivate: Boolean
+)
+
 suspend fun checkRootReadPermission(
     parentType: ObjectType,
     parentId: PrimaryKey,
     uid: PrimaryKey?,
-): Tuple5<ObjectType, PrimaryKey, Boolean, Boolean, Boolean>? {
+): Result<RootReadPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
             DatabaseFactory.queryNotNull({
                 rootId to rootType
             }) {
                 Topic.findById(parentId)
-            }?.let { (rootId, rootType) ->
-                if (rootType != ObjectType.ROOM) {
-                    Tuple5(rootType, rootId, true, uid?.let {
-                        DatabaseFactory.dbQuery {
-                            isCommunityJoined(rootId, uid)
-                        }
-                    } == true, false)
-                } else {
-                    val hasJoined = uid?.let {
-                        DatabaseFactory.dbQuery { isRoomJoined(rootId, uid) }
-                    } == true
-                    val isPrivate = DatabaseFactory.dbQuery { checkRoomIsPrivate(rootId) }
-                    if (isPrivate) {
-                        Tuple5(
-                            rootType,
-                            rootId,
-                            hasJoined,
-                            hasJoined,
-                            true
-                        )
-                    } else {
-                        Tuple5(rootType, rootId, true, hasJoined, false)
-                    }
-                }
+            }.mapResultNotNull { (rootId, rootType) ->
+                checkRootReadPermission(rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            val hasJoined = uid?.let {
-                DatabaseFactory.dbQuery {
-                    isRoomJoined(parentId, it)
+            isRoomJoined(parentId, uid).mapResult { hasJoined ->
+                checkRoomIsPrivate(parentId).map { isPrivate ->
+                    RootReadPermission(parentType, parentId, hasJoined, hasJoined, isPrivate)
                 }
-            } == true
-            val isPrivate = DatabaseFactory.dbQuery {
-                checkRoomIsPrivate(parentId)
-            }
-            if (isPrivate) {
-                Tuple5(parentType, parentId, hasJoined, hasJoined, true)
-            } else {
-                Tuple5(parentType, parentId, true, hasJoined, false)
             }
         }
 
         ObjectType.COMMUNITY -> {
-            val hasJoined = uid?.let {
-                DatabaseFactory.dbQuery {
-                    isCommunityJoined(parentId, it)
-                }
-            } == true
-            Tuple5(parentType, parentId, true, hasJoined, false)
+            isCommunityJoined(parentId, uid).map { hasJoined ->
+                RootReadPermission(parentType, parentId, true, hasJoined, false)
+            }
         }
 
         ObjectType.USER -> TODO()
@@ -339,38 +320,59 @@ suspend fun checkRootWritePermission(
     parentType: ObjectType,
     parentId: PrimaryKey,
     uid: PrimaryKey,
-): Triple<ObjectType, PrimaryKey, Boolean>? {
+): Result<Triple<ObjectType, PrimaryKey, Boolean>?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
             DatabaseFactory.queryNotNull({
                 rootId to rootType
             }) {
                 Topic.findById(parentId)
-            }?.let { (rootId, rootType) ->
-                if (rootType == ObjectType.ROOM) {
-                    Triple(rootType, rootId, DatabaseFactory.dbQuery {
-                        isRoomJoined(rootId, uid)
-                    })
-                } else {
-                    Triple(rootType, rootId, DatabaseFactory.dbQuery {
-                        isCommunityJoined(rootId, uid)
-                    })
-                }
+            }.mapResultNotNull { (rootId, rootType) ->
+                checkRootWritePermission(rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            Triple(parentType, parentId, DatabaseFactory.dbQuery {
-                isRoomJoined(parentId, uid)
-            })
+            isRoomJoined(parentId, uid).map { hasJoined ->
+                Triple(parentType, parentId, hasJoined)
+            }
         }
 
         ObjectType.COMMUNITY -> {
-            Triple(parentType, parentId, DatabaseFactory.dbQuery {
-                isCommunityJoined(parentId, uid)
-            })
+            isCommunityJoined(parentId, uid).map { hasJoined ->
+                Triple(parentType, parentId, hasJoined)
+            }
         }
 
         ObjectType.USER -> TODO()
+    }
+}
+
+suspend fun searchTopics(
+    nextTopicId: PrimaryKey?,
+    size: Int,
+    word: List<String>,
+    backend: Backend
+): Result<PaginationResult<TopicInfo>?> {
+    return backend.topicDocumentService.searchDocument(word, size, nextTopicId).mapResult { documents ->
+        val map = documents.list.groupBy {
+            it.id
+        }
+        val ids = documents.list.map {
+            it.id
+        }
+        DatabaseFactory.mapQuery(Topic::toTopicInfo, Topic::wrapRow) {
+            Topics.select(Topics.fields).where {
+                Topics.id inList ids
+            }
+        }.map { infos ->
+            infos.mapNotNull { t ->
+                map[t.id]?.let {
+                    t.copy(content = TopicContent.Plain(it.first().content))
+                }
+            }
+        }.map { value ->
+            PaginationResult(value, documents.total)
+        }
     }
 }

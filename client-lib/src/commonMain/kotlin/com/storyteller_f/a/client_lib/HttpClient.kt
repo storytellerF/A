@@ -38,7 +38,11 @@ fun HttpClientConfig<*>.defaultClientConfigure() {
     install(HttpCookies)
     install(HttpRequestRetry) {
         retryIf { request, response ->
-            response.status == HttpStatusCode.Unauthorized && request.headers["cookie"].isNullOrEmpty()
+            response.status == HttpStatusCode.Unauthorized && request.headers["cookie"].isNullOrEmpty() ||
+                response.status == HttpStatusCode.TooManyRequests
+        }
+        delayMillis {
+            0
         }
     }
     install(WebSockets) {

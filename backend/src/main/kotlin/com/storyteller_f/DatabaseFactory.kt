@@ -3,6 +3,7 @@ package com.storyteller_f
 import com.storyteller_f.tables.*
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 
@@ -55,27 +56,40 @@ object DatabaseFactory {
         }
     }
 
-    suspend fun <T> dbQuery(block: suspend () -> T): T =
-        newSuspendedTransaction(Dispatchers.IO) { block() }
+    suspend fun <T> dbQuery(block: suspend () -> T): Result<T> =
+        runCatching {
+            newSuspendedTransaction(Dispatchers.IO) { block() }
+        }
 
     /**
      * 带有transform
      */
-    suspend fun <T, R> query(transform: T.() -> R, block: suspend () -> T): R =
+    suspend fun <T, R> query(transform: T.() -> R, block: suspend () -> T): Result<R> =
         dbQuery { transform(block()) }
 
     /**
      * 处理可能查询不到数据的问题
      */
-    suspend fun <T, R : Any?> queryNotNull(transform: T.() -> R?, block: suspend () -> T?): R? =
+    suspend fun <T, R : Any?> queryNotNull(transform: T.() -> R?, block: suspend () -> T?): Result<R?> =
         query({
             this?.let { transform(it) }
         }) { block() }
 
     /**
+     * 处理可能查询不到数据的问题
+     */
+    suspend fun <T, R : Any?, R1> queryNotNull(
+        transform: R1.() -> R?,
+        resultRowTransform: (T) -> R1,
+        block: suspend () -> T?
+    ): Result<R?> = queryNotNull({
+        resultRowTransform(this).transform()
+    }) { block() }
+
+    /**
      * 带有transform
      */
-    suspend fun <T, R> mapQuery(transform: T.() -> R, block: suspend () -> SizedIterable<T>): List<R> =
+    suspend fun <T, R> mapQuery(transform: T.() -> R, block: suspend () -> SizedIterable<T>): Result<List<R>> =
         dbQuery { block().map(transform) }
 
     /**
@@ -83,36 +97,40 @@ object DatabaseFactory {
      */
     suspend fun <T, R, R1> mapQuery(
         transform: R1.() -> R,
-        typeTransform: (T) -> R1,
+        resultRowTransform: (T) -> R1,
         block: suspend () -> SizedIterable<T>
-    ): List<R> =
+    ): Result<List<R>> =
         dbQuery {
-            block().map(typeTransform).map(transform)
+            block().map(resultRowTransform).map(transform)
         }
 
     /**
      * 查询第一个符合条件的数据
      *
      * @param transform 转换数据
-     * @param typeTransform 主要用于将ResultRow 转换成普通数据
+     * @param resultRowTransform 主要用于将ResultRow 转换成普通数据
      */
     suspend fun <T, R, R1> first(
         transform: R1.() -> T,
-        typeTransform: (R) -> R1,
+        resultRowTransform: (R) -> R1,
         block: suspend () -> SizedIterable<R>
-    ): T? = dbQuery {
-        block().limit(1).firstOrNull()?.let(typeTransform)?.let { transform(it) }
+    ): Result<T?> = dbQuery {
+        block().limit(1).firstOrNull()?.let(resultRowTransform)?.let { transform(it) }
     }
 
     /**
      * 检查数据是不是空
      */
-    suspend fun <T> empty(block: suspend () -> SizedIterable<T>): Boolean = dbQuery {
+    suspend fun <T> isEmpty(block: suspend () -> SizedIterable<T>): Result<Boolean> = dbQuery {
         block().limit(1).empty()
     }
 
-    suspend fun <T> count(block: suspend () -> SizedIterable<T>): Long = dbQuery {
+    suspend fun <T> count(block: suspend () -> SizedIterable<T>): Result<Long> = dbQuery {
         block().count()
+    }
+
+    suspend fun insert(block: suspend () -> InsertStatement<Number>): Result<Int> = dbQuery {
+        block().insertedCount
     }
 }
 

@@ -24,8 +24,7 @@ private fun PreviewCommunity(@PreviewParameter(CommunityProvider::class) communi
 @Composable
 private fun PreviewCommunityPage() {
     Column {
-        CustomSearchBar({
-        }) {
+        CustomSearchBar {
         }
         CustomBottomNav(null, navRoutes = communityNavRoutes())
     }

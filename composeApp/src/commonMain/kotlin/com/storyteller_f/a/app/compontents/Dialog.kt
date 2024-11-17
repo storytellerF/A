@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.storyteller_f.a.app.BuildKonfig
 
 sealed interface DialogState {
     data object Loading : DialogState
@@ -102,9 +103,11 @@ fun EventAlertDialog(message: DialogState, updateNewState: (DialogState) -> Unit
             }, title = {
                 Text(throwable.message ?: throwable::class.simpleName ?: throwable.toString())
             }, text = {
-                val text = throwable.stackTraceToString()
-                MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
-                    Text(text, modifier = Modifier.verticalScroll(scrollState), maxLines = (total).coerceIn(2, 20))
+                if (!BuildKonfig.IS_PROD) {
+                    val text = throwable.stackTraceToString()
+                    MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
+                        Text(text, modifier = Modifier.verticalScroll(scrollState), maxLines = (total).coerceIn(2, 20))
+                    }
                 }
             })
         }
@@ -134,7 +137,7 @@ fun ButtonNav(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.clickable {
+        modifier = Modifier.fillMaxWidth().clickable {
             onClick()
         }.padding(8.dp)
     ) {

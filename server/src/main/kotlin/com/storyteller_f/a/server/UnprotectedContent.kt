@@ -13,26 +13,27 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.types.PaginationResult
 import io.ktor.server.routing.*
 
 fun Route.unProtectedContent(backend: Backend) {
+    bindWorldRoute(backend)
+    bindRoomRoute(backend)
+    bindCommunityRoute(backend)
+    bindTopicRoute(backend)
+    bindUserRoute(backend)
+}
+
+private fun Route.bindWorldRoute(backend: Backend) {
     get("/world") {
         omitPrincipal {
-            pagination<TopicInfo, ULong>({
+            pagination<TopicInfo, PrimaryKey>(PrimaryKey::class, {
                 it.id.toString()
             }) { prePageToken, nextPageToken, size ->
                 searchWorld(backend, prePageToken, nextPageToken, size)
             }
         }
     }
-
-    bindRoomRoute(backend)
-
-    bindCommunityRoute(backend)
-
-    bindTopicRoute(backend)
-
-    bindUserRoute(backend)
 }
 
 private fun Route.bindUserRoute(backend: Backend) {
@@ -58,10 +59,10 @@ private fun Route.bindTopicRoute(backend: Backend) {
     route("/topic") {
         get("/{id}/topics") {
             usePrincipalOrNull { uid ->
-                pagination<TopicInfo, PrimaryKey>({
+                pagination<TopicInfo, PrimaryKey>(PrimaryKey::class, {
                     it.id.toString()
                 }) { p, n, s ->
-                    checkParameter<PrimaryKey, Pair<List<TopicInfo>, Long>>("id") {
+                    checkParameter<PrimaryKey, PaginationResult<TopicInfo>>("id") {
                         getTopics(it, ObjectType.TOPIC, uid, backend, p, n, s)
                     }
                 }
@@ -81,6 +82,18 @@ private fun Route.bindTopicRoute(backend: Backend) {
                 verifySnapshot(backend)
             }
         }
+
+        get("/search") {
+            usePrincipalOrNull {
+                pagination<TopicInfo, PrimaryKey>(PrimaryKey::class, {
+                    it.id.toString()
+                }) { p, n, s ->
+                    checkParameter<List<String>, PaginationResult<TopicInfo>>("word") {
+                        searchTopics(n, s, it, backend)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -88,10 +101,10 @@ private fun Route.bindCommunityRoute(backend: Backend) {
     route("/community") {
         get("/{id}/topics") {
             omitPrincipal {
-                pagination<TopicInfo, PrimaryKey>({
+                pagination<TopicInfo, PrimaryKey>(PrimaryKey::class, {
                     it.id.toString()
                 }) { p, n, size ->
-                    checkParameter<PrimaryKey, Pair<List<TopicInfo>, Long>>("id") {
+                    checkParameter<PrimaryKey, PaginationResult<TopicInfo>>("id") {
                         getTopics(
                             it,
                             ObjectType.COMMUNITY,
@@ -106,10 +119,10 @@ private fun Route.bindCommunityRoute(backend: Backend) {
         }
         get("/{id}/rooms") {
             usePrincipalOrNull { uid ->
-                pagination<RoomInfo, PrimaryKey>({
+                pagination<RoomInfo, PrimaryKey>(PrimaryKey::class, {
                     it.id.toString()
                 }) { p, n, size ->
-                    checkParameter<PrimaryKey, Pair<List<RoomInfo>, Long>>("id") {
+                    checkParameter<PrimaryKey, PaginationResult<RoomInfo>>("id") {
                         searchRoomInCommunity(it, uid, backend, p, n, size)
                     }
                 }
@@ -132,10 +145,10 @@ private fun Route.bindCommunityRoute(backend: Backend) {
         }
         get("/search") {
             omitPrincipal {
-                pagination<CommunityInfo, PrimaryKey>({
+                pagination<CommunityInfo, PrimaryKey>(PrimaryKey::class, {
                     it.id.toString()
                 }) { p, n, s ->
-                    checkQueryParameter<String, Pair<List<CommunityInfo>, Long>>("word") {
+                    checkQueryParameter<String, PaginationResult<CommunityInfo>>("word") {
                         searchCommunities(it, backend, p, n, s)
                     }
                 }
@@ -155,10 +168,10 @@ private fun Route.bindRoomRoute(backend: Backend) {
         }
         get("/{id}/topics") {
             usePrincipalOrNull { uid ->
-                pagination<TopicInfo, PrimaryKey>({
+                pagination<TopicInfo, PrimaryKey>(PrimaryKey::class, {
                     it.id.toString()
                 }) { pre, next, size ->
-                    checkParameter<PrimaryKey, Pair<List<TopicInfo>, Long>>("id") {
+                    checkParameter<PrimaryKey, PaginationResult<TopicInfo>>("id") {
                         getTopics(it, ObjectType.ROOM, uid, backend, pre, next, size)
                     }
                 }
@@ -174,10 +187,10 @@ private fun Route.bindRoomRoute(backend: Backend) {
         }
         get("/search") {
             usePrincipalOrNull { id ->
-                pagination<RoomInfo, PrimaryKey>({
+                pagination<RoomInfo, PrimaryKey>(PrimaryKey::class, {
                     it.id.toString()
                 }) { p, n, size ->
-                    checkQueryParameter<String, Pair<List<RoomInfo>, Long>>("word") {
+                    checkQueryParameter<String, PaginationResult<RoomInfo>>("word") {
                         searchRooms(it, id, backend, p, n, size)
                     }
                 }

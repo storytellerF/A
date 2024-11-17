@@ -16,8 +16,7 @@ inline fun <reified R : Any, reified T : Any> Parameters.checkParameter(
     block: (T) -> Result<R?>
 ): Result<R?> {
     val v = runCatching {
-        val value = getOrFailCompact<T>(name)
-        value
+        getOrFailCompact<T>(name)
     }
     return when {
         v.isSuccess -> block(v.getOrThrow())
