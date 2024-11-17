@@ -49,6 +49,6 @@ private fun CommunityRefCellInternal(viewModel: CommunityViewModel, onClick: (Pr
             }
             .padding(10.dp)
     ) {
-        CommunityCell(it, true, onClick)
+        CommunityCell(it, true)
     }
 }

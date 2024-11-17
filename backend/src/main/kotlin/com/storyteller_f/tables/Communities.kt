@@ -10,7 +10,7 @@ object Communities : BaseTable() {
     val aid = varchar("aid", COMMUNITY_ID_LENGTH).uniqueIndex()
     val name = varchar("name", COMMUNITY_NAME_LENGTH).index()
     val icon = varchar("icon", ICON_LENGTH).nullable()
-    val owner = ulong("owner").index()
+    val owner = customPrimaryKey("owner").index()
     val poster = varchar("poster", ICON_LENGTH).nullable()
 }
 
@@ -47,7 +47,7 @@ class Community(
             }
         }
 
-        fun new(community: Community): ULong {
+        fun new(community: Community): PrimaryKey {
             val id = Communities.insert {
                 it[id] = community.id
                 it[name] = community.name

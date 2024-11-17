@@ -9,10 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.russhwolf.settings.ExperimentalSettingsApi
-import com.russhwolf.settings.get
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
-import com.russhwolf.settings.set
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.compontents.MeasureTextLineCount
 import com.storyteller_f.a.app.compontents.use
@@ -31,7 +29,7 @@ import moe.tlaster.precompose.navigation.NavHost
 import moe.tlaster.precompose.navigation.rememberNavigator
 
 @Composable
-fun LoginPage(onLoginSuccess: () -> Unit) {
+fun LoginPage() {
     val navigator = rememberNavigator()
     val nav = remember {
         object : LoginNav {
@@ -58,7 +56,7 @@ fun LoginPage(onLoginSuccess: () -> Unit) {
                 SelectSignupPage(nav)
             }
             scene("/k") {
-                InputPrivateKeyPage(onLoginSuccess)
+                InputPrivateKeyPage()
             }
         }
     }
@@ -102,10 +100,11 @@ fun SelectSignupPage(loginNav: LoginNav) {
 }
 
 @Composable
-fun InputPrivateKeyPage(onLoginSuccess: () -> Unit) {
+fun InputPrivateKeyPage() {
     val privateKey by LoginViewModel.privateKey.collectAsState("")
     val isSignUp by LoginViewModel.isSignUp.collectAsState(false)
     val scope = rememberCoroutineScope()
+    val appNav = LocalAppNav.current
 
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -119,7 +118,7 @@ fun InputPrivateKeyPage(onLoginSuccess: () -> Unit) {
                 Button({
                     if (privateKey.isNotBlank()) {
                         scope.launch {
-                            globalDialogState.use(onLoginSuccess) {
+                            globalDialogState.use(appNav::gotoHome) {
                                 val data = client.getData()
                                 val f = finalData(data)
                                 val sig = signature(privateKey, f)

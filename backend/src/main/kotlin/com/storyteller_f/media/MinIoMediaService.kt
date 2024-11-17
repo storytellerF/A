@@ -6,15 +6,15 @@ import io.minio.http.Method
 import java.util.concurrent.TimeUnit
 
 class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
-    override fun clean(bucketName: String) {
-        useMinIoClient(connection) {
+    override fun clean(bucketName: String): kotlin.Result<Unit> {
+        return useMinIoClient(connection) {
             if (bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 removeAllObject(bucketName)
             }
         }
     }
 
-    override fun get(bucketName: String, objList: List<String?>): List<String?> {
+    override fun get(bucketName: String, objList: List<String?>): kotlin.Result<List<String?>> {
         return useMinIoClient(connection) {
             objList.map {
                 getIconInMioIo(bucketName, it)
@@ -22,8 +22,8 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override fun upload(bucketName: String, list: List<Pair<String, String>>) {
-        useMinIoClient(connection) {
+    override fun upload(bucketName: String, list: List<Pair<String, String>>): kotlin.Result<Unit> {
+        return useMinIoClient(connection) {
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
             }
@@ -36,18 +36,20 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
     }
 }
 
-private fun <R> useMinIoClient(minIoConnection: MinIoConnection, block: MinioClient.() -> R): R {
-    return MinioClient.builder()
-        .endpoint(minIoConnection.url)
-        .credentials(minIoConnection.user, minIoConnection.pass)
-        .build().use {
-            try {
-                it.block()
-            } catch (e: Exception) {
-                e.printStackTrace()
-                throw e
+private fun <R> useMinIoClient(minIoConnection: MinIoConnection, block: MinioClient.() -> R): kotlin.Result<R> {
+    return runCatching {
+        MinioClient.builder()
+            .endpoint(minIoConnection.url)
+            .credentials(minIoConnection.user, minIoConnection.pass)
+            .build().use {
+                try {
+                    it.block()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    throw e
+                }
             }
-        }
+    }
 }
 
 private fun MinioClient.removeAllObject(bucketName: String) {

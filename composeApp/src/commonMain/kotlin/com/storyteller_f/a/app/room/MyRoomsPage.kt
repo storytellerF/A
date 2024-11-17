@@ -19,21 +19,24 @@ import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import coil3.compose.AsyncImage
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.a.client_lib.getJoinedRooms
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKey
 
 @Composable
-fun MyRoomsPage(onClick: (PrimaryKey) -> Unit) {
+fun MyRoomsPage() {
     val viewModel = viewModel(MyRoomsViewModel::class) {
         MyRoomsViewModel()
     }
     val items = viewModel.flow.collectAsLazyPagingItems()
-    RoomList(items, onClick)
+    RoomList(items)
 }
 
 @OptIn(ExperimentalPagingApi::class)
@@ -42,15 +45,14 @@ class MyRoomsViewModel : PagingViewModel<PrimaryKey, RoomInfo>({
         serviceCatching {
             client.getJoinedRooms(10, it)
         }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
+            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKey())
         }
     }
 })
 
 @Composable
 fun RoomList(
-    items: LazyPagingItems<RoomInfo>,
-    onClick: (PrimaryKey) -> Unit
+    items: LazyPagingItems<RoomInfo>
 ) {
     StateView(items) {
         LazyColumn(
@@ -65,14 +67,19 @@ fun RoomList(
                 },
                 contentType = items.itemContentType()
             ) { index ->
-                RoomCell(items[index], false, onClick)
+                RoomCell(items[index], false)
             }
         }
     }
 }
 
 @Composable
-fun RoomCell(roomInfo: RoomInfo?, customBackground: Boolean = false, onClick: (PrimaryKey) -> Unit = {}) {
+fun RoomCell(
+    roomInfo: RoomInfo?,
+    customBackground: Boolean = false
+) {
+    val appNav = LocalAppNav.current
+    val onClick = appNav::goto
     var showDialog by remember {
         mutableStateOf(false)
     }
@@ -83,7 +90,7 @@ fun RoomCell(roomInfo: RoomInfo?, customBackground: Boolean = false, onClick: (P
             else -> Modifier.fillMaxWidth()
                 .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
                 .clickable {
-                    roomInfo?.let { onClick(it.id) }
+                    roomInfo?.let { onClick(it.id, ObjectType.ROOM) }
                 }
                 .padding(10.dp)
         }

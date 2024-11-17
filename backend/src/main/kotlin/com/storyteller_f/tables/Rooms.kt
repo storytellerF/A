@@ -10,8 +10,8 @@ object Rooms : BaseTable() {
     val aid = varchar("aid", ROOM_ID_LENGTH).uniqueIndex()
     val name = varchar("name", ROOM_NAME_LENGTH).index()
     val icon = varchar("icon", ICON_LENGTH).nullable()
-    val creator = ulong("creator").index()
-    val communityId = ulong("community_id").index().nullable()
+    val creator = customPrimaryKey("creator").index()
+    val communityId = customPrimaryKey("community_id").index().nullable()
 }
 
 class Room(
@@ -35,24 +35,26 @@ class Room(
                 row[Rooms.createdTime]
             )
         }
+
+        fun findRoomById(id: PrimaryKey): ResultRow? {
+            return Rooms.selectAll().where {
+                Rooms.id eq id
+            }.limit(1).firstOrNull()
+        }
+
+        fun findRoomByAId(aid: String): ResultRow? {
+            return Rooms.selectAll().where {
+                Rooms.aid eq aid
+            }.limit(1).firstOrNull()
+        }
     }
 }
 
-fun findRoomById(id: PrimaryKey): ResultRow? {
-    return Rooms.selectAll().where {
-        Rooms.id eq id
-    }.limit(1).firstOrNull()
-}
-
-fun findRoomByAId(aid: String): ResultRow? {
-    return Rooms.selectAll().where {
-        Rooms.aid eq aid
-    }.limit(1).firstOrNull()
-}
-
-fun checkRoomIsPrivate(roomId: PrimaryKey): Boolean {
-    val room = findRoomById(roomId)?.let {
-        Room.wrapRow(it)
+suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean> {
+    return DatabaseFactory.dbQuery {
+        val room = Room.findRoomById(roomId)?.let {
+            Room.wrapRow(it)
+        }
+        room?.communityId == null
     }
-    return room?.communityId == null
 }

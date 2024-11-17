@@ -36,15 +36,13 @@ import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.world.WorldPage
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import moe.tlaster.precompose.navigation.*
 import moe.tlaster.precompose.navigation.transition.NavTransition
 
 @Composable
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
-fun HomePage(appNav: AppNav, onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ -> }) {
+fun HomePage() {
     val size = calculateWindowSizeClass()
     val homeNavs = listOf(
         NavRoute("/world", Icons.Default.Public, "world"),
@@ -59,13 +57,13 @@ fun HomePage(appNav: AppNav, onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ 
                     Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    CustomSearchBar(appNav::gotoLogin) {
+                    CustomSearchBar {
                         ProjectIcon()
                     }
                     val pagerState = rememberPagerState {
                         3
                     }
-                    HomePager(Modifier.weight(1f), appNav, pagerState, onClick)
+                    HomePager(Modifier.weight(1f), pagerState)
                     val scope = rememberCoroutineScope()
                     CustomBottomNav(homeNavs[pagerState.currentPage].path, homeNavs) { path ->
                         scope.launch {
@@ -84,7 +82,7 @@ fun HomePage(appNav: AppNav, onClick: (PrimaryKey, ObjectType) -> Unit = { _, _ 
                     CustomRailNav(currentEntry, homeNavs) {
                         navigator.navigate(it, NavOptions(launchSingleTop = true))
                     }
-                    HomeNavHost(navigator, modifier = Modifier.weight(1f), appNav::gotoLogin, onClick)
+                    HomeNavHost(navigator, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -159,12 +157,10 @@ fun CustomBottomNav(
 @Composable
 private fun HomeNavHost(
     navigator: Navigator,
-    modifier: Modifier,
-    onLogin: () -> Unit,
-    onClick: (PrimaryKey, ObjectType) -> Unit
+    modifier: Modifier
 ) {
     Column(modifier = modifier) {
-        CustomSearchBar(onLogin) {
+        CustomSearchBar {
             ProjectIcon()
         }
         NavHost(navigator, initialRoute = "/world", modifier = modifier, navTransition = remember {
@@ -180,20 +176,16 @@ private fun HomeNavHost(
             )
         }) {
             scene("/world") {
-                WorldPage(onClick)
+                WorldPage()
             }
             scene("/communities") {
-                UserHost(onLogin) {
-                    MyCommunitiesPage {
-                        onClick(it, ObjectType.COMMUNITY)
-                    }
+                UserHost {
+                    MyCommunitiesPage()
                 }
             }
             scene("/rooms") {
-                UserHost(onLogin) {
-                    MyRoomsPage {
-                        onClick(it, ObjectType.ROOM)
-                    }
+                UserHost {
+                    MyRoomsPage()
                 }
             }
         }
@@ -204,26 +196,26 @@ private fun HomeNavHost(
 @Composable
 private fun HomePager(
     modifier: Modifier,
-    appNav: AppNav,
-    pagerState: PagerState,
-    onClick: (PrimaryKey, ObjectType) -> Unit
+    pagerState: PagerState
 ) {
+    LocalAppNav.current
     HorizontalPager(pagerState, modifier) {
         when (it) {
-            0 -> WorldPage(onClick)
-            1 -> UserHost(appNav::gotoLogin) {
-                MyCommunitiesPage(appNav::gotoCommunity)
+            0 -> WorldPage()
+            1 -> UserHost {
+                MyCommunitiesPage()
             }
 
-            else -> UserHost(appNav::gotoLogin) {
-                MyRoomsPage(appNav::gotoRoom)
+            else -> UserHost {
+                MyRoomsPage()
             }
         }
     }
 }
 
 @Composable
-private fun UserHost(onClickLogin: () -> Unit, content: @Composable (UserInfo) -> Unit) {
+private fun UserHost(content: @Composable (UserInfo) -> Unit) {
+    val appNav = LocalAppNav.current
     val user by LoginViewModel.user.collectAsState()
     val localUser = user
     if (localUser != null) {
@@ -231,7 +223,7 @@ private fun UserHost(onClickLogin: () -> Unit, content: @Composable (UserInfo) -
     } else {
         CenterBox {
             Button({
-                onClickLogin()
+                appNav.gotoLogin()
             }) {
                 Text("Login")
             }

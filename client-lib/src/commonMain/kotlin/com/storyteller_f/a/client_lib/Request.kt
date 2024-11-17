@@ -22,8 +22,12 @@ suspend fun HttpClient.requestRoomInfoByAid(aid: String) = get("room") {
     }
 }.body<RoomInfo>()
 
-suspend fun HttpClient.requestRoomKeys(id: PrimaryKey) =
-    get("room/$id/pub-keys").body<ServerResponse<Pair<PrimaryKey, String>>>()
+suspend fun HttpClient.requestRoomKeys(id: PrimaryKey, nextId: PrimaryKey?, size: Int) =
+    get("room/$id/pub-keys") {
+        url {
+            appendPagingQueryParams(size, nextId)
+        }
+    }.body<ServerResponse<Pair<PrimaryKey, String>>>()
 
 suspend fun HttpClient.joinRoom(id: PrimaryKey) = post("room/$id/join")
 
@@ -150,3 +154,10 @@ suspend fun HttpClient.verifySnapshot(pack: TopicSnapshotPack) = post("topic/ver
     contentType(ContentType.Application.Json)
     setBody(pack)
 }
+
+suspend fun HttpClient.searchTopics(nextTopicId: PrimaryKey?, size: Int, word: List<String>) = get("/topic/search", {
+    url {
+        parameters.appendAll("word", word)
+        appendPagingQueryParams(size, nextTopicId)
+    }
+}).body<ServerResponse<TopicInfo>>()

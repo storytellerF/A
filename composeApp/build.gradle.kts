@@ -124,6 +124,7 @@ kotlin {
             implementation(libs.multiplatform.markdown.renderer.m3)
             implementation(libs.multiplatform.markdown.renderer.coil3)
             implementation(libs.uri.kmp)
+            implementation(libs.sonner)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -202,6 +203,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
@@ -209,6 +211,7 @@ android {
         compose = true
     }
     dependencies {
+        coreLibraryDesugaring(libs.desugar.jdk.libs)
         debugImplementation(compose.uiTooling)
     }
 }

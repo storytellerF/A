@@ -27,11 +27,13 @@ import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.clientWs
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.common.viewModel
+import com.storyteller_f.a.app.community.CommunityRefCell
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.search.CustomSearchBar
@@ -48,6 +50,7 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
@@ -64,14 +67,14 @@ import org.jetbrains.compose.resources.stringResource
 data class OnRoomJoined(val id: PrimaryKey)
 
 @OptIn(ExperimentalPagingApi::class)
-class RoomTopicsViewModel(roomId: PrimaryKey) : PagingViewModel<PrimaryKey, TopicInfo>({
+class TopicsViewModel(id: PrimaryKey, val type: ObjectType) : PagingViewModel<PrimaryKey, TopicInfo>({
     CustomQueryPagingSource(
         select = select(all()),
-        collectionName = "topics$roomId",
+        collectionName = "topics$id",
         queryProvider = {
             where {
                 if (it != null) {
-                    "id" lessThan it.toLong()
+                    "id" lessThan it
                 } else {
                     Expression.intValue(0) equalTo Expression.intValue(0)
                 }
@@ -85,12 +88,17 @@ class RoomTopicsViewModel(roomId: PrimaryKey) : PagingViewModel<PrimaryKey, Topi
             }.getOrNull()
         }
     )
-}, RoomTopicsRemoteMediator("topics$roomId") { loadKey ->
-    processEncryptedTopic(client.getRoomTopics(roomId, loadKey, 20))
+}, TopicsRemoteMediator("topics$id") { loadKey ->
+    val info = when (type) {
+        ObjectType.ROOM -> client.getRoomTopics(id, loadKey, 20)
+        ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, 20)
+        else -> client.getTopicTopics(id, loadKey, 20)
+    }
+    info.copy(processEncryptedTopic(info.data))
 })
 
 @OptIn(ExperimentalPagingApi::class)
-class RoomTopicsRemoteMediator(
+class TopicsRemoteMediator(
     private val collectionName: String,
     val networkService: suspend (PrimaryKey?) -> ServerResponse<TopicInfo>
 ) :
@@ -186,9 +194,9 @@ class RoomViewModel(private val requestInfo: suspend HttpClient.() -> RoomInfo) 
 }
 
 @Composable
-fun RoomPage(roomId: PrimaryKey, onLogin: () -> Unit, onClick: (PrimaryKey, ObjectType) -> Unit) {
-    val viewModel = viewModel(RoomTopicsViewModel::class, keys = listOf("room-topics", roomId)) {
-        RoomTopicsViewModel(roomId)
+fun RoomPage(roomId: PrimaryKey) {
+    val viewModel = viewModel(TopicsViewModel::class, keys = listOf("room-topics", roomId)) {
+        TopicsViewModel(roomId, ObjectType.ROOM)
     }
     val room = viewModel(RoomViewModel::class, keys = listOf("room", roomId)) {
         RoomViewModel(roomId)
@@ -209,11 +217,11 @@ fun RoomPage(roomId: PrimaryKey, onLogin: () -> Unit, onClick: (PrimaryKey, Obje
     Scaffold(snackbarHost = {
         SnackbarHost(snackBarHost)
     }) {
-        Column(modifier = Modifier.padding(it).consumeWindowInsets(WindowInsets.statusBars)) {
-            CustomSearchBar(onLogin) {
+        Column(modifier = Modifier.navigationBarsPadding()) {
+            CustomSearchBar {
                 RoomIcon(roomInfo, size = 40.dp)
             }
-            RoomPageInternal(lazyListState, items, onClick)
+            RoomPageInternal(lazyListState, items)
             val scope = rememberCoroutineScope()
             RoomInputGroup(roomId, roomInfo, {
                 scope.launch {
@@ -223,7 +231,7 @@ fun RoomPage(roomId: PrimaryKey, onLogin: () -> Unit, onClick: (PrimaryKey, Obje
                 scope.launch {
                     lazyListState.animateScrollToItem(0)
                 }
-            }, onClick)
+            })
         }
     }
 }
@@ -231,8 +239,7 @@ fun RoomPage(roomId: PrimaryKey, onLogin: () -> Unit, onClick: (PrimaryKey, Obje
 @Composable
 private fun ColumnScope.RoomPageInternal(
     lazyListState: LazyListState,
-    items: LazyPagingItems<TopicInfo>,
-    onClick: (PrimaryKey, ObjectType) -> Unit
+    items: LazyPagingItems<TopicInfo>
 ) {
     LazyColumn(
         state = lazyListState,
@@ -257,8 +264,7 @@ private fun ColumnScope.RoomPageInternal(
             TopicCell(
                 current,
                 false,
-                next?.author != current?.author,
-                onClick = onClick
+                next?.author != current?.author
             )
         }
     }
@@ -276,8 +282,16 @@ class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean) :
     override suspend fun loadInternal() {
         handler.request {
             runCatching {
-                val list = client.requestRoomKeys(id)
-                list.data
+                val result = mutableListOf<Pair<PrimaryKey, String>>()
+                var last: PrimaryKey? = null
+                while (true) {
+                    val list = client.requestRoomKeys(id, last, 100)
+                    result.addAll(list.data)
+                    val nextKey = list.pagination?.nextPageToken?.toPrimaryKeyOrNull()
+                    if (nextKey == null) break
+                    last = nextKey
+                }
+                result
             }
         }
     }
@@ -288,8 +302,7 @@ private fun RoomInputGroup(
     roomId: PrimaryKey,
     roomInfo: RoomInfo?,
     notifyError: (String) -> Unit,
-    scrollToNew: () -> Unit,
-    onClick: (PrimaryKey, ObjectType) -> Unit
+    scrollToNew: () -> Unit
 ) {
     var input by remember {
         mutableStateOf("")
@@ -320,10 +333,11 @@ private fun RoomInputGroup(
         )
     }
 
+    val appNav = LocalAppNav.current
     CustomAlertDialog(alertDialogState, {
         alertDialogState = null
     }) {
-        onClick(roomId, ObjectType.ROOM)
+        appNav.goto(roomId, ObjectType.ROOM)
     }
 }
 
@@ -428,6 +442,8 @@ fun InputGroupInternal(
 
 @Composable
 fun RoomDialogInternal(roomInfo: RoomInfo) {
+    val appNav = LocalAppNav.current
+    val onClick = appNav::goto
     DialogContainer {
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -442,6 +458,12 @@ fun RoomDialogInternal(roomInfo: RoomInfo) {
             }
         }
 
+        roomInfo.communityId?.let {
+            CommunityRefCell(it) {
+                onClick(it, ObjectType.COMMUNITY)
+            }
+        }
+
         Column {
             ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
             ButtonNav(Icons.Default.Close, stringResource(Res.string.close))
@@ -453,6 +475,12 @@ fun RoomDialogInternal(roomInfo: RoomInfo) {
                 ButtonNav(Icons.Default.AddHome, "Join Room") {
                     scope.launch {
                         globalDialogState.use {
+                            val communityId = roomInfo.communityId
+                            if (communityId != null) {
+                                if (!client.getCommunityInfo(communityId).isJoined) {
+                                    throw Exception("you should join community first.")
+                                }
+                            }
                             client.joinRoom(roomInfo.id)
                             bus.send(OnRoomJoined(roomInfo.id))
                         }
@@ -465,7 +493,11 @@ fun RoomDialogInternal(roomInfo: RoomInfo) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RoomDialog(showDialog: Boolean, roomInfo: RoomInfo?, dismiss: () -> Unit) {
+fun RoomDialog(
+    showDialog: Boolean,
+    roomInfo: RoomInfo?,
+    dismiss: () -> Unit
+) {
     if (roomInfo != null && showDialog) {
         BasicAlertDialog({
             dismiss()

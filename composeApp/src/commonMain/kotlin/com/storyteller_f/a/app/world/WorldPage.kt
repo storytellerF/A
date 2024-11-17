@@ -25,16 +25,16 @@ import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.topic.TopicCell
 import com.storyteller_f.a.client_lib.getWorldTopics
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 
 @Composable
-fun WorldPage(onClick: (PrimaryKey, ObjectType) -> Unit) {
+fun WorldPage() {
     val viewModel = viewModel(WorldViewModel::class) {
         WorldViewModel()
     }
     val items = viewModel.flow.collectAsLazyPagingItems()
-    TopicList(items, onClick)
+    TopicList(items)
 }
 
 @OptIn(ExperimentalPagingApi::class)
@@ -43,15 +43,14 @@ class WorldViewModel : PagingViewModel<PrimaryKey, TopicInfo>({
         serviceCatching {
             client.getWorldTopics(it, 10)
         }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toULongOrNull())
+            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
         }
     }
 })
 
 @Composable
 fun TopicList(
-    items: LazyPagingItems<TopicInfo>,
-    onClick: (PrimaryKey, ObjectType) -> Unit
+    items: LazyPagingItems<TopicInfo>
 ) {
     StateView(items) {
         LazyColumn(
@@ -63,9 +62,11 @@ fun TopicList(
                 key = items.itemKey(),
                 contentType = items.itemContentType()
             ) { index ->
-                TopicCell(items[index], onClick = onClick)
+                TopicCell(items[index])
                 Spacer(modifier = Modifier.height(20.dp))
-                HorizontalDivider()
+                if (index != items.itemCount - 1) {
+                    HorizontalDivider()
+                }
             }
         }
     }
