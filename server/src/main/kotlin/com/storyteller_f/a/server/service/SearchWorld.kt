@@ -11,23 +11,22 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.tables.Topic
 import com.storyteller_f.tables.Topics
 import com.storyteller_f.types.PaginationResult
+import org.jetbrains.exposed.sql.Query
+import org.jetbrains.exposed.sql.selectAll
+import kotlin.collections.map
+import kotlin.map
 
-suspend fun searchWorld(
+suspend fun searchPublicTopics(
     backend: Backend,
     preTopicId: PrimaryKey?,
     nextTopicId: PrimaryKey?,
     size: Int
 ): Result<PaginationResult<TopicInfo>?> {
-    val query = Topics
-        .select(Topics.fields)
-        .where {
-            Topics.parentType eq ObjectType.COMMUNITY
-        }
     return DatabaseFactory.mapQuery(Topic::toTopicInfo, Topic::wrapRow) {
-        query.bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
+        buildPublicTopicQuery(false).bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
     }.mapResult { data ->
         DatabaseFactory.count {
-            query
+            buildPublicTopicQuery(true)
         }.mapResult { count ->
             backend.topicDocumentService.getDocument(data.map {
                 it.id
@@ -39,5 +38,21 @@ suspend fun searchWorld(
                 }, count)
             }
         }
+    }
+}
+
+private fun buildPublicTopicQuery(getCount: Boolean): Query {
+    return if (getCount) {
+        Topics
+            .selectAll()
+            .where {
+                Topics.parentType eq ObjectType.COMMUNITY
+            }
+    } else {
+        Topics
+            .select(Topics.fields)
+            .where {
+                Topics.parentType eq ObjectType.COMMUNITY
+            }
     }
 }

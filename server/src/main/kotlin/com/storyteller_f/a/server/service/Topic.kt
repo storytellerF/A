@@ -5,14 +5,10 @@ import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.common.bindPaginationQuery
 import com.storyteller_f.index.TopicDocument
-import com.storyteller_f.shared.hmacSign
-import com.storyteller_f.shared.hmacVerify
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.NewTopic
-import com.storyteller_f.shared.obj.TopicSnapshot
-import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapNotNull
@@ -20,12 +16,43 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
-import com.storyteller_f.tables.checkRoomIsPrivate
 import com.storyteller_f.types.PaginationResult
+import io.ktor.resources.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
+import org.apache.fontbox.ttf.OTFParser
+import org.apache.pdfbox.io.RandomAccessReadBufferedFile
+import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.pdmodel.PDPage
+import org.apache.pdfbox.pdmodel.PDPageContentStream
+import org.apache.pdfbox.pdmodel.font.PDType0Font
+import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
+import java.io.File
+
+@Resource("/topics")
+class RouteTopics {
+    @Resource("search")
+    class Search(
+        @Suppress("unused") val parent: RouteTopics = RouteTopics(),
+        val word: List<String>? = null,
+        val parentId: PrimaryKey? = null,
+        val parentType: ObjectType? = null,
+        val rootId: PrimaryKey? = null,
+        val rootType: ObjectType? = null,
+        val author: PrimaryKey? = null,
+    )
+
+    @Resource("{id}")
+    class Id(@Suppress("unused") val parent: RouteTopics, val id: PrimaryKey) {
+        @Resource("snapshot")
+        class Snapshot(val parent: Id)
+
+        @Resource("topics")
+        class Topics(val parent: Id)
+    }
+}
 
 suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend): Result<TopicInfo?> {
     val newTopic = call.receive<NewTopic>()
@@ -33,22 +60,38 @@ suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend
         return Result.failure(ForbiddenException("Community only accept unencrypted content."))
     }
     val content = (newTopic.content as TopicContent.Plain).plain
-    return checkRootWritePermission(newTopic.parentType, newTopic.parentId, uid).mapResultNotNull { (t, p, hasWrite) ->
+    return checkRootWritePermission(
+        newTopic.parentType,
+        newTopic.parentId,
+        uid
+    ).mapResultNotNull { (rootType, rootId, hasWrite) ->
         if (hasWrite) {
             val newId = SnowflakeFactory.nextId()
             val topic = Topic(
                 author = uid,
                 parentId = newTopic.parentId,
                 parentType = newTopic.parentType,
-                rootId = p,
-                rootType = t,
+                rootId = rootId,
+                rootType = rootType,
                 lastModifiedTime = now(),
                 id = newId,
                 createdTime = now(),
             )
             DatabaseFactory.dbQuery {
                 val newTopicId = Topic.new(topic)
-                backend.topicDocumentService.saveDocument(listOf(TopicDocument(newTopicId, content)))
+                backend.topicDocumentService.saveDocument(
+                    listOf(
+                        TopicDocument(
+                            newTopicId,
+                            content,
+                            rootId,
+                            rootType.name,
+                            newTopic.parentId,
+                            newTopic.parentType.name,
+                            uid
+                        )
+                    )
+                )
                 topic.toTopicInfo().copy(content = TopicContent.Plain(content))
             }
         } else {
@@ -72,7 +115,7 @@ fun Topic.toTopicInfo(): TopicInfo {
     )
 }
 
-suspend fun getTopicSnapshot(id: PrimaryKey, topicId: PrimaryKey, backend: Backend): Result<TopicSnapshotPack?> {
+suspend fun getTopicSnapshot(id: PrimaryKey, topicId: PrimaryKey, backend: Backend): Result<File?> {
     return DatabaseFactory.queryNotNull(User::toUserInfo) {
         User.findById(id)
     }.mapResultNotNull { creatorInfo ->
@@ -83,7 +126,7 @@ suspend fun getTopicSnapshot(id: PrimaryKey, topicId: PrimaryKey, backend: Backe
                 }) {
                     Topic.findById(topicId)
                 }.mapResultNotNull { value ->
-                    getTopicSnapshot(topicId, value, creatorInfo, backend)
+                    getTopicSnapshot(value, creatorInfo, backend)
                 }
             } else {
                 Result.failure(ForbiddenException("Permission denied."))
@@ -93,60 +136,50 @@ suspend fun getTopicSnapshot(id: PrimaryKey, topicId: PrimaryKey, backend: Backe
 }
 
 private suspend fun getTopicSnapshot(
-    topicId: PrimaryKey,
-    it: TopicInfo,
+    topicInfo: TopicInfo,
     creatorInfo: UserInfo,
     backend: Backend
-): Result<TopicSnapshotPack?> {
+): Result<File?> {
+    val topicId = topicInfo.id
     return backend.topicDocumentService.getDocument(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultNotNull { documents ->
             DatabaseFactory.queryNotNull(User::toUserInfo) {
-                User.findById(it.author)
-            }.map { value ->
-                value?.let { authorInfo ->
-                    val snapshot = TopicSnapshot(
-                        authorAddress = if (authorInfo.aid == null) authorInfo.address else null,
-                        authorAid = authorInfo.aid,
-                        content = documents.content,
-                        creatorAddress = if (creatorInfo.aid == null) creatorInfo.address else null,
-                        creatorAid = creatorInfo.aid,
-                        topicCreatedTime = it.createdTime,
-                        topicModifiedTime = it.lastModifiedTime,
-                        capturedTime = now()
-                    )
-                    val hash = calcHash(snapshot, backend)
-                    TopicSnapshotPack(snapshot, hash)
+                User.findById(topicInfo.author)
+            }.mapNotNull { authorInfo ->
+                PDDocument().use { document ->
+                    val firstPage = PDPage()
+                    PDPageContentStream(document, firstPage).use { stream ->
+                        stream.beginText()
+                        val otf = OTFParser().parse(
+                            RandomAccessReadBufferedFile(
+                                File(
+                                    "~/DIN-Regular.otf".replace(
+                                        "~",
+                                        System.getProperty("user.home")
+                                    )
+                                )
+                            )
+                        )
+                        stream.setFont(PDType0Font.load(document, otf, false), 12f)
+                        stream.newLineAtOffset(100F, 700F)
+                        stream.setLeading(14.5f)
+                        stream.showText(if (authorInfo.aid == null) authorInfo.address else authorInfo.aid)
+                        stream.newLine()
+                        stream.showText(documents.content)
+                        stream.newLine()
+                        stream.showText(if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid)
+                        stream.newLine()
+                        stream.showText(topicInfo.createdTime.toString())
+                        stream.newLine()
+                        stream.showText(now().toString())
+                        stream.endText()
+                    }
+                    document.addPage(firstPage)
+                    document.save("/tmp/1.pdf")
                 }
+                File("/tmp/1.pdf")
             }
         }
-}
-
-suspend fun calcHash(snapshot: TopicSnapshot, backend: Backend): String {
-    val input = getSnapshotInput(snapshot)
-    val hmacKey = backend.config.hmacKey
-    return hmacSign(hmacKey, input)
-}
-
-private fun getSnapshotInput(snapshot: TopicSnapshot): String {
-    val input = buildString {
-        snapshot.creatorAddress?.let {
-            appendLine(it)
-        }
-        snapshot.creatorAid?.let {
-            appendLine(it)
-        }
-        snapshot.authorAddress?.let {
-            appendLine(it)
-        }
-        snapshot.authorAid?.let {
-            appendLine(it)
-        }
-        appendLine(snapshot.content)
-        appendLine(snapshot.topicCreatedTime)
-        appendLine(snapshot.topicModifiedTime)
-        appendLine(snapshot.capturedTime)
-    }
-    return input
 }
 
 suspend fun getTopic(
@@ -183,12 +216,6 @@ suspend fun getTopic(
     }
 }
 
-suspend fun RoutingContext.verifySnapshot(backend: Backend) = runCatching {
-    val pack = call.receive<TopicSnapshotPack>()
-    val hmacKey = backend.config.hmacKey
-    hmacVerify(hmacKey, pack.hash, getSnapshotInput(pack.snapshot))
-}
-
 suspend fun getTopics(
     parentId: PrimaryKey,
     parentType: ObjectType,
@@ -198,16 +225,11 @@ suspend fun getTopics(
     nextTopicId: PrimaryKey?,
     size: Int
 ): Result<PaginationResult<TopicInfo>?> {
-    val baseQuery = Topics
-        .select(Topics.fields)
-        .where {
-            Topics.parentId eq parentId and (Topics.parentType eq parentType)
-        }
     return DatabaseFactory.mapQuery(Topic::toTopicInfo, Topic::wrapRow) {
-        baseQuery.bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
+        buildGetTopicsQuery(parentId, parentType, false).bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
     }.mapResult { data ->
         DatabaseFactory.count {
-            baseQuery
+            buildGetTopicsQuery(parentId, parentType, true)
         }.mapResult { count ->
             checkRootReadPermission(parentType, parentId, uid).mapResultNotNull { (_, _, hasRead, _, isPrivate) ->
                 when {
@@ -235,6 +257,27 @@ suspend fun getTopics(
                 }, count)
             }
         }
+    }
+}
+
+private fun buildGetTopicsQuery(
+    parentId: PrimaryKey,
+    parentType: ObjectType,
+    getCount: Boolean
+): Query {
+    val topics = Topics
+    return if (getCount) {
+        topics
+            .selectAll()
+            .where {
+                Topics.parentId eq parentId and (Topics.parentType eq parentType)
+            }
+    } else {
+        topics
+            .select(Topics.fields)
+            .where {
+                Topics.parentId eq parentId and (Topics.parentType eq parentType)
+            }
     }
 }
 
@@ -299,16 +342,28 @@ suspend fun checkRootReadPermission(
         }
 
         ObjectType.ROOM -> {
-            isRoomJoined(parentId, uid).mapResult { hasJoined ->
-                checkRoomIsPrivate(parentId).map { isPrivate ->
-                    RootReadPermission(parentType, parentId, hasJoined, hasJoined, isPrivate)
+            DatabaseFactory.queryNotNull({
+                communityId
+            }, {
+                Room.wrapRow(it)
+            }) {
+                Room.findRoomById(parentId)
+            }.mapResult { lng ->
+                isMemberJoined(parentId, uid).map { hasJoined ->
+                    RootReadPermission(parentType, parentId, hasJoined, hasJoined, lng == null)
                 }
             }
         }
 
         ObjectType.COMMUNITY -> {
-            isCommunityJoined(parentId, uid).map { hasJoined ->
-                RootReadPermission(parentType, parentId, true, hasJoined, false)
+            DatabaseFactory.queryNotNull({
+                true
+            }, { Community.wrapRow(it) }) {
+                Community.findById(parentId)
+            }.mapResult { value ->
+                isMemberJoined(parentId, uid).map { hasJoined ->
+                    RootReadPermission(parentType, parentId, true, hasJoined, false)
+                }
             }
         }
 
@@ -333,14 +388,28 @@ suspend fun checkRootWritePermission(
         }
 
         ObjectType.ROOM -> {
-            isRoomJoined(parentId, uid).map { hasJoined ->
-                Triple(parentType, parentId, hasJoined)
+            DatabaseFactory.queryNotNull({
+                communityId
+            }, {
+                Room.wrapRow(it)
+            }) {
+                Room.findRoomById(parentId)
+            }.mapResult {
+                isMemberJoined(parentId, uid).map { hasJoined ->
+                    Triple(parentType, parentId, hasJoined)
+                }
             }
         }
 
         ObjectType.COMMUNITY -> {
-            isCommunityJoined(parentId, uid).map { hasJoined ->
-                Triple(parentType, parentId, hasJoined)
+            DatabaseFactory.queryNotNull({
+                true
+            }, { Community.wrapRow(it) }) {
+                Community.findById(parentId)
+            }.mapResult {
+                isMemberJoined(parentId, uid).map { hasJoined ->
+                    Triple(parentType, parentId, hasJoined)
+                }
             }
         }
 
@@ -348,13 +417,20 @@ suspend fun checkRootWritePermission(
     }
 }
 
-suspend fun searchTopics(
+suspend fun searchPublicTopics(
     nextTopicId: PrimaryKey?,
     size: Int,
-    word: List<String>,
+    search: RouteTopics.Search,
     backend: Backend
 ): Result<PaginationResult<TopicInfo>?> {
-    return backend.topicDocumentService.searchDocument(word, size, nextTopicId).mapResult { documents ->
+    return backend.topicDocumentService.searchDocument(
+        search.word,
+        size,
+        nextTopicId,
+        search.author,
+        if (search.rootId != null && search.rootType != null) search.rootId to search.rootType else null,
+        if (search.parentId != null && search.parentType != null) search.parentId to search.parentType else null,
+    ).mapResult { documents ->
         val map = documents.list.groupBy {
             it.id
         }

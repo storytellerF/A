@@ -1,6 +1,8 @@
 package com.storyteller_f.index
 
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import com.storyteller_f.types.PaginationResult
 import io.github.aakira.napier.Napier
@@ -10,6 +12,7 @@ import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.index.IndexNotFoundException
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
+import org.apache.lucene.index.Term
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
 import org.apache.lucene.search.*
 import org.apache.lucene.store.FSDirectory
@@ -24,9 +27,14 @@ class LuceneTopicDocumentService(private val path: Path) : TopicDocumentService 
                 val addDocuments = writer.addDocuments(
                     topics.map { document ->
                         val doc = Document()
-                        doc.add(LongField("id1", document.id.toLong(), Field.Store.YES))
+                        doc.add(LongField("id1", document.id, Field.Store.YES))
                         doc.add(NumericDocValuesField("id2", document.id))
                         doc.add(TextField("content", document.content, Field.Store.YES))
+                        doc.add(LongField("rootId", document.rootId, Field.Store.YES))
+                        doc.add(LongField("parentId", document.parentId, Field.Store.YES))
+                        doc.add(StringField("rootType", document.rootType, Field.Store.YES))
+                        doc.add(StringField("parentType", document.parentType, Field.Store.YES))
+                        doc.add(LongField("author", document.author, Field.Store.YES))
                         doc
                     }
                 )
@@ -46,9 +54,8 @@ class LuceneTopicDocumentService(private val path: Path) : TopicDocumentService 
                     idList.map { id ->
                         val topDocs = searcher.search(LongPoint.newExactQuery("id1", id.toLong()), 1)
                         topDocs.scoreDocs.firstOrNull()?.let { scoreDoc ->
-                            searcher.storedFields().document(scoreDoc.doc).get("content")?.let { content ->
-                                TopicDocument(id, content)
-                            }
+                            val document = searcher.storedFields().document(scoreDoc.doc)
+                            restoreDocument(id, document)
                         }
                     }
                 }
@@ -69,9 +76,12 @@ class LuceneTopicDocumentService(private val path: Path) : TopicDocumentService 
     }
 
     override suspend fun searchDocument(
-        word: List<String>,
+        word: List<String>?,
         size: Int,
-        nextTopicId: PrimaryKey?
+        nextTopicId: PrimaryKey?,
+        author: PrimaryKey?,
+        root: Pair<PrimaryKey, ObjectType>?,
+        parent: Pair<PrimaryKey, ObjectType>?
     ): Result<PaginationResult<TopicDocument>> {
         return useLucene {
             DirectoryReader.open(it).use { reader ->
@@ -80,21 +90,32 @@ class LuceneTopicDocumentService(private val path: Path) : TopicDocumentService 
                 val combinedQuery = BooleanQuery
                     .Builder()
                     .add(
-                        MultiFieldQueryParser(arrayOf("content"), analyzer).parse(word.joinToString<String>(" ")),
-                        BooleanClause.Occur.MUST
-                    ).add(
                         LongPoint.newRangeQuery("id1", Long.MIN_VALUE, nextTopicId?.minus(1) ?: Long.MAX_VALUE),
                         BooleanClause.Occur.MUST
-                    ).build()
+                    )
+                word?.let {
+                    combinedQuery.add(
+                        MultiFieldQueryParser(arrayOf("content"), analyzer).parse(word.joinToString<String>(" ")),
+                        BooleanClause.Occur.MUST
+                    )
+                }
+                root?.let {
+                    combinedQuery.add(LongPoint.newExactQuery("rootId", it.first), BooleanClause.Occur.MUST)
+                        .add(TermQuery(Term("rootType", it.second.name)), BooleanClause.Occur.MUST)
+                }
+                parent?.let {
+                    combinedQuery.add(LongPoint.newExactQuery("parentId", it.first), BooleanClause.Occur.MUST)
+                        .add(TermQuery(Term("parentType", it.second.name)), BooleanClause.Occur.MUST)
+                }
                 val sortById = Sort(SortField("id2", SortField.Type.LONG, true))
-                val docs = searcher.search(combinedQuery, size, sortById)
+                val docs = searcher.search(combinedQuery.build(), size, sortById)
                 val scoreDocs = docs.scoreDocs
                 PaginationResult(scoreDocs.mapNotNull {
                     searcher.storedFields().document(it.doc).let {
                         val content = it.get("content")
                         val id = it.get("id1").toPrimaryKeyOrNull()
                         if (content != null && id != null) {
-                            TopicDocument(id, content)
+                            restoreDocument(id, it)
                         } else {
                             null
                         }
@@ -110,3 +131,16 @@ class LuceneTopicDocumentService(private val path: Path) : TopicDocumentService 
         }
     }
 }
+
+private fun restoreDocument(
+    id: PrimaryKey,
+    document: Document
+): TopicDocument = TopicDocument(
+    id,
+    document.get("content"),
+    document.get("rootId").toPrimaryKey(),
+    document.get("rootType"),
+    document.get("parentId").toPrimaryKey(),
+    document.get("parentType"),
+    document.get("author").toPrimaryKey()
+)

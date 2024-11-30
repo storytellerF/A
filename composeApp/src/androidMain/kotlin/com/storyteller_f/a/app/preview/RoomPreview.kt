@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -17,7 +18,7 @@ import com.storyteller_f.a.app.topic.TopicCell
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.obj.AddTaskValue
+import com.storyteller_f.shared.obj.PresetValue
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -33,7 +34,7 @@ private class MessageListProvider : PreviewParameterProvider<List<TopicInfo>> {
             )
             if (SystemFileSystem.exists(p)) {
                 val content = SystemFileSystem.source(p).buffered().readString()
-                val value = Json.decodeFromString<AddTaskValue>(content)
+                val value = Json.decodeFromString<PresetValue>(content)
                 yield(value.topicData.orEmpty().filter {
                     it.room != null
                 }.map {
@@ -59,6 +60,7 @@ private fun PreviewRoom(@PreviewParameter(MessageListProvider::class) topicInfos
         val roomInfo = RoomInfo.EMPTY
         InputGroupInternal(
             "test",
+            MaterialTheme.colorScheme.tertiaryContainer,
             {},
             {
             }
@@ -75,7 +77,7 @@ private class RoomsProvider : PreviewParameterProvider<RoomInfo> {
             )
             if (SystemFileSystem.exists(p)) {
                 val content = SystemFileSystem.source(p).buffered().readString()
-                val value = Json.decodeFromString<AddTaskValue>(content)
+                val value = Json.decodeFromString<PresetValue>(content)
                 yieldAll(value.roomData.orEmpty().map {
                     RoomInfo.EMPTY.copy(name = it.name)
                 })
@@ -86,7 +88,9 @@ private class RoomsProvider : PreviewParameterProvider<RoomInfo> {
 @Preview
 @Composable
 private fun PreviewRooms(@PreviewParameter(RoomsProvider::class) roomInfo: RoomInfo) {
-    RoomCell(roomInfo = roomInfo)
+    RoomCell(roomInfo = roomInfo) {
+
+    }
 }
 
 @Preview
@@ -95,6 +99,7 @@ private fun PreviewInputGroup() {
     val roomInfo = RoomInfo.EMPTY
     InputGroupInternal(
         "test",
+        MaterialTheme.colorScheme.tertiaryContainer,
         {},
         {
         }

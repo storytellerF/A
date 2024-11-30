@@ -51,7 +51,7 @@ private fun UserRefCellInternal(viewModel: UserViewModel, onClick: (PrimaryKey) 
         viewModel.handler,
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
+            .height(66.dp)
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
             .clip(shape)
             .clickable {
@@ -61,21 +61,29 @@ private fun UserRefCellInternal(viewModel: UserViewModel, onClick: (PrimaryKey) 
             }
             .padding(10.dp)
     ) {
-        UserRow(it)
+        UserCell(it, true)
     }
 }
 
 @Composable
-fun UserRow(userInfo: UserInfo?, avatarSize: Dp = 40.dp) {
+fun UserCell(userInfo: UserInfo?, customBackground: Boolean, avatarSize: Dp = 50.dp) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = if (customBackground) {
+            Modifier
+                .fillMaxWidth()
+        } else {
+            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
+                .padding(8.dp)
+        },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        UserIcon(userInfo, avatarSize)
+        UserIcon(userInfo, size = avatarSize)
         Column {
-            userInfo?.let { Text(it.nickname) }
+            userInfo?.nickname?.let { Text(it) }
+            userInfo?.aid?.let {
+                Text("aid: $it")
+            }
         }
     }
 }

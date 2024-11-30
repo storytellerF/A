@@ -10,6 +10,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AddHome
+import androidx.compose.material.icons.filled.CardMembership
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Settings
@@ -17,8 +19,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.toRoute
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
@@ -27,16 +32,14 @@ import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
-import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.bus
-import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.clientWs
+import com.dokar.sonner.Toaster
+import com.dokar.sonner.rememberToasterState
+import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.common.*
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.community.CommunityRefCell
 import com.storyteller_f.a.app.compontents.*
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.search.CustomSearchBar
+import com.storyteller_f.a.app.search.SearchScope
 import com.storyteller_f.a.app.topic.TopicCell
 import com.storyteller_f.a.app.topic.processEncryptedTopic
 import com.storyteller_f.a.client_lib.*
@@ -56,15 +59,21 @@ import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import kotbase.Expression
 import kotbase.MutableDocument
-import kotbase.ktx.*
+import kotbase.ktx.all
+import kotbase.ktx.orderBy
+import kotbase.ktx.select
+import kotbase.ktx.where
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Duration.Companion.seconds
 
 data class OnRoomJoined(val id: PrimaryKey)
+data class OnRoomExited(val id: PrimaryKey)
 
 @OptIn(ExperimentalPagingApi::class)
 class TopicsViewModel(id: PrimaryKey, val type: ObjectType) : PagingViewModel<PrimaryKey, TopicInfo>({
@@ -164,21 +173,42 @@ class TopicsRemoteMediator(
     }
 }
 
+class DialogSaveState {
+    val shownDialog = MutableStateFlow<Boolean>(false)
+    fun markDialogShown() {
+        shownDialog.value = true
+    }
+}
+
 class RoomViewModel(private val requestInfo: suspend HttpClient.() -> RoomInfo) : SimpleViewModel<RoomInfo>() {
+    val dialog = DialogSaveState()
+
     constructor(roomId: PrimaryKey) : this({
-        requestRoomInfo(roomId)
+        requestRoomInfo(roomId, LoginViewModel.isAlreadySignUp)
     })
 
     constructor(roomAid: String) : this({
-        requestRoomInfoByAid(roomAid)
+        requestRoomInfoByAid(roomAid, LoginViewModel.isAlreadySignUp)
     })
 
     init {
         load()
         viewModelScope.launch {
             for (i in bus) {
-                if (i is OnRoomJoined && i.id == handler.data.value?.id) {
-                    handler.refresh()
+                if (handler.state.value is LoadingState.Loading) continue
+                val id = handler.data.value?.id
+                when (i) {
+                    is OnRoomJoined -> {
+                        if (i.id == id) {
+                            loadInternal()
+                        }
+                    }
+
+                    is OnRoomExited -> {
+                        if (i.id == id) {
+                            loadInternal()
+                        }
+                    }
                 }
             }
         }
@@ -194,14 +224,14 @@ class RoomViewModel(private val requestInfo: suspend HttpClient.() -> RoomInfo) 
 }
 
 @Composable
-fun RoomPage(roomId: PrimaryKey) {
+fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
     val viewModel = viewModel(TopicsViewModel::class, keys = listOf("room-topics", roomId)) {
         TopicsViewModel(roomId, ObjectType.ROOM)
     }
+    val items = viewModel.flow.collectAsLazyPagingItems()
     val room = viewModel(RoomViewModel::class, keys = listOf("room", roomId)) {
         RoomViewModel(roomId)
     }
-    val items = viewModel.flow.collectAsLazyPagingItems()
     val roomInfo by room.handler.data.collectAsState()
     val lazyListState = rememberLazyListState()
     val snackBarHost = remember {
@@ -217,35 +247,47 @@ fun RoomPage(roomId: PrimaryKey) {
     Scaffold(snackbarHost = {
         SnackbarHost(snackBarHost)
     }) {
-        Column(modifier = Modifier.navigationBarsPadding()) {
-            CustomSearchBar {
-                RoomIcon(roomInfo, size = 40.dp)
+        Column(modifier = Modifier) {
+            var showDialog by remember {
+                mutableStateOf(false)
             }
-            RoomPageInternal(lazyListState, items)
+            val dialogShown by room.dialog.shownDialog.collectAsState()
+            LaunchedEffect(needShowDialog, dialogShown) {
+                if (needShowDialog && !dialogShown) {
+                    room.dialog.markDialogShown()
+                    showDialog = true
+                }
+            }
+            CustomSearchBar(SearchScope.RoomTopic(roomId)) {
+                RoomIcon(roomInfo, size = 40.dp, enableClick = true, showDialog = showDialog, updateShowDialog =  {
+                    showDialog = it
+                }, update = {
+                    room.update(it)
+                })
+            }
+            RoomPageInternal(modifier = Modifier.weight(1f), lazyListState, items)
             val scope = rememberCoroutineScope()
             RoomInputGroup(roomId, roomInfo, {
-                scope.launch {
-                    snackBarHost.showSnackbar(it, withDismissAction = true)
-                }
-            }, {
+                showDialog = true
+            }) {
                 scope.launch {
                     lazyListState.animateScrollToItem(0)
                 }
-            })
+            }
         }
     }
 }
 
 @Composable
-private fun ColumnScope.RoomPageInternal(
+private fun RoomPageInternal(
+    modifier: Modifier,
     lazyListState: LazyListState,
     items: LazyPagingItems<TopicInfo>
 ) {
     LazyColumn(
         state = lazyListState,
-        modifier = Modifier.Companion.weight(1f),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = modifier.padding(top = 10.dp),
+        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
         reverseLayout = true,
     ) {
         items(
@@ -266,6 +308,7 @@ private fun ColumnScope.RoomPageInternal(
                 false,
                 next?.author != current?.author
             )
+            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }
@@ -298,47 +341,65 @@ class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean) :
 }
 
 @Composable
-private fun RoomInputGroup(
+fun RoomInputGroup(
     roomId: PrimaryKey,
     roomInfo: RoomInfo?,
-    notifyError: (String) -> Unit,
-    scrollToNew: () -> Unit
+    startJoinRoom: () -> Unit,
+    scrollToNew: () -> Unit,
 ) {
+    val appNav = LocalAppNav.current
     var input by remember {
         mutableStateOf("")
     }
-    var alertDialogState by remember {
-        mutableStateOf<AlertDialogState?>(null)
+    val alertDialogState = remember {
+        CustomAlertDialogController()
     }
     if (roomInfo != null) {
+        val toaster = rememberToasterState()
+        Toaster(toaster, alignment = Alignment.Center)
         val keysViewModel = viewModel(RoomKeysViewModel::class, keys = listOf("room-keys", roomId)) {
             RoomKeysViewModel(roomId, roomInfo.isPrivate)
         }
         val keyState by keysViewModel.handler.state.collectAsState()
         val keyData by keysViewModel.handler.data.collectAsState()
-        InputGroupInternal(
-            input,
-            {
-                input = it
-            },
-            sendButton = {
-                RoomSendButton(input = input) {
-                    if (roomInfo.isJoined) {
-                        sendMessage(roomInfo, roomId, input, scrollToNew, keyState, keyData, notifyError)
-                    } else {
-                        alertDialogState = AlertDialogState("not join", "do you want to join room?")
+        InputGroupInternal(input, MaterialTheme.colorScheme.tertiaryContainer, {
+            input = it
+        }, sendButton = {
+            RoomSendButton(input = input) {
+                if (roomInfo.isJoined) {
+                    sendMessage(roomInfo, input, scrollToNew, keyState, keyData) {
+                        toaster.show(it, 1.seconds)
                     }
+                } else {
+                    alertDialogState.showMessage("Not join", "Do you want to join room?")
                 }
             }
-        )
+        })
     }
 
-    val appNav = LocalAppNav.current
     CustomAlertDialog(alertDialogState, {
-        alertDialogState = null
+        alertDialogState.close()
     }) {
-        appNav.goto(roomId, ObjectType.ROOM)
+        checkRoomRouteAndAlert(appNav, roomId, startJoinRoom)
     }
+}
+
+private fun checkRoomRouteAndAlert(
+    appNav: AppNav,
+    roomId: PrimaryKey,
+    startJoinRoom: () -> Unit
+) {
+    val current = appNav.currentDestination
+    if (current != null) {
+        val currentDestination = current.destination
+        if (currentDestination.hasRoute(RoomScreen::class)) {
+            if (current.toRoute<RoomScreen>().roomId == roomId) {
+                startJoinRoom()
+                return
+            }
+        }
+    }
+    appNav.gotoRoom(roomId, true)
 }
 
 @Composable
@@ -349,6 +410,16 @@ fun RoomSendButton(
     val state by clientWs.connectionHandler.state.collectAsState()
     val sendState by clientWs.localState.collectAsState()
     val isSending = sendState is LoadingState.Loading
+    CommonInputButton(state, input, send, isSending)
+}
+
+@Composable
+fun CommonInputButton(
+    state: LoadingState?,
+    input: String,
+    send: () -> Unit,
+    isSending: Boolean
+) {
     val scope = rememberCoroutineScope()
     when (val wsState = state) {
         is LoadingState.Done -> {
@@ -380,9 +451,8 @@ fun RoomSendButton(
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-private fun sendMessage(
+fun sendMessage(
     roomInfo: RoomInfo?,
-    roomId: PrimaryKey,
     input: String,
     scrollToNew: () -> Unit,
     keyState: LoadingState?,
@@ -390,6 +460,7 @@ private fun sendMessage(
     notifyError: (String) -> Unit
 ) {
     if (roomInfo != null) {
+        val roomId = roomInfo.id
         clientWs.useWebSocket {
             val content = if (roomInfo.isPrivate) {
                 if (keyState !is LoadingState.Done || keyData == null) {
@@ -423,17 +494,25 @@ private fun sendMessage(
 @Composable
 fun InputGroupInternal(
     input: String,
+    backgroundColor: Color,
     updateInput: (String) -> Unit,
     sendButton: @Composable () -> Unit
 ) {
     Row(
-        modifier = Modifier.padding(horizontal = 20.dp),
+        modifier = Modifier.background(
+            backgroundColor,
+            shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
+        ).padding(horizontal = 20.dp).padding(top = 10.dp).navigationBarsPadding().imePadding().imeAnimation(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         OutlinedTextField(input, {
             updateInput(it)
-        }, modifier = Modifier.weight(1f))
+        }, modifier = Modifier.weight(1f), suffix = {
+            if (input.isNotEmpty()) {
+                Icon(Icons.Default.Clear, "clear input")
+            }
+        })
         Box(modifier = Modifier.width(60.dp).height(40.dp), contentAlignment = Alignment.Center) {
             sendButton()
         }
@@ -441,7 +520,7 @@ fun InputGroupInternal(
 }
 
 @Composable
-fun RoomDialogInternal(roomInfo: RoomInfo) {
+fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit, update: (RoomInfo) -> Unit) {
     val appNav = LocalAppNav.current
     val onClick = appNav::goto
     DialogContainer {
@@ -451,7 +530,7 @@ fun RoomDialogInternal(roomInfo: RoomInfo) {
                 .padding(8.dp),
             Arrangement.spacedBy(12.dp)
         ) {
-            RoomIcon(roomInfo, size = 50.dp)
+            RoomIcon(roomInfo, size = 50.dp, showDialog = false, updateShowDialog = {}, update = {})
             Column {
                 Text(roomInfo.name)
                 Text("aid: ${roomInfo.aid}")
@@ -460,29 +539,36 @@ fun RoomDialogInternal(roomInfo: RoomInfo) {
 
         roomInfo.communityId?.let {
             CommunityRefCell(it) {
+                dismiss()
                 onClick(it, ObjectType.COMMUNITY)
             }
         }
 
         Column {
             ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
-            ButtonNav(Icons.Default.Close, stringResource(Res.string.close))
+            ButtonNav(Icons.Default.CardMembership, "All members") {
+                dismiss()
+                appNav.gotoMemberPage(roomInfo.id, ObjectType.ROOM)
+            }
 
             val scope = rememberCoroutineScope()
+            val toaster = rememberToasterState()
+            Toaster(toaster)
             if (roomInfo.isJoined) {
-                ButtonNav(Icons.Default.Close, "Exit Room")
+                ButtonNav(Icons.Default.Close, "Exit Room") {
+                    scope.launch {
+                        exitRoom(roomInfo) {
+                            toaster.show("success", duration = 1.seconds)
+                            update(it)
+                        }
+                    }
+                }
             } else {
                 ButtonNav(Icons.Default.AddHome, "Join Room") {
                     scope.launch {
-                        globalDialogState.use {
-                            val communityId = roomInfo.communityId
-                            if (communityId != null) {
-                                if (!client.getCommunityInfo(communityId).isJoined) {
-                                    throw Exception("you should join community first.")
-                                }
-                            }
-                            client.joinRoom(roomInfo.id)
-                            bus.send(OnRoomJoined(roomInfo.id))
+                        joinRoom(roomInfo) {
+                            toaster.show("success", duration = 1.seconds)
+                            update(it)
                         }
                     }
                 }
@@ -491,18 +577,41 @@ fun RoomDialogInternal(roomInfo: RoomInfo) {
     }
 }
 
+private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: (RoomInfo) -> Unit) {
+    globalDialogState.use {
+        val communityId = roomInfo.communityId
+        if (communityId != null) {
+            if (!client.getCommunityInfo(communityId, fillJoinInfo = true).isJoined) {
+                throw Exception("you should join community first.")
+            }
+        }
+        val info = client.joinRoom(roomInfo.id)
+        bus.send(OnRoomJoined(roomInfo.id))
+        onSuccess(info)
+    }
+}
+
+private suspend fun exitRoom(roomInfo: RoomInfo, onSuccess: (RoomInfo) -> Unit) {
+    globalDialogState.use {
+        val info = client.exitRoom(roomInfo.id)
+        bus.send(OnRoomExited(roomInfo.id))
+        onSuccess(info)
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoomDialog(
     showDialog: Boolean,
     roomInfo: RoomInfo?,
-    dismiss: () -> Unit
+    dismiss: () -> Unit,
+    update: (RoomInfo) -> Unit
 ) {
     if (roomInfo != null && showDialog) {
         BasicAlertDialog({
             dismiss()
         }) {
-            RoomDialogInternal(roomInfo)
+            RoomDialogInternal(roomInfo, dismiss, update)
         }
     }
 }

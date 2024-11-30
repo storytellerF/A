@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-if [ -z "$IS_LOCAL_HOST" ] || [ -z "$IS_REMOTE_HOST" ]; then
-  echo "IS_LOCAL_HOST/IS_REMOTE_HOST must be set."
+if [ -z "$HOST_TYPE" ]; then
+  echo "HOST_TYPE must be set."
   exit 1
 fi
 
@@ -25,10 +25,9 @@ while IFS= read -r line; do
 done <"$FLAVOR.env"
 
 if [ -z "$PUSH_TO_REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_COMMAND" ]; then
-  if [ "$IS_LOCAL_HOST" = "true" ]; then
+  if [ "$HOST_TYPE" = "local" ]; then
     # 在本地启动
-    IS_DOCKER=false \
-      ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
+    ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
     "./scripts/service_scripts/start-$FLAVOR-compose.sh"
   else
     # 在远程主机上启动
@@ -40,8 +39,7 @@ if [ -z "$PUSH_TO_REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_C
   fi
 
 else
-  IS_DOCKER=false \
-    ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
+  ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
   args=$(grep -v '^#' "$FLAVOR".env | grep -v '^$' | awk -F '=' '{print "--build-arg " $1 "=\"" $2 "\""}' ORS=' ')
   ./scripts/tool_scripts/exec-until-success.sh docker build --platform linux/amd64 "$args" -t "a-server:latest" .
   ./scripts/service_scripts/start-service-on-remote.sh "$PUSH_TO_REMOTE_URI" "$REMOTE_CERT_FILE" "$REMOTE_COMMAND $FLAVOR"

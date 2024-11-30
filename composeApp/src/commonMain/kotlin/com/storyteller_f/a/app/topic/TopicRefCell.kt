@@ -50,7 +50,7 @@ fun TopicRefCellInternal(viewModel: TopicViewModel, onClick: (PrimaryKey) -> Uni
         viewModel.handler,
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
+            .height(120.dp)
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
             .clip(shape)
             .clickable {
@@ -85,7 +85,7 @@ private fun TopicRefCellContent(
         Text(
             (it.content as? TopicContent.Plain)?.plain.toString(),
             color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1
+            maxLines = 3
         )
     }
 }

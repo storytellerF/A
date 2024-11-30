@@ -15,7 +15,7 @@ import com.storyteller_f.a.app.community.CommunityCell
 import com.storyteller_f.a.app.community.CommunityConstrains
 import com.storyteller_f.a.app.community.CommunityGrid
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.obj.AddTaskValue
+import com.storyteller_f.shared.obj.PresetValue
 import kotlinx.serialization.json.Json
 import java.io.File
 
@@ -24,7 +24,7 @@ private class CommunitiesProvider : PreviewParameterProvider<List<CommunityInfo>
         get() = sequence {
             val f = File(com.storyteller_f.a.app.BuildKonfig.PROJECT_PATH, "../../AData/data/preset_community.json")
             if (f.exists()) {
-                val value = Json.decodeFromString<AddTaskValue>(f.readText())
+                val value = Json.decodeFromString<PresetValue>(f.readText())
                 yield(value.communityData.orEmpty().map {
                     CommunityInfo.EMPTY.copy(name = it.name)
                 })

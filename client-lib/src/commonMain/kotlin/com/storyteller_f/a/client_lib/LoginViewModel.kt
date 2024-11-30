@@ -13,7 +13,7 @@ sealed interface ClientSession {
 
     data class PrivateKeySignUp(val privateKey: String) : ClientSession
 
-    data class LoginSuccess(val privateKey: String, val publicKey: String, val address: String) : ClientSession
+    data class SignUpSuccess(val privateKey: String, val publicKey: String, val address: String) : ClientSession
 }
 
 object LoginViewModel {
@@ -21,9 +21,7 @@ object LoginViewModel {
     val privateKey = state.map {
         when (it) {
             is ClientSession.PrivateKeySignIn -> it.privateKey
-
             is ClientSession.PrivateKeySignUp -> it.privateKey
-
             else -> ""
         }
     }
@@ -32,6 +30,7 @@ object LoginViewModel {
     }
     var session: Pair<String, String?>? = null
     val user = MutableStateFlow<UserInfo?>(null)
+    val isAlreadySignUp get() = state.value is ClientSession.SignUpSuccess
 
     fun updateSession(new: String, signature: String?) {
         session = Pair(new, signature)

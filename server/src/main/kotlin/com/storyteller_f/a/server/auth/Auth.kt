@@ -11,7 +11,7 @@ import com.storyteller_f.a.server.unProtectedContent
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
-import com.storyteller_f.shared.utils.downgrade
+import com.storyteller_f.shared.utils.filterNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.User
@@ -139,8 +139,7 @@ fun Application.configureAuth(backend: Backend) {
                 }
             }
             challenge { _, call ->
-                val data = call.getData()
-                call.respond(UnauthorizedResponse(HttpAuthHeader.Single("Custom", data)))
+                call.respondUnauthorizedResponse()
             }
         }
     }
@@ -174,6 +173,11 @@ fun Application.configureAuth(backend: Backend) {
     }
 }
 
+suspend fun ApplicationCall.respondUnauthorizedResponse() {
+    val data = getData()
+    respond(UnauthorizedResponse(HttpAuthHeader.Single("Custom", data)))
+}
+
 private suspend fun RoutingContext.signIn(backend: Backend) {
     val pack = call.receive<SignInPack>()
     val data = call.getData()
@@ -185,16 +189,30 @@ private suspend fun RoutingContext.signIn(backend: Backend) {
             Users.address eq pack.ad
         }
     }
-    userTriple.downgrade {
+    userTriple.filterNull {
         BadRequestException("user not found")
     }.onSuccess { (info, icon, publicKey) ->
         if (verify(publicKey, pack.sig, f)) {
-            call.respond(toFinalUserInfo(info to icon, backend = backend))
+            toFinalUserInfo(info to icon, backend = backend).onSuccess { value ->
+                val id = value.id
+                saveSuccessSessionOnFirst(id)
+                call.respond(value)
+            }.onFailure { exception ->
+                call.respond(HttpStatusCode.BadRequest, "media service get failed.")
+            }
         } else {
             call.respond(HttpStatusCode.BadRequest, "verify failed.")
         }
     }.onFailure {
         call.respond(HttpStatusCode.BadRequest, it.message.toString())
+    }
+}
+
+private fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
+    call.getSession().first.let { session ->
+        if (session is UserSession.Pending) {
+            call.saveSuccessSession(session, id)
+        }
     }
 }
 
@@ -217,6 +235,7 @@ private suspend fun RoutingContext.signUp(backend: Backend) {
                 }) {
                     createUser(User(null, pack.pk, ad, null, name, newId, now()))
                 }.mapResult { value ->
+                    saveSuccessSessionOnFirst(newId)
                     toFinalUserInfo(value, backend)
                 }
             } else {

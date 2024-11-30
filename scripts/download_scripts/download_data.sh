@@ -2,8 +2,8 @@
 set -e
 # 检查参数个数
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <download_url> <password>"
-    exit 1
+    echo "skip download preset data"
+    exit 0
 fi
 
 # 获取参数

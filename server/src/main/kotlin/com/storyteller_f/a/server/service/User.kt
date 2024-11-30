@@ -9,10 +9,23 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.tables.User
 import com.storyteller_f.tables.Users
+import io.ktor.resources.Resource
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.update
+
+@Resource("/users")
+class RouteUsers(val aid: String? = null) {
+    @Resource("{id}")
+    class Id(val parent: RouteUsers = RouteUsers(), val id: PrimaryKey)
+
+    @Resource("update")
+    class Update(val parent: RouteUsers = RouteUsers())
+
+    @Resource("search")
+    class Search(val parent: RouteUsers, val word: String? = null)
+}
 
 fun User.toUserInfo(): UserInfo {
     return UserInfo(id, address, 0, aid, nickname, null)

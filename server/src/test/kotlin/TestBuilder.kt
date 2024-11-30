@@ -45,14 +45,14 @@ fun test(block: suspend (HttpClient) -> Unit) {
     }
 }
 
-suspend fun session(client: HttpClient, block: suspend () -> Unit) {
+suspend fun session(client: HttpClient): Triple<String, String, String> {
     val priKey = generateKeyPair()
     val pubKey = getDerPublicKeyFromPrivateKey(priKey)
     val address = calcAddress(pubKey)
     val data = finalData(client.getData())
     val sign = signature(priKey, data)
-    val userInfo = client.sign(true, pubKey, sign, address)
-    LoginViewModel.updateState(ClientSession.LoginSuccess(priKey, pubKey, address))
+    val userInfo = client.signUp(pubKey, sign)
+    LoginViewModel.updateState(ClientSession.SignUpSuccess(priKey, pubKey, address))
     LoginViewModel.updateUser(userInfo)
-    block()
+    return Triple(priKey, pubKey, address)
 }

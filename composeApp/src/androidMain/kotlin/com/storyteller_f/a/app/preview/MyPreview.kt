@@ -7,7 +7,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.storyteller_f.a.app.BuildKonfig
 import com.storyteller_f.a.app.user.UserDialogInternal
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.obj.AddTaskValue
+import com.storyteller_f.shared.obj.PresetValue
 import kotlinx.serialization.json.Json
 import java.io.File
 
@@ -16,7 +16,7 @@ private class UserInfoPreviewProvider : PreviewParameterProvider<UserInfo> {
         get() = sequence {
             val f = File(BuildKonfig.PROJECT_PATH, "../../AData/data/preset_user.json")
             if (f.exists()) {
-                val value = Json.decodeFromString<AddTaskValue>(f.readText())
+                val value = Json.decodeFromString<PresetValue>(f.readText())
                 yieldAll(value.userData.orEmpty().map {
                     UserInfo.EMPTY.copy(aid = it.id, nickname = it.name)
                 })

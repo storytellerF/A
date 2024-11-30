@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.ExperimentalPagingApi
+import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
@@ -20,22 +21,29 @@ import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.utils.lcm
-import com.storyteller_f.a.client_lib.getJoinCommunities
+import com.storyteller_f.a.client_lib.searchCommunity
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 
 @Composable
 fun MyCommunitiesPage() {
-    val viewModel = viewModel(MyCommunitiesViewModel::class) {
-        MyCommunitiesViewModel()
+    val viewModel = viewModel(CommunitiesViewModel::class) {
+        CommunitiesViewModel(JoinStatusSearch.JOINED, "")
     }
     val items = viewModel.flow.collectAsLazyPagingItems()
+    CommunityList(items)
+}
+
+@Composable
+fun CommunityList(items: LazyPagingItems<CommunityInfo>) {
     StateView(items) {
         CommunityConstrains(modifier = Modifier.fillMaxHeight()) { count, gridSpan, itemSpan ->
             LazyVerticalGrid(
                 GridCells.Fixed(count),
-                contentPadding = PaddingValues(20.dp),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -65,10 +73,13 @@ fun MyCommunitiesPage() {
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class MyCommunitiesViewModel : PagingViewModel<PrimaryKey, CommunityInfo>({
+class CommunitiesViewModel(
+    val joinStatusSearch: JoinStatusSearch,
+    val word: String
+) : PagingViewModel<PrimaryKey, CommunityInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getJoinCommunities(it, 10)
+            client.searchCommunity(it, 10, joinStatusSearch, word)
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
         }
@@ -93,7 +104,7 @@ fun CommunityGrid(communityInfo: CommunityInfo?) {
             .fillMaxWidth()
             .aspectRatio(3f / 4)
             .clickable {
-                communityInfo?.let { appNav.gotoCommunity(it.id) }
+                communityInfo?.let { appNav.goto(it.id, ObjectType.COMMUNITY) }
             }
     ) {
         Box(
@@ -106,7 +117,7 @@ fun CommunityGrid(communityInfo: CommunityInfo?) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (communityInfo != null) {
-                CommunityIcon(communityInfo, 30.dp)
+                CommunityIcon(communityInfo, 30.dp, false, {}) {}
                 Text(
                     communityInfo.name,
                     Modifier,
@@ -131,13 +142,13 @@ fun CommunityCell(
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
                 .clickable {
-                    communityInfo?.id?.let { appNav.gotoCommunity(it) }
+                    communityInfo?.id?.let { appNav.goto(it, ObjectType.COMMUNITY) }
                 }
                 .padding(10.dp)
         },
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        CommunityIcon(communityInfo, 50.dp)
+        CommunityIcon(communityInfo, 50.dp, false, {}) {}
         Text(
             communityInfo?.name.orEmpty(),
             Modifier,

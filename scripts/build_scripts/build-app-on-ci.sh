@@ -33,6 +33,9 @@ while IFS= read -r line; do
     # Ignore empty lines and comments
     [[ -z "$line" || "$line" =~ ^# ]] && continue
     IFS='=' read -r key value <<< "$line"
+    # Check if key starts with "storyteller_f" (case-insensitive)
+    [[ ! "$key" =~ ^[Ss][Tt][Oo][Rr][Yy][Tt][Ee][Ll][Ll][Ee][Rr]_[Ff] ]] && continue
+
     export "$key"="$value"
 done < $TEMP_FILE
 

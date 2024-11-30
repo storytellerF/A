@@ -10,6 +10,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.util.logging.*
+import java.io.File
 
 suspend inline fun <reified R : Any> RoutingContext.usePrincipal(block: (PrimaryKey) -> Result<R?>) {
     usePrincipalOrNull {
@@ -36,11 +37,12 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (P
         block(uid).onSuccess {
             when (it) {
                 null -> call.respond(HttpStatusCode.NotFound)
+                is File -> call.respondFile(it)
                 is Unit -> call.respond(HttpStatusCode.OK)
                 else -> call.respond(it)
             }
         }.onFailure {
-            call.application.log.error(it)
+            call.application.log.error("occur exception", it)
             respondError(it)
         }
     } catch (e: Exception) {
@@ -51,7 +53,7 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (P
 suspend fun RoutingContext.respondError(e: Throwable) {
     when (e) {
         is ForbiddenException -> call.respond(HttpStatusCode.Forbidden, e.message.toString())
-        is UnauthorizedException -> call.respond(HttpStatusCode.Unauthorized)
+        is UnauthorizedException -> call.respondUnauthorizedResponse()
         is MissingRequestParameterException, is ParameterConversionException, is ContentTransformationException ->
             call.respond(
                 HttpStatusCode.BadRequest,

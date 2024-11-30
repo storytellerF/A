@@ -2,22 +2,45 @@ package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.a.server.common.bindPaginationQuery
+import com.storyteller_f.a.server.auth.UnauthorizedException
+import com.storyteller_f.isDup
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Communities
 import com.storyteller_f.tables.Community
-import com.storyteller_f.tables.CommunityJoins
-import com.storyteller_f.tables.createCommunityJoin
-import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.tables.MemberJoins
+import com.storyteller_f.tables.addCommunityJoin
+import com.storyteller_f.tables.exit
+import io.ktor.resources.*
+import io.ktor.server.plugins.BadRequestException
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SizedIterable
-import org.jetbrains.exposed.sql.selectAll
+
+@Resource("/communities")
+class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
+    @Resource("search")
+    class Search(
+        @Suppress("unused") val parent: RouteCommunities = RouteCommunities(),
+        val joinStatus: JoinStatusSearch? = null,
+        val word: String? = null
+    )
+
+    @Resource("{id}")
+    class Id(val parent: RouteCommunities = RouteCommunities(), val id: PrimaryKey) {
+        @Resource("members")
+        class Members(val parent: Id, val word: String?)
+
+        @Resource("join")
+        class Join(val parent: Id)
+
+        @Resource("exit")
+        class Exit(val parent: Id)
+    }
+}
 
 fun Community.toCommunityIfo(
     joinTime: LocalDateTime?
@@ -32,114 +55,86 @@ fun Community.toCommunityIfo(
     joinTime
 )
 
-suspend fun getCommunity(communityId: PrimaryKey, backend: Backend): Result<CommunityInfo?> {
-    return getCommunityInternal(backend) {
-        Community.findById(communityId)
-    }
-}
-
-suspend fun getCommunityByAid(communityAid: String, backend: Backend): Result<CommunityInfo?> {
-    return getCommunityInternal(backend) {
-        Community.find {
-            Communities.aid eq communityAid
-        }
-    }
-}
-
-private suspend fun getCommunityInternal(backend: Backend, searchCommunity: suspend () -> SizedIterable<ResultRow>) =
-    DatabaseFactory.first({
-        Triple(toCommunityIfo(now()), icon, poster)
+suspend fun getCommunity(
+    communityId: PrimaryKey?,
+    communityAid: String?,
+    backend: Backend,
+    id: PrimaryKey?,
+    fillJoinInfo: Boolean?
+): Result<CommunityInfo?> {
+    return DatabaseFactory.queryNotNull({
+        Triple(first.toCommunityIfo(second), first.icon, first.poster)
     }, {
-        Community.wrapRow(it)
-    }, searchCommunity).mapResultNotNull { (info, iconName, coverName) ->
+        Community.wrapRow(it) to if (fillJoinInfo == true) it[MemberJoins.joinTime] else null
+    }) {
+        when {
+            fillJoinInfo != true -> Community.find {
+                if (communityId != null) {
+                    Communities.id eq communityId
+                } else if (communityAid != null) {
+                    Communities.aid eq communityAid
+                } else {
+                    throw BadRequestException("aid must be set.")
+                }
+            }
+
+            id == null -> throw UnauthorizedException()
+            else -> Communities.join(MemberJoins, JoinType.LEFT, Communities.id, MemberJoins.objectId) {
+                MemberJoins.uid eq id
+            }.select(Communities.fields + MemberJoins.joinTime)
+                .where {
+                    if (communityId != null) {
+                        Communities.id eq communityId
+                    } else if (communityAid != null) {
+                        Communities.aid eq communityAid
+                    } else {
+                        throw BadRequestException("aid must be set.")
+                    }
+                }
+        }.limit(1).firstOrNull()
+    }.mapResultNotNull { (info, iconName, coverName) ->
         backend.mediaService.get("apic", listOf(iconName, coverName)).map { (iconUrl, coverUrl) ->
             info.copy(icon = getMediaInfo(iconUrl), poster = getMediaInfo(coverUrl))
         }
     }
+}
 
 suspend fun joinCommunity(
     uid: PrimaryKey,
-    communityId: PrimaryKey
-) = DatabaseFactory.dbQuery {
-    createCommunityJoin(uid, communityId)
-}.map {
-    it.insertedCount > 0
-}
-
-suspend fun searchCommunities(
-    word: String,
-    backend: Backend,
-    prePageToken: PrimaryKey?,
-    nextPageToken: PrimaryKey?,
-    size: Int
-): Result<PaginationResult<CommunityInfo>?> {
-    return DatabaseFactory.mapQuery({
-        Triple(toCommunityIfo(null), icon, poster)
-    }, Community::wrapRow) {
-        val query = Community.find {
-            Communities.name like "%$word%"
-        }
-        query.bindPaginationQuery(Communities, prePageToken, nextPageToken, size)
-    }.mapResult { value ->
-        DatabaseFactory.count {
-            Community.find {
-                Communities.name like "%$word%"
+    communityId: PrimaryKey,
+    backend: Backend
+) = getCommunity(communityId, null, backend, uid, true).mapResultNotNull { community ->
+    if (community.joinTime != null) {
+        Result.success(community)
+    } else {
+        val time = now()
+        addCommunityJoin(uid, communityId, time).mapResult { value ->
+            if (value > 0) {
+                Result.success(community.copy(joinTime = time))
+            } else {
+                Result.failure(BadRequestException("join failed."))
             }
-        }.mapResult { value1 ->
-            parseCommunityList(backend, value).map { value ->
-                PaginationResult(value, value1)
+        }.recoverCatching {
+            if (it.isDup()) {
+                getCommunity(communityId, null, backend, uid, true)
+            } else {
+                Result.failure(it)
             }
         }
     }
 }
 
-suspend fun searchJoinedCommunities(
-    uid: PrimaryKey,
-    backend: Backend,
-    pre: PrimaryKey?,
-    next: PrimaryKey?,
-    size: Int
-): Result<PaginationResult<CommunityInfo>?> {
-    return DatabaseFactory.mapQuery({
-        val (community, joinTime) = this
-        Triple(community.toCommunityIfo(joinTime), community.icon, community.poster)
-    }, {
-        val community = Community.wrapRow(it)
-        val joinTime = it[CommunityJoins.joinTime]
-        community to joinTime
-    }) {
-        val query = Communities.join(CommunityJoins, JoinType.INNER, Communities.id, CommunityJoins.communityId)
-            .select(Communities.fields + CommunityJoins.joinTime)
-            .where {
-                CommunityJoins.uid eq uid
-            }
-        query.bindPaginationQuery(Communities, pre, next, size)
-    }.mapResult { list ->
-        DatabaseFactory.dbQuery {
-            Communities.join(CommunityJoins, JoinType.INNER, Communities.id, CommunityJoins.communityId)
-                .selectAll()
-                .where {
-                    CommunityJoins.uid eq uid
-                }.count()
-        }.mapResult { count ->
-            parseCommunityList(backend, list).map { value ->
-                PaginationResult(value, count)
+suspend fun exitCommunity(communityId: PrimaryKey, id: PrimaryKey, backend: Backend) =
+    getCommunity(communityId, null, backend, id, true).mapResultNotNull { info ->
+        if (info.joinTime == null) {
+            Result.success(info)
+        } else {
+            exit(communityId, id).mapResult { i ->
+                if (i > 0) {
+                    Result.success(info.copy(joinTime = null))
+                } else {
+                    Result.failure(BadRequestException("exit failed"))
+                }
             }
         }
     }
-}
-
-private fun parseCommunityList(
-    backend: Backend,
-    list: List<Triple<CommunityInfo, String?, String?>>
-): Result<List<CommunityInfo>> {
-    return backend.mediaService.get("apic", list.flatMap { (_, icon, poster) ->
-        listOf(icon, poster)
-    }).map { icons ->
-        list.mapIndexed { i, communityPair ->
-            val first = icons[i * 2]
-            val second = icons[i * 2 + 1]
-            communityPair.first.copy(icon = getMediaInfo(first), poster = getMediaInfo(second))
-        }
-    }
-}

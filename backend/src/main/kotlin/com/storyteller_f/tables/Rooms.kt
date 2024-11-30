@@ -50,11 +50,12 @@ class Room(
     }
 }
 
-suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean> {
-    return DatabaseFactory.dbQuery {
-        val room = Room.findRoomById(roomId)?.let {
+suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
+    return DatabaseFactory.queryNotNull({
+        communityId == null
+    }) {
+        Room.findRoomById(roomId)?.let {
             Room.wrapRow(it)
         }
-        room?.communityId == null
     }
 }

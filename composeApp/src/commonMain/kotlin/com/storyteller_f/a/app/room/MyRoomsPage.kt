@@ -26,24 +26,29 @@ import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.a.client_lib.getJoinedRooms
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 
 @Composable
 fun MyRoomsPage() {
-    val viewModel = viewModel(MyRoomsViewModel::class) {
-        MyRoomsViewModel()
+    val viewModel = viewModel(RoomsViewModel::class) {
+        RoomsViewModel(JoinStatusSearch.JOINED, "")
     }
     val items = viewModel.flow.collectAsLazyPagingItems()
     RoomList(items)
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class MyRoomsViewModel : PagingViewModel<PrimaryKey, RoomInfo>({
+class RoomsViewModel(
+    val joinStatusSearch: JoinStatusSearch,
+    val word: String,
+    val community: PrimaryKey? = null
+) : PagingViewModel<PrimaryKey, RoomInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getJoinedRooms(10, it)
+            client.getJoinedRooms(10, it, joinStatusSearch, word, community)
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKey())
         }
@@ -56,7 +61,7 @@ fun RoomList(
 ) {
     StateView(items) {
         LazyColumn(
-            contentPadding = PaddingValues(20.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -67,7 +72,9 @@ fun RoomList(
                 },
                 contentType = items.itemContentType()
             ) { index ->
-                RoomCell(items[index], false)
+                RoomCell(items[index], false) {
+
+                }
             }
         }
     }
@@ -76,7 +83,8 @@ fun RoomList(
 @Composable
 fun RoomCell(
     roomInfo: RoomInfo?,
-    customBackground: Boolean = false
+    customBackground: Boolean = false,
+    update: (RoomInfo) -> Unit
 ) {
     val appNav = LocalAppNav.current
     val onClick = appNav::goto
@@ -95,42 +103,54 @@ fun RoomCell(
                 .padding(10.dp)
         }
     ) {
-        RoomIcon(roomInfo)
+        RoomIcon(roomInfo, showDialog = false, updateShowDialog = {}, update = update)
         Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(roomInfo?.name.orEmpty(), color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
     }
     if (roomInfo != null) {
-        RoomDialog(showDialog, roomInfo) {
+        RoomDialog(showDialog, roomInfo, {
             showDialog = false
-        }
+        }, update)
     }
 }
 
 @Composable
-fun RoomIcon(roomInfo: RoomInfo?, size: Dp = 50.dp) {
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
+fun RoomIcon(
+    roomInfo: RoomInfo?,
+    size: Dp = 50.dp,
+    enableClick: Boolean = false,
+    showDialog: Boolean,
+    updateShowDialog: (Boolean) -> Unit,
+    update: (RoomInfo) -> Unit
+) {
     val iconUrl = roomInfo?.icon?.url
     val radius = 8.dp
+    val shape = RoundedCornerShape(radius)
     if (iconUrl != null) {
-        AsyncImage(iconUrl, contentDescription = "${roomInfo.name}'s icon", modifier = Modifier.size(size).clickable {
-            showDialog = true
-        }.clip(RoundedCornerShape(radius)))
+        AsyncImage(
+            iconUrl,
+            contentDescription = "${roomInfo.name}'s icon",
+            modifier = Modifier.size(size).clip(shape).clickable(enableClick) {
+                updateShowDialog(true)
+            }
+        )
     } else {
         Box(
             modifier = Modifier.size(size)
-                .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(radius))
-                .clickable {
-                    showDialog = true
+                .background(MaterialTheme.colorScheme.tertiaryContainer, shape)
+                .clip(shape)
+                .clickable(enableClick) {
+                    updateShowDialog(true)
                 },
             contentAlignment = Alignment.Center
         ) {
             Text(roomInfo?.name?.safeFirstUnicode()?.toString() ?: "")
         }
     }
-    RoomDialog(showDialog, roomInfo) {
-        showDialog = false
+    roomInfo?.id?.let {
+        RoomDialog(showDialog, roomInfo, {
+            updateShowDialog(false)
+        }, update)
     }
 }

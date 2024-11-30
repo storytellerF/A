@@ -4,7 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.*
+import com.storyteller_f.a.app.client
+import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import io.github.aakira.napier.Napier
+import io.ktor.client.HttpClient
 
 @OptIn(ExperimentalPagingApi::class)
 abstract class PagingViewModel<K : Any, V : Any>(
@@ -54,6 +59,21 @@ class SimplePagingSource<KEY : Any, DATUM : Any>(val service: suspend (KEY?) -> 
     }
 
     override fun getRefreshKey(state: PagingState<KEY, DATUM>): KEY? {
+        return null
+    }
+}
+
+class RegularPagingSource<DATUM : Any>(val service: suspend HttpClient.(PrimaryKey?) -> ServerResponse<DATUM>) :
+    PagingSource<PrimaryKey, DATUM>() {
+    override suspend fun load(params: LoadParams<PrimaryKey>): PagingSourceLoadResult<PrimaryKey, DATUM> {
+        return serviceCatching {
+            client.service(params.key)
+        }.map {
+            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
+        }.loadResult()
+    }
+
+    override fun getRefreshKey(state: PagingState<PrimaryKey, DATUM>): PrimaryKey? {
         return null
     }
 }

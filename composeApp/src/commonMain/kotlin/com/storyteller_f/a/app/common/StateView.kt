@@ -47,8 +47,12 @@ fun <T : Any> StateView(
         delay(REFRESH_AFTER)
         if (refreshing && refresh !is LoadStateLoading) refreshing = false
     }
+    val loadState by produceState<androidx.paging.LoadState?>(null, key1 = refresh) {
+        delay(100)
+        value = refresh
+    }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        StateView(state = refresh.toLoadingState(pagingItems.itemCount), refresh = {
+        StateView(state = loadState.toLoadingState(pagingItems.itemCount), refresh = {
             pagingItems.refresh()
         }, content)
         PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
@@ -57,15 +61,16 @@ fun <T : Any> StateView(
 
 const val REFRESH_AFTER = 300L
 
-private fun LoadState?.toLoadingState(count: Int) = when (this) {
-    null -> null
+private fun LoadState?.toLoadingState(count: Int) =
+    when (this) {
+        null -> null
 
-    is LoadStateLoading -> LoadingState.Loading("loading")
+        is LoadStateLoading -> LoadingState.Loading("loading")
 
-    is LoadStateError -> LoadingState.Error(error)
+        is LoadStateError -> LoadingState.Error(error)
 
-    is LoadStateNotLoading -> LoadingState.Done(count)
-}
+        is LoadStateNotLoading -> LoadingState.Done(count)
+    }
 
 @Composable
 fun StateView(state: LoadingState?, refresh: () -> Unit, content: @Composable () -> Unit) {

@@ -42,7 +42,7 @@ suspend fun <T : Any, R> Result<T?>.mapCatchingNotNull(block: suspend (T) -> R?)
     }
 }
 
-suspend fun <T> Result<T?>.downgrade(block: suspend () -> Throwable): Result<T> {
+suspend fun <T> Result<T?>.filterNull(block: suspend () -> Throwable): Result<T> {
     return if (isSuccess) {
         val t = getOrNull()
         if (t == null) {
@@ -52,5 +52,13 @@ suspend fun <T> Result<T?>.downgrade(block: suspend () -> Throwable): Result<T> 
         }
     } else {
         Result.failure(exceptionOrNull()!!)
+    }
+}
+
+suspend fun <T> Result<T>.recoverError(block: suspend (Throwable) -> Result<T>): Result<T> {
+    if (isSuccess) {
+        return this
+    } else {
+        return block(exceptionOrNull()!!)
     }
 }

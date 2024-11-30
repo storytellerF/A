@@ -3,7 +3,9 @@ package com.storyteller_f.a.app.topic
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalTextStyle
@@ -12,12 +14,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
+import com.mikepenz.markdown.compose.LocalMarkdownColors
+import com.mikepenz.markdown.compose.LocalMarkdownDimens
+import com.mikepenz.markdown.compose.LocalMarkdownPadding
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.components.markdownComponents
@@ -29,12 +42,16 @@ import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.ReactionRow
 import com.storyteller_f.a.app.compontents.TextUnitToPx
 import com.storyteller_f.a.app.compontents.buildTexPainter
-import com.storyteller_f.a.app.user.UserRow
+import com.storyteller_f.a.app.user.UserCell
 import com.storyteller_f.a.app.user.UserViewModel
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
+import dev.snipme.highlights.Highlights
+import dev.snipme.highlights.model.BoldHighlight
+import dev.snipme.highlights.model.CodeHighlight
+import dev.snipme.highlights.model.ColorHighlight
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.markdown.MarkdownTokenTypes
@@ -71,7 +88,7 @@ fun TopicCellInternal(
     ) {
         val avatarSize = 40.dp
         if (showAvatar) {
-            UserRow(authorInfo, avatarSize)
+            UserCell(authorInfo, true, avatarSize)
         }
         Column(
             if (contentAlignAvatar) {
@@ -100,7 +117,7 @@ fun CustomCodeFence(modal: MarkdownComponentModel, content: String) {
     val langOffset = children.indexOfFirst {
         it.type == MarkdownTokenTypes.FENCE_LANG
     }
-    val lang = children.getOrNull(langOffset)?.getTextInNode(content)
+    val lang = children.getOrNull(langOffset)?.getTextInNode(content).toString().lowercase()
     (when {
         listOf("com.storyteller_f.a", "c.s.a", "csa").contains(lang) -> {
             RefBlock(children, langOffset, content)
@@ -110,9 +127,58 @@ fun CustomCodeFence(modal: MarkdownComponentModel, content: String) {
             LatexBlock(children, langOffset, content)
         }
 
+        Highlights.languages().map { language -> language.name.lowercase() }.contains(lang) -> {
+            val highlights by remember {
+                mutableStateOf(
+                    Highlights
+                        .Builder(code = readFenceContent(children, langOffset, content).replaceIndent())
+                        .build()
+                )
+            }
+            val text by produceState<AnnotatedString?>(null) {
+                value = highlights
+                    .getHighlights()
+                    .generateAnnotatedString(highlights.getCode())
+            }
+            val backgroundCodeColor = LocalMarkdownColors.current.codeBackground
+            val codeBackgroundCornerSize = LocalMarkdownDimens.current.codeBackgroundCornerSize
+            val codeBlockPadding = LocalMarkdownPadding.current.codeBlock
+            text?.let {
+                val shape = RoundedCornerShape(codeBackgroundCornerSize)
+                val scrollState = rememberScrollState()
+                Text(
+                    text = it,
+                    modifier = Modifier.fillMaxWidth().background(backgroundCodeColor, shape)
+                        .clip(shape)
+                        .padding(codeBlockPadding).horizontalScroll(scrollState)
+                )
+            }
+        }
+
         else -> null
     }) ?: MarkdownCodeFence(modal.content, modal.node)
 }
+
+fun List<CodeHighlight>.generateAnnotatedString(code: String) =
+    buildAnnotatedString {
+        append(code)
+
+        forEach {
+            when (it) {
+                is BoldHighlight -> addStyle(
+                    SpanStyle(fontWeight = FontWeight.Bold),
+                    start = it.location.start,
+                    end = it.location.end,
+                )
+
+                is ColorHighlight -> addStyle(
+                    SpanStyle(color = Color(it.rgb).copy(alpha = 1f)),
+                    start = it.location.start,
+                    end = it.location.end,
+                )
+            }
+        }
+    }
 
 @Composable
 private fun RefBlock(

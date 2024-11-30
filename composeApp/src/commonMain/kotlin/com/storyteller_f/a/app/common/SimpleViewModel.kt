@@ -20,6 +20,10 @@ abstract class SimpleViewModel<T> : ViewModel() {
             loadInternal()
         }
     }
+
+    fun update(t: T) {
+        handler.data.value = t
+    }
 }
 
 @Composable

@@ -18,13 +18,14 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compontents.ReactionRow
 import com.storyteller_f.a.app.search.CustomSearchBar
+import com.storyteller_f.a.app.search.SearchScope
 import com.storyteller_f.a.app.topic.TopicCellInternal
 import com.storyteller_f.a.app.topic.TopicContentField
 import com.storyteller_f.a.app.topic.TopicDialogInternal
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.obj.AddTaskValue
+import com.storyteller_f.shared.obj.PresetValue
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -40,7 +41,7 @@ private class TopicPagePreviewProvider : PreviewParameterProvider<Pair<TopicInfo
             )
             if (SystemFileSystem.exists(p)) {
                 val content = SystemFileSystem.source(p).buffered().readString()
-                val value = Json.decodeFromString<AddTaskValue>(content)
+                val value = Json.decodeFromString<PresetValue>(content)
                 val value1 = value.topicData.orEmpty().filter {
                     it.room != null
                 }.map {
@@ -56,7 +57,7 @@ private class TopicPagePreviewProvider : PreviewParameterProvider<Pair<TopicInfo
 fun PreviewTopic(@PreviewParameter(TopicPagePreviewProvider::class) param: Pair<TopicInfo, List<TopicInfo>>) {
     val topic = param.first
     Column {
-        CustomSearchBar {
+        CustomSearchBar(SearchScope.TopicTopic(0)) {
             Icon(Icons.Default.Topic, "topic", modifier = Modifier.clickable {
             })
         }

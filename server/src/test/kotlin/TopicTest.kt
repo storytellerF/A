@@ -4,7 +4,6 @@ import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.a.client_lib.getTopicSnapshot
 import com.storyteller_f.a.client_lib.joinCommunity
 import com.storyteller_f.a.client_lib.searchTopics
-import com.storyteller_f.a.client_lib.verifySnapshot
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
@@ -12,7 +11,20 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Community
 import io.ktor.client.call.body
-import io.ktor.client.statement.bodyAsText
+import org.apache.fontbox.ttf.OTFParser
+import org.apache.pdfbox.io.RandomAccessRead
+import org.apache.pdfbox.io.RandomAccessReadBufferedFile
+import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.pdmodel.PDPage
+import org.apache.pdfbox.pdmodel.PDPageContentStream
+import org.apache.pdfbox.pdmodel.common.PDStream
+import org.apache.pdfbox.pdmodel.font.PDFont
+import org.apache.pdfbox.pdmodel.font.PDTrueTypeFont
+import org.apache.pdfbox.pdmodel.font.PDType0Font
+import java.awt.Font
+import java.awt.GraphicsEnvironment
+import java.io.File
+import java.io.RandomAccessFile
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -25,35 +37,61 @@ class TopicTest {
             DatabaseFactory.dbQuery {
                 Community.new(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
             }
-            session(client) {
-                client.joinCommunity(newId)
-                val lastTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "world").body<TopicInfo>()
-                client.createNewTopic(ObjectType.COMMUNITY, newId, "sysroot")
-                val firstTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "world").body<TopicInfo>()
+            session(client)
+            client.joinCommunity(newId)
+            val lastTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello world").body<TopicInfo>()
+            client.createNewTopic(ObjectType.COMMUNITY, newId, "sysroot")
+            val firstTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "best world").body<TopicInfo>()
 
-                val topics = client.searchTopics(null, 1, listOf("world"))
-                assertEquals(2, topics.pagination?.total)
-                assertEquals(1, topics.data.size)
-                assertEquals(firstTopic.id, topics.data.first().id)
-                val topics2 = client.searchTopics(topics.data.first().id, 1, listOf("world"))
-                assertEquals(lastTopic.id, topics2.data.first().id)
-            }
+            val topics = client.searchTopics(null, 1, listOf("world"), null, null)
+            assertEquals(2, topics.pagination?.total)
+            assertEquals(1, topics.data.size)
+            assertEquals(firstTopic.id, topics.data.first().id)
+            val topics2 = client.searchTopics(topics.data.first().id, 1, listOf("world"), null, null)
+            assertEquals(lastTopic.id, topics2.data.first().id)
         }
     }
 
     @Test
     fun `test topic snapshot`() {
         test { client ->
-            session(client) {
-                val newId = SnowflakeFactory.nextId()
-                DatabaseFactory.dbQuery {
-                    Community.new(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
-                }
-                client.joinCommunity(newId)
-                val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello").body<TopicInfo>()
-                val pack = client.getTopicSnapshot(topicInfo.id).body<TopicSnapshotPack>()
-                assertEquals("true", client.verifySnapshot(pack).bodyAsText())
+            session(client)
+            val newId = SnowflakeFactory.nextId()
+            DatabaseFactory.dbQuery {
+                Community.new(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
             }
+            client.joinCommunity(newId)
+            val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello").body<TopicInfo>()
+            client.getTopicSnapshot(topicInfo.id).body<TopicSnapshotPack>()
+        }
+    }
+
+    @Test
+    fun `test generate pdf`() {
+        PDDocument().use { document ->
+            val firstPage = PDPage()
+            PDPageContentStream(document, firstPage).use { stream ->
+                stream.beginText()
+                val otf = OTFParser().parse(
+                    RandomAccessReadBufferedFile(
+                        File(
+                            "~/DIN-Regular.otf".replace(
+                                "~",
+                                System.getProperty("user.home")
+                            )
+                        )
+                    )
+                )
+                stream.setFont(PDType0Font.load(document, otf, false), 12f)
+                stream.newLineAtOffset(100F, 700F)
+                stream.setLeading(14.5f)
+                stream.showText("hello")
+                stream.newLine()
+                stream.showText("world")
+                stream.endText()
+            }
+            document.addPage(firstPage)
+            document.save("test.pdf")
         }
     }
 }

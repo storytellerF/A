@@ -1,8 +1,5 @@
 package com.storyteller_f.a.app
 
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +10,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.DesignServices
 import androidx.compose.material.icons.filled.Diversity3
@@ -24,21 +22,26 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import androidx.navigation.NavOptions
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.community.MyCommunitiesPage
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.room.MyRoomsPage
 import com.storyteller_f.a.app.search.CustomSearchBar
+import com.storyteller_f.a.app.search.SearchScope
 import com.storyteller_f.a.app.world.WorldPage
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
 import kotlinx.coroutines.launch
-import moe.tlaster.precompose.navigation.*
-import moe.tlaster.precompose.navigation.transition.NavTransition
 
 @Composable
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
@@ -49,40 +52,48 @@ fun HomePage() {
         NavRoute("/communities", Icons.Default.Diversity3, "communities"),
         NavRoute("/rooms", Icons.Default.ChatBubble, "rooms"),
     )
-
-    Surface {
-        when (size.widthSizeClass) {
-            WindowWidthSizeClass.Compact -> {
+    when (size.widthSizeClass) {
+        WindowWidthSizeClass.Compact -> {
+            val pagerState = rememberPagerState {
+                3
+            }
+            Scaffold(bottomBar = {
+                val scope = rememberCoroutineScope()
+                CustomBottomNav(homeNavs[pagerState.currentPage].path, homeNavs) { path ->
+                    scope.launch {
+                        pagerState.animateScrollToPage(homeNavs.indexOfFirst {
+                            it.path == path
+                        })
+                    }
+                }
+            }) {
                 Column(
                     Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    CustomSearchBar {
+                    val scope = when(pagerState.currentPage) {
+                        1 -> SearchScope.MyCommunity
+                        2 -> SearchScope.MyRoom
+                        else -> SearchScope.World
+                    }
+                    CustomSearchBar(scope) {
                         ProjectIcon()
                     }
-                    val pagerState = rememberPagerState {
-                        3
-                    }
-                    HomePager(Modifier.weight(1f), pagerState)
-                    val scope = rememberCoroutineScope()
-                    CustomBottomNav(homeNavs[pagerState.currentPage].path, homeNavs) { path ->
-                        scope.launch {
-                            pagerState.animateScrollToPage(homeNavs.indexOfFirst {
-                                it.path == path
-                            })
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    HomePager(Modifier.weight(1f).padding(bottom = it.calculateBottomPadding()), pagerState)
                 }
             }
+        }
 
-            else -> {
-                Row(Modifier.statusBarsPadding()) {
-                    val navigator = rememberNavigator()
-                    val currentEntry by navigator.currentEntry.collectAsState(null)
-                    CustomRailNav(currentEntry, homeNavs) {
-                        navigator.navigate(it, NavOptions(launchSingleTop = true))
+        else -> {
+            Scaffold {
+                Row(Modifier) {
+                    val navigator = rememberNavController()
+                    val currentEntry by navigator.currentBackStackEntryFlow.collectAsState(null)
+                    CustomRailNav(currentEntry?.destination?.route, homeNavs) {
+                        navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
                     }
-                    HomeNavHost(navigator, modifier = Modifier.weight(1f))
+                    HomeNavHost(navigator, modifier = Modifier.weight(1f).padding(bottom = it.calculateBottomPadding()))
                 }
             }
         }
@@ -100,6 +111,7 @@ private fun ProjectIcon() {
     Box(
         modifier = Modifier.size(40.dp)
             .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+            .clip(CircleShape)
             .clickable {
                 showDialog = true
             },
@@ -118,13 +130,13 @@ private fun ProjectIcon() {
 
 @Composable
 fun CustomRailNav(
-    currentEntry: BackStackEntry?,
+    currentEntry: String?,
     navRoutes: List<NavRoute>,
     navigate: (String) -> Unit = {}
 ) {
     NavigationRail(modifier = Modifier.padding(horizontal = 8.dp)) {
         navRoutes.forEach {
-            NavigationRailItem(currentEntry?.path == it.path, {
+            NavigationRailItem(currentEntry == it.path, {
                 navigate(it.path)
             }, icon = {
                 Icon(imageVector = it.icon, contentDescription = it.label)
@@ -156,34 +168,29 @@ fun CustomBottomNav(
 
 @Composable
 private fun HomeNavHost(
-    navigator: Navigator,
+    navigator: NavHostController,
     modifier: Modifier
 ) {
     Column(modifier = modifier) {
-        CustomSearchBar {
+        val scope = when (navigator.currentDestination?.route) {
+            "/communities" -> SearchScope.MyCommunity
+            "/rooms" -> SearchScope.MyRoom
+            else -> SearchScope.World
+        }
+        CustomSearchBar(scope) {
             ProjectIcon()
         }
-        NavHost(navigator, initialRoute = "/world", modifier = modifier, navTransition = remember {
-            NavTransition(
-                createTransition = fadeIn() + slideInVertically {
-                    it / 4
-                },
-                destroyTransition = fadeOut(),
-                pauseTransition = fadeOut(),
-                resumeTransition = fadeIn() + slideInVertically {
-                    it / 4
-                }
-            )
-        }) {
-            scene("/world") {
+        Spacer(modifier = Modifier.height(10.dp))
+        NavHost(navigator, "/world") {
+            composable("/world") {
                 WorldPage()
             }
-            scene("/communities") {
+            composable("/communities") {
                 UserHost {
                     MyCommunitiesPage()
                 }
             }
-            scene("/rooms") {
+            composable("/rooms") {
                 UserHost {
                     MyRoomsPage()
                 }
@@ -198,7 +205,6 @@ private fun HomePager(
     modifier: Modifier,
     pagerState: PagerState
 ) {
-    LocalAppNav.current
     HorizontalPager(pagerState, modifier) {
         when (it) {
             0 -> WorldPage()
@@ -225,7 +231,9 @@ private fun UserHost(content: @Composable (UserInfo) -> Unit) {
             Button({
                 appNav.gotoLogin()
             }) {
-                Text("Login")
+                Icon(Icons.AutoMirrored.Default.Login, "SignIn")
+                Spacer(modifier = Modifier.width(10.dp))
+                Text("SignIn")
             }
         }
     }
@@ -233,17 +241,19 @@ private fun UserHost(content: @Composable (UserInfo) -> Unit) {
 
 @Composable
 private fun ProjectDialogInternal() {
+    val uriHandler = LocalUriHandler.current
     Surface(shape = RoundedCornerShape(8.dp)) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column {
                 AsyncImage(
                     BuildKonfig.GITHUB_CARD_LINK,
                     contentDescription = "github card",
-                    modifier = Modifier.fillMaxWidth().aspectRatio(899f / 296)
+                    modifier = Modifier.fillMaxWidth().aspectRatio(899f / 296).clickable {
+                        uriHandler.openUri("https://github.com/storytellerF/A")
+                    }
                 )
             }
             Column {
-                val uriHandler = LocalUriHandler.current
                 ButtonNav(Icons.Default.DesignServices, "设计文档") {
                     uriHandler.openUri("https://storytellerf.github.io/aspec/")
                 }

@@ -115,7 +115,7 @@ private suspend fun addTopicIntoRoom(
     backend: Backend
 ): Result<TopicInfo?> {
     val roomId = roomInfo.first
-    return isRoomJoined(roomId, uid).mapResult { bool ->
+    return isMemberJoined(roomId, uid).mapResult { bool ->
         if (bool) {
             val content = newTopic.content
             val newId = SnowflakeFactory.nextId()
@@ -130,7 +130,7 @@ private suspend fun addTopicIntoRoom(
                 now()
             )
 
-            checkRoomIsPrivate(roomId).mapResult { isPrivate ->
+            checkRoomIsPrivate(roomId).mapResultNotNull { isPrivate ->
                 if (isPrivate) {
                     when {
                         content !is TopicContent.Encrypted -> Result.failure(
@@ -164,16 +164,12 @@ private suspend fun savePlainTopicContent(
     backend: Backend
 ): Result<TopicInfo> {
     return DatabaseFactory.dbQuery {
-        val newTopicId = Topic.new(topic)
+        Topic.new(topic)
         backend.topicDocumentService.saveDocument(
-            listOf(
-                TopicDocument(
-                    newTopicId,
-                    (content).plain
-                )
-            )
-        )
-        topic.toTopicInfo()
+            listOf(TopicDocument.fromTopic(topic, content))
+        ).getOrThrow()
+
+        topic.toTopicInfo().copy(content = content)
     }
 }
 
@@ -183,13 +179,13 @@ suspend fun saveEncryptedTopicContent(
     encryptedAes: Map<PrimaryKey, String>,
     encryptedContent: String
 ) = DatabaseFactory.dbQuery {
-    val newTopicId = Topic.new(topic)
+    Topic.new(topic)
     EncryptedTopics.insert {
         it[content] = ExposedBlob(encryptedContent.hexToByteArray())
-        it[topicId] = newTopicId
+        it[topicId] = topic.id
     }
     EncryptedTopicKeys.batchInsert(encryptedAes.keys) {
-        this[EncryptedTopicKeys.topicId] = newTopicId
+        this[EncryptedTopicKeys.topicId] = topic.id
         this[EncryptedTopicKeys.uid] = it
         this[EncryptedTopicKeys.encryptedAes] =
             ExposedBlob(encryptedAes[it]!!.hexToByteArray())
@@ -199,10 +195,10 @@ suspend fun saveEncryptedTopicContent(
 
 private suspend fun isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Result<Boolean> {
     return DatabaseFactory.mapQuery({
-        RoomJoin.wrapRow(this)
+        MemberJoin.wrapRow(this)
     }) {
-        RoomJoins.selectAll().where {
-            RoomJoins.roomId eq roomId
+        MemberJoins.selectAll().where {
+            MemberJoins.objectId eq roomId
         }
     }.map { value ->
         value.map {
