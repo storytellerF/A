@@ -6,10 +6,7 @@ if [ -z "$DOCKER_IMAGE_NAME" ]; then
   exit 1
 fi
 
-IS_HOST=true \
-  IS_DOCKER=false \
-  BUILD_ON_LOCAL_HOST=true \
-  BUILD_ON_REMOTE_HOST=false \
-  BUILD_ON_DOCKER=false \
+HOST_TYPE=local \
+  BUILD_ON=local \
   ./scripts/build_scripts/build-all-in-flavor.sh alpha true
 docker build -t "$DOCKER_IMAGE_NAME" .

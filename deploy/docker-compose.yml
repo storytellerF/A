@@ -40,10 +40,8 @@ services:
       args:
         IS_PROD: ${IS_PROD}
         FLAVOR: ${FLAVOR}
-        IS_HOST: false
-        BUILD_ON_LOCAL_HOST: ${BUILD_ON_LOCAL_HOST}
-        BUILD_ON_REMOTE_HOST: ${BUILD_ON_REMOTE_HOST}
-        BUILD_ON_DOCKER: ${BUILD_ON_DOCKER}
+        HOST_TYPE: docker
+        BUILD_ON: ${BUILD_ON}
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
     profiles:

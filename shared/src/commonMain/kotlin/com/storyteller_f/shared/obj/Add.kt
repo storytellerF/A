@@ -3,7 +3,7 @@ package com.storyteller_f.shared.obj
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AddCommunity(
+data class PresetCommunity(
     val icon: String? = null,
     val name: String,
     val id: String,
@@ -12,17 +12,16 @@ data class AddCommunity(
 )
 
 @Serializable
-data class AddUser(
+data class PresetUser(
     val icon: String? = null,
     val name: String,
     val id: String,
-    val publicKey: String,
     val tagline: String,
     val privateKey: String,
 )
 
 @Serializable
-data class AddTopic(
+data class PresetTopic(
     val content: String,
     val community: String? = null,
     val room: String? = null,
@@ -35,7 +34,7 @@ data class AddTopic(
 )
 
 @Serializable
-data class AddRoom(
+data class PresetRoom(
     val name: String,
     val community: String? = null,
     val users: List<String>,
@@ -45,10 +44,10 @@ data class AddRoom(
 )
 
 @Serializable
-data class AddTaskValue(
+data class PresetValue(
     val type: String,
-    val communityData: List<AddCommunity>? = null,
-    val userData: List<AddUser>? = null,
-    val topicData: List<AddTopic>? = null,
-    val roomData: List<AddRoom>? = null
+    val communityData: List<PresetCommunity>? = null,
+    val userData: List<PresetUser>? = null,
+    val topicData: List<PresetTopic>? = null,
+    val roomData: List<PresetRoom>? = null
 )

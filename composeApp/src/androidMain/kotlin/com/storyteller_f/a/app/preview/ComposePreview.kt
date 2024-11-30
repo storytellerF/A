@@ -6,7 +6,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.storyteller_f.a.app.topic.EditTopicPage
 import com.storyteller_f.a.app.topic.PreviewTopicPage
-import com.storyteller_f.shared.obj.AddTaskValue
+import com.storyteller_f.shared.obj.PresetValue
 import kotlinx.serialization.json.Json
 import java.io.File
 
@@ -15,7 +15,7 @@ private class ContentListProvider : PreviewParameterProvider<String> {
         get() = sequence {
             val f = File(com.storyteller_f.a.app.BuildKonfig.PROJECT_PATH, "../../AData/data/preset_topic.json")
             if (f.exists()) {
-                val value = Json.decodeFromString<AddTaskValue>(f.readText())
+                val value = Json.decodeFromString<PresetValue>(f.readText())
                 yieldAll(value.topicData.orEmpty().filter {
                     it.room != null
                 }.map {

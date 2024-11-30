@@ -49,6 +49,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.bcprov.jdk18on)
             implementation(libs.bcpkix.jdk18on)
+            implementation(projects.cryptoJvm)
 //            implementation(libs.bctls.jdk18on)
             implementation(libs.cryptography.provider.jdk)
         }
@@ -61,6 +62,7 @@ kotlin {
             implementation(libs.kotlin.test)
         }
         jvmMain.dependencies {
+            implementation(projects.cryptoJvm)
             implementation(libs.bcprov.jdk18on)
             implementation(libs.bcpkix.jdk18on)
             implementation(libs.cryptography.provider.jdk)

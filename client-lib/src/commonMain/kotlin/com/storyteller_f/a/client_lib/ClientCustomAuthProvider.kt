@@ -11,15 +11,19 @@ import io.ktor.http.auth.*
 
 class ClientCustomAuthProvider : AuthProvider {
 
-    @Deprecated("Please use sendWithoutRequest function instead", ReplaceWith("TODO(\"Not yet implemented\")"))
-    override val sendWithoutRequest: Boolean
-        get() = true
-
     override suspend fun addRequestHeaders(request: HttpRequestBuilder, authHeader: HttpAuthHeader?) {
         Napier.v("addRequestHeaders ${authHeader != null}", tag = "ClientAuth")
         if (authHeader is HttpAuthHeader.Single) {
             request.addRequestHeaders(authHeader.blob)
         }
+    }
+
+    @Deprecated("Please use sendWithoutRequest function instead", level = DeprecationLevel.ERROR)
+    override val sendWithoutRequest: Boolean
+        get() = TODO("Not yet implemented")
+
+    override fun sendWithoutRequest(request: HttpRequestBuilder): Boolean {
+        return true
     }
 
     override fun isApplicable(auth: HttpAuthHeader): Boolean {
@@ -35,7 +39,7 @@ class ClientCustomAuthProvider : AuthProvider {
     }
 
     override suspend fun refreshToken(response: HttpResponse): Boolean {
-        val state = LoginViewModel.state.value as? ClientSession.LoginSuccess
+        val state = LoginViewModel.state.value as? ClientSession.SignUpSuccess
         val data = LoginViewModel.session?.first
         Napier.v("refreshToken", tag = "ClientAuth")
         return if (state == null || data == null) {
@@ -61,13 +65,13 @@ fun HttpRequestBuilder.addRequestHeaders(
     data: String?
 ) {
     data ?: return
-    val state = LoginViewModel.state.value as? ClientSession.LoginSuccess
+    val state = LoginViewModel.state.value as? ClientSession.SignUpSuccess
     if (state != null) {
         val userInfo = LoginViewModel.user.value
-        val userId = userInfo?.id
         val localData = LoginViewModel.session?.first
         val localSignature = LoginViewModel.session?.second
-        if (data == localData && localData.isNotBlank() && !localSignature.isNullOrBlank() && userId != null) {
+        if (userInfo != null && data == localData && localData.isNotBlank() && !localSignature.isNullOrBlank()) {
+            val userId = userInfo.id
             if (userInfo.aid.isNullOrBlank()) {
                 headers[HttpHeaders.Authorization] =
                     """Custom id="$userId", sig="$localSignature""""

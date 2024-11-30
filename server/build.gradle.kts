@@ -31,6 +31,7 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.h2)
     testImplementation(libs.jimfs)
+    implementation(libs.pdfbox)
 }
 
 val isProd = project.findProperty("server.prod") == true

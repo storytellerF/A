@@ -19,13 +19,14 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.easylauncher)
+    alias(libs.plugins.serialization)
 }
 
-val buildIosTarget = project.findProperty("target.ios") == true
-val buildWasmTarget = project.findProperty("target.wasm") == true
+val buildIosTarget = project.findProperty("target.ios") == "true"
+val buildWasmTarget = project.findProperty("target.wasm") == "true"
 val flavor = project.findProperty("buildkonfig.flavor") as String
 val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavor)!!
-val isProd = project.findProperty("server.prod") == true
+val isProd = project.findProperty("server.prod") == "true"
 
 kotlin {
     if (buildWasmTarget) {
@@ -100,13 +101,14 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.material3AdaptiveNavigationSuite)
+            implementation(libs.navigation.compose)
+
 
             implementation(projects.shared)
             implementation(projects.clientLib)
 
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
-            implementation(libs.precompose)
             //network
             implementation(libs.bundles.ktor.client)
             implementation(libs.paging.common)
@@ -125,6 +127,7 @@ kotlin {
             implementation(libs.multiplatform.markdown.renderer.coil3)
             implementation(libs.uri.kmp)
             implementation(libs.sonner)
+            implementation(libs.highlights)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

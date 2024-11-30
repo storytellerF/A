@@ -5,7 +5,9 @@ import co.elastic.clients.elasticsearch._types.SortOrder
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator
+import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery
 import co.elastic.clients.elasticsearch.core.SearchRequest
 import co.elastic.clients.json.JsonData
 import co.elastic.clients.json.jackson.JacksonJsonpMapper
@@ -13,6 +15,7 @@ import co.elastic.clients.transport.TransportUtils
 import co.elastic.clients.transport.rest_client.RestClientTransport
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.ElasticConnection
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.types.PaginationResult
 import io.github.aakira.napier.Napier
@@ -26,6 +29,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider
 import org.elasticsearch.client.RestClient
 import java.io.File
 import java.io.FileInputStream
+import java.net.ConnectException
 
 class ElasticTopicDocumentService(private val connection: ElasticConnection) : TopicDocumentService {
     override suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit> {
@@ -65,24 +69,16 @@ class ElasticTopicDocumentService(private val connection: ElasticConnection) : T
     }
 
     override suspend fun searchDocument(
-        word: List<String>,
+        word: List<String>?,
         size: Int,
-        nextTopicId: PrimaryKey?
+        nextTopicId: PrimaryKey?,
+        author: PrimaryKey?,
+        root: Pair<PrimaryKey, ObjectType>?,
+        parent: Pair<PrimaryKey, ObjectType>?
     ): Result<PaginationResult<TopicDocument>> {
-        val contentQuery = MatchQuery.of { m ->
-            m.field("content")
-                .query(word.joinToString(" ")) // 多关键字匹配，忽略大小写
-                .operator(Operator.Or)
-        }._toQuery()
+        val boolQuery = createTopicSearchQuery(word, root, parent, author, nextTopicId)
 
-        val idRangeQuery = RangeQuery.of { r ->
-            r.field("id")
-                .lt(JsonData.of(nextTopicId ?: Long.MAX_VALUE))
-        }._toQuery()
-
-        val boolQuery = BoolQuery.of { b ->
-            b.must(contentQuery).must(idRangeQuery)
-        }
+        println(boolQuery.toString())
 
         // 构建排序条件：按 ID 升序排序
         val request = SearchRequest.of { s ->
@@ -103,6 +99,74 @@ class ElasticTopicDocumentService(private val connection: ElasticConnection) : T
             }, total?.value() ?: 0)
         }
     }
+
+    private fun createTopicSearchQuery(
+        word: List<String>?,
+        root: Pair<PrimaryKey, ObjectType>?,
+        parent: Pair<PrimaryKey, ObjectType>?,
+        author: PrimaryKey?,
+        nextTopicId: PrimaryKey?
+    ): BoolQuery {
+        val contentQuery = word?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }?.let {
+            MatchQuery.of { m ->
+                m.field("content")
+                    .query(it.joinToString(" ")) // 多关键字匹配，忽略大小写
+                    .operator(Operator.Or)
+            }._toQuery()
+        }
+
+        val rootQuery = root?.let {
+            createRootSearchQuery(it)
+        }
+
+        val parentQuery = parent?.let {
+            createParentSearchQuery(it)
+        }
+
+        val authorQuery = author?.let {
+            TermQuery.of { t ->
+                t.field("author").value(it)
+            }._toQuery()
+        }
+
+        val idRangeQuery = RangeQuery.of { r ->
+            r.field("id")
+                .lt(JsonData.of(nextTopicId ?: Long.MAX_VALUE))
+        }._toQuery()
+
+        return BoolQuery.of { b ->
+            contentQuery?.let {
+                b.must(it)
+            }
+            b.must(idRangeQuery)
+            rootQuery?.let {
+                b.must(it)
+            }
+            parentQuery?.let {
+                b.must(it)
+            }
+            authorQuery?.let {
+                b.must(it)
+            }
+            b
+        }
+    }
+
+    private fun createRootSearchQuery(pair: Pair<PrimaryKey, ObjectType>): Query = BoolQuery.of { b ->
+        b.must(TermQuery.of { t ->
+            t.field("rootId").value(pair.first)
+        }._toQuery()).must(TermQuery.of { t ->
+            t.field("rootType").value(pair.second.name)
+        }._toQuery())
+    }._toQuery()
+
+    private fun createParentSearchQuery(pair: Pair<PrimaryKey, ObjectType>): Query = BoolQuery.of { b ->
+        b.must(TermQuery.of { t ->
+            t.field("parentId").value(pair.first)
+        }._toQuery()).must(TermQuery.of { t ->
+            t.field("parentType").value(pair.second.name)
+        }._toQuery())
+    }._toQuery()
 }
 
 private suspend fun <T> useElasticClient(
@@ -122,21 +186,25 @@ private suspend fun <T> useElasticClient(
         UsernamePasswordCredentials(elasticConnection.name, elasticConnection.pass)
     )
     return runCatching {
-        RestClient
-            .builder(HttpHost.create(elasticConnection.url))
-            .setHttpClientConfigCallback { p0 ->
-                p0.setSSLContext(sslContext)
-                p0.setDefaultCredentialsProvider(credsProv)
-            }
-            .build().use { restClient ->
-                RestClientTransport(
-                    restClient,
-                    JacksonJsonpMapper().apply {
-                        objectMapper().registerKotlinModule()
-                    }
-                ).use { transport ->
-                    ElasticsearchAsyncClient(transport).block()
+        try {
+            RestClient
+                .builder(HttpHost.create(elasticConnection.url))
+                .setHttpClientConfigCallback { p0 ->
+                    p0.setSSLContext(sslContext)
+                    p0.setDefaultCredentialsProvider(credsProv)
                 }
-            }
+                .build().use { restClient ->
+                    RestClientTransport(
+                        restClient,
+                        JacksonJsonpMapper().apply {
+                            objectMapper().registerKotlinModule()
+                        }
+                    ).use { transport ->
+                        ElasticsearchAsyncClient(transport).block()
+                    }
+                }
+        } catch (e: ConnectException) {
+            throw Exception("elastic service unavailable", e)
+        }
     }
 }

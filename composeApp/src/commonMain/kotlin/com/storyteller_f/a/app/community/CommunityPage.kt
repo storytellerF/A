@@ -14,16 +14,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
-import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.CustomBottomNav
+import com.storyteller_f.a.app.CustomRailNav
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.NavRoute
 import com.storyteller_f.a.app.bus
@@ -31,39 +38,53 @@ import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.room.DialogSaveState
 import com.storyteller_f.a.app.room.RoomList
+import com.storyteller_f.a.app.room.RoomsViewModel
 import com.storyteller_f.a.app.room.TopicsViewModel
 import com.storyteller_f.a.app.search.CustomSearchBar
+import com.storyteller_f.a.app.search.SearchScope
 import com.storyteller_f.a.app.world.TopicList
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import io.ktor.client.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 data class OnCommunityJoined(val communityId: PrimaryKey)
+data class OnCommunityExited(val communityId: PrimaryKey)
 
 class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> CommunityInfo) :
     SimpleViewModel<CommunityInfo>() {
+    val dialog = DialogSaveState()
+
     constructor(communityId: PrimaryKey) : this({
-        getCommunityInfo(communityId)
+        getCommunityInfo(communityId, LoginViewModel.isAlreadySignUp)
     })
 
     constructor(communityAid: String) : this({
-        getCommunityInfoByAid(communityAid)
+        getCommunityInfoByAid(communityAid, LoginViewModel.isAlreadySignUp)
     })
 
     init {
         load()
         viewModelScope.launch {
             for (i in bus) {
-                if (i is OnCommunityJoined) {
-                    if (i.communityId == handler.data.value?.id) {
-                        handler.refresh()
+                val id = handler.data.value?.id
+                when (i) {
+                    is OnCommunityJoined -> {
+                        if (i.communityId == id) {
+                            handler.refresh()
+                        }
+                    }
+
+                    is OnCommunityExited -> {
+                        if (i.communityId == id) {
+                            handler.refresh()
+                        }
                     }
                 }
             }
@@ -79,32 +100,101 @@ class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Commu
     }
 }
 
-@OptIn(ExperimentalPagingApi::class)
-class CommunityRoomsViewModel(private val communityId: PrimaryKey) : PagingViewModel<PrimaryKey, RoomInfo>({
-    SimplePagingSource {
-        serviceCatching {
-            client.getCommunityRooms(communityId, it, 10)
-        }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
-        }
-    }
-})
-
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun CommunityPage(
-    communityId: PrimaryKey
+    communityId: PrimaryKey,
+    showDialog: Boolean
 ) {
-    val appNav = LocalAppNav.current
+
+    val size = calculateWindowSizeClass()
+    when (size.widthSizeClass) {
+        WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(communityId, showDialog)
+        else -> CommunityNonCompatPageInternal(communityId, showDialog)
+    }
+}
+
+private fun buildSearchScope(
+    pagerState: PagerState,
+    communityId: PrimaryKey
+) = when (pagerState.currentPage) {
+    0 -> SearchScope.CommunityTopic(communityId)
+    else -> SearchScope.CommunityRoom(communityId)
+}
+
+@Composable
+private fun CommunityNonCompatPageInternal(
+    communityId: PrimaryKey,
+    needShowDialog: Boolean,
+) {
     val model = viewModel(CommunityViewModel::class, keys = listOf("community", communityId)) {
         CommunityViewModel(communityId)
     }
     val community by model.handler.data.collectAsState()
-    val navs = communityNavRoutes()
+    val dialogShown by model.dialog.shownDialog.collectAsState()
     val pagerState = rememberPagerState {
         2
     }
+    val searchScope = buildSearchScope(pagerState, communityId)
+    val navs = communityNavRoutes()
     val scope = rememberCoroutineScope()
+
+    Scaffold {
+        Row(modifier = Modifier.padding(bottom = it.calculateBottomPadding())) {
+            CustomRailNav(navs[pagerState.currentPage].path, navs) { path ->
+                scope.launch {
+                    pagerState.animateScrollToPage(navs.indexOfFirst {
+                        it.path == path
+                    })
+                }
+            }
+            Column(
+                modifier = Modifier,
+            ) {
+                CustomSearchBar(searchScope) {
+                    var showDialog by remember {
+                        mutableStateOf(false)
+                    }
+                    LaunchedEffect(needShowDialog, dialogShown) {
+                        if (needShowDialog && !dialogShown) {
+                            model.dialog.markDialogShown()
+                            showDialog = true
+                        }
+                    }
+                    CommunityIcon(community, 40.dp, showDialog, {
+                        showDialog = it
+                    }, model::update)
+                }
+
+                CommunityPageInternal(pagerState, communityId)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommunityCompatPageInternal(
+    communityId: PrimaryKey,
+    needShowDialog: Boolean,
+) {
+    val model = viewModel(CommunityViewModel::class, keys = listOf("community", communityId)) {
+        CommunityViewModel(communityId)
+    }
+    val community by model.handler.data.collectAsState()
+    val dialogShown by model.dialog.shownDialog.collectAsState()
+    val pagerState = rememberPagerState {
+        2
+    }
+    val searchScope = buildSearchScope(pagerState, communityId)
+    val navs = communityNavRoutes()
+    val appNav = LocalAppNav.current
+    val scope = rememberCoroutineScope()
+    val alertDialogState = remember {
+        CustomAlertDialogController()
+    }
+    var showDialog by remember {
+        mutableStateOf(false)
+    }
     Scaffold(floatingActionButton = {
         FloatingActionButton(onClick = {
             if (community?.isJoined == true) {
@@ -127,13 +217,26 @@ fun CommunityPage(
         Column(
             modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
         ) {
-            CustomSearchBar {
-                CommunityIcon(community, 40.dp)
+            CustomSearchBar(searchScope) {
+                LaunchedEffect(needShowDialog) {
+                    if (needShowDialog && !dialogShown) {
+                        model.dialog.markDialogShown()
+                        showDialog = true
+                    }
+                }
+                CommunityIcon(community, 40.dp, showDialog, {
+                    showDialog = it
+                }, model::update)
             }
 
             CommunityPageInternal(pagerState, communityId)
         }
     }
+    CustomAlertDialog(alertDialogState, {
+        alertDialogState.close()
+    }, {
+        showDialog = true
+    })
 }
 
 @Composable
@@ -157,8 +260,8 @@ private fun CommunityPageInternal(
 
             else -> {
                 val viewModel =
-                    viewModel(CommunityRoomsViewModel::class, keys = listOf("community-rooms", communityId)) {
-                        CommunityRoomsViewModel(communityId)
+                    viewModel(RoomsViewModel::class, keys = listOf("community-rooms", communityId)) {
+                        RoomsViewModel(JoinStatusSearch.UNSPECIFIED, "", communityId)
                     }
                 val items = viewModel.flow.collectAsLazyPagingItems()
                 RoomList(items)
@@ -178,20 +281,26 @@ fun communityNavRoutes(): List<NavRoute> {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommunityDialog(communityInfo: CommunityInfo?, showDialog: Boolean, dismiss: () -> Unit) {
+fun CommunityDialog(
+    communityInfo: CommunityInfo?,
+    showDialog: Boolean,
+    dismiss: () -> Unit,
+    update: (CommunityInfo) -> Unit
+) {
     if (communityInfo != null && showDialog) {
         BasicAlertDialog(
             {
                 dismiss()
             },
         ) {
-            CommunityDialogInternal(communityInfo)
+            CommunityDialogInternal(communityInfo, dismiss, update)
         }
     }
 }
 
 @Composable
-fun CommunityDialogInternal(communityInfo: CommunityInfo) {
+fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit, update: (CommunityInfo) -> Unit) {
+    val nav = LocalAppNav.current
     val communityId = communityInfo.id
     DialogContainer {
         Row(
@@ -199,21 +308,34 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo) {
                 .padding(8.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            CommunityIcon(communityInfo, 50.dp)
+            CommunityIcon(communityInfo, 50.dp, showDialog = false, {}) {}
             Column {
                 Text(communityInfo.name)
             }
         }
         Column {
             val scope = rememberCoroutineScope()
+            ButtonNav(Icons.Default.CardMembership, "All members") {
+                dismiss()
+                nav.gotoMemberPage(communityId, ObjectType.COMMUNITY)
+            }
             if (communityInfo.isJoined) {
-                ButtonNav(Icons.Default.Close, "Exit Community")
+                ButtonNav(Icons.Default.Close, "Exit Community") {
+                    scope.launch {
+                        globalDialogState.use {
+                            val info = client.exitCommunity(communityId)
+                            bus.send(OnCommunityExited(communityId))
+                            update(info)
+                        }
+                    }
+                }
             } else {
                 ButtonNav(Icons.Default.AddHome, "Join Community") {
                     scope.launch {
                         globalDialogState.use {
-                            client.joinCommunity(communityId)
+                            val info = client.joinCommunity(communityId)
                             bus.send(OnCommunityJoined(communityId))
+                            update(info)
                         }
                     }
                 }

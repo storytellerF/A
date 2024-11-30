@@ -22,7 +22,7 @@ sealed interface DialogState {
     data class Text(val text: String) : DialogState
 }
 
-class EventState(val state: MutableState<DialogState> = mutableStateOf(DialogState.None)) {
+class GlobalDialogController(val state: MutableState<DialogState> = mutableStateOf(DialogState.None)) {
     fun showError(error: Throwable) {
         state.value = DialogState.Error(error)
     }
@@ -38,31 +38,24 @@ class EventState(val state: MutableState<DialogState> = mutableStateOf(DialogSta
     fun close() {
         state.value = DialogState.None
     }
-}
 
-@Composable
-fun rememberEventState(): EventState {
-    return remember {
-        EventState()
-    }
-}
-
-suspend fun EventState.use(onSuccess: () -> Unit = {}, block: suspend () -> Unit) {
-    try {
-        showLoading()
-        block()
-        close()
-        onSuccess()
-    } catch (e: Exception) {
-        showError(e)
+    suspend fun use(onSuccess: () -> Unit = {}, block: suspend () -> Unit) {
+        try {
+            showLoading()
+            block()
+            close()
+            onSuccess()
+        } catch (e: Exception) {
+            showError(e)
+        }
     }
 }
 
 @Composable
-fun EventDialog(state: EventState) {
+fun GlobalDialog(state: GlobalDialogController) {
     var message by state.state
     if (message !is DialogState.None) {
-        EventAlertDialog(message) {
+        GlobalDialogInternal(message) {
             message = it
         }
     }
@@ -70,7 +63,7 @@ fun EventDialog(state: EventState) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventAlertDialog(message: DialogState, updateNewState: (DialogState) -> Unit) {
+fun GlobalDialogInternal(message: DialogState, updateNewState: (DialogState) -> Unit) {
     val onDismissRequest = {
         updateNewState(DialogState.None)
     }
@@ -139,7 +132,7 @@ fun ButtonNav(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth().clickable {
             onClick()
-        }.padding(8.dp)
+        }.padding(horizontal = 8.dp, vertical = 12.dp)
     ) {
         Icon(imageVector = icon, contentDescription = title)
         Text(title)
@@ -155,26 +148,54 @@ fun DialogContainer(block: @Composable ColumnScope.() -> Unit) {
     }
 }
 
-class AlertDialogState(val title: String?, val message: String)
+class CustomAlertDialogController(val state: MutableState<CustomAlertDialogState?> = mutableStateOf(null)) {
+    fun showMessage(message: String) {
+        state.value = CustomAlertDialogState(null, message)
+    }
+
+    fun showMessage(title: String, message: String) {
+        state.value = CustomAlertDialogState(title, message)
+    }
+
+    fun showError(throwable: Throwable) {
+        state.value = CustomAlertDialogState(null, throwable.message.toString())
+    }
+
+    fun close() {
+        state.value = null
+    }
+}
+
+class CustomAlertDialogState(val title: String?, val message: String)
 
 @Composable
-fun CustomAlertDialog(state: AlertDialogState?, dismiss: () -> Unit, onClick: () -> Unit) {
-    if (state != null) {
-        androidx.compose.material.AlertDialog({
-            dismiss()
-        }, title = {
-            state.title?.let {
-                Text(it)
-            }
-        }, text = {
-            Text(state.message)
-        }, confirmButton = {
-            Button({
-                dismiss()
-                onClick()
-            }) {
-                Text("Yes")
-            }
-        })
+fun CustomAlertDialog(controller: CustomAlertDialogController, dismiss: () -> Unit, onClickOk: () -> Unit) {
+    val state by controller.state
+    state?.let { it1 ->
+        CustomAlertDialogInternal(dismiss, it1, onClickOk)
     }
+}
+
+@Composable
+fun CustomAlertDialogInternal(
+    dismiss: () -> Unit,
+    it1: CustomAlertDialogState,
+    onClickOk: () -> Unit
+) {
+    AlertDialog({
+        dismiss()
+    }, title = {
+        it1.title?.let {
+            Text(it)
+        }
+    }, text = {
+        Text(it1.message)
+    }, confirmButton = {
+        Button({
+            dismiss()
+            onClickOk()
+        }) {
+            Text("Yes")
+        }
+    })
 }

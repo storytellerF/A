@@ -2,7 +2,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.storyteller_f.shared.*
-import com.storyteller_f.shared.obj.AddTaskValue
+import com.storyteller_f.shared.obj.PresetValue
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.test.Test
@@ -17,12 +17,12 @@ class SignatureTest {
         if (!jsonFile.exists()) return
         addProvider()
 
-        val addTaskValue =
+        val presetValue =
             ObjectMapper().registerModule(KotlinModule.Builder().build())
-                .readValue<AddTaskValue>(jsonFile.readText())
+                .readValue<PresetValue>(jsonFile.readText())
         runBlocking {
             val data = "hello"
-            addTaskValue.userData!!.forEach {
+            presetValue.userData!!.forEach {
                 val privateKeyStr = File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
                 val s = signature(privateKeyStr, data)
                 val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr)
@@ -38,12 +38,12 @@ class SignatureTest {
         if (!jsonFile.exists()) return
         addProvider()
 
-        val addTaskValue =
+        val presetValue =
             ObjectMapper().registerModule(KotlinModule.Builder().build())
-                .readValue<AddTaskValue>(jsonFile.readText())
+                .readValue<PresetValue>(jsonFile.readText())
         runBlocking {
             val data = "hello"
-            addTaskValue.userData!!.forEach {
+            presetValue.userData!!.forEach {
                 val privateKeyStr = File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
                 val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr)
                 val (encrypted, aes) = encrypt(data)

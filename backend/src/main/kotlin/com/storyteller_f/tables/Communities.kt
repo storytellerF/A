@@ -1,6 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
@@ -41,11 +42,9 @@ class Community(
             return Communities.selectAll().where(function)
         }
 
-        fun findById(id: PrimaryKey): Query {
-            return Communities.selectAll().where {
-                Communities.id eq id
-            }
-        }
+        fun findById(id: PrimaryKey) = Communities.selectAll().where {
+            Communities.id eq id
+        }.firstOrNull()
 
         fun new(community: Community): PrimaryKey {
             val id = Communities.insert {
@@ -65,13 +64,4 @@ fun findCommunityByAId(aid: String): ResultRow? {
     return Communities.selectAll().where {
         Communities.aid eq aid
     }.limit(1).firstOrNull()
-}
-
-fun createCommunityJoin(
-    id: PrimaryKey,
-    community: PrimaryKey
-) = CommunityJoins.insert {
-    it[joinTime] = now()
-    it[uid] = id
-    it[communityId] = community
 }

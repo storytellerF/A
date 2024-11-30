@@ -6,8 +6,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.*
-import com.storyteller_f.shared.obj.AddTaskValue
-import com.storyteller_f.shared.obj.AddTopic
+import com.storyteller_f.shared.obj.PresetTopic
+import com.storyteller_f.shared.obj.PresetValue
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -24,6 +24,7 @@ import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 import java.io.File
+import kotlin.collections.get
 import kotlin.system.exitProcess
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -46,17 +47,17 @@ class Add : Subcommand("add", "add entry") {
         }
         val jsonFile = File(jsonFilePath)
 
-        val addTaskValue =
+        val presetValue =
             ObjectMapper().registerModule(KotlinModule.Builder().build())
-                .readValue<AddTaskValue>(jsonFile.readText())
+                .readValue<PresetValue>(jsonFile.readText())
         val parentDir = jsonFile.parentFile
         runBlocking {
             try {
-                when (val type = addTaskValue.type) {
-                    "community" -> addCommunity(addTaskValue, parentDir)
-                    "user" -> addUsers(addTaskValue, parentDir)
-                    "topic" -> addTopics(addTaskValue, parentDir)
-                    "room" -> addRooms(addTaskValue, parentDir)
+                when (val type = presetValue.type) {
+                    "community" -> addCommunity(presetValue, parentDir)
+                    "user" -> addUsers(presetValue, parentDir)
+                    "topic" -> addTopics(presetValue, parentDir)
+                    "room" -> addRooms(presetValue, parentDir)
                     else -> {
                         println("unrecognized type $type")
                         exitProcess(2)
@@ -74,8 +75,8 @@ class Add : Subcommand("add", "add entry") {
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    private suspend fun addRooms(addTaskValue: AddTaskValue, parentDir: File?) {
-        val l = addTaskValue.roomData ?: return
+    private suspend fun addRooms(presetValue: PresetValue, parentDir: File?) {
+        val l = presetValue.roomData ?: return
         val data = l.map {
             val id = SnowflakeFactory.nextId()
             val icon = it.icon
@@ -88,50 +89,51 @@ class Add : Subcommand("add", "add entry") {
             }
         }
         DatabaseFactory.dbQuery {
-            val list = l.flatMap {
+            val userMap = l.flatMap {
                 it.users + it.admin
             }.distinct().map {
                 User.wrapRow(findUserByAId(it)!!)
-            }.groupBy {
-                it.aid
+            }.associate {
+                it.aid to it
             }
-            val communities = l.mapNotNull {
+            val communityMap = l.mapNotNull {
                 it.community
             }.distinct().map {
                 Community.wrapRow(findCommunityByAId(it)!!)
-            }.groupBy {
-                it.aid
+            }.associate {
+                it.aid to it
             }
             val idList = Rooms.batchInsert(data) { (it, p, id) ->
                 this[Rooms.id] = id
                 this[Rooms.aid] = it.id
                 this[Rooms.icon] = p
                 this[Rooms.name] = it.name
-                this[Rooms.communityId] = communities[it.community]?.first()?.id
-                this[Rooms.creator] = list[it.admin]!!.first().id
+                this[Rooms.communityId] = communityMap[it.community]?.id
+                this[Rooms.creator] = userMap[it.admin]!!.id
                 this[Rooms.createdTime] = now()
             }.map {
                 it[Rooms.id]
             }
             l.forEachIndexed { index, addRoom ->
-                RoomJoins.batchInsert(addRoom.users) {
-                    this[RoomJoins.uid] = list[it]!!.first().id
-                    this[RoomJoins.roomId] = idList[index]
-                    this[RoomJoins.joinTime] = now()
+                MemberJoins.batchInsert(addRoom.users) {
+                    this[MemberJoins.uid] = userMap[it]!!.id
+                    this[MemberJoins.objectId] = idList[index]
+                    this[MemberJoins.joinTime] = now()
+                    this[MemberJoins.objectType] = ObjectType.ROOM
                 }
             }
-        }
+        }.getOrThrow()
     }
 
-    private suspend fun addTopics(addTaskValue: AddTaskValue, parentDir: File) {
+    private suspend fun addTopics(presetValue: PresetValue, parentDir: File) {
         DatabaseFactory.dbQuery {
-            val data = addTaskValue.topicData!!
+            val data = presetValue.topicData!!
             val userList = data.map {
                 it.author
             }.distinct().map {
                 User.wrapRow(findUserByAId(it)!!)
-            }.groupBy {
-                it.aid!!
+            }.associate {
+                it.aid!! to it
             }
             data.groupBy {
                 it.community != null
@@ -142,40 +144,33 @@ class Add : Subcommand("add", "add entry") {
                     addTopicsIntoRoom(u, userList, parentDir)
                 }
             }
-        }
+        }.getOrThrow()
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)
-    private suspend fun addTopicsIntoRoom(u: List<AddTopic>, userList: Map<String, List<User>>, parentDir: File) {
+    private suspend fun addTopicsIntoRoom(u: List<PresetTopic>, userList: Map<String, User>, parentDir: File) {
         val roomList = u.mapNotNull {
             it.room
         }.distinct().map {
             Room.wrapRow(Room.findRoomByAId(it)!!)
-        }.groupBy {
-            it.aid
+        }.associate {
+            it.aid to it
         }
-        val ids = insertTopicBaseLevel(u, userList, roomList)
+        val ids = insertRoomTopicBaseLevel(u, userList, roomList)
         // 检查聊天室是属于社区的还是私有的
         val roomIsPrivate = roomList.mapValues { (_, value) ->
-            checkRoomIsPrivate(value.first().id).getOrThrow()
-        }
-        val topicsPrivate = u.mapIndexedNotNull { i, addTopic ->
-            if (roomIsPrivate[addTopic.room] == true) {
-                addTopic to i
-            } else {
-                null
-            }
+            checkRoomIsPrivate(value.id).getOrNull() == true
         }
 
-        insertEncryptedTopic(topicsPrivate, parentDir, ids, u)
-        insertTopic(u, roomIsPrivate, parentDir, ids)
+        insertEncryptedTopic(roomIsPrivate, parentDir, ids, u)
+        insertUnEncryptedTopic(u, roomIsPrivate, parentDir, ids, roomList, userList)
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)
-    private suspend fun insertTopicBaseLevel(
-        u: List<AddTopic>,
-        userList: Map<String, List<User>>,
-        roomList: Map<String, List<Room>>
+    private suspend fun insertRoomTopicBaseLevel(
+        u: List<PresetTopic>,
+        userList: Map<String, User>,
+        roomList: Map<String, Room>
     ): LongArray {
         val ids = LongArray(u.size) {
             DEFAULT_PRIMARY_KEY
@@ -197,12 +192,12 @@ class Add : Subcommand("add", "add entry") {
         topLevelTopic.keys.sorted().forEach { level ->
             val list = topLevelTopic[level].orEmpty()
             val subIds = Topics.batchInsert(list) { (first, index, _, id) ->
-                this[Topics.author] = userList[first.author]!!.first().id
+                this[Topics.author] = userList[first.author]!!.id
                 this[Topics.createdTime] = now()
-                this[Topics.rootId] = roomList[first.room]!!.first().id
+                this[Topics.rootId] = roomList[first.room]!!.id
                 this[Topics.rootType] = ObjectType.ROOM
                 this[Topics.parentId] =
-                    if (level == 0) roomList[first.room]!!.first().id else ids[index - first.parent!!]
+                    if (level == 0) roomList[first.room]!!.id else ids[index - first.parent!!]
                 this[Topics.parentType] = if (level == 0) ObjectType.ROOM else ObjectType.TOPIC
                 this[Topics.id] = id
             }.map {
@@ -216,13 +211,15 @@ class Add : Subcommand("add", "add entry") {
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)
-    private suspend fun insertTopic(
-        u: List<AddTopic>,
+    private suspend fun insertUnEncryptedTopic(
+        presetTopicList: List<PresetTopic>,
         roomIsPrivate: Map<String, Boolean>,
         parentDir: File,
-        ids: LongArray
+        ids: LongArray,
+        roomList: Map<String, Room>,
+        userList1: Map<String, User>
     ) {
-        val topicsPublic = u.mapIndexedNotNull { i, addTopic ->
+        val topicsPublic = presetTopicList.mapIndexedNotNull { i, addTopic ->
             if (roomIsPrivate[addTopic.room] != true) {
                 addTopic to i
             } else {
@@ -232,24 +229,43 @@ class Add : Subcommand("add", "add entry") {
         backend.topicDocumentService.saveDocument(
             topicsPublic.map { (first, second) ->
                 val content = getTopicContent(first, parentDir)
-                TopicDocument(ids[second], content)
+                val level = first.level
+                TopicDocument(
+                    ids[second],
+                    content,
+                    roomList[first.room]!!.id,
+                    ObjectType.ROOM.name,
+                    when (level) {
+                        null, 0 -> roomList[first.room]!!.id
+                        else -> ids[second - first.parent!!]
+                    },
+                    (if (level == 0) ObjectType.ROOM else ObjectType.TOPIC).name,
+                    userList1[first.author]!!.id
+                )
             }
         )
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)
     private suspend fun insertEncryptedTopic(
-        topicsPrivate: List<Pair<AddTopic, Int>>,
+        roomIsPrivate: Map<String, Boolean>,
         parentDir: File,
         ids: LongArray,
-        u: List<AddTopic>
+        u: List<PresetTopic>
     ) {
+        val topicsPrivate = u.mapIndexedNotNull { i, addTopic ->
+            if (roomIsPrivate[addTopic.room] == true) {
+                addTopic to i
+            } else {
+                null
+            }
+        }
         val rooms = u.mapNotNull {
             it.room
         }.distinct().map { roomId ->
-            roomId to RoomJoins
-                .join(Rooms, JoinType.INNER, RoomJoins.roomId, Rooms.id)
-                .join(Users, JoinType.INNER, RoomJoins.uid, Users.id)
+            roomId to MemberJoins
+                .join(Rooms, JoinType.INNER, MemberJoins.objectId, Rooms.id)
+                .join(Users, JoinType.INNER, MemberJoins.uid, Users.id)
                 .select(Users.fields)
                 .where {
                     Rooms.aid eq roomId
@@ -258,15 +274,15 @@ class Add : Subcommand("add", "add entry") {
                 }.map {
                     it.publicKey to it.id
                 }
-        }.groupBy {
-            it.first
+        }.associate {
+            it.first to it
         }
         val encrypted = topicsPrivate.map { (addTopic, index) ->
             val (first, aesBytes) = encrypt(getTopicContent(addTopic, parentDir))
             Tuple4(index, first, aesBytes, addTopic)
         }
         val encryptedKeys = encrypted.flatMap { (index, _, aesBytes, topic) ->
-            rooms[topic.room]!!.first().second.map {
+            rooms[topic.room]!!.second.map {
                 val pubKey = it.first
                 val data4 = encryptAesKey(pubKey, aesBytes)
                 Triple(index, data4, it.second)
@@ -284,7 +300,7 @@ class Add : Subcommand("add", "add entry") {
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)
-    private suspend fun addTopicsIntoCommunity(u: List<AddTopic>, userList: Map<String, List<User>>, parentDir: File) {
+    private suspend fun addTopicsIntoCommunity(u: List<PresetTopic>, userList: Map<String, User>, parentDir: File) {
         val communityList = u.mapNotNull {
             it.community
         }.distinct().map {
@@ -293,12 +309,43 @@ class Add : Subcommand("add", "add entry") {
                 error("$it not found")
             } else {
                 Community.wrapRow(rowCommunity).let {
-                    it.id to it.aid
+                    it.aid to it.id
                 }
             }
-        }.groupBy {
-            it.second
+        }.associate {
+            it.first to it.second
         }
+        val ids = insertCommunityTopicTopLevel(u, userList, communityList)
+        backend.topicDocumentService.saveDocument(
+            u.mapIndexedNotNull { index, topic ->
+                if (topic.community != null) {
+                    val content = getTopicContent(topic, parentDir)
+                    val level = topic.level
+
+                    TopicDocument(
+                        ids[index],
+                        content,
+                        communityList[topic.community]!!,
+                        ObjectType.COMMUNITY.name,
+                        when (level) {
+                            null, 0 -> communityList[topic.community]!!
+                            else -> ids[index - topic.parent!!]
+                        },
+                        (if (level == 0) ObjectType.COMMUNITY else ObjectType.TOPIC).name,
+                        userList[topic.author]!!.id
+                    )
+                } else {
+                    null
+                }
+            }
+        )
+    }
+
+    private suspend fun insertCommunityTopicTopLevel(
+        u: List<PresetTopic>,
+        userList: Map<String, User>,
+        communityList: Map<String, PrimaryKey>
+    ): LongArray {
         val ids = LongArray(u.size) {
             DEFAULT_PRIMARY_KEY
         }
@@ -315,18 +362,18 @@ class Add : Subcommand("add", "add entry") {
         }.groupBy {
             it.data3
         }
-        // 从最顶层开始
+        // 根据层级， 从最顶层开始
         topLevelTopic.keys.sorted().forEach { level ->
             // 添加对应层级的topic
             val list = topLevelTopic[level].orEmpty()
             val subIds = Topics.batchInsert(list) { (first, index, _, id) ->
                 this[Topics.id] = id
-                this[Topics.author] = userList[first.author]!!.first().id
+                this[Topics.author] = userList[first.author]!!.id
                 this[Topics.createdTime] = now()
-                this[Topics.rootId] = communityList[first.community]!!.first().first
+                this[Topics.rootId] = communityList[first.community]!!
                 this[Topics.rootType] = ObjectType.COMMUNITY
                 this[Topics.parentId] =
-                    if (level == 0) communityList[first.community]!!.first().first else ids[index - first.parent!!]
+                    if (level == 0) communityList[first.community]!! else ids[index - first.parent!!]
                 this[Topics.parentType] = if (level == 0) ObjectType.COMMUNITY else ObjectType.TOPIC
             }.map {
                 it[Topics.id]
@@ -336,30 +383,21 @@ class Add : Subcommand("add", "add entry") {
                 ids[list[index].data2] = topicId
             }
         }
-        backend.topicDocumentService.saveDocument(
-            u.mapIndexedNotNull { index, addTopic ->
-                if (addTopic.community != null) {
-                    val content = getTopicContent(addTopic, parentDir)
-                    TopicDocument(ids[index], content)
-                } else {
-                    null
-                }
-            }
-        )
+        return ids
     }
 
-    private fun getTopicContent(addTopic: AddTopic, parentDir: File): String {
-        val content = if (addTopic.type == "file") {
-            File(parentDir, addTopic.content).readText().replace("\r\n", "\n")
+    private fun getTopicContent(presetTopic: PresetTopic, parentDir: File): String {
+        val content = if (presetTopic.type == "file") {
+            File(parentDir, presetTopic.content).readText().replace("\r\n", "\n")
         } else {
-            addTopic.content
+            presetTopic.content
         }
         return content
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    private suspend fun addUsers(addTaskValue: AddTaskValue, parentDir: File?) {
-        val userList = addTaskValue.userData ?: return
+    private suspend fun addUsers(presetValue: PresetValue, parentDir: File?) {
+        val userList = presetValue.userData ?: return
         val data = userList.map {
             val id = SnowflakeFactory.nextId()
             val derPublicKey =
@@ -385,12 +423,13 @@ class Add : Subcommand("add", "add entry") {
                 this[Users.address] = address
                 this[Users.createdTime] = now()
             }
-        }
+        }.getOrThrow()
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    private suspend fun addCommunity(addTaskValue: AddTaskValue, parentDir: File?) {
-        val data = addTaskValue.communityData!!.map {
+    private suspend fun addCommunity(presetValue: PresetValue, parentDir: File?) {
+        val communityData = presetValue.communityData!!
+        val data = communityData.map {
             val id = SnowflakeFactory.nextId()
             val icon = it.icon
             if (icon == null) {
@@ -408,29 +447,49 @@ class Add : Subcommand("add", "add entry") {
 
             Communities.batchInsert(data) { (it, communityIcon, id) ->
                 this[Communities.id] = id
+                this[Communities.createdTime] = now()
                 this[Communities.aid] = it.id
                 this[Communities.name] = it.name
                 this[Communities.icon] = communityIcon
-                this[Communities.createdTime] = now()
                 this[Communities.owner] = systemId
             }
-            data.forEach { (first) ->
-                val users = first.users.orEmpty()
-                val id = first.id
-                val id1 = Communities.select(Communities.id).where {
-                    Communities.aid eq id
-                }.first()[Communities.id]
-                userJoinCommunity(users, id1)
+            data.forEach { (c, _, id) ->
+                val users = c.users.orEmpty()
+                userJoinCommunity(users, id)
             }
-        }
+
+            data.forEach { (t, _, id) ->
+                val l = listOf(
+                    "${t.id}_general" to "General",
+                    "${t.id}_lobby" to "Lobby",
+                    "${t.id}_support" to "Support"
+                ).map { pair ->
+                    Tuple4(pair.first, pair.second, SnowflakeFactory.nextId(), id)
+                }
+                Rooms.batchInsert(l) { (roomAid, name, roomId, communityId) ->
+                    this[Rooms.id] = roomId
+                    this[Rooms.aid] = roomAid.take(ROOM_ID_LENGTH)
+                    this[Rooms.name] = name
+                    this[Rooms.communityId] = communityId
+                    this[Rooms.creator] = systemId
+                    this[Rooms.createdTime] = now()
+                }
+                MemberJoins.batchInsert(l) { (_, _, rId, _) ->
+                    this[MemberJoins.uid] = systemId
+                    this[MemberJoins.objectId] = rId
+                    this[MemberJoins.joinTime] = now()
+                    this[MemberJoins.objectType] = ObjectType.COMMUNITY
+                }
+            }
+        }.getOrThrow()
     }
 
-    private fun userJoinCommunity(users: List<String>, communityId: PrimaryKey) {
+    private suspend fun userJoinCommunity(users: List<String>, communityId: PrimaryKey) {
         users.forEach {
             val userId = Users.select(Users.id).where {
                 Users.aid eq it
             }.first()[Users.id]
-            createCommunityJoin(userId, communityId)
+            addCommunityJoin(userId, communityId, now()).getOrThrow()
         }
     }
 }

@@ -4,6 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.annotation.ExperimentalCoilApi
@@ -13,13 +20,14 @@ import coil3.util.DebugLogger
 import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.community.CommunityPage
-import com.storyteller_f.a.app.compontents.EventDialog
-import com.storyteller_f.a.app.compontents.EventState
+import com.storyteller_f.a.app.compontents.GlobalDialog
+import com.storyteller_f.a.app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.room.RoomPage
 import com.storyteller_f.a.app.topic.TopicComposePage
 import com.storyteller_f.a.app.topic.TopicPage
 import com.storyteller_f.a.app.topic.processEncryptedTopic
 import com.storyteller_f.a.app.ui.theme.AppTheme
+import com.storyteller_f.a.app.user.MemberPage
 import com.storyteller_f.a.client_lib.ClientWebSocket
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.addRequestHeaders
@@ -29,7 +37,6 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.ObjectType.*
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.toPrimaryKey
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
@@ -37,11 +44,9 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.websocket.*
 import kotbase.MutableDocument
 import kotlinx.coroutines.channels.Channel
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import moe.tlaster.precompose.PreComposeApp
-import moe.tlaster.precompose.navigation.*
-import moe.tlaster.precompose.navigation.path
 
 object StaticObj {
     init {
@@ -49,11 +54,32 @@ object StaticObj {
     }
 }
 
-val globalDialogState = EventState()
+val globalDialogState = GlobalDialogController()
 
 val LocalAppNav = compositionLocalOf {
     AppNav.EMPTY
 }
+
+@Serializable
+data object HomeScreen
+
+@Serializable
+data class CommunityScreen(val communityId: PrimaryKey, val showDialog: Boolean)
+
+@Serializable
+data class RoomScreen(val roomId: PrimaryKey, val showDialog: Boolean)
+
+@Serializable
+data object LoginScreen
+
+@Serializable
+data class TopicScreen(val topicId: PrimaryKey)
+
+@Serializable
+data class TopicComposeScreen(val objectType: ObjectType, val objectId: PrimaryKey)
+
+@Serializable
+data class MemberScreen(val objectType: ObjectType, val objectId: PrimaryKey)
 
 @OptIn(ExperimentalCoilApi::class)
 @Composable
@@ -63,86 +89,82 @@ fun App() {
         setSingletonImageLoaderFactory {
             getAsyncImageLoader(it)
         }
-        val navigator = rememberNavigator()
+        val navigator = rememberNavController()
         val appNav = remember {
             newAppNav(navigator)
         }
         CompositionLocalProvider(LocalAppNav provides appNav) {
-            EventDialog(globalDialogState)
-            PreComposeApp {
-                NavHost(navigator, initialRoute = "/home") {
-                    buildRootNav(navigator)
-                }
+            GlobalDialog(globalDialogState)
+            NavHost(navigator, startDestination = HomeScreen) {
+                buildRootNav(navigator)
             }
         }
     }
 }
 
-private fun RouteBuilder.buildRootNav(
-    navigator: Navigator
+private fun NavGraphBuilder.buildRootNav(
+    navigator: NavHostController
 ) {
-    scene("/home") {
+    composable<HomeScreen> {
         HomePage()
     }
-    scene("/login") {
+    composable<LoginScreen> {
         LoginPage()
     }
-    scene("/community/{communityId}") {
-        val communityId = it.path2<PrimaryKey>("communityId", null)
-        if (communityId != null) {
-            CommunityPage(communityId)
+    composable<CommunityScreen> {
+        val screen = it.toRoute<CommunityScreen>()
+        CommunityPage(screen.communityId, screen.showDialog)
+    }
+    composable<RoomScreen> {
+        val screen = it.toRoute<RoomScreen>()
+        RoomPage(screen.roomId, screen.showDialog)
+    }
+    composable<TopicScreen> {
+        TopicPage(it.toRoute<TopicScreen>().topicId)
+    }
+    composable<TopicComposeScreen> {
+        val (objectType, objectId) = it.toRoute<TopicComposeScreen>()
+        TopicComposePage(objectType, objectId) {
+            navigator.popBackStack()
         }
     }
-    scene("/room/{roomId}") {
-        val roomId = it.path2<PrimaryKey>("roomId", null)
-        if (roomId != null) {
-            RoomPage(roomId)
-        }
-    }
-    scene("/topic/{topicId}") {
-        val topicId = it.path2<PrimaryKey>("topicId", null)
-        if (topicId != null) {
-            TopicPage(topicId)
-        }
-    }
-    scene("/topic-compose/{objectType}/{objectId}") {
-        val objectType = it.path<Int>("objectType")?.let {
-            ObjectType.entries.first { t ->
-                t.ordinal == it
-            }
-        }
-        val objectId = it.path2<PrimaryKey>("objectId")
-        if (objectType != null && objectId != null) {
-            TopicComposePage(objectType, objectId) {
-                navigator.goBack()
-            }
-        }
+    composable<MemberScreen> {
+        val (objectType, objectId) = it.toRoute<MemberScreen>()
+        MemberPage(objectId, objectType)
     }
 }
 
-private fun newAppNav(navigator: Navigator) = object : AppNav {
+private fun newAppNav(navigator: NavHostController) = object : AppNav {
+    override val currentDestination = navigator.currentBackStackEntry
     override fun gotoLogin() {
-        navigator.navigate("/login")
+        navigator.navigate(route = LoginScreen)
     }
 
-    override fun gotoRoom(roomId: PrimaryKey) {
-        navigator.navigate("/room/$roomId")
+    override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) {
+        navigator.navigate(route = RoomScreen(roomId, showDialog))
     }
 
-    override fun gotoCommunity(communityId: PrimaryKey) {
-        navigator.navigate("/community/$communityId")
+    override fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean) {
+        navigator.navigate(route = CommunityScreen(communityId, showDialog))
     }
 
     override fun gotoTopic(topicId: PrimaryKey) {
-        navigator.navigate("/topic/$topicId")
+        navigator.navigate(route = TopicScreen(topicId))
     }
 
     override fun gotoHome() {
-        navigator.navigate("/home")
+        navigator.navigate(route = HomeScreen)
     }
 
     override fun gotoTopicCompose(objectType: ObjectType, objectId: PrimaryKey) {
-        navigator.navigate("/topic-compose/${objectType.ordinal}/$objectId")
+        navigator.navigate(route = TopicComposeScreen(objectType, objectId))
+    }
+
+    override fun gotoMemberPage(
+        objectId: PrimaryKey,
+        objectType: ObjectType
+    ) {
+        navigator.navigate(route = MemberScreen(objectType, objectId))
     }
 }
 
@@ -183,17 +205,17 @@ fun HttpClientConfig<*>.setupRequest() {
     }
 }
 
-val bus = Channel<Any> {
-}
+val bus = Channel<Any>(Channel.UNLIMITED)
 
 val settings = Settings()
 
 interface AppNav {
+    val currentDestination: NavBackStackEntry?
     fun gotoLogin()
 
-    fun gotoRoom(roomId: PrimaryKey)
+    fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean)
 
-    fun gotoCommunity(communityId: PrimaryKey)
+    fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean)
 
     fun gotoTopic(topicId: PrimaryKey)
 
@@ -201,10 +223,12 @@ interface AppNav {
 
     fun gotoTopicCompose(objectType: ObjectType, objectId: PrimaryKey)
 
+    fun gotoMemberPage(objectId: PrimaryKey, objectType: ObjectType)
+
     fun goto(id: PrimaryKey, type: ObjectType) {
         when (type) {
-            COMMUNITY -> gotoCommunity(id)
-            ROOM -> gotoRoom(id)
+            COMMUNITY -> gotoCommunity(id, false)
+            ROOM -> gotoRoom(id, false)
             TOPIC -> gotoTopic(id)
             USER -> {
             }
@@ -213,15 +237,18 @@ interface AppNav {
 
     companion object {
         val EMPTY = object : AppNav {
+            override val currentDestination: NavBackStackEntry?
+                get() = TODO("Not yet implemented")
+
             override fun gotoLogin() {
                 TODO("Not yet implemented")
             }
 
-            override fun gotoRoom(roomId: PrimaryKey) {
+            override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) {
                 TODO("Not yet implemented")
             }
 
-            override fun gotoCommunity(communityId: PrimaryKey) {
+            override fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean) {
                 TODO("Not yet implemented")
             }
 
@@ -239,11 +266,13 @@ interface AppNav {
             ) {
                 TODO("Not yet implemented")
             }
+
+            override fun gotoMemberPage(
+                objectId: PrimaryKey,
+                objectType: ObjectType
+            ) {
+                TODO("Not yet implemented")
+            }
         }
     }
-}
-
-inline fun <reified T> BackStackEntry.path2(path: String, default: T? = null): T? {
-    val value = pathMap[path] ?: return default
-    return if (T::class == PrimaryKey::class) value.toPrimaryKey() as T else convertValue(value)
 }

@@ -18,31 +18,34 @@ import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.shared.model.CommunityInfo
 
 @Composable
-fun CommunityIcon(communityInfo: CommunityInfo?, iconSize: Dp = 40.dp) {
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
+fun CommunityIcon(
+    communityInfo: CommunityInfo?,
+    iconSize: Dp = 40.dp,
+    showDialog: Boolean,
+    updateDialog: (Boolean) -> Unit,
+    update: (CommunityInfo) -> Unit,
+) {
     val model = communityInfo?.icon?.url
     val radius = 8.dp
+    val shape = RoundedCornerShape(radius)
     if (model != null) {
-        AsyncImage(model, contentDescription = null, Modifier.size(iconSize).clickable {
-            showDialog = true
-        }.clip(RoundedCornerShape(radius)))
+        AsyncImage(model, contentDescription = null, Modifier.size(iconSize).clip(shape).clickable {
+            updateDialog(true)
+        })
     } else {
         Box(
-            modifier = Modifier.background(
-                MaterialTheme.colorScheme.tertiaryContainer,
-                RoundedCornerShape(radius)
-            )
-                .size(iconSize).clickable {
-                    showDialog = true
+            modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer, shape)
+                .clip(shape)
+                .size(iconSize)
+                .clickable {
+                    updateDialog(true)
                 },
             contentAlignment = Alignment.Center
         ) {
             CharSequenceText(communityInfo?.name?.safeFirstUnicode() ?: "")
         }
     }
-    CommunityDialog(communityInfo, showDialog) {
-        showDialog = false
-    }
+    CommunityDialog(communityInfo, showDialog, {
+        updateDialog(false)
+    }, update)
 }

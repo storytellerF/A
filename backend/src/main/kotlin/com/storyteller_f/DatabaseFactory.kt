@@ -1,5 +1,6 @@
 package com.storyteller_f
 
+import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
 import com.storyteller_f.tables.*
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
@@ -26,15 +27,14 @@ object DatabaseFactory {
 
     private fun init() {
         transaction {
-//            addLogger(StdOutSqlLogger)
+            addLogger(StdOutSqlLogger)
 
             SchemaUtils.create(
                 Communities,
-                CommunityJoins,
+                MemberJoins,
                 EncryptedTopics,
                 EncryptedTopicKeys,
                 Rooms,
-                RoomJoins,
                 Topics,
                 Users,
             )
@@ -45,11 +45,10 @@ object DatabaseFactory {
         transaction {
             SchemaUtils.drop(
                 Communities,
-                CommunityJoins,
+                MemberJoins,
                 EncryptedTopics,
                 EncryptedTopicKeys,
                 Rooms,
-                RoomJoins,
                 Topics,
                 Users
             )
@@ -125,6 +124,10 @@ object DatabaseFactory {
         block().limit(1).empty()
     }
 
+    suspend fun <T> isNotEmpty(block: suspend () -> SizedIterable<T>): Result<Boolean> = dbQuery {
+        !block().limit(1).empty()
+    }
+
     suspend fun <T> count(block: suspend () -> SizedIterable<T>): Result<Long> = dbQuery {
         block().count()
     }
@@ -143,3 +146,7 @@ const val COMMUNITY_NAME_LENGTH = 10
 const val ROOM_ID_LENGTH = 20
 const val ICON_LENGTH = 1000
 const val ROOM_NAME_LENGTH = 10
+
+fun Throwable.isDup(): Boolean {
+    return this is PGSQLIntegrityConstraintViolationException
+}
