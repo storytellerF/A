@@ -71,7 +71,7 @@ fun HomePage() {
                     Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    val scope = when(pagerState.currentPage) {
+                    val scope = when (pagerState.currentPage) {
                         1 -> SearchScope.MyCommunity
                         2 -> SearchScope.MyRoom
                         else -> SearchScope.World

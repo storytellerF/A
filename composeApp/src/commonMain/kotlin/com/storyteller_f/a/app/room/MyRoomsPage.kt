@@ -23,7 +23,6 @@ import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.common.viewModel
-import com.storyteller_f.a.app.compontents.CommonDialogController
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.a.client_lib.getJoinedRooms
@@ -75,7 +74,6 @@ fun RoomList(
                 contentType = items.itemContentType()
             ) { index ->
                 RoomCell(items[index], false) {
-
                 }
             }
         }
@@ -130,7 +128,7 @@ fun RoomIcon(
     enableClick: Boolean = false,
     showDialog: Boolean,
     updateShowDialog: (Boolean) -> Unit,
-    update: (RoomInfo) -> Unit
+    update: (RoomInfo) -> Unit = {}
 ) {
     val iconUrl = roomInfo?.icon?.url
     val radius = 8.dp

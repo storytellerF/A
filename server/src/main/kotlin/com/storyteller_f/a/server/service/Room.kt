@@ -126,17 +126,17 @@ suspend fun joinRoom(
             }
         }
     }
-
 }
 
 suspend fun exitRoom(roomId: PrimaryKey, id: PrimaryKey, backend: Backend) =
     getRoom(roomId, null, id, backend, true).mapResultNotNull { info ->
         if (info.joinedTime == null) {
             Result.success(info)
-        } else
+        } else {
             exit(roomId, id).map { i ->
                 info.copy(joinedTime = null)
             }
+        }
     }
 
 fun mapRoomInfo(it: ResultRow): Pair<RoomInfo, String?> {

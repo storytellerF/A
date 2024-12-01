@@ -201,7 +201,7 @@ fun CustomAlertDialogInternal(
 }
 
 @Composable
-fun rememberCommonDialogController() : CommonDialogController {
+fun rememberCommonDialogController(): CommonDialogController {
     return remember {
         CommonDialogController()
     }

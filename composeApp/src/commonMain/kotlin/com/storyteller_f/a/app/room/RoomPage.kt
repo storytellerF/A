@@ -547,10 +547,9 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit, update: (RoomInf
             val shown by commonDialogController.show
             RoomIcon(
                 roomInfo,
-                size = 50.dp,
                 showDialog = shown,
                 updateShowDialog = commonDialogController::update,
-                update = {})
+            )
             Column {
                 Text(roomInfo.name)
                 Text("aid: ${roomInfo.aid}")
@@ -564,38 +563,47 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit, update: (RoomInf
             }
         }
 
-        Column {
-            ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
-            ButtonNav(Icons.Default.CardMembership, "All members") {
-                dismiss()
-                appNav.gotoMemberPage(roomInfo.id, ObjectType.ROOM)
-            }
+        RoomDialogButtons(dismiss, appNav, roomInfo, update)
+    }
+}
 
-            if (appNav.currentDestination?.destination?.hasRoute(RoomScreen::class) == true) {
-                val scope = rememberCoroutineScope()
-                val toaster = rememberToasterState()
-                Toaster(toaster)
-                if (roomInfo.isJoined) {
-                    ButtonNav(Icons.Default.Close, "Exit Room") {
-                        scope.launch {
-                            exitRoom(roomInfo) {
-                                toaster.show("success", duration = 1.seconds)
-                                update(it)
-                            }
+@Composable
+private fun RoomDialogButtons(
+    dismiss: () -> Unit,
+    appNav: AppNav,
+    roomInfo: RoomInfo,
+    update: (RoomInfo) -> Unit
+) {
+    Column {
+        ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
+        ButtonNav(Icons.Default.CardMembership, "All members") {
+            dismiss()
+            appNav.gotoMemberPage(roomInfo.id, ObjectType.ROOM)
+        }
+
+        if (appNav.currentDestination?.destination?.hasRoute(RoomScreen::class) == true) {
+            val scope = rememberCoroutineScope()
+            val toaster = rememberToasterState()
+            Toaster(toaster)
+            if (roomInfo.isJoined) {
+                ButtonNav(Icons.Default.Close, "Exit Room") {
+                    scope.launch {
+                        exitRoom(roomInfo) {
+                            toaster.show("success", duration = 1.seconds)
+                            update(it)
                         }
                     }
-                } else {
-                    ButtonNav(Icons.Default.AddHome, "Join Room") {
-                        scope.launch {
-                            joinRoom(roomInfo) {
-                                toaster.show("success", duration = 1.seconds)
-                                update(it)
-                            }
+                }
+            } else {
+                ButtonNav(Icons.Default.AddHome, "Join Room") {
+                    scope.launch {
+                        joinRoom(roomInfo) {
+                            toaster.show("success", duration = 1.seconds)
+                            update(it)
                         }
                     }
                 }
             }
-
         }
     }
 }

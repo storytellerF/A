@@ -19,6 +19,8 @@ import io.ktor.resources.*
 import io.ktor.server.plugins.BadRequestException
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SqlExpressionBuilder
 
 @Resource("/communities")
 class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
@@ -68,34 +70,30 @@ suspend fun getCommunity(
         Community.wrapRow(it) to if (fillJoinInfo == true) it[MemberJoins.joinTime] else null
     }) {
         when {
-            fillJoinInfo != true -> Community.find {
-                if (communityId != null) {
-                    Communities.id eq communityId
-                } else if (communityAid != null) {
-                    Communities.aid eq communityAid
-                } else {
-                    throw BadRequestException("aid must be set.")
-                }
-            }
-
+            fillJoinInfo != true -> Community.find(buildCommunityWhereClause(communityId, communityAid))
             id == null -> throw UnauthorizedException()
             else -> Communities.join(MemberJoins, JoinType.LEFT, Communities.id, MemberJoins.objectId) {
                 MemberJoins.uid eq id
             }.select(Communities.fields + MemberJoins.joinTime)
-                .where {
-                    if (communityId != null) {
-                        Communities.id eq communityId
-                    } else if (communityAid != null) {
-                        Communities.aid eq communityAid
-                    } else {
-                        throw BadRequestException("aid must be set.")
-                    }
-                }
+                .where(buildCommunityWhereClause(communityId, communityAid))
         }
     }.mapResultNotNull { (info, iconName, coverName) ->
         backend.mediaService.get("apic", listOf(iconName, coverName)).map { (iconUrl, coverUrl) ->
             info.copy(icon = getMediaInfo(iconUrl), poster = getMediaInfo(coverUrl))
         }
+    }
+}
+
+private fun buildCommunityWhereClause(
+    communityId: PrimaryKey?,
+    communityAid: String?
+): SqlExpressionBuilder.() -> Op<Boolean> = {
+    if (communityId != null) {
+        Communities.id eq communityId
+    } else if (communityAid != null) {
+        Communities.aid eq communityAid
+    } else {
+        throw BadRequestException("aid must be set.")
     }
 }
 

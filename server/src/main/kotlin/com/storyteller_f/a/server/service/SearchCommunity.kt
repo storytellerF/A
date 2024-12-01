@@ -11,7 +11,6 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.tables.Communities
 import com.storyteller_f.tables.Community
 import com.storyteller_f.tables.MemberJoins
-import com.storyteller_f.tables.Rooms
 import com.storyteller_f.types.PaginationResult
 import org.jetbrains.exposed.sql.*
 

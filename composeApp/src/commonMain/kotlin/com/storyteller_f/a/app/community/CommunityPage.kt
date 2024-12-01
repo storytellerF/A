@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavDestination.Companion.hasRoute
 import app.cash.paging.compose.collectAsLazyPagingItems
+import com.storyteller_f.a.app.AppNav
 import com.storyteller_f.a.app.CommunityScreen
 import com.storyteller_f.a.app.CustomBottomNav
 import com.storyteller_f.a.app.CustomRailNav
@@ -108,7 +109,6 @@ fun CommunityPage(
     communityId: PrimaryKey,
     showDialog: Boolean
 ) {
-
     val size = calculateWindowSizeClass()
     when (size.widthSizeClass) {
         WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(communityId, showDialog)
@@ -190,31 +190,15 @@ private fun CommunityCompatPageInternal(
     val searchScope = buildSearchScope(pagerState, communityId)
     val navs = communityNavRoutes()
     val appNav = LocalAppNav.current
-    val scope = rememberCoroutineScope()
-    val alertDialogState = remember {
-        CustomAlertDialogController()
-    }
     var showDialog by remember {
         mutableStateOf(false)
     }
     Scaffold(floatingActionButton = {
-        FloatingActionButton(onClick = {
-            if (community?.isJoined == true) {
-                appNav.gotoTopicCompose(ObjectType.COMMUNITY, communityId)
-            } else {
-                alertDialogState.showMessage("Not Join", "Do you want to join?")
-            }
-        }) {
-            Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add))
+        CommunityFloatingButton(community, appNav, communityId) {
+            showDialog = true
         }
     }, bottomBar = {
-        CustomBottomNav(navs[pagerState.currentPage].path, navs) { path ->
-            scope.launch {
-                pagerState.animateScrollToPage(navs.indexOfFirst {
-                    it.path == path
-                })
-            }
-        }
+        CommunityBottomNav(navs, pagerState)
     }) {
         Column(
             modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
@@ -234,11 +218,45 @@ private fun CommunityCompatPageInternal(
             CommunityPageInternal(pagerState, communityId)
         }
     }
+}
+
+@Composable
+private fun CommunityFloatingButton(
+    community: CommunityInfo?,
+    appNav: AppNav,
+    communityId: PrimaryKey,
+    onClickOk: () -> Unit
+) {
+    val alertDialogState = remember {
+        CustomAlertDialogController()
+    }
+    FloatingActionButton(onClick = {
+        if (community?.isJoined == true) {
+            appNav.gotoTopicCompose(ObjectType.COMMUNITY, communityId)
+        } else {
+            alertDialogState.showMessage("Not Join", "Do you want to join?")
+        }
+    }) {
+        Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add))
+    }
     CustomAlertDialog(alertDialogState, {
         alertDialogState.close()
-    }, {
-        showDialog = true
-    })
+    }, onClickOk)
+}
+
+@Composable
+private fun CommunityBottomNav(
+    navs: List<NavRoute>,
+    pagerState: PagerState
+) {
+    val scope = rememberCoroutineScope()
+    CustomBottomNav(navs[pagerState.currentPage].path, navs) { path ->
+        scope.launch {
+            pagerState.animateScrollToPage(navs.indexOfFirst {
+                it.path == path
+            })
+        }
+    }
 }
 
 @Composable

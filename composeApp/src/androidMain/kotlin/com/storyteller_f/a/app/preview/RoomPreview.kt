@@ -89,7 +89,6 @@ private class RoomsProvider : PreviewParameterProvider<RoomInfo> {
 @Composable
 private fun PreviewRooms(@PreviewParameter(RoomsProvider::class) roomInfo: RoomInfo) {
     RoomCell(roomInfo = roomInfo) {
-
     }
 }
 

@@ -152,7 +152,7 @@ class Add : Subcommand("add", "add entry") {
         val roomList = u.mapNotNull {
             it.room
         }.distinct().map {
-            Room.findRoomByAId(it)!!
+            Room.wrapRow(Room.findRoomByAId(it).firstOrNull()!!)
         }.associate {
             it.aid to it
         }

@@ -45,7 +45,7 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
             CustomSearchBar(
                 when (objectType) {
                     ObjectType.COMMUNITY -> SearchScope.CommunityMember(objectId)
-                    else -> SearchScope.RoomMembers(objectId)
+                    else -> SearchScope.RoomMember(objectId)
                 }
             ) {
             }

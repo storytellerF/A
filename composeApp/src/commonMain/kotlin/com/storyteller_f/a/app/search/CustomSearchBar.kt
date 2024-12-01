@@ -49,8 +49,8 @@ sealed interface SearchScope {
     data class RoomTopic(val roomId: PrimaryKey) : SearchScope
     data class TopicTopic(val topicId: PrimaryKey) : SearchScope
     data class CommunityMember(val communityId: PrimaryKey) : SearchScope
-    data class RoomMembers(val roomId: PrimaryKey) : SearchScope
-    data object Members : SearchScope
+    data class RoomMember(val roomId: PrimaryKey) : SearchScope
+    data object Member : SearchScope
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,8 +115,8 @@ private fun SearchPlaceholder(scope: SearchScope) {
             is SearchScope.RoomTopic -> "input to search topics"
             is SearchScope.TopicTopic -> "input to search topics"
             is SearchScope.CommunityMember -> "input228 to search members"
-            is SearchScope.RoomMembers -> "input to search members"
-            SearchScope.Members -> "input to search members"
+            is SearchScope.RoomMember -> "input to search members"
+            SearchScope.Member -> "input to search members"
         }
     )
 }
@@ -129,175 +129,205 @@ private fun SearchContent(
 ) {
     val current = searchQuery.trim()
     when (scope) {
-        SearchScope.World -> {
-            if (current.isNotBlank()) {
-                val pagerState = rememberPagerState {
-                    2
-                }
-                var selected by remember {
-                    mutableIntStateOf(0)
-                }
-                val tabs = listOf("Topics", "Users")
-                val coroutineScope = rememberCoroutineScope()
-                PrimaryTabRow(selected) {
-                    tabs.forEachIndexed { i, e ->
-                        Tab(selected = selected == i, onClick = {
-                            selected = i
-                            coroutineScope.launch {
-                                pagerState.scrollToPage(i)
-                            }
-                        }) {
-                            Text(text = e, modifier = Modifier.padding(vertical = 12.dp))
-                        }
-                    }
-                }
-                HorizontalPager(pagerState) {
-                    if (it == 0) {
-                        val viewModel = viewModel(TopicSearchViewModel::class, keys = listOf("topic", current)) {
-                            TopicSearchViewModel(current.split(" "), null, null)
-                        }
-                        val topics = viewModel.flow.collectAsLazyPagingItems()
-                        TopicList(topics)
-                    } else {
-                        val viewModel = viewModel(MemberViewModel::class, keys = listOf("members", current)) {
-                            MemberViewModel(0, current, ObjectType.USER)
-                        }
-                        val items = viewModel.flow.collectAsLazyPagingItems()
-                        MemberList(items)
+        SearchScope.World -> WorldSearchContent(current)
+
+        SearchScope.MyCommunity -> MyCommunitySearchContent(current)
+
+        SearchScope.MyRoom -> MyRoomSearchContent(current)
+
+        is SearchScope.CommunityTopic -> CommunityTopicSearchContent(current, scope)
+
+        is SearchScope.CommunityRoom -> CommunityRoomSearchContent(current, scope)
+
+        is SearchScope.RoomTopic -> RoomTopicSearchContent(current, scope)
+
+        is SearchScope.TopicTopic -> TopicTopicSearchContent(current, scope)
+
+        is SearchScope.CommunityMember -> CommunityMemberSearchContent(current, scope)
+
+        is SearchScope.RoomMember -> RoomMemberSearchContent(current, scope)
+
+        SearchScope.Member -> MemberSearchContent(current)
+    }
+}
+
+@Composable
+private fun MemberSearchContent(current: String) {
+    if (current.isNotBlank()) {
+        val viewModel = viewModel(MemberViewModel::class, keys = listOf("members", current)) {
+            MemberViewModel(0, current, ObjectType.USER)
+        }
+        val items = viewModel.flow.collectAsLazyPagingItems()
+        MemberList(items)
+    }
+}
+
+@Composable
+private fun RoomMemberSearchContent(current: String, scope: SearchScope.RoomMember) {
+    if (current.isNotBlank()) {
+        val viewModel = viewModel(MemberViewModel::class, keys = listOf("members", scope.roomId, current)) {
+            MemberViewModel(scope.roomId, current, ObjectType.ROOM)
+        }
+        val items = viewModel.flow.collectAsLazyPagingItems()
+        MemberList(items)
+    }
+}
+
+@Composable
+private fun CommunityMemberSearchContent(current: String, scope: SearchScope.CommunityMember) {
+    if (current.isNotBlank()) {
+        val viewModel =
+            viewModel(MemberViewModel::class, keys = listOf("members", scope.communityId, current)) {
+                MemberViewModel(scope.communityId, current, ObjectType.COMMUNITY)
+            }
+        val items = viewModel.flow.collectAsLazyPagingItems()
+        MemberList(items)
+    }
+}
+
+@Composable
+private fun TopicTopicSearchContent(current: String, scope: SearchScope.TopicTopic) {
+    if (current.isNotBlank()) {
+        val viewModel = viewModel(TopicSearchViewModel::class, keys = listOf("topic", scope.topicId, current)) {
+            TopicSearchViewModel(current.split(" "), scope.topicId, ObjectType.TOPIC)
+        }
+        val topics = viewModel.flow.collectAsLazyPagingItems()
+        TopicList(topics)
+    }
+}
+
+@Composable
+private fun RoomTopicSearchContent(current: String, scope: SearchScope.RoomTopic) {
+    if (current.isNotBlank()) {
+        val viewModel = viewModel(TopicSearchViewModel::class, keys = listOf("topic", scope.roomId, current)) {
+            TopicSearchViewModel(current.split(" "), scope.roomId, ObjectType.ROOM)
+        }
+        val topics = viewModel.flow.collectAsLazyPagingItems()
+        TopicList(topics)
+    }
+}
+
+@Composable
+private fun CommunityRoomSearchContent(current: String, scope: SearchScope.CommunityRoom) {
+    if (current.isNotBlank()) {
+        val viewModel = viewModel(RoomsViewModel::class, keys = listOf("rooms", scope.communityId, current)) {
+            RoomsViewModel(JoinStatusSearch.UNSPECIFIED, current, scope.communityId)
+        }
+        val items = viewModel.flow.collectAsLazyPagingItems()
+        RoomList(items)
+    }
+}
+
+@Composable
+private fun CommunityTopicSearchContent(current: String, scope: SearchScope.CommunityTopic) {
+    if (current.isNotBlank()) {
+        val viewModel =
+            viewModel(TopicSearchViewModel::class, keys = listOf("topic", scope.communityId, current)) {
+                TopicSearchViewModel(current.split(" "), scope.communityId, ObjectType.COMMUNITY)
+            }
+        val topics = viewModel.flow.collectAsLazyPagingItems()
+        TopicList(topics)
+    }
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun MyRoomSearchContent(current: String) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        var currentOption by remember {
+            mutableStateOf(JoinStatusSearch.JOINED)
+        }
+
+        val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
+        FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            SingleChoiceSegmentedButtonRow {
+                options.forEachIndexed { i, e ->
+                    SegmentedButton(currentOption == e, {
+                        currentOption = e
+                    }, shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)) {
+                        Text(e.name.lowercase().replace("_", " "))
                     }
                 }
             }
+        }
+        if (current.isNotBlank()) {
+            val viewModel = viewModel(RoomsViewModel::class, keys = listOf("my-rooms", current)) {
+                RoomsViewModel(JoinStatusSearch.JOINED, current)
+            }
+            val items = viewModel.flow.collectAsLazyPagingItems()
+            RoomList(items)
+        }
+    }
+}
 
-
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun MyCommunitySearchContent(current: String) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        var currentOption by remember {
+            mutableStateOf(JoinStatusSearch.JOINED)
         }
 
-        SearchScope.MyCommunity -> {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                var currentOption by remember {
-                    mutableStateOf(JoinStatusSearch.JOINED)
-                }
-
-                val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    SingleChoiceSegmentedButtonRow {
-                        options.forEachIndexed { i, e ->
-                            SegmentedButton(currentOption == e, {
-                                currentOption = e
-                            }, shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)) {
-                                Text(e.name.lowercase().replace("_", " "))
-                            }
-                        }
+        val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            SingleChoiceSegmentedButtonRow {
+                options.forEachIndexed { i, e ->
+                    SegmentedButton(currentOption == e, {
+                        currentOption = e
+                    }, shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)) {
+                        Text(e.name.lowercase().replace("_", " "))
                     }
-                }
-                if (current.isNotBlank()) {
-                    val viewModel = viewModel(
-                        CommunitiesViewModel::class,
-                        keys = listOf("my-community", currentOption.name, current)
-                    ) {
-                        CommunitiesViewModel(currentOption, current)
-                    }
-                    val items = viewModel.flow.collectAsLazyPagingItems()
-                    CommunityList(items)
                 }
             }
         }
+        if (current.isNotBlank()) {
+            val viewModel = viewModel(
+                CommunitiesViewModel::class,
+                keys = listOf("my-community", currentOption.name, current)
+            ) {
+                CommunitiesViewModel(currentOption, current)
+            }
+            val items = viewModel.flow.collectAsLazyPagingItems()
+            CommunityList(items)
+        }
+    }
+}
 
-        SearchScope.MyRoom -> {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                var currentOption by remember {
-                    mutableStateOf(JoinStatusSearch.JOINED)
-                }
-
-                val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
-                FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    SingleChoiceSegmentedButtonRow {
-                        options.forEachIndexed { i, e ->
-                            SegmentedButton(currentOption == e, {
-                                currentOption = e
-                            }, shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)) {
-                                Text(e.name.lowercase().replace("_", " "))
-                            }
-                        }
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun WorldSearchContent(current: String) {
+    if (current.isNotBlank()) {
+        val pagerState = rememberPagerState {
+            2
+        }
+        var selected by remember {
+            mutableIntStateOf(0)
+        }
+        val tabs = listOf("Topics", "Users")
+        val coroutineScope = rememberCoroutineScope()
+        PrimaryTabRow(selected) {
+            tabs.forEachIndexed { i, e ->
+                Tab(selected = selected == i, onClick = {
+                    selected = i
+                    coroutineScope.launch {
+                        pagerState.scrollToPage(i)
                     }
-                }
-                if (current.isNotBlank()) {
-                    val viewModel = viewModel(RoomsViewModel::class, keys = listOf("my-rooms", current)) {
-                        RoomsViewModel(JoinStatusSearch.JOINED, current)
-                    }
-                    val items = viewModel.flow.collectAsLazyPagingItems()
-                    RoomList(items)
+                }) {
+                    Text(text = e, modifier = Modifier.padding(vertical = 12.dp))
                 }
             }
-
         }
-
-        is SearchScope.CommunityTopic -> {
-            if (current.isNotBlank()) {
-                val viewModel =
-                    viewModel(TopicSearchViewModel::class, keys = listOf("topic", scope.communityId, current)) {
-                        TopicSearchViewModel(current.split(" "), scope.communityId, ObjectType.COMMUNITY)
-                    }
+        HorizontalPager(pagerState) {
+            if (it == 0) {
+                val viewModel = viewModel(TopicSearchViewModel::class, keys = listOf("topic", current)) {
+                    TopicSearchViewModel(current.split(" "), null, null)
+                }
                 val topics = viewModel.flow.collectAsLazyPagingItems()
                 TopicList(topics)
-            }
-        }
-
-        is SearchScope.CommunityRoom -> {
-            if (current.isNotBlank()) {
-                val viewModel = viewModel(RoomsViewModel::class, keys = listOf("rooms", scope.communityId, current)) {
-                    RoomsViewModel(JoinStatusSearch.UNSPECIFIED, current, scope.communityId)
-                }
-                val items = viewModel.flow.collectAsLazyPagingItems()
-                RoomList(items)
-            }
-        }
-
-        is SearchScope.RoomTopic -> {
-            if (current.isNotBlank()) {
-                val viewModel = viewModel(TopicSearchViewModel::class, keys = listOf("topic", scope.roomId, current)) {
-                    TopicSearchViewModel(current.split(" "), scope.roomId, ObjectType.ROOM)
-                }
-                val topics = viewModel.flow.collectAsLazyPagingItems()
-                TopicList(topics)
-            }
-        }
-
-        is SearchScope.TopicTopic -> {
-            if (current.isNotBlank()) {
-                val viewModel = viewModel(TopicSearchViewModel::class, keys = listOf("topic", scope.topicId, current)) {
-                    TopicSearchViewModel(current.split(" "), scope.topicId, ObjectType.TOPIC)
-                }
-                val topics = viewModel.flow.collectAsLazyPagingItems()
-                TopicList(topics)
-            }
-        }
-
-        is SearchScope.CommunityMember -> {
-            if (current.isNotBlank()) {
-                val viewModel =
-                    viewModel(MemberViewModel::class, keys = listOf("members", scope.communityId, current)) {
-                        MemberViewModel(scope.communityId, current, ObjectType.COMMUNITY)
-                    }
-                val items = viewModel.flow.collectAsLazyPagingItems()
-                MemberList(items)
-            }
-        }
-
-        is SearchScope.RoomMembers -> {
-            if (current.isNotBlank()) {
-                val viewModel = viewModel(MemberViewModel::class, keys = listOf("members", scope.roomId, current)) {
-                    MemberViewModel(scope.roomId, current, ObjectType.ROOM)
-                }
-                val items = viewModel.flow.collectAsLazyPagingItems()
-                MemberList(items)
-            }
-        }
-
-        SearchScope.Members -> {
-            if (current.isNotBlank()) {
+            } else {
                 val viewModel = viewModel(MemberViewModel::class, keys = listOf("members", current)) {
                     MemberViewModel(0, current, ObjectType.USER)
                 }

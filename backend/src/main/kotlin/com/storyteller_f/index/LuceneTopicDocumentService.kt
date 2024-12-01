@@ -94,10 +94,20 @@ class LuceneTopicDocumentService(private val path: Path) : TopicDocumentService 
                         BooleanClause.Occur.MUST
                     )
                 word?.let {
-                    combinedQuery.add(
-                        MultiFieldQueryParser(arrayOf("content"), analyzer).parse(word.joinToString<String>(" ")),
-                        BooleanClause.Occur.MUST
-                    )
+                    val filtered = it.map { string ->
+                        string.trim()
+                    }.filter { w ->
+                        w.isNotBlank()
+                    }
+                    if (filtered.isNotEmpty()) {
+                        combinedQuery.add(
+                            MultiFieldQueryParser(
+                                arrayOf("content"),
+                                analyzer
+                            ).parse(filtered.joinToString<String>(" ")),
+                            BooleanClause.Occur.MUST
+                        )
+                    }
                 }
                 root?.let {
                     combinedQuery.add(LongPoint.newExactQuery("rootId", it.first), BooleanClause.Occur.MUST)

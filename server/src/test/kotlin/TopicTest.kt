@@ -5,26 +5,18 @@ import com.storyteller_f.a.client_lib.getTopicSnapshot
 import com.storyteller_f.a.client_lib.joinCommunity
 import com.storyteller_f.a.client_lib.searchTopics
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.obj.TopicSnapshotPack
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Community
 import io.ktor.client.call.body
 import org.apache.fontbox.ttf.OTFParser
-import org.apache.pdfbox.io.RandomAccessRead
 import org.apache.pdfbox.io.RandomAccessReadBufferedFile
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.PDPageContentStream
-import org.apache.pdfbox.pdmodel.common.PDStream
-import org.apache.pdfbox.pdmodel.font.PDFont
-import org.apache.pdfbox.pdmodel.font.PDTrueTypeFont
 import org.apache.pdfbox.pdmodel.font.PDType0Font
-import java.awt.Font
-import java.awt.GraphicsEnvironment
 import java.io.File
-import java.io.RandomAccessFile
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -62,7 +54,7 @@ class TopicTest {
             }
             client.joinCommunity(newId)
             val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello").body<TopicInfo>()
-            client.getTopicSnapshot(topicInfo.id).body<TopicSnapshotPack>()
+            client.getTopicSnapshot(topicInfo.id)
         }
     }
 
@@ -91,7 +83,7 @@ class TopicTest {
                 stream.endText()
             }
             document.addPage(firstPage)
-            document.save("test.pdf")
+            document.save("/tmp/test.pdf")
         }
     }
 }

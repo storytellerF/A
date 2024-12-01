@@ -27,5 +27,4 @@ private fun Route.bindPublicRoute(backend: Backend) {
             }
         }
     }
-
 }
