@@ -30,8 +30,8 @@ echo "put $FILE ./a-server/$FLAVOR.image.tar" | sftp -i "$REMOTE_CERT_FILE" -P 4
 
 sleep 2
 
-md=$(md5sum "$FILE")
-ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "echo ""$md"  "./$FLAVOR.image.tar"" | md5sum -c -"
+md=$(md5sum "$FILE" | awk '{print $1}')
+ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "echo ""$md"  ".a-server//$FLAVOR.image.tar"" | md5sum -c -"
 
 sleep 2
 

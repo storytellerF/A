@@ -155,7 +155,7 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
     }
 
     override fun gotoHome() {
-        navigator.navigate(route = HomeScreen)
+        navigator.popBackStack(HomeScreen, false)
     }
 
     override fun gotoTopicCompose(objectType: ObjectType, objectId: PrimaryKey) {
