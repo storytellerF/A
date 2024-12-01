@@ -25,7 +25,7 @@ lifecycleViewmodelCompose = "2.8.7"
 luceneCore = "10.0.0"
 mosaicRuntime = "0.14.0"
 multiplatformCryptoLibsodiumBindings = "0.9.2"
-multiplatformMarkdownRenderer = "0.25.0"
+multiplatformMarkdownRenderer = "0.27.0"
 napier = "2.7.1"
 cryptographyCore = "0.3.1"
 elasticsearchJava = "8.14.3"
@@ -102,6 +102,7 @@ multiplatform-crypto-libsodium-bindings = { module = "com.ionspin.kotlin:multipl
 multiplatform-markdown-renderer = { module = "com.mikepenz:multiplatform-markdown-renderer", version.ref = "multiplatformMarkdownRenderer" }
 multiplatform-markdown-renderer-coil3 = { module = "com.mikepenz:multiplatform-markdown-renderer-coil3", version.ref = "multiplatformMarkdownRenderer" }
 multiplatform-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "multiplatformMarkdownRenderer" }
+multiplatform-markdown-renderer-code = { module = "com.mikepenz:multiplatform-markdown-renderer-code", version.ref = "multiplatformMarkdownRenderer" }
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
 cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptographyCore" }
 cryptography-provider-jdk = { module = "dev.whyoleg.cryptography:cryptography-provider-jdk", version.ref = "cryptographyCore" }

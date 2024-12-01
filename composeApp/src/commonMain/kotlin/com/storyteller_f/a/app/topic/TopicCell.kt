@@ -112,51 +112,60 @@ fun TopicCellInternal(
 }
 
 @Composable
-fun CustomCodeFence(modal: MarkdownComponentModel, content: String) {
+fun CustomCodeFence(modal: MarkdownComponentModel) {
+    val content = modal.content
     val children = modal.node.children
     val langOffset = children.indexOfFirst {
         it.type == MarkdownTokenTypes.FENCE_LANG
     }
     val lang = children.getOrNull(langOffset)?.getTextInNode(content).toString().lowercase()
-    (when {
-        listOf("com.storyteller_f.a", "c.s.a", "csa").contains(lang) -> {
-            RefBlock(children, langOffset, content)
-        }
+    when {
+        listOf("com.storyteller_f.a", "c.s.a", "csa").contains(lang) -> RefBlock(children, langOffset, content)
 
-        lang == "math" -> {
-            LatexBlock(children, langOffset, content)
-        }
+        lang == "math" -> LatexBlock(children, langOffset, content)
 
-        Highlights.languages().map { language -> language.name.lowercase() }.contains(lang) -> {
-            val highlights by remember {
-                mutableStateOf(
-                    Highlights
-                        .Builder(code = readFenceContent(children, langOffset, content).replaceIndent())
-                        .build()
-                )
-            }
-            val text by produceState<AnnotatedString?>(null) {
-                value = highlights
-                    .getHighlights()
-                    .generateAnnotatedString(highlights.getCode())
-            }
-            val backgroundCodeColor = LocalMarkdownColors.current.codeBackground
-            val codeBackgroundCornerSize = LocalMarkdownDimens.current.codeBackgroundCornerSize
-            val codeBlockPadding = LocalMarkdownPadding.current.codeBlock
-            text?.let {
-                val shape = RoundedCornerShape(codeBackgroundCornerSize)
-                val scrollState = rememberScrollState()
-                Text(
-                    text = it,
-                    modifier = Modifier.fillMaxWidth().background(backgroundCodeColor, shape)
-                        .clip(shape)
-                        .padding(codeBlockPadding).horizontalScroll(scrollState)
-                )
-            }
-        }
+        Highlights.languages().map { language -> language.name.lowercase() }.contains(lang) -> HighlightCodeBlock(
+            modal
+        )
 
-        else -> null
-    }) ?: MarkdownCodeFence(modal.content, modal.node)
+        else -> MarkdownCodeFence(modal.content, modal.node)
+    }
+}
+
+@Composable
+private fun HighlightCodeBlock(
+    modal: MarkdownComponentModel
+) {
+    val content = modal.content
+    val children = modal.node.children
+    val langOffset = children.indexOfFirst {
+        it.type == MarkdownTokenTypes.FENCE_LANG
+    }
+    val highlights by remember {
+        mutableStateOf(
+            Highlights
+                .Builder(code = readFenceContent(children, langOffset, content).replaceIndent())
+                .build()
+        )
+    }
+    val text by produceState<AnnotatedString?>(null) {
+        value = highlights
+            .getHighlights()
+            .generateAnnotatedString(highlights.getCode())
+    }
+    val backgroundCodeColor = LocalMarkdownColors.current.codeBackground
+    val codeBackgroundCornerSize = LocalMarkdownDimens.current.codeBackgroundCornerSize
+    val codeBlockPadding = LocalMarkdownPadding.current.codeBlock
+    text?.let {
+        val shape = RoundedCornerShape(codeBackgroundCornerSize)
+        val scrollState = rememberScrollState()
+        Text(
+            text = it,
+            modifier = Modifier.fillMaxWidth().background(backgroundCodeColor, shape)
+                .clip(shape)
+                .padding(codeBlockPadding).horizontalScroll(scrollState)
+        )
+    }
 }
 
 fun List<CodeHighlight>.generateAnnotatedString(code: String) =
@@ -241,26 +250,33 @@ private fun readFenceContent(
 
 @Composable
 fun TopicContentField(
-    content1: TopicContent?,
+    content: TopicContent?,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    if (content1 is TopicContent.Plain) {
-        Markdown(
-            content1.plain,
-            modifier = modifier.fillMaxWidth().clickable(onClick != null) {
-                onClick?.invoke()
-            },
-            colors = markdownColor(),
-            typography = markdownTypography(),
-            imageTransformer = Coil3ImageTransformerImpl,
-            components = markdownComponents(codeFence = { model ->
-                CustomCodeFence(model, content1.plain)
-            })
-        )
-    } else if (content1 is TopicContent.DecryptFailed) {
-        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-            Text("Permission denied")
+    when (content) {
+        is TopicContent.Plain -> {
+            Markdown(
+                content.plain,
+                modifier = modifier.fillMaxWidth().clickable(onClick != null) {
+                    onClick?.invoke()
+                },
+                colors = markdownColor(),
+                typography = markdownTypography(),
+                imageTransformer = Coil3ImageTransformerImpl,
+                components = markdownComponents(codeFence = {
+                    CustomCodeFence(it)
+                }, codeBlock = { HighlightCodeBlock(it) })
+            )
+        }
+
+        is TopicContent.DecryptFailed, is TopicContent.Encrypted -> {
+            Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                Text("Permission denied")
+            }
+        }
+
+        null -> {
         }
     }
 }
