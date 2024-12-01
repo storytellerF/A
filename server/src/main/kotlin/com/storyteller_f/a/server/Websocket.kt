@@ -47,7 +47,6 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend) {
                     }
                 }
             }
-
         }
     }
 

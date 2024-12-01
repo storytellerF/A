@@ -51,8 +51,9 @@ suspend fun HttpClient.getRoomTopics(
 suspend fun HttpClient.getCommunityInfo(id: PrimaryKey, fillJoinInfo: Boolean = false) =
     get("communities/$id") {
         url {
-            if (fillJoinInfo)
+            if (fillJoinInfo) {
                 parameters.append("fillJoinInfo", "true")
+            }
         }
     }.body<CommunityInfo>()
 
@@ -229,4 +230,6 @@ suspend fun HttpClient.searchTopics(
 
 suspend fun HttpClient.exitRoom(roomId: PrimaryKey) = post("rooms/$roomId/exit").body<RoomInfo>()
 
-suspend fun HttpClient.exitCommunity(communityId: PrimaryKey) = post("communities/$communityId/exit").body<CommunityInfo>()
+suspend fun HttpClient.exitCommunity(communityId: PrimaryKey) = post(
+    "communities/$communityId/exit"
+).body<CommunityInfo>()

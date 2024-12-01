@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
@@ -62,49 +63,59 @@ fun TopicPage(topicId: PrimaryKey) {
     Scaffold(snackbarHost = {
         SnackbarHost(snackBarHost)
     }) {
-        Column(modifier = Modifier) {
-            var showDialog by remember {
-                mutableStateOf(false)
-            }
-            CustomSearchBar(SearchScope.TopicTopic(topicId)) {
-                Icon(Icons.Default.Topic, "topic", modifier = Modifier.clickable {
-                    showDialog = true
-                })
-                TopicDialog(topic, showDialog) {
-                    showDialog = false
-                }
-            }
-            val lazyListState = rememberLazyListState()
-            Box(modifier = Modifier.weight(1f)) {
-                StateView(viewModel.handler, {
-                    topics.refresh()
-                }) {
-                    LazyColumn(
-                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        state = lazyListState
-                    ) {
-                        item {
-                            TopicContentField(it.content)
-                            Spacer(modifier = Modifier.height(12.dp))
-                            ReactionRow()
-                            Spacer(modifier = Modifier.height(12.dp))
-                            HorizontalDivider()
-                        }
+        TopicPageInternal(topicId, topic, viewModel, topics)
+    }
+}
 
-                        nestedStateView(topics) {
-                            TopicCell(it)
-                        }
+@Composable
+private fun TopicPageInternal(
+    topicId: PrimaryKey,
+    topic: TopicInfo?,
+    viewModel: TopicViewModel,
+    topics: LazyPagingItems<TopicInfo>
+) {
+    Column(modifier = Modifier) {
+        var showDialog by remember {
+            mutableStateOf(false)
+        }
+        CustomSearchBar(SearchScope.TopicTopic(topicId)) {
+            Icon(Icons.Default.Topic, "topic", modifier = Modifier.clickable {
+                showDialog = true
+            })
+            TopicDialog(topic, showDialog) {
+                showDialog = false
+            }
+        }
+        val lazyListState = rememberLazyListState()
+        Box(modifier = Modifier.weight(1f)) {
+            StateView(viewModel.handler, {
+                topics.refresh()
+            }) {
+                LazyColumn(
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    state = lazyListState
+                ) {
+                    item {
+                        TopicContentField(it.content)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ReactionRow()
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider()
+                    }
+
+                    nestedStateView(topics) {
+                        TopicCell(it)
                     }
                 }
             }
-            val scope = rememberCoroutineScope()
-            topic?.let {
-                TopicPageInputGroup(it, topicId) {
-                    scope.launch {
-                        delay(200)
-                        lazyListState.animateScrollToItem(1)
-                    }
+        }
+        val scope = rememberCoroutineScope()
+        topic?.let {
+            TopicPageInputGroup(it, topicId) {
+                scope.launch {
+                    delay(200)
+                    lazyListState.animateScrollToItem(1)
                 }
             }
         }

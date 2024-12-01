@@ -1,8 +1,6 @@
 package com.storyteller_f.a.app.topic
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -10,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.storyteller_f.a.app.common.viewModel
-import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.user.UserCell
 import com.storyteller_f.a.app.user.UserViewModel

@@ -5,7 +5,6 @@ import com.storyteller_f.buildBackendFromEnv
 import com.storyteller_f.readEnv
 import com.storyteller_f.shared.hmacSign
 import com.storyteller_f.shared.hmacVerify
-import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.newHmacSha512
@@ -45,7 +44,7 @@ class CommunityTest {
         }
         // 加入社区
         client.joinCommunity(communityId)
-        val communityInfo = client.get("/community/$communityId").body<CommunityInfo>()
+        val communityInfo = client.getCommunityInfo(communityId, true)
         // 验证加入成功
         assertTrue(communityInfo.isJoined)
         // 再次发起创建话题
@@ -55,7 +54,7 @@ class CommunityTest {
         }
         // 测试上传加密话题
         assertFails {
-            client.post("/topic") {
+            client.post("/topics") {
                 contentType(ContentType.Application.Json)
                 setBody(NewTopic(ObjectType.COMMUNITY, communityId, TopicContent.Encrypted("", emptyMap())))
             }
