@@ -125,6 +125,7 @@ kotlin {
             implementation(libs.multiplatform.markdown.renderer)
             implementation(libs.multiplatform.markdown.renderer.m3)
             implementation(libs.multiplatform.markdown.renderer.coil3)
+            implementation(libs.multiplatform.markdown.renderer.code)
             implementation(libs.uri.kmp)
             implementation(libs.sonner)
             implementation(libs.highlights)

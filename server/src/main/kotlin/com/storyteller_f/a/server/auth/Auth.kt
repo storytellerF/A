@@ -260,9 +260,11 @@ private suspend fun ApplicationCall.checkApiRequest(
     return when {
         !BuildConfig.IS_PROD && credential is CustomCredential.IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            if (DatabaseFactory.dbQuery {
-                    User.findById(id) != null
-                }.getOrNull() == true) {
+            if (DatabaseFactory.first({
+                    this
+                }, User::wrapRow) {
+                    User.findById(id)
+                }.getOrNull() != null) {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             } else {
