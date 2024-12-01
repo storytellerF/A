@@ -23,6 +23,8 @@ import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.common.viewModel
+import com.storyteller_f.a.app.compontents.CommonDialogController
+import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.a.client_lib.getJoinedRooms
 import com.storyteller_f.shared.model.RoomInfo
@@ -95,15 +97,21 @@ fun RoomCell(
         modifier = when {
             customBackground -> Modifier
 
-            else -> Modifier.fillMaxWidth()
-                .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
-                .clickable {
-                    roomInfo?.let { onClick(it.id, ObjectType.ROOM) }
-                }
-                .padding(10.dp)
+            else -> {
+                val shape = RoundedCornerShape(10.dp)
+                Modifier.fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.secondaryContainer, shape)
+                    .clip(shape)
+                    .clickable {
+                        roomInfo?.let { onClick(it.id, ObjectType.ROOM) }
+                    }
+                    .padding(10.dp)
+            }
         }
     ) {
-        RoomIcon(roomInfo, showDialog = false, updateShowDialog = {}, update = update)
+        val commonDialogController = rememberCommonDialogController()
+        val shown by commonDialogController.show
+        RoomIcon(roomInfo, showDialog = shown, updateShowDialog = commonDialogController::update, update = update)
         Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(roomInfo?.name.orEmpty(), color = MaterialTheme.colorScheme.onSecondaryContainer)
         }

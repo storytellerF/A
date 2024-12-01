@@ -128,6 +128,7 @@ kotlin {
             implementation(libs.uri.kmp)
             implementation(libs.sonner)
             implementation(libs.highlights)
+            implementation(libs.richeditor.compose)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

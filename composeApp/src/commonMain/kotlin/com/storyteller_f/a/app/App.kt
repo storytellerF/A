@@ -135,7 +135,9 @@ private fun NavGraphBuilder.buildRootNav(
 }
 
 private fun newAppNav(navigator: NavHostController) = object : AppNav {
-    override val currentDestination = navigator.currentBackStackEntry
+    override val currentDestination: NavBackStackEntry?
+        get() = navigator.currentBackStackEntry
+
     override fun gotoLogin() {
         navigator.navigate(route = LoginScreen)
     }

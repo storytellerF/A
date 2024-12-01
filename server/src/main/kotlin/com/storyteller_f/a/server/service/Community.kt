@@ -62,7 +62,7 @@ suspend fun getCommunity(
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
-    return DatabaseFactory.queryNotNull({
+    return DatabaseFactory.first({
         Triple(first.toCommunityIfo(second), first.icon, first.poster)
     }, {
         Community.wrapRow(it) to if (fillJoinInfo == true) it[MemberJoins.joinTime] else null
@@ -91,7 +91,7 @@ suspend fun getCommunity(
                         throw BadRequestException("aid must be set.")
                     }
                 }
-        }.limit(1).firstOrNull()
+        }
     }.mapResultNotNull { (info, iconName, coverName) ->
         backend.mediaService.get("apic", listOf(iconName, coverName)).map { (iconUrl, coverUrl) ->
             info.copy(icon = getMediaInfo(iconUrl), poster = getMediaInfo(coverUrl))

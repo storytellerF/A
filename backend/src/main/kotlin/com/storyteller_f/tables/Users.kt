@@ -36,10 +36,8 @@ class User(
             )
         }
 
-        fun findById(it: PrimaryKey): User? {
-            return find {
-                Users.id eq it
-            }.limit(1).firstOrNull()?.let(::wrapRow)
+        fun findById(it: PrimaryKey) = find {
+            Users.id eq it
         }
 
         fun find(function: SqlExpressionBuilder.() -> Op<Boolean>): SizedIterable<ResultRow> {

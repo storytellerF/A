@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.LazyPagingItems
@@ -19,7 +20,9 @@ import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
+import com.storyteller_f.a.app.compontents.CommonDialogController
 import com.storyteller_f.a.app.compontents.CommunityIcon
+import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.utils.lcm
 import com.storyteller_f.a.client_lib.searchCommunity
 import com.storyteller_f.shared.model.CommunityInfo
@@ -117,7 +120,9 @@ fun CommunityGrid(communityInfo: CommunityInfo?) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (communityInfo != null) {
-                CommunityIcon(communityInfo, 30.dp, false, {}) {}
+                val commonDialogController = rememberCommonDialogController()
+                val shown by commonDialogController.show
+                CommunityIcon(communityInfo, 30.dp, shown, commonDialogController::update) {}
                 Text(
                     communityInfo.name,
                     Modifier,
@@ -138,17 +143,23 @@ fun CommunityCell(
     Row(
         modifier = when {
             customBackground -> Modifier
-            else -> Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
-                .clickable {
-                    communityInfo?.id?.let { appNav.goto(it, ObjectType.COMMUNITY) }
-                }
-                .padding(10.dp)
+            else -> {
+                val shape = RoundedCornerShape(10.dp)
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.secondaryContainer, shape)
+                    .clip(shape)
+                    .clickable {
+                        communityInfo?.id?.let { appNav.goto(it, ObjectType.COMMUNITY) }
+                    }
+                    .padding(10.dp)
+            }
         },
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        CommunityIcon(communityInfo, 50.dp, false, {}) {}
+        val commonDialogController = rememberCommonDialogController()
+        val shown by commonDialogController.show
+        CommunityIcon(communityInfo, 50.dp, shown, commonDialogController::update) {}
         Text(
             communityInfo?.name.orEmpty(),
             Modifier,

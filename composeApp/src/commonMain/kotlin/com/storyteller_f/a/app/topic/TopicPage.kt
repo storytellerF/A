@@ -127,8 +127,7 @@ private fun TopicPageInputGroup(
             RoomViewModel(roomId)
         }
         val roomInfo by room.handler.data.collectAsState()
-        RoomInputGroup(topic.rootId, roomInfo, {}, {
-        })
+        RoomInputGroup(topic.rootId, roomInfo, topicId, {}, scrollTo)
     } else {
         TopicInputGroup(scope, topicId, scrollTo)
     }

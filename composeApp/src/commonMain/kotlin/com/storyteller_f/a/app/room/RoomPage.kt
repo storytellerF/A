@@ -2,6 +2,7 @@ package com.storyteller_f.a.app.room
 
 import a.composeapp.generated.resources.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -259,7 +260,7 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
                 }
             }
             CustomSearchBar(SearchScope.RoomTopic(roomId)) {
-                RoomIcon(roomInfo, size = 40.dp, enableClick = true, showDialog = showDialog, updateShowDialog =  {
+                RoomIcon(roomInfo, size = 40.dp, enableClick = true, showDialog = showDialog, updateShowDialog = {
                     showDialog = it
                 }, update = {
                     room.update(it)
@@ -267,7 +268,7 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
             }
             RoomPageInternal(modifier = Modifier.weight(1f), lazyListState, items)
             val scope = rememberCoroutineScope()
-            RoomInputGroup(roomId, roomInfo, {
+            RoomInputGroup(roomId, roomInfo, null, {
                 showDialog = true
             }) {
                 scope.launch {
@@ -344,6 +345,7 @@ class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean) :
 fun RoomInputGroup(
     roomId: PrimaryKey,
     roomInfo: RoomInfo?,
+    topicId: PrimaryKey?,
     startJoinRoom: () -> Unit,
     scrollToNew: () -> Unit,
 ) {
@@ -367,8 +369,8 @@ fun RoomInputGroup(
         }, sendButton = {
             RoomSendButton(input = input) {
                 if (roomInfo.isJoined) {
-                    sendMessage(roomInfo, input, scrollToNew, keyState, keyData) {
-                        toaster.show(it, 1.seconds)
+                    sendMessage(roomInfo, input, scrollToNew, keyState, keyData, topicId) {
+                        toaster.show(it, duration = 1.seconds)
                     }
                 } else {
                     alertDialogState.showMessage("Not join", "Do you want to join room?")
@@ -457,6 +459,7 @@ fun sendMessage(
     scrollToNew: () -> Unit,
     keyState: LoadingState?,
     keyData: List<Pair<PrimaryKey, String>>?,
+    topicId: PrimaryKey?,
     notifyError: (String) -> Unit
 ) {
     if (roomInfo != null) {
@@ -477,11 +480,19 @@ fun sendMessage(
             }
             if (content != null) {
                 val message: RoomFrame = RoomFrame.Message(
-                    NewTopic(
-                        ObjectType.ROOM,
-                        roomId,
-                        content
-                    )
+                    if (topicId != null) {
+                        NewTopic(
+                            ObjectType.TOPIC,
+                            topicId,
+                            content
+                        )
+                    } else {
+                        NewTopic(
+                            ObjectType.ROOM,
+                            roomId,
+                            content
+                        )
+                    }
                 )
                 sendSerialized(message)
                 delay(500)
@@ -510,7 +521,9 @@ fun InputGroupInternal(
             updateInput(it)
         }, modifier = Modifier.weight(1f), suffix = {
             if (input.isNotEmpty()) {
-                Icon(Icons.Default.Clear, "clear input")
+                Icon(Icons.Default.Clear, "clear input", modifier = Modifier.clickable {
+                    updateInput("")
+                })
             }
         })
         Box(modifier = Modifier.width(60.dp).height(40.dp), contentAlignment = Alignment.Center) {
@@ -530,7 +543,14 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit, update: (RoomInf
                 .padding(8.dp),
             Arrangement.spacedBy(12.dp)
         ) {
-            RoomIcon(roomInfo, size = 50.dp, showDialog = false, updateShowDialog = {}, update = {})
+            val commonDialogController = rememberCommonDialogController()
+            val shown by commonDialogController.show
+            RoomIcon(
+                roomInfo,
+                size = 50.dp,
+                showDialog = shown,
+                updateShowDialog = commonDialogController::update,
+                update = {})
             Column {
                 Text(roomInfo.name)
                 Text("aid: ${roomInfo.aid}")
@@ -551,28 +571,31 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit, update: (RoomInf
                 appNav.gotoMemberPage(roomInfo.id, ObjectType.ROOM)
             }
 
-            val scope = rememberCoroutineScope()
-            val toaster = rememberToasterState()
-            Toaster(toaster)
-            if (roomInfo.isJoined) {
-                ButtonNav(Icons.Default.Close, "Exit Room") {
-                    scope.launch {
-                        exitRoom(roomInfo) {
-                            toaster.show("success", duration = 1.seconds)
-                            update(it)
+            if (appNav.currentDestination?.destination?.hasRoute(RoomScreen::class) == true) {
+                val scope = rememberCoroutineScope()
+                val toaster = rememberToasterState()
+                Toaster(toaster)
+                if (roomInfo.isJoined) {
+                    ButtonNav(Icons.Default.Close, "Exit Room") {
+                        scope.launch {
+                            exitRoom(roomInfo) {
+                                toaster.show("success", duration = 1.seconds)
+                                update(it)
+                            }
                         }
                     }
-                }
-            } else {
-                ButtonNav(Icons.Default.AddHome, "Join Room") {
-                    scope.launch {
-                        joinRoom(roomInfo) {
-                            toaster.show("success", duration = 1.seconds)
-                            update(it)
+                } else {
+                    ButtonNav(Icons.Default.AddHome, "Join Room") {
+                        scope.launch {
+                            joinRoom(roomInfo) {
+                                toaster.show("success", duration = 1.seconds)
+                                update(it)
+                            }
                         }
                     }
                 }
             }
+
         }
     }
 }

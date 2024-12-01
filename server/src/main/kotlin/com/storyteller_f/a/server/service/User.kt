@@ -43,9 +43,9 @@ fun toFinalUserInfo(p: Pair<UserInfo, String?>, backend: Backend): Result<UserIn
 suspend fun RoutingContext.getUser(
     it: PrimaryKey,
     backend: Backend
-) = DatabaseFactory.queryNotNull({
+) = DatabaseFactory.first({
     toUserInfo() to icon
-}) {
+}, User::wrapRow) {
     User.findById(it)
 }.mapResultNotNull {
     toFinalUserInfo(it, backend)
@@ -69,9 +69,9 @@ suspend fun RoutingContext.updateUser(id: PrimaryKey): Result<Int> {
     val result1 = listOf(suspend {
         if (!newUser.aid.isNullOrBlank()) {
             // check aid is null
-            DatabaseFactory.queryNotNull({
+            DatabaseFactory.first({
                 aid
-            }) {
+            }, User::wrapRow) {
                 User.findById(id)
             }.mapResult {
                 if (it != null) {

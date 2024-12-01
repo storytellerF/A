@@ -28,7 +28,7 @@ suspend fun HttpClient.requestRoomInfoByAid(aid: String, alreadySignUp: Boolean)
 }.body<RoomInfo>()
 
 suspend fun HttpClient.requestRoomKeys(id: PrimaryKey, nextId: PrimaryKey?, size: Int) =
-    get("room/$id/pub-keys") {
+    get("rooms/$id/pub-keys") {
         url {
             appendPagingQueryParams(size, nextId)
         }

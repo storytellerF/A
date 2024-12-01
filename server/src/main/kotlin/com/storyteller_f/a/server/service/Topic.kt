@@ -3,6 +3,7 @@ package com.storyteller_f.a.server.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.a.server.auth.UnauthorizedException
 import com.storyteller_f.a.server.common.bindPaginationQuery
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TopicContent
@@ -116,14 +117,14 @@ fun Topic.toTopicInfo(): TopicInfo {
 }
 
 suspend fun getTopicSnapshot(id: PrimaryKey, topicId: PrimaryKey, backend: Backend): Result<File?> {
-    return DatabaseFactory.queryNotNull(User::toUserInfo) {
+    return DatabaseFactory.first(User::toUserInfo, User::wrapRow) {
         User.findById(id)
     }.mapResultNotNull { creatorInfo ->
         checkRootReadPermission(ObjectType.TOPIC, topicId, id).mapResultNotNull { (_, _, hasRead) ->
             if (hasRead) {
-                DatabaseFactory.queryNotNull({
+                DatabaseFactory.first({
                     toTopicInfo()
-                }) {
+                }, Topic::wrapRow) {
                     Topic.findById(topicId)
                 }.mapResultNotNull { value ->
                     getTopicSnapshot(value, creatorInfo, backend)
@@ -143,7 +144,7 @@ private suspend fun getTopicSnapshot(
     val topicId = topicInfo.id
     return backend.topicDocumentService.getDocument(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultNotNull { documents ->
-            DatabaseFactory.queryNotNull(User::toUserInfo) {
+            DatabaseFactory.first(User::toUserInfo, User::wrapRow) {
                 User.findById(topicInfo.author)
             }.mapNotNull { authorInfo ->
                 PDDocument().use { document ->
@@ -193,12 +194,16 @@ suspend fun getTopic(
         uid
     ).mapResultNotNull { (_, _, hasRead, hasJoined, isPrivate) ->
         if (hasRead) {
-            DatabaseFactory.queryNotNull(Topic::toTopicInfo) {
+            DatabaseFactory.first(Topic::toTopicInfo, Topic::wrapRow) {
                 Topic.findById(topicId)
             }.mapResultNotNull { info ->
                 if (isPrivate) {
-                    DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }.map { value ->
-                        value.firstOrNull()?.let { id -> info.copy(content = id) }
+                    if (uid == null) {
+                        Result.failure(UnauthorizedException())
+                    } else {
+                        DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }.map { value ->
+                            value.firstOrNull()?.let { id -> info.copy(content = id) }
+                        }
                     }
                 } else {
                     backend.topicDocumentService.getDocument(listOf(topicId)).map { value ->
@@ -241,10 +246,16 @@ suspend fun getTopics(
                         }
                     }
 
-                    hasRead -> DatabaseFactory.dbQuery {
-                        getEncryptedTopicContent(data.map {
-                            it.id
-                        }, uid)
+                    hasRead -> {
+                        if (uid == null) {
+                            Result.failure(UnauthorizedException())
+                        } else {
+                            DatabaseFactory.dbQuery {
+                                getEncryptedTopicContent(data.map {
+                                    it.id
+                                }, uid)
+                            }
+                        }
                     }
 
                     else -> Result.failure(ForbiddenException())
@@ -284,34 +295,23 @@ private fun buildGetTopicsQuery(
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)
 
 @OptIn(ExperimentalStdlibApi::class)
-fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey?): List<TopicContent.Encrypted> {
+fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey): List<TopicContent.Encrypted> {
     val aesMap = EncryptedTopicKeys.selectAll().where {
-        val op = EncryptedTopicKeys.topicId inList topicId
-        if (uid != null) {
-            op and (EncryptedTopicKeys.uid eq uid)
-        } else {
-            op
-        }
+        EncryptedTopicKeys.topicId inList topicId and (EncryptedTopicKeys.uid eq uid)
     }.map {
         EncryptedTopicKey.wrapRow(it)
-    }.groupBy {
-        it.topicId
-    }.mapValues { listEntry ->
-        listEntry.value.map {
-            it.uid to it.encryptedAes.toHexString()
-        }
+    }.associate {
+        it.topicId to mapOf((it.uid to it.encryptedAes.toHexString()))
     }
     val contentMap = EncryptedTopics.selectAll().where {
         EncryptedTopics.topicId inList topicId
     }.map {
         EncryptedTopic.wrapRow(it)
-    }.groupBy {
-        it.topicId
-    }.mapValues {
-        it.value.first().content.toHexString()
+    }.associate {
+        it.topicId to it.content.toHexString()
     }
     return topicId.map {
-        val map = aesMap[it].orEmpty().toMap()
+        val map = aesMap[it] ?: emptyMap()
         val content = contentMap[it].orEmpty()
         TopicContent.Encrypted(content, map)
     }
@@ -332,9 +332,9 @@ suspend fun checkRootReadPermission(
 ): Result<RootReadPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.queryNotNull({
+            DatabaseFactory.first({
                 rootId to rootType
-            }) {
+            }, Topic::wrapRow) {
                 Topic.findById(parentId)
             }.mapResultNotNull { (rootId, rootType) ->
                 checkRootReadPermission(rootType, rootId, uid)
@@ -342,25 +342,27 @@ suspend fun checkRootReadPermission(
         }
 
         ObjectType.ROOM -> {
-            DatabaseFactory.queryNotNull({
+            DatabaseFactory.first({
                 communityId
-            }, {
-                Room.wrapRow(it)
-            }) {
+            }, Room::wrapRow) {
                 Room.findRoomById(parentId)
             }.mapResult { lng ->
-                isMemberJoined(parentId, uid).map { hasJoined ->
-                    RootReadPermission(parentType, parentId, hasJoined, hasJoined, lng == null)
+                if (lng != null || uid != null) {
+                    isMemberJoined(parentId, uid).map { hasJoined ->
+                        RootReadPermission(parentType, parentId, hasJoined, hasJoined, lng == null)
+                    }
+                } else {
+                    Result.failure(UnauthorizedException())
                 }
             }
         }
 
         ObjectType.COMMUNITY -> {
-            DatabaseFactory.queryNotNull({
-                true
-            }, { Community.wrapRow(it) }) {
+            DatabaseFactory.first({
+                this
+            }, Community::wrapRow) {
                 Community.findById(parentId)
-            }.mapResult { value ->
+            }.mapResultNotNull { value ->
                 isMemberJoined(parentId, uid).map { hasJoined ->
                     RootReadPermission(parentType, parentId, true, hasJoined, false)
                 }
@@ -378,9 +380,9 @@ suspend fun checkRootWritePermission(
 ): Result<Triple<ObjectType, PrimaryKey, Boolean>?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.queryNotNull({
+            DatabaseFactory.first({
                 rootId to rootType
-            }) {
+            }, Topic::wrapRow) {
                 Topic.findById(parentId)
             }.mapResultNotNull { (rootId, rootType) ->
                 checkRootWritePermission(rootType, rootId, uid)
@@ -388,11 +390,9 @@ suspend fun checkRootWritePermission(
         }
 
         ObjectType.ROOM -> {
-            DatabaseFactory.queryNotNull({
+            DatabaseFactory.first({
                 communityId
-            }, {
-                Room.wrapRow(it)
-            }) {
+            }, Room::wrapRow) {
                 Room.findRoomById(parentId)
             }.mapResult {
                 isMemberJoined(parentId, uid).map { hasJoined ->
@@ -402,9 +402,9 @@ suspend fun checkRootWritePermission(
         }
 
         ObjectType.COMMUNITY -> {
-            DatabaseFactory.queryNotNull({
-                true
-            }, { Community.wrapRow(it) }) {
+            DatabaseFactory.first({
+                this
+            }, Community::wrapRow) {
                 Community.findById(parentId)
             }.mapResult {
                 isMemberJoined(parentId, uid).map { hasJoined ->

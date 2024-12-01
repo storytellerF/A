@@ -32,6 +32,7 @@ dependencies {
     testImplementation(libs.h2)
     testImplementation(libs.jimfs)
     implementation(libs.pdfbox)
+    implementation(libs.napier)
 }
 
 val isProd = project.findProperty("server.prod") == true
