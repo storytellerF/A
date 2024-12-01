@@ -314,9 +314,9 @@ private suspend fun checkDevWsLink(call: ApplicationCall): CustomPrincipal? {
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        DatabaseFactory.queryNotNull({
+        DatabaseFactory.first({
             CustomPrincipal(id)
-        }) {
+        }, User::wrapRow) {
             User.findById(id)
         }.getOrNull()
     } else {

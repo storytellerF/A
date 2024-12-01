@@ -28,7 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavDestination.Companion.hasRoute
 import app.cash.paging.compose.collectAsLazyPagingItems
+import com.storyteller_f.a.app.CommunityScreen
 import com.storyteller_f.a.app.CustomBottomNav
 import com.storyteller_f.a.app.CustomRailNav
 import com.storyteller_f.a.app.LocalAppNav
@@ -200,7 +202,7 @@ private fun CommunityCompatPageInternal(
             if (community?.isJoined == true) {
                 appNav.gotoTopicCompose(ObjectType.COMMUNITY, communityId)
             } else {
-                globalDialogState.showMessage("Not joined!")
+                alertDialogState.showMessage("Not Join", "Do you want to join?")
             }
         }) {
             Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add))
@@ -314,28 +316,30 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit, u
             }
         }
         Column {
-            val scope = rememberCoroutineScope()
             ButtonNav(Icons.Default.CardMembership, "All members") {
                 dismiss()
                 nav.gotoMemberPage(communityId, ObjectType.COMMUNITY)
             }
-            if (communityInfo.isJoined) {
-                ButtonNav(Icons.Default.Close, "Exit Community") {
-                    scope.launch {
-                        globalDialogState.use {
-                            val info = client.exitCommunity(communityId)
-                            bus.send(OnCommunityExited(communityId))
-                            update(info)
+            if (nav.currentDestination?.destination?.hasRoute(CommunityScreen::class) == true) {
+                val scope = rememberCoroutineScope()
+                if (communityInfo.isJoined) {
+                    ButtonNav(Icons.Default.Close, "Exit Community") {
+                        scope.launch {
+                            globalDialogState.use {
+                                val info = client.exitCommunity(communityId)
+                                bus.send(OnCommunityExited(communityId))
+                                update(info)
+                            }
                         }
                     }
-                }
-            } else {
-                ButtonNav(Icons.Default.AddHome, "Join Community") {
-                    scope.launch {
-                        globalDialogState.use {
-                            val info = client.joinCommunity(communityId)
-                            bus.send(OnCommunityJoined(communityId))
-                            update(info)
+                } else {
+                    ButtonNav(Icons.Default.AddHome, "Join Community") {
+                        scope.launch {
+                            globalDialogState.use {
+                                val info = client.joinCommunity(communityId)
+                                bus.send(OnCommunityJoined(communityId))
+                                update(info)
+                            }
                         }
                     }
                 }

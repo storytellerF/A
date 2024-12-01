@@ -51,8 +51,8 @@ class Topic(
             )
         }
 
-        fun findById(topicId: PrimaryKey): Topic? {
-            return findTopicById(topicId)?.let(::wrapRow)
+        fun findById(topicId: PrimaryKey) = Topics.selectAll().where {
+            Topics.id eq topicId
         }
 
         fun new(info: Topic): PrimaryKey {
@@ -71,8 +71,3 @@ class Topic(
     }
 }
 
-fun findTopicById(id: PrimaryKey): ResultRow? {
-    return Topics.selectAll().where {
-        Topics.id eq id
-    }.limit(1).firstOrNull()
-}

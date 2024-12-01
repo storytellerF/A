@@ -199,3 +199,20 @@ fun CustomAlertDialogInternal(
         }
     })
 }
+
+@Composable
+fun rememberCommonDialogController() : CommonDialogController {
+    return remember {
+        CommonDialogController()
+    }
+}
+
+class CommonDialogController(val show: MutableState<Boolean> = mutableStateOf(false)) {
+    fun dismiss() {
+        show.value = false
+    }
+
+    fun update(new: Boolean) {
+        show.value = new
+    }
+}

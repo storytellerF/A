@@ -2,6 +2,7 @@ package com.storyteller_f
 
 import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
 import com.storyteller_f.tables.*
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.InsertStatement
@@ -55,7 +56,7 @@ object DatabaseFactory {
         }
     }
 
-    suspend fun <T> dbQuery(block: suspend () -> T): Result<T> =
+    suspend fun <T> dbQuery(block: suspend Transaction.() -> T): Result<T> =
         runCatching {
             newSuspendedTransaction(Dispatchers.IO) { block() }
         }
@@ -63,33 +64,22 @@ object DatabaseFactory {
     /**
      * 带有transform
      */
-    suspend fun <T, R> query(transform: T.() -> R, block: suspend () -> T): Result<R> =
+    suspend fun <T, R> query(transform: T.() -> R, block: Transaction.() -> T): Result<R> =
         dbQuery { transform(block()) }
-
-    /**
-     * 处理可能查询不到数据的问题
-     */
-    suspend fun <T, R : Any?> queryNotNull(transform: T.() -> R?, block: suspend () -> T?): Result<R?> =
-        query({
-            this?.let { transform(it) }
-        }) { block() }
-
-    /**
-     * 处理可能查询不到数据的问题
-     */
-    suspend fun <T, R : Any?, R1> queryNotNull(
-        transform: R1.() -> R?,
-        resultRowTransform: (T) -> R1,
-        block: suspend () -> T?
-    ): Result<R?> = queryNotNull({
-        resultRowTransform(this).transform()
-    }) { block() }
 
     /**
      * 带有transform
      */
-    suspend fun <T, R> mapQuery(transform: T.() -> R, block: suspend () -> SizedIterable<T>): Result<List<R>> =
-        dbQuery { block().map(transform) }
+    suspend fun <T, R> mapQuery(transform: T.() -> R, block: () -> SizedIterable<T>): Result<List<R>> =
+        dbQuery {
+            Napier.d(tag = "explain") {
+                val result = explain {
+                    block()
+                }.toList().joinToString("\n")
+                "$result $statements"
+            }
+            block().map(transform)
+        }
 
     /**
      * 带有transform
@@ -97,9 +87,15 @@ object DatabaseFactory {
     suspend fun <T, R, R1> mapQuery(
         transform: R1.() -> R,
         resultRowTransform: (T) -> R1,
-        block: suspend () -> SizedIterable<T>
+        block: () -> SizedIterable<T>
     ): Result<List<R>> =
         dbQuery {
+            Napier.d(tag = "explain") {
+                val result = explain {
+                    block()
+                }.toList().joinToString("\n")
+                "$result $statements"
+            }
             block().map(resultRowTransform).map(transform)
         }
 
@@ -112,27 +108,51 @@ object DatabaseFactory {
     suspend fun <T, R, R1> first(
         transform: R1.() -> T,
         resultRowTransform: (R) -> R1,
-        block: suspend () -> SizedIterable<R>
+        block: () -> SizedIterable<R>
     ): Result<T?> = dbQuery {
+        Napier.d(tag = "explain") {
+            val explainResult = explain {
+                block().limit(1)
+            }.toList().joinToString("\n")
+            "$statements $explainResult"
+        }
         block().limit(1).firstOrNull()?.let(resultRowTransform)?.let { transform(it) }
     }
 
     /**
      * 检查数据是不是空
      */
-    suspend fun <T> isEmpty(block: suspend () -> SizedIterable<T>): Result<Boolean> = dbQuery {
+    suspend fun <T> isEmpty(block: () -> SizedIterable<T>): Result<Boolean> = dbQuery {
+        Napier.d(tag = "explain result") {
+            val result = explain {
+                block().limit(1)
+            }.toList().joinToString("\n")
+            "$result $statements"
+        }
         block().limit(1).empty()
     }
 
-    suspend fun <T> isNotEmpty(block: suspend () -> SizedIterable<T>): Result<Boolean> = dbQuery {
+    suspend fun <T> isNotEmpty(block: () -> SizedIterable<T>): Result<Boolean> = dbQuery {
+        Napier.d(tag = "explain result") {
+            val result = explain {
+                block().limit(1)
+            }.toList().joinToString("\n")
+            "$result $statements"
+        }
         !block().limit(1).empty()
     }
 
-    suspend fun <T> count(block: suspend () -> SizedIterable<T>): Result<Long> = dbQuery {
+    suspend fun <T> count(block: () -> SizedIterable<T>): Result<Long> = dbQuery {
+        Napier.d(tag = "explain") {
+            val result = explain {
+                block()
+            }.toList().joinToString("\n")
+            "$result $statements"
+        }
         block().count()
     }
 
-    suspend fun insert(block: suspend () -> InsertStatement<Number>): Result<Int> = dbQuery {
+    suspend fun insert(block: () -> InsertStatement<Number>): Result<Int> = dbQuery {
         block().insertedCount
     }
 }

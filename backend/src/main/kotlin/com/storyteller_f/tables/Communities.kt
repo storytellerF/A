@@ -38,13 +38,11 @@ class Community(
             )
         }
 
-        fun find(function: SqlExpressionBuilder.() -> Op<Boolean>): Query {
-            return Communities.selectAll().where(function)
-        }
+        fun find(function: SqlExpressionBuilder.() -> Op<Boolean>) = Communities.selectAll().where(function)
 
         fun findById(id: PrimaryKey) = Communities.selectAll().where {
             Communities.id eq id
-        }.firstOrNull()
+        }
 
         fun new(community: Community): PrimaryKey {
             val id = Communities.insert {

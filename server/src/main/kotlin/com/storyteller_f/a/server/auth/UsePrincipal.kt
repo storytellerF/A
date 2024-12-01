@@ -46,7 +46,7 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (P
             respondError(it)
         }
     } catch (e: Exception) {
-        call.application.log.error("Catch", e)
+        call.application.log.error("Catch exception in api", e)
     }
 }
 

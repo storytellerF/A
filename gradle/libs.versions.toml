@@ -46,6 +46,7 @@ pdfBuilder = "2.1.0"
 pgjdbcNg = "0.8.9"
 postgresql = "42.7.2"
 precompose = "1.7.0-alpha03"
+richeditorCompose = "1.0.0-rc10"
 slf4jSimple = "2.0.13"
 sqliteJdbc = "3.46.0.0"
 uiTestJunit4Android = "1.7.5"
@@ -59,10 +60,9 @@ androidx-test-ext-junit = "1.2.1"
 [libraries]
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 highlights = { module = "dev.snipme:highlights", version.ref = "highlights" }
-kodeview = { module = "dev.snipme:kodeview", version.ref = "kodeview" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
-pdf-builder = { module = "com.github.timrs2998:pdf-builder", version.ref = "pdfBuilder" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
+richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditorCompose" }
 sonner = { module = "io.github.dokar3:sonner", version = "0.3.8" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
@@ -147,7 +147,6 @@ paging-common = { module = "app.cash.paging:paging-common", version.ref = "pagin
 paging-compose-common = { module = "app.cash.paging:paging-compose-common", version.ref = "pagingCommon" }
 pgjdbc-ng = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng", version.ref = "pgjdbcNg" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
-precompose = { module = "moe.tlaster:precompose", version.ref = "precompose" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }

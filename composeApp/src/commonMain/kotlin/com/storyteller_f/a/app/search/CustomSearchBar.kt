@@ -107,7 +107,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
 private fun SearchPlaceholder(scope: SearchScope) {
     Text(
         when (scope) {
-            SearchScope.World -> "input to search topics"
+            SearchScope.World -> "input to search topics/users"
             SearchScope.MyCommunity -> "input to search community"
             SearchScope.MyRoom -> "input to search topics"
             is SearchScope.CommunityTopic -> "input to search topics"

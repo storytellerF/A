@@ -36,26 +36,20 @@ class Room(
             )
         }
 
-        fun findRoomById(id: PrimaryKey): ResultRow? {
-            return Rooms.selectAll().where {
-                Rooms.id eq id
-            }.limit(1).firstOrNull()
+        fun findRoomById(id: PrimaryKey) = Rooms.selectAll().where {
+            Rooms.id eq id
         }
 
-        fun findRoomByAId(aid: String): ResultRow? {
-            return Rooms.selectAll().where {
-                Rooms.aid eq aid
-            }.limit(1).firstOrNull()
+        fun findRoomByAId(aid: String) = Rooms.selectAll().where {
+            Rooms.aid eq aid
         }
     }
 }
 
 suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
-    return DatabaseFactory.queryNotNull({
+    return DatabaseFactory.first({
         communityId == null
-    }) {
-        Room.findRoomById(roomId)?.let {
-            Room.wrapRow(it)
-        }
+    }, Room::wrapRow) {
+        Room.findRoomById(roomId)
     }
 }
