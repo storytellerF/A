@@ -9,10 +9,10 @@ import com.storyteller_f.a.server.service.exitCommunity
 import com.storyteller_f.a.server.service.getCommunity
 import com.storyteller_f.a.server.service.joinCommunity
 import com.storyteller_f.a.server.service.searchCommunities
-import com.storyteller_f.a.server.service.searchMembers
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.tables.searchMembers
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 

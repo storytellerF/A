@@ -57,8 +57,8 @@ import io.ktor.client.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
-data class OnCommunityJoined(val communityId: PrimaryKey)
-data class OnCommunityExited(val communityId: PrimaryKey)
+data class OnCommunityJoined(val communityId: PrimaryKey, val newInfo: CommunityInfo)
+data class OnCommunityExited(val communityId: PrimaryKey, val newInfo: CommunityInfo)
 
 class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> CommunityInfo) :
     SimpleViewModel<CommunityInfo>() {
@@ -75,18 +75,18 @@ class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Commu
     init {
         load()
         viewModelScope.launch {
-            for (i in bus) {
+            bus.collect { i ->
                 val id = handler.data.value?.id
                 when (i) {
                     is OnCommunityJoined -> {
                         if (i.communityId == id) {
-                            handler.refresh()
+                            update(i.newInfo)
                         }
                     }
 
                     is OnCommunityExited -> {
                         if (i.communityId == id) {
-                            handler.refresh()
+                            update(i.newInfo)
                         }
                     }
                 }
@@ -165,7 +165,7 @@ private fun CommunityNonCompatPageInternal(
                     }
                     CommunityIcon(community, 40.dp, showDialog, {
                         showDialog = it
-                    }, model::update)
+                    })
                 }
 
                 CommunityPageInternal(pagerState, communityId)
@@ -212,7 +212,7 @@ private fun CommunityCompatPageInternal(
                 }
                 CommunityIcon(community, 40.dp, showDialog, {
                     showDialog = it
-                }, model::update)
+                })
             }
 
             CommunityPageInternal(pagerState, communityId)
@@ -304,8 +304,7 @@ fun communityNavRoutes(): List<NavRoute> {
 fun CommunityDialog(
     communityInfo: CommunityInfo?,
     showDialog: Boolean,
-    dismiss: () -> Unit,
-    update: (CommunityInfo) -> Unit
+    dismiss: () -> Unit
 ) {
     if (communityInfo != null && showDialog) {
         BasicAlertDialog(
@@ -313,13 +312,13 @@ fun CommunityDialog(
                 dismiss()
             },
         ) {
-            CommunityDialogInternal(communityInfo, dismiss, update)
+            CommunityDialogInternal(communityInfo, dismiss)
         }
     }
 }
 
 @Composable
-fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit, update: (CommunityInfo) -> Unit) {
+fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
     val nav = LocalAppNav.current
     val communityId = communityInfo.id
     DialogContainer {
@@ -328,7 +327,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit, u
                 .padding(8.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            CommunityIcon(communityInfo, 50.dp, showDialog = false, {}) {}
+            CommunityIcon(communityInfo, 50.dp, showDialog = false, {})
             Column {
                 Text(communityInfo.name)
             }
@@ -345,8 +344,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit, u
                         scope.launch {
                             globalDialogState.use {
                                 val info = client.exitCommunity(communityId)
-                                bus.send(OnCommunityExited(communityId))
-                                update(info)
+                                bus.emit(OnCommunityExited(communityId, info))
                             }
                         }
                     }
@@ -355,8 +353,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit, u
                         scope.launch {
                             globalDialogState.use {
                                 val info = client.joinCommunity(communityId)
-                                bus.send(OnCommunityJoined(communityId))
-                                update(info)
+                                bus.emit(OnCommunityJoined(communityId, info))
                             }
                         }
                     }

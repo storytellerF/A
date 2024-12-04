@@ -18,8 +18,7 @@ import java.io.File
 @Preview
 @Composable
 private fun PreviewCommunity(@PreviewParameter(CommunityProvider::class) communityInfo: CommunityInfo) {
-    CommunityDialogInternal(communityInfo = communityInfo, {}) {
-    }
+    CommunityDialogInternal(communityInfo = communityInfo, {})
 }
 
 @Preview

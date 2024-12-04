@@ -16,7 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compontents.ReactionRow
+import com.storyteller_f.a.app.compontents.InteractionRow
 import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.search.SearchScope
 import com.storyteller_f.a.app.topic.TopicCellInternal
@@ -71,7 +71,11 @@ fun PreviewTopic(@PreviewParameter(TopicPagePreviewProvider::class) param: Pair<
             }
 
             item {
-                ReactionRow()
+                InteractionRow(topic, {
+
+                }) {
+
+                }
             }
 
             item {
@@ -79,7 +83,7 @@ fun PreviewTopic(@PreviewParameter(TopicPagePreviewProvider::class) param: Pair<
             }
 
             items(param.second) {
-                TopicCellInternal(it, true, UserInfo.EMPTY, true)
+                TopicCellInternal(it, true, UserInfo.EMPTY, true) {}
             }
         }
     }

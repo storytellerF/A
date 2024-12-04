@@ -3,43 +3,36 @@ package com.storyteller_f.a.app.topic
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
-import com.mikepenz.markdown.compose.LocalMarkdownColors
-import com.mikepenz.markdown.compose.LocalMarkdownDimens
-import com.mikepenz.markdown.compose.LocalMarkdownPadding
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.components.markdownComponents
-import com.mikepenz.markdown.compose.elements.MarkdownCodeFence
+import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.viewModel
-import com.storyteller_f.a.app.compontents.ReactionRow
+import com.storyteller_f.a.app.compontents.InteractionRow
 import com.storyteller_f.a.app.compontents.TextUnitToPx
 import com.storyteller_f.a.app.compontents.buildTexPainter
 import com.storyteller_f.a.app.user.UserCell
@@ -49,28 +42,39 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import dev.snipme.highlights.Highlights
-import dev.snipme.highlights.model.BoldHighlight
-import dev.snipme.highlights.model.CodeHighlight
-import dev.snipme.highlights.model.ColorHighlight
+import dev.snipme.highlights.model.SyntaxThemes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicCell(
-    topicInfo: TopicInfo?,
+    topicInfoRaw: TopicInfo,
     contentAlignAvatar: Boolean = true,
     showAvatar: Boolean = true
 ) {
-    if (topicInfo != null) {
-        val author = topicInfo.author
+    val viewModel = viewModel(TopicViewModel::class, keys = listOf("topic-single", topicInfoRaw.id)) {
+        TopicViewModel(topicInfoRaw)
+    }
+    val topicInfo by viewModel.handler.data.collectAsState()
+    topicInfo?.let { info ->
+        val author = info.author
         val authorViewModel = viewModel(UserViewModel::class, keys = listOf("user", author)) {
             UserViewModel(author)
         }
+
+        val sheetState = rememberModalBottomSheetState()
+        var showBottomSheet by remember { mutableStateOf(false) }
         val authorInfo by authorViewModel.handler.data.collectAsState()
-        TopicCellInternal(topicInfo, showAvatar, authorInfo, contentAlignAvatar)
+        TopicCellInternal(info, showAvatar, authorInfo, contentAlignAvatar) {
+            showBottomSheet = true
+        }
+        EmojiPicker(sheetState, showBottomSheet, info) {
+            showBottomSheet = false
+        }
     }
 }
 
@@ -79,8 +83,10 @@ fun TopicCellInternal(
     topicInfo: TopicInfo,
     showAvatar: Boolean,
     authorInfo: UserInfo?,
-    contentAlignAvatar: Boolean
+    contentAlignAvatar: Boolean,
+    startAddReaction: () -> Unit
 ) {
+    val topicId = topicInfo.id
     val appNav = LocalAppNav.current
     val onClick = appNav::goto
     Column(
@@ -103,10 +109,12 @@ fun TopicCellInternal(
             TopicContentField(
                 topicInfo.content,
                 onClick = {
-                    onClick(topicInfo.id, ObjectType.TOPIC)
+                    onClick(topicId, ObjectType.TOPIC)
                 }
             )
-            ReactionRow()
+            InteractionRow(topicInfo, startAddReaction) {
+                onClick(topicId, ObjectType.TOPIC)
+            }
         }
     }
 }
@@ -124,11 +132,7 @@ fun CustomCodeFence(modal: MarkdownComponentModel) {
 
         lang == "math" -> LatexBlock(children, langOffset, content)
 
-        Highlights.languages().map { language -> language.name.lowercase() }.contains(lang) -> HighlightCodeBlock(
-            modal
-        )
-
-        else -> MarkdownCodeFence(modal.content, modal.node)
+        else -> HighlightCodeBlock(modal)
     }
 }
 
@@ -136,58 +140,12 @@ fun CustomCodeFence(modal: MarkdownComponentModel) {
 private fun HighlightCodeBlock(
     modal: MarkdownComponentModel
 ) {
-    val content = modal.content
-    val children = modal.node.children
-    val langOffset = children.indexOfFirst {
-        it.type == MarkdownTokenTypes.FENCE_LANG
+    val isDarkTheme = isSystemInDarkTheme()
+    val highlightsBuilder = remember(isDarkTheme) {
+        Highlights.Builder().theme(SyntaxThemes.atom(darkMode = isDarkTheme))
     }
-    val highlights by remember {
-        mutableStateOf(
-            Highlights
-                .Builder(code = readFenceContent(children, langOffset, content).replaceIndent())
-                .build()
-        )
-    }
-    val text by produceState<AnnotatedString?>(null) {
-        value = highlights
-            .getHighlights()
-            .generateAnnotatedString(highlights.getCode())
-    }
-    val backgroundCodeColor = LocalMarkdownColors.current.codeBackground
-    val codeBackgroundCornerSize = LocalMarkdownDimens.current.codeBackgroundCornerSize
-    val codeBlockPadding = LocalMarkdownPadding.current.codeBlock
-    text?.let {
-        val shape = RoundedCornerShape(codeBackgroundCornerSize)
-        val scrollState = rememberScrollState()
-        Text(
-            text = it,
-            modifier = Modifier.fillMaxWidth().background(backgroundCodeColor, shape)
-                .clip(shape)
-                .padding(codeBlockPadding).horizontalScroll(scrollState)
-        )
-    }
+    MarkdownHighlightedCodeFence(modal.content, modal.node, highlightsBuilder)
 }
-
-fun List<CodeHighlight>.generateAnnotatedString(code: String) =
-    buildAnnotatedString {
-        append(code)
-
-        forEach {
-            when (it) {
-                is BoldHighlight -> addStyle(
-                    SpanStyle(fontWeight = FontWeight.Bold),
-                    start = it.location.start,
-                    end = it.location.end,
-                )
-
-                is ColorHighlight -> addStyle(
-                    SpanStyle(color = Color(it.rgb).copy(alpha = 1f)),
-                    start = it.location.start,
-                    end = it.location.end,
-                )
-            }
-        }
-    }
 
 @Composable
 private fun RefBlock(

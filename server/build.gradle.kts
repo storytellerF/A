@@ -33,6 +33,7 @@ dependencies {
     testImplementation(libs.jimfs)
     implementation(libs.pdfbox)
     implementation(libs.napier)
+    implementation(libs.emoji.reader.jvm)
 }
 
 val isProd = project.findProperty("server.prod") == true

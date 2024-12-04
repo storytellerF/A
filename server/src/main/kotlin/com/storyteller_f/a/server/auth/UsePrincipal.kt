@@ -1,6 +1,8 @@
 package com.storyteller_f.a.server.auth
 
-import com.storyteller_f.a.server.service.ForbiddenException
+import com.storyteller_f.CustomBadRequestException
+import com.storyteller_f.ForbiddenException
+import com.storyteller_f.UnauthorizedException
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -9,7 +11,6 @@ import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
-import io.ktor.util.logging.*
 import java.io.File
 
 suspend inline fun <reified R : Any> RoutingContext.usePrincipal(block: (PrimaryKey) -> Result<R?>) {
@@ -22,7 +23,6 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipal(block: (Primary
     }
 }
 
-class UnauthorizedException : Exception()
 
 suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> Result<R?>) {
     usePrincipalOrNull {
@@ -60,7 +60,7 @@ suspend fun RoutingContext.respondError(e: Throwable) {
                 e.localizedMessage
             )
 
-        is BadRequestException -> call.respond(
+        is BadRequestException, is CustomBadRequestException -> call.respond(
             HttpStatusCode.BadRequest,
             e.localizedMessage
         )

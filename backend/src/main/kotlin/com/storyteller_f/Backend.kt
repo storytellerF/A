@@ -7,7 +7,12 @@ import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.media.MediaService
 import com.storyteller_f.media.MinIoMediaService
 import com.storyteller_f.naming.NameService
+import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
+import org.jetbrains.exposed.sql.Query
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.andWhere
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Paths
@@ -122,4 +127,31 @@ private fun databaseConnection(properties: Map<out Any, Any>): DatabaseConnectio
     val user = properties["DATABASE_USER"] as String
     val pass = properties["DATABASE_PASS"] as String
     return DatabaseConnection(uri, driver, user, pass)
+}
+
+fun Query.bindPaginationQuery(
+    table: BaseTable,
+    prePageToken: PrimaryKey?,
+    nextPageToken: PrimaryKey?,
+    size: Int
+): Query {
+    if (nextPageToken != null) {
+        andWhere {
+            table.id less nextPageToken
+        }
+    } else if (prePageToken != null) {
+        andWhere {
+            table.id greater prePageToken
+        }
+    }
+    return orderBy(table.id, SortOrder.DESC).limit(size)
+}
+
+class UnauthorizedException : Exception()
+class ForbiddenException(message: String = "Invalid operation") : Exception(message)
+class CustomBadRequestException(message: String) : Exception(message)
+
+
+fun getMediaInfo(iconUrl: String?): MediaInfo? {
+    return iconUrl?.let { MediaInfo(it) }
 }

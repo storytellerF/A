@@ -1,9 +1,8 @@
 package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.a.server.auth.UnauthorizedException
-import com.storyteller_f.a.server.common.bindPaginationQuery
+import com.storyteller_f.ForbiddenException
+import com.storyteller_f.getMediaInfo
 import com.storyteller_f.isDup
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
@@ -13,12 +12,9 @@ import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverError
 import com.storyteller_f.tables.*
-import com.storyteller_f.tables.Rooms
 import com.storyteller_f.types.PaginationResult
-import io.ktor.resources.Resource
+import io.ktor.resources.*
 import io.ktor.server.plugins.*
-import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.*
 
 @Resource("/rooms")
 class RouteRooms(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
@@ -42,7 +38,7 @@ class RouteRooms(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
         class PubKeys(val parent: Id)
 
         @Resource("topics")
-        class Topics(val parent: Id)
+        class Topics(val parent: Id, val fillHasCommented: Boolean? = null)
 
         @Resource("exit")
         class Exit(val parent: Id)
@@ -58,16 +54,8 @@ suspend fun getRoomPubKeys(
 ): Result<PaginationResult<Pair<PrimaryKey, String>>?> {
     return isMemberJoined(roomId, userId).mapResult {
         if (it) {
-            DatabaseFactory.mapQuery({
-                this[Users.id] to this[Users.publicKey]
-            }) {
-                buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, pre, next, size)
-            }.mapResult { data ->
-                DatabaseFactory.count {
-                    buildRoomPubKeyQuery(roomId, true)
-                }.map { count ->
-                    PaginationResult(data, count)
-                }
+            commonPaginationRoomPubKeyList(roomId, pre, next, size).map { (data, count) ->
+                PaginationResult(data, count)
             }
         } else {
             Result.failure(ForbiddenException("Permission denied."))
@@ -75,22 +63,6 @@ suspend fun getRoomPubKeys(
     }
 }
 
-private fun buildRoomPubKeyQuery(roomId: PrimaryKey, getCount: Boolean): Query {
-    val join = Users.join(MemberJoins, JoinType.INNER, Users.id, MemberJoins.uid)
-    return if (getCount) {
-        join
-            .selectAll()
-            .where {
-                MemberJoins.objectId eq roomId
-            }
-    } else {
-        join
-            .select(Users.id, Users.publicKey)
-            .where {
-                MemberJoins.objectId eq roomId
-            }
-    }
-}
 
 suspend fun joinRoom(
     roomId: PrimaryKey,
@@ -139,22 +111,7 @@ suspend fun exitRoom(roomId: PrimaryKey, id: PrimaryKey, backend: Backend) =
         }
     }
 
-fun mapRoomInfo(it: ResultRow): Pair<RoomInfo, String?> {
-    val joinedTime = it.getOrNull(MemberJoins.joinTime)
-    val room = Room.wrapRow(it)
-    return room.toRoomInfo(joinedTime) to room.icon
-}
 
-private fun Room.toRoomInfo(joinedTime: LocalDateTime?) = RoomInfo(
-    id,
-    name,
-    aid,
-    creator,
-    null,
-    createdTime,
-    joinedTime,
-    communityId
-)
 
 suspend fun getRoom(
     roomId: PrimaryKey?,
@@ -166,39 +123,12 @@ suspend fun getRoom(
     if (roomId == null && roomAid == null) {
         return Result.failure(BadRequestException("roomId or roomAid must be set."))
     }
-    return DatabaseFactory.first({
-        this
-    }, ::mapRoomInfo) {
-        val baseOp = Op.build {
-            if (roomId != null) {
-                Rooms.id eq roomId
-            } else {
-                Rooms.aid eq roomAid!!
-            }
-        }
-
-        when {
-            fillJoinInfo != true -> Rooms
-                .select(Rooms.fields)
-                .where {
-                    baseOp and (Rooms.communityId.isNotNull())
-                }
-
-            uid != null -> Rooms
-                .join(MemberJoins, JoinType.LEFT, Rooms.id, MemberJoins.objectId) {
-                    MemberJoins.uid eq uid
-                }
-                .select(Rooms.fields + MemberJoins.joinTime)
-                .where {
-                    baseOp
-                }
-
-            else -> throw UnauthorizedException()
-        }
-    }.mapResultNotNull { (info, iconName) ->
+    return getRoomSource(roomId, roomAid, fillJoinInfo, uid).mapResultNotNull { (info, iconName) ->
         backend.mediaService.get("apic", listOf(iconName)).map { value ->
             val icon = value.firstOrNull()
             info.copy(icon = getMediaInfo(icon))
         }
     }
 }
+
+

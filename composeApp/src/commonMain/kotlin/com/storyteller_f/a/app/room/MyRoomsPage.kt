@@ -73,8 +73,7 @@ fun RoomList(
                 },
                 contentType = items.itemContentType()
             ) { index ->
-                RoomCell(items[index], false) {
-                }
+                RoomCell(items[index], false)
             }
         }
     }
@@ -83,8 +82,7 @@ fun RoomList(
 @Composable
 fun RoomCell(
     roomInfo: RoomInfo?,
-    customBackground: Boolean = false,
-    update: (RoomInfo) -> Unit
+    customBackground: Boolean = false
 ) {
     val appNav = LocalAppNav.current
     val onClick = appNav::goto
@@ -109,7 +107,7 @@ fun RoomCell(
     ) {
         val commonDialogController = rememberCommonDialogController()
         val shown by commonDialogController.show
-        RoomIcon(roomInfo, showDialog = shown, updateShowDialog = commonDialogController::update, update = update)
+        RoomIcon(roomInfo, showDialog = shown, updateShowDialog = commonDialogController::update)
         Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(roomInfo?.name.orEmpty(), color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
@@ -117,7 +115,7 @@ fun RoomCell(
     if (roomInfo != null) {
         RoomDialog(showDialog, roomInfo, {
             showDialog = false
-        }, update)
+        })
     }
 }
 
@@ -128,7 +126,6 @@ fun RoomIcon(
     enableClick: Boolean = false,
     showDialog: Boolean,
     updateShowDialog: (Boolean) -> Unit,
-    update: (RoomInfo) -> Unit = {}
 ) {
     val iconUrl = roomInfo?.icon?.url
     val radius = 8.dp
@@ -157,6 +154,6 @@ fun RoomIcon(
     roomInfo?.id?.let {
         RoomDialog(showDialog, roomInfo, {
             updateShowDialog(false)
-        }, update)
+        })
     }
 }

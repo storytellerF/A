@@ -73,8 +73,8 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
 
-data class OnRoomJoined(val id: PrimaryKey)
-data class OnRoomExited(val id: PrimaryKey)
+data class OnRoomJoined(val id: PrimaryKey, val newInfo: RoomInfo)
+data class OnRoomExited(val id: PrimaryKey, val newInfo: RoomInfo)
 
 @OptIn(ExperimentalPagingApi::class)
 class TopicsViewModel(id: PrimaryKey, val type: ObjectType) : PagingViewModel<PrimaryKey, TopicInfo>({
@@ -195,19 +195,20 @@ class RoomViewModel(private val requestInfo: suspend HttpClient.() -> RoomInfo) 
     init {
         load()
         viewModelScope.launch {
-            for (i in bus) {
-                if (handler.state.value is LoadingState.Loading) continue
-                val id = handler.data.value?.id
-                when (i) {
-                    is OnRoomJoined -> {
-                        if (i.id == id) {
-                            loadInternal()
+            bus.collect { i ->
+                if (handler.state.value !is LoadingState.Loading) {
+                    val id = handler.data.value?.id
+                    when (i) {
+                        is OnRoomJoined -> {
+                            if (i.id == id) {
+                                update(i.newInfo)
+                            }
                         }
-                    }
 
-                    is OnRoomExited -> {
-                        if (i.id == id) {
-                            loadInternal()
+                        is OnRoomExited -> {
+                            if (i.id == id) {
+                                update(i.newInfo)
+                            }
                         }
                     }
                 }
@@ -262,8 +263,6 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
             CustomSearchBar(SearchScope.RoomTopic(roomId)) {
                 RoomIcon(roomInfo, size = 40.dp, enableClick = true, showDialog = showDialog, updateShowDialog = {
                     showDialog = it
-                }, update = {
-                    room.update(it)
                 })
             }
             RoomPageInternal(modifier = Modifier.weight(1f), lazyListState, items)
@@ -304,12 +303,14 @@ private fun RoomPageInternal(
                 null
             }
             val current = items[index]
-            TopicCell(
-                current,
-                false,
-                next?.author != current?.author
-            )
-            Spacer(modifier = Modifier.height(10.dp))
+            current?.let { info ->
+                TopicCell(
+                    info,
+                    false,
+                    next?.author != info.author
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+            }
         }
     }
 }
@@ -533,7 +534,7 @@ fun InputGroupInternal(
 }
 
 @Composable
-fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit, update: (RoomInfo) -> Unit) {
+fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
     val appNav = LocalAppNav.current
     val onClick = appNav::goto
     DialogContainer {
@@ -563,7 +564,7 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit, update: (RoomInf
             }
         }
 
-        RoomDialogButtons(dismiss, appNav, roomInfo, update)
+        RoomDialogButtons(dismiss, appNav, roomInfo)
     }
 }
 
@@ -572,7 +573,6 @@ private fun RoomDialogButtons(
     dismiss: () -> Unit,
     appNav: AppNav,
     roomInfo: RoomInfo,
-    update: (RoomInfo) -> Unit
 ) {
     Column {
         ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
@@ -590,7 +590,6 @@ private fun RoomDialogButtons(
                     scope.launch {
                         exitRoom(roomInfo) {
                             toaster.show("success", duration = 1.seconds)
-                            update(it)
                         }
                     }
                 }
@@ -599,7 +598,6 @@ private fun RoomDialogButtons(
                     scope.launch {
                         joinRoom(roomInfo) {
                             toaster.show("success", duration = 1.seconds)
-                            update(it)
                         }
                     }
                 }
@@ -608,7 +606,7 @@ private fun RoomDialogButtons(
     }
 }
 
-private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: (RoomInfo) -> Unit) {
+private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: () -> Unit) {
     globalDialogState.use {
         val communityId = roomInfo.communityId
         if (communityId != null) {
@@ -617,16 +615,16 @@ private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: (RoomInfo) -> Unit) 
             }
         }
         val info = client.joinRoom(roomInfo.id)
-        bus.send(OnRoomJoined(roomInfo.id))
-        onSuccess(info)
+        bus.emit(OnRoomJoined(roomInfo.id, info))
+        onSuccess()
     }
 }
 
-private suspend fun exitRoom(roomInfo: RoomInfo, onSuccess: (RoomInfo) -> Unit) {
+private suspend fun exitRoom(roomInfo: RoomInfo, onSuccess: () -> Unit) {
     globalDialogState.use {
         val info = client.exitRoom(roomInfo.id)
-        bus.send(OnRoomExited(roomInfo.id))
-        onSuccess(info)
+        bus.emit(OnRoomExited(roomInfo.id, info))
+        onSuccess()
     }
 }
 
@@ -636,13 +634,12 @@ fun RoomDialog(
     showDialog: Boolean,
     roomInfo: RoomInfo?,
     dismiss: () -> Unit,
-    update: (RoomInfo) -> Unit
 ) {
     if (roomInfo != null && showDialog) {
         BasicAlertDialog({
             dismiss()
         }) {
-            RoomDialogInternal(roomInfo, dismiss, update)
+            RoomDialogInternal(roomInfo, dismiss)
         }
     }
 }
