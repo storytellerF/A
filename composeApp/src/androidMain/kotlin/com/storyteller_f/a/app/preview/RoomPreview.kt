@@ -57,7 +57,6 @@ private fun PreviewRoom(@PreviewParameter(MessageListProvider::class) topicInfos
                 TopicCell(it, false)
             }
         }
-        val roomInfo = RoomInfo.EMPTY
         InputGroupInternal(
             "test",
             MaterialTheme.colorScheme.tertiaryContainer,
@@ -88,8 +87,7 @@ private class RoomsProvider : PreviewParameterProvider<RoomInfo> {
 @Preview
 @Composable
 private fun PreviewRooms(@PreviewParameter(RoomsProvider::class) roomInfo: RoomInfo) {
-    RoomCell(roomInfo = roomInfo) {
-    }
+    RoomCell(roomInfo = roomInfo)
 }
 
 @Preview

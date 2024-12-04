@@ -62,20 +62,3 @@ fun <R : Any> getPageToken(pageTokenType: KClass<R>, pageToken: String): R? = if
     DefaultConversionService.fromValue(pageToken, pageTokenType) as? R
 }
 
-fun Query.bindPaginationQuery(
-    table: BaseTable,
-    prePageToken: PrimaryKey?,
-    nextPageToken: PrimaryKey?,
-    size: Int
-): Query {
-    if (nextPageToken != null) {
-        andWhere {
-            table.id less nextPageToken
-        }
-    } else if (prePageToken != null) {
-        andWhere {
-            table.id greater prePageToken
-        }
-    }
-    return orderBy(table.id, SortOrder.DESC).limit(size)
-}

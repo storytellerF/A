@@ -1,8 +1,7 @@
 package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.a.server.auth.UnauthorizedException
+import com.storyteller_f.getMediaInfo
 import com.storyteller_f.isDup
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
@@ -10,17 +9,13 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.tables.Communities
-import com.storyteller_f.tables.Community
-import com.storyteller_f.tables.MemberJoins
 import com.storyteller_f.tables.addCommunityJoin
+import com.storyteller_f.tables.commonPaginationCommunityList
 import com.storyteller_f.tables.exit
+import com.storyteller_f.tables.getCommonCommunity
+import com.storyteller_f.types.PaginationResult
 import io.ktor.resources.*
 import io.ktor.server.plugins.BadRequestException
-import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
 
 @Resource("/communities")
 class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
@@ -44,18 +39,6 @@ class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = nul
     }
 }
 
-fun Community.toCommunityIfo(
-    joinTime: LocalDateTime?
-): CommunityInfo = CommunityInfo(
-    id,
-    aid,
-    name,
-    owner,
-    createdTime,
-    null,
-    null,
-    joinTime
-)
 
 suspend fun getCommunity(
     communityId: PrimaryKey?,
@@ -64,38 +47,18 @@ suspend fun getCommunity(
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
-    return DatabaseFactory.first({
-        Triple(first.toCommunityIfo(second), first.icon, first.poster)
-    }, {
-        Community.wrapRow(it) to if (fillJoinInfo == true) it[MemberJoins.joinTime] else null
-    }) {
-        when {
-            fillJoinInfo != true -> Community.find(buildCommunityWhereClause(communityId, communityAid))
-            id == null -> throw UnauthorizedException()
-            else -> Communities.join(MemberJoins, JoinType.LEFT, Communities.id, MemberJoins.objectId) {
-                MemberJoins.uid eq id
-            }.select(Communities.fields + MemberJoins.joinTime)
-                .where(buildCommunityWhereClause(communityId, communityAid))
-        }
-    }.mapResultNotNull { (info, iconName, coverName) ->
+    return getCommonCommunity(
+        fillJoinInfo,
+        communityId,
+        communityAid,
+        id
+    ).mapResultNotNull { (info, iconName, coverName) ->
         backend.mediaService.get("apic", listOf(iconName, coverName)).map { (iconUrl, coverUrl) ->
             info.copy(icon = getMediaInfo(iconUrl), poster = getMediaInfo(coverUrl))
         }
     }
 }
 
-private fun buildCommunityWhereClause(
-    communityId: PrimaryKey?,
-    communityAid: String?
-): SqlExpressionBuilder.() -> Op<Boolean> = {
-    if (communityId != null) {
-        Communities.id eq communityId
-    } else if (communityAid != null) {
-        Communities.aid eq communityAid
-    } else {
-        throw BadRequestException("aid must be set.")
-    }
-}
 
 suspend fun joinCommunity(
     uid: PrimaryKey,
@@ -136,3 +99,34 @@ suspend fun exitCommunity(communityId: PrimaryKey, id: PrimaryKey, backend: Back
             }
         }
     }
+
+suspend fun searchCommunities(
+    backend: Backend,
+    prePageToken: PrimaryKey?,
+    nextPageToken: PrimaryKey?,
+    size: Int,
+    uid: PrimaryKey?,
+    search: RouteCommunities.Search
+): Result<PaginationResult<CommunityInfo>?> {
+    return commonPaginationCommunityList(uid, prePageToken, nextPageToken, size, search.joinStatus, search.word).mapResult { (list, count) ->
+        parseCommunityList(backend, list).map { value ->
+            PaginationResult(value, count)
+        }
+    }
+}
+
+
+private fun parseCommunityList(
+    backend: Backend,
+    list: List<Triple<CommunityInfo, String?, String?>>
+): Result<List<CommunityInfo>> {
+    return backend.mediaService.get("apic", list.flatMap { (_, icon, poster) ->
+        listOf(icon, poster)
+    }).map { icons ->
+        list.mapIndexed { i, communityPair ->
+            val first = icons[i * 2]
+            val second = icons[i * 2 + 1]
+            communityPair.first.copy(icon = getMediaInfo(first), poster = getMediaInfo(second))
+        }
+    }
+}

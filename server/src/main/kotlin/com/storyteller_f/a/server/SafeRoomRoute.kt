@@ -10,13 +10,13 @@ import com.storyteller_f.a.server.service.getRoom
 import com.storyteller_f.a.server.service.getRoomPubKeys
 import com.storyteller_f.a.server.service.getTopics
 import com.storyteller_f.a.server.service.joinRoom
-import com.storyteller_f.a.server.service.searchMembers
-import com.storyteller_f.a.server.service.searchRooms
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.tables.searchMembers
+import com.storyteller_f.tables.searchRooms
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 
@@ -26,7 +26,7 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
             pagination<RoomInfo, PrimaryKey>(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, size ->
-                searchRooms(id, backend, p, n, size, it)
+                searchRooms(id, backend, p, n, size, it.joinStatus, it.word, it.community)
             }
         }
     }
@@ -60,7 +60,7 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
             pagination<TopicInfo, PrimaryKey>(PrimaryKey::class, {
                 it.id.toString()
             }) { pre, next, size ->
-                getTopics(it.parent.id, ObjectType.ROOM, uid, backend, pre, next, size)
+                getTopics(it.parent.id, ObjectType.ROOM, uid, backend, pre, next, size, it.fillHasCommented)
             }
         }
     }

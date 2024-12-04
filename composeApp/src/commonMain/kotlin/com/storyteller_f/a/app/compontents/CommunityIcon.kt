@@ -23,7 +23,6 @@ fun CommunityIcon(
     iconSize: Dp = 40.dp,
     showDialog: Boolean,
     updateDialog: (Boolean) -> Unit,
-    update: (CommunityInfo) -> Unit,
 ) {
     val model = communityInfo?.icon?.url
     val radius = 8.dp
@@ -47,5 +46,5 @@ fun CommunityIcon(
     }
     CommunityDialog(communityInfo, showDialog, {
         updateDialog(false)
-    }, update)
+    })
 }

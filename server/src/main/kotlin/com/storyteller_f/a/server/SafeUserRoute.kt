@@ -5,12 +5,12 @@ import com.storyteller_f.a.server.auth.omitPrincipal
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.RouteUsers
-import com.storyteller_f.a.server.service.getUser
-import com.storyteller_f.a.server.service.getUserByAid
-import com.storyteller_f.a.server.service.searchMembers
 import com.storyteller_f.a.server.service.updateUser
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.tables.getUser
+import com.storyteller_f.tables.getUserByAid
+import com.storyteller_f.tables.searchMembers
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 

@@ -19,7 +19,10 @@ data class TopicInfo(
     val parentType: ObjectType,
     val hasJoined: Boolean,
     val createdTime: LocalDateTime,
-    val lastModifiedTime: LocalDateTime?
+    val commentCount: Long,
+    val reactionCount: Long,
+    val hasComment: Boolean,
+    val lastModifiedTime: LocalDateTime?,
 ) : Identifiable {
     companion object {
         val EMPTY = TopicInfo(
@@ -32,6 +35,9 @@ data class TopicInfo(
             ObjectType.TOPIC,
             false,
             now(),
+            0,
+            0,
+            false,
             now()
         )
     }

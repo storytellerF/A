@@ -3,9 +3,8 @@ package com.storyteller_f.a.server
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
-import com.storyteller_f.a.server.service.ForbiddenException
-import com.storyteller_f.a.server.service.toTopicInfo
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -206,7 +205,7 @@ suspend fun saveEncryptedTopicContent(
         this[EncryptedTopicKeys.encryptedAes] =
             ExposedBlob(encryptedAes[it]!!.hexToByteArray())
     }
-    topic.toTopicInfo().copy(content = TopicContent.Encrypted(encryptedContent, encryptedAes))
+    topic.toTopicInfo(hasComment = false).copy(content = TopicContent.Encrypted(encryptedContent, encryptedAes))
 }
 
 private suspend fun isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Result<Boolean> {

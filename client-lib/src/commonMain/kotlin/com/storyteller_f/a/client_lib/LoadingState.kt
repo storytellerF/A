@@ -15,16 +15,17 @@ class LoadingHandler<T>(val refresh: () -> Unit) {
     suspend fun request(
         service: suspend () -> Result<T>,
     ) {
-        state.loading()
+        if (state.value is LoadingState.Loading) return
+        state.markLoading()
         service().onSuccess { res ->
             if (res != null) {
                 data.value = res
-                state.loaded()
+                state.markLoaded()
             } else {
-                state.error("nil")
+                state.markError("nil")
             }
         }.onFailure {
-            state.error(it)
+            state.markError(it)
         }
     }
 
@@ -34,18 +35,18 @@ class LoadingHandler<T>(val refresh: () -> Unit) {
     }
 }
 
-fun MutableStateFlow<LoadingState?>.loaded() {
+fun MutableStateFlow<LoadingState?>.markLoaded() {
     value = LoadingState.Done()
 }
 
-fun MutableStateFlow<LoadingState?>.error(e: Throwable) {
+fun MutableStateFlow<LoadingState?>.markError(e: Throwable) {
     value = LoadingState.Error(e)
 }
 
-fun MutableStateFlow<LoadingState?>.error(e: String) {
+fun MutableStateFlow<LoadingState?>.markError(e: String) {
     value = LoadingState.Error(Exception(e))
 }
 
-fun MutableStateFlow<LoadingState?>.loading(message: String = "") {
+fun MutableStateFlow<LoadingState?>.markLoading(message: String = "") {
     value = LoadingState.Loading(message)
 }

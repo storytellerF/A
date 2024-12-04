@@ -44,6 +44,9 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.websocket.*
 import kotbase.MutableDocument
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.internal.ChannelFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -207,7 +210,7 @@ fun HttpClientConfig<*>.setupRequest() {
     }
 }
 
-val bus = Channel<Any>(Channel.UNLIMITED)
+val bus = MutableSharedFlow<Any>()
 
 val settings = Settings()
 

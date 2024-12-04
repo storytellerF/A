@@ -4,10 +4,15 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.BuildConfig
-import com.storyteller_f.a.server.protectedContent
-import com.storyteller_f.a.server.service.toFinalUserInfo
-import com.storyteller_f.a.server.service.toUserInfo
-import com.storyteller_f.a.server.unProtectedContent
+import com.storyteller_f.a.server.bindProtectedSafeCommunityRoute
+import com.storyteller_f.a.server.bindProtectedSafeRoomRoute
+import com.storyteller_f.a.server.bindProtectedSafeTopicRoute
+import com.storyteller_f.a.server.bindProtectedSafeUserRoute
+import com.storyteller_f.a.server.bindSafeCommunityRoute
+import com.storyteller_f.a.server.bindSafeRoomRoute
+import com.storyteller_f.a.server.bindSafeTopicRoute
+import com.storyteller_f.a.server.bindSafeUserRoute
+import com.storyteller_f.a.server.webSocketContent
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
@@ -17,6 +22,8 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.User
 import com.storyteller_f.tables.Users
 import com.storyteller_f.tables.createUser
+import com.storyteller_f.tables.toFinalUserInfo
+import com.storyteller_f.tables.toUserInfo
 import io.ktor.http.*
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
@@ -26,6 +33,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
+import io.ktor.server.websocket.webSocket
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -145,10 +153,20 @@ fun Application.configureAuth(backend: Backend) {
     }
     routing {
         authenticate {
-            protectedContent(backend)
+            bindProtectedSafeTopicRoute(backend)
+            bindProtectedSafeCommunityRoute(backend)
+            bindProtectedSafeRoomRoute(backend)
+            bindProtectedSafeUserRoute()
+            webSocket("/link") {
+                webSocketContent(backend)
+            }
         }
         authenticate(optional = true) {
-            unProtectedContent(backend)
+            bindSafeRoomRoute(backend)
+            bindSafeTopicRoute(backend)
+            bindSafeCommunityRoute(backend)
+            bindSafeUserRoute(backend)
+            bindProtectedSafeUserRoute()
         }
 
         get("/get_data") {

@@ -14,6 +14,10 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
+fun isAlreadyLogin(): Boolean {
+    return LoginViewModel.isAlreadySignUp
+}
+
 suspend fun HttpClient.requestRoomInfo(id: PrimaryKey, alreadySignUp: Boolean) = get("rooms/$id") {
     url {
         if (alreadySignUp) parameters.append("fillJoinInfo", "true")
@@ -66,8 +70,11 @@ suspend fun HttpClient.getCommunityInfoByAid(aid: String, fillJoinInfo: Boolean 
     }
 }.body<CommunityInfo>()
 
-suspend fun HttpClient.getCommunityTopics(communityId: PrimaryKey, nextTopicId: PrimaryKey?, size: Int) =
-    searchTopics(nextTopicId, size, emptyList(), communityId, ObjectType.COMMUNITY)
+suspend fun HttpClient.getCommunityTopics(
+    communityId: PrimaryKey,
+    nextTopicId: PrimaryKey?,
+    size: Int
+) = searchTopics(nextTopicId, size, emptyList(), communityId, ObjectType.COMMUNITY)
 
 suspend fun HttpClient.searchCommunity(
     nextCommunityId: PrimaryKey?,
@@ -124,12 +131,17 @@ private fun URLBuilder.appendPagingQueryParams(size: Int, nextId: PrimaryKey?) {
     }
 }
 
-suspend fun HttpClient.getWorldTopics(nextTopicId: PrimaryKey?, size: Int) = get("world") {
+private fun URLBuilder.appendPagingQueryParams(size: Int, nextId: String?) {
+    parameters.append("size", size.toString())
+    if (nextId != null) {
+        parameters.append("nextPageToken", nextId)
+    }
+}
+
+suspend fun HttpClient.getWorldTopics(nextTopicId: PrimaryKey?, size: Int, fillHasCommented: Boolean) = get("topics/recommend") {
     url {
-        parameters.append("size", size.toString())
-        if (nextTopicId != null) {
-            parameters.append("nextPageToken", nextTopicId.toString())
-        }
+        parameters.append("fillHasCommented", fillHasCommented.toString())
+        appendPagingQueryParams(size, nextTopicId)
     }
 }.body<ServerResponse<TopicInfo>>()
 
@@ -214,7 +226,7 @@ suspend fun HttpClient.searchTopics(
     size: Int,
     word: List<String>,
     parentId: PrimaryKey?,
-    parentType: ObjectType?,
+    parentType: ObjectType?
 ) = get("/topics/search") {
     url {
         parentId?.let {
@@ -222,6 +234,9 @@ suspend fun HttpClient.searchTopics(
         }
         parentType?.let {
             parameters.append("parentType", it.name)
+        }
+        if (isAlreadyLogin()) {
+            parameters.append("fillHasCommented", "true")
         }
         parameters.appendAll("word", word)
         appendPagingQueryParams(size, nextTopicId)
@@ -233,3 +248,21 @@ suspend fun HttpClient.exitRoom(roomId: PrimaryKey) = post("rooms/$roomId/exit")
 suspend fun HttpClient.exitCommunity(communityId: PrimaryKey) = post(
     "communities/$communityId/exit"
 ).body<CommunityInfo>()
+
+suspend fun HttpClient.addReaction(topicId: PrimaryKey, emoji: String) = post("topics/${topicId}/reactions") {
+    contentType(ContentType.Text.Plain)
+    setBody(emoji)
+}.body<ReactionInfo>()
+
+suspend fun HttpClient.deleteReaction(emoji: String) = post("reactions/delete") {
+    contentType(ContentType.Text.Plain)
+    setBody(emoji)
+}.body<Boolean>()
+
+suspend fun HttpClient.getReactions(topicId: PrimaryKey) =
+    get("topics/${topicId}/reactions") {
+        url {
+            if (isAlreadyLogin())
+                parameters.append("fillHasReacted", "true")
+        }
+    }.body<ServerResponse<ReactionInfo>>()
