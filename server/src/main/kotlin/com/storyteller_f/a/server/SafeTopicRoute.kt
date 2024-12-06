@@ -1,7 +1,6 @@
 package com.storyteller_f.a.server
 
 import com.storyteller_f.Backend
-import com.yy.mobile.emoji.EmojiReader
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
@@ -18,15 +17,12 @@ import com.storyteller_f.a.server.service.searchPublicTopics
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.tables.deleteReaction
-import com.storyteller_f.tables.getReaction
-import com.storyteller_f.tables.getSingleReaction
+import com.yy.mobile.emoji.EmojiReader
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.receive
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
-import kotlin.math.ln
 
 fun Route.bindSafeTopicRoute(backend: Backend) {
     get<RouteTopics.Search> {

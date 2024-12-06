@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
+    alias(libs.plugins.kover)
     id("io.gitlab.arturbosch.detekt").version("1.23.7")
 }
 
@@ -68,4 +69,52 @@ subprojects {
         input.from(
             tasks.withType<Detekt>().map { it.sarifReportFile })
     }
+}
+
+
+subprojects {
+    val androidLibModules = emptyList<String>()
+    val jvmLibModules = listOf<String>("server", "crypto-jvm", "backend")
+    if (jvmLibModules.contains(name) || androidLibModules.contains(name)) {
+        apply(plugin = "org.jetbrains.kotlinx.kover")
+        if (androidLibModules.contains(name)) {
+            apply(plugin = "com.android.library")
+        }
+
+        dependencies {
+            if (name == "server") {
+                val action = { it: String ->
+                    kover(project(":$it"))
+                    Unit
+                }
+                androidLibModules.forEach(action)
+                jvmLibModules.forEach(action)
+            }
+            if (androidLibModules.contains(name)) {
+                val robolectricVersion = "4.11.1"
+                "testImplementation"("org.robolectric:robolectric:$robolectricVersion")
+            }
+        }
+        koverReport {
+            if (androidLibModules.contains(name)) {
+                defaults {
+                    mergeWith("release")
+                }
+                // filters for all report types of all build variants
+                filters {
+                    excludes {
+                        classes(
+                            "*Fragment",
+                            "*Fragment\$*",
+                            "*Activity",
+                            "*Activity\$*",
+                            "*.databinding.*",
+                            "*.BuildConfig"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
 }

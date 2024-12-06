@@ -17,11 +17,11 @@ import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Max
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.count
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.longLiteral
 import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.selectAll
 
 object Reactions : BaseTable() {
@@ -74,7 +74,10 @@ suspend fun commonReactions(
         ReactionInfo(data1, objectId, ObjectType.TOPIC, data3, data2, data4 == 1L)
     }, {
         Tuple4(
-            it[Reactions.emoji], it[countExpression], it[latestTimeExpression], when {
+            it[Reactions.emoji],
+            it[countExpression],
+            it[latestTimeExpression],
+            when {
                 selection != null -> it[selection]
                 else -> 0
             }
@@ -129,14 +132,12 @@ suspend fun getSingleReaction(uid: PrimaryKey, emoji: String): Result<SingleReac
     }
 }
 
-
 suspend fun deleteReaction(
-    id: PrimaryKey,
+    uid: PrimaryKey,
     emoji: String
-): Result<Boolean?> = getSingleReaction(id, emoji).mapResultNotNull {
+): Result<Boolean?> = getSingleReaction(uid, emoji).mapResultNotNull {
     deleteReaction(it.id)
 }
-
 
 suspend fun deleteReaction(reactionId: PrimaryKey): Result<Boolean> {
     return DatabaseFactory.dbQuery {
@@ -146,10 +147,6 @@ suspend fun deleteReaction(reactionId: PrimaryKey): Result<Boolean> {
             }
         }
     }.map { value ->
-        if (value > 0) {
-            true
-        } else {
-            false
-        }
+        value > 0
     }
 }

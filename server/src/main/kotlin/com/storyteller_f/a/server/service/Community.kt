@@ -29,7 +29,7 @@ class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = nul
     @Resource("{id}")
     class Id(val parent: RouteCommunities = RouteCommunities(), val id: PrimaryKey) {
         @Resource("members")
-        class Members(val parent: Id, val word: String?)
+        class Members(val parent: Id, val word: String? = null)
 
         @Resource("join")
         class Join(val parent: Id)
@@ -38,7 +38,6 @@ class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = nul
         class Exit(val parent: Id)
     }
 }
-
 
 suspend fun getCommunity(
     communityId: PrimaryKey?,
@@ -58,7 +57,6 @@ suspend fun getCommunity(
         }
     }
 }
-
 
 suspend fun joinCommunity(
     uid: PrimaryKey,
@@ -108,13 +106,19 @@ suspend fun searchCommunities(
     uid: PrimaryKey?,
     search: RouteCommunities.Search
 ): Result<PaginationResult<CommunityInfo>?> {
-    return commonPaginationCommunityList(uid, prePageToken, nextPageToken, size, search.joinStatus, search.word).mapResult { (list, count) ->
+    return commonPaginationCommunityList(
+        uid,
+        prePageToken,
+        nextPageToken,
+        size,
+        search.joinStatus,
+        search.word
+    ).mapResult { (list, count) ->
         parseCommunityList(backend, list).map { value ->
             PaginationResult(value, count)
         }
     }
 }
-
 
 private fun parseCommunityList(
     backend: Backend,

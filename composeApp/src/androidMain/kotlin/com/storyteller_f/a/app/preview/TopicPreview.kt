@@ -72,9 +72,7 @@ fun PreviewTopic(@PreviewParameter(TopicPagePreviewProvider::class) param: Pair<
 
             item {
                 InteractionRow(topic, {
-
                 }) {
-
                 }
             }
 

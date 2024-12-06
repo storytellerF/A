@@ -1,11 +1,13 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
+import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
+import com.storyteller_f.shared.utils.now
 import com.storyteller_f.types.PaginationResult
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
@@ -70,7 +72,6 @@ fun createUser(
     return user
 }
 
-
 suspend fun getUserAid(id: PrimaryKey): Result<String?> = DatabaseFactory.first({
     aid
 }, User::wrapRow) {
@@ -96,7 +97,6 @@ suspend fun getUser(
 ) = getUserById1(it).mapResultNotNull {
     toFinalUserInfo(it, backend)
 }
-
 
 suspend fun getUserByAid(
     aid: String,
@@ -148,13 +148,13 @@ suspend fun commonPaginationMemberList(
 
 private fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, word: String?): Query {
     val query = if (objectId != null) {
-        val join = Users.join(MemberJoins, JoinType.INNER, Users.id, MemberJoins.uid)
+        val join = Users.join(MemberJoins, JoinType.INNER, Users.id, MemberJoins.uid) {
+            MemberJoins.objectId eq objectId
+        }
         if (getCount) {
             join.selectAll()
         } else {
-            join.select(Users.fields)
-        }.where {
-            MemberJoins.objectId eq objectId
+            join.select(Users.fields + MemberJoins.joinTime)
         }
     } else {
         Users.selectAll()
@@ -187,4 +187,35 @@ suspend fun searchMembers(
             }, count)
         }
     }
+}
+
+suspend fun getCommonUser(pack: SignInPack): Result<Triple<UserInfo, String?, String>?> = DatabaseFactory.first({
+    Triple(toUserInfo(), icon, publicKey)
+}, User::wrapRow) {
+    User.find {
+        Users.address eq pack.ad
+    }
+}
+
+suspend fun getUser(
+    ad: String,
+    name: String,
+    newId: PrimaryKey,
+    pk: String
+): Result<Pair<UserInfo, Nothing?>> = DatabaseFactory.query({
+    toUserInfo() to null
+}) {
+    createUser(User(null, pk, ad, null, name, newId, now()))
+}
+
+suspend fun isUserNotExists(pk: String): Result<Boolean> = DatabaseFactory.isEmpty {
+    User.find {
+        Users.publicKey eq pk
+    }
+}
+
+suspend fun getUser(id: PrimaryKey): Result<User?> = DatabaseFactory.first({
+    this
+}, User::wrapRow) {
+    User.findById(id)
 }

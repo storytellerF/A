@@ -1,10 +1,12 @@
 package com.storyteller_f.a.server
 
 import com.storyteller_f.Backend
+import com.storyteller_f.UnauthorizedException
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.RouteRooms
+import com.storyteller_f.a.server.service.checkRootReadPermission
 import com.storyteller_f.a.server.service.exitRoom
 import com.storyteller_f.a.server.service.getRoom
 import com.storyteller_f.a.server.service.getRoomPubKeys
@@ -15,6 +17,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.tables.searchMembers
 import com.storyteller_f.tables.searchRooms
 import io.ktor.server.resources.*
@@ -36,7 +39,13 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
             pagination<UserInfo, PrimaryKey>(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                searchMembers(it.parent.id, backend, p, n, s, it.word)
+                checkRootReadPermission(ObjectType.ROOM, it.parent.id, id).mapResultNotNull { permission ->
+                    if (permission.hasRead) {
+                        searchMembers(it.parent.id, backend, p, n, s, it.word)
+                    } else {
+                        Result.failure(UnauthorizedException())
+                    }
+                }
             }
         }
     }

@@ -138,7 +138,9 @@ private fun URLBuilder.appendPagingQueryParams(size: Int, nextId: String?) {
     }
 }
 
-suspend fun HttpClient.getWorldTopics(nextTopicId: PrimaryKey?, size: Int, fillHasCommented: Boolean) = get("topics/recommend") {
+suspend fun HttpClient.getWorldTopics(nextTopicId: PrimaryKey?, size: Int, fillHasCommented: Boolean) = get(
+    "topics/recommend"
+) {
     url {
         parameters.append("fillHasCommented", fillHasCommented.toString())
         appendPagingQueryParams(size, nextTopicId)
@@ -173,15 +175,17 @@ suspend fun HttpClient.getTopicInfoByAid(aid: String) = get("topics") {
     }
 }.body<TopicInfo>()
 
-suspend fun HttpClient.getJoinedRooms(
+suspend fun HttpClient.searchRooms(
     size: Int,
     nextRoomId: PrimaryKey?,
     joinStatusSearch: JoinStatusSearch,
-    word: String,
+    word: String?,
     communityId: PrimaryKey?
 ) = get("rooms/search") {
     url {
-        parameters.append("word", word)
+        if (!(word.isNullOrBlank())) {
+            parameters.append("word", word)
+        }
         parameters.append("joinStatus", joinStatusSearch.name)
         communityId?.let {
             parameters.append("community", it.toString())
@@ -249,7 +253,7 @@ suspend fun HttpClient.exitCommunity(communityId: PrimaryKey) = post(
     "communities/$communityId/exit"
 ).body<CommunityInfo>()
 
-suspend fun HttpClient.addReaction(topicId: PrimaryKey, emoji: String) = post("topics/${topicId}/reactions") {
+suspend fun HttpClient.addReaction(topicId: PrimaryKey, emoji: String) = post("topics/$topicId/reactions") {
     contentType(ContentType.Text.Plain)
     setBody(emoji)
 }.body<ReactionInfo>()
@@ -260,9 +264,12 @@ suspend fun HttpClient.deleteReaction(emoji: String) = post("reactions/delete") 
 }.body<Boolean>()
 
 suspend fun HttpClient.getReactions(topicId: PrimaryKey) =
-    get("topics/${topicId}/reactions") {
+    get("topics/$topicId/reactions") {
         url {
-            if (isAlreadyLogin())
+            if (isAlreadyLogin()) {
                 parameters.append("fillHasReacted", "true")
+            }
         }
     }.body<ServerResponse<ReactionInfo>>()
+
+suspend fun HttpClient.signOut() = post("/sign_out")

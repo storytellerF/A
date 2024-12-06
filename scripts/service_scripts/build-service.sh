@@ -28,14 +28,14 @@ if [ -z "$PUSH_TO_REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_C
   if [ "$HOST_TYPE" = "local" ]; then
     # 在本地启动
     ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
-    "./scripts/service_scripts/start-$FLAVOR-compose.sh"
+    "./scripts/service_scripts/start-$FLAVOR-compose.sh" false 'up -d --build'
   else
     # 在远程主机上启动
     # load image
     docker load -i "/tmp/A/$FLAVOR.image.tar"
     cd deploy
     # 使用预构建镜像构建服务
-    "../scripts/service_scripts/start-$FLAVOR-compose.sh" true
+    "../scripts/service_scripts/start-$FLAVOR-compose.sh" true 'up -d --build'
   fi
 
 else

@@ -55,6 +55,7 @@ buildconfig = "0.15.1"
 kotlin_buildconfig = "5.4.0"
 espresso-core = "3.6.1"
 androidx-test-ext-junit = "1.2.1"
+kover = "0.7.4"
 
 [libraries]
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
@@ -166,6 +167,7 @@ serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref 
 easylauncher = { id = "com.starter.easylauncher", version.ref = "easylauncher" }
 buildconfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildconfig" }
 kotlinBuildConfig = { id = "com.github.gmazzo.buildconfig", version.ref = "kotlin_buildconfig" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 
 [bundles]
 ktor-client = ["ktor-client-content-negotiation", "ktor-client-core", "ktor-serialization-kotlinx-json", "ktor-client-auth", "ktor-client-logging", "ktor-client-websockets"]

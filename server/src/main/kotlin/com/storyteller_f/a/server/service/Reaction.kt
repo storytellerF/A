@@ -18,7 +18,6 @@ import com.storyteller_f.tables.getReaction
 import com.storyteller_f.tables.getSimpleTopic
 import org.jetbrains.exposed.sql.insert
 
-
 suspend fun addReaction(
     userId: PrimaryKey,
     topicId: PrimaryKey,
@@ -57,10 +56,8 @@ suspend fun addReaction(
                 }
             }
         }
-
     }
 }
-
 
 suspend fun reactionList(
     objectId: PrimaryKey,
@@ -74,4 +71,3 @@ suspend fun reactionList(
         }
     }
 }
-

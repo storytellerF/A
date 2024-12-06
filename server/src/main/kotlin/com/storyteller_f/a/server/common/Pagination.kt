@@ -1,17 +1,12 @@
 package com.storyteller_f.a.server.common
 
-import com.storyteller_f.BaseTable
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapCatchingNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.types.PaginationResult
 import io.ktor.server.routing.*
 import io.ktor.util.converters.*
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.andWhere
 import kotlin.reflect.KClass
 
 suspend fun <T, R : Any> RoutingContext.pagination(
@@ -61,4 +56,3 @@ fun <R : Any> getPageToken(pageTokenType: KClass<R>, pageToken: String): R? = if
 } else {
     DefaultConversionService.fromValue(pageToken, pageTokenType) as? R
 }
-
