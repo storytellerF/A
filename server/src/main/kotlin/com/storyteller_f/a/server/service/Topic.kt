@@ -63,7 +63,7 @@ class RouteTopics(val fillHasCommented: Boolean? = null) {
 }
 
 @Resource("reactions")
-class RouteReactions() {
+class RouteReactions {
     @Resource("delete")
     class Delete(val parent: RouteReactions)
 }
@@ -114,13 +114,11 @@ suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend
     }
 }
 
-
-
 suspend fun getTopicSnapshot(id: PrimaryKey, topicId: PrimaryKey, backend: Backend): Result<File?> {
     return DatabaseFactory.first(User::toUserInfo, User::wrapRow) {
         User.findById(id)
     }.mapResultNotNull { creatorInfo ->
-        checkRootReadPermission(ObjectType.TOPIC, topicId, id).mapResultNotNull { (_, _, hasRead) ->
+        checkRootReadPermission(ObjectType.TOPIC, topicId, id).mapResultNotNull { (hasRead) ->
             if (hasRead) {
                 getSimpleTopic(topicId).mapResultNotNull { value ->
                     getTopicSnapshot(value, creatorInfo, backend)
@@ -190,7 +188,7 @@ suspend fun getTopic(
         ObjectType.TOPIC,
         topicId,
         uid
-    ).mapResultNotNull { (_, _, hasRead, hasJoined, isPrivate) ->
+    ).mapResultNotNull { (hasRead, hasJoined, isPrivate) ->
         if (hasRead) {
             getCommonTopic(topicId, uid).mapResultNotNull { info ->
                 if (isPrivate) {
@@ -230,7 +228,7 @@ suspend fun getTopics(
     val predicate: SqlExpressionBuilder.() -> Op<Boolean> = {
         Topics.parentId eq parentId and (Topics.parentType eq parentType)
     }
-    return checkRootReadPermission(parentType, parentId, uid).mapResultNotNull { (_, _, hasRead, _, isPrivate) ->
+    return checkRootReadPermission(parentType, parentId, uid).mapResultNotNull { (hasRead, _, isPrivate) ->
         when {
             !isPrivate -> commonPaginationSearchTopics(
                 uid,
@@ -281,8 +279,6 @@ suspend fun getTopics(
     }
 }
 
-
-
 @OptIn(ExperimentalStdlibApi::class)
 fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey): List<TopicContent.Encrypted> {
     val aesMap = EncryptedTopicKeys.selectAll().where {
@@ -307,8 +303,6 @@ fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey): List<T
 }
 
 data class RootReadPermission(
-    val type: ObjectType,
-    val id: PrimaryKey,
     val hasRead: Boolean,
     val hasJoined: Boolean,
     val isPrivate: Boolean
@@ -327,13 +321,13 @@ suspend fun checkRootReadPermission(
         }
 
         ObjectType.ROOM -> {
-            getRoomCommunityId(parentId).mapResult { lng ->
-                if (lng != null || uid != null) {
-                    isMemberJoined(parentId, uid).map { hasJoined ->
-                        RootReadPermission(parentType, parentId, hasJoined, hasJoined, lng == null)
-                    }
-                } else {
+            getRoomCommunityId(parentId).mapResult { communityId ->
+                if (communityId == null && uid == null) {
                     Result.failure(UnauthorizedException())
+                } else {
+                    isMemberJoined(parentId, uid).map { hasJoined ->
+                        RootReadPermission(hasJoined || communityId != null, hasJoined, communityId == null)
+                    }
                 }
             }
         }
@@ -341,7 +335,7 @@ suspend fun checkRootReadPermission(
         ObjectType.COMMUNITY -> {
             getCommunitySource(parentId).mapResultNotNull { value ->
                 isMemberJoined(parentId, uid).map { hasJoined ->
-                    RootReadPermission(parentType, parentId, true, hasJoined, false)
+                    RootReadPermission(true, hasJoined, false)
                 }
             }
         }
@@ -381,7 +375,6 @@ suspend fun checkRootWritePermission(
         ObjectType.USER -> TODO()
     }
 }
-
 
 suspend fun searchPublicTopics(
     nextTopicId: PrimaryKey?,
@@ -448,4 +441,3 @@ suspend fun recommendTopics(
         }
     }
 }
-

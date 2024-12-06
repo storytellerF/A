@@ -23,7 +23,6 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipal(block: (Primary
     }
 }
 
-
 suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> Result<R?>) {
     usePrincipalOrNull {
         block()

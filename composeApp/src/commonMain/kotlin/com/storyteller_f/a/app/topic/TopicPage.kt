@@ -97,7 +97,7 @@ fun EmojiPicker(
     hideSheet: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    if (showSheet)
+    if (showSheet) {
         ModalBottomSheet(
             modifier = Modifier.navigationBarsPadding(),
             onDismissRequest = {
@@ -131,6 +131,7 @@ fun EmojiPicker(
                 }
             }
         }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -170,7 +171,6 @@ private fun TopicPageInternal(
                         InteractionRow(it, {
                             startAddReaction()
                         }) {
-
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         HorizontalDivider()
@@ -290,8 +290,9 @@ class TopicViewModel(private val requestInfo: suspend HttpClient.() -> TopicInfo
             bus.collect { value ->
                 val id = handler.data.value?.id
                 if (value is OnTopicChanged) {
-                    if (value.topicInfo.id == id)
+                    if (value.topicInfo.id == id) {
                         update(value.topicInfo)
+                    }
                 }
             }
         }

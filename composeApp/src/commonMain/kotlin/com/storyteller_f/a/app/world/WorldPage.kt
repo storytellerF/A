@@ -30,7 +30,6 @@ import com.storyteller_f.a.client_lib.getWorldTopics
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
-import org.kodein.emoji.compose.m3.TextWithNotoAnimatedEmoji
 
 @Composable
 fun WorldPage() {
@@ -112,7 +111,8 @@ fun Pill(
 
             emoji != null -> Text(emoji)
         }
-        if (text != null)
+        if (text != null) {
             Text(text, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 12.sp)
+        }
     }
 }

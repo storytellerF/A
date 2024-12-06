@@ -24,8 +24,6 @@ class RouteUsers(val aid: String? = null) {
     class Search(@Suppress("unused") val parent: RouteUsers, val word: String? = null)
 }
 
-
-
 suspend fun RoutingContext.updateUser(id: PrimaryKey): Result<Int> {
     val newUser = call.receive<UserInfo>()
     val result1 = listOf(suspend {

@@ -137,7 +137,7 @@ suspend fun getCommonTopic(topicId: PrimaryKey, uid: PrimaryKey?): Result<TopicI
         )
     }) {
         Topics.join(t2, JoinType.LEFT, Topics.id, t2[Topics.parentId])
-            .join(Reactions, JoinType.INNER, Topics.id, Reactions.objectId)
+            .join(Reactions, JoinType.LEFT, Topics.id, Reactions.objectId)
             .let { join ->
                 when {
                     containExpression != null -> join.select(baseSelection + containExpression)
@@ -155,9 +155,11 @@ private fun topicAuthorContains(
     uid: PrimaryKey?,
     t2: Alias<Topics>
 ): Max<Long, Long>? {
-    val containExpression = if (uid != null) Expression.build {
-        val expr = case().When(t2[Topics.author].eq(uid), longLiteral(1)).Else(longLiteral(0))
-        Max<Long, Long>(expr, LongColumnType())
+    val containExpression = if (uid != null) {
+        Expression.build {
+            val expr = case().When(t2[Topics.author].eq(uid), longLiteral(1)).Else(longLiteral(0))
+            Max<Long, Long>(expr, LongColumnType())
+        }
     } else {
         null
     }
@@ -208,7 +210,7 @@ suspend fun commonSearchTopics(
         )
     }) {
         Topics.join(t2, JoinType.LEFT, Topics.id, t2[Topics.parentId])
-            .join(Reactions, JoinType.INNER, Topics.id, Reactions.objectId)
+            .join(Reactions, JoinType.LEFT, Topics.id, Reactions.objectId)
             .let {
                 when {
                     containExpression != null -> it.select(baseSelection + containExpression)

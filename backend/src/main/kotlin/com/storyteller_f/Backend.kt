@@ -151,7 +151,6 @@ class UnauthorizedException : Exception()
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)
 class CustomBadRequestException(message: String) : Exception(message)
 
-
 fun getMediaInfo(iconUrl: String?): MediaInfo? {
     return iconUrl?.let { MediaInfo(it) }
 }

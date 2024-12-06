@@ -18,12 +18,12 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.filterNull
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.User
 import com.storyteller_f.tables.Users
-import com.storyteller_f.tables.createUser
+import com.storyteller_f.tables.getCommonUser
+import com.storyteller_f.tables.getUser
+import com.storyteller_f.tables.isUserNotExists
 import com.storyteller_f.tables.toFinalUserInfo
-import com.storyteller_f.tables.toUserInfo
 import io.ktor.http.*
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
@@ -160,6 +160,12 @@ fun Application.configureAuth(backend: Backend) {
             webSocket("/link") {
                 webSocketContent(backend)
             }
+            post("/sign_out") {
+                usePrincipal { id ->
+                    call.sessions.clear(UserSession::class)
+                    Result.success(Unit)
+                }
+            }
         }
         authenticate(optional = true) {
             bindSafeRoomRoute(backend)
@@ -168,26 +174,29 @@ fun Application.configureAuth(backend: Backend) {
             bindSafeUserRoute(backend)
             bindProtectedSafeUserRoute()
         }
+        bindUnauthenticatedRoute(backend)
+    }
+}
 
-        get("/get_data") {
-            call.respondText(call.getData())
-        }
+private fun Routing.bindUnauthenticatedRoute(backend: Backend) {
+    get("/get_data") {
+        call.respondText(call.getData())
+    }
 
-        post("/sign_up") {
-            signUp(backend)
-        }
+    post("/sign_up") {
+        signUp(backend)
+    }
 
-        post("/sign_in") {
-            signIn(backend)
-        }
+    post("/sign_in") {
+        signIn(backend)
+    }
 
-        get("/ping") {
-            call.respondText("pong")
-        }
+    get("/ping") {
+        call.respondText("pong")
+    }
 
-        get {
-            call.respondText("${backend.config.flavor} ${backend.config.isProd}")
-        }
+    get {
+        call.respondText("${backend.config.flavor} ${backend.config.isProd}")
     }
 }
 
@@ -200,14 +209,7 @@ private suspend fun RoutingContext.signIn(backend: Backend) {
     val pack = call.receive<SignInPack>()
     val data = call.getData()
     val f = finalData(data)
-    val userTriple = DatabaseFactory.first({
-        Triple(toUserInfo(), icon, publicKey)
-    }, User::wrapRow) {
-        User.find {
-            Users.address eq pack.ad
-        }
-    }
-    userTriple.filterNull {
+    getCommonUser(pack).filterNull {
         BadRequestException("user not found")
     }.onSuccess { (info, icon, publicKey) ->
         if (verify(publicKey, pack.sig, f)) {
@@ -239,20 +241,12 @@ private suspend fun RoutingContext.signUp(backend: Backend) {
     val data = call.getData()
     val f = finalData(data)
     if (verify(pack.pk, pack.sig, f)) {
-        DatabaseFactory.isEmpty {
-            User.find {
-                Users.publicKey eq pack.pk
-            }
-        }.mapResult { bool ->
+        isUserNotExists(pack.pk).mapResult { bool ->
             if (bool) {
                 val ad = calcAddress(pack.pk)
                 val newId = SnowflakeFactory.nextId()
                 val name = backend.nameService.parse(newId)
-                DatabaseFactory.query({
-                    toUserInfo() to null
-                }) {
-                    createUser(User(null, pack.pk, ad, null, name, newId, now()))
-                }.mapResult { value ->
+                getUser(ad, name, newId, pack.pk).mapResult { value ->
                     saveSuccessSessionOnFirst(newId)
                     toFinalUserInfo(value, backend)
                 }
@@ -278,11 +272,7 @@ private suspend fun ApplicationCall.checkApiRequest(
     return when {
         !BuildConfig.IS_PROD && credential is CustomCredential.IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            if (DatabaseFactory.first({
-                    this
-                }, User::wrapRow) {
-                    User.findById(id)
-                }.getOrNull() != null) {
+            if (getUser(id).getOrNull() != null) {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             } else {
@@ -291,18 +281,7 @@ private suspend fun ApplicationCall.checkApiRequest(
         }
 
         sig.isNotBlank() && session.data.isNotBlank() -> {
-            DatabaseFactory.first({
-                this
-            }, {
-                it[Users.publicKey] to it[Users.id]
-            }) {
-                Users.select(listOf(Users.publicKey, Users.id)).where {
-                    when (credential) {
-                        is CustomCredential.AidCredential -> Users.aid eq credential.aid
-                        is CustomCredential.IdCredential -> Users.id eq credential.id
-                    }
-                }
-            }.getOrNull()?.let { (pubKey, id) ->
+            getUserAuthData(credential).getOrNull()?.let { (pubKey, id) ->
                 if (verify(
                         pubKey,
                         sig,
@@ -319,6 +298,19 @@ private suspend fun ApplicationCall.checkApiRequest(
 
         else -> {
             null
+        }
+    }
+}
+
+private suspend fun getUserAuthData(credential: CustomCredential): Result<Pair<String, Long>?> = DatabaseFactory.first({
+    this
+}, {
+    it[Users.publicKey] to it[Users.id]
+}) {
+    Users.select(listOf(Users.publicKey, Users.id)).where {
+        when (credential) {
+            is CustomCredential.AidCredential -> Users.aid eq credential.aid
+            is CustomCredential.IdCredential -> Users.id eq credential.id
         }
     }
 }

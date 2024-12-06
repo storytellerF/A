@@ -25,10 +25,29 @@ object MemberJoins : Table() {
     }
 }
 
-class MemberJoin(val uid: PrimaryKey, val roomId: PrimaryKey, val joinTime: LocalDateTime) {
+class MemberJoin(
+    val uid: PrimaryKey,
+    val objectId: PrimaryKey,
+    val objectType: ObjectType,
+    val joinTime: LocalDateTime
+) {
     companion object {
         fun wrapRow(row: ResultRow): MemberJoin {
-            return MemberJoin(row[MemberJoins.uid], row[MemberJoins.objectId], row[MemberJoins.joinTime])
+            return MemberJoin(
+                row[MemberJoins.uid],
+                row[MemberJoins.objectId],
+                row[MemberJoins.objectType],
+                row[MemberJoins.joinTime]
+            )
+        }
+
+        fun new(join: MemberJoin): Boolean {
+            return MemberJoins.insert { statement ->
+                statement[uid] = join.uid
+                statement[objectId] = join.objectId
+                statement[objectType] = join.objectType
+                statement[joinTime] = join.joinTime
+            }.insertedCount > 0
         }
     }
 }

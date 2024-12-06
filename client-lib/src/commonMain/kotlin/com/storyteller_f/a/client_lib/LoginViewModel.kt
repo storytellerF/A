@@ -32,8 +32,8 @@ object LoginViewModel {
     val user = MutableStateFlow<UserInfo?>(null)
     val isAlreadySignUp get() = state.value is ClientSession.SignUpSuccess
 
-    fun updateSession(new: String, signature: String?) {
-        session = Pair(new, signature)
+    fun updateSession(data: String, signature: String?) {
+        session = data to signature
     }
 
     fun updateUser(new: UserInfo) {
@@ -60,7 +60,7 @@ object LoginViewModel {
         state.value = newState
     }
 
-    fun logout() {
+    fun signOut() {
         state.value = ClientSession.LoginNone
         user.value = null
         session = null

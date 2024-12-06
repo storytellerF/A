@@ -65,7 +65,6 @@ fun findCommunityByAId(aid: String): ResultRow? {
     }.limit(1).firstOrNull()
 }
 
-
 fun Community.toCommunityIfo(
     joinTime: LocalDateTime?
 ): CommunityInfo = CommunityInfo(

@@ -13,6 +13,7 @@ import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
 
@@ -52,6 +53,18 @@ class Room(
 
         fun findRoomByAId(aid: String) = Rooms.selectAll().where {
             Rooms.aid eq aid
+        }
+
+        fun new(room: Room): Boolean {
+            return Rooms.insert { statement ->
+                statement[id] = room.id
+                statement[createdTime] = room.createdTime
+                statement[aid] = room.aid
+                statement[name] = room.name
+                statement[icon] = room.icon
+                statement[creator] = room.creator
+                statement[communityId] = room.communityId
+            }.insertedCount > 0
         }
     }
 }
@@ -120,7 +133,7 @@ private fun buildRoomSearchQuery(
     }
     if (!(word.isNullOrBlank())) {
         query.andWhere {
-            Rooms.name like "%${word}%"
+            Rooms.name like "%$word%"
         }
     }
     if (community != null) {
@@ -137,12 +150,14 @@ private fun buildUnspecifiedRoomSearchQuery(
 ): Query = if (uid != null) {
     val join = Rooms
         .join(MemberJoins, JoinType.LEFT, Rooms.id, MemberJoins.objectId) {
-            (MemberJoins.uid eq uid).or(MemberJoins.uid.isNull())
+            (MemberJoins.uid eq uid)
         }
     if (getCount) {
         join.selectAll()
     } else {
         join.select(Rooms.fields + MemberJoins.joinTime)
+    }.where {
+        (MemberJoins.uid.isNull() and Rooms.communityId.isNotNull()).or(MemberJoins.uid.isNotNull())
     }
 } else {
     Rooms
@@ -159,7 +174,7 @@ private fun buildNotJoinedRoomSearchQuery(
     join.selectAll().where {
         Rooms.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
             MemberJoins.uid eq uid
-        })
+        }) and Rooms.communityId.isNotNull()
     }
 } else {
     throw UnauthorizedException()
@@ -181,7 +196,6 @@ private fun buildJoinedRoomSearchQuery(
 } else {
     throw UnauthorizedException()
 }
-
 
 suspend fun getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?> = DatabaseFactory.first({
     communityId
@@ -261,7 +275,6 @@ suspend fun getRoomSource(
     }
 }
 
-
 suspend fun searchRooms(
     uid: PrimaryKey?,
     backend: Backend,
@@ -286,7 +299,6 @@ suspend fun searchRooms(
         }
     }
 }
-
 
 private fun roomsResponse(list: List<Pair<RoomInfo, String?>>, backend: Backend): Result<List<RoomInfo>> {
     return backend.mediaService.get("apic", list.map {

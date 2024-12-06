@@ -3,8 +3,6 @@ package com.storyteller_f.a.app.compontents
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Comment
-import androidx.compose.material.icons.filled.AddReaction
-import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.outlined.AddReaction
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -24,6 +22,7 @@ import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 data class OnTopicChanged(val topicInfo: TopicInfo)
@@ -104,25 +103,34 @@ fun InteractionRow(
             }
         }
         if (reactions.itemCount > 0) {
-            val info = reactions[index]
-            val first = info?.first
-            val emoji = first?.emoji
-            val hasReacted = first?.hasReacted
-            Pill((first?.count ?: 0).toString(), emoji = emoji, selected = hasReacted == true) {
-                emoji?.let { string ->
-                    if (hasReacted == true) {
-                        scope.launch {
-                            globalDialogState.use {
-                                client.deleteReaction(string)
-                            }
-                        }
-                    } else {
-                        scope.launch {
-                            globalDialogState.use {
-                                client.addReaction(topicInfo.id, string)
-                                bus.emit(OnTopicChanged(topicInfo.copy(reactionCount = reactionCount + 1)))
-                            }
-                        }
+            EmojiCell(scope, topicInfo, reactionCount, reactions[index])
+        }
+    }
+}
+
+@Composable
+private fun EmojiCell(
+    scope: CoroutineScope,
+    topicInfo: TopicInfo,
+    reactionCount: Long,
+    info: Pair<ReactionInfo, Int>?
+) {
+    val first = info?.first
+    val emoji = first?.emoji
+    val hasReacted = first?.hasReacted
+    Pill((first?.count ?: 0).toString(), emoji = emoji, selected = hasReacted == true) {
+        emoji?.let { string ->
+            if (hasReacted == true) {
+                scope.launch {
+                    globalDialogState.use {
+                        client.deleteReaction(string)
+                    }
+                }
+            } else {
+                scope.launch {
+                    globalDialogState.use {
+                        client.addReaction(topicInfo.id, string)
+                        bus.emit(OnTopicChanged(topicInfo.copy(reactionCount = reactionCount + 1)))
                     }
                 }
             }

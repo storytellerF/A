@@ -25,7 +25,7 @@ import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.utils.safeFirstUnicode
-import com.storyteller_f.a.client_lib.getJoinedRooms
+import com.storyteller_f.a.client_lib.searchRooms
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
@@ -49,7 +49,7 @@ class RoomsViewModel(
 ) : PagingViewModel<PrimaryKey, RoomInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getJoinedRooms(10, it, joinStatusSearch, word, community)
+            client.searchRooms(10, it, joinStatusSearch, word, community)
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKey())
         }

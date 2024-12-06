@@ -29,7 +29,7 @@ class RouteRooms(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
     @Resource("{id}")
     class Id(val parent: RouteRooms = RouteRooms(), val id: PrimaryKey) {
         @Resource("members")
-        class Members(val parent: Id, val word: String?)
+        class Members(val parent: Id, val word: String? = null)
 
         @Resource("join")
         class Join(val parent: Id)
@@ -62,7 +62,6 @@ suspend fun getRoomPubKeys(
         }
     }
 }
-
 
 suspend fun joinRoom(
     roomId: PrimaryKey,
@@ -111,8 +110,6 @@ suspend fun exitRoom(roomId: PrimaryKey, id: PrimaryKey, backend: Backend) =
         }
     }
 
-
-
 suspend fun getRoom(
     roomId: PrimaryKey?,
     roomAid: String?,
@@ -130,5 +127,3 @@ suspend fun getRoom(
         }
     }
 }
-
-

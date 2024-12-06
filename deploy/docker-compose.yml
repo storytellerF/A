@@ -57,7 +57,7 @@ services:
     labels:
       - "bunkerweb.INSTANCE=yes"
     environment:
-      - SERVER_NAME=ec2-54-153-231-70.ap-southeast-2.compute.amazonaws.com
+      - SERVER_NAME=www.example.com
       - API_WHITELIST_IP=127.0.0.0/8 10.20.30.0/24
       - USE_REVERSE_PROXY=yes
       - REVERSE_PROXY_URL=/
