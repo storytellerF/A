@@ -74,8 +74,10 @@ object DatabaseFactory {
                 }
             }
         }.recoverError { throwable ->
-            r.initCause(throwable)
-            Result.failure(r)
+            if (throwable.cause == null) {
+                throwable.initCause(r)
+            }
+            Result.failure(throwable)
         }
     }
 
