@@ -41,7 +41,8 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (P
                 else -> call.respond(it)
             }
         }.onFailure {
-            call.application.log.error("occur exception", it)
+            if (it !is UnauthorizedException)
+                call.application.log.error("Occur exception", it)
             respondError(it)
         }
     } catch (e: Exception) {
