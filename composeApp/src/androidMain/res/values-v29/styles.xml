@@ -1,0 +1,5 @@
+<resources>
+    <style name="App" parent="Base">
+        <item name="android:enforceNavigationBarContrast">false</item>
+    </style>
+</resources>

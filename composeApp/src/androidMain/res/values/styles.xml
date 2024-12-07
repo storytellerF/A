@@ -1,0 +1,9 @@
+<resources>
+    <style name="Base">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+    <style name="App" parent="Base">
+
+    </style>
+</resources>

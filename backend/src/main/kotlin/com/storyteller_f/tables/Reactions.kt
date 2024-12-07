@@ -10,7 +10,7 @@ import com.storyteller_f.shared.model.SingleReactionInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.Tuple4
-import com.storyteller_f.shared.utils.mapResultNotNull
+import com.storyteller_f.shared.utils.mapResult
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.LongColumnType
@@ -127,16 +127,20 @@ suspend fun getSingleReaction(uid: PrimaryKey, emoji: String): Result<SingleReac
         Reaction.wrapRow(it)
     }) {
         Reactions.selectAll().where {
-            (Reactions.emoji eq emoji)
-        }.groupBy(Reactions.emoji)
+            (Reactions.emoji eq emoji) and (Reactions.uid eq uid)
+        }
     }
 }
 
 suspend fun deleteReaction(
     uid: PrimaryKey,
     emoji: String
-): Result<Boolean?> = getSingleReaction(uid, emoji).mapResultNotNull {
-    deleteReaction(it.id)
+): Result<Boolean> = getSingleReaction(uid, emoji).mapResult {
+    if (it == null) {
+        Result.success(true)
+    } else {
+        deleteReaction(it.id)
+    }
 }
 
 suspend fun deleteReaction(reactionId: PrimaryKey): Result<Boolean> {
