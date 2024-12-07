@@ -8,13 +8,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.ExperimentalPagingApi
-import androidx.paging.LoadState
-import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.world.Pill
+import com.storyteller_f.a.client_lib.LoadingState
 import com.storyteller_f.a.client_lib.addReaction
 import com.storyteller_f.a.client_lib.deleteReaction
 import com.storyteller_f.a.client_lib.getReactions
@@ -22,25 +21,24 @@ import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 data class OnTopicChanged(val topicInfo: TopicInfo)
 
 @OptIn(ExperimentalPagingApi::class)
-class ReactionsViewModel(val objectId: PrimaryKey) : PagingViewModel<String, Pair<ReactionInfo, Int>>({
-    SimplePagingSource {
-        serviceCatching {
-            val reactions = client.getReactions(objectId)
-            reactions
-            ServerResponse(reactions.data.mapIndexed { index, info ->
-                info to index
-            })
-        }.map {
-            APagingData(it.data, it.pagination?.nextPageToken)
+class ReactionsViewModel(val objectId: PrimaryKey) : SimpleViewModel<ServerResponse<ReactionInfo>>() {
+    init {
+        load()
+    }
+
+    override suspend fun loadInternal() {
+        handler.request {
+            runCatching {
+                client.getReactions(objectId)
+            }
         }
     }
-})
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -56,35 +54,23 @@ fun InteractionRow(
     val reactionsViewModel = viewModel(ReactionsViewModel::class, keys = listOf("reactions", objectId)) {
         ReactionsViewModel(objectId)
     }
-    val reactions = reactionsViewModel.flow.collectAsLazyPagingItems()
-    val refresh = reactions.loadState.refresh
-    val itemCount = reactions.itemCount
+    val reactions by reactionsViewModel.handler.data.collectAsState()
+    val refresh by reactionsViewModel.handler.state.collectAsState()
+    val itemCount = reactions?.data?.size ?: 0
     LaunchedEffect(refresh, itemCount, reactionCount) {
-        if (refresh is LoadState.NotLoading && itemCount.toLong() != reactionCount) {
-            reactions.refresh()
+        if (refresh != null && refresh is LoadingState.Done && itemCount.toLong() != reactionCount) {
+            reactionsViewModel.handler.refresh()
         }
     }
     var maxLines by remember {
         mutableStateOf(2)
     }
 
+    val it = reactions ?: ServerResponse(emptyList())
     val moreOrCollapseIndicator = @Composable { scope: ContextualFlowRowOverflowScope ->
-        val remainingItems = scope.totalItemCount - scope.shownItemCount
-        if (remainingItems > 0) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Pill(icon = Icons.Outlined.AddReaction) {
-                    startAddReaction()
-                }
-                Pill(text = "+$remainingItems") {}
-            }
-        } else {
-            Pill(icon = Icons.Outlined.AddReaction) {
-                startAddReaction()
-            }
-        }
+        InteractionRowEnd(scope, startAddReaction)
     }
-    val scope = rememberCoroutineScope()
-
+    val data = it.data
     ContextualFlowRow(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -95,35 +81,59 @@ fun InteractionRow(
             expandIndicator = moreOrCollapseIndicator,
             collapseIndicator = moreOrCollapseIndicator
         ),
-        itemCount = reactions.itemCount.coerceAtLeast(1)
+        itemCount = data.size.coerceAtLeast(1)
     ) { index ->
         if (index == 0) {
             Pill(commentCount.toString(), selected = hasComment, icon = Icons.AutoMirrored.Outlined.Comment) {
                 startAddComment()
             }
         }
-        if (reactions.itemCount > 0) {
-            EmojiCell(scope, topicInfo, reactionCount, reactions[index])
+        if (data.isNotEmpty()) {
+            data.getOrNull(index)?.let { info ->
+                EmojiCell(topicInfo, reactionCount, info)
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun InteractionRowEnd(
+    scope: ContextualFlowRowOverflowScope,
+    startAddReaction: () -> Unit
+) {
+    val remainingItems = scope.totalItemCount - scope.shownItemCount
+    if (remainingItems > 0) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Pill(icon = Icons.Outlined.AddReaction) {
+                startAddReaction()
+            }
+            Pill(text = "+$remainingItems") {}
+        }
+    } else {
+        Pill(icon = Icons.Outlined.AddReaction) {
+            startAddReaction()
         }
     }
 }
 
 @Composable
 private fun EmojiCell(
-    scope: CoroutineScope,
     topicInfo: TopicInfo,
     reactionCount: Long,
-    info: Pair<ReactionInfo, Int>?
+    info: ReactionInfo
 ) {
-    val first = info?.first
-    val emoji = first?.emoji
-    val hasReacted = first?.hasReacted
-    Pill((first?.count ?: 0).toString(), emoji = emoji, selected = hasReacted == true) {
-        emoji?.let { string ->
+    val scope = rememberCoroutineScope()
+    val first = info
+    val emoji = first.emoji
+    val hasReacted = first.hasReacted
+    Pill(first.count.toString(), emoji = emoji, selected = hasReacted == true) {
+        emoji.let { string ->
             if (hasReacted == true) {
                 scope.launch {
                     globalDialogState.use {
                         client.deleteReaction(string)
+                        bus.emit(OnTopicChanged(topicInfo.copy(reactionCount = reactionCount - 1)))
                     }
                 }
             } else {

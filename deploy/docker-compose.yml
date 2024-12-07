@@ -57,11 +57,15 @@ services:
     labels:
       - "bunkerweb.INSTANCE=yes"
     environment:
-      - SERVER_NAME=www.example.com
+      - SERVER_NAME=acommmunity.link
       - API_WHITELIST_IP=127.0.0.0/8 10.20.30.0/24
       - USE_REVERSE_PROXY=yes
       - REVERSE_PROXY_URL=/
       - REVERSE_PROXY_HOST=http://server:8811
+      - AUTO_LETS_ENCRYPT=yes
+      - EMAIL_LETS_ENCRYPT=34095089+storytellerF@users.noreply.github.com
+      - LETS_ENCRYPT_CLEAR_OLD_CERTS=yes
+      - DISABLE_DEFAULT_SERVER=no
     networks:
       - bw-universe
       - bw-services

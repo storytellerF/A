@@ -23,7 +23,6 @@ import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.topic.TopicCell
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.getWorldTopics
@@ -109,7 +108,9 @@ fun Pill(
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
 
-            emoji != null -> Text(emoji)
+            emoji != null -> {
+                Text(emoji)
+            }
         }
         if (text != null) {
             Text(text, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 12.sp)
