@@ -76,10 +76,10 @@ data object LoginScreen
 data class TopicScreen(val topicId: PrimaryKey)
 
 @Serializable
-data class TopicComposeScreen(val objectType: ObjectType, val objectId: PrimaryKey)
+data class TopicComposeScreen(val objectType: String, val objectId: PrimaryKey)
 
 @Serializable
-data class MemberScreen(val objectType: ObjectType, val objectId: PrimaryKey)
+data class MemberScreen(val objectType: String, val objectId: PrimaryKey)
 
 @OptIn(ExperimentalCoilApi::class)
 @Composable
@@ -124,13 +124,13 @@ private fun NavGraphBuilder.buildRootNav(
     }
     composable<TopicComposeScreen> {
         val (objectType, objectId) = it.toRoute<TopicComposeScreen>()
-        TopicComposePage(objectType, objectId) {
+        TopicComposePage(ObjectType.valueOf(objectType), objectId) {
             navigator.popBackStack()
         }
     }
     composable<MemberScreen> {
         val (objectType, objectId) = it.toRoute<MemberScreen>()
-        MemberPage(objectId, objectType)
+        MemberPage(objectId, ObjectType.valueOf(objectType))
     }
 }
 
@@ -159,14 +159,14 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
     }
 
     override fun gotoTopicCompose(objectType: ObjectType, objectId: PrimaryKey) {
-        navigator.navigate(route = TopicComposeScreen(objectType, objectId))
+        navigator.navigate(route = TopicComposeScreen(objectType.name, objectId))
     }
 
     override fun gotoMemberPage(
         objectId: PrimaryKey,
         objectType: ObjectType
     ) {
-        navigator.navigate(route = MemberScreen(objectType, objectId))
+        navigator.navigate(route = MemberScreen(objectType.name, objectId))
     }
 }
 
