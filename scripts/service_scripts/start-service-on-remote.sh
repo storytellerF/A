@@ -35,7 +35,7 @@ sleep 2
 ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "echo ""$md"  "./a-server/$FLAVOR.image.tar"" | md5sum -c -"
 sleep 2
 
-./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "sudo cp ./a-server/$FLAVOR.image.tar /tmp/A/$FLAVOR.image.tar"
+./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "cp ./a-server/$FLAVOR.image.tar /tmp/A/$FLAVOR.image.tar"
 sleep 2
 
 # 验证上传的文件完整性
