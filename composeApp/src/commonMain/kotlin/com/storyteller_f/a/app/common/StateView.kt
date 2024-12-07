@@ -203,7 +203,8 @@ fun <T : Any> RefCellStateView(
                 }.padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(localState.e.message.toString(), modifier = Modifier.fillMaxHeight(), maxLines = 1)
+                val e = localState.e
+                Text(e.message.toString().take(100), modifier = Modifier.fillMaxHeight(), maxLines = 1)
             }
 
             else -> {

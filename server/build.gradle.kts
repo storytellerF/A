@@ -34,6 +34,7 @@ dependencies {
     implementation(libs.pdfbox)
     implementation(libs.napier)
     implementation(libs.emoji.reader.jvm)
+    implementation(libs.geoip2)
 }
 
 val isProd = project.findProperty("server.prod") == true
