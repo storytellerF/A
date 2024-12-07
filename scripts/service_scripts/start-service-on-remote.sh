@@ -22,21 +22,24 @@ else
   echo "$FILE already exists. Skipping docker save."
 fi
 
-./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "mkdir -p a-server"
-
-sleep 2
-
-echo "put $FILE ./a-server/$FLAVOR.image.tar" | sftp -i "$REMOTE_CERT_FILE" -P 422 "$PUSH_TO_REMOTE_URI"
-
+./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "mkdir -p a-server && mkdir -p /tmp/A"
 sleep 2
 
 md=$(md5sum "$FILE" | awk '{print $1}')
-ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "echo ""$md"  ".a-server//$FLAVOR.image.tar"" | md5sum -c -"
-
+#mdRemote=$(ssh -i ~/Downloads/default.pem -p 422 ubuntu@54.153.231.70 "md5sum ./a-server/$FLAVOR.image.tar | awk '{print \$1}'")
+#echo "local: $md remote: $mdRemote"
+echo "put $FILE ./a-server/$FLAVOR.image.tar" | sftp -i "$REMOTE_CERT_FILE" -P 422 "$PUSH_TO_REMOTE_URI"
 sleep 2
 
-./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "sudo -s mv ./a-server/* /tmp/A"
+# 验证上传的文件完整性
+ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "echo ""$md"  "./a-server/$FLAVOR.image.tar"" | md5sum -c -"
+sleep 2
 
+./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "sudo cp ./a-server/$FLAVOR.image.tar /tmp/A/$FLAVOR.image.tar"
+sleep 2
+
+# 验证上传的文件完整性
+ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "echo ""$md"  "/tmp/A/$FLAVOR.image.tar"" | md5sum -c -"
 sleep 2
 
 ./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$PUSH_TO_REMOTE_URI" "$REMOTE_COMMAND"

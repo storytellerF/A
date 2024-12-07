@@ -1,5 +1,6 @@
 package com.storyteller_f.a.server
 
+import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.auth.UserSession
@@ -17,6 +18,7 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.origin
 import io.ktor.server.plugins.ratelimit.RateLimit
 import io.ktor.server.request.*
 import io.ktor.server.resources.Resources
@@ -26,6 +28,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.io.File
+import java.net.InetAddress
+import kotlin.jvm.optionals.getOrNull
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
@@ -91,6 +95,9 @@ private fun processPreSetData(map: Map<out Any, Any>) {
 fun Application.module() {
     val map = readEnv()
     val backend = buildBackendFromEnv(map)
+    val reader = DatabaseReader.Builder(
+        ClassLoader.getSystemClassLoader().getResourceAsStream("GeoLite2-Country.mmdb")
+    ).build()
 
     install(ContentNegotiation) {
         json()
@@ -100,7 +107,12 @@ fun Application.module() {
         format { call ->
             val status = call.response.status()
             val httpMethod = call.request.httpMethod.value
-            "Status: $status, HTTP method: $httpMethod, Url: ${call.request.uri}"
+            val remoteAddress = call.request.origin.remoteAddress
+            val country = reader.tryCountry(InetAddress.getByName(remoteAddress)).getOrNull()
+            """Status: $status, HTTP method: $httpMethod, 
+                |Url: ${call.request.uri},
+                |Ip: $remoteAddress
+                |Region ${country?.toJson()}""".trimMargin()
         }
     }
     install(CallId) {

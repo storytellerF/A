@@ -10,7 +10,7 @@ COMMAND="$@"
 
 # 无限循环执行命令直到成功
 while true; do
-  echo "Executing: $COMMAND"
+  #echo "Executing: $COMMAND"
 
   # 执行命令
   eval "$COMMAND"
