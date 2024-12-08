@@ -22,28 +22,28 @@ else
   echo "$FILE already exists. Skipping docker save."
 fi
 
-./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$REMOTE_URI" "mkdir -p a-server && mkdir -p /tmp/A"
+./scripts/tool_scripts/exec-until-success.sh ssh "mkdir -p a-server && mkdir -p /tmp/A"
 sleep 2
 
 md=$(md5sum "$FILE" | awk '{print $1}')
-mdRemote=$(ssh -i "$REMOTE_CERT_FILE" -p 422 ubuntu@54.153.231.70 "md5sum ./a-server/$FLAVOR.image.tar | awk '{print \$1}'")
+mdRemote=$(ssh "$REMOTE_URI" "md5sum ./a-server/$FLAVOR.image.tar | awk '{print \$1}'")
 echo "local: $md remote: $mdRemote"
 if [ "$md" != "$mdRemote" ]; then
-  echo "put $FILE ./a-server/$FLAVOR.image.tar" | sftp -i "$REMOTE_CERT_FILE" -P 422 "$REMOTE_URI"
+  echo "put $FILE ./a-server/$FLAVOR.image.tar" | sftp "$REMOTE_URI"
   sleep 2
 
   # 验证上传的文件完整性
-  ssh -i "$REMOTE_CERT_FILE" -p 422 "$REMOTE_URI" "echo ""$md"  "./a-server/$FLAVOR.image.tar"" | md5sum -c -"
+  ssh "echo ""$md"  "./a-server/$FLAVOR.image.tar"" | md5sum -c -"
   sleep 2
 
-  ./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$REMOTE_URI" "cp ./a-server/$FLAVOR.image.tar /tmp/A/$FLAVOR.image.tar"
+  ./scripts/tool_scripts/exec-until-success.sh ssh "cp ./a-server/$FLAVOR.image.tar /tmp/A/$FLAVOR.image.tar"
   sleep 2
 
   # 验证上传的文件完整性
-  ssh -i "$REMOTE_CERT_FILE" -p 422 "$REMOTE_URI" "echo ""$md"  "/tmp/A/$FLAVOR.image.tar"" | md5sum -c -"
+  ssh "echo ""$md"  "/tmp/A/$FLAVOR.image.tar"" | md5sum -c -"
   sleep 2
 else
   echo "docker image same, skip upload."
 fi
 
-./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$REMOTE_URI" "$REMOTE_COMMAND"
+./scripts/tool_scripts/exec-until-success.sh ssh "$REMOTE_COMMAND"
