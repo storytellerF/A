@@ -46,4 +46,4 @@ else
 fi
 
 HOST_TYPE=local \
-    ./scripts/service_scripts/build-service.sh mini ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh"
+    ./scripts/service_scripts/build-service.sh "s-$FLAVOR" ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh"
