@@ -58,5 +58,9 @@ ssh-keyscan -p 422 -H acommunity.link >> ~/.ssh/known_hosts
 
 cat ~/.ssh/known_hosts
 
+eval $(ssh-agent)
+
+ssh -i ./remote.pem -p 422 ubuntu@acommunity.link "mkdir -p a-server && mkdir -p /tmp/A"
+
 HOST_TYPE=local \
     ./scripts/service_scripts/build-service.sh "s-$FLAVOR" ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh"
