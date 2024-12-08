@@ -39,7 +39,11 @@ mkdir -p "build/outputs/apk/release"
 
 mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/s-$FLAVOR.apk"
 
-echo "$REMOTE_ENCODED_CERT" | base64 --decode -o remote.pem
+if [ "$(uname)" = "Darwin" ]; then
+  echo "$REMOTE_ENCODED_CERT" | base64 --decode -o remote.pem
+else
+  echo "$REMOTE_ENCODED_CERT" | base64 --decode > remote.pem
+fi
 
 HOST_TYPE=local \
     ./scripts/service_scripts/build-service.sh mini ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh"
