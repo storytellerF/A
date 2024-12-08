@@ -8,10 +8,12 @@ fi
 # 将所有的参数当做要执行的命令
 COMMAND="$@"
 
-# 无限循环执行命令直到成功
-while true; do
-  #echo "Executing: $COMMAND"
+# 设置最大重试次数
+MAX_RETRIES=5
+RETRY_COUNT=0
 
+# 无限循环执行命令直到成功或达到最大重试次数
+while true; do
   # 执行命令
   eval "$COMMAND"
 
@@ -21,7 +23,16 @@ while true; do
     echo "Command succeeded."
     break
   else
-    echo "Command failed[$result]. Retrying..."
-    sleep 1  # 等待一秒再重试，避免过快的重试
+    # 增加重试次数
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+
+    # 检查是否超过最大重试次数
+    if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+      echo "Command failed [$result]. Reached maximum retry limit ($MAX_RETRIES)."
+      exit 1
+    else
+      echo "Command failed [$result]. Retrying ($RETRY_COUNT/$MAX_RETRIES)..."
+      sleep 1  # 等待一秒再重试，避免过快的重试
+    fi
   fi
 done

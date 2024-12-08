@@ -49,7 +49,7 @@ else
   if [ ! -f "$FILE" ]; then
     ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
     args=$(grep -v '^#' "$FLAVOR".env | grep -v '^$' | awk -F '=' '{print "--build-arg " $1 "=\"" $2 "\""}' ORS=' ')
-    ./scripts/tool_scripts/exec-until-success.sh docker build --platform linux/amd64 "$args" -t "a-server:latest" .
+    ./scripts/tool_scripts/exec-until-success.sh docker build . --platform linux/amd64 "$args" -t "a-server:latest"
   else
     echo "$FILE already exists. Skipping docker image build."
   fi
