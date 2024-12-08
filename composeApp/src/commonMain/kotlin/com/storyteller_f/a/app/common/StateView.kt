@@ -23,6 +23,7 @@ import app.cash.paging.LoadStateNotLoading
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
+import com.storyteller_f.a.app.compontents.ExceptionView
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.client_lib.LoadingHandler
 import com.storyteller_f.a.client_lib.LoadingState
@@ -85,7 +86,7 @@ fun StateView(state: LoadingState?, refresh: () -> Unit, content: @Composable ()
 
         is LoadingState.Error -> CenterBox {
             Column(modifier = Modifier.padding(20.dp)) {
-                Text(text = state.e.message.toString())
+                ExceptionView(state.e)
                 Button({
                     refresh()
                 }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
@@ -153,7 +154,7 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
         is LoadStateError -> {
             item {
                 Column(modifier = Modifier.fillMaxWidth().height(100.dp)) {
-                    Text(text = refreshState.error.message ?: refreshState.error.stackTraceToString())
+                    ExceptionView(refreshState.error)
                     Button({
                         items.refresh()
                     }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
@@ -203,8 +204,7 @@ fun <T : Any> RefCellStateView(
                 }.padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                val e = localState.e
-                Text(e.message.toString().take(100), modifier = Modifier.fillMaxHeight(), maxLines = 1)
+                ExceptionView(localState.e)
             }
 
             else -> {

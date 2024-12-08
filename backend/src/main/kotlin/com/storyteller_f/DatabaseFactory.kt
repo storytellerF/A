@@ -1,7 +1,6 @@
 package com.storyteller_f
 
 import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
-import com.storyteller_f.shared.utils.recoverError
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
@@ -68,16 +67,11 @@ object DatabaseFactory {
                     block()
                 } catch (e: Throwable) {
                     Napier.e(e, "database failed") {
-                        statements.toString()
+                        "$statements\nat ${r.stackTraceToString()}"
                     }
                     throw e
                 }
             }
-        }.recoverError { throwable ->
-            if (throwable.cause == null) {
-                throwable.initCause(r)
-            }
-            Result.failure(throwable)
         }
     }
 

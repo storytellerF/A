@@ -111,17 +111,9 @@ class CommunityTest {
     @Test
     fun `test hmac`() {
         runBlocking {
-            val backend = buildBackendFromEnv(readEnv())
-            val hmacKey = backend.config.hmacKey
+            val hmacKey = newHmacSha512()
             val s = hmacSign(hmacKey, "text")
             assertTrue(hmacVerify(hmacKey, s, "text"))
-        }
-    }
-
-    @Test
-    fun `test generate hmac key`() {
-        runBlocking {
-            println(newHmacSha512())
         }
     }
 

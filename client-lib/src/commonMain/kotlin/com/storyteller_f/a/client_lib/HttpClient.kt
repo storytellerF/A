@@ -8,11 +8,14 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.websocket.*
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
+
+class ServerErrorException(val text: String) : Exception()
 
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
@@ -48,5 +51,13 @@ fun HttpClientConfig<*>.defaultClientConfigure() {
     install(WebSockets) {
         pingInterval = 2.seconds
         contentConverter = KotlinxWebsocketSerializationConverter(Json)
+    }
+    HttpResponseValidator {
+        handleResponseExceptionWithRequest { exception, request ->
+            val clientException = exception as? ClientRequestException ?: return@handleResponseExceptionWithRequest
+            val exceptionResponse = clientException.response
+            val exceptionResponseText = exceptionResponse.bodyAsText()
+            throw ServerErrorException(exceptionResponseText)
+        }
     }
 }

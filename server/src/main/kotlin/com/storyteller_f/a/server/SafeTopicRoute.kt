@@ -15,6 +15,7 @@ import com.storyteller_f.a.server.service.reactionList
 import com.storyteller_f.a.server.service.recommendTopics
 import com.storyteller_f.a.server.service.searchPublicTopics
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.obj.NewReaction
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.deleteReaction
@@ -77,7 +78,7 @@ fun Route.bindProtectedSafeTopicRoute(backend: Backend) {
 
     post<RouteTopics.Id.Reactions> {
         usePrincipal { id ->
-            val emoji = call.receive<String>()
+            val emoji = call.receive<NewReaction>().emoji
             if (EmojiReader.getTextLength(emoji) == 1 && EmojiReader.isEmojiOfCharIndex(emoji, 0)) {
                 addReaction(id, it.parent.id, emoji)
             } else {
@@ -88,7 +89,7 @@ fun Route.bindProtectedSafeTopicRoute(backend: Backend) {
 
     post<RouteReactions.Delete> {
         usePrincipal { id ->
-            val emoji = call.receive<String>()
+            val emoji = call.receive<NewReaction>().emoji
             if (EmojiReader.getTextLength(emoji) == 1 && EmojiReader.isEmojiOfCharIndex(emoji, 0)) {
                 deleteReaction(id, emoji)
             } else {

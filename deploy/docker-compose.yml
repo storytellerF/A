@@ -67,6 +67,8 @@ services:
       - LETS_ENCRYPT_CLEAR_OLD_CERTS=yes
       - DISABLE_DEFAULT_SERVER=no
       - USE_LIMIT_REQ=no
+      - SERVE_FILES=no
+      - INTERCEPTED_ERROR_CODES=
     networks:
       - bw-universe
       - bw-services
