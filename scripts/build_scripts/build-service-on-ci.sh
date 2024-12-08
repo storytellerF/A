@@ -29,16 +29,6 @@ while IFS= read -r line; do
     export "$key"="$value"
 done < $TEMP_FILE
 
-./scripts/tool_scripts/save-env.sh
-
-./scripts/tool_scripts/modify-flavor.sh "s-$FLAVOR" true
-
-./gradlew composeApp:build
-
-mkdir -p "build/outputs/apk/release"
-
-mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/s-$FLAVOR.apk"
-
 if [ "$(uname)" = "Darwin" ]; then
   echo "$REMOTE_ENCODED_CERT" | base64 --decode -o remote.pem
 else
@@ -54,13 +44,25 @@ if [ ! -f ~/.ssh/known_hosts ]; then
   touch ~/.ssh/known_hosts
 fi
 
-ssh-keyscan -p 422 -H acommunity.link >> ~/.ssh/known_hosts
+ssh-keyscan -H acommunity.link >> ~/.ssh/known_hosts
 
 cat ~/.ssh/known_hosts
 
 eval $(ssh-agent)
 
-ssh -i ./remote.pem -p 422 ubuntu@acommunity.link "mkdir -p a-server && mkdir -p /tmp/A"
+ssh-add ./remote.pem
+
+ssh ubuntu@acommunity.link "mkdir -p a-server && mkdir -p /tmp/A"
+
+./scripts/tool_scripts/save-env.sh
+
+./scripts/tool_scripts/modify-flavor.sh "s-$FLAVOR" true
+
+./gradlew composeApp:build
+
+mkdir -p "build/outputs/apk/release"
+
+mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/s-$FLAVOR.apk"
 
 HOST_TYPE=local \
     ./scripts/service_scripts/build-service.sh "s-$FLAVOR" ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh"
