@@ -26,7 +26,7 @@ fi
 sleep 2
 
 md=$(md5sum "$FILE" | awk '{print $1}')
-mdRemote=$(ssh -i ~/Downloads/default.pem -p 422 ubuntu@54.153.231.70 "md5sum ./a-server/$FLAVOR.image.tar | awk '{print \$1}'")
+mdRemote=$(ssh -i "$REMOTE_CERT_FILE" -p 422 ubuntu@54.153.231.70 "md5sum ./a-server/$FLAVOR.image.tar | awk '{print \$1}'")
 echo "local: $md remote: $mdRemote"
 if [ "$md" != "$mdRemote" ]; then
   echo "put $FILE ./a-server/$FLAVOR.image.tar" | sftp -i "$REMOTE_CERT_FILE" -P 422 "$REMOTE_URI"
