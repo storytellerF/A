@@ -53,7 +53,6 @@ if [ ! -f ~/.ssh/known_hosts ]; then
   touch ~/.ssh/known_hosts
 fi
 
-
 ssh-keyscan -H acommunity.link >> ~/.ssh/known_hosts
 
 HOST_TYPE=local \
