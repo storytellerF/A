@@ -56,5 +56,7 @@ fi
 
 ssh-keyscan -p 422 -H acommunity.link >> ~/.ssh/known_hosts
 
+cat ~/.ssh/known_hosts
+
 HOST_TYPE=local \
     ./scripts/service_scripts/build-service.sh "s-$FLAVOR" ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh"
