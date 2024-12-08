@@ -39,8 +39,8 @@ if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_COMMAND" 
     # 使用预构建镜像构建服务
     "../scripts/service_scripts/start-$FLAVOR-compose.sh" true 'up -d --build'
   fi
-
 else
+  # 在本地构建，然后发送docker image 到远程主机上启动
   echo "build for remote"
   # 定义要保存的文件名
   FILE="build/images/$FLAVOR.image.tar"
@@ -48,8 +48,7 @@ else
   # 检查文件是否存在
   if [ ! -f "$FILE" ]; then
     ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
-    args=$(grep -v '^#' "$FLAVOR".env | grep -v '^$' | awk -F '=' '{print "--build-arg " $1 "=\"" $2 "\""}' ORS=' ')
-    ./scripts/tool_scripts/exec-until-success.sh docker build . --platform linux/amd64 "$args" -t "a-server:latest"
+    ./scripts/tool_scripts/exec-until-success.sh docker build --platform linux/amd64 --build-arg IS_PROD=$IS_PROD --build-arg FLAVOR=$FLAVOR --build-arg BUILD_ON=$BUILD_ON -t a-server:latest .
   else
     echo "$FILE already exists. Skipping docker image build."
   fi

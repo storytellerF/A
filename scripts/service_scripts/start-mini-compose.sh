@@ -3,6 +3,8 @@
 USE_PREBUILD=$1
 CUSTOM_COMMAND=$2
 
+./scripts/tool_scripts/check-all-env.sh
+
 if [ "$USE_PREBUILD" = "true" ]; then
      docker compose --env-file ../mini.env \
           -f docker-compose.yml \

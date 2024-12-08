@@ -54,6 +54,7 @@ val flavor = project.findProperty("buildkonfig.flavor")
 val copyTask = tasks.register("CopyEnv", Copy::class) {
     group = "copy"
     from("../${flavor}.env")
+    enabled = File(rootDir, "${flavor}.env").exists()
     into(layout.buildDirectory.dir("copied/resources"))
     rename {
         ".env"
