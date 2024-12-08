@@ -45,5 +45,7 @@ else
   echo "$REMOTE_ENCODED_CERT" | base64 --decode > remote.pem
 fi
 
+ssh-keyscan -H acommunity.link >> ~/.ssh/known_hosts
+
 HOST_TYPE=local \
     ./scripts/service_scripts/build-service.sh "s-$FLAVOR" ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh"
