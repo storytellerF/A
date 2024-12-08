@@ -4,6 +4,7 @@ import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.obj.NewReaction
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
@@ -254,13 +255,13 @@ suspend fun HttpClient.exitCommunity(communityId: PrimaryKey) = post(
 ).body<CommunityInfo>()
 
 suspend fun HttpClient.addReaction(topicId: PrimaryKey, emoji: String) = post("topics/$topicId/reactions") {
-    contentType(ContentType.Text.Plain)
-    setBody(emoji)
+    contentType(ContentType.Application.Json)
+    setBody(NewReaction(emoji))
 }.body<ReactionInfo>()
 
 suspend fun HttpClient.deleteReaction(emoji: String) = post("reactions/delete") {
-    contentType(ContentType.Text.Plain)
-    setBody(emoji)
+    contentType(ContentType.Application.Json)
+    setBody(NewReaction(emoji))
 }.body<Boolean>()
 
 suspend fun HttpClient.getReactions(topicId: PrimaryKey) =

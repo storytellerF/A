@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Topic
@@ -16,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -129,12 +131,22 @@ private fun EmojiPickerInternal(
     updateQuery: (String) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth().consumeWindowInsets(WindowInsets.navigationBars)) {
-        Spacer(modifier = Modifier.height(10.dp))
-        TextField(query, {
-            updateQuery(it)
-        }, suffix = {
-            Icon(Icons.Default.Clear, "clear reaction query")
-        }, modifier = Modifier.align(Alignment.CenterHorizontally))
+        Spacer(modifier = Modifier.height(20.dp))
+        TextField(
+            query,
+            {
+                updateQuery(it)
+            },
+            suffix = {
+                Icon(Icons.Default.Clear, "clear reaction query")
+            },
+            modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth().padding(horizontal = 20.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = TextFieldDefaults.colors(
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            )
+        )
         Spacer(modifier = Modifier.height(10.dp))
         val emojiList by produceState(emptyList<Emoji>(), query) {
             value = if (query.isEmpty()) {

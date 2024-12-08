@@ -29,3 +29,4 @@ scripts/download-image.sh
 deploy/preset.zip
 node_modules
 bin
+remote.pem

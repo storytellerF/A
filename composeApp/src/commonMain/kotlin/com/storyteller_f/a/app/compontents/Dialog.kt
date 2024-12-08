@@ -94,7 +94,7 @@ fun GlobalDialogInternal(message: DialogState, updateNewState: (DialogState) -> 
                     Text("Close")
                 }
             }, title = {
-                Text(throwable.message ?: throwable::class.simpleName ?: throwable.toString())
+                ExceptionView(throwable)
             }, text = {
                 if (!BuildKonfig.IS_PROD) {
                     val text = throwable.stackTraceToString()

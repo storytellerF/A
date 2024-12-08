@@ -38,3 +38,8 @@ done < $TEMP_FILE
 mkdir -p "build/outputs/apk/release"
 
 mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/s-$FLAVOR.apk"
+
+echo "$REMOTE_ENCODED_CERT" | base64 --decode -o remote.pem
+
+HOST_TYPE=local \
+    ./scripts/service_scripts/build-service.sh mini ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh"
