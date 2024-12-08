@@ -22,7 +22,7 @@ else
   echo "$FILE already exists. Skipping docker save."
 fi
 
-./scripts/tool_scripts/exec-until-success.sh ssh -i "$REMOTE_CERT_FILE" -p 422 "$REMOTE_URI" "mkdir -p a-server && mkdir -p /tmp/A"
+./scripts/tool_scripts/exec-until-success.sh ssh -o StrictHostKeyChecking=accept-new -i "$REMOTE_CERT_FILE" -p 422 "$REMOTE_URI" "mkdir -p a-server && mkdir -p /tmp/A"
 sleep 2
 
 md=$(md5sum "$FILE" | awk '{print $1}')
