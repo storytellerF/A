@@ -52,5 +52,5 @@ else
   else
     echo "$FILE already exists. Skipping docker image build."
   fi
-cat  ./scripts/service_scripts/push-image-to-remote.sh "$REMOTE_URI" "$REMOTE_CERT_FILE" "$REMOTE_COMMAND $FLAVOR"
+  ./scripts/service_scripts/push-image-to-remote.sh "$REMOTE_URI" "$REMOTE_CERT_FILE" "$REMOTE_COMMAND $FLAVOR"
 fi
