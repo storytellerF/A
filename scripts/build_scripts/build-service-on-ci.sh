@@ -47,14 +47,14 @@ fi
 
 chmod 600 ./remote.pem
 
-## 检查 known_hosts 文件是否存在
-#if [ ! -f ~/.ssh/known_hosts ]; then
-#  # 如果文件不存在，创建空的 known_hosts 文件
-#  mkdir -p ~/.ssh
-#  touch ~/.ssh/known_hosts
-#fi
-#
-#ssh-keyscan -H acommunity.link >> ~/.ssh/known_hosts
+# 检查 known_hosts 文件是否存在
+if [ ! -f ~/.ssh/known_hosts ]; then
+  # 如果文件不存在，创建空的 known_hosts 文件
+  mkdir -p ~/.ssh
+  touch ~/.ssh/known_hosts
+fi
+
+ssh-keyscan -p 422 -H acommunity.link >> ~/.ssh/known_hosts
 
 HOST_TYPE=local \
     ./scripts/service_scripts/build-service.sh "s-$FLAVOR" ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh"
