@@ -2,7 +2,6 @@
 set -e
 URL=$1
 FLAVOR=$2
-FLAVOR="g-$FLAVOR"
 IS_PROD="true"
 
 # 自动根据系统环境设置换行符格式

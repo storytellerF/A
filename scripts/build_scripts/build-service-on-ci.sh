@@ -52,17 +52,20 @@ eval $(ssh-agent)
 
 ssh-add ./remote.pem
 
-ssh ubuntu@acommunity.link "mkdir -p a-server && mkdir -p /tmp/A"
+# 检查远端是否可用
+ssh ubuntu@acommunity.link "whoami"
 
 ./scripts/tool_scripts/save-env.sh
 
-./scripts/tool_scripts/modify-flavor.sh "s-$FLAVOR" true
+./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" true
 
 ./gradlew composeApp:build
 
 mkdir -p "build/outputs/apk/release"
 
-mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/s-$FLAVOR.apk"
+mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/$FLAVOR.apk"
 
-HOST_TYPE=local \
-    ./scripts/service_scripts/build-service.sh "s-$FLAVOR" ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh"
+# 构建远端
+./scripts/build-server-image.sh
+# 远端没有生成的env 文件，需要使用原始env 文件
+./scripts/service_scripts/push-image-to-remote.sh ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh $FLAVOR"
