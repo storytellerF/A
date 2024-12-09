@@ -66,6 +66,6 @@ mkdir -p "build/outputs/apk/release"
 mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/$FLAVOR.apk"
 
 # 构建远端
-./scripts/build-server-image.sh
+./scripts/build_scripts/build-server-image.sh
 # 远端没有生成的env 文件，需要使用原始env 文件
 ./scripts/service_scripts/push-image-to-remote.sh ubuntu@acommunity.link ./remote.pem "sudo bash ./start.sh $FLAVOR"
