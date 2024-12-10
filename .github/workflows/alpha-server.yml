@@ -4,13 +4,13 @@ on:
   push:
     branches: [ "alpha" ]
     paths:
-      - 'backend'
-      - 'cli'
-      - 'crypto-jvm'
-      - 'deploy'
-      - 'scripts'
-      - 'server'
-      - 'shared'
+      - 'backend/**'
+      - 'cli/**'
+      - 'crypto-jvm/**'
+      - 'deploy/**'
+      - 'scripts/**'
+      - 'server/**'
+      - 'shared/**'
 
 jobs:
   build:
