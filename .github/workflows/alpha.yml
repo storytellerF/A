@@ -15,13 +15,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: mini
-    env:
-      # this will take the entire vars context configured in the repository > environments
-      # setting and convert it to JSON so we can automatically assign all the values to the
-      # runner's environment
-      VARS_CONTEXT: ${{ toJson(vars) }}
-      SECRETS_CONTEXT: ${{ toJson(secrets) }}
     steps:
       - uses: actions/checkout@v4
         with:
