@@ -3,9 +3,9 @@ package com.storyteller_f.a.client_lib
 import kotlinx.coroutines.flow.MutableStateFlow
 
 sealed class LoadingState {
-    class Loading(val state: String) : LoadingState()
-    class Error(val e: Throwable) : LoadingState()
-    class Done(val itemCount: Int = 1) : LoadingState()
+    data object Loading : LoadingState()
+    data class Error(val e: Throwable) : LoadingState()
+    data class Done(val itemCount: Int = 1) : LoadingState()
 }
 
 class LoadingHandler<T>(val refresh: () -> Unit) {
@@ -47,6 +47,6 @@ fun MutableStateFlow<LoadingState?>.markError(e: String) {
     value = LoadingState.Error(Exception(e))
 }
 
-fun MutableStateFlow<LoadingState?>.markLoading(message: String = "") {
-    value = LoadingState.Loading(message)
+fun MutableStateFlow<LoadingState?>.markLoading() {
+    value = LoadingState.Loading
 }

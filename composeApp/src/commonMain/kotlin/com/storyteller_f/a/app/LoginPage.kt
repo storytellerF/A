@@ -1,5 +1,15 @@
 package com.storyteller_f.a.app
 
+import a.composeapp.generated.resources.Res
+import a.composeapp.generated.resources.auto_generate
+import a.composeapp.generated.resources.go_to_sign_in
+import a.composeapp.generated.resources.go_to_sign_up
+import a.composeapp.generated.resources.input_private_key
+import a.composeapp.generated.resources.private_key
+import a.composeapp.generated.resources.sign_in
+import a.composeapp.generated.resources.sign_up
+import a.composeapp.generated.resources.start_sign_in
+import a.composeapp.generated.resources.start_sign_up
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -29,6 +39,7 @@ import com.storyteller_f.shared.model.LoginUser
 import com.storyteller_f.shared.signature
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
 
 @Composable
@@ -38,7 +49,7 @@ fun LoginPage() {
         object : LoginNav {
 
             override fun gotoPrivateKey() {
-                navigator.navigate("/k")
+                navigator.navigate("/input_private_key")
             }
 
             override fun gotoSignUp() {
@@ -58,7 +69,7 @@ fun LoginPage() {
             composable("/select_signup") {
                 SelectSignupPage(nav)
             }
-            composable("/k") {
+            composable("/input_private_key") {
                 InputPrivateKeyPage()
             }
         }
@@ -69,14 +80,14 @@ fun LoginPage() {
 fun SelectLoginPage(loginNav: LoginNav) {
     CenterBox {
         Column(verticalArrangement = Arrangement.spacedBy(40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Login", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(Res.string.sign_in), style = MaterialTheme.typography.headlineMedium)
             OutlinedButton({
                 LoginViewModel.state.value = ClientSession.PrivateKeySignIn("")
                 loginNav.gotoPrivateKey()
             }, shape = ButtonDefaults.outlinedShape) {
-                Text("Input Private Key")
+                Text(stringResource(Res.string.private_key))
             }
-            Text("Go to Sign Up->", modifier = Modifier.clickable {
+            Text(stringResource(Res.string.go_to_sign_up), modifier = Modifier.clickable {
                 LoginViewModel.state.value = ClientSession.SignUpNone
                 loginNav.gotoSignUp()
             }, textDecoration = TextDecoration.Underline)
@@ -88,14 +99,14 @@ fun SelectLoginPage(loginNav: LoginNav) {
 fun SelectSignupPage(loginNav: LoginNav) {
     CenterBox {
         Column(verticalArrangement = Arrangement.spacedBy(40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("SignUp", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(Res.string.sign_up), style = MaterialTheme.typography.headlineMedium)
             Button({
                 LoginViewModel.state.value = ClientSession.PrivateKeySignUp("")
                 loginNav.gotoPrivateKey()
             }) {
-                Text("Input Private Key")
+                Text(stringResource(Res.string.private_key))
             }
-            Text("Go to Login->", modifier = Modifier.clickable {
+            Text(stringResource(Res.string.go_to_sign_in), modifier = Modifier.clickable {
                 loginNav.gotoLogin()
             }, textDecoration = TextDecoration.Underline)
         }
@@ -111,7 +122,7 @@ fun InputPrivateKeyPage() {
 
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("输入私钥", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(Res.string.input_private_key), style = MaterialTheme.typography.titleLarge)
             MeasureTextLineCount(privateKey, LocalTextStyle.current, 32.dp) { lineCount, _ ->
                 TextField(
                     privateKey,
@@ -120,7 +131,7 @@ fun InputPrivateKeyPage() {
                     },
                     modifier = Modifier.padding(top = 10.dp).fillMaxWidth(),
                     maxLines = max(lineCount, 2),
-                    minLines = max(lineCount, 2)
+                    minLines = max(lineCount, 2),
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -145,7 +156,7 @@ fun InputPrivateKeyPage() {
                         }
                     }
                 }) {
-                    Text(if (isSignUp) "Start SignUp" else "Start Login")
+                    Text(if (isSignUp) stringResource(Res.string.start_sign_up) else stringResource(Res.string.start_sign_in))
                 }
                 if (isSignUp) {
                     Button({
@@ -153,7 +164,7 @@ fun InputPrivateKeyPage() {
                             LoginViewModel.updatePrivateKey(generateKeyPair())
                         }
                     }) {
-                        Text("Auto generate")
+                        Text(stringResource(Res.string.auto_generate))
                     }
                 }
             }

@@ -319,7 +319,7 @@ private fun TopicInputGroup(
         CommonInputButton(LoadingState.Done(), input, {
             if (!isSending) {
                 scope.launch {
-                    sendState = LoadingState.Loading("")
+                    sendState = LoadingState.Loading
                     try {
                         val info = client.createNewTopic(ObjectType.TOPIC, topic.id, input).body<TopicInfo>()
                         getOrCreateCollection("topics${info.parentId}").save(

@@ -29,7 +29,7 @@ class ClientWebSocket(
         val old = connectionHandler.data.value
         if (old != null && old.isActive) {
             GlobalScope.launch {
-                localState.value = LoadingState.Loading("send")
+                localState.value = LoadingState.Loading
                 try {
                     old.block()
                     localState.value = LoadingState.Done()

@@ -368,13 +368,16 @@ fun RoomInputGroup(
         InputGroupInternal(input, MaterialTheme.colorScheme.tertiaryContainer, {
             input = it
         }, sendButton = {
+            val p1 = stringResource(Res.string.private_room_pub_key_loading)
+            val title = stringResource(Res.string.permission_denied)
+            val message = stringResource(Res.string.join_room_prompt)
             RoomSendButton(input = input) {
                 if (roomInfo.isJoined) {
                     sendMessage(roomInfo, input, scrollToNew, keyState, keyData, topicId) {
-                        toaster.show(it, duration = 1.seconds)
+                        toaster.show(p1, duration = 1.seconds)
                     }
                 } else {
-                    alertDialogState.showMessage("Not join", "Do you want to join room?")
+                    alertDialogState.showMessage(title, message)
                 }
             }
         })
@@ -461,14 +464,14 @@ fun sendMessage(
     keyState: LoadingState?,
     keyData: List<Pair<PrimaryKey, String>>?,
     topicId: PrimaryKey?,
-    notifyError: (String) -> Unit
+    notifyPubKeyStillLoading: () -> Unit
 ) {
     if (roomInfo != null) {
         val roomId = roomInfo.id
         clientWs.useWebSocket {
             val content = if (roomInfo.isPrivate) {
                 if (keyState !is LoadingState.Done || keyData == null) {
-                    notifyError("loading")
+                    notifyPubKeyStillLoading()
                     null
                 } else {
                     val (encrypted, aes) = encrypt(input)
@@ -576,7 +579,7 @@ private fun RoomDialogButtons(
 ) {
     Column {
         ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
-        ButtonNav(Icons.Default.CardMembership, "All members") {
+        ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
             dismiss()
             appNav.gotoMemberPage(roomInfo.id, ObjectType.ROOM)
         }
@@ -585,19 +588,20 @@ private fun RoomDialogButtons(
             val scope = rememberCoroutineScope()
             val toaster = rememberToasterState()
             Toaster(toaster)
+            val successMessage = stringResource(Res.string.success)
             if (roomInfo.isJoined) {
-                ButtonNav(Icons.Default.Close, "Exit Room") {
+                ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
                     scope.launch {
                         exitRoom(roomInfo) {
-                            toaster.show("success", duration = 1.seconds)
+                            toaster.show(successMessage, duration = 1.seconds)
                         }
                     }
                 }
             } else {
-                ButtonNav(Icons.Default.AddHome, "Join Room") {
+                ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_room)) {
                     scope.launch {
                         joinRoom(roomInfo) {
-                            toaster.show("success", duration = 1.seconds)
+                            toaster.show(successMessage, duration = 1.seconds)
                         }
                     }
                 }

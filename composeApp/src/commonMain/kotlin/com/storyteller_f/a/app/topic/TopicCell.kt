@@ -1,5 +1,7 @@
 package com.storyteller_f.a.app.topic
 
+import a.composeapp.generated.resources.Res
+import a.composeapp.generated.resources.permission_denied
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,6 +50,7 @@ import kotlinx.coroutines.withContext
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -230,7 +233,7 @@ fun TopicContentField(
 
         is TopicContent.DecryptFailed, is TopicContent.Encrypted -> {
             Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                Text("Permission denied")
+                Text(stringResource(Res.string.permission_denied))
             }
         }
 

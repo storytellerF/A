@@ -1,5 +1,11 @@
 package com.storyteller_f.a.app.search
 
+import a.composeapp.generated.resources.Res
+import a.composeapp.generated.resources.input_search_community
+import a.composeapp.generated.resources.input_search_members
+import a.composeapp.generated.resources.input_search_room
+import a.composeapp.generated.resources.input_search_topics
+import a.composeapp.generated.resources.input_search_topics_and_users
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +45,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 sealed interface SearchScope {
     data object World : SearchScope
@@ -106,18 +113,18 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
 @Composable
 private fun SearchPlaceholder(scope: SearchScope) {
     Text(
-        when (scope) {
-            SearchScope.World -> "input to search topics/users"
-            SearchScope.MyCommunity -> "input to search community"
-            SearchScope.MyRoom -> "input to search topics"
-            is SearchScope.CommunityTopic -> "input to search topics"
-            is SearchScope.CommunityRoom -> "input to search room"
-            is SearchScope.RoomTopic -> "input to search topics"
-            is SearchScope.TopicTopic -> "input to search topics"
-            is SearchScope.CommunityMember -> "input228 to search members"
-            is SearchScope.RoomMember -> "input to search members"
-            SearchScope.Member -> "input to search members"
-        }
+        stringResource(when (scope) {
+            SearchScope.World -> Res.string.input_search_topics_and_users
+            SearchScope.MyCommunity -> Res.string.input_search_community
+            SearchScope.MyRoom -> Res.string.input_search_topics
+            is SearchScope.CommunityTopic -> Res.string.input_search_topics
+            is SearchScope.CommunityRoom -> Res.string.input_search_room
+            is SearchScope.RoomTopic -> Res.string.input_search_topics
+            is SearchScope.TopicTopic -> Res.string.input_search_topics
+            is SearchScope.CommunityMember -> Res.string.input_search_members
+            is SearchScope.RoomMember -> Res.string.input_search_members
+            SearchScope.Member -> Res.string.input_search_members
+        })
     )
 }
 

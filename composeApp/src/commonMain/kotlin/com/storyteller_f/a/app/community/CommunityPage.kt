@@ -2,6 +2,11 @@ package com.storyteller_f.a.app.community
 
 import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.add
+import a.composeapp.generated.resources.all_members
+import a.composeapp.generated.resources.exit_community
+import a.composeapp.generated.resources.join_community
+import a.composeapp.generated.resources.join_community_prompt
+import a.composeapp.generated.resources.permission_denied
 import a.composeapp.generated.resources.rooms
 import a.composeapp.generated.resources.topics
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -163,9 +168,9 @@ private fun CommunityNonCompatPageInternal(
                             showDialog = true
                         }
                     }
-                    CommunityIcon(community, 40.dp, showDialog, {
+                    CommunityIcon(community, 40.dp, showDialog) {
                         showDialog = it
-                    })
+                    }
                 }
 
                 CommunityPageInternal(pagerState, communityId)
@@ -210,9 +215,9 @@ private fun CommunityCompatPageInternal(
                         showDialog = true
                     }
                 }
-                CommunityIcon(community, 40.dp, showDialog, {
+                CommunityIcon(community, 40.dp, showDialog) {
                     showDialog = it
-                })
+                }
             }
 
             CommunityPageInternal(pagerState, communityId)
@@ -230,11 +235,14 @@ private fun CommunityFloatingButton(
     val alertDialogState = remember {
         CustomAlertDialogController()
     }
+    val title = stringResource(Res.string.permission_denied)
+    val message = stringResource(Res.string.join_community_prompt)
     FloatingActionButton(onClick = {
         if (community?.isJoined == true) {
             appNav.gotoTopicCompose(ObjectType.COMMUNITY, communityId)
         } else {
-            alertDialogState.showMessage("Not Join", "Do you want to join?")
+
+            alertDialogState.showMessage(title, message)
         }
     }) {
         Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add))
@@ -333,14 +341,14 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
             }
         }
         Column {
-            ButtonNav(Icons.Default.CardMembership, "All members") {
+            ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
                 dismiss()
                 nav.gotoMemberPage(communityId, ObjectType.COMMUNITY)
             }
             if (nav.currentDestination?.destination?.hasRoute(CommunityScreen::class) == true) {
                 val scope = rememberCoroutineScope()
                 if (communityInfo.isJoined) {
-                    ButtonNav(Icons.Default.Close, "Exit Community") {
+                    ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_community)) {
                         scope.launch {
                             globalDialogState.use {
                                 val info = client.exitCommunity(communityId)
@@ -349,7 +357,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                         }
                     }
                 } else {
-                    ButtonNav(Icons.Default.AddHome, "Join Community") {
+                    ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_community)) {
                         scope.launch {
                             globalDialogState.use {
                                 val info = client.joinCommunity(communityId)

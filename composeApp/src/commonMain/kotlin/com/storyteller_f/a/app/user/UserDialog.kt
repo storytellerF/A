@@ -3,6 +3,7 @@ package com.storyteller_f.a.app.user
 import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.settings
 import a.composeapp.generated.resources.sign_out
+import a.composeapp.generated.resources.sign_out_prompt
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -39,9 +40,10 @@ fun UserDialogInternal(userInfo: UserInfo) {
 
         Column {
             if (my?.id == userInfo.id) {
+                val title = stringResource(Res.string.sign_out_prompt)
                 ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
                 ButtonNav(Icons.AutoMirrored.Default.Logout, stringResource(Res.string.sign_out)) {
-                    controller.showMessage("Are you sure to sign out?", "")
+                    controller.showMessage(title, "")
                 }
             }
         }

@@ -33,7 +33,7 @@ fun CommunityIcon(
         })
     } else {
         Box(
-            modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer, shape)
+            modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, shape)
                 .clip(shape)
                 .size(iconSize)
                 .clickable {

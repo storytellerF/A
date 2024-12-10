@@ -1,5 +1,8 @@
 package com.storyteller_f.a.app
 
+import a.composeapp.generated.resources.Res
+import a.composeapp.generated.resources.design_spec
+import a.composeapp.generated.resources.sign_in
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,6 +45,7 @@ import com.storyteller_f.a.app.world.WorldPage
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
@@ -231,9 +235,9 @@ private fun UserHost(content: @Composable (UserInfo) -> Unit) {
             Button({
                 appNav.gotoLogin()
             }) {
-                Icon(Icons.AutoMirrored.Default.Login, "SignIn")
+                Icon(Icons.AutoMirrored.Default.Login, stringResource(Res.string.sign_in))
                 Spacer(modifier = Modifier.width(10.dp))
-                Text("SignIn")
+                Text(stringResource(Res.string.sign_in))
             }
         }
     }
@@ -254,7 +258,7 @@ private fun ProjectDialogInternal() {
                 )
             }
             Column {
-                ButtonNav(Icons.Default.DesignServices, "设计文档") {
+                ButtonNav(Icons.Default.DesignServices, stringResource(Res.string.design_spec)) {
                     uriHandler.openUri("https://storytellerf.github.io/aspec/")
                 }
             }
