@@ -1,5 +1,9 @@
 package com.storyteller_f.a.app.topic
 
+import a.composeapp.generated.resources.Res
+import a.composeapp.generated.resources.edit
+import a.composeapp.generated.resources.preview
+import a.composeapp.generated.resources.raw
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -32,6 +36,7 @@ import kotbase.MutableDocument
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +69,7 @@ private fun TopicComposeInternal(
         3
     }
     val state = rememberRichTextState()
-    val tabs = listOf("Edit", "Preview", "Raw")
+    val tabs = listOf(stringResource(Res.string.edit), stringResource(Res.string.preview), stringResource(Res.string.raw))
     val selected = pagerState.currentPage
     val coroutineScope = rememberCoroutineScope()
 

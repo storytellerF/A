@@ -11,6 +11,7 @@ on:
       - 'scripts/**'
       - 'server/**'
       - 'shared/**'
+      - 'gradle/**'
 
 jobs:
   build:

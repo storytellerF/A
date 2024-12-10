@@ -10,13 +10,17 @@ import com.storyteller_f.a.client_lib.ServerErrorException
 @Composable
 fun ExceptionView(throwable: Throwable) {
     if (throwable is ServerErrorException) {
-        val state = rememberRichTextState()
+        if (throwable.text.isNotBlank() && throwable.text.startsWith("<html")) {
+            val state = rememberRichTextState()
 
-        LaunchedEffect(throwable.message) {
-            state.setHtml(throwable.text)
+            LaunchedEffect(throwable.message) {
+                state.setHtml(throwable.text)
+            }
+
+            BasicRichTextEditor(state = state, readOnly = true)
+        } else {
+            Text("${throwable.status.value}${throwable.status.description}")
         }
-
-        BasicRichTextEditor(state = state, readOnly = true)
     } else {
         Text((throwable.message ?: throwable::class.simpleName ?: throwable.toString()).take(100))
     }

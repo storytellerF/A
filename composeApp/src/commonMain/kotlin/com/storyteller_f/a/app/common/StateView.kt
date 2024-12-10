@@ -1,5 +1,8 @@
 package com.storyteller_f.a.app.common
 
+import a.composeapp.generated.resources.Res
+import a.composeapp.generated.resources.no_content_yet
+import a.composeapp.generated.resources.refresh
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
@@ -29,6 +32,7 @@ import com.storyteller_f.a.client_lib.LoadingHandler
 import com.storyteller_f.a.client_lib.LoadingState
 import com.storyteller_f.shared.model.Identifiable
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -66,7 +70,7 @@ private fun LoadState?.toLoadingState(count: Int) =
     when (this) {
         null -> null
 
-        is LoadStateLoading -> LoadingState.Loading("loading")
+        is LoadStateLoading -> LoadingState.Loading
 
         is LoadStateError -> LoadingState.Error(error)
 
@@ -85,19 +89,22 @@ fun StateView(state: LoadingState?, refresh: () -> Unit, content: @Composable ()
         }
 
         is LoadingState.Error -> CenterBox {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 ExceptionView(state.e)
                 Button({
                     refresh()
-                }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                    Text("Refresh")
+                }, modifier = Modifier) {
+                    Text(stringResource(Res.string.refresh))
                 }
             }
         }
 
         is LoadingState.Done -> if (state.itemCount == 0) {
             CenterBox {
-                Text(text = "No content yet.")
+                Text(text = stringResource(Res.string.no_content_yet))
             }
         } else {
             content()
