@@ -23,6 +23,8 @@ import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.common.viewModel
+import com.storyteller_f.a.app.community.CommunityViewModel
+import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.a.client_lib.searchRooms
@@ -110,6 +112,21 @@ fun RoomCell(
         RoomIcon(roomInfo, showDialog = shown, updateShowDialog = commonDialogController::update)
         Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(roomInfo?.name.orEmpty(), color = MaterialTheme.colorScheme.onSecondaryContainer)
+        }
+
+        val communityId = roomInfo?.communityId
+        if (communityId != null) {
+            val model = viewModel(CommunityViewModel::class, keys = listOf("community", communityId)) {
+                CommunityViewModel(communityId)
+            }
+            val communityInfo by model.handler.data.collectAsState()
+            var showCommunityDialog by remember {
+                mutableStateOf(false)
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            CommunityIcon(communityInfo, showDialog = showCommunityDialog, updateDialog = {
+                showCommunityDialog = it
+            })
         }
     }
     if (roomInfo != null) {
