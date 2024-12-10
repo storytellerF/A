@@ -35,8 +35,3 @@ jobs:
 
       - name: Build mini service
         run: ./scripts/build_scripts/build-service-on-ci.sh
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Signed A Bundle
-          path: build/outputs/apk/release/
