@@ -53,17 +53,15 @@ eval $(ssh-agent)
 ssh-add ./remote.pem
 
 # 检查远端是否可用
-ssh ubuntu@acommunity.link "whoami"
+remoteName=$(ssh ubuntu@acommunity.link "whoami")
+if [ "$remoteName" != 'ubuntu' ]; then
+    echo "connect remote failed"
+    exit 1
+fi
 
 ./scripts/tool_scripts/save-env.sh
 
 ./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" true
-
-./gradlew composeApp:build
-
-mkdir -p "build/outputs/apk/release"
-
-mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/$FLAVOR.apk"
 
 # 构建远端
 echo "build docker image"

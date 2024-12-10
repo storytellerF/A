@@ -4,13 +4,13 @@ on:
   push:
     branches: [ "alpha" ]
     paths:
-      - 'composeApp'
-      - 'shared'
-      - 'scripts/build_scripts/build-app-on-ci.sh'
-      - 'scripts/tool_scripts/modify-flavor.sh'
-      - 'gradle'
+      - 'backend'
+      - 'cli'
       - 'crypto-jvm'
-      - 'client-lib'
+      - 'deploy'
+      - 'scripts'
+      - 'server'
+      - 'shared'
 
 jobs:
   build:
@@ -33,11 +33,8 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Build mini app
-        run: ./scripts/build_scripts/build-app-on-ci.sh https://acommunity.link/ mini
-
-      - name: Build koyeb app
-        run: ./scripts/build_scripts/build-app-on-ci.sh https://respectable-jobie-anabn-3d54150c.koyeb.app/server/ koyeb
+      - name: Build mini service
+        run: ./scripts/build_scripts/build-service-on-ci.sh
 
       - uses: actions/upload-artifact@v4
         with:
