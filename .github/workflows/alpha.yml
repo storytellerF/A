@@ -4,13 +4,13 @@ on:
   push:
     branches: [ "alpha" ]
     paths:
-      - 'composeApp'
-      - 'shared'
+      - 'composeApp/**'
+      - 'shared/**'
       - 'scripts/build_scripts/build-app-on-ci.sh'
       - 'scripts/tool_scripts/modify-flavor.sh'
-      - 'gradle'
-      - 'crypto-jvm'
-      - 'client-lib'
+      - 'gradle/**'
+      - 'crypto-jvm/**'
+      - 'client-lib/**'
 
 jobs:
   build:
