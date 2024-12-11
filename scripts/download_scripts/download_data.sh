@@ -1,14 +1,15 @@
 #!/bin/bash
 set -e
-# 检查参数个数
-if [ "$#" -ne 2 ]; then
-    echo "skip download preset data"
-    exit 0
-fi
 
-# 获取参数
-DOWNLOAD_URL=$1
-PASSWORD=$2
+if [ -z "$PRESET_ENCRYPTED_URI" ] || [ -z "$PRESET_ENCRYPTED_PRESET_ENCRYPTED_PASSWORD" ]; then
+  # 检查参数个数
+  if [ "$#" -ne 2 ]; then
+      echo "skip download preset data"
+      exit 0
+  fi
+  export PRESET_ENCRYPTED_URI=$1
+  export PRESET_ENCRYPTED_PRESET_ENCRYPTED_PASSWORD=$2
+fi
 
 # 临时文件名
 TEMP_ZIP="preset.zip"
@@ -21,7 +22,7 @@ if [ -d preset_data ]; then
 fi
 
 # 下载 ZIP 文件
-echo "Downloading file from $DOWNLOAD_URL..."
+echo "Downloading file from $PRESET_ENCRYPTED_URI..."
 
 # 检查文件是否已经存在
 if [ -f "$TEMP_ZIP" ]; then
@@ -30,7 +31,7 @@ else
     echo "File '$TEMP_ZIP' does not exist, downloading..."
 
     # 下载 ZIP 文件
-    curl -L -o "$TEMP_ZIP" "$DOWNLOAD_URL"
+    curl -L -o "$TEMP_ZIP" "$PRESET_ENCRYPTED_URI"
 
     # 检查下载是否成功
     if [ $? -ne 0 ]; then
@@ -45,8 +46,8 @@ fi
 echo "Unzipping file..."
 
 # 检查解压是否成功
-if ! unzip -q -P "$PASSWORD" $TEMP_ZIP; then
-    echo "Unzip failed! Check if the password is correct."
+if ! unzip -q -P "$PRESET_ENCRYPTED_PASSWORD" $TEMP_ZIP; then
+    echo "Unzip failed! Check if the PRESET_ENCRYPTED_PASSWORD is correct."
     exit 1
 fi
 

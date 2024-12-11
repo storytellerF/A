@@ -3,15 +3,13 @@ FROM eclipse-temurin:21 AS builder
 RUN apt-get update && apt-get install -y \
     unzip
 
-#^3
+#^1
 ARG IS_PROD
 ARG FLAVOR
 ARG BUILD_ON
-ARG PRESET_ENCRYPTED_URI
-ARG PRESET_ENCRYPTED_PASSWORD
-#!3
+#!1
 
-#3
+#1
 
 WORKDIR /app
 
@@ -22,7 +20,7 @@ COPY . .
 RUN find scripts/ -type f \( -name "*.sh" -o -name "*.js" \) -exec sed -i 's/\r$//' {} + && \
     sed -i 's/\r$//' gradlew
 
-RUN ./scripts/download_scripts/download_data.sh $PRESET_ENCRYPTED_URI $PRESET_ENCRYPTED_PASSWORD
+RUN ./scripts/download_scripts/download_data.sh
 
 ENV HOST_TYPE=docker
 
