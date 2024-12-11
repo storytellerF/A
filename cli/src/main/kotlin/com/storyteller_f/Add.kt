@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.index.TopicDocument
+import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetValue
@@ -84,7 +85,7 @@ class Add : Subcommand("add", "add entry") {
                 Triple(it, null, id)
             } else {
                 val p = "icon/${Uuid.random()}"
-                backend.mediaService.upload("apic", listOf(p to File(parentDir, icon).absolutePath))
+                backend.mediaService.upload("apic", listOf(UploadPack(p, File(parentDir, icon))))
                 Triple(it, p, id)
             }
         }
@@ -93,16 +94,12 @@ class Add : Subcommand("add", "add entry") {
                 it.users + it.admin
             }.distinct().map {
                 User.wrapRow(findUserByAId(it)!!)
-            }.associate {
-                it.aid to it
-            }
+            }.associateBy { it.aid }
             val communityMap = l.mapNotNull {
                 it.community
             }.distinct().map {
                 Community.wrapRow(findCommunityByAId(it)!!)
-            }.associate {
-                it.aid to it
-            }
+            }.associateBy { it.aid }
             val idList = Rooms.batchInsert(data) { (it, p, id) ->
                 this[Rooms.id] = id
                 this[Rooms.aid] = it.id
@@ -132,9 +129,7 @@ class Add : Subcommand("add", "add entry") {
                 it.author
             }.distinct().map {
                 User.wrapRow(findUserByAId(it)!!)
-            }.associate {
-                it.aid!! to it
-            }
+            }.associateBy { it.aid!! }
             data.groupBy {
                 it.community != null
             }.forEach { (t, u) ->
@@ -147,15 +142,12 @@ class Add : Subcommand("add", "add entry") {
         }.getOrThrow()
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
     private suspend fun addTopicsIntoRoom(u: List<PresetTopic>, userList: Map<String, User>, parentDir: File) {
         val roomList = u.mapNotNull {
             it.room
         }.distinct().map {
             Room.wrapRow(Room.findRoomByAId(it).firstOrNull()!!)
-        }.associate {
-            it.aid to it
-        }
+        }.associateBy { it.aid }
         val ids = insertRoomTopicBaseLevel(u, userList, roomList)
         // 检查聊天室是属于社区的还是私有的
         val roomIsPrivate = roomList.mapValues { (_, value) ->
@@ -166,7 +158,6 @@ class Add : Subcommand("add", "add entry") {
         insertUnEncryptedTopic(u, roomIsPrivate, parentDir, ids, roomList, userList)
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
     private suspend fun insertRoomTopicBaseLevel(
         u: List<PresetTopic>,
         userList: Map<String, User>,
@@ -210,7 +201,6 @@ class Add : Subcommand("add", "add entry") {
         return ids
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
     private suspend fun insertUnEncryptedTopic(
         presetTopicList: List<PresetTopic>,
         roomIsPrivate: Map<String, Boolean>,
@@ -226,7 +216,7 @@ class Add : Subcommand("add", "add entry") {
                 null
             }
         }
-        backend.topicDocumentService.saveDocument(
+        backend.topicSearchService.saveDocument(
             topicsPublic.map { (first, second) ->
                 val content = getTopicContent(first, parentDir)
                 val level = first.level
@@ -246,7 +236,6 @@ class Add : Subcommand("add", "add entry") {
         )
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
     private suspend fun insertEncryptedTopic(
         roomIsPrivate: Map<String, Boolean>,
         parentDir: File,
@@ -274,9 +263,7 @@ class Add : Subcommand("add", "add entry") {
                 }.map {
                     it.publicKey to it.id
                 }
-        }.associate {
-            it.first to it
-        }
+        }.associateBy { it.first }
         val encrypted = topicsPrivate.map { (addTopic, index) ->
             val (first, aesBytes) = encrypt(getTopicContent(addTopic, parentDir))
             Tuple4(index, first, aesBytes, addTopic)
@@ -299,7 +286,6 @@ class Add : Subcommand("add", "add entry") {
         }
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
     private suspend fun addTopicsIntoCommunity(u: List<PresetTopic>, userList: Map<String, User>, parentDir: File) {
         val communityList = u.mapNotNull {
             it.community
@@ -308,15 +294,15 @@ class Add : Subcommand("add", "add entry") {
             if (rowCommunity == null) {
                 error("$it not found")
             } else {
-                Community.wrapRow(rowCommunity).let {
-                    it.aid to it.id
+                Community.wrapRow(rowCommunity).let { community ->
+                    community.aid to community.id
                 }
             }
         }.associate {
             it.first to it.second
         }
         val ids = insertCommunityTopicTopLevel(u, userList, communityList)
-        backend.topicDocumentService.saveDocument(
+        backend.topicSearchService.saveDocument(
             u.mapIndexedNotNull { index, topic ->
                 if (topic.community != null) {
                     val content = getTopicContent(topic, parentDir)
@@ -408,8 +394,7 @@ class Add : Subcommand("add", "add entry") {
                 Tuple5(it, null, derPublicKey, ad, id)
             } else {
                 val p = "icon/${Uuid.random()}"
-                val absolutePath = File(parentDir, icon).absolutePath
-                backend.mediaService.upload("apic", listOf(p to absolutePath))
+                backend.mediaService.upload("apic", listOf(UploadPack(p, File(parentDir, icon))))
                 Tuple5(it, null, derPublicKey, ad, id)
             }
         }
@@ -436,7 +421,7 @@ class Add : Subcommand("add", "add entry") {
                 Triple(it, null, id)
             } else {
                 val p = "icon/${Uuid.random()}"
-                backend.mediaService.upload("apic", listOf(p to File(parentDir, icon).absolutePath))
+                backend.mediaService.upload("apic", listOf(UploadPack(p, File(parentDir, icon))))
                 Triple(it, p, id)
             }
         }

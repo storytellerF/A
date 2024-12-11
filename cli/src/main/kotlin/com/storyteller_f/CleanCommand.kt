@@ -14,7 +14,7 @@ class CleanCommand : Subcommand("clean", "clean all data") {
         }
         backend.mediaService.clean("apic")
         runBlocking {
-            backend.topicDocumentService.clean()
+            backend.topicSearchService.clean()
         }
         Napier.i {
             "clean done."

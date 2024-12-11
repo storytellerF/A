@@ -18,7 +18,7 @@ import org.apache.lucene.search.*
 import org.apache.lucene.store.FSDirectory
 import java.nio.file.Path
 
-class LuceneTopicDocumentService(private val path: Path) : TopicDocumentService {
+class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
     private val analyzer = StandardAnalyzer()
 
     override suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit> {

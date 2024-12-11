@@ -4,6 +4,7 @@ import com.storyteller_f.MinIoConnection
 import io.minio.*
 import io.minio.http.Method
 import java.util.concurrent.TimeUnit
+import kotlin.Result
 
 class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
     override fun clean(bucketName: String): kotlin.Result<Unit> {
@@ -22,14 +23,16 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override fun upload(bucketName: String, list: List<Pair<String, String>>): kotlin.Result<Unit> {
+    override fun upload(bucketName: String, list: List<UploadPack>): Result<Unit> {
         return useMinIoClient(connection) {
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
             }
             list.forEach { (objName, picFullPath) ->
                 uploadObject(
-                    UploadObjectArgs.builder().bucket(bucketName).`object`(objName).filename(picFullPath).build()
+                    UploadObjectArgs.builder().bucket(
+                        bucketName
+                    ).`object`(objName).filename(picFullPath.absolutePath).build()
                 )
             }
         }

@@ -25,6 +25,7 @@ kotlinxDatetime = "0.6.1"
 ktomlCore = "0.5.1"
 lifecycleViewmodelCompose = "2.8.7"
 luceneCore = "10.0.0"
+minioVersion = "1.20.0"
 mosaicRuntime = "0.14.0"
 multiplatformCryptoLibsodiumBindings = "0.9.2"
 multiplatformMarkdownRenderer = "0.27.0"
@@ -60,6 +61,7 @@ kover = "0.7.4"
 
 [libraries]
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
+elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "minioVersion" }
 emoji-compose-m3 = { module = "org.kodein.emoji:emoji-compose-m3", version.ref = "emojiKt" }
 emoji-kt = { module = "org.kodein.emoji:emoji-kt", version.ref = "emojiKt" }
 geoip2 = { module = "com.maxmind.geoip2:geoip2", version.ref = "geoip2" }
@@ -155,6 +157,7 @@ postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" 
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 sunny-chung-composable-table = { module = "io.github.sunny-chung:composable-table", version.ref = "composableTableVersion" }
+testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "minioVersion" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 
 [plugins]
