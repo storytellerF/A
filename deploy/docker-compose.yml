@@ -46,6 +46,8 @@ services:
       - ${SERVER_PORT}:${SERVER_PORT}
     profiles:
       - server
+    volumes:
+      - ./preset_data:/app/deploy/preset_data
     networks:
       - bw-services
 

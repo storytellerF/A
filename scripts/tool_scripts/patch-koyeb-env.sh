@@ -52,11 +52,12 @@ replace_string_2+="EOF\n"
 sed -e "s|#1|$replace_string_1|" -e "s|#2|$replace_string_2|" -e "s|#3|$replace_string_3|" "$dockerfile_template" > "$dockerfile_output"
 
 ed -s "./$dockerfile_output" <<EOF
-/#^3/+,/#!3/-d
-/#^3/a
+/#^1/+,/#!1/-d
+/#^1/a
 #patched
 .
 wq
 EOF
+
 
 echo "Dockerfile 已生成: $dockerfile_output"
