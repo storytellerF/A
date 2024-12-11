@@ -180,7 +180,7 @@ private suspend fun savePlainTopicContent(
 ): Result<TopicInfo> {
     return DatabaseFactory.dbQuery {
         Topic.new(topic)
-        backend.topicDocumentService.saveDocument(
+        backend.topicSearchService.saveDocument(
             listOf(TopicDocument.fromTopic(topic, content))
         ).getOrThrow()
 

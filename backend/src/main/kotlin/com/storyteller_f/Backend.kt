@@ -1,8 +1,8 @@
 package com.storyteller_f
 
-import com.storyteller_f.index.ElasticTopicDocumentService
-import com.storyteller_f.index.LuceneTopicDocumentService
-import com.storyteller_f.index.TopicDocumentService
+import com.storyteller_f.index.ElasticTopicSearchService
+import com.storyteller_f.index.LuceneTopicSearchService
+import com.storyteller_f.index.TopicSearchService
 import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.media.MediaService
 import com.storyteller_f.media.MinIoMediaService
@@ -20,7 +20,7 @@ import java.util.*
 
 class Backend(
     val config: Config,
-    val topicDocumentService: TopicDocumentService,
+    val topicSearchService: TopicSearchService,
     val mediaService: MediaService,
     val nameService: NameService
 )
@@ -36,8 +36,8 @@ data class ElasticConnection(val url: String, val certFile: String, val name: St
 data class MinIoConnection(val url: String, val user: String, val pass: String)
 data class DatabaseConnection(val uri: String, val driver: String, val user: String, val password: String)
 
-fun readEnv(): Map<out Any, Any> {
-    val map = ClassLoader.getSystemClassLoader().getResourceAsStream(".env")?.use {
+fun readEnv(envResFile: String = ".env"): Map<out Any, Any> {
+    val map = ClassLoader.getSystemClassLoader().getResourceAsStream(envResFile)?.use {
         Properties().apply {
             load(it)
         }
@@ -98,14 +98,14 @@ private fun mediaService(map: Map<out Any, Any>): MediaService {
 
 private fun topicDocumentService(
     map: Map<out Any, Any>,
-): TopicDocumentService {
+): TopicSearchService {
     return when (val type = map["SEARCH_SERVICE"]) {
         "elastic" -> {
             val certFile = map["CERT_FILE"] as String
             val url = map["ELASTIC_URL"] as String
             val name = map["ELASTIC_NAME"] as String
             val pass = map["ELASTIC_PASSWORD"] as String
-            ElasticTopicDocumentService(ElasticConnection(url, certFile, name, pass))
+            ElasticTopicSearchService(ElasticConnection(url, certFile, name, pass))
         }
 
         "lucene" -> {
@@ -114,7 +114,7 @@ private fun topicDocumentService(
             Napier.i {
                 "lucene path $path"
             }
-            LuceneTopicDocumentService(path)
+            LuceneTopicSearchService(path)
         }
 
         else -> throw UnsupportedOperationException("unsupported search service type [$type]")

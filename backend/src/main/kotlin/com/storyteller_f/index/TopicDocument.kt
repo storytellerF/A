@@ -30,7 +30,7 @@ data class TopicDocument(
     }
 }
 
-interface TopicDocumentService {
+interface TopicSearchService {
     suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit>
 
     suspend fun getDocument(idList: List<PrimaryKey>): Result<List<TopicDocument?>>

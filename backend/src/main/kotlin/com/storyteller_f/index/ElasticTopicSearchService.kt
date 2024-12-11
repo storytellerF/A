@@ -30,8 +30,13 @@ import org.elasticsearch.client.RestClient
 import java.io.File
 import java.io.FileInputStream
 import java.net.ConnectException
+import javax.net.ssl.SSLContext
 
-class ElasticTopicDocumentService(private val connection: ElasticConnection) : TopicDocumentService {
+class ElasticTopicSearchService(private val connection: ElasticConnection) : TopicSearchService {
+    companion object {
+        var INJECTED_SSL_CONTEXT: SSLContext? = null
+    }
+
     override suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit> {
         return useElasticClient(connection) {
             topics.map { topic ->
@@ -173,12 +178,15 @@ private suspend fun <T> useElasticClient(
     elasticConnection: ElasticConnection,
     block: suspend ElasticsearchAsyncClient.() -> T
 ): Result<T> {
-    val crtStream = withContext(Dispatchers.IO) {
-        Napier.i(message = "cert path ${File(elasticConnection.certFile).canonicalPath}")
-        FileInputStream(elasticConnection.certFile)
+    val sslContext = if (elasticConnection.certFile.isNotBlank()) {
+        val crtStream = withContext(Dispatchers.IO) {
+            Napier.i(message = "cert path ${File(elasticConnection.certFile).canonicalPath}")
+            FileInputStream(elasticConnection.certFile)
+        }
+        TransportUtils.sslContextFromHttpCaCrt(crtStream)
+    } else {
+        null
     }
-    val sslContext = TransportUtils
-        .sslContextFromHttpCaCrt(crtStream)
 
     val credsProv = BasicCredentialsProvider()
     credsProv.setCredentials(

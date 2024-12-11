@@ -21,16 +21,16 @@ import com.storyteller_f.types.PaginationResult
 import io.ktor.resources.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
-import org.apache.fontbox.ttf.OTFParser
-import org.apache.pdfbox.io.RandomAccessReadBufferedFile
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.PDPageContentStream
+import org.apache.pdfbox.pdmodel.font.FontMappers
 import org.apache.pdfbox.pdmodel.font.PDType0Font
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
+import java.awt.GraphicsEnvironment
 import java.io.File
 
 @Resource("/topics")
@@ -93,7 +93,7 @@ suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend
             )
             DatabaseFactory.dbQuery {
                 val newTopicId = Topic.new(topic)
-                backend.topicDocumentService.saveDocument(
+                backend.topicSearchService.saveDocument(
                     listOf(
                         TopicDocument(
                             newTopicId,
@@ -136,45 +136,52 @@ private suspend fun getTopicSnapshot(
     backend: Backend
 ): Result<File?> {
     val topicId = topicInfo.id
-    return backend.topicDocumentService.getDocument(listOf(topicId)).map { value -> value.firstOrNull() }
+    return backend.topicSearchService.getDocument(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultNotNull { documents ->
             DatabaseFactory.first(User::toUserInfo, User::wrapRow) {
                 User.findById(topicInfo.author)
             }.mapNotNull { authorInfo ->
-                PDDocument().use { document ->
-                    val firstPage = PDPage()
-                    PDPageContentStream(document, firstPage).use { stream ->
-                        stream.beginText()
-                        val otf = OTFParser().parse(
-                            RandomAccessReadBufferedFile(
-                                File(
-                                    "~/DIN-Regular.otf".replace(
-                                        "~",
-                                        System.getProperty("user.home")
-                                    )
-                                )
-                            )
-                        )
-                        stream.setFont(PDType0Font.load(document, otf, false), 12f)
-                        stream.newLineAtOffset(100F, 700F)
-                        stream.setLeading(14.5f)
-                        stream.showText(if (authorInfo.aid == null) authorInfo.address else authorInfo.aid)
-                        stream.newLine()
-                        stream.showText(documents.content)
-                        stream.newLine()
-                        stream.showText(if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid)
-                        stream.newLine()
-                        stream.showText(topicInfo.createdTime.toString())
-                        stream.newLine()
-                        stream.showText(now().toString())
-                        stream.endText()
-                    }
-                    document.addPage(firstPage)
-                    document.save("/tmp/1.pdf")
-                }
+                generateSnapshot(authorInfo, documents, creatorInfo, topicInfo)
                 File("/tmp/1.pdf")
             }
         }
+}
+
+private fun generateSnapshot(
+    authorInfo: UserInfo,
+    documents: TopicDocument,
+    creatorInfo: UserInfo,
+    topicInfo: TopicInfo
+) {
+    val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
+    PDDocument().use { document ->
+        val firstPage = PDPage()
+        PDPageContentStream(document, firstPage).use { stream ->
+            stream.beginText()
+            // 创建字体文件
+            val fontNames = graphicsEnvironment.availableFontFamilyNames
+            val firstFontName = fontNames.firstOrNull()
+
+            // 使用 PDFBox 加载字体
+            val pdFont =
+                PDType0Font.load(document, FontMappers.instance().getTrueTypeFont(firstFontName, null).font, true)
+            stream.setFont(pdFont, 12f)
+            stream.newLineAtOffset(100F, 700F)
+            stream.setLeading(14.5f)
+            stream.showText(if (authorInfo.aid == null) authorInfo.address else authorInfo.aid)
+            stream.newLine()
+            stream.showText(documents.content)
+            stream.newLine()
+            stream.showText(if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid)
+            stream.newLine()
+            stream.showText(topicInfo.createdTime.toString())
+            stream.newLine()
+            stream.showText(now().toString())
+            stream.endText()
+        }
+        document.addPage(firstPage)
+        document.save("/tmp/1.pdf")
+    }
 }
 
 suspend fun getTopic(
@@ -200,7 +207,7 @@ suspend fun getTopic(
                         }
                     }
                 } else {
-                    backend.topicDocumentService.getDocument(listOf(topicId)).map { value ->
+                    backend.topicSearchService.getDocument(listOf(topicId)).map { value ->
                         value.firstOrNull()?.content?.let {
                             info.copy(content = TopicContent.Plain(it))
                         }
@@ -238,7 +245,7 @@ suspend fun getTopics(
                 size,
                 fillHasCommented
             ).mapResult { (data, count) ->
-                backend.topicDocumentService.getDocument(data.map {
+                backend.topicSearchService.getDocument(data.map {
                     it.id
                 }).map {
                     it.mapNotNull {
@@ -383,7 +390,7 @@ suspend fun searchPublicTopics(
     backend: Backend,
     uid: PrimaryKey?
 ): Result<PaginationResult<TopicInfo>?> {
-    return backend.topicDocumentService.searchDocument(
+    return backend.topicSearchService.searchDocument(
         search.word,
         size,
         nextTopicId,
@@ -430,7 +437,7 @@ suspend fun recommendTopics(
         size,
         fillHasCommented
     ).mapResult { (data, count) ->
-        backend.topicDocumentService.getDocument(data.map {
+        backend.topicSearchService.getDocument(data.map {
             it.id
         }).map { value ->
             PaginationResult(data.mapIndexed { i, t ->
