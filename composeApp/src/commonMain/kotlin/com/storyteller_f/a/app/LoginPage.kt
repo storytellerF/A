@@ -138,25 +138,21 @@ fun InputPrivateKeyPage() {
                 Button({
                     if (privateKey.isNotBlank()) {
                         scope.launch {
-                            globalDialogState.use(appNav::gotoHome) {
-                                val data = client.getData()
-                                val f = finalData(data)
-                                val sig = signature(privateKey, f)
-                                val publicKey = getDerPublicKeyFromPrivateKey(privateKey)
-                                val ad = calcAddress(publicKey)
-                                val u = when {
-                                    isSignUp -> client.signUp(publicKey, sig)
-                                    else -> client.signIn(ad, sig)
-                                }
-                                LoginViewModel.updateState(ClientSession.SignUpSuccess(privateKey, publicKey, ad))
-                                LoginViewModel.updateSession(data, sig)
-                                LoginViewModel.updateUser(u)
-                                storeToStorage()
-                            }
+                            signUpOrSignIn(appNav, privateKey, isSignUp)
                         }
                     }
                 }) {
-                    Text(if (isSignUp) stringResource(Res.string.start_sign_up) else stringResource(Res.string.start_sign_in))
+                    Text(
+
+                        stringResource(
+                            if (isSignUp) {
+                                Res.string.start_sign_up
+                            } else {
+                                Res.string.start_sign_in
+                            }
+                        )
+
+                    )
                 }
                 if (isSignUp) {
                     Button({
@@ -169,6 +165,28 @@ fun InputPrivateKeyPage() {
                 }
             }
         }
+    }
+}
+
+private suspend fun signUpOrSignIn(
+    appNav: AppNav,
+    privateKey: String,
+    isSignUp: Boolean
+) {
+    globalDialogState.use(appNav::gotoHome) {
+        val data = client.getData()
+        val f = finalData(data)
+        val sig = signature(privateKey, f)
+        val publicKey = getDerPublicKeyFromPrivateKey(privateKey)
+        val ad = calcAddress(publicKey)
+        val u = when {
+            isSignUp -> client.signUp(publicKey, sig)
+            else -> client.signIn(ad, sig)
+        }
+        LoginViewModel.updateState(ClientSession.SignUpSuccess(privateKey, publicKey, ad))
+        LoginViewModel.updateSession(data, sig)
+        LoginViewModel.updateUser(u)
+        storeToStorage()
     }
 }
 

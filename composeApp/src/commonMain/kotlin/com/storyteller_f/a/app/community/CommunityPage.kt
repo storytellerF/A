@@ -241,7 +241,6 @@ private fun CommunityFloatingButton(
         if (community?.isJoined == true) {
             appNav.gotoTopicCompose(ObjectType.COMMUNITY, communityId)
         } else {
-
             alertDialogState.showMessage(title, message)
         }
     }) {
