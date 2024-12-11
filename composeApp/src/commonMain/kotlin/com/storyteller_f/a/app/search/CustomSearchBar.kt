@@ -113,18 +113,20 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
 @Composable
 private fun SearchPlaceholder(scope: SearchScope) {
     Text(
-        stringResource(when (scope) {
-            SearchScope.World -> Res.string.input_search_topics_and_users
-            SearchScope.MyCommunity -> Res.string.input_search_community
-            SearchScope.MyRoom -> Res.string.input_search_topics
-            is SearchScope.CommunityTopic -> Res.string.input_search_topics
-            is SearchScope.CommunityRoom -> Res.string.input_search_room
-            is SearchScope.RoomTopic -> Res.string.input_search_topics
-            is SearchScope.TopicTopic -> Res.string.input_search_topics
-            is SearchScope.CommunityMember -> Res.string.input_search_members
-            is SearchScope.RoomMember -> Res.string.input_search_members
-            SearchScope.Member -> Res.string.input_search_members
-        })
+        stringResource(
+            when (scope) {
+                SearchScope.World -> Res.string.input_search_topics_and_users
+                SearchScope.MyCommunity -> Res.string.input_search_community
+                SearchScope.MyRoom -> Res.string.input_search_topics
+                is SearchScope.CommunityTopic -> Res.string.input_search_topics
+                is SearchScope.CommunityRoom -> Res.string.input_search_room
+                is SearchScope.RoomTopic -> Res.string.input_search_topics
+                is SearchScope.TopicTopic -> Res.string.input_search_topics
+                is SearchScope.CommunityMember -> Res.string.input_search_members
+                is SearchScope.RoomMember -> Res.string.input_search_members
+                SearchScope.Member -> Res.string.input_search_members
+            }
+        )
     )
 }
 

@@ -69,7 +69,11 @@ private fun TopicComposeInternal(
         3
     }
     val state = rememberRichTextState()
-    val tabs = listOf(stringResource(Res.string.edit), stringResource(Res.string.preview), stringResource(Res.string.raw))
+    val tabs = listOf(
+        stringResource(Res.string.edit),
+        stringResource(Res.string.preview),
+        stringResource(Res.string.raw)
+    )
     val selected = pagerState.currentPage
     val coroutineScope = rememberCoroutineScope()
 
