@@ -3,3 +3,5 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./lucene_data:/app/deploy/lucene_data
