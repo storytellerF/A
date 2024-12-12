@@ -46,8 +46,6 @@ fi
 
 ssh-keyscan -H acommunity.link >> ~/.ssh/known_hosts
 
-cat ~/.ssh/known_hosts
-
 eval $(ssh-agent)
 
 ssh-add ./remote.pem
