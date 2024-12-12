@@ -185,11 +185,11 @@ class RoomViewModel(private val requestInfo: suspend HttpClient.() -> RoomInfo) 
     val dialog = DialogSaveState()
 
     constructor(roomId: PrimaryKey) : this({
-        requestRoomInfo(roomId, LoginViewModel.isAlreadySignUp)
+        requestRoomInfo(roomId, LoginViewModel.currentIsAlreadySignUp)
     })
 
     constructor(roomAid: String) : this({
-        requestRoomInfoByAid(roomAid, LoginViewModel.isAlreadySignUp)
+        requestRoomInfoByAid(roomAid, LoginViewModel.currentIsAlreadySignUp)
     })
 
     init {

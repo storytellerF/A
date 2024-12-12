@@ -1,33 +1,18 @@
 package com.storyteller_f.a.app.search
 
-import a.composeapp.generated.resources.Res
-import a.composeapp.generated.resources.input_search_community
-import a.composeapp.generated.resources.input_search_members
-import a.composeapp.generated.resources.input_search_room
-import a.composeapp.generated.resources.input_search_topics
-import a.composeapp.generated.resources.input_search_topics_and_users
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import a.composeapp.generated.resources.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.common.APagingData
-import com.storyteller_f.a.app.common.PagingViewModel
-import com.storyteller_f.a.app.common.SimplePagingSource
-import com.storyteller_f.a.app.common.serviceCatching
-import com.storyteller_f.a.app.common.viewModel
+import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.community.CommunitiesViewModel
 import com.storyteller_f.a.app.community.CommunityList
 import com.storyteller_f.a.app.compontents.UserIcon
@@ -39,7 +24,6 @@ import com.storyteller_f.a.app.world.TopicList
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.searchTopics
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -92,7 +76,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
                         leadingIcon()
                     },
                     trailingIcon = {
-                        val userInfo by LoginViewModel.user.collectAsState<UserInfo?>()
+                        val userInfo by LoginViewModel.user.collectAsState()
                         UserIcon(userInfo, size = 40.dp)
                     },
                     placeholder = {
@@ -130,7 +114,6 @@ private fun SearchPlaceholder(scope: SearchScope) {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun SearchContent(
     scope: SearchScope,
@@ -247,21 +230,25 @@ private fun MyRoomSearchContent(current: String) {
             mutableStateOf(JoinStatusSearch.JOINED)
         }
 
-        val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
-        FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            SingleChoiceSegmentedButtonRow {
-                options.forEachIndexed { i, e ->
-                    SegmentedButton(currentOption == e, {
-                        currentOption = e
-                    }, shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)) {
-                        Text(e.name.lowercase().replace("_", " "))
+        val isAlreadySignUp by LoginViewModel.isAlreadySignUp.collectAsState(false)
+        val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
+        if (isAlreadySignUp) {
+            val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
+            FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                SingleChoiceSegmentedButtonRow {
+                    options.forEachIndexed { i, e ->
+                        SegmentedButton(currentOption == e, {
+                            currentOption = e
+                        }, shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)) {
+                            Text(e.name.lowercase().replace("_", " "))
+                        }
                     }
                 }
             }
         }
         if (current.isNotBlank()) {
-            val viewModel = viewModel(RoomsViewModel::class, keys = listOf("my-rooms", current)) {
-                RoomsViewModel(JoinStatusSearch.JOINED, current)
+            val viewModel = viewModel(RoomsViewModel::class, keys = listOf("my-rooms", finalOption.name, current)) {
+                RoomsViewModel(finalOption, current)
             }
             val items = viewModel.flow.collectAsLazyPagingItems()
             RoomList(items)
@@ -271,33 +258,36 @@ private fun MyRoomSearchContent(current: String) {
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun MyCommunitySearchContent(current: String) {
+private fun MyCommunitySearchContent(query: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
         var currentOption by remember {
             mutableStateOf(JoinStatusSearch.JOINED)
         }
-
-        val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            SingleChoiceSegmentedButtonRow {
-                options.forEachIndexed { i, e ->
-                    SegmentedButton(currentOption == e, {
-                        currentOption = e
-                    }, shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)) {
-                        Text(e.name.lowercase().replace("_", " "))
+        val isAlreadySignUp by LoginViewModel.isAlreadySignUp.collectAsState(false)
+        val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
+        if (isAlreadySignUp) {
+            val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                SingleChoiceSegmentedButtonRow {
+                    options.forEachIndexed { i, e ->
+                        SegmentedButton(currentOption == e, {
+                            currentOption = e
+                        }, shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)) {
+                            Text(e.name.lowercase().replace("_", " "))
+                        }
                     }
                 }
             }
         }
-        if (current.isNotBlank()) {
+        if (query.isNotBlank()) {
             val viewModel = viewModel(
                 CommunitiesViewModel::class,
-                keys = listOf("my-community", currentOption.name, current)
+                keys = listOf("my-community", finalOption.name, query)
             ) {
-                CommunitiesViewModel(currentOption, current)
+                CommunitiesViewModel(finalOption, query)
             }
             val items = viewModel.flow.collectAsLazyPagingItems()
             CommunityList(items)
@@ -347,6 +337,7 @@ private fun WorldSearchContent(current: String) {
     }
 }
 
+@OptIn(ExperimentalPagingApi::class)
 class TopicSearchViewModel(word: List<String>, parentId: PrimaryKey?, parentType: ObjectType?) :
     PagingViewModel<PrimaryKey, TopicInfo>({
         SimplePagingSource {

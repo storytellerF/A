@@ -43,7 +43,7 @@ fun WorldPage() {
 class WorldViewModel : PagingViewModel<PrimaryKey, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getWorldTopics(it, 10, LoginViewModel.isAlreadySignUp)
+            client.getWorldTopics(it, 10, LoginViewModel.currentIsAlreadySignUp)
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
         }

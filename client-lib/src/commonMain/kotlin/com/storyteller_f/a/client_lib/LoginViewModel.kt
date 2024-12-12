@@ -18,19 +18,22 @@ sealed interface ClientSession {
 
 object LoginViewModel {
     val state = MutableStateFlow<ClientSession>(ClientSession.LoginNone)
-    val privateKey = state.map {
+    val inputtedPrivateKey = state.map {
         when (it) {
             is ClientSession.PrivateKeySignIn -> it.privateKey
             is ClientSession.PrivateKeySignUp -> it.privateKey
             else -> ""
         }
     }
-    val isSignUp = state.map {
+    val isSignUpFlow = state.map {
         it is ClientSession.PrivateKeySignUp
     }
     var session: Pair<String, String?>? = null
     val user = MutableStateFlow<UserInfo?>(null)
-    val isAlreadySignUp get() = state.value is ClientSession.SignUpSuccess
+    val currentIsAlreadySignUp get() = state.value is ClientSession.SignUpSuccess
+    val isAlreadySignUp = state.map {
+        it is ClientSession.SignUpSuccess
+    }
 
     fun updateSession(data: String, signature: String?) {
         session = data to signature

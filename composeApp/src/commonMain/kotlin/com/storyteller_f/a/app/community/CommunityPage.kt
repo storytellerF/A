@@ -70,11 +70,11 @@ class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Commu
     val dialog = DialogSaveState()
 
     constructor(communityId: PrimaryKey) : this({
-        getCommunityInfo(communityId, LoginViewModel.isAlreadySignUp)
+        getCommunityInfo(communityId, LoginViewModel.currentIsAlreadySignUp)
     })
 
     constructor(communityAid: String) : this({
-        getCommunityInfoByAid(communityAid, LoginViewModel.isAlreadySignUp)
+        getCommunityInfoByAid(communityAid, LoginViewModel.currentIsAlreadySignUp)
     })
 
     init {

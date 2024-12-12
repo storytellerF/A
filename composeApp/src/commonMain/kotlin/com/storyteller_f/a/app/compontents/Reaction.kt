@@ -3,20 +3,19 @@ package com.storyteller_f.a.app.compontents
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Comment
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.AddReaction
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.ExperimentalPagingApi
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.world.Pill
-import com.storyteller_f.a.client_lib.LoadingState
-import com.storyteller_f.a.client_lib.addReaction
-import com.storyteller_f.a.client_lib.deleteReaction
-import com.storyteller_f.a.client_lib.getReactions
+import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ServerResponse
@@ -68,7 +67,11 @@ fun InteractionRow(
 
     val it = reactions ?: ServerResponse(emptyList())
     val moreOrCollapseIndicator = @Composable { scope: ContextualFlowRowOverflowScope ->
-        InteractionRowEnd(scope, startAddReaction)
+        InteractionRowEnd(scope, startAddReaction, {
+            maxLines = 2
+        }) {
+            maxLines = Int.MAX_VALUE
+        }
     }
     val data = it.data
     ContextualFlowRow(
@@ -100,19 +103,28 @@ fun InteractionRow(
 @OptIn(ExperimentalLayoutApi::class)
 private fun InteractionRowEnd(
     scope: ContextualFlowRowOverflowScope,
-    startAddReaction: () -> Unit
+    startAddReaction: () -> Unit,
+    shrink: () -> Unit,
+    expand: () -> Unit,
 ) {
+    val appNav = LocalAppNav.current
     val remainingItems = scope.totalItemCount - scope.shownItemCount
-    if (remainingItems > 0) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Pill(icon = Icons.Outlined.AddReaction) {
-                startAddReaction()
-            }
-            Pill(text = "+$remainingItems") {}
-        }
-    } else {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Pill(icon = Icons.Outlined.AddReaction) {
-            startAddReaction()
+            if (LoginViewModel.currentIsAlreadySignUp) {
+                startAddReaction()
+            } else {
+                appNav.gotoLogin()
+            }
+        }
+        if (remainingItems > 0) {
+            Pill(text = "+$remainingItems") {
+                expand()
+            }
+        } else {
+            Pill(icon = Icons.Default.Close) {
+                shrink()
+            }
         }
     }
 }

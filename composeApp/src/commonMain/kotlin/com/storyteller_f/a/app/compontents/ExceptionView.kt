@@ -19,7 +19,7 @@ fun ExceptionView(throwable: Throwable) {
 
             BasicRichTextEditor(state = state, readOnly = true)
         } else {
-            Text("${throwable.status.value}${throwable.status.description}")
+            Text("${throwable.status.value}${throwable.text}")
         }
     } else {
         Text((throwable.message ?: throwable::class.simpleName ?: throwable.toString()).take(100))

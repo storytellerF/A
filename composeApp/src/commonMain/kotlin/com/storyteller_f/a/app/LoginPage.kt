@@ -115,8 +115,8 @@ fun SelectSignupPage(loginNav: LoginNav) {
 
 @Composable
 fun InputPrivateKeyPage() {
-    val privateKey by LoginViewModel.privateKey.collectAsState("")
-    val isSignUp by LoginViewModel.isSignUp.collectAsState(false)
+    val privateKey by LoginViewModel.inputtedPrivateKey.collectAsState("")
+    val isSignUp by LoginViewModel.isSignUpFlow.collectAsState(false)
     val scope = rememberCoroutineScope()
     val appNav = LocalAppNav.current
 
