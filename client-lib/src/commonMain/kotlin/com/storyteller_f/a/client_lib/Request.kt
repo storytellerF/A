@@ -16,7 +16,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 
 fun isAlreadyLogin(): Boolean {
-    return LoginViewModel.isAlreadySignUp
+    return LoginViewModel.currentIsAlreadySignUp
 }
 
 suspend fun HttpClient.requestRoomInfo(id: PrimaryKey, alreadySignUp: Boolean) = get("rooms/$id") {

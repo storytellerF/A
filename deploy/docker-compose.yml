@@ -71,6 +71,8 @@ services:
       - USE_LIMIT_REQ=no
       - SERVE_FILES=no
       - INTERCEPTED_ERROR_CODES=
+      - REVERSE_PROXY_WS=yes
+      - REVERSE_PROXY_INTERCEPT_ERRORS=no
     networks:
       - bw-universe
       - bw-services
