@@ -131,53 +131,6 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
     }
 }
 
-fun Application.configureAuth(backend: Backend) {
-    install(Authentication) {
-        custom {
-            validate { session, call, credential ->
-                when (session) {
-                    is UserSession.Success -> CustomPrincipal(session.id)
-                    is UserSession.Pending -> {
-                        when {
-                            credential != null -> call.checkApiRequest(credential, session)
-                            backend.config.isProd -> null
-                            else -> checkDevWsLink(call)
-                        }
-                    }
-                }
-            }
-            challenge { _, call ->
-                call.respondUnauthorizedResponse()
-            }
-        }
-    }
-    routing {
-        authenticate {
-            bindProtectedSafeTopicRoute(backend)
-            bindProtectedSafeCommunityRoute(backend)
-            bindProtectedSafeRoomRoute(backend)
-            bindProtectedSafeUserRoute()
-            webSocket("/link") {
-                webSocketContent(backend)
-            }
-            post("/sign_out") {
-                usePrincipal { id ->
-                    call.sessions.clear(UserSession::class)
-                    Result.success(Unit)
-                }
-            }
-        }
-        authenticate(optional = true) {
-            bindSafeRoomRoute(backend)
-            bindSafeTopicRoute(backend)
-            bindSafeCommunityRoute(backend)
-            bindSafeUserRoute(backend)
-            bindProtectedSafeUserRoute()
-        }
-        bindUnauthenticatedRoute(backend)
-    }
-}
-
 private fun Routing.bindUnauthenticatedRoute(backend: Backend) {
     get("/get_data") {
         call.respondText(call.getData())
@@ -217,7 +170,7 @@ private suspend fun RoutingContext.signIn(backend: Backend) {
                 val id = value.id
                 saveSuccessSessionOnFirst(id)
                 call.respond(value)
-            }.onFailure { exception ->
+            }.onFailure {
                 call.respond(HttpStatusCode.BadRequest, "media service get failed.")
             }
         } else {
@@ -268,7 +221,6 @@ private suspend fun ApplicationCall.checkApiRequest(
     session: UserSession.Pending
 ): CustomPrincipal? {
     val sig = credential.sig
-    @Suppress("KotlinConstantConditions")
     return when {
         !BuildConfig.IS_PROD && credential is CustomCredential.IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
@@ -377,9 +329,55 @@ private fun ApplicationCall.getSession(): Pair<UserSession, String> {
 }
 
 fun ApplicationCall.getRateLimitKey(): Comparable<*> {
-    val session = getSession().first
-    return when (session) {
+    return when (val session = getSession().first) {
         is UserSession.Success -> session.id
         is UserSession.Pending -> session.remote
+    }
+}
+
+fun Application.configureAuth(backend: Backend) {
+    install(Authentication) {
+        custom {
+            validate { session, call, credential ->
+                when (session) {
+                    is UserSession.Success -> CustomPrincipal(session.id)
+                    is UserSession.Pending -> {
+                        when {
+                            credential != null -> call.checkApiRequest(credential, session)
+                            backend.config.isProd -> null
+                            else -> checkDevWsLink(call)
+                        }
+                    }
+                }
+            }
+            challenge { _, call ->
+                call.respondUnauthorizedResponse()
+            }
+        }
+    }
+    routing {
+        authenticate {
+            bindProtectedSafeTopicRoute(backend)
+            bindProtectedSafeCommunityRoute(backend)
+            bindProtectedSafeRoomRoute(backend)
+            bindProtectedSafeUserRoute()
+            webSocket("/link") {
+                webSocketContent(backend)
+            }
+            post("/sign_out") {
+                usePrincipal { _ ->
+                    call.sessions.clear(UserSession::class)
+                    Result.success(Unit)
+                }
+            }
+        }
+        authenticate(optional = true) {
+            bindSafeRoomRoute(backend)
+            bindSafeTopicRoute(backend)
+            bindSafeCommunityRoute(backend)
+            bindSafeUserRoute(backend)
+            bindProtectedSafeUserRoute()
+        }
+        bindUnauthenticatedRoute(backend)
     }
 }

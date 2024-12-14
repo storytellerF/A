@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 URL=$1
 FLAVOR=$2

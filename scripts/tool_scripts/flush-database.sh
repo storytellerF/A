@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 sh gradlew cli:installDist
 cd cli

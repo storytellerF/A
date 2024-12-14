@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 if [ -z "$PRESET_ENCRYPTED_URI" ] || [ -z "$PRESET_ENCRYPTED_PRESET_ENCRYPTED_PASSWORD" ]; then

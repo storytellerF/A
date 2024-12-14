@@ -66,8 +66,10 @@ object DatabaseFactory {
                 try {
                     block()
                 } catch (e: Throwable) {
-                    Napier.e(e, "database failed") {
-                        "$statements\nat ${r.stackTraceToString()}"
+                    if (e !is UnauthorizedException) {
+                        Napier.e(e, "database failed") {
+                            "$statements\nat ${r.stackTraceToString()}"
+                        }
                     }
                     throw e
                 }

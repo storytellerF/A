@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 docker load -i deploy/docker-images/eclipse-temurin.tar
 docker load -i deploy/docker-images/postgres.tar

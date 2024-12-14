@@ -1,3 +1,4 @@
+#!/bin/sh
 # 定义要保存的文件名
 FILE="build/images/$FLAVOR.image.tar"
 

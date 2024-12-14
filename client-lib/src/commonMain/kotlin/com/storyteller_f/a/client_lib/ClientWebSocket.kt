@@ -6,6 +6,8 @@ import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(DelicateCoroutinesApi::class)
 class ClientWebSocket(
@@ -18,9 +20,15 @@ class ClientWebSocket(
 
     init {
         GlobalScope.launch {
-            while (true) {
-                connectWebSocketIfNeed()
-                delay(5000)
+            LoginViewModel.isAlreadySignUp.distinctUntilChanged().collectLatest {
+                if (it) {
+                    while (true) {
+                        connectWebSocketIfNeed()
+                        delay(5000)
+                    }
+                } else {
+                    connectionHandler.data.value?.cancel()
+                }
             }
         }
     }
@@ -41,6 +49,7 @@ class ClientWebSocket(
     }
 
     private suspend fun connectWebSocketIfNeed() {
+        if (!LoginViewModel.currentIsAlreadySignUp) return
         when (connectionHandler.state.value) {
             is LoadingState.Loading -> return
             is LoadingState.Done -> {
@@ -57,8 +66,7 @@ class ClientWebSocket(
             startListenerWebSocket(session)
             connectionHandler.done(session)
         } catch (e: Exception) {
-            connectionHandler.data.value = null
-            connectionHandler.state.value = LoadingState.Error(e)
+            connectionHandler.error(e)
         }
     }
 
