@@ -9,11 +9,7 @@ import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetValue
-import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.Tuple4
-import com.storyteller_f.shared.type.Tuple5
+import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
@@ -25,10 +21,7 @@ import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 import java.io.File
-import kotlin.collections.get
 import kotlin.system.exitProcess
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalCli::class)
 class Add : Subcommand("add", "add entry") {
@@ -75,7 +68,6 @@ class Add : Subcommand("add", "add entry") {
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     private suspend fun addRooms(presetValue: PresetValue, parentDir: File?) {
         val l = presetValue.roomData ?: return
         val data = l.map {
@@ -84,7 +76,7 @@ class Add : Subcommand("add", "add entry") {
             if (icon == null) {
                 Triple(it, null, id)
             } else {
-                val p = "icon/${Uuid.random()}"
+                val p = "icon/room-icon"
                 backend.mediaService.upload("apic", listOf(UploadPack(p, File(parentDir, icon))))
                 Triple(it, p, id)
             }
@@ -381,7 +373,6 @@ class Add : Subcommand("add", "add entry") {
         return content
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     private suspend fun addUsers(presetValue: PresetValue, parentDir: File?) {
         val userList = presetValue.userData ?: return
         val data = userList.map {
@@ -393,7 +384,7 @@ class Add : Subcommand("add", "add entry") {
             if (icon == null) {
                 Tuple5(it, null, derPublicKey, ad, id)
             } else {
-                val p = "icon/${Uuid.random()}"
+                val p = "icon/avatar"
                 backend.mediaService.upload("apic", listOf(UploadPack(p, File(parentDir, icon))))
                 Tuple5(it, null, derPublicKey, ad, id)
             }
@@ -411,7 +402,6 @@ class Add : Subcommand("add", "add entry") {
         }.getOrThrow()
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     private suspend fun addCommunity(presetValue: PresetValue, parentDir: File?) {
         val communityData = presetValue.communityData!!
         val data = communityData.map {
@@ -420,7 +410,7 @@ class Add : Subcommand("add", "add entry") {
             if (icon == null) {
                 Triple(it, null, id)
             } else {
-                val p = "icon/${Uuid.random()}"
+                val p = "icon/community-icon"
                 backend.mediaService.upload("apic", listOf(UploadPack(p, File(parentDir, icon))))
                 Triple(it, p, id)
             }
