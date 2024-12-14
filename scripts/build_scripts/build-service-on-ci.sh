@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
@@ -25,6 +25,7 @@ jq -r 'to_entries |
 while IFS= read -r line; do
     # Ignore empty lines and comments
     [[ -z "$line" || "$line" =~ ^# ]] && continue
+    # bash 特有
     IFS='=' read -r key value <<< "$line"
     export "$key"="$value"
 done < $TEMP_FILE
