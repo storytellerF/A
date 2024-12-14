@@ -237,7 +237,7 @@ fun TopicContentField(
             }
         }
 
-        null -> {
+        else -> {
         }
     }
 }

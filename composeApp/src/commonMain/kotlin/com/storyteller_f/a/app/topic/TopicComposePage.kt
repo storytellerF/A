@@ -4,7 +4,6 @@ import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.edit
 import a.composeapp.generated.resources.preview
 import a.composeapp.generated.resources.raw
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -38,7 +37,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicComposePage(objectType: ObjectType, objectId: PrimaryKey, backPrePage: () -> Unit) {
     var input by remember {
@@ -50,8 +49,8 @@ fun TopicComposePage(objectType: ObjectType, objectId: PrimaryKey, backPrePage: 
         }, actions = {
             TopicComposeSubmitButton(input, objectType, objectId, backPrePage)
         })
-    }) {
-        Column(modifier = Modifier.padding(top = it.calculateTopPadding())) {
+    }) { paddingValues ->
+        Column(modifier = Modifier.padding(top = paddingValues.calculateTopPadding())) {
             TopicComposeInternal(input) {
                 input = it
             }
@@ -89,12 +88,10 @@ private fun TopicComposeInternal(
         }
     }
     HorizontalPager(pagerState, key = tabs::get) { index ->
-        if (index == 0) {
-            RichEditTopicPage(state, updateInput)
-        } else if (index == 1) {
-            PreviewTopicPage(input)
-        } else {
-            EditTopicPage(input) {
+        when (index) {
+            0 -> RichEditTopicPage(state, updateInput)
+            1 -> PreviewTopicPage(input)
+            else -> EditTopicPage(input) {
                 updateInput(it)
                 state.setMarkdown(it)
             }
@@ -163,13 +160,13 @@ private fun TopicComposeSubmitButton(
     objectId: PrimaryKey,
     backPrePage: () -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
     IconButton({
         val c = input.trim()
         if (c.isNotEmpty()) {
-            coroutineScope.launch {
-                try {
+            scope.launch {
+                globalDialogState.use {
                     val info = client.createNewTopic(objectType, objectId, input).body<TopicInfo>()
                     getOrCreateCollection("topics${info.parentId}").save(
                         MutableDocument(
@@ -178,8 +175,6 @@ private fun TopicComposeSubmitButton(
                         )
                     )
                     backPrePage()
-                } catch (e: Exception) {
-                    globalDialogState.showError(e)
                 }
             }
         }

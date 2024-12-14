@@ -6,7 +6,6 @@ import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.RouteUsers
 import com.storyteller_f.a.server.service.updateUser
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.getUser
 import com.storyteller_f.tables.getUserByAid
@@ -36,7 +35,7 @@ fun Route.bindSafeUserRoute(backend: Backend) {
 
     get<RouteUsers.Search> {
         omitPrincipal {
-            pagination<UserInfo, PrimaryKey>(PrimaryKey::class, {
+            pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
                 searchMembers(null, backend, p, n, s, it.word)

@@ -84,13 +84,15 @@ suspend fun getCommunitySource(parentId: PrimaryKey): Result<Community?> = Datab
     Community.findById(parentId)
 }
 
+data class CommunityRawResult(val communityInfo: CommunityInfo, val icon: String?, val poster: String?)
+
 suspend fun getCommonCommunity(
     fillJoinInfo: Boolean?,
     communityId: PrimaryKey?,
     communityAid: String?,
     id: PrimaryKey?
-): Result<Triple<CommunityInfo, String?, String?>?> = DatabaseFactory.first({
-    Triple(first.toCommunityIfo(second), first.icon, first.poster)
+): Result<CommunityRawResult?> = DatabaseFactory.first({
+    CommunityRawResult(first.toCommunityIfo(second), first.icon, first.poster)
 }, {
     Community.wrapRow(it) to if (fillJoinInfo == true) it[MemberJoins.joinTime] else null
 }) {
@@ -124,8 +126,8 @@ suspend fun commonCommunityList(
     size: Int,
     joinStatus: JoinStatusSearch?,
     word: String?
-): Result<List<Triple<CommunityInfo, String?, String?>>> = DatabaseFactory.mapQuery({
-    Triple(toCommunityIfo(null), icon, poster)
+): Result<List<CommunityRawResult>> = DatabaseFactory.mapQuery({
+    CommunityRawResult(toCommunityIfo(null), icon, poster)
 }, Community::wrapRow) {
     getSearchCommunityQuery(uid, false, joinStatus, word).bindPaginationQuery(
         Communities,
@@ -189,7 +191,7 @@ suspend fun commonPaginationCommunityList(
     size: Int,
     joinStatus: JoinStatusSearch?,
     word: String?
-): Result<Pair<List<Triple<CommunityInfo, String?, String?>>, Long>> {
+): Result<Pair<List<CommunityRawResult>, Long>> {
     return commonCommunityList(uid, prePageToken, nextPageToken, size, joinStatus, word).mapResult { list ->
         DatabaseFactory.count {
             getSearchCommunityQuery(uid, true, joinStatus, word)

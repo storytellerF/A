@@ -4,33 +4,23 @@ import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
-import com.storyteller_f.a.server.service.RouteReactions
-import com.storyteller_f.a.server.service.RouteTopics
-import com.storyteller_f.a.server.service.addReaction
-import com.storyteller_f.a.server.service.addTopicAtCommunity
-import com.storyteller_f.a.server.service.getTopic
-import com.storyteller_f.a.server.service.getTopicSnapshot
-import com.storyteller_f.a.server.service.getTopics
-import com.storyteller_f.a.server.service.reactionList
-import com.storyteller_f.a.server.service.recommendTopics
-import com.storyteller_f.a.server.service.searchPublicTopics
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.obj.NewReaction
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.deleteReaction
 import com.yy.mobile.emoji.EmojiReader
-import io.ktor.server.plugins.BadRequestException
-import io.ktor.server.request.receive
+import io.ktor.server.plugins.*
+import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 
 fun Route.bindSafeTopicRoute(backend: Backend) {
     get<RouteTopics.Search> {
         usePrincipalOrNull { id ->
-            pagination<TopicInfo, PrimaryKey>(PrimaryKey::class, {
+            pagination(PrimaryKey::class, {
                 it.id.toString()
-            }) { p, n, s ->
+            }) { _, n, s ->
                 searchPublicTopics(n, s, it, backend, id)
             }
         }
@@ -38,7 +28,7 @@ fun Route.bindSafeTopicRoute(backend: Backend) {
 
     get<RouteTopics.Recommend> {
         usePrincipalOrNull { uid ->
-            pagination<TopicInfo, PrimaryKey>(PrimaryKey::class, {
+            pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { prePageToken, nextPageToken, size ->
                 recommendTopics(backend, prePageToken, nextPageToken, size, uid, it.parent.fillHasCommented == true)
@@ -54,7 +44,7 @@ fun Route.bindSafeTopicRoute(backend: Backend) {
 
     get<RouteTopics.Id.Topics> {
         usePrincipalOrNull { uid ->
-            pagination<TopicInfo, PrimaryKey>(PrimaryKey::class, {
+            pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
                 getTopics(it.parent.id, ObjectType.TOPIC, uid, backend, p, n, s, it.parent.parent.fillHasCommented)

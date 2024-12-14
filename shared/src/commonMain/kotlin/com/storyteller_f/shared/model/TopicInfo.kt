@@ -27,7 +27,7 @@ data class TopicInfo(
     companion object {
         val EMPTY = TopicInfo(
             DEFAULT_PRIMARY_KEY,
-            TopicContent.Plain(""),
+            TopicContent.Nil,
             DEFAULT_PRIMARY_KEY,
             DEFAULT_PRIMARY_KEY,
             ObjectType.TOPIC,
@@ -45,6 +45,10 @@ data class TopicInfo(
 
 @Serializable
 sealed interface TopicContent {
+    @Serializable
+    @SerialName("nil")
+    data object Nil : TopicContent
+
     @Serializable
     @SerialName("plain")
     data class Plain(val plain: String) : TopicContent

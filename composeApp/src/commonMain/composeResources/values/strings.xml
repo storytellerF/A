@@ -41,4 +41,5 @@
     <string name="input_search_topics_and_users">Input to search topics/users</string>
     <string name="refresh">Refresh</string>
     <string name="no_content_yet">No content yet</string>
+    <string name="copy">Copy</string>
 </resources>

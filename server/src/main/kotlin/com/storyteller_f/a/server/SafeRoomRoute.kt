@@ -5,16 +5,8 @@ import com.storyteller_f.UnauthorizedException
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
-import com.storyteller_f.a.server.service.RouteRooms
-import com.storyteller_f.a.server.service.checkRootReadPermission
-import com.storyteller_f.a.server.service.exitRoom
-import com.storyteller_f.a.server.service.getRoom
-import com.storyteller_f.a.server.service.getRoomPubKeys
-import com.storyteller_f.a.server.service.getTopics
-import com.storyteller_f.a.server.service.joinRoom
-import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResultNotNull
@@ -26,7 +18,7 @@ import io.ktor.server.routing.Route
 fun Route.bindSafeRoomRoute(backend: Backend) {
     get<RouteRooms.Search> {
         usePrincipalOrNull { id ->
-            pagination<RoomInfo, PrimaryKey>(PrimaryKey::class, {
+            pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, size ->
                 searchRooms(id, backend, p, n, size, it.joinStatus, it.word, it.community)
@@ -36,7 +28,7 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
 
     get<RouteRooms.Id.Members> {
         usePrincipalOrNull { id ->
-            pagination<UserInfo, PrimaryKey>(PrimaryKey::class, {
+            pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
                 checkRootReadPermission(ObjectType.ROOM, it.parent.id, id).mapResultNotNull { permission ->

@@ -4,13 +4,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
-import com.storyteller_f.a.server.service.RouteCommunities
-import com.storyteller_f.a.server.service.exitCommunity
-import com.storyteller_f.a.server.service.getCommunity
-import com.storyteller_f.a.server.service.joinCommunity
-import com.storyteller_f.a.server.service.searchCommunities
-import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.searchMembers
 import io.ktor.server.resources.*
@@ -19,7 +13,7 @@ import io.ktor.server.routing.Route
 fun Route.bindSafeCommunityRoute(backend: Backend) {
     get<RouteCommunities.Search> {
         usePrincipalOrNull { id ->
-            pagination<CommunityInfo, PrimaryKey>(PrimaryKey::class, {
+            pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
                 searchCommunities(backend, p, n, s, id, it)
@@ -28,8 +22,8 @@ fun Route.bindSafeCommunityRoute(backend: Backend) {
     }
 
     get<RouteCommunities.Id.Members> {
-        usePrincipalOrNull { id ->
-            pagination<UserInfo, PrimaryKey>(PrimaryKey::class, {
+        usePrincipalOrNull { _ ->
+            pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
                 searchMembers(it.parent.id, backend, p, n, s, it.word)

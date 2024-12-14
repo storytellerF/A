@@ -18,9 +18,15 @@ REMOTE_CERT_FILE=$3
 REMOTE_COMMAND=$4
 
 while IFS= read -r line; do
+  # 去除行尾的 \r，确保兼容 Windows 换行符
+  line="${line%%$'\r'}"
   # Ignore empty lines and comments
   [[ -z "$line" || "$line" =~ ^# ]] && continue
+  # 读取键值对
   IFS='=' read -r key value <<<"$line"
+  # 忽略值为空或者注释的行
+  [[ -z "$value" || "$value" =~ ^# ]] && continue
+  # 导出环境变量
   export "$key"="$value"
 done <"$FLAVOR.env"
 
@@ -28,16 +34,15 @@ if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_COMMAND" 
   if [ "$HOST_TYPE" = "local" ]; then
     echo "build on local"
     # 在本地启动
-    ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
+    ./scripts/build_scripts/build-server-image.sh
     "./scripts/service_scripts/start-$FLAVOR-compose.sh" false 'up -d --build'
   else
     echo "build on remote"
     # 在远程主机上启动
     # load image
     docker load -i "/tmp/A/$FLAVOR.image.tar"
-    cd deploy
     # 使用预构建镜像构建服务
-    "../scripts/service_scripts/start-$FLAVOR-compose.sh" true 'up -d --build'
+    "./scripts/service_scripts/start-$FLAVOR-compose.sh" true 'up -d --build'
   fi
 else
   # 在本地构建，然后发送docker image 到远程主机上启动

@@ -206,7 +206,7 @@ fun <T : Any> RefCellStateView(
             }
 
             is LoadingState.Error -> Box(
-                modifier = Modifier.fillMaxWidth().clickable {
+                modifier = Modifier.fillMaxSize().clickable {
                     globalDialogState.showError(localState.e)
                 }.padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center

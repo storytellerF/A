@@ -9,10 +9,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.tables.addCommunityJoin
-import com.storyteller_f.tables.commonPaginationCommunityList
-import com.storyteller_f.tables.exit
-import com.storyteller_f.tables.getCommonCommunity
+import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import io.ktor.resources.*
 import io.ktor.server.plugins.BadRequestException
@@ -122,7 +119,7 @@ suspend fun searchCommunities(
 
 private fun parseCommunityList(
     backend: Backend,
-    list: List<Triple<CommunityInfo, String?, String?>>
+    list: List<CommunityRawResult>
 ): Result<List<CommunityInfo>> {
     return backend.mediaService.get("apic", list.flatMap { (_, icon, poster) ->
         listOf(icon, poster)
@@ -130,7 +127,7 @@ private fun parseCommunityList(
         list.mapIndexed { i, communityPair ->
             val first = icons[i * 2]
             val second = icons[i * 2 + 1]
-            communityPair.first.copy(icon = getMediaInfo(first), poster = getMediaInfo(second))
+            communityPair.communityInfo.copy(icon = getMediaInfo(first), poster = getMediaInfo(second))
         }
     }
 }

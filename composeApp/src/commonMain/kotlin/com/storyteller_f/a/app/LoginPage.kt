@@ -49,15 +49,21 @@ fun LoginPage() {
         object : LoginNav {
 
             override fun gotoPrivateKey() {
-                navigator.navigate("/input_private_key")
+                if (!navigator.popBackStack("/input_private_key", false)) {
+                    navigator.navigate("/input_private_key")
+                }
             }
 
             override fun gotoSignUp() {
-                navigator.navigate("/select_signup")
+                if (!navigator.popBackStack("/select_signup", false)) {
+                    navigator.navigate("/select_signup")
+                }
             }
 
             override fun gotoLogin() {
-                navigator.navigate("/select_login")
+                if (!navigator.popBackStack("/select_login", false)) {
+                    navigator.navigate("/select_login")
+                }
             }
         }
     }
@@ -122,7 +128,6 @@ fun InputPrivateKeyPage() {
 
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text(stringResource(Res.string.input_private_key), style = MaterialTheme.typography.titleLarge)
             MeasureTextLineCount(privateKey, LocalTextStyle.current, 32.dp) { lineCount, _ ->
                 TextField(
                     privateKey,
@@ -132,6 +137,9 @@ fun InputPrivateKeyPage() {
                     modifier = Modifier.padding(top = 10.dp).fillMaxWidth(),
                     maxLines = max(lineCount, 2),
                     minLines = max(lineCount, 2),
+                    label = {
+                        Text(stringResource(Res.string.input_private_key))
+                    }
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
