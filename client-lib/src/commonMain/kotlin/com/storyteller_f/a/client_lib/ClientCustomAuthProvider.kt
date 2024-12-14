@@ -18,7 +18,11 @@ class ClientCustomAuthProvider : AuthProvider {
         }
     }
 
-    @Deprecated("Please use sendWithoutRequest function instead", level = DeprecationLevel.ERROR)
+    @Deprecated(
+        "Please use sendWithoutRequest function instead",
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("TODO(\"Not yet implemented\")")
+    )
     override val sendWithoutRequest: Boolean
         get() = TODO("Not yet implemented")
 

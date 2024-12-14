@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 DOCKER_IMAGE_NAME=$1
 if [ -z "$DOCKER_IMAGE_NAME" ]; then

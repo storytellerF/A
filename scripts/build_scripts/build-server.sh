@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
-sh gradlew server:buildFatJar --no-daemon
+./gradlew server:buildFatJar --no-daemon
 cp ./server/build/libs/*-all.jar ./deploy/build

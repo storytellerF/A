@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 ./scripts/tool_scripts/check-all-env.sh
 

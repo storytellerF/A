@@ -33,6 +33,11 @@ class LoadingHandler<T>(val refresh: () -> Unit) {
         data.value = t
         state.value = LoadingState.Done()
     }
+
+    fun error(error: Throwable) {
+        data.value = null
+        state.value = LoadingState.Error(error)
+    }
 }
 
 fun MutableStateFlow<LoadingState?>.markLoaded() {

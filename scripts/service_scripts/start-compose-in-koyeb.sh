@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 FLAVOR=$1
 ./scripts/docker_images_scripts/load-docker-images.sh

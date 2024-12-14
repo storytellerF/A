@@ -1,7 +1,6 @@
-FROM eclipse-temurin:21 AS builder
+FROM eclipse-temurin:21-alpine AS builder
 
-RUN apt-get update && apt-get install -y \
-    unzip
+RUN apk add bash
 
 #^1
 ARG IS_PROD

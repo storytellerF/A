@@ -13,7 +13,7 @@ while IFS= read -r key; do
   key=$(echo "$key" | tr -d '\r')
   upper_key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
 
-  # 获取对应的环境变量值
+  # 获取对应的环境变量值 bash 特有
   value="${!key}"
   # 对反斜杠进行转义
   value=$(echo "$value" | sed 's/\\/\\\\/g')

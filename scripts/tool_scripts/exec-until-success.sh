@@ -23,7 +23,7 @@ while true; do
     echo "Command succeeded."
     break
   else
-    # 增加重试次数
+    # 增加重试次数 bash 特有
     RETRY_COUNT=$((RETRY_COUNT + 1))
 
     # 检查是否超过最大重试次数

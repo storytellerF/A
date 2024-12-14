@@ -5,7 +5,7 @@ env_dir='.'
 # 遍历目录中的所有 .env 文件
 for file in "$env_dir"/*.env; do
   # 检查是否找到 .env 文件
-  if [[ -f "$file" ]]; then
+  if [ -f "$file" ]; then
     echo "Processing $file..."
     # 执行脚本
     ./scripts/tool_scripts/check-env-filter.sh env-filter "$file"
