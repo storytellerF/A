@@ -67,7 +67,7 @@ fun InteractionRow(
 
     val it = reactions ?: ServerResponse(emptyList())
     val moreOrCollapseIndicator = @Composable { scope: ContextualFlowRowOverflowScope ->
-        InteractionRowEnd(scope, startAddReaction, {
+        InteractionRowEnd(scope, startAddReaction, maxLines, {
             maxLines = 2
         }) {
             maxLines = Int.MAX_VALUE
@@ -104,6 +104,7 @@ fun InteractionRow(
 private fun InteractionRowEnd(
     scope: ContextualFlowRowOverflowScope,
     startAddReaction: () -> Unit,
+    maxLines: Int,
     shrink: () -> Unit,
     expand: () -> Unit,
 ) {
@@ -121,7 +122,7 @@ private fun InteractionRowEnd(
             Pill(text = "+$remainingItems") {
                 expand()
             }
-        } else {
+        } else if (maxLines > 2) {
             Pill(icon = Icons.Default.Close) {
                 shrink()
             }

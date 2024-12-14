@@ -9,7 +9,7 @@ fi
 if [ "$BUILD_ON" = "$HOST_TYPE" ]; then
   echo "Proceeding with build...[${HOST_TYPE}]"
 else
-  echo "Never build."
+  echo "BUILD_ON and HOST_TYPE mismatch, skip build."
   exit 0
 fi
 

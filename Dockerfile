@@ -27,15 +27,16 @@ ENV HOST_TYPE=docker
 RUN --mount=type=cache,target=/root/.gradle \
     ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
 
-FROM eclipse-temurin:21
+RUN mkdir -p ./cli/build/uncompressed && tar -xf ./cli/build/distributions/cli.tar -C ./cli/build/uncompressed
+
+FROM eclipse-temurin:21-alpine
 
 RUN mkdir /app
 
 WORKDIR /app
 COPY --from=builder /app/server/build/libs/*-all.jar ./ktor-server.jar
-COPY --from=builder /app/cli/build/distributions/cli.tar ./cli.tar
+COPY --from=builder /app/cli/build/uncompressed/cli ./cli
 COPY --from=builder /app/deploy ./deploy
 COPY scripts/tool_scripts/flush-database-singleton.sh ./scripts/tool_scripts/flush-database-singleton.sh
-RUN tar -xf ./cli.tar
 
 ENTRYPOINT ["java","-jar","./ktor-server.jar"]
