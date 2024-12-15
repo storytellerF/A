@@ -39,6 +39,7 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import kotlinx.coroutines.Dispatchers
@@ -242,8 +243,11 @@ fun TopicContentField(
     val media by list.handler.data.collectAsState()
     when (content) {
         is TopicContent.Plain -> {
+            val plain by produceState("", content.plain) {
+                value = extractMarkdownHeadline(content.plain)
+            }
             Markdown(
-                content.plain,
+                plain,
                 modifier = modifier.fillMaxWidth().clickable(onClick != null) {
                     onClick?.invoke()
                 },

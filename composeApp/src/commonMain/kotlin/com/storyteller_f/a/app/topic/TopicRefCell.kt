@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +24,7 @@ import com.storyteller_f.a.app.user.UserViewModel
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.extractMarkdownHeadline
 
 @Composable
 fun TopicRefCell(topicId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
@@ -82,8 +84,12 @@ private fun TopicRefCellContent(
         authorInfo?.let {
             Text("${authorInfo?.nickname} :")
         }
+        val text = (it.content as? TopicContent.Plain)?.plain.toString()
+        val plain by produceState("", text) {
+            value = extractMarkdownHeadline(text)
+        }
         Text(
-            (it.content as? TopicContent.Plain)?.plain.toString(),
+            plain,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 3
         )

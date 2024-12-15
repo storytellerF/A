@@ -52,7 +52,7 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
                 DirectoryReader.open(it).use { reader ->
                     val searcher = IndexSearcher(reader)
                     idList.map { id ->
-                        val topDocs = searcher.search(LongPoint.newExactQuery("id1", id.toLong()), 1)
+                        val topDocs = searcher.search(LongPoint.newExactQuery("id1", id), 1)
                         topDocs.scoreDocs.firstOrNull()?.let { scoreDoc ->
                             val document = searcher.storedFields().document(scoreDoc.doc)
                             restoreDocument(id, document)
