@@ -200,14 +200,22 @@ suspend fun getTopic(
             getCommonTopic(topicId, uid).mapResultNotNull { info ->
                 when {
                     !isPrivate -> backend.topicSearchService.getDocument(listOf(topicId)).map { value ->
-                        value.firstOrNull()?.content?.let {
-                            info.copy(content = TopicContent.Plain(it))
+                        val content = value.firstOrNull()?.content
+                        if (content != null) {
+                            info.copy(content = TopicContent.Plain(content))
+                        } else {
+                            info
                         }
                     }
 
                     uid == null -> Result.failure(UnauthorizedException())
                     else -> DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }.map { value ->
-                        value.firstOrNull()?.let { id -> info.copy(content = id) }
+                        val encrypted = value.firstOrNull()
+                        if (encrypted != null) {
+                            info.copy(content = encrypted)
+                        } else {
+                            info
+                        }
                     }
                 }
             }.mapNotNull { value ->
@@ -395,9 +403,7 @@ suspend fun searchPublicTopics(
         if (search.rootId != null && search.rootType != null) search.rootId to search.rootType else null,
         if (search.parentId != null && search.parentType != null) search.parentId to search.parentType else null,
     ).mapResult { documents ->
-        val map = documents.list.associate {
-            it.id to it
-        }
+        val map = documents.list.associateBy { it.id }
         val ids = documents.list.map {
             it.id
         }

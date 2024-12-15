@@ -56,6 +56,7 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.cryptography.core)
             implementation(libs.kotlinx.datetime)
+            implementation("org.jetbrains:markdown:0.7.3")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
