@@ -10,12 +10,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.AddHome
-import androidx.compose.material.icons.filled.CardMembership
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -103,7 +98,7 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType) : PagingViewModel<Pr
         ObjectType.ROOM -> client.getRoomTopics(id, loadKey, 20)
         ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, 20)
         else -> client.getTopicTopics(id, loadKey, 20)
-    }
+    }.getOrThrow()
     info.copy(processEncryptedTopic(info.data))
 })
 
@@ -181,7 +176,7 @@ class DialogSaveState {
     }
 }
 
-class RoomViewModel(private val requestInfo: suspend HttpClient.() -> RoomInfo) : SimpleViewModel<RoomInfo>() {
+class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<RoomInfo>) : SimpleViewModel<RoomInfo>() {
     val dialog = DialogSaveState()
 
     constructor(roomId: PrimaryKey) : this({
@@ -216,22 +211,16 @@ class RoomViewModel(private val requestInfo: suspend HttpClient.() -> RoomInfo) 
         }
     }
 
-    override suspend fun loadInternal() {
-        handler.request {
-            serviceCatching {
-                requestInfo(client)
-            }
-        }
-    }
+    override suspend fun loadInternal() = requestInfo(client)
 }
 
 @Composable
 fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
-    val viewModel = viewModel(TopicsViewModel::class, keys = listOf("room-topics", roomId)) {
+    val viewModel = viewModel(keys = listOf("room-topics", roomId)) {
         TopicsViewModel(roomId, ObjectType.ROOM)
     }
     val items = viewModel.flow.collectAsLazyPagingItems()
-    val room = viewModel(RoomViewModel::class, keys = listOf("room", roomId)) {
+    val room = viewModel(keys = listOf("room", roomId)) {
         RoomViewModel(roomId)
     }
     val roomInfo by room.handler.data.collectAsState()
@@ -324,21 +313,16 @@ class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean) :
         }
     }
 
-    override suspend fun loadInternal() {
-        handler.request {
-            runCatching {
-                val result = mutableListOf<Pair<PrimaryKey, String>>()
-                var last: PrimaryKey? = null
-                while (true) {
-                    val list = client.requestRoomKeys(id, last, 100)
-                    result.addAll(list.data)
-                    val nextKey = list.pagination?.nextPageToken?.toPrimaryKeyOrNull()
-                    if (nextKey == null) break
-                    last = nextKey
-                }
-                result
-            }
+    override suspend fun loadInternal() = runCatching {
+        val result = mutableListOf<Pair<PrimaryKey, String>>()
+        var last: PrimaryKey? = null
+        while (true) {
+            val list = client.requestRoomKeys(id, last, 100).getOrThrow()
+            result.addAll(list.data)
+            val nextKey = list.pagination?.nextPageToken?.toPrimaryKeyOrNull() ?: break
+            last = nextKey
         }
+        result
     }
 }
 
@@ -360,12 +344,14 @@ fun RoomInputGroup(
     if (roomInfo != null) {
         val toaster = rememberToasterState()
         Toaster(toaster, alignment = Alignment.Center)
-        val keysViewModel = viewModel(RoomKeysViewModel::class, keys = listOf("room-keys", roomId)) {
+        val keysViewModel = viewModel(keys = listOf("room-keys", roomId)) {
             RoomKeysViewModel(roomId, roomInfo.isPrivate)
         }
         val keyState by keysViewModel.handler.state.collectAsState()
         val keyData by keysViewModel.handler.data.collectAsState()
-        InputGroupInternal(input, MaterialTheme.colorScheme.tertiaryContainer, {
+        val objectId = topicId ?: roomId
+        val objectType = if (topicId != null) ObjectType.TOPIC else ObjectType.ROOM
+        InputGroupInternal(objectId, objectType, input, MaterialTheme.colorScheme.tertiaryContainer, {
             input = it
         }, sendButton = {
             val p1 = stringResource(Res.string.private_room_pub_key_loading)
@@ -508,6 +494,8 @@ fun sendMessage(
 
 @Composable
 fun InputGroupInternal(
+    objectId: PrimaryKey,
+    objectType: ObjectType,
     input: String,
     backgroundColor: Color,
     updateInput: (String) -> Unit,
@@ -524,13 +512,20 @@ fun InputGroupInternal(
         OutlinedTextField(input, {
             updateInput(it)
         }, modifier = Modifier.weight(1f), suffix = {
-            if (input.isNotEmpty()) {
-                Icon(Icons.Default.Clear, "clear input", modifier = Modifier.clickable {
-                    updateInput("")
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (input.isNotEmpty()) {
+                    Icon(Icons.Default.Clear, "clear input", modifier = Modifier.clickable {
+                        updateInput("")
+                    })
+                }
+                val appNav = LocalAppNav.current
+                Icon(Icons.Default.OpenInFull, "open in full", modifier = Modifier.clickable {
+                    appNav.gotoTopicCompose(objectType, objectId)
                 })
             }
         })
-        Box(modifier = Modifier.width(60.dp).height(40.dp), contentAlignment = Alignment.Center) {
+
+        Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
             sendButton()
         }
     }
@@ -614,11 +609,11 @@ private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: () -> Unit) {
     globalDialogState.use {
         val communityId = roomInfo.communityId
         if (communityId != null) {
-            if (!client.getCommunityInfo(communityId, fillJoinInfo = true).isJoined) {
+            if (!client.getCommunityInfo(communityId, fillJoinInfo = true).getOrThrow().isJoined) {
                 throw Exception("you should join community first.")
             }
         }
-        val info = client.joinRoom(roomInfo.id)
+        val info = client.joinRoom(roomInfo.id).getOrThrow()
         bus.emit(OnRoomJoined(roomInfo.id, info))
         onSuccess()
     }
@@ -626,7 +621,7 @@ private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: () -> Unit) {
 
 private suspend fun exitRoom(roomInfo: RoomInfo, onSuccess: () -> Unit) {
     globalDialogState.use {
-        val info = client.exitRoom(roomInfo.id)
+        val info = client.exitRoom(roomInfo.id).getOrThrow()
         bus.emit(OnRoomExited(roomInfo.id, info))
         onSuccess()
     }

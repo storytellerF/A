@@ -19,7 +19,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun RoomRefCell(roomId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(RoomViewModel::class, keys = listOf("room", roomId)) {
+    val viewModel = viewModel(keys = listOf("room", roomId)) {
         RoomViewModel(roomId)
     }
     RoomRefCellInternal(viewModel, onClick)
@@ -27,7 +27,7 @@ fun RoomRefCell(roomId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
 
 @Composable
 fun RoomRefCell(roomAid: String, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(RoomViewModel::class, keys = listOf("room", roomAid)) {
+    val viewModel = viewModel(keys = listOf("room", roomAid)) {
         RoomViewModel(roomAid)
     }
 

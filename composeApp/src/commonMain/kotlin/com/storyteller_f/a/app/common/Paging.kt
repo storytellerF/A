@@ -5,10 +5,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.*
 import com.storyteller_f.a.app.client
+import com.storyteller_f.a.client_lib.serviceCatching
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
-import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 
 @OptIn(ExperimentalPagingApi::class)
@@ -24,18 +24,6 @@ abstract class PagingViewModel<K : Any, V : Any>(
         sourceBuilder()
     }.flow
         .cachedIn(viewModelScope)
-}
-
-inline fun <R> serviceCatching(block: () -> R): Result<R> {
-    return try {
-        val value = block()
-        Result.success(value)
-    } catch (e: Throwable) {
-        Napier.e(e) {
-            "serviceCatching"
-        }
-        Result.failure(e)
-    }
 }
 
 fun <KEY : Any, DATUM : Any> Result<APagingData<KEY, DATUM>>.loadResult(): PagingSourceLoadResult<KEY, DATUM> {

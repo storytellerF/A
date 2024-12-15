@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
-URL=$1
-FLAVOR=$2
+FLAVOR=$1
+URL=$2
 IS_PROD="true"
 
 # 自动根据系统环境设置换行符格式
@@ -20,8 +20,8 @@ if [ "$use_windows_newline" = true ]; then
 fi
 
 cat > "./$FLAVOR.env" <<EOF
-SERVER_URL=${URL}${newline}
-WS_SERVER_URL=${URL}${newline}
+SERVER_URL=https://${URL}${newline}
+WS_SERVER_URL=wss://${URL}${newline}
 EOF
 
 ./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$IS_PROD"

@@ -84,9 +84,9 @@ fun User.toUserInfo(): UserInfo {
 
 fun toFinalUserInfo(p: Pair<UserInfo, String?>, backend: Backend): Result<UserInfo> {
     val (userInfo, icon) = p
-    return backend.mediaService.get("apic", listOf(icon)).map { value ->
+    return backend.mediaService.get("amedia", listOf(icon)).map { value ->
         userInfo.copy(avatar = value.firstOrNull()?.let {
-            MediaInfo(it)
+            MediaInfo(it,)
         })
     }
 }
@@ -177,12 +177,12 @@ suspend fun searchMembers(
     word: String?
 ): Result<PaginationResult<UserInfo>> {
     return commonPaginationMemberList(objectId, prePageToken, nextPageToken, size, word).mapResult { (pairs, count) ->
-        backend.mediaService.get("apic", pairs.map {
+        backend.mediaService.get("amedia", pairs.map {
             it.second
         }).map { value ->
             PaginationResult(pairs.mapIndexed { index, pair ->
                 pair.first.copy(avatar = value[index]?.let {
-                    MediaInfo(it)
+                    MediaInfo(it,)
                 })
             }, count)
         }

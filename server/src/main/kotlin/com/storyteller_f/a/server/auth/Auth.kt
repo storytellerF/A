@@ -4,16 +4,10 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.BuildConfig
-import com.storyteller_f.a.server.bindProtectedSafeCommunityRoute
-import com.storyteller_f.a.server.bindProtectedSafeRoomRoute
-import com.storyteller_f.a.server.bindProtectedSafeTopicRoute
-import com.storyteller_f.a.server.bindProtectedSafeUserRoute
-import com.storyteller_f.a.server.bindSafeCommunityRoute
-import com.storyteller_f.a.server.bindSafeRoomRoute
-import com.storyteller_f.a.server.bindSafeTopicRoute
-import com.storyteller_f.a.server.bindSafeUserRoute
-import com.storyteller_f.a.server.webSocketContent
+import com.storyteller_f.a.server.common.checkParameter
+import com.storyteller_f.a.server.route.*
 import com.storyteller_f.shared.*
+import com.storyteller_f.shared.model.MediaResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.filterNull
@@ -33,7 +27,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-import io.ktor.server.websocket.webSocket
+import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -131,7 +125,7 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
     }
 }
 
-private fun Routing.bindUnauthenticatedRoute(backend: Backend) {
+fun Routing.bindUnauthenticatedRoute(backend: Backend) {
     get("/get_data") {
         call.respondText(call.getData())
     }
@@ -146,6 +140,17 @@ private fun Routing.bindUnauthenticatedRoute(backend: Backend) {
 
     get("/ping") {
         call.respondText("pong")
+    }
+
+    get("/amedia/{path...}") {
+        omitPrincipal {
+            checkParameter<List<String>, MediaResponse>("path") {
+                val userHome = System.getProperty("user.home")
+                val file = File(userHome, "a/amedia/${it.joinToString("/")}")
+                val value = MediaResponse(file.path, ContentType.defaultForFile(file).toString())
+                Result.success(value)
+            }
+        }
     }
 
     get {
@@ -355,29 +360,5 @@ fun Application.configureAuth(backend: Backend) {
             }
         }
     }
-    routing {
-        authenticate {
-            bindProtectedSafeTopicRoute(backend)
-            bindProtectedSafeCommunityRoute(backend)
-            bindProtectedSafeRoomRoute(backend)
-            bindProtectedSafeUserRoute()
-            webSocket("/link") {
-                webSocketContent(backend)
-            }
-            post("/sign_out") {
-                usePrincipal { _ ->
-                    call.sessions.clear(UserSession::class)
-                    Result.success(Unit)
-                }
-            }
-        }
-        authenticate(optional = true) {
-            bindSafeRoomRoute(backend)
-            bindSafeTopicRoute(backend)
-            bindSafeCommunityRoute(backend)
-            bindSafeUserRoute(backend)
-            bindProtectedSafeUserRoute()
-        }
-        bindUnauthenticatedRoute(backend)
-    }
+    commonRoute(backend)
 }

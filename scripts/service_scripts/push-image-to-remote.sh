@@ -15,20 +15,23 @@ IMAGE_NAME="a-server:latest"
 
 # 检查文件是否存在
 if [ ! -f "$FILE" ]; then
-  echo "$FILE does not exist. Saving Docker image..."
+  echo "$FILE does not exist. Saving Docker image...`date`"
   docker save -o "$FILE" "$IMAGE_NAME"
-  echo "Docker image saved to $FILE."
+  echo "Docker image saved to $FILE.`date`"
 else
-  echo "$FILE already exists. Skipping docker save."
+  echo "$FILE already exists. Skipping docker save.`date`"
 fi
 
-./scripts/tool_scripts/exec-until-success.sh ssh "$REMOTE_URI" "mkdir -p a-server && mkdir -p /tmp/A"
+./scripts/tool_scripts/exec-until-success.sh ssh "$REMOTE_URI" "mkdir -p a-server"
+sleep 2
+./scripts/tool_scripts/exec-until-success.sh ssh "$REMOTE_URI" "mkdir -p /tmp/A"
 sleep 2
 
 md=$(md5sum "$FILE" | awk '{print $1}')
 mdRemote=$(ssh "$REMOTE_URI" "md5sum ./a-server/$FLAVOR.image.tar | awk '{print \$1}'")
 echo "local: $md remote: $mdRemote"
 if [ "$md" != "$mdRemote" ]; then
+  echo "upload tar `date`"
   echo "put $FILE ./a-server/$FLAVOR.image.tar" | sftp "$REMOTE_URI"
   sleep 2
 
@@ -43,7 +46,8 @@ if [ "$md" != "$mdRemote" ]; then
   ssh "$REMOTE_URI" "echo ""$md"  "/tmp/A/$FLAVOR.image.tar"" | md5sum -c -"
   sleep 2
 else
-  echo "docker image same, skip upload."
+  echo "docker image same, skip upload.`date`"
 fi
 
+echo "start docker `date`"
 ./scripts/tool_scripts/exec-until-success.sh ssh "$REMOTE_URI" "$REMOTE_COMMAND"

@@ -30,19 +30,37 @@ class RoomTest {
             createRooms(community1, room1, room2, room3)
             attachSession(client) {
                 assertFails {
-                    client.joinRoom(room1)
+                    client.joinRoom(room1).getOrThrow()
                 }
                 client.joinCommunity(community1)
                 client.joinRoom(room1)
-                assertEquals(1, client.searchRooms(10, null, JoinStatusSearch.JOINED, null, null).data.size)
-                assertEquals(1, client.searchRooms(10, null, JoinStatusSearch.NOT_JOINED, null, null).data.size)
-                assertEquals(2, client.searchRooms(10, null, JoinStatusSearch.UNSPECIFIED, null, null).data.size)
-                assertEquals(1, client.searchRooms(10, null, JoinStatusSearch.UNSPECIFIED, "name2", null).data.size)
+                assertEquals(
+                    1,
+                    client.searchRooms(10, null, JoinStatusSearch.JOINED, null, null).getOrThrow().data.size
+                )
+                assertEquals(
+                    1,
+                    client.searchRooms(10, null, JoinStatusSearch.NOT_JOINED, null, null).getOrThrow().data.size
+                )
+                assertEquals(
+                    2,
+                    client.searchRooms(10, null, JoinStatusSearch.UNSPECIFIED, null, null).getOrThrow().data.size
+                )
+                assertEquals(
+                    1,
+                    client.searchRooms(10, null, JoinStatusSearch.UNSPECIFIED, "name2", null).getOrThrow().data.size
+                )
                 DatabaseFactory.dbQuery {
                     MemberJoin.new(MemberJoin(it.data4, room3, ObjectType.ROOM, now()))
                 }
-                assertEquals(2, client.searchRooms(10, null, JoinStatusSearch.JOINED, null, null).data.size)
-                assertEquals(2, client.searchRooms(10, null, JoinStatusSearch.UNSPECIFIED, null, community1).data.size)
+                assertEquals(
+                    2,
+                    client.searchRooms(10, null, JoinStatusSearch.JOINED, null, null).getOrThrow().data.size
+                )
+                assertEquals(
+                    2,
+                    client.searchRooms(10, null, JoinStatusSearch.UNSPECIFIED, null, community1).getOrThrow().data.size
+                )
             }
         }
     }
@@ -124,20 +142,20 @@ class RoomTest {
                 client.joinRoom(room1)
             }
             attachSession(client) {
-                assertEquals(1, client.searchRoomMembers(room1, null, 10, null).data.size)
+                assertEquals(1, client.searchRoomMembers(room1, null, 10, null).getOrThrow().data.size)
                 client.joinCommunity(community1)
                 client.joinRoom(room1)
-                assertEquals(2, client.searchRoomMembers(room1, null, 10, null).data.size)
+                assertEquals(2, client.searchRoomMembers(room1, null, 10, null).getOrThrow().data.size)
                 assertFails {
-                    client.searchRoomMembers(room2, null, 10, null)
+                    client.searchRoomMembers(room2, null, 10, null).getOrThrow()
                 }
                 assertFails {
-                    client.joinRoom(room2)
+                    client.joinRoom(room2).getOrThrow()
                 }
                 DatabaseFactory.dbQuery {
                     MemberJoin.new(MemberJoin(it.data4, room2, ObjectType.ROOM, now()))
                 }
-                assertEquals(1, client.searchRoomMembers(room2, null, 10, null).data.size)
+                assertEquals(1, client.searchRoomMembers(room2, null, 10, null).getOrThrow().data.size)
             }
         }
     }

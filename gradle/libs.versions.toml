@@ -8,12 +8,13 @@ androidx-lifecycleProcess = "2.8.7"
 bcprovJdk18on = "1.78.1"
 coil = "3.0.0-rc02"
 composableTableVersion = "1.2.0"
-compose-plugin = "1.7.0"
+compose-plugin = "1.7.1"
 couchbaseLite = "3.1.3-1.1.0"
 desugar_jdk_libs = "2.1.3"
 detektVersion = "1.23.7"
 emoji-reader = "2.0.6"
 emojiKt = "2.0.1"
+filekitCompose = "0.8.8"
 geoip2 = "4.2.1"
 h2 = "2.2.224"
 highlights = "1.0.0"
@@ -38,7 +39,7 @@ kotlin = "2.0.21"
 kotlinxCli = "0.3.6"
 kotlinxSerializationJson = "1.7.3"
 ktor = "3.0.0"
-logback = "1.5.6"
+logback = "1.5.11"
 material3WindowSizeClassMultiplatform = "0.5.0"
 minio = "8.5.11"
 multiplatformSettingsNoArg = "1.2.0"
@@ -50,7 +51,7 @@ postgresql = "42.7.2"
 richeditorCompose = "1.0.0-rc10"
 slf4jSimple = "2.0.13"
 sqliteJdbc = "3.46.0.0"
-uiTestJunit4Android = "1.7.5"
+uiTestJunit4Android = "1.7.6"
 uriKmp = "0.0.18"
 easylauncher = "6.4.0"
 buildconfig = "0.15.1"
@@ -64,6 +65,7 @@ desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref 
 elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "minioVersion" }
 emoji-compose-m3 = { module = "org.kodein.emoji:emoji-compose-m3", version.ref = "emojiKt" }
 emoji-kt = { module = "org.kodein.emoji:emoji-kt", version.ref = "emojiKt" }
+filekit-compose = { module = "io.github.vinceglb:filekit-compose", version.ref = "filekitCompose" }
 geoip2 = { module = "com.maxmind.geoip2:geoip2", version.ref = "geoip2" }
 highlights = { module = "dev.snipme:highlights", version.ref = "highlights" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }

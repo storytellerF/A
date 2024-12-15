@@ -27,7 +27,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun UserRefCell(userId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(UserViewModel::class, keys = listOf("user", userId)) {
+    val viewModel = viewModel(keys = listOf("user", userId)) {
         UserViewModel(userId)
     }
 
@@ -36,7 +36,7 @@ fun UserRefCell(userId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
 
 @Composable
 fun UserRefCell(userAid: String, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(UserViewModel::class, keys = listOf("user", userAid)) {
+    val viewModel = viewModel(keys = listOf("user", userAid)) {
         UserViewModel(userAid)
     }
 

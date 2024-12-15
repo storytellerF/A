@@ -122,6 +122,7 @@ kotlin {
             implementation(libs.sonner)
             implementation(libs.highlights)
             implementation(libs.richeditor.compose)
+            implementation(libs.filekit.compose)
 
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)

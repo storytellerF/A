@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.Result
 
 class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
-    override fun clean(bucketName: String): kotlin.Result<Unit> {
+    override fun clean(bucketName: String): Result<Unit> {
         return useMinIoClient(connection) {
             if (bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 removeAllObject(bucketName)
@@ -15,7 +15,17 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override fun get(bucketName: String, objList: List<String?>): kotlin.Result<List<String?>> {
+    override fun list(bucketName: String, prefix: String): Result<List<String>> {
+        return useMinIoClient(connection) {
+            listObjects(
+                ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build()
+            ).map {
+                it.get().objectName()
+            }
+        }
+    }
+
+    override fun get(bucketName: String, objList: List<String?>): Result<List<String?>> {
         return useMinIoClient(connection) {
             objList.map {
                 getIconInMioIo(bucketName, it)
@@ -39,7 +49,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
     }
 }
 
-private fun <R> useMinIoClient(minIoConnection: MinIoConnection, block: MinioClient.() -> R): kotlin.Result<R> {
+private fun <R> useMinIoClient(minIoConnection: MinIoConnection, block: MinioClient.() -> R): Result<R> {
     return runCatching {
         MinioClient.builder()
             .endpoint(minIoConnection.url)

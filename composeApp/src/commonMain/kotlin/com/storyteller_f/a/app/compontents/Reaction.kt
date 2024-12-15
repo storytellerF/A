@@ -30,13 +30,7 @@ class ReactionsViewModel(val objectId: PrimaryKey) : SimpleViewModel<ServerRespo
         load()
     }
 
-    override suspend fun loadInternal() {
-        handler.request {
-            runCatching {
-                client.getReactions(objectId)
-            }
-        }
-    }
+    override suspend fun loadInternal() = client.getReactions(objectId)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -50,7 +44,7 @@ fun InteractionRow(
     val commentCount = topicInfo.commentCount
     val hasComment = topicInfo.hasComment
     val reactionCount = topicInfo.reactionCount
-    val reactionsViewModel = viewModel(ReactionsViewModel::class, keys = listOf("reactions", objectId)) {
+    val reactionsViewModel = viewModel(keys = listOf("reactions", objectId)) {
         ReactionsViewModel(objectId)
     }
     val reactions by reactionsViewModel.handler.data.collectAsState()

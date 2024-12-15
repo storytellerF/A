@@ -5,7 +5,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.util.*
 
 inline fun <reified T : Any, reified R : Any> RoutingContext.checkParameter(
-    name: String = "id",
+    name: String,
     block: (T) -> Result<R?>
 ): Result<R?> {
     return call.parameters.checkParameter<R, T>(name, block)
@@ -31,11 +31,4 @@ inline fun <reified T : Any> Parameters.getOrFailCompact(name: String): T {
         getOrFail<T>(name)
     }
     return value
-}
-
-inline fun <reified T : Any, reified R : Any> RoutingContext.checkQueryParameter(
-    name: String = "id",
-    block: (T) -> Result<R?>
-): Result<R?> {
-    return call.queryParameters.checkParameter<R, T>(name, block)
 }

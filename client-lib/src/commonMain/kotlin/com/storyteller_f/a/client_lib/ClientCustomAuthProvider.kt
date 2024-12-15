@@ -75,8 +75,8 @@ fun HttpRequestBuilder.addRequestHeaders(
         val localData = LoginViewModel.session?.first
         val localSignature = LoginViewModel.session?.second
         if (userInfo != null && data == localData && localData.isNotBlank() && !localSignature.isNullOrBlank()) {
-            val userId = userInfo.id
             if (userInfo.aid.isNullOrBlank()) {
+                val userId = userInfo.id
                 headers[HttpHeaders.Authorization] =
                     """Custom id="$userId", sig="$localSignature""""
             } else {

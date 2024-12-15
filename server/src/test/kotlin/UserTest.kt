@@ -13,13 +13,13 @@ class UserTest {
         attachSession(client) {
             val uid = it.data4
             assertNotNull(uid)
-            val aid = client.getUserInfo(uid).aid
+            val aid = client.getUserInfo(uid).getOrThrow().aid
             assertNull(aid)
             val updateRow = client.updateUserInfo(
                 UserInfo.EMPTY.copy(aid = "newaid")
-            )
+            ).getOrThrow()
             assertEquals(1, updateRow)
-            val user = client.getUserInfoByAid("newaid")
+            val user = client.getUserInfoByAid("newaid").getOrThrow()
             assertEquals(uid, user.id)
         }
     }

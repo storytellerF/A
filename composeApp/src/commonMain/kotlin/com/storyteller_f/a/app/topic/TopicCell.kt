@@ -8,30 +8,25 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
-import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
+import coil3.compose.AsyncImagePainter
+import coil3.compose.LocalPlatformContext
+import coil3.compose.rememberAsyncImagePainter
+import coil3.request.ImageRequest
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.ImageData
+import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.InteractionRow
@@ -39,6 +34,7 @@ import com.storyteller_f.a.app.compontents.TextUnitToPx
 import com.storyteller_f.a.app.compontents.buildTexPainter
 import com.storyteller_f.a.app.user.UserCell
 import com.storyteller_f.a.app.user.UserViewModel
+import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
@@ -59,13 +55,13 @@ fun TopicCell(
     contentAlignAvatar: Boolean = true,
     showAvatar: Boolean = true
 ) {
-    val viewModel = viewModel(TopicViewModel::class, keys = listOf("topic-single", topicInfoRaw.id)) {
+    val viewModel = viewModel(keys = listOf("topic-single", topicInfoRaw.id)) {
         TopicViewModel(topicInfoRaw)
     }
     val topicInfo by viewModel.handler.data.collectAsState()
     topicInfo?.let { info ->
         val author = info.author
-        val authorViewModel = viewModel(UserViewModel::class, keys = listOf("user", author)) {
+        val authorViewModel = viewModel(keys = listOf("user", author)) {
             UserViewModel(author)
         }
 
@@ -209,12 +205,41 @@ private fun readFenceContent(
     return content.substring(start, end)
 }
 
+class CustomCoil3ImageTransformerImpl(mediaList: List<MediaInfo>) : ImageTransformer {
+    private val mediaMap = mediaList.associateBy { "/${it.name}" }
+
+    @Composable
+    override fun transform(link: String): ImageData {
+        return rememberAsyncImagePainter(
+            model = ImageRequest.Builder(LocalPlatformContext.current)
+                .data(mediaMap[link]?.url)
+                .size(coil3.size.Size.ORIGINAL)
+                .build()
+        ).let { ImageData(it) }
+    }
+
+    @Composable
+    override fun intrinsicSize(painter: Painter): Size {
+        var size by remember(painter) { mutableStateOf(painter.intrinsicSize) }
+        if (painter is AsyncImagePainter) {
+            val painterState = painter.state.collectAsState()
+            val intrinsicSize = painterState.value.painter?.intrinsicSize
+            intrinsicSize?.also { size = it }
+        }
+        return size
+    }
+}
+
 @Composable
 fun TopicContentField(
     content: TopicContent?,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
+    val list = viewModel(keys = listOf("media")) {
+        MediaListViewModel()
+    }
+    val media by list.handler.data.collectAsState()
     when (content) {
         is TopicContent.Plain -> {
             Markdown(
@@ -224,7 +249,7 @@ fun TopicContentField(
                 },
                 colors = markdownColor(),
                 typography = markdownTypography(),
-                imageTransformer = Coil3ImageTransformerImpl,
+                imageTransformer = CustomCoil3ImageTransformerImpl(media?.data.orEmpty()),
                 components = markdownComponents(codeFence = {
                     CustomCodeFence(it)
                 }, codeBlock = { HighlightCodeBlock(it) })

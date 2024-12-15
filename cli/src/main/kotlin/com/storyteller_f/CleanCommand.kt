@@ -12,7 +12,7 @@ class CleanCommand : Subcommand("clean", "clean all data") {
         Napier.i {
             "database tables removed."
         }
-        backend.mediaService.clean("apic")
+        backend.mediaService.clean("amedia")
         runBlocking {
             backend.topicSearchService.clean()
         }

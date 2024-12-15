@@ -41,10 +41,8 @@ fun main(args: Array<String>) {
 
     processPreSetData(map)
 
-    val backend = buildBackendFromEnv(map)
     val serverPort = (map["SERVER_PORT"] as String).toInt()
     val extraArgs = arrayOf("-port=$serverPort")
-    DatabaseFactory.init(backend.config.databaseConnection)
 
     EngineMain.main(args + extraArgs)
 }
@@ -98,6 +96,7 @@ fun Application.module() {
     val reader = DatabaseReader.Builder(
         ClassLoader.getSystemClassLoader().getResourceAsStream("GeoLite2-Country.mmdb")
     ).build()
+    DatabaseFactory.init(backend.config.databaseConnection)
 
     install(ContentNegotiation) {
         json()
