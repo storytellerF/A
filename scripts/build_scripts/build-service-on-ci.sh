@@ -59,6 +59,8 @@ if [ "$remoteName" != 'ubuntu' ]; then
     exit 1
 fi
 
+echo "prepare build `date`"
+
 ./scripts/tool_scripts/save-env.sh
 
 ./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" true
