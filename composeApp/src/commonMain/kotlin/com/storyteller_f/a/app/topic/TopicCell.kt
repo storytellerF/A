@@ -107,7 +107,8 @@ fun TopicCellInternal(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             TopicContentField(
-                topicInfo.content,
+                topicInfo,
+                showHeadline = true,
                 onClick = {
                     onClick(topicId, ObjectType.TOPIC)
                 }
@@ -233,27 +234,36 @@ class CustomCoil3ImageTransformerImpl(mediaList: List<MediaInfo>) : ImageTransfo
 
 @Composable
 fun TopicContentField(
-    content: TopicContent?,
-    modifier: Modifier = Modifier,
+    topicInfo: TopicInfo,
+    showHeadline: Boolean,
     onClick: (() -> Unit)? = null
 ) {
-    val list = viewModel(keys = listOf("media")) {
-        MediaListViewModel()
-    }
-    val media by list.handler.data.collectAsState()
-    when (content) {
+    when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
+            val mediaList = if (topicInfo.isPrivate) {
+                val list = viewModel(keys = listOf("media", topicInfo.rootId)) {
+                    MediaListViewModel(topicInfo.rootId, ObjectType.ROOM)
+                }
+                val media by list.handler.data.collectAsState()
+                media?.data.orEmpty()
+            } else {
+                content.list
+            }
             val plain by produceState("", content.plain) {
-                value = extractMarkdownHeadline(content.plain)
+                value = if (showHeadline) {
+                    extractMarkdownHeadline(content.plain)
+                } else {
+                    content.plain
+                }
             }
             Markdown(
                 plain,
-                modifier = modifier.fillMaxWidth().clickable(onClick != null) {
+                modifier = Modifier.fillMaxWidth().clickable(onClick != null) {
                     onClick?.invoke()
                 },
                 colors = markdownColor(),
                 typography = markdownTypography(),
-                imageTransformer = CustomCoil3ImageTransformerImpl(media?.data.orEmpty()),
+                imageTransformer = CustomCoil3ImageTransformerImpl(mediaList),
                 components = markdownComponents(codeFence = {
                     CustomCodeFence(it)
                 }, codeBlock = { HighlightCodeBlock(it) })

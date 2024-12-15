@@ -1,4 +1,6 @@
+import com.storyteller_f.shared.utils.extractHeadParagraph
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
+import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -11,7 +13,9 @@ class MarkdownTest {
         Some introductory text before the second level header.
         
         Hello.
-        
+        ```c
+            print();
+        ```
         ## Second Level Header
         
         Content after the second level header.
@@ -24,6 +28,21 @@ class MarkdownTest {
             Hello.
         """.trimIndent(), actual
         )
+    }
+
+    @Test
+    fun `test extract media`() {
+        val text = """
+            ![test](/test.jpg "test")
+        """.trimIndent()
+        val list = extractMarkdownMediaLink(text)
+        assertEquals("/test.jpg", list.first())
+    }
+
+    @Test
+    fun `test extract paragraph`() {
+        val r = extractHeadParagraph("test")
+        assertEquals("test", r)
     }
 
 

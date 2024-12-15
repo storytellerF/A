@@ -353,17 +353,22 @@ suspend fun HttpClient.signOut() = serviceCatching {
     post("sign_out")
 }
 
-suspend fun HttpClient.getMediaList() = serviceCatching {
-    get("amedia").body<ServerResponse<MediaInfo>>()
+suspend fun HttpClient.getMediaList(objectId: PrimaryKey, objectType: ObjectType) = serviceCatching {
+    get("amedia") {
+        url {
+            parameters.append("objectId", objectId.toString())
+            parameters.append("objectType", objectType.name)
+        }
+    }.body<ServerResponse<MediaInfo>>()
 }
 
 suspend fun HttpClient.upload(stream: ByteArray, name: String, extension: String) = serviceCatching {
-    post("upload") {
+    post("amedia/upload") {
         setBody(
             MultiPartFormDataContent(
                 formData {
                     append("description", "amedia")
-                    append("image", stream, Headers.build {
+                    append("file", stream, Headers.build {
                         append(HttpHeaders.ContentType, ContentType.defaultForFileExtension(extension).contentType)
                         append(HttpHeaders.ContentDisposition, "filename=\"$name\"")
                     })

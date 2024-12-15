@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
@@ -29,11 +30,14 @@ import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.a.client_lib.getMediaList
 import com.storyteller_f.a.client_lib.upload
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -48,24 +52,40 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
 
-class MediaListViewModel : SimpleViewModel<ServerResponse<MediaInfo>>() {
+class MediaListViewModel(private val objectId: PrimaryKey, private val objectType: ObjectType) :
+    SimpleViewModel<ServerResponse<MediaInfo>>() {
     init {
         load()
     }
 
-    override suspend fun loadInternal() = client.getMediaList()
+    override suspend fun loadInternal() = client.getMediaList(objectId, objectType)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicComposePage(objectType: ObjectType, objectId: PrimaryKey, backPrePage: () -> Unit) {
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val user by LoginViewModel.user.collectAsState()
+    user?.let {
+        TopicComposeScaffold(it, scope, drawerState, objectType, objectId, backPrePage)
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun TopicComposeScaffold(
+    user: UserInfo,
+    scope: CoroutineScope,
+    drawerState: DrawerState,
+    objectType: ObjectType,
+    objectId: PrimaryKey,
+    backPrePage: () -> Unit
+) {
     var input by remember {
         mutableStateOf("")
     }
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-    val list = viewModel(keys = listOf("media")) {
-        MediaListViewModel()
+    val list = viewModel(keys = listOf("media", user.id)) {
+        MediaListViewModel(user.id, ObjectType.USER)
     }
     ModalNavigationDrawer({
         TopicComposeDrawer(scope, list, input) {
@@ -90,7 +110,7 @@ fun TopicComposePage(objectType: ObjectType, objectId: PrimaryKey, backPrePage: 
             })
         }) { paddingValues ->
             Column(modifier = Modifier.padding(top = paddingValues.calculateTopPadding())) {
-                TopicComposeInternal(input) {
+                TopicComposeInternal(input, list) {
                     input = it
                 }
             }
@@ -135,6 +155,8 @@ private fun TopicComposeDrawer(
                 }, false, {
                     val url = it.name
                     updateInput("$input\n![$url](/$url \"$url\")\n")
+                }, icon = {
+                    AsyncImage(it.url, it.name, modifier = Modifier.size(40.dp))
                 })
             }
         }
@@ -145,6 +167,7 @@ private fun TopicComposeDrawer(
 @Composable
 private fun TopicComposeInternal(
     input: String,
+    mediaListViewModel: MediaListViewModel,
     updateInput: (String) -> Unit
 ) {
     val pagerState = rememberPagerState {
@@ -170,10 +193,11 @@ private fun TopicComposeInternal(
             }
         }
     }
+    val list by mediaListViewModel.handler.data.collectAsState()
     HorizontalPager(pagerState, key = tabs::get) { index ->
         when (index) {
             0 -> RichEditTopicPage(input, state, updateInput)
-            1 -> PreviewTopicPage(input)
+            1 -> PreviewTopicPage(input, list?.data)
             else -> EditTopicPage(input) {
                 Napier.i {
                     "markdown update1 $it"
@@ -185,7 +209,6 @@ private fun TopicComposeInternal(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RichEditTopicPage(input: String, state: RichTextState, updateInput: (String) -> Unit) {
     LaunchedEffect(state.annotatedString) {
@@ -296,9 +319,12 @@ private fun TopicComposeSubmitButton(
 }
 
 @Composable
-fun PreviewTopicPage(input: String) {
+fun PreviewTopicPage(input: String, res: List<MediaInfo>?) {
     Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-        TopicContentField(TopicContent.Plain(input), modifier = Modifier.padding(20.dp))
+        TopicContentField(
+            TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, res.orEmpty())),
+            showHeadline = false,
+        )
     }
 }
 

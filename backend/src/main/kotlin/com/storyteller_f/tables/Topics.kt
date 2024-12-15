@@ -115,6 +115,7 @@ fun Topic.toTopicInfo(commentCount: Long = 0, hasComment: Boolean = false, react
         commentCount = commentCount,
         reactionCount = reactionCount,
         hasComment = hasComment,
+        isPrivate = false,
         lastModifiedTime = now()
     )
 }

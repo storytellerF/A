@@ -6,16 +6,14 @@ import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.UnauthorizedException
 import com.storyteller_f.index.TopicDocument
+import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultNotNull
-import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import io.ktor.resources.*
@@ -199,12 +197,26 @@ suspend fun getTopic(
         if (hasRead) {
             getCommonTopic(topicId, uid).mapResultNotNull { info ->
                 when {
-                    !isPrivate -> backend.topicSearchService.getDocument(listOf(topicId)).map { value ->
+                    !isPrivate -> backend.topicSearchService.getDocument(listOf(topicId)).mapResult { value ->
                         val content = value.firstOrNull()?.content
                         if (content != null) {
-                            info.copy(content = TopicContent.Plain(content))
+                            val mediaLinks = extractMarkdownMediaLink(content)
+                            backend.mediaService.get("amedia", mediaLinks.map {
+                                "${info.author}$it"
+                            }).map { mediaUrls ->
+                                info.copy(
+                                    content = TopicContent.Plain(
+                                        content,
+                                        mediaLinks.mapIndexedNotNull { index, mediaName ->
+                                            mediaUrls[index]?.let {
+                                                MediaInfo(it, mediaName)
+                                            }
+                                        }
+                                    )
+                                )
+                            }
                         } else {
-                            info
+                            Result.success(info)
                         }
                     }
 
@@ -212,7 +224,7 @@ suspend fun getTopic(
                     else -> DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }.map { value ->
                         val encrypted = value.firstOrNull()
                         if (encrypted != null) {
-                            info.copy(content = encrypted)
+                            info.copy(content = encrypted, isPrivate = true)
                         } else {
                             info
                         }
@@ -278,7 +290,7 @@ suspend fun getTopics(
                         }, uid)
                     }.map { topicContents ->
                         PaginationResult(data.mapIndexed { index, l ->
-                            l.copy(content = topicContents[index])
+                            l.copy(content = topicContents[index], isPrivate = true)
                         }, count)
                     }
                 }
@@ -403,20 +415,55 @@ suspend fun searchPublicTopics(
         if (search.rootId != null && search.rootType != null) search.rootId to search.rootType else null,
         if (search.parentId != null && search.parentType != null) search.parentId to search.parentType else null,
     ).mapResult { documents ->
-        val map = documents.list.associateBy { it.id }
+        val documentMap = documents.list.associateBy { it.id }
         val ids = documents.list.map {
             it.id
         }
         commonSearchTopics(uid, {
             Topics.id inList ids
-        }, null, nextTopicId, size, search.parent.fillHasCommented).map { infos ->
-            infos.mapNotNull { t ->
-                map[t.id]?.let {
-                    t.copy(content = TopicContent.Plain(it.content))
-                }
-            }
+        }, null, nextTopicId, size, search.parent.fillHasCommented).mapResult { infos ->
+            processMediaLink(documents, backend, infos, documentMap)
         }.map { value ->
             PaginationResult(value, documents.total)
+        }
+    }
+}
+
+private fun processMediaLink(
+    documents: PaginationResult<TopicDocument>,
+    backend: Backend,
+    infos: List<TopicInfo>,
+    documentMap: Map<PrimaryKey, TopicDocument>
+): Result<List<TopicInfo>> {
+    val list = documents.list.flatMap { document ->
+        val mediaLinks = extractMarkdownMediaLink(document.content)
+        mediaLinks.map {
+            document.id to "${document.author}$it"
+        }
+    }.distinct()
+    val mediaNameList = list.map {
+        it.second
+    }
+    // 根据topicId 保存的mediaName 的map
+    val mediaMap = list.groupBy {
+        it.first
+    }
+    return backend.mediaService.get("amedia", mediaNameList).map { mediaUrls ->
+        val mediaInfoMap = mediaUrls.mapIndexedNotNull { index, url ->
+            url?.let {
+                mediaNameList[index] to MediaInfo(it, mediaNameList[index])
+            }
+        }.associateBy {
+            it.first
+        }
+        infos.map { info ->
+            documentMap[info.id]?.let { document ->
+                val m = mediaMap[document.id]?.mapNotNull {
+                    val mediaName = it.second
+                    mediaInfoMap[mediaName]?.second
+                }.orEmpty()
+                info.copy(content = TopicContent.Plain(document.content, m))
+            } ?: info
         }
     }
 }

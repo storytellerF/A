@@ -8,33 +8,101 @@ import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.parser.MarkdownParser
 
 fun extractMarkdownHeadline(markdownText: String): String {
-    val flavour = CommonMarkFlavourDescriptor()
-    val parser = MarkdownParser(flavour)
-    val parsedTree = parser.buildMarkdownTreeFromString(markdownText)
+    val parsedTree = astNode(markdownText)
 
-    val result = StringBuilder()
+    val paragraphs = StringBuilder()
+    var headline = ""
     var captureContent = false
 
     parsedTree.accept(object : Visitor {
         override fun visitNode(node: ASTNode) {
-            when (node.type) {
-                MarkdownElementTypes.ATX_1 -> {
+            when {
+                node.type == MarkdownElementTypes.ATX_1 -> {
                     // Extract the first level header content
-                    result.appendLine(markdownText.substring(node.startOffset, node.endOffset))
+                    headline = markdownText.substring(node.startOffset, node.endOffset).trim().take(50)
                     captureContent = true
                 }
 
-                MarkdownElementTypes.ATX_2 -> {
-                    // Stop capturing when encountering the first second-level header
-                    captureContent = false
-                }
-
-                MarkdownElementTypes.PARAGRAPH -> {
+                node.type == MarkdownElementTypes.PARAGRAPH -> {
                     if (captureContent) {
                         val content = markdownText.substring(node.startOffset, node.endOffset).trim()
                         if (content.isNotEmpty()) {
-                            result.appendLine(content)
+                            paragraphs.appendLine(content)
                         }
+                    }
+                }
+
+                MarkdownElementTypes::class.java.fields.any {
+                    node.type.name == it.name
+                } -> {
+                    // Stop capturing when encountering the first second-level header
+                    captureContent = false
+                }
+            }
+
+            node.children.forEach { it.accept(this) }
+        }
+    })
+    return if (headline.isNotBlank()) {
+        val trim = "$headline\n${paragraphs.toString().trim().take(150)}"
+        trim
+    } else {
+        extractHeadParagraph(markdownText)
+    }
+}
+
+fun extractHeadParagraph(
+    markdownText: String,
+): String {
+    val paragraphs = StringBuilder()
+    val parsedTree = astNode(markdownText)
+    var captureContent1 = false
+    parsedTree.accept(object : Visitor {
+        override fun visitNode(node: ASTNode) {
+            when {
+                node.type == MarkdownElementTypes.MARKDOWN_FILE -> captureContent1 = true
+                node.type == MarkdownElementTypes.PARAGRAPH -> {
+                    if (captureContent1) {
+                        val content = markdownText.substring(node.startOffset, node.endOffset).trim()
+                        if (content.isNotEmpty()) {
+                            paragraphs.appendLine(content)
+                        }
+                    }
+                }
+
+                MarkdownElementTypes::class.java.fields.any {
+                    node.type.name == it.name
+                } -> {
+                    // Stop capturing when encountering the first second-level header
+                    captureContent1 = false
+                }
+            }
+
+            node.children.forEach { it.accept(this) }
+        }
+    })
+    return paragraphs.toString().trim().take(200)
+}
+
+fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
+    val parsedTree = astNode(markdownText)
+
+    val list = mutableListOf<String>()
+
+    parsedTree.accept(object : Visitor {
+        override fun visitNode(node: ASTNode) {
+            when (node.type) {
+                MarkdownElementTypes.IMAGE -> {
+                    // Extract the first level header content
+                    val markdownImage = markdownText.substring(node.startOffset, node.endOffset)
+
+                    // 正则表达式匹配 ![alt text](image path "title")
+                    val regex = Regex("""!\[([^]]*)]\(([^ )]+)(?:\s+"([^"]*)")?\)""")
+
+                    val matchResult = regex.find(markdownImage)
+                    if (matchResult != null) {
+                        val imagePath = matchResult.groupValues[2] // 提取图片路径
+                        list.add(imagePath)
                     }
                 }
             }
@@ -42,8 +110,12 @@ fun extractMarkdownHeadline(markdownText: String): String {
             node.children.forEach { it.accept(this) }
         }
     })
-    val trim = result.toString().trim()
-    return trim.ifEmpty {
-        markdownText.take(100)
-    }
+    return list
+}
+
+private fun astNode(markdownText: String): ASTNode {
+    val flavour = CommonMarkFlavourDescriptor()
+    val parser = MarkdownParser(flavour)
+    val parsedTree = parser.buildMarkdownTreeFromString(markdownText)
+    return parsedTree
 }
