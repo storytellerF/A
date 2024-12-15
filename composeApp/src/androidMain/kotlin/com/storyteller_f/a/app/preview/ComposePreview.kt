@@ -35,5 +35,5 @@ private fun PreviewTopicEdit(@PreviewParameter(ContentListProvider::class) conte
 @Preview(showSystemUi = true)
 @Composable
 private fun PreviewTopicPreview(@PreviewParameter(ContentListProvider::class) content: String) {
-    PreviewTopicPage(content)
+    PreviewTopicPage(content, emptyList())
 }

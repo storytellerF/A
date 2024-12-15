@@ -205,7 +205,8 @@ suspend fun saveEncryptedTopicContent(
         this[EncryptedTopicKeys.encryptedAes] =
             ExposedBlob(encryptedAes[it]!!.hexToByteArray())
     }
-    topic.toTopicInfo(hasComment = false).copy(content = TopicContent.Encrypted(encryptedContent, encryptedAes))
+    topic.toTopicInfo(hasComment = false)
+        .copy(content = TopicContent.Encrypted(encryptedContent, encryptedAes), isPrivate = true)
 }
 
 private suspend fun isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Result<Boolean> {

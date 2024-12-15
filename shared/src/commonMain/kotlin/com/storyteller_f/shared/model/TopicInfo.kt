@@ -22,6 +22,7 @@ data class TopicInfo(
     val commentCount: Long,
     val reactionCount: Long,
     val hasComment: Boolean,
+    val isPrivate: Boolean,
     val lastModifiedTime: LocalDateTime?,
 ) : Identifiable {
     companion object {
@@ -38,7 +39,8 @@ data class TopicInfo(
             0,
             0,
             false,
-            now()
+            isPrivate = false,
+            lastModifiedTime = now()
         )
     }
 }
@@ -51,7 +53,7 @@ sealed interface TopicContent {
 
     @Serializable
     @SerialName("plain")
-    data class Plain(val plain: String) : TopicContent
+    data class Plain(val plain: String, val list: List<MediaInfo> = emptyList()) : TopicContent
 
     @Serializable
     @SerialName("encrypted")
