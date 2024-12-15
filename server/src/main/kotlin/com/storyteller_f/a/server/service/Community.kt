@@ -49,7 +49,7 @@ suspend fun getCommunity(
         communityAid,
         id
     ).mapResultNotNull { (info, iconName, coverName) ->
-        backend.mediaService.get("apic", listOf(iconName, coverName)).map { (iconUrl, coverUrl) ->
+        backend.mediaService.get("amedia", listOf(iconName, coverName)).map { (iconUrl, coverUrl) ->
             info.copy(icon = getMediaInfo(iconUrl), poster = getMediaInfo(coverUrl))
         }
     }
@@ -121,7 +121,7 @@ private fun parseCommunityList(
     backend: Backend,
     list: List<CommunityRawResult>
 ): Result<List<CommunityInfo>> {
-    return backend.mediaService.get("apic", list.flatMap { (_, icon, poster) ->
+    return backend.mediaService.get("amedia", list.flatMap { (_, icon, poster) ->
         listOf(icon, poster)
     }).map { icons ->
         list.mapIndexed { i, communityPair ->

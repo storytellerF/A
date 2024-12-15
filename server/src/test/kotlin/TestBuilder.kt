@@ -83,10 +83,10 @@ suspend fun <R> attachSession(
     val priKey = generateKeyPair()
     val pubKey = getDerPublicKeyFromPrivateKey(priKey)
     val address = calcAddress(pubKey)
-    val rawData = client.getData()
+    val rawData = client.getData().getOrThrow()
     val data = finalData(rawData)
     val sign = signature(priKey, data)
-    val userInfo = client.signUp(pubKey, sign)
+    val userInfo = client.signUp(pubKey, sign).getOrThrow()
     LoginViewModel.updateState(ClientSession.SignUpSuccess(priKey, pubKey, address))
     LoginViewModel.updateUser(userInfo)
     LoginViewModel.updateSession(rawData, sign)
@@ -101,13 +101,13 @@ suspend fun <R1, R2> loginSession(
     session: Tuple5<String, String, String, PrimaryKey, R1>,
     block: suspend (Tuple4<String, String, String, PrimaryKey>) -> R2
 ): Tuple5<String, String, String, PrimaryKey, R2> {
-    val rawData = client.getData()
+    val rawData = client.getData().getOrThrow()
     val data = finalData(rawData)
     val sign = signature(session.data1, data)
     val address = session.data3
     val pubKey = session.data2
     val priKey = session.data1
-    val userInfo = client.signIn(address, sign)
+    val userInfo = client.signIn(address, sign).getOrThrow()
     LoginViewModel.updateState(ClientSession.SignUpSuccess(priKey, pubKey, address))
     LoginViewModel.updateUser(userInfo)
     LoginViewModel.updateSession(rawData, sign)

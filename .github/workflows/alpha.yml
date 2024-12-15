@@ -12,6 +12,9 @@ on:
       - 'gradle/**'
       - 'crypto-jvm/**'
       - 'client-lib/**'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -34,10 +37,10 @@ jobs:
           cache: gradle
 
       - name: Build mini app
-        run: ./scripts/build_scripts/build-app-on-ci.sh https://acommunity.link/ mini
+        run: ./scripts/build_scripts/build-app-on-ci.sh mini acommunity.link/
 
       - name: Build koyeb app
-        run: ./scripts/build_scripts/build-app-on-ci.sh https://respectable-jobie-anabn-3d54150c.koyeb.app/server/ koyeb
+        run: ./scripts/build_scripts/build-app-on-ci.sh koyeb respectable-jobie-anabn-3d54150c.koyeb.app/server/
 
       - uses: actions/upload-artifact@v4
         with:

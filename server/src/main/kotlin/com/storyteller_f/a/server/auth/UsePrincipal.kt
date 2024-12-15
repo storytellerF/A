@@ -3,6 +3,7 @@ package com.storyteller_f.a.server.auth
 import com.storyteller_f.CustomBadRequestException
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.UnauthorizedException
+import com.storyteller_f.shared.model.MediaResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -11,6 +12,7 @@ import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import io.ktor.utils.io.streams.*
 import java.io.File
 
 suspend inline fun <reified R : Any> RoutingContext.usePrincipal(block: (PrimaryKey) -> Result<R?>) {
@@ -36,7 +38,9 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (P
         block(uid).onSuccess {
             when (it) {
                 null -> call.respond(HttpStatusCode.NotFound)
-                is File -> call.respondFile(it)
+                is MediaResponse -> {
+                    call.respondFile(File(it.file))
+                }
                 is Unit -> call.respond(HttpStatusCode.OK)
                 else -> call.respond(it)
             }

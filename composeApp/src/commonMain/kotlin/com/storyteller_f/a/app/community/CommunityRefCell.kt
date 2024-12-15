@@ -19,7 +19,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun CommunityRefCell(communityId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(CommunityViewModel::class, keys = listOf("community", communityId)) {
+    val viewModel = viewModel(keys = listOf("community", communityId)) {
         CommunityViewModel(communityId)
     }
     CommunityRefCellInternal(viewModel, onClick)
@@ -27,7 +27,7 @@ fun CommunityRefCell(communityId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
 
 @Composable
 fun CommunityRefCell(communityAid: String, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(CommunityViewModel::class, keys = listOf("community", communityAid)) {
+    val viewModel = viewModel(keys = listOf("community", communityAid)) {
         CommunityViewModel(communityAid)
     }
     CommunityRefCellInternal(viewModel, onClick)

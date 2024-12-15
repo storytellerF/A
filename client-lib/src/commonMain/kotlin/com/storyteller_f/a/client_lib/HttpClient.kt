@@ -15,7 +15,7 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
 
-class ServerErrorException(val status: HttpStatusCode, val text: String) : Exception()
+class ServerErrorException(val status: HttpStatusCode, val text: String) : Exception("$status $text")
 
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
@@ -53,11 +53,12 @@ fun HttpClientConfig<*>.defaultClientConfigure() {
         contentConverter = KotlinxWebsocketSerializationConverter(Json)
     }
     HttpResponseValidator {
-        handleResponseExceptionWithRequest { exception, request ->
-            val clientException = exception as? ClientRequestException ?: return@handleResponseExceptionWithRequest
-            val exceptionResponse = clientException.response
-            val exceptionResponseText = exceptionResponse.bodyAsText()
-            throw ServerErrorException(exceptionResponse.status, exceptionResponseText)
+        handleResponseExceptionWithRequest { exception, _ ->
+            if (exception is ResponseException) {
+                val exceptionResponse = exception.response
+                val exceptionResponseText = exceptionResponse.bodyAsText()
+                throw ServerErrorException(exceptionResponse.status, exceptionResponseText)
+            }
         }
     }
 }

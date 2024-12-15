@@ -28,6 +28,7 @@ import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.a.client_lib.searchRooms
+import com.storyteller_f.a.client_lib.serviceCatching
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
@@ -36,7 +37,7 @@ import com.storyteller_f.shared.type.toPrimaryKey
 
 @Composable
 fun MyRoomsPage() {
-    val viewModel = viewModel(RoomsViewModel::class) {
+    val viewModel = viewModel {
         RoomsViewModel(JoinStatusSearch.JOINED, "")
     }
     val items = viewModel.flow.collectAsLazyPagingItems()
@@ -45,13 +46,13 @@ fun MyRoomsPage() {
 
 @OptIn(ExperimentalPagingApi::class)
 class RoomsViewModel(
-    val joinStatusSearch: JoinStatusSearch,
-    val word: String,
+    private val joinStatusSearch: JoinStatusSearch,
+    private val word: String,
     val community: PrimaryKey? = null
 ) : PagingViewModel<PrimaryKey, RoomInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.searchRooms(10, it, joinStatusSearch, word, community)
+            client.searchRooms(10, it, joinStatusSearch, word, community).getOrThrow()
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKey())
         }
@@ -116,7 +117,7 @@ fun RoomCell(
 
         val communityId = roomInfo?.communityId
         if (communityId != null) {
-            val model = viewModel(CommunityViewModel::class, keys = listOf("community", communityId)) {
+            val model = viewModel(keys = listOf("community", communityId)) {
                 CommunityViewModel(communityId)
             }
             val communityInfo by model.handler.data.collectAsState()
@@ -130,9 +131,9 @@ fun RoomCell(
         }
     }
     if (roomInfo != null) {
-        RoomDialog(showDialog, roomInfo, {
+        RoomDialog(showDialog, roomInfo) {
             showDialog = false
-        })
+        }
     }
 }
 
@@ -169,8 +170,8 @@ fun RoomIcon(
         }
     }
     roomInfo?.id?.let {
-        RoomDialog(showDialog, roomInfo, {
+        RoomDialog(showDialog, roomInfo) {
             updateShowDialog(false)
-        })
+        }
     }
 }

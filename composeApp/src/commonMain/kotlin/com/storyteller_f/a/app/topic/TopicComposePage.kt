@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -23,19 +24,37 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import com.storyteller_f.a.app.client
+import com.storyteller_f.a.app.common.SimpleViewModel
+import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.getOrCreateCollection
+import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.client_lib.createNewTopic
+import com.storyteller_f.a.client_lib.getMediaList
+import com.storyteller_f.a.client_lib.upload
+import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import io.ktor.client.call.*
+import io.github.aakira.napier.Napier
+import io.github.vinceglb.filekit.core.FileKit
+import io.github.vinceglb.filekit.core.extension
+import io.github.vinceglb.filekit.core.pickFile
 import kotbase.MutableDocument
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
+
+class MediaListViewModel : SimpleViewModel<ServerResponse<MediaInfo>>() {
+    init {
+        load()
+    }
+
+    override suspend fun loadInternal() = client.getMediaList()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,16 +62,80 @@ fun TopicComposePage(objectType: ObjectType, objectId: PrimaryKey, backPrePage: 
     var input by remember {
         mutableStateOf("")
     }
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val list = viewModel(keys = listOf("media")) {
+        MediaListViewModel()
+    }
+    ModalNavigationDrawer({
+        TopicComposeDrawer(scope, list, input) {
+            input = it
+        }
+    }, drawerState = drawerState, modifier = Modifier.fillMaxWidth(), gesturesEnabled = false) {
+        Scaffold(topBar = {
+            TopAppBar({
+            }, navigationIcon = {
+//                IconButton(onClick = {
+//                    scope.launch {
+//                        drawerState.open()
+//                    }
+//                }) {
+//                    Icon(Icons.Filled.Menu, contentDescription = null)
+//                }
+            }, actions = {
+                TopicComposeSubmitButton(input, objectType, objectId) {
+                    input = ""
+                    backPrePage()
+                }
+            })
+        }) { paddingValues ->
+            Column(modifier = Modifier.padding(top = paddingValues.calculateTopPadding())) {
+                TopicComposeInternal(input) {
+                    input = it
+                }
+            }
+        }
+    }
+}
 
-    Scaffold(topBar = {
-        TopAppBar({
-        }, actions = {
-            TopicComposeSubmitButton(input, objectType, objectId, backPrePage)
-        })
-    }) { paddingValues ->
-        Column(modifier = Modifier.padding(top = paddingValues.calculateTopPadding())) {
-            TopicComposeInternal(input) {
-                input = it
+@Composable
+private fun TopicComposeDrawer(
+    scope: CoroutineScope,
+    list: MediaListViewModel,
+    input: String,
+    updateInput: (String) -> Unit
+) {
+    ModalDrawerSheet {
+        Row {
+            IconButton({
+                scope.launch {
+                    globalDialogState.use {
+                        val f = FileKit.pickFile()
+                        if (f != null) {
+                            val size = f.getSize()
+                            if (size != null && size <= 1024 * 1024) {
+                                client.upload(f.readBytes(), f.name, f.extension)
+                            }
+                        }
+                    }
+                }
+            }) {
+                Icon(Icons.Default.UploadFile, "upload file")
+            }
+            IconButton({
+                list.handler.refresh()
+            }) {
+                Icon(Icons.Default.Refresh, "refresh file")
+            }
+        }
+        StateView(list.handler) {
+            it.data.forEach {
+                NavigationDrawerItem({
+                    Text(it.name.toString())
+                }, false, {
+                    val url = it.name
+                    updateInput("$input\n![$url](/$url \"$url\")\n")
+                })
             }
         }
     }
@@ -89,9 +172,12 @@ private fun TopicComposeInternal(
     }
     HorizontalPager(pagerState, key = tabs::get) { index ->
         when (index) {
-            0 -> RichEditTopicPage(state, updateInput)
+            0 -> RichEditTopicPage(input, state, updateInput)
             1 -> PreviewTopicPage(input)
             else -> EditTopicPage(input) {
+                Napier.i {
+                    "markdown update1 $it"
+                }
                 updateInput(it)
                 state.setMarkdown(it)
             }
@@ -101,55 +187,81 @@ private fun TopicComposeInternal(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun RichEditTopicPage(state: RichTextState, updateInput: (String) -> Unit) {
+fun RichEditTopicPage(input: String, state: RichTextState, updateInput: (String) -> Unit) {
     LaunchedEffect(state.annotatedString) {
-        updateInput(state.toMarkdown())
+        val markdown = state.toMarkdown()
+        Napier.i {
+            "markdown effect $markdown"
+        }
+        if (input != markdown) {
+            Napier.i {
+                "markdown edit update input $markdown"
+            }
+            updateInput(markdown)
+        }
+    }
+    LaunchedEffect(input) {
+        if (state.toMarkdown() != input) {
+            Napier.i {
+                "markdown edit update $input"
+            }
+            state.setMarkdown(input)
+        }
     }
     val currentSpanStyle = state.currentSpanStyle
     Column(modifier = Modifier.navigationBarsPadding()) {
-        FlowRow {
-            IconToggleButton(currentSpanStyle.fontWeight == FontWeight.Bold, {
-                state.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold))
-            }) {
-                Icon(Icons.Default.FormatBold, "toggle bold")
-            }
-            IconToggleButton(currentSpanStyle.fontStyle == FontStyle.Italic, {
-                state.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic))
-            }) {
-                Icon(Icons.Default.FormatItalic, "toggle italic")
-            }
-            IconToggleButton(currentSpanStyle.textDecoration == TextDecoration.Underline, {
-                state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.Underline))
-            }) {
-                Icon(Icons.Default.FormatUnderlined, "toggle underline")
-            }
-            IconToggleButton(currentSpanStyle.textDecoration == TextDecoration.LineThrough, {
-                state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough))
-            }) {
-                Icon(Icons.Default.FormatStrikethrough, "toggle line through")
-            }
-            VerticalDivider(modifier = Modifier.height(20.dp).align(androidx.compose.ui.Alignment.CenterVertically))
-            IconToggleButton(state.isOrderedList, {
-                state.toggleOrderedList()
-            }) {
-                Icon(Icons.Default.FormatListNumbered, "toggle ordered list")
-            }
-            IconToggleButton(state.isUnorderedList, {
-                state.toggleUnorderedList()
-            }) {
-                Icon(Icons.AutoMirrored.Filled.FormatListBulleted, "toggle unordered list")
-            }
-            VerticalDivider(modifier = Modifier.height(20.dp).align(androidx.compose.ui.Alignment.CenterVertically))
-            IconToggleButton(state.isCodeSpan, {
-                state.toggleCodeSpan()
-            }) {
-                Icon(Icons.Default.Code, "toggle code span")
-            }
-        }
+        TopicComposeToolbar(currentSpanStyle, state)
         BasicRichTextEditor(
             state = state,
             modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp),
         )
+    }
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun TopicComposeToolbar(
+    currentSpanStyle: SpanStyle,
+    state: RichTextState
+) {
+    FlowRow {
+        IconToggleButton(currentSpanStyle.fontWeight == FontWeight.Bold, {
+            state.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold))
+        }) {
+            Icon(Icons.Default.FormatBold, "toggle bold")
+        }
+        IconToggleButton(currentSpanStyle.fontStyle == FontStyle.Italic, {
+            state.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic))
+        }) {
+            Icon(Icons.Default.FormatItalic, "toggle italic")
+        }
+        IconToggleButton(currentSpanStyle.textDecoration == TextDecoration.Underline, {
+            state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.Underline))
+        }) {
+            Icon(Icons.Default.FormatUnderlined, "toggle underline")
+        }
+        IconToggleButton(currentSpanStyle.textDecoration == TextDecoration.LineThrough, {
+            state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough))
+        }) {
+            Icon(Icons.Default.FormatStrikethrough, "toggle line through")
+        }
+        VerticalDivider(modifier = Modifier.height(20.dp).align(Alignment.CenterVertically))
+        IconToggleButton(state.isOrderedList, {
+            state.toggleOrderedList()
+        }) {
+            Icon(Icons.Default.FormatListNumbered, "toggle ordered list")
+        }
+        IconToggleButton(state.isUnorderedList, {
+            state.toggleUnorderedList()
+        }) {
+            Icon(Icons.AutoMirrored.Filled.FormatListBulleted, "toggle unordered list")
+        }
+        VerticalDivider(modifier = Modifier.height(20.dp).align(Alignment.CenterVertically))
+        IconToggleButton(state.isCodeSpan, {
+            state.toggleCodeSpan()
+        }) {
+            Icon(Icons.Default.Code, "toggle code span")
+        }
     }
 }
 
@@ -163,11 +275,11 @@ private fun TopicComposeSubmitButton(
     val scope = rememberCoroutineScope()
 
     IconButton({
-        val c = input.trim()
-        if (c.isNotEmpty()) {
+        val finalInput = input.trim()
+        if (finalInput.isNotEmpty()) {
             scope.launch {
                 globalDialogState.use {
-                    val info = client.createNewTopic(objectType, objectId, input).body<TopicInfo>()
+                    val info = client.createNewTopic(objectType, objectId, finalInput).getOrThrow()
                     getOrCreateCollection("topics${info.parentId}").save(
                         MutableDocument(
                             info.id.toString(),

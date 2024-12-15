@@ -24,6 +24,7 @@ import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.utils.lcm
 import com.storyteller_f.a.client_lib.searchCommunity
+import com.storyteller_f.a.client_lib.serviceCatching
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
@@ -32,7 +33,7 @@ import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 
 @Composable
 fun MyCommunitiesPage() {
-    val viewModel = viewModel(CommunitiesViewModel::class) {
+    val viewModel = viewModel {
         CommunitiesViewModel(JoinStatusSearch.JOINED, "")
     }
     val items = viewModel.flow.collectAsLazyPagingItems()
@@ -76,12 +77,12 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>) {
 
 @OptIn(ExperimentalPagingApi::class)
 class CommunitiesViewModel(
-    val joinStatusSearch: JoinStatusSearch,
-    val word: String
+    private val joinStatusSearch: JoinStatusSearch,
+    private val word: String
 ) : PagingViewModel<PrimaryKey, CommunityInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.searchCommunity(it, 10, joinStatusSearch, word)
+            client.searchCommunity(it, 10, joinStatusSearch, word).getOrThrow()
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
         }

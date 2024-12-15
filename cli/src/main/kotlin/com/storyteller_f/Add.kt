@@ -44,7 +44,7 @@ class Add : Subcommand("add", "add entry") {
         val presetValue =
             ObjectMapper().registerModule(KotlinModule.Builder().build())
                 .readValue<PresetValue>(jsonFile.readText())
-        val parentDir = jsonFile.parentFile
+        val parentDir = jsonFile.parentFile.canonicalFile
         runBlocking {
             try {
                 when (val type = presetValue.type) {
@@ -76,8 +76,8 @@ class Add : Subcommand("add", "add entry") {
             if (icon == null) {
                 Triple(it, null, id)
             } else {
-                val p = "icon/room-icon"
-                backend.mediaService.upload("apic", listOf(UploadPack(p, File(parentDir, icon))))
+                val p = "$id/room-icon"
+                backend.mediaService.upload("amedia", listOf(UploadPack(p, File(parentDir, icon))))
                 Triple(it, p, id)
             }
         }
@@ -384,8 +384,8 @@ class Add : Subcommand("add", "add entry") {
             if (icon == null) {
                 Tuple5(it, null, derPublicKey, ad, id)
             } else {
-                val p = "icon/avatar"
-                backend.mediaService.upload("apic", listOf(UploadPack(p, File(parentDir, icon))))
+                val p = "$id/avatar"
+                backend.mediaService.upload("amedia", listOf(UploadPack(p, File(parentDir, icon))))
                 Tuple5(it, null, derPublicKey, ad, id)
             }
         }
@@ -410,8 +410,8 @@ class Add : Subcommand("add", "add entry") {
             if (icon == null) {
                 Triple(it, null, id)
             } else {
-                val p = "icon/community-icon"
-                backend.mediaService.upload("apic", listOf(UploadPack(p, File(parentDir, icon))))
+                val p = "$id/community-icon"
+                backend.mediaService.upload("amedia", listOf(UploadPack(p, File(parentDir, icon))))
                 Triple(it, p, id)
             }
         }

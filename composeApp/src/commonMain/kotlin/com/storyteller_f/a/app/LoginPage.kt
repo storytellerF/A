@@ -182,7 +182,7 @@ private suspend fun signUpOrSignIn(
     isSignUp: Boolean
 ) {
     globalDialogState.use(appNav::gotoHome) {
-        val data = client.getData()
+        val data = client.getData().getOrThrow()
         val f = finalData(data)
         val sig = signature(privateKey, f)
         val publicKey = getDerPublicKeyFromPrivateKey(privateKey)
@@ -190,7 +190,7 @@ private suspend fun signUpOrSignIn(
         val u = when {
             isSignUp -> client.signUp(publicKey, sig)
             else -> client.signIn(ad, sig)
-        }
+        }.getOrThrow()
         LoginViewModel.updateState(ClientSession.SignUpSuccess(privateKey, publicKey, ad))
         LoginViewModel.updateSession(data, sig)
         LoginViewModel.updateUser(u)

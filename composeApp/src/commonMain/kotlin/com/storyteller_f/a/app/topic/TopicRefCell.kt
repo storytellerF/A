@@ -26,7 +26,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun TopicRefCell(topicId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(TopicViewModel::class, keys = listOf("topic", topicId)) {
+    val viewModel = viewModel(keys = listOf("topic", topicId)) {
         TopicViewModel(topicId)
     }
 
@@ -35,7 +35,7 @@ fun TopicRefCell(topicId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
 
 @Composable
 fun TopicRefCell(topicAid: String, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(TopicViewModel::class, keys = listOf("topic", topicAid)) {
+    val viewModel = viewModel(keys = listOf("topic", topicAid)) {
         TopicViewModel(topicAid)
     }
 
@@ -68,7 +68,7 @@ private fun TopicRefCellContent(
     onClick: (PrimaryKey) -> Unit,
 ) {
     val author = it.author
-    val authorViewModel = viewModel(UserViewModel::class, keys = listOf("user", author)) {
+    val authorViewModel = viewModel(keys = listOf("user", author)) {
         UserViewModel(author)
     }
     val authorInfo by authorViewModel.handler.data.collectAsState()

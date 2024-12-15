@@ -301,7 +301,7 @@ suspend fun searchRooms(
 }
 
 private fun roomsResponse(list: List<Pair<RoomInfo, String?>>, backend: Backend): Result<List<RoomInfo>> {
-    return backend.mediaService.get("apic", list.map {
+    return backend.mediaService.get("amedia", list.map {
         it.second
     }).map { icons ->
         list.mapIndexed { i, roomPair ->

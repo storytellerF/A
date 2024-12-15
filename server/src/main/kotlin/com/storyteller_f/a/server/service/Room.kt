@@ -121,7 +121,7 @@ suspend fun getRoom(
         return Result.failure(BadRequestException("roomId or roomAid must be set."))
     }
     return getRoomSource(roomId, roomAid, fillJoinInfo, uid).mapResultNotNull { (info, iconName) ->
-        backend.mediaService.get("apic", listOf(iconName)).map { value ->
+        backend.mediaService.get("amedia", listOf(iconName)).map { value ->
             val icon = value.firstOrNull()
             info.copy(icon = getMediaInfo(icon))
         }

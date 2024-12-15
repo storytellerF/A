@@ -4,7 +4,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
-import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
+import com.mohamedrejeb.richeditor.ui.material3.RichText
 import com.storyteller_f.a.client_lib.ServerErrorException
 
 @Composable
@@ -17,9 +17,9 @@ fun ExceptionView(throwable: Throwable) {
                 state.setHtml(throwable.text)
             }
 
-            BasicRichTextEditor(state = state, readOnly = true)
+            RichText(state = state)
         } else {
-            Text("${throwable.status.value}${throwable.text}")
+            Text("${throwable.status.value} ${throwable.text}")
         }
     } else {
         Text((throwable.message ?: throwable::class.simpleName ?: throwable.toString()).take(100))

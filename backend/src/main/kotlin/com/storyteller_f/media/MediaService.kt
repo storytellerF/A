@@ -10,4 +10,6 @@ interface MediaService {
     fun get(bucketName: String, objList: List<String?>): Result<List<String?>>
 
     fun clean(bucketName: String): Result<Unit>
+
+    fun list(bucketName: String, prefix: String): Result<List<String>>
 }

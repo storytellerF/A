@@ -1,4 +1,4 @@
-package com.storyteller_f.a.server
+package com.storyteller_f.a.server.route
 
 import com.storyteller_f.Backend
 import com.storyteller_f.UnauthorizedException

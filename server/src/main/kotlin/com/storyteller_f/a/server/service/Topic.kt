@@ -198,19 +198,16 @@ suspend fun getTopic(
     ).mapResultNotNull { (hasRead, hasJoined, isPrivate) ->
         if (hasRead) {
             getCommonTopic(topicId, uid).mapResultNotNull { info ->
-                if (isPrivate) {
-                    if (uid == null) {
-                        Result.failure(UnauthorizedException())
-                    } else {
-                        DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }.map { value ->
-                            value.firstOrNull()?.let { id -> info.copy(content = id) }
-                        }
-                    }
-                } else {
-                    backend.topicSearchService.getDocument(listOf(topicId)).map { value ->
+                when {
+                    !isPrivate -> backend.topicSearchService.getDocument(listOf(topicId)).map { value ->
                         value.firstOrNull()?.content?.let {
                             info.copy(content = TopicContent.Plain(it))
                         }
+                    }
+
+                    uid == null -> Result.failure(UnauthorizedException())
+                    else -> DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }.map { value ->
+                        value.firstOrNull()?.let { id -> info.copy(content = id) }
                     }
                 }
             }.mapNotNull { value ->

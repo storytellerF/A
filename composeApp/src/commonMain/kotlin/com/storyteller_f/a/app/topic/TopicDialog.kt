@@ -31,7 +31,7 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
             dismiss()
         }) {
             val author = topicInfo.author
-            val authorViewModel = viewModel(UserViewModel::class, keys = listOf("user", author)) {
+            val authorViewModel = viewModel(keys = listOf("user", author)) {
                 UserViewModel(author)
             }
             val authorInfo by authorViewModel.handler.data.collectAsState()

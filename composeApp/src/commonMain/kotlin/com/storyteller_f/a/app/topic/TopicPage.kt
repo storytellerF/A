@@ -47,7 +47,6 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.client.*
-import io.ktor.client.call.*
 import kotbase.MutableDocument
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -62,12 +61,12 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicPage(topicId: PrimaryKey) {
-    val viewModel = viewModel(TopicViewModel::class, keys = listOf("topic", topicId)) {
+    val viewModel = viewModel(keys = listOf("topic", topicId)) {
         TopicViewModel(topicId)
     }
     val topic by viewModel.handler.data.collectAsState()
 
-    val topicsViewModel = viewModel(TopicsViewModel::class, keys = listOf("topic-topics", topicId)) {
+    val topicsViewModel = viewModel(keys = listOf("topic-topics", topicId)) {
         TopicsViewModel(topicId, ObjectType.TOPIC)
     }
     val topics = topicsViewModel.flow.collectAsLazyPagingItems()
@@ -148,7 +147,7 @@ private fun EmojiPickerInternal(
             )
         )
         Spacer(modifier = Modifier.height(10.dp))
-        val emojiList by produceState(emptyList<Emoji>(), query) {
+        val emojiList by produceState(emptyList(), query) {
             value = if (query.isEmpty()) {
                 Emoji.list()
             } else {
@@ -208,7 +207,6 @@ private fun EmojiItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopicPageInternal(
     topicId: PrimaryKey,
@@ -280,7 +278,7 @@ private fun TopicPageInputGroup(
     val scope = rememberCoroutineScope()
     if (topic.rootType == ObjectType.ROOM) {
         val roomId = topic.rootId
-        val room = viewModel(RoomViewModel::class, keys = listOf("room", roomId)) {
+        val room = viewModel(keys = listOf("room", roomId)) {
             RoomViewModel(roomId)
         }
         val roomInfo by room.handler.data.collectAsState()
@@ -308,7 +306,7 @@ private fun TopicInputGroup(
     var input by remember {
         mutableStateOf("")
     }
-    InputGroupInternal(input, MaterialTheme.colorScheme.secondaryContainer, {
+    InputGroupInternal(topic.id, ObjectType.TOPIC, input, MaterialTheme.colorScheme.secondaryContainer, {
         input = it
     }, sendButton = {
         val focusManager = LocalFocusManager.current
@@ -321,7 +319,7 @@ private fun TopicInputGroup(
                 scope.launch {
                     sendState = LoadingState.Loading
                     try {
-                        val info = client.createNewTopic(ObjectType.TOPIC, topic.id, input).body<TopicInfo>()
+                        val info = client.createNewTopic(ObjectType.TOPIC, topic.id, input).getOrThrow()
                         getOrCreateCollection("topics${info.parentId}").save(
                             MutableDocument(
                                 info.id.toString(),
@@ -345,7 +343,8 @@ private fun TopicInputGroup(
     })
 }
 
-class TopicViewModel(private val requestInfo: suspend HttpClient.() -> TopicInfo) : SimpleViewModel<TopicInfo>() {
+class TopicViewModel(private val requestInfo: suspend HttpClient.() -> Result<TopicInfo>) :
+    SimpleViewModel<TopicInfo>() {
     constructor(topicId: PrimaryKey) : this({
         getTopicInfo(topicId)
     })
@@ -355,7 +354,7 @@ class TopicViewModel(private val requestInfo: suspend HttpClient.() -> TopicInfo
     })
 
     constructor(topicInfo: TopicInfo) : this({
-        topicInfo
+        Result.success(topicInfo)
     })
 
     init {
@@ -372,12 +371,10 @@ class TopicViewModel(private val requestInfo: suspend HttpClient.() -> TopicInfo
         }
     }
 
-    override suspend fun loadInternal() {
-        handler.request {
-            serviceCatching {
-                val info = requestInfo(client)
-                processEncryptedTopic(listOf(info)).first()
-            }
+    override suspend fun loadInternal(): Result<TopicInfo> {
+        return serviceCatching {
+            val info = requestInfo(client).getOrThrow()
+            processEncryptedTopic(listOf(info)).first()
         }
     }
 }
@@ -395,7 +392,7 @@ suspend fun processEncryptedTopic(info: List<TopicInfo>): List<TopicInfo> {
             val s = content.encryptedKey[uid]
             topicInfo.copy(
                 content = if (s != null) {
-                    runCatching<String> {
+                    runCatching {
                         decrypt(
                             key,
                             content.encrypted.hexToByteArray(),

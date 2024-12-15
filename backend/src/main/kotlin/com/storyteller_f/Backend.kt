@@ -91,7 +91,7 @@ private fun mediaService(map: Map<out Any, Any>): MediaService {
             MinIoMediaService(MinIoConnection(url, name, pass))
         }
 
-        "filesystem" -> FileSystemMediaService()
+        "filesystem" -> FileSystemMediaService(map["SERVER_URL"] as String)
         else -> throw UnsupportedOperationException("unsupported media service type ${map["MEDIA_SERVICE"]}")
     }
 }
