@@ -26,7 +26,7 @@ ENV HOST_TYPE=docker
 RUN --mount=type=cache,target=/root/.gradle \
     ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
 
-RUN mkdir -p ./cli/build/uncompressed && tar -xf ./cli/build/distributions/cli.tar -C ./cli/build/decompressed
+RUN mkdir -p ./cli/build/decompressed && tar -xf ./cli/build/distributions/cli.tar -C ./cli/build/decompressed
 
 FROM eclipse-temurin:21-alpine
 
