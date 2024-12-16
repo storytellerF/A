@@ -1,10 +1,10 @@
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Community
+import com.storyteller_f.tables.createCommunity
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -16,9 +16,7 @@ class TopicTest {
     fun `test topic search`() {
         test { client ->
             val newId = SnowflakeFactory.nextId()
-            DatabaseFactory.dbQuery {
-                Community.new(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
-            }
+            createCommunity(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
             attachSession(client) {
                 client.joinCommunity(newId)
                 val lastTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello world").getOrThrow()
@@ -40,9 +38,7 @@ class TopicTest {
         test { client ->
             attachSession(client) {
                 val newId = SnowflakeFactory.nextId()
-                DatabaseFactory.dbQuery {
-                    Community.new(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
-                }
+                createCommunity(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())).getOrThrow()
                 client.joinCommunity(newId)
                 val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello").getOrThrow()
                 client.getTopicSnapshot(topicInfo.id)
@@ -56,9 +52,17 @@ class TopicTest {
             val emoji = "\uD83D\uDE00"
             val newCommunity = SnowflakeFactory.nextId()
             val session1 = attachSession(client) {
-                DatabaseFactory.dbQuery {
-                    Community.new(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newCommunity, now()))
-                }
+                createCommunity(
+                    Community(
+                        "aid",
+                        "name",
+                        null,
+                        DEFAULT_PRIMARY_KEY,
+                        null,
+                        newCommunity,
+                        now()
+                    )
+                ).getOrThrow()
                 client.joinCommunity(newCommunity)
                 val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, newCommunity, "hello").getOrThrow()
                 val reactionInfo = client.addReaction(topicInfo.id, emoji).getOrThrow()

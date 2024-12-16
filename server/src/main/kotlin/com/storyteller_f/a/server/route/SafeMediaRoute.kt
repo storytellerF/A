@@ -2,7 +2,6 @@ package com.storyteller_f.a.server.route
 
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
-import com.storyteller_f.a.server.service.RouteMedia
 import com.storyteller_f.a.server.service.getMediaList
 import com.storyteller_f.media.UploadPack
 import io.ktor.http.content.*
@@ -13,7 +12,7 @@ import io.ktor.utils.io.*
 import kotlinx.io.readByteArray
 import java.io.File
 
-fun Route.bindSafeMediaRoute(backend: Backend) {
+fun Route.bindProtectedSafeMediaRoute(backend: Backend) {
     get<RouteMedia> {
         usePrincipal { id ->
             getMediaList(id, backend, it)

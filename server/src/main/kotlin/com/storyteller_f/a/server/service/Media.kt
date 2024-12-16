@@ -1,21 +1,15 @@
 package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
-import com.storyteller_f.UnauthorizedException
+import com.storyteller_f.ForbiddenException
+import com.storyteller_f.a.server.route.RouteMedia
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ServerResponse
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
 import io.ktor.resources.*
 import io.ktor.server.plugins.*
-
-@Resource("/amedia")
-class RouteMedia(val objectId: PrimaryKey? = null, val objectType: ObjectType? = null) {
-    @Resource("upload")
-    class Upload(@Suppress("unused") val parent: RouteMedia)
-}
 
 suspend fun getMediaList(
     uid: PrimaryKey,
@@ -27,8 +21,12 @@ suspend fun getMediaList(
             BadRequestException("invalid query")
         )
     }
-    return checkRootReadPermission(routeMedia.objectType, routeMedia.objectId, uid).mapResultNotNull { (hasRead) ->
-        if (hasRead) {
+    return checkRootWritePermission(
+        routeMedia.objectType,
+        routeMedia.objectId,
+        uid
+    ).mapResultNotNull { (_, _, hasWrite) ->
+        if (hasWrite) {
             backend.mediaService.list("amedia", "$uid").mapResult { names ->
                 backend.mediaService.get("amedia", names.map {
                     "$uid/$it"
@@ -39,7 +37,7 @@ suspend fun getMediaList(
                 }
             }
         } else {
-            Result.failure(UnauthorizedException())
+            Result.failure(ForbiddenException("no permission"))
         }
     }
 }

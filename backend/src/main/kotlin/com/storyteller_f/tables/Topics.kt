@@ -1,14 +1,10 @@
 package com.storyteller_f.tables
 
-import com.storyteller_f.BaseObj
-import com.storyteller_f.BaseTable
-import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.UnauthorizedException
-import com.storyteller_f.bindPaginationQuery
-import com.storyteller_f.customPrimaryKey
-import com.storyteller_f.objectType
+import com.storyteller_f.*
+import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.Tuple4
@@ -16,20 +12,9 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Topic.Companion.wrapRow
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.Alias
-import org.jetbrains.exposed.sql.Expression
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.LongColumnType
-import org.jetbrains.exposed.sql.Max
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
-import org.jetbrains.exposed.sql.alias
-import org.jetbrains.exposed.sql.countDistinct
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.jetbrains.exposed.sql.longLiteral
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 
 object Topics : BaseTable() {
     val author = customPrimaryKey("author").index()
@@ -220,4 +205,105 @@ suspend fun commonSearchTopics(
             }
             .where(predicate).groupBy(Topics.id).bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
     }
+}
+
+suspend fun getEncryptedTopic(
+    data: List<TopicInfo>,
+    uid: PrimaryKey
+) = DatabaseFactory.dbQuery {
+    getEncryptedTopicContent(data.map {
+        it.id
+    }, uid)
+}
+
+@OptIn(ExperimentalStdlibApi::class)
+fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey): List<TopicContent.Encrypted> {
+    val aesMap = EncryptedTopicKeys.selectAll().where {
+        EncryptedTopicKeys.topicId inList topicId and (EncryptedTopicKeys.uid eq uid)
+    }.map {
+        EncryptedTopicKey.wrapRow(it)
+    }.associate {
+        it.topicId to mapOf((it.uid to it.encryptedAes.toHexString()))
+    }
+    val contentMap = EncryptedTopics.selectAll().where {
+        EncryptedTopics.topicId inList topicId
+    }.map {
+        EncryptedTopic.wrapRow(it)
+    }.associate {
+        it.topicId to it.content.toHexString()
+    }
+    return topicId.map {
+        val map = aesMap[it] ?: emptyMap()
+        val content = contentMap[it].orEmpty()
+        TopicContent.Encrypted(content, map)
+    }
+}
+suspend fun getTopicRoot(newTopic: NewTopic) = DatabaseFactory.first({
+    rootId to rootType
+}, Topic::wrapRow) {
+    Topic.findById(newTopic.parentId)
+}
+
+suspend fun getEncryptedTopics(
+    topicId: PrimaryKey,
+    uid: PrimaryKey
+) = DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }
+
+suspend fun saveTopic(
+    topic: Topic,
+    backend: Backend,
+    content: String,
+    rootId: PrimaryKey,
+    rootType: ObjectType,
+    newTopic: NewTopic,
+    uid: PrimaryKey
+) = DatabaseFactory.dbQuery {
+    val newTopicId = Topic.new(topic)
+    backend.topicSearchService.saveDocument(
+        listOf(
+            TopicDocument(
+                newTopicId,
+                content,
+                rootId,
+                rootType.name,
+                newTopic.parentId,
+                newTopic.parentType.name,
+                uid
+            )
+        )
+    )
+    topic.toTopicInfo().copy(content = TopicContent.Plain(content))
+}
+suspend fun saveTopic1(
+    topic: Topic,
+    backend: Backend,
+    content: TopicContent.Plain
+) = DatabaseFactory.dbQuery {
+    Topic.new(topic)
+    backend.topicSearchService.saveDocument(
+        listOf(TopicDocument.fromTopic(topic, content))
+    ).getOrThrow()
+
+    topic.toTopicInfo().copy(content = content)
+}
+
+@OptIn(ExperimentalStdlibApi::class)
+suspend fun saveEncryptedTopic(
+    topic: Topic,
+    encryptedContent: String,
+    encryptedAes: Map<PrimaryKey, String>
+) = DatabaseFactory.dbQuery {
+    Topic.new(topic)
+    EncryptedTopics.insert {
+        it[content] = ExposedBlob(encryptedContent.hexToByteArray())
+        it[topicId] = topic.id
+    }
+    EncryptedTopicKeys.batchInsert(encryptedAes.keys) {
+        this[EncryptedTopicKeys.topicId] = topic.id
+        this[EncryptedTopicKeys.uid] = it
+        this[EncryptedTopicKeys.encryptedAes] =
+            ExposedBlob(encryptedAes[it]!!.hexToByteArray())
+    }
+    topic.toTopicInfo(hasComment = false)
+        .copy(content = TopicContent.Encrypted(encryptedContent, encryptedAes), isPrivate = true)
 }

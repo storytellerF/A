@@ -129,7 +129,7 @@ fun InputPrivateKeyPage() {
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
             MeasureTextLineCount(privateKey, LocalTextStyle.current, 32.dp) { lineCount, _ ->
-                TextField(
+                OutlinedTextField(
                     privateKey,
                     onValueChange = {
                         LoginViewModel.updatePrivateKey(it)

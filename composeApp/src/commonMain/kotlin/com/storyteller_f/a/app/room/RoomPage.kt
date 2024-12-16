@@ -1,8 +1,10 @@
 package com.storyteller_f.a.app.room
 
 import a.composeapp.generated.resources.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -492,6 +494,7 @@ fun sendMessage(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InputGroupInternal(
     objectId: PrimaryKey,
@@ -519,8 +522,10 @@ fun InputGroupInternal(
                     })
                 }
                 val appNav = LocalAppNav.current
-                Icon(Icons.Default.OpenInFull, "open in full", modifier = Modifier.clickable {
-                    appNav.gotoTopicCompose(objectType, objectId)
+                Icon(Icons.Default.OpenInFull, "open in full", modifier = Modifier.combinedClickable(onLongClick = {
+                    appNav.gotoTopicCompose(objectType, objectId, true)
+                }) {
+                    appNav.gotoTopicCompose(objectType, objectId, false)
                 })
             }
         })

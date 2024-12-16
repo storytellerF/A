@@ -1,5 +1,4 @@
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.hmacSign
 import com.storyteller_f.shared.hmacVerify
@@ -13,6 +12,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Community
+import com.storyteller_f.tables.createCommunity
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -26,9 +26,9 @@ class CommunityTest {
     @Test
     fun `test get community`() = test { client ->
         val newId = SnowflakeFactory.nextId()
-        val communityId = DatabaseFactory.dbQuery {
-            Community.new(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
-        }.getOrThrow()
+        val communityId = createCommunity(
+            Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())
+        ).getOrThrow()
         val community = client.getCommunityInfo(communityId).getOrThrow()
         assertEquals(communityId, client.getCommunityInfoByAid(community.aid).getOrThrow().id)
     }
@@ -38,9 +38,8 @@ class CommunityTest {
         attachSession(client) {
             // insert community
             val newId = SnowflakeFactory.nextId()
-            val communityId = DatabaseFactory.dbQuery {
-                Community.new(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
-            }.getOrThrow()
+            val community = Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())
+            val communityId = createCommunity(community).getOrThrow()
             assertFails {
                 client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
             }
@@ -76,9 +75,9 @@ class CommunityTest {
             val communities = buildList {
                 repeat(10) {
                     val newId = SnowflakeFactory.nextId()
-                    DatabaseFactory.dbQuery {
-                        Community.new(Community("aid$it", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
-                    }.getOrThrow().let(::add)
+                    createCommunity(
+                        Community("aid$it", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())
+                    ).getOrThrow().let(::add)
                 }
             }
             attachSession(client) {
@@ -114,13 +113,9 @@ class CommunityTest {
     fun `test search community`() {
         test { client ->
             val community1 = SnowflakeFactory.nextId()
-            DatabaseFactory.dbQuery {
-                Community.new(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now()))
-            }.getOrThrow()
+            createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now())).getOrThrow()
             val community2 = SnowflakeFactory.nextId()
-            DatabaseFactory.dbQuery {
-                Community.new(Community("c2", "name2", null, DEFAULT_PRIMARY_KEY, null, community2, now()))
-            }.getOrThrow()
+            createCommunity(Community("c2", "name2", null, DEFAULT_PRIMARY_KEY, null, community2, now())).getOrThrow()
             attachSession(client) {
                 client.joinCommunity(community1)
                 testSearchCommunityCount(client, 1, null, 10, JoinStatusSearch.JOINED, null)
@@ -154,9 +149,7 @@ class CommunityTest {
     fun `test search community member`() {
         test { client ->
             val community1 = SnowflakeFactory.nextId()
-            DatabaseFactory.dbQuery {
-                Community.new(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now()))
-            }.getOrThrow()
+            createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now())).getOrThrow()
             attachSession(client) {
                 assertEquals(0, client.searchCommunityMembers(community1, null, 10, null).getOrThrow().data.size)
                 client.joinCommunity(community1)

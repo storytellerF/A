@@ -200,3 +200,7 @@ suspend fun commonPaginationCommunityList(
         }
     }
 }
+
+suspend fun createCommunity(community: Community) = DatabaseFactory.dbQuery {
+    Community.new(community)
+}

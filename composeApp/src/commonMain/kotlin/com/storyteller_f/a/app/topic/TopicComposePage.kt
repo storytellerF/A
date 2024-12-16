@@ -62,12 +62,17 @@ class MediaListViewModel(private val objectId: PrimaryKey, private val objectTyp
 }
 
 @Composable
-fun TopicComposePage(objectType: ObjectType, objectId: PrimaryKey, backPrePage: () -> Unit) {
+fun TopicComposePage(
+    objectType: ObjectType,
+    objectId: PrimaryKey,
+    enableExperimental: Boolean,
+    backPrePage: () -> Unit
+) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val user by LoginViewModel.user.collectAsState()
     user?.let {
-        TopicComposeScaffold(it, scope, drawerState, objectType, objectId, backPrePage)
+        TopicComposeScaffold(it, scope, drawerState, objectType, objectId, backPrePage, enableExperimental)
     }
 }
 
@@ -79,7 +84,8 @@ private fun TopicComposeScaffold(
     drawerState: DrawerState,
     objectType: ObjectType,
     objectId: PrimaryKey,
-    backPrePage: () -> Unit
+    backPrePage: () -> Unit,
+    enableExperimental: Boolean
 ) {
     var input by remember {
         mutableStateOf("")
@@ -91,17 +97,19 @@ private fun TopicComposeScaffold(
         TopicComposeDrawer(scope, list, input) {
             input = it
         }
-    }, drawerState = drawerState, modifier = Modifier.fillMaxWidth(), gesturesEnabled = false) {
+    }, drawerState = drawerState, modifier = Modifier.fillMaxWidth(), gesturesEnabled = enableExperimental) {
         Scaffold(topBar = {
             TopAppBar({
             }, navigationIcon = {
-//                IconButton(onClick = {
-//                    scope.launch {
-//                        drawerState.open()
-//                    }
-//                }) {
-//                    Icon(Icons.Filled.Menu, contentDescription = null)
-//                }
+                if (enableExperimental) {
+                    IconButton(onClick = {
+                        scope.launch {
+                            drawerState.open()
+                        }
+                    }) {
+                        Icon(Icons.Filled.Menu, contentDescription = null)
+                    }
+                }
             }, actions = {
                 TopicComposeSubmitButton(input, objectType, objectId) {
                     input = ""
@@ -110,7 +118,7 @@ private fun TopicComposeScaffold(
             })
         }) { paddingValues ->
             Column(modifier = Modifier.padding(top = paddingValues.calculateTopPadding())) {
-                TopicComposeInternal(input, list) {
+                TopicComposeInternal(input, list, enableExperimental) {
                     input = it
                 }
             }
@@ -168,6 +176,7 @@ private fun TopicComposeDrawer(
 private fun TopicComposeInternal(
     input: String,
     mediaListViewModel: MediaListViewModel,
+    enableExperimental: Boolean,
     updateInput: (String) -> Unit
 ) {
     val pagerState = rememberPagerState {
@@ -195,9 +204,9 @@ private fun TopicComposeInternal(
     }
     val list by mediaListViewModel.handler.data.collectAsState()
     HorizontalPager(pagerState, key = tabs::get) { index ->
-        when (index) {
-            0 -> RichEditTopicPage(input, state, updateInput)
-            1 -> PreviewTopicPage(input, list?.data)
+        when {
+            index == 0 && !enableExperimental -> RichEditTopicPage(input, state, updateInput)
+            index == 1 -> PreviewTopicPage(input, list?.data)
             else -> EditTopicPage(input) {
                 Napier.i {
                     "markdown update1 $it"

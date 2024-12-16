@@ -12,17 +12,8 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.Tuple4
 import com.storyteller_f.shared.utils.mapResult
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.Expression
-import org.jetbrains.exposed.sql.LongColumnType
-import org.jetbrains.exposed.sql.Max
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.count
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.longLiteral
-import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
+import kotlin.text.insert
 
 object Reactions : BaseTable() {
     val emoji = varchar("emoji", 20)
@@ -152,5 +143,21 @@ suspend fun deleteReaction(reactionId: PrimaryKey): Result<Boolean> {
         }
     }.map { value ->
         value > 0
+    }
+}
+
+suspend fun insertReaction(
+    newId: PrimaryKey,
+    userId: PrimaryKey,
+    reactionInfo: ReactionInfo,
+    now: LocalDateTime
+) = DatabaseFactory.insert {
+    Reactions.insert { statement ->
+        statement[id] = newId
+        statement[uid] = userId
+        statement[objectId] = reactionInfo.objectId
+        statement[objectType] = reactionInfo.objectType
+        statement[emoji] = reactionInfo.emoji
+        statement[createdTime] = now
     }
 }
