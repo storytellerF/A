@@ -9,9 +9,8 @@ import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.tables.Community
-import com.storyteller_f.tables.MemberJoin
-import com.storyteller_f.tables.Room
+import com.storyteller_f.tables.*
+import io.ktor.client.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -21,9 +20,7 @@ class RoomTest {
     fun `test room search`() {
         test { client ->
             val community1 = SnowflakeFactory.nextId()
-            DatabaseFactory.dbQuery {
-                Community.new(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now()))
-            }.getOrThrow()
+            createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now())).getOrThrow()
             val room1 = SnowflakeFactory.nextId()
             val room2 = SnowflakeFactory.nextId()
             val room3 = SnowflakeFactory.nextId()
@@ -34,35 +31,31 @@ class RoomTest {
                 }
                 client.joinCommunity(community1)
                 client.joinRoom(room1)
-                assertEquals(
-                    1,
-                    client.searchRooms(10, null, JoinStatusSearch.JOINED, null, null).getOrThrow().data.size
-                )
-                assertEquals(
-                    1,
-                    client.searchRooms(10, null, JoinStatusSearch.NOT_JOINED, null, null).getOrThrow().data.size
-                )
-                assertEquals(
-                    2,
-                    client.searchRooms(10, null, JoinStatusSearch.UNSPECIFIED, null, null).getOrThrow().data.size
-                )
-                assertEquals(
-                    1,
-                    client.searchRooms(10, null, JoinStatusSearch.UNSPECIFIED, "name2", null).getOrThrow().data.size
-                )
-                DatabaseFactory.dbQuery {
-                    MemberJoin.new(MemberJoin(it.data4, room3, ObjectType.ROOM, now()))
-                }
-                assertEquals(
-                    2,
-                    client.searchRooms(10, null, JoinStatusSearch.JOINED, null, null).getOrThrow().data.size
-                )
-                assertEquals(
-                    2,
-                    client.searchRooms(10, null, JoinStatusSearch.UNSPECIFIED, null, community1).getOrThrow().data.size
-                )
+                testSearchRoom(1, 10, null, JoinStatusSearch.JOINED, null, null, client)
+                testSearchRoom(1, 10, null, JoinStatusSearch.NOT_JOINED, null, null, client)
+                testSearchRoom(2, 10, null, JoinStatusSearch.UNSPECIFIED, null, null, client)
+                testSearchRoom(1, 10, null, JoinStatusSearch.UNSPECIFIED, "name2", null, client)
+                val join = MemberJoin(it.data4, room3, ObjectType.ROOM, now())
+                createMemberJoin(join).getOrThrow()
+                testSearchRoom(2, 10, null, JoinStatusSearch.JOINED, null, null, client)
+                testSearchRoom(2, 10, null, JoinStatusSearch.UNSPECIFIED, null, community1, client)
             }
         }
+    }
+
+    suspend fun testSearchRoom(
+        expected: Int,
+        size: Int,
+        nextRoomId: PrimaryKey?,
+        joinStatusSearch: JoinStatusSearch,
+        word: String?,
+        communityId: PrimaryKey?,
+        client: HttpClient
+    ) {
+        assertEquals(
+            expected,
+            client.searchRooms(size, nextRoomId, joinStatusSearch, word, communityId).getOrThrow().data.size
+        )
     }
 
     private suspend fun createRooms(
@@ -152,9 +145,7 @@ class RoomTest {
                 assertFails {
                     client.joinRoom(room2).getOrThrow()
                 }
-                DatabaseFactory.dbQuery {
-                    MemberJoin.new(MemberJoin(it.data4, room2, ObjectType.ROOM, now()))
-                }
+                createMemberJoin(MemberJoin(it.data4, room2, ObjectType.ROOM, now())).getOrThrow()
                 assertEquals(1, client.searchRoomMembers(room2, null, 10, null).getOrThrow().data.size)
             }
         }

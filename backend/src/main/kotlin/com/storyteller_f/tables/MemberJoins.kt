@@ -97,3 +97,15 @@ suspend fun addCommunityJoin(
         it[objectType] = ObjectType.COMMUNITY
     }
 }
+
+suspend fun createMemberJoin(join: MemberJoin) = DatabaseFactory.dbQuery {
+    MemberJoin.new(join)
+}
+
+suspend fun isRoomJoins1(roomId: PrimaryKey) = DatabaseFactory.mapQuery({
+    MemberJoin.wrapRow(this)
+}) {
+    MemberJoins.selectAll().where {
+        MemberJoins.objectId eq roomId
+    }
+}

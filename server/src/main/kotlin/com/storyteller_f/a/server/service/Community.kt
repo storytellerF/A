@@ -1,10 +1,10 @@
 package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
+import com.storyteller_f.a.server.route.RouteCommunities
 import com.storyteller_f.getMediaInfo
 import com.storyteller_f.isDup
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
@@ -13,28 +13,6 @@ import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import io.ktor.resources.*
 import io.ktor.server.plugins.BadRequestException
-
-@Resource("/communities")
-class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
-    @Resource("search")
-    class Search(
-        @Suppress("unused") val parent: RouteCommunities = RouteCommunities(),
-        val joinStatus: JoinStatusSearch? = null,
-        val word: String? = null
-    )
-
-    @Resource("{id}")
-    class Id(val parent: RouteCommunities = RouteCommunities(), val id: PrimaryKey) {
-        @Resource("members")
-        class Members(val parent: Id, val word: String? = null)
-
-        @Resource("join")
-        class Join(val parent: Id)
-
-        @Resource("exit")
-        class Exit(val parent: Id)
-    }
-}
 
 suspend fun getCommunity(
     communityId: PrimaryKey?,

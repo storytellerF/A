@@ -73,6 +73,10 @@ fun extractHeadParagraph(
                 MarkdownElementTypes::class.java.fields.any {
                     node.type.name == it.name
                 } -> {
+                    if (paragraphs.length <= 100) {
+                        val content = markdownText.substring(node.startOffset, node.endOffset).trim()
+                        paragraphs.appendLine(content)
+                    }
                     // Stop capturing when encountering the first second-level header
                     captureContent1 = false
                 }

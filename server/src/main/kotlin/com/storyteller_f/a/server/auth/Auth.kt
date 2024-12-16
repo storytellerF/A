@@ -2,32 +2,27 @@ package com.storyteller_f.a.server.auth
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.BuildConfig
-import com.storyteller_f.a.server.common.checkParameter
 import com.storyteller_f.a.server.route.*
 import com.storyteller_f.shared.*
-import com.storyteller_f.shared.model.MediaResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.filterNull
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.tables.User
-import com.storyteller_f.tables.Users
-import com.storyteller_f.tables.getCommonUser
-import com.storyteller_f.tables.getUser
-import com.storyteller_f.tables.isUserNotExists
-import com.storyteller_f.tables.toFinalUserInfo
+import com.storyteller_f.tables.*
 import io.ktor.http.*
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
+import io.ktor.server.resources.*
+import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-import java.io.File
+import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -125,39 +120,6 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
     }
 }
 
-fun Routing.bindUnauthenticatedRoute(backend: Backend) {
-    get("/get_data") {
-        call.respondText(call.getData())
-    }
-
-    post("/sign_up") {
-        signUp(backend)
-    }
-
-    post("/sign_in") {
-        signIn(backend)
-    }
-
-    get("/ping") {
-        call.respondText("pong")
-    }
-
-    get("/amedia/{path...}") {
-        omitPrincipal {
-            checkParameter<List<String>, MediaResponse>("path") {
-                val userHome = System.getProperty("user.home")
-                val file = File(userHome, "a/amedia/${it.joinToString("/")}")
-                val value = MediaResponse(file.path, ContentType.defaultForFile(file).toString())
-                Result.success(value)
-            }
-        }
-    }
-
-    get {
-        call.respondText("${backend.config.flavor} ${backend.config.isProd}")
-    }
-}
-
 suspend fun ApplicationCall.respondUnauthorizedResponse() {
     val data = getData()
     respond(UnauthorizedResponse(HttpAuthHeader.Single("Custom", data)))
@@ -204,7 +166,7 @@ private suspend fun RoutingContext.signUp(backend: Backend) {
                 val ad = calcAddress(pack.pk)
                 val newId = SnowflakeFactory.nextId()
                 val name = backend.nameService.parse(newId)
-                getUser(ad, name, newId, pack.pk).mapResult { value ->
+                createUser(ad, name, newId, pack.pk).mapResult { value ->
                     saveSuccessSessionOnFirst(newId)
                     toFinalUserInfo(value, backend)
                 }
@@ -259,17 +221,14 @@ private suspend fun ApplicationCall.checkApiRequest(
     }
 }
 
-private suspend fun getUserAuthData(credential: CustomCredential): Result<Pair<String, Long>?> = DatabaseFactory.first({
-    this
-}, {
-    it[Users.publicKey] to it[Users.id]
-}) {
-    Users.select(listOf(Users.publicKey, Users.id)).where {
+private suspend fun getUserAuthData(credential: CustomCredential): Result<Pair<String, Long>?> {
+    val predicate: SqlExpressionBuilder.() -> Op<Boolean> = {
         when (credential) {
             is CustomCredential.AidCredential -> Users.aid eq credential.aid
             is CustomCredential.IdCredential -> Users.id eq credential.id
         }
     }
+    return getUserAuthDataBy(predicate)
 }
 
 private fun ApplicationCall.saveSuccessSession(
@@ -283,11 +242,9 @@ private suspend fun checkDevWsLink(call: ApplicationCall): CustomPrincipal? {
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        DatabaseFactory.first({
-            CustomPrincipal(id)
-        }, User::wrapRow) {
-            User.findById(id)
-        }.getOrNull()
+        checkUserExists(id).getOrNull()?.let {
+            CustomPrincipal(it)
+        }
     } else {
         null
     }
@@ -361,4 +318,27 @@ fun Application.configureAuth(backend: Backend) {
         }
     }
     commonRoute(backend)
+}
+
+fun Route.bindUnprotectedAccountRoute(backend: Backend) {
+    get<RouteAccounts.GetData> {
+        call.respondText(call.getData())
+    }
+
+    post<RouteAccounts.SignUp> {
+        signUp(backend)
+    }
+
+    post<RouteAccounts.SignIn> {
+        signIn(backend)
+    }
+}
+
+fun Route.bindProtectedAccountRoute() {
+    post<RouteAccounts.SignOut> {
+        usePrincipal { _ ->
+            call.sessions.clear(UserSession::class)
+            Result.success(Unit)
+        }
+    }
 }

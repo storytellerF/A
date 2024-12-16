@@ -2,10 +2,8 @@ package com.storyteller_f.a.server
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
-import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.NewTopic
@@ -22,10 +20,6 @@ import io.ktor.util.logging.error
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 
 val messageResponseFlow = MutableSharedFlow<RoomFrame.NewTopicInfo>()
 val sharedFlow = messageResponseFlow.asSharedFlow()
@@ -91,11 +85,7 @@ private suspend fun addTopicAtRoom(
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.first({
-                rootId to rootType
-            }, Topic::wrapRow) {
-                Topic.findById(newTopic.parentId)
-            }.mapResultNotNull { (id, type) ->
+            getTopicRoot(newTopic).mapResultNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
                     addTopicIntoRoom(
                         id,
@@ -178,45 +168,17 @@ private suspend fun savePlainTopicContent(
     content: TopicContent.Plain,
     backend: Backend
 ): Result<TopicInfo> {
-    return DatabaseFactory.dbQuery {
-        Topic.new(topic)
-        backend.topicSearchService.saveDocument(
-            listOf(TopicDocument.fromTopic(topic, content))
-        ).getOrThrow()
-
-        topic.toTopicInfo().copy(content = content)
-    }
+    return saveTopic1(topic, backend, content)
 }
 
-@OptIn(ExperimentalStdlibApi::class)
 suspend fun saveEncryptedTopicContent(
     topic: Topic,
     encryptedAes: Map<PrimaryKey, String>,
     encryptedContent: String
-) = DatabaseFactory.dbQuery {
-    Topic.new(topic)
-    EncryptedTopics.insert {
-        it[content] = ExposedBlob(encryptedContent.hexToByteArray())
-        it[topicId] = topic.id
-    }
-    EncryptedTopicKeys.batchInsert(encryptedAes.keys) {
-        this[EncryptedTopicKeys.topicId] = topic.id
-        this[EncryptedTopicKeys.uid] = it
-        this[EncryptedTopicKeys.encryptedAes] =
-            ExposedBlob(encryptedAes[it]!!.hexToByteArray())
-    }
-    topic.toTopicInfo(hasComment = false)
-        .copy(content = TopicContent.Encrypted(encryptedContent, encryptedAes), isPrivate = true)
-}
+) = saveEncryptedTopic(topic, encryptedContent, encryptedAes)
 
 private suspend fun isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Result<Boolean> {
-    return DatabaseFactory.mapQuery({
-        MemberJoin.wrapRow(this)
-    }) {
-        MemberJoins.selectAll().where {
-            MemberJoins.objectId eq roomId
-        }
-    }.map { value ->
+    return isRoomJoins1(roomId).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()

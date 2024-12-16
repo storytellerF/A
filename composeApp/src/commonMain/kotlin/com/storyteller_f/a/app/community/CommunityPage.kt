@@ -210,7 +210,7 @@ private fun CommunityFloatingButton(
     val message = stringResource(Res.string.join_community_prompt)
     FloatingActionButton(onClick = {
         if (community?.isJoined == true) {
-            appNav.gotoTopicCompose(ObjectType.COMMUNITY, communityId)
+            appNav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, false)
         } else {
             alertDialogState.showMessage(title, message)
         }

@@ -86,7 +86,7 @@ fun toFinalUserInfo(p: Pair<UserInfo, String?>, backend: Backend): Result<UserIn
     val (userInfo, icon) = p
     return backend.mediaService.get("amedia", listOf(icon)).map { value ->
         userInfo.copy(avatar = value.firstOrNull()?.let {
-            MediaInfo(it,)
+            MediaInfo(it)
         })
     }
 }
@@ -182,7 +182,7 @@ suspend fun searchMembers(
         }).map { value ->
             PaginationResult(pairs.mapIndexed { index, pair ->
                 pair.first.copy(avatar = value[index]?.let {
-                    MediaInfo(it,)
+                    MediaInfo(it)
                 })
             }, count)
         }
@@ -197,7 +197,7 @@ suspend fun getCommonUser(pack: SignInPack): Result<Triple<UserInfo, String?, St
     }
 }
 
-suspend fun getUser(
+suspend fun createUser(
     ad: String,
     name: String,
     newId: PrimaryKey,
@@ -219,3 +219,39 @@ suspend fun getUser(id: PrimaryKey): Result<User?> = DatabaseFactory.first({
 }, User::wrapRow) {
     User.findById(id)
 }
+
+suspend fun getUser2(id: PrimaryKey) =
+    DatabaseFactory.first(User::toUserInfo, User::wrapRow) {
+        User.findById(id)
+    }
+
+suspend fun updateUser1(
+    id: PrimaryKey,
+    newUser: UserInfo
+) = DatabaseFactory.dbQuery {
+    Users.update({
+        Users.id eq id
+    }) {
+        if (newUser.nickname.isNotBlank()) {
+            it[nickname] = newUser.nickname
+        }
+        if (!newUser.aid.isNullOrBlank()) {
+            it[aid] = newUser.aid
+        }
+    }
+}
+
+suspend fun checkUserExists(id: Long) = DatabaseFactory.first({
+    id
+}, User::wrapRow) {
+    User.findById(id)
+}
+
+suspend fun getUserAuthDataBy(predicate: SqlExpressionBuilder.() -> Op<Boolean>) =
+    DatabaseFactory.first({
+        this
+    }, {
+        it[Users.publicKey] to it[Users.id]
+    }) {
+        Users.select(listOf(Users.publicKey, Users.id)).where(predicate)
+    }

@@ -266,7 +266,7 @@ suspend fun HttpClient.signUp(
     publicKey: String,
     signature: String,
 ) = serviceCatching {
-    post("sign_up") {
+    post("accounts/sign_up") {
         contentType(ContentType.Application.Json)
         setBody(SignUpPack(publicKey, signature))
     }.body<UserInfo>()
@@ -276,14 +276,14 @@ suspend fun HttpClient.signIn(
     address: String,
     signature: String
 ) = serviceCatching {
-    post("sign_in") {
+    post("accounts/sign_in") {
         contentType(ContentType.Application.Json)
         setBody(SignInPack(address, signature))
     }.body<UserInfo>()
 }
 
 suspend fun HttpClient.getData() = serviceCatching {
-    get("get_data").bodyAsText()
+    get("accounts/get_data").bodyAsText()
 }
 
 suspend fun HttpClient.getTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
@@ -350,7 +350,7 @@ suspend fun HttpClient.getReactions(topicId: PrimaryKey) =
     }
 
 suspend fun HttpClient.signOut() = serviceCatching {
-    post("sign_out")
+    post("accounts/sign_out")
 }
 
 suspend fun HttpClient.getMediaList(objectId: PrimaryKey, objectType: ObjectType) = serviceCatching {
