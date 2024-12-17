@@ -43,7 +43,7 @@ if [ "$md" != "$mdRemote" ]; then
   ssh "$REMOTE_URI" "echo ""$md"  "$TARGET"" | md5sum -c -"
   sleep 2
 
-  "$REMOTE_URI" "cp "$TARGET" "$TARGET2""
+  ssh "$REMOTE_URI" "cp "$TARGET" "$TARGET2""
   sleep 2
 
   # 验证上传的文件完整性
