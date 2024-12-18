@@ -46,11 +46,8 @@ if [ "$md" != "$mdRemote" ]; then
   ssh "$REMOTE_URI" "cp "$TARGET" "$TARGET2""
   sleep 2
 
-  # 验证上传的文件完整性
-  ssh "$REMOTE_URI" "echo ""$md"  "$TARGET2"" | md5sum -c -"
   # 解压
-  sleep 2
-  ssh "$REMOTE_URI" "cd /tmp/A && bzip2 -d $TARGET2"
+  ssh "$REMOTE_URI" "cd /tmp/A && bzip2 -df $TARGET2"
   sleep 2
 else
   echo "docker image same, skip upload.`date`"
