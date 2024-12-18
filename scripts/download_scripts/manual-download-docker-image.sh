@@ -1,9 +1,9 @@
 #!/bin/sh
 set -e
-mkdir -p deploy/docker-images
+mkdir -p deploy/docker-images build/scripts
 
 # 要下载的文件
-file="scripts/download-image.sh"
+file="build/scripts/download-image.sh"
 url="https://raw.githubusercontent.com/moby/moby/master/contrib/download-frozen-image-v2.sh"
 
 # 判断文件是否已经存在
