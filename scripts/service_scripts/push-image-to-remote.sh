@@ -1,9 +1,8 @@
 #!/bin/bash
 set -e
 REMOTE_URI=$1
-REMOTE_CERT_FILE=$2
-REMOTE_COMMAND=$3
-if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_COMMAND" ]; then
+REMOTE_COMMAND=$2
+if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_COMMAND" ]; then
   echo "REMOTE_URI, REMOTE_COMMAND and REMOTE_CERT_FILE must be set"
   exit 1
 fi

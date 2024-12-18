@@ -40,7 +40,8 @@ if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_COMMAND" 
     echo "build on remote"
     # 在远程主机上启动
     # load image
-    docker load -i "/tmp/A/$FLAVOR.image.tar"
+    # docker load -i "/tmp/A/$FLAVOR.image.tar"
+    ./scripts/build_scripts/build-server-image.sh
     # 使用预构建镜像构建服务
     "./scripts/service_scripts/start-$FLAVOR-compose.sh" true 'up -d --build'
   fi
