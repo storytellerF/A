@@ -149,4 +149,3 @@ fun Query.bindPaginationQuery(
 class UnauthorizedException : Exception()
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)
 class CustomBadRequestException(message: String) : Exception(message)
-

@@ -78,7 +78,16 @@ fun TopicComposePage(
     val scope = rememberCoroutineScope()
     val user by LoginViewModel.user.collectAsState()
     user?.let {
-        TopicComposeScaffold(it, scope, drawerState, objectType, objectId, backPrePage, enableExperimental, privateRoomId)
+        TopicComposeScaffold(
+            it,
+            scope,
+            drawerState,
+            objectType,
+            objectId,
+            backPrePage,
+            enableExperimental,
+            privateRoomId
+        )
     }
 }
 
@@ -98,10 +107,11 @@ private fun TopicComposeScaffold(
         mutableStateOf("")
     }
     val list = viewModel(keys = listOf("media", user.id, privateRoomId)) {
-        if (privateRoomId != null)
+        if (privateRoomId != null) {
             MediaListViewModel(privateRoomId, ObjectType.ROOM)
-        else
+        } else {
             MediaListViewModel(user.id, ObjectType.USER)
+        }
     }
     ModalNavigationDrawer({
         TopicComposeDrawer(scope, list, input) {
@@ -190,7 +200,6 @@ private fun TopicComposeDrawer(
                     })
                 }
             }
-
         }
     }
 }

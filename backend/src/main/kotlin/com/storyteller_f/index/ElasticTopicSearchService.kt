@@ -213,10 +213,11 @@ private suspend fun <T> useElasticClient(
                     }
                 }
         } catch (e: Exception) {
-            if (e is ConnectException || e is ConnectionClosedException)
+            if (e is ConnectException || e is ConnectionClosedException) {
                 throw Exception("elastic service unavailable", e)
-            else
+            } else {
                 throw e
+            }
         }
     }
 }

@@ -15,15 +15,17 @@ fi
 ssh "$REMOTE_URI" "mkdir -p a-server/$FLAVOR"
 sleep 2
 
+mkdir -p ./build/jar
+unzip -qn ./server/build/libs/server-all.jar -d ./server/build/libs/server
+tar -cf ./server/build/libs/server.tar ./server/build/libs/server/
+tar -cf ./build/jar/server-cli.tar ./server/build/libs/server.tar ./cli/build/distributions/cli.tar
 # 定义文件数组
 SERVER_JAR_FILES=(
-  "./server/build/libs/server-all.jar"
-  "./cli/build/distributions/cli.tar"
+  "./build/jar/server-cli.tar"
 )
 
 SERVER_JAR_TARGETS=(
-  "./a-server/$FLAVOR/server-all.jar"
-  "./a-server/$FLAVOR/cli.tar"
+  "./a-server/$FLAVOR/server-cli.tar"
 )
 
 # 检查数组长度是否一致

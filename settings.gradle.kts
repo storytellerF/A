@@ -32,6 +32,7 @@ dependencyResolutionManagement {
         }
         mavenCentral()
         maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
+        maven("https://jogamp.org/deployment/maven/")
         maven("https://jitpack.io")
     }
 }

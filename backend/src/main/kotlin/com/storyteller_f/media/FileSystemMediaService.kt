@@ -2,7 +2,6 @@ package com.storyteller_f.media
 
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.MediaItem
-import java.awt.datatransfer.MimeTypeParseException
 import java.io.File
 import java.net.URLConnection
 import java.nio.file.Files
