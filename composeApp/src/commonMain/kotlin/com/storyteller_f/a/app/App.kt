@@ -76,7 +76,7 @@ data object LoginScreen
 data class TopicScreen(val topicId: PrimaryKey)
 
 @Serializable
-data class TopicComposeScreen(val objectType: String, val objectId: PrimaryKey, val enableExperimental: Boolean)
+data class TopicComposeScreen(val objectType: String, val objectId: PrimaryKey, val enableExperimental: Boolean, val privateRoomId: PrimaryKey?)
 
 @Serializable
 data class MemberScreen(val objectType: String, val objectId: PrimaryKey)
@@ -123,8 +123,8 @@ private fun NavGraphBuilder.buildRootNav(
         TopicPage(it.toRoute<TopicScreen>().topicId)
     }
     composable<TopicComposeScreen> {
-        val (objectType, objectId, enableExperimental) = it.toRoute<TopicComposeScreen>()
-        TopicComposePage(ObjectType.valueOf(objectType), objectId, enableExperimental) {
+        val (objectType, objectId, enableExperimental, privateRoomId) = it.toRoute<TopicComposeScreen>()
+        TopicComposePage(ObjectType.valueOf(objectType), objectId, enableExperimental, privateRoomId) {
             navigator.popBackStack()
         }
     }
@@ -158,8 +158,13 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
         navigator.popBackStack(HomeScreen, false)
     }
 
-    override fun gotoTopicCompose(objectType: ObjectType, objectId: PrimaryKey, enableExperimental: Boolean) {
-        navigator.navigate(route = TopicComposeScreen(objectType.name, objectId, enableExperimental))
+    override fun gotoTopicCompose(
+        objectType: ObjectType,
+        objectId: PrimaryKey,
+        enableExperimental: Boolean,
+        privateRoomId: PrimaryKey?
+    ) {
+        navigator.navigate(route = TopicComposeScreen(objectType.name, objectId, enableExperimental, privateRoomId))
     }
 
     override fun gotoMemberPage(
@@ -223,7 +228,7 @@ interface AppNav {
 
     fun gotoHome()
 
-    fun gotoTopicCompose(objectType: ObjectType, objectId: PrimaryKey, enableExperimental: Boolean)
+    fun gotoTopicCompose(objectType: ObjectType, objectId: PrimaryKey, enableExperimental: Boolean, privateRoomId: PrimaryKey?)
 
     fun gotoMemberPage(objectId: PrimaryKey, objectType: ObjectType)
 
@@ -262,7 +267,12 @@ interface AppNav {
                 TODO("Not yet implemented")
             }
 
-            override fun gotoTopicCompose(objectType: ObjectType, objectId: PrimaryKey, enableExperimental: Boolean) {
+            override fun gotoTopicCompose(
+                objectType: ObjectType,
+                objectId: PrimaryKey,
+                enableExperimental: Boolean,
+                privateRoomId: PrimaryKey?
+            ) {
                 TODO("Not yet implemented")
             }
 

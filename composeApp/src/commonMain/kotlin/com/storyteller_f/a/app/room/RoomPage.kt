@@ -353,7 +353,9 @@ fun RoomInputGroup(
         val keyData by keysViewModel.handler.data.collectAsState()
         val objectId = topicId ?: roomId
         val objectType = if (topicId != null) ObjectType.TOPIC else ObjectType.ROOM
-        InputGroupInternal(objectId, objectType, input, MaterialTheme.colorScheme.tertiaryContainer, {
+        InputGroupInternal(objectId, objectType, input, MaterialTheme.colorScheme.tertiaryContainer, roomId.takeIf {
+            roomInfo.isPrivate
+        }, {
             input = it
         }, sendButton = {
             val p1 = stringResource(Res.string.private_room_pub_key_loading)
@@ -501,6 +503,7 @@ fun InputGroupInternal(
     objectType: ObjectType,
     input: String,
     backgroundColor: Color,
+    privateRoomId: PrimaryKey?,
     updateInput: (String) -> Unit,
     sendButton: @Composable () -> Unit
 ) {
@@ -523,9 +526,9 @@ fun InputGroupInternal(
                 }
                 val appNav = LocalAppNav.current
                 Icon(Icons.Default.OpenInFull, "open in full", modifier = Modifier.combinedClickable(onLongClick = {
-                    appNav.gotoTopicCompose(objectType, objectId, true)
+                    appNav.gotoTopicCompose(objectType, objectId, true, privateRoomId)
                 }) {
-                    appNav.gotoTopicCompose(objectType, objectId, false)
+                    appNav.gotoTopicCompose(objectType, objectId, false, privateRoomId)
                 })
             }
         })

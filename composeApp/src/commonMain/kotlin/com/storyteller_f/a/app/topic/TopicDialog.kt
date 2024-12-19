@@ -2,25 +2,32 @@ package com.storyteller_f.a.app.topic
 
 import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.copy
+import a.composeapp.generated.resources.snapshot
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
+import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.DialogContainer
+import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.user.UserCell
 import com.storyteller_f.a.app.user.UserViewModel
+import com.storyteller_f.a.client_lib.getTopicSnapshot
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +61,14 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?) {
                     clipboardManager.setText(annotatedString = buildAnnotatedString {
                         append(content.plain)
                     })
+                }
+                val scope = rememberCoroutineScope()
+                ButtonNav(Icons.Default.PictureAsPdf, stringResource(Res.string.snapshot)) {
+                    scope.launch {
+                        globalDialogState.use {
+                            client.getTopicSnapshot(topicInfo.id)
+                        }
+                    }
                 }
             }
         }

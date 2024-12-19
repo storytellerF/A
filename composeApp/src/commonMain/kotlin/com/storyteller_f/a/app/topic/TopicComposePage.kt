@@ -5,6 +5,8 @@ import a.composeapp.generated.resources.edit
 import a.composeapp.generated.resources.preview
 import a.composeapp.generated.resources.raw
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.BasicTextField
@@ -21,6 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.dokar.sonner.Toaster
+import com.dokar.sonner.rememberToasterState
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
@@ -51,6 +55,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Duration.Companion.seconds
 
 class MediaListViewModel(private val objectId: PrimaryKey, private val objectType: ObjectType) :
     SimpleViewModel<ServerResponse<MediaInfo>>() {
@@ -66,13 +71,14 @@ fun TopicComposePage(
     objectType: ObjectType,
     objectId: PrimaryKey,
     enableExperimental: Boolean,
+    privateRoomId: PrimaryKey?,
     backPrePage: () -> Unit
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val user by LoginViewModel.user.collectAsState()
     user?.let {
-        TopicComposeScaffold(it, scope, drawerState, objectType, objectId, backPrePage, enableExperimental)
+        TopicComposeScaffold(it, scope, drawerState, objectType, objectId, backPrePage, enableExperimental, privateRoomId)
     }
 }
 
@@ -85,13 +91,17 @@ private fun TopicComposeScaffold(
     objectType: ObjectType,
     objectId: PrimaryKey,
     backPrePage: () -> Unit,
-    enableExperimental: Boolean
+    enableExperimental: Boolean,
+    privateRoomId: PrimaryKey?
 ) {
     var input by remember {
         mutableStateOf("")
     }
-    val list = viewModel(keys = listOf("media", user.id)) {
-        MediaListViewModel(user.id, ObjectType.USER)
+    val list = viewModel(keys = listOf("media", user.id, privateRoomId)) {
+        if (privateRoomId != null)
+            MediaListViewModel(privateRoomId, ObjectType.ROOM)
+        else
+            MediaListViewModel(user.id, ObjectType.USER)
     }
     ModalNavigationDrawer({
         TopicComposeDrawer(scope, list, input) {
@@ -133,6 +143,8 @@ private fun TopicComposeDrawer(
     input: String,
     updateInput: (String) -> Unit
 ) {
+    val toasterState = rememberToasterState()
+    Toaster(toasterState)
     ModalDrawerSheet {
         Row {
             IconButton({
@@ -143,6 +155,8 @@ private fun TopicComposeDrawer(
                             val size = f.getSize()
                             if (size != null && size <= 1024 * 1024) {
                                 client.upload(f.readBytes(), f.name, f.extension)
+                            } else {
+                                toasterState.show("size is null or size too big", duration = 1.seconds)
                             }
                         }
                     }
@@ -157,16 +171,26 @@ private fun TopicComposeDrawer(
             }
         }
         StateView(list.handler) {
-            it.data.forEach {
-                NavigationDrawerItem({
-                    Text(it.name.toString())
-                }, false, {
-                    val url = it.name
-                    updateInput("$input\n![$url](/$url \"$url\")\n")
-                }, icon = {
-                    AsyncImage(it.url, it.name, modifier = Modifier.size(40.dp))
-                })
+            LazyColumn {
+                items(it.data) {
+                    NavigationDrawerItem({
+                        Text(it.item.name.toString())
+                    }, false, {
+                        updateInput(
+                            """$input
+```object
+{
+    "contentType": "application/pdf",
+    "name": "${it.item.name}"
+}
+```"""
+                        )
+                    }, icon = {
+                        AsyncImage(it.url, it.item.name, modifier = Modifier.size(40.dp))
+                    })
+                }
             }
+
         }
     }
 }
@@ -329,7 +353,7 @@ private fun TopicComposeSubmitButton(
 
 @Composable
 fun PreviewTopicPage(input: String, res: List<MediaInfo>?) {
-    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)) {
         TopicContentField(
             TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, res.orEmpty())),
             showHeadline = false,

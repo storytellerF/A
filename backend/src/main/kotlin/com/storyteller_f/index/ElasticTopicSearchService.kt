@@ -22,6 +22,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
+import org.apache.http.ConnectionClosedException
 import org.apache.http.HttpHost
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
@@ -211,8 +212,11 @@ private suspend fun <T> useElasticClient(
                         ElasticsearchAsyncClient(transport).block()
                     }
                 }
-        } catch (e: ConnectException) {
-            throw Exception("elastic service unavailable", e)
+        } catch (e: Exception) {
+            if (e is ConnectException || e is ConnectionClosedException)
+                throw Exception("elastic service unavailable", e)
+            else
+                throw e
         }
     }
 }

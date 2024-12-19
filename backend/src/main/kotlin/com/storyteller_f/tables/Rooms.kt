@@ -305,7 +305,7 @@ private fun roomsResponse(list: List<Pair<RoomInfo, String?>>, backend: Backend)
         it.second
     }).map { icons ->
         list.mapIndexed { i, roomPair ->
-            roomPair.first.copy(icon = getMediaInfo(icons[i]))
+            roomPair.first.copy(icon = icons[i])
         }
     }
 }

@@ -123,6 +123,8 @@ kotlin {
             implementation(libs.highlights)
             implementation(libs.richeditor.compose)
             implementation(libs.filekit.compose)
+            implementation(libs.compose.pdf)
+            implementation(libs.compose.multiplatform.media.player)
 
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)

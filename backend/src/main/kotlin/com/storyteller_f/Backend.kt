@@ -7,7 +7,6 @@ import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.media.MediaService
 import com.storyteller_f.media.MinIoMediaService
 import com.storyteller_f.naming.NameService
-import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import org.jetbrains.exposed.sql.Query
@@ -151,6 +150,3 @@ class UnauthorizedException : Exception()
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)
 class CustomBadRequestException(message: String) : Exception(message)
 
-fun getMediaInfo(iconUrl: String?): MediaInfo? {
-    return iconUrl?.let { MediaInfo(it) }
-}
