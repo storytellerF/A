@@ -1,6 +1,8 @@
 package com.storyteller_f.media
 
 import com.storyteller_f.MinIoConnection
+import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.MediaItem
 import io.minio.*
 import io.minio.http.Method
 import java.util.concurrent.TimeUnit
@@ -15,36 +17,59 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override fun list(bucketName: String, prefix: String): Result<List<String>> {
+    override fun list(bucketName: String, prefix: String): Result<List<MediaInfo?>> {
         return useMinIoClient(connection) {
-            listObjects(
+            val names = listObjects(
                 ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build()
             ).map {
                 it.get().objectName()
             }
+            get(bucketName, names).getOrThrow()
         }
     }
 
-    override fun get(bucketName: String, objList: List<String?>): Result<List<String?>> {
+    private fun MinioClient.stat(
+        bucketName: String,
+        objName: String
+    ): MediaItem {
+        val statObject =
+            statObject(StatObjectArgs.builder().bucket(bucketName).`object`(objName).build())
+        return MediaItem(objName, statObject.contentType(), statObject.size())
+    }
+
+    override fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>> {
         return useMinIoClient(connection) {
             objList.map {
-                getIconInMioIo(bucketName, it)
+                if (it == null) {
+                    null
+                } else {
+                    val url = getIconInMioIo(bucketName, it)
+                    if (url != null) {
+                        val item = stat(bucketName, it)
+                        MediaInfo(url, item)
+                    } else {
+                        null
+                    }
+                }
+
             }
         }
     }
 
-    override fun upload(bucketName: String, list: List<UploadPack>): Result<Unit> {
+    override fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>> {
         return useMinIoClient(connection) {
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
             }
-            list.forEach { (objName, picFullPath) ->
-                uploadObject(
+            val names = list.map { (objName, picFullPath) ->
+                val response = uploadObject(
                     UploadObjectArgs.builder().bucket(
                         bucketName
                     ).`object`(objName).filename(picFullPath.absolutePath).build()
                 )
+                response.`object`()
             }
+            get(bucketName, names).getOrThrow()
         }
     }
 }

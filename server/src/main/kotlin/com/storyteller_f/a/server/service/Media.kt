@@ -27,14 +27,8 @@ suspend fun getMediaList(
         uid
     ).mapResultNotNull { (_, _, hasWrite) ->
         if (hasWrite) {
-            backend.mediaService.list("amedia", "$uid").mapResult { names ->
-                backend.mediaService.get("amedia", names.map {
-                    "$uid/$it"
-                }).map {
-                    ServerResponse(it.mapIndexedNotNull { index, s ->
-                        s?.let { it1 -> MediaInfo(it1, names[index]) }
-                    })
-                }
+            backend.mediaService.list("amedia", "$uid/").map { names ->
+                ServerResponse(names)
             }
         } else {
             Result.failure(ForbiddenException("no permission"))

@@ -2,7 +2,6 @@ package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
-import com.storyteller_f.getMediaInfo
 import com.storyteller_f.isDup
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -12,7 +11,6 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverError
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
-import io.ktor.resources.*
 import io.ktor.server.plugins.*
 
 suspend fun getRoomPubKeys(
@@ -93,7 +91,7 @@ suspend fun getRoom(
     return getRoomSource(roomId, roomAid, fillJoinInfo, uid).mapResultNotNull { (info, iconName) ->
         backend.mediaService.get("amedia", listOf(iconName)).map { value ->
             val icon = value.firstOrNull()
-            info.copy(icon = getMediaInfo(icon))
+            info.copy(icon = icon)
         }
     }
 }

@@ -140,9 +140,9 @@ class RouteAccounts {
 fun Application.commonRoute(backend: Backend) {
     routing {
         authenticate {
+            bindProtectedSafeRoomRoute(backend)
             bindProtectedSafeTopicRoute(backend)
             bindProtectedSafeCommunityRoute(backend)
-            bindProtectedSafeRoomRoute(backend)
             bindProtectedSafeUserRoute()
             webSocket("/link") {
                 webSocketContent(backend)
@@ -155,7 +155,6 @@ fun Application.commonRoute(backend: Backend) {
             bindSafeTopicRoute(backend)
             bindSafeCommunityRoute(backend)
             bindSafeUserRoute(backend)
-            bindProtectedSafeUserRoute()
         }
         bindUnprotectedAccountRoute(backend)
         bindUnauthenticatedRoute(backend)

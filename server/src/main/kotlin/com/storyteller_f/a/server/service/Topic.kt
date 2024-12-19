@@ -6,7 +6,9 @@ import com.storyteller_f.ForbiddenException
 import com.storyteller_f.UnauthorizedException
 import com.storyteller_f.a.server.route.RouteTopics
 import com.storyteller_f.index.TopicDocument
+import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.MediaItem
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
@@ -16,7 +18,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
-import io.ktor.resources.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -29,6 +30,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.and
 import java.awt.GraphicsEnvironment
 import java.io.File
+import java.lang.Exception
 
 suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend): Result<TopicInfo?> {
     val newTopic = call.receive<NewTopic>()
@@ -60,12 +62,12 @@ suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend
     }
 }
 
-suspend fun getTopicSnapshot(id: PrimaryKey, topicId: PrimaryKey, backend: Backend): Result<File?> {
-    return getUser2(id).mapResultNotNull { creatorInfo ->
-        checkRootReadPermission(ObjectType.TOPIC, topicId, id).mapResultNotNull { (hasRead) ->
+suspend fun createTopicSnapshot(uid: PrimaryKey, topicId: PrimaryKey, backend: Backend): Result<MediaInfo?> {
+    return getUser2(uid).mapResultNotNull { creatorInfo ->
+        checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultNotNull { (hasRead) ->
             if (hasRead) {
                 getSimpleTopic(topicId).mapResultNotNull { value ->
-                    getTopicSnapshot(value, creatorInfo, backend)
+                    createTopicSnapshot(value, creatorInfo, backend, uid)
                 }
             } else {
                 Result.failure(ForbiddenException("Permission denied."))
@@ -74,17 +76,29 @@ suspend fun getTopicSnapshot(id: PrimaryKey, topicId: PrimaryKey, backend: Backe
     }
 }
 
-private suspend fun getTopicSnapshot(
+private suspend fun createTopicSnapshot(
     topicInfo: TopicInfo,
     creatorInfo: UserInfo,
-    backend: Backend
-): Result<File?> {
+    backend: Backend,
+    uid: PrimaryKey
+): Result<MediaInfo?> {
     val topicId = topicInfo.id
     return backend.topicSearchService.getDocument(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultNotNull { documents ->
-            getUser2(topicInfo.author).mapNotNull { authorInfo ->
-                generateSnapshot(authorInfo, documents, creatorInfo, topicInfo)
-                File("/tmp/1.pdf")
+            getUser2(topicInfo.author).mapResultNotNull { authorInfo ->
+                val name = "$uid/$topicId.pdf"
+                val saveTo = File("/tmp/$name")
+                saveTo.parentFile?.let {
+                    if (!it.exists() && !it.mkdirs()) {
+                        Result.failure(Exception("failed"))
+                    } else {
+                        generateSnapshot(authorInfo, documents, creatorInfo, topicInfo, saveTo)
+                        backend.mediaService.upload("amedia", listOf(UploadPack(name, saveTo))).mapResult {
+                            saveTo.delete()
+                            Result.success(it.firstOrNull())
+                        }
+                    }
+                } ?: Result.failure(Exception("failed"))
             }
         }
 }
@@ -93,7 +107,8 @@ private fun generateSnapshot(
     authorInfo: UserInfo,
     documents: TopicDocument,
     creatorInfo: UserInfo,
-    topicInfo: TopicInfo
+    topicInfo: TopicInfo,
+    saveToFile: File,
 ) {
     val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
     PDDocument().use { document ->
@@ -110,19 +125,19 @@ private fun generateSnapshot(
             stream.setFont(pdFont, 12f)
             stream.newLineAtOffset(100F, 700F)
             stream.setLeading(14.5f)
-            stream.showText(if (authorInfo.aid == null) authorInfo.address else authorInfo.aid)
+            stream.showText("pub by ${if (authorInfo.aid == null) authorInfo.address else authorInfo.aid}")
+            stream.newLine()
+            stream.showText("pub at ${topicInfo.createdTime}")
             stream.newLine()
             stream.showText(documents.content)
             stream.newLine()
-            stream.showText(if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid)
+            stream.showText("capture by ${if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid}")
             stream.newLine()
-            stream.showText(topicInfo.createdTime.toString())
-            stream.newLine()
-            stream.showText(now().toString())
+            stream.showText("capture at ${now()}")
             stream.endText()
         }
         document.addPage(firstPage)
-        document.save("/tmp/1.pdf")
+        document.save(saveToFile)
     }
 }
 
@@ -152,9 +167,7 @@ suspend fun getTopic(
                                     content = TopicContent.Plain(
                                         content,
                                         mediaLinks.mapIndexedNotNull { index, mediaName ->
-                                            mediaUrls[index]?.let {
-                                                MediaInfo(it, mediaName)
-                                            }
+                                            mediaUrls[index]
                                         }
                                     )
                                 )
@@ -383,7 +396,7 @@ private fun processMediaLink(
     return backend.mediaService.get("amedia", mediaNameList).map { mediaUrls ->
         val mediaInfoMap = mediaUrls.mapIndexedNotNull { index, url ->
             url?.let {
-                mediaNameList[index] to MediaInfo(it, mediaNameList[index])
+                mediaNameList[index] to it
             }
         }.associateBy {
             it.first

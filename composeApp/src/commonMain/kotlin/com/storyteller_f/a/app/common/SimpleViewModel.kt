@@ -28,7 +28,7 @@ abstract class SimpleViewModel<T> : ViewModel() {
 
 @Composable
 inline fun <reified VM : ViewModel> viewModel(
-    keys: List<Comparable<*>>? = null,
+    keys: List<Comparable<*>?>? = null,
     crossinline factory: () -> VM
 ): VM {
     Napier.i {

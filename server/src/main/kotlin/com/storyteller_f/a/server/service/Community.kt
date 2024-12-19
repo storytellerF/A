@@ -2,7 +2,6 @@ package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.route.RouteCommunities
-import com.storyteller_f.getMediaInfo
 import com.storyteller_f.isDup
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -11,7 +10,6 @@ import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
-import io.ktor.resources.*
 import io.ktor.server.plugins.BadRequestException
 
 suspend fun getCommunity(
@@ -27,8 +25,8 @@ suspend fun getCommunity(
         communityAid,
         id
     ).mapResultNotNull { (info, iconName, coverName) ->
-        backend.mediaService.get("amedia", listOf(iconName, coverName)).map { (iconUrl, coverUrl) ->
-            info.copy(icon = getMediaInfo(iconUrl), poster = getMediaInfo(coverUrl))
+        backend.mediaService.get("amedia", listOf(iconName, coverName)).map { (iconInfo, coverInfo) ->
+            info.copy(icon = iconInfo, poster = coverInfo)
         }
     }
 }
@@ -105,7 +103,7 @@ private fun parseCommunityList(
         list.mapIndexed { i, communityPair ->
             val first = icons[i * 2]
             val second = icons[i * 2 + 1]
-            communityPair.communityInfo.copy(icon = getMediaInfo(first), poster = getMediaInfo(second))
+            communityPair.communityInfo.copy(icon = first, poster = second)
         }
     }
 }

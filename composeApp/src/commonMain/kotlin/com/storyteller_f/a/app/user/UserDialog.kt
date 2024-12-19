@@ -16,6 +16,7 @@ import com.russhwolf.settings.serialization.removeValue
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.storeToStorage
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.getUserInfo
 import com.storyteller_f.a.client_lib.getUserInfoByAid
@@ -75,6 +76,7 @@ private fun refreshMyInfo(my: UserInfo?) {
             client.getUserInfoByAid(aid)
         }.getOrNull()?.let {
             LoginViewModel.updateUser(it)
+            storeToStorage()
         }
     }
 }

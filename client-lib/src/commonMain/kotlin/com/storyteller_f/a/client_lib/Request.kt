@@ -287,7 +287,7 @@ suspend fun HttpClient.getData() = serviceCatching {
 }
 
 suspend fun HttpClient.getTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
-    get("topics/$topicId/snapshot")
+    get("topics/$topicId/snapshot").body<MediaInfo>()
 }
 
 suspend fun HttpClient.searchTopics(

@@ -306,7 +306,7 @@ private fun TopicInputGroup(
     var input by remember {
         mutableStateOf("")
     }
-    InputGroupInternal(topic.id, ObjectType.TOPIC, input, MaterialTheme.colorScheme.secondaryContainer, {
+    InputGroupInternal(topic.id, ObjectType.TOPIC, input, MaterialTheme.colorScheme.secondaryContainer, null, {
         input = it
     }, sendButton = {
         val focusManager = LocalFocusManager.current

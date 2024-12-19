@@ -56,7 +56,7 @@ fun Route.bindSafeTopicRoute(backend: Backend) {
 fun Route.bindProtectedSafeTopicRoute(backend: Backend) {
     get<RouteTopics.Id.Snapshot> {
         usePrincipal { id ->
-            getTopicSnapshot(id, it.parent.id, backend)
+            createTopicSnapshot(id, it.parent.id, backend)
         }
     }
 

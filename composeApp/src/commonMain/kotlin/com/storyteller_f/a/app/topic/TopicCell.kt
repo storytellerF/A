@@ -2,19 +2,26 @@ package com.storyteller_f.a.app.topic
 
 import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.permission_denied
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
+import chaintech.videoplayer.model.AudioFile
+import chaintech.videoplayer.ui.audio.AudioPlayerComposable
+import chaintech.videoplayer.ui.video.VideoPlayerComposable
+import chaintech.videoplayer.ui.youtube.YouTubePlayerComposable
 import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
@@ -42,12 +49,17 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
+import dev.zt64.compose.pdf.RemotePdfState
+import dev.zt64.compose.pdf.component.PdfPage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
 import org.jetbrains.compose.resources.stringResource
+import java.net.URL
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,7 +133,7 @@ fun TopicCellInternal(
 }
 
 @Composable
-fun CustomCodeFence(modal: MarkdownComponentModel) {
+fun CustomCodeFence(modal: MarkdownComponentModel, mediaList1: Map<String, MediaInfo>) {
     val content = modal.content
     val children = modal.node.children
     val langOffset = children.indexOfFirst {
@@ -133,7 +145,70 @@ fun CustomCodeFence(modal: MarkdownComponentModel) {
 
         lang == "math" -> LatexBlock(children, langOffset, content)
 
+        lang == "object" -> ObjectBlock(children, langOffset, content, modal, mediaList1)
+
         else -> HighlightCodeBlock(modal)
+    }
+}
+
+@Serializable
+data class MarkdownObject(val contentType: String, val name: String)
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun ObjectBlock(
+    children: List<ASTNode>,
+    langOffset: Int,
+    content: String,
+    modal: MarkdownComponentModel,
+    mediaList1: Map<String, MediaInfo>
+) {
+    val c = readFenceContent(children, langOffset, content)
+    val obj = Json.decodeFromString<MarkdownObject>(c)
+    if (obj.contentType == "video/youtube") {
+        YouTubePlayerComposable(
+            modifier = Modifier.height(200.dp),
+            videoId = obj.name
+        )
+    } else {
+        val mediaInfo = mediaList1[obj.name]
+        val url = mediaInfo?.url
+        val contentType = mediaInfo?.item?.contentType
+        when {
+            url == null || contentType == null -> {
+                HighlightCodeBlock(modal)
+            }
+            contentType == "application/pdf" -> {
+                val errorIndicator = rememberVectorPainter(Icons.Default.Error)
+                val refreshIndicator = rememberVectorPainter(Icons.Default.Refresh)
+                val state = remember(url, errorIndicator, refreshIndicator) {
+                    RemotePdfState(URL(url), errorIndicator, refreshIndicator)
+                }
+                HorizontalPager(
+                    state = rememberPagerState { state.pageCount }
+                ) { i ->
+                    PdfPage(
+                        state = state,
+                        index = i
+                    )
+                }
+            }
+            contentType.startsWith("video/") -> {
+                VideoPlayerComposable(
+                    modifier = Modifier.height(200.dp),
+                    url = url
+                )
+            }
+            contentType.startsWith("audio/") -> {
+                AudioPlayerComposable(
+                    modifier = Modifier,
+                    audios = listOf(AudioFile(url, obj.name))
+                )
+            }
+            else -> {
+                HighlightCodeBlock(modal)
+            }
+        }
     }
 }
 
@@ -207,8 +282,7 @@ private fun readFenceContent(
     return content.substring(start, end)
 }
 
-class CustomCoil3ImageTransformerImpl(mediaList: List<MediaInfo>) : ImageTransformer {
-    private val mediaMap = mediaList.associateBy { "/${it.name}" }
+class CustomCoil3ImageTransformerImpl(val mediaMap: Map<String, MediaInfo>) : ImageTransformer {
 
     @Composable
     override fun transform(link: String): ImageData {
@@ -256,6 +330,7 @@ fun TopicContentField(
                     content.plain
                 }
             }
+            val mediaMap = mediaList.associateBy { "${it.item.name}" }
             Markdown(
                 plain,
                 modifier = Modifier.fillMaxWidth().clickable(onClick != null) {
@@ -263,9 +338,9 @@ fun TopicContentField(
                 },
                 colors = markdownColor(),
                 typography = markdownTypography(),
-                imageTransformer = CustomCoil3ImageTransformerImpl(mediaList),
+                imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap),
                 components = markdownComponents(codeFence = {
-                    CustomCodeFence(it)
+                    CustomCodeFence(it, mediaMap)
                 }, codeBlock = { HighlightCodeBlock(it) })
             )
         }

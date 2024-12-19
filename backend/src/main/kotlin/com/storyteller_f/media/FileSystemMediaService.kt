@@ -1,6 +1,10 @@
 package com.storyteller_f.media
 
+import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.MediaItem
+import java.awt.datatransfer.MimeTypeParseException
 import java.io.File
+import java.net.URLConnection
 import java.nio.file.Files
 
 class FileSystemMediaService(val base: String) : MediaService {
@@ -13,7 +17,7 @@ class FileSystemMediaService(val base: String) : MediaService {
         }
     }
 
-    override fun upload(bucketName: String, list: List<UploadPack>): Result<Unit> {
+    override fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>> {
         val file = File(root, bucketName)
         if (!file.exists()) {
             val r = file.mkdir()
@@ -34,14 +38,22 @@ class FileSystemMediaService(val base: String) : MediaService {
             }
             Files.copy(uploadPack.path.toPath(), target.toPath())
         }
-        return Result.success(Unit)
+        return get(bucketName, list.map {
+            it.name
+        })
     }
 
-    override fun get(bucketName: String, objList: List<String?>): Result<List<String?>> {
+    override fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>> {
         return Result.success(objList.map {
             when (it) {
                 null -> null
-                else -> "${base}amedia/$it"
+                else -> {
+                    val file = File(root, "$bucketName/$it")
+                    MediaInfo(
+                        "${base}amedia/$it",
+                        MediaItem(it, URLConnection.guessContentTypeFromName(it), file.length())
+                    )
+                }
             }
         })
     }
@@ -52,10 +64,10 @@ class FileSystemMediaService(val base: String) : MediaService {
         return Result.success(Unit)
     }
 
-    override fun list(bucketName: String, prefix: String): Result<List<String>> {
-        val file = File(root, "$bucketName/$prefix")
-        return Result.success(file.listFiles().orEmpty().map {
-            it.name
+    override fun list(bucketName: String, prefix: String): Result<List<MediaInfo?>> {
+        val file = File(root, "$bucketName$prefix")
+        return get(bucketName, file.listFiles().orEmpty().map {
+            "${prefix}${it.name}"
         })
     }
 }
