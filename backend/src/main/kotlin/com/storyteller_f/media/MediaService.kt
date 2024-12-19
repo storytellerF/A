@@ -1,7 +1,6 @@
 package com.storyteller_f.media
 
 import com.storyteller_f.shared.model.MediaInfo
-import com.storyteller_f.shared.model.MediaItem
 import java.io.File
 
 data class UploadPack(val name: String, val path: File)

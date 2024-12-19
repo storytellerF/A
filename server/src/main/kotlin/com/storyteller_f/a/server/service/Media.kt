@@ -6,7 +6,6 @@ import com.storyteller_f.a.server.route.RouteMedia
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
 import io.ktor.resources.*
 import io.ktor.server.plugins.*

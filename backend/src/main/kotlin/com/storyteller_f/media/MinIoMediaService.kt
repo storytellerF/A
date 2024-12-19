@@ -51,7 +51,6 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
                         null
                     }
                 }
-
             }
         }
     }

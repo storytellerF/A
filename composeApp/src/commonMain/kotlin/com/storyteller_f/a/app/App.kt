@@ -76,7 +76,12 @@ data object LoginScreen
 data class TopicScreen(val topicId: PrimaryKey)
 
 @Serializable
-data class TopicComposeScreen(val objectType: String, val objectId: PrimaryKey, val enableExperimental: Boolean, val privateRoomId: PrimaryKey?)
+data class TopicComposeScreen(
+    val objectType: String,
+    val objectId: PrimaryKey,
+    val enableExperimental: Boolean,
+    val privateRoomId: PrimaryKey?
+)
 
 @Serializable
 data class MemberScreen(val objectType: String, val objectId: PrimaryKey)
@@ -228,7 +233,12 @@ interface AppNav {
 
     fun gotoHome()
 
-    fun gotoTopicCompose(objectType: ObjectType, objectId: PrimaryKey, enableExperimental: Boolean, privateRoomId: PrimaryKey?)
+    fun gotoTopicCompose(
+        objectType: ObjectType,
+        objectId: PrimaryKey,
+        enableExperimental: Boolean,
+        privateRoomId: PrimaryKey?
+    )
 
     fun gotoMemberPage(objectId: PrimaryKey, objectType: ObjectType)
 

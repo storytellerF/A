@@ -2,7 +2,6 @@ package com.storyteller_f.tables
 
 import com.storyteller_f.*
 import com.storyteller_f.shared.SignInPack
-import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult

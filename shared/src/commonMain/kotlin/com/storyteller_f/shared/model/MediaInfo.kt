@@ -3,7 +3,7 @@ package com.storyteller_f.shared.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MediaInfo    (val url: String, val item: MediaItem)
+data class MediaInfo(val url: String, val item: MediaItem)
 
 @Serializable
 data class MediaItem(val name: String, val contentType: String?, val size: Long)

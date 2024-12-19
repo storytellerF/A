@@ -8,7 +8,6 @@ import com.storyteller_f.a.server.route.RouteTopics
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.model.MediaInfo
-import com.storyteller_f.shared.model.MediaItem
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
