@@ -71,5 +71,5 @@ echo "prepare build `date`"
 HOST_TYPE=local ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
 echo "push to remote `date`"
 # 远端没有生成的env 文件，需要使用原始env 文件
-./scripts/service_scripts/push-jar-to-remote.sh ubuntu@acommunity.link "./start1.sh $FLAVOR"
+./scripts/service_scripts/push-jar-to-remote.sh ubuntu@acommunity.link "./start-jar-service-in-ubuntu.sh $FLAVOR"
 echo "done `date`"
