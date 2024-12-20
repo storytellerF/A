@@ -18,7 +18,7 @@ sleep 2
 mkdir -p ./build/jar
 unzip -qn ./server/build/libs/server-all.jar -d ./server/build/libs/server
 tar -cf ./server/build/libs/server.tar ./server/build/libs/server/
-tar -cf ./build/jar/server-cli.tar ./server/build/libs/server.tar ./cli/build/distributions/cli.tar
+tar -cf ./build/jar/server-cli.tar -C ./server/build/libs server.tar -C ./cli/build/distributions cli.tar
 # 定义文件数组
 SERVER_JAR_FILES=(
   "./build/jar/server-cli.tar"
