@@ -8,30 +8,19 @@ import androidx.compose.material.icons.outlined.AddReaction
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.paging.ExperimentalPagingApi
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.model.OnTopicChanged
+import com.storyteller_f.a.app.model.createReactionsViewModel
 import com.storyteller_f.a.app.world.Pill
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ServerResponse
-import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
-
-data class OnTopicChanged(val topicInfo: TopicInfo)
-
-@OptIn(ExperimentalPagingApi::class)
-class ReactionsViewModel(val objectId: PrimaryKey) : SimpleViewModel<ServerResponse<ReactionInfo>>() {
-    init {
-        load()
-    }
-
-    override suspend fun loadInternal() = client.getReactions(objectId)
-}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -44,9 +33,7 @@ fun InteractionRow(
     val commentCount = topicInfo.commentCount
     val hasComment = topicInfo.hasComment
     val reactionCount = topicInfo.reactionCount
-    val reactionsViewModel = viewModel(keys = listOf("reactions", objectId)) {
-        ReactionsViewModel(objectId)
-    }
+    val reactionsViewModel = createReactionsViewModel(objectId)
     val reactions by reactionsViewModel.handler.data.collectAsState()
     val refresh by reactionsViewModel.handler.state.collectAsState()
     val itemCount = reactions?.data?.size ?: 0
@@ -131,10 +118,9 @@ private fun EmojiCell(
     info: ReactionInfo
 ) {
     val scope = rememberCoroutineScope()
-    val first = info
-    val emoji = first.emoji
-    val hasReacted = first.hasReacted
-    Pill(first.count.toString(), emoji = emoji, selected = hasReacted == true) {
+    val emoji = info.emoji
+    val hasReacted = info.hasReacted
+    Pill(info.count.toString(), emoji = emoji, selected = hasReacted == true) {
         emoji.let { string ->
             if (hasReacted == true) {
                 scope.launch {

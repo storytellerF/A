@@ -17,12 +17,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
 import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.user.UserCell
-import com.storyteller_f.a.app.user.UserViewModel
 import com.storyteller_f.a.client_lib.getTopicSnapshot
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -38,9 +37,7 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
             dismiss()
         }) {
             val author = topicInfo.author
-            val authorViewModel = viewModel(keys = listOf("user", author)) {
-                UserViewModel(author)
-            }
+            val authorViewModel = createUserViewModel(author)
             val authorInfo by authorViewModel.handler.data.collectAsState()
 
             TopicDialogInternal(topicInfo, authorInfo)

@@ -35,12 +35,13 @@ import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.InteractionRow
 import com.storyteller_f.a.app.compontents.TextUnitToPx
 import com.storyteller_f.a.app.compontents.buildTexPainter
+import com.storyteller_f.a.app.model.createMediaListViewModel
+import com.storyteller_f.a.app.model.createTopicViewModel
+import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.user.UserCell
-import com.storyteller_f.a.app.user.UserViewModel
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -68,15 +69,11 @@ fun TopicCell(
     contentAlignAvatar: Boolean = true,
     showAvatar: Boolean = true
 ) {
-    val viewModel = viewModel(keys = listOf("topic-single", topicInfoRaw.id)) {
-        TopicViewModel(topicInfoRaw)
-    }
+    val viewModel = createTopicViewModel(topicInfoRaw.id)
     val topicInfo by viewModel.handler.data.collectAsState()
     topicInfo?.let { info ->
         val author = info.author
-        val authorViewModel = viewModel(keys = listOf("user", author)) {
-            UserViewModel(author)
-        }
+        val authorViewModel = createUserViewModel(author)
 
         val sheetState = rememberModalBottomSheetState()
         var showBottomSheet by remember { mutableStateOf(false) }
@@ -154,7 +151,6 @@ fun CustomCodeFence(modal: MarkdownComponentModel, mediaList1: Map<String, Media
 @Serializable
 data class MarkdownObject(val contentType: String, val name: String)
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ObjectBlock(
     children: List<ASTNode>,
@@ -315,9 +311,7 @@ fun TopicContentField(
     when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
             val mediaList = if (topicInfo.isPrivate) {
-                val list = viewModel(keys = listOf("media", topicInfo.rootId)) {
-                    MediaListViewModel(topicInfo.rootId, ObjectType.ROOM)
-                }
+                val list = createMediaListViewModel(topicInfo.rootId, 0)
                 val media by list.handler.data.collectAsState()
                 media?.data.orEmpty()
             } else {
@@ -330,7 +324,7 @@ fun TopicContentField(
                     content.plain
                 }
             }
-            val mediaMap = mediaList.associateBy { "${it.item.name}" }
+            val mediaMap = mediaList.associateBy { it.item.name }
             Markdown(
                 plain,
                 modifier = Modifier.fillMaxWidth().clickable(onClick != null) {

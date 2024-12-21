@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewModelScope
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.dokar.sonner.Toaster
@@ -30,13 +29,17 @@ import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.common.*
+import com.storyteller_f.a.app.common.StateView
+import com.storyteller_f.a.app.common.getOrCreateCollection
+import com.storyteller_f.a.app.common.nestedStateView
 import com.storyteller_f.a.app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.InteractionRow
-import com.storyteller_f.a.app.compontents.OnTopicChanged
 import com.storyteller_f.a.app.globalDialogState
-import com.storyteller_f.a.app.room.*
+import com.storyteller_f.a.app.model.*
+import com.storyteller_f.a.app.room.CommonInputButton
+import com.storyteller_f.a.app.room.InputGroupInternal
+import com.storyteller_f.a.app.room.RoomInputGroup
 import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.search.SearchScope
 import com.storyteller_f.a.client_lib.*
@@ -46,7 +49,6 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import io.ktor.client.*
 import kotbase.MutableDocument
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -61,14 +63,10 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicPage(topicId: PrimaryKey) {
-    val viewModel = viewModel(keys = listOf("topic", topicId)) {
-        TopicViewModel(topicId)
-    }
+    val viewModel = createTopicViewModel(topicId)
     val topic by viewModel.handler.data.collectAsState()
 
-    val topicsViewModel = viewModel(keys = listOf("topic-topics", topicId)) {
-        TopicsViewModel(topicId, ObjectType.TOPIC)
-    }
+    val topicsViewModel = createTopicsInTopicViewModel(topicId)
     val topics = topicsViewModel.flow.collectAsLazyPagingItems()
     val snackBarHost = remember {
         SnackbarHostState()
@@ -278,9 +276,7 @@ private fun TopicPageInputGroup(
     val scope = rememberCoroutineScope()
     if (topic.rootType == ObjectType.ROOM) {
         val roomId = topic.rootId
-        val room = viewModel(keys = listOf("room", roomId)) {
-            RoomViewModel(roomId)
-        }
+        val room = createRoomViewModel(roomId)
         val roomInfo by room.handler.data.collectAsState()
         RoomInputGroup(topic.rootId, roomInfo, topicId, {}, scrollTo)
     } else {
@@ -341,42 +337,6 @@ private fun TopicInputGroup(
             }
         }, isSending)
     })
-}
-
-class TopicViewModel(private val requestInfo: suspend HttpClient.() -> Result<TopicInfo>) :
-    SimpleViewModel<TopicInfo>() {
-    constructor(topicId: PrimaryKey) : this({
-        getTopicInfo(topicId)
-    })
-
-    constructor(topicAid: String) : this({
-        getTopicInfoByAid(topicAid)
-    })
-
-    constructor(topicInfo: TopicInfo) : this({
-        Result.success(topicInfo)
-    })
-
-    init {
-        load()
-        viewModelScope.launch {
-            bus.collect { value ->
-                val id = handler.data.value?.id
-                if (value is OnTopicChanged) {
-                    if (value.topicInfo.id == id) {
-                        update(value.topicInfo)
-                    }
-                }
-            }
-        }
-    }
-
-    override suspend fun loadInternal(): Result<TopicInfo> {
-        return serviceCatching {
-            val info = requestInfo(client).getOrThrow()
-            processEncryptedTopic(listOf(info)).first()
-        }
-    }
 }
 
 @OptIn(ExperimentalStdlibApi::class)

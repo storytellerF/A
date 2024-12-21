@@ -16,68 +16,22 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavDestination.Companion.hasRoute
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.*
-import com.storyteller_f.a.app.common.SimpleViewModel
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.*
-import com.storyteller_f.a.app.room.DialogSaveState
+import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.room.RoomList
-import com.storyteller_f.a.app.room.RoomsViewModel
-import com.storyteller_f.a.app.room.TopicsViewModel
 import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.search.SearchScope
 import com.storyteller_f.a.app.world.TopicList
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.client.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-
-data class OnCommunityJoined(val communityId: PrimaryKey, val newInfo: CommunityInfo)
-data class OnCommunityExited(val communityId: PrimaryKey, val newInfo: CommunityInfo)
-
-class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Result<CommunityInfo>) :
-    SimpleViewModel<CommunityInfo>() {
-    val dialog = DialogSaveState()
-
-    constructor(communityId: PrimaryKey) : this({
-        getCommunityInfo(communityId, LoginViewModel.currentIsAlreadySignUp)
-    })
-
-    constructor(communityAid: String) : this({
-        getCommunityInfoByAid(communityAid, LoginViewModel.currentIsAlreadySignUp)
-    })
-
-    init {
-        load()
-        viewModelScope.launch {
-            bus.collect { i ->
-                val id = handler.data.value?.id
-                when (i) {
-                    is OnCommunityJoined -> {
-                        if (i.communityId == id) {
-                            update(i.newInfo)
-                        }
-                    }
-
-                    is OnCommunityExited -> {
-                        if (i.communityId == id) {
-                            update(i.newInfo)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    override suspend fun loadInternal() = requestInfo(client)
-}
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
@@ -105,9 +59,7 @@ private fun CommunityNonCompatPageInternal(
     communityId: PrimaryKey,
     needShowDialog: Boolean,
 ) {
-    val model = viewModel(keys = listOf("community", communityId)) {
-        CommunityViewModel(communityId)
-    }
+    val model = createCommunityViewModel(communityId)
     val community by model.handler.data.collectAsState()
     val dialogShown by model.dialog.shownDialog.collectAsState()
     val pagerState = rememberPagerState {
@@ -155,9 +107,7 @@ private fun CommunityCompatPageInternal(
     communityId: PrimaryKey,
     needShowDialog: Boolean,
 ) {
-    val model = viewModel(keys = listOf("community", communityId)) {
-        CommunityViewModel(communityId)
-    }
+    val model = createCommunityViewModel(communityId)
     val community by model.handler.data.collectAsState()
     val dialogShown by model.dialog.shownDialog.collectAsState()
     val pagerState = rememberPagerState {
@@ -245,20 +195,13 @@ private fun CommunityPageInternal(
     HorizontalPager(pagerState) {
         when (it) {
             0 -> {
-                val viewModel = viewModel(
-                    keys = listOf("community-topics", communityId)
-                ) {
-                    TopicsViewModel(communityId, ObjectType.COMMUNITY)
-                }
+                val viewModel = createCommunityTopicsViewModel(communityId)
                 val items = viewModel.flow.collectAsLazyPagingItems()
                 TopicList(items)
             }
 
             else -> {
-                val viewModel =
-                    viewModel(keys = listOf("community-rooms", communityId)) {
-                        RoomsViewModel(JoinStatusSearch.UNSPECIFIED, "", communityId)
-                    }
+                val viewModel = createCommunityRoomsViewModel(communityId)
                 val items = viewModel.flow.collectAsLazyPagingItems()
                 RoomList(items)
             }

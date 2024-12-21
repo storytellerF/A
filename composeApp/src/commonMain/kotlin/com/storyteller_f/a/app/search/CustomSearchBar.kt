@@ -9,26 +9,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.collectAsLazyPagingItems
-import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.common.*
-import com.storyteller_f.a.app.community.CommunitiesViewModel
+import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.community.CommunityList
 import com.storyteller_f.a.app.compontents.UserIcon
+import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.room.RoomList
-import com.storyteller_f.a.app.room.RoomsViewModel
 import com.storyteller_f.a.app.user.MemberList
-import com.storyteller_f.a.app.user.MemberViewModel
 import com.storyteller_f.a.app.world.TopicList
 import com.storyteller_f.a.client_lib.LoginViewModel
-import com.storyteller_f.a.client_lib.searchTopics
-import com.storyteller_f.a.client_lib.serviceCatching
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -147,9 +138,7 @@ private fun SearchContent(
 @Composable
 private fun MemberSearchContent(current: String) {
     if (current.isNotBlank()) {
-        val viewModel = viewModel(keys = listOf("members", current)) {
-            MemberViewModel(0, current, ObjectType.USER)
-        }
+        val viewModel = createMemberSearchViewModel(current)
         val items = viewModel.flow.collectAsLazyPagingItems()
         MemberList(items)
     }
@@ -158,9 +147,7 @@ private fun MemberSearchContent(current: String) {
 @Composable
 private fun RoomMemberSearchContent(current: String, scope: SearchScope.RoomMember) {
     if (current.isNotBlank()) {
-        val viewModel = viewModel(keys = listOf("members", scope.roomId, current)) {
-            MemberViewModel(scope.roomId, current, ObjectType.ROOM)
-        }
+        val viewModel = createSearchMemberInRoomViewModel(scope, current)
         val items = viewModel.flow.collectAsLazyPagingItems()
         MemberList(items)
     }
@@ -169,10 +156,7 @@ private fun RoomMemberSearchContent(current: String, scope: SearchScope.RoomMemb
 @Composable
 private fun CommunityMemberSearchContent(current: String, scope: SearchScope.CommunityMember) {
     if (current.isNotBlank()) {
-        val viewModel =
-            viewModel(keys = listOf("members", scope.communityId, current)) {
-                MemberViewModel(scope.communityId, current, ObjectType.COMMUNITY)
-            }
+        val viewModel = createMemberSearchInCommunityViewModel(scope, current)
         val items = viewModel.flow.collectAsLazyPagingItems()
         MemberList(items)
     }
@@ -181,9 +165,7 @@ private fun CommunityMemberSearchContent(current: String, scope: SearchScope.Com
 @Composable
 private fun TopicTopicSearchContent(current: String, scope: SearchScope.TopicTopic) {
     if (current.isNotBlank()) {
-        val viewModel = viewModel(keys = listOf("topic", scope.topicId, current)) {
-            TopicSearchViewModel(current.split(" "), scope.topicId, ObjectType.TOPIC)
-        }
+        val viewModel = createTopicSearchInTopicViewModel(scope, current)
         val topics = viewModel.flow.collectAsLazyPagingItems()
         TopicList(topics)
     }
@@ -192,9 +174,7 @@ private fun TopicTopicSearchContent(current: String, scope: SearchScope.TopicTop
 @Composable
 private fun RoomTopicSearchContent(current: String, scope: SearchScope.RoomTopic) {
     if (current.isNotBlank()) {
-        val viewModel = viewModel(keys = listOf("topic", scope.roomId, current)) {
-            TopicSearchViewModel(current.split(" "), scope.roomId, ObjectType.ROOM)
-        }
+        val viewModel = createTopicSearchInRoomViewModel(scope, current)
         val topics = viewModel.flow.collectAsLazyPagingItems()
         TopicList(topics)
     }
@@ -203,9 +183,7 @@ private fun RoomTopicSearchContent(current: String, scope: SearchScope.RoomTopic
 @Composable
 private fun CommunityRoomSearchContent(current: String, scope: SearchScope.CommunityRoom) {
     if (current.isNotBlank()) {
-        val viewModel = viewModel(keys = listOf("rooms", scope.communityId, current)) {
-            RoomsViewModel(JoinStatusSearch.UNSPECIFIED, current, scope.communityId)
-        }
+        val viewModel = createRoomSearchInCommunityViewModel(scope, current)
         val items = viewModel.flow.collectAsLazyPagingItems()
         RoomList(items)
     }
@@ -214,10 +192,7 @@ private fun CommunityRoomSearchContent(current: String, scope: SearchScope.Commu
 @Composable
 private fun CommunityTopicSearchContent(current: String, scope: SearchScope.CommunityTopic) {
     if (current.isNotBlank()) {
-        val viewModel =
-            viewModel(keys = listOf("topic", scope.communityId, current)) {
-                TopicSearchViewModel(current.split(" "), scope.communityId, ObjectType.COMMUNITY)
-            }
+        val viewModel = createTopicSearchInCommunityViewModel(scope, current)
         val topics = viewModel.flow.collectAsLazyPagingItems()
         TopicList(topics)
     }
@@ -248,9 +223,7 @@ private fun MyRoomSearchContent(current: String) {
             }
         }
         if (current.isNotBlank()) {
-            val viewModel = viewModel(keys = listOf("my-rooms", finalOption.name, current)) {
-                RoomsViewModel(finalOption, current)
-            }
+            val viewModel = createRoomSearchViewModel(finalOption, current)
             val items = viewModel.flow.collectAsLazyPagingItems()
             RoomList(items)
         }
@@ -284,11 +257,7 @@ private fun MyCommunitySearchContent(query: String) {
             }
         }
         if (query.isNotBlank()) {
-            val viewModel = viewModel(
-                keys = listOf("my-community", finalOption.name, query)
-            ) {
-                CommunitiesViewModel(finalOption, query)
-            }
+            val viewModel = createSearchCommunitiesViewModel(finalOption, query)
             val items = viewModel.flow.collectAsLazyPagingItems()
             CommunityList(items)
         }
@@ -321,30 +290,14 @@ private fun WorldSearchContent(current: String) {
         }
         HorizontalPager(pagerState) {
             if (it == 0) {
-                val viewModel = viewModel(keys = listOf("topic", current)) {
-                    TopicSearchViewModel(current.split(" "), null, null)
-                }
+                val viewModel = createTopicSearchViewModel(current)
                 val topics = viewModel.flow.collectAsLazyPagingItems()
                 TopicList(topics)
             } else {
-                val viewModel = viewModel(keys = listOf("members", current)) {
-                    MemberViewModel(0, current, ObjectType.USER)
-                }
+                val viewModel = createMemberSearchViewModel(current)
                 val items = viewModel.flow.collectAsLazyPagingItems()
                 MemberList(items)
             }
         }
     }
 }
-
-@OptIn(ExperimentalPagingApi::class)
-class TopicSearchViewModel(word: List<String>, parentId: PrimaryKey?, parentType: ObjectType?) :
-    PagingViewModel<PrimaryKey, TopicInfo>({
-        SimplePagingSource {
-            serviceCatching {
-                client.searchTopics(it, 10, word, parentId, parentType).getOrThrow()
-            }.map {
-                APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
-            }
-        }
-    })
