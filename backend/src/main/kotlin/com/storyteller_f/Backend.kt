@@ -90,7 +90,11 @@ private fun mediaService(map: Map<out Any, Any>): MediaService {
             MinIoMediaService(MinIoConnection(url, name, pass))
         }
 
-        "filesystem" -> FileSystemMediaService(map["SERVER_URL"] as String)
+        "filesystem" -> {
+            val url = map["SERVER_URL"] as String
+            val base = map["FILE_SYSTEM_MEDIA_PATH"] as String
+            FileSystemMediaService(url, base)
+        }
         else -> throw UnsupportedOperationException("unsupported media service type ${map["MEDIA_SERVICE"]}")
     }
 }
@@ -109,7 +113,7 @@ private fun topicDocumentService(
 
         "lucene" -> {
             val luceneBase = map["LUCENE_BASE_PATH"] as String
-            val path = Paths.get(luceneBase.removeSurrounding("'"), "lucene_data/index")
+            val path = Paths.get(luceneBase.removeSurrounding("'"), "index")
             Napier.i {
                 "lucene path $path"
             }

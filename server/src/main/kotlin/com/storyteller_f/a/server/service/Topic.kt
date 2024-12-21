@@ -104,7 +104,7 @@ private suspend fun createTopicSnapshot(
 
 private fun generateSnapshot(
     authorInfo: UserInfo,
-    documents: TopicDocument,
+    topicDocument: TopicDocument,
     creatorInfo: UserInfo,
     topicInfo: TopicInfo,
     saveToFile: File,
@@ -115,12 +115,13 @@ private fun generateSnapshot(
         PDPageContentStream(document, firstPage).use { stream ->
             stream.beginText()
             // 创建字体文件
-            val fontNames = graphicsEnvironment.availableFontFamilyNames
-            val firstFontName = fontNames.firstOrNull()
+            val font = graphicsEnvironment.allFonts.firstOrNull {
+                it.canDisplayUpTo(topicDocument.content) == -1
+            }
 
             // 使用 PDFBox 加载字体
             val pdFont =
-                PDType0Font.load(document, FontMappers.instance().getTrueTypeFont(firstFontName, null).font, true)
+                PDType0Font.load(document, FontMappers.instance().getTrueTypeFont(font?.name, null).font, true)
             stream.setFont(pdFont, 12f)
             stream.newLineAtOffset(100F, 700F)
             stream.setLeading(14.5f)
@@ -128,8 +129,12 @@ private fun generateSnapshot(
             stream.newLine()
             stream.showText("pub at ${topicInfo.createdTime}")
             stream.newLine()
-            stream.showText(documents.content)
-            stream.newLine()
+            topicDocument.content.split("\n").forEach {
+                it.chunked(50).forEach { s ->
+                    stream.showText(s)
+                    stream.newLine()
+                }
+            }
             stream.showText("capture by ${if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid}")
             stream.newLine()
             stream.showText("capture at ${now()}")

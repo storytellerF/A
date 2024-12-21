@@ -137,19 +137,23 @@ private fun TopicComposeDrawer(
     updateInput: (String) -> Unit
 ) {
     val toasterState = rememberToasterState()
+    val my by LoginViewModel.user.collectAsState()
     Toaster(toasterState)
     ModalDrawerSheet {
         Row {
             IconButton({
                 scope.launch {
                     globalDialogState.use {
-                        val f = FileKit.pickFile()
-                        if (f != null) {
-                            val size = f.getSize()
-                            if (size != null && size <= 1024 * 1024) {
-                                client.upload(f.readBytes(), f.name, f.extension)
-                            } else {
-                                toasterState.show("size is null or size too big", duration = 1.seconds)
+                        val id = my?.id
+                        if (id != null) {
+                            val f = FileKit.pickFile()
+                            if (f != null) {
+                                val size = f.getSize()
+                                if (size != null && size <= 100 * 1024 * 1024) {
+                                    client.upload(f.readBytes(), f.name, f.extension, id, ObjectType.USER)
+                                } else {
+                                    toasterState.show("size is null or size too big", duration = 1.seconds)
+                                }
                             }
                         }
                     }
@@ -164,10 +168,10 @@ private fun TopicComposeDrawer(
             }
         }
         StateView(list.handler) {
-            LazyColumn {
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 items(it.data) {
                     NavigationDrawerItem({
-                        Text(it.item.name.toString())
+                        Text(it.item.name)
                     }, false, {
                         updateInput(
                             """$input
@@ -345,11 +349,13 @@ private fun TopicComposeSubmitButton(
 
 @Composable
 fun PreviewTopicPage(input: String, res: List<MediaInfo>?) {
-    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)) {
-        TopicContentField(
-            TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, res.orEmpty())),
-            showHeadline = false,
-        )
+    LazyColumn(modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)) {
+        item {
+            TopicContentField(
+                TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, res.orEmpty())),
+                showHeadline = false,
+            )
+        }
     }
 }
 

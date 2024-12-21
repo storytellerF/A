@@ -1,9 +1,12 @@
 package com.storyteller_f.a.app
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.remember
+import a.composeapp.generated.resources.Res
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -13,10 +16,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import coil3.ImageLoader
 import coil3.PlatformContext
-import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
 import coil3.util.DebugLogger
+import com.mikepenz.aboutlibraries.ui.compose.m3.*
 import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.community.CommunityPage
@@ -47,6 +50,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 object StaticObj {
     init {
@@ -76,6 +80,9 @@ data object LoginScreen
 data class TopicScreen(val topicId: PrimaryKey)
 
 @Serializable
+data object AboutScreen
+
+@Serializable
 data class TopicComposeScreen(
     val objectType: String,
     val objectId: PrimaryKey,
@@ -86,7 +93,6 @@ data class TopicComposeScreen(
 @Serializable
 data class MemberScreen(val objectType: String, val objectId: PrimaryKey)
 
-@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun App() {
     StaticObj
@@ -107,6 +113,7 @@ fun App() {
     }
 }
 
+@OptIn(ExperimentalResourceApi::class)
 private fun NavGraphBuilder.buildRootNav(
     navigator: NavHostController
 ) {
@@ -136,6 +143,18 @@ private fun NavGraphBuilder.buildRootNav(
     composable<MemberScreen> {
         val (objectType, objectId) = it.toRoute<MemberScreen>()
         MemberPage(objectId, ObjectType.valueOf(objectType))
+    }
+    composable<AboutScreen> {
+        val libraries by rememberLibraries {
+            Res.readBytes("files/aboutlibraries.json").decodeToString()
+        }
+        Surface {
+            LibrariesContainer(
+                libraries,
+                Modifier.fillMaxSize().statusBarsPadding(),
+                colors = LibraryDefaults.libraryColors(backgroundColor = MaterialTheme.colorScheme.background)
+            )
+        }
     }
 }
 
@@ -177,6 +196,10 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
         objectType: ObjectType
     ) {
         navigator.navigate(route = MemberScreen(objectType.name, objectId))
+    }
+
+    override fun gotoAbout() {
+        navigator.navigate(AboutScreen)
     }
 }
 
@@ -252,6 +275,8 @@ interface AppNav {
         }
     }
 
+    fun gotoAbout()
+
     companion object {
         val EMPTY = object : AppNav {
             override val currentDestination: NavBackStackEntry?
@@ -290,6 +315,10 @@ interface AppNav {
                 objectId: PrimaryKey,
                 objectType: ObjectType
             ) {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoAbout() {
                 TODO("Not yet implemented")
             }
         }

@@ -20,6 +20,7 @@ plugins {
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.easylauncher)
     alias(libs.plugins.serialization)
+    id("com.mikepenz.aboutlibraries.plugin")
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
@@ -91,6 +92,9 @@ kotlin {
             implementation(libs.jlatexmath.android)
             implementation(libs.jlatexmath.android.font.cyrillic)
             implementation(libs.jlatexmath.android.font.greek)
+            implementation(libs.androidx.media3.exoplayer)
+            implementation(libs.androidx.media3.exoplayer.dash)
+            implementation(libs.androidx.media3.ui)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -124,7 +128,8 @@ kotlin {
             implementation(libs.richeditor.compose)
             implementation(libs.filekit.compose)
             implementation(libs.compose.pdf)
-            implementation(libs.compose.multiplatform.media.player)
+            implementation(libs.aboutlibraries.core)
+            implementation(libs.aboutlibraries.compose.m3)
 
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
@@ -316,4 +321,47 @@ val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
 
 afterEvaluate {
     tasks["packageRelease"]?.dependsOn(decodeBase64ToStoreFileTask)
+}
+
+aboutLibraries {
+    // - If the automatic registered android tasks are disabled, a similar thing can be achieved manually
+    // - `./gradlew app:exportLibraryDefinitions -PaboutLibraries.exportPath=src/main/res/raw`
+    // - the resulting file can for example be added as part of the SCM
+    registerAndroidTasks = true
+    // Define the output file name. Modifying this will disable the automatic meta data discovery for supported platforms.
+    outputFileName = "aboutlibraries.json"
+    // Define the path configuration files are located in. E.g. additional libraries, licenses to add to the target .json
+    // Warning: Please do not use the parent folder of a module as path, as this can result in issues. More details: https://github.com/mikepenz/AboutLibraries/issues/936
+    configPath = "config"
+    // Allow to enable "offline mode", will disable any network check of the plugin (including [fetchRemoteLicense] or pulling spdx license texts)
+    offlineMode = true
+    // Enable fetching of "remote" licenses.  Uses the API of supported source hosts
+    // See https://github.com/mikepenz/AboutLibraries#special-repository-support
+    fetchRemoteLicense = true
+    // Enables fetching of "remote" funding information. Uses the API of supported source hosts
+    // See https://github.com/mikepenz/AboutLibraries#special-repository-support
+    fetchRemoteFunding = true
+    // (Optional) GitHub token to raise API request limit to allow fetching more licenses
+//    gitHubApiToken = getLocalOrGlobalProperty("github.pat")
+    // Full license text for license IDs mentioned here will be included, even if no detected dependency uses them.
+    additionalLicenses = arrayOf("mit", "mpl_2_0")
+    // Allows to exclude some fields from the generated meta data field.
+    // If the class name is specified, the field is only excluded for that class; without a class name, the exclusion is global.
+    excludeFields = arrayOf("developers", "funding")
+    // Enable inclusion of `platform` dependencies in the library report
+    includePlatform = true
+    // Define the strict mode, will fail if the project uses licenses not allowed
+    // - This will only automatically fail for Android projects which have `registerAndroidTasks` enabled
+    // For non Android projects, execute `exportLibraryDefinitions`
+    strictMode = com.mikepenz.aboutlibraries.plugin.StrictMode.FAIL
+    // Allowed set of licenses, this project will be able to use without build failure
+//    allowedLicenses = arrayOf("Apache-2.0", "asdkl", "MIT")
+    // Enable the duplication mode, allows to merge, or link dependencies which relate
+    duplicationMode = com.mikepenz.aboutlibraries.plugin.DuplicateMode.LINK
+    // Configure the duplication rule, to match "duplicates" with
+    duplicationRule = com.mikepenz.aboutlibraries.plugin.DuplicateRule.SIMPLE
+    // Enable pretty printing for the generated JSON file
+    prettyPrint = false
+    // Allows to only collect dependencies of specific variants during the `collectDependencies` step.
+    filterVariants = arrayOf("debug", "release")
 }
