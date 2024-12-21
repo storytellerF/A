@@ -1,10 +1,8 @@
 package com.storyteller_f.a.app.room
 
 import a.composeapp.generated.resources.*
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -34,10 +32,7 @@ import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.search.SearchScope
 import com.storyteller_f.a.app.topic.TopicCell
-import com.storyteller_f.a.client_lib.LoadingState
-import com.storyteller_f.a.client_lib.exitRoom
-import com.storyteller_f.a.client_lib.getCommunityInfo
-import com.storyteller_f.a.client_lib.joinRoom
+import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.encrypt
 import com.storyteller_f.shared.encryptAesKey
 import com.storyteller_f.shared.model.RoomInfo
@@ -306,7 +301,6 @@ fun sendMessage(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InputGroupInternal(
     objectId: PrimaryKey,
@@ -317,6 +311,7 @@ fun InputGroupInternal(
     updateInput: (String) -> Unit,
     sendButton: @Composable () -> Unit
 ) {
+    val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
     Row(
         modifier = Modifier.background(
             backgroundColor,
@@ -335,11 +330,13 @@ fun InputGroupInternal(
                     })
                 }
                 val appNav = LocalAppNav.current
-                Icon(Icons.Default.OpenInFull, "open in full", modifier = Modifier.combinedClickable(onLongClick = {
-                    appNav.gotoTopicCompose(objectType, objectId, true, privateRoomId)
-                }) {
-                    appNav.gotoTopicCompose(objectType, objectId, false, privateRoomId)
-                })
+                Icon(
+                    Icons.Default.OpenInFull,
+                    "open in full",
+                    modifier = Modifier.clickable(enabled = alreadyLoginIn) {
+                        appNav.gotoTopicCompose(objectType, objectId, false, privateRoomId)
+                    }
+                )
             }
         })
 

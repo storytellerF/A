@@ -104,14 +104,7 @@ fun Application.module() {
     install(CallLogging) {
         level = Level.INFO
         format { call ->
-            val status = call.response.status()
-            val httpMethod = call.request.httpMethod.value
-            val remoteAddress = call.request.origin.remoteAddress
-            val country = reader.tryCountry(InetAddress.getByName(remoteAddress)).getOrNull()
-            """Status: $status, HTTP method: $httpMethod, 
-                |Url: ${call.request.uri},
-                |Ip: $remoteAddress
-                |Region ${country?.toJson()}""".trimMargin()
+            buildLog(call, reader)
         }
     }
     install(CallId) {
@@ -147,4 +140,27 @@ fun Application.module() {
     }
     install(Resources)
     configureAuth(backend)
+}
+
+private fun buildLog(
+    call: ApplicationCall,
+    reader: DatabaseReader
+): String {
+    val status = call.response.status()
+    val httpMethod = call.request.httpMethod.value
+    val remoteAddress = call.request.origin.remoteAddress
+    val country = reader.tryCountry(InetAddress.getByName(remoteAddress)).getOrNull()
+    if (country == null) {
+        call.request.header("X-Forwarded-For")?.split(", ")?.forEach {
+            val c = reader.tryCountry(InetAddress.getByName(it)).getOrNull()
+            Napier.i {
+                "$it ${c?.toJson()}"
+            }
+        }
+    }
+    return """Status: $status, HTTP method: $httpMethod, 
+                |Url: ${call.request.uri},
+                |Query: ${call.request.queryString()}
+                |Ip: $remoteAddress
+                |Region ${country?.toJson()}""".trimMargin()
 }

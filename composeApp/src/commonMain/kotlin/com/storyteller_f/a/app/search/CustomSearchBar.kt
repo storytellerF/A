@@ -73,7 +73,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
                     },
                     placeholder = {
                         SearchPlaceholder(scope)
-                    }
+                    },
                 )
             },
             expanded = active,

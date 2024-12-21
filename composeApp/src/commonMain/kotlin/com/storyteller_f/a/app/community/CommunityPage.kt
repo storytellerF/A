@@ -277,6 +277,9 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                         }
                     }
                 }
+                ButtonNav(Icons.Default.Add, "Add") {
+                    nav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, true, null)
+                }
             }
         }
     }

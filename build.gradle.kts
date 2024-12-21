@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.kover)
     id("io.gitlab.arturbosch.detekt").version("1.23.7")
+    id("com.mikepenz.aboutlibraries.plugin") version "11.2.3" apply false
 }
 
 val detektReportMergeSarif by tasks.registering(ReportMergeTask::class) {

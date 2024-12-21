@@ -14,10 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
-import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.DesignServices
-import androidx.compose.material.icons.filled.Diversity3
-import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -257,9 +254,13 @@ private fun ProjectDialogInternal() {
                     }
                 )
             }
+            val appNav = LocalAppNav.current
             Column {
                 ButtonNav(Icons.Default.DesignServices, stringResource(Res.string.design_spec)) {
                     uriHandler.openUri("https://storytellerf.github.io/aspec/")
+                }
+                ButtonNav(Icons.Default.Add, "About") {
+                    appNav.gotoAbout()
                 }
             }
         }

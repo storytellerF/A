@@ -5,9 +5,10 @@ import com.storyteller_f.shared.model.MediaItem
 import java.io.File
 import java.net.URLConnection
 import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
-class FileSystemMediaService(val base: String) : MediaService {
-    private val root = File(System.getProperty("user.home"), "a")
+class FileSystemMediaService(private val url: String, base: String) : MediaService {
+    private val root = File(base, "a")
 
     init {
         if (!root.exists()) {
@@ -35,7 +36,7 @@ class FileSystemMediaService(val base: String) : MediaService {
                     }
                 }
             }
-            Files.copy(uploadPack.path.toPath(), target.toPath())
+            Files.copy(uploadPack.path.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
         return get(bucketName, list.map {
             it.name
@@ -49,7 +50,7 @@ class FileSystemMediaService(val base: String) : MediaService {
                 else -> {
                     val file = File(root, "$bucketName/$it")
                     MediaInfo(
-                        "${base}amedia/$it",
+                        "${url}amedia/$it",
                         MediaItem(it, URLConnection.guessContentTypeFromName(it), file.length())
                     )
                 }
@@ -64,7 +65,7 @@ class FileSystemMediaService(val base: String) : MediaService {
     }
 
     override fun list(bucketName: String, prefix: String): Result<List<MediaInfo?>> {
-        val file = File(root, "$bucketName$prefix")
+        val file = File(root, "$bucketName/$prefix")
         return get(bucketName, file.listFiles().orEmpty().map {
             "${prefix}${it.name}"
         })

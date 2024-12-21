@@ -362,8 +362,18 @@ suspend fun HttpClient.getMediaList(objectId: PrimaryKey, objectType: ObjectType
     }.body<ServerResponse<MediaInfo>>()
 }
 
-suspend fun HttpClient.upload(stream: ByteArray, name: String, extension: String) = serviceCatching {
+suspend fun HttpClient.upload(
+    stream: ByteArray,
+    name: String,
+    extension: String,
+    objectId: PrimaryKey,
+    objectType: ObjectType
+) = serviceCatching {
     post("amedia/upload") {
+        url {
+            parameters.append("objectId", objectId.toString())
+            parameters.append("objectType", objectType.name)
+        }
         setBody(
             MultiPartFormDataContent(
                 formData {
@@ -379,5 +389,5 @@ suspend fun HttpClient.upload(stream: ByteArray, name: String, extension: String
         onUpload { bytesSentTotal, contentLength ->
             println("Sent $bytesSentTotal bytes from $contentLength")
         }
-    }
+    }.body<ServerResponse<MediaInfo>>()
 }
