@@ -2,17 +2,21 @@ package com.storyteller_f.media
 
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.MediaItem
+import io.github.aakira.napier.Napier
 import java.io.File
 import java.net.URLConnection
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
 class FileSystemMediaService(private val url: String, base: String) : MediaService {
-    private val root = File(base, "a")
+    private val root = File(base)
 
     init {
+        Napier.i {
+            "media path ${root.canonicalPath}"
+        }
         if (!root.exists()) {
-            val r = root.mkdir()
+            val r = root.mkdirs()
             assert(r)
         }
     }
