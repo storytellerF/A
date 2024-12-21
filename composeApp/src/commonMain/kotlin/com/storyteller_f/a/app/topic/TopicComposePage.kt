@@ -29,20 +29,18 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.common.SimpleViewModel
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.getOrCreateCollection
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.model.MediaListViewModel
+import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.createNewTopic
-import com.storyteller_f.a.client_lib.getMediaList
 import com.storyteller_f.a.client_lib.upload
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
@@ -56,15 +54,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
-
-class MediaListViewModel(private val objectId: PrimaryKey, private val objectType: ObjectType) :
-    SimpleViewModel<ServerResponse<MediaInfo>>() {
-    init {
-        load()
-    }
-
-    override suspend fun loadInternal() = client.getMediaList(objectId, objectType)
-}
 
 @Composable
 fun TopicComposePage(
@@ -106,13 +95,7 @@ private fun TopicComposeScaffold(
     var input by remember {
         mutableStateOf("")
     }
-    val list = viewModel(keys = listOf("media", user.id, privateRoomId)) {
-        if (privateRoomId != null) {
-            MediaListViewModel(privateRoomId, ObjectType.ROOM)
-        } else {
-            MediaListViewModel(user.id, ObjectType.USER)
-        }
-    }
+    val list = createMediaListViewModel(privateRoomId, user.id)
     ModalNavigationDrawer({
         TopicComposeDrawer(scope, list, input) {
             input = it

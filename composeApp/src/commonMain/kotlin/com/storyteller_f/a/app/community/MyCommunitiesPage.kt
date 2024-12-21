@@ -12,30 +12,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
+import com.storyteller_f.a.app.model.createJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.utils.lcm
-import com.storyteller_f.a.client_lib.searchCommunity
-import com.storyteller_f.a.client_lib.serviceCatching
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 
 @Composable
 fun MyCommunitiesPage() {
-    val viewModel = viewModel {
-        CommunitiesViewModel(JoinStatusSearch.JOINED, "")
-    }
+    val viewModel = createJoinedCommunitiesViewModel()
     val items = viewModel.flow.collectAsLazyPagingItems()
     CommunityList(items)
 }
@@ -74,20 +66,6 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>) {
         }
     }
 }
-
-@OptIn(ExperimentalPagingApi::class)
-class CommunitiesViewModel(
-    private val joinStatusSearch: JoinStatusSearch,
-    private val word: String
-) : PagingViewModel<PrimaryKey, CommunityInfo>({
-    SimplePagingSource {
-        serviceCatching {
-            client.searchCommunity(it, 10, joinStatusSearch, word).getOrThrow()
-        }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
-        }
-    }
-})
 
 @Composable
 fun CommunityConstrains(modifier: Modifier = Modifier, content: @Composable (Int, Int, Int) -> Unit) {

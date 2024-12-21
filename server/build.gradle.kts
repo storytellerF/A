@@ -23,8 +23,10 @@ dependencies {
     implementation(projects.shared)
     implementation(projects.backend)
     implementation(libs.bundles.ktor.server)
-    implementation(libs.minio)
-    implementation(libs.ktoml.core)
+    implementation(libs.pdfbox)
+    implementation(libs.napier)
+    implementation(libs.emoji.reader.jvm)
+    implementation(libs.geoip2)
 
     testImplementation(projects.clientLib)
     testImplementation(libs.ktor.server.test.host)
@@ -32,10 +34,6 @@ dependencies {
     testImplementation(libs.h2)
     testImplementation(libs.testcontainers.minio)
     testImplementation(libs.elasticsearch)
-    implementation(libs.pdfbox)
-    implementation(libs.napier)
-    implementation(libs.emoji.reader.jvm)
-    implementation(libs.geoip2)
 }
 
 val isProd = project.findProperty("server.prod") == true

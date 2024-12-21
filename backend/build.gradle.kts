@@ -12,16 +12,18 @@ version = "unspecified"
 
 dependencies {
     testImplementation(kotlin("test"))
+
     api(libs.exposed.core)
     api(libs.exposed.dao)
-    implementation(libs.pgjdbc.ng)
-    implementation(libs.postgresql)
-    implementation(libs.napier)
     api(libs.exposed.crypt)
     api(libs.exposed.jdbc)
     api(libs.exposed.kotlin.datetime)
     api(libs.exposed.json)
     api(libs.exposed.money)
+
+    implementation(libs.pgjdbc.ng)
+    implementation(libs.postgresql)
+    implementation(libs.napier)
     implementation(projects.shared)
     implementation(libs.minio)
     implementation(libs.elasticsearch.java)

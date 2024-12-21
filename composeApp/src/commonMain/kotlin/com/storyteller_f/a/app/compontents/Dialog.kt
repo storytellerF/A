@@ -14,6 +14,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.storyteller_f.a.app.BuildKonfig
+import kotlinx.coroutines.flow.MutableStateFlow
+
+class DialogSaveState {
+    val shownDialog = MutableStateFlow<Boolean>(false)
+    fun markDialogShown() {
+        shownDialog.value = true
+    }
+}
 
 sealed interface DialogState {
     data object Loading : DialogState

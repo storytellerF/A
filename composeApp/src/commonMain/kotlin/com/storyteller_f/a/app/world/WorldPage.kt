@@ -16,40 +16,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
-import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.common.*
+import com.storyteller_f.a.app.common.StateView
+import com.storyteller_f.a.app.model.createWorldViewModel
 import com.storyteller_f.a.app.topic.TopicCell
-import com.storyteller_f.a.client_lib.LoginViewModel
-import com.storyteller_f.a.client_lib.getWorldTopics
-import com.storyteller_f.a.client_lib.serviceCatching
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 
 @Composable
 fun WorldPage() {
-    val viewModel = viewModel {
-        WorldViewModel()
-    }
+    val viewModel = createWorldViewModel()
     val items = viewModel.flow.collectAsLazyPagingItems()
     TopicList(items)
 }
-
-@OptIn(ExperimentalPagingApi::class)
-class WorldViewModel : PagingViewModel<PrimaryKey, TopicInfo>({
-    SimplePagingSource {
-        serviceCatching {
-            client.getWorldTopics(it, 10, LoginViewModel.currentIsAlreadySignUp).getOrThrow()
-        }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
-        }
-    }
-})
 
 @Composable
 fun TopicList(

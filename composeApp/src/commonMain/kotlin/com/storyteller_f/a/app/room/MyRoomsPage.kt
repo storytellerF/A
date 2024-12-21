@@ -13,51 +13,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.common.*
-import com.storyteller_f.a.app.common.viewModel
-import com.storyteller_f.a.app.community.CommunityViewModel
+import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
+import com.storyteller_f.a.app.model.createCommunityViewModel
+import com.storyteller_f.a.app.model.createJoinedRoomsViewModel
 import com.storyteller_f.a.app.utils.safeFirstUnicode
-import com.storyteller_f.a.client_lib.searchRooms
-import com.storyteller_f.a.client_lib.serviceCatching
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.toPrimaryKey
 
 @Composable
 fun MyRoomsPage() {
-    val viewModel = viewModel {
-        RoomsViewModel(JoinStatusSearch.JOINED, "")
-    }
+    val viewModel = createJoinedRoomsViewModel()
     val items = viewModel.flow.collectAsLazyPagingItems()
     RoomList(items)
 }
-
-@OptIn(ExperimentalPagingApi::class)
-class RoomsViewModel(
-    private val joinStatusSearch: JoinStatusSearch,
-    private val word: String,
-    val community: PrimaryKey? = null
-) : PagingViewModel<PrimaryKey, RoomInfo>({
-    SimplePagingSource {
-        serviceCatching {
-            client.searchRooms(10, it, joinStatusSearch, word, community).getOrThrow()
-        }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKey())
-        }
-    }
-})
 
 @Composable
 fun RoomList(
@@ -117,9 +93,7 @@ fun RoomCell(
 
         val communityId = roomInfo?.communityId
         if (communityId != null) {
-            val model = viewModel(keys = listOf("community", communityId)) {
-                CommunityViewModel(communityId)
-            }
+            val model = createCommunityViewModel(communityId)
             val communityInfo by model.handler.data.collectAsState()
             var showCommunityDialog by remember {
                 mutableStateOf(false)

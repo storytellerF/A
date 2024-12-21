@@ -15,21 +15,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.RefCellStateView
 import com.storyteller_f.a.app.common.viewModel
+import com.storyteller_f.a.app.model.RoomViewModel
+import com.storyteller_f.a.app.model.createRoomViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun RoomRefCell(roomId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(keys = listOf("room", roomId)) {
-        RoomViewModel(roomId)
-    }
+    val viewModel = createRoomViewModel(roomId)
     RoomRefCellInternal(viewModel, onClick)
 }
 
 @Composable
 fun RoomRefCell(roomAid: String, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(keys = listOf("room", roomAid)) {
-        RoomViewModel(roomAid)
-    }
+    val viewModel = createRoomViewModel(roomAid)
 
     RoomRefCellInternal(viewModel, onClick)
 }

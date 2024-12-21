@@ -15,21 +15,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.RefCellStateView
 import com.storyteller_f.a.app.common.viewModel
+import com.storyteller_f.a.app.model.CommunityViewModel
+import com.storyteller_f.a.app.model.createCommunityViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun CommunityRefCell(communityId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(keys = listOf("community", communityId)) {
-        CommunityViewModel(communityId)
-    }
+    val viewModel = createCommunityViewModel(communityId)
     CommunityRefCellInternal(viewModel, onClick)
 }
 
 @Composable
 fun CommunityRefCell(communityAid: String, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(keys = listOf("community", communityAid)) {
-        CommunityViewModel(communityAid)
-    }
+    val viewModel = createCommunityViewModel(communityAid)
     CommunityRefCellInternal(viewModel, onClick)
 }
 

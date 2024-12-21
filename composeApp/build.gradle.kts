@@ -100,7 +100,7 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
-            implementation(compose.material3AdaptiveNavigationSuite)
+//            implementation(compose.material3AdaptiveNavigationSuite)
             implementation(libs.navigation.compose)
 
 

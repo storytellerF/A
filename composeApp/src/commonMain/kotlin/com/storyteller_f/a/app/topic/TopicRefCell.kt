@@ -2,11 +2,7 @@ package com.storyteller_f.a.app.topic
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,8 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.RefCellStateView
-import com.storyteller_f.a.app.common.viewModel
-import com.storyteller_f.a.app.user.UserViewModel
+import com.storyteller_f.a.app.model.TopicViewModel
+import com.storyteller_f.a.app.model.createTopicViewModel
+import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -28,18 +25,14 @@ import com.storyteller_f.shared.utils.extractMarkdownHeadline
 
 @Composable
 fun TopicRefCell(topicId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(keys = listOf("topic", topicId)) {
-        TopicViewModel(topicId)
-    }
+    val viewModel = createTopicViewModel(topicId)
 
     TopicRefCellInternal(viewModel, onClick)
 }
 
 @Composable
 fun TopicRefCell(topicAid: String, onClick: (PrimaryKey) -> Unit) {
-    val viewModel = viewModel(keys = listOf("topic", topicAid)) {
-        TopicViewModel(topicAid)
-    }
+    val viewModel = createTopicViewModel(topicAid)
 
     TopicRefCellInternal(viewModel, onClick)
 }
@@ -70,9 +63,7 @@ private fun TopicRefCellContent(
     onClick: (PrimaryKey) -> Unit,
 ) {
     val author = it.author
-    val authorViewModel = viewModel(keys = listOf("user", author)) {
-        UserViewModel(author)
-    }
+    val authorViewModel = createUserViewModel(author)
     val authorInfo by authorViewModel.handler.data.collectAsState()
     Row(
         modifier = Modifier.clickable {
