@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.*
@@ -327,7 +328,7 @@ aboutLibraries {
     // - If the automatic registered android tasks are disabled, a similar thing can be achieved manually
     // - `./gradlew app:exportLibraryDefinitions -PaboutLibraries.exportPath=src/main/res/raw`
     // - the resulting file can for example be added as part of the SCM
-    registerAndroidTasks = true
+    registerAndroidTasks = false
     // Define the output file name. Modifying this will disable the automatic meta data discovery for supported platforms.
     outputFileName = "aboutlibraries.json"
     // Define the path configuration files are located in. E.g. additional libraries, licenses to add to the target .json
@@ -365,3 +366,8 @@ aboutLibraries {
     // Allows to only collect dependencies of specific variants during the `collectDependencies` step.
     filterVariants = arrayOf("debug", "release")
 }
+
+tasks.withType(KotlinCompile::class.java).configureEach {
+    dependsOn("exportLibraryDefinitions")
+}
+tasks.getByName("copyNonXmlValueResourcesForCommonMain").dependsOn("exportLibraryDefinitions")

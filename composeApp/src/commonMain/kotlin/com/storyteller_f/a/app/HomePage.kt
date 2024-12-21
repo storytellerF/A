@@ -124,7 +124,9 @@ private fun ProjectIcon() {
         BasicAlertDialog({
             showDialog = false
         }) {
-            ProjectDialogInternal()
+            ProjectDialogInternal {
+                showDialog = false
+            }
         }
     }
 }
@@ -241,7 +243,7 @@ private fun UserHost(content: @Composable (UserInfo) -> Unit) {
 }
 
 @Composable
-private fun ProjectDialogInternal() {
+private fun ProjectDialogInternal(dismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     Surface(shape = RoundedCornerShape(8.dp)) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -260,6 +262,7 @@ private fun ProjectDialogInternal() {
                     uriHandler.openUri("https://storytellerf.github.io/aspec/")
                 }
                 ButtonNav(Icons.Default.Add, "About") {
+                    dismiss()
                     appNav.gotoAbout()
                 }
             }
