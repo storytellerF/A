@@ -17,7 +17,7 @@ sleep 2
 
 mkdir -p ./build/jar
 unzip -qn ./server/build/libs/server-all.jar -d ./server/build/libs/server
-tar -cf ./server/build/libs/server.tar ./server/build/libs/server/
+tar -cf ./server/build/libs/server.tar -C ./server/build/libs/server/ .
 tar -cf ./build/jar/server-cli.tar -C ./server/build/libs server.tar -C ../../../cli/build/distributions cli.tar
 # 定义文件数组
 SERVER_JAR_FILES=(
@@ -46,7 +46,7 @@ for i in "${!SERVER_JAR_FILES[@]}"; do
   echo "local: $md remote: $mdRemote"
   if [ "$md" != "$mdRemote" ]; then
     echo "upload $SERVER_JAR_FILE $(date)"
-    bzip2 -k $SERVER_JAR_FILE
+    bzip2 -kf $SERVER_JAR_FILE
     echo "put $SERVER_JAR_FILE.bz2 $SERVER_JAR_TARGET.bz2" | sftp "$REMOTE_URI"
     echo "upload done $(date)"
     sleep 2

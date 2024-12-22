@@ -3,6 +3,7 @@ package com.storyteller_f.tables
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.types.PaginationResult
@@ -16,11 +17,11 @@ import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.statements.InsertStatement
 
 object Rooms : BaseTable() {
-    val aid = varchar("aid", ROOM_ID_LENGTH).uniqueIndex()
-    val name = varchar("name", ROOM_NAME_LENGTH).index()
-    val icon = varchar("icon", ICON_LENGTH).nullable()
+    val name = roomName()
+    val icon = roomIcon()
     val creator = customPrimaryKey("creator").index()
     val communityId = customPrimaryKey("community_id").index().nullable()
 }
@@ -37,7 +38,7 @@ class Room(
     companion object {
         fun wrapRow(row: ResultRow): Room {
             return Room(
-                row[Rooms.aid],
+                row[Aids.value],
                 row[Rooms.name],
                 row[Rooms.icon],
                 row[Rooms.creator],
@@ -51,28 +52,29 @@ class Room(
             Rooms.id eq id
         }
 
-        fun findRoomByAId(aid: String) = Rooms.selectAll().where {
-            Rooms.aid eq aid
-        }
+        fun findRoomByAId(aid: String) = Rooms
+            .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+            .select(Rooms.fields + Aids.value).where {
+                Aids.value eq aid
+            }
 
-        fun new(room: Room): Boolean {
+        fun new(room: Room): InsertStatement<Number> {
             return Rooms.insert { statement ->
                 statement[id] = room.id
                 statement[createdTime] = room.createdTime
-                statement[aid] = room.aid
                 statement[name] = room.name
                 statement[icon] = room.icon
                 statement[creator] = room.creator
                 statement[communityId] = room.communityId
-            }.insertedCount > 0
+            }
         }
     }
 }
 
 suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
     return DatabaseFactory.first({
-        communityId == null
-    }, Room::wrapRow) {
+        it[Rooms.communityId] == null
+    }) {
         Room.findRoomById(roomId)
     }
 }
@@ -149,19 +151,21 @@ private fun buildUnspecifiedRoomSearchQuery(
     getCount: Boolean
 ): Query = if (uid != null) {
     val join = Rooms
+        .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
         .join(MemberJoins, JoinType.LEFT, Rooms.id, MemberJoins.objectId) {
             (MemberJoins.uid eq uid)
         }
     if (getCount) {
         join.selectAll()
     } else {
-        join.select(Rooms.fields + MemberJoins.joinTime)
+        join.select(Rooms.fields + MemberJoins.joinTime + Aids.value)
     }.where {
         (MemberJoins.uid.isNull() and Rooms.communityId.isNotNull()).or(MemberJoins.uid.isNotNull())
     }
 } else {
     Rooms
-        .selectAll()
+        .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+        .select(Rooms.fields + Aids.value)
         .where {
             Rooms.communityId.isNotNull()
         }
@@ -170,12 +174,13 @@ private fun buildUnspecifiedRoomSearchQuery(
 private fun buildNotJoinedRoomSearchQuery(
     uid: PrimaryKey?
 ): Query = if (uid != null) {
-    val join = Rooms
-    join.selectAll().where {
-        Rooms.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
-            MemberJoins.uid eq uid
-        }) and Rooms.communityId.isNotNull()
-    }
+    Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+        .select(Rooms.fields + Aids.value)
+        .where {
+            Rooms.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
+                MemberJoins.uid eq uid
+            }) and Rooms.communityId.isNotNull()
+        }
 } else {
     throw UnauthorizedException()
 }
@@ -185,21 +190,22 @@ private fun buildJoinedRoomSearchQuery(
     getCount: Boolean
 ): Query = if (uid != null) {
     val join = Rooms
+        .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
         .join(MemberJoins, JoinType.INNER, Rooms.id, MemberJoins.objectId) {
             MemberJoins.uid eq uid
         }
     if (getCount) {
         join.selectAll()
     } else {
-        join.select(Rooms.fields + MemberJoins.joinTime)
+        join.select(Rooms.fields + MemberJoins.joinTime + Aids.value)
     }
 } else {
     throw UnauthorizedException()
 }
 
 suspend fun getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?> = DatabaseFactory.first({
-    communityId
-}, Room::wrapRow) {
+    it[Rooms.communityId]
+}) {
     Room.findRoomById(parentId)
 }
 
@@ -244,29 +250,29 @@ suspend fun getRoomSource(
     roomAid: String?,
     fillJoinInfo: Boolean?,
     uid: PrimaryKey?
-): Result<Pair<RoomInfo, String?>?> = DatabaseFactory.first({
-    this
-}, ::mapRoomInfo) {
+): Result<Pair<RoomInfo, String?>?> = DatabaseFactory.first(::mapRoomInfo) {
     val baseOp = Op.build {
         if (roomId != null) {
             Rooms.id eq roomId
         } else {
-            Rooms.aid eq roomAid!!
+            Aids.value eq roomAid!!
         }
     }
 
     when {
         fillJoinInfo != true -> Rooms
-            .select(Rooms.fields)
+            .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+            .select(Rooms.fields + Aids.value)
             .where {
                 baseOp and (Rooms.communityId.isNotNull())
             }
 
         uid != null -> Rooms
+            .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
             .join(MemberJoins, JoinType.LEFT, Rooms.id, MemberJoins.objectId) {
                 MemberJoins.uid eq uid
             }
-            .select(Rooms.fields + MemberJoins.joinTime)
+            .select(Rooms.fields + MemberJoins.joinTime + Aids.value)
             .where {
                 baseOp
             }
@@ -308,4 +314,12 @@ private fun roomsResponse(list: List<Pair<RoomInfo, String?>>, backend: Backend)
             roomPair.first.copy(icon = icons[i])
         }
     }
+}
+
+suspend fun createRoom(room4: Room): Result<Boolean> = DatabaseFactory.dbQuery {
+    Room.new(room4).insertedCount > 0 && Aids.insert {
+        it[value] = room4.aid
+        it[objectId] = room4.id
+        it[objectType] = ObjectType.ROOM
+    }.insertedCount > 0
 }

@@ -22,10 +22,12 @@ import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.client
+import com.storyteller_f.a.app.community.CommunityRefCell
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.createUserViewModel
+import com.storyteller_f.a.app.room.RoomRefCell
 import com.storyteller_f.a.app.user.UserCell
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.getTopicSnapshot
@@ -48,13 +50,13 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
             val authorViewModel = createUserViewModel(author)
             val authorInfo by authorViewModel.handler.data.collectAsState()
 
-            TopicDialogInternal(topicInfo, authorInfo)
+            TopicDialogInternal(topicInfo, authorInfo, dismiss)
         }
     }
 }
 
 @Composable
-fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?) {
+fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismiss: () -> Unit) {
     val clipboardManager = LocalClipboardManager.current
     val appNav = LocalAppNav.current
     val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
@@ -63,6 +65,16 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?) {
     DialogContainer {
         UserCell(authorInfo, true)
         Text("pub: ${topicInfo.lastModifiedTime}")
+
+        when (topicInfo.rootType) {
+            ObjectType.COMMUNITY ->
+                CommunityRefCell(topicInfo.rootId)
+
+            ObjectType.ROOM ->
+                RoomRefCell(topicInfo.rootId)
+
+            else -> {}
+        }
         Column {
             val content = topicInfo.content
             if (content is TopicContent.Plain) {
@@ -83,6 +95,7 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?) {
                         }
                     }
                     ButtonNav(Icons.Default.Add, "Add") {
+                        dismiss()
                         appNav.gotoTopicCompose(
                             ObjectType.TOPIC,
                             topicInfo.id,

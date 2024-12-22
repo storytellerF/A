@@ -55,7 +55,11 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
                     val file = File(root, "$bucketName/$it")
                     MediaInfo(
                         "${url}amedia/$it",
-                        MediaItem(it, URLConnection.guessContentTypeFromName(it), file.length())
+                        MediaItem(
+                            it,
+                            URLConnection.guessContentTypeFromName(file.path) ?: "application/oct-stream",
+                            file.length()
+                        )
                     )
                 }
             }
@@ -73,5 +77,9 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
         return get(bucketName, file.listFiles().orEmpty().map {
             "${prefix}${it.name}"
         })
+    }
+
+    fun getResponse(it: List<String>): File {
+        return File(root, "amedia/${it.joinToString("/")}")
     }
 }

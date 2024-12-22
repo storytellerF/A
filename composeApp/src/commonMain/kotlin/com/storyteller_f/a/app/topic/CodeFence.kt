@@ -28,7 +28,6 @@ import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
-import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.compontents.AudioView
 import com.storyteller_f.a.app.compontents.TextUnitToPx
 import com.storyteller_f.a.app.compontents.VideoView
@@ -138,10 +137,9 @@ private fun RefBlock(
     langOffset: Int,
     content: String
 ) {
-    val appNav = LocalAppNav.current
     val textInNode = readFenceContent(children, langOffset, content)
     TopicRoute.parseRefUri(textInNode).let {
-        it.first?.let { it1 -> it1(it.second, appNav) }
+        it.first?.let { it1 -> it1(it.second) }
     }
 }
 
@@ -191,7 +189,7 @@ private fun readFenceContent(
     return content.substring(start, end)
 }
 
-class CustomCoil3ImageTransformerImpl(val mediaMap: Map<String, MediaInfo>) : ImageTransformer {
+class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>) : ImageTransformer {
 
     @Composable
     override fun transform(link: String): ImageData {

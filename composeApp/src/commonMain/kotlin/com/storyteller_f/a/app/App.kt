@@ -31,6 +31,7 @@ import com.storyteller_f.a.app.topic.TopicPage
 import com.storyteller_f.a.app.topic.processEncryptedTopic
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.app.user.MemberPage
+import com.storyteller_f.a.app.user.UserPage
 import com.storyteller_f.a.client_lib.ClientWebSocket
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.addRequestHeaders
@@ -38,7 +39,6 @@ import com.storyteller_f.a.client_lib.defaultClientConfigure
 import com.storyteller_f.a.client_lib.getClient
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.ObjectType.*
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
@@ -81,6 +81,9 @@ data class TopicScreen(val topicId: PrimaryKey)
 
 @Serializable
 data object AboutScreen
+
+@Serializable
+data class UserScreen(val uid: PrimaryKey)
 
 @Serializable
 data class TopicComposeScreen(
@@ -156,6 +159,10 @@ private fun NavGraphBuilder.buildRootNav(
             )
         }
     }
+    composable<UserScreen> {
+        val route = it.toRoute<UserScreen>()
+        UserPage(route.uid)
+    }
 }
 
 private fun newAppNav(navigator: NavHostController) = object : AppNav {
@@ -200,6 +207,10 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
 
     override fun gotoAbout() {
         navigator.navigate(AboutScreen)
+    }
+
+    override fun gotoUser(uid: PrimaryKey) {
+        navigator.navigate(UserScreen(uid))
     }
 }
 
@@ -265,17 +276,9 @@ interface AppNav {
 
     fun gotoMemberPage(objectId: PrimaryKey, objectType: ObjectType)
 
-    fun goto(id: PrimaryKey, type: ObjectType) {
-        when (type) {
-            COMMUNITY -> gotoCommunity(id, false)
-            ROOM -> gotoRoom(id, false)
-            TOPIC -> gotoTopic(id)
-            USER -> {
-            }
-        }
-    }
-
     fun gotoAbout()
+
+    fun gotoUser(uid: PrimaryKey)
 
     companion object {
         val EMPTY = object : AppNav {
@@ -319,6 +322,10 @@ interface AppNav {
             }
 
             override fun gotoAbout() {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoUser(uid: PrimaryKey) {
                 TODO("Not yet implemented")
             }
         }

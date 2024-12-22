@@ -90,5 +90,5 @@ fun PreviewTopic(@PreviewParameter(TopicPagePreviewProvider::class) param: Pair<
 @Preview
 @Composable
 fun PreviewTopicDialog() {
-    TopicDialogInternal(TopicInfo.EMPTY, UserInfo.EMPTY)
+    TopicDialogInternal(TopicInfo.EMPTY, UserInfo.EMPTY) {}
 }

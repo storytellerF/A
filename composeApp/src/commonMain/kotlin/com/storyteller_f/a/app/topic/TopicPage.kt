@@ -287,7 +287,7 @@ private fun TopicPageInputGroup(
     CustomAlertDialog(alertDialogState, {
         alertDialogState.close()
     }) {
-        appNav.goto(topic.rootId, topic.rootType)
+        appNav.gotoTopic(topic.rootId)
     }
 }
 

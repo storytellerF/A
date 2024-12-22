@@ -349,7 +349,6 @@ fun InputGroupInternal(
 @Composable
 fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
     val appNav = LocalAppNav.current
-    val onClick = appNav::goto
     DialogContainer {
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -370,11 +369,8 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
             }
         }
 
-        roomInfo.communityId?.let {
-            CommunityRefCell(it) {
-                dismiss()
-                onClick(it, ObjectType.COMMUNITY)
-            }
+        roomInfo.communityId?.let { communityId ->
+            CommunityRefCell(communityId)
         }
 
         RoomDialogButtons(dismiss, appNav, roomInfo)

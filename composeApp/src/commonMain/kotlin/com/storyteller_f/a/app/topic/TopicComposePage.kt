@@ -173,21 +173,38 @@ private fun TopicComposeDrawer(
                     NavigationDrawerItem({
                         Text(it.item.name)
                     }, false, {
-                        updateInput(
-                            """$input
-```object
-{
-    "contentType": "application/pdf",
-    "name": "${it.item.name}"
-}
-```"""
-                        )
+                        insertContent(it, updateInput, input)
                     }, icon = {
                         AsyncImage(it.url, it.item.name, modifier = Modifier.size(40.dp))
                     })
                 }
             }
         }
+    }
+}
+
+private fun insertContent(
+    it: MediaInfo,
+    updateInput: (String) -> Unit,
+    input: String
+) {
+    if (it.item.contentType.startsWith("image/")) {
+        updateInput(
+            """$input
+![${it.item.name}](${it.item.name} "${it.item.name}")
+"""
+        )
+    } else {
+
+        updateInput(
+            """$input
+```object
+{
+    "contentType": "${it.item.contentType}",
+    "name": "${it.item.name}"
+}
+```"""
+        )
     }
 }
 

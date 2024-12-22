@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class MediaInfo(val url: String, val item: MediaItem)
 
 @Serializable
-data class MediaItem(val name: String, val contentType: String?, val size: Long)
+data class MediaItem(val name: String, val contentType: String, val size: Long)
 
 @Serializable
 class MediaResponse(val file: String, val contentType: String)

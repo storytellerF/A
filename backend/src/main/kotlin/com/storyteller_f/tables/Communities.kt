@@ -3,17 +3,17 @@ package com.storyteller_f.tables
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
 object Communities : BaseTable() {
-    val aid = varchar("aid", COMMUNITY_ID_LENGTH).uniqueIndex()
-    val name = varchar("name", COMMUNITY_NAME_LENGTH).index()
-    val icon = varchar("icon", ICON_LENGTH).nullable()
+    val name = communityName()
+    val icon = communityIcon()
+    val poster = communityPoster()
     val owner = customPrimaryKey("owner").index()
-    val poster = varchar("poster", ICON_LENGTH).nullable()
 }
 
 class Community(
@@ -29,7 +29,7 @@ class Community(
     companion object {
         fun wrapRow(row: ResultRow): Community {
             return Community(
-                row[Communities.aid],
+                row[Aids.value],
                 row[Communities.name],
                 row[Communities.icon],
                 row[Communities.owner],
@@ -39,30 +39,27 @@ class Community(
             )
         }
 
-        fun find(function: SqlExpressionBuilder.() -> Op<Boolean>) = Communities.selectAll().where(function)
+        fun findById(id: PrimaryKey) = Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+            .select(Communities.fields + Aids.value)
+            .where {
+                Communities.id eq id
+            }
 
-        fun findById(id: PrimaryKey) = Communities.selectAll().where {
-            Communities.id eq id
-        }
-
-        fun new(community: Community): PrimaryKey {
-            val id = Communities.insert {
+        fun new(community: Community): Boolean {
+            return Communities.insert {
                 it[id] = community.id
                 it[name] = community.name
                 it[owner] = community.owner
-                it[aid] = community.aid
                 it[createdTime] = community.createdTime
-            }[Communities.id]
-            assert(id == community.id)
-            return id
+            }.insertedCount > 0
         }
     }
 }
 
-fun findCommunityByAId(aid: String): ResultRow? {
-    return Communities.selectAll().where {
-        Communities.aid eq aid
-    }.limit(1).firstOrNull()
+fun findCommunityByAId(aid: String): Query {
+    return Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
+        Aids.value eq aid
+    }.limit(1)
 }
 
 fun Community.toCommunityIfo(
@@ -78,9 +75,9 @@ fun Community.toCommunityIfo(
     joinTime
 )
 
-suspend fun getCommunitySource(parentId: PrimaryKey): Result<Community?> = DatabaseFactory.first({
-    this
-}, Community::wrapRow) {
+suspend fun checkCommunityExists(parentId: PrimaryKey) = DatabaseFactory.first({
+    it[Communities.id]
+}) {
     Community.findById(parentId)
 }
 
@@ -97,11 +94,15 @@ suspend fun getCommonCommunity(
     Community.wrapRow(it) to if (fillJoinInfo == true) it[MemberJoins.joinTime] else null
 }) {
     when {
-        fillJoinInfo != true -> Community.find(buildCommunityWhereClause(communityId, communityAid))
+        fillJoinInfo != true -> Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+            .select(Communities.fields + Aids.value)
+            .where(buildCommunityWhereClause(communityId, communityAid))
+
         id == null -> throw UnauthorizedException()
-        else -> Communities.join(MemberJoins, JoinType.LEFT, Communities.id, MemberJoins.objectId) {
-            MemberJoins.uid eq id
-        }.select(Communities.fields + MemberJoins.joinTime)
+        else -> Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+            .join(MemberJoins, JoinType.LEFT, Communities.id, MemberJoins.objectId) {
+                MemberJoins.uid eq id
+            }.select(Communities.fields + MemberJoins.joinTime + Aids.value)
             .where(buildCommunityWhereClause(communityId, communityAid))
     }
 }
@@ -113,7 +114,7 @@ private fun buildCommunityWhereClause(
     if (communityId != null) {
         Communities.id eq communityId
     } else if (communityAid != null) {
-        Communities.aid eq communityAid
+        Aids.value eq communityAid
     } else {
         throw CustomBadRequestException("aid must be set.")
     }
@@ -146,13 +147,14 @@ fun getSearchCommunityQuery(
     val query = when (joinStatusSearch) {
         JoinStatusSearch.JOINED -> {
             if (uid != null) {
-                val join = Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-                    MemberJoins.uid eq uid
-                }
+                val join = Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                    .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+                        MemberJoins.uid eq uid
+                    }
                 if (getCount) {
                     join.selectAll()
                 } else {
-                    join.select(Communities.fields + MemberJoins.joinTime)
+                    join.select(Communities.fields + MemberJoins.joinTime + Aids.value)
                 }
             } else {
                 throw UnauthorizedException()
@@ -161,19 +163,21 @@ fun getSearchCommunityQuery(
 
         JoinStatusSearch.NOT_JOINED -> {
             if (uid != null) {
-                val join = Communities
-                join.selectAll().where {
-                    Communities.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
-                        MemberJoins.uid eq uid
-                    })
-                }
+                Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                    .select(Communities.fields + Aids.value)
+                    .where {
+                        Communities.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
+                            MemberJoins.uid eq uid
+                        })
+                    }
             } else {
                 throw UnauthorizedException()
             }
         }
 
         else -> {
-            Communities.selectAll()
+            Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                .select(Communities.fields + Aids.value)
         }
     }
     if (!(word.isNullOrBlank())) {
@@ -202,5 +206,9 @@ suspend fun commonPaginationCommunityList(
 }
 
 suspend fun createCommunity(community: Community) = DatabaseFactory.dbQuery {
-    Community.new(community)
+    Community.new(community) && Aids.insert {
+        it[value] = community.aid
+        it[objectId] = community.id
+        it[objectType] = ObjectType.COMMUNITY
+    }.insertedCount > 0
 }

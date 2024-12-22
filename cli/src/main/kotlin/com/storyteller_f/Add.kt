@@ -7,6 +7,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.*
+import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetValue
 import com.storyteller_f.shared.type.*
@@ -76,8 +77,9 @@ class Add : Subcommand("add", "add entry") {
             if (icon == null) {
                 Triple(it, null, id)
             } else {
-                val p = "$id/room-icon"
-                backend.mediaService.upload("amedia", listOf(UploadPack(p, File(parentDir, icon))))
+                val path = File(parentDir, icon)
+                val p = "$id/room-icon.${path.extension}"
+                backend.mediaService.upload("amedia", listOf(UploadPack(p, path)))
                 Triple(it, p, id)
             }
         }
@@ -85,16 +87,15 @@ class Add : Subcommand("add", "add entry") {
             val userMap = l.flatMap {
                 it.users + it.admin
             }.distinct().map {
-                User.wrapRow(findUserByAId(it)!!)
+                User.wrapRow(findUserByAId(it).first())
             }.associateBy { it.aid }
             val communityMap = l.mapNotNull {
                 it.community
             }.distinct().map {
-                Community.wrapRow(findCommunityByAId(it)!!)
+                Community.wrapRow(findCommunityByAId(it).first())
             }.associateBy { it.aid }
             val idList = Rooms.batchInsert(data) { (it, p, id) ->
                 this[Rooms.id] = id
-                this[Rooms.aid] = it.id
                 this[Rooms.icon] = p
                 this[Rooms.name] = it.name
                 this[Rooms.communityId] = communityMap[it.community]?.id
@@ -102,6 +103,11 @@ class Add : Subcommand("add", "add entry") {
                 this[Rooms.createdTime] = now()
             }.map {
                 it[Rooms.id]
+            }
+            Aids.batchInsert(data) { (it, _, id) ->
+                this[Aids.value] = it.id
+                this[Aids.objectId] = id
+                this[Aids.objectType] = ObjectType.ROOM
             }
             l.forEachIndexed { index, addRoom ->
                 MemberJoins.batchInsert(addRoom.users) {
@@ -120,7 +126,7 @@ class Add : Subcommand("add", "add entry") {
             val userList = data.map {
                 it.author
             }.distinct().map {
-                User.wrapRow(findUserByAId(it)!!)
+                User.wrapRow(findUserByAId(it).first())
             }.associateBy { it.aid!! }
             data.groupBy {
                 it.community != null
@@ -243,18 +249,18 @@ class Add : Subcommand("add", "add entry") {
         }
         val rooms = u.mapNotNull {
             it.room
-        }.distinct().map { roomId ->
-            roomId to MemberJoins
+        }.distinct().map { roomAid ->
+            val members = MemberJoins
                 .join(Rooms, JoinType.INNER, MemberJoins.objectId, Rooms.id)
+                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
                 .join(Users, JoinType.INNER, MemberJoins.uid, Users.id)
                 .select(Users.fields)
                 .where {
-                    Rooms.aid eq roomId
+                    Aids.value eq roomAid
                 }.map {
-                    User.wrapRow(it)
-                }.map {
-                    it.publicKey to it.id
+                    it[Users.publicKey] to it[Users.id]
                 }
+            roomAid to members
         }.associateBy { it.first }
         val encrypted = topicsPrivate.map { (addTopic, index) ->
             val (first, aesBytes) = encrypt(getTopicContent(addTopic, parentDir))
@@ -282,7 +288,7 @@ class Add : Subcommand("add", "add entry") {
         val communityList = u.mapNotNull {
             it.community
         }.distinct().map {
-            val rowCommunity = findCommunityByAId(it)
+            val rowCommunity = findCommunityByAId(it).firstOrNull()
             if (rowCommunity == null) {
                 error("$it not found")
             } else {
@@ -384,20 +390,25 @@ class Add : Subcommand("add", "add entry") {
             if (icon == null) {
                 Tuple5(it, null, derPublicKey, ad, id)
             } else {
-                val p = "$id/avatar"
-                backend.mediaService.upload("amedia", listOf(UploadPack(p, File(parentDir, icon))))
+                val path = File(parentDir, icon)
+                val p = "$id/avatar.${path.extension}"
+                backend.mediaService.upload("amedia", listOf(UploadPack(p, path)))
                 Tuple5(it, null, derPublicKey, ad, id)
             }
         }
         DatabaseFactory.dbQuery {
-            Users.batchInsert(data) { (pair, userIcon, pubKey, address, id) ->
+            Users.batchInsert(data) { (_, userIcon, pubKey, address, id) ->
                 this[Users.id] = id
-                this[Users.aid] = pair.id
                 this[Users.icon] = userIcon
                 this[Users.nickname] = backend.nameService.parse(id)
                 this[Users.publicKey] = pubKey
                 this[Users.address] = address
                 this[Users.createdTime] = now()
+            }
+            Aids.batchInsert(data) { (pair, _, _, _, id) ->
+                this[Aids.value] = pair.id
+                this[Aids.objectId] = id
+                this[Aids.objectType] = ObjectType.USER
             }
         }.getOrThrow()
     }
@@ -410,23 +421,30 @@ class Add : Subcommand("add", "add entry") {
             if (icon == null) {
                 Triple(it, null, id)
             } else {
-                val p = "$id/community-icon"
-                backend.mediaService.upload("amedia", listOf(UploadPack(p, File(parentDir, icon))))
+                val path = File(parentDir, icon)
+                val p = "$id/community-icon.${path.extension}"
+                backend.mediaService.upload("amedia", listOf(UploadPack(p, path)))
                 Triple(it, p, id)
             }
         }
+        addCommunity(data)
+    }
+
+    private suspend fun addCommunity(data: List<Triple<PresetCommunity, String?, PrimaryKey>>) {
         DatabaseFactory.dbQuery {
-            val systemId = Users.select(Users.id).where {
-                Users.aid eq "System"
-            }.first()[Users.id]
+            val systemId = findUserByAId("System").first()[Users.id]
 
             Communities.batchInsert(data) { (it, communityIcon, id) ->
                 this[Communities.id] = id
                 this[Communities.createdTime] = now()
-                this[Communities.aid] = it.id
                 this[Communities.name] = it.name
                 this[Communities.icon] = communityIcon
                 this[Communities.owner] = systemId
+            }
+            Aids.batchInsert(data) { (it, _, id) ->
+                this[Aids.value] = it.id
+                this[Aids.objectId] = id
+                this[Aids.objectType] = ObjectType.COMMUNITY
             }
             data.forEach { (c, _, id) ->
                 val users = c.users.orEmpty()
@@ -434,22 +452,26 @@ class Add : Subcommand("add", "add entry") {
             }
 
             data.forEach { (t, _, id) ->
-                val l = listOf(
+                val defaultRoomList = listOf(
                     "${t.id}_general" to "General",
                     "${t.id}_lobby" to "Lobby",
                     "${t.id}_support" to "Support"
                 ).map { pair ->
                     Tuple4(pair.first, pair.second, SnowflakeFactory.nextId(), id)
                 }
-                Rooms.batchInsert(l) { (roomAid, name, roomId, communityId) ->
+                Rooms.batchInsert(defaultRoomList) { (_, name, roomId, communityId) ->
                     this[Rooms.id] = roomId
-                    this[Rooms.aid] = roomAid.take(ROOM_ID_LENGTH)
                     this[Rooms.name] = name
                     this[Rooms.communityId] = communityId
                     this[Rooms.creator] = systemId
                     this[Rooms.createdTime] = now()
                 }
-                MemberJoins.batchInsert(l) { (_, _, rId, _) ->
+                Aids.batchInsert(defaultRoomList) { (roomAid, _, roomId, _) ->
+                    this[Aids.value] = roomAid.take(ROOM_ID_LENGTH)
+                    this[Aids.objectId] = roomId
+                    this[Aids.objectType] = ObjectType.ROOM
+                }
+                MemberJoins.batchInsert(defaultRoomList) { (_, _, rId, _) ->
                     this[MemberJoins.uid] = systemId
                     this[MemberJoins.objectId] = rId
                     this[MemberJoins.joinTime] = now()
@@ -461,9 +483,7 @@ class Add : Subcommand("add", "add entry") {
 
     private suspend fun userJoinCommunity(users: List<String>, communityId: PrimaryKey) {
         users.forEach {
-            val userId = Users.select(Users.id).where {
-                Users.aid eq it
-            }.first()[Users.id]
+            val userId = findUserByAId(it).first()[Users.id]
             addCommunityJoin(userId, communityId, now()).getOrThrow()
         }
     }

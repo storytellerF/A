@@ -4,13 +4,12 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.tables.getUserAid
-import com.storyteller_f.tables.updateUser1
-import io.ktor.resources.*
+import com.storyteller_f.tables.updateUser
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
 
-suspend fun RoutingContext.updateUser(id: PrimaryKey): Result<Int> {
+suspend fun RoutingContext.updateUser(id: PrimaryKey): Result<UserInfo?> {
     val newUser = call.receive<UserInfo>()
     val result1 = listOf(suspend {
         if (!newUser.aid.isNullOrBlank()) {
@@ -27,12 +26,18 @@ suspend fun RoutingContext.updateUser(id: PrimaryKey): Result<Int> {
         }
     }).firstNotNullOfOrNull {
         val result = it()
-        if (result.getOrNull() == true) {
+        if (result.isSuccess) {
             null
         } else {
             result
         }
     }
-    if (result1 != null) return result1.map { 0 }
-    return updateUser1(id, newUser)
+    if (result1 != null) return result1.map { null }
+    return updateUser(id, newUser).map {
+        if (it) {
+            newUser
+        } else {
+            null
+        }
+    }
 }
