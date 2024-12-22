@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 
 class CommunityTest {
     @Test
-    fun `test get community`() = test { client ->
+    fun `test get community`() = test { client, _ ->
         val newId = SnowflakeFactory.nextId()
         createCommunity(
             Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())
@@ -34,7 +34,7 @@ class CommunityTest {
     }
 
     @Test
-    fun `test create topic in community`() = test { client ->
+    fun `test create topic in community`() = test { client, _ ->
         attachSession(client) {
             // insert community
             val communityId = SnowflakeFactory.nextId()
@@ -50,6 +50,7 @@ class CommunityTest {
             assertTrue(communityInfo.isJoined)
             // 再次发起创建话题
             client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
+            assertEquals(1, client.getCommunityTopics(communityId, null, 10).getOrThrow().data.size)
             // 测试上传加密话题
             assertFails {
                 client.post("/topics") {
@@ -66,12 +67,14 @@ class CommunityTest {
                 val newInfo = client.getTopicInfo(topicId).getOrThrow()
                 assertTrue(newInfo.hasComment)
             }
+            //测试退出社区
+            client.exitCommunity(communityId)
         }
     }
 
     @Test
     fun `test communities pagination`() {
-        test { client ->
+        test { client, _ ->
             val communities = buildList {
                 repeat(10) {
                     val newId = SnowflakeFactory.nextId()
@@ -112,7 +115,7 @@ class CommunityTest {
 
     @Test
     fun `test search community`() {
-        test { client ->
+        test { client, _ ->
             val community1 = SnowflakeFactory.nextId()
             createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now())).getOrThrow()
             val community2 = SnowflakeFactory.nextId()
@@ -148,7 +151,7 @@ class CommunityTest {
 
     @Test
     fun `test search community member`() {
-        test { client ->
+        test { client, _ ->
             val community1 = SnowflakeFactory.nextId()
             createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now())).getOrThrow()
             attachSession(client) {

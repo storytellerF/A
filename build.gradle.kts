@@ -72,10 +72,18 @@ subprojects {
     }
 }
 
+dependencies {
+    kover(project(":server"))
+}
 
 subprojects {
     val androidLibModules = emptyList<String>()
-    val jvmLibModules = listOf<String>("server", "crypto-jvm", "backend")
+    val libModulesMap = mapOf(
+        "server" to listOf(
+            "crypto-jvm", "backend"
+        )
+    )
+    val jvmLibModules = listOf("server", "crypto-jvm", "backend")
     if (jvmLibModules.contains(name) || androidLibModules.contains(name)) {
         apply(plugin = "org.jetbrains.kotlinx.kover")
         if (androidLibModules.contains(name)) {
@@ -83,35 +91,19 @@ subprojects {
         }
 
         dependencies {
-            if (name == "server") {
-                val action = { it: String ->
-                    kover(project(":$it"))
-                    Unit
-                }
-                androidLibModules.forEach(action)
-                jvmLibModules.forEach(action)
+            libModulesMap[name]?.forEach {
+                kover(project(":$it"))
             }
             if (androidLibModules.contains(name)) {
-                val robolectricVersion = "4.11.1"
-                "testImplementation"("org.robolectric:robolectric:$robolectricVersion")
+                "testImplementation"(libs.robolectric)
             }
         }
-        koverReport {
-            if (androidLibModules.contains(name)) {
-                defaults {
-                    mergeWith("release")
-                }
+        kover {
+            reports {
                 // filters for all report types of all build variants
                 filters {
                     excludes {
-                        classes(
-                            "*Fragment",
-                            "*Fragment\$*",
-                            "*Activity",
-                            "*Activity\$*",
-                            "*.databinding.*",
-                            "*.BuildConfig"
-                        )
+                        androidGeneratedClasses()
                     }
                 }
             }

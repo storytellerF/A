@@ -8,13 +8,11 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.Tuple4
 import com.storyteller_f.shared.type.Tuple5
 import io.ktor.client.*
+import io.ktor.client.plugins.websocket.*
 import io.ktor.server.application.*
 import io.ktor.server.config.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
-import org.testcontainers.containers.MinIOContainer
-import org.testcontainers.elasticsearch.ElasticsearchContainer
-import org.testcontainers.utility.DockerImageName
 
 @Suppress("unused")
 fun Application.module() {
@@ -22,31 +20,31 @@ fun Application.module() {
     }
 }
 
-fun test(block: suspend (HttpClient) -> Unit) {
+fun test(block: suspend (HttpClient, ClientWebSocket) -> Unit) {
     SnowflakeFactory.setMachine(0)
     addProvider()
-    testApplication {
-        val env = readEnv(".env").toMutableMap()
-        ElasticsearchContainer(
-            DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.9.2")
-        ).use { elasticClient ->
-            elasticClient.start()
-            env["SEARCH_SERVICE"] = "elastic"
-            env["ELASTIC_NAME"] = "elastic"
-            env["ELASTIC_PASSWORD"] = "changeme"
-            env["ELASTIC_URL"] = "https://${elasticClient.httpHostAddress}"
-            MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z").use { minioContainer ->
-                minioContainer.start()
-                env["MEDIA_SERVICE"] = "minio"
-                env["MINIO_URL"] = minioContainer.s3URL
-                env["MINIO_NAME"] = minioContainer.userName
-                env["MINIO_PASS"] = minioContainer.password
-                doTest(env, block)
-                minioContainer.stop()
-            }
-            elasticClient.stop()
-        }
-    }
+//    testApplication {
+//        val env = readEnv(".env").toMutableMap()
+//        ElasticsearchContainer(
+//            DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.9.2")
+//        ).use { elasticClient ->
+//            elasticClient.start()
+//            env["SEARCH_SERVICE"] = "elastic"
+//            env["ELASTIC_NAME"] = "elastic"
+//            env["ELASTIC_PASSWORD"] = "changeme"
+//            env["ELASTIC_URL"] = "https://${elasticClient.httpHostAddress}"
+//            MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z").use { minioContainer ->
+//                minioContainer.start()
+//                env["MEDIA_SERVICE"] = "minio"
+//                env["MINIO_URL"] = minioContainer.s3URL
+//                env["MINIO_NAME"] = minioContainer.userName
+//                env["MINIO_PASS"] = minioContainer.password
+//                doTest(env, block)
+//                minioContainer.stop()
+//            }
+//            elasticClient.stop()
+//        }
+//    }
     testApplication {
         val env = readEnv(".env")
         doTest(env, block)
@@ -55,7 +53,7 @@ fun test(block: suspend (HttpClient) -> Unit) {
 
 private suspend fun ApplicationTestBuilder.doTest(
     env: Map<out Any, Any>,
-    block: suspend (HttpClient) -> Unit
+    block: suspend (HttpClient, ClientWebSocket) -> Unit
 ) {
     val backend = buildBackendFromEnv(env)
     backend.topicSearchService.clean()
@@ -68,10 +66,18 @@ private suspend fun ApplicationTestBuilder.doTest(
             "ktor.application.modules.size" to "2"
         )
     }
-    val client1 = createClient {
+    val client = createClient {
         defaultClientConfigure()
     }
-    block(client1)
+    val wsClient = ClientWebSocket({
+        client.webSocketSession("/link") {
+            addRequestHeaders(LoginViewModel.session?.first)
+        }
+    }) {
+        it
+    }
+
+    block(client, wsClient)
     backend.topicSearchService.clean()
     DatabaseFactory.clean()
 }

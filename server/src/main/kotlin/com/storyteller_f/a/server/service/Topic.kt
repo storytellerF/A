@@ -55,7 +55,14 @@ suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend
                 id = newId,
                 createdTime = now(),
             )
-            saveTopic(topic, backend, content, rootId, rootType, newTopic, uid)
+            saveTopic(topic, backend, content, rootId, rootType, newTopic, uid).mapResult {
+                backend.topicSearchService.getDocument(listOf(newId)).mapResult {
+                    val topicInfo = topic.toTopicInfo()
+                    processMediaLink(backend, listOf(topicInfo), it).map {
+                        it.firstOrNull()
+                    }
+                }
+            }
         } else {
             Result.failure(ForbiddenException("Permission denied."))
         }
@@ -408,7 +415,7 @@ private fun SqlExpressionBuilder.buildPublicDatabaseSearchExpression(
     }
 }
 
-private fun processMediaLink(
+fun processMediaLink(
     backend: Backend,
     infos: List<TopicInfo>,
     documentList: List<TopicDocument?>

@@ -8,7 +8,11 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Operator
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery
+import co.elastic.clients.elasticsearch.core.BulkRequest
+import co.elastic.clients.elasticsearch.core.MgetRequest
 import co.elastic.clients.elasticsearch.core.SearchRequest
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
+import co.elastic.clients.elasticsearch.core.bulk.IndexOperation
 import co.elastic.clients.json.JsonData
 import co.elastic.clients.json.jackson.JacksonJsonpMapper
 import co.elastic.clients.transport.TransportUtils
@@ -31,36 +35,54 @@ import org.elasticsearch.client.RestClient
 import java.io.File
 import java.io.FileInputStream
 import java.net.ConnectException
-import javax.net.ssl.SSLContext
+
+private const val topicIndexName = "topics"
 
 class ElasticTopicSearchService(private val connection: ElasticConnection) : TopicSearchService {
-    companion object {
-        var INJECTED_SSL_CONTEXT: SSLContext? = null
-    }
 
-    override suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit> {
-        return useElasticClient(connection) {
-            topics.map { topic ->
+    override suspend fun saveDocument(topics: List<TopicDocument>): Result<Long> {
+        return if (topics.size == 1) {
+            val topic = topics.first()
+            useElasticClient(connection) {
                 index {
-                    it.index("topics").id(topic.id.toString()).document(topic)
-                }
-            }.forEach {
-                it.await()
+                    it.index(topicIndexName).id(topic.id.toString()).document(topic)
+                }.await().seqNo()!!
+            }
+        } else {
+            useElasticClient(connection) {
+                bulk(BulkRequest.of {
+                    it.operations(topics.map { document ->
+                        BulkOperation.of { op ->
+                            op.index(
+                                IndexOperation.Builder<TopicDocument>()
+                                    .index(topicIndexName)
+                                    .id(document.id.toString()) // 指定文档 ID
+                                    .document(document)
+                                    .build()
+                            )
+                        }
+                    })
+                }).await().items().size.toLong()
             }
         }
     }
 
     override suspend fun getDocument(idList: List<PrimaryKey>): Result<List<TopicDocument?>> {
-        return useElasticClient(connection) {
-            idList.map { id ->
-                get({
-                    it.index("topics")
+        return if (idList.size == 1) {
+            useElasticClient(connection) {
+                val id = idList.first()
+                listOf(get({
+                    it.index(topicIndexName)
                         .id(id.toString())
-                }, TopicDocument::class.java)
-            }.map {
-                it.await()
-            }.map {
-                it.source()
+                }, TopicDocument::class.java).await().source())
+            }
+        } else {
+            useElasticClient(connection) {
+                mget(MgetRequest.of {
+                    it.index(topicIndexName).ids(idList.map { it.toString() })
+                }, TopicDocument::class.java).await().docs().map {
+                    it.result().source()
+                }
             }
         }
     }
@@ -68,7 +90,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     override suspend fun clean(): Result<Unit> {
         return useElasticClient(connection) {
             indices().delete {
-                it.index("topics")
+                it.index(topicIndexName)
             }.await()
             Unit
         }
@@ -88,7 +110,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
 
         // 构建排序条件：按 ID 升序排序
         val request = SearchRequest.of { s ->
-            s.index("topics") // 指定索引名称
+            s.index(topicIndexName) // 指定索引名称
                 .query(boolQuery._toQuery())
                 .sort { sort ->
                     sort.field { f ->
@@ -97,7 +119,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 }.trackScores(true)
         }
         return useElasticClient(connection) {
-            val response = search<TopicDocument>(request, TopicDocument::class.java).await()
+            val response = search(request, TopicDocument::class.java).await()
             val hits = response.hits()
             val total = hits.total()
             PaginationResult(hits.hits().mapNotNull {

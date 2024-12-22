@@ -33,9 +33,9 @@ class ClientWebSocket(
         }
     }
 
-    fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit) {
+    fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job? {
         val old = connectionHandler.data.value
-        if (old != null && old.isActive) {
+        return if (old != null && old.isActive) {
             GlobalScope.launch {
                 localState.value = LoadingState.Loading
                 try {
@@ -45,6 +45,8 @@ class ClientWebSocket(
                     localState.value = LoadingState.Error(e)
                 }
             }
+        } else {
+            null
         }
     }
 

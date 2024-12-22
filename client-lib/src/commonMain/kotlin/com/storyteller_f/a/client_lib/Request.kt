@@ -2,17 +2,17 @@ package com.storyteller_f.a.client_lib
 
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
+import com.storyteller_f.shared.encrypt
+import com.storyteller_f.shared.encryptAesKey
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.JoinStatusSearch
-import com.storyteller_f.shared.obj.NewReaction
-import com.storyteller_f.shared.obj.NewTopic
-import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
+import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
@@ -390,4 +390,37 @@ suspend fun HttpClient.upload(
             println("Sent $bytesSentTotal bytes from $contentLength")
         }
     }.body<ServerResponse<MediaInfo>>()
+}
+
+@OptIn(ExperimentalStdlibApi::class)
+suspend fun DefaultClientWebSocketSession.sendMessage(
+    roomInfo: RoomInfo,
+    input: String,
+    keyData: List<Pair<PrimaryKey, String>>,
+    topicId: PrimaryKey?,
+) {
+    val content = if (roomInfo.isPrivate) {
+        val (encrypted, aes) = encrypt(input)
+        TopicContent.Encrypted(encrypted.toHexString(), keyData.associate {
+            it.first to encryptAesKey(it.second, aes).toHexString()
+        })
+    } else {
+        TopicContent.Plain(input)
+    }
+    val message: RoomFrame = RoomFrame.Message(
+        if (topicId != null) {
+            NewTopic(
+                ObjectType.TOPIC,
+                topicId,
+                content
+            )
+        } else {
+            NewTopic(
+                ObjectType.ROOM,
+                roomInfo.id,
+                content
+            )
+        }
+    )
+    sendSerialized(message)
 }

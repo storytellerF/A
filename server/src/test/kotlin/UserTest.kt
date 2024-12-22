@@ -9,7 +9,7 @@ import kotlin.test.assertNull
 
 class UserTest {
     @Test
-    fun `test get user`() = test { client ->
+    fun `test get user`() = test { client, _ ->
         attachSession(client) {
             val uid = it.data4
             assertNotNull(uid)
@@ -25,7 +25,7 @@ class UserTest {
     }
 
     @Test
-    fun `test login`() = test { client ->
+    fun `test login`() = test { client, _ ->
         val session = attachSession(client) {
         }
         loginSession(client, session) {
