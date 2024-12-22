@@ -6,7 +6,6 @@ import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResultNotNull
@@ -58,7 +57,7 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
 
     get<RouteRooms.Id.Topics> {
         usePrincipalOrNull { uid ->
-            pagination<TopicInfo, PrimaryKey>(PrimaryKey::class, {
+            pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { pre, next, size ->
                 getTopics(it.parent.id, ObjectType.ROOM, uid, backend, pre, next, size, it.fillHasCommented)
@@ -75,7 +74,7 @@ fun Route.bindProtectedSafeRoomRoute(backend: Backend) {
     }
     get<RouteRooms.Id.PubKeys> {
         usePrincipal { id ->
-            pagination<Pair<PrimaryKey, String>, PrimaryKey>(PrimaryKey::class, {
+            pagination(PrimaryKey::class, {
                 it.first.toString()
             }) { pre, next, size ->
                 getRoomPubKeys(it.parent.id, id, pre, next, size)

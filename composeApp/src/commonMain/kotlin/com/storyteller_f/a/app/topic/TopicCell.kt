@@ -27,7 +27,6 @@ import com.storyteller_f.a.app.user.UserCell
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import org.jetbrains.compose.resources.stringResource
 
@@ -66,7 +65,6 @@ fun TopicCellInternal(
 ) {
     val topicId = topicInfo.id
     val appNav = LocalAppNav.current
-    val onClick = appNav::goto
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -88,11 +86,11 @@ fun TopicCellInternal(
                 topicInfo,
                 showHeadline = true,
                 onClick = {
-                    onClick(topicId, ObjectType.TOPIC)
+                    appNav.gotoTopic(topicId)
                 }
             )
             InteractionRow(topicInfo, startAddReaction) {
-                onClick(topicId, ObjectType.TOPIC)
+                appNav.gotoTopic(topicId)
             }
         }
     }

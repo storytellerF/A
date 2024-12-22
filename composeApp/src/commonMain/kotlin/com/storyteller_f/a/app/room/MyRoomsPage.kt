@@ -26,7 +26,6 @@ import com.storyteller_f.a.app.model.createCommunityViewModel
 import com.storyteller_f.a.app.model.createJoinedRoomsViewModel
 import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.type.ObjectType
 
 @Composable
 fun MyRoomsPage() {
@@ -64,7 +63,6 @@ fun RoomCell(
     customBackground: Boolean = false
 ) {
     val appNav = LocalAppNav.current
-    val onClick = appNav::goto
     var showDialog by remember {
         mutableStateOf(false)
     }
@@ -78,7 +76,7 @@ fun RoomCell(
                     .background(MaterialTheme.colorScheme.secondaryContainer, shape)
                     .clip(shape)
                     .clickable {
-                        roomInfo?.let { onClick(it.id, ObjectType.ROOM) }
+                        roomInfo?.let { appNav.gotoRoom(it.id, false) }
                     }
                     .padding(10.dp)
             }

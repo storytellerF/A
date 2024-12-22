@@ -13,29 +13,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.RefCellStateView
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.model.RoomViewModel
 import com.storyteller_f.a.app.model.createRoomViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
-fun RoomRefCell(roomId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
+fun RoomRefCell(roomId: PrimaryKey) {
     val viewModel = createRoomViewModel(roomId)
-    RoomRefCellInternal(viewModel, onClick)
+    RoomRefCellInternal(viewModel)
 }
 
 @Composable
-fun RoomRefCell(roomAid: String, onClick: (PrimaryKey) -> Unit) {
+fun RoomRefCell(roomAid: String) {
     val viewModel = createRoomViewModel(roomAid)
 
-    RoomRefCellInternal(viewModel, onClick)
+    RoomRefCellInternal(viewModel)
 }
 
 @Composable
-private fun RoomRefCellInternal(viewModel: RoomViewModel, onClick: (PrimaryKey) -> Unit) {
+private fun RoomRefCellInternal(viewModel: RoomViewModel) {
     val roomInfo by viewModel.handler.data.collectAsState()
-
+    val appNav = LocalAppNav.current
     val shape = RoundedCornerShape(10.dp)
     RefCellStateView(
         viewModel.handler,
@@ -46,7 +46,7 @@ private fun RoomRefCellInternal(viewModel: RoomViewModel, onClick: (PrimaryKey) 
             .clip(shape)
             .clickable {
                 roomInfo?.let {
-                    onClick(it.id)
+                    appNav.gotoRoom(it.id, false)
                 }
             }
             .padding(10.dp)

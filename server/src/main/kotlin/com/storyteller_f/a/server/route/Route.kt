@@ -4,6 +4,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.*
 import com.storyteller_f.a.server.common.checkParameter
 import com.storyteller_f.a.server.webSocketContent
+import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.shared.model.MediaResponse
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
@@ -12,11 +13,10 @@ import io.ktor.http.*
 import io.ktor.resources.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
-import java.io.File
 
 @Resource("/communities")
 class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
@@ -169,10 +169,14 @@ fun Routing.bindUnauthenticatedRoute(backend: Backend) {
     get("/amedia/{path...}") {
         omitPrincipal {
             checkParameter<List<String>, MediaResponse>("path") {
-                val userHome = System.getProperty("user.home")
-                val file = File(userHome, "a/amedia/${it.joinToString("/")}")
-                val value = MediaResponse(file.path, ContentType.defaultForFile(file).toString())
-                Result.success(value)
+                val service = backend.mediaService
+                if (service is FileSystemMediaService) {
+                    val file = service.getResponse(it)
+                    val value = MediaResponse(file.path, ContentType.defaultForFile(file).toString())
+                    Result.success(value)
+                } else {
+                    Result.failure(BadRequestException("can't find file"))
+                }
             }
         }
     }

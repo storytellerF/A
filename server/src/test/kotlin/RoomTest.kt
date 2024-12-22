@@ -1,5 +1,4 @@
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.joinCommunity
 import com.storyteller_f.a.client_lib.joinRoom
 import com.storyteller_f.a.client_lib.searchRoomMembers
@@ -102,23 +101,21 @@ class RoomTest {
     @Test
     fun `test search room members`() {
         test { client ->
-            val community1 = SnowflakeFactory.nextId()
-            DatabaseFactory.dbQuery {
-                Community.new(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now()))
-            }.getOrThrow()
-            val room1 = SnowflakeFactory.nextId()
+            val communityId = SnowflakeFactory.nextId()
+            createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, communityId, now())).getOrThrow()
+            val publicRoom = SnowflakeFactory.nextId()
             createRoom(
                 Room(
                     "r1",
                     "name1",
                     null,
                     creator = DEFAULT_PRIMARY_KEY,
-                    communityId = community1,
-                    id = room1,
+                    communityId = communityId,
+                    id = publicRoom,
                     createdTime = now()
                 )
             ).getOrThrow()
-            val room2 = SnowflakeFactory.nextId()
+            val privateRoom = SnowflakeFactory.nextId()
             createRoom(
                 Room(
                     "r2",
@@ -126,32 +123,28 @@ class RoomTest {
                     icon = null,
                     creator = DEFAULT_PRIMARY_KEY,
                     communityId = null,
-                    id = room2,
+                    id = privateRoom,
                     createdTime = now()
                 )
             ).getOrThrow()
             attachSession(client) {
-                client.joinCommunity(community1)
-                client.joinRoom(room1)
+                client.joinCommunity(communityId)
+                client.joinRoom(publicRoom)
             }
             attachSession(client) {
-                assertEquals(1, client.searchRoomMembers(room1, null, 10, null).getOrThrow().data.size)
-                client.joinCommunity(community1)
-                client.joinRoom(room1)
-                assertEquals(2, client.searchRoomMembers(room1, null, 10, null).getOrThrow().data.size)
+                assertEquals(1, client.searchRoomMembers(publicRoom, null, 10, null).getOrThrow().data.size)
+                client.joinCommunity(communityId)
+                client.joinRoom(publicRoom)
+                assertEquals(2, client.searchRoomMembers(publicRoom, null, 10, null).getOrThrow().data.size)
                 assertFails {
-                    client.searchRoomMembers(room2, null, 10, null).getOrThrow()
+                    client.searchRoomMembers(privateRoom, null, 10, null).getOrThrow()
                 }
                 assertFails {
-                    client.joinRoom(room2).getOrThrow()
+                    client.joinRoom(privateRoom).getOrThrow()
                 }
-                createMemberJoin(MemberJoin(it.data4, room2, ObjectType.ROOM, now())).getOrThrow()
-                assertEquals(1, client.searchRoomMembers(room2, null, 10, null).getOrThrow().data.size)
+                createMemberJoin(MemberJoin(it.data4, privateRoom, ObjectType.ROOM, now())).getOrThrow()
+                assertEquals(1, client.searchRoomMembers(privateRoom, null, 10, null).getOrThrow().data.size)
             }
         }
     }
-}
-
-private suspend fun createRoom(room4: Room): Result<Boolean> = DatabaseFactory.dbQuery {
-    Room.new(room4)
 }

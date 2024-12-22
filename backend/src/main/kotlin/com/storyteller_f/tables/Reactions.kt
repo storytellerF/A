@@ -1,10 +1,6 @@
 package com.storyteller_f.tables
 
-import com.storyteller_f.BaseObj
-import com.storyteller_f.BaseTable
-import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.customPrimaryKey
-import com.storyteller_f.objectType
+import com.storyteller_f.*
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.SingleReactionInfo
 import com.storyteller_f.shared.type.ObjectType
@@ -13,10 +9,9 @@ import com.storyteller_f.shared.type.Tuple4
 import com.storyteller_f.shared.utils.mapResult
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
-import kotlin.text.insert
 
 object Reactions : BaseTable() {
-    val emoji = varchar("emoji", 20)
+    val emoji = emoji()
     val uid = customPrimaryKey("uid")
     val objectId = customPrimaryKey("object_id")
     val objectType = objectType("object_type")
@@ -27,7 +22,6 @@ object Reactions : BaseTable() {
 }
 
 class Reaction(
-    val emoji: String,
     val uid: PrimaryKey,
     val objectId: PrimaryKey,
     val objectType: ObjectType,
@@ -37,7 +31,6 @@ class Reaction(
     companion object {
         fun wrapRow(resultRow: ResultRow): Reaction {
             return Reaction(
-                resultRow[Reactions.emoji],
                 resultRow[Reactions.uid],
                 resultRow[Reactions.objectId],
                 resultRow[Reactions.objectType],

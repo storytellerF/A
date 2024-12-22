@@ -11,6 +11,7 @@ import com.storyteller_f.shared.type.Tuple4
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Topic.Companion.wrapRow
+import com.storyteller_f.types.PaginationResult
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
@@ -152,32 +153,32 @@ private fun topicAuthorContains(
     return containExpression
 }
 
-suspend fun commonPaginationSearchTopics(
+suspend fun commonPaginationTopics(
     uid: PrimaryKey?,
-    predicate: SqlExpressionBuilder.() -> Op<Boolean>,
     preTopicId: PrimaryKey?,
     nextTopicId: PrimaryKey?,
     size: Int,
-    fillHasCommented: Boolean?
-): Result<Pair<List<TopicInfo>, Long>> {
-    return commonSearchTopics(uid, predicate, preTopicId, nextTopicId, size, fillHasCommented).mapResult { data ->
+    fillHasCommented: Boolean?,
+    predicate: SqlExpressionBuilder.() -> Op<Boolean>
+): Result<PaginationResult<TopicInfo>> {
+    return commonTopics(uid, preTopicId, nextTopicId, size, fillHasCommented, predicate).mapResult { data ->
         DatabaseFactory.count {
             Topics
                 .selectAll()
                 .where(predicate)
         }.map { count ->
-            data to count
+            PaginationResult(data, count)
         }
     }
 }
 
-suspend fun commonSearchTopics(
+suspend fun commonTopics(
     uid: PrimaryKey?,
-    predicate: SqlExpressionBuilder.() -> Op<Boolean>,
     preTopicId: PrimaryKey?,
     nextTopicId: PrimaryKey?,
     size: Int,
-    fillHasCommented: Boolean?
+    fillHasCommented: Boolean?,
+    predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<List<TopicInfo>> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
     val t2 = Topics.alias("t2")
@@ -207,6 +208,7 @@ suspend fun commonSearchTopics(
     }
 }
 
+// 加密内容不能处理media，需要客户端处理
 suspend fun getEncryptedTopic(
     data: List<TopicInfo>,
     uid: PrimaryKey
@@ -238,6 +240,7 @@ fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey): List<T
         TopicContent.Encrypted(content, map)
     }
 }
+
 suspend fun getTopicRoot(newTopic: NewTopic) = DatabaseFactory.first({
     rootId to rootType
 }, Topic::wrapRow) {
@@ -274,6 +277,7 @@ suspend fun saveTopic(
     )
     topic.toTopicInfo().copy(content = TopicContent.Plain(content))
 }
+
 suspend fun saveTopic1(
     topic: Topic,
     backend: Backend,

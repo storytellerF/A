@@ -17,6 +17,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
+import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -62,11 +63,11 @@ suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend
 }
 
 suspend fun createTopicSnapshot(uid: PrimaryKey, topicId: PrimaryKey, backend: Backend): Result<MediaInfo?> {
-    return getUser2(uid).mapResultNotNull { creatorInfo ->
+    return getRawUserById(uid).mapResultNotNull { (first) ->
         checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultNotNull { (hasRead) ->
             if (hasRead) {
                 getSimpleTopic(topicId).mapResultNotNull { value ->
-                    createTopicSnapshot(value, creatorInfo, backend, uid)
+                    createTopicSnapshot(value, first, backend, uid)
                 }
             } else {
                 Result.failure(ForbiddenException("Permission denied."))
@@ -84,14 +85,14 @@ private suspend fun createTopicSnapshot(
     val topicId = topicInfo.id
     return backend.topicSearchService.getDocument(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultNotNull { documents ->
-            getUser2(topicInfo.author).mapResultNotNull { authorInfo ->
+            getRawUserById(topicInfo.author).mapResultNotNull { (first) ->
                 val name = "$uid/$topicId.pdf"
                 val saveTo = File("/tmp/$name")
                 saveTo.parentFile?.let {
                     if (!it.exists() && !it.mkdirs()) {
                         Result.failure(Exception("failed"))
                     } else {
-                        generateSnapshot(authorInfo, documents, creatorInfo, topicInfo, saveTo)
+                        generateSnapshot(first, documents, creatorInfo, topicInfo, saveTo)
                         backend.mediaService.upload("amedia", listOf(UploadPack(name, saveTo))).mapResult {
                             saveTo.delete()
                             Result.success(it.firstOrNull())
@@ -161,23 +162,8 @@ suspend fun getTopic(
             getCommonTopic(topicId, uid).mapResultNotNull { info ->
                 when {
                     !isPrivate -> backend.topicSearchService.getDocument(listOf(topicId)).mapResult { value ->
-                        val content = value.firstOrNull()?.content
-                        if (content != null) {
-                            val mediaLinks = extractMarkdownMediaLink(content)
-                            backend.mediaService.get("amedia", mediaLinks.map {
-                                "${info.author}$it"
-                            }).map { mediaUrls ->
-                                info.copy(
-                                    content = TopicContent.Plain(
-                                        content,
-                                        mediaLinks.mapIndexedNotNull { index, mediaName ->
-                                            mediaUrls[index]
-                                        }
-                                    )
-                                )
-                            }
-                        } else {
-                            Result.success(info)
+                        processMediaLink(backend, listOf(info), value).map {
+                            it.first()
                         }
                     }
 
@@ -215,40 +201,31 @@ suspend fun getTopics(
     }
     return checkRootReadPermission(parentType, parentId, uid).mapResultNotNull { (hasRead, _, isPrivate) ->
         when {
-            !isPrivate -> commonPaginationSearchTopics(
+            !isPrivate -> commonPaginationTopics(
                 uid,
-                predicate,
                 preTopicId,
                 nextTopicId,
                 size,
-                fillHasCommented
+                fillHasCommented,
+                predicate
             ).mapResult { (data, count) ->
                 backend.topicSearchService.getDocument(data.map {
                     it.id
-                }).map { documents ->
-                    documents.map {
-                        it?.let { it1 -> TopicContent.Plain(it1.content) }
-                    }
+                }).mapResult { documents ->
+                    processMediaLink(backend, data, documents)
                 }.map { topicContents ->
-                    PaginationResult(data.mapIndexed { index, l ->
-                        val c = topicContents[index]
-                        if (c != null) {
-                            l.copy(content = c)
-                        } else {
-                            l
-                        }
-                    }, count)
+                    PaginationResult(topicContents, count)
                 }
             }
 
             hasRead && uid != null -> {
-                commonPaginationSearchTopics(
+                commonPaginationTopics(
                     uid,
-                    predicate,
                     preTopicId,
                     nextTopicId,
                     size,
-                    fillHasCommented
+                    fillHasCommented,
+                    predicate
                 ).mapResult { (data, count) ->
                     getEncryptedTopic(data, uid).map { topicContents ->
                         PaginationResult(data.mapIndexed { index, l ->
@@ -302,7 +279,7 @@ suspend fun checkRootReadPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            getCommunitySource(parentId).mapResultNotNull {
+            checkCommunityExists(parentId).mapResultNotNull {
                 isMemberJoined(parentId, uid).map { hasJoined ->
                     RootReadPermission(true, hasJoined, false)
                 }
@@ -334,7 +311,7 @@ suspend fun checkRootWritePermission(
         }
 
         ObjectType.COMMUNITY -> {
-            getCommunitySource(parentId).mapResult {
+            checkCommunityExists(parentId).mapResultNotNull {
                 isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
@@ -342,7 +319,7 @@ suspend fun checkRootWritePermission(
         }
 
         ObjectType.USER -> {
-            getUserById1(parentId).mapNotNull { (first) ->
+            getRawUserById(parentId).mapNotNull { (first) ->
                 RootWritePermission(parentType, parentId, first.id == uid)
             }
         }
@@ -356,6 +333,23 @@ suspend fun searchPublicTopics(
     backend: Backend,
     uid: PrimaryKey?
 ): Result<PaginationResult<TopicInfo>?> {
+    if (search.rootType != null && search.rootType != ObjectType.COMMUNITY && search.rootType != ObjectType.USER) {
+        return Result.failure(BadRequestException("can't search private topic"))
+    }
+    if (search.word.isNullOrEmpty()) {
+        return commonPaginationTopics(uid, null, nextTopicId, size, search.parent.fillHasCommented) {
+            buildPublicDatabaseSearchExpression(search)
+        }.mapResultNotNull { (data, count) ->
+            val ids = data.map {
+                it.id
+            }
+            backend.topicSearchService.getDocument(ids).mapResult { list ->
+                processMediaLink(backend, data, list).map {
+                    PaginationResult(it, count)
+                }
+            }
+        }
+    }
     return backend.topicSearchService.searchDocument(
         search.word,
         size,
@@ -363,36 +357,68 @@ suspend fun searchPublicTopics(
         search.author,
         if (search.rootId != null && search.rootType != null) search.rootId to search.rootType else null,
         if (search.parentId != null && search.parentType != null) search.parentId to search.parentType else null,
-    ).mapResult { documents ->
-        val documentMap = documents.list.associateBy { it.id }
-        val ids = documents.list.map {
+    ).mapResult { (list, total) ->
+        val ids = list.map {
             it.id
         }
-        commonSearchTopics(uid, {
+        commonTopics(uid, null, nextTopicId, size, search.parent.fillHasCommented) {
             Topics.id inList ids
-        }, null, nextTopicId, size, search.parent.fillHasCommented).mapResult { infos ->
-            processMediaLink(documents, backend, infos, documentMap)
+        }.mapResult { infos ->
+            processMediaLink(backend, infos, list)
         }.map { value ->
-            PaginationResult(value, documents.total)
+            PaginationResult(value, total)
         }
     }
 }
 
+private fun SqlExpressionBuilder.buildPublicDatabaseSearchExpression(
+    search: RouteTopics.Search,
+) = with(this) {
+    listOf(
+        { op: Op<Boolean> ->
+            if (search.author != null) {
+                op.and(Topics.author eq search.author)
+            } else {
+                null
+            }
+        },
+        { op: Op<Boolean> ->
+            if (search.rootId != null) {
+                op.and(Topics.rootId eq search.rootId)
+            } else {
+                null
+            }
+        },
+        { op: Op<Boolean> ->
+            if (search.parentId != null && search.parentType != null) {
+                op.and(Topics.parentId eq search.parentId).and(Topics.parentType eq search.parentType)
+            } else {
+                null
+            }
+        },
+        { op: Op<Boolean> ->
+            if (search.rootType != null && search.rootId != null) {
+                op.and(Topics.rootId eq search.rootId).and(Topics.rootType eq search.rootType)
+            } else {
+                null
+            }
+        }
+    ).fold(Topics.rootType eq ObjectType.COMMUNITY) { acc, f ->
+        f(acc) ?: acc
+    }
+}
+
 private fun processMediaLink(
-    documents: PaginationResult<TopicDocument>,
     backend: Backend,
     infos: List<TopicInfo>,
-    documentMap: Map<PrimaryKey, TopicDocument>
+    documentList: List<TopicDocument?>
 ): Result<List<TopicInfo>> {
-    val list = documents.list.flatMap { document ->
-        val mediaLinks = extractMarkdownMediaLink(document.content)
-        mediaLinks.map {
-            document.id to "${document.author}$it"
-        }
-    }.distinct()
+    val documentMap = documentList.filterNotNull().associateBy { it.id }
+    val list = documentMediaList(documentList)
+    // 所有用到的media
     val mediaNameList = list.map {
         it.second
-    }
+    }.distinct()
     // 根据topicId 保存的mediaName 的map
     val mediaMap = list.groupBy {
         it.first
@@ -417,6 +443,20 @@ private fun processMediaLink(
     }
 }
 
+fun documentMediaList(documentList: List<TopicDocument?>): List<Pair<PrimaryKey, String>> {
+    val list = documentList.flatMap { document ->
+        if (document != null) {
+            val mediaLinks = extractMarkdownMediaLink(document.content)
+            mediaLinks.map {
+                document.id to it
+            }
+        } else {
+            emptyList()
+        }
+    }.distinct()
+    return list
+}
+
 suspend fun recommendTopics(
     backend: Backend,
     preTopicId: PrimaryKey?,
@@ -425,25 +465,21 @@ suspend fun recommendTopics(
     uid: PrimaryKey?,
     fillHasCommented: Boolean,
 ): Result<PaginationResult<TopicInfo>?> {
-    val predicate: SqlExpressionBuilder.() -> Op<Boolean> = {
-        Topics.parentType eq ObjectType.COMMUNITY
-    }
-    return commonPaginationSearchTopics(
+    return commonPaginationTopics(
         uid,
-        predicate,
         preTopicId,
         nextTopicId,
         size,
         fillHasCommented
-    ).mapResult { (data, count) ->
+    ) {
+        Topics.parentType eq ObjectType.COMMUNITY
+    }.mapResult { (data, count) ->
         backend.topicSearchService.getDocument(data.map {
             it.id
-        }).map { value ->
-            PaginationResult(data.mapIndexed { i, t ->
-                value[i]?.let {
-                    t.copy(content = TopicContent.Plain(it.content))
-                } ?: t
-            }, count)
+        }).mapResult { value ->
+            processMediaLink(backend, data, value).map {
+                PaginationResult(it, count)
+            }
         }
     }
 }

@@ -3,7 +3,10 @@ package com.storyteller_f.a.server.auth
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.BuildConfig
-import com.storyteller_f.a.server.route.*
+import com.storyteller_f.a.server.auth.CustomCredential.AidCredential
+import com.storyteller_f.a.server.auth.CustomCredential.IdCredential
+import com.storyteller_f.a.server.route.RouteAccounts
+import com.storyteller_f.a.server.route.commonRoute
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
@@ -21,8 +24,6 @@ import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -40,13 +41,13 @@ private fun HttpAuthHeader.Parameterized.customCredential(): CustomCredential? {
             it.name == "id"
         }?.value?.toLong()
         if (id != null) {
-            CustomCredential.IdCredential(id, sig)
+            IdCredential(id, sig)
         } else {
             val aid = parameters.firstOrNull {
                 it.name == "aid"
             }?.value
             if (aid != null) {
-                CustomCredential.AidCredential(aid, sig)
+                AidCredential(aid, sig)
             } else {
                 null
             }
@@ -129,7 +130,7 @@ private suspend fun RoutingContext.signIn(backend: Backend) {
     val pack = call.receive<SignInPack>()
     val data = call.getData()
     val f = finalData(data)
-    getCommonUser(pack).filterNull {
+    getUserByAddress(pack.ad).filterNull {
         BadRequestException("user not found")
     }.onSuccess { (info, icon, publicKey) ->
         if (verify(publicKey, pack.sig, f)) {
@@ -189,9 +190,9 @@ private suspend fun ApplicationCall.checkApiRequest(
 ): CustomPrincipal? {
     val sig = credential.sig
     return when {
-        !BuildConfig.IS_PROD && credential is CustomCredential.IdCredential && sig == credential.id.toString() -> {
+        !BuildConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            if (getUser(id).getOrNull() != null) {
+            if (getRawUserById(id).getOrNull() != null) {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             } else {
@@ -222,13 +223,14 @@ private suspend fun ApplicationCall.checkApiRequest(
 }
 
 private suspend fun getUserAuthData(credential: CustomCredential): Result<Pair<String, Long>?> {
-    val predicate: SqlExpressionBuilder.() -> Op<Boolean> = {
-        when (credential) {
-            is CustomCredential.AidCredential -> Users.aid eq credential.aid
-            is CustomCredential.IdCredential -> Users.id eq credential.id
+    return when (credential) {
+        is AidCredential -> getUserAuthDataByAid {
+            Aids.value eq credential.aid
+        }
+        is IdCredential -> getUserAuthDataBy {
+            Users.id eq credential.id
         }
     }
-    return getUserAuthDataBy(predicate)
 }
 
 private fun ApplicationCall.saveSuccessSession(

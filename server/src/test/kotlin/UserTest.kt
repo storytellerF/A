@@ -18,7 +18,7 @@ class UserTest {
             val updateRow = client.updateUserInfo(
                 UserInfo.EMPTY.copy(aid = "newaid")
             ).getOrThrow()
-            assertEquals(1, updateRow)
+            assertEquals(updateRow.aid, "newaid")
             val user = client.getUserInfoByAid("newaid").getOrThrow()
             assertEquals(uid, user.id)
         }

@@ -109,6 +109,14 @@ fun createTopicSearchInTopicViewModel(
 }
 
 @Composable
+fun createTopicSearchInUserViewModel(
+    scope: SearchScope.UserTopic,
+    current: String
+) = viewModel(keys = listOf("topic", scope.userId, current)) {
+    TopicSearchViewModel(current.split(" "), scope.userId, ObjectType.USER)
+}
+
+@Composable
 fun createMemberSearchViewModel(current: String) = viewModel(keys = listOf("members", current)) {
     MemberViewModel(0, current, ObjectType.USER)
 }

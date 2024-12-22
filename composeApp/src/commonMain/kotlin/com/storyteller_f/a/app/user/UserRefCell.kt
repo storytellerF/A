@@ -19,8 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.RefCellStateView
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.model.UserViewModel
 import com.storyteller_f.a.app.model.createUserViewModel
@@ -28,23 +28,23 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
-fun UserRefCell(userId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
+fun UserRefCell(userId: PrimaryKey) {
     val viewModel = createUserViewModel(userId)
 
-    UserRefCellInternal(viewModel, onClick)
+    UserRefCellInternal(viewModel)
 }
 
 @Composable
-fun UserRefCell(userAid: String, onClick: (PrimaryKey) -> Unit) {
+fun UserRefCell(userAid: String) {
     val viewModel = createUserViewModel(userAid)
-
-    UserRefCellInternal(viewModel, onClick)
+    UserRefCellInternal(viewModel)
 }
 
 @Composable
-private fun UserRefCellInternal(viewModel: UserViewModel, onClick: (PrimaryKey) -> Unit) {
+private fun UserRefCellInternal(viewModel: UserViewModel) {
     val userInfo by viewModel.handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
+    val appNav = LocalAppNav.current
     RefCellStateView(
         viewModel.handler,
         modifier = Modifier
@@ -54,7 +54,7 @@ private fun UserRefCellInternal(viewModel: UserViewModel, onClick: (PrimaryKey) 
             .clip(shape)
             .clickable {
                 userInfo?.let {
-                    onClick(it.id)
+                    appNav.gotoUser(it.id)
                 }
             }
             .padding(10.dp)

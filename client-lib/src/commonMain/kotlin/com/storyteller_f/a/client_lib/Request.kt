@@ -198,7 +198,7 @@ suspend fun HttpClient.updateUserInfo(newUserInfo: UserInfo) = serviceCatching {
     post("users/update") {
         contentType(ContentType.Application.Json)
         setBody(newUserInfo)
-    }.body<Int>()
+    }.body<UserInfo>()
 }
 
 suspend fun HttpClient.getUserInfoByAid(aid: String) = serviceCatching {

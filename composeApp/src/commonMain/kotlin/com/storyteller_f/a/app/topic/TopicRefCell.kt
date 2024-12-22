@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.RefCellStateView
 import com.storyteller_f.a.app.model.TopicViewModel
 import com.storyteller_f.a.app.model.createTopicViewModel
@@ -24,22 +25,23 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 
 @Composable
-fun TopicRefCell(topicId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
+fun TopicRefCell(topicId: PrimaryKey) {
     val viewModel = createTopicViewModel(topicId)
 
-    TopicRefCellInternal(viewModel, onClick)
+    TopicRefCellInternal(viewModel)
 }
 
 @Composable
-fun TopicRefCell(topicAid: String, onClick: (PrimaryKey) -> Unit) {
+fun TopicRefCell(topicAid: String) {
     val viewModel = createTopicViewModel(topicAid)
 
-    TopicRefCellInternal(viewModel, onClick)
+    TopicRefCellInternal(viewModel)
 }
 
 @Composable
-fun TopicRefCellInternal(viewModel: TopicViewModel, onClick: (PrimaryKey) -> Unit) {
-    val it by viewModel.handler.data.collectAsState()
+fun TopicRefCellInternal(viewModel: TopicViewModel) {
+    val topicInfo by viewModel.handler.data.collectAsState()
+    val appNav = LocalAppNav.current
     val shape = RoundedCornerShape(4.dp)
     RefCellStateView(
         viewModel.handler,
@@ -49,26 +51,22 @@ fun TopicRefCellInternal(viewModel: TopicViewModel, onClick: (PrimaryKey) -> Uni
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
             .clip(shape)
             .clickable {
-                it?.let { it1 -> onClick(it1.id) }
+                topicInfo?.let { it1 -> appNav.gotoTopic(it1.id) }
             }
             .padding(10.dp),
     ) {
-        TopicRefCellContent(it, onClick)
+        TopicRefCellContent(it)
     }
 }
 
 @Composable
 private fun TopicRefCellContent(
     it: TopicInfo,
-    onClick: (PrimaryKey) -> Unit,
 ) {
     val author = it.author
     val authorViewModel = createUserViewModel(author)
     val authorInfo by authorViewModel.handler.data.collectAsState()
     Row(
-        modifier = Modifier.clickable {
-            onClick(it.id)
-        },
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

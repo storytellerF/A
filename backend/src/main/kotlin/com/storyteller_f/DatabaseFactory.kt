@@ -38,7 +38,8 @@ object DatabaseFactory {
                 Rooms,
                 Topics,
                 Users,
-                Reactions
+                Reactions,
+                Aids
             )
         }
     }
@@ -53,7 +54,8 @@ object DatabaseFactory {
                 Rooms,
                 Topics,
                 Users,
-                Reactions
+                Reactions,
+                Aids
             )
         }
     }
@@ -121,6 +123,19 @@ object DatabaseFactory {
     }
 
     /**
+     * 查询第一个符合条件的数据
+     *
+     * @param resultRowTransform 主要用于将ResultRow 转换成普通数据
+     */
+    suspend fun <R, R1> first(
+        resultRowTransform: (R) -> R1,
+        block: () -> SizedIterable<R>
+    ): Result<R1?> = dbQuery {
+        explainQuery(block)
+        block().limit(1).firstOrNull()?.let(resultRowTransform)
+    }
+
+    /**
      * 检查数据是不是空
      */
     suspend fun <T> isEmpty(block: () -> SizedIterable<T>): Result<Boolean> = dbQuery {
@@ -165,3 +180,18 @@ const val ROOM_NAME_LENGTH = 10
 fun Throwable.isDup(): Boolean {
     return this is PGSQLIntegrityConstraintViolationException
 }
+
+fun Table.userIcon() = varchar("icon", ICON_LENGTH).nullable()
+fun Table.userPublicKey() = varchar("public_key", PUBLIC_KEY_LENGTH).uniqueIndex()
+fun Table.userAddress() = varchar("pub_address", ADDRESS_LENGTH).uniqueIndex()
+fun Table.userName() = varchar("nickname", USER_NICKNAME).index()
+
+fun Table.roomIcon() = varchar("icon", ICON_LENGTH).nullable()
+fun Table.roomName() = varchar("name", ROOM_NAME_LENGTH).index()
+
+fun <T : Table> T.emoji() = varchar("emoji", 20)
+
+fun Table.communityName() = varchar("name", COMMUNITY_NAME_LENGTH).index()
+fun Table.communityIcon() = varchar("icon", ICON_LENGTH).nullable()
+
+fun Table.communityPoster() = varchar("poster", ICON_LENGTH).nullable()

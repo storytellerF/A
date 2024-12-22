@@ -247,15 +247,6 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     Surface(shape = RoundedCornerShape(8.dp)) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column {
-                AsyncImage(
-                    BuildKonfig.GITHUB_CARD_LINK,
-                    contentDescription = "github card",
-                    modifier = Modifier.fillMaxWidth().aspectRatio(899f / 296).clickable {
-                        uriHandler.openUri("https://github.com/storytellerF/A")
-                    }
-                )
-            }
             val appNav = LocalAppNav.current
             Column {
                 ButtonNav(Icons.Default.DesignServices, stringResource(Res.string.design_spec)) {

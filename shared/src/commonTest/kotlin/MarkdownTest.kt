@@ -28,6 +28,13 @@ class MarkdownTest {
             Hello.
         """.trimIndent(), actual
         )
+
+        val extractMarkdownHeadline = extractMarkdownHeadline(
+            """
+            ![7276537454461452288/Camera_XHS_17315769117051040g2sg31a3ct9d77edg5pn7lgd7e81mqe6f528.jpg](7276537454461452288/Camera_XHS_17315769117051040g2sg31a3ct9d77edg5pn7lgd7e81mqe6f528.jpg "7276537454461452288/Camera_XHS_17315769117051040g2sg31a3ct9d77edg5pn7lgd7e81mqe6f528.jpg")
+        """.trimIndent()
+        )
+        extractMarkdownHeadline
     }
 
     @Test

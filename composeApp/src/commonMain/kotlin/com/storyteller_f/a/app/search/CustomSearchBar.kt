@@ -34,6 +34,7 @@ sealed interface SearchScope {
     data class CommunityMember(val communityId: PrimaryKey) : SearchScope
     data class RoomMember(val roomId: PrimaryKey) : SearchScope
     data object Member : SearchScope
+    data class UserTopic(val userId: PrimaryKey) : SearchScope
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,6 +102,7 @@ private fun SearchPlaceholder(scope: SearchScope) {
                 is SearchScope.CommunityMember -> Res.string.input_search_members
                 is SearchScope.RoomMember -> Res.string.input_search_members
                 SearchScope.Member -> Res.string.input_search_members
+                is SearchScope.UserTopic -> Res.string.input_search_topics
             }
         )
     )
@@ -132,6 +134,7 @@ private fun SearchContent(
         is SearchScope.RoomMember -> RoomMemberSearchContent(current, scope)
 
         SearchScope.Member -> MemberSearchContent(current)
+        is SearchScope.UserTopic -> UserTopicSearchContent(current, scope)
     }
 }
 
@@ -166,6 +169,15 @@ private fun CommunityMemberSearchContent(current: String, scope: SearchScope.Com
 private fun TopicTopicSearchContent(current: String, scope: SearchScope.TopicTopic) {
     if (current.isNotBlank()) {
         val viewModel = createTopicSearchInTopicViewModel(scope, current)
+        val topics = viewModel.flow.collectAsLazyPagingItems()
+        TopicList(topics)
+    }
+}
+
+@Composable
+private fun UserTopicSearchContent(current: String, scope: SearchScope.UserTopic) {
+    if (current.isNotBlank()) {
+        val viewModel = createTopicSearchInUserViewModel(scope, current)
         val topics = viewModel.flow.collectAsLazyPagingItems()
         TopicList(topics)
     }

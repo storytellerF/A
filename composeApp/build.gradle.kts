@@ -274,11 +274,6 @@ buildkonfig {
     val wsServerUrl = properties["WS_SERVER_URL"] as String
     defaultConfigs {
         buildConfigField(STRING, "PROJECT_PATH", layout.projectDirectory.asFile.absolutePath, const = true)
-        buildConfigField(
-            STRING,
-            "GITHUB_CARD_LINK",
-            "https://github-link-card.s3.ap-northeast-1.amazonaws.com/storytellerF/A.png", const = true
-        )
         buildConfigField(STRING, "SERVER_URL", serverUrl, const = true)
         buildConfigField(STRING, "WS_SERVER_URL", wsServerUrl, const = true)
         buildConfigField(BOOLEAN, "IS_PROD", isProd.toString(), const = true)

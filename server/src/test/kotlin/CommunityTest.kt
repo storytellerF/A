@@ -26,20 +26,20 @@ class CommunityTest {
     @Test
     fun `test get community`() = test { client ->
         val newId = SnowflakeFactory.nextId()
-        val communityId = createCommunity(
+        createCommunity(
             Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())
         ).getOrThrow()
-        val community = client.getCommunityInfo(communityId).getOrThrow()
-        assertEquals(communityId, client.getCommunityInfoByAid(community.aid).getOrThrow().id)
+        val community = client.getCommunityInfo(newId).getOrThrow()
+        assertEquals(newId, client.getCommunityInfoByAid(community.aid).getOrThrow().id)
     }
 
     @Test
     fun `test create topic in community`() = test { client ->
         attachSession(client) {
             // insert community
-            val newId = SnowflakeFactory.nextId()
-            val community = Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())
-            val communityId = createCommunity(community).getOrThrow()
+            val communityId = SnowflakeFactory.nextId()
+            val community = Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, communityId, now())
+            createCommunity(community).getOrThrow()
             assertFails {
                 client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
             }
@@ -77,7 +77,8 @@ class CommunityTest {
                     val newId = SnowflakeFactory.nextId()
                     createCommunity(
                         Community("aid$it", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())
-                    ).getOrThrow().let(::add)
+                    ).getOrThrow()
+                    add(newId)
                 }
             }
             attachSession(client) {

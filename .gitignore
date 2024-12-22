@@ -25,6 +25,7 @@ elastic
 !server/src/test/resources/.env
 deploy/*_data
 deploy/docker-images
+deploy/amedia
 scripts/download-image.sh
 deploy/preset.zip
 deploy_test

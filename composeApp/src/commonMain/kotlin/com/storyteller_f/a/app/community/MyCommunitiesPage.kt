@@ -23,7 +23,6 @@ import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.model.createJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.utils.lcm
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.type.ObjectType
 
 @Composable
 fun MyCommunitiesPage() {
@@ -85,7 +84,7 @@ fun CommunityGrid(communityInfo: CommunityInfo?) {
             .fillMaxWidth()
             .aspectRatio(3f / 4)
             .clickable {
-                communityInfo?.let { appNav.goto(it.id, ObjectType.COMMUNITY) }
+                communityInfo?.let { appNav.gotoCommunity(it.id, false) }
             }
     ) {
         Box(
@@ -128,7 +127,7 @@ fun CommunityCell(
                     .background(MaterialTheme.colorScheme.secondaryContainer, shape)
                     .clip(shape)
                     .clickable {
-                        communityInfo?.id?.let { appNav.goto(it, ObjectType.COMMUNITY) }
+                        communityInfo?.id?.let { appNav.gotoCommunity(it, false) }
                     }
                     .padding(10.dp)
             }

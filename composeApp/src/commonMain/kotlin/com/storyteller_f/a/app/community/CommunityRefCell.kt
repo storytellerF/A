@@ -13,28 +13,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.RefCellStateView
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.model.CommunityViewModel
 import com.storyteller_f.a.app.model.createCommunityViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
-fun CommunityRefCell(communityId: PrimaryKey, onClick: (PrimaryKey) -> Unit) {
+fun CommunityRefCell(communityId: PrimaryKey) {
     val viewModel = createCommunityViewModel(communityId)
-    CommunityRefCellInternal(viewModel, onClick)
+    CommunityRefCellInternal(viewModel)
 }
 
 @Composable
-fun CommunityRefCell(communityAid: String, onClick: (PrimaryKey) -> Unit) {
+fun CommunityRefCell(communityAid: String) {
     val viewModel = createCommunityViewModel(communityAid)
-    CommunityRefCellInternal(viewModel, onClick)
+    CommunityRefCellInternal(viewModel)
 }
 
 @Composable
-private fun CommunityRefCellInternal(viewModel: CommunityViewModel, onClick: (PrimaryKey) -> Unit) {
+private fun CommunityRefCellInternal(viewModel: CommunityViewModel) {
     val communityInfo by viewModel.handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
+    val appNav = LocalAppNav.current
     RefCellStateView(
         viewModel.handler,
         modifier = Modifier
@@ -43,7 +44,7 @@ private fun CommunityRefCellInternal(viewModel: CommunityViewModel, onClick: (Pr
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
             .clip(shape)
             .clickable {
-                communityInfo?.let { onClick(it.id) }
+                communityInfo?.let { appNav.gotoCommunity(it.id, false) }
             }
             .padding(10.dp)
     ) {

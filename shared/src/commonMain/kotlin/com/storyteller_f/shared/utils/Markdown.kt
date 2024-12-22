@@ -59,13 +59,18 @@ fun extractHeadParagraph(
     var captureContent1 = false
     parsedTree.accept(object : Visitor {
         override fun visitNode(node: ASTNode) {
+            println(node.type)
             when {
                 node.type == MarkdownElementTypes.MARKDOWN_FILE -> captureContent1 = true
                 node.type == MarkdownElementTypes.PARAGRAPH -> {
                     if (captureContent1) {
                         val content = markdownText.substring(node.startOffset, node.endOffset).trim()
                         if (content.isNotEmpty()) {
-                            paragraphs.appendLine(content)
+                            if (node.children.size == 1 && node.children.first().type == MarkdownElementTypes.IMAGE) {
+                                paragraphs.appendLine(content)
+                            } else {
+                                paragraphs.appendLine(content.take(200))
+                            }
                         }
                     }
                 }
@@ -85,7 +90,7 @@ fun extractHeadParagraph(
             node.children.forEach { it.accept(this) }
         }
     })
-    return paragraphs.toString().trim().take(200)
+    return paragraphs.toString().trim()
 }
 
 fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {

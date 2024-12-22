@@ -278,6 +278,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                     }
                 }
                 ButtonNav(Icons.Default.Add, "Add") {
+                    dismiss()
                     nav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, true, null)
                 }
             }

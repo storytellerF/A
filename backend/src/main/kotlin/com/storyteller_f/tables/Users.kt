@@ -1,8 +1,8 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
@@ -12,11 +12,10 @@ import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
 object Users : BaseTable() {
-    val aid = varchar("aid", USER_ID_LENGTH).uniqueIndex().nullable()
-    val publicKey = varchar("public_key", PUBLIC_KEY_LENGTH).uniqueIndex()
-    val address = varchar("pub_address", ADDRESS_LENGTH).uniqueIndex()
-    val icon = varchar("icon", ICON_LENGTH).nullable()
-    val nickname = varchar("nickname", USER_NICKNAME).index()
+    val publicKey = userPublicKey()
+    val address = userAddress()
+    val icon = userIcon()
+    val nickname = userName()
 }
 
 class User(
@@ -32,7 +31,7 @@ class User(
     companion object {
         fun wrapRow(row: ResultRow): User {
             return User(
-                row[Users.aid],
+                row[Aids.value],
                 row[Users.publicKey],
                 row[Users.address],
                 row[Users.icon],
@@ -52,29 +51,18 @@ class User(
     }
 }
 
-fun findUserByAId(aid: String): ResultRow? {
-    return Users.selectAll().where {
-        Users.aid eq aid
-    }.limit(1).firstOrNull()
-}
-
-fun createUser(
-    user: User
-): User {
-    Users.insert {
-        it[id] = user.id
-        it[publicKey] = user.publicKey
-        it[address] = user.address
-        it[nickname] = user.nickname
-        it[createdTime] = user.createdTime
-    }
-    return user
+fun findUserByAId(aid: String): Query {
+    return Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
+        Aids.value eq aid
+    }.limit(1)
 }
 
 suspend fun getUserAid(id: PrimaryKey): Result<String?> = DatabaseFactory.first({
-    aid
-}, User::wrapRow) {
-    User.findById(id)
+    it[Aids.value]
+}) {
+    Aids.selectAll().where {
+        Aids.objectId eq id
+    }
 }
 
 fun User.toUserInfo(): UserInfo {
@@ -88,31 +76,31 @@ fun toFinalUserInfo(p: Pair<UserInfo, String?>, backend: Backend): Result<UserIn
     }
 }
 
-suspend fun getUser(
-    it: PrimaryKey,
-    backend: Backend
-) = getUserById1(it).mapResultNotNull {
-    toFinalUserInfo(it, backend)
-}
-
 suspend fun getUserByAid(
     aid: String,
     backend: Backend
-) = getUserByAid1(aid).mapResultNotNull {
+) = getRawUserByAid(aid).mapResultNotNull {
     toFinalUserInfo(it, backend)
 }
 
-suspend fun getUserById1(it: PrimaryKey): Result<Pair<UserInfo, String?>?> = DatabaseFactory.first({
-    toUserInfo() to icon
-}, User::wrapRow) {
-    User.findById(it)
+suspend fun getUser(
+    it: PrimaryKey,
+    backend: Backend
+) = getRawUserById(it).mapResultNotNull {
+    toFinalUserInfo(it, backend)
 }
 
-suspend fun getUserByAid1(aid: String): Result<Pair<UserInfo, String?>?> = DatabaseFactory.first({
+suspend fun getRawUserByAid(aid: String) = DatabaseFactory.first({
     toUserInfo() to icon
 }, User::wrapRow) {
-    User.find {
-        Users.aid eq aid
+    findUserByAId(aid)
+}
+
+suspend fun getRawUserById(it: PrimaryKey): Result<Pair<UserInfo, String?>?> = DatabaseFactory.first({
+    toUserInfo() to icon
+}, User::wrapRow) {
+    Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
+        Users.id eq it
     }
 }
 
@@ -145,16 +133,18 @@ suspend fun commonPaginationMemberList(
 
 private fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, word: String?): Query {
     val query = if (objectId != null) {
-        val join = Users.join(MemberJoins, JoinType.INNER, Users.id, MemberJoins.uid) {
-            MemberJoins.objectId eq objectId
-        }
+        val join = Users
+            .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+            .join(MemberJoins, JoinType.INNER, Users.id, MemberJoins.uid) {
+                MemberJoins.objectId eq objectId
+            }
         if (getCount) {
             join.selectAll()
         } else {
-            join.select(Users.fields + MemberJoins.joinTime)
+            join.select(Users.fields + MemberJoins.joinTime + Aids.value)
         }
     } else {
-        Users.selectAll()
+        Users.join(Aids, JoinType.LEFT, Rooms.id, Aids.objectId).select(Users.fields + Aids.value)
     }
 
     if (!(word.isNullOrBlank())) {
@@ -184,12 +174,15 @@ suspend fun searchMembers(
     }
 }
 
-suspend fun getCommonUser(pack: SignInPack): Result<Triple<UserInfo, String?, String>?> = DatabaseFactory.first({
+suspend fun getUserByAddress(ad: String): Result<Triple<UserInfo, String?, String>?> = DatabaseFactory.first({
     Triple(toUserInfo(), icon, publicKey)
 }, User::wrapRow) {
-    User.find {
-        Users.address eq pack.ad
-    }
+    Users
+        .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+        .select(Users.fields + Aids.value)
+        .where {
+            Users.address eq ad
+        }
 }
 
 suspend fun createUser(
@@ -200,7 +193,15 @@ suspend fun createUser(
 ): Result<Pair<UserInfo, Nothing?>> = DatabaseFactory.query({
     toUserInfo() to null
 }) {
-    createUser(User(null, pk, ad, null, name, newId, now()))
+    val user = User(null, pk, ad, null, name, newId, now())
+    Users.insert {
+        it[id] = user.id
+        it[publicKey] = user.publicKey
+        it[address] = user.address
+        it[nickname] = user.nickname
+        it[createdTime] = user.createdTime
+    }
+    user
 }
 
 suspend fun isUserNotExists(pk: String): Result<Boolean> = DatabaseFactory.isEmpty {
@@ -209,29 +210,34 @@ suspend fun isUserNotExists(pk: String): Result<Boolean> = DatabaseFactory.isEmp
     }
 }
 
-suspend fun getUser(id: PrimaryKey): Result<User?> = DatabaseFactory.first({
-    this
-}, User::wrapRow) {
-    User.findById(id)
-}
-
-suspend fun getUser2(id: PrimaryKey) =
-    DatabaseFactory.first(User::toUserInfo, User::wrapRow) {
-        User.findById(id)
-    }
-
-suspend fun updateUser1(
+suspend fun updateUser(
     id: PrimaryKey,
     newUser: UserInfo
-) = DatabaseFactory.dbQuery {
-    Users.update({
-        Users.id eq id
-    }) {
-        if (newUser.nickname.isNotBlank()) {
-            it[nickname] = newUser.nickname
-        }
-        if (!newUser.aid.isNullOrBlank()) {
-            it[aid] = newUser.aid
+): Result<Boolean> {
+    val aid = newUser.aid
+    return DatabaseFactory.dbQuery {
+        listOf({
+            if (newUser.nickname.isNotBlank()) {
+                Users.update({
+                    Users.id eq id
+                }) {
+                    it[nickname] = newUser.nickname
+                } > 0
+            } else {
+                true
+            }
+        }, {
+            if (!aid.isNullOrBlank()) {
+                Aids.upsert(Aids.objectId) {
+                    it[objectId] = id
+                    it[value] = aid
+                    it[objectType] = ObjectType.USER
+                }.insertedCount > 0
+            } else {
+                true
+            }
+        }).all {
+            it()
         }
     }
 }
@@ -242,10 +248,17 @@ suspend fun checkUserExists(id: Long) = DatabaseFactory.first({
     User.findById(id)
 }
 
+suspend fun getUserAuthDataByAid(predicate: SqlExpressionBuilder.() -> Op<Boolean>) =
+    DatabaseFactory.first({
+        it[Users.publicKey] to it[Users.id]
+    }) {
+        Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+            .select(listOf(Users.publicKey, Users.id))
+            .where(predicate)
+    }
+
 suspend fun getUserAuthDataBy(predicate: SqlExpressionBuilder.() -> Op<Boolean>) =
     DatabaseFactory.first({
-        this
-    }, {
         it[Users.publicKey] to it[Users.id]
     }) {
         Users.select(listOf(Users.publicKey, Users.id)).where(predicate)
