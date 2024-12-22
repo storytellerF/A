@@ -37,6 +37,7 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
+import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -44,6 +45,7 @@ import kotlinx.serialization.json.Json
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
+import java.net.URI
 import java.net.URL
 
 @Composable
@@ -93,7 +95,7 @@ fun ObjectBlock(
                 val errorIndicator = rememberVectorPainter(Icons.Default.Error)
                 val refreshIndicator = rememberVectorPainter(Icons.Default.Refresh)
                 val state = remember(url, errorIndicator, refreshIndicator) {
-                    RemotePdfState(URL(url), errorIndicator, refreshIndicator)
+                    RemotePdfState(URI.create(url).toURL(), errorIndicator, refreshIndicator)
                 }
                 HorizontalPager(
                     state = rememberPagerState { state.pageCount }

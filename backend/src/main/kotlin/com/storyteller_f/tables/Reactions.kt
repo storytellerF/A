@@ -55,7 +55,7 @@ suspend fun commonReactions(
     val selection = reactionAuthorContains(uid)
 
     return DatabaseFactory.mapQuery({
-        ReactionInfo(data1, objectId, ObjectType.TOPIC, data3, data2, data4 == 1L)
+        ReactionInfo(data1, objectId, ObjectType.TOPIC, data2, data4 == 1L)
     }, {
         Tuple4(
             it[Reactions.emoji],
@@ -94,9 +94,9 @@ suspend fun getReaction(uid: PrimaryKey, objectId: PrimaryKey, emojiText: String
     val containsExpression = reactionAuthorContainsIfUidNotNull(uid)
     val countExpression = Reactions.id.count()
     return DatabaseFactory.first({
-        ReactionInfo(emojiText, objectId, ObjectType.TOPIC, third, first, second == 1L)
+        ReactionInfo(emojiText, objectId, ObjectType.TOPIC, first, second == 1L)
     }, {
-        Triple(it[countExpression], it[containsExpression], it[Reactions.createdTime])
+        Pair(it[countExpression], it[containsExpression])
     }) {
         Reactions.select(countExpression, containsExpression).where {
             (Reactions.objectId eq objectId) and (Reactions.emoji eq emojiText)

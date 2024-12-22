@@ -1,8 +1,5 @@
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.client_lib.joinCommunity
-import com.storyteller_f.a.client_lib.joinRoom
-import com.storyteller_f.a.client_lib.searchRoomMembers
-import com.storyteller_f.a.client_lib.searchRooms
+import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
@@ -17,7 +14,7 @@ import kotlin.test.assertFails
 class RoomTest {
     @Test
     fun `test room search`() {
-        test { client ->
+        test { client, _ ->
             val community1 = SnowflakeFactory.nextId()
             createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now())).getOrThrow()
             val room1 = SnowflakeFactory.nextId()
@@ -38,11 +35,14 @@ class RoomTest {
                 createMemberJoin(join).getOrThrow()
                 testSearchRoom(2, 10, null, JoinStatusSearch.JOINED, null, null, client)
                 testSearchRoom(2, 10, null, JoinStatusSearch.UNSPECIFIED, null, community1, client)
+                client.exitRoom(room1)
+                //测试幂等
+                client.exitRoom(room1)
             }
         }
     }
 
-    suspend fun testSearchRoom(
+    private suspend fun testSearchRoom(
         expected: Int,
         size: Int,
         nextRoomId: PrimaryKey?,
@@ -100,7 +100,7 @@ class RoomTest {
 
     @Test
     fun `test search room members`() {
-        test { client ->
+        test { client, _ ->
             val communityId = SnowflakeFactory.nextId()
             createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, communityId, now())).getOrThrow()
             val publicRoom = SnowflakeFactory.nextId()
@@ -129,6 +129,8 @@ class RoomTest {
             ).getOrThrow()
             attachSession(client) {
                 client.joinCommunity(communityId)
+                client.joinRoom(publicRoom)
+                //检查幂等
                 client.joinRoom(publicRoom)
             }
             attachSession(client) {

@@ -275,7 +275,6 @@ suspend fun saveTopic(
             )
         )
     )
-    topic.toTopicInfo().copy(content = TopicContent.Plain(content))
 }
 
 suspend fun saveTopic1(

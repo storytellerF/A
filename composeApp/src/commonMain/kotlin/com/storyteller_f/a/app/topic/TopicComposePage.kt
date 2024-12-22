@@ -195,7 +195,6 @@ private fun insertContent(
 """
         )
     } else {
-
         updateInput(
             """$input
 ```object

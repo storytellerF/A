@@ -7,7 +7,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compontents.UserIcon
-import com.storyteller_f.a.app.model.createCommunityTopicsViewModel
 import com.storyteller_f.a.app.model.createTopicSearchInUserViewModel
 import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.search.CustomSearchBar

@@ -10,7 +10,6 @@ data class ReactionInfo(
     val emoji: String,
     val objectId: PrimaryKey,
     val objectType: ObjectType,
-    val createdTime: LocalDateTime?,
     val count: Long,
     val hasReacted: Boolean
 )

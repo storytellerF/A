@@ -59,8 +59,8 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
     val snackBarHost = remember {
         SnackbarHostState()
     }
-    LaunchedEffect(clientWs.remoteState) {
-        clientWs.remoteState.collect {
+    LaunchedEffect(wsClient.remoteState) {
+        wsClient.remoteState.collect {
             if (it is RoomFrame.Error) {
                 snackBarHost.showSnackbar(it.error, withDismissAction = true)
             }
@@ -208,8 +208,8 @@ fun RoomSendButton(
     input: String,
     send: () -> Unit
 ) {
-    val state by clientWs.connectionHandler.state.collectAsState()
-    val sendState by clientWs.localState.collectAsState()
+    val state by wsClient.connectionHandler.state.collectAsState()
+    val sendState by wsClient.localState.collectAsState()
     val isSending = sendState is LoadingState.Loading
     CommonInputButton(state, input, send, isSending)
 }
@@ -251,7 +251,6 @@ fun CommonInputButton(
     }
 }
 
-@OptIn(ExperimentalStdlibApi::class)
 fun sendMessage(
     roomInfo: RoomInfo?,
     input: String,
@@ -262,44 +261,19 @@ fun sendMessage(
     notifyPubKeyStillLoading: () -> Unit
 ) {
     if (roomInfo != null) {
-        val roomId = roomInfo.id
-        clientWs.useWebSocket {
-            val content = if (roomInfo.isPrivate) {
-                if (keyState !is LoadingState.Done || keyData == null) {
-                    notifyPubKeyStillLoading()
-                    null
-                } else {
-                    val (encrypted, aes) = encrypt(input)
-                    TopicContent.Encrypted(encrypted.toHexString(), keyData.associate {
-                        it.first to encryptAesKey(it.second, aes).toHexString()
-                    })
-                }
-            } else {
-                TopicContent.Plain(input)
-            }
-            if (content != null) {
-                val message: RoomFrame = RoomFrame.Message(
-                    if (topicId != null) {
-                        NewTopic(
-                            ObjectType.TOPIC,
-                            topicId,
-                            content
-                        )
-                    } else {
-                        NewTopic(
-                            ObjectType.ROOM,
-                            roomId,
-                            content
-                        )
-                    }
-                )
-                sendSerialized(message)
-                delay(500)
-                scrollToNew()
-            }
+        if (keyState !is LoadingState.Done || keyData == null) {
+            notifyPubKeyStillLoading()
+            return
+        }
+        wsClient.useWebSocket {
+            sendMessage(roomInfo, input, keyData, topicId)
+            delay(500)
+            scrollToNew()
         }
     }
 }
+
+
 
 @Composable
 fun InputGroupInternal(

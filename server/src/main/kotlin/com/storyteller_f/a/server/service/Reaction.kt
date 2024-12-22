@@ -26,7 +26,7 @@ suspend fun addReaction(
             } else {
                 val now = now()
                 val reactionInfo =
-                    ReactionInfo(emojiText, topicId, ObjectType.TOPIC, now, (oldReaction?.count ?: 0) + 1, true)
+                    ReactionInfo(emojiText, topicId, ObjectType.TOPIC, (oldReaction?.count ?: 0) + 1, true)
                 insertReaction(newId, userId, reactionInfo, now).map { i ->
                     if (i > 0) {
                         reactionInfo

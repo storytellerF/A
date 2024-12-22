@@ -21,10 +21,10 @@ import java.nio.file.Path
 class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
     private val analyzer = StandardAnalyzer()
 
-    override suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit> {
+    override suspend fun saveDocument(topics: List<TopicDocument>): Result<Long> {
         return useLucene {
             IndexWriter(it, IndexWriterConfig(analyzer)).use { writer ->
-                val addDocuments = writer.addDocuments(
+                val r = writer.addDocuments(
                     topics.map { document ->
                         val doc = Document()
                         doc.add(LongField("id1", document.id, Field.Store.YES))
@@ -39,29 +39,52 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
                     }
                 )
                 Napier.d {
-                    "save document $addDocuments in `lucene`"
+                    "save document $r in `lucene`"
                 }
+                r
             }
         }
     }
 
     override suspend fun getDocument(idList: List<PrimaryKey>): Result<List<TopicDocument?>> {
         if (idList.isEmpty()) return Result.success(emptyList())
-        return useLucene {
-            try {
-                DirectoryReader.open(it).use { reader ->
-                    val searcher = IndexSearcher(reader)
-                    idList.map { id ->
+        if (idList.size == 1) {
+            return useLucene {
+                try {
+                    DirectoryReader.open(it).use { reader ->
+                        val searcher = IndexSearcher(reader)
+                        val id = idList.first()
                         val topDocs = searcher.search(LongPoint.newExactQuery("id1", id), 1)
-                        topDocs.scoreDocs.firstOrNull()?.let { scoreDoc ->
+                        listOf(topDocs.scoreDocs.firstOrNull()?.let { scoreDoc ->
                             val document = searcher.storedFields().document(scoreDoc.doc)
                             restoreDocument(id, document)
-                        }
+                        })
+                    }
+                } catch (_: IndexNotFoundException) {
+                    List(idList.size) {
+                        null
                     }
                 }
-            } catch (_: IndexNotFoundException) {
-                List(idList.size) {
-                    null
+            }
+        } else {
+            return useLucene {
+                try {
+                    DirectoryReader.open(it).use { reader ->
+                        val searcher = IndexSearcher(reader)
+                        val query = LongPoint.newSetQuery("id1", idList)
+                        val topDocs = searcher.search(query, idList.size)
+                        val map = topDocs.scoreDocs.map { scoreDoc ->
+                            val document = searcher.storedFields().document(scoreDoc.doc)
+                            restoreDocument(document.get("id1").toPrimaryKey(), document)
+                        }.associateBy { it.id }
+                        idList.map { id ->
+                            map[id]
+                        }
+                    }
+                } catch (_: IndexNotFoundException) {
+                    List(idList.size) {
+                        null
+                    }
                 }
             }
         }
@@ -104,7 +127,7 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
                             MultiFieldQueryParser(
                                 arrayOf("content"),
                                 analyzer
-                            ).parse(filtered.joinToString<String>(" ")),
+                            ).parse(filtered.joinToString(" ")),
                             BooleanClause.Occur.MUST
                         )
                     }

@@ -31,7 +31,6 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.community.MyCommunitiesPage
 import com.storyteller_f.a.app.compontents.ButtonNav

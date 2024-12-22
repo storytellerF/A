@@ -61,10 +61,12 @@ buildconfig = "0.15.1"
 kotlin_buildconfig = "5.4.0"
 espresso-core = "3.6.1"
 androidx-test-ext-junit = "1.2.1"
-kover = "0.7.4"
+kover = "0.9.0"
 media3Exoplayer = "1.5.1"
+robolectricVersion = "4.11.1"
 
 [libraries]
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectricVersion" }
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3Exoplayer" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
