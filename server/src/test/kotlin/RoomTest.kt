@@ -36,7 +36,7 @@ class RoomTest {
                 testSearchRoom(2, 10, null, JoinStatusSearch.JOINED, null, null, client)
                 testSearchRoom(2, 10, null, JoinStatusSearch.UNSPECIFIED, null, community1, client)
                 client.exitRoom(room1)
-                //测试幂等
+                // 测试幂等
                 client.exitRoom(room1)
             }
         }
@@ -130,7 +130,7 @@ class RoomTest {
             attachSession(client) {
                 client.joinCommunity(communityId)
                 client.joinRoom(publicRoom)
-                //检查幂等
+                // 检查幂等
                 client.joinRoom(publicRoom)
             }
             attachSession(client) {

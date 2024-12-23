@@ -104,14 +104,15 @@ fun TopicContentField(
 ) {
     when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
-            val mediaList = if (topicInfo.isPrivate) {
+            val isPrivate = topicInfo.isPrivate
+            val mediaList = if (isPrivate) {
                 val list = createMediaListViewModel(topicInfo.rootId, 0)
                 val media by list.handler.data.collectAsState()
                 media?.data.orEmpty()
             } else {
                 content.list
             }
-            val plain by produceState("", content.plain) {
+            val plain by produceState("", content.plain, showHeadline) {
                 value = if (showHeadline) {
                     extractMarkdownHeadline(content.plain)
                 } else {

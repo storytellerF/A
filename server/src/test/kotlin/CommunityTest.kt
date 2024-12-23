@@ -67,7 +67,7 @@ class CommunityTest {
                 val newInfo = client.getTopicInfo(topicId).getOrThrow()
                 assertTrue(newInfo.hasComment)
             }
-            //测试退出社区
+            // 测试退出社区
             client.exitCommunity(communityId)
         }
     }

@@ -36,7 +36,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.net.ConnectException
 
-private const val topicIndexName = "topics"
+private const val TOPIC_INDEX_NAME = "topics"
 
 class ElasticTopicSearchService(private val connection: ElasticConnection) : TopicSearchService {
 
@@ -45,7 +45,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
             val topic = topics.first()
             useElasticClient(connection) {
                 index {
-                    it.index(topicIndexName).id(topic.id.toString()).document(topic)
+                    it.index(TOPIC_INDEX_NAME).id(topic.id.toString()).document(topic)
                 }.await().seqNo()!!
             }
         } else {
@@ -55,7 +55,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                         BulkOperation.of { op ->
                             op.index(
                                 IndexOperation.Builder<TopicDocument>()
-                                    .index(topicIndexName)
+                                    .index(TOPIC_INDEX_NAME)
                                     .id(document.id.toString()) // 指定文档 ID
                                     .document(document)
                                     .build()
@@ -72,14 +72,14 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
             useElasticClient(connection) {
                 val id = idList.first()
                 listOf(get({
-                    it.index(topicIndexName)
+                    it.index(TOPIC_INDEX_NAME)
                         .id(id.toString())
                 }, TopicDocument::class.java).await().source())
             }
         } else {
             useElasticClient(connection) {
                 mget(MgetRequest.of {
-                    it.index(topicIndexName).ids(idList.map { it.toString() })
+                    it.index(TOPIC_INDEX_NAME).ids(idList.map { it.toString() })
                 }, TopicDocument::class.java).await().docs().map {
                     it.result().source()
                 }
@@ -90,7 +90,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     override suspend fun clean(): Result<Unit> {
         return useElasticClient(connection) {
             indices().delete {
-                it.index(topicIndexName)
+                it.index(TOPIC_INDEX_NAME)
             }.await()
             Unit
         }
@@ -110,7 +110,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
 
         // 构建排序条件：按 ID 升序排序
         val request = SearchRequest.of { s ->
-            s.index(topicIndexName) // 指定索引名称
+            s.index(TOPIC_INDEX_NAME) // 指定索引名称
                 .query(boolQuery._toQuery())
                 .sort { sort ->
                     sort.field { f ->

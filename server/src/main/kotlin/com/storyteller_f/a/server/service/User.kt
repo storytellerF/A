@@ -12,17 +12,24 @@ import io.ktor.server.routing.*
 suspend fun RoutingContext.updateUser(id: PrimaryKey): Result<UserInfo?> {
     val newUser = call.receive<UserInfo>()
     val result1 = listOf(suspend {
-        if (!newUser.aid.isNullOrBlank()) {
+        if (newUser.aid.isNullOrBlank()) {
+            Result.success(Unit)
+        } else {
             // check aid is null
             getUserAid(id).mapResult {
                 if (it != null) {
                     Result.failure(BadRequestException("aid is not null."))
                 } else {
-                    Result.success(true)
+                    Result.success(Unit)
                 }
             }
-        } else {
-            Result.success(true)
+        }
+    }, suspend {
+        val aid = newUser.aid
+        when {
+            aid.isNullOrBlank() -> Result.success(Unit)
+            aid.length in 2..20 -> Result.success(Unit)
+            else -> Result.failure(BadRequestException("aid too long"))
         }
     }).firstNotNullOfOrNull {
         val result = it()
