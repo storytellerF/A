@@ -71,7 +71,7 @@ class TopicTest {
                 val reactionInfo = client.addReaction(topicInfo.id, emoji).getOrThrow()
                 assertEquals(emoji, reactionInfo.emoji)
                 assertTrue(reactionInfo.hasReacted)
-                //测试幂等
+                // 测试幂等
                 client.addReaction(topicInfo.id, emoji).getOrThrow()
                 topicInfo
             }
@@ -99,7 +99,6 @@ class TopicTest {
                 val plain = info.content as TopicContent.Plain
                 assertEquals(media.item.name, plain.list.first().item.name)
             }
-
         }
     }
 
@@ -131,5 +130,4 @@ class TopicTest {
             }
         }
     }
-
 }

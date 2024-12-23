@@ -13,6 +13,9 @@ import io.ktor.server.application.*
 import io.ktor.server.config.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
+import org.testcontainers.containers.MinIOContainer
+import org.testcontainers.elasticsearch.ElasticsearchContainer
+import org.testcontainers.utility.DockerImageName
 
 @Suppress("unused")
 fun Application.module() {
@@ -23,28 +26,28 @@ fun Application.module() {
 fun test(block: suspend (HttpClient, ClientWebSocket) -> Unit) {
     SnowflakeFactory.setMachine(0)
     addProvider()
-//    testApplication {
-//        val env = readEnv(".env").toMutableMap()
-//        ElasticsearchContainer(
-//            DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.9.2")
-//        ).use { elasticClient ->
-//            elasticClient.start()
-//            env["SEARCH_SERVICE"] = "elastic"
-//            env["ELASTIC_NAME"] = "elastic"
-//            env["ELASTIC_PASSWORD"] = "changeme"
-//            env["ELASTIC_URL"] = "https://${elasticClient.httpHostAddress}"
-//            MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z").use { minioContainer ->
-//                minioContainer.start()
-//                env["MEDIA_SERVICE"] = "minio"
-//                env["MINIO_URL"] = minioContainer.s3URL
-//                env["MINIO_NAME"] = minioContainer.userName
-//                env["MINIO_PASS"] = minioContainer.password
-//                doTest(env, block)
-//                minioContainer.stop()
-//            }
-//            elasticClient.stop()
-//        }
-//    }
+    testApplication {
+        val env = readEnv(".env").toMutableMap()
+        ElasticsearchContainer(
+            DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.9.2")
+        ).use { elasticClient ->
+            elasticClient.start()
+            env["SEARCH_SERVICE"] = "elastic"
+            env["ELASTIC_NAME"] = "elastic"
+            env["ELASTIC_PASSWORD"] = "changeme"
+            env["ELASTIC_URL"] = "https://${elasticClient.httpHostAddress}"
+            MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z").use { minioContainer ->
+                minioContainer.start()
+                env["MEDIA_SERVICE"] = "minio"
+                env["MINIO_URL"] = minioContainer.s3URL
+                env["MINIO_NAME"] = minioContainer.userName
+                env["MINIO_PASS"] = minioContainer.password
+                doTest(env, block)
+                minioContainer.stop()
+            }
+            elasticClient.stop()
+        }
+    }
     testApplication {
         val env = readEnv(".env")
         doTest(env, block)

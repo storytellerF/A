@@ -13,17 +13,19 @@ fun extractMarkdownHeadline(markdownText: String): String {
     val paragraphs = StringBuilder()
     var headline = ""
     var captureContent = false
+    var enableNestSearch = true
 
     parsedTree.accept(object : Visitor {
         override fun visitNode(node: ASTNode) {
+            val type = node.type
             when {
-                node.type == MarkdownElementTypes.ATX_1 -> {
+                type == MarkdownElementTypes.ATX_1 -> {
                     // Extract the first level header content
                     headline = markdownText.substring(node.startOffset, node.endOffset).trim().take(50)
                     captureContent = true
                 }
 
-                node.type == MarkdownElementTypes.PARAGRAPH -> {
+                type == MarkdownElementTypes.PARAGRAPH -> {
                     if (captureContent) {
                         val content = markdownText.substring(node.startOffset, node.endOffset).trim()
                         if (content.isNotEmpty()) {
@@ -33,14 +35,17 @@ fun extractMarkdownHeadline(markdownText: String): String {
                 }
 
                 MarkdownElementTypes::class.java.fields.any {
-                    node.type.name == it.name
+                    type.name == it.name
                 } -> {
                     // Stop capturing when encountering the first second-level header
                     captureContent = false
+                    enableNestSearch = true
                 }
             }
 
-            node.children.forEach { it.accept(this) }
+            if (enableNestSearch) {
+                node.children.forEach { it.accept(this) }
+            }
         }
     })
     return if (headline.isNotBlank()) {
@@ -56,17 +61,18 @@ fun extractHeadParagraph(
 ): String {
     val paragraphs = StringBuilder()
     val parsedTree = astNode(markdownText)
-    var captureContent1 = false
+    var captureContent = false
     parsedTree.accept(object : Visitor {
         override fun visitNode(node: ASTNode) {
-            println(node.type)
+            val type = node.type
+            val children = node.children
             when {
-                node.type == MarkdownElementTypes.MARKDOWN_FILE -> captureContent1 = true
-                node.type == MarkdownElementTypes.PARAGRAPH -> {
-                    if (captureContent1) {
+                type == MarkdownElementTypes.MARKDOWN_FILE -> captureContent = true
+                type == MarkdownElementTypes.PARAGRAPH -> {
+                    if (captureContent) {
                         val content = markdownText.substring(node.startOffset, node.endOffset).trim()
                         if (content.isNotEmpty()) {
-                            if (node.children.size == 1 && node.children.first().type == MarkdownElementTypes.IMAGE) {
+                            if (children.size == 1 && children.first().type == MarkdownElementTypes.IMAGE) {
                                 paragraphs.appendLine(content)
                             } else {
                                 paragraphs.appendLine(content.take(200))
@@ -76,18 +82,20 @@ fun extractHeadParagraph(
                 }
 
                 MarkdownElementTypes::class.java.fields.any {
-                    node.type.name == it.name
+                    type.name == it.name
                 } -> {
                     if (paragraphs.length <= 100) {
                         val content = markdownText.substring(node.startOffset, node.endOffset).trim()
                         paragraphs.appendLine(content)
                     }
                     // Stop capturing when encountering the first second-level header
-                    captureContent1 = false
+                    captureContent = false
                 }
             }
 
-            node.children.forEach { it.accept(this) }
+            if (captureContent) {
+                children.forEach { it.accept(this) }
+            }
         }
     })
     return paragraphs.toString().trim()

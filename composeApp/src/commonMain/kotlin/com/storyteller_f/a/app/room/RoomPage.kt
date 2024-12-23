@@ -33,12 +33,8 @@ import com.storyteller_f.a.app.search.CustomSearchBar
 import com.storyteller_f.a.app.search.SearchScope
 import com.storyteller_f.a.app.topic.TopicCell
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.shared.encrypt
-import com.storyteller_f.shared.encryptAesKey
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -272,8 +268,6 @@ fun sendMessage(
         }
     }
 }
-
-
 
 @Composable
 fun InputGroupInternal(
