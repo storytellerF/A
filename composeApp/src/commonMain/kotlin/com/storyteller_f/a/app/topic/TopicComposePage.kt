@@ -28,11 +28,13 @@ import com.dokar.sonner.rememberToasterState
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
+import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.MediaListViewModel
+import com.storyteller_f.a.app.model.OnMediaUploaded
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.createNewTopic
@@ -150,7 +152,17 @@ private fun TopicComposeDrawer(
                             if (f != null) {
                                 val size = f.getSize()
                                 if (size != null && size <= 100 * 1024 * 1024) {
-                                    client.upload(f.readBytes(), f.name, f.extension, id, ObjectType.USER)
+                                    val response = client.upload(
+                                        f.readBytes(),
+                                        f.name,
+                                        f.extension,
+                                        id,
+                                        ObjectType.USER
+                                    )
+                                        .getOrThrow()
+                                    response.data.firstOrNull()?.let {
+                                        bus.emit(OnMediaUploaded(it))
+                                    }
                                 } else {
                                     toasterState.show("size is null or size too big", duration = 1.seconds)
                                 }

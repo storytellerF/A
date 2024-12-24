@@ -19,9 +19,9 @@ import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 
 object Topics : BaseTable() {
     val author = customPrimaryKey("author").index()
-    val parentId = customPrimaryKey("parent_id")
+    val parentId = customPrimaryKey("parent_id").index()
     val parentType = objectType("parent_type")
-    val rootId = customPrimaryKey("root_id")
+    val rootId = customPrimaryKey("root_id").index()
     val rootType = objectType("root_type")
     val lastModifiedTime = datetime("last_modified_time").nullable()
 

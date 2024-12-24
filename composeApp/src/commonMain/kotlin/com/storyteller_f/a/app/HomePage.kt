@@ -255,6 +255,12 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
                     dismiss()
                     appNav.gotoAbout()
                 }
+                ButtonNav(Icons.Default.Download, "Download latest app") {
+                    dismiss()
+                    uriHandler.openUri(
+                        "https://nightly.link/storytellerF/A/workflows/alpha/alpha/Signed%20A%20Bundle.zip"
+                    )
+                }
             }
         }
     }
