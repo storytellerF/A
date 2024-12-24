@@ -1,10 +1,12 @@
 package com.storyteller_f.a.server.auth
 
+import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.BuildConfig
 import com.storyteller_f.a.server.auth.CustomCredential.AidCredential
 import com.storyteller_f.a.server.auth.CustomCredential.IdCredential
+import com.storyteller_f.a.server.remoteIp
 import com.storyteller_f.a.server.route.RouteAccounts
 import com.storyteller_f.a.server.route.commonRoute
 import com.storyteller_f.shared.*
@@ -74,6 +76,7 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
 
     class Config(name: String?) : AuthenticationProvider.Config(name) {
 
+        lateinit var databaseReader: DatabaseReader
         lateinit var validateFunction: CustomValidator
         lateinit var challengeFunction: CustomChallenge
 
@@ -88,7 +91,7 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
 
     override suspend fun onAuthenticate(context: AuthenticationContext) {
         val call = context.call
-        val (session) = call.getSession()
+        val (session) = call.getSession(config.databaseReader)
         val credential = call.customCredential()
         val principal = config.validateFunction(session, call, credential)
         if (principal != null) {
@@ -121,14 +124,14 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
     }
 }
 
-suspend fun ApplicationCall.respondUnauthorizedResponse() {
-    val data = getData()
+suspend fun ApplicationCall.respondUnauthorizedResponse(reader: DatabaseReader) {
+    val data = getData(reader)
     respond(UnauthorizedResponse(HttpAuthHeader.Single("Custom", data)))
 }
 
-private suspend fun RoutingContext.signIn(backend: Backend) {
+private suspend fun RoutingContext.signIn(backend: Backend, reader: DatabaseReader) {
     val pack = call.receive<SignInPack>()
-    val data = call.getData()
+    val data = call.getData(reader)
     val f = finalData(data)
     getUserByAddress(pack.ad).filterNull {
         BadRequestException("user not found")
@@ -136,7 +139,7 @@ private suspend fun RoutingContext.signIn(backend: Backend) {
         if (verify(publicKey, pack.sig, f)) {
             toFinalUserInfo(info to icon, backend = backend).onSuccess { value ->
                 val id = value.id
-                saveSuccessSessionOnFirst(id)
+                saveSuccessSessionOnFirst(id, reader)
                 call.respond(value)
             }.onFailure {
                 call.respond(HttpStatusCode.BadRequest, "media service get failed.")
@@ -149,17 +152,17 @@ private suspend fun RoutingContext.signIn(backend: Backend) {
     }
 }
 
-private fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
-    call.getSession().first.let { session ->
+private fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey, reader: DatabaseReader) {
+    call.getSession(reader).first.let { session ->
         if (session is UserSession.Pending) {
             call.saveSuccessSession(session, id)
         }
     }
 }
 
-private suspend fun RoutingContext.signUp(backend: Backend) {
+private suspend fun RoutingContext.signUp(backend: Backend, reader: DatabaseReader) {
     val pack = call.receive<SignUpPack>()
-    val data = call.getData()
+    val data = call.getData(reader)
     val f = finalData(data)
     if (verify(pack.pk, pack.sig, f)) {
         isUserNotExists(pack.pk).mapResult { bool ->
@@ -168,7 +171,7 @@ private suspend fun RoutingContext.signUp(backend: Backend) {
                 val newId = SnowflakeFactory.nextId()
                 val name = backend.nameService.parse(newId)
                 createUser(ad, name, newId, pack.pk).mapResult { value ->
-                    saveSuccessSessionOnFirst(newId)
+                    saveSuccessSessionOnFirst(newId, reader)
                     toFinalUserInfo(value, backend)
                 }
             } else {
@@ -252,14 +255,14 @@ private suspend fun checkDevWsLink(call: ApplicationCall): CustomPrincipal? {
     }
 }
 
-private fun ApplicationCall.getData(): String {
-    val (_, data) = getSession()
+private fun ApplicationCall.getData(databaseReader: DatabaseReader): String {
+    val (_, data) = getSession(databaseReader)
     return data
 }
 
 @OptIn(ExperimentalUuidApi::class)
-private fun ApplicationCall.getSession(): Pair<UserSession, String> {
-    val remote = request.origin.remoteAddress
+private fun ApplicationCall.getSession(databaseReader: DatabaseReader): Pair<UserSession, String> {
+    val remote = remoteIp(databaseReader).first().first
     return when (val session = sessions.get(UserSession::class)) {
         null -> {
             val data = Uuid.random().toString()
@@ -292,16 +295,17 @@ private fun ApplicationCall.getSession(): Pair<UserSession, String> {
     }
 }
 
-fun ApplicationCall.getRateLimitKey(): Comparable<*> {
-    return when (val session = getSession().first) {
+fun ApplicationCall.getRateLimitKey(databaseReader: DatabaseReader): Comparable<*> {
+    return when (val session = getSession(databaseReader).first) {
         is UserSession.Success -> session.id
         is UserSession.Pending -> session.remote
     }
 }
 
-fun Application.configureAuth(backend: Backend) {
+fun Application.configureAuth(backend: Backend, reader: DatabaseReader) {
     install(Authentication) {
         custom {
+            databaseReader = reader
             validate { session, call, credential ->
                 when (session) {
                     is UserSession.Success -> CustomPrincipal(session.id)
@@ -315,24 +319,24 @@ fun Application.configureAuth(backend: Backend) {
                 }
             }
             challenge { _, call ->
-                call.respondUnauthorizedResponse()
+                call.respondUnauthorizedResponse(reader)
             }
         }
     }
     commonRoute(backend)
 }
 
-fun Route.bindUnprotectedAccountRoute(backend: Backend) {
+fun Route.bindUnprotectedAccountRoute(backend: Backend, databaseReader: DatabaseReader) {
     get<RouteAccounts.GetData> {
-        call.respondText(call.getData())
+        call.respondText(call.getData(databaseReader))
     }
 
     post<RouteAccounts.SignUp> {
-        signUp(backend)
+        signUp(backend, databaseReader)
     }
 
     post<RouteAccounts.SignIn> {
-        signIn(backend)
+        signIn(backend, databaseReader)
     }
 }
 
