@@ -133,13 +133,13 @@ fun Application.module() {
             global {
                 rateLimiter(limit = 10, refillPeriod = 1.seconds)
                 requestKey { call ->
-                    call.getRateLimitKey()
+                    call.getRateLimitKey(reader)
                 }
             }
         }
     }
     install(Resources)
-    configureAuth(backend)
+    configureAuth(backend, reader)
 }
 
 private fun buildLog(
@@ -148,19 +148,31 @@ private fun buildLog(
 ): String {
     val status = call.response.status()
     val httpMethod = call.request.httpMethod.value
-    val remoteAddress = call.request.origin.remoteAddress
-    val country = reader.tryCountry(InetAddress.getByName(remoteAddress)).getOrNull()
-    if (country == null) {
-        call.request.header("X-Forwarded-For")?.split(", ")?.forEach {
-            val c = reader.tryCountry(InetAddress.getByName(it)).getOrNull()
-            Napier.i {
-                "$it ${c?.toJson()}"
-            }
-        }
-    }
+    val (firstIp) = call.remoteIp(reader)
     return """Status: $status, HTTP method: $httpMethod, 
                 |Url: ${call.request.uri},
                 |Query: ${call.request.queryString()}
-                |Ip: $remoteAddress
-                |Region ${country?.toJson()}""".trimMargin()
+                |Ip: ${firstIp.first}
+                |Region ${firstIp.second}""".trimMargin()
+}
+
+fun ApplicationCall.remoteIp(
+    reader: DatabaseReader
+): List<Pair<String, String?>> {
+    val remoteAddress = request.origin.remoteAddress
+    val country = reader.tryCountry(InetAddress.getByName(remoteAddress)).getOrNull()
+    return if (country == null) {
+        request.header("X-Forwarded-For")?.split(", ").orEmpty().mapNotNull {
+            val c = reader.tryCountry(InetAddress.getByName(it)).getOrNull()
+            if (c != null) {
+                it to c.country.isoCode
+            } else {
+                null
+            }
+        }.ifEmpty {
+            listOf("127.0.0.1" to null)
+        }
+    } else {
+        listOf(remoteAddress to country.country.isoCode)
+    }
 }

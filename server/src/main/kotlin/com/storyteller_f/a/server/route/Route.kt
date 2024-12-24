@@ -156,7 +156,7 @@ fun Application.commonRoute(backend: Backend) {
             bindSafeCommunityRoute(backend)
             bindSafeUserRoute(backend)
         }
-        bindUnprotectedAccountRoute(backend)
+        bindUnprotectedAccountRoute(backend, )
         bindUnauthenticatedRoute(backend)
     }
 }

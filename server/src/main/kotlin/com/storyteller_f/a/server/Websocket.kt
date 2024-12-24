@@ -71,6 +71,9 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend) {
                 }
             }
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.channels.ClosedReceiveChannelException) {
+                call.application.log.info("${call.request.call.request}")
+            }
             call.application.log.error("ws receive", e)
             job.cancel()
             return
