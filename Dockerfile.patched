@@ -1,7 +1,6 @@
-FROM eclipse-temurin:21 AS builder
+FROM eclipse-temurin:21-alpine AS builder
 
-RUN apt-get update && apt-get install -y \
-    unzip
+RUN apk add bash
 
 #^1
 #patched
@@ -57,6 +56,8 @@ ARG MINIO_NAME
 ENV MINIO_NAME=$MINIO_NAME
 ARG MINIO_PASS
 ENV MINIO_PASS=$MINIO_PASS
+ARG FILE_SYSTEM_MEDIA_PATH
+ENV FILE_SYSTEM_MEDIA_PATH=$FILE_SYSTEM_MEDIA_PATH
 ARG DATABASE_URI
 ENV DATABASE_URI=$DATABASE_URI
 ARG DATABASE_PORT
@@ -129,6 +130,7 @@ MINIO_PORT=${MINIO_PORT}
 MINIO_PORT_CONSOLE=${MINIO_PORT_CONSOLE}
 MINIO_NAME=${MINIO_NAME}
 MINIO_PASS=${MINIO_PASS}
+FILE_SYSTEM_MEDIA_PATH=${FILE_SYSTEM_MEDIA_PATH}
 DATABASE_URI=${DATABASE_URI}
 DATABASE_PORT=${DATABASE_PORT}
 DATABASE_DB=${DATABASE_DB}
@@ -162,15 +164,16 @@ ENV HOST_TYPE=docker
 RUN --mount=type=cache,target=/root/.gradle \
     ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
 
-FROM eclipse-temurin:21
+RUN mkdir -p ./cli/build/decompressed && tar -xf ./cli/build/distributions/cli.tar -C ./cli/build/decompressed
+
+FROM eclipse-temurin:21-alpine
 
 RUN mkdir /app
 
 WORKDIR /app
 COPY --from=builder /app/server/build/libs/*-all.jar ./ktor-server.jar
-COPY --from=builder /app/cli/build/distributions/cli.tar ./cli.tar
+COPY --from=builder /app/cli/build/decompressed/cli .
 COPY --from=builder /app/deploy ./deploy
 COPY scripts/tool_scripts/flush-database-singleton.sh ./scripts/tool_scripts/flush-database-singleton.sh
-RUN tar -xf ./cli.tar
 
 ENTRYPOINT ["java","-jar","./ktor-server.jar"]
