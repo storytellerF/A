@@ -30,8 +30,10 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-data class OnCommunityJoined(val communityId: PrimaryKey, val newInfo: CommunityInfo)
-data class OnCommunityExited(val communityId: PrimaryKey, val newInfo: CommunityInfo)
+data class OnCommunityJoined(val newInfo: CommunityInfo)
+data class OnCommunityExited(val newInfo: CommunityInfo)
+
+data class OnMediaUploaded(val mediaInfo: MediaInfo)
 
 class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Result<CommunityInfo>) :
     SimpleViewModel<CommunityInfo>() {
@@ -52,13 +54,13 @@ class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Resul
                 val id = handler.data.value?.id
                 when (i) {
                     is OnCommunityJoined -> {
-                        if (i.communityId == id) {
+                        if (i.newInfo.id == id) {
                             update(i.newInfo)
                         }
                     }
 
                     is OnCommunityExited -> {
-                        if (i.communityId == id) {
+                        if (i.newInfo.id == id) {
                             update(i.newInfo)
                         }
                     }
@@ -99,8 +101,8 @@ class RoomsViewModel(
     }
 })
 
-data class OnRoomJoined(val id: PrimaryKey, val newInfo: RoomInfo)
-data class OnRoomExited(val id: PrimaryKey, val newInfo: RoomInfo)
+data class OnRoomJoined(val newInfo: RoomInfo)
+data class OnRoomExited(val newInfo: RoomInfo)
 
 @OptIn(ExperimentalPagingApi::class)
 class TopicsViewModel(id: PrimaryKey, val type: ObjectType) : PagingViewModel<PrimaryKey, TopicInfo>({
@@ -215,19 +217,17 @@ class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<Roo
         load()
         viewModelScope.launch {
             bus.collect { i ->
-                if (handler.state.value !is LoadingState.Loading) {
-                    val id = handler.data.value?.id
-                    when (i) {
-                        is OnRoomJoined -> {
-                            if (i.id == id) {
-                                update(i.newInfo)
-                            }
+                val id = handler.data.value?.id
+                when (i) {
+                    is OnRoomJoined -> {
+                        if (i.newInfo.id == id) {
+                            update(i.newInfo)
                         }
+                    }
 
-                        is OnRoomExited -> {
-                            if (i.id == id) {
-                                update(i.newInfo)
-                            }
+                    is OnRoomExited -> {
+                        if (i.newInfo.id == id) {
+                            update(i.newInfo)
                         }
                     }
                 }
@@ -254,10 +254,19 @@ class MediaListViewModel(private val objectId: PrimaryKey, private val objectTyp
     SimpleViewModel<ServerResponse<MediaInfo>>() {
     init {
         load()
+        viewModelScope.launch {
+            bus.collect {
+                if (it is OnMediaUploaded) {
+                    val old = handler.data.value ?: ServerResponse(emptyList())
+                    update(old.copy(data = old.data + it.mediaInfo))
+                }
+            }
+        }
     }
 
     override suspend fun loadInternal() = client.getMediaList(objectId, objectType)
 }
+
 class UserViewModel(private val requestInfo: suspend HttpClient.() -> Result<UserInfo>) : SimpleViewModel<UserInfo>() {
     constructor(userId: PrimaryKey) : this({
         getUserInfo(userId)
@@ -342,6 +351,7 @@ class TopicViewModel(private val requestInfo: suspend HttpClient.() -> Result<To
         }
     }
 }
+
 class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean) :
     SimpleViewModel<List<Pair<PrimaryKey, String>>>() {
 

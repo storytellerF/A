@@ -38,7 +38,6 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -393,7 +392,7 @@ private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: () -> Unit) {
             }
         }
         val info = client.joinRoom(roomInfo.id).getOrThrow()
-        bus.emit(OnRoomJoined(roomInfo.id, info))
+        bus.emit(OnRoomJoined(info))
         onSuccess()
     }
 }
@@ -401,7 +400,7 @@ private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: () -> Unit) {
 private suspend fun exitRoom(roomInfo: RoomInfo, onSuccess: () -> Unit) {
     globalDialogState.use {
         val info = client.exitRoom(roomInfo.id).getOrThrow()
-        bus.emit(OnRoomExited(roomInfo.id, info))
+        bus.emit(OnRoomExited(info))
         onSuccess()
     }
 }

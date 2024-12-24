@@ -6,7 +6,7 @@ import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
 
 object EncryptedTopics : Table() {
-    val topicId = customPrimaryKey("topic_id")
+    val topicId = customPrimaryKey("topic_id").index()
     val content = blob("content")
 
     override val primaryKey = PrimaryKey(topicId)
@@ -21,9 +21,13 @@ class EncryptedTopic(val topicId: PrimaryKey, val content: ByteArray) {
 }
 
 object EncryptedTopicKeys : Table() {
-    val topicId = customPrimaryKey("topic_id")
+    val topicId = customPrimaryKey("topic_id").index()
     val uid = customPrimaryKey("uid")
     val encryptedAes = blob("encrypted_aes")
+
+    init {
+        index("encrypted-topic-key-main", true, topicId, uid)
+    }
 }
 
 class EncryptedTopicKey(val topicId: PrimaryKey, val uid: PrimaryKey, val encryptedAes: ByteArray) {

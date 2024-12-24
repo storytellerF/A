@@ -29,7 +29,6 @@ import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import io.ktor.client.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -263,7 +262,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                         scope.launch {
                             globalDialogState.use {
                                 val info = client.exitCommunity(communityId).getOrThrow()
-                                bus.emit(OnCommunityExited(communityId, info))
+                                bus.emit(OnCommunityExited(info))
                             }
                         }
                     }
@@ -272,7 +271,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                         scope.launch {
                             globalDialogState.use {
                                 val info = client.joinCommunity(communityId).getOrThrow()
-                                bus.emit(OnCommunityJoined(communityId, info))
+                                bus.emit(OnCommunityJoined(info))
                             }
                         }
                     }

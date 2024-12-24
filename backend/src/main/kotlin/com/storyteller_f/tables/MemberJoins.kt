@@ -18,7 +18,7 @@ object MemberJoins : Table() {
     val uid = customPrimaryKey("uid").index()
     val objectId = customPrimaryKey("object_id").index()
     val objectType = objectType("object_type")
-    val joinTime = datetime("join_time").index()
+    val joinTime = datetime("join_time")
 
     init {
         index("member-join-main", true, objectId, uid)

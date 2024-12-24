@@ -13,7 +13,7 @@ import org.jetbrains.exposed.sql.*
 object Reactions : BaseTable() {
     val emoji = emoji()
     val uid = customPrimaryKey("uid")
-    val objectId = customPrimaryKey("object_id")
+    val objectId = customPrimaryKey("object_id").index()
     val objectType = objectType("object_type")
 
     init {
