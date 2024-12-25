@@ -255,14 +255,14 @@ private suspend fun checkDevWsLink(call: ApplicationCall): CustomPrincipal? {
     }
 }
 
-private fun ApplicationCall.getData(databaseReader: DatabaseReader): String {
-    val (_, data) = getSession(databaseReader)
+private fun ApplicationCall.getData(reader: DatabaseReader): String {
+    val (_, data) = getSession(reader)
     return data
 }
 
 @OptIn(ExperimentalUuidApi::class)
-private fun ApplicationCall.getSession(databaseReader: DatabaseReader): Pair<UserSession, String> {
-    val remote = remoteIp(databaseReader).first().first
+private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession, String> {
+    val remote = remoteIp(reader).first().first
     return when (val session = sessions.get(UserSession::class)) {
         null -> {
             val data = Uuid.random().toString()
@@ -323,7 +323,7 @@ fun Application.configureAuth(backend: Backend, reader: DatabaseReader) {
             }
         }
     }
-    commonRoute(backend)
+    commonRoute(backend, reader)
 }
 
 fun Route.bindUnprotectedAccountRoute(backend: Backend, databaseReader: DatabaseReader) {
@@ -340,9 +340,9 @@ fun Route.bindUnprotectedAccountRoute(backend: Backend, databaseReader: Database
     }
 }
 
-fun Route.bindProtectedAccountRoute() {
+fun Route.bindProtectedAccountRoute(reader: DatabaseReader) {
     post<RouteAccounts.SignOut> {
-        usePrincipal { _ ->
+        usePrincipal(reader) { _ ->
             call.sessions.clear(UserSession::class)
             Result.success(Unit)
         }

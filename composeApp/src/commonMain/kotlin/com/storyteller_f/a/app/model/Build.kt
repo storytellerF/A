@@ -4,7 +4,9 @@ import androidx.compose.runtime.Composable
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.search.SearchScope
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 
@@ -136,6 +138,12 @@ fun createTopicViewModel(topicId: PrimaryKey) =
     }
 
 @Composable
+fun createTopicViewModelFromInfo(topicInfo: TopicInfo) =
+    viewModel(keys = listOf("topic", topicInfo.id)) {
+        TopicViewModel(topicInfo)
+    }
+
+@Composable
 fun createTopicsInTopicViewModel(topicId: PrimaryKey) =
     viewModel(keys = listOf("topic-topics", topicId)) {
         TopicsViewModel(topicId, ObjectType.TOPIC)
@@ -202,8 +210,8 @@ fun createUserViewModel(userId: PrimaryKey) =
     }
 
 @Composable
-fun createWorldViewModel() = viewModel {
-    WorldViewModel()
+fun createWorldViewModel() = viewModel(keys = listOf("world")) {
+    TopicsViewModel(DEFAULT_PRIMARY_KEY, null)
 }
 
 @Composable

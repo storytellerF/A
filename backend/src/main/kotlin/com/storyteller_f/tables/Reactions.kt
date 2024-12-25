@@ -104,22 +104,23 @@ suspend fun getReaction(uid: PrimaryKey, objectId: PrimaryKey, emojiText: String
     }
 }
 
-suspend fun getSingleReaction(uid: PrimaryKey, emoji: String): Result<SingleReactionInfo?> {
+suspend fun getSingleReaction(uid: PrimaryKey, emoji: String, objectId: PrimaryKey): Result<SingleReactionInfo?> {
     return DatabaseFactory.first({
         SingleReactionInfo(id, emoji, objectId, objectType, createdTime, uid)
     }, {
         Reaction.wrapRow(it)
     }) {
         Reactions.selectAll().where {
-            (Reactions.emoji eq emoji) and (Reactions.uid eq uid)
+            (Reactions.objectId eq objectId) and (Reactions.uid eq uid) and (Reactions.emoji eq emoji)
         }
     }
 }
 
 suspend fun deleteReaction(
     uid: PrimaryKey,
-    emoji: String
-): Result<Boolean> = getSingleReaction(uid, emoji).mapResult {
+    emoji: String,
+    objectId: PrimaryKey
+): Result<Boolean> = getSingleReaction(uid, emoji, objectId).mapResult {
     if (it == null) {
         Result.success(true)
     } else {

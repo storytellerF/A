@@ -1,21 +1,18 @@
 package com.storyteller_f.a.server.route
 
+import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.service.getMediaList
 import com.storyteller_f.a.server.service.uploadMedia
-import io.ktor.http.content.*
-import io.ktor.server.plugins.*
-import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.resources.post
 import io.ktor.server.routing.*
-import io.ktor.utils.io.*
 import java.io.File
 
-fun Route.bindProtectedSafeMediaRoute(backend: Backend) {
+fun Route.bindProtectedSafeMediaRoute(backend: Backend, reader: DatabaseReader) {
     get<RouteMedia> {
-        usePrincipal { id ->
+        usePrincipal(reader) { id ->
             getMediaList(id, backend, it)
         }
     }
@@ -27,7 +24,7 @@ fun Route.bindProtectedSafeMediaRoute(backend: Backend) {
     }
 
     post<RouteMedia.Upload> {
-        usePrincipal { id ->
+        usePrincipal(reader) { id ->
             uploadMedia(it, id, root, backend)
         }
     }

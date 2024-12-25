@@ -15,7 +15,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.network.ktor3.KtorNetworkFetcherFactory
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.storyteller_f.a.app.LocalAppNav
+import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.user.UserDialog
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
@@ -38,7 +43,7 @@ fun UserIcon(userInfo: UserInfo?, showDialog: Boolean = true, size: Dp = 40.dp) 
     val url = userInfo?.avatar?.url
     if (url != null) {
         AsyncImage(
-            url,
+            globalLoader(url),
             contentDescription = "${userInfo.nickname}'s avatar",
             modifier = Modifier.size(size).clip(CircleShape).clickable(showDialog, onClick = onClick)
         )
@@ -57,3 +62,9 @@ fun UserIcon(userInfo: UserInfo?, showDialog: Boolean = true, size: Dp = 40.dp) 
         showMyDialog = false
     }
 }
+
+@Composable
+fun globalLoader(url: String) =
+    ImageRequest.Builder(LocalPlatformContext.current).data(url).crossfade(true).fetcherFactory(
+        KtorNetworkFetcherFactory(client)
+    ).build()

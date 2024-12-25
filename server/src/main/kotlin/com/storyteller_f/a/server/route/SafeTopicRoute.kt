@@ -1,10 +1,12 @@
 package com.storyteller_f.a.server.route
 
+import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
+import com.storyteller_f.shared.obj.DeleteReaction
 import com.storyteller_f.shared.obj.NewReaction
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -15,9 +17,9 @@ import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 
-fun Route.bindSafeTopicRoute(backend: Backend) {
+fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
     get<RouteTopics.Search> {
-        usePrincipalOrNull { id ->
+        usePrincipalOrNull(reader) { id ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { _, n, s ->
@@ -27,7 +29,7 @@ fun Route.bindSafeTopicRoute(backend: Backend) {
     }
 
     get<RouteTopics.Recommend> {
-        usePrincipalOrNull { uid ->
+        usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { prePageToken, nextPageToken, size ->
@@ -37,13 +39,13 @@ fun Route.bindSafeTopicRoute(backend: Backend) {
     }
 
     get<RouteTopics.Id> {
-        usePrincipalOrNull { id ->
+        usePrincipalOrNull(reader) { id ->
             getTopic(it.id, id, backend, it.parent.fillHasCommented)
         }
     }
 
     get<RouteTopics.Id.Topics> {
-        usePrincipalOrNull { uid ->
+        usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
@@ -53,23 +55,23 @@ fun Route.bindSafeTopicRoute(backend: Backend) {
     }
 }
 
-fun Route.bindProtectedSafeTopicRoute(backend: Backend) {
+fun Route.bindProtectedSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
     get<RouteTopics.Id.Snapshot> {
-        usePrincipal { id ->
+        usePrincipal(reader) { id ->
             createTopicSnapshot(id, it.parent.id, backend)
         }
     }
 
     post<RouteTopics> {
-        usePrincipal {
+        usePrincipal(reader) {
             addTopicAtCommunity(it, backend)
         }
     }
 
     post<RouteTopics.Id.Reactions> {
-        usePrincipal { id ->
+        usePrincipal(reader) { id ->
             val emoji = call.receive<NewReaction>().emoji
-            if (EmojiReader.getTextLength(emoji) == 1 && EmojiReader.isEmojiOfCharIndex(emoji, 0)) {
+            if (isEmoji(emoji)) {
                 addReaction(id, it.parent.id, emoji)
             } else {
                 Result.failure(BadRequestException("invalid emoji"))
@@ -78,10 +80,11 @@ fun Route.bindProtectedSafeTopicRoute(backend: Backend) {
     }
 
     post<RouteReactions.Delete> {
-        usePrincipal { id ->
-            val emoji = call.receive<NewReaction>().emoji
-            if (EmojiReader.getTextLength(emoji) == 1 && EmojiReader.isEmojiOfCharIndex(emoji, 0)) {
-                deleteReaction(id, emoji)
+        usePrincipal(reader) { id ->
+            val deleteReaction = call.receive<DeleteReaction>()
+            val emoji = deleteReaction.emoji
+            if (isEmoji(emoji)) {
+                deleteReaction(id, emoji, deleteReaction.objectId)
             } else {
                 Result.failure(BadRequestException("invalid emoji"))
             }
@@ -89,8 +92,10 @@ fun Route.bindProtectedSafeTopicRoute(backend: Backend) {
     }
 
     get<RouteTopics.Id.Reactions> {
-        usePrincipalOrNull { id ->
+        usePrincipalOrNull(reader) { id ->
             reactionList(it.parent.id, id, it.parent.parent.fillHasCommented)
         }
     }
 }
+
+private fun isEmoji(emoji: String) = EmojiReader.getTextLength(emoji) == 1 && EmojiReader.isEmojiOfCharIndex(emoji, 0)

@@ -1,5 +1,6 @@
 package com.storyteller_f.a.server.route
 
+import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.UnauthorizedException
 import com.storyteller_f.a.server.auth.usePrincipal
@@ -14,9 +15,9 @@ import com.storyteller_f.tables.searchRooms
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 
-fun Route.bindSafeRoomRoute(backend: Backend) {
+fun Route.bindSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
     get<RouteRooms.Search> {
-        usePrincipalOrNull { id ->
+        usePrincipalOrNull(reader) { id ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, size ->
@@ -26,7 +27,7 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
     }
 
     get<RouteRooms.Id.Members> {
-        usePrincipalOrNull { id ->
+        usePrincipalOrNull(reader) { id ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
@@ -42,7 +43,7 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
     }
 
     get<RouteRooms> {
-        usePrincipalOrNull { id ->
+        usePrincipalOrNull(reader) { id ->
             it.aid?.let { aid ->
                 getRoom(null, aid, id, backend, it.fillJoinInfo)
             } ?: Result.success(null)
@@ -50,13 +51,13 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
     }
 
     get<RouteRooms.Id> {
-        usePrincipalOrNull { id ->
+        usePrincipalOrNull(reader) { id ->
             getRoom(it.id, null, id, backend, it.parent.fillJoinInfo)
         }
     }
 
     get<RouteRooms.Id.Topics> {
-        usePrincipalOrNull { uid ->
+        usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { pre, next, size ->
@@ -66,14 +67,14 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
     }
 }
 
-fun Route.bindProtectedSafeRoomRoute(backend: Backend) {
+fun Route.bindProtectedSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
     post<RouteRooms.Id.Join> {
-        usePrincipal { id ->
+        usePrincipal(reader) { id ->
             joinRoom(it.parent.id, id, backend)
         }
     }
     get<RouteRooms.Id.PubKeys> {
-        usePrincipal { id ->
+        usePrincipal(reader) { id ->
             pagination(PrimaryKey::class, {
                 it.first.toString()
             }) { pre, next, size ->
@@ -82,7 +83,7 @@ fun Route.bindProtectedSafeRoomRoute(backend: Backend) {
         }
     }
     post<RouteRooms.Id.Exit> {
-        usePrincipal { uid ->
+        usePrincipal(reader) { uid ->
             exitRoom(it.parent.id, uid, backend)
         }
     }

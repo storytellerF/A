@@ -1,5 +1,6 @@
 package com.storyteller_f.a.server.route
 
+import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.*
 import com.storyteller_f.a.server.common.checkParameter
@@ -107,7 +108,7 @@ class RouteTopics(val fillHasCommented: Boolean? = null) {
 @Resource("reactions")
 class RouteReactions {
     @Resource("delete")
-    class Delete(val parent: RouteReactions)
+    class Delete(@Suppress("unused") val parent: RouteReactions)
 }
 
 @Resource("/users")
@@ -137,37 +138,37 @@ class RouteAccounts {
     class GetData(@Suppress("unused")val parent: RouteAccounts)
 }
 
-fun Application.commonRoute(backend: Backend) {
+fun Application.commonRoute(backend: Backend, reader: DatabaseReader) {
     routing {
         authenticate {
-            bindProtectedSafeRoomRoute(backend)
-            bindProtectedSafeTopicRoute(backend)
-            bindProtectedSafeCommunityRoute(backend)
-            bindProtectedSafeUserRoute()
+            bindProtectedSafeRoomRoute(backend, reader)
+            bindProtectedSafeTopicRoute(backend, reader)
+            bindProtectedSafeCommunityRoute(backend, reader)
+            bindProtectedSafeUserRoute(reader)
             webSocket("/link") {
                 webSocketContent(backend)
             }
-            bindProtectedAccountRoute()
-            bindProtectedSafeMediaRoute(backend)
+            bindProtectedAccountRoute(reader)
+            bindProtectedSafeMediaRoute(backend, reader)
         }
         authenticate(optional = true) {
-            bindSafeRoomRoute(backend)
-            bindSafeTopicRoute(backend)
-            bindSafeCommunityRoute(backend)
-            bindSafeUserRoute(backend)
+            bindSafeRoomRoute(backend, reader)
+            bindSafeTopicRoute(backend, reader)
+            bindSafeCommunityRoute(backend, reader)
+            bindSafeUserRoute(backend, reader)
         }
-        bindUnprotectedAccountRoute(backend, )
-        bindUnauthenticatedRoute(backend)
+        bindUnprotectedAccountRoute(backend, reader)
+        bindUnauthenticatedRoute(backend, reader)
     }
 }
 
-fun Routing.bindUnauthenticatedRoute(backend: Backend) {
+fun Routing.bindUnauthenticatedRoute(backend: Backend, reader: DatabaseReader) {
     get("/ping") {
         call.respondText("pong")
     }
 
     get("/amedia/{path...}") {
-        omitPrincipal {
+        omitPrincipal(reader) {
             checkParameter<List<String>, MediaResponse>("path") {
                 val service = backend.mediaService
                 if (service is FileSystemMediaService) {

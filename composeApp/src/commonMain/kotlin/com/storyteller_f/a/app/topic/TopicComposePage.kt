@@ -31,11 +31,11 @@ import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.StateView
-import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.MediaListViewModel
 import com.storyteller_f.a.app.model.OnMediaUploaded
 import com.storyteller_f.a.app.model.createMediaListViewModel
+import com.storyteller_f.a.app.updateDocumentInParent
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.a.client_lib.upload
@@ -49,11 +49,8 @@ import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.core.FileKit
 import io.github.vinceglb.filekit.core.extension
 import io.github.vinceglb.filekit.core.pickFile
-import kotbase.MutableDocument
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
 
@@ -360,12 +357,7 @@ private fun TopicComposeSubmitButton(
             scope.launch {
                 globalDialogState.use {
                     val info = client.createNewTopic(objectType, objectId, finalInput).getOrThrow()
-                    getOrCreateCollection("topics${info.parentId}").save(
-                        MutableDocument(
-                            info.id.toString(),
-                            Json.encodeToString(info)
-                        )
-                    )
+                    updateDocumentInParent(info)
                     backPrePage()
                 }
             }

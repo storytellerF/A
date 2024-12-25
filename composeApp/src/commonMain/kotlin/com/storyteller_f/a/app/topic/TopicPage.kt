@@ -26,16 +26,12 @@ import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
-import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.bus
-import com.storyteller_f.a.app.client
+import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.common.StateView
-import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.common.nestedStateView
 import com.storyteller_f.a.app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.InteractionRow
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.room.CommonInputButton
 import com.storyteller_f.a.app.room.InputGroupInternal
@@ -49,12 +45,9 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import kotbase.MutableDocument
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.getString
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.list
@@ -316,12 +309,7 @@ private fun TopicInputGroup(
                     sendState = LoadingState.Loading
                     try {
                         val info = client.createNewTopic(ObjectType.TOPIC, topic.id, input).getOrThrow()
-                        getOrCreateCollection("topics${info.parentId}").save(
-                            MutableDocument(
-                                info.id.toString(),
-                                Json.encodeToString(info)
-                            )
-                        )
+                        updateDocumentInParent(info)
                         sendState = LoadingState.Done()
                         input = ""
                         focusManager.clearFocus()

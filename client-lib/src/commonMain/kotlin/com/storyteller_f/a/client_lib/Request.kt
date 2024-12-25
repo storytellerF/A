@@ -75,6 +75,9 @@ suspend fun HttpClient.getRoomTopics(
 ) = serviceCatching {
     get("rooms/$roomId/topics") {
         url {
+            if (isAlreadyLogin()) {
+                parameters.append("fillHasCommented", "true")
+            }
             appendPagingQueryParams(size, nextTopicId)
         }
     }.body<ServerResponse<TopicInfo>>()
@@ -171,20 +174,15 @@ private fun URLBuilder.appendPagingQueryParams(size: Int, nextId: PrimaryKey?) {
     }
 }
 
-private fun URLBuilder.appendPagingQueryParams(size: Int, nextId: String?) {
-    parameters.append("size", size.toString())
-    if (nextId != null) {
-        parameters.append("nextPageToken", nextId)
-    }
-}
-
-suspend fun HttpClient.getWorldTopics(nextTopicId: PrimaryKey?, size: Int, fillHasCommented: Boolean) =
+suspend fun HttpClient.getWorldTopics(nextTopicId: PrimaryKey?, size: Int) =
     serviceCatching {
         get(
             "topics/recommend"
         ) {
             url {
-                parameters.append("fillHasCommented", fillHasCommented.toString())
+                if (isAlreadyLogin()) {
+                    parameters.append("fillHasCommented", "true")
+                }
                 appendPagingQueryParams(size, nextTopicId)
             }
         }.body<ServerResponse<TopicInfo>>()
@@ -213,6 +211,9 @@ suspend fun HttpClient.getTopicTopics(topicId: PrimaryKey, nextTopicId: PrimaryK
     serviceCatching {
         get("topics/$topicId/topics") {
             url {
+                if (isAlreadyLogin()) {
+                    parameters.append("fillHasCommented", "true")
+                }
                 appendPagingQueryParams(size, nextTopicId)
             }
         }.body<ServerResponse<TopicInfo>>()
@@ -331,10 +332,10 @@ suspend fun HttpClient.addReaction(topicId: PrimaryKey, emoji: String) = service
     }.body<ReactionInfo>()
 }
 
-suspend fun HttpClient.deleteReaction(emoji: String) = serviceCatching {
+suspend fun HttpClient.deleteReaction(emoji: String, objectId: PrimaryKey) = serviceCatching {
     post("reactions/delete") {
         contentType(ContentType.Application.Json)
-        setBody(NewReaction(emoji))
+        setBody(DeleteReaction(emoji, objectId))
     }.body<Boolean>()
 }
 
@@ -379,7 +380,7 @@ suspend fun HttpClient.upload(
                 formData {
                     append("description", "amedia")
                     append("file", stream, Headers.build {
-                        append(HttpHeaders.ContentType, ContentType.defaultForFileExtension(extension).contentType)
+                        append(HttpHeaders.ContentType, ContentType.defaultForFileExtension(extension))
                         append(HttpHeaders.ContentDisposition, "filename=\"$name\"")
                     })
                 },

@@ -28,7 +28,7 @@ fun CommunityIcon(
     val radius = 8.dp
     val shape = RoundedCornerShape(radius)
     if (model != null) {
-        AsyncImage(model, contentDescription = null, Modifier.size(iconSize).clip(shape).clickable {
+        AsyncImage(globalLoader(model), contentDescription = null, Modifier.size(iconSize).clip(shape).clickable {
             updateDialog(true)
         })
     } else {

@@ -23,11 +23,13 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
+import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
+import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.compontents.AudioView
 import com.storyteller_f.a.app.compontents.TextUnitToPx
 import com.storyteller_f.a.app.compontents.VideoView
@@ -190,15 +192,20 @@ private fun readFenceContent(
     return content.substring(start, end)
 }
 
+@Composable
+private fun imageRequestInMarkdown(link: String, mediaMap: Map<String, MediaInfo>) =
+    ImageRequest.Builder(LocalPlatformContext.current)
+        .fetcherFactory(KtorNetworkFetcherFactory(client))
+        .data(mediaMap[link]?.url)
+        .size(coil3.size.Size.ORIGINAL)
+        .build()
+
 class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>) : ImageTransformer {
 
     @Composable
     override fun transform(link: String): ImageData {
         return rememberAsyncImagePainter(
-            model = ImageRequest.Builder(LocalPlatformContext.current)
-                .data(mediaMap[link]?.url)
-                .size(coil3.size.Size.ORIGINAL)
-                .build()
+            model = imageRequestInMarkdown(link, mediaMap)
         ).let { ImageData(it) }
     }
 
