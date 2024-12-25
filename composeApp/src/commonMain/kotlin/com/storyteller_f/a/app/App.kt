@@ -37,6 +37,7 @@ import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.addRequestHeaders
 import com.storyteller_f.a.client_lib.defaultClientConfigure
 import com.storyteller_f.a.client_lib.getClient
+import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -232,17 +233,26 @@ val wsClient by lazy {
     }) {
         if (it is RoomFrame.NewTopicInfo) {
             val info = processEncryptedTopic(listOf(it.topicInfo)).first()
-            getOrCreateCollection("topics${info.parentId}").save(
-                MutableDocument(
-                    info.id.toString(),
-                    Json.encodeToString(info)
-                )
-            )
+            updateDocumentInParent(info)
             Napier.v(tag = "pagination") {
                 "save document $info"
             }
         }
     }
+}
+
+fun updateDocumentInParent(info: TopicInfo) {
+    val collectionName = "topics${info.parentId}"
+    updateDocument(collectionName, info)
+}
+
+fun updateDocument(collectionName: String, info: TopicInfo) {
+    getOrCreateCollection(collectionName).save(
+        MutableDocument(
+            info.id.toString(),
+            Json.encodeToString(info)
+        )
+    )
 }
 
 fun HttpClientConfig<*>.setupRequest() {

@@ -21,9 +21,9 @@ import com.mikepenz.markdown.m3.markdownTypography
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.compontents.InteractionRow
 import com.storyteller_f.a.app.model.createMediaListViewModel
-import com.storyteller_f.a.app.model.createTopicViewModel
 import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.user.UserCell
+import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
@@ -33,25 +33,21 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicCell(
-    topicInfoRaw: TopicInfo,
+    info: TopicInfo,
     contentAlignAvatar: Boolean = true,
     showAvatar: Boolean = true
 ) {
-    val viewModel = createTopicViewModel(topicInfoRaw.id)
-    val topicInfo by viewModel.handler.data.collectAsState()
-    topicInfo?.let { info ->
-        val author = info.author
-        val authorViewModel = createUserViewModel(author)
+    val author = info.author
+    val authorViewModel = createUserViewModel(author)
 
-        val sheetState = rememberModalBottomSheetState()
-        var showBottomSheet by remember { mutableStateOf(false) }
-        val authorInfo by authorViewModel.handler.data.collectAsState()
-        TopicCellInternal(info, showAvatar, authorInfo, contentAlignAvatar) {
-            showBottomSheet = true
-        }
-        EmojiPicker(sheetState, showBottomSheet, info) {
-            showBottomSheet = false
-        }
+    val sheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(false) }
+    val authorInfo by authorViewModel.handler.data.collectAsState()
+    TopicCellInternal(info, showAvatar, authorInfo, contentAlignAvatar) {
+        showBottomSheet = true
+    }
+    EmojiPicker(sheetState, showBottomSheet, info) {
+        showBottomSheet = false
     }
 }
 
@@ -105,33 +101,16 @@ fun TopicContentField(
     when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
             val isPrivate = topicInfo.isPrivate
-            val mediaList = if (isPrivate) {
-                val list = createMediaListViewModel(topicInfo.rootId, 0)
-                val media by list.handler.data.collectAsState()
-                media?.data.orEmpty()
-            } else {
-                content.list
-            }
-            val plain by produceState("", content.plain, showHeadline) {
-                value = if (showHeadline) {
-                    extractMarkdownHeadline(content.plain)
-                } else {
-                    content.plain
-                }
-            }
-            val mediaMap = mediaList.associateBy { it.item.name }
-            Markdown(
-                plain,
-                modifier = Modifier.fillMaxWidth().clickable(onClick != null) {
-                    onClick?.invoke()
-                },
-                colors = markdownColor(),
-                typography = markdownTypography(),
-                imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap),
-                components = markdownComponents(codeFence = {
-                    CustomCodeFence(it, mediaMap)
-                }, codeBlock = { HighlightCodeBlock(it) })
-            )
+            val rawMediaList = content.list
+            val plain1 = content.plain
+            TopicContentFieldInternal(isPrivate, topicInfo, rawMediaList, plain1, showHeadline, onClick)
+        }
+
+        is TopicContent.Extracted -> {
+            val isPrivate = topicInfo.isPrivate
+            val rawMediaList = content.list
+            val plain1 = content.plain
+            TopicContentFieldInternal(isPrivate, topicInfo, rawMediaList, plain1, showHeadline, onClick)
         }
 
         is TopicContent.DecryptFailed, is TopicContent.Encrypted -> {
@@ -143,4 +122,42 @@ fun TopicContentField(
         else -> {
         }
     }
+}
+
+@Composable
+private fun TopicContentFieldInternal(
+    isPrivate: Boolean,
+    topicInfo: TopicInfo,
+    rawMediaList: List<MediaInfo>,
+    plain1: String,
+    showHeadline: Boolean,
+    onClick: (() -> Unit)?
+) {
+    val mediaList = if (isPrivate) {
+        val list = createMediaListViewModel(topicInfo.rootId, 0)
+        val media by list.handler.data.collectAsState()
+        media?.data.orEmpty()
+    } else {
+        rawMediaList
+    }
+    val plain by produceState("", plain1, showHeadline) {
+        value = if (showHeadline) {
+            extractMarkdownHeadline(plain1)
+        } else {
+            plain1
+        }
+    }
+    val mediaMap = mediaList.associateBy { it.item.name }
+    Markdown(
+        plain,
+        modifier = Modifier.fillMaxWidth().clickable(onClick != null) {
+            onClick?.invoke()
+        },
+        colors = markdownColor(),
+        typography = markdownTypography(),
+        imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap),
+        components = markdownComponents(codeFence = {
+            CustomCodeFence(it, mediaMap)
+        }, codeBlock = { HighlightCodeBlock(it) })
+    )
 }

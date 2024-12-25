@@ -21,6 +21,7 @@ import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.compontents.CommunityIcon
+import com.storyteller_f.a.app.compontents.globalLoader
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.model.createCommunityViewModel
 import com.storyteller_f.a.app.model.createJoinedRoomsViewModel
@@ -122,7 +123,7 @@ fun RoomIcon(
     val shape = RoundedCornerShape(radius)
     if (iconUrl != null) {
         AsyncImage(
-            iconUrl,
+            globalLoader(iconUrl),
             contentDescription = "${roomInfo.name}'s icon",
             modifier = Modifier.size(size).clip(shape).clickable(enableClick) {
                 updateShowDialog(true)

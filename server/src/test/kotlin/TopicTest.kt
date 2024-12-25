@@ -75,15 +75,16 @@ class TopicTest {
                 client.addReaction(topicInfo.id, emoji).getOrThrow()
                 topicInfo
             }
+            val topicId = session1.data5.id
             attachSession(client) {
                 client.joinCommunity(newCommunity)
-                val reactions = client.getReactions(session1.data5.id).getOrThrow()
+                val reactions = client.getReactions(topicId).getOrThrow()
                 assertEquals(1, reactions.data.size)
                 assertFalse(reactions.data.first().hasReacted)
             }
             loginSession(client, session1) {
-                assertTrue(client.deleteReaction(emoji).getOrThrow())
-                assertEquals(0, client.getReactions(session1.data5.id).getOrThrow().data.size)
+                assertTrue(client.deleteReaction(emoji, topicId).getOrThrow())
+                assertEquals(0, client.getReactions(topicId).getOrThrow().data.size)
             }
         }
     }

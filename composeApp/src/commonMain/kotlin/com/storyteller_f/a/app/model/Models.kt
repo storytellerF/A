@@ -10,24 +10,19 @@ import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.DialogSaveState
 import com.storyteller_f.a.app.topic.processEncryptedTopic
+import com.storyteller_f.a.app.updateDocument
+import com.storyteller_f.a.app.updateDocumentInParent
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.ServerResponse
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.toPrimaryKey
-import com.storyteller_f.shared.type.toPrimaryKeyOrNull
+import com.storyteller_f.shared.type.*
+import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import kotbase.Expression
-import kotbase.MutableDocument
-import kotbase.ktx.all
-import kotbase.ktx.orderBy
-import kotbase.ktx.select
-import kotbase.ktx.where
+import kotbase.ktx.*
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 data class OnCommunityJoined(val newInfo: CommunityInfo)
@@ -105,7 +100,7 @@ data class OnRoomJoined(val newInfo: RoomInfo)
 data class OnRoomExited(val newInfo: RoomInfo)
 
 @OptIn(ExperimentalPagingApi::class)
-class TopicsViewModel(id: PrimaryKey, val type: ObjectType) : PagingViewModel<PrimaryKey, TopicInfo>({
+class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null) : PagingViewModel<PrimaryKey, TopicInfo>({
     CustomQueryPagingSource(
         select = select(all()),
         collectionName = "topics$id",
@@ -127,13 +122,42 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType) : PagingViewModel<Pr
         }
     )
 }, TopicsRemoteMediator("topics$id") { loadKey ->
-    val info = when (type) {
-        ObjectType.ROOM -> client.getRoomTopics(id, loadKey, 20)
-        ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, 20)
+    val info = when {
+        id == DEFAULT_PRIMARY_KEY -> client.getWorldTopics(loadKey, 10)
+        type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, 20)
+        type == ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, 20)
         else -> client.getTopicTopics(id, loadKey, 20)
     }.getOrThrow()
-    info.copy(processEncryptedTopic(info.data))
-})
+    info.copy(processEncryptedTopic(info.data).map {
+        extractHeadlineIfPlain(it)
+    })
+}) {
+    init {
+        viewModelScope.launch {
+            bus.collect { value ->
+                if (value is OnTopicChanged) {
+                    val topicInfo = value.topicInfo
+                    updateDocumentInParent(extractHeadlineIfPlain(topicInfo))
+                    // 尝试更新到推荐
+                    if (select(all()).from(getOrCreateCollection("topics$id"))
+                            .where(Expression.property("id").equalTo(topicInfo.id)).execute().next() != null
+                    ) {
+                        updateDocument("topics0", topicInfo)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
+    val content = it.content
+    return if (content is TopicContent.Plain) {
+        it.copy(content = TopicContent.Extracted(extractMarkdownHeadline(content.plain)))
+    } else {
+        it
+    }
+}
 
 @OptIn(ExperimentalPagingApi::class)
 class TopicsRemoteMediator(
@@ -141,11 +165,6 @@ class TopicsRemoteMediator(
     val networkService: suspend (PrimaryKey?) -> ServerResponse<TopicInfo>
 ) :
     RemoteMediator<PrimaryKey, TopicInfo>() {
-    private val scope = database.defaultScope
-    private val collection
-        get() = scope.getCollection(collectionName) ?: database.createCollection(
-            collectionName
-        )
 
     override suspend fun load(
         loadType: LoadType,
@@ -175,17 +194,7 @@ class TopicsRemoteMediator(
                 database.deleteCollection(collectionName)
             }
             response.data.forEach {
-                val rawId = it.id.toString(2)
-                collection.save(
-                    MutableDocument(
-                        if (rawId.length == 64) {
-                            rawId
-                        } else {
-                            "0$rawId"
-                        },
-                        Json.encodeToString(it)
-                    )
-                )
+                updateDocument(collectionName, it)
             }
             Napier.v(tag = "pagination") {
                 "mediator success $loadKey"
@@ -287,9 +296,12 @@ class UserViewModel(private val requestInfo: suspend HttpClient.() -> Result<Use
 class WorldViewModel : PagingViewModel<PrimaryKey, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getWorldTopics(it, 10, LoginViewModel.currentIsAlreadySignUp).getOrThrow()
+            client.getWorldTopics(it, 10).getOrThrow()
         }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
+            val data = it.data.map { info ->
+                extractHeadlineIfPlain(info)
+            }
+            APagingData(data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
         }
     }
 })

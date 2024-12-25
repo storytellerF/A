@@ -52,6 +52,10 @@ sealed interface TopicContent {
     data object Nil : TopicContent
 
     @Serializable
+    @SerialName("extracted")
+    data class Extracted(val plain: String, val list: List<MediaInfo> = emptyList()) : TopicContent
+
+    @Serializable
     @SerialName("plain")
     data class Plain(val plain: String, val list: List<MediaInfo> = emptyList()) : TopicContent
 

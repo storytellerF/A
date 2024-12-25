@@ -122,10 +122,10 @@ private fun EmojiCell(
     val hasReacted = info.hasReacted
     Pill(info.count.toString(), emoji = emoji, selected = hasReacted == true) {
         emoji.let { string ->
-            if (hasReacted == true) {
+            if (hasReacted) {
                 scope.launch {
                     globalDialogState.use {
-                        client.deleteReaction(string)
+                        client.deleteReaction(string, topicInfo.id)
                         bus.emit(OnTopicChanged(topicInfo.copy(reactionCount = reactionCount - 1)))
                     }
                 }
