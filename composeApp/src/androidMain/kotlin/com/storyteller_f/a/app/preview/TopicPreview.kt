@@ -67,7 +67,7 @@ fun PreviewTopic(@PreviewParameter(TopicPagePreviewProvider::class) param: Pair<
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                TopicContentField(topic, false)
+                TopicContentField(topic)
             }
 
             item {

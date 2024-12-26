@@ -1,8 +1,12 @@
 package com.storyteller_f.shared.utils
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.intellij.markdown.MarkdownElementTypes
+import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.accept
+import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.ast.visitors.Visitor
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.parser.MarkdownParser
@@ -122,6 +126,15 @@ fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
                         list.add(imagePath)
                     }
                 }
+
+                MarkdownElementTypes.CODE_FENCE -> {
+                    val lang = getLang(node, markdownText)
+                    if (lang == "object") {
+                        val content = readCodeFence(node, markdownText)
+                        val obj = Json.decodeFromString<MarkdownObject>(content)
+                        list.add(obj.name)
+                    }
+                }
             }
 
             node.children.forEach { it.accept(this) }
@@ -136,3 +149,28 @@ private fun astNode(markdownText: String): ASTNode {
     val parsedTree = parser.buildMarkdownTreeFromString(markdownText)
     return parsedTree
 }
+
+fun readCodeFence(node: ASTNode, content: String): String {
+    val children = node.children
+    val langOffset = children.indexOfFirst {
+        it.type == MarkdownTokenTypes.FENCE_LANG
+    }
+    val start = children.subList(langOffset + 1, children.size).first {
+        it.type == MarkdownTokenTypes.CODE_FENCE_CONTENT
+    }.startOffset
+    val end = children.last {
+        it.type == MarkdownTokenTypes.CODE_FENCE_CONTENT
+    }.endOffset
+    return content.substring(start, end)
+}
+
+fun getLang(node: ASTNode, content: String): String {
+    val children = node.children
+    val langOffset = children.indexOfFirst {
+        it.type == MarkdownTokenTypes.FENCE_LANG
+    }
+    return children.getOrNull(langOffset)?.getTextInNode(content).toString().lowercase()
+}
+
+@Serializable
+data class MarkdownObject(val contentType: String, val name: String)

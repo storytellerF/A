@@ -373,7 +373,6 @@ fun PreviewTopicPage(input: String, res: List<MediaInfo>?) {
         item {
             TopicContentField(
                 TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, res.orEmpty())),
-                showHeadline = false,
             )
         }
     }

@@ -229,7 +229,7 @@ private fun TopicPageInternal(
                     state = lazyListState
                 ) {
                     item {
-                        TopicContentField(it, false)
+                        TopicContentField(it)
                         Spacer(modifier = Modifier.height(12.dp))
                         InteractionRow(it, {
                             startAddReaction()
