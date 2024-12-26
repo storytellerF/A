@@ -153,7 +153,7 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null) : PagingView
 private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
     val content = it.content
     return if (content is TopicContent.Plain) {
-        it.copy(content = TopicContent.Extracted(extractMarkdownHeadline(content.plain)))
+        it.copy(content = TopicContent.Extracted(extractMarkdownHeadline(content.plain), content.list))
     } else {
         it
     }

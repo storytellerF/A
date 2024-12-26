@@ -27,7 +27,6 @@ import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,14 +102,14 @@ fun TopicContentField(
             val isPrivate = topicInfo.isPrivate
             val rawMediaList = content.list
             val plain1 = content.plain
-            TopicContentFieldInternal(isPrivate, topicInfo, rawMediaList, plain1, showHeadline, onClick)
+            TopicContentFieldInternal(isPrivate, topicInfo, rawMediaList, plain1, onClick)
         }
 
         is TopicContent.Extracted -> {
             val isPrivate = topicInfo.isPrivate
             val rawMediaList = content.list
             val plain1 = content.plain
-            TopicContentFieldInternal(isPrivate, topicInfo, rawMediaList, plain1, showHeadline, onClick)
+            TopicContentFieldInternal(isPrivate, topicInfo, rawMediaList, plain1, onClick)
         }
 
         is TopicContent.DecryptFailed, is TopicContent.Encrypted -> {
@@ -130,7 +129,6 @@ private fun TopicContentFieldInternal(
     topicInfo: TopicInfo,
     rawMediaList: List<MediaInfo>,
     plain1: String,
-    showHeadline: Boolean,
     onClick: (() -> Unit)?
 ) {
     val mediaList = if (isPrivate) {
@@ -140,16 +138,9 @@ private fun TopicContentFieldInternal(
     } else {
         rawMediaList
     }
-    val plain by produceState("", plain1, showHeadline) {
-        value = if (showHeadline) {
-            extractMarkdownHeadline(plain1)
-        } else {
-            plain1
-        }
-    }
     val mediaMap = mediaList.associateBy { it.item.name }
     Markdown(
-        plain,
+        plain1,
         modifier = Modifier.fillMaxWidth().clickable(onClick != null) {
             onClick?.invoke()
         },
