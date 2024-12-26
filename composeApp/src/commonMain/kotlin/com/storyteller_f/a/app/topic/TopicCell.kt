@@ -79,7 +79,6 @@ fun TopicCellInternal(
         ) {
             TopicContentField(
                 topicInfo,
-                showHeadline = true,
                 onClick = {
                     appNav.gotoTopic(topicId)
                 }
@@ -94,7 +93,6 @@ fun TopicCellInternal(
 @Composable
 fun TopicContentField(
     topicInfo: TopicInfo,
-    showHeadline: Boolean,
     onClick: (() -> Unit)? = null
 ) {
     when (val content = topicInfo.content) {

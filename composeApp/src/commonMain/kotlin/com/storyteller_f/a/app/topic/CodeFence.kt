@@ -35,52 +35,43 @@ import com.storyteller_f.a.app.compontents.TextUnitToPx
 import com.storyteller_f.a.app.compontents.VideoView
 import com.storyteller_f.a.app.compontents.buildTexPainter
 import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.utils.MarkdownObject
+import com.storyteller_f.shared.utils.getLang
+import com.storyteller_f.shared.utils.readCodeFence
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
-import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.intellij.markdown.MarkdownTokenTypes
-import org.intellij.markdown.ast.ASTNode
-import org.intellij.markdown.ast.getTextInNode
 import java.net.URI
 
 @Composable
 fun CustomCodeFence(modal: MarkdownComponentModel, mediaList1: Map<String, MediaInfo>) {
-    val content = modal.content
-    val children = modal.node.children
-    val langOffset = children.indexOfFirst {
-        it.type == MarkdownTokenTypes.FENCE_LANG
+    val lang = remember(modal.node, modal.content) {
+        getLang(modal.node, modal.content)
     }
-    val lang = children.getOrNull(langOffset)?.getTextInNode(content).toString().lowercase()
     when {
-        listOf("com.storyteller_f.a", "c.s.a", "csa").contains(lang) -> RefBlock(children, langOffset, content)
+        listOf("com.storyteller_f.a", "c.s.a", "csa").contains(lang) -> RefBlock(modal)
 
-        lang == "math" -> LatexBlock(children, langOffset, content)
+        lang == "math" -> LatexBlock(modal)
 
-        lang == "object" -> ObjectBlock(children, langOffset, content, modal, mediaList1)
+        lang == "object" -> ObjectBlock(modal, mediaList1)
 
         else -> HighlightCodeBlock(modal)
     }
 }
 
-@Serializable
-data class MarkdownObject(val contentType: String, val name: String)
-
 @Composable
 fun ObjectBlock(
-    children: List<ASTNode>,
-    langOffset: Int,
-    content: String,
     modal: MarkdownComponentModel,
     mediaList1: Map<String, MediaInfo>
 ) {
-    val c = readFenceContent(children, langOffset, content)
-    val obj = Json.decodeFromString<MarkdownObject>(c)
+    val obj = remember(modal.node, modal.content) {
+        val c = readCodeFence(modal.node, modal.content)
+        Json.decodeFromString<MarkdownObject>(c)
+    }
     if (obj.contentType == "video/youtube") {
         HighlightCodeBlock(modal)
     } else {
@@ -88,38 +79,33 @@ fun ObjectBlock(
         val url = mediaInfo?.url
         val contentType = mediaInfo?.item?.contentType
         when {
-            url == null || contentType == null -> {
-                HighlightCodeBlock(modal)
-            }
+            url == null || contentType == null -> HighlightCodeBlock(modal)
 
-            contentType == "application/pdf" -> {
-                val errorIndicator = rememberVectorPainter(Icons.Default.Error)
-                val refreshIndicator = rememberVectorPainter(Icons.Default.Refresh)
-                val state = remember(url, errorIndicator, refreshIndicator) {
-                    RemotePdfState(URI.create(url).toURL(), errorIndicator, refreshIndicator)
-                }
-                HorizontalPager(
-                    state = rememberPagerState { state.pageCount }
-                ) { i ->
-                    PdfPage(
-                        state = state,
-                        index = i
-                    )
-                }
-            }
+            contentType == "application/pdf" -> PdfView(url)
 
-            contentType.startsWith("video/") -> {
-                VideoView(url = url)
-            }
+            contentType.startsWith("video/") -> VideoView(url = url)
 
-            contentType.startsWith("audio/") -> {
-                AudioView(url)
-            }
+            contentType.startsWith("audio/") -> AudioView(url)
 
-            else -> {
-                HighlightCodeBlock(modal)
-            }
+            else -> HighlightCodeBlock(modal)
         }
+    }
+}
+
+@Composable
+private fun PdfView(url: String) {
+    val errorIndicator = rememberVectorPainter(Icons.Default.Error)
+    val refreshIndicator = rememberVectorPainter(Icons.Default.Refresh)
+    val state = remember(url, errorIndicator, refreshIndicator) {
+        RemotePdfState(URI.create(url).toURL(), errorIndicator, refreshIndicator)
+    }
+    HorizontalPager(
+        state = rememberPagerState { state.pageCount }
+    ) { i ->
+        PdfPage(
+            state = state,
+            index = i
+        )
     }
 }
 
@@ -136,30 +122,28 @@ fun HighlightCodeBlock(
 
 @Composable
 private fun RefBlock(
-    children: List<ASTNode>,
-    langOffset: Int,
-    content: String
+    modal: MarkdownComponentModel
 ) {
-    val textInNode = readFenceContent(children, langOffset, content)
-    TopicRoute.parseRefUri(textInNode).let {
-        it.first?.let { it1 -> it1(it.second) }
+    val (first, second) = remember(modal.node, modal.content) {
+        val textInNode = readCodeFence(modal.node, modal.content)
+        TopicRoute.parseRefUri(textInNode)
     }
+    first?.let { it1 -> it1(second) }
 }
 
 @Composable
 private fun LatexBlock(
-    children: List<ASTNode>,
-    langOffset: Int,
-    content: String
+    modal: MarkdownComponentModel
 ) {
     val textStyle = LocalTextStyle.current
     val size = TextUnitToPx(textStyle.fontSize)
     val backgroundColor = MaterialTheme.colorScheme.surface.value.toInt()
     val textColor = textStyle.color.value.toInt()
-    val painter by produceState<Painter?>(null, children, langOffset, content, backgroundColor, textColor) {
+    val painter by produceState<Painter?>(null, modal.node, modal.content, backgroundColor, textColor) {
         value = withContext(Dispatchers.Default) {
+            val tex = readCodeFence(modal.node, modal.content)
             buildTexPainter(
-                readFenceContent(children, langOffset, content),
+                tex,
                 backgroundColor,
                 textColor,
                 size
@@ -176,20 +160,6 @@ private fun LatexBlock(
             CircularProgressIndicator(modifier = Modifier.size(4.dp))
         }
     }
-}
-
-private fun readFenceContent(
-    children: List<ASTNode>,
-    langOffset: Int,
-    content: String
-): String {
-    val start = children.subList(langOffset + 1, children.size).first {
-        it.type == MarkdownTokenTypes.CODE_FENCE_CONTENT
-    }.startOffset
-    val end = children.last {
-        it.type == MarkdownTokenTypes.CODE_FENCE_CONTENT
-    }.endOffset
-    return content.substring(start, end)
 }
 
 @Composable
