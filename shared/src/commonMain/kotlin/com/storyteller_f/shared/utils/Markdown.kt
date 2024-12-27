@@ -121,17 +121,8 @@ fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
         override fun visitNode(node: ASTNode) {
             when (node.type) {
                 MarkdownElementTypes.IMAGE -> {
-                    // Extract the first level header content
-                    val markdownImage = markdownText.substring(node.startOffset, node.endOffset)
-
-                    // 正则表达式匹配 ![alt text](image path "title")
-                    val regex = Regex("""!\[([^]]*)]\(([^ )]+)(?:\s+"([^"]*)")?\)""")
-
-                    val matchResult = regex.find(markdownImage)
-                    if (matchResult != null) {
-                        val imagePath = matchResult.groupValues[2] // 提取图片路径
-                        list.add(imagePath)
-                    }
+                    val imagePath = extractImageUrl(node, markdownText)
+                    imagePath?.let { list.add(it) }
                 }
 
                 MarkdownElementTypes.CODE_FENCE -> {
@@ -149,7 +140,21 @@ fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
     })
     return list
 }
+fun extractImageUrl(node: ASTNode, markdownText: String): String? {
+    // Extract the first level header content
+    val markdownImage = markdownText.substring(node.startOffset, node.endOffset)
 
+    // 正则表达式匹配 ![alt text](image path "title")
+    val regex = Regex("""!\[([^]]*)]\(([^ )]+)(?:\s+"([^"]*)")?\)""")
+
+    val matchResult = regex.find(markdownImage)
+    val imagePath = if (matchResult != null) {
+        matchResult.groupValues[2] // 提取图片路径
+    } else {
+        null
+    }
+    return imagePath
+}
 private fun astNode(markdownText: String): ASTNode {
     val flavour = CommonMarkFlavourDescriptor()
     val parser = MarkdownParser(flavour)

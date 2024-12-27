@@ -8,11 +8,10 @@ import androidx.compose.material.icons.outlined.AddReaction
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.bus
-import com.storyteller_f.a.app.client
+import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.common.*
-import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.model.OnAddReaction
+import com.storyteller_f.a.app.model.OnRemoveReaction
 import com.storyteller_f.a.app.model.OnTopicChanged
 import com.storyteller_f.a.app.model.createReactionsViewModel
 import com.storyteller_f.a.app.world.Pill
@@ -120,13 +119,14 @@ private fun EmojiCell(
     val scope = rememberCoroutineScope()
     val emoji = info.emoji
     val hasReacted = info.hasReacted
-    Pill(info.count.toString(), emoji = emoji, selected = hasReacted == true) {
+    Pill(info.count.toString(), emoji = emoji, selected = hasReacted) {
         emoji.let { string ->
             if (hasReacted) {
                 scope.launch {
                     globalDialogState.use {
                         client.deleteReaction(string, topicInfo.id)
                         bus.emit(OnTopicChanged(topicInfo.copy(reactionCount = reactionCount - 1)))
+                        bus.emit(OnRemoveReaction(topicInfo.id, string))
                     }
                 }
             } else {
@@ -134,6 +134,7 @@ private fun EmojiCell(
                     globalDialogState.use {
                         client.addReaction(topicInfo.id, string)
                         bus.emit(OnTopicChanged(topicInfo.copy(reactionCount = reactionCount + 1)))
+                        bus.emit(OnAddReaction(topicInfo.id, string))
                     }
                 }
             }

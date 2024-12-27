@@ -251,7 +251,7 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
                 ButtonNav(Icons.Default.DesignServices, stringResource(Res.string.design_spec)) {
                     uriHandler.openUri("https://storytellerf.github.io/aspec/")
                 }
-                ButtonNav(Icons.Default.Add, "About") {
+                ButtonNav(Icons.Default.Code, "About") {
                     dismiss()
                     appNav.gotoAbout()
                 }

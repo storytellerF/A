@@ -65,12 +65,18 @@ private fun UserRefCellInternal(viewModel: UserViewModel) {
 
 @Composable
 fun UserCell(userInfo: UserInfo?, customBackground: Boolean, avatarSize: Dp = 50.dp) {
+    userInfo ?: return
+    val appNav = LocalAppNav.current
     Row(
         modifier = if (customBackground) {
             Modifier
-                .fillMaxWidth()
+                .fillMaxWidth().clickable {
+                    appNav.gotoUser(userInfo.id)
+                }
         } else {
-            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
+            Modifier.fillMaxWidth().clickable {
+                appNav.gotoUser(userInfo.id)
+            }.background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
                 .padding(8.dp)
         },
         verticalAlignment = Alignment.CenterVertically,
@@ -78,8 +84,8 @@ fun UserCell(userInfo: UserInfo?, customBackground: Boolean, avatarSize: Dp = 50
     ) {
         UserIcon(userInfo, size = avatarSize)
         Column {
-            userInfo?.nickname?.let { Text(it) }
-            userInfo?.aid?.let {
+            Text(userInfo.nickname)
+            userInfo.aid?.let {
                 Text("aid: $it")
             }
         }

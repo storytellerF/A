@@ -293,7 +293,9 @@ suspend fun checkRootReadPermission(
             }
         }
 
-        ObjectType.USER -> TODO()
+        ObjectType.USER -> getRawUserById(parentId).mapNotNull {
+            RootReadPermission(true, false, false)
+        }
     }
 }
 
