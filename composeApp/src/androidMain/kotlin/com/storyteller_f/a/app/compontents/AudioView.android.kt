@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PauseCircle
+import androidx.compose.material.icons.filled.Pending
 import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -91,7 +91,7 @@ actual fun AudioView(url: String) {
         }) {
             when {
                 currentPlaying -> Icon(Icons.Default.PauseCircle, "pause", modifier = Modifier.size(40.dp))
-                currentLoading -> Icon(Icons.Default.Refresh, "loading", modifier = Modifier.size(40.dp))
+                currentLoading -> Icon(Icons.Default.Pending, "loading", modifier = Modifier.size(40.dp))
                 else -> Icon(Icons.Default.PlayCircle, "play", modifier = Modifier.size(40.dp))
             }
         }

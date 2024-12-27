@@ -97,17 +97,11 @@ fun TopicContentField(
 ) {
     when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
-            val isPrivate = topicInfo.isPrivate
-            val rawMediaList = content.list
-            val plain1 = content.plain
-            TopicContentFieldInternal(isPrivate, topicInfo, rawMediaList, plain1, onClick)
+            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain, onClick)
         }
 
         is TopicContent.Extracted -> {
-            val isPrivate = topicInfo.isPrivate
-            val rawMediaList = content.list
-            val plain1 = content.plain
-            TopicContentFieldInternal(isPrivate, topicInfo, rawMediaList, plain1, onClick)
+            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain, onClick)
         }
 
         is TopicContent.DecryptFailed, is TopicContent.Encrypted -> {
@@ -126,7 +120,7 @@ private fun TopicContentFieldInternal(
     isPrivate: Boolean,
     topicInfo: TopicInfo,
     rawMediaList: List<MediaInfo>,
-    plain1: String,
+    plain: String,
     onClick: (() -> Unit)?
 ) {
     val mediaList = if (isPrivate) {
@@ -138,7 +132,7 @@ private fun TopicContentFieldInternal(
     }
     val mediaMap = mediaList.associateBy { it.item.name }
     Markdown(
-        plain1,
+        plain,
         modifier = Modifier.fillMaxWidth().clickable(onClick != null) {
             onClick?.invoke()
         },

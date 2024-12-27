@@ -22,7 +22,7 @@ fun ExceptionView(throwable: Throwable) {
         } else {
             Text("${throwable.status.value} ${throwable.text}")
         }
-    } else if (throwable is SocketTimeoutException) {
+    } else if (throwable is SocketTimeoutException || throwable is ConnectTimeoutException) {
         Text("Timeout")
     } else {
         Text((throwable.message ?: throwable::class.simpleName ?: throwable.toString()).take(100))
