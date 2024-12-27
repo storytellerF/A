@@ -131,4 +131,13 @@ class TopicTest {
             }
         }
     }
+
+    @Test
+    fun `test create in user`() {
+        test { client, _ ->
+            attachSession(client) {
+                client.createNewTopic(ObjectType.USER, it.data4, "hello").getOrThrow()
+            }
+        }
+    }
 }

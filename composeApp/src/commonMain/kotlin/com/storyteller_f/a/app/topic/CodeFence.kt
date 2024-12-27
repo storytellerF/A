@@ -3,10 +3,12 @@ package com.storyteller_f.a.app.topic
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
@@ -19,6 +21,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
@@ -177,6 +180,6 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInf
     override fun transform(link: String): ImageData {
         return rememberAsyncImagePainter(
             model = imageRequestInMarkdown(link, mediaMap)
-        ).let { ImageData(it) }
+        ).let { ImageData(it, modifier = Modifier.clip(RoundedCornerShape(10.dp)).fillMaxWidth()) }
     }
 }

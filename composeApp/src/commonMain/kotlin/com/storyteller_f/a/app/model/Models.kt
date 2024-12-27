@@ -137,12 +137,15 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null) : PagingView
             bus.collect { value ->
                 if (value is OnTopicChanged) {
                     val topicInfo = value.topicInfo
-                    updateDocumentInParent(extractHeadlineIfPlain(topicInfo))
-                    // 尝试更新到推荐
-                    if (select(all()).from(getOrCreateCollection("topics$id"))
-                            .where(Expression.property("id").equalTo(topicInfo.id)).execute().next() != null
-                    ) {
-                        updateDocument("topics0", topicInfo)
+                    if (id == topicInfo.parentId) {
+                        updateDocumentInParent(extractHeadlineIfPlain(topicInfo))
+                    } else if (id == DEFAULT_PRIMARY_KEY) {
+                        // 尝试更新到推荐
+                        if (select(all()).from(getOrCreateCollection("topics0"))
+                                .where(Expression.property("id").equalTo(topicInfo.id)).execute().next() != null
+                        ) {
+                            updateDocument("topics0", extractHeadlineIfPlain(topicInfo))
+                        }
                     }
                 }
             }
@@ -153,7 +156,7 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null) : PagingView
 private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
     val content = it.content
     return if (content is TopicContent.Plain) {
-        it.copy(content = TopicContent.Extracted(extractMarkdownHeadline(content.plain), content.list))
+        it.copy(content = TopicContent.Extracted(extractMarkdownHeadline(content.plain), content.list, content.plain))
     } else {
         it
     }
@@ -319,10 +322,37 @@ class MemberViewModel(private val objectId: PrimaryKey, private val word: String
     })
 
 data class OnTopicChanged(val topicInfo: TopicInfo)
+data class OnAddReaction(val topicId: PrimaryKey, val emoji: String)
+data class OnRemoveReaction(val topicId: PrimaryKey, val emoji: String)
 
 class ReactionsViewModel(private val objectId: PrimaryKey) : SimpleViewModel<ServerResponse<ReactionInfo>>() {
     init {
         load()
+        viewModelScope.launch {
+            bus.collect {
+                if (it is OnAddReaction) {
+                    if (it.topicId == objectId) {
+                        handler.data.value?.data.orEmpty().map { info ->
+                            when {
+                                info.emoji != it.emoji -> info
+                                info.hasReacted -> info
+                                else -> info.copy(count = info.count, hasReacted = true)
+                            }
+                        }
+                    }
+                } else if (it is OnRemoveReaction) {
+                    if (it.topicId == objectId) {
+                        handler.data.value?.data.orEmpty().map { info ->
+                            when {
+                                info.emoji != it.emoji -> info
+                                !info.hasReacted -> info
+                                else -> info.copy(count = info.count - 1, hasReacted = false)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     override suspend fun loadInternal() = client.getReactions(objectId)

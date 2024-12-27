@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
@@ -75,12 +76,14 @@ actual fun AudioView(url: String) {
             player.pause()
         }
     }
+    val shape = RoundedCornerShape(20.dp)
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .height(100.dp)
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer, shape)
+            .clip(shape)
     ) {
         IconButton({
             if (player.isPlaying) {
