@@ -13,14 +13,15 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.network.ktor3.KtorNetworkFetcherFactory
@@ -177,16 +178,5 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInf
         return rememberAsyncImagePainter(
             model = imageRequestInMarkdown(link, mediaMap)
         ).let { ImageData(it) }
-    }
-
-    @Composable
-    override fun intrinsicSize(painter: Painter): Size {
-        var size by remember(painter) { mutableStateOf(painter.intrinsicSize) }
-        if (painter is AsyncImagePainter) {
-            val painterState = painter.state.collectAsState()
-            val intrinsicSize = painterState.value.painter?.intrinsicSize
-            intrinsicSize?.also { size = it }
-        }
-        return size
     }
 }

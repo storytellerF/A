@@ -2,6 +2,7 @@ package com.storyteller_f.shared.utils
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
@@ -22,6 +23,9 @@ fun extractMarkdownHeadline(markdownText: String): String {
     parsedTree.accept(object : Visitor {
         override fun visitNode(node: ASTNode) {
             val type = node.type
+            val typeList = MarkdownElementTypes::class.java.fields.mapNotNull {
+                (it.get(MarkdownElementTypes) as? IElementType)?.name
+            }
             when {
                 type == MarkdownElementTypes.ATX_1 -> {
                     // Extract the first level header content
@@ -38,8 +42,8 @@ fun extractMarkdownHeadline(markdownText: String): String {
                     }
                 }
 
-                MarkdownElementTypes::class.java.fields.any {
-                    type.name == it.name
+                typeList.any {
+                    type.name == it
                 } -> {
                     // Stop capturing when encountering the first second-level header
                     captureContent = false
@@ -70,6 +74,9 @@ fun extractHeadParagraph(
         override fun visitNode(node: ASTNode) {
             val type = node.type
             val children = node.children
+            val typeList = MarkdownElementTypes::class.java.fields.mapNotNull {
+                (it.get(MarkdownElementTypes) as? IElementType)?.name
+            }
             when {
                 type == MarkdownElementTypes.MARKDOWN_FILE -> captureContent = true
                 type == MarkdownElementTypes.PARAGRAPH -> {
@@ -85,8 +92,8 @@ fun extractHeadParagraph(
                     }
                 }
 
-                MarkdownElementTypes::class.java.fields.any {
-                    type.name == it.name
+                typeList.any {
+                    it == type.name
                 } -> {
                     if (paragraphs.length <= 100) {
                         val content = markdownText.substring(node.startOffset, node.endOffset).trim()
