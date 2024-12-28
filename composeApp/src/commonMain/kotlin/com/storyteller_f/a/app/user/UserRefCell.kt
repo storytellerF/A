@@ -58,24 +58,30 @@ private fun UserRefCellInternal(viewModel: UserViewModel) {
                 }
             }
             .padding(10.dp)
-    ) {
-        UserCell(it, true)
+    ) { info ->
+        UserCell(info, true) {
+            appNav.gotoUser(it)
+        }
     }
 }
 
 @Composable
-fun UserCell(userInfo: UserInfo?, customBackground: Boolean, avatarSize: Dp = 50.dp) {
+fun UserCell(
+    userInfo: UserInfo?,
+    customBackground: Boolean,
+    avatarSize: Dp = 50.dp,
+    onClick: (PrimaryKey) -> Unit = {}
+) {
     userInfo ?: return
-    val appNav = LocalAppNav.current
     Row(
         modifier = if (customBackground) {
             Modifier
                 .fillMaxWidth().clickable {
-                    appNav.gotoUser(userInfo.id)
+                    onClick(userInfo.id)
                 }
         } else {
             Modifier.fillMaxWidth().clickable {
-                appNav.gotoUser(userInfo.id)
+                onClick(userInfo.id)
             }.background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
                 .padding(8.dp)
         },
@@ -85,8 +91,11 @@ fun UserCell(userInfo: UserInfo?, customBackground: Boolean, avatarSize: Dp = 50
         UserIcon(userInfo, size = avatarSize)
         Column {
             Text(userInfo.nickname)
-            userInfo.aid?.let {
-                Text("aid: $it")
+            val aid = userInfo.aid
+            if (aid != null) {
+                Text("aid: $aid")
+            } else {
+                Text("ad: ${userInfo.address}")
             }
         }
     }

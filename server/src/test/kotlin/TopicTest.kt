@@ -8,10 +8,7 @@ import com.storyteller_f.tables.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class TopicTest {
 
@@ -19,12 +16,13 @@ class TopicTest {
     fun `test topic search`() {
         test { client, _ ->
             val newId = SnowflakeFactory.nextId()
-            createCommunity(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now()))
+            doCreateCommunity(Community("aid", "name", owner = DEFAULT_PRIMARY_KEY, id = newId, createdTime = now()))
             attachSession(client) {
                 client.joinCommunity(newId)
                 val lastTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello world").getOrThrow()
                 client.createNewTopic(ObjectType.COMMUNITY, newId, "sysroot").getOrThrow()
                 val firstTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "best world").getOrThrow()
+                withContext(Dispatchers.IO) { delay(1000) }
 
                 val topics = client.searchTopics(null, 1, listOf("world"), null, null).getOrThrow()
                 assertEquals(2, topics.pagination?.total)
@@ -41,7 +39,7 @@ class TopicTest {
         test { client, _ ->
             attachSession(client) {
                 val newId = SnowflakeFactory.nextId()
-                createCommunity(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())).getOrThrow()
+                doCreateCommunity(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())).getOrThrow()
                 client.joinCommunity(newId)
                 val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello").getOrThrow()
                 client.getTopicSnapshot(topicInfo.id)
@@ -55,16 +53,8 @@ class TopicTest {
             val emoji = "\uD83D\uDE00"
             val newCommunity = SnowflakeFactory.nextId()
             val session1 = attachSession(client) {
-                createCommunity(
-                    Community(
-                        "aid",
-                        "name",
-                        null,
-                        DEFAULT_PRIMARY_KEY,
-                        null,
-                        newCommunity,
-                        now()
-                    )
+                doCreateCommunity(
+                    Community("aid", "name", owner = DEFAULT_PRIMARY_KEY, id = newCommunity, createdTime = now())
                 ).getOrThrow()
                 client.joinCommunity(newCommunity)
                 val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, newCommunity, "hello").getOrThrow()
@@ -96,7 +86,11 @@ class TopicTest {
                 val media = client.upload("hello".toByteArray(), "hello.txt", "txt", it.data4, ObjectType.USER)
                     .getOrThrow().data.first()
                 val info =
-                    client.createNewTopic(ObjectType.USER, it.data4, "![hello.txt](${media.item.name})").getOrThrow()
+                    client.createNewTopic(
+                        ObjectType.USER,
+                        it.data4,
+                        "![hello.txt](${media.item.noPrefixName})"
+                    ).getOrThrow()
                 val plain = info.content as TopicContent.Plain
                 assertEquals(media.item.name, plain.list.first().item.name)
             }
@@ -107,7 +101,7 @@ class TopicTest {
     fun `test create topic in room`() {
         test { client, wsClient ->
             val communityId = SnowflakeFactory.nextId()
-            createCommunity(Community("test1", "test1", null, 0, null, communityId, now()))
+            doCreateCommunity(Community("test1", "test1", null, 0, null, communityId, now()))
             val publicRoomId = SnowflakeFactory.nextId()
             createRoom(Room("room1", "room1", null, 0, communityId, publicRoomId, now())).getOrThrow()
             val privateRoomId = SnowflakeFactory.nextId()
@@ -121,13 +115,26 @@ class TopicTest {
                 withContext(Dispatchers.Default) { delay(1000) }
                 assertEquals(1, client.getRoomTopics(publicRoomId, null, 10).getOrThrow().data.size)
                 addRoomJoin(privateRoomId, it.data4, now())
-                val roomInfo2 = client.requestRoomInfo(privateRoomId, true).getOrThrow()
+                val roomInfo2 = client.getRoomInfo(privateRoomId).getOrThrow()
                 val keys = client.requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
                 wsClient.useWebSocket {
                     sendMessage(roomInfo2, "hello", keys, null)
                 }?.join()
                 withContext(Dispatchers.Default) { delay(1000) }
-                assertEquals(1, client.getRoomTopics(privateRoomId, null, 10).getOrThrow().data.size)
+                val privateRoomTopicList = client.getRoomTopics(privateRoomId, null, 10).getOrThrow().data
+                assertEquals(1, privateRoomTopicList.size)
+                val id = privateRoomTopicList.first().id
+                client.getTopicInfo(id).getOrThrow()
+                assertFails {
+                    client.createNewTopic(ObjectType.TOPIC, id, "forbid use api add topic to room").getOrThrow()
+                }
+                assertFails {
+                    client.createNewTopic(
+                        ObjectType.ROOM,
+                        publicRoomId,
+                        "forbid use api add topic to room"
+                    ).getOrThrow()
+                }
             }
         }
     }
@@ -138,6 +145,21 @@ class TopicTest {
             attachSession(client) {
                 client.createNewTopic(ObjectType.USER, it.data4, "hello").getOrThrow()
             }
+        }
+    }
+
+    @Test
+    fun `test recommend`() {
+        test { client, _ ->
+            val communityId = SnowflakeFactory.nextId()
+            doCreateCommunity(Community("c1", "c1", owner = 0, id = communityId, createdTime = now()))
+            attachSession(client) {
+                client.joinCommunity(communityId)
+                repeat(4) {
+                    client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello $it").getOrThrow()
+                }
+            }
+            client.getRecommendTopics(null, 10)
         }
     }
 }

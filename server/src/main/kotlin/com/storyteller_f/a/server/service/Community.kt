@@ -1,9 +1,12 @@
 package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
+import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.route.RouteCommunities
+import com.storyteller_f.bindPaginationQuery
 import com.storyteller_f.isDup
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
@@ -11,6 +14,7 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import io.ktor.server.plugins.BadRequestException
+import org.jetbrains.exposed.sql.JoinType
 
 suspend fun getCommunity(
     communityId: PrimaryKey?,
@@ -31,7 +35,7 @@ suspend fun getCommunity(
     }
 }
 
-suspend fun joinCommunity(
+suspend fun doUserJoinCommunity(
     uid: PrimaryKey,
     communityId: PrimaryKey,
     backend: Backend
@@ -79,6 +83,9 @@ suspend fun searchCommunities(
     uid: PrimaryKey?,
     search: RouteCommunities.Search
 ): Result<PaginationResult<CommunityInfo>?> {
+    if (search.joinStatus == JoinStatusSearch.JOINED && search.target != null) {
+        return searchTargetUserJoinedCommunities(prePageToken, nextPageToken, size, backend, uid, search.target)
+    }
     return commonPaginationCommunityList(
         uid,
         prePageToken,
@@ -90,6 +97,68 @@ suspend fun searchCommunities(
         parseCommunityList(backend, list).map { value ->
             PaginationResult(value, count)
         }
+    }
+}
+
+private suspend fun searchTargetUserJoinedCommunities(
+    prePageToken: PrimaryKey?,
+    nextPageToken: PrimaryKey?,
+    size: Int,
+    backend: Backend,
+    uid: PrimaryKey?,
+    target: PrimaryKey
+): Result<PaginationResult<CommunityInfo>> {
+    return DatabaseFactory.mapQuery({
+        CommunityRawResult(first.toCommunityIfo(second), first.icon, first.poster)
+    }, {
+        Community.wrapRow(it) to it[MemberJoins.joinTime]
+    }) {
+        getUserJoinedCommunityQuery(target, false).bindPaginationQuery(
+            Communities,
+            prePageToken,
+            nextPageToken,
+            size
+        )
+    }.mapResult { list ->
+        DatabaseFactory.count {
+            getUserJoinedCommunityQuery(target, true)
+        }.mapResult { count ->
+            parseCommunityList(backend, list).mapResult { value ->
+                if (uid != null) {
+                    processUserJoinedTimeReplace(value, uid, count)
+                } else {
+                    Result.success(PaginationResult(value.map {
+                        it.copy(joinTime = null, extension = CommunityInfo.Extension(it.joinTime))
+                    }, count))
+                }
+            }
+        }
+    }
+}
+
+private suspend fun processUserJoinedTimeReplace(
+    value: List<CommunityInfo>,
+    uid: PrimaryKey,
+    count: Long
+): Result<PaginationResult<CommunityInfo>> {
+    val communityIds = value.map {
+        it.id
+    }
+    return DatabaseFactory.mapQuery({
+        this[Communities.id] to this[MemberJoins.joinTime]
+    }) {
+        Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+            MemberJoins.uid eq uid
+        }
+            .select(Communities.id, MemberJoins.joinTime)
+            .where {
+                Communities.id.inList(communityIds)
+            }
+    }.map { joinedTimeList ->
+        val map = joinedTimeList.associate { it }
+        PaginationResult(value.map {
+            it.copy(joinTime = map[it.id], extension = CommunityInfo.Extension(it.joinTime))
+        }, count)
     }
 }
 

@@ -274,7 +274,7 @@ suspend fun saveTopic(
                 uid
             )
         )
-    )
+    ).getOrThrow()
 }
 
 suspend fun saveTopic1(

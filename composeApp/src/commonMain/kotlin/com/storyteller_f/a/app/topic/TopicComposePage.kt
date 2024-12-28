@@ -180,11 +180,11 @@ private fun TopicComposeDrawer(
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 items(it.data) {
                     NavigationDrawerItem({
-                        Text(it.item.name)
+                        Text(it.item.noPrefixName)
                     }, false, {
                         insertContent(it, updateInput, input)
                     }, icon = {
-                        AsyncImage(it.url, it.item.name, modifier = Modifier.size(40.dp))
+                        AsyncImage(it.url, it.item.noPrefixName, modifier = Modifier.size(40.dp))
                     })
                 }
             }
@@ -200,7 +200,7 @@ private fun insertContent(
     if (it.item.contentType.startsWith("image/")) {
         updateInput(
             """$input
-![${it.item.name}](${it.item.name} "${it.item.name}")
+![${it.item.noPrefixName}](${it.item.noPrefixName} "${it.item.noPrefixName}")
 """
         )
     } else {
@@ -209,7 +209,7 @@ private fun insertContent(
 ```object
 {
     "contentType": "${it.item.contentType}",
-    "name": "${it.item.name}"
+    "name": "${it.item.noPrefixName}"
 }
 ```"""
         )

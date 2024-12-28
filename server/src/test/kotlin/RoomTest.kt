@@ -13,10 +13,24 @@ import kotlin.test.assertFails
 
 class RoomTest {
     @Test
+    fun `test get room`() {
+        test { client, _ ->
+            val room1 = SnowflakeFactory.nextId()
+            createRoom(
+                Room("r1", "name1", creator = DEFAULT_PRIMARY_KEY, communityId = 0, id = room1, createdTime = now())
+            ).getOrThrow()
+            client.getRoomInfo(room1).getOrThrow()
+            client.getRoomInfoByAid("r1").getOrThrow()
+        }
+    }
+
+    @Test
     fun `test room search`() {
         test { client, _ ->
             val community1 = SnowflakeFactory.nextId()
-            createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now())).getOrThrow()
+            doCreateCommunity(
+                Community("c1", "name1", owner = DEFAULT_PRIMARY_KEY, id = community1, createdTime = now())
+            ).getOrThrow()
             val room1 = SnowflakeFactory.nextId()
             val room2 = SnowflakeFactory.nextId()
             val room3 = SnowflakeFactory.nextId()
@@ -67,7 +81,6 @@ class RoomTest {
             Room(
                 "r1",
                 "name1",
-                null,
                 creator = DEFAULT_PRIMARY_KEY,
                 communityId = community1,
                 id = room1,
@@ -78,7 +91,6 @@ class RoomTest {
             Room(
                 "r2",
                 "name2",
-                icon = null,
                 creator = DEFAULT_PRIMARY_KEY,
                 communityId = community1,
                 id = room2,
@@ -89,9 +101,7 @@ class RoomTest {
             Room(
                 "r3",
                 "name3",
-                null,
                 creator = DEFAULT_PRIMARY_KEY,
-                communityId = null,
                 id = room3,
                 createdTime = now()
             )
@@ -102,13 +112,14 @@ class RoomTest {
     fun `test search room members`() {
         test { client, _ ->
             val communityId = SnowflakeFactory.nextId()
-            createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, communityId, now())).getOrThrow()
+            doCreateCommunity(
+                Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, communityId, now())
+            ).getOrThrow()
             val publicRoom = SnowflakeFactory.nextId()
             createRoom(
                 Room(
                     "r1",
                     "name1",
-                    null,
                     creator = DEFAULT_PRIMARY_KEY,
                     communityId = communityId,
                     id = publicRoom,
@@ -120,9 +131,7 @@ class RoomTest {
                 Room(
                     "r2",
                     "name2",
-                    icon = null,
                     creator = DEFAULT_PRIMARY_KEY,
-                    communityId = null,
                     id = privateRoom,
                     createdTime = now()
                 )

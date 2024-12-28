@@ -70,11 +70,12 @@ class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Resul
 @OptIn(ExperimentalPagingApi::class)
 class CommunitiesViewModel(
     private val joinStatusSearch: JoinStatusSearch,
-    private val word: String
+    private val word: String,
+    private val target: PrimaryKey? = null,
 ) : PagingViewModel<PrimaryKey, CommunityInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.searchCommunity(it, 10, joinStatusSearch, word).getOrThrow()
+            client.searchCommunity(it, 10, joinStatusSearch, word, target).getOrThrow()
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
         }
@@ -123,7 +124,7 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null) : PagingView
     )
 }, TopicsRemoteMediator("topics$id") { loadKey ->
     val info = when {
-        id == DEFAULT_PRIMARY_KEY -> client.getWorldTopics(loadKey, 10)
+        id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, 10)
         type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, 20)
         type == ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, 20)
         else -> client.getTopicTopics(id, loadKey, 20)
@@ -218,11 +219,11 @@ class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<Roo
     val dialog = DialogSaveState()
 
     constructor(roomId: PrimaryKey) : this({
-        requestRoomInfo(roomId, LoginViewModel.currentIsAlreadySignUp)
+        getRoomInfo(roomId)
     })
 
     constructor(roomAid: String) : this({
-        requestRoomInfoByAid(roomAid, LoginViewModel.currentIsAlreadySignUp)
+        getRoomInfoByAid(roomAid)
     })
 
     init {
@@ -299,7 +300,7 @@ class UserViewModel(private val requestInfo: suspend HttpClient.() -> Result<Use
 class WorldViewModel : PagingViewModel<PrimaryKey, TopicInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.getWorldTopics(it, 10).getOrThrow()
+            client.getRecommendTopics(it, 10).getOrThrow()
         }.map {
             val data = it.data.map { info ->
                 extractHeadlineIfPlain(info)

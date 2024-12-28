@@ -3,7 +3,9 @@ package com.storyteller_f.media
 import com.storyteller_f.MinIoConnection
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.MediaItem
+import io.github.aakira.napier.Napier
 import io.minio.*
+import io.minio.errors.ErrorResponseException
 import io.minio.http.Method
 import java.util.concurrent.TimeUnit
 import kotlin.Result
@@ -34,7 +36,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
     ): MediaItem {
         val statObject =
             statObject(StatObjectArgs.builder().bucket(bucketName).`object`(objName).build())
-        return MediaItem(objName, statObject.contentType(), statObject.size())
+        return MediaItem(objName, statObject.contentType(), statObject.size(), objName.substringAfter("/"))
     }
 
     override fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>> {
@@ -43,12 +45,20 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
                 if (it == null) {
                     null
                 } else {
-                    val url = getIconInMioIo(bucketName, it)
-                    if (url != null) {
-                        val item = stat(bucketName, it)
-                        MediaInfo(url, item)
-                    } else {
-                        null
+                    try {
+                        val url = getMinioObjectUrl(bucketName, it)
+                        if (url != null) {
+                            val item = stat(bucketName, it)
+                            MediaInfo(url, item, null)
+                        } else {
+                            null
+                        }
+                    } catch (e: ErrorResponseException) {
+                        if (e.errorResponse().code() == "NoSuchKey") {
+                            null
+                        } else {
+                            throw e
+                        }
                     }
                 }
             }
@@ -74,6 +84,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
 }
 
 private fun <R> useMinIoClient(minIoConnection: MinIoConnection, block: MinioClient.() -> R): Result<R> {
+    val point = Exception()
     return runCatching {
         MinioClient.builder()
             .endpoint(minIoConnection.url)
@@ -82,7 +93,9 @@ private fun <R> useMinIoClient(minIoConnection: MinIoConnection, block: MinioCli
                 try {
                     it.block()
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Napier.e(throwable = point) {
+                        "minio error $e"
+                    }
                     throw e
                 }
             }
@@ -97,7 +110,7 @@ private fun MinioClient.removeAllObject(bucketName: String) {
     }
 }
 
-private fun MinioClient.getIconInMioIo(bucketName: String, objName: String?): String? {
+private fun MinioClient.getMinioObjectUrl(bucketName: String, objName: String?): String? {
     objName ?: return null
     return getPresignedObjectUrl(
         GetPresignedObjectUrlArgs.builder()

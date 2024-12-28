@@ -3,6 +3,7 @@ package com.storyteller_f.a.server
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.MergedEnv
 import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
@@ -47,11 +48,11 @@ fun main(args: Array<String>) {
     EngineMain.main(args + extraArgs)
 }
 
-private fun processPreSetData(map: Map<out Any, Any>) {
-    val preSetEnable = (map["PRESET_ENABLE"] as String).toBoolean()
+private fun processPreSetData(env: MergedEnv) {
+    val preSetEnable = (env["PRESET_ENABLE"] as String).toBoolean()
     if (preSetEnable) {
-        val preSetScript = map["PRESET_SCRIPT"] as String
-        val workingDir = map["PRESET_WORKING_DIR"] as String
+        val preSetScript = env["PRESET_SCRIPT"] as String
+        val workingDir = env["PRESET_WORKING_DIR"] as String
         if (preSetScript.isNotBlank() && workingDir.isNotBlank()) {
             val scriptArray = preSetScript.trim('\'').split(" ").map {
                 if (it.startsWith("~")) {
@@ -91,7 +92,12 @@ private fun processPreSetData(map: Map<out Any, Any>) {
 
 @Suppress("unused")
 fun Application.module() {
-    val map = readEnv()
+    val associate = engine.environment.config.toMap().mapNotNull {
+        (it.value as? String)?.let { v ->
+            it.key to v
+        }
+    }.associate { it }
+    val map = readEnv(associate)
     val backend = buildBackendFromEnv(map)
     val reader = DatabaseReader.Builder(
         ClassLoader.getSystemClassLoader().getResourceAsStream("GeoLite2-Country.mmdb")

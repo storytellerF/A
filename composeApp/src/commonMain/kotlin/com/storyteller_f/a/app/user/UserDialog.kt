@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.serialization.removeValue
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.globalDialogState
@@ -31,13 +32,17 @@ import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 @Composable
-fun UserDialogInternal(userInfo: UserInfo) {
+fun UserDialogInternal(userInfo: UserInfo, dismiss: () -> Unit = {}) {
     val controller = remember {
         CustomAlertDialogController()
     }
+    val appNav = LocalAppNav.current
     val my by LoginViewModel.user.collectAsState()
     DialogContainer {
-        UserCell(userInfo, false, avatarSize = 50.dp)
+        UserCell(userInfo, false, avatarSize = 50.dp) {
+            dismiss()
+            appNav.gotoUser(it)
+        }
         Column {
             if (my?.id == userInfo.id) {
                 LaunchedEffect(null) {
@@ -92,7 +97,7 @@ fun UserDialog(
         BasicAlertDialog({
             dismiss()
         }) {
-            UserDialogInternal(userInfo)
+            UserDialogInternal(userInfo, dismiss)
         }
     }
 }

@@ -34,18 +34,18 @@ inline fun <R> serviceCatching(block: () -> R): Result<R> {
     }
 }
 
-suspend fun HttpClient.requestRoomInfo(id: PrimaryKey, alreadySignUp: Boolean) = serviceCatching {
+suspend fun HttpClient.getRoomInfo(id: PrimaryKey) = serviceCatching {
     get("rooms/$id") {
         url {
-            if (alreadySignUp) parameters.append("fillJoinInfo", "true")
+            if (isAlreadyLogin()) parameters.append("fillJoinInfo", "true")
         }
     }.body<RoomInfo>()
 }
 
-suspend fun HttpClient.requestRoomInfoByAid(aid: String, alreadySignUp: Boolean) = serviceCatching {
+suspend fun HttpClient.getRoomInfoByAid(aid: String) = serviceCatching {
     get("rooms") {
         url {
-            if (alreadySignUp) parameters.append("fillJoinInfo", "true")
+            if (isAlreadyLogin()) parameters.append("fillJoinInfo", "true")
             parameters.append("aid", aid)
         }
     }.body<RoomInfo>()
@@ -115,11 +115,13 @@ suspend fun HttpClient.searchCommunity(
     nextCommunityId: PrimaryKey?,
     size: Int,
     joinStatusSearch: JoinStatusSearch,
-    word: String?
+    word: String?,
+    target: PrimaryKey? = null
 ) = serviceCatching {
     get("communities/search") {
         url {
             word?.let { value -> parameters.append("word", value) }
+            target?.let { value -> parameters.append("target", value.toString()) }
             parameters.append("joinStatus", joinStatusSearch.name)
             appendPagingQueryParams(size, nextCommunityId)
         }
@@ -174,7 +176,7 @@ private fun URLBuilder.appendPagingQueryParams(size: Int, nextId: PrimaryKey?) {
     }
 }
 
-suspend fun HttpClient.getWorldTopics(nextTopicId: PrimaryKey?, size: Int) =
+suspend fun HttpClient.getRecommendTopics(nextTopicId: PrimaryKey?, size: Int) =
     serviceCatching {
         get(
             "topics/recommend"

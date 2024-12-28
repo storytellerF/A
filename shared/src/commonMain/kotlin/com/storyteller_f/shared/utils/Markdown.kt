@@ -20,12 +20,11 @@ fun extractMarkdownHeadline(markdownText: String): String {
     var captureContent = false
     var enableNestSearch = true
 
+    val typeList = markdownTypes()
+
     parsedTree.accept(object : Visitor {
         override fun visitNode(node: ASTNode) {
             val type = node.type
-            val typeList = MarkdownElementTypes::class.java.fields.mapNotNull {
-                (it.get(MarkdownElementTypes) as? IElementType)?.name
-            }
             when {
                 type == MarkdownElementTypes.ATX_1 -> {
                     // Extract the first level header content
@@ -57,8 +56,7 @@ fun extractMarkdownHeadline(markdownText: String): String {
         }
     })
     return if (headline.isNotBlank()) {
-        val trim = "$headline\n${paragraphs.toString().trim().take(150)}"
-        trim
+        "$headline\n${paragraphs.toString().trim().take(150)}"
     } else {
         extractHeadParagraph(markdownText)
     }
@@ -70,13 +68,11 @@ fun extractHeadParagraph(
     val paragraphs = StringBuilder()
     val parsedTree = astNode(markdownText)
     var captureContent = false
+    val typeList = markdownTypes()
     parsedTree.accept(object : Visitor {
         override fun visitNode(node: ASTNode) {
             val type = node.type
             val children = node.children
-            val typeList = MarkdownElementTypes::class.java.fields.mapNotNull {
-                (it.get(MarkdownElementTypes) as? IElementType)?.name
-            }
             when {
                 type == MarkdownElementTypes.MARKDOWN_FILE -> captureContent = true
                 type == MarkdownElementTypes.PARAGRAPH -> {
@@ -85,6 +81,7 @@ fun extractHeadParagraph(
                         if (content.isNotEmpty()) {
                             if (children.size == 1 && children.first().type == MarkdownElementTypes.IMAGE) {
                                 paragraphs.appendLine(content)
+                                captureContent = false
                             } else {
                                 paragraphs.appendLine(content.take(200))
                             }
@@ -111,7 +108,12 @@ fun extractHeadParagraph(
     })
     return paragraphs.toString().trim()
 }
-
+fun markdownTypes(): List<String> {
+    val typeList = MarkdownElementTypes::class.java.fields.mapNotNull {
+        (it.get(MarkdownElementTypes) as? IElementType)?.name
+    }
+    return typeList
+}
 fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
     val parsedTree = astNode(markdownText)
 

@@ -26,6 +26,11 @@ fun createJoinedCommunitiesViewModel() = viewModel {
 }
 
 @Composable
+fun createTargetUserJoinedCommunitiesViewModel(target: PrimaryKey) = viewModel {
+    CommunitiesViewModel(JoinStatusSearch.JOINED, "", target)
+}
+
+@Composable
 fun createCommunityViewModel(communityId: PrimaryKey) =
     viewModel(keys = listOf("community", communityId)) {
         CommunityViewModel(communityId)

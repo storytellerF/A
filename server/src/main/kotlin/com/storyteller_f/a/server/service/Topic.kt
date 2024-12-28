@@ -37,34 +37,45 @@ suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend
     if (newTopic.content is TopicContent.Encrypted) {
         return Result.failure(ForbiddenException("Community only accept unencrypted content."))
     }
+    if (newTopic.parentType == ObjectType.ROOM) {
+        return Result.failure(ForbiddenException("can't use api to add topic in room"))
+    }
     val content = (newTopic.content as TopicContent.Plain).plain
     return checkRootWritePermission(
         newTopic.parentType,
         newTopic.parentId,
         uid
     ).mapResultNotNull { (rootType, rootId, hasWrite) ->
-        if (hasWrite) {
-            val newId = SnowflakeFactory.nextId()
-            val topic = Topic(
-                author = uid,
-                parentId = newTopic.parentId,
-                parentType = newTopic.parentType,
-                rootId = rootId,
-                rootType = rootType,
-                lastModifiedTime = now(),
-                id = newId,
-                createdTime = now(),
-            )
-            saveTopic(topic, backend, content, rootId, rootType, newTopic, uid).mapResult {
-                backend.topicSearchService.getDocument(listOf(newId)).mapResult {
-                    val topicInfo = topic.toTopicInfo()
-                    processMediaLink(backend, listOf(topicInfo), it).map {
-                        it.firstOrNull()
+        when {
+            rootType == ObjectType.ROOM -> {
+                Result.failure(ForbiddenException("can't use api to add topic in room"))
+            }
+
+            hasWrite -> {
+                val newId = SnowflakeFactory.nextId()
+                val topic = Topic(
+                    author = uid,
+                    parentId = newTopic.parentId,
+                    parentType = newTopic.parentType,
+                    rootId = rootId,
+                    rootType = rootType,
+                    lastModifiedTime = now(),
+                    id = newId,
+                    createdTime = now(),
+                )
+                saveTopic(topic, backend, content, rootId, rootType, newTopic, uid).mapResult {
+                    backend.topicSearchService.getDocument(listOf(newId)).mapResult { documents ->
+                        val topicInfo = topic.toTopicInfo()
+                        processMediaLink(backend, listOf(topicInfo), documents).map {
+                            it.firstOrNull()
+                        }
                     }
                 }
             }
-        } else {
-            Result.failure(ForbiddenException("Permission denied."))
+
+            else -> {
+                Result.failure(ForbiddenException("Permission denied."))
+            }
         }
     }
 }
@@ -360,8 +371,8 @@ suspend fun searchPublicTopics(
         }
     }
     return backend.topicSearchService.searchDocument(
-        search.word,
         size,
+        search.word,
         nextTopicId,
         search.author,
         if (search.rootId != null && search.rootType != null) search.rootId to search.rootType else null,
@@ -373,9 +384,9 @@ suspend fun searchPublicTopics(
         commonTopics(uid, null, nextTopicId, size, search.parent.fillHasCommented) {
             Topics.id inList ids
         }.mapResult { infos ->
-            processMediaLink(backend, infos, list)
-        }.map { value ->
-            PaginationResult(value, total)
+            processMediaLink(backend, infos, list).map {
+                PaginationResult(it, total)
+            }
         }
     }
 }
@@ -453,41 +464,39 @@ fun processMediaLink(
 }
 
 fun documentMediaList(documentList: List<TopicDocument?>): List<Pair<PrimaryKey, String>> {
-    val list = documentList.flatMap { document ->
+    return documentList.flatMap { document ->
         if (document != null) {
             val mediaLinks = extractMarkdownMediaLink(document.content)
             mediaLinks.map {
-                document.id to it
+                val prefix = document.author
+                document.id to "$prefix/$it"
             }
         } else {
             emptyList()
         }
     }.distinct()
-    return list
 }
 
 suspend fun recommendTopics(
     backend: Backend,
-    preTopicId: PrimaryKey?,
     nextTopicId: PrimaryKey?,
     size: Int,
     uid: PrimaryKey?,
     fillHasCommented: Boolean,
 ): Result<PaginationResult<TopicInfo>?> {
-    return commonPaginationTopics(
-        uid,
-        preTopicId,
-        nextTopicId,
+    return backend.topicSearchService.searchDocument(
         size,
-        fillHasCommented
-    ) {
-        Topics.parentType eq ObjectType.COMMUNITY
-    }.mapResult { (data, count) ->
-        backend.topicSearchService.getDocument(data.map {
+        nextTopicId = nextTopicId,
+        parent = null to ObjectType.COMMUNITY,
+    ).mapResult { (list, total) ->
+        val ids = list.map {
             it.id
-        }).mapResult { value ->
-            processMediaLink(backend, data, value).map {
-                PaginationResult(it, count)
+        }
+        commonTopics(uid, null, nextTopicId, size, fillHasCommented) {
+            Topics.id inList ids
+        }.mapResult { infos ->
+            processMediaLink(backend, infos, list).map {
+                PaginationResult(it, total)
             }
         }
     }

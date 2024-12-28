@@ -19,9 +19,9 @@ object Communities : BaseTable() {
 class Community(
     val aid: String,
     val name: String,
-    val icon: String?,
+    val icon: String? = null,
     val owner: PrimaryKey,
-    val poster: String?,
+    val poster: String? = null,
     id: PrimaryKey,
     createdTime: LocalDateTime
 ) :
@@ -128,8 +128,10 @@ suspend fun commonCommunityList(
     joinStatus: JoinStatusSearch?,
     word: String?
 ): Result<List<CommunityRawResult>> = DatabaseFactory.mapQuery({
-    CommunityRawResult(toCommunityIfo(null), icon, poster)
-}, Community::wrapRow) {
+    CommunityRawResult(first.toCommunityIfo(null), first.icon, first.poster)
+}, {
+    Community.wrapRow(it) to it.getOrNull(MemberJoins.joinTime)
+}) {
     getSearchCommunityQuery(uid, false, joinStatus, word).bindPaginationQuery(
         Communities,
         prePageToken,
@@ -147,15 +149,7 @@ fun getSearchCommunityQuery(
     val query = when (joinStatusSearch) {
         JoinStatusSearch.JOINED -> {
             if (uid != null) {
-                val join = Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-                    .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-                        MemberJoins.uid eq uid
-                    }
-                if (getCount) {
-                    join.selectAll()
-                } else {
-                    join.select(Communities.fields + MemberJoins.joinTime + Aids.value)
-                }
+                getUserJoinedCommunityQuery(uid, getCount)
             } else {
                 throw UnauthorizedException()
             }
@@ -188,6 +182,21 @@ fun getSearchCommunityQuery(
     return query
 }
 
+fun getUserJoinedCommunityQuery(
+    target: PrimaryKey,
+    getCount: Boolean
+): Query {
+    val join = Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+        .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+            MemberJoins.uid eq target
+        }
+    return if (getCount) {
+        join.selectAll()
+    } else {
+        join.select(Communities.fields + MemberJoins.joinTime + Aids.value)
+    }
+}
+
 suspend fun commonPaginationCommunityList(
     uid: PrimaryKey?,
     prePageToken: PrimaryKey?,
@@ -205,7 +214,7 @@ suspend fun commonPaginationCommunityList(
     }
 }
 
-suspend fun createCommunity(community: Community) = DatabaseFactory.dbQuery {
+suspend fun doCreateCommunity(community: Community) = DatabaseFactory.dbQuery {
     Community.new(community) && Aids.insert {
         it[value] = community.aid
         it[objectId] = community.id

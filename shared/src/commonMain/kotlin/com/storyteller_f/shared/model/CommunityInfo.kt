@@ -16,8 +16,12 @@ data class CommunityInfo(
     val icon: MediaInfo? = null,
     val poster: MediaInfo? = null,
     val joinTime: LocalDateTime? = null,
+    val extension: Extension? = null,
 ) {
     val isJoined get() = joinTime != null
+
+    @Serializable
+    data class Extension(val targetUserJoinedTime: LocalDateTime? = null)
 
     companion object {
         val EMPTY = CommunityInfo(DEFAULT_PRIMARY_KEY, "", "", DEFAULT_PRIMARY_KEY, now(), null, null, now())

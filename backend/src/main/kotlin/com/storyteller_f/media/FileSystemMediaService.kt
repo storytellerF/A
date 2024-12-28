@@ -1,5 +1,9 @@
 package com.storyteller_f.media
 
+import com.j256.simplemagic.ContentInfo
+import com.j256.simplemagic.ContentInfoUtil
+import com.j256.simplemagic.ContentType
+import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.MediaItem
 import io.github.aakira.napier.Napier
@@ -7,9 +11,12 @@ import java.io.File
 import java.net.URLConnection
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import javax.imageio.ImageIO
+import javax.imageio.stream.FileImageInputStream
 
 class FileSystemMediaService(private val url: String, base: String) : MediaService {
     private val root = File(base)
+    private val util = ContentInfoUtil()
 
     init {
         Napier.i {
@@ -53,17 +60,48 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
                 null -> null
                 else -> {
                     val file = File(root, "$bucketName/$it")
-                    MediaInfo(
-                        "${url}amedia/$it",
-                        MediaItem(
-                            it,
-                            URLConnection.guessContentTypeFromName(file.path) ?: "application/oct-stream",
-                            file.length()
-                        )
-                    )
+                    if (file.exists()) {
+                        val item = stat(it, file)
+                        val dimension = getDimension(item, file)
+                        MediaInfo("${url}amedia/$it", item, dimension)
+                    } else {
+                        null
+                    }
                 }
             }
         })
+    }
+
+    private fun getDimension(
+        item: MediaItem,
+        file: File
+    ) = ImageIO.getImageReadersByMIMEType(item.contentType).asSequence().firstNotNullOfOrNull { reader ->
+        try {
+            reader.input = FileImageInputStream(file)
+            Dimension(
+                reader.getWidth(reader.minIndex),
+                reader.getHeight(reader.minIndex)
+            )
+        } catch (e: Exception) {
+            Napier.e(throwable = e) {
+                "get image dimension failed ${item.name}"
+            }
+            null
+        } finally {
+            reader.dispose()
+        }
+    }
+
+    private fun stat(it: String, file: File): MediaItem {
+        val contentInfo: ContentInfo? = util.findMatch(file)
+        val contentType =
+            contentInfo?.mimeType ?: URLConnection.guessContentTypeFromName(file.path) ?: ContentType.OTHER.mimeType
+        return MediaItem(
+            it,
+            contentType,
+            file.length(),
+            it.substringAfter("/")
+        )
     }
 
     override fun clean(bucketName: String): Result<Unit> {
