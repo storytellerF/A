@@ -154,12 +154,11 @@ private fun buildLog(
 ): String {
     val status = call.response.status()
     val httpMethod = call.request.httpMethod.value
-    val (firstIp) = call.remoteIp(reader)
+    val ipList = call.remoteIp(reader).joinToString(",")
     return """Status: $status, HTTP method: $httpMethod, 
                 |Url: ${call.request.uri},
                 |Query: ${call.request.queryString()}
-                |Ip: ${firstIp.first}
-                |Region ${firstIp.second}""".trimMargin()
+                |Ip：$ipList}""".trimMargin()
 }
 
 fun ApplicationCall.remoteIp(

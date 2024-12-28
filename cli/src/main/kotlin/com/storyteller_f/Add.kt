@@ -231,7 +231,7 @@ class Add : Subcommand("add", "add entry") {
                     userList1[first.author]!!.id
                 )
             }
-        )
+        ).getOrThrow()
     }
 
     private suspend fun insertEncryptedTopic(
