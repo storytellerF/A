@@ -25,7 +25,8 @@ class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = nul
     class Search(
         @Suppress("unused") val parent: RouteCommunities = RouteCommunities(),
         val joinStatus: JoinStatusSearch? = null,
-        val word: String? = null
+        val word: String? = null,
+        val target: PrimaryKey? = null,
     )
 
     @Resource("{id}")
@@ -101,7 +102,7 @@ class RouteTopics(val fillHasCommented: Boolean? = null) {
         class Topics(val parent: Id)
 
         @Resource("reactions")
-        class Reactions(val parent: Id)
+        class Reactions(val parent: Id, val fillHasReacted: Boolean? = null)
     }
 }
 
@@ -129,13 +130,13 @@ class RouteAccounts {
     class SignUp(@Suppress("unused") val parent: RouteAccounts)
 
     @Resource("sign_in")
-    class SignIn(@Suppress("unused")val parent: RouteAccounts)
+    class SignIn(@Suppress("unused") val parent: RouteAccounts)
 
     @Resource("sign_out")
-    class SignOut(@Suppress("unused")val parent: RouteAccounts)
+    class SignOut(@Suppress("unused") val parent: RouteAccounts)
 
     @Resource("get_data")
-    class GetData(@Suppress("unused")val parent: RouteAccounts)
+    class GetData(@Suppress("unused") val parent: RouteAccounts)
 }
 
 fun Application.commonRoute(backend: Backend, reader: DatabaseReader) {
@@ -146,7 +147,7 @@ fun Application.commonRoute(backend: Backend, reader: DatabaseReader) {
             bindProtectedSafeCommunityRoute(backend, reader)
             bindProtectedSafeUserRoute(reader)
             webSocket("/link") {
-                webSocketContent(backend)
+                webSocketContent(backend, reader)
             }
             bindProtectedAccountRoute(reader)
             bindProtectedSafeMediaRoute(backend, reader)
@@ -173,8 +174,12 @@ fun Routing.bindUnauthenticatedRoute(backend: Backend, reader: DatabaseReader) {
                 val service = backend.mediaService
                 if (service is FileSystemMediaService) {
                     val file = service.getResponse(it)
-                    val value = MediaResponse(file.path, ContentType.defaultForFile(file).toString())
-                    Result.success(value)
+                    if (file.exists()) {
+                        val value = MediaResponse(file.path, ContentType.defaultForFile(file).toString())
+                        Result.success(value)
+                    } else {
+                        Result.success(null)
+                    }
                 } else {
                     Result.failure(BadRequestException("can't find file"))
                 }

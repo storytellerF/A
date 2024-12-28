@@ -33,7 +33,7 @@ fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { prePageToken, nextPageToken, size ->
-                recommendTopics(backend, prePageToken, nextPageToken, size, uid, it.parent.fillHasCommented == true)
+                recommendTopics(backend, nextPageToken, size, uid, it.parent.fillHasCommented == true)
             }
         }
     }
@@ -51,6 +51,11 @@ fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
             }) { p, n, s ->
                 getTopics(it.parent.id, ObjectType.TOPIC, uid, backend, p, n, s, it.parent.parent.fillHasCommented)
             }
+        }
+    }
+    get<RouteTopics.Id.Reactions> {
+        usePrincipalOrNull(reader) { id ->
+            reactionList(it.parent.id, id, it.parent.parent.fillHasCommented)
         }
     }
 }
@@ -88,12 +93,6 @@ fun Route.bindProtectedSafeTopicRoute(backend: Backend, reader: DatabaseReader) 
             } else {
                 Result.failure(BadRequestException("invalid emoji"))
             }
-        }
-    }
-
-    get<RouteTopics.Id.Reactions> {
-        usePrincipalOrNull(reader) { id ->
-            reactionList(it.parent.id, id, it.parent.parent.fillHasCommented)
         }
     }
 }

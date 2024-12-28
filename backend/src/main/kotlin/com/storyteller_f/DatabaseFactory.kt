@@ -158,11 +158,11 @@ object DatabaseFactory {
     }
 
     private fun <T> Transaction.explainQuery(block: () -> SizedIterable<T>) {
-        Napier.d(tag = "explain result") {
+        Napier.i(tag = "explain result") {
             val result = explain {
-                block().limit(1)
+                block()
             }.toList().joinToString("\n")
-            "$result\n$statements"
+            "result: $result\nstatements: $statements"
         }
     }
 }

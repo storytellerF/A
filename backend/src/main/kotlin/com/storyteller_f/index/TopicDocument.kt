@@ -31,18 +31,18 @@ data class TopicDocument(
 }
 
 interface TopicSearchService {
-    suspend fun saveDocument(topics: List<TopicDocument>): Result<Long>
+    suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit>
 
     suspend fun getDocument(idList: List<PrimaryKey>): Result<List<TopicDocument?>>
 
     suspend fun clean(): Result<Unit>
 
     suspend fun searchDocument(
-        word: List<String>?,
         size: Int,
-        nextTopicId: PrimaryKey?,
-        author: PrimaryKey?,
-        root: Pair<PrimaryKey, ObjectType>?,
-        parent: Pair<PrimaryKey, ObjectType>?,
+        word: List<String>? = null,
+        nextTopicId: PrimaryKey? = null,
+        author: PrimaryKey? = null,
+        root: Pair<PrimaryKey?, ObjectType>? = null,
+        parent: Pair<PrimaryKey?, ObjectType>? = null,
     ): Result<PaginationResult<TopicDocument>>
 }

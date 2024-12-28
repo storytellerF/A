@@ -63,7 +63,9 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismiss: ()
     val toasterState = rememberToasterState()
     Toaster(toasterState)
     DialogContainer {
-        UserCell(authorInfo, true)
+        UserCell(authorInfo, true) {
+            appNav.gotoUser(it)
+        }
         Text("pub: ${topicInfo.lastModifiedTime}")
 
         when (topicInfo.rootType) {

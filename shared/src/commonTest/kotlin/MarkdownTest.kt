@@ -28,16 +28,6 @@ class MarkdownTest {
             Hello.
         """.trimIndent(), actual
         )
-
-        val extractMarkdownHeadline = extractMarkdownHeadline(
-            """
-            ![7276537454461452288/Camera_XHS_17315769117051040g2sg31a3ct9d77edg5pn7lgd7e81mqe6f528.jpg](7276537454461452288/Camera_XHS_17315769117051040g2sg31a3ct9d77edg5pn7lgd7e81mqe6f528.jpg "7276537454461452288/Camera_XHS_17315769117051040g2sg31a3ct9d77edg5pn7lgd7e81mqe6f528.jpg")
-        """.trimIndent()
-        )
-        assertEquals(
-            """![7276537454461452288/Camera_XHS_17315769117051040g2sg31a3ct9d77edg5pn7lgd7e81mqe6f528.jpg](7276537454461452288/Camera_XHS_17315769117051040g2sg31a3ct9d77edg5pn7lgd7e81mqe6f528.jpg "7276537454461452288/Camera_XHS_17315769117051040g2sg31a3ct9d77edg5pn7lgd7e81mqe6f528.jpg")""",
-            extractMarkdownHeadline
-        )
     }
 
     @Test
@@ -53,6 +43,16 @@ class MarkdownTest {
     fun `test extract paragraph`() {
         val r = extractHeadParagraph("test")
         assertEquals("test", r)
+    }
+
+    @Test
+    fun `test extract image`() {
+        assertEquals(
+            """![I00012733.jpg](I00012733.jpg "I00012733.jpg")""",
+            extractMarkdownHeadline(
+                """![I00012733.jpg](I00012733.jpg "I00012733.jpg")"""
+            )
+        )
     }
 
 }

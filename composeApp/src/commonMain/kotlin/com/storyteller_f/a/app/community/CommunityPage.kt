@@ -210,11 +210,10 @@ private fun CommunityPageInternal(
 
 @Composable
 fun communityNavRoutes(): List<NavRoute> {
-    val navs = listOf(
+    return listOf(
         NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
         NavRoute("/rooms", Icons.Default.ChatBubble, stringResource(Res.string.rooms))
     )
-    return navs
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

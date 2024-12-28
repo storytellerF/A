@@ -4,7 +4,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient
 import co.elastic.clients.elasticsearch._types.SortOrder
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery
-import co.elastic.clients.elasticsearch._types.query_dsl.Operator
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery
@@ -40,17 +39,20 @@ private const val TOPIC_INDEX_NAME = "topics"
 
 class ElasticTopicSearchService(private val connection: ElasticConnection) : TopicSearchService {
 
-    override suspend fun saveDocument(topics: List<TopicDocument>): Result<Long> {
+    override suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit> {
         return if (topics.size == 1) {
             val topic = topics.first()
             useElasticClient(connection) {
-                index {
+                val response = index {
                     it.index(TOPIC_INDEX_NAME).id(topic.id.toString()).document(topic)
-                }.await().seqNo()!!
+                }.await()
+                Napier.i(tag = "elastic save") {
+                    response.toString()
+                }
             }
         } else {
             useElasticClient(connection) {
-                bulk(BulkRequest.of {
+                val response = bulk(BulkRequest.of {
                     it.operations(topics.map { document ->
                         BulkOperation.of { op ->
                             op.index(
@@ -62,15 +64,18 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                             )
                         }
                     })
-                }).await().items().size.toLong()
+                }).await()
+                Napier.i(tag = "elastic save bulk") {
+                    response.toString()
+                }
             }
         }
     }
 
     override suspend fun getDocument(idList: List<PrimaryKey>): Result<List<TopicDocument?>> {
         return if (idList.size == 1) {
+            val id = idList.first()
             useElasticClient(connection) {
-                val id = idList.first()
                 listOf(get({
                     it.index(TOPIC_INDEX_NAME)
                         .id(id.toString())
@@ -78,8 +83,8 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
             }
         } else {
             useElasticClient(connection) {
-                mget(MgetRequest.of {
-                    it.index(TOPIC_INDEX_NAME).ids(idList.map { it.toString() })
+                mget(MgetRequest.of { builder ->
+                    builder.index(TOPIC_INDEX_NAME).ids(idList.map { it.toString() })
                 }, TopicDocument::class.java).await().docs().map {
                     it.result().source()
                 }
@@ -89,24 +94,30 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
 
     override suspend fun clean(): Result<Unit> {
         return useElasticClient(connection) {
-            indices().delete {
-                it.index(TOPIC_INDEX_NAME)
-            }.await()
-            Unit
+            if (indices().exists {
+                    it.index(TOPIC_INDEX_NAME)
+                }.await().value()) {
+                val response = indices().delete {
+                    it.index(TOPIC_INDEX_NAME)
+                }.await()
+                Napier.i {
+                    "elastic clean $response"
+                }
+            } else {
+                Unit
+            }
         }
     }
 
     override suspend fun searchDocument(
-        word: List<String>?,
         size: Int,
+        word: List<String>?,
         nextTopicId: PrimaryKey?,
         author: PrimaryKey?,
-        root: Pair<PrimaryKey, ObjectType>?,
-        parent: Pair<PrimaryKey, ObjectType>?
+        root: Pair<PrimaryKey?, ObjectType>?,
+        parent: Pair<PrimaryKey?, ObjectType>?
     ): Result<PaginationResult<TopicDocument>> {
         val boolQuery = createTopicSearchQuery(word, root, parent, author, nextTopicId)
-
-        println(boolQuery.toString())
 
         // 构建排序条件：按 ID 升序排序
         val request = SearchRequest.of { s ->
@@ -117,6 +128,9 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                         f.field("id").order(SortOrder.Asc)
                     }
                 }.trackScores(true)
+        }
+        Napier.i {
+            "elastic search query $request"
         }
         return useElasticClient(connection) {
             val response = search(request, TopicDocument::class.java).await()
@@ -130,17 +144,18 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
 
     private fun createTopicSearchQuery(
         word: List<String>?,
-        root: Pair<PrimaryKey, ObjectType>?,
-        parent: Pair<PrimaryKey, ObjectType>?,
+        root: Pair<PrimaryKey?, ObjectType>?,
+        parent: Pair<PrimaryKey?, ObjectType>?,
         author: PrimaryKey?,
         nextTopicId: PrimaryKey?
     ): BoolQuery {
-        val contentQuery = word?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }?.let {
-            MatchQuery.of { m ->
-                m.field("content")
-                    .query(it.joinToString(" ")) // 多关键字匹配，忽略大小写
-                    .operator(Operator.Or)
-            }._toQuery()
+        val contentQuery = word?.let {
+            it.filter { w -> w.isNotBlank() }.takeIf { list -> list.isNotEmpty() }?.let {
+                MatchQuery.of { m ->
+                    m.field("content")
+                        .query(it.joinToString(" ")) // 多关键字匹配，忽略大小写
+                }._toQuery()
+            }
         }
 
         val rootQuery = root?.let {
@@ -157,16 +172,17 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
             }._toQuery()
         }
 
-        val idRangeQuery = RangeQuery.of { r ->
-            r.field("id")
-                .lt(JsonData.of(nextTopicId ?: Long.MAX_VALUE))
-        }._toQuery()
+        val idRangeQuery = nextTopicId?.let {
+            RangeQuery.of { r ->
+                r.field("id")
+                    .lt(JsonData.of(nextTopicId))
+            }._toQuery()
+        }
 
         return BoolQuery.of { b ->
             contentQuery?.let {
                 b.must(it)
             }
-            b.must(idRangeQuery)
             rootQuery?.let {
                 b.must(it)
             }
@@ -176,22 +192,31 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
             authorQuery?.let {
                 b.must(it)
             }
+            idRangeQuery?.let {
+                b.must(it)
+            }
             b
         }
     }
 
-    private fun createRootSearchQuery(pair: Pair<PrimaryKey, ObjectType>): Query = BoolQuery.of { b ->
+    private fun createRootSearchQuery(pair: Pair<PrimaryKey?, ObjectType>): Query = BoolQuery.of { b ->
+        pair.first?.let {
+            b.must(TermQuery.of { t ->
+                t.field("rootId").value(it)
+            }._toQuery())
+        }
         b.must(TermQuery.of { t ->
-            t.field("rootId").value(pair.first)
-        }._toQuery()).must(TermQuery.of { t ->
             t.field("rootType").value(pair.second.name)
         }._toQuery())
     }._toQuery()
 
-    private fun createParentSearchQuery(pair: Pair<PrimaryKey, ObjectType>): Query = BoolQuery.of { b ->
+    private fun createParentSearchQuery(pair: Pair<PrimaryKey?, ObjectType>): Query = BoolQuery.of { b ->
+        pair.first?.let {
+            b.must(TermQuery.of { t ->
+                t.field("parentId").value(it)
+            }._toQuery())
+        }
         b.must(TermQuery.of { t ->
-            t.field("parentId").value(pair.first)
-        }._toQuery()).must(TermQuery.of { t ->
             t.field("parentType").value(pair.second.name)
         }._toQuery())
     }._toQuery()
@@ -201,6 +226,7 @@ private suspend fun <T> useElasticClient(
     elasticConnection: ElasticConnection,
     block: suspend ElasticsearchAsyncClient.() -> T
 ): Result<T> {
+    val point = Exception()
     val sslContext = if (elasticConnection.certFile.isNotBlank()) {
         val crtStream = withContext(Dispatchers.IO) {
             Napier.i(message = "cert path ${File(elasticConnection.certFile).canonicalPath}")
@@ -211,17 +237,20 @@ private suspend fun <T> useElasticClient(
         null
     }
 
-    val credsProv = BasicCredentialsProvider()
-    credsProv.setCredentials(
-        AuthScope.ANY,
-        UsernamePasswordCredentials(elasticConnection.name, elasticConnection.pass)
-    )
+    val credsProv = BasicCredentialsProvider().apply {
+        setCredentials(
+            AuthScope.ANY,
+            UsernamePasswordCredentials(elasticConnection.name, elasticConnection.pass)
+        )
+    }
     return runCatching {
         try {
             RestClient
                 .builder(HttpHost.create(elasticConnection.url))
                 .setHttpClientConfigCallback { p0 ->
-                    p0.setSSLContext(sslContext)
+                    if (sslContext != null) {
+                        p0.setSSLContext(sslContext)
+                    }
                     p0.setDefaultCredentialsProvider(credsProv)
                 }
                 .build().use { restClient ->
@@ -238,6 +267,9 @@ private suspend fun <T> useElasticClient(
             if (e is ConnectException || e is ConnectionClosedException) {
                 throw Exception("elastic service unavailable", e)
             } else {
+                Napier.e(throwable = point) {
+                    "elastic error $e"
+                }
                 throw e
             }
         }

@@ -1,87 +1,105 @@
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.MergedEnv
 import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.a.server.module
 import com.storyteller_f.buildBackendFromEnv
-import com.storyteller_f.readEnv
+import com.storyteller_f.readResourceEnv
 import com.storyteller_f.shared.*
+import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.Tuple4
 import com.storyteller_f.shared.type.Tuple5
+import io.github.aakira.napier.DebugAntilog
+import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
-import io.ktor.server.application.*
 import io.ktor.server.config.*
-import io.ktor.server.routing.*
 import io.ktor.server.testing.*
+import kotlinx.coroutines.runBlocking
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.elasticsearch.ElasticsearchContainer
-import org.testcontainers.utility.DockerImageName
+import kotlin.collections.Map
+import kotlin.collections.forEach
+import kotlin.collections.listOf
+import kotlin.collections.set
+import kotlin.collections.toMutableMap
 
-@Suppress("unused")
-fun Application.module() {
-    routing {
-    }
-}
-
-fun test(block: suspend (HttpClient, ClientWebSocket) -> Unit) {
+fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, ClientWebSocket) -> Unit) {
+    Napier.base(DebugAntilog())
     SnowflakeFactory.setMachine(0)
     addProvider()
-    testApplication {
-        val env = readEnv(".env").toMutableMap()
+    run {
+        val env = readResourceEnv(".env")!!.toMutableMap()
         ElasticsearchContainer(
-            DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.9.2")
-        ).use { elasticClient ->
-            elasticClient.start()
-            env["SEARCH_SERVICE"] = "elastic"
-            env["ELASTIC_NAME"] = "elastic"
-            env["ELASTIC_PASSWORD"] = "changeme"
-            env["ELASTIC_URL"] = "https://${elasticClient.httpHostAddress}"
-            MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z").use { minioContainer ->
-                minioContainer.start()
-                env["MEDIA_SERVICE"] = "minio"
-                env["MINIO_URL"] = minioContainer.s3URL
-                env["MINIO_NAME"] = minioContainer.userName
-                env["MINIO_PASS"] = minioContainer.password
-                doTest(env, block)
-                minioContainer.stop()
+            "docker.elastic.co/elasticsearch/elasticsearch:8.1.2"
+        )
+            // disable SSL
+            .withEnv("xpack.security.transport.ssl.enabled", "false")
+            .withEnv("xpack.security.http.ssl.enabled", "false").use { elasticClient ->
+                elasticClient.start()
+                env["SEARCH_SERVICE"] = "elastic"
+                env["ELASTIC_NAME"] = "elastic"
+                env["ELASTIC_PASSWORD"] = "changeme"
+                env["ELASTIC_URL"] = "http://${elasticClient.httpHostAddress}"
+                MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z").use { minioContainer ->
+                    minioContainer.start()
+                    env["MEDIA_SERVICE"] = "minio"
+                    env["MINIO_URL"] = minioContainer.s3URL
+                    env["MINIO_NAME"] = minioContainer.userName
+                    env["MINIO_PASS"] = minioContainer.password
+                    doTest(env, receivedFrame, block)
+                    minioContainer.stop()
+                }
+                elasticClient.stop()
             }
-            elasticClient.stop()
-        }
     }
-    testApplication {
-        val env = readEnv(".env")
-        doTest(env, block)
+
+    run {
+        val env = readResourceEnv(".env")!!
+        doTest(env, receivedFrame, block)
     }
 }
 
-private suspend fun ApplicationTestBuilder.doTest(
-    env: Map<out Any, Any>,
+private fun doTest(
+    env: Map<String, String>,
+    receivedFrame: (RoomFrame) -> Unit = {},
     block: suspend (HttpClient, ClientWebSocket) -> Unit
 ) {
-    val backend = buildBackendFromEnv(env)
-    backend.topicSearchService.clean()
+    val backend = buildBackendFromEnv(MergedEnv(listOf(env)))
+    runBlocking {
+        backend.topicSearchService.clean()
+    }
     DatabaseFactory.clean(backend.config.databaseConnection)
     DatabaseFactory.init(backend.config.databaseConnection)
-    environment {
-        config = MapApplicationConfig(
-            "ktor.application.modules.0" to "TestBuilderKt.module",
-            "ktor.application.modules.1" to "com.storyteller_f.a.server.ApplicationKt.module",
-            "ktor.application.modules.size" to "2"
-        )
-    }
-    val client = createClient {
-        defaultClientConfigure()
-    }
-    val wsClient = ClientWebSocket({
-        client.webSocketSession("/link") {
-            addRequestHeaders(LoginViewModel.session?.first)
+    testApplication {
+        environment {
+            config = MapApplicationConfig().apply {
+                env.forEach {
+                    put(it.key, it.value)
+                }
+            }
         }
-    }) {
-        it
+        application {
+            module()
+        }
+        val client = createClient {
+            defaultClientConfigure()
+        }
+        val wsClient = ClientWebSocket({
+            client.webSocketSession("/link") {
+                addRequestHeaders(LoginViewModel.session?.first)
+            }
+        }) {
+            receivedFrame(it)
+        }
+
+        block(client, wsClient)
     }
 
-    block(client, wsClient)
-    backend.topicSearchService.clean()
+    runBlocking {
+        backend.topicSearchService.clean()
+    }
     DatabaseFactory.clean()
 }
 
@@ -100,7 +118,7 @@ suspend fun <R> attachSession(
     LoginViewModel.updateUser(userInfo)
     LoginViewModel.updateSession(rawData, sign)
     val r = block(Tuple4(priKey, pubKey, address, userInfo.id))
-    client.signOut()
+    client.signOut().getOrThrow()
     LoginViewModel.signOut()
     return Tuple5(priKey, pubKey, address, userInfo.id, r)
 }

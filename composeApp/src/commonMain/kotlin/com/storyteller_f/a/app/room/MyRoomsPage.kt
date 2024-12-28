@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
-import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.LocalAppNav
@@ -50,7 +49,6 @@ fun RoomList(
                 key = items.itemKey {
                     it.id.toString()
                 },
-                contentType = items.itemContentType()
             ) { index ->
                 RoomCell(items[index], false)
             }

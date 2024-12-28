@@ -12,22 +12,19 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Community
-import com.storyteller_f.tables.createCommunity
+import com.storyteller_f.tables.doCreateCommunity
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class CommunityTest {
     @Test
     fun `test get community`() = test { client, _ ->
         val newId = SnowflakeFactory.nextId()
-        createCommunity(
-            Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())
+        doCreateCommunity(
+            Community("aid", "name", owner = DEFAULT_PRIMARY_KEY, id = newId, createdTime = now())
         ).getOrThrow()
         val community = client.getCommunityInfo(newId).getOrThrow()
         assertEquals(newId, client.getCommunityInfoByAid(community.aid).getOrThrow().id)
@@ -38,8 +35,8 @@ class CommunityTest {
         attachSession(client) {
             // insert community
             val communityId = SnowflakeFactory.nextId()
-            val community = Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, communityId, now())
-            createCommunity(community).getOrThrow()
+            val community = Community("aid", "name", owner = DEFAULT_PRIMARY_KEY, id = communityId, createdTime = now())
+            doCreateCommunity(community).getOrThrow()
             assertFails {
                 client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
             }
@@ -78,8 +75,8 @@ class CommunityTest {
             val communities = buildList {
                 repeat(10) {
                     val newId = SnowflakeFactory.nextId()
-                    createCommunity(
-                        Community("aid$it", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())
+                    doCreateCommunity(
+                        Community("aid$it", "name", owner = DEFAULT_PRIMARY_KEY, id = newId, createdTime = now())
                     ).getOrThrow()
                     add(newId)
                 }
@@ -117,9 +114,19 @@ class CommunityTest {
     fun `test search community`() {
         test { client, _ ->
             val community1 = SnowflakeFactory.nextId()
-            createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now())).getOrThrow()
+            doCreateCommunity(
+                Community("c1", "name1", owner = DEFAULT_PRIMARY_KEY, id = community1, createdTime = now())
+            ).getOrThrow()
             val community2 = SnowflakeFactory.nextId()
-            createCommunity(Community("c2", "name2", null, DEFAULT_PRIMARY_KEY, null, community2, now())).getOrThrow()
+            doCreateCommunity(
+                Community(
+                    "c2",
+                    "name2",
+                    owner = DEFAULT_PRIMARY_KEY,
+                    id = community2,
+                    createdTime = now()
+                )
+            ).getOrThrow()
             attachSession(client) {
                 client.joinCommunity(community1)
                 testSearchCommunityCount(client, 1, null, 10, JoinStatusSearch.JOINED, null)
@@ -153,11 +160,48 @@ class CommunityTest {
     fun `test search community member`() {
         test { client, _ ->
             val community1 = SnowflakeFactory.nextId()
-            createCommunity(Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, community1, now())).getOrThrow()
+            doCreateCommunity(
+                Community("c1", "name1", owner = DEFAULT_PRIMARY_KEY, id = community1, createdTime = now())
+            ).getOrThrow()
             attachSession(client) {
                 assertEquals(0, client.searchCommunityMembers(community1, null, 10, null).getOrThrow().data.size)
                 client.joinCommunity(community1)
                 assertEquals(1, client.searchCommunityMembers(community1, null, 10, null).getOrThrow().data.size)
+            }
+        }
+    }
+
+    @Test
+    fun `test get other user joined communities`() {
+        test { client, _ ->
+            val (_, _, _, data4, _) = attachSession(client) {
+                repeat(10) {
+                    val communityId = SnowflakeFactory.nextId()
+                    doCreateCommunity(
+                        Community("c$it", "c$it", owner = 0, id = communityId, createdTime = now())
+                    ).getOrThrow()
+                    client.joinCommunity(communityId).getOrThrow()
+                }
+            }
+            run {
+                val response = client.searchCommunity(null, 10, JoinStatusSearch.JOINED, null, data4).getOrThrow()
+                assertEquals(10, response.data.size)
+                response.data.forEach {
+                    assertFalse(it.isJoined)
+                    assertNotNull(it.extension?.targetUserJoinedTime)
+                }
+            }
+            attachSession(client) {
+                val response = client.searchCommunity(null, 10, JoinStatusSearch.JOINED, null, data4).getOrThrow()
+                assertEquals(10, response.data.size)
+                response.data.forEach {
+                    client.joinCommunity(it.id)
+                }
+                val response2 = client.searchCommunity(null, 10, JoinStatusSearch.JOINED, null, data4).getOrThrow()
+                response2.data.forEach {
+                    assertTrue(it.isJoined)
+                    assertNotNull(it.extension?.targetUserJoinedTime)
+                }
             }
         }
     }

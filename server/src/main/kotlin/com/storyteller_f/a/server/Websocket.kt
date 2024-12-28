@@ -1,5 +1,6 @@
 package com.storyteller_f.a.server
 
+import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
@@ -15,8 +16,11 @@ import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.ktor.server.application.*
+import io.ktor.server.request.*
 import io.ktor.server.websocket.*
 import io.ktor.util.logging.error
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -24,21 +28,11 @@ import kotlinx.coroutines.launch
 val messageResponseFlow = MutableSharedFlow<RoomFrame.NewTopicInfo>()
 val sharedFlow = messageResponseFlow.asSharedFlow()
 
-suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend) {
+suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend, reader: DatabaseReader) {
     val job = launch {
         sharedFlow.collect { frame ->
             usePrincipalOrNull { uid ->
-                val info = frame.topicInfo
-                if (uid != null) {
-                    call.application.log.info("distribution ${info.id}")
-                    isMemberJoined(info.rootId, uid).onSuccess { value ->
-                        if (value && uid != info.author) {
-                            sendSerialized(frame as RoomFrame)
-                        }
-                    }.onFailure { exception ->
-                        call.application.log.error("distribution ws to $uid", exception)
-                    }
-                }
+                sendToMember(frame, uid)
             }
         }
     }
@@ -48,36 +42,77 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend) {
             val frame = receiveDeserialized<RoomFrame>()
             usePrincipalOrNull { uid ->
                 if (uid != null) {
-                    try {
-                        if (frame is RoomFrame.Message) {
-                            val newTopic = frame.newTopic
-                            addTopicAtRoom(newTopic, uid, backend = backend).onSuccess {
-                                if (it == null) {
-                                    sendSerialized(RoomFrame.Error("not found") as RoomFrame)
-                                } else {
-                                    val raw = RoomFrame.NewTopicInfo(it)
-                                    sendSerialized(raw as RoomFrame)
-                                    messageResponseFlow.emit(raw)
-                                }
-                            }.onFailure {
-                                val message = it.message ?: "unknown error"
-                                call.application.log.error(it)
-                                sendSerialized(RoomFrame.Error(message) as RoomFrame)
-                            }
-                        }
-                    } catch (e: Exception) {
-                        call.application.log.error("Catch exception in ws", e)
-                    }
+                    processUserMessage(frame, uid, backend)
                 }
             }
         } catch (e: Exception) {
-            if (e is kotlinx.coroutines.channels.ClosedReceiveChannelException) {
-                call.application.log.info("${call.request.call.request}")
-            }
-            call.application.log.error("ws receive", e)
+            printWsError(e, reader)
             job.cancel()
             return
         }
+    }
+}
+
+private suspend fun DefaultWebSocketServerSession.sendToMember(
+    frame: RoomFrame.NewTopicInfo,
+    uid: PrimaryKey?
+) {
+    val info = frame.topicInfo
+    if (uid != null) {
+        call.application.log.info("distribution ${info.id}")
+        isMemberJoined(info.rootId, uid).onSuccess { value ->
+            if (value && uid != info.author) {
+                sendSerialized(frame as RoomFrame)
+            }
+        }.onFailure { exception ->
+            call.application.log.error("distribution ws to $uid", exception)
+        }
+    }
+}
+
+private fun DefaultWebSocketServerSession.printWsError(
+    e: Exception,
+    reader: DatabaseReader
+) {
+    when (e) {
+        is ClosedReceiveChannelException -> {
+            call.application.log.info("ws closed ${call.remoteIp(reader).first()}")
+        }
+
+        is CancellationException -> {
+            call.application.log.info("ws cancel")
+        }
+
+        else -> {
+            call.application.log.error("ws receive", e)
+        }
+    }
+}
+
+private suspend fun DefaultWebSocketServerSession.processUserMessage(
+    frame: RoomFrame,
+    uid: PrimaryKey,
+    backend: Backend
+) {
+    try {
+        if (frame is RoomFrame.Message) {
+            val newTopic = frame.newTopic
+            addTopicAtRoom(newTopic, uid, backend = backend).onSuccess {
+                if (it == null) {
+                    sendSerialized(RoomFrame.Error("not found") as RoomFrame)
+                } else {
+                    val raw = RoomFrame.NewTopicInfo(it)
+                    sendSerialized(raw as RoomFrame)
+                    messageResponseFlow.emit(raw)
+                }
+            }.onFailure {
+                val message = it.message ?: "unknown error"
+                call.application.log.error(it)
+                sendSerialized(RoomFrame.Error(message) as RoomFrame)
+            }
+        }
+    } catch (e: Exception) {
+        call.application.log.error("Catch exception in ws", e)
     }
 }
 

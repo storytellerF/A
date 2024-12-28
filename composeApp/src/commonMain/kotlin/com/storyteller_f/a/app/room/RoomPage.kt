@@ -21,7 +21,6 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
-import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
@@ -110,7 +109,6 @@ private fun RoomPageInternal(
             key = items.itemKey { topicInfo ->
                 topicInfo.id.toString()
             },
-            contentType = items.itemContentType()
         ) { index ->
             val next = if (index + 1 < items.itemCount) {
                 items[index + 1]

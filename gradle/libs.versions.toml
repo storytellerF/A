@@ -52,6 +52,7 @@ pdfbox = "3.0.2"
 pgjdbcNg = "0.8.9"
 postgresql = "42.7.2"
 richeditorCompose = "1.0.0-rc10"
+simplemagic = "1.17"
 slf4jSimple = "2.0.13"
 sqliteJdbc = "3.46.0.0"
 uiTestJunit4Android = "1.7.6"
@@ -83,6 +84,7 @@ highlights = { module = "dev.snipme:highlights", version.ref = "highlights" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditorCompose" }
+simplemagic = { module = "com.j256.simplemagic:simplemagic", version.ref = "simplemagic" }
 sonner = { module = "io.github.dokar3:sonner", version = "0.3.8" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }

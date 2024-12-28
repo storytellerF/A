@@ -14,7 +14,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
-import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.*
@@ -53,7 +52,6 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>) {
                             GridItemSpan(itemSpan)
                         }
                     },
-                    contentType = items.itemContentType()
                 ) { index ->
                     val communityInfo = items[index]
                     when {

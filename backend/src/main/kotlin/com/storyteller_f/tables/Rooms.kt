@@ -29,9 +29,9 @@ object Rooms : BaseTable() {
 class Room(
     val aid: String,
     val name: String,
-    val icon: String?,
+    val icon: String? = null,
     val creator: PrimaryKey,
-    val communityId: PrimaryKey?,
+    val communityId: PrimaryKey? = null,
     id: PrimaryKey,
     createdTime: LocalDateTime
 ) : BaseObj(id, createdTime) {

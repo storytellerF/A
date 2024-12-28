@@ -51,7 +51,7 @@ suspend fun reactionList(
     fillHasReacted: Boolean?
 ): Result<ServerResponse<ReactionInfo>> {
     if (fillHasReacted == true && uid == null) return Result.failure(UnauthorizedException())
-    return getSimpleTopic(objectId).mapResult { topicInfo ->
+    return getSimpleTopic(objectId).mapResult {
         commonReactions(uid, objectId).map { infos ->
             ServerResponse(infos, Pagination(null, null, infos.size.toLong()))
         }

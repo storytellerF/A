@@ -15,16 +15,15 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.network.ktor3.KtorNetworkFetcherFactory
@@ -175,11 +174,31 @@ private fun imageRequestInMarkdown(link: String, mediaMap: Map<String, MediaInfo
         .build()
 
 class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>) : ImageTransformer {
+    private val reverseMap = mediaMap.values.associateBy {
+        it.url
+    }
 
     @Composable
     override fun transform(link: String): ImageData {
         return rememberAsyncImagePainter(
             model = imageRequestInMarkdown(link, mediaMap)
         ).let { ImageData(it, modifier = Modifier.clip(RoundedCornerShape(10.dp)).fillMaxWidth()) }
+    }
+
+    @Composable
+    override fun intrinsicSize(painter: Painter): Size {
+        return if (painter is AsyncImagePainter) {
+            val input by painter.input.collectAsState()
+            val link = input.request.data
+            if (link is String) {
+                reverseMap[link]?.dimension?.let {
+                    Size(it.width.toFloat(), it.height.toFloat())
+                } ?: painter.intrinsicSize
+            } else {
+                painter.intrinsicSize
+            }
+        } else {
+            painter.intrinsicSize
+        }
     }
 }

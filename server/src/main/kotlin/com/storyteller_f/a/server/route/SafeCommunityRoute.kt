@@ -46,7 +46,7 @@ fun Route.bindSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
 fun Route.bindProtectedSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
     post<RouteCommunities.Id.Join> {
         usePrincipal(reader) { id ->
-            joinCommunity(id, it.parent.id, backend)
+            doUserJoinCommunity(id, it.parent.id, backend)
         }
     }
 

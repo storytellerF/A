@@ -65,7 +65,9 @@ fun TopicCellInternal(
     ) {
         val avatarSize = 40.dp
         if (showAvatar) {
-            UserCell(authorInfo, true, avatarSize)
+            UserCell(authorInfo, true, avatarSize) {
+                appNav.gotoUser(it)
+            }
         }
         Column(
             if (contentAlignAvatar) {
@@ -130,7 +132,7 @@ private fun TopicContentFieldInternal(
     } else {
         rawMediaList
     }
-    val mediaMap = mediaList.associateBy { it.item.name }
+    val mediaMap = mediaList.associateBy { it.item.noPrefixName }
     Markdown(
         plain,
         modifier = Modifier.fillMaxWidth().clickable(onClick != null) {

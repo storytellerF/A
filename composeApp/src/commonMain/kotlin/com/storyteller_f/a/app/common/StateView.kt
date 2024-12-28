@@ -24,7 +24,6 @@ import app.cash.paging.LoadStateError
 import app.cash.paging.LoadStateLoading
 import app.cash.paging.LoadStateNotLoading
 import app.cash.paging.compose.LazyPagingItems
-import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.compontents.ExceptionView
 import com.storyteller_f.a.app.globalDialogState
@@ -172,9 +171,12 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
         }
 
         else -> {
-            items(items.itemCount, key = items.itemKey {
-                it.id.toString()
-            }, contentType = items.itemContentType()) {
+            items(
+                items.itemCount,
+                key = items.itemKey {
+                    it.id.toString()
+                }
+            ) {
                 content(items[it])
             }
             if (items.loadState.append is LoadStateLoading) {

@@ -31,6 +31,7 @@ dependencies {
     implementation(libs.lucene.core)
     implementation(libs.lucene.queryparser)
     implementation(libs.lucene.analysis.common)
+    implementation(libs.simplemagic)
 }
 
 tasks.test {

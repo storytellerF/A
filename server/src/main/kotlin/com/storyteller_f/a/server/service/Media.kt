@@ -17,6 +17,8 @@ import io.ktor.server.routing.*
 import io.ktor.utils.io.*
 import kotlinx.io.readByteArray
 import java.io.File
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 suspend fun getMediaList(
     uid: PrimaryKey,
@@ -41,6 +43,7 @@ suspend fun getMediaList(
     }
 }
 
+@OptIn(ExperimentalUuidApi::class)
 suspend fun RoutingContext.uploadMedia(
     it: RouteMedia.Upload,
     id: PrimaryKey,
@@ -59,15 +62,18 @@ suspend fun RoutingContext.uploadMedia(
                 is PartData.FileItem -> {
                     fileName = part.originalFileName as String
                     val fileBytes = part.provider().readRemaining().readByteArray()
-                    val file = File(root, fileName)
-                    file.writeBytes(fileBytes)
-                    result.addAll(
-                        backend.mediaService.upload(
-                            "amedia",
-                            listOf(UploadPack("${it.objectId}/$fileName", file))
-                        ).getOrThrow().filterNotNull()
-                    )
-                    file.delete()
+                    val file = File(root, Uuid.random().toString() + fileName)
+                    try {
+                        file.writeBytes(fileBytes)
+                        result.addAll(
+                            backend.mediaService.upload(
+                                "amedia",
+                                listOf(UploadPack("${it.objectId}/$fileName", file))
+                            ).getOrThrow().filterNotNull()
+                        )
+                    } finally {
+                        file.delete()
+                    }
                 }
 
                 else -> {}

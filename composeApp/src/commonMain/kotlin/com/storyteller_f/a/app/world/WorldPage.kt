@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
-import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.model.createWorldViewModel
@@ -38,17 +37,19 @@ fun TopicList(
 ) {
     StateView(items) {
         LazyColumn(
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(
                 count = items.itemCount,
-                key = items.itemKey(),
-                contentType = items.itemContentType()
-            ) { index ->
-                items[index]?.let { TopicCell(it) }
+                key = items.itemKey {
+                    it.id
+                },
+            ) {
+                items[it]?.let { info -> TopicCell(info) }
                 Spacer(modifier = Modifier.height(20.dp))
-                if (index != items.itemCount - 1) {
+                if (it != items.itemCount - 1) {
                     HorizontalDivider()
                 }
             }
