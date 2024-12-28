@@ -77,25 +77,18 @@ dependencies {
 }
 
 subprojects {
-    val androidLibModules = emptyList<String>()
     val libModulesMap = mapOf(
         "server" to listOf(
             "crypto-jvm", "backend"
         )
     )
     val jvmLibModules = listOf("server", "crypto-jvm", "backend")
-    if (jvmLibModules.contains(name) || androidLibModules.contains(name)) {
+    if (jvmLibModules.contains(name)) {
         apply(plugin = "org.jetbrains.kotlinx.kover")
-        if (androidLibModules.contains(name)) {
-            apply(plugin = "com.android.library")
-        }
 
         dependencies {
             libModulesMap[name]?.forEach {
                 kover(project(":$it"))
-            }
-            if (androidLibModules.contains(name)) {
-                "testImplementation"(libs.robolectric)
             }
         }
         kover {

@@ -32,7 +32,7 @@ fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
         usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
-            }) { prePageToken, nextPageToken, size ->
+            }) { _, nextPageToken, size ->
                 recommendTopics(backend, nextPageToken, size, uid, it.parent.fillHasCommented == true)
             }
         }

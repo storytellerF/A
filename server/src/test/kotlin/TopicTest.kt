@@ -159,7 +159,7 @@ class TopicTest {
                     client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello $it").getOrThrow()
                 }
             }
-            client.getRecommendTopics(null, 10)
+            assertEquals(4, client.getRecommendTopics(null, 10).getOrThrow().data.size)
         }
     }
 }
