@@ -5,4 +5,4 @@ services:
         condition: service_healthy
     volumes:
       - ./lucene_data:/app/deploy/lucene_data
-      - ./amedia:/app/deploy/amedia
+      - ./amedia_data:/app/deploy/amedia_data

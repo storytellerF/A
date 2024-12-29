@@ -33,9 +33,9 @@ FROM eclipse-temurin:21-alpine
 RUN mkdir /app
 
 WORKDIR /app
-COPY --from=builder /app/server/build/libs/*-all.jar ./ktor-server.jar
+COPY --from=builder /app/server/build/libs/*-all.jar ./lib/ktor-server.jar
 COPY --from=builder /app/cli/build/decompressed/cli .
 COPY --from=builder /app/deploy ./deploy
 COPY scripts/tool_scripts/flush-database-singleton.sh ./scripts/tool_scripts/flush-database-singleton.sh
 
-ENTRYPOINT ["java","-jar","./ktor-server.jar"]
+ENTRYPOINT ["java","-jar","./lib/ktor-server.jar"]
