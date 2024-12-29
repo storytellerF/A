@@ -159,6 +159,7 @@ class TopicTest {
                     client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello $it").getOrThrow()
                 }
             }
+            withContext(Dispatchers.IO) { delay(2000) }
             assertEquals(4, client.getRecommendTopics(null, 10).getOrThrow().data.size)
         }
     }
