@@ -1,14 +1,15 @@
 #!/bin/sh
 set -e
+# 检查参数个数
+if [ "$#" -eq 2 ]; then
+    echo "try use env"
+    export PRESET_ENCRYPTED_URI=$1
+    export PRESET_ENCRYPTED_PRESET_ENCRYPTED_PASSWORD=$2
+fi
 
 if [ -z "$PRESET_ENCRYPTED_URI" ] || [ -z "$PRESET_ENCRYPTED_PRESET_ENCRYPTED_PASSWORD" ]; then
-  # 检查参数个数
-  if [ "$#" -ne 2 ]; then
-      echo "skip download preset data"
-      exit 0
-  fi
-  export PRESET_ENCRYPTED_URI=$1
-  export PRESET_ENCRYPTED_PRESET_ENCRYPTED_PASSWORD=$2
+    echo "skip download preset data"
+    exit 0
 fi
 
 # 临时文件名
