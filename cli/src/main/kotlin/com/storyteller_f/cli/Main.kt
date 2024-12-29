@@ -1,6 +1,9 @@
-package com.storyteller_f
+package com.storyteller_f.cli
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.Backend
+import com.storyteller_f.buildBackendFromEnv
+import com.storyteller_f.readEnv
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
@@ -18,6 +21,7 @@ fun main(args: Array<String>) {
         args.contentToString()
     }
     val argParser = ArgParser("ACli")
-    argParser.subcommands(Add(), CleanCommand())
+    argParser.subcommands(Add(), CleanCommand(), PrintCommand())
     argParser.parse(args)
 }
+

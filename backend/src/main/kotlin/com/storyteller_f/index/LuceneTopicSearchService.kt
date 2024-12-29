@@ -108,13 +108,15 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
         return useLucene {
             DirectoryReader.open(it).use { reader ->
                 val searcher = IndexSearcher(reader)
-                val analyzer = StandardAnalyzer()
-                val combinedQuery = buildQuery(nextTopicId, word, analyzer, root, parent)
+                val combinedQuery = buildQuery(nextTopicId, word, root, parent)
+                Napier.i {
+                    "lucene search query $combinedQuery"
+                }
                 val sortById = Sort(SortField("id2", SortField.Type.LONG, true))
                 val docs = searcher.search(combinedQuery.build(), size, sortById)
                 val scoreDocs = docs.scoreDocs
                 PaginationResult(scoreDocs.mapNotNull { doc ->
-                    searcher.storedFields().document(doc.doc).let { document ->
+                    searcher.storedFields().document(doc.doc)?.let { document ->
                         val content = document.get("content")
                         val id = document.get("id1").toPrimaryKeyOrNull()
                         if (content != null && id != null) {
@@ -131,10 +133,10 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
     private fun buildQuery(
         nextTopicId: PrimaryKey?,
         word: List<String>?,
-        analyzer: StandardAnalyzer,
         root: Pair<PrimaryKey?, ObjectType>?,
         parent: Pair<PrimaryKey?, ObjectType>?
     ): BooleanQuery.Builder {
+        val analyzer = StandardAnalyzer()
         val combinedQuery = BooleanQuery
             .Builder()
         if (nextTopicId != null) {
