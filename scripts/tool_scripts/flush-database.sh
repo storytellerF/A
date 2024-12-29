@@ -6,7 +6,7 @@ if [ -z "$base" ]; then
   exit 1
 fi
 
-sh gradlew cli:installDist
+./gradlew cli:installDist
 cd cli
 cli_path=build/install/cli/bin/cli
 ../scripts/tool_scripts/flush-database-singleton.sh $cli_path "../$base"

@@ -27,7 +27,8 @@ kotlin {
 }
 
 application {
-    mainClass = "com.storyteller_f.MainKt"
+    mainClass = "com.storyteller_f.cli.MainKt"
+    applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 
 tasks.withType<JavaExec> {

@@ -10,6 +10,7 @@ group = "com.storyteller_f.a"
 version = "1.0.0"
 application {
     mainClass.set("com.storyteller_f.a.server.ApplicationKt")
+    applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 
 kotlin {

@@ -1,9 +1,11 @@
-package com.storyteller_f
+package com.storyteller_f.cli
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.ROOM_ID_LENGTH
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.*
@@ -71,6 +73,9 @@ class Add : Subcommand("add", "add entry") {
 
     private suspend fun addRooms(presetValue: PresetValue, parentDir: File?) {
         val l = presetValue.roomData ?: return
+        Napier.i {
+            "rooms count ${presetValue.roomData?.size}"
+        }
         val data = l.map {
             val id = SnowflakeFactory.nextId()
             val icon = it.icon
@@ -121,6 +126,9 @@ class Add : Subcommand("add", "add entry") {
     }
 
     private suspend fun addTopics(presetValue: PresetValue, parentDir: File) {
+        Napier.i {
+            "topics count ${presetValue.topicData?.size}"
+        }
         DatabaseFactory.dbQuery {
             val data = presetValue.topicData!!
             val userList = data.map {
@@ -315,14 +323,17 @@ class Add : Subcommand("add", "add entry") {
                             null, 0 -> communityList[topic.community]!!
                             else -> ids[index - topic.parent!!]
                         },
-                        (if (level == 0) ObjectType.COMMUNITY else ObjectType.TOPIC).name,
+                        when (level) {
+                            0, null -> ObjectType.COMMUNITY
+                            else -> ObjectType.TOPIC
+                        }.name,
                         userList[topic.author]!!.id
                     )
                 } else {
                     null
                 }
             }
-        )
+        ).getOrThrow()
     }
 
     private suspend fun insertCommunityTopicTopLevel(
@@ -381,6 +392,9 @@ class Add : Subcommand("add", "add entry") {
 
     private suspend fun addUsers(presetValue: PresetValue, parentDir: File?) {
         val userList = presetValue.userData ?: return
+        Napier.i {
+            "users count ${presetValue.userData?.size}"
+        }
         val data = userList.map {
             val id = SnowflakeFactory.nextId()
             val derPublicKey =
@@ -415,6 +429,9 @@ class Add : Subcommand("add", "add entry") {
 
     private suspend fun addCommunity(presetValue: PresetValue, parentDir: File?) {
         val communityData = presetValue.communityData!!
+        Napier.i {
+            "communities count ${presetValue.communityData?.size}"
+        }
         val data = communityData.map {
             val id = SnowflakeFactory.nextId()
             val icon = it.icon
