@@ -9,25 +9,25 @@ class MarkdownTest {
     fun `test extract headline`() {
         val markdownText = """
         # First Level Header
-        
+
         Some introductory text before the second level header.
-        
+
         Hello.
         ```c
             print();
         ```
         ## Second Level Header
-        
+
         Content after the second level header.
     """.trimIndent()
-        val actual = extractMarkdownHeadline(markdownText)
         assertEquals(
             """
             # First Level Header
             Some introductory text before the second level header.
             Hello.
-        """.trimIndent(), actual
+        """.trimIndent(), extractMarkdownHeadline(markdownText)
         )
+        assertEquals("*hello*", extractMarkdownHeadline("*hello*"))
     }
 
     @Test

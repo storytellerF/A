@@ -18,7 +18,6 @@ fun extractMarkdownHeadline(markdownText: String): String {
     val paragraphs = StringBuilder()
     var headline = ""
     var captureContent = false
-    var enableNestSearch = true
 
     val typeList = markdownTypes()
 
@@ -26,10 +25,10 @@ fun extractMarkdownHeadline(markdownText: String): String {
         override fun visitNode(node: ASTNode) {
             val type = node.type
             when {
+                type == MarkdownElementTypes.MARKDOWN_FILE -> captureContent = true
                 type == MarkdownElementTypes.ATX_1 -> {
                     // Extract the first level header content
                     headline = markdownText.substring(node.startOffset, node.endOffset).trim().take(50)
-                    captureContent = true
                 }
 
                 type == MarkdownElementTypes.PARAGRAPH -> {
@@ -46,11 +45,10 @@ fun extractMarkdownHeadline(markdownText: String): String {
                 } -> {
                     // Stop capturing when encountering the first second-level header
                     captureContent = false
-                    enableNestSearch = true
                 }
             }
 
-            if (enableNestSearch) {
+            if (captureContent) {
                 node.children.forEach { it.accept(this) }
             }
         }
@@ -81,10 +79,10 @@ fun extractHeadParagraph(
                         if (content.isNotEmpty()) {
                             if (children.size == 1 && children.first().type == MarkdownElementTypes.IMAGE) {
                                 paragraphs.appendLine(content)
-                                captureContent = false
                             } else {
                                 paragraphs.appendLine(content.take(200))
                             }
+                            captureContent = false
                         }
                     }
                 }
@@ -96,7 +94,6 @@ fun extractHeadParagraph(
                         val content = markdownText.substring(node.startOffset, node.endOffset).trim()
                         paragraphs.appendLine(content)
                     }
-                    // Stop capturing when encountering the first second-level header
                     captureContent = false
                 }
             }
@@ -108,12 +105,14 @@ fun extractHeadParagraph(
     })
     return paragraphs.toString().trim()
 }
+
 fun markdownTypes(): List<String> {
     val typeList = MarkdownElementTypes::class.java.fields.mapNotNull {
         (it.get(MarkdownElementTypes) as? IElementType)?.name
     }
     return typeList
 }
+
 fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
     val parsedTree = astNode(markdownText)
 
@@ -142,6 +141,7 @@ fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
     })
     return list
 }
+
 fun extractImageUrl(node: ASTNode, markdownText: String): String? {
     // Extract the first level header content
     val markdownImage = markdownText.substring(node.startOffset, node.endOffset)
@@ -157,6 +157,7 @@ fun extractImageUrl(node: ASTNode, markdownText: String): String? {
     }
     return imagePath
 }
+
 private fun astNode(markdownText: String): ASTNode {
     val flavour = CommonMarkFlavourDescriptor()
     val parser = MarkdownParser(flavour)
