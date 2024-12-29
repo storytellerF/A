@@ -106,27 +106,32 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
         parent: Pair<PrimaryKey?, ObjectType>?
     ): Result<PaginationResult<TopicDocument>> {
         return useLucene {
-            DirectoryReader.open(it).use { reader ->
-                val searcher = IndexSearcher(reader)
-                val combinedQuery = buildQuery(nextTopicId, word, root, parent)
-                Napier.i {
-                    "lucene search query $combinedQuery"
-                }
-                val sortById = Sort(SortField("id2", SortField.Type.LONG, true))
-                val docs = searcher.search(combinedQuery.build(), size, sortById)
-                val scoreDocs = docs.scoreDocs
-                PaginationResult(scoreDocs.mapNotNull { doc ->
-                    searcher.storedFields().document(doc.doc)?.let { document ->
-                        val content = document.get("content")
-                        val id = document.get("id1").toPrimaryKeyOrNull()
-                        if (content != null && id != null) {
-                            restoreDocument(id, document)
-                        } else {
-                            null
-                        }
+            try {
+                DirectoryReader.open(it).use { reader ->
+                    val searcher = IndexSearcher(reader)
+                    val combinedQuery = buildQuery(nextTopicId, word, root, parent)
+                    Napier.i {
+                        "lucene search query $combinedQuery"
                     }
-                }, docs.totalHits.value)
+                    val sortById = Sort(SortField("id2", SortField.Type.LONG, true))
+                    val docs = searcher.search(combinedQuery.build(), size, sortById)
+                    val scoreDocs = docs.scoreDocs
+                    PaginationResult(scoreDocs.mapNotNull { doc ->
+                        searcher.storedFields().document(doc.doc)?.let { document ->
+                            val content = document.get("content")
+                            val id = document.get("id1").toPrimaryKeyOrNull()
+                            if (content != null && id != null) {
+                                restoreDocument(id, document)
+                            } else {
+                                null
+                            }
+                        }
+                    }, docs.totalHits.value)
+                }
+            } catch (e: IndexNotFoundException) {
+                PaginationResult(emptyList(), 0)
             }
+
         }
     }
 
