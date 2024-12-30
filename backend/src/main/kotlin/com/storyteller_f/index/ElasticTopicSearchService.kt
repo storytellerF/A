@@ -31,6 +31,7 @@ import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.elasticsearch.client.RestClient
+import org.simpleframework.xml.util.Match
 import java.io.File
 import java.io.FileInputStream
 import java.net.ConnectException
@@ -122,7 +123,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
         // 构建排序条件：按 ID 升序排序
         val request = SearchRequest.of { s ->
             s.index(TOPIC_INDEX_NAME) // 指定索引名称
-                .query(boolQuery._toQuery())
+                .query(boolQuery)
                 .sort { sort ->
                     sort.field { f ->
                         f.field("id").order(SortOrder.Asc)
@@ -148,54 +149,50 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
         parent: Pair<PrimaryKey?, ObjectType>?,
         author: PrimaryKey?,
         nextTopicId: PrimaryKey?
-    ): BoolQuery {
-        val contentQuery = word?.let {
-            it.filter { w -> w.isNotBlank() }.takeIf { list -> list.isNotEmpty() }?.let {
-                MatchQuery.of { m ->
-                    m.field("content")
-                        .query(it.joinToString(" ")) // 多关键字匹配，忽略大小写
-                }._toQuery()
+    ): Query {
+        val queryList = buildList {
+            word?.let {
+                it.filter { w -> w.isNotBlank() }.takeIf { list -> list.isNotEmpty() }?.let {
+                    add(MatchQuery.of { m ->
+                        m.field("content")
+                            .query(it.joinToString(" ")) // 多关键字匹配，忽略大小写
+                    }._toQuery())
+                }
+            }
+
+            root?.let {
+                add(createRootSearchQuery(it))
+            }
+
+            parent?.let {
+                add(createParentSearchQuery(it))
+            }
+
+            author?.let {
+                add(TermQuery.of { t ->
+                    t.field("author").value(it)
+                }._toQuery())
+            }
+            nextTopicId?.let {
+                add(RangeQuery.of { r ->
+                    r.field("id")
+                        .lt(JsonData.of(nextTopicId))
+                }._toQuery())
             }
         }
 
-        val rootQuery = root?.let {
-            createRootSearchQuery(it)
+        Napier.i {
+            "query list size ${queryList.size} $queryList"
         }
-
-        val parentQuery = parent?.let {
-            createParentSearchQuery(it)
-        }
-
-        val authorQuery = author?.let {
-            TermQuery.of { t ->
-                t.field("author").value(it)
+        return if (queryList.size == 1) {
+            queryList.first()
+        } else {
+            BoolQuery.of { b ->
+                queryList.forEach {
+                    b.must(it)
+                }
+                b
             }._toQuery()
-        }
-
-        val idRangeQuery = nextTopicId?.let {
-            RangeQuery.of { r ->
-                r.field("id")
-                    .lt(JsonData.of(nextTopicId))
-            }._toQuery()
-        }
-
-        return BoolQuery.of { b ->
-            contentQuery?.let {
-                b.must(it)
-            }
-            rootQuery?.let {
-                b.must(it)
-            }
-            parentQuery?.let {
-                b.must(it)
-            }
-            authorQuery?.let {
-                b.must(it)
-            }
-            idRangeQuery?.let {
-                b.must(it)
-            }
-            b
         }
     }
 
@@ -205,21 +202,33 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 t.field("rootId").value(it)
             }._toQuery())
         }
-        b.must(TermQuery.of { t ->
-            t.field("rootType").value(pair.second.name)
+        b.must(MatchQuery.of { t ->
+            t.field("rootType").query(pair.second.name)
         }._toQuery())
     }._toQuery()
 
-    private fun createParentSearchQuery(pair: Pair<PrimaryKey?, ObjectType>): Query = BoolQuery.of { b ->
-        pair.first?.let {
-            b.must(TermQuery.of { t ->
-                t.field("parentId").value(it)
+    private fun createParentSearchQuery(pair: Pair<PrimaryKey?, ObjectType>): Query {
+        val queryList = buildList {
+            pair.first?.let {
+                add(TermQuery.of { t ->
+                    t.field("parentId").value(it)
+                }._toQuery())
+            }
+            add(TermQuery.of { t ->
+                t.field("parentType.keyword").value(pair.second.name)
             }._toQuery())
         }
-        b.must(TermQuery.of { t ->
-            t.field("parentType").value(pair.second.name)
-        }._toQuery())
-    }._toQuery()
+        return if (queryList.size == 1) {
+            queryList.first()
+        } else {
+            BoolQuery.of { b ->
+                queryList.forEach {
+                    b.must(it)
+                }
+                b
+            }._toQuery()
+        }
+    }
 }
 
 private suspend fun <T> useElasticClient(

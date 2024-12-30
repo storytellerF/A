@@ -25,6 +25,7 @@ jimfs = "1.3.0"
 jlatexmath = "1.0.7"
 jlatexmathAndroid = "0.2.0"
 kotlinxCoroutinesCore = "1.9.0"
+kotlinxCoroutinesSwing = "1.10.1"
 kotlinxDatetime = "0.6.1"
 ktomlCore = "0.5.1"
 lifecycleViewmodelCompose = "2.8.7"
@@ -51,6 +52,7 @@ pagingCommon = "3.3.0-alpha02-0.5.1"
 pdfbox = "3.0.2"
 pgjdbcNg = "0.8.9"
 postgresql = "42.7.2"
+postgresqlVersion = "1.20.4"
 richeditorCompose = "1.0.0-rc10"
 simplemagic = "1.17"
 slf4jSimple = "2.0.13"
@@ -67,6 +69,7 @@ media3Exoplayer = "1.5.1"
 robolectricVersion = "4.11.1"
 
 [libraries]
+kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinxCoroutinesSwing" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectricVersion" }
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3Exoplayer" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
@@ -174,6 +177,7 @@ slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" 
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 sunny-chung-composable-table = { module = "io.github.sunny-chung:composable-table", version.ref = "composableTableVersion" }
 testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "minioVersion" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "postgresqlVersion" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 
 [plugins]

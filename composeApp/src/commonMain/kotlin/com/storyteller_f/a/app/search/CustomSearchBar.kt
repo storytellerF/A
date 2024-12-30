@@ -4,18 +4,23 @@ import a.composeapp.generated.resources.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.cash.paging.compose.collectAsLazyPagingItems
+import com.storyteller_f.a.app.AppNav
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.community.CommunityList
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.room.RoomList
 import com.storyteller_f.a.app.user.MemberList
+import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.app.world.TopicList
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.obj.JoinStatusSearch
@@ -35,11 +40,13 @@ sealed interface SearchScope {
     data class RoomMember(val roomId: PrimaryKey) : SearchScope
     data object Member : SearchScope
     data class UserTopic(val userId: PrimaryKey) : SearchScope
+    data class UserCommunities(val userId: PrimaryKey) : SearchScope
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
+    val appNav = LocalAppNav.current
     var query by remember {
         mutableStateOf("")
     }
@@ -66,7 +73,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
                     expanded = active,
                     onExpandedChange = onActiveChange,
                     leadingIcon = {
-                        leadingIcon()
+                        MergedLeadingIcon(leadingIcon, active, appNav)
                     },
                     trailingIcon = {
                         val userInfo by LoginViewModel.user.collectAsState()
@@ -88,6 +95,31 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
 }
 
 @Composable
+private fun MergedLeadingIcon(
+    leadingIcon: @Composable () -> Unit,
+    active: Boolean,
+    appNav: AppNav
+) {
+    var active1 = active
+    if (platform.hasNativeBack) {
+        leadingIcon()
+    } else {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton({
+                if (active1) {
+                    active1 = false
+                } else {
+                    appNav.back()
+                }
+            }) {
+                Icon(Icons.AutoMirrored.Default.ArrowBack, "back")
+            }
+            leadingIcon()
+        }
+    }
+}
+
+@Composable
 private fun SearchPlaceholder(scope: SearchScope) {
     Text(
         stringResource(
@@ -103,6 +135,7 @@ private fun SearchPlaceholder(scope: SearchScope) {
                 is SearchScope.RoomMember -> Res.string.input_search_members
                 SearchScope.Member -> Res.string.input_search_members
                 is SearchScope.UserTopic -> Res.string.input_search_topics
+                is SearchScope.UserCommunities -> Res.string.input_search_community
             }
         )
     )
@@ -134,7 +167,19 @@ private fun SearchContent(
         is SearchScope.RoomMember -> RoomMemberSearchContent(current, scope)
 
         SearchScope.Member -> MemberSearchContent(current)
+
         is SearchScope.UserTopic -> UserTopicSearchContent(current, scope)
+
+        is SearchScope.UserCommunities -> UserCommunitySearchContent(current, scope)
+    }
+}
+
+@Composable
+fun UserCommunitySearchContent(current: String, scope: SearchScope.UserCommunities) {
+    if (current.isNotBlank()) {
+        val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(scope.userId, current)
+        val pagingItems = communitiesViewModel.flow.collectAsLazyPagingItems()
+        CommunityList(pagingItems)
     }
 }
 

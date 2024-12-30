@@ -18,6 +18,7 @@ import io.ktor.server.config.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
 import org.testcontainers.containers.MinIOContainer
+import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 import kotlin.collections.Map
 import kotlin.collections.forEach
@@ -32,7 +33,7 @@ fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, Cl
     run {
         val env = readResourceEnv(".env")!!.toMutableMap()
         ElasticsearchContainer(
-            "docker.elastic.co/elasticsearch/elasticsearch:8.1.2"
+            "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
         )
             // disable SSL
             .withEnv("xpack.security.transport.ssl.enabled", "false")
@@ -42,16 +43,22 @@ fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, Cl
                 env["ELASTIC_NAME"] = "elastic"
                 env["ELASTIC_PASSWORD"] = "changeme"
                 env["ELASTIC_URL"] = "http://${elasticClient.httpHostAddress}"
-                MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z").use { minioContainer ->
+                MinIOContainer("minio/minio:RELEASE.2024-12-18T13-15-44Z").use { minioContainer ->
                     minioContainer.start()
                     env["MEDIA_SERVICE"] = "minio"
                     env["MINIO_URL"] = minioContainer.s3URL
                     env["MINIO_NAME"] = minioContainer.userName
                     env["MINIO_PASS"] = minioContainer.password
-                    doTest(env, receivedFrame, block)
-                    minioContainer.stop()
+                    PostgreSQLContainer("pgvector/pgvector:pg16").use { postgreSQLContainer ->
+                        postgreSQLContainer.start()
+                        env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl
+                        env["DATABASE_DRIVER"] = postgreSQLContainer.driverClassName
+                        env["DATABASE_USER"] = postgreSQLContainer.username
+                        env["DATABASE_PASS"] = postgreSQLContainer.password
+                        env["DATABASE_DB"] = postgreSQLContainer.databaseName
+                        doTest(env, receivedFrame, block)
+                    }
                 }
-                elasticClient.stop()
             }
     }
 
@@ -72,6 +79,7 @@ private fun doTest(
     }
     DatabaseFactory.clean(backend.config.databaseConnection)
     DatabaseFactory.init(backend.config.databaseConnection)
+    DatabaseFactory.enableExplain()
     testApplication {
         environment {
             config = MapApplicationConfig().apply {

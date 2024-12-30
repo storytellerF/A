@@ -213,6 +213,10 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
     override fun gotoUser(uid: PrimaryKey) {
         navigator.navigate(UserScreen(uid))
     }
+
+    override fun back() {
+        navigator.popBackStack()
+    }
 }
 
 fun getAsyncImageLoader(context: PlatformContext) =
@@ -290,9 +294,11 @@ interface AppNav {
 
     fun gotoUser(uid: PrimaryKey)
 
+    fun back()
+
     companion object {
         val EMPTY = object : AppNav {
-            override val currentDestination: NavBackStackEntry?
+            override val currentDestination: NavBackStackEntry
                 get() = TODO("Not yet implemented")
 
             override fun gotoLogin() {
@@ -336,6 +342,10 @@ interface AppNav {
             }
 
             override fun gotoUser(uid: PrimaryKey) {
+                TODO("Not yet implemented")
+            }
+
+            override fun back() {
                 TODO("Not yet implemented")
             }
         }

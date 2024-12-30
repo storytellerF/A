@@ -14,6 +14,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -29,6 +32,7 @@ import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.compontents.MeasureTextLineCount
+import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.ClientSession
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.getData
@@ -50,38 +54,52 @@ import kotlin.math.max
 fun LoginPage() {
     val navigator = rememberNavController()
     val nav = remember {
-        object : LoginNav {
-
-            override fun gotoPrivateKey() {
-                if (!navigator.popBackStack("/input_private_key", false)) {
-                    navigator.navigate("/input_private_key")
+        buildLoginNav(navigator)
+    }
+    val appNav = LocalAppNav.current
+    Surface {
+        Column {
+            if (!platform.hasNativeBack) {
+                IconButton({
+                    if (!navigator.popBackStack()) {
+                        appNav.back()
+                    }
+                }) {
+                    Icon(Icons.AutoMirrored.Default.ArrowBack, "back to pre page")
                 }
             }
-
-            override fun gotoSignUp() {
-                if (!navigator.popBackStack("/select_signup", false)) {
-                    navigator.navigate("/select_signup")
+            NavHost(navigator, "/select_login") {
+                composable("/select_login") {
+                    SelectLoginPage(nav)
                 }
-            }
-
-            override fun gotoLogin() {
-                if (!navigator.popBackStack("/select_login", false)) {
-                    navigator.navigate("/select_login")
+                composable("/select_signup") {
+                    SelectSignupPage(nav)
+                }
+                composable("/input_private_key") {
+                    InputPrivateKeyPage()
                 }
             }
         }
     }
-    Surface {
-        NavHost(navigator, "/select_login") {
-            composable("/select_login") {
-                SelectLoginPage(nav)
-            }
-            composable("/select_signup") {
-                SelectSignupPage(nav)
-            }
-            composable("/input_private_key") {
-                InputPrivateKeyPage()
-            }
+}
+
+private fun buildLoginNav(navigator: NavHostController) = object : LoginNav {
+
+    override fun gotoPrivateKey() {
+        if (!navigator.popBackStack("/input_private_key", false)) {
+            navigator.navigate("/input_private_key")
+        }
+    }
+
+    override fun gotoSignUp() {
+        if (!navigator.popBackStack("/select_signup", false)) {
+            navigator.navigate("/select_signup")
+        }
+    }
+
+    override fun gotoLogin() {
+        if (!navigator.popBackStack("/select_login", false)) {
+            navigator.navigate("/select_login")
         }
     }
 }

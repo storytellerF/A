@@ -20,7 +20,7 @@ class ClientWebSocket(
 
     init {
         GlobalScope.launch {
-            LoginViewModel.isAlreadySignUp.distinctUntilChanged().collectLatest {
+            LoginViewModel.isAlreadySignUp.distinctUntilChanged().collect {
                 if (it) {
                     while (true) {
                         connectWebSocketIfNeed()

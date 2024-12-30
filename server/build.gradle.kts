@@ -35,6 +35,7 @@ dependencies {
     testImplementation(libs.h2)
     testImplementation(libs.testcontainers.minio)
     testImplementation(libs.elasticsearch)
+    testImplementation(libs.testcontainers.postgresql)
 }
 
 val isProd = project.findProperty("server.prod") == true

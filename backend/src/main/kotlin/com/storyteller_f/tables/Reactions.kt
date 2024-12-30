@@ -5,7 +5,6 @@ import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.SingleReactionInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.Tuple4
 import com.storyteller_f.shared.utils.mapResult
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
@@ -17,7 +16,7 @@ object Reactions : BaseTable() {
     val objectType = objectType("object_type")
 
     init {
-        index("reaction-main", true, objectId, uid, emoji)
+        index("reaction-main", true, objectId,  emoji, uid)
     }
 }
 
@@ -45,22 +44,19 @@ suspend fun commonReactions(
     uid: PrimaryKey?,
     objectId: PrimaryKey
 ): Result<List<ReactionInfo>> {
-    val latestTimeExpression = Reactions.createdTime.max<LocalDateTime, LocalDateTime>()
     val countExpression = Reactions.uid.count()
     val baseSelection = listOf(
         Reactions.emoji,
         countExpression,
-        latestTimeExpression
     )
     val selection = reactionAuthorContains(uid)
 
     return DatabaseFactory.mapQuery({
-        ReactionInfo(data1, objectId, ObjectType.TOPIC, data2, data4 == 1L)
+        ReactionInfo(first, objectId, ObjectType.TOPIC, second, third == 1L)
     }, {
-        Tuple4(
+        Triple(
             it[Reactions.emoji],
             it[countExpression],
-            it[latestTimeExpression],
             when {
                 selection != null -> it[selection]
                 else -> 0
@@ -74,7 +70,7 @@ suspend fun commonReactions(
             }
         ).where {
             Reactions.objectId eq objectId
-        }.groupBy(Reactions.emoji).orderBy(latestTimeExpression, SortOrder.DESC)
+        }.groupBy(Reactions.emoji).orderBy(countExpression, SortOrder.DESC)
     }
 }
 
@@ -86,7 +82,7 @@ private fun reactionAuthorContains(uid: PrimaryKey?): Max<Long, Long>? {
 }
 
 private fun reactionAuthorContainsIfUidNotNull(uid: PrimaryKey): Max<Long, Long> = Expression.build {
-    val expr = case().When<Long>(Reactions.uid.eq(uid), longLiteral(1)).Else(longLiteral(0))
+    val expr = case().When(Reactions.uid.eq(uid), longLiteral(1)).Else(longLiteral(0))
     Max(expr, LongColumnType())
 }
 
@@ -111,7 +107,7 @@ suspend fun getSingleReaction(uid: PrimaryKey, emoji: String, objectId: PrimaryK
         Reaction.wrapRow(it)
     }) {
         Reactions.selectAll().where {
-            (Reactions.objectId eq objectId) and (Reactions.uid eq uid) and (Reactions.emoji eq emoji)
+            (Reactions.objectId eq objectId) and (Reactions.emoji eq emoji) and (Reactions.uid eq uid)
         }
     }
 }

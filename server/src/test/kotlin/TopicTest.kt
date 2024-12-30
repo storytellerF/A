@@ -152,14 +152,14 @@ class TopicTest {
     fun `test recommend`() {
         test { client, _ ->
             val communityId = SnowflakeFactory.nextId()
-            doCreateCommunity(Community("c1", "c1", owner = 0, id = communityId, createdTime = now()))
+            doCreateCommunity(Community("c1", "c1", owner = 0, id = communityId, createdTime = now())).getOrThrow()
             attachSession(client) {
-                client.joinCommunity(communityId)
+                client.joinCommunity(communityId).getOrThrow()
                 repeat(4) {
                     client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello $it").getOrThrow()
                 }
             }
-            withContext(Dispatchers.IO) { delay(2000) }
+            withContext(Dispatchers.IO) { delay(1000) }
             assertEquals(4, client.getRecommendTopics(null, 10).getOrThrow().data.size)
         }
     }

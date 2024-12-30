@@ -131,7 +131,6 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
             } catch (e: IndexNotFoundException) {
                 PaginationResult(emptyList(), 0)
             }
-
         }
     }
 

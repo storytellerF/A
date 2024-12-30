@@ -24,4 +24,3 @@ fun main(args: Array<String>) {
     argParser.subcommands(Add(), CleanCommand(), PrintCommand())
     argParser.parse(args)
 }
-
