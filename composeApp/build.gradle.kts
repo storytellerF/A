@@ -155,6 +155,7 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.emoji.reader.jvm)
             implementation(libs.jlatexmath)
+            implementation(libs.kotlinx.coroutines.swing)
         }
         desktopTest.dependencies {
             implementation(compose.desktop.currentOs)

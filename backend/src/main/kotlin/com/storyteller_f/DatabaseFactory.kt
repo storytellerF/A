@@ -11,6 +11,12 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 object DatabaseFactory {
 
+    private var isEnableExplain = false
+
+    fun enableExplain() {
+        isEnableExplain = true
+    }
+
     private fun connect(connection: DatabaseConnection) {
         val (uri, driver, user, password) = connection
         Database.connect(uri, driver, user, password)
@@ -158,20 +164,28 @@ object DatabaseFactory {
     }
 
     private fun <T> Transaction.explainQuery(block: () -> SizedIterable<T>) {
-        Napier.i(tag = "explain result") {
+        if (isEnableExplain) {
             val result = explain {
                 block()
             }.toList().joinToString("\n")
-            "result: $result\nstatements: $statements"
+            if (result.contains("Sort") ||
+                result.contains("GroupAggregate") ||
+                result.contains("Seq") ||
+                result.contains(
+                    "Nested Loop"
+                )
+            ) {
+                Napier.i(tag = "explain result") {
+                    "result: $result\nstatements: $statements"
+                }
+            }
         }
     }
 }
 
 const val PUBLIC_KEY_LENGTH = 512
 const val ADDRESS_LENGTH = 100
-const val USER_ID_LENGTH = 20
 const val USER_NICKNAME = 20
-const val COMMUNITY_ID_LENGTH = 20
 const val COMMUNITY_NAME_LENGTH = 10
 const val ROOM_ID_LENGTH = 20
 const val ICON_LENGTH = 1000

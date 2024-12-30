@@ -26,7 +26,7 @@ import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
-fun UserIcon(userInfo: UserInfo?, showDialog: Boolean = true, size: Dp = 40.dp) {
+fun UserIcon(userInfo: UserInfo?, couldShowDialog: Boolean = true, size: Dp = 40.dp) {
     val appNav = LocalAppNav.current
     val user = LoginViewModel.user.collectAsState()
     val isMe = user.value?.id == userInfo?.id
@@ -36,7 +36,7 @@ fun UserIcon(userInfo: UserInfo?, showDialog: Boolean = true, size: Dp = 40.dp) 
     val onClick = {
         if (isMe && userInfo == null) {
             appNav.gotoLogin()
-        } else if (showDialog) {
+        } else if (couldShowDialog) {
             showMyDialog = true
         }
     }
@@ -45,7 +45,7 @@ fun UserIcon(userInfo: UserInfo?, showDialog: Boolean = true, size: Dp = 40.dp) 
         AsyncImage(
             globalLoader(url),
             contentDescription = "${userInfo.nickname}'s avatar",
-            modifier = Modifier.size(size).clip(CircleShape).clickable(showDialog, onClick = onClick)
+            modifier = Modifier.size(size).clip(CircleShape).clickable(couldShowDialog, onClick = onClick)
         )
     } else {
         Image(
@@ -54,7 +54,7 @@ fun UserIcon(userInfo: UserInfo?, showDialog: Boolean = true, size: Dp = 40.dp) 
             modifier = Modifier.size(size)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
-                .clickable(showDialog, onClick = onClick)
+                .clickable(couldShowDialog, onClick = onClick)
                 .padding(size / 5)
         )
     }

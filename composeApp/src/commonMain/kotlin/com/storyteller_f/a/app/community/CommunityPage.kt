@@ -17,6 +17,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavOptions
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.*
@@ -53,6 +57,14 @@ private fun buildSearchScope(
     else -> SearchScope.CommunityRoom(communityId)
 }
 
+private fun buildSearchScope(
+    currentRoute: String?,
+    communityId: PrimaryKey
+) = when (currentRoute) {
+    "/topics" -> SearchScope.CommunityTopic(communityId)
+    else -> SearchScope.CommunityRoom(communityId)
+}
+
 @Composable
 private fun CommunityNonCompatPageInternal(
     communityId: PrimaryKey,
@@ -61,21 +73,14 @@ private fun CommunityNonCompatPageInternal(
     val model = createCommunityViewModel(communityId)
     val community by model.handler.data.collectAsState()
     val dialogShown by model.dialog.shownDialog.collectAsState()
-    val pagerState = rememberPagerState {
-        2
-    }
-    val searchScope = buildSearchScope(pagerState, communityId)
     val navs = communityNavRoutes()
-    val scope = rememberCoroutineScope()
-
+    val navigator = rememberNavController()
+    val current by navigator.currentBackStackEntryFlow.collectAsState(null)
+    val searchScope = buildSearchScope(current?.destination?.route, communityId)
     Scaffold { paddingValues ->
         Row(modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())) {
-            CustomRailNav(navs[pagerState.currentPage].path, navs) { path ->
-                scope.launch {
-                    pagerState.animateScrollToPage(navs.indexOfFirst { route ->
-                        route.path == path
-                    })
-                }
+            CustomRailNav(current?.destination?.route, navs) {
+                navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
             }
             Column(
                 modifier = Modifier,
@@ -95,7 +100,18 @@ private fun CommunityNonCompatPageInternal(
                     }
                 }
 
-                CommunityPageInternal(pagerState, communityId)
+                NavHost(navigator, "/topics") {
+                    composable("/topics") {
+                        val viewModel = createCommunityTopicsViewModel(communityId)
+                        val items = viewModel.flow.collectAsLazyPagingItems()
+                        TopicList(items)
+                    }
+                    composable("/rooms") {
+                        val viewModel = createCommunityRoomsViewModel(communityId)
+                        val items = viewModel.flow.collectAsLazyPagingItems()
+                        RoomList(items)
+                    }
+                }
             }
         }
     }
