@@ -33,6 +33,7 @@ dependencies {
     implementation(libs.lucene.analysis.common)
     implementation(libs.simplemagic)
 
+    runtimeOnly(libs.lucene.backward.codecs)
     testImplementation(libs.elasticsearch)
 }
 
