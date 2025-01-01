@@ -73,24 +73,15 @@ subprojects {
 }
 
 dependencies {
-    kover(project(":server"))
+    listOf("server", "crypto-jvm", "backend").forEach {
+        kover(project(":$it"))
+    }
 }
 
 subprojects {
-    val libModulesMap = mapOf(
-        "server" to listOf(
-            "crypto-jvm", "backend"
-        )
-    )
     val jvmLibModules = listOf("server", "crypto-jvm", "backend")
     if (jvmLibModules.contains(name)) {
         apply(plugin = "org.jetbrains.kotlinx.kover")
-
-        dependencies {
-            libModulesMap[name]?.forEach {
-                kover(project(":$it"))
-            }
-        }
         kover {
             reports {
                 // filters for all report types of all build variants

@@ -106,6 +106,13 @@ fun createCommunityTopicsViewModel(communityId: PrimaryKey): TopicsViewModel {
 }
 
 @Composable
+fun createUserTopicsViewModel(
+    uid: PrimaryKey
+) = viewModel(keys = listOf("user-topics", uid)) {
+    TopicsViewModel(uid, ObjectType.USER)
+}
+
+@Composable
 fun createTopicSearchViewModel(current: String) = viewModel(keys = listOf("topic", current)) {
     TopicSearchViewModel(current.split(" "), null, null)
 }
