@@ -9,7 +9,7 @@ import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.DialogSaveState
-import com.storyteller_f.a.app.topic.processEncryptedTopic
+import com.storyteller_f.a.app.pages.topic.processEncryptedTopic
 import com.storyteller_f.a.app.updateDocument
 import com.storyteller_f.a.app.updateDocumentInParent
 import com.storyteller_f.a.client_lib.*

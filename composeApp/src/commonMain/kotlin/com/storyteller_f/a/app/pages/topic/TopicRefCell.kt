@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.topic
+package com.storyteller_f.a.app.pages.topic
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

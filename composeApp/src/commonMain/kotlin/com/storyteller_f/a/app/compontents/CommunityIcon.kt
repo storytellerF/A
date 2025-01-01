@@ -13,7 +13,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.community.CommunityDialog
+import com.storyteller_f.a.app.pages.community.CommunityDialog
 import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.shared.model.CommunityInfo
 

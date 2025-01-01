@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.user
+package com.storyteller_f.a.app.pages.user
 
 import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.rooms
@@ -31,12 +31,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.*
-import com.storyteller_f.a.app.community.CommunityList
+import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.model.*
-import com.storyteller_f.a.app.search.CustomSearchBar
-import com.storyteller_f.a.app.search.SearchScope
-import com.storyteller_f.a.app.world.TopicList
+import com.storyteller_f.a.app.pages.search.CustomSearchBar
+import com.storyteller_f.a.app.pages.search.SearchScope
+import com.storyteller_f.a.app.pages.world.TopicList
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType

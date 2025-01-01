@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.topic
+package com.storyteller_f.a.app.compontents
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -33,10 +33,7 @@ import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.compontents.AudioView
-import com.storyteller_f.a.app.compontents.TextUnitToPx
-import com.storyteller_f.a.app.compontents.VideoView
-import com.storyteller_f.a.app.compontents.buildTexPainter
+import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.utils.MarkdownObject
 import com.storyteller_f.shared.utils.getLang

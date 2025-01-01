@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.community
+package com.storyteller_f.a.app.pages.community
 
 import a.composeapp.generated.resources.*
 import androidx.compose.foundation.background
@@ -25,10 +25,10 @@ import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
-import com.storyteller_f.a.app.room.RoomList
-import com.storyteller_f.a.app.search.CustomSearchBar
-import com.storyteller_f.a.app.search.SearchScope
-import com.storyteller_f.a.app.world.TopicList
+import com.storyteller_f.a.app.pages.room.RoomList
+import com.storyteller_f.a.app.pages.search.CustomSearchBar
+import com.storyteller_f.a.app.pages.search.SearchScope
+import com.storyteller_f.a.app.pages.world.TopicList
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.ObjectType

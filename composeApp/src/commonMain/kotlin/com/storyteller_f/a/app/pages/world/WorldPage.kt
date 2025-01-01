@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.world
+package com.storyteller_f.a.app.pages.world
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,7 +21,7 @@ import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.model.createWorldViewModel
-import com.storyteller_f.a.app.topic.TopicCell
+import com.storyteller_f.a.app.compontents.TopicCell
 import com.storyteller_f.shared.model.TopicInfo
 
 @Composable

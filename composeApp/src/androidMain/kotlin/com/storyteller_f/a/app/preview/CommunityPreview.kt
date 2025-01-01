@@ -6,10 +6,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.storyteller_f.a.app.CustomBottomNav
-import com.storyteller_f.a.app.community.CommunityDialogInternal
-import com.storyteller_f.a.app.community.communityNavRoutes
-import com.storyteller_f.a.app.search.CustomSearchBar
-import com.storyteller_f.a.app.search.SearchScope
+import com.storyteller_f.a.app.pages.community.CommunityDialogInternal
+import com.storyteller_f.a.app.pages.community.communityNavRoutes
+import com.storyteller_f.a.app.pages.search.CustomSearchBar
+import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.PresetValue
 import kotlinx.serialization.json.Json

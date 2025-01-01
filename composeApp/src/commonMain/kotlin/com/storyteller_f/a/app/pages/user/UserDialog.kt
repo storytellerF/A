@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.user
+package com.storyteller_f.a.app.pages.user
 
 import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.settings

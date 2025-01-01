@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.topic
+package com.storyteller_f.a.app.pages.topic
 
 import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.edit

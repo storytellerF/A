@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.user
+package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,8 +20,8 @@ import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.model.createMemberViewModel
-import com.storyteller_f.a.app.search.CustomSearchBar
-import com.storyteller_f.a.app.search.SearchScope
+import com.storyteller_f.a.app.pages.search.CustomSearchBar
+import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey

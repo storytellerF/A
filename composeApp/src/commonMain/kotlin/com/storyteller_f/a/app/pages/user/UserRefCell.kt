@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.user
+package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

@@ -21,7 +21,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.user.UserDialog
+import com.storyteller_f.a.app.pages.user.UserDialog
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
 
