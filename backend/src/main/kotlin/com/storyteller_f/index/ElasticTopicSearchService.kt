@@ -31,7 +31,6 @@ import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.elasticsearch.client.RestClient
-import org.simpleframework.xml.util.Match
 import java.io.File
 import java.io.FileInputStream
 import java.net.ConnectException

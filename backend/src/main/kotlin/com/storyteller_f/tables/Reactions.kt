@@ -16,7 +16,7 @@ object Reactions : BaseTable() {
     val objectType = objectType("object_type")
 
     init {
-        index("reaction-main", true, objectId,  emoji, uid)
+        index("reaction-main", true, objectId, emoji, uid)
     }
 }
 
