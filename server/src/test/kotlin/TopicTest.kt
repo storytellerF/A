@@ -93,6 +93,15 @@ class TopicTest {
                     ).getOrThrow()
                 val plain = info.content as TopicContent.Plain
                 assertEquals(media.item.name, plain.list.first().item.name)
+                //查询单个topic
+                assertEquals(1, client.getUserTopics(it.data4, null, 10).getOrThrow().data.size)
+                client.createNewTopic(
+                    ObjectType.USER,
+                    it.data4,
+                    "test"
+                ).getOrThrow()
+                //查询多个topic
+                assertEquals(2, client.getUserTopics(it.data4, null, 10).getOrThrow().data.size)
             }
         }
     }

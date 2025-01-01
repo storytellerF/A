@@ -137,7 +137,7 @@ private fun UserCompatInternal(
             }
             HorizontalPager(pagerState) { pageIndex ->
                 if (pageIndex == 0) {
-                    val topicsViewModel = createTopicSearchInUserViewModel(SearchScope.UserTopic(uid), "")
+                    val topicsViewModel = createUserTopicsViewModel(uid)
                     val pagingItems = topicsViewModel.flow.collectAsLazyPagingItems()
                     TopicList(pagingItems)
                 } else {

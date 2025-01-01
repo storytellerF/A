@@ -4,6 +4,7 @@ import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.*
 import com.storyteller_f.a.server.common.checkParameter
+import com.storyteller_f.a.server.route.RouteTopics.Id
 import com.storyteller_f.a.server.webSocketContent
 import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.shared.model.MediaResponse
@@ -115,7 +116,10 @@ class RouteReactions {
 @Resource("/users")
 class RouteUsers(val aid: String? = null) {
     @Resource("{id}")
-    class Id(@Suppress("unused") val parent: RouteUsers = RouteUsers(), val id: PrimaryKey)
+    class Id(@Suppress("unused") val parent: RouteUsers = RouteUsers(), val id: PrimaryKey) {
+        @Resource("topics")
+        class Topics(val parent: Id, val fillHasCommented: Boolean? = null)
+    }
 
     @Resource("update")
     class Update(@Suppress("unused") val parent: RouteUsers = RouteUsers())

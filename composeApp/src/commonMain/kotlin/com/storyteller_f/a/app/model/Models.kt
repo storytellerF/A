@@ -126,7 +126,7 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null) : PagingView
     val info = when {
         id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, 10)
         type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, 20)
-        type == ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, 20)
+        type == ObjectType.COMMUNITY -> client.searchTopics(loadKey, 20, emptyList(), id, ObjectType.COMMUNITY)
         else -> client.getTopicTopics(id, loadKey, 20)
     }.getOrThrow()
     info.copy(processEncryptedTopic(info.data).map {

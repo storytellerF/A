@@ -32,6 +32,8 @@ dependencies {
     implementation(libs.lucene.queryparser)
     implementation(libs.lucene.analysis.common)
     implementation(libs.simplemagic)
+
+    testImplementation(libs.elasticsearch)
 }
 
 tasks.test {

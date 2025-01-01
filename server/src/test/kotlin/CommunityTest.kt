@@ -47,7 +47,8 @@ class CommunityTest {
             assertTrue(communityInfo.isJoined)
             // 再次发起创建话题
             client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
-            assertEquals(1, client.getCommunityTopics(communityId, null, 10).getOrThrow().data.size)
+            assertEquals(1,
+                client.searchTopics(null, 10, emptyList(), communityId, ObjectType.COMMUNITY).getOrThrow().data.size)
             // 测试上传加密话题
             assertFails {
                 client.post("/topics") {
@@ -57,7 +58,8 @@ class CommunityTest {
             }
             // 添加话题到子话题
             kotlin.run {
-                val topicId = client.getCommunityTopics(communityId, null, 10).getOrThrow().data.first().id
+                val topicId = client.searchTopics(null, 10, emptyList(), communityId, ObjectType.COMMUNITY)
+                    .getOrThrow().data.first().id
                 val new = client.createNewTopic(ObjectType.TOPIC, topicId, "test").getOrThrow()
                 assertEquals(ObjectType.COMMUNITY, new.rootType)
                 assertEquals(communityId, new.rootId)
