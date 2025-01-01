@@ -1,9 +1,9 @@
-package com.storyteller_f.a.app.topic
+package com.storyteller_f.a.app.pages.topic
 
 import androidx.compose.runtime.Composable
-import com.storyteller_f.a.app.community.CommunityRefCell
-import com.storyteller_f.a.app.room.RoomRefCell
-import com.storyteller_f.a.app.user.UserRefCell
+import com.storyteller_f.a.app.pages.community.CommunityRefCell
+import com.storyteller_f.a.app.pages.room.RoomRefCell
+import com.storyteller_f.a.app.pages.user.UserRefCell
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 
 class TopicRoute(

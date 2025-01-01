@@ -14,7 +14,7 @@ import com.storyteller_f.a.app.model.OnAddReaction
 import com.storyteller_f.a.app.model.OnRemoveReaction
 import com.storyteller_f.a.app.model.OnTopicChanged
 import com.storyteller_f.a.app.model.createReactionsViewModel
-import com.storyteller_f.a.app.world.Pill
+import com.storyteller_f.a.app.pages.world.Pill
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo

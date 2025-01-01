@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.room
+package com.storyteller_f.a.app.pages.room
 
 import a.composeapp.generated.resources.*
 import androidx.compose.foundation.background
@@ -25,12 +25,12 @@ import app.cash.paging.compose.itemKey
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.*
-import com.storyteller_f.a.app.community.CommunityRefCell
+import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
-import com.storyteller_f.a.app.search.CustomSearchBar
-import com.storyteller_f.a.app.search.SearchScope
-import com.storyteller_f.a.app.topic.TopicCell
+import com.storyteller_f.a.app.pages.search.CustomSearchBar
+import com.storyteller_f.a.app.pages.search.SearchScope
+import com.storyteller_f.a.app.compontents.TopicCell
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicInfo

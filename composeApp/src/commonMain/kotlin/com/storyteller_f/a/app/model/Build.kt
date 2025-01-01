@@ -2,7 +2,7 @@ package com.storyteller_f.a.app.model
 
 import androidx.compose.runtime.Composable
 import com.storyteller_f.a.app.common.viewModel
-import com.storyteller_f.a.app.search.SearchScope
+import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch

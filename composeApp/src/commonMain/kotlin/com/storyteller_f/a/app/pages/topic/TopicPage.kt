@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.topic
+package com.storyteller_f.a.app.pages.topic
 
 import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.success
@@ -32,12 +32,13 @@ import com.storyteller_f.a.app.common.nestedStateView
 import com.storyteller_f.a.app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.InteractionRow
+import com.storyteller_f.a.app.compontents.TopicCell
 import com.storyteller_f.a.app.model.*
-import com.storyteller_f.a.app.room.CommonInputButton
-import com.storyteller_f.a.app.room.InputGroupInternal
-import com.storyteller_f.a.app.room.RoomInputGroup
-import com.storyteller_f.a.app.search.CustomSearchBar
-import com.storyteller_f.a.app.search.SearchScope
+import com.storyteller_f.a.app.pages.room.CommonInputButton
+import com.storyteller_f.a.app.pages.room.InputGroupInternal
+import com.storyteller_f.a.app.pages.room.RoomInputGroup
+import com.storyteller_f.a.app.pages.search.CustomSearchBar
+import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.decrypt
 import com.storyteller_f.shared.getDerPrivateKey
