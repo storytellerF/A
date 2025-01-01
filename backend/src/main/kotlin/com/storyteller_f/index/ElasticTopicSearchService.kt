@@ -12,7 +12,6 @@ import co.elastic.clients.elasticsearch.core.MgetRequest
 import co.elastic.clients.elasticsearch.core.SearchRequest
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
 import co.elastic.clients.elasticsearch.core.bulk.IndexOperation
-import co.elastic.clients.json.JsonData
 import co.elastic.clients.json.jackson.JacksonJsonpMapper
 import co.elastic.clients.transport.TransportUtils
 import co.elastic.clients.transport.rest_client.RestClientTransport
@@ -174,8 +173,10 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
             }
             nextTopicId?.let {
                 add(RangeQuery.of { r ->
-                    r.field("id")
-                        .lt(JsonData.of(nextTopicId))
+                    r.number {
+                        it.field("id")
+                            .lt(nextTopicId.toDouble())
+                    }
                 }._toQuery())
             }
         }
