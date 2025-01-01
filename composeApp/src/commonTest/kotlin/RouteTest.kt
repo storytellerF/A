@@ -6,7 +6,7 @@ import kotlin.test.assertNotNull
 class RouteTest {
 
     @Test
-    fun `test route match`() {
+    fun testRouteMatch() {
         val string = "/room/a/test"
 
         val result = parseRefUri(string)
