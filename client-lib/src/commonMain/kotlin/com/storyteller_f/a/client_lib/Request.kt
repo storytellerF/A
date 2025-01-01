@@ -303,11 +303,11 @@ suspend fun HttpClient.getTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
 }
 
 suspend fun HttpClient.searchTopics(
-    nextTopicId: PrimaryKey?,
     size: Int,
     word: List<String>,
-    parentId: PrimaryKey?,
-    parentType: ObjectType?
+    parentId: PrimaryKey? = null,
+    parentType: ObjectType? = null,
+    nextTopicId: PrimaryKey? = null
 ) = serviceCatching {
     get("topics/search") {
         url {

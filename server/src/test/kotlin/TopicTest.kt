@@ -24,11 +24,11 @@ class TopicTest {
                 val firstTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "best world").getOrThrow()
                 withContext(Dispatchers.IO) { delay(1000) }
 
-                val topics = client.searchTopics(null, 1, listOf("world"), null, null).getOrThrow()
+                val topics = client.searchTopics(1, listOf("world"),).getOrThrow()
                 assertEquals(2, topics.pagination?.total)
                 assertEquals(1, topics.data.size)
                 assertEquals(firstTopic.id, topics.data.first().id)
-                val topics2 = client.searchTopics(topics.data.first().id, 1, listOf("world"), null, null).getOrThrow()
+                val topics2 = client.searchTopics(1, listOf("world"), nextTopicId = topics.data.first().id).getOrThrow()
                 assertEquals(lastTopic.id, topics2.data.first().id)
             }
         }
@@ -93,14 +93,14 @@ class TopicTest {
                     ).getOrThrow()
                 val plain = info.content as TopicContent.Plain
                 assertEquals(media.item.name, plain.list.first().item.name)
-                //查询单个topic
+                // 查询单个topic
                 assertEquals(1, client.getUserTopics(it.data4, null, 10).getOrThrow().data.size)
                 client.createNewTopic(
                     ObjectType.USER,
                     it.data4,
                     "test"
                 ).getOrThrow()
-                //查询多个topic
+                // 查询多个topic
                 assertEquals(2, client.getUserTopics(it.data4, null, 10).getOrThrow().data.size)
             }
         }

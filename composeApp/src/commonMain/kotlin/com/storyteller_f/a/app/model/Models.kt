@@ -126,7 +126,7 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null) : PagingView
     val info = when {
         id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, 10)
         type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, 20)
-        type == ObjectType.COMMUNITY -> client.searchTopics(loadKey, 20, emptyList(), id, ObjectType.COMMUNITY)
+        type == ObjectType.COMMUNITY -> client.searchTopics(20, emptyList(), id, ObjectType.COMMUNITY, loadKey)
         else -> client.getTopicTopics(id, loadKey, 20)
     }.getOrThrow()
     info.copy(processEncryptedTopic(info.data).map {
@@ -256,7 +256,7 @@ class TopicSearchViewModel(word: List<String>, parentId: PrimaryKey?, parentType
     PagingViewModel<PrimaryKey, TopicInfo>({
         SimplePagingSource {
             serviceCatching {
-                client.searchTopics(it, 10, word, parentId, parentType).getOrThrow()
+                client.searchTopics(10, word, parentId, parentType, it).getOrThrow()
             }.map {
                 APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
             }
