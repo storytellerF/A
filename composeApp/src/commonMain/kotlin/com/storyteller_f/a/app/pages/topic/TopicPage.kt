@@ -29,10 +29,7 @@ import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.nestedStateView
-import com.storyteller_f.a.app.compontents.CustomAlertDialog
-import com.storyteller_f.a.app.compontents.CustomAlertDialogController
-import com.storyteller_f.a.app.compontents.InteractionRow
-import com.storyteller_f.a.app.compontents.TopicCell
+import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.room.CommonInputButton
 import com.storyteller_f.a.app.pages.room.InputGroupInternal
@@ -82,122 +79,6 @@ fun TopicPage(topicId: PrimaryKey) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun EmojiPicker(
-    sheetState: SheetState,
-    showSheet: Boolean,
-    topic: TopicInfo,
-    hideSheet: () -> Unit
-) {
-    var query by remember {
-        mutableStateOf("")
-    }
-
-    if (showSheet) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                hideSheet()
-            },
-            dragHandle = null,
-            sheetState = sheetState,
-            contentWindowInsets = {
-                WindowInsets(0)
-            },
-        ) {
-            EmojiPickerInternal(query, topic, sheetState, hideSheet) {
-                query = it
-            }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun EmojiPickerInternal(
-    query: String,
-    topic: TopicInfo,
-    sheetState: SheetState,
-    hideSheet: () -> Unit,
-    updateQuery: (String) -> Unit,
-) {
-    Column(modifier = Modifier.fillMaxWidth().consumeWindowInsets(WindowInsets.navigationBars)) {
-        Spacer(modifier = Modifier.height(20.dp))
-        TextField(
-            query,
-            {
-                updateQuery(it)
-            },
-            suffix = {
-                Icon(Icons.Default.Clear, "clear reaction query")
-            },
-            modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth().padding(horizontal = 20.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            )
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        val emojiList by produceState(emptyList(), query) {
-            value = if (query.isEmpty()) {
-                Emoji.list()
-            } else {
-                Emoji.list().filter { emoji ->
-                    emoji.details.description.contains(query, true)
-                }
-            }
-        }
-        val emojiSize = 50.dp
-        BoxWithConstraints(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            val contentWidth = maxWidth - 40.dp
-            val count = (contentWidth / emojiSize).toInt()
-            val style = if (emojiSize * count == contentWidth) {
-                GridCells.FixedSize(emojiSize)
-            } else {
-                GridCells.Fixed(count)
-            }
-            LazyVerticalGrid(
-                style,
-                contentPadding = PaddingValues(20.dp, 10.dp),
-                modifier = Modifier.wrapContentWidth().height(300.dp)
-            ) {
-                items(emojiList, key = {
-                    it.toString()
-                }) {
-                    EmojiItem(emojiSize, topic, it, sheetState, hideSheet)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun EmojiItem(
-    emojiSize: Dp,
-    topic: TopicInfo,
-    emoji: Emoji,
-    sheetState: SheetState,
-    hideSheet: () -> Unit
-) {
-    val scope = rememberCoroutineScope()
-    Box(modifier = Modifier.size(emojiSize).clickable {
-        scope.launch {
-            globalDialogState.use {
-                client.addReaction(topic.id, emoji.details.string)
-                bus.emit(OnTopicChanged(topic.copy(reactionCount = topic.reactionCount + 1)))
-                sheetState.hide()
-            }
-        }.invokeOnCompletion {
-            if (!sheetState.isVisible) {
-                hideSheet()
-            }
-        }
-    }, contentAlignment = Alignment.Center) {
-        Text(emoji.details.string, fontSize = 25.sp)
-    }
-}
 
 @Composable
 private fun TopicPageInternal(

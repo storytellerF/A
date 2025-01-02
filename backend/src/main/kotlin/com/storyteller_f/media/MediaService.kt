@@ -3,7 +3,7 @@ package com.storyteller_f.media
 import com.storyteller_f.shared.model.MediaInfo
 import java.io.File
 
-data class UploadPack(val name: String, val path: File)
+data class UploadPack(val name: String, val path: File, val contentType: String? = null)
 
 interface MediaService {
     fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>>

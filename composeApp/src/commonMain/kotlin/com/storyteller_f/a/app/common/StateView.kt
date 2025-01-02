@@ -56,7 +56,7 @@ fun <T : Any> StateView(
         value = refresh
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        StateView(state = loadState.toLoadingState(pagingItems.itemCount), refresh = {
+        StateViewInternal(state = loadState.toLoadingState(pagingItems.itemCount), refresh = {
             pagingItems.refresh()
         }, content)
         PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
@@ -77,7 +77,7 @@ private fun LoadState?.toLoadingState(count: Int) =
     }
 
 @Composable
-fun StateView(state: LoadingState?, refresh: () -> Unit, content: @Composable () -> Unit) {
+private fun StateViewInternal(state: LoadingState?, refresh: () -> Unit, content: @Composable () -> Unit) {
     when (state) {
         null -> CenterBox {
             CircularProgressIndicator()
@@ -135,7 +135,7 @@ fun <T> StateView(handler: LoadingHandler<T?>, extraRefresh: () -> Unit = {}, co
         if (refreshing && state !is LoadingState.Loading) refreshing = false
     }
     Box(modifier = Modifier.pullRefresh(refreshState)) {
-        StateView(state, refresh = {
+        StateViewInternal(state, refresh = {
             handler.refresh()
             extraRefresh()
         }) {

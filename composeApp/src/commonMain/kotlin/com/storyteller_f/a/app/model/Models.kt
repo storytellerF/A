@@ -271,7 +271,9 @@ class MediaListViewModel(private val objectId: PrimaryKey, private val objectTyp
             bus.collect {
                 if (it is OnMediaUploaded) {
                     val old = handler.data.value ?: ServerResponse(emptyList())
-                    update(old.copy(data = old.data + it.mediaInfo))
+                    update(old.copy(data = old.data.toMutableList().apply {
+                        add(0, it.mediaInfo)
+                    }))
                 }
             }
         }

@@ -377,9 +377,9 @@ suspend fun HttpClient.getMediaList(objectId: PrimaryKey, objectType: ObjectType
 suspend fun HttpClient.upload(
     stream: ByteArray,
     name: String,
-    extension: String,
     objectId: PrimaryKey,
-    objectType: ObjectType
+    objectType: ObjectType,
+    contentType: ContentType
 ) = serviceCatching {
     post("amedia/upload") {
         url {
@@ -391,7 +391,7 @@ suspend fun HttpClient.upload(
                 formData {
                     append("description", "amedia")
                     append("file", stream, Headers.build {
-                        append(HttpHeaders.ContentType, ContentType.defaultForFileExtension(extension))
+                        append(HttpHeaders.ContentType, contentType)
                         append(HttpHeaders.ContentDisposition, "filename=\"$name\"")
                     })
                 },

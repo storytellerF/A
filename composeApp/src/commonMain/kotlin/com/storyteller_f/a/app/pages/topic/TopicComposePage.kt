@@ -31,6 +31,7 @@ import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.StateView
+import com.storyteller_f.a.app.compontents.TopicContentField
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.MediaListViewModel
 import com.storyteller_f.a.app.model.OnMediaUploaded
@@ -62,14 +63,10 @@ fun TopicComposePage(
     privateRoomId: PrimaryKey?,
     backPrePage: () -> Unit
 ) {
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
     val user by LoginViewModel.user.collectAsState()
     user?.let {
         TopicComposeScaffold(
             it,
-            scope,
-            drawerState,
             objectType,
             objectId,
             backPrePage,
@@ -83,8 +80,6 @@ fun TopicComposePage(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun TopicComposeScaffold(
     user: UserInfo,
-    scope: CoroutineScope,
-    drawerState: DrawerState,
     objectType: ObjectType,
     objectId: PrimaryKey,
     backPrePage: () -> Unit,
@@ -94,125 +89,37 @@ private fun TopicComposeScaffold(
     var input by remember {
         mutableStateOf("")
     }
-    val list = createMediaListViewModel(privateRoomId, user.id)
-    ModalNavigationDrawer({
-        TopicComposeDrawer(scope, list, input) {
-            input = it
-        }
-    }, drawerState = drawerState, modifier = Modifier.fillMaxWidth(), gesturesEnabled = enableExperimental) {
-        Scaffold(topBar = {
-            TopAppBar({
-            }, navigationIcon = {
-                if (enableExperimental) {
-                    IconButton(onClick = {
-                        scope.launch {
-                            drawerState.open()
-                        }
-                    }) {
-                        Icon(Icons.Filled.Menu, contentDescription = null)
-                    }
+    var showSheet by remember {
+        mutableStateOf(false)
+    }
+    Scaffold(topBar = {
+        TopAppBar({
+        }, navigationIcon = {
+            if (enableExperimental) {
+                IconButton(onClick = {
+                    showSheet = true
+                }) {
+                    Icon(Icons.Filled.PermMedia, contentDescription = null)
                 }
-            }, actions = {
-                TopicComposeSubmitButton(input, objectType, objectId) {
-                    input = ""
-                    backPrePage()
-                }
-            })
-        }) { paddingValues ->
-            Column(modifier = Modifier.padding(top = paddingValues.calculateTopPadding())) {
-                TopicComposeInternal(input, list, enableExperimental) {
-                    input = it
-                }
+            }
+        }, actions = {
+            TopicComposeSubmitButton(input, objectType, objectId) {
+                input = ""
+                backPrePage()
+            }
+        })
+    }) { paddingValues ->
+        Column(modifier = Modifier.padding(top = paddingValues.calculateTopPadding())) {
+            TopicComposeInternal(input, enableExperimental, privateRoomId, user) {
+                input = it
             }
         }
     }
-}
-
-@Composable
-private fun TopicComposeDrawer(
-    scope: CoroutineScope,
-    list: MediaListViewModel,
-    input: String,
-    updateInput: (String) -> Unit
-) {
-    val toasterState = rememberToasterState()
-    val my by LoginViewModel.user.collectAsState()
-    Toaster(toasterState)
-    ModalDrawerSheet {
-        Row {
-            IconButton({
-                scope.launch {
-                    globalDialogState.use {
-                        val id = my?.id
-                        if (id != null) {
-                            val f = FileKit.pickFile()
-                            if (f != null) {
-                                val size = f.getSize()
-                                if (size != null && size <= 100 * 1024 * 1024) {
-                                    val response = client.upload(
-                                        f.readBytes(),
-                                        f.name,
-                                        f.extension,
-                                        id,
-                                        ObjectType.USER
-                                    )
-                                        .getOrThrow()
-                                    response.data.firstOrNull()?.let {
-                                        bus.emit(OnMediaUploaded(it))
-                                    }
-                                } else {
-                                    toasterState.show("size is null or size too big", duration = 1.seconds)
-                                }
-                            }
-                        }
-                    }
-                }
-            }) {
-                Icon(Icons.Default.UploadFile, "upload file")
-            }
-            IconButton({
-                list.handler.refresh()
-            }) {
-                Icon(Icons.Default.Refresh, "refresh file")
-            }
-        }
-        StateView(list.handler) {
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(it.data) {
-                    NavigationDrawerItem({
-                        Text(it.item.noPrefixName)
-                    }, false, {
-                        insertContent(it, updateInput, input)
-                    }, icon = {
-                        AsyncImage(it.url, it.item.noPrefixName, modifier = Modifier.size(40.dp))
-                    })
-                }
-            }
-        }
-    }
-}
-
-private fun insertContent(
-    it: MediaInfo,
-    updateInput: (String) -> Unit,
-    input: String
-) {
-    if (it.item.contentType.startsWith("image/")) {
-        updateInput(
-            """$input
-![${it.item.noPrefixName}](${it.item.noPrefixName} "${it.item.noPrefixName}")
-"""
-        )
-    } else {
-        updateInput(
-            """$input
-```object
-{
-    "contentType": "${it.item.contentType}",
-    "name": "${it.item.noPrefixName}"
-}
-```"""
-        )
+    val sheetState = rememberModalBottomSheetState()
+    MediaPicker(showSheet, sheetState, input, {
+        input = it
+    }, privateRoomId, user) {
+        showSheet = false
     }
 }
 
@@ -220,10 +127,13 @@ private fun insertContent(
 @Composable
 private fun TopicComposeInternal(
     input: String,
-    mediaListViewModel: MediaListViewModel,
     enableExperimental: Boolean,
+    privateRoomId: PrimaryKey?,
+    user: UserInfo,
     updateInput: (String) -> Unit
 ) {
+    val mediaListViewModel = createMediaListViewModel(privateRoomId, user.id)
+
     val pagerState = rememberPagerState {
         3
     }

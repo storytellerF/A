@@ -27,6 +27,7 @@ exposedVersion = "0.57.0"
 filekitCompose = "0.8.8"
 geoip2 = "4.2.1"
 h2 = "2.3.232"
+haze = "1.1.1"
 highlights = "1.0.0"
 jacksonModuleKotlin = "2.18.2"
 jlatexmath = "1.0.7"
@@ -53,9 +54,11 @@ napier = "2.7.1"
 navigationCompose = "2.8.0-alpha11"
 pagingCommon = "3.3.0-alpha02-0.5.1"
 pdfbox = "3.0.3"
+permissionsCompose = "0.18.1"
 pgjdbcNg = "0.8.9"
 postgresql = "42.7.4"
 postgresqlVersion = "1.20.4"
+recordCore = "0.4.0"
 richeditorCompose = "1.0.0-rc10"
 simplemagic = "1.17"
 slf4jSimple = "2.0.16"
@@ -107,6 +110,7 @@ exposed-money = { module = "org.jetbrains.exposed:exposed-money", version.ref = 
 filekit-compose = { module = "io.github.vinceglb:filekit-compose", version.ref = "filekitCompose" }
 geoip2 = { module = "com.maxmind.geoip2:geoip2", version.ref = "geoip2" }
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 highlights = { module = "dev.snipme:highlights", version.ref = "highlights" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jacksonModuleKotlin" }
 jlatexmath = { module = "org.scilab.forge:jlatexmath", version.ref = "jlatexmath" }
@@ -159,8 +163,10 @@ navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-co
 paging-common = { module = "app.cash.paging:paging-common", version.ref = "pagingCommon" }
 paging-compose-common = { module = "app.cash.paging:paging-compose-common", version.ref = "pagingCommon" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
+permissions-compose = { module = "dev.icerock.moko:permissions-compose", version.ref = "permissionsCompose" }
 pgjdbc-ng = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng", version.ref = "pgjdbcNg" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+record-core = { module = "dev.theolm.record:record-core", version.ref = "recordCore" }
 richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditorCompose" }
 simplemagic = { module = "com.j256.simplemagic:simplemagic", version.ref = "simplemagic" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }

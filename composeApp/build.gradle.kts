@@ -96,6 +96,7 @@ kotlin {
             implementation(libs.androidx.media3.exoplayer)
             implementation(libs.androidx.media3.exoplayer.dash)
             implementation(libs.androidx.media3.ui)
+            implementation(libs.record.core)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -131,6 +132,7 @@ kotlin {
             implementation(libs.compose.pdf)
             implementation(libs.aboutlibraries.core)
             implementation(libs.aboutlibraries.compose.m3)
+            implementation(libs.haze)
 
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)

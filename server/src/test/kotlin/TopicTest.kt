@@ -5,6 +5,7 @@ import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
+import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -83,7 +84,13 @@ class TopicTest {
     fun `test create user topic`() {
         test { client, _ ->
             attachSession(client) {
-                val media = client.upload("hello".toByteArray(), "hello.txt", "txt", it.data4, ObjectType.USER)
+                val media = client.upload(
+                    "hello".toByteArray(),
+                    "hello.txt",
+                    it.data4,
+                    ObjectType.USER,
+                    ContentType.defaultForFileExtension("txt")
+                )
                     .getOrThrow().data.first()
                 val info =
                     client.createNewTopic(
