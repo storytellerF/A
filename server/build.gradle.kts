@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.napier)
     implementation(libs.emoji.reader.jvm)
     implementation(libs.geoip2)
+    implementation(libs.simplemagic)
 
     testImplementation(projects.clientLib)
     testImplementation(libs.ktor.server.test.host)

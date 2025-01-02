@@ -7,6 +7,7 @@ import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.MediaItem
 import io.github.aakira.napier.Napier
+import kotlinx.datetime.*
 import java.io.File
 import java.net.URLConnection
 import java.nio.file.Files
@@ -100,7 +101,8 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
             it,
             contentType,
             file.length(),
-            it.substringAfter("/")
+            it.substringAfter("/"),
+            Instant.fromEpochMilliseconds(file.lastModified()).toLocalDateTime(TimeZone.UTC)
         )
     }
 

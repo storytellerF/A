@@ -1,5 +1,6 @@
 package com.storyteller_f.a.server.route
 
+import com.j256.simplemagic.ContentInfoUtil
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
@@ -23,9 +24,11 @@ fun Route.bindProtectedSafeMediaRoute(backend: Backend, reader: DatabaseReader) 
         error("create atemp failed")
     }
 
+    val infoUtil = ContentInfoUtil()
+
     post<RouteMedia.Upload> {
         usePrincipal(reader) { id ->
-            uploadMedia(it, id, root, backend)
+            uploadMedia(it, id, root, backend, infoUtil)
         }
     }
 }

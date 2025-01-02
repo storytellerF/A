@@ -7,6 +7,7 @@ import io.github.aakira.napier.Napier
 import io.minio.*
 import io.minio.errors.ErrorResponseException
 import io.minio.http.Method
+import kotlinx.datetime.toKotlinLocalDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.Result
 
@@ -36,7 +37,13 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
     ): MediaItem {
         val statObject =
             statObject(StatObjectArgs.builder().bucket(bucketName).`object`(objName).build())
-        return MediaItem(objName, statObject.contentType(), statObject.size(), objName.substringAfter("/"))
+        return MediaItem(
+            objName,
+            statObject.contentType(),
+            statObject.size(),
+            objName.substringAfter("/"),
+            statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime()
+        )
     }
 
     override fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>> {
@@ -70,11 +77,18 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
             }
-            val names = list.map { (objName, picFullPath) ->
+            val names = list.map { (objName, picFullPath, type) ->
                 val response = uploadObject(
-                    UploadObjectArgs.builder().bucket(
-                        bucketName
-                    ).`object`(objName).filename(picFullPath.absolutePath).build()
+                    UploadObjectArgs.builder()
+                        .bucket(bucketName)
+                        .`object`(objName)
+                        .filename(picFullPath.absolutePath)
+                        .apply {
+                            if (type != null) {
+                                contentType(type)
+                            }
+                        }
+                        .build()
                 )
                 response.`object`()
             }

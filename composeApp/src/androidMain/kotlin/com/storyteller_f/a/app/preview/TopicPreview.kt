@@ -20,7 +20,7 @@ import com.storyteller_f.a.app.compontents.InteractionRow
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.compontents.TopicCellInternal
-import com.storyteller_f.a.app.topic.TopicContentField
+import com.storyteller_f.a.app.compontents.TopicContentField
 import com.storyteller_f.a.app.pages.topic.TopicDialogInternal
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo

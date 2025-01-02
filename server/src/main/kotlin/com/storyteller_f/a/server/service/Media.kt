@@ -1,5 +1,6 @@
 package com.storyteller_f.a.server.service
 
+import com.j256.simplemagic.ContentInfoUtil
 import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.route.RouteMedia
@@ -10,7 +11,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResultNotNull
 import io.ktor.http.content.*
-import io.ktor.resources.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
@@ -49,26 +49,38 @@ suspend fun RoutingContext.uploadMedia(
     id: PrimaryKey,
     root: File,
     backend: Backend,
+    infoUtil: ContentInfoUtil,
 ) = if (it.parent.objectType == ObjectType.TOPIC) {
     Result.failure(BadRequestException("can't upload to topic"))
 } else {
     checkRootWritePermission(it.parent.objectType, it.parent.objectId, id).mapResultNotNull {
-        var fileName: String
         val multipartData = call.receiveMultipart()
         val result = mutableListOf<MediaInfo>()
 
         multipartData.forEachPart { part ->
             when (part) {
                 is PartData.FileItem -> {
-                    fileName = part.originalFileName as String
+                    val fileName = part.originalFileName as String
+
                     val fileBytes = part.provider().readRemaining().readByteArray()
                     val file = File(root, Uuid.random().toString() + fileName)
+
                     try {
                         file.writeBytes(fileBytes)
+                        val type = if (part.contentType.toString() == "audio/mp4") {
+                            val mimeType = infoUtil.findMatch(file).contentType.mimeType
+                            if (mimeType == "audio/mp4") {
+                                "audio/mp4"
+                            } else {
+                                null
+                            }
+                        } else {
+                            null
+                        }
                         result.addAll(
                             backend.mediaService.upload(
                                 "amedia",
-                                listOf(UploadPack("${it.objectId}/$fileName", file))
+                                listOf(UploadPack("${it.objectId}/$fileName", file, type))
                             ).getOrThrow().filterNotNull()
                         )
                     } finally {
