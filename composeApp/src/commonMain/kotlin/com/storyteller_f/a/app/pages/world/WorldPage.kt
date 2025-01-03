@@ -20,8 +20,8 @@ import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.common.StateView
-import com.storyteller_f.a.app.model.createWorldViewModel
 import com.storyteller_f.a.app.compontents.TopicCell
+import com.storyteller_f.a.app.model.createWorldViewModel
 import com.storyteller_f.shared.model.TopicInfo
 
 @Composable

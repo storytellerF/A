@@ -1,5 +1,6 @@
 package com.storyteller_f.a.app.pages.topic
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,10 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.StopCircle
-import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -67,6 +65,7 @@ fun MediaPicker(
         val pagerState = rememberPagerState {
             2
         }
+        val currentPage = pagerState.currentPage
         ModalBottomSheet(
             onDismissRequest = {
                 hideSheet()
@@ -77,6 +76,15 @@ fun MediaPicker(
                 WindowInsets(0)
             },
         ) {
+            val tabs = listOf(Icons.Default.UploadFile to "files", Icons.Default.Mic to "audio recorder")
+            PrimaryTabRow(currentPage) {
+                tabs.forEachIndexed { index, pair ->
+                    Tab(currentPage == index, {
+                    }) {
+                        Icon(pair.first, pair.second)
+                    }
+                }
+            }
             HorizontalPager(pagerState, modifier = Modifier.height(300.dp)) {
                 if (it == 0) {
                     MediaListView(input, privateRoomId, user, updateInput)
@@ -100,7 +108,7 @@ fun AudioRecorder(privateRoomId: PrimaryKey?) {
     Box(modifier = Modifier.fillMaxSize()) {
         IconButton({
             scope.launch {
-                if (isGranted)
+                if (isGranted) {
                     if (isRecording) {
                         val path = Recorder.stopRecord()
                         Napier.i {
@@ -110,17 +118,18 @@ fun AudioRecorder(privateRoomId: PrimaryKey?) {
                     } else {
                         Recorder.startRecord()
                     }
+                }
             }
         }, modifier = Modifier.align(Alignment.Center).haze(state = hazeState)) {
             if (isRecording) {
-                Icon(Icons.Default.StopCircle, "stop record", modifier = Modifier.size(200.dp))
+                Image(Icons.Default.StopCircle, "stop record", modifier = Modifier.size(200.dp))
             } else {
-                Icon(Icons.Default.PlayCircle, "start record", modifier = Modifier.size(200.dp))
+                Image(Icons.Default.PlayCircle, "start record", modifier = Modifier.size(200.dp))
             }
         }
 
         val surface = MaterialTheme.colorScheme.surface
-        if (!isGranted)
+        if (!isGranted) {
             Box(modifier = Modifier.fillMaxSize().hazeChild(hazeState) {
                 this.backgroundColor = surface
             }) {
@@ -130,6 +139,7 @@ fun AudioRecorder(privateRoomId: PrimaryKey?) {
                     Text(("Provide permission"))
                 }
             }
+        }
     }
 }
 

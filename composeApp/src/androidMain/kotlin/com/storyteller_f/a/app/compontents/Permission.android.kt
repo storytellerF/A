@@ -27,7 +27,6 @@ actual fun isPermissionGranted(permission: Permission): MutableState<Boolean> {
     return isGranted
 }
 
-
 actual fun requestPermission(permission: Permission) {
     val launcher = launcherRef?.get() ?: return
     val p = when (permission) {

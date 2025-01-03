@@ -32,8 +32,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.common.CenterBox
-import com.storyteller_f.a.app.pages.community.MyCommunitiesPage
 import com.storyteller_f.a.app.compontents.ButtonNav
+import com.storyteller_f.a.app.pages.community.MyCommunitiesPage
 import com.storyteller_f.a.app.pages.room.MyRoomsPage
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope

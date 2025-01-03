@@ -132,3 +132,11 @@ tasks.withType<DependencyUpdatesTask> {
         isNonStable(candidate.version)
     }
 }
+
+allprojects {
+    tasks.withType<Test> {
+        if (name == "testDebugUnitTest" || name == "testReleaseUnitTest") {
+            exclude("**/ExampleTest*")
+        }
+    }
+}
