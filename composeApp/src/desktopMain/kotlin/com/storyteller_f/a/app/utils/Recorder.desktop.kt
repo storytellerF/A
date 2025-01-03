@@ -44,7 +44,6 @@ actual object Recorder {
                 flow.value = false
             }
         }
-
     }
 
     internal actual fun stopRecord(): Path {

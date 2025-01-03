@@ -163,12 +163,17 @@ private fun LatexBlock(
 }
 
 @Composable
-private fun imageRequestInMarkdown(link: String, mediaMap: Map<String, MediaInfo>) =
-    ImageRequest.Builder(LocalPlatformContext.current)
+private fun imageRequestInMarkdown(link: String, mediaMap: Map<String, MediaInfo>): ImageRequest {
+    val size = mediaMap[link]?.dimension?.let {
+        coil3.size.Size(it.width, it.height)
+    } ?: coil3.size.Size.ORIGINAL
+    val url = mediaMap[link]?.url
+    return ImageRequest.Builder(LocalPlatformContext.current)
         .fetcherFactory(KtorNetworkFetcherFactory(client))
-        .data(mediaMap[link]?.url)
-        .size(coil3.size.Size.ORIGINAL)
+        .data(url)
+        .size(size)
         .build()
+}
 
 class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>) : ImageTransformer {
     private val reverseMap = mediaMap.values.associateBy {

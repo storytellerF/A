@@ -31,9 +31,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.*
-import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.model.*
+import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.world.TopicList

@@ -6,7 +6,6 @@ import a.composeapp.generated.resources.preview
 import a.composeapp.generated.resources.raw
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.BasicTextField
@@ -22,24 +21,16 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import com.dokar.sonner.Toaster
-import com.dokar.sonner.rememberToasterState
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
-import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
-import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.compontents.TopicContentField
 import com.storyteller_f.a.app.globalDialogState
-import com.storyteller_f.a.app.model.MediaListViewModel
-import com.storyteller_f.a.app.model.OnMediaUploaded
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.a.app.updateDocumentInParent
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.createNewTopic
-import com.storyteller_f.a.client_lib.upload
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -47,13 +38,8 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
-import io.github.vinceglb.filekit.core.FileKit
-import io.github.vinceglb.filekit.core.extension
-import io.github.vinceglb.filekit.core.pickFile
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun TopicComposePage(

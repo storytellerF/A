@@ -9,5 +9,4 @@ actual fun isPermissionGranted(permission: Permission): MutableState<Boolean> {
     }
 }
 
-actual fun requestPermission(permission: Permission) {
-}
+actual fun requestPermission(permission: Permission) = Unit
