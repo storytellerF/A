@@ -16,10 +16,10 @@ import com.storyteller_f.tables.searchMembers
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 
-fun Route.bindProtectedSafeUserRoute(reader: DatabaseReader) {
+fun Route.bindProtectedSafeUserRoute(reader: DatabaseReader, backend: Backend) {
     post<RouteUsers.Update> {
         usePrincipal(reader) { id ->
-            updateUser(id)
+            updateUser(id, backend)
         }
     }
 }

@@ -31,6 +31,7 @@ import com.storyteller_f.a.app.pages.topic.TopicPage
 import com.storyteller_f.a.app.pages.topic.processEncryptedTopic
 import com.storyteller_f.a.app.pages.user.MemberPage
 import com.storyteller_f.a.app.pages.user.UserPage
+import com.storyteller_f.a.app.pages.user.UserSettingPage
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.client_lib.ClientWebSocket
 import com.storyteller_f.a.client_lib.LoginViewModel
@@ -96,6 +97,9 @@ data class TopicComposeScreen(
 
 @Serializable
 data class MemberScreen(val objectType: String, val objectId: PrimaryKey)
+
+@Serializable
+data object UserSettingScreen
 
 @Composable
 fun App() {
@@ -164,6 +168,9 @@ private fun NavGraphBuilder.buildRootNav(
         val route = it.toRoute<UserScreen>()
         UserPage(route.uid)
     }
+    composable<UserSettingScreen> {
+        UserSettingPage()
+    }
 }
 
 private fun newAppNav(navigator: NavHostController) = object : AppNav {
@@ -216,6 +223,10 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
 
     override fun back() {
         navigator.popBackStack()
+    }
+
+    override fun gotoUserSetting() {
+        navigator.navigate(UserSettingScreen)
     }
 }
 
@@ -296,6 +307,8 @@ interface AppNav {
 
     fun back()
 
+    fun gotoUserSetting()
+
     companion object {
         val EMPTY = object : AppNav {
             override val currentDestination: NavBackStackEntry
@@ -346,6 +359,10 @@ interface AppNav {
             }
 
             override fun back() {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoUserSetting() {
                 TODO("Not yet implemented")
             }
         }

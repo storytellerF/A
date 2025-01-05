@@ -84,16 +84,16 @@ suspend fun HttpClient.getRoomTopics(
 }
 
 suspend fun HttpClient.getCommunityTopics(
-    roomId: PrimaryKey,
-    nextTopicId: PrimaryKey?,
+    communityId: PrimaryKey,
+    nextCommunityId: PrimaryKey?,
     size: Int,
 ) = serviceCatching {
-    get("communities/$roomId/topics") {
+    get("communities/$communityId/topics") {
         url {
             if (isAlreadyLogin()) {
                 parameters.append("fillHasCommented", "true")
             }
-            appendPagingQueryParams(size, nextTopicId)
+            appendPagingQueryParams(size, nextCommunityId)
         }
     }.body<ServerResponse<TopicInfo>>()
 }

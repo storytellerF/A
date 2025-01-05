@@ -152,7 +152,7 @@ fun Application.commonRoute(backend: Backend, reader: DatabaseReader) {
             bindProtectedSafeRoomRoute(backend, reader)
             bindProtectedSafeTopicRoute(backend, reader)
             bindProtectedSafeCommunityRoute(backend, reader)
-            bindProtectedSafeUserRoute(reader)
+            bindProtectedSafeUserRoute(reader, backend)
             webSocket("/link") {
                 webSocketContent(backend, reader)
             }

@@ -67,7 +67,7 @@ private fun PreviewRoom(@PreviewParameter(MessageListProvider::class) topicInfos
             {},
             {},
 
-            ) {
+        ) {
         }
     }
 }

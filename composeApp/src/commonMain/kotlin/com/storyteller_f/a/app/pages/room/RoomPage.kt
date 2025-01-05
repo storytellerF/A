@@ -146,7 +146,7 @@ fun RoomInputGroup(
     var input by remember {
         mutableStateOf("")
     }
-    val alertDialogState = remember {
+    val controller = remember {
         CustomAlertDialogController()
     }
     val scope = rememberCoroutineScope()
@@ -154,53 +154,33 @@ fun RoomInputGroup(
         val toasterState = rememberToasterState()
         Toaster(toasterState, alignment = Alignment.Center)
         val keysViewModel = createRoomKeysViewModel(roomId, roomInfo)
-        val keyState by keysViewModel.handler.state.collectAsState()
-        val keyData by keysViewModel.handler.data.collectAsState()
         val objectId = topicId ?: roomId
         val objectType = if (topicId != null) ObjectType.TOPIC else ObjectType.ROOM
+        val updateInput: (String) -> Unit = {
+            input = it
+        }
         InputGroupInternal(
-            objectId, objectType, input, MaterialTheme.colorScheme.tertiaryContainer,
+            objectId,
+            objectType,
+            input,
+            MaterialTheme.colorScheme.tertiaryContainer,
             roomId.takeIf {
                 roomInfo.isPrivate
             },
+            updateInput,
             {
-                input = it
-            },
-            {
-                insertContent(it, {
-                    input = it
-                }, input)
-                sendRoomTopic(
-                    roomInfo,
-                    input,
-                    scrollToNew,
-                    keyState,
-                    keyData,
-                    topicId,
-                    scope,
-                    toasterState,
-                    alertDialogState
-                )
+                insertContent(it, updateInput, input)
+                sendRoomTopic(roomInfo, input, scrollToNew, topicId, scope, toasterState, controller, keysViewModel)
             },
         ) {
             RoomSendButton(input = input) {
-                sendRoomTopic(
-                    roomInfo,
-                    input,
-                    scrollToNew,
-                    keyState,
-                    keyData,
-                    topicId,
-                    scope,
-                    toasterState,
-                    alertDialogState
-                )
+                sendRoomTopic(roomInfo, input, scrollToNew, topicId, scope, toasterState, controller, keysViewModel)
             }
         }
     }
 
-    CustomAlertDialog(alertDialogState, {
-        alertDialogState.close()
+    CustomAlertDialog(controller, {
+        controller.close()
     }) {
         checkRoomRouteAndAlert(appNav, roomId, startJoinRoom)
     }
@@ -210,13 +190,14 @@ private fun sendRoomTopic(
     roomInfo: RoomInfo,
     input: String,
     scrollToNew: () -> Unit,
-    keyState: LoadingState?,
-    keyData: List<Pair<PrimaryKey, String>>?,
     topicId: PrimaryKey?,
     scope: CoroutineScope,
     toasterState: ToasterState,
-    alertDialogState: CustomAlertDialogController
+    alertDialogState: CustomAlertDialogController,
+    keysViewModel: RoomKeysViewModel
 ) {
+    val keyState = keysViewModel.handler.state.value
+    val keyData = keysViewModel.handler.data.value
     if (roomInfo.isJoined) {
         sendMessage(roomInfo, input, scrollToNew, keyState, keyData, topicId) {
             scope.launch {
@@ -388,7 +369,9 @@ private fun InputGroupSuffix(
         })
     }
     val sheetState = rememberModalBottomSheetState()
-    MediaPicker(showSheet, sheetState, input, updateInput, privateRoomId, uploadSuccess) {
+    MediaPicker(showSheet, sheetState, privateRoomId, { info ->
+        insertContent(info, updateInput, input)
+    }, uploadSuccess) {
         showSheet = false
     }
 }

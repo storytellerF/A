@@ -165,6 +165,10 @@ class CustomAlertDialogController(val state: MutableState<CustomAlertDialogState
         state.value = CustomAlertDialogState(title, message)
     }
 
+    fun showTitle(title: String) {
+        state.value = CustomAlertDialogState(title, "")
+    }
+
     fun showError(throwable: Throwable) {
         state.value = CustomAlertDialogState(null, throwable.message.toString())
     }

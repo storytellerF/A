@@ -173,7 +173,11 @@ private fun TopicInputGroup(
     }
     val isSending = sendState.value is LoadingState.Loading
     InputGroupInternal(
-        topic.id, ObjectType.TOPIC, input, MaterialTheme.colorScheme.secondaryContainer, null,
+        topic.id,
+        ObjectType.TOPIC,
+        input,
+        MaterialTheme.colorScheme.secondaryContainer,
+        null,
         {
             input = it
         },

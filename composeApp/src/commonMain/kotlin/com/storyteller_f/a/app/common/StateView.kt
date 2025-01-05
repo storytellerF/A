@@ -121,7 +121,12 @@ fun CenterBox(content: @Composable () -> Unit) {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun <T> StateView(handler: LoadingHandler<T?>, extraRefresh: () -> Unit = {}, modifier: Modifier = Modifier, content: @Composable (T) -> Unit) {
+fun <T> StateView(
+    handler: LoadingHandler<T?>,
+    extraRefresh: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    content: @Composable (T) -> Unit
+) {
     val state by handler.state.collectAsState()
     val data by handler.data.collectAsState()
     var refreshing by remember { mutableStateOf(false) }
