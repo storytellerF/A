@@ -95,6 +95,7 @@ kotlin {
             implementation(libs.jlatexmath.android.font.greek)
             implementation(libs.androidx.media3.exoplayer)
             implementation(libs.androidx.media3.exoplayer.dash)
+            implementation(libs.androidx.media3.exoplayer.hls)
             implementation(libs.androidx.media3.ui)
             implementation(libs.record.core)
         }
