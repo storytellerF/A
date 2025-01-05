@@ -69,33 +69,33 @@ private fun UserRefCellInternal(viewModel: UserViewModel) {
 fun UserCell(
     userInfo: UserInfo?,
     customBackground: Boolean,
-    avatarSize: Dp = 50.dp,
     onClick: (PrimaryKey) -> Unit = {}
 ) {
-    userInfo ?: return
     Row(
         modifier = if (customBackground) {
             Modifier
-                .fillMaxWidth().clickable {
-                    onClick(userInfo.id)
+                .fillMaxWidth().clickable(userInfo != null) {
+                    userInfo?.id?.let(onClick)
                 }
         } else {
-            Modifier.fillMaxWidth().clickable {
-                onClick(userInfo.id)
+            Modifier.fillMaxWidth().clickable(userInfo != null) {
+                userInfo?.id?.let(onClick)
             }.background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
                 .padding(8.dp)
-        },
+        }.height(40.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        UserIcon(userInfo, size = avatarSize)
-        Column {
-            Text(userInfo.nickname)
-            val aid = userInfo.aid
-            if (aid != null) {
-                Text("aid: $aid")
-            } else {
-                Text("ad: ${userInfo.address}")
+        UserIcon(userInfo)
+        if (userInfo != null) {
+            Column {
+                Text(userInfo.nickname, style = MaterialTheme.typography.titleSmall)
+                val aid = userInfo.aid
+                if (aid != null) {
+                    Text("aid: $aid", style = MaterialTheme.typography.labelSmall)
+                } else {
+                    Text("ad: ${userInfo.address}", style = MaterialTheme.typography.labelSmall)
+                }
             }
         }
     }

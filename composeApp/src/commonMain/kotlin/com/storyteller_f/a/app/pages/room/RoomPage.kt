@@ -22,7 +22,9 @@ import androidx.navigation.toRoute
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
+import com.dokar.sonner.ToastType
 import com.dokar.sonner.Toaster
+import com.dokar.sonner.ToasterState
 import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.*
@@ -31,12 +33,16 @@ import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
+import com.storyteller_f.a.app.pages.topic.MediaPicker
+import com.storyteller_f.a.app.pages.topic.insertContent
 import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -143,38 +149,90 @@ fun RoomInputGroup(
     val alertDialogState = remember {
         CustomAlertDialogController()
     }
+    val scope = rememberCoroutineScope()
     if (roomInfo != null) {
-        val toaster = rememberToasterState()
-        Toaster(toaster, alignment = Alignment.Center)
+        val toasterState = rememberToasterState()
+        Toaster(toasterState, alignment = Alignment.Center)
         val keysViewModel = createRoomKeysViewModel(roomId, roomInfo)
         val keyState by keysViewModel.handler.state.collectAsState()
         val keyData by keysViewModel.handler.data.collectAsState()
         val objectId = topicId ?: roomId
         val objectType = if (topicId != null) ObjectType.TOPIC else ObjectType.ROOM
-        InputGroupInternal(objectId, objectType, input, MaterialTheme.colorScheme.tertiaryContainer, roomId.takeIf {
-            roomInfo.isPrivate
-        }, {
-            input = it
-        }, sendButton = {
-            val p1 = stringResource(Res.string.private_room_pub_key_loading)
-            val title = stringResource(Res.string.permission_denied)
-            val message = stringResource(Res.string.join_room_prompt)
+        InputGroupInternal(
+            objectId, objectType, input, MaterialTheme.colorScheme.tertiaryContainer,
+            roomId.takeIf {
+                roomInfo.isPrivate
+            },
+            {
+                input = it
+            },
+            {
+                insertContent(it, {
+                    input = it
+                }, input)
+                sendRoomTopic(
+                    roomInfo,
+                    input,
+                    scrollToNew,
+                    keyState,
+                    keyData,
+                    topicId,
+                    scope,
+                    toasterState,
+                    alertDialogState
+                )
+            },
+        ) {
             RoomSendButton(input = input) {
-                if (roomInfo.isJoined) {
-                    sendMessage(roomInfo, input, scrollToNew, keyState, keyData, topicId) {
-                        toaster.show(p1, duration = 1.seconds)
-                    }
-                } else {
-                    alertDialogState.showMessage(title, message)
-                }
+                sendRoomTopic(
+                    roomInfo,
+                    input,
+                    scrollToNew,
+                    keyState,
+                    keyData,
+                    topicId,
+                    scope,
+                    toasterState,
+                    alertDialogState
+                )
             }
-        })
+        }
     }
 
     CustomAlertDialog(alertDialogState, {
         alertDialogState.close()
     }) {
         checkRoomRouteAndAlert(appNav, roomId, startJoinRoom)
+    }
+}
+
+private fun sendRoomTopic(
+    roomInfo: RoomInfo,
+    input: String,
+    scrollToNew: () -> Unit,
+    keyState: LoadingState?,
+    keyData: List<Pair<PrimaryKey, String>>?,
+    topicId: PrimaryKey?,
+    scope: CoroutineScope,
+    toasterState: ToasterState,
+    alertDialogState: CustomAlertDialogController
+) {
+    if (roomInfo.isJoined) {
+        sendMessage(roomInfo, input, scrollToNew, keyState, keyData, topicId) {
+            scope.launch {
+                toasterState.show(
+                    getString(Res.string.private_room_pub_key_loading),
+                    type = ToastType.Info,
+                    duration = 1.seconds
+                )
+            }
+        }
+    } else {
+        scope.launch {
+            val title = getString(Res.string.permission_denied)
+            val message = getString(Res.string.join_room_prompt)
+            alertDialogState.showMessage(title, message)
+        }
     }
 }
 
@@ -204,15 +262,15 @@ fun RoomSendButton(
     val state by wsClient.connectionHandler.state.collectAsState()
     val sendState by wsClient.localState.collectAsState()
     val isSending = sendState is LoadingState.Loading
-    CommonInputButton(state, input, send, isSending)
+    CommonInputButton(state, input, isSending, send)
 }
 
 @Composable
 fun CommonInputButton(
     state: LoadingState?,
     input: String,
-    send: () -> Unit,
-    isSending: Boolean
+    isSending: Boolean,
+    send: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     when (state) {
@@ -274,9 +332,9 @@ fun InputGroupInternal(
     backgroundColor: Color,
     privateRoomId: PrimaryKey?,
     updateInput: (String) -> Unit,
+    uploadSuccess: (MediaInfo) -> Unit,
     sendButton: @Composable () -> Unit
 ) {
-    val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
     Row(
         modifier = Modifier.background(
             backgroundColor,
@@ -288,26 +346,50 @@ fun InputGroupInternal(
         OutlinedTextField(input, {
             updateInput(it)
         }, modifier = Modifier.weight(1f), suffix = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (input.isNotEmpty()) {
-                    Icon(Icons.Default.Clear, "clear input", modifier = Modifier.clickable {
-                        updateInput("")
-                    })
-                }
-                val appNav = LocalAppNav.current
-                Icon(
-                    Icons.Default.OpenInFull,
-                    "open in full",
-                    modifier = Modifier.clickable(enabled = alreadyLoginIn) {
-                        appNav.gotoTopicCompose(objectType, objectId, false, privateRoomId)
-                    }
-                )
-            }
+            InputGroupSuffix(input, updateInput, objectType, objectId, privateRoomId, uploadSuccess)
         })
 
         Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
             sendButton()
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun InputGroupSuffix(
+    input: String,
+    updateInput: (String) -> Unit,
+    objectType: ObjectType,
+    objectId: PrimaryKey,
+    privateRoomId: PrimaryKey?,
+    uploadSuccess: (MediaInfo) -> Unit
+) {
+    val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
+    var showSheet by remember {
+        mutableStateOf(false)
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (input.isNotEmpty()) {
+            Icon(Icons.Default.Clear, "clear input", modifier = Modifier.clickable {
+                updateInput("")
+            })
+        }
+        val appNav = LocalAppNav.current
+        Icon(
+            Icons.Default.OpenInFull,
+            "open in full",
+            modifier = Modifier.clickable(enabled = alreadyLoginIn) {
+                appNav.gotoTopicCompose(objectType, objectId, false, privateRoomId)
+            }
+        )
+        Icon(Icons.Filled.PermMedia, contentDescription = null, modifier = Modifier.clickable(alreadyLoginIn) {
+            showSheet = true
+        })
+    }
+    val sheetState = rememberModalBottomSheetState()
+    MediaPicker(showSheet, sheetState, input, updateInput, privateRoomId, uploadSuccess) {
+        showSheet = false
     }
 }
 
@@ -357,14 +439,17 @@ private fun RoomDialogButtons(
 
         if (appNav.currentDestination?.destination?.hasRoute(RoomScreen::class) == true) {
             val scope = rememberCoroutineScope()
-            val toaster = rememberToasterState()
-            Toaster(toaster)
-            val successMessage = stringResource(Res.string.success)
+            val toasterState = rememberToasterState()
+            Toaster(toasterState, alignment = Alignment.Center)
             if (roomInfo.isJoined) {
                 ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
                     scope.launch {
                         exitRoom(roomInfo) {
-                            toaster.show(successMessage, duration = 1.seconds)
+                            toasterState.show(
+                                getString(Res.string.success),
+                                type = ToastType.Success,
+                                duration = 1.seconds
+                            )
                         }
                     }
                 }
@@ -372,7 +457,11 @@ private fun RoomDialogButtons(
                 ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_room)) {
                     scope.launch {
                         joinRoom(roomInfo) {
-                            toaster.show(successMessage, duration = 1.seconds)
+                            toasterState.show(
+                                getString(Res.string.success),
+                                type = ToastType.Success,
+                                duration = 1.seconds
+                            )
                         }
                     }
                 }
@@ -381,7 +470,7 @@ private fun RoomDialogButtons(
     }
 }
 
-private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: () -> Unit) {
+private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: suspend () -> Unit) {
     globalDialogState.use {
         val communityId = roomInfo.communityId
         if (communityId != null) {
@@ -395,7 +484,7 @@ private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: () -> Unit) {
     }
 }
 
-private suspend fun exitRoom(roomInfo: RoomInfo, onSuccess: () -> Unit) {
+private suspend fun exitRoom(roomInfo: RoomInfo, onSuccess: suspend () -> Unit) {
     globalDialogState.use {
         val info = client.exitRoom(roomInfo.id).getOrThrow()
         bus.emit(OnRoomExited(info))

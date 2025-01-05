@@ -39,7 +39,7 @@ fun UserDialogInternal(userInfo: UserInfo, dismiss: () -> Unit = {}) {
     val appNav = LocalAppNav.current
     val my by LoginViewModel.user.collectAsState()
     DialogContainer {
-        UserCell(userInfo, false, avatarSize = 50.dp) {
+        UserCell(userInfo, false) {
             dismiss()
             appNav.gotoUser(it)
         }

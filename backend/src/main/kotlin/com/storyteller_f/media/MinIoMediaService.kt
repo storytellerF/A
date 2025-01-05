@@ -20,14 +20,16 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override fun list(bucketName: String, prefix: String): Result<List<MediaInfo?>> {
+    override fun list(bucketName: String, prefix: String): Result<List<MediaInfo>> {
         return useMinIoClient(connection) {
             val names = listObjects(
                 ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build()
             ).map {
                 it.get().objectName()
             }
-            get(bucketName, names).getOrThrow()
+            get(bucketName, names).map {
+                it.filterNotNull()
+            }.getOrThrow()
         }
     }
 

@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.AppNav
 import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.community.CommunityList
@@ -77,7 +76,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
                     },
                     trailingIcon = {
                         val userInfo by LoginViewModel.user.collectAsState()
-                        UserIcon(userInfo, size = 40.dp)
+                        UserIcon(userInfo)
                     },
                     placeholder = {
                         SearchPlaceholder(scope)

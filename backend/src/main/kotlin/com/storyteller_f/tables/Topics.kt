@@ -24,11 +24,6 @@ object Topics : BaseTable() {
     val rootId = customPrimaryKey("root_id").index()
     val rootType = objectType("root_type")
     val lastModifiedTime = datetime("last_modified_time").nullable()
-
-    init {
-        index("topic-main", false, parentType, parentId)
-        index("topic-root", false, rootType, rootId)
-    }
 }
 
 class Topic(

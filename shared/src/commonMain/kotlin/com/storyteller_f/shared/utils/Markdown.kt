@@ -7,6 +7,7 @@ import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.accept
+import org.intellij.markdown.ast.acceptChildren
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.ast.visitors.Visitor
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
@@ -24,6 +25,7 @@ fun extractMarkdownHeadline(markdownText: String): String {
     parsedTree.accept(object : Visitor {
         override fun visitNode(node: ASTNode) {
             val type = node.type
+            println(type)
             when {
                 type == MarkdownElementTypes.MARKDOWN_FILE -> captureContent = true
                 type == MarkdownElementTypes.ATX_1 -> {
@@ -34,6 +36,7 @@ fun extractMarkdownHeadline(markdownText: String): String {
                 type == MarkdownElementTypes.PARAGRAPH -> {
                     if (captureContent) {
                         val content = markdownText.substring(node.startOffset, node.endOffset).trim()
+                        println(content)
                         if (content.isNotEmpty()) {
                             paragraphs.appendLine(content)
                         }
@@ -49,7 +52,7 @@ fun extractMarkdownHeadline(markdownText: String): String {
             }
 
             if (captureContent) {
-                node.children.forEach { it.accept(this) }
+                node.acceptChildren(this)
             }
         }
     })
@@ -99,7 +102,7 @@ fun extractHeadParagraph(
             }
 
             if (captureContent) {
-                children.forEach { it.accept(this) }
+                node.acceptChildren(this)
             }
         }
     })
@@ -107,10 +110,9 @@ fun extractHeadParagraph(
 }
 
 fun markdownTypes(): List<String> {
-    val typeList = MarkdownElementTypes::class.java.fields.mapNotNull {
+    return MarkdownElementTypes::class.java.fields.mapNotNull {
         (it.get(MarkdownElementTypes) as? IElementType)?.name
     }
-    return typeList
 }
 
 fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
@@ -136,7 +138,7 @@ fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
                 }
             }
 
-            node.children.forEach { it.accept(this) }
+            node.acceptChildren(this)
         }
     })
     return list
@@ -158,11 +160,10 @@ fun extractImageUrl(node: ASTNode, markdownText: String): String? {
     return imagePath
 }
 
-private fun astNode(markdownText: String): ASTNode {
+fun astNode(markdownText: String): ASTNode {
     val flavour = CommonMarkFlavourDescriptor()
     val parser = MarkdownParser(flavour)
-    val parsedTree = parser.buildMarkdownTreeFromString(markdownText)
-    return parsedTree
+    return parser.buildMarkdownTreeFromString(markdownText)
 }
 
 fun readCodeFence(node: ASTNode, content: String): String {

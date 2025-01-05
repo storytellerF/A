@@ -27,7 +27,7 @@ import java.io.File
 import kotlin.system.exitProcess
 
 @OptIn(ExperimentalCli::class)
-class Add : Subcommand("add", "add entry") {
+class AddPreset : Subcommand("add", "add entry") {
     private val jsonFilePath by argument(ArgType.String, "json", "json data file path")
 
     override fun execute() {
@@ -407,7 +407,7 @@ class Add : Subcommand("add", "add entry") {
                 val path = File(parentDir, icon)
                 val p = "$id/avatar.${path.extension}"
                 backend.mediaService.upload("amedia", listOf(UploadPack(p, path)))
-                Tuple5(it, null, derPublicKey, ad, id)
+                Tuple5(it, p, derPublicKey, ad, id)
             }
         }
         DatabaseFactory.dbQuery {

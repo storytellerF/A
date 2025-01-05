@@ -41,6 +41,16 @@ fun Route.bindSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
             getCommunity(null, it.aid, backend, id, it.fillJoinInfo)
         }
     }
+
+    get<RouteCommunities.Id.Topics> {
+        usePrincipalOrNull(reader) { id ->
+            pagination(PrimaryKey::class, {
+                it.id.toString()
+            }) { _, n, s ->
+                getCommunityTopicList(it, id, n, s, backend, it)
+            }
+        }
+    }
 }
 
 fun Route.bindProtectedSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {

@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
 import com.dokar.sonner.Toaster
@@ -35,6 +36,7 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.utils.formatTime
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
@@ -61,12 +63,12 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismiss: ()
     val appNav = LocalAppNav.current
     val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
     val toasterState = rememberToasterState()
-    Toaster(toasterState)
+    Toaster(toasterState, alignment = Alignment.Center)
     DialogContainer {
         UserCell(authorInfo, true) {
             appNav.gotoUser(it)
         }
-        Text("pub: ${topicInfo.lastModifiedTime}")
+        Text("pub: ${topicInfo.createdTime.formatTime()}")
 
         when (topicInfo.rootType) {
             ObjectType.COMMUNITY ->

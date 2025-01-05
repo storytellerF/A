@@ -12,11 +12,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.dokar.sonner.Toaster
+import com.dokar.sonner.ToasterState
 import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.common.StateView
@@ -137,14 +139,13 @@ private fun TopicPageInputGroup(
     val alertDialogState = remember {
         CustomAlertDialogController()
     }
-    val scope = rememberCoroutineScope()
     if (topic.rootType == ObjectType.ROOM) {
         val roomId = topic.rootId
         val room = createRoomViewModel(roomId)
         val roomInfo by room.handler.data.collectAsState()
         RoomInputGroup(topic.rootId, roomInfo, topicId, {}, scrollTo)
     } else {
-        TopicInputGroup(scope, scrollTo, topic)
+        TopicInputGroup(scrollTo, topic)
     }
 
     val appNav = LocalAppNav.current
@@ -157,45 +158,70 @@ private fun TopicPageInputGroup(
 
 @Composable
 private fun TopicInputGroup(
-    scope: CoroutineScope,
     scrollTo: () -> Unit,
     topic: TopicInfo
 ) {
-    val toaster = rememberToasterState()
-    Toaster(toaster, alignment = Alignment.Center)
+    val scope = rememberCoroutineScope()
+    val toasterState = rememberToasterState()
+    Toaster(toasterState, alignment = Alignment.Center)
     var input by remember {
         mutableStateOf("")
     }
-    InputGroupInternal(topic.id, ObjectType.TOPIC, input, MaterialTheme.colorScheme.secondaryContainer, null, {
-        input = it
-    }, sendButton = {
-        val focusManager = LocalFocusManager.current
-        var sendState by remember {
-            mutableStateOf<LoadingState>(LoadingState.Done())
-        }
-        val isSending = sendState is LoadingState.Loading
-        CommonInputButton(LoadingState.Done(), input, {
+    val focusManager = LocalFocusManager.current
+    val sendState = remember {
+        mutableStateOf<LoadingState>(LoadingState.Done())
+    }
+    val isSending = sendState.value is LoadingState.Loading
+    InputGroupInternal(
+        topic.id, ObjectType.TOPIC, input, MaterialTheme.colorScheme.secondaryContainer, null,
+        {
+            input = it
+        },
+        {
+            insertContent(it, {
+                input = it
+            }, input)
+            sendTopic(scope, sendState, topic, input, {
+                input = it
+            }, focusManager, toasterState, scrollTo)
+        },
+    ) {
+        CommonInputButton(LoadingState.Done(), input, isSending) {
             if (!isSending) {
-                scope.launch {
-                    sendState = LoadingState.Loading
-                    try {
-                        val info = client.createNewTopic(ObjectType.TOPIC, topic.id, input).getOrThrow()
-                        updateDocumentInParent(info)
-                        sendState = LoadingState.Done()
-                        input = ""
-                        focusManager.clearFocus()
-                        bus.emit(OnTopicChanged(topic.copy(commentCount = topic.commentCount + 1)))
-                        toaster.show(getString(Res.string.success), duration = 1.seconds)
-                        scrollTo()
-                    } catch (e: Exception) {
-                        globalDialogState.showError(e)
-                    } finally {
-                        sendState = LoadingState.Done()
-                    }
-                }
+                sendTopic(scope, sendState, topic, input, {
+                    input = it
+                }, focusManager, toasterState, scrollTo)
             }
-        }, isSending)
-    })
+        }
+    }
+}
+
+private fun sendTopic(
+    scope: CoroutineScope,
+    sendState: MutableState<LoadingState>,
+    topic: TopicInfo,
+    input: String,
+    updateInput: (String) -> Unit,
+    focusManager: FocusManager,
+    toasterState: ToasterState,
+    scrollTo: () -> Unit
+) {
+    scope.launch {
+        sendState.value = LoadingState.Loading
+        try {
+            val info = client.createNewTopic(ObjectType.TOPIC, topic.id, input).getOrThrow()
+            updateDocumentInParent(info)
+            updateInput("")
+            focusManager.clearFocus()
+            bus.emit(OnTopicChanged(topic.copy(commentCount = topic.commentCount + 1)))
+            toasterState.show(getString(Res.string.success), duration = 1.seconds)
+            scrollTo()
+        } catch (e: Exception) {
+            globalDialogState.showError(e)
+        } finally {
+            sendState.value = LoadingState.Done()
+        }
+    }
 }
 
 @OptIn(ExperimentalStdlibApi::class)

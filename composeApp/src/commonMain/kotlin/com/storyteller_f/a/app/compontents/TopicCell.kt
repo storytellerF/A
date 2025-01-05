@@ -52,7 +52,7 @@ fun TopicCellInternal(
     ) {
         val avatarSize = 40.dp
         if (showAvatar) {
-            UserCell(authorInfo, true, avatarSize) {
+            UserCell(authorInfo, true) {
                 appNav.gotoUser(it)
             }
         }

@@ -221,3 +221,17 @@ suspend fun doCreateCommunity(community: Community) = DatabaseFactory.dbQuery {
         it[objectType] = ObjectType.COMMUNITY
     }.insertedCount > 0
 }
+
+suspend fun getCommunityByIds(
+    uid: PrimaryKey,
+    communityIds: List<PrimaryKey>
+) = DatabaseFactory.mapQuery({
+    this[Communities.id] to this[MemberJoins.joinTime]
+}) {
+    Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+        MemberJoins.uid eq uid
+    }.select(Communities.id, MemberJoins.joinTime)
+        .where {
+            Communities.id.inList(communityIds)
+        }
+}

@@ -23,7 +23,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.network.ktor3.KtorNetworkFetcherFactory
@@ -176,31 +175,10 @@ private fun imageRequestInMarkdown(link: String, mediaMap: Map<String, MediaInfo
 }
 
 class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>) : ImageTransformer {
-    private val reverseMap = mediaMap.values.associateBy {
-        it.url
-    }
-
     @Composable
     override fun transform(link: String): ImageData {
         return rememberAsyncImagePainter(
             model = imageRequestInMarkdown(link, mediaMap)
         ).let { ImageData(it, modifier = Modifier.clip(RoundedCornerShape(10.dp)).fillMaxWidth()) }
-    }
-
-    @Composable
-    override fun intrinsicSize(painter: Painter): Size {
-        return if (painter is AsyncImagePainter) {
-            val input by painter.input.collectAsState()
-            val link = input.request.data
-            if (link is String) {
-                reverseMap[link]?.dimension?.let {
-                    Size(it.width.toFloat(), it.height.toFloat())
-                } ?: painter.intrinsicSize
-            } else {
-                painter.intrinsicSize
-            }
-        } else {
-            painter.intrinsicSize
-        }
     }
 }
