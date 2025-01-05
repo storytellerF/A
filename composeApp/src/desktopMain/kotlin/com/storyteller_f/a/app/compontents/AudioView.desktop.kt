@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PauseCircle
-import androidx.compose.material.icons.filled.Pending
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,7 +21,6 @@ import io.github.aakira.napier.log
 import javazoom.jl.player.FactoryRegistry
 import javazoom.jl.player.JavaSoundAudioDeviceFactory
 import javazoom.jl.player.jlp
-
 
 @Composable
 actual fun AudioView(url: String) {

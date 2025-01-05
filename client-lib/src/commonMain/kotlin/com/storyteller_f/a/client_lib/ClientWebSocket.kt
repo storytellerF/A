@@ -39,7 +39,7 @@ class ClientWebSocket(
                 localState.value = LoadingState.Loading
                 try {
                     old.block()
-                    localState.value = LoadingState.Done()
+                    localState.value = LoadingState.Done
                 } catch (e: Exception) {
                     localState.value = LoadingState.Error(e)
                 }

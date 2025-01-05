@@ -2,6 +2,7 @@ package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
+import com.storyteller_f.CustomBadRequestException
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.UnauthorizedException
 import com.storyteller_f.a.server.route.RouteTopics
@@ -32,15 +33,17 @@ import java.awt.GraphicsEnvironment
 import java.io.File
 import java.lang.Exception
 
-suspend fun RoutingContext.addTopicAtCommunity(uid: PrimaryKey, backend: Backend): Result<TopicInfo?> {
-    val newTopic = call.receive<NewTopic>()
+suspend fun addTopicAtCommunity(uid: PrimaryKey, backend: Backend, newTopic: NewTopic): Result<TopicInfo?> {
     if (newTopic.content is TopicContent.Encrypted) {
         return Result.failure(ForbiddenException("Community only accept unencrypted content."))
     }
     if (newTopic.parentType == ObjectType.ROOM) {
         return Result.failure(ForbiddenException("can't use api to add topic in room"))
     }
-    val content = (newTopic.content as TopicContent.Plain).plain
+    val content = (newTopic.content as TopicContent.Plain).plain.trim()
+    if (content.isEmpty()) {
+        return Result.failure(CustomBadRequestException("content is empty"))
+    }
     return checkRootWritePermission(
         newTopic.parentType,
         newTopic.parentId,

@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 sealed class LoadingState {
     data object Loading : LoadingState()
     data class Error(val e: Throwable) : LoadingState()
-    data class Done(val itemCount: Int = 1) : LoadingState()
+    data object Done : LoadingState()
 }
 
 class LoadingHandler<T>(val refresh: () -> Unit) {
@@ -31,7 +31,7 @@ class LoadingHandler<T>(val refresh: () -> Unit) {
 
     fun done(t: T) {
         data.value = t
-        state.value = LoadingState.Done()
+        state.value = LoadingState.Done
     }
 
     fun error(error: Throwable) {
@@ -41,7 +41,7 @@ class LoadingHandler<T>(val refresh: () -> Unit) {
 }
 
 fun MutableStateFlow<LoadingState?>.markLoaded() {
-    value = LoadingState.Done()
+    value = LoadingState.Done
 }
 
 fun MutableStateFlow<LoadingState?>.markError(e: Throwable) {
