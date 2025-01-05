@@ -88,8 +88,12 @@ private fun StateViewInternal(
             CircularProgressIndicator()
         }
 
-        is LoadingState.Loading -> CenterBox {
-            CircularProgressIndicator()
+        is LoadingState.Loading -> if (itemCount == 0) {
+            CenterBox {
+                CircularProgressIndicator()
+            }
+        } else {
+            content()
         }
 
         is LoadingState.Error -> CenterBox {

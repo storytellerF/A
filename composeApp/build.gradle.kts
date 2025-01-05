@@ -224,6 +224,9 @@ android {
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".debug"
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         getByName("release") {
             isMinifyEnabled = true
@@ -354,7 +357,7 @@ aboutLibraries {
 //    gitHubApiToken = getLocalOrGlobalProperty("github.pat")
     // Full license text for license IDs mentioned here will be included, even if no detected dependency uses them.
     additionalLicenses = arrayOf("mit", "mpl_2_0")
-    // Allows to exclude some fields from the generated meta data field.
+    // Allows to exclude some fields from the generated metadata field.
     // If the class name is specified, the field is only excluded for that class; without a class name, the exclusion is global.
     excludeFields = arrayOf("developers", "funding")
     // Enable inclusion of `platform` dependencies in the library report

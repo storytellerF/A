@@ -12,10 +12,12 @@ if [ "$USE_PREBUILD" = "true" ]; then
           -f docker-compose.yml \
           -f docker-compose.d.yml \
           -f docker-compose.prebuild.yml \
+          -f docker-compose.mini.yml \
           $CUSTOM_COMMAND
 else
      docker compose --env-file ../mini.env \
           -f docker-compose.yml \
           -f docker-compose.d.yml \
+          -f docker-compose.mini.yml \
           $CUSTOM_COMMAND
 fi
