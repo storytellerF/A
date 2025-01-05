@@ -19,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
@@ -41,6 +40,7 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
+import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -62,6 +62,10 @@ fun CustomCodeFence(modal: MarkdownComponentModel, mediaList1: Map<String, Media
     }
 }
 
+private val json = Json {
+    ignoreUnknownKeys = true
+}
+
 @Composable
 fun ObjectBlock(
     modal: MarkdownComponentModel,
@@ -69,24 +73,36 @@ fun ObjectBlock(
 ) {
     val obj = remember(modal.node, modal.content) {
         val c = readCodeFence(modal.node, modal.content)
-        Json.decodeFromString<MarkdownObject>(c)
+        json.decodeFromString<MarkdownObject>(c)
     }
-    if (obj.contentType == "video/youtube") {
-        HighlightCodeBlock(modal)
-    } else {
-        val mediaInfo = mediaList1[obj.name]
-        val url = mediaInfo?.url
-        val contentType = mediaInfo?.item?.contentType
-        when {
-            url == null || contentType == null -> HighlightCodeBlock(modal)
+    when (obj.contentType) {
+        "video/youtube" -> HighlightCodeBlock(modal)
+        "application/vnd.apple.mpegurl" -> {
+            when {
+                obj.url.trim().isEmpty() -> HighlightCodeBlock(modal)
+                runCatching {
+                    Url(obj.url)
+                }.getOrNull() == null -> HighlightCodeBlock(modal)
 
-            contentType == "application/pdf" -> PdfView(url)
+                else -> VideoView(obj.url, "application/vnd.apple.mpegurl")
+            }
+        }
 
-            contentType.startsWith("video/") -> VideoView(url = url)
+        else -> {
+            val mediaInfo = mediaList1[obj.name]
+            val url = mediaInfo?.url
+            val contentType = mediaInfo?.item?.contentType
+            when {
+                url == null || contentType == null -> HighlightCodeBlock(modal)
 
-            contentType.startsWith("audio/") -> AudioView(url)
+                contentType == "application/pdf" -> PdfView(url)
 
-            else -> HighlightCodeBlock(modal)
+                contentType.startsWith("video/") -> VideoView(url = url, contentType)
+
+                contentType.startsWith("audio/") -> AudioView(url)
+
+                else -> HighlightCodeBlock(modal)
+            }
         }
     }
 }

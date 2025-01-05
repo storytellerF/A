@@ -1,63 +1,123 @@
 package com.storyteller_f.a.app.compontents
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.common.VideoSize
+import androidx.media3.common.*
+import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.dokar.sonner.Toaster
+import com.dokar.sonner.rememberToasterState
+import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
-actual fun VideoView(url: String) {
+actual fun VideoView(url: String, contentType: String) {
     log {
         "Video $url"
     }
+    val toasterState = rememberToasterState()
+    Toaster(toasterState, alignment = Alignment.Center)
     val context = LocalContext.current
     var size by remember {
         mutableStateOf<VideoSize?>(null)
     }
+    val scope = rememberCoroutineScope()
+    var currentLoading by remember {
+        mutableStateOf(false)
+    }
     val player = remember {
+        log {
+            "Video $url init"
+        }
         ExoPlayer.Builder(context).build().apply {
             addListener(object : Player.Listener {
                 override fun onVideoSizeChanged(videoSize: VideoSize) {
                     super.onVideoSizeChanged(videoSize)
                     size = videoSize
                 }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    super.onPlayerError(error)
+                    Napier.i {
+                        "Video $url error $error ${error.errorCode} ${error.errorCodeName}"
+                    }
+                    if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+                        if (error is ExoPlaybackException) {
+                            if (error.type == 0) {
+                                toasterState.show("source error, restart after 5 seconds")
+                                scope.launch {
+                                    delay(5000)
+                                    prepare()
+                                    play()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                override fun onIsLoadingChanged(isLoading: Boolean) {
+                    super.onIsLoadingChanged(isLoading)
+                    currentLoading = isLoading
+                }
             })
+
+            addMediaItem(MediaItem.Builder().setUri(url).apply {
+                if (contentType == "application/vnd.apple.mpegurl" && !url.endsWith(".m3u8")) {
+                    setMimeType(MimeTypes.APPLICATION_M3U8)
+                }
+            }.build())
+            prepare()
         }
+
     }
     DisposableEffect(player) {
         onDispose {
-            player.pause()
+            log {
+                "Video $url release"
+            }
+            player.release()
         }
     }
     val shape = RoundedCornerShape(20.dp)
-    AndroidView(
-        factory = {
-            PlayerView(it)
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(16f / 9)
-            .background(MaterialTheme.colorScheme.surfaceContainer, shape)
-            .clip(shape)
-    ) {
-        log {
-            "Video $url update"
+    Box {
+        AndroidView(
+            factory = {
+                PlayerView(it)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9)
+                .background(MaterialTheme.colorScheme.surfaceContainer, shape)
+                .clip(shape)
+        ) {
+            log {
+                "Video $url update"
+            }
+            it.player = player
         }
-        it.player = player
-        player.addMediaItem(MediaItem.fromUri(url))
-        player.prepare()
+        if (currentLoading && contentType != "application/vnd.apple.mpegurl") {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .height(40.dp)
+            )
+        }
+
     }
 }
