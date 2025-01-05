@@ -75,7 +75,7 @@ class CommunitiesViewModel(
 ) : PagingViewModel<PrimaryKey, CommunityInfo>({
     SimplePagingSource {
         serviceCatching {
-            client.searchCommunity(it, 10, joinStatusSearch, word, target).getOrThrow()
+            client.searchCommunity(10, joinStatusSearch, word, target, it).getOrThrow()
         }.map {
             APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
         }
@@ -122,12 +122,13 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null) : PagingView
             }.getOrNull()
         }
     )
-}, TopicsRemoteMediator("topics$id") { loadKey ->
+}, TopicsRemoteMediator("topics$id") { loadKey, size ->
     val info = when {
-        id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, 10)
-        type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, 20)
-        type == ObjectType.COMMUNITY -> client.searchTopics(20, emptyList(), id, ObjectType.COMMUNITY, loadKey)
-        else -> client.getTopicTopics(id, loadKey, 20)
+        id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, size)
+        type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, size)
+        type == ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, size)
+        type == ObjectType.USER -> client.getUserTopics(id, loadKey, size)
+        else -> client.getTopicTopics(id, loadKey, size)
     }.getOrThrow()
     info.copy(processEncryptedTopic(info.data).map {
         extractHeadlineIfPlain(it)
@@ -166,7 +167,7 @@ private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
 @OptIn(ExperimentalPagingApi::class)
 class TopicsRemoteMediator(
     private val collectionName: String,
-    val networkService: suspend (PrimaryKey?) -> ServerResponse<TopicInfo>
+    val networkService: suspend (PrimaryKey?, Int) -> ServerResponse<TopicInfo>
 ) :
     RemoteMediator<PrimaryKey, TopicInfo>() {
 
@@ -193,7 +194,7 @@ class TopicsRemoteMediator(
             }
         }
         return try {
-            val response = networkService(loadKey)
+            val response = networkService(loadKey, state.config.pageSize)
             if (loadType == LoadType.REFRESH) {
                 database.deleteCollection(collectionName)
             }

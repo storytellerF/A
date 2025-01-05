@@ -1,6 +1,5 @@
-import com.storyteller_f.shared.utils.extractHeadParagraph
+import com.storyteller_f.shared.utils.*
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
-import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -56,3 +55,4 @@ class MarkdownTest {
     }
 
 }
+

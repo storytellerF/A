@@ -112,11 +112,13 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
         return Result.success(Unit)
     }
 
-    override fun list(bucketName: String, prefix: String): Result<List<MediaInfo?>> {
+    override fun list(bucketName: String, prefix: String): Result<List<MediaInfo>> {
         val file = File(root, "$bucketName/$prefix")
         return get(bucketName, file.listFiles().orEmpty().map {
             "${prefix}${it.name}"
-        })
+        }).map {
+            it.filterNotNull()
+        }
     }
 
     fun getResponse(it: List<String>): File {

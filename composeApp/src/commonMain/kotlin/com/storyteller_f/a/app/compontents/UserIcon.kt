@@ -12,7 +12,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -26,13 +25,14 @@ import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
-fun UserIcon(userInfo: UserInfo?, couldShowDialog: Boolean = true, size: Dp = 40.dp) {
+fun UserIcon(userInfo: UserInfo?, couldShowDialog: Boolean = true) {
     val appNav = LocalAppNav.current
     val user = LoginViewModel.user.collectAsState()
     val isMe = user.value?.id == userInfo?.id
     var showMyDialog by remember {
         mutableStateOf(false)
     }
+    val size = 40.dp
     val onClick = {
         if (isMe && userInfo == null) {
             appNav.gotoLogin()

@@ -21,6 +21,6 @@ fun main(args: Array<String>) {
         args.contentToString()
     }
     val argParser = ArgParser("ACli")
-    argParser.subcommands(Add(), CleanCommand(), PrintCommand())
+    argParser.subcommands(AddPreset(), CleanCommand(), PrintCommand())
     argParser.parse(args)
 }

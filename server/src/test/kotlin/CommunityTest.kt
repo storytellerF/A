@@ -49,7 +49,7 @@ class CommunityTest {
             client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
             assertEquals(
                 1,
-                client.searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY,).getOrThrow().data.size
+                client.searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY).getOrThrow().data.size
             )
             // 测试上传加密话题
             assertFails {
@@ -60,7 +60,7 @@ class CommunityTest {
             }
             // 添加话题到子话题
             kotlin.run {
-                val topicId = client.searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY,)
+                val topicId = client.searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY)
                     .getOrThrow().data.first().id
                 val new = client.createNewTopic(ObjectType.TOPIC, topicId, "test").getOrThrow()
                 assertEquals(ObjectType.COMMUNITY, new.rootType)
@@ -92,7 +92,8 @@ class CommunityTest {
                 var lastCommunityId: PrimaryKey? = null
                 var sum = 0L
                 while (true) {
-                    val res = client.searchCommunity(lastCommunityId, 3, JoinStatusSearch.JOINED, "").getOrThrow()
+                    val res = client.searchCommunity(3, JoinStatusSearch.JOINED, "", nextCommunityId = lastCommunityId)
+                        .getOrThrow()
                     val pagination = res.pagination!!
                     lastCommunityId = pagination.nextPageToken?.toPrimaryKeyOrNull()
                     sum += res.data.size
@@ -152,10 +153,10 @@ class CommunityTest {
         assertEquals(
             expectedCount,
             client.searchCommunity(
-                nextCommunityId,
                 size,
                 joinStatusSearch,
-                word
+                word,
+                nextCommunityId = nextCommunityId
             ).getOrThrow().data.size
         )
     }
@@ -188,7 +189,7 @@ class CommunityTest {
                 }
             }
             run {
-                val response = client.searchCommunity(null, 10, JoinStatusSearch.JOINED, null, data4).getOrThrow()
+                val response = client.searchCommunity(10, JoinStatusSearch.JOINED, target = data4).getOrThrow()
                 assertEquals(10, response.data.size)
                 response.data.forEach {
                     assertFalse(it.isJoined)
@@ -196,12 +197,12 @@ class CommunityTest {
                 }
             }
             attachSession(client) {
-                val response = client.searchCommunity(null, 10, JoinStatusSearch.JOINED, null, data4).getOrThrow()
+                val response = client.searchCommunity(10, JoinStatusSearch.JOINED, target = data4).getOrThrow()
                 assertEquals(10, response.data.size)
                 response.data.forEach {
-                    client.joinCommunity(it.id)
+                    client.joinCommunity(it.id).getOrThrow()
                 }
-                val response2 = client.searchCommunity(null, 10, JoinStatusSearch.JOINED, null, data4).getOrThrow()
+                val response2 = client.searchCommunity(10, JoinStatusSearch.JOINED, target = data4).getOrThrow()
                 response2.data.forEach {
                     assertTrue(it.isJoined)
                     assertNotNull(it.extension?.targetUserJoinedTime)

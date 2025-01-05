@@ -356,20 +356,6 @@ suspend fun searchPublicTopics(
     if (search.rootType != null && search.rootType != ObjectType.COMMUNITY && search.rootType != ObjectType.USER) {
         return Result.failure(BadRequestException("can't search private topic"))
     }
-    if (search.word.isNullOrEmpty()) {
-        return commonPaginationTopics(uid, null, nextTopicId, size, search.parent.fillHasCommented) {
-            buildPublicDatabaseSearchExpression(search)
-        }.mapResultNotNull { (data, count) ->
-            val ids = data.map {
-                it.id
-            }
-            backend.topicSearchService.getDocument(ids).mapResult { list ->
-                processMediaLink(backend, data, list).map {
-                    PaginationResult(it, count)
-                }
-            }
-        }
-    }
     return backend.topicSearchService.searchDocument(
         size,
         search.word,
@@ -388,43 +374,6 @@ suspend fun searchPublicTopics(
                 PaginationResult(it, total)
             }
         }
-    }
-}
-
-private fun SqlExpressionBuilder.buildPublicDatabaseSearchExpression(
-    search: RouteTopics.Search,
-) = with(this) {
-    listOf(
-        { op: Op<Boolean> ->
-            if (search.author != null) {
-                op.and(Topics.author eq search.author)
-            } else {
-                null
-            }
-        },
-        { op: Op<Boolean> ->
-            if (search.rootId != null) {
-                op.and(Topics.rootId eq search.rootId)
-            } else {
-                null
-            }
-        },
-        { op: Op<Boolean> ->
-            if (search.parentId != null && search.parentType != null) {
-                op.and(Topics.parentId eq search.parentId).and(Topics.parentType eq search.parentType)
-            } else {
-                null
-            }
-        },
-        { op: Op<Boolean> ->
-            if (search.rootType != null && search.rootId != null) {
-                op.and(Topics.rootId eq search.rootId).and(Topics.rootType eq search.rootType)
-            } else {
-                null
-            }
-        }
-    ).fold(Topics.rootType eq ObjectType.COMMUNITY) { acc, f ->
-        f(acc) ?: acc
     }
 }
 

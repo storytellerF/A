@@ -12,5 +12,5 @@ interface MediaService {
 
     fun clean(bucketName: String): Result<Unit>
 
-    fun list(bucketName: String, prefix: String): Result<List<MediaInfo?>>
+    fun list(bucketName: String, prefix: String): Result<List<MediaInfo>>
 }

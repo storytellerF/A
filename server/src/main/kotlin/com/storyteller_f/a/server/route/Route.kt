@@ -40,6 +40,9 @@ class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = nul
 
         @Resource("exit")
         class Exit(val parent: Id)
+
+        @Resource("topics")
+        class Topics(val parent: Id, val fillHasCommented: Boolean? = null)
     }
 }
 

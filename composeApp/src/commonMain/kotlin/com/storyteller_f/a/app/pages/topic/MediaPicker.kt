@@ -1,23 +1,29 @@
 package com.storyteller_f.a.app.pages.topic
 
-import androidx.compose.foundation.Image
+import a.composeapp.generated.resources.Res
+import a.composeapp.generated.resources.success
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.dokar.sonner.Toaster
-import com.dokar.sonner.ToasterState
 import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.client
@@ -35,6 +41,7 @@ import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.formatTime
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
@@ -43,11 +50,13 @@ import io.github.vinceglb.filekit.core.FileKit
 import io.github.vinceglb.filekit.core.extension
 import io.github.vinceglb.filekit.core.pickFile
 import io.ktor.http.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
+import org.jetbrains.compose.resources.getString
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,14 +67,15 @@ fun MediaPicker(
     input: String,
     updateInput: (String) -> Unit,
     privateRoomId: PrimaryKey?,
-    user: UserInfo,
+    uploadSuccess: (MediaInfo) -> Unit,
     hideSheet: () -> Unit
 ) {
+    val pagerState = rememberPagerState {
+        2
+    }
     if (showSheet) {
-        val pagerState = rememberPagerState {
-            2
-        }
         val currentPage = pagerState.currentPage
+        val scope = rememberCoroutineScope()
         ModalBottomSheet(
             onDismissRequest = {
                 hideSheet()
@@ -77,19 +87,23 @@ fun MediaPicker(
             },
         ) {
             val tabs = listOf(Icons.Default.UploadFile to "files", Icons.Default.Mic to "audio recorder")
-            PrimaryTabRow(currentPage) {
+            PrimaryTabRow(currentPage, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
                 tabs.forEachIndexed { index, pair ->
                     Tab(currentPage == index, {
+                        scope.launch {
+                            pagerState.scrollToPage(index)
+                        }
                     }) {
-                        Icon(pair.first, pair.second)
+                        Icon(pair.first, pair.second, modifier = Modifier.padding(vertical = 10.dp).size(30.dp))
                     }
                 }
             }
             HorizontalPager(pagerState, modifier = Modifier.height(300.dp)) {
                 if (it == 0) {
-                    MediaListView(input, privateRoomId, user, updateInput)
+                    val userInfo by LoginViewModel.user.collectAsState()
+                    userInfo?.let { it1 -> MediaListView(input, privateRoomId, it1, updateInput, uploadSuccess) }
                 } else {
-                    AudioRecorder(privateRoomId)
+                    AudioRecorder(privateRoomId, uploadSuccess)
                 }
             }
         }
@@ -97,41 +111,19 @@ fun MediaPicker(
 }
 
 @Composable
-fun AudioRecorder(privateRoomId: PrimaryKey?) {
+fun AudioRecorder(privateRoomId: PrimaryKey?, uploadSuccess: (MediaInfo) -> Unit) {
     val isRecording by Recorder.isRecording
     val hazeState = remember { HazeState() }
     val isGranted by isPermissionGranted(Permission.Audio)
     val scope = rememberCoroutineScope()
     val toasterState = rememberToasterState()
-    val my by LoginViewModel.user.collectAsState()
-    Toaster(toasterState)
-    Box(modifier = Modifier.fillMaxSize()) {
-        IconButton({
-            scope.launch {
-                if (isGranted) {
-                    if (isRecording) {
-                        val path = Recorder.stopRecord()
-                        Napier.i {
-                            "save to $path"
-                        }
-                        upload(my, toasterState, privateRoomId, path)
-                    } else {
-                        Recorder.startRecord()
-                    }
-                }
-            }
-        }, modifier = Modifier.align(Alignment.Center).haze(state = hazeState)) {
-            if (isRecording) {
-                Image(Icons.Default.StopCircle, "stop record", modifier = Modifier.size(200.dp))
-            } else {
-                Image(Icons.Default.PlayCircle, "start record", modifier = Modifier.size(200.dp))
-            }
-        }
+    Toaster(toasterState, alignment = Alignment.Center)
 
-        val surface = MaterialTheme.colorScheme.surface
+    Box(modifier = Modifier.fillMaxSize()) {
+        RecorderButton(hazeState, scope, isGranted, isRecording, uploadSuccess, privateRoomId)
         if (!isGranted) {
             Box(modifier = Modifier.fillMaxSize().hazeChild(hazeState) {
-                this.backgroundColor = surface
+                backgroundColor = Color.Transparent
             }) {
                 Button({
                     requestPermission(Permission.Audio)
@@ -144,65 +136,116 @@ fun AudioRecorder(privateRoomId: PrimaryKey?) {
 }
 
 @Composable
+private fun BoxScope.RecorderButton(
+    hazeState: HazeState,
+    scope: CoroutineScope,
+    isGranted: Boolean,
+    isRecording: Boolean,
+    uploadSuccess: (MediaInfo) -> Unit,
+    privateRoomId: PrimaryKey?
+) {
+    Box(
+        modifier = Modifier.size(150.dp)
+            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+            .clip(CircleShape)
+            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape).align(Alignment.Center)
+            .haze(state = hazeState).clickable {
+                scope.launch {
+                    if (isGranted) {
+                        if (isRecording) {
+                            val path = Recorder.stopRecord()
+                            Napier.i {
+                                "save to $path"
+                            }
+                            uploadPath(privateRoomId, path, uploadSuccess)
+                        } else {
+                            Recorder.startRecord()
+                        }
+                    }
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        if (isRecording) {
+            Icon(Icons.Default.StopCircle, "stop record", modifier = Modifier.size(50.dp))
+        } else {
+            Icon(Icons.Default.PlayCircle, "start record", modifier = Modifier.size(50.dp))
+        }
+    }
+}
+
+@Composable
 private fun MediaListView(
     input: String,
     privateRoomId: PrimaryKey?,
     user: UserInfo,
-    updateInput: (String) -> Unit
+    updateInput: (String) -> Unit,
+    uploadSuccess: (MediaInfo) -> Unit
 ) {
     val list = createMediaListViewModel(privateRoomId, user.id)
     val scope = rememberCoroutineScope()
     val toasterState = rememberToasterState()
-    val my by LoginViewModel.user.collectAsState()
-    Toaster(toasterState)
-    Column(modifier = Modifier.padding(top = 20.dp)) {
+    Toaster(toasterState, alignment = Alignment.Center)
+    Column(modifier = Modifier.padding(top = 10.dp)) {
         Row {
             IconButton({
                 scope.launch {
-                    upload(my, toasterState, privateRoomId)
+                    selectFileAndUpload(privateRoomId, uploadSuccess)
                 }
             }) {
                 Icon(Icons.Default.UploadFile, "upload file")
             }
-            IconButton({
-                list.handler.refresh()
-            }) {
-                Icon(Icons.Default.Refresh, "refresh file")
-            }
         }
-        Box(modifier = Modifier.weight(1f)) {
-            StateView(list.handler) {
-                LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
-                    items(it.data) {
-                        Row(modifier = Modifier.clickable {
-                            insertContent(it, updateInput, input)
-                            toasterState.show("success", duration = 1.seconds)
-                        }) {
-                            AsyncImage(
-                                it.url,
-                                it.item.noPrefixName,
-                                modifier = Modifier.size(40.dp),
-                                contentScale = ContentScale.Crop
-                            )
-                            Spacer(modifier = Modifier.width(20.dp))
-                            Column {
-                                Text(it.item.noPrefixName)
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Text(it.item.lastModified.toString())
-                            }
+        StateView(list.handler, modifier = Modifier.weight(1f)) {
+            LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
+                items(it.data) {
+                    Row(modifier = Modifier.fillMaxWidth().clickable {
+                        insertContent(it, updateInput, input)
+                        scope.launch {
+                            toasterState.show(getString(Res.string.success), duration = 1.seconds)
+                        }
+                    }) {
+                        FileIcon(it)
+                        Spacer(modifier = Modifier.width(20.dp))
+                        Column {
+                            Text(it.item.noPrefixName)
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(it.item.lastModified.formatTime())
                         }
                     }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }
             }
         }
     }
 }
 
-private suspend fun upload(
-    my: UserInfo?,
-    toasterState: ToasterState,
-    privateRoomId: PrimaryKey?
+@Composable
+private fun FileIcon(it: MediaInfo) {
+    val contentType = it.item.contentType
+    val modifier = Modifier.size(40.dp)
+    if (contentType.startsWith("image")) {
+        AsyncImage(
+            it.url,
+            it.item.noPrefixName,
+            modifier = modifier.clip(RoundedCornerShape(5.dp)),
+            contentScale = ContentScale.Crop
+        )
+    } else if (contentType.startsWith("audio")) {
+        Icon(Icons.Default.AudioFile, "audio file", modifier)
+    } else if (contentType.startsWith("video")) {
+        Icon(Icons.Default.VideoFile, "video file", modifier)
+    } else {
+        Icon(Icons.Default.AttachFile, "other file", modifier)
+    }
+}
+
+private suspend fun selectFileAndUpload(
+    privateRoomId: PrimaryKey?,
+    uploadSuccess: (MediaInfo) -> Unit
 ) {
+    val my = LoginViewModel.user.value
     globalDialogState.use {
         val id = my?.id
         val f = FileKit.pickFile()
@@ -213,7 +256,7 @@ private suspend fun upload(
                 f.name,
                 id,
                 ContentType.defaultForFileExtension(f.extension),
-                toasterState
+                uploadSuccess
             ) {
                 f.readBytes()
             }
@@ -221,12 +264,12 @@ private suspend fun upload(
     }
 }
 
-private suspend fun upload(
-    my: UserInfo?,
-    toasterState: ToasterState,
+private suspend fun uploadPath(
     privateRoomId: PrimaryKey?,
-    path: Path
+    path: Path,
+    uploadSuccess: (MediaInfo) -> Unit
 ) {
+    val my = LoginViewModel.user.value
     val meta = SystemFileSystem.metadataOrNull(path) ?: return
     globalDialogState.use {
         upload(
@@ -235,7 +278,7 @@ private suspend fun upload(
             path.name,
             my?.id,
             ContentType.parse("audio/mp4"),
-            toasterState
+            uploadSuccess
         ) {
             SystemFileSystem.source(path).buffered().readByteArray()
         }
@@ -248,7 +291,7 @@ private suspend fun upload(
     name: String,
     id: PrimaryKey?,
     contentType: ContentType,
-    toasterState: ToasterState,
+    uploadSuccess: (MediaInfo) -> Unit,
     readStream: suspend () -> ByteArray
 ) {
     if (size != null && size <= 100 * 1024 * 1024) {
@@ -274,13 +317,14 @@ private suspend fun upload(
         }
         response.data.firstOrNull()?.let {
             bus.emit(OnMediaUploaded(it))
+            uploadSuccess(it)
         }
     } else {
-        toasterState.show("size is null or size too big", duration = 1.seconds)
+        throw Exception("size is null or size too big")
     }
 }
 
-private fun insertContent(
+fun insertContent(
     it: MediaInfo,
     updateInput: (String) -> Unit,
     input: String

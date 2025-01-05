@@ -1,12 +1,10 @@
 package com.storyteller_f.a.server.service
 
-import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.*
 import com.storyteller_f.a.server.route.RouteCommunities
-import com.storyteller_f.bindPaginationQuery
-import com.storyteller_f.isDup
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
@@ -14,7 +12,6 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import io.ktor.server.plugins.BadRequestException
-import org.jetbrains.exposed.sql.JoinType
 
 suspend fun getCommunity(
     communityId: PrimaryKey?,
@@ -144,17 +141,7 @@ private suspend fun processUserJoinedTimeReplace(
     val communityIds = value.map {
         it.id
     }
-    return DatabaseFactory.mapQuery({
-        this[Communities.id] to this[MemberJoins.joinTime]
-    }) {
-        Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-            MemberJoins.uid eq uid
-        }
-            .select(Communities.id, MemberJoins.joinTime)
-            .where {
-                Communities.id.inList(communityIds)
-            }
-    }.map { joinedTimeList ->
+    return getCommunityByIds(uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         PaginationResult(value.map {
             it.copy(joinTime = map[it.id], extension = CommunityInfo.Extension(it.joinTime))
@@ -174,5 +161,31 @@ private fun parseCommunityList(
             val second = icons[i * 2 + 1]
             communityPair.communityInfo.copy(icon = first, poster = second)
         }
+    }
+}
+
+suspend fun getCommunityTopicList(
+    it: RouteCommunities.Id.Topics,
+    id: PrimaryKey?,
+    n: PrimaryKey?,
+    s: Int,
+    backend: Backend,
+    search: RouteCommunities.Id.Topics
+) = checkRootReadPermission(ObjectType.COMMUNITY, it.parent.id, id).mapResultNotNull {
+    if (it.hasRead) {
+        commonPaginationTopics(id, null, n, s, search.fillHasCommented) {
+            Topics.rootId eq search.parent.id
+        }.mapResultNotNull { (data, count) ->
+            val ids = data.map {
+                it.id
+            }
+            backend.topicSearchService.getDocument(ids).mapResult { list ->
+                processMediaLink(backend, data, list).map {
+                    PaginationResult(it, count)
+                }
+            }
+        }
+    } else {
+        Result.failure(ForbiddenException())
     }
 }
