@@ -32,11 +32,11 @@ inline fun <reified VM : ViewModel> viewModel(
     crossinline factory: () -> VM
 ): VM {
     Napier.i {
-        "viewModel ${VM::class}"
+        "viewModel ${VM::class.simpleName} $keys"
     }
     return viewModel(key = keys?.joinToString(), initializer = {
         Napier.i {
-            "viewModel build ${VM::class}"
+            "viewModel build ${VM::class.simpleName} $keys"
         }
         factory()
     })

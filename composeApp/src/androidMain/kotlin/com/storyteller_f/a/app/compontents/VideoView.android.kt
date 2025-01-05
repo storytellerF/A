@@ -1,5 +1,6 @@
 package com.storyteller_f.a.app.compontents
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -20,14 +21,16 @@ import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.dokar.sonner.Toaster
+import com.dokar.sonner.ToasterState
 import com.dokar.sonner.rememberToasterState
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-actual fun VideoView(url: String, contentType: String) {
+actual fun VideoView(modifier: Modifier, url: String, contentType: String) {
     log {
         "Video $url"
     }
@@ -42,49 +45,11 @@ actual fun VideoView(url: String, contentType: String) {
         mutableStateOf(false)
     }
     val player = remember {
-        log {
-            "Video $url init"
+        rememberMediaPlayer(url, context, toasterState, scope, contentType, {
+            size = it
+        }) {
+            currentLoading = it
         }
-        ExoPlayer.Builder(context).build().apply {
-            addListener(object : Player.Listener {
-                override fun onVideoSizeChanged(videoSize: VideoSize) {
-                    super.onVideoSizeChanged(videoSize)
-                    size = videoSize
-                }
-
-                override fun onPlayerError(error: PlaybackException) {
-                    super.onPlayerError(error)
-                    Napier.i {
-                        "Video $url error $error ${error.errorCode} ${error.errorCodeName}"
-                    }
-                    if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
-                        if (error is ExoPlaybackException) {
-                            if (error.type == 0) {
-                                toasterState.show("source error, restart after 5 seconds")
-                                scope.launch {
-                                    delay(5000)
-                                    prepare()
-                                    play()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                override fun onIsLoadingChanged(isLoading: Boolean) {
-                    super.onIsLoadingChanged(isLoading)
-                    currentLoading = isLoading
-                }
-            })
-
-            addMediaItem(MediaItem.Builder().setUri(url).apply {
-                if (contentType == "application/vnd.apple.mpegurl" && !url.endsWith(".m3u8")) {
-                    setMimeType(MimeTypes.APPLICATION_M3U8)
-                }
-            }.build())
-            prepare()
-        }
-
     }
     DisposableEffect(player) {
         onDispose {
@@ -94,8 +59,9 @@ actual fun VideoView(url: String, contentType: String) {
             player.release()
         }
     }
+
     val shape = RoundedCornerShape(20.dp)
-    Box {
+    Box(modifier = modifier) {
         AndroidView(
             factory = {
                 PlayerView(it)
@@ -118,6 +84,66 @@ actual fun VideoView(url: String, contentType: String) {
                     .height(40.dp)
             )
         }
+    }
+}
 
+private fun rememberMediaPlayer(
+    url: String,
+    context: Context,
+    toasterState: ToasterState,
+    scope: CoroutineScope,
+    contentType: String,
+    updateSize: (VideoSize) -> Unit,
+    updateLoading: (Boolean) -> Unit,
+): ExoPlayer {
+    log {
+        "Video $url init"
+    }
+    return ExoPlayer.Builder(context).build().apply {
+        addListener(buildListener(url, toasterState, scope, updateSize, updateLoading))
+
+        addMediaItem(MediaItem.Builder().setUri(url).apply {
+            if (contentType == "application/vnd.apple.mpegurl" && !url.endsWith(".m3u8")) {
+                setMimeType(MimeTypes.APPLICATION_M3U8)
+            }
+        }.build())
+        prepare()
+    }
+}
+
+private fun ExoPlayer.buildListener(
+    url: String,
+    toasterState: ToasterState,
+    scope: CoroutineScope,
+    updateSize: (VideoSize) -> Unit,
+    updateLoading: (Boolean) -> Unit,
+): Player.Listener {
+    return object : Player.Listener {
+        override fun onVideoSizeChanged(videoSize: VideoSize) {
+            super.onVideoSizeChanged(videoSize)
+            updateSize(videoSize)
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            super.onPlayerError(error)
+            Napier.i {
+                "Video $url error $error ${error.errorCode} ${error.errorCodeName}"
+            }
+            if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+                if (error is ExoPlaybackException) {
+                    toasterState.show("source error, restart after 5 seconds")
+                    scope.launch {
+                        delay(5000)
+                        prepare()
+                        play()
+                    }
+                }
+            }
+        }
+
+        override fun onIsLoadingChanged(isLoading: Boolean) {
+            super.onIsLoadingChanged(isLoading)
+            updateLoading(isLoading)
+        }
     }
 }

@@ -45,7 +45,7 @@ class ClientCustomAuthProvider : AuthProvider {
     override suspend fun refreshToken(response: HttpResponse): Boolean {
         val state = LoginViewModel.state.value as? ClientSession.SignUpSuccess
         val data = LoginViewModel.session?.first
-        Napier.v("refreshToken", tag = "ClientAuth")
+        Napier.v("refreshToken $data", tag = "ClientAuth")
         return if (state == null || data == null) {
             false
         } else {
@@ -54,11 +54,11 @@ class ClientCustomAuthProvider : AuthProvider {
                 LoginViewModel.updateSession(data, signature(localPrivateKey, finalData(data)))
             }.fold({
                 Napier.v(tag = "ClientAuth") {
-                    "refreshToken Success"
+                    "refreshToken success"
                 }
                 true
             }, {
-                Napier.e("signature failed", it, tag = "ClientAuth")
+                Napier.e("refreshToken failed", it, tag = "ClientAuth")
                 false
             })
         }

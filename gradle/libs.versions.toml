@@ -7,7 +7,6 @@ android-minSdk = "24"
 android-targetSdk = "35"
 androidx-activityCompose = "1.9.3"
 androidx-lifecycleProcess = "2.8.7"
-androidx-test-ext-junit = "1.2.1"
 bcprovJdk18on = "1.79"
 buildconfig = "0.15.2"
 coil = "3.0.4"
@@ -22,7 +21,6 @@ easylauncher = "6.4.0"
 elasticsearchJava = "8.17.0"
 emoji-reader = "2.0.6"
 emojiKt = "2.1.0"
-espresso-core = "3.6.1"
 exposedVersion = "0.57.0"
 filekitCompose = "0.8.8"
 geoip2 = "4.2.1"
@@ -32,6 +30,7 @@ highlights = "1.0.0"
 jacksonModuleKotlin = "2.18.2"
 jlatexmath = "1.0.7"
 jlatexmathAndroid = "0.2.0"
+jlayer = "1.0.3"
 kotlin = "2.1.0"
 kotlin_buildconfig = "5.5.1"
 kotlinxCli = "0.3.6"
@@ -43,6 +42,7 @@ ktor = "3.0.3"
 lifecycleViewmodelCompose = "2.8.7"
 logback = "1.5.15"
 luceneCore = "10.1.0"
+markdown = "0.7.3"
 material3WindowSizeClassMultiplatform = "0.5.0"
 media3Exoplayer = "1.5.1"
 minio = "8.5.14"
@@ -54,7 +54,6 @@ napier = "2.7.1"
 navigationCompose = "2.8.0-alpha11"
 pagingCommon = "3.3.0-alpha02-0.5.1"
 pdfbox = "3.0.3"
-permissionsCompose = "0.18.1"
 pgjdbcNg = "0.8.9"
 postgresql = "42.7.4"
 postgresqlVersion = "1.20.4"
@@ -65,6 +64,7 @@ slf4jSimple = "2.0.16"
 sqliteJdbc = "3.47.1.0"
 uiTestJunit4Android = "1.7.6"
 uriKmp = "0.0.18"
+vlcj = "4.8.3"
 
 [libraries]
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibrariesComposeM3" }
@@ -75,7 +75,6 @@ androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", versi
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3Exoplayer" }
 androidx-media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3Exoplayer" }
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
-androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
 androidx-ui-test-junit4-android = { module = "androidx.compose.ui:ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "uiTestJunit4Android" }
 bcpkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bcprovJdk18on" }
@@ -100,7 +99,6 @@ elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version
 emoji-compose-m3 = { module = "org.kodein.emoji:emoji-compose-m3", version.ref = "emojiKt" }
 emoji-kt = { module = "org.kodein.emoji:emoji-kt", version.ref = "emojiKt" }
 emoji-reader-jvm = { module = "com.github.YvesCheung.EmojiReader:lib-jvm", version.ref = "emoji-reader" }
-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso-core" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposedVersion" }
 exposed-crypt = { module = "org.jetbrains.exposed:exposed-crypt", version.ref = "exposedVersion" }
 exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposedVersion" }
@@ -118,6 +116,7 @@ jlatexmath = { module = "org.scilab.forge:jlatexmath", version.ref = "jlatexmath
 jlatexmath-android = { module = "ru.noties:jlatexmath-android", version.ref = "jlatexmathAndroid" }
 jlatexmath-android-font-cyrillic = { module = "ru.noties:jlatexmath-android-font-cyrillic", version.ref = "jlatexmathAndroid" }
 jlatexmath-android-font-greek = { module = "ru.noties:jlatexmath-android-font-greek", version.ref = "jlatexmathAndroid" }
+jlayer = { module = "com.github.umjammer:jlayer", version.ref = "jlayer" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kotlinxCli" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinxCoroutinesSwing" }
@@ -149,6 +148,7 @@ lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", 
 lucene-backward-codecs = { module = "org.apache.lucene:lucene-backward-codecs", version.ref = "luceneCore" }
 lucene-core = { module = "org.apache.lucene:lucene-core", version.ref = "luceneCore" }
 lucene-queryparser = { module = "org.apache.lucene:lucene-queryparser", version.ref = "luceneCore" }
+markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 material3-window-size = { module = "dev.chrisbanes.material3:material3-window-size-class-multiplatform", version.ref = "material3WindowSizeClassMultiplatform" }
 minio = { module = "io.minio:minio", version.ref = "minio" }
 mosaic-runtime = { module = "com.jakewharton.mosaic:mosaic-runtime", version.ref = "mosaicRuntime" }
@@ -164,7 +164,6 @@ navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-co
 paging-common = { module = "app.cash.paging:paging-common", version.ref = "pagingCommon" }
 paging-compose-common = { module = "app.cash.paging:paging-compose-common", version.ref = "pagingCommon" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
-permissions-compose = { module = "dev.icerock.moko:permissions-compose", version.ref = "permissionsCompose" }
 pgjdbc-ng = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng", version.ref = "pgjdbcNg" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 record-core = { module = "dev.theolm.record:record-core", version.ref = "recordCore" }
@@ -177,6 +176,7 @@ sunny-chung-composable-table = { module = "io.github.sunny-chung:composable-tabl
 testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "minioVersion" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "postgresqlVersion" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
+vlcj = { module = "uk.co.caprica:vlcj", version.ref = "vlcj" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

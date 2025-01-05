@@ -65,11 +65,9 @@ actual fun AudioView(url: String) {
                     currentLoading = isLoading
                 }
             })
+            addMediaItem(MediaItem.fromUri(url))
+            prepare()
         }
-    }
-    LaunchedEffect(player, url) {
-        player.addMediaItem(MediaItem.fromUri(url))
-        player.prepare()
     }
     DisposableEffect(player) {
         onDispose {

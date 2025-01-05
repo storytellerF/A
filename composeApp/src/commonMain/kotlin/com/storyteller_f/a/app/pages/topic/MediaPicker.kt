@@ -157,7 +157,9 @@ private fun BoxScope.RecorderButton(
                             }
                             uploadPath(privateRoomId, path, uploadSuccess)
                         } else {
-                            Recorder.startRecord()
+                            globalDialogState.use {
+                                Recorder.startRecord()
+                            }
                         }
                     }
                 }

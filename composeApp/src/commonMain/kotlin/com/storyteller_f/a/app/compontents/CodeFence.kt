@@ -2,10 +2,7 @@ package com.storyteller_f.a.app.compontents
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -84,7 +81,7 @@ fun ObjectBlock(
                     Url(obj.url)
                 }.getOrNull() == null -> HighlightCodeBlock(modal)
 
-                else -> VideoView(obj.url, "application/vnd.apple.mpegurl")
+                else -> VideoView(modifier = Modifier, obj.url, "application/vnd.apple.mpegurl")
             }
         }
 
@@ -97,7 +94,7 @@ fun ObjectBlock(
 
                 contentType == "application/pdf" -> PdfView(url)
 
-                contentType.startsWith("video/") -> VideoView(url = url, contentType)
+                contentType.startsWith("video/") -> VideoView(modifier = Modifier, url, contentType)
 
                 contentType.startsWith("audio/") -> AudioView(url)
 

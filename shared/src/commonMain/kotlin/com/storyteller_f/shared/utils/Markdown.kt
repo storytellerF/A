@@ -25,7 +25,6 @@ fun extractMarkdownHeadline(markdownText: String): String {
     parsedTree.accept(object : Visitor {
         override fun visitNode(node: ASTNode) {
             val type = node.type
-            println(type)
             when {
                 type == MarkdownElementTypes.MARKDOWN_FILE -> captureContent = true
                 type == MarkdownElementTypes.ATX_1 -> {
@@ -36,7 +35,6 @@ fun extractMarkdownHeadline(markdownText: String): String {
                 type == MarkdownElementTypes.PARAGRAPH -> {
                     if (captureContent) {
                         val content = markdownText.substring(node.startOffset, node.endOffset).trim()
-                        println(content)
                         if (content.isNotEmpty()) {
                             paragraphs.appendLine(content)
                         }
