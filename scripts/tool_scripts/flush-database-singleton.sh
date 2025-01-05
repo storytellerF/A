@@ -23,7 +23,7 @@ for json_file in "$base"/*.json; do
     if [ "$file_index" -eq "$index" ]; then
       echo "Process $json_file"
       sh "$cli_path" add "$json_file"
-      echo "result is $?"
+      echo "$json_file result is $?"
     fi
 
     index=$((index + 1))

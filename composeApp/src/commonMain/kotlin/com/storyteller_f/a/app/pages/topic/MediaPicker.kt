@@ -1,7 +1,5 @@
 package com.storyteller_f.a.app.pages.topic
 
-import a.composeapp.generated.resources.Res
-import a.composeapp.generated.resources.success
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -56,22 +54,20 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
-import org.jetbrains.compose.resources.getString
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaPicker(
     showSheet: Boolean,
     sheetState: SheetState,
-    input: String,
-    updateInput: (String) -> Unit,
     privateRoomId: PrimaryKey?,
+    clickItem: (MediaInfo) -> Unit,
     uploadSuccess: (MediaInfo) -> Unit,
+    support: List<String> = listOf("files", "audio recorder"),
     hideSheet: () -> Unit
 ) {
     val pagerState = rememberPagerState {
-        2
+        support.size
     }
     if (showSheet) {
         val currentPage = pagerState.currentPage
@@ -86,7 +82,9 @@ fun MediaPicker(
                 WindowInsets(0)
             },
         ) {
-            val tabs = listOf(Icons.Default.UploadFile to "files", Icons.Default.Mic to "audio recorder")
+            val tabs = listOf(Icons.Default.UploadFile to "files", Icons.Default.Mic to "audio recorder").filter {
+                support.contains(it.second)
+            }
             PrimaryTabRow(currentPage, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
                 tabs.forEachIndexed { index, pair ->
                     Tab(currentPage == index, {
@@ -99,9 +97,9 @@ fun MediaPicker(
                 }
             }
             HorizontalPager(pagerState, modifier = Modifier.height(300.dp)) {
-                if (it == 0) {
+                if (tabs[it].second == "files") {
                     val userInfo by LoginViewModel.user.collectAsState()
-                    userInfo?.let { it1 -> MediaListView(input, privateRoomId, it1, updateInput, uploadSuccess) }
+                    userInfo?.let { it1 -> MediaListView(privateRoomId, it1, clickItem, uploadSuccess) }
                 } else {
                     AudioRecorder(privateRoomId, uploadSuccess)
                 }
@@ -176,10 +174,9 @@ private fun BoxScope.RecorderButton(
 
 @Composable
 private fun MediaListView(
-    input: String,
     privateRoomId: PrimaryKey?,
     user: UserInfo,
-    updateInput: (String) -> Unit,
+    clickItem: (MediaInfo) -> Unit,
     uploadSuccess: (MediaInfo) -> Unit
 ) {
     val list = createMediaListViewModel(privateRoomId, user.id)
@@ -200,10 +197,7 @@ private fun MediaListView(
             LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
                 items(it.data) {
                     Row(modifier = Modifier.fillMaxWidth().clickable {
-                        insertContent(it, updateInput, input)
-                        scope.launch {
-                            toasterState.show(getString(Res.string.success), duration = 1.seconds)
-                        }
+                        clickItem(it)
                     }) {
                         FileIcon(it)
                         Spacer(modifier = Modifier.width(20.dp))

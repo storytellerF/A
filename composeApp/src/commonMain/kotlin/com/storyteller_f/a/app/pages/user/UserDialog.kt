@@ -10,7 +10,6 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.unit.dp
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.serialization.removeValue
 import com.storyteller_f.a.app.LocalAppNav
@@ -49,9 +48,12 @@ fun UserDialogInternal(userInfo: UserInfo, dismiss: () -> Unit = {}) {
                     refreshMyInfo(my)
                 }
                 val title = stringResource(Res.string.sign_out_prompt)
-                ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
+                ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings)) {
+                    dismiss()
+                    appNav.gotoUserSetting()
+                }
                 ButtonNav(Icons.AutoMirrored.Default.Logout, stringResource(Res.string.sign_out)) {
-                    controller.showMessage(title, "")
+                    controller.showTitle(title)
                 }
             }
         }

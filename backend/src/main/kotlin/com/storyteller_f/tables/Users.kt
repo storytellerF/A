@@ -214,19 +214,25 @@ suspend fun updateUser(
     id: PrimaryKey,
     newUser: UserInfo
 ): Result<Boolean> {
-    val aid = newUser.aid
     return DatabaseFactory.dbQuery {
         listOf({
-            if (newUser.nickname.isNotBlank()) {
+            val avatar = newUser.avatar?.item?.name
+            if (newUser.nickname.isNotEmpty() || avatar?.isNotEmpty() == true) {
                 Users.update({
                     Users.id eq id
                 }) {
-                    it[nickname] = newUser.nickname
+                    if (newUser.nickname.isNotEmpty()) {
+                        it[nickname] = newUser.nickname
+                    }
+                    if (avatar?.isNotEmpty() == true) {
+                        it[icon] = avatar
+                    }
                 } > 0
             } else {
                 true
             }
         }, {
+            val aid = newUser.aid
             if (!aid.isNullOrBlank()) {
                 Aids.upsert(Aids.objectId) {
                     it[objectId] = id
