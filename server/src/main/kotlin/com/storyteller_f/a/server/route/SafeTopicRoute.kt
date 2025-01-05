@@ -8,6 +8,7 @@ import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.obj.DeleteReaction
 import com.storyteller_f.shared.obj.NewReaction
+import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.deleteReaction
@@ -69,7 +70,8 @@ fun Route.bindProtectedSafeTopicRoute(backend: Backend, reader: DatabaseReader) 
 
     post<RouteTopics> {
         usePrincipal(reader) {
-            addTopicAtCommunity(it, backend)
+            val topic = call.receive<NewTopic>()
+            addTopicAtCommunity(it, backend, topic)
         }
     }
 

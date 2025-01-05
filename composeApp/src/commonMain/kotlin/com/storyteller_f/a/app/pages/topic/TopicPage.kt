@@ -169,7 +169,7 @@ private fun TopicInputGroup(
     }
     val focusManager = LocalFocusManager.current
     val sendState = remember {
-        mutableStateOf<LoadingState>(LoadingState.Done())
+        mutableStateOf<LoadingState>(LoadingState.Done)
     }
     val isSending = sendState.value is LoadingState.Loading
     InputGroupInternal(
@@ -190,7 +190,7 @@ private fun TopicInputGroup(
             }, focusManager, toasterState, scrollTo)
         },
     ) {
-        CommonInputButton(LoadingState.Done(), input, isSending) {
+        CommonInputButton(LoadingState.Done, input, isSending) {
             if (!isSending) {
                 sendTopic(scope, sendState, topic, input, {
                     input = it
@@ -223,7 +223,7 @@ private fun sendTopic(
         } catch (e: Exception) {
             globalDialogState.showError(e)
         } finally {
-            sendState.value = LoadingState.Done()
+            sendState.value = LoadingState.Done
         }
     }
 }

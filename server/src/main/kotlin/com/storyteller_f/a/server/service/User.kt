@@ -62,6 +62,11 @@ private fun checkAid(newUser: UserInfo): Result<Unit> {
     return when {
         aid.isNullOrBlank() -> Result.success(Unit)
         aid.length in 2..20 -> Result.success(Unit)
+        !aid.all {
+            it in 'A'..'Z' || it in 'a'..'z' || it in '0'..'9' || it == '_' || it == '-'
+        } -> {
+            Result.failure(CustomBadRequestException("only support alphabet, number, underline and hyphen"))
+        }
         else -> Result.failure(BadRequestException("aid too long"))
     }
 }

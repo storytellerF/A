@@ -56,16 +56,16 @@ fun <T : Any> StateView(
         value = refresh
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        StateViewInternal(state = loadState.toLoadingState(pagingItems.itemCount), refresh = {
+        StateViewInternal(state = loadState.toLoadingState(), refresh = {
             pagingItems.refresh()
-        }, content)
+        }, pagingItems.itemCount, content)
         PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
 }
 
 const val REFRESH_AFTER = 300L
 
-private fun LoadState?.toLoadingState(count: Int) =
+private fun LoadState?.toLoadingState() =
     when (this) {
         null -> null
 
@@ -73,11 +73,16 @@ private fun LoadState?.toLoadingState(count: Int) =
 
         is LoadStateError -> LoadingState.Error(error)
 
-        is LoadStateNotLoading -> LoadingState.Done(count)
+        is LoadStateNotLoading -> LoadingState.Done
     }
 
 @Composable
-private fun StateViewInternal(state: LoadingState?, refresh: () -> Unit, content: @Composable () -> Unit) {
+private fun StateViewInternal(
+    state: LoadingState?,
+    refresh: () -> Unit,
+    itemCount: Int,
+    content: @Composable () -> Unit
+) {
     when (state) {
         null -> CenterBox {
             CircularProgressIndicator()
@@ -101,7 +106,7 @@ private fun StateViewInternal(state: LoadingState?, refresh: () -> Unit, content
             }
         }
 
-        is LoadingState.Done -> if (state.itemCount == 0) {
+        is LoadingState.Done -> if (itemCount == 0) {
             CenterBox {
                 Text(text = stringResource(Res.string.no_content_yet))
             }
@@ -143,7 +148,7 @@ fun <T> StateView(
         StateViewInternal(state, refresh = {
             handler.refresh()
             extraRefresh()
-        }) {
+        }, 1) {
             data?.let {
                 content(it)
             }

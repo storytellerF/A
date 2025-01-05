@@ -97,6 +97,21 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
     try {
         if (frame is RoomFrame.Message) {
             val newTopic = frame.newTopic
+            val content = newTopic.content
+            if (content is TopicContent.Plain) {
+                if (content.plain.isBlank()) {
+                    sendSerialized(RoomFrame.Error("plain is empty") as RoomFrame)
+                    return
+                }
+            } else if (content is TopicContent.Encrypted) {
+                if (content.encrypted.isBlank()) {
+                    sendSerialized(RoomFrame.Error("message is empty") as RoomFrame)
+                    return
+                }
+            } else {
+                sendSerialized(RoomFrame.Error("not support message type") as RoomFrame)
+                return
+            }
             addTopicAtRoom(newTopic, uid, backend = backend).onSuccess {
                 if (it == null) {
                     sendSerialized(RoomFrame.Error("not found") as RoomFrame)
