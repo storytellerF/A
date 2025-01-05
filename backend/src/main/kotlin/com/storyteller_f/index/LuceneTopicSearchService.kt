@@ -109,12 +109,12 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
             try {
                 DirectoryReader.open(it).use { reader ->
                     val searcher = IndexSearcher(reader)
-                    val combinedQuery = buildQuery(nextTopicId, word, root, parent)
+                    val combinedQuery = buildQuery(nextTopicId, word, root, parent).build()
                     Napier.i {
                         "lucene search query $combinedQuery"
                     }
                     val sortById = Sort(SortField("id2", SortField.Type.LONG, true))
-                    val docs = searcher.search(combinedQuery.build(), size, sortById)
+                    val docs = searcher.search(combinedQuery, size, sortById)
                     val scoreDocs = docs.scoreDocs
                     PaginationResult(scoreDocs.mapNotNull { doc ->
                         searcher.storedFields().document(doc.doc)?.let { document ->

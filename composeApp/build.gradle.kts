@@ -1,5 +1,3 @@
-@file:OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
-
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import com.google.common.base.CaseFormat
@@ -159,6 +157,8 @@ kotlin {
             implementation(libs.emoji.reader.jvm)
             implementation(libs.jlatexmath)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.vlcj)
+            implementation(libs.jlayer)
         }
         desktopTest.dependencies {
             implementation(compose.desktop.currentOs)
@@ -337,7 +337,7 @@ aboutLibraries {
     // - `./gradlew app:exportLibraryDefinitions -PaboutLibraries.exportPath=src/main/res/raw`
     // - the resulting file can for example be added as part of the SCM
     registerAndroidTasks = false
-    // Define the output file name. Modifying this will disable the automatic meta data discovery for supported platforms.
+    // Define the output file name. Modifying this will disable the automatic metadata discovery for supported platforms.
     outputFileName = "aboutlibraries.json"
     // Define the path configuration files are located in. E.g. additional libraries, licenses to add to the target .json
     // Warning: Please do not use the parent folder of a module as path, as this can result in issues. More details: https://github.com/mikepenz/AboutLibraries/issues/936

@@ -41,8 +41,13 @@ fun HttpClientConfig<*>.defaultClientConfigure() {
     install(HttpCookies)
     install(HttpRequestRetry) {
         retryIf { request, response ->
-            response.status == HttpStatusCode.Unauthorized && request.headers["cookie"].isNullOrEmpty() ||
+            if (response.status == HttpStatusCode.Unauthorized) {
+                val data = LoginViewModel.session?.first
+                val r = response.headers["www-authenticate"]
+                data != r
+            } else {
                 response.status == HttpStatusCode.TooManyRequests
+            }
         }
         delayMillis {
             0

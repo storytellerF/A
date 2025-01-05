@@ -49,32 +49,41 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
                 else -> call.respond(it)
             }
         }.onFailure {
-            if (it !is UnauthorizedException) {
+            if (!respondError(it, reader)) {
                 call.application.log.error("Occur exception", it)
             }
-            respondError(it, reader)
         }
     } catch (e: Exception) {
         call.application.log.error("Catch exception in api", e)
     }
 }
 
-suspend fun RoutingContext.respondError(e: Throwable, reader: DatabaseReader) {
+suspend fun RoutingContext.respondError(e: Throwable, reader: DatabaseReader): Boolean {
     when (e) {
-        is ForbiddenException -> call.respond(HttpStatusCode.Forbidden, e.message.toString())
-        is UnauthorizedException -> call.respondUnauthorizedResponse(reader)
-        is MissingRequestParameterException, is ParameterConversionException, is ContentTransformationException ->
-            call.respond(
-                HttpStatusCode.BadRequest,
-                e.localizedMessage
-            )
+        is ForbiddenException -> {
+            call.respond(HttpStatusCode.Forbidden, e.message.toString())
+            return true
+        }
 
-        is BadRequestException, is CustomBadRequestException -> call.respond(
-            HttpStatusCode.BadRequest,
-            e.localizedMessage
-        )
+        is UnauthorizedException -> {
+            call.respondUnauthorizedResponse(reader)
+            return true
+        }
 
-        else -> call.respond(HttpStatusCode.InternalServerError, e.localizedMessage ?: e.toString())
+        is MissingRequestParameterException, is ParameterConversionException, is ContentTransformationException -> {
+            call.respond(HttpStatusCode.BadRequest, e.localizedMessage)
+            return true
+        }
+
+        is BadRequestException, is CustomBadRequestException -> {
+            call.respond(HttpStatusCode.BadRequest, e.localizedMessage)
+            return true
+        }
+
+        else -> {
+            call.respond(HttpStatusCode.InternalServerError, e.localizedMessage ?: e.toString())
+            return false
+        }
     }
 }
 
