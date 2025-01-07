@@ -33,7 +33,7 @@ dependencies {
     implementation(libs.lucene.analysis.common)
     implementation(libs.simplemagic)
 
-    runtimeOnly(libs.lucene.backward.codecs)
+    implementation(libs.lucene.backward.codecs)
     testImplementation(libs.elasticsearch)
 }
 
@@ -49,7 +49,8 @@ sourceSets {
         resources {
             srcDirs(
                 layout.buildDirectory.dir("copied/resources"),
-                layout.buildDirectory.dir("copied-ca/resources")
+                layout.buildDirectory.dir("copied-ca/resources"),
+                layout.buildDirectory.dir("merged-services/resources")
             )
         }
     }
@@ -57,7 +58,7 @@ sourceSets {
 
 val flavor = project.findProperty("buildkonfig.flavor")
 
-val copyTask = tasks.register("CopyEnv", Copy::class) {
+val copyTask = tasks.register("copyEnv", Copy::class) {
     group = "copy"
     from("../${flavor}.env")
     enabled = File(rootDir, "${flavor}.env").exists()
@@ -67,5 +68,42 @@ val copyTask = tasks.register("CopyEnv", Copy::class) {
     }
 }
 
+val mergeServiceFiles = tasks.register("mergeServiceFiles") {
+    group = "build"
+    description = "Merge SPI files from dependencies into a single output"
+
+    val outputDir = layout.buildDirectory.dir("merged-services")
+    doLast {
+
+        // Iterate through each jar/zip in runtimeClasspath
+        val output = outputDir.get().asFile
+        output.mkdirs()
+        configurations.runtimeClasspath.get().flatMap { file ->
+            if (file.isFile && file.name.endsWith(".jar")) {
+                zipTree(file).filter {
+                    it.name.startsWith("org.apache.lucene.codecs")
+                }.map { serviceFile ->
+                    val serviceName = serviceFile.name
+                    val serviceContent =
+                        serviceFile.readText().lines().filter { it.startsWith("org.apache.lucene") }
+                    serviceName to serviceContent
+                }
+            } else {
+                emptyList()
+            }
+        }.groupBy {
+            it.first
+        }.forEach {
+            val outputFile = output.resolve("META-INF/services/${it.key}")
+            outputFile.parentFile.mkdirs()
+
+            outputFile.writeText(it.value.flatMap {
+                it.second
+            }.joinToString("\n"))
+        }
+    }
+}
+
 tasks.processResources.dependsOn(copyTask)
+tasks.processResources.dependsOn(mergeServiceFiles)
 
