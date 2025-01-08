@@ -3,7 +3,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 200M         # 最大内存限制为 200MB
+          #memory: 200M         # 最大内存限制为 200MB
           cpus: "0.5"          # 限制使用最多 50% 的 CPU 核心
-        reservations:
-          memory: 100M         # 软内存限制为 100MB
+        #reservations:
+          #memory: 100M         # 软内存限制为 100MB

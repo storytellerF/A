@@ -11,6 +11,7 @@ import com.storyteller_f.shared.model.MediaResponse
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapResult
 import io.ktor.http.*
 import io.ktor.resources.*
 import io.ktor.server.application.*
@@ -177,11 +178,11 @@ fun Routing.bindUnauthenticatedRoute(backend: Backend, reader: DatabaseReader) {
 
     get("/amedia/{path...}") {
         omitPrincipal(reader) {
-            checkParameter<List<String>, MediaResponse>("path") {
+            checkParameter<List<String>, MediaResponse>("path") { paths ->
                 val service = backend.mediaService
                 if (service is FileSystemMediaService) {
-                    val file = service.getResponse(it)
-                    if (file.exists()) {
+                    val file = service.getResponse(paths)
+                    if (file?.exists() == true) {
                         val value = MediaResponse(file.path, ContentType.defaultForFile(file).toString())
                         Result.success(value)
                     } else {
