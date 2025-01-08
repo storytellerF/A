@@ -121,7 +121,12 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
         }
     }
 
-    fun getResponse(it: List<String>): File {
-        return File(root, "amedia/${it.joinToString("/")}")
+    fun getResponse(it: List<String>): File? {
+        val file = File(root, "amedia/${it.joinToString("/")}")
+        return if (file.canonicalPath.startsWith(File(root, "amedia").canonicalPath)) {
+            file
+        } else {
+            null
+        }
     }
 }
