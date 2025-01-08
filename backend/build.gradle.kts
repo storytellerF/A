@@ -50,7 +50,7 @@ sourceSets {
             srcDirs(
                 layout.buildDirectory.dir("copied/resources"),
                 layout.buildDirectory.dir("copied-ca/resources"),
-                layout.buildDirectory.dir("merged-services/resources")
+                layout.buildDirectory.dir("merged/services")
             )
         }
     }
@@ -72,7 +72,7 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
     group = "build"
     description = "Merge SPI files from dependencies into a single output"
 
-    val outputDir = layout.buildDirectory.dir("merged-services")
+    val outputDir = layout.buildDirectory.dir("merged/services")
     doLast {
 
         // Iterate through each jar/zip in runtimeClasspath
