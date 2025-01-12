@@ -36,6 +36,7 @@ WORKDIR /app
 COPY --from=builder /app/server/build/libs/*-all.jar ./lib/ktor-server.jar
 COPY --from=builder /app/cli/build/decompressed/cli .
 COPY --from=builder /app/deploy ./deploy
+COPY --from=builder /app/build/envs/*.env .
 COPY scripts/tool_scripts/flush-database-singleton.sh ./scripts/tool_scripts/flush-database-singleton.sh
 
 ENTRYPOINT ["java","-jar","./lib/ktor-server.jar"]

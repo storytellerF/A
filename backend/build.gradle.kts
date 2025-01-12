@@ -48,8 +48,8 @@ sourceSets {
     main {
         resources {
             srcDirs(
-                layout.buildDirectory.dir("copied/resources"),
-                layout.buildDirectory.dir("copied-ca/resources"),
+//                layout.buildDirectory.dir("copied/resources"),
+//                layout.buildDirectory.dir("copied-ca/resources"),
                 layout.buildDirectory.dir("merged/services")
             )
         }
@@ -58,15 +58,15 @@ sourceSets {
 
 val flavor = project.findProperty("buildkonfig.flavor")
 
-val copyTask = tasks.register("copyEnv", Copy::class) {
-    group = "copy"
-    from("../${flavor}.env")
-    enabled = File(rootDir, "${flavor}.env").exists()
-    into(layout.buildDirectory.dir("copied/resources"))
-    rename {
-        ".env"
-    }
-}
+//val copyTask = tasks.register("copyEnv", Copy::class) {
+//    group = "copy"
+//    from("../${flavor}.env")
+//    enabled = File(rootDir, "${flavor}.env").exists()
+//    into(layout.buildDirectory.dir("copied/resources"))
+//    rename {
+//        ".env"
+//    }
+//}
 
 val mergeServiceFiles = tasks.register("mergeServiceFiles") {
     group = "build"
@@ -104,6 +104,6 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
     }
 }
 
-tasks.processResources.dependsOn(copyTask)
+//tasks.processResources.dependsOn(copyTask)
 tasks.processResources.dependsOn(mergeServiceFiles)
 

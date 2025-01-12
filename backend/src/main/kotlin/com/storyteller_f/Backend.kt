@@ -12,6 +12,8 @@ import io.github.aakira.napier.Napier
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.andWhere
+import java.io.File
+import java.io.FileInputStream
 import java.nio.file.Paths
 import java.util.*
 
@@ -41,7 +43,7 @@ class MergedEnv(val list: List<Map<String, String>?>) {
 }
 
 fun readEnv(map: Map<String, String> = emptyMap()): MergedEnv {
-    return MergedEnv(listOf(map, readResourceEnv(".env"), System.getenv()))
+    return MergedEnv(listOf(map, readFileEnv(".env"), readResourceEnv(".env"), System.getenv()))
 }
 
 fun readResourceEnv(resName: String) = ClassLoader.getSystemClassLoader().getResourceAsStream(resName)?.use {
@@ -51,6 +53,18 @@ fun readResourceEnv(resName: String) = ClassLoader.getSystemClassLoader().getRes
 }?.map {
     it.key as String to it.value as String
 }?.associate { it }
+
+fun readFileEnv(resName: String) = (if (File(resName).exists()) {
+    FileInputStream(resName).use {
+        Properties().apply {
+            load(it)
+        }
+    }.map {
+        it.key as String to it.value as String
+    }.associate { it }
+} else {
+    emptyMap()
+})
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {
     println("load env: ${env["COMPOSE_PROJECT_NAME"]}")
