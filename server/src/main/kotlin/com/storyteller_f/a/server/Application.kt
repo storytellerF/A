@@ -42,17 +42,17 @@ fun main(args: Array<String>) {
 
     processPreSetData(map)
 
-    val serverPort = (map["SERVER_PORT"] as String).toInt()
+    val serverPort = map["SERVER_PORT"].toInt()
     val extraArgs = arrayOf("-port=$serverPort")
 
     EngineMain.main(args + extraArgs)
 }
 
 private fun processPreSetData(env: MergedEnv) {
-    val preSetEnable = (env["PRESET_ENABLE"] as String).toBoolean()
+    val preSetEnable = env["PRESET_ENABLE"].toBoolean()
     if (preSetEnable) {
-        val preSetScript = env["PRESET_SCRIPT"] as String
-        val workingDir = env["PRESET_WORKING_DIR"] as String
+        val preSetScript = env["PRESET_SCRIPT"]
+        val workingDir = env["PRESET_WORKING_DIR"]
         if (preSetScript.isNotBlank() && workingDir.isNotBlank()) {
             val scriptArray = preSetScript.trim('\'').split(" ").map {
                 if (it.startsWith("~")) {
