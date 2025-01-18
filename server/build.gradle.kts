@@ -21,6 +21,7 @@ dependencies {
     runtimeOnly(libs.logback)
 
     implementation(libs.cryptography.provider.jdk)
+    implementation(libs.bcpkix.jdk18on)
     implementation(projects.shared)
     implementation(projects.backend)
     implementation(libs.bundles.ktor.server)
@@ -29,6 +30,10 @@ dependencies {
     implementation(libs.emoji.reader.jvm)
     implementation(libs.geoip2)
     implementation(libs.simplemagic)
+    implementation(libs.log4j.core)
+    implementation(libs.log4j.api)
+    implementation(libs.pdfbox.layout)
+    implementation(projects.cryptoJvm)
 
     testImplementation(projects.clientLib)
     testImplementation(libs.ktor.server.test.host)

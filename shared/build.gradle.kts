@@ -46,7 +46,6 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
-            implementation(libs.bcprov.jdk18on)
             implementation(projects.cryptoJvm)
             implementation(libs.cryptography.provider.jdk)
         }
@@ -61,7 +60,6 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(projects.cryptoJvm)
-            implementation(libs.bcprov.jdk18on)
             implementation(libs.cryptography.provider.jdk)
         }
     }

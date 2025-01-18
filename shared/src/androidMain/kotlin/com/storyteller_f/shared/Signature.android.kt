@@ -4,19 +4,6 @@ import com.storyteller_f.crypto_jvm.CryptoJvm
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.Security
 
-fun addProvider() {
-    Security.removeProvider("BC")
-    Security.addProvider(BouncyCastleProvider())
-//    Security.addProvider(BouncyCastleJsseProvider())
-//    Security.addProvider(BouncyCastlePQCProvider())
-//    Security.getProviders().forEach {
-//        println(it.name)
-//        it.services.forEach {
-//            println("service ${it.type} ${it.algorithm} ${it.className}")
-//        }
-//    }
-}
-
 actual suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): String {
     return CryptoJvm.getDerPublicKeyFromPrivateKey(pemPrivateKeyStr)
 }

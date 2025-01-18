@@ -5,7 +5,7 @@ agp = "8.7.3"
 android-compileSdk = "35"
 android-minSdk = "24"
 android-targetSdk = "35"
-androidx-activityCompose = "1.9.3"
+androidx-activityCompose = "1.10.0"
 androidx-lifecycleProcess = "2.8.7"
 bcprovJdk18on = "1.79"
 buildconfig = "0.15.2"
@@ -40,6 +40,7 @@ kotlinxSerializationJson = "1.7.3"
 kover = "0.9.0"
 ktor = "3.0.3"
 lifecycleViewmodelCompose = "2.8.7"
+log4jCore = "2.24.3"
 logback = "1.5.15"
 luceneCore = "10.1.0"
 markdown = "0.7.3"
@@ -54,6 +55,8 @@ napier = "2.7.1"
 navigationCompose = "2.8.0-alpha11"
 pagingCommon = "3.3.0-alpha02-0.5.1"
 pdfbox = "3.0.3"
+pdfbox2LayoutVersion = "3.0.0-rc.0"
+pdfboxLayout = "3.0.0-rc.0"
 pgjdbcNg = "0.8.9"
 postgresql = "42.7.4"
 postgresqlVersion = "1.20.4"
@@ -143,6 +146,8 @@ ktor-server-sessions = { module = "io.ktor:ktor-server-sessions", version.ref = 
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "androidx-lifecycleProcess" }
+log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4jCore" }
+log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4jCore" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", version.ref = "luceneCore" }
 lucene-backward-codecs = { module = "org.apache.lucene:lucene-backward-codecs", version.ref = "luceneCore" }
@@ -164,6 +169,8 @@ navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-co
 paging-common = { module = "app.cash.paging:paging-common", version.ref = "pagingCommon" }
 paging-compose-common = { module = "app.cash.paging:paging-compose-common", version.ref = "pagingCommon" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
+pdfbox-layout = { module = "com.github.cghislai:pdfbox-layout", version.ref = "pdfboxLayout" }
+pdfbox-layout-pdfbox2-layout = { module = "com.github.cghislai.pdfbox-layout:pdfbox2-layout", version.ref = "pdfbox2LayoutVersion" }
 pgjdbc-ng = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng", version.ref = "pgjdbcNg" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 record-core = { module = "dev.theolm.record:record-core", version.ref = "recordCore" }

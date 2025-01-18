@@ -2,6 +2,7 @@ package com.storyteller_f.crypto_jvm
 
 import org.bouncycastle.jcajce.provider.digest.Keccak
 import org.bouncycastle.jce.interfaces.ECPrivateKey
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECPrivateKeySpec
 import org.bouncycastle.jce.spec.ECPublicKeySpec
 import org.bouncycastle.openssl.PEMParser
@@ -12,12 +13,22 @@ import java.io.StringReader
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.PublicKey
+import java.security.Security
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+
+fun addProviderForAndroid() {
+    Security.removeProvider("BC")
+    Security.addProvider(BouncyCastleProvider())
+}
+
+fun addProviderForJvm() {
+    Security.addProvider(BouncyCastleProvider())
+}
 
 object CryptoJvm {
 

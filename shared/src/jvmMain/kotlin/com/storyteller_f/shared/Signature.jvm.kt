@@ -1,12 +1,6 @@
 package com.storyteller_f.shared
 
 import com.storyteller_f.crypto_jvm.CryptoJvm
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import java.security.Security
-
-fun addProvider() {
-    Security.addProvider(BouncyCastleProvider())
-}
 
 actual suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): String {
     return CryptoJvm.getDerPublicKeyFromPrivateKey(pemPrivateKeyStr)

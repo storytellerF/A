@@ -19,6 +19,7 @@ import java.util.*
 
 class Backend(
     val config: Config,
+    val snapshotVerify: Pair<String, String>,
     val topicSearchService: TopicSearchService,
     val mediaService: MediaService,
     val nameService: NameService
@@ -81,6 +82,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 
     return Backend(
         config,
+        env["SNAPSHOT_KEYSTORE_PATH"] to env.get("SNAPSHOT_KEY_PASS"),
         topicDocumentService,
         mediaService,
         NameService()

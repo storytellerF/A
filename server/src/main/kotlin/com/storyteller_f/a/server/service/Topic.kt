@@ -19,19 +19,19 @@ import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import io.ktor.server.plugins.*
-import io.ktor.server.request.*
-import io.ktor.server.routing.*
+import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
-import org.apache.pdfbox.pdmodel.PDPage
-import org.apache.pdfbox.pdmodel.PDPageContentStream
 import org.apache.pdfbox.pdmodel.font.FontMappers
 import org.apache.pdfbox.pdmodel.font.PDType0Font
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.and
+import rst.pdfbox.layout.elements.Document
+import rst.pdfbox.layout.elements.Paragraph
 import java.awt.GraphicsEnvironment
 import java.io.File
-import java.lang.Exception
+import java.io.FileInputStream
+import java.security.KeyStore
 
 suspend fun addTopicAtCommunity(uid: PrimaryKey, backend: Backend, newTopic: NewTopic): Result<TopicInfo?> {
     if (newTopic.content is TopicContent.Encrypted) {
@@ -108,63 +108,104 @@ private suspend fun createTopicSnapshot(
         .mapResultNotNull { documents ->
             getRawUserById(topicInfo.author).mapResultNotNull { (first) ->
                 val name = "$uid/$topicId.pdf"
-                val saveTo = File("/tmp/$name")
-                saveTo.parentFile?.let {
-                    if (!it.exists() && !it.mkdirs()) {
-                        Result.failure(Exception("failed"))
-                    } else {
-                        generateSnapshot(first, documents, creatorInfo, topicInfo, saveTo)
-                        backend.mediaService.upload("amedia", listOf(UploadPack(name, saveTo))).mapResult {
-                            saveTo.delete()
+                val pdfFile = File("/tmp/$name")
+                val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
+                try {
+                    generateSignedSnapshot(
+                        first,
+                        creatorInfo,
+                        topicInfo,
+                        pdfFile,
+                        signedFile,
+                        documents.content, backend.snapshotVerify
+                    ).mapResultNotNull {
+                        backend.mediaService.upload("amedia", listOf(UploadPack(name, pdfFile))).mapResult {
+                            pdfFile.delete()
                             Result.success(it.firstOrNull())
                         }
                     }
-                } ?: Result.failure(Exception("failed"))
+                } finally {
+                    pdfFile.delete()
+                    signedFile.delete()
+                }
+
             }
         }
 }
 
-private fun generateSnapshot(
+fun generateSignedSnapshot(
     authorInfo: UserInfo,
-    topicDocument: TopicDocument,
     creatorInfo: UserInfo,
     topicInfo: TopicInfo,
     saveToFile: File,
-) {
-    val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
-    PDDocument().use { document ->
-        val firstPage = PDPage()
-        PDPageContentStream(document, firstPage).use { stream ->
-            stream.beginText()
-            // 创建字体文件
-            val font = graphicsEnvironment.allFonts.firstOrNull {
-                it.canDisplayUpTo(topicDocument.content) == -1
-            }
-
-            // 使用 PDFBox 加载字体
-            val pdFont =
-                PDType0Font.load(document, FontMappers.instance().getTrueTypeFont(font?.name, null).font, true)
-            stream.setFont(pdFont, 12f)
-            stream.newLineAtOffset(100F, 700F)
-            stream.setLeading(14.5f)
-            stream.showText("pub by ${if (authorInfo.aid == null) authorInfo.address else authorInfo.aid}")
-            stream.newLine()
-            stream.showText("pub at ${topicInfo.createdTime}")
-            stream.newLine()
-            topicDocument.content.split("\n").forEach {
-                it.chunked(50).forEach { s ->
-                    stream.showText(s)
-                    stream.newLine()
+    signedFile: File, content: String,
+    snapshot: Pair<String, String>
+): Result<Unit?> {
+    val parent = saveToFile.parentFile
+    return if (parent != null) {
+        if (!parent.exists() && !parent.mkdirs()) {
+            Result.failure(Exception("failed"))
+        } else {
+            generateSnapshot(authorInfo, creatorInfo, topicInfo, saveToFile, content)
+            runCatching {
+                val keyStorePath = snapshot.first
+                val password = snapshot.second
+                if (keyStorePath.isNotEmpty() && password.isNotEmpty()) {
+                    val store = KeyStore.getInstance("PKCS12").apply {
+                        load(FileInputStream(keyStorePath), password.toCharArray())
+                    }
+                    CreateSignature(store, password.toCharArray())
+                        .signDetached(saveToFile, signedFile, "https://freetsa.org/tsr")
                 }
             }
-            stream.showText("capture by ${if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid}")
-            stream.newLine()
-            stream.showText("capture at ${now()}")
-            stream.endText()
         }
-        document.addPage(firstPage)
-        document.save(saveToFile)
+    } else {
+        Result.success(null)
     }
+}
+
+private fun generateSnapshot(
+    authorInfo: UserInfo,
+    creatorInfo: UserInfo,
+    topicInfo: TopicInfo,
+    saveToFile: File,
+    content: String,
+) {
+    Document().apply {
+        val font = loadSystemFont(pdDocument, content)
+        add(Paragraph().apply {
+            addText(
+                "pub by ${if (authorInfo.aid == null) authorInfo.address else authorInfo.aid}",
+                14f,
+                font
+            )
+        })
+        add(Paragraph().apply {
+            addText("pub at ${topicInfo.createdTime}", 14f, font)
+        })
+        add(Paragraph().apply {
+            addText("capture by ${if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid}", 14f, font)
+        })
+        add(Paragraph().apply {
+            addText("capture at ${now()}", 14f, font)
+        })
+        add(Paragraph().apply {
+            addText(content, 14f, font)
+        })
+        save(saveToFile)
+    }
+}
+
+private fun loadSystemFont(
+    document: PDDocument,
+    content: String
+): PDType0Font? {
+    val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
+    val font = graphicsEnvironment.allFonts.firstOrNull {
+        it.canDisplayUpTo(content) == -1
+    }
+    // 使用 PDFBox 加载字体
+    return PDType0Font.load(document, FontMappers.instance().getTrueTypeFont(font?.name, null).font, true)
 }
 
 suspend fun getTopic(
