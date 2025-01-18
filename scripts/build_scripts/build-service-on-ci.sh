@@ -61,8 +61,6 @@ fi
 
 echo "prepare build `date`"
 
-./scripts/tool_scripts/save-env.sh
-
 ./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" true
 
 # 构建远端
