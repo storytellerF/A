@@ -25,11 +25,12 @@ import kotlin.collections.forEach
 import kotlin.collections.listOf
 import kotlin.collections.set
 import kotlin.collections.toMutableMap
+import com.storyteller_f.crypto_jvm.addProviderForJvm
 
 fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, ClientWebSocket) -> Unit) {
     Napier.base(DebugAntilog())
     SnowflakeFactory.setMachine(0)
-    addProvider()
+    addProviderForJvm()
     run {
         val env = readResourceEnv(".env")!!.toMutableMap()
         ElasticsearchContainer(
