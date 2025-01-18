@@ -46,7 +46,7 @@ while IFS= read -r key; do
 done < "$env_filter_file"
 
 # 完成 COPY 块的 EOF 部分
-replace_string_2+="EOF\n"
+replace_string_2+="EOF\nCOPY ./\${FLAVOR}.env ./build/envs/.env\n"
 
 # 使用 sed 替换 dockerfile 模板中的 #1 和 #2
 sed -e "s|#1|$replace_string_1|" -e "s|#2|$replace_string_2|" -e "s|#3|$replace_string_3|" "$dockerfile_template" > "$dockerfile_output"
