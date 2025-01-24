@@ -16,8 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.bus
-import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnTopicChanged
 import com.storyteller_f.a.client_lib.addReaction
@@ -126,6 +126,7 @@ private fun EmojiItem(
     hideSheet: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    val client = LocalClient.current
     Box(modifier = Modifier.size(emojiSize).clickable {
         scope.launch {
             globalDialogState.use {

@@ -136,7 +136,7 @@ tasks.withType<DependencyUpdatesTask> {
 allprojects {
     tasks.withType<Test> {
         if (name == "testDebugUnitTest" || name == "testReleaseUnitTest") {
-            exclude("**/ExampleTest*")
+            exclude("**/device_based/*")
         }
     }
 }

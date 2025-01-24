@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
+import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.bus
-import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.compontents.Permission
 import com.storyteller_f.a.app.compontents.isPermissionGranted
@@ -47,6 +47,7 @@ import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.core.FileKit
 import io.github.vinceglb.filekit.core.extension
 import io.github.vinceglb.filekit.core.pickFile
+import io.ktor.client.*
 import io.ktor.http.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -116,9 +117,9 @@ fun AudioRecorder(privateRoomId: PrimaryKey?, uploadSuccess: (MediaInfo) -> Unit
     val scope = rememberCoroutineScope()
     val toasterState = rememberToasterState()
     Toaster(toasterState, alignment = Alignment.Center)
-
+    val client = LocalClient.current
     Box(modifier = Modifier.fillMaxSize()) {
-        RecorderButton(hazeState, scope, isGranted, isRecording, uploadSuccess, privateRoomId)
+        RecorderButton(hazeState, scope, isGranted, isRecording, uploadSuccess, privateRoomId, client)
         if (!isGranted) {
             Box(modifier = Modifier.fillMaxSize().hazeChild(hazeState) {
                 backgroundColor = Color.Transparent
@@ -140,7 +141,8 @@ private fun BoxScope.RecorderButton(
     isGranted: Boolean,
     isRecording: Boolean,
     uploadSuccess: (MediaInfo) -> Unit,
-    privateRoomId: PrimaryKey?
+    privateRoomId: PrimaryKey?,
+    client: HttpClient
 ) {
     Box(
         modifier = Modifier.size(150.dp)
@@ -155,7 +157,7 @@ private fun BoxScope.RecorderButton(
                             Napier.i {
                                 "save to $path"
                             }
-                            uploadPath(privateRoomId, path, uploadSuccess)
+                            uploadPath(privateRoomId, path, client, uploadSuccess)
                         } else {
                             globalDialogState.use {
                                 Recorder.startRecord()
@@ -181,6 +183,7 @@ private fun MediaListView(
     clickItem: (MediaInfo) -> Unit,
     uploadSuccess: (MediaInfo) -> Unit
 ) {
+    val client = LocalClient.current
     val list = createMediaListViewModel(privateRoomId, user.id)
     val scope = rememberCoroutineScope()
     val toasterState = rememberToasterState()
@@ -189,7 +192,7 @@ private fun MediaListView(
         Row {
             IconButton({
                 scope.launch {
-                    selectFileAndUpload(privateRoomId, uploadSuccess)
+                    selectFileAndUpload(privateRoomId, client, uploadSuccess)
                 }
             }) {
                 Icon(Icons.Default.UploadFile, "upload file")
@@ -239,6 +242,7 @@ private fun FileIcon(it: MediaInfo) {
 
 private suspend fun selectFileAndUpload(
     privateRoomId: PrimaryKey?,
+    client: HttpClient,
     uploadSuccess: (MediaInfo) -> Unit
 ) {
     val my = LoginViewModel.user.value
@@ -252,7 +256,7 @@ private suspend fun selectFileAndUpload(
                 f.name,
                 id,
                 ContentType.defaultForFileExtension(f.extension),
-                uploadSuccess
+                uploadSuccess, client
             ) {
                 f.readBytes()
             }
@@ -263,6 +267,7 @@ private suspend fun selectFileAndUpload(
 private suspend fun uploadPath(
     privateRoomId: PrimaryKey?,
     path: Path,
+    client: HttpClient,
     uploadSuccess: (MediaInfo) -> Unit
 ) {
     val my = LoginViewModel.user.value
@@ -274,7 +279,7 @@ private suspend fun uploadPath(
             path.name,
             my?.id,
             ContentType.parse("audio/mp4"),
-            uploadSuccess
+            uploadSuccess, client
         ) {
             SystemFileSystem.source(path).buffered().readByteArray()
         }
@@ -288,6 +293,7 @@ private suspend fun upload(
     id: PrimaryKey?,
     contentType: ContentType,
     uploadSuccess: (MediaInfo) -> Unit,
+    client: HttpClient,
     readStream: suspend () -> ByteArray
 ) {
     if (size != null && size <= 100 * 1024 * 1024) {

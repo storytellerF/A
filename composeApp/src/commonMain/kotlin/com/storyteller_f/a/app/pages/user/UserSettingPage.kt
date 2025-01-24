@@ -8,7 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.client
+import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.pages.topic.MediaPicker
@@ -48,6 +48,7 @@ fun UserSettingPage() {
             }
         }
     }
+    val client = LocalClient.current
     val scope = rememberCoroutineScope()
     val updateIcon = { info: MediaInfo ->
         scope.launch {

@@ -63,31 +63,35 @@ suspend fun RoutingContext.uploadMedia(
             when (part) {
                 is PartData.FileItem -> {
                     val fileName = part.originalFileName as String
-
-                    val fileBytes = part.provider().readRemaining().readByteArray()
                     val file = File(root, Uuid.random().toString() + fileName)
+                    //ktor 自带检查，保险起见再次检查
+                    if (file.canonicalPath == file.absolutePath) {
+                        val fileBytes = part.provider().readRemaining().readByteArray()
 
-                    try {
-                        file.writeBytes(fileBytes)
-                        val type = if (part.contentType.toString() == "audio/mp4") {
-                            val mimeType = infoUtil.findMatch(file).contentType.mimeType
-                            if (mimeType == "audio/mp4") {
-                                "audio/mp4"
+                        try {
+                            file.writeBytes(fileBytes)
+                            val type = if (part.contentType.toString() == "audio/mp4") {
+                                val mimeType = infoUtil.findMatch(file).contentType.mimeType
+                                if (mimeType == "audio/mp4") {
+                                    "audio/mp4"
+                                } else {
+                                    null
+                                }
                             } else {
                                 null
                             }
-                        } else {
-                            null
+                            result.addAll(
+                                backend.mediaService.upload(
+                                    "amedia",
+                                    listOf(UploadPack("${it.objectId}/$fileName", file, type))
+                                ).getOrThrow().filterNotNull()
+                            )
+                        } finally {
+                            file.delete()
                         }
-                        result.addAll(
-                            backend.mediaService.upload(
-                                "amedia",
-                                listOf(UploadPack("${it.objectId}/$fileName", file, type))
-                            ).getOrThrow().filterNotNull()
-                        )
-                    } finally {
-                        file.delete()
                     }
+
+
                 }
 
                 else -> {}

@@ -24,8 +24,8 @@ plugins {
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
 val buildWasmTarget = project.findProperty("target.wasm") == "true"
-val flavor = project.findProperty("buildkonfig.flavor") as String
-val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavor)!!
+val flavorStr = project.findProperty("buildkonfig.flavor") as String
+val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavorStr)!!
 val isProd = project.findProperty("server.prod") == "true"
 
 kotlin {
@@ -96,6 +96,10 @@ kotlin {
             implementation(libs.androidx.media3.exoplayer.hls)
             implementation(libs.androidx.media3.ui)
             implementation(libs.record.core)
+            implementation(projects.cryptoJvm)
+        }
+        androidUnitTest.dependencies {
+            implementation(libs.robolectric)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -105,7 +109,6 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
-//            implementation(compose.material3AdaptiveNavigationSuite)
             implementation(libs.navigation.compose)
 
 
@@ -221,6 +224,14 @@ android {
             excludes += listOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/versions/9/OSGI-INF/MANIFEST.MF")
         }
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.systemProperty("robolectric.logging.enabled", true)
+            }
+        }
+    }
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".debug"
@@ -257,10 +268,10 @@ dependencies {
 easylauncher {
     buildTypes {
         register("debug") {
-            filters(chromeLike(label = flavor), greenRibbonFilter("debug"))
+            filters(chromeLike(label = flavorStr), greenRibbonFilter("debug"))
         }
         register("release") {
-            filters(chromeLike(label = flavor))
+            filters(chromeLike(label = flavorStr))
         }
     }
 }
@@ -280,7 +291,7 @@ compose.desktop {
 buildkonfig {
     packageName = "com.storyteller_f.a.app"
     val properties = Properties().apply {
-        val file = layout.projectDirectory.file("../${flavor}.env").asFile
+        val file = layout.projectDirectory.file("../${flavorStr}.env").asFile
         load(FileInputStream(file))
     }
     val serverUrl = properties["SERVER_URL"] as String
@@ -290,6 +301,7 @@ buildkonfig {
         buildConfigField(STRING, "SERVER_URL", serverUrl, const = true)
         buildConfigField(STRING, "WS_SERVER_URL", wsServerUrl, const = true)
         buildConfigField(BOOLEAN, "IS_PROD", isProd.toString(), const = true)
+        buildConfigField(STRING, "FLAVOR", flavorStr, const = true)
     }
 }
 

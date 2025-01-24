@@ -12,6 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.markdownComponents
@@ -68,7 +69,7 @@ private fun TopicContentFieldInternal(
         plain,
         modifier = Modifier.fillMaxWidth().clickable(onClick != null) {
             onClick?.invoke()
-        },
+        }.testTag("content"),
         colors = markdownColor(),
         typography = markdownTypography(),
         imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap),

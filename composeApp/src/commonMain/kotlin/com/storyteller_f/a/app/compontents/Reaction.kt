@@ -119,6 +119,7 @@ private fun EmojiCell(
     val scope = rememberCoroutineScope()
     val emoji = info.emoji
     val hasReacted = info.hasReacted
+    val client = LocalClient.current
     Pill(info.count.toString(), emoji = emoji, selected = hasReacted) {
         emoji.let { string ->
             if (hasReacted) {

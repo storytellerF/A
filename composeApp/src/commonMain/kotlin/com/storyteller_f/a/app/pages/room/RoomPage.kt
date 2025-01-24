@@ -42,6 +42,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import io.ktor.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -59,6 +60,7 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
     val snackBarHost = remember {
         SnackbarHostState()
     }
+    val wsClient = LocalWsClient.current
     LaunchedEffect(wsClient.remoteState) {
         wsClient.remoteState.collect {
             if (it is RoomFrame.Error) {
@@ -149,6 +151,7 @@ fun RoomInputGroup(
     val controller = remember {
         CustomAlertDialogController()
     }
+    val wsClient = LocalWsClient.current
     val scope = rememberCoroutineScope()
     if (roomInfo != null) {
         val toasterState = rememberToasterState()
@@ -170,11 +173,11 @@ fun RoomInputGroup(
             updateInput,
             {
                 insertContent(it, updateInput, input)
-                sendRoomTopic(roomInfo, input, scrollToNew, topicId, scope, toasterState, controller, keysViewModel)
+                sendRoomTopic(roomInfo, input, scrollToNew, topicId, scope, toasterState, controller, keysViewModel, wsClient)
             },
         ) {
             RoomSendButton(input = input) {
-                sendRoomTopic(roomInfo, input, scrollToNew, topicId, scope, toasterState, controller, keysViewModel)
+                sendRoomTopic(roomInfo, input, scrollToNew, topicId, scope, toasterState, controller, keysViewModel, wsClient)
             }
         }
     }
@@ -194,12 +197,13 @@ private fun sendRoomTopic(
     scope: CoroutineScope,
     toasterState: ToasterState,
     alertDialogState: CustomAlertDialogController,
-    keysViewModel: RoomKeysViewModel
+    keysViewModel: RoomKeysViewModel,
+    wsClient: ClientWebSocket
 ) {
     val keyState = keysViewModel.handler.state.value
     val keyData = keysViewModel.handler.data.value
     if (roomInfo.isJoined) {
-        sendMessage(roomInfo, input, scrollToNew, keyState, keyData, topicId) {
+        sendMessage(roomInfo, input, scrollToNew, keyState, keyData, topicId, wsClient = wsClient) {
             scope.launch {
                 toasterState.show(
                     getString(Res.string.private_room_pub_key_loading),
@@ -240,6 +244,7 @@ fun RoomSendButton(
     input: String,
     send: () -> Unit
 ) {
+    val wsClient = LocalWsClient.current
     val state by wsClient.connectionHandler.state.collectAsState()
     val sendState by wsClient.localState.collectAsState()
     val isSending = sendState is LoadingState.Loading
@@ -290,6 +295,7 @@ fun sendMessage(
     keyState: LoadingState?,
     keyData: List<Pair<PrimaryKey, String>>?,
     topicId: PrimaryKey?,
+    wsClient: ClientWebSocket,
     notifyPubKeyStillLoading: () -> Unit
 ) {
     if (roomInfo != null) {
@@ -413,6 +419,7 @@ private fun RoomDialogButtons(
     appNav: AppNav,
     roomInfo: RoomInfo,
 ) {
+    val client = LocalClient.current
     Column {
         ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
         ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
@@ -427,7 +434,7 @@ private fun RoomDialogButtons(
             if (roomInfo.isJoined) {
                 ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
                     scope.launch {
-                        exitRoom(roomInfo) {
+                        exitRoom(roomInfo, client) {
                             toasterState.show(
                                 getString(Res.string.success),
                                 type = ToastType.Success,
@@ -439,7 +446,7 @@ private fun RoomDialogButtons(
             } else {
                 ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_room)) {
                     scope.launch {
-                        joinRoom(roomInfo) {
+                        joinRoom(roomInfo, client) {
                             toasterState.show(
                                 getString(Res.string.success),
                                 type = ToastType.Success,
@@ -453,7 +460,7 @@ private fun RoomDialogButtons(
     }
 }
 
-private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: suspend () -> Unit) {
+private suspend fun joinRoom(roomInfo: RoomInfo, client: HttpClient, onSuccess: suspend () -> Unit) {
     globalDialogState.use {
         val communityId = roomInfo.communityId
         if (communityId != null) {
@@ -467,7 +474,7 @@ private suspend fun joinRoom(roomInfo: RoomInfo, onSuccess: suspend () -> Unit) 
     }
 }
 
-private suspend fun exitRoom(roomInfo: RoomInfo, onSuccess: suspend () -> Unit) {
+private suspend fun exitRoom(roomInfo: RoomInfo, client: HttpClient, onSuccess: suspend () -> Unit) {
     globalDialogState.use {
         val info = client.exitRoom(roomInfo.id).getOrThrow()
         bus.emit(OnRoomExited(info))

@@ -31,6 +31,7 @@ jacksonModuleKotlin = "2.18.2"
 jlatexmath = "1.0.7"
 jlatexmathAndroid = "0.2.0"
 jlayer = "1.0.3"
+junit = "4.13.2"
 kotlin = "2.1.0"
 kotlin_buildconfig = "5.5.1"
 kotlinxCli = "0.3.6"
@@ -62,6 +63,7 @@ postgresql = "42.7.4"
 postgresqlVersion = "1.20.4"
 recordCore = "0.4.0"
 richeditorCompose = "1.0.0-rc10"
+robolectric = "4.14.1"
 simplemagic = "1.17"
 slf4jSimple = "2.0.16"
 sqliteJdbc = "3.47.1.0"
@@ -120,6 +122,7 @@ jlatexmath-android = { module = "ru.noties:jlatexmath-android", version.ref = "j
 jlatexmath-android-font-cyrillic = { module = "ru.noties:jlatexmath-android-font-cyrillic", version.ref = "jlatexmathAndroid" }
 jlatexmath-android-font-greek = { module = "ru.noties:jlatexmath-android-font-greek", version.ref = "jlatexmathAndroid" }
 jlayer = { module = "com.github.umjammer:jlayer", version.ref = "jlayer" }
+junit = { module = "junit:junit", version.ref = "junit" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kotlinxCli" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinxCoroutinesSwing" }
@@ -170,11 +173,11 @@ paging-common = { module = "app.cash.paging:paging-common", version.ref = "pagin
 paging-compose-common = { module = "app.cash.paging:paging-compose-common", version.ref = "pagingCommon" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 pdfbox-layout = { module = "com.github.cghislai:pdfbox-layout", version.ref = "pdfboxLayout" }
-pdfbox-layout-pdfbox2-layout = { module = "com.github.cghislai.pdfbox-layout:pdfbox2-layout", version.ref = "pdfbox2LayoutVersion" }
 pgjdbc-ng = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng", version.ref = "pgjdbcNg" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 record-core = { module = "dev.theolm.record:record-core", version.ref = "recordCore" }
 richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditorCompose" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 simplemagic = { module = "com.j256.simplemagic:simplemagic", version.ref = "simplemagic" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 sonner = "io.github.dokar3:sonner:0.3.8"

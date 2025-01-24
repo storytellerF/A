@@ -34,11 +34,11 @@ dependencies {
     implementation(libs.log4j.api)
     implementation(libs.pdfbox.layout)
     implementation(projects.cryptoJvm)
+    implementation(libs.h2)
 
     testImplementation(projects.clientLib)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test)
-    testImplementation(libs.h2)
     testImplementation(libs.testcontainers.minio)
     testImplementation(libs.elasticsearch)
     testImplementation(libs.testcontainers.postgresql)
