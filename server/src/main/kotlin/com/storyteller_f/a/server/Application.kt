@@ -42,7 +42,7 @@ fun main(args: Array<String>) {
 
     processPreSetData(map)
 
-    val serverPort = map["SERVER_PORT"].toInt()
+    val serverPort = map["SERVER_PORT"].takeIf { it.isNotEmpty() }?.toInt() ?: 80
     val extraArgs = arrayOf("-port=$serverPort")
 
     EngineMain.main(args + extraArgs)

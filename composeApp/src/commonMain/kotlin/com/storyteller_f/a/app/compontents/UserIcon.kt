@@ -20,7 +20,7 @@ import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.client
+import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.pages.user.UserDialog
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
@@ -66,7 +66,9 @@ fun UserIcon(userInfo: UserInfo?, couldShowDialog: Boolean = true) {
 }
 
 @Composable
-fun globalLoader(url: String) =
-    ImageRequest.Builder(LocalPlatformContext.current).data(url).crossfade(true).fetcherFactory(
+fun globalLoader(url: String): ImageRequest {
+    val client = LocalClient.current
+    return ImageRequest.Builder(LocalPlatformContext.current).data(url).crossfade(true).fetcherFactory(
         KtorNetworkFetcherFactory(client)
     ).build()
+}

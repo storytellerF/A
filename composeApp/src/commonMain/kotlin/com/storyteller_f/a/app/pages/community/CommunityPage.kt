@@ -265,6 +265,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                 Text(communityInfo.name)
             }
         }
+        val client = LocalClient.current
         Column {
             ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
                 dismiss()

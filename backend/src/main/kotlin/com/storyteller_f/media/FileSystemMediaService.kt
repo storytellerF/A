@@ -123,10 +123,9 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
 
     fun getResponse(it: List<String>): File? {
         val file = File(root, "amedia/${it.joinToString("/")}")
-        return if (file.canonicalPath.startsWith(File(root, "amedia").canonicalPath)) {
-            file
-        } else {
-            null
+        if (file.canonicalPath != file.absolutePath) {
+            return null
         }
+        return file
     }
 }

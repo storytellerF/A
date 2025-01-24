@@ -427,13 +427,17 @@ fun processMediaLink(
     documentList: List<TopicDocument?>
 ): Result<List<TopicInfo>> {
     val documentMap = documentList.filterNotNull().associateBy { it.id }
-    val list = documentMediaList(documentList)
+    // id + mediaLink，此处的mediaLink 应该包含前缀，内部会自动添加前缀
+    val mediaList = documentMediaList(documentList).filter {
+        val temp = File(it.second)
+        temp.canonicalPath == temp.absolutePath
+    }
     // 所有用到的media
-    val mediaNameList = list.map {
+    val mediaNameList = mediaList.map {
         it.second
     }.distinct()
     // 根据topicId 保存的mediaName 的map
-    val mediaMap = list.groupBy {
+    val mediaMap = mediaList.groupBy {
         it.first
     }
     return backend.mediaService.get("amedia", mediaNameList).map { mediaUrls ->

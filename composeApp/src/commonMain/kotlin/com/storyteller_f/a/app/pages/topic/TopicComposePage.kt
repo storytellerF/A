@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
-import com.storyteller_f.a.app.client
+import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.compontents.TopicContentField
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.createMediaListViewModel
@@ -107,8 +107,8 @@ private fun TopicComposeScaffold(
             input = it
         }, input)
     }, {
-        insertContent(it, {
-            input = it
+        insertContent(it, { s ->
+            input = s
         }, input)
     }) {
         showSheet = false
@@ -252,7 +252,7 @@ private fun TopicComposeSubmitButton(
     backPrePage: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-
+    val client = LocalClient.current
     IconButton({
         val finalInput = input.trim()
         if (finalInput.isNotEmpty()) {

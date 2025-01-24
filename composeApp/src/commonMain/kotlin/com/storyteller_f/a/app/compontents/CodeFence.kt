@@ -27,7 +27,7 @@ import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
-import com.storyteller_f.a.app.client
+import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.utils.MarkdownObject
@@ -176,6 +176,7 @@ private fun LatexBlock(
 
 @Composable
 private fun imageRequestInMarkdown(link: String, mediaMap: Map<String, MediaInfo>): ImageRequest {
+    val client = LocalClient.current
     val size = mediaMap[link]?.dimension?.let {
         coil3.size.Size(it.width, it.height)
     } ?: coil3.size.Size.ORIGINAL

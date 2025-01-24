@@ -6,7 +6,6 @@ import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import com.storyteller_f.a.app.bus
-import com.storyteller_f.a.app.client
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.DialogSaveState
 import com.storyteller_f.a.app.pages.topic.processEncryptedTopic
@@ -30,17 +29,17 @@ data class OnCommunityExited(val newInfo: CommunityInfo)
 
 data class OnMediaUploaded(val mediaInfo: MediaInfo)
 
-class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Result<CommunityInfo>) :
-    SimpleViewModel<CommunityInfo>() {
+class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Result<CommunityInfo>, client: HttpClient) :
+    SimpleViewModel<CommunityInfo>(client) {
     val dialog = DialogSaveState()
 
-    constructor(communityId: PrimaryKey) : this({
+    constructor(communityId: PrimaryKey, client: HttpClient) : this({
         getCommunityInfo(communityId, LoginViewModel.currentIsAlreadySignUp)
-    })
+    }, client)
 
-    constructor(communityAid: String) : this({
+    constructor(communityAid: String, client: HttpClient) : this({
         getCommunityInfoByAid(communityAid, LoginViewModel.currentIsAlreadySignUp)
-    })
+    }, client)
 
     init {
         load()
@@ -72,68 +71,78 @@ class CommunitiesViewModel(
     private val joinStatusSearch: JoinStatusSearch,
     private val word: String,
     private val target: PrimaryKey? = null,
-) : PagingViewModel<PrimaryKey, CommunityInfo>({
-    SimplePagingSource {
-        serviceCatching {
-            client.searchCommunity(10, joinStatusSearch, word, target, it).getOrThrow()
-        }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
+    client: HttpClient
+) : PagingViewModel<PrimaryKey, CommunityInfo>(
+    {
+        SimplePagingSource {
+            serviceCatching {
+                client.searchCommunity(10, joinStatusSearch, word, target, it).getOrThrow()
+            }.map {
+                APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
+            }
         }
-    }
-})
+    },
+    client = client
+)
 
 @OptIn(ExperimentalPagingApi::class)
 class RoomsViewModel(
     private val joinStatusSearch: JoinStatusSearch,
     private val word: String,
-    val community: PrimaryKey? = null
-) : PagingViewModel<PrimaryKey, RoomInfo>({
-    SimplePagingSource {
-        serviceCatching {
-            client.searchRooms(10, it, joinStatusSearch, word, community).getOrThrow()
-        }.map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKey())
+    val community: PrimaryKey? = null,
+    client: HttpClient
+) : PagingViewModel<PrimaryKey, RoomInfo>(
+    {
+        SimplePagingSource {
+            serviceCatching {
+                client.searchRooms(10, it, joinStatusSearch, word, community).getOrThrow()
+            }.map {
+                APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKey())
+            }
         }
-    }
-})
+    }, client = client
+)
 
 data class OnRoomJoined(val newInfo: RoomInfo)
 data class OnRoomExited(val newInfo: RoomInfo)
 
 @OptIn(ExperimentalPagingApi::class)
-class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null) : PagingViewModel<PrimaryKey, TopicInfo>({
-    CustomQueryPagingSource(
-        select = select(all()),
-        collectionName = "topics$id",
-        queryProvider = {
-            where {
-                if (it != null) {
-                    "id" lessThan it
-                } else {
-                    Expression.intValue(0) equalTo Expression.intValue(0)
+class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null, client: HttpClient) :
+    PagingViewModel<PrimaryKey, TopicInfo>(
+        {
+            CustomQueryPagingSource(
+                select = select(all()),
+                collectionName = "topics$id",
+                queryProvider = {
+                    where {
+                        if (it != null) {
+                            "id" lessThan it
+                        } else {
+                            Expression.intValue(0) equalTo Expression.intValue(0)
+                        }
+                    }.orderBy {
+                        "id".descending()
+                    }
+                },
+                jsonStringMapper = { json: String ->
+                    kotlin.runCatching {
+                        Json.decodeFromString<TopicInfo>(json)
+                    }.getOrNull()
                 }
-            }.orderBy {
-                "id".descending()
-            }
-        },
-        jsonStringMapper = { json: String ->
-            kotlin.runCatching {
-                Json.decodeFromString<TopicInfo>(json)
-            }.getOrNull()
-        }
-    )
-}, TopicsRemoteMediator("topics$id") { loadKey, size ->
-    val info = when {
-        id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, size)
-        type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, size)
-        type == ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, size)
-        type == ObjectType.USER -> client.getUserTopics(id, loadKey, size)
-        else -> client.getTopicTopics(id, loadKey, size)
-    }.getOrThrow()
-    info.copy(processEncryptedTopic(info.data).map {
-        extractHeadlineIfPlain(it)
-    })
-}) {
+            )
+        }, TopicsRemoteMediator("topics$id") { loadKey, size ->
+            val info = when {
+                id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, size)
+                type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, size)
+                type == ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, size)
+                type == ObjectType.USER -> client.getUserTopics(id, loadKey, size)
+                else -> client.getTopicTopics(id, loadKey, size)
+            }.getOrThrow()
+            info.copy(processEncryptedTopic(info.data).map {
+                extractHeadlineIfPlain(it)
+            })
+        }, client
+    ) {
     init {
         viewModelScope.launch {
             bus.collect { value ->
@@ -216,16 +225,18 @@ class TopicsRemoteMediator(
     }
 }
 
-class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<RoomInfo>) : SimpleViewModel<RoomInfo>() {
+class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<RoomInfo>, client: HttpClient) : SimpleViewModel<RoomInfo>(
+    client
+) {
     val dialog = DialogSaveState()
 
-    constructor(roomId: PrimaryKey) : this({
+    constructor(roomId: PrimaryKey, client: HttpClient) : this({
         getRoomInfo(roomId)
-    })
+    }, client)
 
-    constructor(roomAid: String) : this({
+    constructor(roomAid: String, client: HttpClient) : this({
         getRoomInfoByAid(roomAid)
-    })
+    }, client)
 
     init {
         load()
@@ -253,19 +264,21 @@ class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<Roo
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class TopicSearchViewModel(word: List<String>, parentId: PrimaryKey?, parentType: ObjectType?) :
-    PagingViewModel<PrimaryKey, TopicInfo>({
-        SimplePagingSource {
-            serviceCatching {
-                client.searchTopics(10, word, parentId, parentType, it).getOrThrow()
-            }.map {
-                APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
+class TopicSearchViewModel(word: List<String>, parentId: PrimaryKey?, parentType: ObjectType?, client: HttpClient) :
+    PagingViewModel<PrimaryKey, TopicInfo>(
+        {
+            SimplePagingSource {
+                serviceCatching {
+                    client.searchTopics(10, word, parentId, parentType, it).getOrThrow()
+                }.map {
+                    APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
+                }
             }
-        }
-    })
+        }, client = client
+    )
 
-class MediaListViewModel(private val objectId: PrimaryKey, private val objectType: ObjectType) :
-    SimpleViewModel<ServerResponse<MediaInfo>>() {
+class MediaListViewModel(private val objectId: PrimaryKey, private val objectType: ObjectType, client: HttpClient) :
+    SimpleViewModel<ServerResponse<MediaInfo>>(client) {
     init {
         load()
         viewModelScope.launch {
@@ -283,14 +296,16 @@ class MediaListViewModel(private val objectId: PrimaryKey, private val objectTyp
     override suspend fun loadInternal() = client.getMediaList(objectId, objectType)
 }
 
-class UserViewModel(private val requestInfo: suspend HttpClient.() -> Result<UserInfo>) : SimpleViewModel<UserInfo>() {
-    constructor(userId: PrimaryKey) : this({
+class UserViewModel(private val requestInfo: suspend HttpClient.() -> Result<UserInfo>, client: HttpClient) : SimpleViewModel<UserInfo>(
+    client
+) {
+    constructor(userId: PrimaryKey, client: HttpClient) : this({
         getUserInfo(userId)
-    })
+    }, client)
 
-    constructor(userAid: String) : this({
+    constructor(userAid: String, client: HttpClient) : this({
         getUserInfoByAid(userAid)
-    })
+    }, client)
 
     init {
         load()
@@ -300,36 +315,28 @@ class UserViewModel(private val requestInfo: suspend HttpClient.() -> Result<Use
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class WorldViewModel : PagingViewModel<PrimaryKey, TopicInfo>({
-    SimplePagingSource {
-        serviceCatching {
-            client.getRecommendTopics(it, 10).getOrThrow()
-        }.map {
-            val data = it.data.map { info ->
-                extractHeadlineIfPlain(info)
-            }
-            APagingData(data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
-        }
-    }
-})
-
-@OptIn(ExperimentalPagingApi::class)
-class MemberViewModel(private val objectId: PrimaryKey, private val word: String, private val objectType: ObjectType) :
-    PagingViewModel<PrimaryKey, UserInfo>({
-        RegularPagingSource {
-            when (objectType) {
-                ObjectType.COMMUNITY -> searchCommunityMembers(objectId, it, 10, word)
-                ObjectType.ROOM -> searchRoomMembers(objectId, it, 10, word)
-                else -> searchAllMembers(it, 10, word)
-            }.getOrThrow()
-        }
-    })
+class MemberViewModel(objectId: PrimaryKey, word: String, objectType: ObjectType, client: HttpClient) :
+    PagingViewModel<PrimaryKey, UserInfo>(
+        {
+            RegularPagingSource(
+                {
+                    when (objectType) {
+                        ObjectType.COMMUNITY -> searchCommunityMembers(objectId, it, 10, word)
+                        ObjectType.ROOM -> searchRoomMembers(objectId, it, 10, word)
+                        else -> searchAllMembers(it, 10, word)
+                    }.getOrThrow()
+                }, client
+            )
+        }, client = client
+    )
 
 data class OnTopicChanged(val topicInfo: TopicInfo)
 data class OnAddReaction(val topicId: PrimaryKey, val emoji: String)
 data class OnRemoveReaction(val topicId: PrimaryKey, val emoji: String)
 
-class ReactionsViewModel(private val objectId: PrimaryKey) : SimpleViewModel<ServerResponse<ReactionInfo>>() {
+class ReactionsViewModel(private val objectId: PrimaryKey, client: HttpClient) : SimpleViewModel<ServerResponse<ReactionInfo>>(
+    client
+) {
     init {
         load()
         viewModelScope.launch {
@@ -362,19 +369,15 @@ class ReactionsViewModel(private val objectId: PrimaryKey) : SimpleViewModel<Ser
     override suspend fun loadInternal() = client.getReactions(objectId)
 }
 
-class TopicViewModel(private val requestInfo: suspend HttpClient.() -> Result<TopicInfo>) :
-    SimpleViewModel<TopicInfo>() {
-    constructor(topicId: PrimaryKey) : this({
+class TopicViewModel(private val requestInfo: suspend HttpClient.() -> Result<TopicInfo>, client: HttpClient) :
+    SimpleViewModel<TopicInfo>(client) {
+    constructor(topicId: PrimaryKey, client: HttpClient) : this({
         getTopicInfo(topicId)
-    })
+    }, client)
 
-    constructor(topicAid: String) : this({
+    constructor(topicAid: String, client: HttpClient) : this({
         getTopicInfoByAid(topicAid)
-    })
-
-    constructor(topicInfo: TopicInfo) : this({
-        Result.success(topicInfo)
-    })
+    }, client)
 
     init {
         load()
@@ -398,8 +401,8 @@ class TopicViewModel(private val requestInfo: suspend HttpClient.() -> Result<To
     }
 }
 
-class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean) :
-    SimpleViewModel<List<Pair<PrimaryKey, String>>>() {
+class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean, client: HttpClient) :
+    SimpleViewModel<List<Pair<PrimaryKey, String>>>(client) {
 
     init {
         if (private) {

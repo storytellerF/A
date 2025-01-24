@@ -15,7 +15,15 @@ class SnapshotTest {
         Security.addProvider(SecurityProvider.getProvider())
         val pdfFile = File("build/tmp/2.pdf")
         val signedFile = File("build/tmp/2_signed.pdf")
-        generateSignedSnapshot(UserInfo.EMPTY, UserInfo.EMPTY, TopicInfo.EMPTY, pdfFile, signedFile, "hello").getOrThrow()
+        generateSignedSnapshot(
+            UserInfo.EMPTY,
+            UserInfo.EMPTY,
+            TopicInfo.EMPTY,
+            pdfFile,
+            signedFile,
+            "hello",
+            "" to ""
+        ).getOrThrow()
 
         ShowSignature().showSignature(signedFile, "123456")
     }

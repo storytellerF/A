@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.*
-import com.storyteller_f.a.app.client
 import com.storyteller_f.a.client_lib.serviceCatching
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
@@ -15,6 +14,7 @@ import io.ktor.client.HttpClient
 abstract class PagingViewModel<K : Any, V : Any>(
     sourceBuilder: PagingViewModel<K, V>.() -> PagingSource<K, V>,
     remoteMediator: RemoteMediator<K, V>? = null,
+    val client: HttpClient
 ) :
     ViewModel() {
     val flow = Pager(
@@ -51,7 +51,7 @@ class SimplePagingSource<KEY : Any, DATUM : Any>(val service: suspend (KEY?) -> 
     }
 }
 
-class RegularPagingSource<DATUM : Any>(val service: suspend HttpClient.(PrimaryKey?) -> ServerResponse<DATUM>) :
+class RegularPagingSource<DATUM : Any>(val service: suspend HttpClient.(PrimaryKey?) -> ServerResponse<DATUM>, val client: HttpClient) :
     PagingSource<PrimaryKey, DATUM>() {
     override suspend fun load(params: LoadParams<PrimaryKey>): PagingSourceLoadResult<PrimaryKey, DATUM> {
         return serviceCatching {

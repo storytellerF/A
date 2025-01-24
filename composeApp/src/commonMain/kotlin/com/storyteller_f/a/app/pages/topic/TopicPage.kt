@@ -37,6 +37,7 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import io.ktor.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -171,6 +172,7 @@ private fun TopicInputGroup(
     val sendState = remember {
         mutableStateOf<LoadingState>(LoadingState.Done)
     }
+    val client = LocalClient.current
     val isSending = sendState.value is LoadingState.Loading
     InputGroupInternal(
         topic.id,
@@ -181,20 +183,20 @@ private fun TopicInputGroup(
         {
             input = it
         },
-        {
-            insertContent(it, {
+        { mediaInfo ->
+            insertContent(mediaInfo, {
                 input = it
             }, input)
             sendTopic(scope, sendState, topic, input, {
                 input = it
-            }, focusManager, toasterState, scrollTo)
+            }, focusManager, toasterState, client, scrollTo)
         },
     ) {
         CommonInputButton(LoadingState.Done, input, isSending) {
             if (!isSending) {
                 sendTopic(scope, sendState, topic, input, {
                     input = it
-                }, focusManager, toasterState, scrollTo)
+                }, focusManager, toasterState, client, scrollTo)
             }
         }
     }
@@ -208,6 +210,7 @@ private fun sendTopic(
     updateInput: (String) -> Unit,
     focusManager: FocusManager,
     toasterState: ToasterState,
+    client: HttpClient,
     scrollTo: () -> Unit
 ) {
     scope.launch {

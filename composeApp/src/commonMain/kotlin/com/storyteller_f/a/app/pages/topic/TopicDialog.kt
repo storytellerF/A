@@ -22,7 +22,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.client
+import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.globalDialogState
@@ -90,6 +90,7 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismiss: ()
                 val scope = rememberCoroutineScope()
                 val successText = stringResource(Res.string.success)
                 if (alreadyLoginIn) {
+                    val client = LocalClient.current
                     ButtonNav(Icons.Default.PictureAsPdf, stringResource(Res.string.snapshot)) {
                         scope.launch {
                             globalDialogState.use {

@@ -1,15 +1,6 @@
 package com.storyteller_f.a.app
 
-import a.composeapp.generated.resources.Res
-import a.composeapp.generated.resources.auto_generate
-import a.composeapp.generated.resources.go_to_sign_in
-import a.composeapp.generated.resources.go_to_sign_up
-import a.composeapp.generated.resources.input_private_key
-import a.composeapp.generated.resources.private_key
-import a.composeapp.generated.resources.sign_in
-import a.composeapp.generated.resources.sign_up
-import a.composeapp.generated.resources.start_sign_in
-import a.composeapp.generated.resources.start_sign_up
+import a.composeapp.generated.resources.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
@@ -27,26 +18,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.russhwolf.settings.ExperimentalSettingsApi
-import com.russhwolf.settings.serialization.decodeValueOrNull
-import com.russhwolf.settings.serialization.encodeValue
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.compontents.MeasureTextLineCount
 import com.storyteller_f.a.app.utils.platform
-import com.storyteller_f.a.client_lib.ClientSession
-import com.storyteller_f.a.client_lib.LoginViewModel
-import com.storyteller_f.a.client_lib.getData
-import com.storyteller_f.a.client_lib.signIn
-import com.storyteller_f.a.client_lib.signUp
-import com.storyteller_f.shared.calcAddress
-import com.storyteller_f.shared.finalData
-import com.storyteller_f.shared.generateKeyPair
-import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
-import com.storyteller_f.shared.model.LoginUser
-import com.storyteller_f.shared.signature
+import com.storyteller_f.a.app.utils.storeToStorage
+import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.shared.*
+import io.ktor.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.ExperimentalSerializationApi
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
 
@@ -147,7 +127,7 @@ fun InputPrivateKeyPage() {
     val isSignUp by LoginViewModel.isSignUpFlow.collectAsState(false)
     val scope = rememberCoroutineScope()
     val appNav = LocalAppNav.current
-
+    val client = LocalClient.current
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
             MeasureTextLineCount(privateKey, LocalTextStyle.current, 32.dp) { lineCount, _ ->
@@ -164,13 +144,13 @@ fun InputPrivateKeyPage() {
                     },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                     keyboardActions = KeyboardActions(onGo = {
-                        startSign(privateKey, scope, appNav, isSignUp)
+                        startSign(privateKey, scope, appNav, client, isSignUp)
                     })
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Button({
-                    startSign(privateKey, scope, appNav, isSignUp)
+                    startSign(privateKey, scope, appNav, client, isSignUp)
                 }) {
                     Text(
                         stringResource(
@@ -200,11 +180,12 @@ private fun startSign(
     privateKey: String,
     scope: CoroutineScope,
     appNav: AppNav,
+    client: HttpClient,
     isSignUp: Boolean
 ) {
     if (privateKey.isNotBlank()) {
         scope.launch {
-            signUpOrSignIn(appNav, privateKey, isSignUp)
+            signUpOrSignIn(appNav, privateKey, client, isSignUp)
         }
     }
 }
@@ -212,6 +193,7 @@ private fun startSign(
 private suspend fun signUpOrSignIn(
     appNav: AppNav,
     privateKey: String,
+    client: HttpClient,
     isSignUp: Boolean
 ) {
     globalDialogState.use(appNav::gotoHome) {
@@ -229,29 +211,6 @@ private suspend fun signUpOrSignIn(
         LoginViewModel.updateUser(u)
         storeToStorage()
     }
-}
-
-@OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-fun restoreFromStorage() {
-    val loginUser = settings.decodeValueOrNull(LoginUser.serializer(), "login_user") ?: return
-    val privateKey = loginUser.privateKey
-    val publicKey = loginUser.publicKey
-    val address = loginUser.address
-    val signature = loginUser.signature
-    val data = loginUser.data
-    val userInfo = loginUser.user
-    LoginViewModel.updateState(ClientSession.SignUpSuccess(privateKey, publicKey, address))
-    LoginViewModel.updateUser(userInfo)
-    LoginViewModel.updateSession(data, signature)
-}
-
-@OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-fun storeToStorage() {
-    val state = LoginViewModel.state.value as ClientSession.SignUpSuccess
-    val session = LoginViewModel.session ?: return
-    val user = LoginViewModel.user.value ?: return
-    val loginUser = LoginUser(state.privateKey, state.publicKey, state.address, session.second, session.first, user)
-    settings.encodeValue(LoginUser.serializer(), "login_user", loginUser)
 }
 
 interface LoginNav {

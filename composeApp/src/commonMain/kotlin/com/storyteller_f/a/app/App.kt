@@ -20,7 +20,6 @@ import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.mikepenz.aboutlibraries.ui.compose.m3.*
-import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.compontents.GlobalDialog
 import com.storyteller_f.a.app.compontents.GlobalDialogController
@@ -66,6 +65,18 @@ val LocalAppNav = compositionLocalOf {
     AppNav.EMPTY
 }
 
+val LocalClient = compositionLocalOf {
+    HttpClient()
+}
+
+val LocalWsClient = compositionLocalOf {
+    ClientWebSocket({
+        error("")
+    }) {
+
+    }
+}
+
 @Serializable
 data object HomeScreen
 
@@ -103,6 +114,13 @@ data object UserSettingScreen
 
 @Composable
 fun App() {
+    val httpUrl = BuildKonfig.SERVER_URL
+    val wsServerUrl = BuildKonfig.WS_SERVER_URL
+    AppInternal(httpUrl, wsServerUrl)
+}
+
+@Composable
+fun AppInternal(httpUrl: String, wsServerUrl: String) {
     StaticObj
     AppTheme(dynamicColor = false) {
         setSingletonImageLoaderFactory {
@@ -112,10 +130,32 @@ fun App() {
         val appNav = remember {
             newAppNav(navigator)
         }
+
         CompositionLocalProvider(LocalAppNav provides appNav) {
-            GlobalDialog(globalDialogState)
-            NavHost(navigator, startDestination = HomeScreen) {
-                buildRootNav(navigator)
+            val client = getClient {
+                defaultClientConfigure()
+                setupRequest(httpUrl)
+            }
+            CompositionLocalProvider(LocalClient provides client) {
+                val ws = ClientWebSocket({
+                    client.webSocketSession(wsServerUrl + "link") {
+                        addRequestHeaders(LoginViewModel.session?.first)
+                    }
+                }) {
+                    if (it is RoomFrame.NewTopicInfo) {
+                        val info = processEncryptedTopic(listOf(it.topicInfo)).first()
+                        updateDocumentInParent(info)
+                        Napier.v(tag = "pagination") {
+                            "save document $info"
+                        }
+                    }
+                }
+                CompositionLocalProvider(LocalWsClient provides ws) {
+                    GlobalDialog(globalDialogState)
+                    NavHost(navigator, startDestination = HomeScreen) {
+                        buildRootNav(navigator)
+                    }
+                }
             }
         }
     }
@@ -233,29 +273,6 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
 fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
 
-val client by lazy {
-    getClient {
-        defaultClientConfigure()
-        setupRequest()
-    }
-}
-
-val wsClient by lazy {
-    ClientWebSocket({
-        client.webSocketSession(BuildKonfig.WS_SERVER_URL + "link") {
-            addRequestHeaders(LoginViewModel.session?.first)
-        }
-    }) {
-        if (it is RoomFrame.NewTopicInfo) {
-            val info = processEncryptedTopic(listOf(it.topicInfo)).first()
-            updateDocumentInParent(info)
-            Napier.v(tag = "pagination") {
-                "save document $info"
-            }
-        }
-    }
-}
-
 fun updateDocumentInParent(info: TopicInfo) {
     val collectionName = "topics${info.parentId}"
     updateDocument(collectionName, info)
@@ -270,15 +287,13 @@ fun updateDocument(collectionName: String, info: TopicInfo) {
     )
 }
 
-fun HttpClientConfig<*>.setupRequest() {
+fun HttpClientConfig<*>.setupRequest(httpUrl: String) {
     defaultRequest {
-        url(BuildKonfig.SERVER_URL)
+        url(httpUrl)
     }
 }
 
 val bus = MutableSharedFlow<Any>()
-
-val settings = Settings()
 
 interface AppNav {
     val currentDestination: NavBackStackEntry?
