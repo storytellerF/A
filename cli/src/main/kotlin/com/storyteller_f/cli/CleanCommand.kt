@@ -1,6 +1,7 @@
 package com.storyteller_f.cli
 
 import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.media.AMEDIA_BUCKET
 import com.storyteller_f.shared.type.ObjectType
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ExperimentalCli
@@ -14,7 +15,7 @@ class CleanCommand : Subcommand("clean", "clean all data") {
         Napier.i {
             "database tables removed."
         }
-        backend.mediaService.clean("amedia").getOrThrow()
+        backend.mediaService.clean(AMEDIA_BUCKET).getOrThrow()
         runBlocking {
             backend.topicSearchService.clean().getOrThrow()
         }

@@ -2,10 +2,13 @@ package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
 import com.storyteller_f.CustomBadRequestException
+import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.USER_NICKNAME
+import com.storyteller_f.media.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.tables.getUser
 import com.storyteller_f.tables.getUserAid
 import com.storyteller_f.tables.updateUser
 import io.ktor.server.plugins.*
@@ -32,11 +35,11 @@ suspend fun RoutingContext.updateUser(id: PrimaryKey, backend: Backend): Result<
         }
     }
     if (result1 != null) return result1.map { null }
-    return updateUser(id, newUser).map {
+    return DatabaseFactory.updateUser(id, newUser).mapResult {
         if (it) {
-            newUser
+            DatabaseFactory.getUser(id, backend)
         } else {
-            null
+            Result.success(null)
         }
     }
 }
@@ -48,7 +51,7 @@ private suspend fun checkAidModifyTimes(
     Result.success(Unit)
 } else {
     // check aid is null
-    getUserAid(id).mapResult {
+    DatabaseFactory.getUserAid(id).mapResult {
         if (it != null) {
             Result.failure(BadRequestException("aid is not null."))
         } else {
@@ -86,7 +89,7 @@ private suspend fun checkAvatar(
 ): Result<Unit> {
     val avatar = newUser.avatar?.item?.name
     return if (avatar != null) {
-        backend.mediaService.get("amedia", listOf(avatar)).mapResult {
+        backend.mediaService.get(AMEDIA_BUCKET, listOf(avatar)).mapResult {
             val mediaInfo = it.firstOrNull()
             when {
                 mediaInfo == null -> Result.failure(CustomBadRequestException("avatar not valid"))

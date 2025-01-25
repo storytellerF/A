@@ -9,8 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.model.OnUpdateUser
 import com.storyteller_f.a.app.pages.topic.MediaPicker
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.updateUserInfo
@@ -73,6 +75,7 @@ fun UserSettingPage() {
             globalDialogState.use {
                 val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(nickname = it)).getOrThrow()
                 LoginViewModel.updateUser(newInfo)
+                bus.emit(OnUpdateUser(newInfo))
                 showInputDialog = false
             }
         }

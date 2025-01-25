@@ -1,12 +1,10 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.Backend
-import com.storyteller_f.CustomBadRequestException
-import com.storyteller_f.ForbiddenException
-import com.storyteller_f.UnauthorizedException
+import com.storyteller_f.*
 import com.storyteller_f.a.server.route.RouteTopics
 import com.storyteller_f.index.TopicDocument
+import com.storyteller_f.media.AMEDIA_BUCKET
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -66,7 +64,7 @@ suspend fun addTopicAtCommunity(uid: PrimaryKey, backend: Backend, newTopic: New
                     id = newId,
                     createdTime = now(),
                 )
-                saveTopic(topic, backend, content, rootId, rootType, newTopic, uid).mapResult {
+                DatabaseFactory.saveTopic(topic, backend, content, rootId, rootType, newTopic, uid).mapResult {
                     backend.topicSearchService.getDocument(listOf(newId)).mapResult { documents ->
                         val topicInfo = topic.toTopicInfo()
                         processMediaLink(backend, listOf(topicInfo), documents).map {
@@ -84,10 +82,10 @@ suspend fun addTopicAtCommunity(uid: PrimaryKey, backend: Backend, newTopic: New
 }
 
 suspend fun createTopicSnapshot(uid: PrimaryKey, topicId: PrimaryKey, backend: Backend): Result<MediaInfo?> {
-    return getRawUserById(uid).mapResultNotNull { (first) ->
+    return DatabaseFactory.getRawUserById(uid).mapResultNotNull { (first) ->
         checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultNotNull { (hasRead) ->
             if (hasRead) {
-                getSimpleTopic(topicId).mapResultNotNull { value ->
+                DatabaseFactory.getSimpleTopic(topicId).mapResultNotNull { value ->
                     createTopicSnapshot(value, first, backend, uid)
                 }
             } else {
@@ -106,7 +104,7 @@ private suspend fun createTopicSnapshot(
     val topicId = topicInfo.id
     return backend.topicSearchService.getDocument(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultNotNull { documents ->
-            getRawUserById(topicInfo.author).mapResultNotNull { (first) ->
+            DatabaseFactory.getRawUserById(topicInfo.author).mapResultNotNull { (first) ->
                 val name = "$uid/$topicId.pdf"
                 val pdfFile = File("/tmp/$name")
                 val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
@@ -120,7 +118,7 @@ private suspend fun createTopicSnapshot(
                         documents.content,
                         backend.snapshotVerify
                     ).mapResultNotNull {
-                        backend.mediaService.upload("amedia", listOf(UploadPack(name, pdfFile))).mapResult {
+                        backend.mediaService.upload(AMEDIA_BUCKET, listOf(UploadPack(name, pdfFile))).mapResult {
                             pdfFile.delete()
                             Result.success(it.firstOrNull())
                         }
@@ -231,7 +229,7 @@ suspend fun getTopic(
                     }
 
                     uid == null -> Result.failure(UnauthorizedException())
-                    else -> getEncryptedTopics(topicId, uid).map { value ->
+                    else -> DatabaseFactory.getEncryptedTopics(topicId, uid).map { value ->
                         val encrypted = value.firstOrNull()
                         if (encrypted != null) {
                             info.copy(content = encrypted, isPrivate = true)
@@ -290,7 +288,7 @@ suspend fun getTopics(
                     fillHasCommented,
                     predicate
                 ).mapResult { (data, count) ->
-                    getEncryptedTopic(data, uid).map { topicContents ->
+                    DatabaseFactory.getEncryptedTopic(data, uid).map { topicContents ->
                         PaginationResult(data.mapIndexed { index, l ->
                             l.copy(content = topicContents[index], isPrivate = true)
                         }, count)
@@ -324,13 +322,13 @@ suspend fun checkRootReadPermission(
 ): Result<RootReadPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            getTopicRoot(parentId).mapResultNotNull { (rootId, rootType) ->
+            DatabaseFactory.getTopicRoot(parentId).mapResultNotNull { (rootId, rootType) ->
                 checkRootReadPermission(rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            getRoomCommunityId(parentId).mapResult { communityId ->
+            DatabaseFactory.getRoomCommunityId(parentId).mapResult { communityId ->
                 if (communityId == null && uid == null) {
                     Result.failure(UnauthorizedException())
                 } else {
@@ -342,15 +340,15 @@ suspend fun checkRootReadPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            checkCommunityExists(parentId).mapResultNotNull {
+            DatabaseFactory.checkCommunityExists(parentId).mapResultNotNull {
                 isMemberJoined(parentId, uid).map { hasJoined ->
                     RootReadPermission(true, hasJoined, false)
                 }
             }
         }
 
-        ObjectType.USER -> getRawUserById(parentId).mapNotNull {
-            RootReadPermission(true, false, false)
+        ObjectType.USER -> DatabaseFactory.getRawUserById(parentId).mapNotNull {
+            RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         }
     }
 }
@@ -362,13 +360,13 @@ suspend fun checkRootWritePermission(
 ): Result<RootWritePermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            getTopicRoot(parentId).mapResultNotNull { (rootId, rootType) ->
+            DatabaseFactory.getTopicRoot(parentId).mapResultNotNull { (rootId, rootType) ->
                 checkRootWritePermission(rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            getRoomCommunityId(parentId).mapResult {
+            DatabaseFactory.getRoomCommunityId(parentId).mapResult {
                 isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
@@ -376,7 +374,7 @@ suspend fun checkRootWritePermission(
         }
 
         ObjectType.COMMUNITY -> {
-            checkCommunityExists(parentId).mapResultNotNull {
+            DatabaseFactory.checkCommunityExists(parentId).mapResultNotNull {
                 isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
@@ -384,7 +382,7 @@ suspend fun checkRootWritePermission(
         }
 
         ObjectType.USER -> {
-            getRawUserById(parentId).mapNotNull { (first) ->
+            DatabaseFactory.getRawUserById(parentId).mapNotNull { (first) ->
                 RootWritePermission(parentType, parentId, first.id == uid)
             }
         }
@@ -441,7 +439,7 @@ fun processMediaLink(
     val mediaMap = mediaList.groupBy {
         it.first
     }
-    return backend.mediaService.get("amedia", mediaNameList).map { mediaUrls ->
+    return backend.mediaService.get(AMEDIA_BUCKET, mediaNameList).map { mediaUrls ->
         val mediaInfoMap = mediaUrls.mapIndexedNotNull { index, url ->
             url?.let {
                 mediaNameList[index] to it

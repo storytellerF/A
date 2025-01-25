@@ -169,9 +169,9 @@ private fun BoxScope.RecorderButton(
         contentAlignment = Alignment.Center
     ) {
         if (isRecording) {
-            Icon(Icons.Default.StopCircle, "stop record", modifier = Modifier.size(50.dp))
+            Icon(Icons.Default.Stop, "stop record", modifier = Modifier.size(50.dp))
         } else {
-            Icon(Icons.Default.PlayCircle, "start record", modifier = Modifier.size(50.dp))
+            Icon(Icons.Default.PlayArrow, "start record", modifier = Modifier.size(50.dp))
         }
     }
 }
@@ -279,7 +279,7 @@ private suspend fun uploadPath(
             privateRoomId,
             path.name,
             my?.id,
-            ContentType.parse("audio/mp4"),
+            ContentType.defaultForFilePath(path.toString()),
             uploadSuccess,
             client
         ) {

@@ -31,7 +31,7 @@ dependencies {
     implementation(libs.lucene.core)
     implementation(libs.lucene.queryparser)
     implementation(libs.lucene.analysis.common)
-    implementation(libs.simplemagic)
+    implementation(libs.tika.core)
 
     implementation(libs.lucene.backward.codecs)
     testImplementation(libs.elasticsearch)
@@ -56,7 +56,6 @@ sourceSets {
     }
 }
 
-val flavor = project.findProperty("buildkonfig.flavor")
 
 //val copyTask = tasks.register("copyEnv", Copy::class) {
 //    group = "copy"
@@ -107,3 +106,11 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
 //tasks.processResources.dependsOn(copyTask)
 tasks.processResources.dependsOn(mergeServiceFiles)
 
+val isProd = project.findProperty("server.prod") == true
+val flavor = project.findProperty("buildkonfig.flavor").toString()
+
+buildConfig {
+    className = "BackendConfig"
+    buildConfigField<Boolean>("IS_PROD", isProd)
+    buildConfigField<String>("FLAVOR", flavor)
+}

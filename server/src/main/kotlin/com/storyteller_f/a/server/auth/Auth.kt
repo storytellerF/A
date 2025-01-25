@@ -3,6 +3,7 @@ package com.storyteller_f.a.server.auth
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
+import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.BuildConfig
 import com.storyteller_f.a.server.auth.CustomCredential.AidCredential
 import com.storyteller_f.a.server.auth.CustomCredential.IdCredential
@@ -133,7 +134,7 @@ private suspend fun RoutingContext.signIn(backend: Backend, reader: DatabaseRead
     val pack = call.receive<SignInPack>()
     val data = call.getData(reader)
     val f = finalData(data)
-    getUserByAddress(pack.ad).filterNull {
+    DatabaseFactory.getUserByAddress(pack.ad).filterNull {
         BadRequestException("user not found")
     }.onSuccess { (info, icon, publicKey) ->
         if (verify(publicKey, pack.sig, f)) {
@@ -165,12 +166,12 @@ private suspend fun RoutingContext.signUp(backend: Backend, reader: DatabaseRead
     val data = call.getData(reader)
     val f = finalData(data)
     if (verify(pack.pk, pack.sig, f)) {
-        isUserNotExists(pack.pk).mapResult { bool ->
+        DatabaseFactory.isUserNotExists(pack.pk).mapResult { bool ->
             if (bool) {
                 val ad = calcAddress(pack.pk)
                 val newId = SnowflakeFactory.nextId()
                 val name = backend.nameService.parse(newId)
-                createUser(ad, name, newId, pack.pk).mapResult { value ->
+                DatabaseFactory.createUser(ad, name, newId, pack.pk).mapResult { value ->
                     saveSuccessSessionOnFirst(newId, reader)
                     toFinalUserInfo(value, backend)
                 }
@@ -195,7 +196,7 @@ private suspend fun ApplicationCall.checkApiRequest(
     return when {
         !BuildConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            if (getRawUserById(id).getOrNull() != null) {
+            if (DatabaseFactory.getRawUserById(id).getOrNull() != null) {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             } else {
@@ -227,10 +228,10 @@ private suspend fun ApplicationCall.checkApiRequest(
 
 private suspend fun getUserAuthData(credential: CustomCredential): Result<Pair<String, Long>?> {
     return when (credential) {
-        is AidCredential -> getUserAuthDataByAid {
+        is AidCredential -> DatabaseFactory.getUserAuthDataByAid {
             Aids.value eq credential.aid
         }
-        is IdCredential -> getUserAuthDataBy {
+        is IdCredential -> DatabaseFactory.getUserAuthDataBy {
             Users.id eq credential.id
         }
     }
@@ -247,7 +248,7 @@ private suspend fun checkDevWsLink(call: ApplicationCall): CustomPrincipal? {
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        checkUserExists(id).getOrNull()?.let {
+        DatabaseFactory.checkUserExists(id).getOrNull()?.let {
             CustomPrincipal(it)
         }
     } else {

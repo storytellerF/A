@@ -62,11 +62,11 @@ suspend fun isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?) = if (uid == 
     }
 }
 
-suspend fun addRoomJoin(
+suspend fun DatabaseFactory.addRoomJoin(
     room: PrimaryKey,
     id: PrimaryKey,
     time: LocalDateTime
-) = DatabaseFactory.insert {
+) = insert {
     MemberJoins.insert {
         it[joinTime] = time
         it[objectId] = room
@@ -75,8 +75,8 @@ suspend fun addRoomJoin(
     }
 }
 
-suspend fun exit(containerId: PrimaryKey, id: PrimaryKey): Result<Int> {
-    return DatabaseFactory.dbQuery {
+suspend fun DatabaseFactory.exit(containerId: PrimaryKey, id: PrimaryKey): Result<Int> {
+    return dbQuery {
         MemberJoins.deleteWhere {
             with(it) {
                 objectId eq containerId and (uid eq id)
@@ -85,11 +85,11 @@ suspend fun exit(containerId: PrimaryKey, id: PrimaryKey): Result<Int> {
     }
 }
 
-suspend fun addCommunityJoin(
+suspend fun DatabaseFactory.addCommunityJoin(
     id: PrimaryKey,
     community: PrimaryKey,
     time: LocalDateTime
-) = DatabaseFactory.insert {
+) = insert {
     MemberJoins.insert {
         it[joinTime] = time
         it[uid] = id
@@ -98,11 +98,11 @@ suspend fun addCommunityJoin(
     }
 }
 
-suspend fun createMemberJoin(join: MemberJoin) = DatabaseFactory.dbQuery {
+suspend fun DatabaseFactory.createMemberJoin(join: MemberJoin) = dbQuery {
     MemberJoin.new(join)
 }
 
-suspend fun isRoomJoins1(roomId: PrimaryKey) = DatabaseFactory.mapQuery({
+suspend fun DatabaseFactory.isRoomJoins1(roomId: PrimaryKey) = mapQuery({
     MemberJoin.wrapRow(this)
 }) {
     MemberJoins.selectAll().where {

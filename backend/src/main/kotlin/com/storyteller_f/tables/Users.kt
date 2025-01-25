@@ -1,6 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
+import com.storyteller_f.media.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -57,7 +58,7 @@ fun findUserByAId(aid: String): Query {
     }.limit(1)
 }
 
-suspend fun getUserAid(id: PrimaryKey): Result<String?> = DatabaseFactory.first({
+suspend fun DatabaseFactory.getUserAid(id: PrimaryKey): Result<String?> = first({
     it[Aids.value]
 }) {
     Aids.selectAll().where {
@@ -71,32 +72,32 @@ fun User.toUserInfo(): UserInfo {
 
 fun toFinalUserInfo(p: Pair<UserInfo, String?>, backend: Backend): Result<UserInfo> {
     val (userInfo, icon) = p
-    return backend.mediaService.get("amedia", listOf(icon)).map { value ->
+    return backend.mediaService.get(AMEDIA_BUCKET, listOf(icon)).map { value ->
         userInfo.copy(avatar = value.firstOrNull())
     }
 }
 
-suspend fun getUserByAid(
+suspend fun DatabaseFactory.getUserByAid(
     aid: String,
     backend: Backend
 ) = getRawUserByAid(aid).mapResultNotNull {
     toFinalUserInfo(it, backend)
 }
 
-suspend fun getUser(
+suspend fun DatabaseFactory.getUser(
     it: PrimaryKey,
     backend: Backend
 ) = getRawUserById(it).mapResultNotNull {
     toFinalUserInfo(it, backend)
 }
 
-suspend fun getRawUserByAid(aid: String) = DatabaseFactory.first({
+suspend fun DatabaseFactory.getRawUserByAid(aid: String) = first({
     toUserInfo() to icon
 }, User::wrapRow) {
     findUserByAId(aid)
 }
 
-suspend fun getRawUserById(it: PrimaryKey): Result<Pair<UserInfo, String?>?> = DatabaseFactory.first({
+suspend fun DatabaseFactory.getRawUserById(it: PrimaryKey): Result<Pair<UserInfo, String?>?> = first({
     toUserInfo() to icon
 }, User::wrapRow) {
     Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
@@ -104,14 +105,14 @@ suspend fun getRawUserById(it: PrimaryKey): Result<Pair<UserInfo, String?>?> = D
     }
 }
 
-suspend fun commonPaginationMemberList(
+suspend fun DatabaseFactory.commonPaginationMemberList(
     objectId: PrimaryKey?,
     prePageToken: PrimaryKey?,
     nextPageToken: PrimaryKey?,
     size: Int,
     word: String?
 ): Result<Pair<List<Pair<UserInfo, String?>>, Long>> {
-    return DatabaseFactory.mapQuery({
+    return mapQuery({
         first.toUserInfo() to second
     }, {
         User.wrapRow(it) to it[Users.icon]
@@ -155,7 +156,7 @@ private fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, wo
     return query
 }
 
-suspend fun searchMembers(
+suspend fun DatabaseFactory.searchMembers(
     objectId: PrimaryKey?,
     backend: Backend,
     prePageToken: PrimaryKey?,
@@ -164,7 +165,7 @@ suspend fun searchMembers(
     word: String?
 ): Result<PaginationResult<UserInfo>> {
     return commonPaginationMemberList(objectId, prePageToken, nextPageToken, size, word).mapResult { (pairs, count) ->
-        backend.mediaService.get("amedia", pairs.map {
+        backend.mediaService.get(AMEDIA_BUCKET, pairs.map {
             it.second
         }).map { value ->
             PaginationResult(pairs.mapIndexed { index, pair ->
@@ -174,7 +175,7 @@ suspend fun searchMembers(
     }
 }
 
-suspend fun getUserByAddress(ad: String): Result<Triple<UserInfo, String?, String>?> = DatabaseFactory.first({
+suspend fun DatabaseFactory.getUserByAddress(ad: String): Result<Triple<UserInfo, String?, String>?> = first({
     Triple(toUserInfo(), icon, publicKey)
 }, User::wrapRow) {
     Users
@@ -185,12 +186,12 @@ suspend fun getUserByAddress(ad: String): Result<Triple<UserInfo, String?, Strin
         }
 }
 
-suspend fun createUser(
+suspend fun DatabaseFactory.createUser(
     ad: String,
     name: String,
     newId: PrimaryKey,
     pk: String
-): Result<Pair<UserInfo, Nothing?>> = DatabaseFactory.query({
+): Result<Pair<UserInfo, Nothing?>> = query({
     toUserInfo() to null
 }) {
     val user = User(null, pk, ad, null, name, newId, now())
@@ -204,17 +205,17 @@ suspend fun createUser(
     user
 }
 
-suspend fun isUserNotExists(pk: String): Result<Boolean> = DatabaseFactory.isEmpty {
+suspend fun DatabaseFactory.isUserNotExists(pk: String): Result<Boolean> = isEmpty {
     User.find {
         Users.publicKey eq pk
     }
 }
 
-suspend fun updateUser(
+suspend fun DatabaseFactory.updateUser(
     id: PrimaryKey,
     newUser: UserInfo
 ): Result<Boolean> {
-    return DatabaseFactory.dbQuery {
+    return dbQuery {
         listOf({
             val avatar = newUser.avatar?.item?.name
             if (newUser.nickname.isNotEmpty() || avatar?.isNotEmpty() == true) {
@@ -248,14 +249,14 @@ suspend fun updateUser(
     }
 }
 
-suspend fun checkUserExists(id: Long) = DatabaseFactory.first({
+suspend fun DatabaseFactory.checkUserExists(id: Long) = first({
     id
 }, User::wrapRow) {
     User.findById(id)
 }
 
-suspend fun getUserAuthDataByAid(predicate: SqlExpressionBuilder.() -> Op<Boolean>) =
-    DatabaseFactory.first({
+suspend fun DatabaseFactory.getUserAuthDataByAid(predicate: SqlExpressionBuilder.() -> Op<Boolean>) =
+    first({
         it[Users.publicKey] to it[Users.id]
     }) {
         Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -263,8 +264,8 @@ suspend fun getUserAuthDataByAid(predicate: SqlExpressionBuilder.() -> Op<Boolea
             .where(predicate)
     }
 
-suspend fun getUserAuthDataBy(predicate: SqlExpressionBuilder.() -> Op<Boolean>) =
-    DatabaseFactory.first({
+suspend fun DatabaseFactory.getUserAuthDataBy(predicate: SqlExpressionBuilder.() -> Op<Boolean>) =
+    first({
         it[Users.publicKey] to it[Users.id]
     }) {
         Users.select(listOf(Users.publicKey, Users.id)).where(predicate)

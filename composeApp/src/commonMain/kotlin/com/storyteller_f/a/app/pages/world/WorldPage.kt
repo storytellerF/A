@@ -38,7 +38,7 @@ fun TopicList(
     StateView(items) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(
@@ -48,7 +48,6 @@ fun TopicList(
                 },
             ) {
                 items[it]?.let { info -> TopicCell(info) }
-                Spacer(modifier = Modifier.height(20.dp))
                 if (it != items.itemCount - 1) {
                     HorizontalDivider()
                 }

@@ -7,13 +7,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
+import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
@@ -24,6 +21,7 @@ import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.compontents.GlobalDialog
 import com.storyteller_f.a.app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.pages.community.CommunityPage
+import com.storyteller_f.a.app.pages.media.MediaPage
 import com.storyteller_f.a.app.pages.room.RoomPage
 import com.storyteller_f.a.app.pages.topic.TopicComposePage
 import com.storyteller_f.a.app.pages.topic.TopicPage
@@ -32,11 +30,8 @@ import com.storyteller_f.a.app.pages.user.MemberPage
 import com.storyteller_f.a.app.pages.user.UserPage
 import com.storyteller_f.a.app.pages.user.UserSettingPage
 import com.storyteller_f.a.app.ui.theme.AppTheme
-import com.storyteller_f.a.client_lib.ClientWebSocket
-import com.storyteller_f.a.client_lib.LoginViewModel
-import com.storyteller_f.a.client_lib.addRequestHeaders
-import com.storyteller_f.a.client_lib.defaultClientConfigure
-import com.storyteller_f.a.client_lib.getClient
+import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
@@ -111,6 +106,9 @@ data class MemberScreen(val objectType: String, val objectId: PrimaryKey)
 @Serializable
 data object UserSettingScreen
 
+@Serializable
+data class MediaScreen(val url: String)
+
 @Composable
 fun App() {
     val httpUrl = BuildKonfig.SERVER_URL
@@ -121,7 +119,7 @@ fun App() {
 @Composable
 fun AppInternal(httpUrl: String, wsServerUrl: String) {
     StaticObj
-    AppTheme(dynamicColor = false) {
+    AppTheme(dynamicColor = true) {
         setSingletonImageLoaderFactory {
             getAsyncImageLoader(it)
         }
@@ -210,6 +208,10 @@ private fun NavGraphBuilder.buildRootNav(
     composable<UserSettingScreen> {
         UserSettingPage()
     }
+    composable<MediaScreen> {
+        val route = it.toRoute<MediaScreen>()
+        MediaPage(route.url)
+    }
 }
 
 private fun newAppNav(navigator: NavHostController) = object : AppNav {
@@ -267,6 +269,10 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
     override fun gotoUserSetting() {
         navigator.navigate(UserSettingScreen)
     }
+
+    override fun gotoMedia(info: MediaInfo) {
+        navigator.navigate(MediaScreen(info.url))
+    }
 }
 
 fun getAsyncImageLoader(context: PlatformContext) =
@@ -323,6 +329,8 @@ interface AppNav {
 
     fun gotoUserSetting()
 
+    fun gotoMedia(info: MediaInfo)
+
     companion object {
         val EMPTY = object : AppNav {
             override val currentDestination: NavBackStackEntry
@@ -377,6 +385,10 @@ interface AppNav {
             }
 
             override fun gotoUserSetting() {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoMedia(info: MediaInfo) {
                 TODO("Not yet implemented")
             }
         }

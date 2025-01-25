@@ -1,8 +1,11 @@
 package com.storyteller_f.a.app.compontents
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,12 +15,17 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
@@ -27,6 +35,7 @@ import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
+import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.shared.model.MediaInfo
@@ -175,24 +184,55 @@ private fun LatexBlock(
 }
 
 @Composable
-private fun imageRequestInMarkdown(link: String, mediaMap: Map<String, MediaInfo>): ImageRequest {
+private fun imageRequestInMarkdown(
+    info: MediaInfo?
+): ImageRequest {
     val client = LocalClient.current
-    val size = mediaMap[link]?.dimension?.let {
-        coil3.size.Size(it.width, it.height)
-    } ?: coil3.size.Size.ORIGINAL
-    val url = mediaMap[link]?.url
     return ImageRequest.Builder(LocalPlatformContext.current)
         .fetcherFactory(KtorNetworkFetcherFactory(client))
-        .data(url)
-        .size(size)
+        .data(info?.url)
         .build()
+}
+
+@Composable
+fun getSize(info: MediaInfo?): Pair<Float, Float>? {
+    val dimension = info?.dimension
+    val s = if (info != null && dimension != null) {
+        val hDp = convertPxToDp(dimension.height).value
+        val height = minOf(hDp, 200f)
+        val width = dimension.width * height / dimension.height
+        width to height
+    } else {
+        null
+    }
+    return s
 }
 
 class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>) : ImageTransformer {
     @Composable
     override fun transform(link: String): ImageData {
-        return rememberAsyncImagePainter(
-            model = imageRequestInMarkdown(link, mediaMap)
-        ).let { ImageData(it, modifier = Modifier.clip(RoundedCornerShape(10.dp)).fillMaxWidth()) }
+        val appNav = LocalAppNav.current
+        val info = mediaMap[link]
+        val painter = rememberAsyncImagePainter(model = imageRequestInMarkdown(info))
+        return ImageData(
+            painter,
+            modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
+                info?.let { it1 -> appNav.gotoMedia(it1) }
+            }
+        )
     }
+}
+
+@Composable
+fun convertPxToDp(px: Int): Dp {
+    // 获取当前屏幕密度
+    val density = LocalDensity.current.density
+    // 将像素值转换为 dp
+    return (px / density).dp
+}
+
+@Composable
+fun convertDpToPx(dp: Dp): Int {
+    val density = LocalDensity.current.density
+    return (dp.value * density).toInt()
 }

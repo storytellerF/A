@@ -14,7 +14,4 @@ else
 fi
 
 mkdir -p deploy/build
-if [ "$FLAVOR" = "koyeb" ]; then
-  ./scripts/tool_scripts/check-all-env.sh
-fi
 ./scripts/build_scripts/build-server.sh && ./scripts/build_scripts/build-cli.sh

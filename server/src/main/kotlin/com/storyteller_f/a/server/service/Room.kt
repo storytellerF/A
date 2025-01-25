@@ -1,8 +1,10 @@
 package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
+import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.isDup
+import com.storyteller_f.media.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
@@ -22,7 +24,7 @@ suspend fun getRoomPubKeys(
 ): Result<PaginationResult<Pair<PrimaryKey, String>>?> {
     return isMemberJoined(roomId, userId).mapResult {
         if (it) {
-            commonPaginationRoomPubKeyList(roomId, pre, next, size).map { (data, count) ->
+            DatabaseFactory.commonPaginationRoomPubKeyList(roomId, pre, next, size).map { (data, count) ->
                 PaginationResult(data, count)
             }
         } else {
@@ -46,7 +48,7 @@ suspend fun joinRoom(
             isMemberJoined(communityId, uid).mapResult { hasJoined ->
                 if (hasJoined) {
                     val time = now()
-                    addRoomJoin(roomId, uid, time).mapResult { affectedCount ->
+                    DatabaseFactory.addRoomJoin(roomId, uid, time).mapResult { affectedCount ->
                         if (affectedCount > 0) {
                             Result.success(roomInfo.copy(joinedTime = time))
                         } else {
@@ -72,7 +74,7 @@ suspend fun exitRoom(roomId: PrimaryKey, id: PrimaryKey, backend: Backend) =
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            exit(roomId, id).map { i ->
+            DatabaseFactory.exit(roomId, id).map { i ->
                 info.copy(joinedTime = null)
             }
         }
@@ -88,8 +90,8 @@ suspend fun getRoom(
     if (roomId == null && roomAid == null) {
         return Result.failure(BadRequestException("roomId or roomAid must be set."))
     }
-    return getRoomSource(roomId, roomAid, fillJoinInfo, uid).mapResultNotNull { (info, iconName) ->
-        backend.mediaService.get("amedia", listOf(iconName)).map { value ->
+    return DatabaseFactory.getRoomSource(roomId, roomAid, fillJoinInfo, uid).mapResultNotNull { (info, iconName) ->
+        backend.mediaService.get(AMEDIA_BUCKET, listOf(iconName)).map { value ->
             val icon = value.firstOrNull()
             info.copy(icon = icon)
         }

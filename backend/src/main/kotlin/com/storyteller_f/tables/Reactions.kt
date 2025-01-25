@@ -120,12 +120,12 @@ suspend fun deleteReaction(
     if (it == null) {
         Result.success(true)
     } else {
-        deleteReaction(it.id)
+        DatabaseFactory.deleteReaction(it.id)
     }
 }
 
-suspend fun deleteReaction(reactionId: PrimaryKey): Result<Boolean> {
-    return DatabaseFactory.dbQuery {
+suspend fun DatabaseFactory.deleteReaction(reactionId: PrimaryKey): Result<Boolean> {
+    return dbQuery {
         Reactions.deleteWhere { builder ->
             with(builder) {
                 id eq reactionId
@@ -136,12 +136,12 @@ suspend fun deleteReaction(reactionId: PrimaryKey): Result<Boolean> {
     }
 }
 
-suspend fun insertReaction(
+suspend fun DatabaseFactory.insertReaction(
     newId: PrimaryKey,
     userId: PrimaryKey,
     reactionInfo: ReactionInfo,
     now: LocalDateTime
-) = DatabaseFactory.insert {
+) = insert {
     Reactions.insert { statement ->
         statement[id] = newId
         statement[uid] = userId

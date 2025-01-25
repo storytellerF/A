@@ -1,4 +1,5 @@
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
@@ -17,7 +18,9 @@ class TopicTest {
     fun `test topic search`() {
         test { client, _ ->
             val newId = SnowflakeFactory.nextId()
-            doCreateCommunity(Community("aid", "name", owner = DEFAULT_PRIMARY_KEY, id = newId, createdTime = now()))
+            DatabaseFactory.doCreateCommunity(
+                Community("aid", "name", owner = DEFAULT_PRIMARY_KEY, id = newId, createdTime = now())
+            )
             attachSession(client) {
                 client.joinCommunity(newId)
                 val lastTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello world").getOrThrow()
@@ -25,7 +28,7 @@ class TopicTest {
                 val firstTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "best world").getOrThrow()
                 withContext(Dispatchers.IO) { delay(1000) }
 
-                val topics = client.searchTopics(1, listOf("world"),).getOrThrow()
+                val topics = client.searchTopics(1, listOf("world")).getOrThrow()
                 assertEquals(2, topics.pagination?.total)
                 assertEquals(1, topics.data.size)
                 assertEquals(firstTopic.id, topics.data.first().id)
@@ -40,7 +43,9 @@ class TopicTest {
         test { client, _ ->
             attachSession(client) {
                 val newId = SnowflakeFactory.nextId()
-                doCreateCommunity(Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())).getOrThrow()
+                DatabaseFactory.doCreateCommunity(
+                    Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())
+                ).getOrThrow()
                 client.joinCommunity(newId)
                 val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello").getOrThrow()
                 client.getTopicSnapshot(topicInfo.id)
@@ -54,7 +59,7 @@ class TopicTest {
             val emoji = "\uD83D\uDE00"
             val newCommunity = SnowflakeFactory.nextId()
             val session1 = attachSession(client) {
-                doCreateCommunity(
+                DatabaseFactory.doCreateCommunity(
                     Community("aid", "name", owner = DEFAULT_PRIMARY_KEY, id = newCommunity, createdTime = now())
                 ).getOrThrow()
                 client.joinCommunity(newCommunity)
@@ -117,11 +122,11 @@ class TopicTest {
     fun `test create topic in room`() {
         test { client, wsClient ->
             val communityId = SnowflakeFactory.nextId()
-            doCreateCommunity(Community("test1", "test1", null, 0, null, communityId, now()))
+            DatabaseFactory.doCreateCommunity(Community("test1", "test1", null, 0, null, communityId, now()))
             val publicRoomId = SnowflakeFactory.nextId()
-            createRoom(Room("room1", "room1", null, 0, communityId, publicRoomId, now())).getOrThrow()
+            DatabaseFactory.createRoom(Room("room1", "room1", null, 0, communityId, publicRoomId, now())).getOrThrow()
             val privateRoomId = SnowflakeFactory.nextId()
-            createRoom(Room("room2", "room2", null, 0, null, privateRoomId, now())).getOrThrow()
+            DatabaseFactory.createRoom(Room("room2", "room2", null, 0, null, privateRoomId, now())).getOrThrow()
             attachSession(client) {
                 client.joinCommunity(communityId).getOrThrow()
                 val roomInfo = client.joinRoom(publicRoomId).getOrThrow()
@@ -130,7 +135,7 @@ class TopicTest {
                 }?.join()
                 withContext(Dispatchers.Default) { delay(1000) }
                 assertEquals(1, client.getRoomTopics(publicRoomId, null, 10).getOrThrow().data.size)
-                addRoomJoin(privateRoomId, it.data4, now())
+                DatabaseFactory.addRoomJoin(privateRoomId, it.data4, now())
                 val roomInfo2 = client.getRoomInfo(privateRoomId).getOrThrow()
                 val keys = client.requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
                 wsClient.useWebSocket {
@@ -168,7 +173,9 @@ class TopicTest {
     fun `test recommend`() {
         test { client, _ ->
             val communityId = SnowflakeFactory.nextId()
-            doCreateCommunity(Community("c1", "c1", owner = 0, id = communityId, createdTime = now())).getOrThrow()
+            DatabaseFactory.doCreateCommunity(
+                Community("c1", "c1", owner = 0, id = communityId, createdTime = now())
+            ).getOrThrow()
             attachSession(client) {
                 client.joinCommunity(communityId).getOrThrow()
                 repeat(4) {

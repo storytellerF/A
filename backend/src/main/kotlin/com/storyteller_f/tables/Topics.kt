@@ -70,13 +70,13 @@ class Topic(
     }
 }
 
-suspend fun getTopicRoot(parentId: PrimaryKey): Result<Pair<PrimaryKey, ObjectType>?> = DatabaseFactory.first({
+suspend fun DatabaseFactory.getTopicRoot(parentId: PrimaryKey): Result<Pair<PrimaryKey, ObjectType>?> = first({
     rootId to rootType
 }, Topic::wrapRow) {
     Topic.findById(parentId)
 }
 
-suspend fun getSimpleTopic(topicId: PrimaryKey): Result<TopicInfo?> = DatabaseFactory.first({
+suspend fun DatabaseFactory.getSimpleTopic(topicId: PrimaryKey): Result<TopicInfo?> = first({
     toTopicInfo(0, false)
 }, Topic::wrapRow) {
     Topic.findById(topicId)
@@ -204,10 +204,10 @@ suspend fun commonTopics(
 }
 
 // 加密内容不能处理media，需要客户端处理
-suspend fun getEncryptedTopic(
+suspend fun DatabaseFactory.getEncryptedTopic(
     data: List<TopicInfo>,
     uid: PrimaryKey
-) = DatabaseFactory.dbQuery {
+) = dbQuery {
     getEncryptedTopicContent(data.map {
         it.id
     }, uid)
@@ -236,18 +236,18 @@ fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey): List<T
     }
 }
 
-suspend fun getTopicRoot(newTopic: NewTopic) = DatabaseFactory.first({
+suspend fun DatabaseFactory.getTopicRoot(newTopic: NewTopic) = first({
     rootId to rootType
 }, Topic::wrapRow) {
     Topic.findById(newTopic.parentId)
 }
 
-suspend fun getEncryptedTopics(
+suspend fun DatabaseFactory.getEncryptedTopics(
     topicId: PrimaryKey,
     uid: PrimaryKey
-) = DatabaseFactory.dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }
+) = dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }
 
-suspend fun saveTopic(
+suspend fun DatabaseFactory.saveTopic(
     topic: Topic,
     backend: Backend,
     content: String,
@@ -255,7 +255,7 @@ suspend fun saveTopic(
     rootType: ObjectType,
     newTopic: NewTopic,
     uid: PrimaryKey
-) = DatabaseFactory.dbQuery {
+) = dbQuery {
     val newTopicId = Topic.new(topic)
     backend.topicSearchService.saveDocument(
         listOf(
@@ -272,11 +272,11 @@ suspend fun saveTopic(
     ).getOrThrow()
 }
 
-suspend fun saveTopic1(
+suspend fun DatabaseFactory.saveTopic1(
     topic: Topic,
     backend: Backend,
     content: TopicContent.Plain
-) = DatabaseFactory.dbQuery {
+) = dbQuery {
     Topic.new(topic)
     backend.topicSearchService.saveDocument(
         listOf(TopicDocument.fromTopic(topic, content))
@@ -286,11 +286,11 @@ suspend fun saveTopic1(
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-suspend fun saveEncryptedTopic(
+suspend fun DatabaseFactory.saveEncryptedTopic(
     topic: Topic,
     encryptedContent: String,
     encryptedAes: Map<PrimaryKey, String>
-) = DatabaseFactory.dbQuery {
+) = dbQuery {
     Topic.new(topic)
     EncryptedTopics.insert {
         it[content] = ExposedBlob(encryptedContent.hexToByteArray())

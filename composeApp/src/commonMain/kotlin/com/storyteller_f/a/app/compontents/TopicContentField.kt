@@ -2,7 +2,6 @@ package com.storyteller_f.a.app.compontents
 
 import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.permission_denied
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,6 +17,7 @@ import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.DefaultMarkdownAnimation
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -27,15 +27,14 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun TopicContentField(
     topicInfo: TopicInfo,
-    onClick: (() -> Unit)? = null
 ) {
     when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
-            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain, onClick)
+            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain)
         }
 
         is TopicContent.Extracted -> {
-            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain, onClick)
+            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain)
         }
 
         is TopicContent.DecryptFailed, is TopicContent.Encrypted -> {
@@ -55,7 +54,6 @@ private fun TopicContentFieldInternal(
     topicInfo: TopicInfo,
     rawMediaList: List<MediaInfo>,
     plain: String,
-    onClick: (() -> Unit)?
 ) {
     val mediaList = if (isPrivate) {
         val list = createMediaListViewModel(topicInfo.rootId, 0)
@@ -67,14 +65,15 @@ private fun TopicContentFieldInternal(
     val mediaMap = mediaList.associateBy { it.item.noPrefixName }
     Markdown(
         plain,
-        modifier = Modifier.fillMaxWidth().clickable(onClick != null) {
-            onClick?.invoke()
-        }.testTag("content"),
+        modifier = Modifier.fillMaxWidth().testTag("content"),
         colors = markdownColor(),
         typography = markdownTypography(),
         imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap),
         components = markdownComponents(codeFence = {
             CustomCodeFence(it, mediaMap)
-        }, codeBlock = { HighlightCodeBlock(it) })
+        }, codeBlock = { HighlightCodeBlock(it) }),
+        animations = DefaultMarkdownAnimation({
+            this
+        })
     )
 }

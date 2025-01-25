@@ -17,7 +17,10 @@ import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.elasticsearch.ElasticsearchContainer
@@ -31,7 +34,7 @@ fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, Cl
     Napier.base(DebugAntilog())
     SnowflakeFactory.setMachine(0)
     addProviderForJvm()
-    run {
+    runBlocking {
         val env = readResourceEnv(".env")!!.toMutableMap()
         ElasticsearchContainer(
             "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
@@ -57,6 +60,9 @@ fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, Cl
                         env["DATABASE_USER"] = postgreSQLContainer.username
                         env["DATABASE_PASS"] = postgreSQLContainer.password
                         env["DATABASE_DB"] = postgreSQLContainer.databaseName
+                        withContext(Dispatchers.IO) {
+                            delay(1000)
+                        }
                         doTest(env, receivedFrame, block)
                     }
                 }
