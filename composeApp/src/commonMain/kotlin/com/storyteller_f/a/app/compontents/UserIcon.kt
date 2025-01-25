@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -42,18 +43,19 @@ fun UserIcon(userInfo: UserInfo?, couldShowDialog: Boolean = true) {
         }
     }
     val url = userInfo?.avatar?.url
+    val modifier = if (isMe) Modifier.testTag("me") else Modifier
     if (url != null) {
         AsyncImage(
             globalLoader(url),
             contentDescription = "${userInfo.nickname}'s avatar",
-            modifier = Modifier.size(size).clip(CircleShape).clickable(couldShowDialog, onClick = onClick),
+            modifier = modifier.size(size).clip(CircleShape).clickable(couldShowDialog, onClick = onClick),
             contentScale = ContentScale.Crop
         )
     } else {
         Image(
             Icons.Default.AccountCircle,
             contentDescription = "default avatar",
-            modifier = Modifier.size(size)
+            modifier = modifier.size(size)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
                 .clickable(couldShowDialog, onClick = onClick)
