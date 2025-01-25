@@ -29,7 +29,7 @@ dependencies {
     implementation(libs.napier)
     implementation(libs.emoji.reader.jvm)
     implementation(libs.geoip2)
-    implementation(libs.simplemagic)
+    implementation(libs.tika.core)
     implementation(libs.log4j.core)
     implementation(libs.log4j.api)
     implementation(libs.pdfbox.layout)
@@ -44,11 +44,7 @@ dependencies {
     testImplementation(libs.testcontainers.postgresql)
 }
 
-val isProd = project.findProperty("server.prod") == true
 
-buildConfig {
-    buildConfigField<Boolean>("IS_PROD", isProd)
-}
 
 tasks.withType<JavaExec> {
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")

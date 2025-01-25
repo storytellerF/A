@@ -8,6 +8,7 @@ import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ROOM_ID_LENGTH
 import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.index.TopicDocument
+import com.storyteller_f.media.AMEDIA_BUCKET
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.obj.PresetCommunity
@@ -85,7 +86,7 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/room-icon.${path.extension}"
-                backend.mediaService.upload("amedia", listOf(UploadPack(p, path)))
+                backend.mediaService.upload(AMEDIA_BUCKET, listOf(UploadPack(p, path)))
                 Triple(it, p, id)
             }
         }
@@ -407,7 +408,7 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/avatar.${path.extension}"
-                backend.mediaService.upload("amedia", listOf(UploadPack(p, path)))
+                backend.mediaService.upload(AMEDIA_BUCKET, listOf(UploadPack(p, path)))
                 Tuple5(it, p, derPublicKey, ad, id)
             }
         }
@@ -441,7 +442,7 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/community-icon.${path.extension}"
-                backend.mediaService.upload("amedia", listOf(UploadPack(p, path)))
+                backend.mediaService.upload(AMEDIA_BUCKET, listOf(UploadPack(p, path)))
                 Triple(it, p, id)
             }
         }
@@ -502,7 +503,7 @@ class AddPreset : Subcommand("add", "add entry") {
     private suspend fun userJoinCommunity(users: List<String>, communityId: PrimaryKey) {
         users.forEach {
             val userId = findUserByAId(it).first()[Users.id]
-            addCommunityJoin(userId, communityId, now()).getOrThrow()
+            DatabaseFactory.addCommunityJoin(userId, communityId, now()).getOrThrow()
         }
     }
 }

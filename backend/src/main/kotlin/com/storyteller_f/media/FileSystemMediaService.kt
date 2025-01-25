@@ -1,13 +1,13 @@
 package com.storyteller_f.media
 
-import com.j256.simplemagic.ContentInfo
-import com.j256.simplemagic.ContentInfoUtil
-import com.j256.simplemagic.ContentType
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.MediaItem
 import io.github.aakira.napier.Napier
-import kotlinx.datetime.*
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.apache.tika.Tika
 import java.io.File
 import java.net.URLConnection
 import java.nio.file.Files
@@ -16,8 +16,8 @@ import javax.imageio.ImageIO
 import javax.imageio.stream.FileImageInputStream
 
 class FileSystemMediaService(private val url: String, base: String) : MediaService {
-    private val root = File(base)
-    private val util = ContentInfoUtil()
+    private val root = File(base).canonicalFile
+    private val tika = Tika()
 
     init {
         Napier.i {
@@ -79,11 +79,12 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
     ) = ImageIO.getImageReadersByMIMEType(item.contentType).asSequence().firstNotNullOfOrNull { reader ->
         try {
             reader.input = FileImageInputStream(file)
+            reader.read(reader.minIndex)
             Dimension(
                 reader.getWidth(reader.minIndex),
                 reader.getHeight(reader.minIndex)
             )
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Napier.e(throwable = e) {
                 "get image dimension failed ${item.name}"
             }
@@ -94,9 +95,10 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
     }
 
     private fun stat(it: String, file: File): MediaItem {
-        val contentInfo: ContentInfo? = util.findMatch(file)
-        val contentType =
-            contentInfo?.mimeType ?: URLConnection.guessContentTypeFromName(file.path) ?: ContentType.OTHER.mimeType
+        val contentType = kotlin.runCatching {
+            tika.detect(file)
+        }.getOrNull() ?: URLConnection.guessContentTypeFromName(file.path)
+            ?: org.apache.http.entity.ContentType.APPLICATION_OCTET_STREAM.mimeType
         return MediaItem(
             it,
             contentType,

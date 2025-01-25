@@ -2,11 +2,9 @@ package device_based
 
 import androidx.compose.ui.test.*
 import com.storyteller_f.a.app.AppInternal
-import com.storyteller_f.a.app.compontents.TopicContentField
 import com.storyteller_f.a.app.setupRequest
 import com.storyteller_f.a.client_lib.getClient
-import com.storyteller_f.shared.model.TopicInfo
-import io.ktor.client.*
+import com.storyteller_f.shared.getPlatform
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -23,7 +21,7 @@ class AppTest {
         test {
             runComposeUiTest {
                 setContent {
-                    AppInternal("http://10.0.2.2:$it", "ws://10.0.2.2:$it")
+                    AppInternal(it, it.replace("http", "ws"))
                 }
 
                 onNodeWithTag("me").performClick()
@@ -32,22 +30,23 @@ class AppTest {
 
     }
 
-    private fun test(block: (Int) -> Unit) {
+    private fun test(block: (String) -> Unit) {
+        val ip = "localhost"
         runBlocking {
             val testClient = getClient {
                 expectSuccess = true
-                setupRequest("http://10.0.2.2:8888")
+                setupRequest("http://$ip:8888")
             }
             assertEquals("pong", testClient.get("/ping").bodyAsText())
+            val platform = getPlatform()
             val port = testClient.post("/start") {
+                setBody("${platform.name}\n${platform.id}")
                 timeout {
-                    requestTimeoutMillis = 10_000
                     socketTimeoutMillis = 20_000
-                    connectTimeoutMillis = 10_000
                 }
             }.bodyAsText().toIntOrNull() ?: return@runBlocking
             try {
-                block(port)
+                block("http://$ip:$port")
             } finally {
                 testClient.post("/stop") {
                     setBody(port.toString())

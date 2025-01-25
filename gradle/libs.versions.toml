@@ -67,9 +67,12 @@ robolectric = "4.14.1"
 simplemagic = "1.17"
 slf4jSimple = "2.0.16"
 sqliteJdbc = "3.47.1.0"
+tikaCore = "3.0.0"
 uiTestJunit4Android = "1.7.6"
 uriKmp = "0.0.18"
+vaviImageAvif = "0.0.7"
 vlcj = "4.8.3"
+zoomimageComposeCoil3 = "1.1.1"
 
 [libraries]
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibrariesComposeM3" }
@@ -186,8 +189,11 @@ sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 sunny-chung-composable-table = { module = "io.github.sunny-chung:composable-table", version.ref = "composableTableVersion" }
 testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "minioVersion" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "postgresqlVersion" }
+tika-core = { module = "org.apache.tika:tika-core", version.ref = "tikaCore" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
+vavi-image-avif = { module = "com.github.umjammer:vavi-image-avif", version.ref = "vaviImageAvif" }
 vlcj = { module = "uk.co.caprica:vlcj", version.ref = "vlcj" }
+zoomimage-compose-coil3 = { module = "io.github.panpf.zoomimage:zoomimage-compose-coil3", version.ref = "zoomimageComposeCoil3" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

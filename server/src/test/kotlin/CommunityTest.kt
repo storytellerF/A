@@ -1,4 +1,5 @@
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.hmacSign
 import com.storyteller_f.shared.hmacVerify
@@ -26,7 +27,7 @@ class CommunityTest {
     @Test
     fun `test get community`() = test { client, _ ->
         val newId = SnowflakeFactory.nextId()
-        doCreateCommunity(
+        DatabaseFactory.doCreateCommunity(
             Community("aid", "name", owner = DEFAULT_PRIMARY_KEY, id = newId, createdTime = now())
         ).getOrThrow()
         val community = client.getCommunityInfo(newId).getOrThrow()
@@ -39,7 +40,7 @@ class CommunityTest {
             // insert community
             val communityId = SnowflakeFactory.nextId()
             val community = Community("aid", "name", owner = DEFAULT_PRIMARY_KEY, id = communityId, createdTime = now())
-            doCreateCommunity(community).getOrThrow()
+            DatabaseFactory.doCreateCommunity(community).getOrThrow()
             assertFails {
                 client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
             }
@@ -84,7 +85,7 @@ class CommunityTest {
             val communities = buildList {
                 repeat(10) {
                     val newId = SnowflakeFactory.nextId()
-                    doCreateCommunity(
+                    DatabaseFactory.doCreateCommunity(
                         Community("aid$it", "name", owner = DEFAULT_PRIMARY_KEY, id = newId, createdTime = now())
                     ).getOrThrow()
                     add(newId)
@@ -124,11 +125,11 @@ class CommunityTest {
     fun `test search community`() {
         test { client, _ ->
             val community1 = SnowflakeFactory.nextId()
-            doCreateCommunity(
+            DatabaseFactory.doCreateCommunity(
                 Community("c1", "name1", owner = DEFAULT_PRIMARY_KEY, id = community1, createdTime = now())
             ).getOrThrow()
             val community2 = SnowflakeFactory.nextId()
-            doCreateCommunity(
+            DatabaseFactory.doCreateCommunity(
                 Community(
                     "c2",
                     "name2",
@@ -170,7 +171,7 @@ class CommunityTest {
     fun `test search community member`() {
         test { client, _ ->
             val community1 = SnowflakeFactory.nextId()
-            doCreateCommunity(
+            DatabaseFactory.doCreateCommunity(
                 Community("c1", "name1", owner = DEFAULT_PRIMARY_KEY, id = community1, createdTime = now())
             ).getOrThrow()
             attachSession(client) {
@@ -187,7 +188,7 @@ class CommunityTest {
             val (_, _, _, data4, _) = attachSession(client) {
                 repeat(10) {
                     val communityId = SnowflakeFactory.nextId()
-                    doCreateCommunity(
+                    DatabaseFactory.doCreateCommunity(
                         Community("c$it", "c$it", owner = 0, id = communityId, createdTime = now())
                     ).getOrThrow()
                     client.joinCommunity(communityId).getOrThrow()

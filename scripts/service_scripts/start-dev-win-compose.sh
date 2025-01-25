@@ -1,6 +1,5 @@
 #!/bin/sh
 set -e
-./scripts/tool_scripts/check-all-env.sh
 
 cd deploy
 mkdir -p es_ca

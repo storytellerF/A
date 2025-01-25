@@ -15,8 +15,8 @@
     <string name="success">Success</string>
     <string name="design_spec">Design Spec</string>
     <string name="private_key">Private Key</string>
-    <string name="go_to_sign_up">Go to sign up-></string>
-    <string name="go_to_sign_in">Go to sign in-></string>
+    <string name="go_to_sign_up">Go to sign up</string>
+    <string name="go_to_sign_in">Go to sign in</string>
     <string name="input_private_key">Input private key</string>
     <string name="start_sign_up">Start sign up</string>
     <string name="start_sign_in">Start sign in</string>

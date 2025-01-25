@@ -2,6 +2,7 @@ package com.storyteller_f.a.server.route
 
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
+import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.UnauthorizedException
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
@@ -33,7 +34,7 @@ fun Route.bindSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
             }) { p, n, s ->
                 checkRootReadPermission(ObjectType.ROOM, it.parent.id, id).mapResultNotNull { permission ->
                     if (permission.hasRead) {
-                        searchMembers(it.parent.id, backend, p, n, s, it.word)
+                        DatabaseFactory.searchMembers(it.parent.id, backend, p, n, s, it.word)
                     } else {
                         Result.failure(UnauthorizedException())
                     }

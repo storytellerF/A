@@ -1,6 +1,7 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.UnauthorizedException
 import com.storyteller_f.isDup
 import com.storyteller_f.shared.model.ReactionInfo
@@ -18,7 +19,7 @@ suspend fun addReaction(
     topicId: PrimaryKey,
     emojiText: String
 ): Result<ReactionInfo?> {
-    return getSimpleTopic(topicId).mapResult { topic ->
+    return DatabaseFactory.getSimpleTopic(topicId).mapResult { topic ->
         val newId = SnowflakeFactory.nextId()
         getReaction(userId, topicId, emojiText).mapResult { oldReaction ->
             if (oldReaction != null && oldReaction.hasReacted) {
@@ -27,7 +28,7 @@ suspend fun addReaction(
                 val now = now()
                 val reactionInfo =
                     ReactionInfo(emojiText, topicId, ObjectType.TOPIC, (oldReaction?.count ?: 0) + 1, true)
-                insertReaction(newId, userId, reactionInfo, now).map { i ->
+                DatabaseFactory.insertReaction(newId, userId, reactionInfo, now).map { i ->
                     if (i > 0) {
                         reactionInfo
                     } else {
@@ -51,7 +52,7 @@ suspend fun reactionList(
     fillHasReacted: Boolean?
 ): Result<ServerResponse<ReactionInfo>> {
     if (fillHasReacted == true && uid == null) return Result.failure(UnauthorizedException())
-    return getSimpleTopic(objectId).mapResult {
+    return DatabaseFactory.getSimpleTopic(objectId).mapResult {
         commonReactions(uid, objectId).map { infos ->
             ServerResponse(infos, Pagination(null, null, infos.size.toLong()))
         }

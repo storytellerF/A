@@ -28,6 +28,10 @@ data class OnCommunityJoined(val newInfo: CommunityInfo)
 data class OnCommunityExited(val newInfo: CommunityInfo)
 
 data class OnMediaUploaded(val mediaInfo: MediaInfo)
+data class OnRoomJoined(val newInfo: RoomInfo)
+data class OnRoomExited(val newInfo: RoomInfo)
+
+data class OnUpdateUser(val newUser: UserInfo)
 
 class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Result<CommunityInfo>, client: HttpClient) :
     SimpleViewModel<CommunityInfo>(client) {
@@ -103,9 +107,6 @@ class RoomsViewModel(
     },
     client = client
 )
-
-data class OnRoomJoined(val newInfo: RoomInfo)
-data class OnRoomExited(val newInfo: RoomInfo)
 
 @OptIn(ExperimentalPagingApi::class)
 class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null, client: HttpClient) :
@@ -315,6 +316,13 @@ class UserViewModel(private val requestInfo: suspend HttpClient.() -> Result<Use
 
     init {
         load()
+        viewModelScope.launch {
+            bus.collect {
+                if (it is OnUpdateUser && it.newUser.id == handler.data.value?.id) {
+                    update(it.newUser)
+                }
+            }
+        }
     }
 
     override suspend fun loadInternal() = requestInfo(client)

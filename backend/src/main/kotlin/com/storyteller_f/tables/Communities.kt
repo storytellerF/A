@@ -75,7 +75,7 @@ fun Community.toCommunityIfo(
     joinTime
 )
 
-suspend fun checkCommunityExists(parentId: PrimaryKey) = DatabaseFactory.first({
+suspend fun DatabaseFactory.checkCommunityExists(parentId: PrimaryKey) = first({
     it[Communities.id]
 }) {
     Community.findById(parentId)
@@ -83,12 +83,12 @@ suspend fun checkCommunityExists(parentId: PrimaryKey) = DatabaseFactory.first({
 
 data class CommunityRawResult(val communityInfo: CommunityInfo, val icon: String?, val poster: String?)
 
-suspend fun getCommonCommunity(
+suspend fun DatabaseFactory.getCommonCommunity(
     fillJoinInfo: Boolean?,
     communityId: PrimaryKey?,
     communityAid: String?,
     id: PrimaryKey?
-): Result<CommunityRawResult?> = DatabaseFactory.first({
+): Result<CommunityRawResult?> = first({
     CommunityRawResult(first.toCommunityIfo(second), first.icon, first.poster)
 }, {
     Community.wrapRow(it) to if (fillJoinInfo == true) it[MemberJoins.joinTime] else null
@@ -120,14 +120,14 @@ private fun buildCommunityWhereClause(
     }
 }
 
-suspend fun commonCommunityList(
+suspend fun DatabaseFactory.commonCommunityList(
     uid: PrimaryKey?,
     prePageToken: PrimaryKey?,
     nextPageToken: PrimaryKey?,
     size: Int,
     joinStatus: JoinStatusSearch?,
     word: String?
-): Result<List<CommunityRawResult>> = DatabaseFactory.mapQuery({
+): Result<List<CommunityRawResult>> = mapQuery({
     CommunityRawResult(first.toCommunityIfo(null), first.icon, first.poster)
 }, {
     Community.wrapRow(it) to it.getOrNull(MemberJoins.joinTime)
@@ -197,7 +197,7 @@ fun getUserJoinedCommunityQuery(
     }
 }
 
-suspend fun commonPaginationCommunityList(
+suspend fun DatabaseFactory.commonPaginationCommunityList(
     uid: PrimaryKey?,
     prePageToken: PrimaryKey?,
     nextPageToken: PrimaryKey?,
@@ -206,7 +206,7 @@ suspend fun commonPaginationCommunityList(
     word: String?
 ): Result<Pair<List<CommunityRawResult>, Long>> {
     return commonCommunityList(uid, prePageToken, nextPageToken, size, joinStatus, word).mapResult { list ->
-        DatabaseFactory.count {
+        count {
             getSearchCommunityQuery(uid, true, joinStatus, word)
         }.map { value ->
             list to value
@@ -214,7 +214,7 @@ suspend fun commonPaginationCommunityList(
     }
 }
 
-suspend fun doCreateCommunity(community: Community) = DatabaseFactory.dbQuery {
+suspend fun DatabaseFactory.doCreateCommunity(community: Community) = dbQuery {
     Community.new(community) && Aids.insert {
         it[value] = community.aid
         it[objectId] = community.id
@@ -222,10 +222,10 @@ suspend fun doCreateCommunity(community: Community) = DatabaseFactory.dbQuery {
     }.insertedCount > 0
 }
 
-suspend fun getCommunityByIds(
+suspend fun DatabaseFactory.getCommunityByIds(
     uid: PrimaryKey,
     communityIds: List<PrimaryKey>
-) = DatabaseFactory.mapQuery({
+) = mapQuery({
     this[Communities.id] to this[MemberJoins.joinTime]
 }) {
     Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {

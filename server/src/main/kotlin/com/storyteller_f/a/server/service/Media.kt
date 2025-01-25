@@ -1,9 +1,9 @@
 package com.storyteller_f.a.server.service
 
-import com.j256.simplemagic.ContentInfoUtil
 import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.route.RouteMedia
+import com.storyteller_f.media.AMEDIA_BUCKET
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ServerResponse
@@ -16,6 +16,7 @@ import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import io.ktor.utils.io.*
 import kotlinx.io.readByteArray
+import org.apache.tika.Tika
 import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -34,7 +35,7 @@ suspend fun getMediaList(
         uid
     ).mapResultNotNull { (_, _, hasWrite) ->
         if (hasWrite) {
-            backend.mediaService.list("amedia", "$uid/").map { names ->
+            backend.mediaService.list(AMEDIA_BUCKET, "$uid/").map { names ->
                 ServerResponse(names.sortedByDescending { info ->
                     info.item.lastModified
                 })
@@ -51,7 +52,7 @@ suspend fun RoutingContext.uploadMedia(
     id: PrimaryKey,
     root: File,
     backend: Backend,
-    infoUtil: ContentInfoUtil,
+    tika: Tika,
 ) = if (it.parent.objectType == ObjectType.TOPIC) {
     Result.failure(BadRequestException("can't upload to topic"))
 } else {
@@ -70,19 +71,10 @@ suspend fun RoutingContext.uploadMedia(
 
                         try {
                             file.writeBytes(fileBytes)
-                            val type = if (part.contentType.toString() == "audio/mp4") {
-                                val mimeType = infoUtil.findMatch(file).contentType.mimeType
-                                if (mimeType == "audio/mp4") {
-                                    "audio/mp4"
-                                } else {
-                                    null
-                                }
-                            } else {
-                                null
-                            }
+                            val type = checkContentType(part, file, tika)
                             result.addAll(
                                 backend.mediaService.upload(
-                                    "amedia",
+                                    AMEDIA_BUCKET,
                                     listOf(UploadPack("${it.objectId}/$fileName", file, type))
                                 ).getOrThrow().filterNotNull()
                             )
@@ -97,5 +89,23 @@ suspend fun RoutingContext.uploadMedia(
             part.dispose()
         }
         Result.success(ServerResponse(result))
+    }
+}
+
+private fun checkContentType(
+    part: PartData,
+    file: File,
+    tika: Tika
+): String? {
+    val s = "audio/mp4"
+    return if (part.contentType.toString() == s) {
+        val mimeType = tika.detect(file)
+        if (mimeType == s) {
+            s
+        } else {
+            null
+        }
+    } else {
+        null
     }
 }

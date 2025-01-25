@@ -3,6 +3,7 @@ package com.storyteller_f.a.server
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
+import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.shared.model.TopicContent
@@ -16,9 +17,8 @@ import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.ktor.server.application.*
-import io.ktor.server.request.*
 import io.ktor.server.websocket.*
-import io.ktor.util.logging.error
+import io.ktor.util.logging.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -138,7 +138,7 @@ private suspend fun addTopicAtRoom(
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            getTopicRoot(newTopic).mapResultNotNull { (id, type) ->
+            DatabaseFactory.getTopicRoot(newTopic).mapResultNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
                     addTopicIntoRoom(
                         id,
@@ -221,17 +221,17 @@ private suspend fun savePlainTopicContent(
     content: TopicContent.Plain,
     backend: Backend
 ): Result<TopicInfo> {
-    return saveTopic1(topic, backend, content)
+    return DatabaseFactory.saveTopic1(topic, backend, content)
 }
 
 suspend fun saveEncryptedTopicContent(
     topic: Topic,
     encryptedAes: Map<PrimaryKey, String>,
     encryptedContent: String
-) = saveEncryptedTopic(topic, encryptedContent, encryptedAes)
+) = DatabaseFactory.saveEncryptedTopic(topic, encryptedContent, encryptedAes)
 
 private suspend fun isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Result<Boolean> {
-    return isRoomJoins1(roomId).map { value ->
+    return DatabaseFactory.isRoomJoins1(roomId).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()

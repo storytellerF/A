@@ -137,6 +137,7 @@ kotlin {
             implementation(libs.aboutlibraries.core)
             implementation(libs.aboutlibraries.compose.m3)
             implementation(libs.haze)
+            implementation(libs.zoomimage.compose.coil3)
 
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
@@ -402,5 +403,7 @@ tasks.withType<Test> {
         exclude("**/device_based/*")
     } else if (name == "testReleaseUnitTest") {
         exclude("**/device_based/*", "**/jvm_based/*")
+    } else if (name == "desktopTest") {
+        exclude("**/device_based/*")
     }
 }

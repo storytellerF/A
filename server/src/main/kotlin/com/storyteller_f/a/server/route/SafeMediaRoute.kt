@@ -1,6 +1,5 @@
 package com.storyteller_f.a.server.route
 
-import com.j256.simplemagic.ContentInfoUtil
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
@@ -9,6 +8,7 @@ import com.storyteller_f.a.server.service.uploadMedia
 import io.ktor.server.resources.*
 import io.ktor.server.resources.post
 import io.ktor.server.routing.*
+import org.apache.tika.Tika
 import java.io.File
 
 fun Route.bindProtectedSafeMediaRoute(backend: Backend, reader: DatabaseReader) {
@@ -24,11 +24,11 @@ fun Route.bindProtectedSafeMediaRoute(backend: Backend, reader: DatabaseReader) 
         error("create atemp failed")
     }
 
-    val infoUtil = ContentInfoUtil()
+    val tika = Tika()
 
     post<RouteMedia.Upload> {
         usePrincipal(reader) { id ->
-            uploadMedia(it, id, root, backend, infoUtil)
+            uploadMedia(it, id, root, backend, tika)
         }
     }
 }

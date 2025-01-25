@@ -7,11 +7,11 @@ import java.util.concurrent.CountDownLatch
 
 fun runGradle(envFilePath: String, port: Int): Process? {
     val envFile = File(envFilePath, "server/src/test/resources/.env")
-    if (!envFile.exists())  {
+    if (!envFile.exists()) {
         println("${envFile.absolutePath} not exists")
         return null
     }
-    val file = File(envFilePath)  // 确保这个路径正确，指向包含 gradlew.bat 的父目录
+    val file = File(envFilePath) // 确保这个路径正确，指向包含 gradlew.bat 的父目录
     val isWin = isWin()
     val gradleCommand = if (isWin) {
         // Windows
@@ -42,16 +42,21 @@ fun runGradle(envFilePath: String, port: Int): Process? {
     return builder.start()
 }
 
-private fun isWin(): Boolean {
+fun isWin(): Boolean {
     val property = System.getProperty("os.name").orEmpty()
-    val isWin = property.lowercase().contains("win")
-    return isWin
+    return property.lowercase().contains("win")
 }
 
 fun forceStop(port: Int) {
     if (isWin()) {
         Runtime.getRuntime()
-            .exec("cmd /c for /f \"tokens=5\" %i in ('netstat -ano ^| findstr :${port}') do taskkill /PID %i /F\n")
+            .exec(
+                arrayOf(
+                    "cmd",
+                    "/c",
+                    "for /f \"tokens=5\" %i in ('netstat -ano ^| findstr :$port') do taskkill /PID %i /F\n"
+                )
+            )
     }
 }
 
@@ -80,7 +85,7 @@ fun startServer(port: Int, envFilePath: String): Process? {
         serverProcess.errorStream.bufferedReader().use {
             while (serverProcess.isAlive) {
                 val line = it.readLine() ?: break
-                if (line == "Execution failed for task ':server:run'.") {
+                if (line.contains("Execution failed for task ':server:")) {
                     error(line)
                 } else {
                     System.err.println(line)

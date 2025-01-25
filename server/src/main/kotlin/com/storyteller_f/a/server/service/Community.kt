@@ -2,6 +2,7 @@ package com.storyteller_f.a.server.service
 
 import com.storyteller_f.*
 import com.storyteller_f.a.server.route.RouteCommunities
+import com.storyteller_f.media.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
@@ -20,13 +21,13 @@ suspend fun getCommunity(
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
-    return getCommonCommunity(
+    return DatabaseFactory.getCommonCommunity(
         fillJoinInfo,
         communityId,
         communityAid,
         id
     ).mapResultNotNull { (info, iconName, coverName) ->
-        backend.mediaService.get("amedia", listOf(iconName, coverName)).map { (iconInfo, coverInfo) ->
+        backend.mediaService.get(AMEDIA_BUCKET, listOf(iconName, coverName)).map { (iconInfo, coverInfo) ->
             info.copy(icon = iconInfo, poster = coverInfo)
         }
     }
@@ -41,7 +42,7 @@ suspend fun doUserJoinCommunity(
         Result.success(community)
     } else {
         val time = now()
-        addCommunityJoin(uid, communityId, time).mapResult { value ->
+        DatabaseFactory.addCommunityJoin(uid, communityId, time).mapResult { value ->
             if (value > 0) {
                 Result.success(community.copy(joinTime = time))
             } else {
@@ -62,7 +63,7 @@ suspend fun exitCommunity(communityId: PrimaryKey, id: PrimaryKey, backend: Back
         if (info.joinTime == null) {
             Result.success(info)
         } else {
-            exit(communityId, id).mapResult { i ->
+            DatabaseFactory.exit(communityId, id).mapResult { i ->
                 if (i > 0) {
                     Result.success(info.copy(joinTime = null))
                 } else {
@@ -83,7 +84,7 @@ suspend fun searchCommunities(
     if (search.joinStatus == JoinStatusSearch.JOINED && search.target != null) {
         return searchTargetUserJoinedCommunities(prePageToken, nextPageToken, size, backend, uid, search.target)
     }
-    return commonPaginationCommunityList(
+    return DatabaseFactory.commonPaginationCommunityList(
         uid,
         prePageToken,
         nextPageToken,
@@ -141,7 +142,7 @@ private suspend fun processUserJoinedTimeReplace(
     val communityIds = value.map {
         it.id
     }
-    return getCommunityByIds(uid, communityIds).map { joinedTimeList ->
+    return DatabaseFactory.getCommunityByIds(uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         PaginationResult(value.map {
             it.copy(joinTime = map[it.id], extension = CommunityInfo.Extension(it.joinTime))
@@ -153,7 +154,7 @@ private fun parseCommunityList(
     backend: Backend,
     list: List<CommunityRawResult>
 ): Result<List<CommunityInfo>> {
-    return backend.mediaService.get("amedia", list.flatMap { (_, icon, poster) ->
+    return backend.mediaService.get(AMEDIA_BUCKET, list.flatMap { (_, icon, poster) ->
         listOf(icon, poster)
     }).map { icons ->
         list.mapIndexed { i, communityPair ->
@@ -171,8 +172,8 @@ suspend fun getCommunityTopicList(
     s: Int,
     backend: Backend,
     search: RouteCommunities.Id.Topics
-) = checkRootReadPermission(ObjectType.COMMUNITY, it.parent.id, id).mapResultNotNull {
-    if (it.hasRead) {
+) = checkRootReadPermission(ObjectType.COMMUNITY, it.parent.id, id).mapResultNotNull { permission ->
+    if (permission.hasRead) {
         commonPaginationTopics(id, null, n, s, search.fillHasCommented) {
             Topics.rootId eq search.parent.id
         }.mapResultNotNull { (data, count) ->

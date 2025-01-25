@@ -162,22 +162,27 @@ fun <T> StateView(
 }
 
 fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, content: @Composable (T?) -> Unit) {
-    when (val refreshState = items.loadState.refresh) {
-        is LoadStateLoading -> {
+    when (val refreshState = items.loadState.refresh.toLoadingState()) {
+        is LoadingState.Loading -> {
             item {
                 Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
+            nestedStateList(items, content)
         }
 
-        is LoadStateError -> {
+        is LoadingState.Error -> {
+            nestedStateList(items, content)
             item {
-                Column(modifier = Modifier.fillMaxWidth().height(100.dp)) {
-                    ExceptionView(refreshState.error)
+                Column(
+                    modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 100.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ExceptionView(refreshState.e)
                     Button({
                         items.refresh()
-                    }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    }, modifier = Modifier) {
                         Text("Refresh")
                     }
                 }
@@ -185,14 +190,7 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
         }
 
         else -> {
-            items(
-                items.itemCount,
-                key = items.itemKey {
-                    it.id.toString()
-                }
-            ) {
-                content(items[it])
-            }
+            nestedStateList(items, content)
             if (items.loadState.append is LoadStateLoading) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
@@ -201,6 +199,20 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
                 }
             }
         }
+    }
+}
+
+private fun <T : Identifiable> LazyListScope.nestedStateList(
+    items: LazyPagingItems<T>,
+    content: @Composable (T?) -> Unit
+) {
+    items(
+        items.itemCount,
+        key = items.itemKey {
+            it.id.toString()
+        }
+    ) {
+        content(items[it])
     }
 }
 

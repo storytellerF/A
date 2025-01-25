@@ -1,5 +1,6 @@
 package com.storyteller_f
 
+import com.storyteller_f.backend.BackendConfig
 import com.storyteller_f.index.ElasticTopicSearchService
 import com.storyteller_f.index.LuceneTopicSearchService
 import com.storyteller_f.index.TopicSearchService
@@ -44,7 +45,15 @@ class MergedEnv(val list: List<Map<String, String>?>) {
 }
 
 fun readEnv(map: Map<String, String> = emptyMap()): MergedEnv {
-    return MergedEnv(listOf(map, readFileEnv(".env"), readResourceEnv(".env"), System.getenv()))
+    return MergedEnv(
+        listOf(
+            map,
+            readFileEnv("../${BackendConfig.FLAVOR}.env"),
+            readFileEnv(".env"),
+            readResourceEnv(".env"),
+            System.getenv()
+        )
+    )
 }
 
 fun readResourceEnv(resName: String) = ClassLoader.getSystemClassLoader().getResourceAsStream(resName)?.use {
@@ -82,7 +91,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 
     return Backend(
         config,
-        env["SNAPSHOT_KEYSTORE_PATH"] to env.get("SNAPSHOT_KEY_PASS"),
+        env["SNAPSHOT_KEYSTORE_PATH"] to env["SNAPSHOT_KEY_PASS"],
         topicDocumentService,
         mediaService,
         NameService()

@@ -2,12 +2,7 @@ package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -48,7 +43,7 @@ private fun UserRefCellInternal(viewModel: UserViewModel) {
         viewModel.handler,
         modifier = Modifier
             .fillMaxWidth()
-            .height(66.dp)
+            .height(56.dp)
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
             .clip(shape)
             .clickable {
@@ -56,7 +51,6 @@ private fun UserRefCellInternal(viewModel: UserViewModel) {
                     appNav.gotoUser(it.id)
                 }
             }
-            .padding(10.dp)
     ) { info ->
         UserCell(info, true) {
             appNav.gotoUser(it)
@@ -70,25 +64,28 @@ fun UserCell(
     customBackground: Boolean,
     onClick: (PrimaryKey) -> Unit = {}
 ) {
+    val shape = RoundedCornerShape(8.dp)
+    val id = userInfo?.id
     Row(
         modifier = if (customBackground) {
             Modifier
-                .fillMaxWidth().clickable(userInfo != null) {
-                    userInfo?.id?.let(onClick)
+                .fillMaxWidth().clip(shape).clickable(id != null) {
+                    id?.let(onClick)
                 }
         } else {
-            Modifier.fillMaxWidth().clickable(userInfo != null) {
-                userInfo?.id?.let(onClick)
-            }.background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
-                .padding(8.dp)
-        }.height(40.dp),
+            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceDim, shape)
+                .clip(shape)
+                .clickable(id != null) {
+                    id?.let(onClick)
+                }
+        }.height(56.dp).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         UserIcon(userInfo)
         if (userInfo != null) {
             Column {
-                Text(userInfo.nickname, style = MaterialTheme.typography.titleSmall)
+                Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)
                 val aid = userInfo.aid
                 if (aid != null) {
                     Text("aid: $aid", style = MaterialTheme.typography.labelSmall)

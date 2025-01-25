@@ -1,6 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
+import com.storyteller_f.media.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
@@ -203,24 +204,24 @@ private fun buildJoinedRoomSearchQuery(
     throw UnauthorizedException()
 }
 
-suspend fun getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?> = DatabaseFactory.first({
+suspend fun DatabaseFactory.getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?> = first({
     it[Rooms.communityId]
 }) {
     Room.findRoomById(parentId)
 }
 
-suspend fun commonPaginationRoomPubKeyList(
+suspend fun DatabaseFactory.commonPaginationRoomPubKeyList(
     roomId: PrimaryKey,
     pre: PrimaryKey?,
     next: PrimaryKey?,
     size: Int
 ): Result<Pair<List<Pair<Long, String>>, Long>> {
-    return DatabaseFactory.mapQuery({
+    return mapQuery({
         this[Users.id] to this[Users.publicKey]
     }) {
         buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, pre, next, size)
     }.mapResult { data ->
-        DatabaseFactory.count {
+        count {
             buildRoomPubKeyQuery(roomId, true)
         }.map { value ->
             data to value
@@ -245,12 +246,12 @@ fun buildRoomPubKeyQuery(roomId: PrimaryKey, getCount: Boolean): Query {
     }
 }
 
-suspend fun getRoomSource(
+suspend fun DatabaseFactory.getRoomSource(
     roomId: PrimaryKey?,
     roomAid: String?,
     fillJoinInfo: Boolean?,
     uid: PrimaryKey?
-): Result<Pair<RoomInfo, String?>?> = DatabaseFactory.first(::mapRoomInfo) {
+): Result<Pair<RoomInfo, String?>?> = first(::mapRoomInfo) {
     val baseOp = Op.build {
         if (roomId != null) {
             Rooms.id eq roomId
@@ -307,7 +308,7 @@ suspend fun searchRooms(
 }
 
 private fun roomsResponse(list: List<Pair<RoomInfo, String?>>, backend: Backend): Result<List<RoomInfo>> {
-    return backend.mediaService.get("amedia", list.map {
+    return backend.mediaService.get(AMEDIA_BUCKET, list.map {
         it.second
     }).map { icons ->
         list.mapIndexed { i, roomPair ->
@@ -316,7 +317,7 @@ private fun roomsResponse(list: List<Pair<RoomInfo, String?>>, backend: Backend)
     }
 }
 
-suspend fun createRoom(room4: Room): Result<Boolean> = DatabaseFactory.dbQuery {
+suspend fun DatabaseFactory.createRoom(room4: Room): Result<Boolean> = dbQuery {
     Room.new(room4).insertedCount > 0 && Aids.insert {
         it[value] = room4.aid
         it[objectId] = room4.id
