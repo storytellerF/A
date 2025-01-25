@@ -156,6 +156,7 @@ kotlin {
 
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(compose.uiTest)
+            implementation(projects.testServer.simple)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

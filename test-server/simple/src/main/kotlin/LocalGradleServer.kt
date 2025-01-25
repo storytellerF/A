@@ -1,0 +1,93 @@
+
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import java.io.File
+import java.util.concurrent.CountDownLatch
+
+fun runGradle(envFilePath: String, port: Int): Process? {
+    val envFile = File(envFilePath, "server/src/test/resources/.env")
+    if (!envFile.exists())  {
+        println("${envFile.absolutePath} not exists")
+        return null
+    }
+    val file = File(envFilePath)  // 确保这个路径正确，指向包含 gradlew.bat 的父目录
+    val isWin = isWin()
+    val gradleCommand = if (isWin) {
+        // Windows
+        File(file, "gradlew.bat").absolutePath
+    } else {
+        // Linux/MacOS
+        "./gradlew"
+    }
+
+    val builder = ProcessBuilder(
+        gradleCommand,
+        "server:run",
+        "-Dorg.gradle.logging.level=quiet",
+        "--quiet",
+    )
+        .directory(file.canonicalFile)
+    val pairs = envFile.readLines().filter {
+        it.isNotBlank()
+    }.map {
+        val list = it.split("=", limit = 2)
+        list[0] to list.getOrElse(1) {
+            ""
+        }
+    }
+    builder.environment().putAll(pairs)
+    builder.environment()["SERVER_PORT"] = port.toString()
+
+    return builder.start()
+}
+
+private fun isWin(): Boolean {
+    val property = System.getProperty("os.name").orEmpty()
+    val isWin = property.lowercase().contains("win")
+    return isWin
+}
+
+fun forceStop(port: Int) {
+    if (isWin()) {
+        Runtime.getRuntime()
+            .exec("cmd /c for /f \"tokens=5\" %i in ('netstat -ano ^| findstr :${port}') do taskkill /PID %i /F\n")
+    }
+}
+
+fun stopServer(serverProcess: Process, port: Int) {
+    serverProcess.destroy()
+    forceStop(port)
+}
+
+@OptIn(DelicateCoroutinesApi::class)
+fun startServer(port: Int, envFilePath: String): Process? {
+    forceStop(port)
+    val serverProcess = runGradle(envFilePath, port) ?: return null
+    val latch = CountDownLatch(1)
+    GlobalScope.launch {
+        serverProcess.inputStream.bufferedReader().use {
+            while (serverProcess.isAlive) {
+                val line = it.readLine() ?: break
+                println(line)
+                if (line.contains("Application started")) {
+                    latch.countDown()
+                }
+            }
+        }
+    }
+    GlobalScope.launch {
+        serverProcess.errorStream.bufferedReader().use {
+            while (serverProcess.isAlive) {
+                val line = it.readLine() ?: break
+                if (line == "Execution failed for task ':server:run'.") {
+                    error(line)
+                } else {
+                    System.err.println(line)
+                }
+            }
+        }
+    }
+    latch.await()
+    return serverProcess
+}
