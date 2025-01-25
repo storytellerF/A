@@ -100,7 +100,8 @@ class RoomsViewModel(
                 APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKey())
             }
         }
-    }, client = client
+    },
+    client = client
 )
 
 data class OnRoomJoined(val newInfo: RoomInfo)
@@ -130,7 +131,8 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null, client: Http
                     }.getOrNull()
                 }
             )
-        }, TopicsRemoteMediator("topics$id") { loadKey, size ->
+        },
+        TopicsRemoteMediator("topics$id") { loadKey, size ->
             val info = when {
                 id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, size)
                 type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, size)
@@ -141,7 +143,8 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null, client: Http
             info.copy(processEncryptedTopic(info.data).map {
                 extractHeadlineIfPlain(it)
             })
-        }, client
+        },
+        client
     ) {
     init {
         viewModelScope.launch {
@@ -225,9 +228,10 @@ class TopicsRemoteMediator(
     }
 }
 
-class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<RoomInfo>, client: HttpClient) : SimpleViewModel<RoomInfo>(
-    client
-) {
+class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<RoomInfo>, client: HttpClient) :
+    SimpleViewModel<RoomInfo>(
+        client
+    ) {
     val dialog = DialogSaveState()
 
     constructor(roomId: PrimaryKey, client: HttpClient) : this({
@@ -274,7 +278,8 @@ class TopicSearchViewModel(word: List<String>, parentId: PrimaryKey?, parentType
                     APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
                 }
             }
-        }, client = client
+        },
+        client = client
     )
 
 class MediaListViewModel(private val objectId: PrimaryKey, private val objectType: ObjectType, client: HttpClient) :
@@ -296,9 +301,10 @@ class MediaListViewModel(private val objectId: PrimaryKey, private val objectTyp
     override suspend fun loadInternal() = client.getMediaList(objectId, objectType)
 }
 
-class UserViewModel(private val requestInfo: suspend HttpClient.() -> Result<UserInfo>, client: HttpClient) : SimpleViewModel<UserInfo>(
-    client
-) {
+class UserViewModel(private val requestInfo: suspend HttpClient.() -> Result<UserInfo>, client: HttpClient) :
+    SimpleViewModel<UserInfo>(
+        client
+    ) {
     constructor(userId: PrimaryKey, client: HttpClient) : this({
         getUserInfo(userId)
     }, client)
@@ -325,18 +331,21 @@ class MemberViewModel(objectId: PrimaryKey, word: String, objectType: ObjectType
                         ObjectType.ROOM -> searchRoomMembers(objectId, it, 10, word)
                         else -> searchAllMembers(it, 10, word)
                     }.getOrThrow()
-                }, client
+                },
+                client
             )
-        }, client = client
+        },
+        client = client
     )
 
 data class OnTopicChanged(val topicInfo: TopicInfo)
 data class OnAddReaction(val topicId: PrimaryKey, val emoji: String)
 data class OnRemoveReaction(val topicId: PrimaryKey, val emoji: String)
 
-class ReactionsViewModel(private val objectId: PrimaryKey, client: HttpClient) : SimpleViewModel<ServerResponse<ReactionInfo>>(
-    client
-) {
+class ReactionsViewModel(private val objectId: PrimaryKey, client: HttpClient) :
+    SimpleViewModel<ServerResponse<ReactionInfo>>(
+        client
+    ) {
     init {
         load()
         viewModelScope.launch {

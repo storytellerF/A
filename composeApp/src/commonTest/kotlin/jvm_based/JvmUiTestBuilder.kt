@@ -3,10 +3,13 @@ package jvm_based
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.junit.Assume
 import java.io.File
 import java.util.concurrent.CountDownLatch
 
 fun runGradle(vararg args: String): Process {
+    val envFilePath = File("../server/src/test/resources/.env")
+    Assume.assumeTrue(envFilePath.exists())
     val file = File("../")  // 确保这个路径正确，指向包含 gradlew.bat 的父目录
     val isWin = isWin()
     val gradleCommand = if (isWin) {
@@ -25,7 +28,7 @@ fun runGradle(vararg args: String): Process {
         *args
     )
         .directory(file.canonicalFile)
-    val pairs = File("../server/src/test/resources/.env").readLines().filter {
+    val pairs = envFilePath.readLines().filter {
         it.isNotBlank()
     }.map {
         val list = it.split("=", limit = 2)
@@ -54,7 +57,6 @@ fun forceStop() {
 @OptIn(DelicateCoroutinesApi::class)
 fun jvmBasedTest(block: () -> Unit) {
     forceStop()
-    System.loadLibrary("LiteCore")
     val latch = CountDownLatch(1)
     val serverProcess = runGradle()
     GlobalScope.launch {

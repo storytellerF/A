@@ -99,6 +99,8 @@ kotlin {
             implementation(projects.cryptoJvm)
         }
         androidUnitTest.dependencies {
+            implementation(libs.androidx.ui.test.junit4.android)
+            implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
         }
         commonMain.dependencies {
@@ -162,6 +164,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.vlcj)
             implementation(libs.jlayer)
+            implementation(projects.cryptoJvm)
         }
         desktopTest.dependencies {
             implementation(compose.desktop.currentOs)
@@ -224,6 +227,7 @@ android {
             excludes += listOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/versions/9/OSGI-INF/MANIFEST.MF")
         }
     }
+    @Suppress("UnstableApiUsage")
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -391,3 +395,11 @@ tasks.withType(KotlinCompile::class.java).configureEach {
     dependsOn("exportLibraryDefinitions")
 }
 tasks.getByName("copyNonXmlValueResourcesForCommonMain").dependsOn("exportLibraryDefinitions")
+
+tasks.withType<Test> {
+    if (name == "testDebugUnitTest") {
+        exclude("**/device_based/*")
+    } else if (name == "testReleaseUnitTest") {
+        exclude("**/device_based/*", "**/jvm_based/*")
+    }
+}

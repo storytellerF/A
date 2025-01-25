@@ -73,7 +73,6 @@ val LocalWsClient = compositionLocalOf {
     ClientWebSocket({
         error("")
     }) {
-
     }
 }
 

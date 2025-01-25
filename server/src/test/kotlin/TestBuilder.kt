@@ -4,6 +4,7 @@ import com.storyteller_f.MergedEnv
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.a.server.module
 import com.storyteller_f.buildBackendFromEnv
+import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.readResourceEnv
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.obj.RoomFrame
@@ -25,7 +26,6 @@ import kotlin.collections.forEach
 import kotlin.collections.listOf
 import kotlin.collections.set
 import kotlin.collections.toMutableMap
-import com.storyteller_f.crypto_jvm.addProviderForJvm
 
 fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, ClientWebSocket) -> Unit) {
     Napier.base(DebugAntilog())

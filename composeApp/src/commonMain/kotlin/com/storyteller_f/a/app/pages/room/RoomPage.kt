@@ -28,7 +28,6 @@ import com.dokar.sonner.ToasterState
 import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.*
-import com.storyteller_f.a.app.compontents.TopicCell
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
@@ -162,6 +161,17 @@ fun RoomInputGroup(
         val updateInput: (String) -> Unit = {
             input = it
         }
+        val c = RoomMessageContext(
+            roomInfo,
+            input,
+            scrollToNew,
+            topicId,
+            scope,
+            toasterState,
+            controller,
+            keysViewModel,
+            wsClient
+        )
         InputGroupInternal(
             objectId,
             objectType,
@@ -173,11 +183,11 @@ fun RoomInputGroup(
             updateInput,
             {
                 insertContent(it, updateInput, input)
-                sendRoomTopic(roomInfo, input, scrollToNew, topicId, scope, toasterState, controller, keysViewModel, wsClient)
+                sendRoomTopic(c)
             },
         ) {
             RoomSendButton(input = input) {
-                sendRoomTopic(roomInfo, input, scrollToNew, topicId, scope, toasterState, controller, keysViewModel, wsClient)
+                sendRoomTopic(c)
             }
         }
     }
@@ -189,23 +199,27 @@ fun RoomInputGroup(
     }
 }
 
+class RoomMessageContext(
+    val roomInfo: RoomInfo,
+    val input: String,
+    val scrollToNew: () -> Unit,
+    val topicId: PrimaryKey?,
+    val scope: CoroutineScope,
+    val toasterState: ToasterState,
+    val alertDialogState: CustomAlertDialogController,
+    val keysViewModel: RoomKeysViewModel,
+    val wsClient: ClientWebSocket
+)
+
 private fun sendRoomTopic(
-    roomInfo: RoomInfo,
-    input: String,
-    scrollToNew: () -> Unit,
-    topicId: PrimaryKey?,
-    scope: CoroutineScope,
-    toasterState: ToasterState,
-    alertDialogState: CustomAlertDialogController,
-    keysViewModel: RoomKeysViewModel,
-    wsClient: ClientWebSocket
+    c: RoomMessageContext
 ) {
-    val keyState = keysViewModel.handler.state.value
-    val keyData = keysViewModel.handler.data.value
-    if (roomInfo.isJoined) {
-        sendMessage(roomInfo, input, scrollToNew, keyState, keyData, topicId, wsClient = wsClient) {
-            scope.launch {
-                toasterState.show(
+    val keyState = c.keysViewModel.handler.state.value
+    val keyData = c.keysViewModel.handler.data.value
+    if (c.roomInfo.isJoined) {
+        sendMessage(c.roomInfo, c.input, c.scrollToNew, keyState, keyData, c.topicId, wsClient = c.wsClient) {
+            c.scope.launch {
+                c.toasterState.show(
                     getString(Res.string.private_room_pub_key_loading),
                     type = ToastType.Info,
                     duration = 1.seconds
@@ -213,10 +227,10 @@ private fun sendRoomTopic(
             }
         }
     } else {
-        scope.launch {
+        c.scope.launch {
             val title = getString(Res.string.permission_denied)
             val message = getString(Res.string.join_room_prompt)
-            alertDialogState.showMessage(title, message)
+            c.alertDialogState.showMessage(title, message)
         }
     }
 }

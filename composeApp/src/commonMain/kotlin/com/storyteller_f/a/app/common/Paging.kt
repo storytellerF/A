@@ -8,7 +8,7 @@ import com.storyteller_f.a.client_lib.serviceCatching
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
-import io.ktor.client.HttpClient
+import io.ktor.client.*
 
 @OptIn(ExperimentalPagingApi::class)
 abstract class PagingViewModel<K : Any, V : Any>(
@@ -51,7 +51,10 @@ class SimplePagingSource<KEY : Any, DATUM : Any>(val service: suspend (KEY?) -> 
     }
 }
 
-class RegularPagingSource<DATUM : Any>(val service: suspend HttpClient.(PrimaryKey?) -> ServerResponse<DATUM>, val client: HttpClient) :
+class RegularPagingSource<DATUM : Any>(
+    val service: suspend HttpClient.(PrimaryKey?) -> ServerResponse<DATUM>,
+    val client: HttpClient
+) :
     PagingSource<PrimaryKey, DATUM>() {
     override suspend fun load(params: LoadParams<PrimaryKey>): PagingSourceLoadResult<PrimaryKey, DATUM> {
         return serviceCatching {

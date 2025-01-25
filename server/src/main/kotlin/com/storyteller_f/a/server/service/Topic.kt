@@ -117,7 +117,8 @@ private suspend fun createTopicSnapshot(
                         topicInfo,
                         pdfFile,
                         signedFile,
-                        documents.content, backend.snapshotVerify
+                        documents.content,
+                        backend.snapshotVerify
                     ).mapResultNotNull {
                         backend.mediaService.upload("amedia", listOf(UploadPack(name, pdfFile))).mapResult {
                             pdfFile.delete()
@@ -128,7 +129,6 @@ private suspend fun createTopicSnapshot(
                     pdfFile.delete()
                     signedFile.delete()
                 }
-
             }
         }
 }
@@ -138,7 +138,8 @@ fun generateSignedSnapshot(
     creatorInfo: UserInfo,
     topicInfo: TopicInfo,
     saveToFile: File,
-    signedFile: File, content: String,
+    signedFile: File,
+    content: String,
     snapshot: Pair<String, String>
 ): Result<Unit?> {
     val parent = saveToFile.parentFile
