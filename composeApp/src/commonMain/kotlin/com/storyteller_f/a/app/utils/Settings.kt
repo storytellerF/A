@@ -35,6 +35,7 @@ fun storeToStorage() {
     defaultSettings.encodeValue(LoginUser.serializer(), "login_user", loginUser)
 }
 
+@OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 fun clearStorage() {
     defaultSettings.removeValue<LoginUser>("login_user")
 }

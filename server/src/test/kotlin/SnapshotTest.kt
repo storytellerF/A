@@ -10,7 +10,6 @@ import kotlin.test.Test
 class SnapshotTest {
     @Test
     fun `test generate signed pdf`() {
-
         // register BouncyCastle provider, needed for "exotic" algorithms
         Security.addProvider(SecurityProvider.getProvider())
         val pdfFile = File("build/tmp/2.pdf")

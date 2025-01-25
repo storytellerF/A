@@ -256,7 +256,8 @@ private suspend fun selectFileAndUpload(
                 f.name,
                 id,
                 ContentType.defaultForFileExtension(f.extension),
-                uploadSuccess, client
+                uploadSuccess,
+                client
             ) {
                 f.readBytes()
             }
@@ -279,7 +280,8 @@ private suspend fun uploadPath(
             path.name,
             my?.id,
             ContentType.parse("audio/mp4"),
-            uploadSuccess, client
+            uploadSuccess,
+            client
         ) {
             SystemFileSystem.source(path).buffered().readByteArray()
         }

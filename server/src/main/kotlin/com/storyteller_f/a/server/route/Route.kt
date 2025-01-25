@@ -11,7 +11,6 @@ import com.storyteller_f.shared.model.MediaResponse
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapResult
 import io.ktor.http.*
 import io.ktor.resources.*
 import io.ktor.server.application.*

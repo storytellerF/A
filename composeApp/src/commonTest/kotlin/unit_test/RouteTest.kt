@@ -1,3 +1,5 @@
+package unit_test
+
 import com.storyteller_f.a.app.pages.topic.TopicRoute.Companion.parseRefUri
 import kotlin.test.Test
 import kotlin.test.assertEquals

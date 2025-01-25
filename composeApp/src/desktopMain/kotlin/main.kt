@@ -1,11 +1,11 @@
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.storyteller_f.a.app.App
-import com.storyteller_f.a.app.restoreFromStorage
-import com.storyteller_f.shared.addProvider
+import com.storyteller_f.a.app.utils.restoreFromStorage
+import com.storyteller_f.crypto_jvm.addProviderForJvm
 
 fun main() {
-    addProvider()
+    addProviderForJvm()
     restoreFromStorage()
     application {
         Window(

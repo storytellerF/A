@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ROOM_ID_LENGTH
+import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.*
@@ -37,7 +38,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             exitProcess(1)
         }
-        addProvider()
+        addProviderForJvm()
         DatabaseFactory.init(backend.config.databaseConnection)
         Napier.i {
             "database init done."

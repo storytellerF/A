@@ -1,23 +1,37 @@
 package jvm_based
 
+import android.content.ComponentName
 import android.content.ContentProvider
+import com.storyteller_f.a.app.MainActivity
 import kotbase.CouchbaseLite
 import org.junit.Before
+import org.junit.Rule
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowApplicationPackageManager
 
 @RunWith(RobolectricTestRunner::class)
 @Config(
     manifest = Config.NONE,
-    libraries = ["CouchbaseLiteTemp/1804786a0d7bbc395e8d4cbeb2342a1f/LiteCoreJNI.dll", "CouchbaseLiteTemp/1a4a585fd410b8ca6293a97ecb5a5c44/LiteCore.dll"]
 )
 actual abstract class UsingContextTest {
     @Before
     fun setup() {
+        System.loadLibrary("LiteCore")
+        System.loadLibrary("LiteCoreJNI")
         val app = RuntimeEnvironment.getApplication()
+        Shadows.shadowOf(app.packageManager).addActivityIfNotPresent(
+            ComponentName(
+                app.packageName,
+                MainActivity::class.simpleName!!,
+            )
+        )
         CouchbaseLite.init(app, true)
         setupAndroidContextProvider()
     }

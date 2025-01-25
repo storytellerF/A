@@ -1,6 +1,7 @@
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.obj.PresetValue
 import kotlinx.coroutines.runBlocking
@@ -15,7 +16,7 @@ class SignatureTest {
         val jsonFilePath = "../../AData/data/preset_user.json"
         val jsonFile = File(jsonFilePath)
         if (!jsonFile.exists()) return
-        addProvider()
+        addProviderForJvm()
 
         val presetValue =
             ObjectMapper().registerModule(KotlinModule.Builder().build())
@@ -36,7 +37,7 @@ class SignatureTest {
         val jsonFilePath = "../../AData/data/preset_user.json"
         val jsonFile = File(jsonFilePath)
         if (!jsonFile.exists()) return
-        addProvider()
+        addProviderForJvm()
 
         val presetValue =
             ObjectMapper().registerModule(KotlinModule.Builder().build())

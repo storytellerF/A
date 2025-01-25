@@ -64,7 +64,7 @@ suspend fun RoutingContext.uploadMedia(
                 is PartData.FileItem -> {
                     val fileName = part.originalFileName as String
                     val file = File(root, Uuid.random().toString() + fileName)
-                    //ktor 自带检查，保险起见再次检查
+                    // ktor 自带检查，保险起见再次检查
                     if (file.canonicalPath == file.absolutePath) {
                         val fileBytes = part.provider().readRemaining().readByteArray()
 
@@ -90,8 +90,6 @@ suspend fun RoutingContext.uploadMedia(
                             file.delete()
                         }
                     }
-
-
                 }
 
                 else -> {}

@@ -67,7 +67,6 @@ fun UserDialogInternal(userInfo: UserInfo, dismiss: () -> Unit = {}) {
             globalDialogState.use {
                 client.signOut()
                 LoginViewModel.signOut()
-
             }
         }
     }

@@ -11,6 +11,7 @@ dependencies {
     runtimeOnly(libs.slf4j.simple)
     testImplementation(kotlin("test"))
 
+    implementation(projects.cryptoJvm)
     implementation(projects.shared)
     implementation(projects.backend)
     implementation(libs.kotlinx.cli)
