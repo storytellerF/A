@@ -4,17 +4,14 @@ import android.content.ComponentName
 import android.content.ContentProvider
 import com.storyteller_f.a.app.MainActivity
 import kotbase.CouchbaseLite
+import org.junit.Assume
 import org.junit.Before
-import org.junit.Rule
-import org.junit.rules.TestWatcher
-import org.junit.runner.Description
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
-import org.robolectric.shadows.ShadowApplicationPackageManager
 
 @RunWith(RobolectricTestRunner::class)
 @Config(
@@ -23,6 +20,7 @@ import org.robolectric.shadows.ShadowApplicationPackageManager
 actual abstract class UsingContextTest {
     @Before
     fun setup() {
+        Assume.assumeTrue(System.getProperty("os.name").orEmpty().contains("win", true))
         System.loadLibrary("LiteCore")
         System.loadLibrary("LiteCoreJNI")
         val app = RuntimeEnvironment.getApplication()

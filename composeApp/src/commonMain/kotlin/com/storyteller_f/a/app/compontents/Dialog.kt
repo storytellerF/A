@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import com.storyteller_f.a.app.BuildKonfig
+import com.storyteller_f.a.app.AppConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class DialogSaveState {
@@ -104,7 +104,7 @@ fun GlobalDialogInternal(message: DialogState, updateNewState: (DialogState) -> 
             }, title = {
                 ExceptionView(throwable)
             }, text = {
-                if (!BuildKonfig.IS_PROD) {
+                if (!AppConfig.IS_PROD) {
                     val text = throwable.stackTraceToString()
                     MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
                         Text(text, modifier = Modifier.verticalScroll(scrollState), maxLines = (total).coerceIn(2, 20))

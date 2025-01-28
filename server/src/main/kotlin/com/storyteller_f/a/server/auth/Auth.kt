@@ -4,7 +4,7 @@ import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.a.server.BuildConfig
+import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.AidCredential
 import com.storyteller_f.a.server.auth.CustomCredential.IdCredential
 import com.storyteller_f.a.server.remoteIp
@@ -194,7 +194,7 @@ private suspend fun ApplicationCall.checkApiRequest(
 ): CustomPrincipal? {
     val sig = credential.sig
     return when {
-        !BuildConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
+        !ServerConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
             if (DatabaseFactory.getRawUserById(id).getOrNull() != null) {
                 saveSuccessSession(session, id)

@@ -8,9 +8,9 @@ import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ROOM_ID_LENGTH
 import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.index.TopicDocument
-import com.storyteller_f.media.AMEDIA_BUCKET
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.*
+import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetValue

@@ -49,3 +49,12 @@ dependencies {
 tasks.withType<JavaExec> {
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
+
+val isProd = project.findProperty("server.prod") == true
+val flavor = project.findProperty("buildkonfig.flavor").toString()
+
+buildConfig {
+    className = "ServerConfig"
+    buildConfigField<Boolean>("IS_PROD", isProd)
+    buildConfigField<String>("FLAVOR", flavor)
+}

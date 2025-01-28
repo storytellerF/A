@@ -17,12 +17,10 @@ import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 import kotlin.collections.Map
 import kotlin.collections.forEach
@@ -47,25 +45,28 @@ fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, Cl
                 env["ELASTIC_NAME"] = "elastic"
                 env["ELASTIC_PASSWORD"] = "changeme"
                 env["ELASTIC_URL"] = "http://${elasticClient.httpHostAddress}"
-                MinIOContainer("minio/minio:RELEASE.2024-12-18T13-15-44Z").use { minioContainer ->
-                    minioContainer.start()
-                    env["MEDIA_SERVICE"] = "minio"
-                    env["MINIO_URL"] = minioContainer.s3URL
-                    env["MINIO_NAME"] = minioContainer.userName
-                    env["MINIO_PASS"] = minioContainer.password
-                    PostgreSQLContainer("pgvector/pgvector:pg16").use { postgreSQLContainer ->
-                        postgreSQLContainer.start()
-                        env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl
-                        env["DATABASE_DRIVER"] = postgreSQLContainer.driverClassName
-                        env["DATABASE_USER"] = postgreSQLContainer.username
-                        env["DATABASE_PASS"] = postgreSQLContainer.password
-                        env["DATABASE_DB"] = postgreSQLContainer.databaseName
-                        withContext(Dispatchers.IO) {
-                            delay(1000)
+                MinIOContainer(
+                    "minio/minio:RELEASE.2024-12-18T13-15-44Z"
+                ).waitingFor(Wait.forSuccessfulCommand("curl -I http://localhost:9000/minio/health/live"))
+                    .use { minioContainer ->
+                        minioContainer.start()
+                        env["MEDIA_SERVICE"] = "minio"
+                        env["MINIO_URL"] = minioContainer.s3URL
+                        env["MINIO_NAME"] = minioContainer.userName
+                        env["MINIO_PASS"] = minioContainer.password
+                        PostgreSQLContainer(
+                            "pgvector/pgvector:pg16"
+                        ).waitingFor(Wait.forSuccessfulCommand("pg_isready")).use { postgreSQLContainer ->
+                            postgreSQLContainer.start()
+                            println("jdbc: ${postgreSQLContainer.jdbcUrl}")
+                            env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl
+                            env["DATABASE_DRIVER"] = postgreSQLContainer.driverClassName
+                            env["DATABASE_USER"] = postgreSQLContainer.username
+                            env["DATABASE_PASS"] = postgreSQLContainer.password
+                            env["DATABASE_DB"] = postgreSQLContainer.databaseName
+                            doTest(env, receivedFrame, block)
                         }
-                        doTest(env, receivedFrame, block)
                     }
-                }
             }
     }
 
@@ -87,6 +88,7 @@ private fun doTest(
     DatabaseFactory.clean(backend.config.databaseConnection)
     DatabaseFactory.init(backend.config.databaseConnection)
     DatabaseFactory.enableExplain()
+    println("prepared resource")
     testApplication {
         environment {
             config = MapApplicationConfig().apply {
@@ -112,6 +114,7 @@ private fun doTest(
         block(client, wsClient)
     }
 
+    println("clean resource")
     runBlocking {
         backend.topicSearchService.clean()
     }

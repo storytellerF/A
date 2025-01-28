@@ -36,7 +36,7 @@ private class TopicPagePreviewProvider : PreviewParameterProvider<Pair<TopicInfo
     override val values: Sequence<Pair<TopicInfo, List<TopicInfo>>>
         get() = sequence {
             val p = Path(
-                com.storyteller_f.a.app.BuildKonfig.PROJECT_PATH,
+                com.storyteller_f.a.app.AppConfig.PROJECT_PATH,
                 "../../AData/data/preset_topic.json"
             )
             if (SystemFileSystem.exists(p)) {
