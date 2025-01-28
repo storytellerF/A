@@ -2,7 +2,7 @@ package com.storyteller_f.a.server.service
 
 import com.storyteller_f.*
 import com.storyteller_f.a.server.route.RouteCommunities
-import com.storyteller_f.media.AMEDIA_BUCKET
+import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType

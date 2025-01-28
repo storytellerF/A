@@ -111,8 +111,8 @@ data class MediaScreen(val url: String)
 
 @Composable
 fun App() {
-    val httpUrl = BuildKonfig.SERVER_URL
-    val wsServerUrl = BuildKonfig.WS_SERVER_URL
+    val httpUrl = AppConfig.SERVER_URL
+    val wsServerUrl = AppConfig.WS_SERVER_URL
     AppInternal(httpUrl, wsServerUrl)
 }
 

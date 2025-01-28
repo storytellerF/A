@@ -13,7 +13,7 @@ import java.io.File
 private class ContentListProvider : PreviewParameterProvider<String> {
     override val values: Sequence<String>
         get() = sequence {
-            val f = File(com.storyteller_f.a.app.BuildKonfig.PROJECT_PATH, "../../AData/data/preset_topic.json")
+            val f = File(com.storyteller_f.a.app.AppConfig.PROJECT_PATH, "../../AData/data/preset_topic.json")
             if (f.exists()) {
                 val value = Json.decodeFromString<PresetValue>(f.readText())
                 yieldAll(value.topicData.orEmpty().filter {

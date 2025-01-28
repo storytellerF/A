@@ -3,6 +3,8 @@ package com.storyteller_f.shared.model
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
+const val AMEDIA_BUCKET = "amedia"
+
 @Serializable
 data class Dimension(val width: Int, val height: Int)
 

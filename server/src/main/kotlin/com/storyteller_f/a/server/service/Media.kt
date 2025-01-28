@@ -3,8 +3,8 @@ package com.storyteller_f.a.server.service
 import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.route.RouteMedia
-import com.storyteller_f.media.AMEDIA_BUCKET
 import com.storyteller_f.media.UploadPack
+import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType

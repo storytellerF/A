@@ -22,7 +22,7 @@ import java.io.File
 private class CommunitiesProvider : PreviewParameterProvider<List<CommunityInfo>> {
     override val values: Sequence<List<CommunityInfo>>
         get() = sequence {
-            val f = File(com.storyteller_f.a.app.BuildKonfig.PROJECT_PATH, "../../AData/data/preset_community.json")
+            val f = File(com.storyteller_f.a.app.AppConfig.PROJECT_PATH, "../../AData/data/preset_community.json")
             if (f.exists()) {
                 val value = Json.decodeFromString<PresetValue>(f.readText())
                 yield(value.communityData.orEmpty().map {

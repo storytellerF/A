@@ -56,7 +56,6 @@ napier = "2.7.1"
 navigationCompose = "2.8.0-alpha11"
 pagingCommon = "3.3.0-alpha02-0.5.1"
 pdfbox = "3.0.3"
-pdfbox2LayoutVersion = "3.0.0-rc.0"
 pdfboxLayout = "3.0.0-rc.0"
 pgjdbcNg = "0.8.9"
 postgresql = "42.7.4"
@@ -64,6 +63,7 @@ postgresqlVersion = "1.20.4"
 recordCore = "0.4.0"
 richeditorCompose = "1.0.0-rc10"
 robolectric = "4.14.1"
+screenshot = "0.0.1-alpha07"
 simplemagic = "1.17"
 slf4jSimple = "2.0.16"
 sqliteJdbc = "3.47.1.0"
@@ -85,6 +85,7 @@ androidx-media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
 androidx-ui-test-junit4-android = { module = "androidx.compose.ui:ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "uiTestJunit4Android" }
+androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiTestJunit4Android" }
 bcpkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bcprovJdk18on" }
 bcprov-jdk18on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bcprovJdk18on" }
 bctls-jdk18on = { module = "org.bouncycastle:bctls-jdk18on", version.ref = "bcprovJdk18on" }
@@ -207,6 +208,7 @@ kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
+screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot"}
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 [bundles]

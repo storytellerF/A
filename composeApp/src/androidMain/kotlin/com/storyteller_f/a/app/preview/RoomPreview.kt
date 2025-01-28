@@ -30,7 +30,7 @@ private class MessageListProvider : PreviewParameterProvider<List<TopicInfo>> {
     override val values: Sequence<List<TopicInfo>>
         get() = sequence {
             val p = Path(
-                com.storyteller_f.a.app.BuildKonfig.PROJECT_PATH,
+                com.storyteller_f.a.app.AppConfig.PROJECT_PATH,
                 "../../AData/data/preset_topic.json"
             )
             if (SystemFileSystem.exists(p)) {
@@ -76,7 +76,7 @@ private class RoomsProvider : PreviewParameterProvider<RoomInfo> {
     override val values: Sequence<RoomInfo>
         get() = sequence {
             val p = Path(
-                com.storyteller_f.a.app.BuildKonfig.PROJECT_PATH,
+                com.storyteller_f.a.app.AppConfig.PROJECT_PATH,
                 "../../AData/data/preset_room.json"
             )
             if (SystemFileSystem.exists(p)) {

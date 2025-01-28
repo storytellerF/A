@@ -4,7 +4,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.CustomBadRequestException
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.USER_NICKNAME
-import com.storyteller_f.media.AMEDIA_BUCKET
+import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult

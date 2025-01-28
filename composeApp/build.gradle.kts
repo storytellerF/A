@@ -296,6 +296,7 @@ compose.desktop {
 
 buildkonfig {
     packageName = "com.storyteller_f.a.app"
+    objectName = "AppConfig"
     val properties = Properties().apply {
         val file = layout.projectDirectory.file("../${flavorStr}.env").asFile
         load(FileInputStream(file))

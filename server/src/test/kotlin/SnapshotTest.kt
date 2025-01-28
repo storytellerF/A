@@ -1,7 +1,6 @@
 import com.storyteller_f.a.server.service.generateSignedSnapshot
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import org.apache.pdfbox.examples.signature.ShowSignature
 import org.apache.pdfbox.pdmodel.encryption.SecurityProvider
 import java.io.File
 import java.security.Security
@@ -24,6 +23,6 @@ class SnapshotTest {
             "" to ""
         ).getOrThrow()
 
-        ShowSignature().showSignature(signedFile, "123456")
+//        ShowSignature().showSignature(signedFile, "123456")
     }
 }

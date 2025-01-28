@@ -18,7 +18,7 @@ import java.io.File
 @Preview
 @Composable
 private fun PreviewCommunity(@PreviewParameter(CommunityProvider::class) communityInfo: CommunityInfo) {
-    CommunityDialogInternal(communityInfo = communityInfo, {})
+    CommunityDialogInternal(communityInfo = communityInfo) {}
 }
 
 @Preview
@@ -34,7 +34,7 @@ private fun PreviewCommunityPage() {
 private class CommunityProvider : PreviewParameterProvider<CommunityInfo> {
     override val values: Sequence<CommunityInfo>
         get() = sequence {
-            val f = File(com.storyteller_f.a.app.BuildKonfig.PROJECT_PATH, "../../AData/data/preset_community.json")
+            val f = File(com.storyteller_f.a.app.AppConfig.PROJECT_PATH, "../../AData/data/preset_community.json")
             if (f.exists()) {
                 val value = Json.decodeFromString<PresetValue>(f.readText())
                 yieldAll(value.communityData.orEmpty().map {

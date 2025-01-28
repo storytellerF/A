@@ -2,7 +2,6 @@ package com.storyteller_f.media
 
 import com.storyteller_f.shared.model.MediaInfo
 import java.io.File
-const val AMEDIA_BUCKET = "amedia"
 
 data class UploadPack(val name: String, val path: File, val contentType: String? = null)
 
