@@ -19,7 +19,7 @@ COPY . .
 RUN find scripts/ -type f \( -name "*.sh" -o -name "*.js" \) -exec sed -i 's/\r$//' {} + && \
     sed -i 's/\r$//' gradlew
 
-RUN ./scripts/download_scripts/download_data.sh
+RUN ./scripts/download_scripts/download-data.sh
 
 ENV HOST_TYPE=docker
 
