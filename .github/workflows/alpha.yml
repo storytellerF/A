@@ -37,10 +37,10 @@ jobs:
           cache: gradle
 
       - name: Build mini app
-        run: ./scripts/build_scripts/build-app-on-ci.sh mini www.acommunity.link/
+        run: ./scripts/build_scripts/build-app-on-ci.sh mini www.acommunity.link
 
       - name: Build koyeb app
-        run: ./scripts/build_scripts/build-app-on-ci.sh koyeb respectable-jobie-anabn-3d54150c.koyeb.app/server/
+        run: ./scripts/build_scripts/build-app-on-ci.sh koyeb respectable-jobie-anabn-3d54150c.koyeb.app/server
 
       - uses: actions/upload-artifact@v4
         with:

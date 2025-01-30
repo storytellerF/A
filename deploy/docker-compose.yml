@@ -56,6 +56,8 @@ services:
 
   bunkerweb:
     image: bunkerity/bunkerweb:${BUNKER_VERSION}
+    depends_on:
+      - bw-db
     ports:
       - ${BUNKER_PORT}:8080
       - ${BUNKER_PORT_SECRET}:8443
@@ -96,6 +98,7 @@ services:
     depends_on:
       - bunkerweb
       - bw-docker
+      - bw-db
     environment:
       - DATABASE_URI=${BUNKER_DB_URI}
       - DOCKER_HOST=tcp://bw-docker:2375
@@ -120,6 +123,7 @@ services:
     image: bunkerity/bunkerweb-ui:1.5.12
     depends_on:
       - bw-docker
+      - bw-db
     environment:
       - DATABASE_URI=${BUNKER_DB_URI}
       - DOCKER_HOST=tcp://bw-docker:2375
