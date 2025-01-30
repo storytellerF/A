@@ -1,6 +1,6 @@
 FROM eclipse-temurin:21-alpine AS builder
 
-RUN apk add bash curl
+RUN apk add bash curl unzip
 
 #^1
 #patched
