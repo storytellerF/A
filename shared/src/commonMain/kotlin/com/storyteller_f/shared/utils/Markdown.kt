@@ -11,6 +11,8 @@ import org.intellij.markdown.ast.acceptChildren
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.ast.visitors.Visitor
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
+import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
+import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.parser.MarkdownParser
 
 fun extractMarkdownHeadline(markdownText: String): String {
@@ -159,7 +161,7 @@ fun extractImageUrl(node: ASTNode, markdownText: String): String? {
 }
 
 fun astNode(markdownText: String): ASTNode {
-    val flavour = CommonMarkFlavourDescriptor()
+    val flavour = GFMFlavourDescriptor()
     val parser = MarkdownParser(flavour)
     return parser.buildMarkdownTreeFromString(markdownText)
 }
@@ -176,6 +178,17 @@ fun readCodeFence(node: ASTNode, content: String): String {
         it.type == MarkdownTokenTypes.CODE_FENCE_CONTENT
     }.endOffset
     return content.substring(start, end)
+}
+
+fun readInlineMath(node: ASTNode, content: String): String {
+    val children = node.children
+    val langOffset = children.first {
+        it.type == GFMTokenTypes.DOLLAR
+    }.endOffset
+    val end = children.last {
+        it.type == GFMTokenTypes.DOLLAR
+    }.startOffset
+    return content.substring(langOffset, end).removeSurrounding("`")
 }
 
 fun getLang(node: ASTNode, content: String): String {

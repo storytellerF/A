@@ -80,7 +80,7 @@ private fun TopicPageInternal(
     topics: LazyPagingItems<TopicInfo>,
     startAddReaction: () -> Unit
 ) {
-    Column(modifier = Modifier) {
+    Column(modifier = Modifier.fillMaxSize()) {
         var showDialog by remember {
             mutableStateOf(false)
         }
@@ -93,29 +93,28 @@ private fun TopicPageInternal(
             }
         }
         val lazyListState = rememberLazyListState()
-        Box(modifier = Modifier.weight(1f)) {
-            StateView(viewModel.handler, {
-                topics.refresh()
-            }) {
-                LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    state = lazyListState
-                ) {
-                    item {
-                        TopicContentField(it)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        InteractionRow(it, {
-                            startAddReaction()
-                        }) {
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        HorizontalDivider()
+        StateView(viewModel.handler, {
+            topics.refresh()
+        }, modifier = Modifier.weight(1f)) {
+            LazyColumn(
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                state = lazyListState,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                item {
+                    TopicContentField(it)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    InteractionRow(it, {
+                        startAddReaction()
+                    }) {
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider()
+                }
 
-                    nestedStateView(topics) {
-                        it?.let { topicInfoRaw -> TopicCell(topicInfoRaw) }
-                    }
+                nestedStateView(topics) {
+                    it?.let { topicInfoRaw -> TopicCell(topicInfoRaw) }
                 }
             }
         }
