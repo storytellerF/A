@@ -25,5 +25,5 @@ data class LoginUser(
     val address: String,
     val signature: String?,
     val data: String,
-    val user: UserInfo
+    val user: UserInfo,
 )

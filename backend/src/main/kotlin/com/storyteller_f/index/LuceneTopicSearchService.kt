@@ -45,7 +45,7 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
         }
     }
 
-    override suspend fun getDocument(idList: List<PrimaryKey>): Result<List<TopicDocument?>> {
+    override suspend fun getDocuments(idList: List<PrimaryKey>): Result<List<TopicDocument?>> {
         if (idList.isEmpty()) return Result.success(emptyList())
         if (idList.size == 1) {
             return useLucene {

@@ -180,7 +180,7 @@ suspend fun getCommunityTopicList(
             val ids = data.map {
                 it.id
             }
-            backend.topicSearchService.getDocument(ids).mapResult { list ->
+            backend.topicSearchService.getDocuments(ids).mapResult { list ->
                 processMediaLink(backend, data, list).map {
                     PaginationResult(it, count)
                 }

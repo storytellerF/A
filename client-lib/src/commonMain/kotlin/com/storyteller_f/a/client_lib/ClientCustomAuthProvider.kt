@@ -27,6 +27,7 @@ class ClientCustomAuthProvider : AuthProvider {
         get() = TODO("Not yet implemented")
 
     override fun sendWithoutRequest(request: HttpRequestBuilder): Boolean {
+        Napier.v("sendWithoutRequest", tag = "ClientAuth")
         return true
     }
 
@@ -75,6 +76,9 @@ fun HttpRequestBuilder.addRequestHeaders(
         val localData = LoginViewModel.session?.first
         val localSignature = LoginViewModel.session?.second
         if (userInfo != null && data == localData && localData.isNotBlank() && !localSignature.isNullOrBlank()) {
+            Napier.i {
+                "headers $localData $localSignature"
+            }
             if (userInfo.aid.isNullOrBlank()) {
                 val userId = userInfo.id
                 headers[HttpHeaders.Authorization] =

@@ -33,7 +33,7 @@ data class TopicDocument(
 interface TopicSearchService {
     suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit>
 
-    suspend fun getDocument(idList: List<PrimaryKey>): Result<List<TopicDocument?>>
+    suspend fun getDocuments(idList: List<PrimaryKey>): Result<List<TopicDocument?>>
 
     suspend fun clean(): Result<Unit>
 

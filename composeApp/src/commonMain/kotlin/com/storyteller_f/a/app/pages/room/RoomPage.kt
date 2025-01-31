@@ -380,12 +380,18 @@ private fun InputGroupSuffix(
         Icon(
             Icons.Default.OpenInFull,
             "open in full",
-            modifier = Modifier.clickable(enabled = alreadyLoginIn) {
-                appNav.gotoTopicCompose(objectType, objectId, false, privateRoomId)
+            modifier = Modifier.clickable {
+                if (alreadyLoginIn)
+                    appNav.gotoTopicCompose(objectType, objectId, false, privateRoomId)
+                else
+                    globalDialogState.showMessage("need sign in")
             }
         )
-        Icon(Icons.Filled.PermMedia, contentDescription = null, modifier = Modifier.clickable(alreadyLoginIn) {
-            showSheet = true
+        Icon(Icons.Filled.PermMedia, contentDescription = null, modifier = Modifier.clickable {
+            if (alreadyLoginIn)
+                showSheet = true
+            else
+                globalDialogState.showMessage("need sign in")
         })
     }
     val sheetState = rememberModalBottomSheetState()

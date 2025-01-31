@@ -8,7 +8,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery
 import co.elastic.clients.elasticsearch.core.BulkRequest
-import co.elastic.clients.elasticsearch.core.MgetRequest
 import co.elastic.clients.elasticsearch.core.SearchRequest
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
 import co.elastic.clients.elasticsearch.core.bulk.IndexOperation
@@ -39,53 +38,64 @@ private const val TOPIC_INDEX_NAME = "topics"
 class ElasticTopicSearchService(private val connection: ElasticConnection) : TopicSearchService {
 
     override suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit> {
-        return if (topics.size == 1) {
-            val topic = topics.first()
-            useElasticClient(connection) {
-                val response = index {
-                    it.index(TOPIC_INDEX_NAME).id(topic.id.toString()).document(topic)
-                }.await()
-                Napier.i(tag = "elastic save") {
-                    response.toString()
+        return when {
+            topics.isEmpty() -> Result.success(Unit)
+            topics.size == 1 -> {
+                val topic = topics.first()
+                useElasticClient(connection) {
+                    val response = index {
+                        it.index(TOPIC_INDEX_NAME).id(topic.id.toString()).document(topic)
+                    }.await()
+                    Napier.i(tag = "elastic save") {
+                        response.toString()
+                    }
                 }
             }
-        } else {
-            useElasticClient(connection) {
-                val response = bulk(BulkRequest.of {
-                    it.operations(topics.map { document ->
-                        BulkOperation.of { op ->
-                            op.index(
-                                IndexOperation.Builder<TopicDocument>()
-                                    .index(TOPIC_INDEX_NAME)
-                                    .id(document.id.toString()) // 指定文档 ID
-                                    .document(document)
-                                    .build()
-                            )
-                        }
-                    })
-                }).await()
-                Napier.i(tag = "elastic save bulk") {
-                    response.toString()
+
+            else -> {
+                useElasticClient(connection) {
+                    val response = bulk {
+                        it.operations(topics.map { document ->
+                            BulkOperation.of { op ->
+                                op.index(
+                                    IndexOperation.Builder<TopicDocument>()
+                                        .index(TOPIC_INDEX_NAME)
+                                        .id(document.id.toString()) // 指定文档 ID
+                                        .document(document)
+                                        .build()
+                                )
+                            }
+                        })
+                    }.await()
+                    Napier.i(tag = "elastic save bulk") {
+                        response.toString()
+                    }
                 }
             }
         }
     }
 
-    override suspend fun getDocument(idList: List<PrimaryKey>): Result<List<TopicDocument?>> {
-        return if (idList.size == 1) {
-            val id = idList.first()
-            useElasticClient(connection) {
-                listOf(get({
-                    it.index(TOPIC_INDEX_NAME)
-                        .id(id.toString())
-                }, TopicDocument::class.java).await().source())
+    override suspend fun getDocuments(idList: List<PrimaryKey>): Result<List<TopicDocument?>> {
+        return when {
+            idList.isEmpty() -> Result.success(emptyList())
+            idList.size == 1 -> {
+                useElasticClient(connection) {
+                    idList.map { id ->
+                        get({
+                            it.index(TOPIC_INDEX_NAME).id(id.toString())
+                        }, TopicDocument::class.java).await().source()
+                    }
+
+                }
             }
-        } else {
-            useElasticClient(connection) {
-                mget(MgetRequest.of { builder ->
-                    builder.index(TOPIC_INDEX_NAME).ids(idList.map { it.toString() })
-                }, TopicDocument::class.java).await().docs().map {
-                    it.result().source()
+
+            else -> {
+                useElasticClient(connection) {
+                    mget({
+                        it.index(TOPIC_INDEX_NAME).ids(idList.map { it.toString() })
+                    }, TopicDocument::class.java).await().docs().map {
+                        it.result().source()
+                    }
                 }
             }
         }

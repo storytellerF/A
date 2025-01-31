@@ -81,7 +81,7 @@ fun PreviewTopic(@PreviewParameter(TopicPagePreviewProvider::class) param: Pair<
             }
 
             items(param.second) {
-                TopicCellInternal(it, true, UserInfo.EMPTY, true) {}
+                TopicCellInternal(it, UserInfo.EMPTY, true, true) {}
             }
         }
     }
