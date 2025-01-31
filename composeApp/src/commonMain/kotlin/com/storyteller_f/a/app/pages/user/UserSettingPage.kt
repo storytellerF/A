@@ -20,21 +20,25 @@ import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import kotlinx.coroutines.launch
 
+sealed interface UserSettingOption {
+    data object Name : UserSettingOption
+    data object Aid : UserSettingOption
+    data object Icon : UserSettingOption
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserSettingPage() {
-    var showSheet by remember {
-        mutableStateOf(false)
-    }
     var showInputDialog by remember {
-        mutableStateOf(false)
+        mutableStateOf<UserSettingOption?>(null)
     }
+    val showSheet = showInputDialog is UserSettingOption.Icon
     val sheetState = rememberModalBottomSheetState()
     val my by LoginViewModel.user.collectAsState()
     Scaffold {
         Column(modifier = Modifier.padding(horizontal = 20.dp).padding(it)) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
-                showSheet = true
+                showInputDialog = UserSettingOption.Icon
             }) {
                 Text("Icon")
                 Spacer(modifier = Modifier.weight(1f))
@@ -42,11 +46,23 @@ fun UserSettingPage() {
             }
             HorizontalDivider()
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
-                showInputDialog = true
+                showInputDialog = UserSettingOption.Name
             }) {
                 Text("Name")
                 Spacer(modifier = Modifier.weight(1f))
                 my?.nickname?.let { it1 -> Text(it1, textDecoration = TextDecoration.Underline) }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
+                showInputDialog = UserSettingOption.Aid
+            }) {
+                Text("Aid")
+                Spacer(modifier = Modifier.weight(1f))
+                val aid = my?.aid
+                if (aid == null) {
+                    Text("undefined", textDecoration = TextDecoration.Underline)
+                } else {
+                    Text(aid)
+                }
             }
         }
     }
@@ -57,7 +73,7 @@ fun UserSettingPage() {
             globalDialogState.use {
                 val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(avatar = info)).getOrThrow()
                 LoginViewModel.updateUser(newInfo)
-                showSheet = false
+                showInputDialog = null
             }
         }
     }
@@ -66,17 +82,32 @@ fun UserSettingPage() {
     }, {
         updateIcon(it)
     }, support = listOf("files")) {
-        showSheet = false
+        showInputDialog = null
     }
-    InputDialog(showInputDialog, my?.nickname.orEmpty(), {
-        showInputDialog = false
+    InputDialog(showInputDialog != null, my?.nickname.orEmpty(), {
+        showInputDialog = null
     }) {
         scope.launch {
-            globalDialogState.use {
-                val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(nickname = it)).getOrThrow()
-                LoginViewModel.updateUser(newInfo)
-                bus.emit(OnUpdateUser(newInfo))
-                showInputDialog = false
+            when (showInputDialog) {
+                is UserSettingOption.Name -> {
+                    globalDialogState.use {
+                        val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(nickname = it)).getOrThrow()
+                        LoginViewModel.updateUser(newInfo)
+                        bus.emit(OnUpdateUser(newInfo))
+                        showInputDialog = null
+                    }
+                }
+
+                is UserSettingOption.Aid -> {
+                    globalDialogState.use {
+                        val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(aid = it)).getOrThrow()
+                        LoginViewModel.updateUser(newInfo)
+                        bus.emit(OnUpdateUser(newInfo))
+                        showInputDialog = null
+                    }
+                }
+
+                else -> {}
             }
         }
     }

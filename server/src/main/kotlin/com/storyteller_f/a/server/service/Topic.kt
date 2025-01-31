@@ -65,7 +65,7 @@ suspend fun addTopicAtCommunity(uid: PrimaryKey, backend: Backend, newTopic: New
                     createdTime = now(),
                 )
                 DatabaseFactory.saveTopic(topic, backend, content, rootId, rootType, newTopic, uid).mapResult {
-                    backend.topicSearchService.getDocument(listOf(newId)).mapResult { documents ->
+                    backend.topicSearchService.getDocuments(listOf(newId)).mapResult { documents ->
                         val topicInfo = topic.toTopicInfo()
                         processMediaLink(backend, listOf(topicInfo), documents).map {
                             it.firstOrNull()
@@ -102,7 +102,7 @@ private suspend fun createTopicSnapshot(
     uid: PrimaryKey
 ): Result<MediaInfo?> {
     val topicId = topicInfo.id
-    return backend.topicSearchService.getDocument(listOf(topicId)).map { value -> value.firstOrNull() }
+    return backend.topicSearchService.getDocuments(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultNotNull { documents ->
             DatabaseFactory.getRawUserById(topicInfo.author).mapResultNotNull { (first) ->
                 val name = "$uid/$topicId.pdf"
@@ -222,7 +222,7 @@ suspend fun getTopic(
         if (hasRead) {
             getCommonTopic(topicId, uid).mapResultNotNull { info ->
                 when {
-                    !isPrivate -> backend.topicSearchService.getDocument(listOf(topicId)).mapResult { value ->
+                    !isPrivate -> backend.topicSearchService.getDocuments(listOf(topicId)).mapResult { value ->
                         processMediaLink(backend, listOf(info), value).map {
                             it.first()
                         }
@@ -270,7 +270,7 @@ suspend fun getTopics(
                 fillHasCommented,
                 predicate
             ).mapResult { (data, count) ->
-                backend.topicSearchService.getDocument(data.map {
+                backend.topicSearchService.getDocuments(data.map {
                     it.id
                 }).mapResult { documents ->
                     processMediaLink(backend, data, documents)

@@ -3,6 +3,10 @@
 USE_PREBUILD=$1
 CUSTOM_COMMAND=$2
 
+if [ -z "$CUSTOM_COMMAND" ]; then
+    CUSTOM_COMMAND="up -d --build"
+fi
+
 cd deploy
 
 if [ "$USE_PREBUILD" = "true" ]; then

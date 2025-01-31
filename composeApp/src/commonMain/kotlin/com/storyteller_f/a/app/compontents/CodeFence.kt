@@ -16,17 +16,24 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.network.ktor3.KtorNetworkFetcherFactory
@@ -35,6 +42,7 @@ import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
+import com.mikepenz.markdown.model.PlaceholderConfig
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.pages.topic.TopicRoute
@@ -46,6 +54,7 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
+import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -191,6 +200,7 @@ private fun imageRequestInMarkdown(
     return ImageRequest.Builder(LocalPlatformContext.current)
         .fetcherFactory(KtorNetworkFetcherFactory(client))
         .data(info?.url)
+        .size(coil3.size.Size.ORIGINAL)
         .build()
 }
 
@@ -221,6 +231,40 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInf
             }
         )
     }
+
+    override fun placeholderConfig(density: Density, containerSize: Size, intrinsicImageSize: Size): PlaceholderConfig {
+        val size1 = with(density) {
+            when {
+                containerSize.isUnspecified -> Size(180f, 180f)
+                intrinsicImageSize.isUnspecified -> Size(containerSize.width.toSp().value, 180f)
+                else -> {
+                    val width = minOf(intrinsicImageSize.width, containerSize.width)
+                    val height = if (intrinsicImageSize.width < containerSize.width) {
+                        intrinsicImageSize.height
+                    } else {
+                        (intrinsicImageSize.height * containerSize.width) / intrinsicImageSize.width
+                    }
+                    Size(width.toSp().value, height.toSp().value)
+                }
+            }
+        }
+        Napier.i {
+            "size $size1"
+        }
+        return PlaceholderConfig(size1, animate = false)
+    }
+
+    @Composable
+    override fun intrinsicSize(painter: Painter): Size {
+        var size by remember(painter) { mutableStateOf(painter.intrinsicSize) }
+        if (painter is AsyncImagePainter) {
+            val painterState = painter.state.collectAsState()
+            val intrinsicSize = painterState.value.painter?.intrinsicSize
+            intrinsicSize?.also { size = it }
+        }
+        return size
+    }
+
 }
 
 @Composable

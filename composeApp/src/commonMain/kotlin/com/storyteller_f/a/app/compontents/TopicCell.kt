@@ -31,7 +31,7 @@ fun TopicCell(
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     val authorInfo by authorViewModel.handler.data.collectAsState()
-    TopicCellInternal(info, showAvatar, authorInfo, contentAlignAvatar) {
+    TopicCellInternal(info, authorInfo, showAvatar, contentAlignAvatar) {
         showBottomSheet = true
     }
     EmojiPicker(sheetState, showBottomSheet, info) {
@@ -45,8 +45,8 @@ fun TopicCell(
 @Composable
 fun TopicCellInternal(
     topicInfo: TopicInfo,
-    showAvatar: Boolean,
     authorInfo: UserInfo?,
+    showAvatar: Boolean,
     contentAlignAvatar: Boolean,
     modifier: Modifier = Modifier,
     startAddReaction: () -> Unit

@@ -122,7 +122,7 @@ private fun topicDocumentService(
 ): TopicSearchService {
     return when (val type = env["SEARCH_SERVICE"]) {
         "elastic" -> {
-            val certFile = env["CERT_FILE"]
+            val certFile = env["ELASTIC_CERT_FILE"]
             val url = env["ELASTIC_URL"]
             val name = env["ELASTIC_NAME"]
             val pass = env["ELASTIC_PASSWORD"]

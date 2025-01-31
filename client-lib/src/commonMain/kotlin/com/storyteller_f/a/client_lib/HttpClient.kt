@@ -44,6 +44,9 @@ fun HttpClientConfig<*>.defaultClientConfigure() {
             if (response.status == HttpStatusCode.Unauthorized) {
                 val data = LoginViewModel.session?.first
                 val r = response.headers["www-authenticate"]
+                Napier.i {
+                    "unauthorized $r $data"
+                }
                 data != r
             } else {
                 response.status == HttpStatusCode.TooManyRequests

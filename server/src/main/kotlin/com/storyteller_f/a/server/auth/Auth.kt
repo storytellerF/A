@@ -16,6 +16,7 @@ import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.filterNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.tables.*
+import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
@@ -266,8 +267,7 @@ private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession
     val remote = remoteIp(reader).first().first
     return when (val session = sessions.get(UserSession::class)) {
         null -> {
-            val data = Uuid.random().toString()
-            val newSession = UserSession.Pending(data, remote)
+            val (data, newSession) = createPendingSession(remote)
             sessions.set<UserSession>(newSession)
             newSession to data
         }
@@ -276,8 +276,7 @@ private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession
             if (remote == session.remote) {
                 session to session.data
             } else {
-                val data = Uuid.random().toString()
-                val value = UserSession.Pending(data, remote)
+                val (data, value) = createPendingSession(remote)
                 sessions.set<UserSession>(value)
                 value to data
             }
@@ -287,13 +286,22 @@ private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession
             if (remote == session.remote) {
                 session to session.data
             } else {
-                val data = Uuid.random().toString()
-                val value = UserSession.Pending(data, remote)
+                val (data, value) = createPendingSession(remote)
                 sessions.set<UserSession>(value)
                 value to data
             }
         }
     }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+private fun createPendingSession(remote: String): Pair<String, UserSession.Pending> {
+    Napier.i {
+        "pending session $remote"
+    }
+    val data = Uuid.random().toString()
+    val value = UserSession.Pending(data, remote)
+    return Pair(data, value)
 }
 
 fun ApplicationCall.getRateLimitKey(databaseReader: DatabaseReader): Comparable<*> {

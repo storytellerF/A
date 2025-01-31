@@ -1,0 +1,8 @@
+volumes:
+  certs:
+    driver: local
+    external: false
+    driver_opts:
+      type: bind
+      o: bind
+      device: ${ELASTIC_CERT_DIR}

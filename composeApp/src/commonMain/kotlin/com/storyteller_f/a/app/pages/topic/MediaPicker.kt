@@ -17,7 +17,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -41,15 +40,12 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.formatTime
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.haze
-import dev.chrisbanes.haze.hazeChild
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.core.FileKit
 import io.github.vinceglb.filekit.core.extension
 import io.github.vinceglb.filekit.core.pickFile
 import io.ktor.client.*
 import io.ktor.http.*
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -112,18 +108,14 @@ fun MediaPicker(
 @Composable
 fun AudioRecorder(privateRoomId: PrimaryKey?, uploadSuccess: (MediaInfo) -> Unit) {
     val isRecording by Recorder.isRecording
-    val hazeState = remember { HazeState() }
     val isGranted by isPermissionGranted(Permission.Audio)
-    val scope = rememberCoroutineScope()
     val toasterState = rememberToasterState()
     Toaster(toasterState, alignment = Alignment.Center)
     val client = LocalClient.current
     Box(modifier = Modifier.fillMaxSize()) {
-        RecorderButton(hazeState, scope, isGranted, isRecording, uploadSuccess, privateRoomId, client)
+        RecorderButton(isGranted, isRecording, uploadSuccess, privateRoomId, client)
         if (!isGranted) {
-            Box(modifier = Modifier.fillMaxSize().hazeChild(hazeState) {
-                backgroundColor = Color.Transparent
-            }) {
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer)) {
                 Button({
                     requestPermission(Permission.Audio)
                 }, modifier = Modifier.align(Alignment.Center)) {
@@ -136,20 +128,19 @@ fun AudioRecorder(privateRoomId: PrimaryKey?, uploadSuccess: (MediaInfo) -> Unit
 
 @Composable
 private fun BoxScope.RecorderButton(
-    hazeState: HazeState,
-    scope: CoroutineScope,
     isGranted: Boolean,
     isRecording: Boolean,
     uploadSuccess: (MediaInfo) -> Unit,
     privateRoomId: PrimaryKey?,
     client: HttpClient
 ) {
+    val scope = rememberCoroutineScope()
     Box(
         modifier = Modifier.size(150.dp)
             .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
             .clip(CircleShape)
             .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape).align(Alignment.Center)
-            .haze(state = hazeState).clickable {
+            .clickable {
                 scope.launch {
                     if (isGranted) {
                         if (isRecording) {

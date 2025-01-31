@@ -33,7 +33,9 @@ fun WorldPage() {
 
 @Composable
 fun TopicList(
-    items: LazyPagingItems<TopicInfo>
+    items: LazyPagingItems<TopicInfo>,
+    showAvatar: Boolean = true,
+    contentAlignAvatar: Boolean = true,
 ) {
     StateView(items) {
         LazyColumn(
@@ -47,7 +49,7 @@ fun TopicList(
                     it.id
                 },
             ) {
-                items[it]?.let { info -> TopicCell(info) }
+                items[it]?.let { info -> TopicCell(info, contentAlignAvatar, showAvatar) }
                 if (it != items.itemCount - 1) {
                     HorizontalDivider()
                 }

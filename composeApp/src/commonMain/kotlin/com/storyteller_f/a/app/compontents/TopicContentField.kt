@@ -18,6 +18,7 @@ import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.DefaultMarkdownAnimation
+import com.mikepenz.markdown.model.markdownAnimations
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -72,7 +73,7 @@ private fun TopicContentFieldInternal(
         components = markdownComponents(codeFence = {
             CustomCodeFence(it, mediaMap)
         }, codeBlock = { HighlightCodeBlock(it) }),
-        animations = DefaultMarkdownAnimation({
+        animations = markdownAnimations(animateTextSize = {
             this
         })
     )

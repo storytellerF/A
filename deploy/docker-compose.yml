@@ -5,10 +5,6 @@ volumes:
   certs:
     driver: local
     external: false
-    driver_opts:
-      type: ${CERTS_DIR:+none}
-      o: ${CERTS_DIR:+bind}
-      device: ${CERTS_DIR}
   esdata01:
     driver: local
   kibanadata:
@@ -199,7 +195,7 @@ services:
       - media
 
   setup:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
     user: "0"
@@ -261,17 +257,17 @@ services:
     depends_on:
       setup:
         condition: service_healthy
-    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
     labels:
       co.elastic.logs/module: elasticsearch
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
       - esdata01:/usr/share/elasticsearch/data
     ports:
-      - ${ES_PORT}:9200
+      - ${ELASTIC_PORT}:9200
     environment:
       - node.name=es01
-      - cluster.name=${CLUSTER_NAME}
+      - cluster.name=${ELASTIC_CLUSTER_NAME}
       - discovery.type=single-node
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - bootstrap.memory_lock=true
@@ -285,7 +281,7 @@ services:
       - xpack.security.transport.ssl.certificate=certs/es01/es01.crt
       - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.verification_mode=certificate
-      - xpack.license.self_generated.type=${LICENSE}
+      - xpack.license.self_generated.type=${ELASTIC_LICENSE}
     deploy:
       resources:
         limits:
@@ -312,7 +308,7 @@ services:
     depends_on:
       es01:
         condition: service_healthy
-    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION}
     labels:
       co.elastic.logs/module: kibana
     volumes:
@@ -326,9 +322,9 @@ services:
       - ELASTICSEARCH_USERNAME=kibana_system
       - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
       - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
-      - XPACK_SECURITY_ENCRYPTIONKEY=${ENCRYPTION_KEY}
-      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${ENCRYPTION_KEY}
-      - XPACK_REPORTING_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_SECURITY_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
+      - XPACK_REPORTING_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
     deploy:
       resources:
         limits:
@@ -354,7 +350,7 @@ services:
         condition: service_healthy
       kibana:
         condition: service_healthy
-    image: docker.elastic.co/beats/metricbeat:${STACK_VERSION}
+    image: docker.elastic.co/beats/metricbeat:${ELASTIC_VERSION}
     user: root
     volumes:
       - certs:/usr/share/metricbeat/certs
@@ -381,7 +377,7 @@ services:
     depends_on:
       es01:
         condition: service_healthy
-    image: docker.elastic.co/beats/filebeat:${STACK_VERSION}
+    image: docker.elastic.co/beats/filebeat:${ELASTIC_VERSION}
     user: root
     volumes:
       - certs:/usr/share/filebeat/certs
@@ -409,7 +405,7 @@ services:
         condition: service_healthy
       kibana:
         condition: service_healthy
-    image: docker.elastic.co/logstash/logstash:${STACK_VERSION}
+    image: docker.elastic.co/logstash/logstash:${ELASTIC_VERSION}
     labels:
       co.elastic.logs/module: logstash
     user: root

@@ -103,7 +103,7 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
                     composable("/topics") {
                         val topicsViewModel = createTopicSearchInUserViewModel(SearchScope.UserTopic(uid), "")
                         val pagingItems = topicsViewModel.flow.collectAsLazyPagingItems()
-                        TopicList(pagingItems)
+                        TopicList(pagingItems, showAvatar = false)
                     }
                     composable("/communities") {
                         val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid, "")
@@ -139,7 +139,7 @@ private fun UserCompatInternal(
                 if (pageIndex == 0) {
                     val topicsViewModel = createUserTopicsViewModel(uid)
                     val pagingItems = topicsViewModel.flow.collectAsLazyPagingItems()
-                    TopicList(pagingItems)
+                    TopicList(pagingItems, showAvatar = false)
                 } else {
                     val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid, "")
                     val pagingItems = communitiesViewModel.flow.collectAsLazyPagingItems()
