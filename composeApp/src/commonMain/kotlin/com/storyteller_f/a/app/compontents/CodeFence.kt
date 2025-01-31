@@ -1,6 +1,5 @@
 package com.storyteller_f.a.app.compontents
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -14,8 +13,8 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +31,10 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
@@ -54,12 +56,17 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
-import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.io.asOutputStream
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.serialization.json.Json
 import java.net.URI
+import java.security.MessageDigest
 
 @Composable
 fun CustomCodeFence(modal: MarkdownComponentModel, mediaList1: Map<String, MediaInfo>) {
@@ -165,31 +172,64 @@ private fun RefBlock(
 private fun LatexBlock(
     modal: MarkdownComponentModel
 ) {
-    val textStyle = LocalTextStyle.current
-    val size = TextUnitToPx(textStyle.fontSize)
-    val backgroundColor = MaterialTheme.colorScheme.surface.value.toInt()
-    val textColor = textStyle.color.value.toInt()
-    val painter by produceState<Painter?>(null, modal.node, modal.content, backgroundColor, textColor) {
-        value = withContext(Dispatchers.Default) {
-            val tex = readCodeFence(modal.node, modal.content)
-            buildTexPainter(
-                tex,
-                backgroundColor,
-                textColor,
-                size
-            )
+    val paintState by rememberGeneratedLatexImage(modal)
+    paintState?.let {
+        if (it.isSuccess) {
+            val (r, path) = it.getOrThrow()
+            if (r) {
+                AsyncImage(
+                    model = path.toString(),
+                    contentDescription = "math",
+                )
+            } else {
+                HighlightCodeBlock(modal)
+            }
+        } else {
+            HighlightCodeBlock(modal)
         }
-    }
-    painter?.let {
-        Image(
-            painter = it,
-            contentDescription = "math",
-        )
     } ?: run {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(8.dp)) {
             CircularProgressIndicator(modifier = Modifier.size(4.dp))
         }
     }
+}
+
+@Composable
+fun rememberGeneratedLatexImage(modal: MarkdownComponentModel): State<Result<Pair<Boolean, Path>>?> {
+    val textStyle = LocalTextStyle.current
+    val size = textUnitToPx(textStyle.fontSize)
+    val backgroundColor = 0
+    val textColor = textStyle.color.value.toInt()
+    return produceState<Result<Pair<Boolean, Path>>?>(
+        null,
+        modal.node,
+        modal.content,
+        backgroundColor,
+        textColor
+    ) {
+        value = generateLatexImage(backgroundColor, textColor, size, readCodeFence(modal.node, modal.content))
+    }
+}
+
+suspend fun generateLatexImage(
+    backgroundColor: Int,
+    textColor: Int,
+    size: Float,
+    tex: String
+): Result<Pair<Boolean, Path>> = withContext(Dispatchers.Default) {
+    runCatching {
+        val key = md5(tex)
+        val output = Path(SystemTemporaryDirectory, "${key}-${backgroundColor}-${textColor}-${size}.png")
+        if (SystemFileSystem.exists(output)) {
+            true to output
+        } else {
+            SystemFileSystem.sink(output).buffered().use {
+                buildTexPainter(tex, backgroundColor, textColor, size, it.asOutputStream()) to output
+            }
+        }
+
+    }
+
 }
 
 @Composable
@@ -223,17 +263,25 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInf
     override fun transform(link: String): ImageData {
         val appNav = LocalAppNav.current
         val info = mediaMap[link]
-        val painter = rememberAsyncImagePainter(model = imageRequestInMarkdown(info))
-        return ImageData(
-            painter,
-            modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
-                info?.let { it1 -> appNav.gotoMedia(it1) }
-            }
-        )
+        return if (link.startsWith("file:///")) {
+            val painter = rememberAsyncImagePainter(model = link.substring(7))
+            return ImageData(painter)
+        } else {
+            val model = imageRequestInMarkdown(info)
+            val painter = rememberAsyncImagePainter(model = model)
+            return ImageData(
+                painter,
+                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
+                    info?.let { it1 -> appNav.gotoMedia(info) }
+                }
+            )
+
+        }
+
     }
 
     override fun placeholderConfig(density: Density, containerSize: Size, intrinsicImageSize: Size): PlaceholderConfig {
-        val size1 = with(density) {
+        return PlaceholderConfig(with(density) {
             when {
                 containerSize.isUnspecified -> Size(180f, 180f)
                 intrinsicImageSize.isUnspecified -> Size(containerSize.width.toSp().value, 180f)
@@ -247,11 +295,7 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInf
                     Size(width.toSp().value, height.toSp().value)
                 }
             }
-        }
-        Napier.i {
-            "size $size1"
-        }
-        return PlaceholderConfig(size1, animate = false)
+        }, animate = false)
     }
 
     @Composable
@@ -276,7 +320,21 @@ fun convertPxToDp(px: Int): Dp {
 }
 
 @Composable
+fun convertPxToSp(px: Int): TextUnit {
+    // 获取当前屏幕密度
+    val density = LocalDensity.current.density
+    // 将像素值转换为 dp
+    return (px / density).sp
+}
+
+@Composable
 fun convertDpToPx(dp: Dp): Int {
     val density = LocalDensity.current.density
     return (dp.value * density).toInt()
+}
+
+fun md5(input: String): String {
+    val md = MessageDigest.getInstance("MD5")
+    val digest = md.digest(input.toByteArray()) // 计算 MD5
+    return digest.joinToString("") { "%02x".format(it) } // 转换为十六进制字符串
 }

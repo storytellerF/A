@@ -1,5 +1,11 @@
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
+import org.intellij.markdown.ast.ASTNode
+import org.intellij.markdown.ast.accept
+import org.intellij.markdown.ast.acceptChildren
+import org.intellij.markdown.ast.visitors.Visitor
+import org.intellij.markdown.flavours.gfm.GFMElementTypes
+import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -52,6 +58,24 @@ class MarkdownTest {
                 """![I00012733.jpg](I00012733.jpg "I00012733.jpg")"""
             )
         )
+    }
+
+    @Test
+    fun `test extract inline math`() {
+        val markdownText = "$\\`\\sqrt{3x-1}+(1+x)^2\\`$".trimIndent()
+        val parsedTree = astNode(
+            markdownText
+        )
+        parsedTree.accept(object : Visitor {
+            override fun visitNode(node: ASTNode) {
+                println(node.type)
+                if (node.type == GFMElementTypes.INLINE_MATH) {
+                    println(readInlineMath(node, markdownText))
+                }
+                node.acceptChildren(this)
+            }
+
+        })
     }
 
 }

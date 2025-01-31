@@ -147,6 +147,7 @@ kotlin {
             implementation(libs.couchbase.lite.paging)
             implementation(libs.sunny.chung.composable.table)
 
+            implementation(libs.kim)
             implementation(libs.napier)
             implementation(libs.uri.kmp)
             implementation(libs.emoji.kt)

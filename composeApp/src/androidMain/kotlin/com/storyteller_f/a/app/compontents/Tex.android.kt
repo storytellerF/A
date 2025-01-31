@@ -1,12 +1,12 @@
 package com.storyteller_f.a.app.compontents
 
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.painter.Painter
+import android.graphics.Bitmap
+import androidx.compose.ui.geometry.Size
 import androidx.core.graphics.drawable.toBitmap
 import ru.noties.jlatexmath.JLatexMathDrawable
+import java.io.OutputStream
 
-actual fun buildTexPainter(tex: String, backgroundColor: Int, color: Int, textSize: Float): Painter {
+actual fun buildTexPainter(tex: String, backgroundColor: Int, color: Int, textSize: Float, outputStream: OutputStream): Boolean {
     val drawable = JLatexMathDrawable.builder(tex)
         .textSize(textSize)
         .padding(8)
@@ -14,5 +14,5 @@ actual fun buildTexPainter(tex: String, backgroundColor: Int, color: Int, textSi
         .align(JLatexMathDrawable.ALIGN_RIGHT)
         .build()
     val bitmap = drawable.toBitmap()
-    return BitmapPainter(bitmap.asImageBitmap())
+    return bitmap.compress(Bitmap.CompressFormat.PNG, 80, outputStream)
 }
