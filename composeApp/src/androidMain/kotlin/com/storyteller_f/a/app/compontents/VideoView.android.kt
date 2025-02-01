@@ -23,6 +23,7 @@ import androidx.media3.ui.PlayerView
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.ToasterState
 import com.dokar.sonner.rememberToasterState
+import com.storyteller_f.a.app.LocalToaster
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import kotlinx.coroutines.CoroutineScope
@@ -34,8 +35,7 @@ actual fun VideoView(modifier: Modifier, url: String, contentType: String) {
     log {
         "Video $url"
     }
-    val toasterState = rememberToasterState()
-    Toaster(toasterState, alignment = Alignment.Center)
+    val toasterState = LocalToaster.current
     val context = LocalContext.current
     var size by remember {
         mutableStateOf<VideoSize?>(null)

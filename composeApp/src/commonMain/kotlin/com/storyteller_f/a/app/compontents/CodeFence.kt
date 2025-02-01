@@ -56,6 +56,7 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
+import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -172,52 +173,45 @@ private fun RefBlock(
 private fun LatexBlock(
     modal: MarkdownComponentModel
 ) {
-    val paintState by rememberGeneratedLatexImage(modal)
-    paintState?.let {
-        if (it.isSuccess) {
-            val (r, path) = it.getOrThrow()
-            if (r) {
-                AsyncImage(
-                    model = path.toString(),
-                    contentDescription = "math",
-                )
-            } else {
-                HighlightCodeBlock(modal)
-            }
+    val paintState = rememberGeneratedLatexImage(modal)
+    if (paintState.isSuccess) {
+        val (r, path) = paintState.getOrThrow()
+        if (r) {
+            AsyncImage(
+                model = path.toString(),
+                contentDescription = "math",
+            )
         } else {
             HighlightCodeBlock(modal)
         }
-    } ?: run {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(8.dp)) {
-            CircularProgressIndicator(modifier = Modifier.size(4.dp))
-        }
+    } else {
+        HighlightCodeBlock(modal)
     }
 }
 
 @Composable
-fun rememberGeneratedLatexImage(modal: MarkdownComponentModel): State<Result<Pair<Boolean, Path>>?> {
+fun rememberGeneratedLatexImage(modal: MarkdownComponentModel): Result<Pair<Boolean, Path>> {
     val textStyle = LocalTextStyle.current
     val size = textUnitToPx(textStyle.fontSize)
     val backgroundColor = 0
     val textColor = textStyle.color.value.toInt()
-    return produceState<Result<Pair<Boolean, Path>>?>(
-        null,
+    return remember(
         modal.node,
         modal.content,
         backgroundColor,
         textColor
     ) {
-        value = generateLatexImage(backgroundColor, textColor, size, readCodeFence(modal.node, modal.content))
+        generateLatexImage(backgroundColor, textColor, size, readCodeFence(modal.node, modal.content))
     }
 }
 
-suspend fun generateLatexImage(
+fun generateLatexImage(
     backgroundColor: Int,
     textColor: Int,
     size: Float,
     tex: String
-): Result<Pair<Boolean, Path>> = withContext(Dispatchers.Default) {
-    runCatching {
+): Result<Pair<Boolean, Path>> {
+    return runCatching {
         val key = md5(tex)
         val output = Path(SystemTemporaryDirectory, "${key}-${backgroundColor}-${textColor}-${size}.png")
         if (SystemFileSystem.exists(output)) {
@@ -280,35 +274,6 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInf
 
     }
 
-    override fun placeholderConfig(density: Density, containerSize: Size, intrinsicImageSize: Size): PlaceholderConfig {
-        return PlaceholderConfig(with(density) {
-            when {
-                containerSize.isUnspecified -> Size(180f, 180f)
-                intrinsicImageSize.isUnspecified -> Size(containerSize.width.toSp().value, 180f)
-                else -> {
-                    val width = minOf(intrinsicImageSize.width, containerSize.width)
-                    val height = if (intrinsicImageSize.width < containerSize.width) {
-                        intrinsicImageSize.height
-                    } else {
-                        (intrinsicImageSize.height * containerSize.width) / intrinsicImageSize.width
-                    }
-                    Size(width.toSp().value, height.toSp().value)
-                }
-            }
-        }, animate = false)
-    }
-
-    @Composable
-    override fun intrinsicSize(painter: Painter): Size {
-        var size by remember(painter) { mutableStateOf(painter.intrinsicSize) }
-        if (painter is AsyncImagePainter) {
-            val painterState = painter.state.collectAsState()
-            val intrinsicSize = painterState.value.painter?.intrinsicSize
-            intrinsicSize?.also { size = it }
-        }
-        return size
-    }
-
 }
 
 @Composable
@@ -324,8 +289,10 @@ fun convertPxToSp(px: Int): TextUnit {
     // 获取当前屏幕密度
     val density = LocalDensity.current.density
     // 将像素值转换为 dp
-    return (px / density).sp
+    return pxToSp(px, density)
 }
+
+fun pxToSp(px: Int, density: Float): TextUnit = (px / density).sp
 
 @Composable
 fun convertDpToPx(dp: Dp): Int {

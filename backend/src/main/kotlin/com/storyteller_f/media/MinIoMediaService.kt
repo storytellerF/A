@@ -1,6 +1,7 @@
 package com.storyteller_f.media
 
 import com.storyteller_f.MinIoConnection
+import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.MediaItem
 import io.github.aakira.napier.Napier
@@ -36,16 +37,28 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
     private fun MinioClient.stat(
         bucketName: String,
         objName: String
-    ): MediaItem {
+    ): Pair<MediaItem, Dimension?> {
         val statObject =
             statObject(StatObjectArgs.builder().bucket(bucketName).`object`(objName).build())
+        val dimension = if (statObject.contentType().startsWith("image")) {
+            val metadata = statObject.userMetadata()
+            val width = metadata["width"]?.toIntOrNull()
+            val height = metadata["height"]?.toIntOrNull()
+            if (width != null && height != null) {
+                Dimension(width, height)
+            } else {
+                null
+            }
+        } else {
+            null
+        }
         return MediaItem(
             objName,
             statObject.contentType(),
             statObject.size(),
             objName.substringAfter("/"),
             statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime()
-        )
+        ) to dimension
     }
 
     override fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>> {
@@ -57,8 +70,8 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
                     try {
                         val url = getMinioObjectUrl(bucketName, it)
                         if (url != null) {
-                            val item = stat(bucketName, it)
-                            MediaInfo(url, item, null)
+                            val (item, dimension) = stat(bucketName, it)
+                            MediaInfo(url, item, dimension)
                         } else {
                             null
                         }
@@ -79,12 +92,13 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
             }
-            val names = list.map { (objName, picFullPath, type) ->
+            val names = list.map { (objName, picFullPath, type, meta) ->
                 val response = uploadObject(
                     UploadObjectArgs.builder()
                         .bucket(bucketName)
                         .`object`(objName)
                         .filename(picFullPath.absolutePath)
+                        .userMetadata(meta)
                         .apply {
                             if (type != null) {
                                 contentType(type)

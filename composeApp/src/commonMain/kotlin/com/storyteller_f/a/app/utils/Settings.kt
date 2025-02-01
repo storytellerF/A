@@ -18,20 +18,13 @@ fun restoreFromStorage() {
     val privateKey = loginUser.privateKey
     val publicKey = loginUser.publicKey
     val address = loginUser.address
-    val signature = loginUser.signature
-    val data = loginUser.data
-    val userInfo = loginUser.user
     LoginViewModel.updateState(ClientSession.SignUpSuccess(privateKey, publicKey, address))
-    LoginViewModel.updateUser(userInfo)
-    LoginViewModel.updateSession(data, signature)
 }
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 fun storeToStorage() {
     val state = LoginViewModel.state.value as ClientSession.SignUpSuccess
-    val session = LoginViewModel.session ?: return
-    val user = LoginViewModel.user.value ?: return
-    val loginUser = LoginUser(state.privateKey, state.publicKey, state.address, session.second, session.first, user)
+    val loginUser = LoginUser(state.privateKey, state.publicKey, state.address)
     defaultSettings.encodeValue(LoginUser.serializer(), "login_user", loginUser)
 }
 

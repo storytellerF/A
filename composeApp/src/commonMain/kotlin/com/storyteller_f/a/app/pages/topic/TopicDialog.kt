@@ -23,6 +23,7 @@ import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.globalDialogState
@@ -62,8 +63,7 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismiss: ()
     val clipboardManager = LocalClipboardManager.current
     val appNav = LocalAppNav.current
     val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
-    val toasterState = rememberToasterState()
-    Toaster(toasterState, alignment = Alignment.Center)
+    val toasterState = LocalToaster.current
     DialogContainer {
         UserCell(authorInfo, true) {
             appNav.gotoUser(it)

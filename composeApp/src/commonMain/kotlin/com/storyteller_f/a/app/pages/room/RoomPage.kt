@@ -153,8 +153,7 @@ fun RoomInputGroup(
     val wsClient = LocalWsClient.current
     val scope = rememberCoroutineScope()
     if (roomInfo != null) {
-        val toasterState = rememberToasterState()
-        Toaster(toasterState, alignment = Alignment.Center)
+        val toasterState = LocalToaster.current
         val keysViewModel = createRoomKeysViewModel(roomId, roomInfo)
         val objectId = topicId ?: roomId
         val objectType = if (topicId != null) ObjectType.TOPIC else ObjectType.ROOM
@@ -449,8 +448,7 @@ private fun RoomDialogButtons(
 
         if (appNav.currentDestination?.destination?.hasRoute(RoomScreen::class) == true) {
             val scope = rememberCoroutineScope()
-            val toasterState = rememberToasterState()
-            Toaster(toasterState, alignment = Alignment.Center)
+            val toasterState = LocalToaster.current
             if (roomInfo.isJoined) {
                 ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
                     scope.launch {

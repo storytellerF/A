@@ -3,7 +3,7 @@ package com.storyteller_f.a.server.service
 import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.route.RouteMedia
-import com.storyteller_f.media.UploadPack
+import com.storyteller_f.media.uploadOneFil
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ServerResponse
@@ -71,13 +71,16 @@ suspend fun RoutingContext.uploadMedia(
 
                         try {
                             file.writeBytes(fileBytes)
-                            val type = checkContentType(part, file, tika)
-                            result.addAll(
-                                backend.mediaService.upload(
-                                    AMEDIA_BUCKET,
-                                    listOf(UploadPack("${it.objectId}/$fileName", file, type))
-                                ).getOrThrow().filterNotNull()
-                            )
+                            val info = uploadOneFil(
+                                file,
+                                tika,
+                                backend,
+                                fileName,
+                                it.objectId,
+                                part.contentType.toString()
+                            ).getOrThrow()
+                            if (info != null)
+                                result.add(info)
                         } finally {
                             file.delete()
                         }
@@ -92,20 +95,3 @@ suspend fun RoutingContext.uploadMedia(
     }
 }
 
-private fun checkContentType(
-    part: PartData,
-    file: File,
-    tika: Tika
-): String? {
-    val s = "audio/mp4"
-    return if (part.contentType.toString() == s) {
-        val mimeType = tika.detect(file)
-        if (mimeType == s) {
-            s
-        } else {
-            null
-        }
-    } else {
-        null
-    }
-}

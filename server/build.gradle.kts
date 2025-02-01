@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.pdfbox.layout)
     implementation(projects.cryptoJvm)
     implementation(libs.h2)
+    implementation(libs.kim)
 
     testImplementation(projects.clientLib)
     testImplementation(libs.ktor.server.test.host)

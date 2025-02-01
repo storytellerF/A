@@ -18,6 +18,7 @@ dependencies {
     implementation(libs.jackson.module.kotlin)
     implementation(libs.cryptography.provider.jdk)
     implementation(libs.napier)
+    implementation(libs.tika.core)
 }
 
 tasks.test {

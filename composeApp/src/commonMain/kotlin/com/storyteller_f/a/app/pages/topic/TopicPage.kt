@@ -162,8 +162,7 @@ private fun TopicInputGroup(
     topic: TopicInfo
 ) {
     val scope = rememberCoroutineScope()
-    val toasterState = rememberToasterState()
-    Toaster(toasterState, alignment = Alignment.Center)
+    val toasterState = LocalToaster.current
     var input by remember {
         mutableStateOf("")
     }

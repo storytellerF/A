@@ -8,9 +8,8 @@ import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ROOM_ID_LENGTH
 import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.index.TopicDocument
-import com.storyteller_f.media.UploadPack
+import com.storyteller_f.media.uploadOneFil
 import com.storyteller_f.shared.*
-import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetValue
@@ -22,6 +21,7 @@ import kotlinx.cli.ArgType
 import kotlinx.cli.ExperimentalCli
 import kotlinx.cli.Subcommand
 import kotlinx.coroutines.runBlocking
+import org.apache.tika.Tika
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
@@ -50,13 +50,14 @@ class AddPreset : Subcommand("add", "add entry") {
             ObjectMapper().registerModule(KotlinModule.Builder().build())
                 .readValue<PresetValue>(jsonFile.readText())
         val parentDir = jsonFile.parentFile.canonicalFile
+        val tika = Tika()
         runBlocking {
             try {
                 when (val type = presetValue.type) {
-                    "community" -> addCommunity(presetValue, parentDir)
-                    "user" -> addUsers(presetValue, parentDir)
-                    "topic" -> addTopics(presetValue, parentDir)
-                    "room" -> addRooms(presetValue, parentDir)
+                    "community" -> addCommunity(presetValue, parentDir, tika)
+                    "user" -> addUsers(presetValue, parentDir, tika)
+                    "topic" -> addTopics(presetValue, parentDir, tika)
+                    "room" -> addRooms(presetValue, parentDir, tika)
                     else -> {
                         println("unrecognized type $type")
                         exitProcess(2)
@@ -73,7 +74,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
     }
 
-    private suspend fun addRooms(presetValue: PresetValue, parentDir: File?) {
+    private suspend fun addRooms(presetValue: PresetValue, parentDir: File?, tika: Tika) {
         val l = presetValue.roomData ?: return
         Napier.i {
             "rooms count ${presetValue.roomData?.size}"
@@ -86,7 +87,7 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/room-icon.${path.extension}"
-                backend.mediaService.upload(AMEDIA_BUCKET, listOf(UploadPack(p, path)))
+                uploadOneFil(path, tika, backend, "room-icon.${path.extension}", id, null).getOrThrow()
                 Triple(it, p, id)
             }
         }
@@ -127,7 +128,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }.getOrThrow()
     }
 
-    private suspend fun addTopics(presetValue: PresetValue, parentDir: File) {
+    private suspend fun addTopics(presetValue: PresetValue, parentDir: File, tika: Tika) {
         Napier.i {
             "topics count ${presetValue.topicData?.size}"
         }
@@ -392,7 +393,7 @@ class AddPreset : Subcommand("add", "add entry") {
         return content
     }
 
-    private suspend fun addUsers(presetValue: PresetValue, parentDir: File?) {
+    private suspend fun addUsers(presetValue: PresetValue, parentDir: File?, tika: Tika) {
         val userList = presetValue.userData ?: return
         Napier.i {
             "users count ${presetValue.userData?.size}"
@@ -408,7 +409,7 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/avatar.${path.extension}"
-                backend.mediaService.upload(AMEDIA_BUCKET, listOf(UploadPack(p, path)))
+                uploadOneFil(path, tika, backend, "avatar.${path.extension}", id, null).getOrThrow()
                 Tuple5(it, p, derPublicKey, ad, id)
             }
         }
@@ -429,7 +430,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }.getOrThrow()
     }
 
-    private suspend fun addCommunity(presetValue: PresetValue, parentDir: File?) {
+    private suspend fun addCommunity(presetValue: PresetValue, parentDir: File?, tika: Tika) {
         val communityData = presetValue.communityData!!
         Napier.i {
             "communities count ${presetValue.communityData?.size}"
@@ -442,7 +443,7 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/community-icon.${path.extension}"
-                backend.mediaService.upload(AMEDIA_BUCKET, listOf(UploadPack(p, path)))
+                uploadOneFil(path, tika, backend, "community-icon.${path.extension}", id, null).getOrThrow()
                 Triple(it, p, id)
             }
         }

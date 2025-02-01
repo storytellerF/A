@@ -175,7 +175,7 @@ suspend fun getCommunityTopicList(
 ) = checkRootReadPermission(ObjectType.COMMUNITY, it.parent.id, id).mapResultNotNull { permission ->
     if (permission.hasRead) {
         commonPaginationTopics(id, null, n, s, search.fillHasCommented) {
-            Topics.rootId eq search.parent.id
+            Topics.parentId eq search.parent.id
         }.mapResultNotNull { (data, count) ->
             val ids = data.map {
                 it.id

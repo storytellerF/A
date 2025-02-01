@@ -32,6 +32,7 @@ dependencies {
     implementation(libs.lucene.queryparser)
     implementation(libs.lucene.analysis.common)
     implementation(libs.tika.core)
+    implementation(libs.kim)
 
     implementation(libs.lucene.backward.codecs)
     testImplementation(libs.elasticsearch)
