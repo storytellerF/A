@@ -164,7 +164,6 @@ fun CustomMarkdownParagraph(
         codeSpanStyle,
         annotator,
         inlineContentMap,
-        density
     ) {
         buildAnnotatedString {
             pushStyle(style.toSpanStyle())
@@ -499,7 +498,6 @@ private fun buildInlineContentMap(
                             alpha = imageData.alpha,
                             colorFilter = imageData.colorFilter
                         )
-                        Text(now().toString(), modifier = Modifier.background(Color.White))
                     }
                 }
             }

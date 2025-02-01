@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
@@ -212,10 +213,9 @@ fun createUserViewModel(userAid: String) = viewModel(keys = listOf("user", userA
 }
 
 @Composable
-fun createUserViewModel(userId: PrimaryKey) =
-    viewModel(keys = listOf("user", userId)) {
-        UserViewModel(userId, it)
-    }
+fun createUserViewModel(userId: PrimaryKey, init: UserInfo? = null) = viewModel(keys = listOf("user", userId)) {
+    UserViewModel(userId, it, init)
+}
 
 @Composable
 fun createWorldViewModel() = viewModel(keys = listOf("world")) {
@@ -223,7 +223,6 @@ fun createWorldViewModel() = viewModel(keys = listOf("world")) {
 }
 
 @Composable
-fun createReactionsViewModel(objectId: PrimaryKey) =
-    viewModel(keys = listOf("reactions", objectId)) {
-        ReactionsViewModel(objectId, it)
-    }
+fun createReactionsViewModel(objectId: PrimaryKey) = viewModel(keys = listOf("reactions", objectId)) {
+    ReactionsViewModel(objectId, it)
+}

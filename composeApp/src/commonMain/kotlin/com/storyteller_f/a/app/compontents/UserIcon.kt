@@ -28,39 +28,14 @@ import com.storyteller_f.shared.model.UserInfo
 
 @Composable
 fun UserIcon(userInfo: UserInfo?, couldShowDialog: Boolean = true) {
-    val appNav = LocalAppNav.current
-    val user = LoginViewModel.user.collectAsState()
-    val isMe = user.value?.id == userInfo?.id
+    val meInfo = LoginViewModel.user.collectAsState()
+    val isMe = meInfo.value?.id == userInfo?.id
     var showMyDialog by remember {
         mutableStateOf(false)
     }
-    val size = 40.dp
-    val onClick = {
-        if (isMe && userInfo == null) {
-            appNav.gotoLogin()
-        } else if (couldShowDialog) {
-            showMyDialog = true
-        }
-    }
     val url = userInfo?.avatar?.url
-    val modifier = if (isMe) Modifier.testTag("me") else Modifier
-    if (url != null) {
-        AsyncImage(
-            globalLoader(url),
-            contentDescription = "${userInfo.nickname}'s avatar",
-            modifier = modifier.size(size).clip(CircleShape).clickable(couldShowDialog, onClick = onClick),
-            contentScale = ContentScale.Crop
-        )
-    } else {
-        Image(
-            Icons.Default.AccountCircle,
-            contentDescription = "default avatar",
-            modifier = modifier.size(size)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
-                .clickable(couldShowDialog, onClick = onClick)
-                .padding(size / 5)
-        )
+    UserIconInternal(isMe, couldShowDialog, url) { ->
+        showMyDialog = true
     }
     UserDialog(userInfo, showMyDialog) {
         showMyDialog = false
@@ -68,9 +43,45 @@ fun UserIcon(userInfo: UserInfo?, couldShowDialog: Boolean = true) {
 }
 
 @Composable
+fun UserIconInternal(isMe: Boolean, couldShowDialog: Boolean, url: String?, showDialog: () -> Unit) {
+    val appNav = LocalAppNav.current
+    val showDialog by rememberUpdatedState(showDialog)
+    val onClick = {
+        if (isMe) {
+            appNav.gotoLogin()
+        } else if (couldShowDialog) {
+            showDialog()
+        }
+    }
+    val size = 40.dp
+    val modifier = if (isMe) Modifier.testTag("me") else Modifier
+    if (url != null) {
+        AsyncImage(
+            globalLoader(url),
+            contentDescription = "avatar",
+            modifier = modifier.size(size).clip(CircleShape).clickable(couldShowDialog, onClick = onClick),
+            contentScale = ContentScale.Crop
+        )
+    } else {
+        Image(
+            Icons.Default.AccountCircle,
+            contentDescription = "avatar",
+            modifier = modifier.size(size)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                .clickable(couldShowDialog, onClick = onClick)
+                .padding(size / 5)
+        )
+    }
+}
+
+@Composable
 fun globalLoader(url: String): ImageRequest {
     val client = LocalClient.current
-    return ImageRequest.Builder(LocalPlatformContext.current).data(url).crossfade(true).fetcherFactory(
-        KtorNetworkFetcherFactory(client)
-    ).build()
+    val platformContext = LocalPlatformContext.current
+    return remember(url) {
+        ImageRequest.Builder(platformContext).data(url).crossfade(true).fetcherFactory(
+            KtorNetworkFetcherFactory(client)
+        ).build()
+    }
 }

@@ -24,25 +24,30 @@ data class TopicInfo(
     val hasComment: Boolean,
     val isPrivate: Boolean,
     val lastModifiedTime: LocalDateTime?,
+    val extension: Extension?
 ) : Identifiable {
     companion object {
         val EMPTY = TopicInfo(
-            DEFAULT_PRIMARY_KEY,
-            TopicContent.Nil,
-            DEFAULT_PRIMARY_KEY,
-            DEFAULT_PRIMARY_KEY,
-            ObjectType.TOPIC,
-            DEFAULT_PRIMARY_KEY,
-            ObjectType.TOPIC,
-            false,
-            now(),
-            0,
-            0,
-            false,
+            id = DEFAULT_PRIMARY_KEY,
+            content = TopicContent.Nil,
+            author = DEFAULT_PRIMARY_KEY,
+            rootId = DEFAULT_PRIMARY_KEY,
+            rootType = ObjectType.TOPIC,
+            parentId = DEFAULT_PRIMARY_KEY,
+            parentType = ObjectType.TOPIC,
+            hasJoined = false,
+            createdTime = now(),
+            commentCount = 0,
+            reactionCount = 0,
+            hasComment = false,
             isPrivate = false,
-            lastModifiedTime = now()
+            lastModifiedTime = now(),
+            extension = Extension(UserInfo.EMPTY)
         )
     }
+
+    @Serializable
+    data class Extension(val authorInfo: UserInfo?)
 }
 
 @Serializable

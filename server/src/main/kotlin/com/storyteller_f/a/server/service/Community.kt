@@ -181,7 +181,7 @@ suspend fun getCommunityTopicList(
                 it.id
             }
             backend.topicSearchService.getDocuments(ids).mapResult { list ->
-                processMediaLink(backend, data, list).map {
+                processMediaAndAuthor(backend, data, list).map {
                     PaginationResult(it, count)
                 }
             }

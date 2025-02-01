@@ -1,11 +1,8 @@
 package com.storyteller_f.a.app.compontents
 
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichText
 import com.storyteller_f.a.client_lib.ServerErrorException
@@ -24,7 +21,7 @@ fun ExceptionView(throwable: Throwable) {
 
                 RichText(state = state)
             } else {
-                Text("${throwable.status.value} ${throwable.text}")
+                Text("${throwable.status} ${throwable.text}")
             }
         }
 

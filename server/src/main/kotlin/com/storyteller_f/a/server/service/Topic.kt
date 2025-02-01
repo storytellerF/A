@@ -67,7 +67,7 @@ suspend fun addTopicAtCommunity(uid: PrimaryKey, backend: Backend, newTopic: New
                 DatabaseFactory.saveTopic(topic, backend, content, rootId, rootType, newTopic, uid).mapResult {
                     backend.topicSearchService.getDocuments(listOf(newId)).mapResult { documents ->
                         val topicInfo = topic.toTopicInfo()
-                        processMediaLink(backend, listOf(topicInfo), documents).map {
+                        processMediaAndAuthor(backend, listOf(topicInfo), documents).map {
                             it.firstOrNull()
                         }
                     }
@@ -223,7 +223,7 @@ suspend fun getTopic(
             getCommonTopic(topicId, uid).mapResultNotNull { info ->
                 when {
                     !isPrivate -> backend.topicSearchService.getDocuments(listOf(topicId)).mapResult { value ->
-                        processMediaLink(backend, listOf(info), value).map {
+                        processMediaAndAuthor(backend, listOf(info), value).map {
                             it.first()
                         }
                     }
@@ -273,7 +273,7 @@ suspend fun getTopics(
                 backend.topicSearchService.getDocuments(data.map {
                     it.id
                 }).mapResult { documents ->
-                    processMediaLink(backend, data, documents)
+                    processMediaAndAuthor(backend, data, documents)
                 }.map { topicContents ->
                     PaginationResult(topicContents, count)
                 }
@@ -413,14 +413,14 @@ suspend fun searchPublicTopics(
         commonTopics(uid, null, nextTopicId, size, search.parent.fillHasCommented) {
             Topics.id inList ids
         }.mapResult { infos ->
-            processMediaLink(backend, infos, list).map {
+            processMediaAndAuthor(backend, infos, list).map {
                 PaginationResult(it, total)
             }
         }
     }
 }
 
-fun processMediaLink(
+suspend fun processMediaAndAuthor(
     backend: Backend,
     infos: List<TopicInfo>,
     documentList: List<TopicDocument?>
@@ -440,21 +440,31 @@ fun processMediaLink(
         it.first
     }
     return backend.mediaService.get(AMEDIA_BUCKET, mediaNameList).map { mediaUrls ->
-        val mediaInfoMap = mediaUrls.mapIndexedNotNull { index, url ->
-            url?.let {
-                mediaNameList[index] to it
-            }
-        }.associateBy {
-            it.first
+        val mediaInfoMap = mediaUrls.filterNotNull().mapIndexed { index, url ->
+            mediaNameList[index] to url
+        }.associate {
+            it.first to it.second
         }
         infos.map { info ->
             documentMap[info.id]?.let { document ->
                 val m = mediaMap[document.id]?.mapNotNull {
                     val mediaName = it.second
-                    mediaInfoMap[mediaName]?.second
+                    mediaInfoMap[mediaName]
                 }.orEmpty()
                 info.copy(content = TopicContent.Plain(document.content, m))
             } ?: info
+        }
+    }.mapResult { infos ->
+        val ids = infos.map {
+            it.author
+        }
+        DatabaseFactory.getUsersByIds(ids, backend).map { users ->
+            val userMap = users.associate {
+                it.id to it
+            }
+            infos.map {
+                it.copy(extension = TopicInfo.Extension(userMap[it.author]))
+            }
         }
     }
 }
@@ -491,7 +501,7 @@ suspend fun recommendTopics(
         commonTopics(uid, null, nextTopicId, size, fillHasCommented) {
             Topics.id inList ids
         }.mapResult { infos ->
-            processMediaLink(backend, infos, list).map {
+            processMediaAndAuthor(backend, infos, list).map {
                 PaginationResult(it, total)
             }
         }
