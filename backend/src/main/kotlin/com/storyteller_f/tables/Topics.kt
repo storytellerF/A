@@ -97,7 +97,8 @@ fun Topic.toTopicInfo(commentCount: Long = 0, hasComment: Boolean = false, react
         reactionCount = reactionCount,
         hasComment = hasComment,
         isPrivate = false,
-        lastModifiedTime = now()
+        lastModifiedTime = now(),
+        extension = null
     )
 }
 
@@ -167,6 +168,8 @@ suspend fun commonPaginationTopics(
     }
 }
 
+class TopicSearchTuple(val topicInfo: Topic, val commentCount: Long, val hasComment: Boolean, val reactionCount: Long)
+
 suspend fun commonTopics(
     uid: PrimaryKey?,
     preTopicId: PrimaryKey?,
@@ -179,14 +182,14 @@ suspend fun commonTopics(
     val t2 = Topics.alias("t2")
     val reactionComment = Reactions.id.countDistinct()
     val containExpression = topicAuthorContains(uid, t2)
-    val commentCount = t2[Topics.id].countDistinct()
-    val baseSelection = Topics.fields + commentCount + reactionComment
+    val commentCountColumn = t2[Topics.id].countDistinct()
+    val baseSelection = Topics.fields + commentCountColumn + reactionComment
     return DatabaseFactory.mapQuery({
-        data1.toTopicInfo(data2, data3, data4)
+        topicInfo.toTopicInfo(commentCount, hasComment, reactionCount)
     }, {
-        Tuple4(
+        TopicSearchTuple(
             wrapRow(it),
-            it[commentCount],
+            it[commentCountColumn],
             if (containExpression != null) (it[containExpression] == 1L) else false,
             it[reactionComment]
         )

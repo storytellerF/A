@@ -26,7 +26,7 @@ fun TopicCell(
     showAvatar: Boolean = true
 ) {
     val author = info.author
-    val authorViewModel = createUserViewModel(author)
+    val authorViewModel = createUserViewModel(author, info.extension?.authorInfo)
 
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -54,12 +54,10 @@ fun TopicCellInternal(
     val topicId = topicInfo.id
     val appNav = LocalAppNav.current
     Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = modifier.clip(RoundedCornerShape(8.dp)).clickable {
             appNav.gotoTopic(topicId)
-        }.padding(horizontal = 8.dp)
+        }.padding(8.dp)
     ) {
-        val avatarSize = 40.dp
         if (showAvatar) {
             UserCell(authorInfo, true) {
                 appNav.gotoUser(it)
@@ -67,11 +65,11 @@ fun TopicCellInternal(
         }
         Column(
             if (contentAlignAvatar) {
-                Modifier.padding(horizontal = 8.dp).padding(bottom = 12.dp)
+                Modifier.padding(horizontal = 8.dp)
             } else {
-                Modifier.fillMaxWidth().padding(start = avatarSize + 8.dp, end = 8.dp)
+                Modifier.fillMaxWidth().padding(start = 48.dp, end = 8.dp)
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
-                    .padding(12.dp)
+                    .padding(horizontal = 12.dp).padding(top = 8.dp,bottom = 12.dp)
             },
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {

@@ -2,6 +2,7 @@ package com.storyteller_f.tables
 
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
+import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -52,11 +53,14 @@ class User(
     }
 }
 
-fun findUserByAId(aid: String): Query {
-    return Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
-        Aids.value eq aid
+fun findUserByAid(aid: String) = Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
+    Aids.value eq aid
+}.limit(1)
+
+private fun findUserById(it: PrimaryKey): Query =
+    Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
+        Users.id eq it
     }.limit(1)
-}
 
 suspend fun DatabaseFactory.getUserAid(id: PrimaryKey): Result<String?> = first({
     it[Aids.value]
@@ -77,6 +81,20 @@ fun toFinalUserInfo(p: Pair<UserInfo, String?>, backend: Backend): Result<UserIn
     }
 }
 
+fun DatabaseFactory.fillUserMedia(p: List<Pair<UserInfo, String?>>, backend: Backend): Result<List<UserInfo>> {
+    val userInfos = p.map {
+        it.first
+    }
+    val icons = p.map {
+        it.second
+    }
+    return backend.mediaService.get(AMEDIA_BUCKET, icons).map { value ->
+        value.mapIndexed { index, avatar ->
+            userInfos[index].copy(avatar = avatar)
+        }
+    }
+}
+
 suspend fun DatabaseFactory.getUserByAid(
     aid: String,
     backend: Backend
@@ -94,15 +112,13 @@ suspend fun DatabaseFactory.getUser(
 suspend fun DatabaseFactory.getRawUserByAid(aid: String) = first({
     toUserInfo() to icon
 }, User::wrapRow) {
-    findUserByAId(aid)
+    findUserByAid(aid)
 }
 
 suspend fun DatabaseFactory.getRawUserById(it: PrimaryKey): Result<Pair<UserInfo, String?>?> = first({
     toUserInfo() to icon
 }, User::wrapRow) {
-    Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
-        Users.id eq it
-    }
+    findUserById(it)
 }
 
 suspend fun DatabaseFactory.commonPaginationMemberList(
@@ -124,7 +140,7 @@ suspend fun DatabaseFactory.commonPaginationMemberList(
             size
         )
     }.mapResult { pairs ->
-        DatabaseFactory.count {
+        count {
             buildSearchMembersQuery(objectId, true, word)
         }.map { value ->
             pairs to value
@@ -214,38 +230,36 @@ suspend fun DatabaseFactory.isUserNotExists(pk: String): Result<Boolean> = isEmp
 suspend fun DatabaseFactory.updateUser(
     id: PrimaryKey,
     newUser: UserInfo
-): Result<Boolean> {
-    return dbQuery {
-        listOf({
-            val avatar = newUser.avatar?.item?.name
-            if (newUser.nickname.isNotEmpty() || avatar?.isNotEmpty() == true) {
-                Users.update({
-                    Users.id eq id
-                }) {
-                    if (newUser.nickname.isNotEmpty()) {
-                        it[nickname] = newUser.nickname
-                    }
-                    if (avatar?.isNotEmpty() == true) {
-                        it[icon] = avatar
-                    }
-                } > 0
-            } else {
-                true
-            }
-        }, {
-            val aid = newUser.aid
-            if (!aid.isNullOrBlank()) {
-                Aids.upsert(Aids.objectId) {
-                    it[objectId] = id
-                    it[value] = aid
-                    it[objectType] = ObjectType.USER
-                }.insertedCount > 0
-            } else {
-                true
-            }
-        }).all {
-            it()
+) = dbQuery {
+    listOf({
+        val avatar = newUser.avatar?.item?.name
+        if (newUser.nickname.isNotEmpty() || avatar?.isNotEmpty() == true) {
+            Users.update({
+                Users.id eq id
+            }) {
+                if (newUser.nickname.isNotEmpty()) {
+                    it[nickname] = newUser.nickname
+                }
+                if (avatar?.isNotEmpty() == true) {
+                    it[icon] = avatar
+                }
+            } > 0
+        } else {
+            true
         }
+    }, {
+        val aid = newUser.aid
+        if (!aid.isNullOrBlank()) {
+            Aids.upsert(Aids.objectId) {
+                it[objectId] = id
+                it[value] = aid
+                it[objectType] = ObjectType.USER
+            }.insertedCount > 0
+        } else {
+            true
+        }
+    }).all {
+        it()
     }
 }
 
@@ -270,3 +284,16 @@ suspend fun DatabaseFactory.getUserAuthDataBy(predicate: SqlExpressionBuilder.()
     }) {
         Users.select(listOf(Users.publicKey, Users.id)).where(predicate)
     }
+
+suspend fun DatabaseFactory.getUsersByIds(ids: List<PrimaryKey>, backend: Backend) = mapQuery({
+    toUserInfo() to icon
+}, User::wrapRow) {
+    Users
+        .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+        .select(Users.fields + Aids.value)
+        .where {
+            Users.id inList ids
+        }
+}.mapResult {
+    fillUserMedia(it, backend)
+}

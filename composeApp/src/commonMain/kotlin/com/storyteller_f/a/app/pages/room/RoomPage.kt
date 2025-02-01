@@ -129,7 +129,6 @@ private fun RoomPageInternal(
                     false,
                     next?.author != info.author
                 )
-                Spacer(modifier = Modifier.height(10.dp))
             }
         }
     }

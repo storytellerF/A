@@ -95,7 +95,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val userMap = l.flatMap {
                 it.users + it.admin
             }.distinct().map {
-                User.wrapRow(findUserByAId(it).first())
+                User.wrapRow(findUserByAid(it).first())
             }.associateBy { it.aid }
             val communityMap = l.mapNotNull {
                 it.community
@@ -137,7 +137,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val userList = data.map {
                 it.author
             }.distinct().map {
-                User.wrapRow(findUserByAId(it).first())
+                User.wrapRow(findUserByAid(it).first())
             }.associateBy { it.aid!! }
             data.groupBy {
                 it.community != null
@@ -452,7 +452,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun addCommunity(data: List<Triple<PresetCommunity, String?, PrimaryKey>>) {
         DatabaseFactory.dbQuery {
-            val systemId = findUserByAId("System").first()[Users.id]
+            val systemId = findUserByAid("System").first()[Users.id]
 
             Communities.batchInsert(data) { (it, communityIcon, id) ->
                 this[Communities.id] = id
@@ -503,7 +503,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun userJoinCommunity(users: List<String>, communityId: PrimaryKey) {
         users.forEach {
-            val userId = findUserByAId(it).first()[Users.id]
+            val userId = findUserByAid(it).first()[Users.id]
             DatabaseFactory.addCommunityJoin(userId, communityId, now()).getOrThrow()
         }
     }
