@@ -64,11 +64,15 @@ fun UserDialogInternal(userInfo: UserInfo, dismiss: () -> Unit = {}) {
         controller.close()
     }) {
         scope.launch {
-            globalDialogState.use {
-                client.signOut()
-                LoginViewModel.signOut()
-            }
+            signOut(client)
         }
+    }
+}
+
+ suspend fun signOut(client: HttpClient) {
+    globalDialogState.use {
+        client.signOut()
+        LoginViewModel.signOut()
     }
 }
 

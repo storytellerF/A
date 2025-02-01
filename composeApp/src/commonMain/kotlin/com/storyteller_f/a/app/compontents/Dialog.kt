@@ -1,5 +1,6 @@
 package com.storyteller_f.a.app.compontents
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +15,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.storyteller_f.a.app.AppConfig
+import com.storyteller_f.a.client_lib.ServerErrorException
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class DialogSaveState {
@@ -47,7 +49,7 @@ class GlobalDialogController(val state: MutableState<DialogState> = mutableState
         state.value = DialogState.None
     }
 
-    suspend fun use(onSuccess: () -> Unit = {}, block: suspend () -> Unit) {
+    suspend fun use(onSuccess: () -> Unit = {}, onError: () -> Unit = {}, block: suspend () -> Unit) {
         try {
             showLoading()
             block()
@@ -55,6 +57,7 @@ class GlobalDialogController(val state: MutableState<DialogState> = mutableState
             onSuccess()
         } catch (e: Exception) {
             showError(e)
+            onError()
         }
     }
 }
@@ -95,22 +98,40 @@ fun GlobalDialogInternal(message: DialogState, updateNewState: (DialogState) -> 
         is DialogState.Error -> {
             val throwable = message.throwable
             val scrollState = rememberScrollState()
-            AlertDialog(onDismissRequest, {
-                Button({
+            if (throwable is ServerErrorException && throwable.text.startsWith("<html")) {
+                BasicAlertDialog({
                     onDismissRequest()
                 }) {
-                    Text("Close")
-                }
-            }, title = {
-                ExceptionView(throwable)
-            }, text = {
-                if (!AppConfig.IS_PROD) {
-                    val text = throwable.stackTraceToString()
-                    MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
-                        Text(text, modifier = Modifier.verticalScroll(scrollState), maxLines = (total).coerceIn(2, 20))
+                    DialogContainer {
+                        Column {
+                            ExceptionView(throwable)
+                        }
                     }
                 }
-            })
+            } else {
+                AlertDialog(onDismissRequest, {
+                    Button({
+                        onDismissRequest()
+                    }) {
+                        Text("Close")
+                    }
+                }, title = {
+                    Text(throwable.localizedMessage.toString())
+                }, text = {
+                    @Suppress("KotlinConstantConditions")
+                    if (!AppConfig.IS_PROD) {
+                        val text = throwable.stackTraceToString()
+                        MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
+                            Text(
+                                text,
+                                modifier = Modifier.verticalScroll(scrollState),
+                                maxLines = total.coerceIn(2, 20)
+                            )
+                        }
+                    }
+                })
+            }
+
         }
 
         is DialogState.Text -> {

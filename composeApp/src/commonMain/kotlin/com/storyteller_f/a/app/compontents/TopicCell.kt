@@ -67,7 +67,7 @@ fun TopicCellInternal(
         }
         Column(
             if (contentAlignAvatar) {
-                Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp)
+                Modifier.padding(horizontal = 8.dp).padding(bottom = 12.dp)
             } else {
                 Modifier.fillMaxWidth().padding(start = avatarSize + 8.dp, end = 8.dp)
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))

@@ -162,6 +162,18 @@ fun <T> StateView(
 }
 
 fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, content: @Composable (T?) -> Unit) {
+    when (items.loadState.refresh.toLoadingState()) {
+        is LoadingState.Loading -> {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
+
+        else -> {}
+    }
+    nestedStateList(items, content)
     when (val refreshState = items.loadState.refresh.toLoadingState()) {
         is LoadingState.Loading -> {
             item {
@@ -169,11 +181,9 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
                     CircularProgressIndicator()
                 }
             }
-            nestedStateList(items, content)
         }
 
         is LoadingState.Error -> {
-            nestedStateList(items, content)
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 100.dp),
@@ -190,7 +200,6 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
         }
 
         else -> {
-            nestedStateList(items, content)
             if (items.loadState.append is LoadStateLoading) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {

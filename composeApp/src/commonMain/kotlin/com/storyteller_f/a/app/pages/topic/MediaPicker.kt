@@ -23,6 +23,7 @@ import coil3.compose.AsyncImage
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.compontents.Permission
@@ -109,8 +110,6 @@ fun MediaPicker(
 fun AudioRecorder(privateRoomId: PrimaryKey?, uploadSuccess: (MediaInfo) -> Unit) {
     val isRecording by Recorder.isRecording
     val isGranted by isPermissionGranted(Permission.Audio)
-    val toasterState = rememberToasterState()
-    Toaster(toasterState, alignment = Alignment.Center)
     val client = LocalClient.current
     Box(modifier = Modifier.fillMaxSize()) {
         RecorderButton(isGranted, isRecording, uploadSuccess, privateRoomId, client)
@@ -177,8 +176,6 @@ private fun MediaListView(
     val client = LocalClient.current
     val list = createMediaListViewModel(privateRoomId, user.id)
     val scope = rememberCoroutineScope()
-    val toasterState = rememberToasterState()
-    Toaster(toasterState, alignment = Alignment.Center)
     Column(modifier = Modifier.padding(top = 10.dp)) {
         Row {
             IconButton({

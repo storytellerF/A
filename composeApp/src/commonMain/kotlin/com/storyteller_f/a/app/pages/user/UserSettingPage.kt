@@ -20,10 +20,10 @@ import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import kotlinx.coroutines.launch
 
-sealed interface UserSettingOption {
-    data object Name : UserSettingOption
-    data object Aid : UserSettingOption
-    data object Icon : UserSettingOption
+sealed class UserSettingOption(open val name: String?) {
+    data class Name(override val name: String?) : UserSettingOption(name)
+    data class Aid(override val name: String?) : UserSettingOption(name)
+    data class Icon(override val name: String?) : UserSettingOption(name)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,33 +35,37 @@ fun UserSettingPage() {
     val showSheet = showInputDialog is UserSettingOption.Icon
     val sheetState = rememberModalBottomSheetState()
     val my by LoginViewModel.user.collectAsState()
-    Scaffold {
-        Column(modifier = Modifier.padding(horizontal = 20.dp).padding(it)) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
-                showInputDialog = UserSettingOption.Icon
-            }) {
-                Text("Icon")
-                Spacer(modifier = Modifier.weight(1f))
-                UserIcon(my)
-            }
-            HorizontalDivider()
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
-                showInputDialog = UserSettingOption.Name
-            }) {
-                Text("Name")
-                Spacer(modifier = Modifier.weight(1f))
-                my?.nickname?.let { it1 -> Text(it1, textDecoration = TextDecoration.Underline) }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
-                showInputDialog = UserSettingOption.Aid
-            }) {
-                Text("Aid")
-                Spacer(modifier = Modifier.weight(1f))
-                val aid = my?.aid
-                if (aid == null) {
-                    Text("undefined", textDecoration = TextDecoration.Underline)
-                } else {
-                    Text(aid)
+    my?.let { m ->
+        Scaffold {
+            Column(modifier = Modifier.padding(horizontal = 20.dp).padding(it)) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
+                    showInputDialog = UserSettingOption.Icon(m.avatar?.item?.name)
+                }) {
+                    Text("Icon")
+                    Spacer(modifier = Modifier.weight(1f))
+                    UserIcon(my)
+                }
+                HorizontalDivider()
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
+                    showInputDialog = UserSettingOption.Name(m.nickname)
+                }) {
+                    Text("Name")
+                    Spacer(modifier = Modifier.weight(1f))
+                    my?.nickname?.let { it1 -> Text(it1, textDecoration = TextDecoration.Underline) }
+                }
+                val aid = m.aid
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.height(60.dp).clickable(aid == null) {
+                        showInputDialog = UserSettingOption.Aid(aid)
+                    }) {
+                    Text("Aid")
+                    Spacer(modifier = Modifier.weight(1f))
+                    if (aid == null) {
+                        Text("undefined", textDecoration = TextDecoration.Underline)
+                    } else {
+                        Text(aid)
+                    }
                 }
             }
         }
@@ -84,30 +88,32 @@ fun UserSettingPage() {
     }, support = listOf("files")) {
         showInputDialog = null
     }
-    InputDialog(showInputDialog != null, my?.nickname.orEmpty(), {
-        showInputDialog = null
-    }) {
-        scope.launch {
-            when (showInputDialog) {
-                is UserSettingOption.Name -> {
-                    globalDialogState.use {
-                        val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(nickname = it)).getOrThrow()
-                        LoginViewModel.updateUser(newInfo)
-                        bus.emit(OnUpdateUser(newInfo))
-                        showInputDialog = null
+    showInputDialog?.let {
+        InputDialog(true, it.name.orEmpty(), {
+            showInputDialog = null
+        }) {
+            scope.launch {
+                when (showInputDialog) {
+                    is UserSettingOption.Name -> {
+                        globalDialogState.use {
+                            val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(nickname = it)).getOrThrow()
+                            LoginViewModel.updateUser(newInfo)
+                            bus.emit(OnUpdateUser(newInfo))
+                            showInputDialog = null
+                        }
                     }
-                }
 
-                is UserSettingOption.Aid -> {
-                    globalDialogState.use {
-                        val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(aid = it)).getOrThrow()
-                        LoginViewModel.updateUser(newInfo)
-                        bus.emit(OnUpdateUser(newInfo))
-                        showInputDialog = null
+                    is UserSettingOption.Aid -> {
+                        globalDialogState.use {
+                            val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(aid = it)).getOrThrow()
+                            LoginViewModel.updateUser(newInfo)
+                            bus.emit(OnUpdateUser(newInfo))
+                            showInputDialog = null
+                        }
                     }
-                }
 
-                else -> {}
+                    else -> {}
+                }
             }
         }
     }

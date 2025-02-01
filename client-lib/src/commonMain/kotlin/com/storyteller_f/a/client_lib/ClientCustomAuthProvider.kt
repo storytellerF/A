@@ -33,20 +33,21 @@ class ClientCustomAuthProvider : AuthProvider {
 
     override fun isApplicable(auth: HttpAuthHeader): Boolean {
         Napier.v("isApplicable $auth", tag = "ClientAuth")
-        if (auth is HttpAuthHeader.Single) {
+        if (auth.authScheme == "Custom" && auth is HttpAuthHeader.Single) {
             val data = auth.blob
             val localData = LoginViewModel.session?.first
             if (data != localData) {
                 LoginViewModel.updateSession(data, null)
             }
+            return true
         }
-        return auth.authScheme == "Custom" && auth is HttpAuthHeader.Single
+        return false
     }
 
     override suspend fun refreshToken(response: HttpResponse): Boolean {
         val state = LoginViewModel.state.value as? ClientSession.SignUpSuccess
         val data = LoginViewModel.session?.first
-        Napier.v("refreshToken $data", tag = "ClientAuth")
+        Napier.v("refreshToken $data ${state != null}", tag = "ClientAuth")
         return if (state == null || data == null) {
             false
         } else {

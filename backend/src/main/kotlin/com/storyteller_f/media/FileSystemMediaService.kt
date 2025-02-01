@@ -1,5 +1,7 @@
 package com.storyteller_f.media
 
+import com.ashampoo.kim.common.convertToPhotoMetadata
+import com.ashampoo.kim.jvm.KimJvm
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.MediaItem
@@ -63,7 +65,7 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
                     val file = File(root, "$bucketName/$it")
                     if (file.exists()) {
                         val item = stat(it, file)
-                        val dimension = getDimension(item, file)
+                        val dimension = getDimension(file)
                         MediaInfo("${url}amedia/$it", item, dimension)
                     } else {
                         null
@@ -74,23 +76,14 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
     }
 
     private fun getDimension(
-        item: MediaItem,
         file: File
-    ) = ImageIO.getImageReadersByMIMEType(item.contentType).asSequence().firstNotNullOfOrNull { reader ->
-        try {
-            reader.input = FileImageInputStream(file)
-            reader.read(reader.minIndex)
-            Dimension(
-                reader.getWidth(reader.minIndex),
-                reader.getHeight(reader.minIndex)
-            )
-        } catch (e: Throwable) {
-            Napier.e(throwable = e) {
-                "get image dimension failed ${item.name}"
-            }
+    ) = KimJvm.readMetadata(file)?.convertToPhotoMetadata()?.let {
+        val width = it.widthPx
+        val height = it.heightPx
+        if (width != null && height != null) {
+            Dimension(width, height)
+        } else {
             null
-        } finally {
-            reader.dispose()
         }
     }
 
@@ -98,7 +91,7 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
         val contentType = kotlin.runCatching {
             tika.detect(file)
         }.getOrNull() ?: URLConnection.guessContentTypeFromName(file.path)
-            ?: org.apache.http.entity.ContentType.APPLICATION_OCTET_STREAM.mimeType
+        ?: org.apache.http.entity.ContentType.APPLICATION_OCTET_STREAM.mimeType
         return MediaItem(
             it,
             contentType,

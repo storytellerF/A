@@ -185,18 +185,19 @@ private fun startSign(
 ) {
     if (privateKey.isNotBlank()) {
         scope.launch {
-            signUpOrSignIn(appNav, privateKey, client, isSignUp)
+            signUpOrSignIn(privateKey, client, isSignUp, appNav::gotoHome) {}
         }
     }
 }
 
-private suspend fun signUpOrSignIn(
-    appNav: AppNav,
+ suspend fun signUpOrSignIn(
     privateKey: String,
     client: HttpClient,
-    isSignUp: Boolean
+    isSignUp: Boolean,
+    done: () -> Unit,
+    onError: () -> Unit
 ) {
-    globalDialogState.use(appNav::gotoHome) {
+    globalDialogState.use(done, onError) {
         val data = client.getData().getOrThrow()
         val f = finalData(data)
         val sig = signature(privateKey, f)

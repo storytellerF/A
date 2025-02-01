@@ -1,12 +1,19 @@
 package com.storyteller_f.a.app
 
 import a.composeapp.generated.resources.Res
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,8 +23,12 @@ import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
 import coil3.util.DebugLogger
+import com.dokar.sonner.Toaster
+import com.dokar.sonner.ToasterState
+import com.dokar.sonner.rememberToasterState
 import com.mikepenz.aboutlibraries.ui.compose.m3.*
 import com.storyteller_f.a.app.common.getOrCreateCollection
+import com.storyteller_f.a.app.compontents.DialogState.Text
 import com.storyteller_f.a.app.compontents.GlobalDialog
 import com.storyteller_f.a.app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.pages.community.CommunityPage
@@ -29,8 +40,10 @@ import com.storyteller_f.a.app.pages.topic.processEncryptedTopic
 import com.storyteller_f.a.app.pages.user.MemberPage
 import com.storyteller_f.a.app.pages.user.UserPage
 import com.storyteller_f.a.app.pages.user.UserSettingPage
+import com.storyteller_f.a.app.pages.user.signOut
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.a.client_lib.addRequestHeaders
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
@@ -41,8 +54,14 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.websocket.*
+import io.ktor.http.buildUrl
+import io.ktor.http.path
+import io.ktor.http.takeFrom
 import kotbase.MutableDocument
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -69,6 +88,11 @@ val LocalWsClient = compositionLocalOf {
         error("")
     }) {
     }
+}
+
+@OptIn(DelicateCoroutinesApi::class)
+val LocalToaster = compositionLocalOf {
+    ToasterState(GlobalScope)
 }
 
 @Serializable
@@ -124,37 +148,107 @@ fun AppInternal(httpUrl: String, wsServerUrl: String) {
             getAsyncImageLoader(it)
         }
         val navigator = rememberNavController()
-        val appNav = remember {
-            newAppNav(navigator)
+        App2(navigator, httpUrl, wsServerUrl) {
+            NavHost(navigator, startDestination = HomeScreen) {
+                buildRootNav(navigator)
+            }
         }
+    }
+}
 
-        CompositionLocalProvider(LocalAppNav provides appNav) {
-            val client = getClient {
-                defaultClientConfigure()
-                setupRequest(httpUrl)
-            }
-            CompositionLocalProvider(LocalClient provides client) {
-                val ws = ClientWebSocket({
-                    client.webSocketSession(wsServerUrl + "link") {
-                        addRequestHeaders(LoginViewModel.session?.first)
-                    }
-                }) {
-                    if (it is RoomFrame.NewTopicInfo) {
-                        val info = processEncryptedTopic(listOf(it.topicInfo)).first()
-                        updateDocumentInParent(info)
-                        Napier.v(tag = "pagination") {
-                            "save document $info"
-                        }
-                    }
-                }
-                CompositionLocalProvider(LocalWsClient provides ws) {
-                    GlobalDialog(globalDialogState)
-                    NavHost(navigator, startDestination = HomeScreen) {
-                        buildRootNav(navigator)
+@Composable
+fun App2(navigator: NavHostController, httpUrl: String, wsServerUrl: String, content: @Composable () -> Unit) {
+    val appNav = remember {
+        newAppNav(navigator)
+    }
+
+    CompositionLocalProvider(LocalAppNav provides appNav) {
+        val client = getClient {
+            defaultClientConfigure()
+            setupRequest(httpUrl)
+        }
+        CompositionLocalProvider(LocalClient provides client) {
+            val ws = buildWsClient(client, wsServerUrl)
+            CompositionLocalProvider(LocalWsClient provides ws) {
+                GlobalDialog(globalDialogState)
+                val toasterState = rememberToasterState()
+                Toaster(toasterState, alignment = Alignment.Center)
+                CompositionLocalProvider(LocalToaster provides toasterState) {
+                    LoginCheck {
+                        content()
                     }
                 }
             }
         }
+    }
+}
+
+private fun buildWsClient(
+    client: HttpClient,
+    wsServerUrl: String
+): ClientWebSocket = ClientWebSocket({
+    client.webSocketSession(buildUrl {
+        takeFrom(wsServerUrl)
+        path("link")
+    }.toString()) {
+        addRequestHeaders(LoginViewModel.session?.first)
+    }
+}) {
+    if (it is RoomFrame.NewTopicInfo) {
+        val info = processEncryptedTopic(listOf(it.topicInfo)).first()
+        updateDocumentInParent(info)
+        Napier.v(tag = "pagination") {
+            "save document $info"
+        }
+    }
+}
+
+@Composable
+fun LoginCheck(content: @Composable () -> Unit) {
+    val client = LocalClient.current
+    val state by LoginViewModel.state.collectAsState(false)
+    val user by LoginViewModel.user.collectAsState()
+    val signUpSuccessSession = state
+    var tried by remember {
+        mutableStateOf(false)
+    }
+    LaunchedEffect(signUpSuccessSession, tried) {
+        if (!tried) {
+            if (signUpSuccessSession is ClientSession.SignUpSuccess) {
+                LoginViewModel.state
+                signUpOrSignIn(signUpSuccessSession.privateKey, client, false, {
+                    tried = true
+                }) {
+                    tried = true
+                }
+            }
+        }
+    }
+    val scope = rememberCoroutineScope()
+    if (signUpSuccessSession is ClientSession.SignUpSuccess && user == null) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            if (tried) {
+                Column {
+                    Button({
+                        scope.launch {
+                            signOut(client)
+                        }
+                    }) {
+                        Text("Sign out")
+                    }
+                    Button({
+                        tried = false
+                    }) {
+                        Text("Retry")
+                    }
+                }
+
+            } else {
+                CircularProgressIndicator(modifier = Modifier.size(40.dp))
+            }
+        }
+    } else {
+        content()
     }
 }
 
