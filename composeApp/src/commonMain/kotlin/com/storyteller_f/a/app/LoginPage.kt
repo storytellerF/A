@@ -190,7 +190,7 @@ private fun startSign(
     }
 }
 
- suspend fun signUpOrSignIn(
+suspend fun signUpOrSignIn(
     privateKey: String,
     client: HttpClient,
     isSignUp: Boolean,

@@ -16,11 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
-import com.dokar.sonner.Toaster
-import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.LocalToaster

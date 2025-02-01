@@ -14,8 +14,6 @@ import java.io.File
 import java.net.URLConnection
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
-import javax.imageio.ImageIO
-import javax.imageio.stream.FileImageInputStream
 
 class FileSystemMediaService(private val url: String, base: String) : MediaService {
     private val root = File(base).canonicalFile
@@ -91,7 +89,7 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
         val contentType = kotlin.runCatching {
             tika.detect(file)
         }.getOrNull() ?: URLConnection.guessContentTypeFromName(file.path)
-        ?: org.apache.http.entity.ContentType.APPLICATION_OCTET_STREAM.mimeType
+            ?: org.apache.http.entity.ContentType.APPLICATION_OCTET_STREAM.mimeType
         return MediaItem(
             it,
             contentType,

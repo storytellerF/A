@@ -242,7 +242,6 @@ fun LoginCheck(content: @Composable () -> Unit) {
                         Text("Retry")
                     }
                 }
-
             } else {
                 CircularProgressIndicator(modifier = Modifier.size(40.dp))
             }

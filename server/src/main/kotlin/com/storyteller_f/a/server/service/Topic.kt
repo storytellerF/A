@@ -23,7 +23,6 @@ import org.apache.pdfbox.pdmodel.font.FontMappers
 import org.apache.pdfbox.pdmodel.font.PDType0Font
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
-import org.jetbrains.exposed.sql.and
 import rst.pdfbox.layout.elements.Document
 import rst.pdfbox.layout.elements.Paragraph
 import java.awt.GraphicsEnvironment
@@ -258,7 +257,7 @@ suspend fun getTopics(
     fillHasCommented: Boolean?
 ): Result<PaginationResult<TopicInfo>?> {
     val predicate: SqlExpressionBuilder.() -> Op<Boolean> = {
-        Topics.parentId eq parentId and (Topics.parentType eq parentType)
+        Topics.parentId eq parentId
     }
     return checkRootReadPermission(parentType, parentId, uid).mapResultNotNull { (hasRead, _, isPrivate) ->
         when {

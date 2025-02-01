@@ -10,16 +10,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
-import com.dokar.sonner.Toaster
 import com.dokar.sonner.ToasterState
-import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.nestedStateView

@@ -8,12 +8,13 @@ import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ROOM_ID_LENGTH
 import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.index.TopicDocument
-import com.storyteller_f.media.uploadOneFil
+import com.storyteller_f.media.uploadFiles
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetValue
 import com.storyteller_f.shared.type.*
+import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
@@ -87,7 +88,11 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/room-icon.${path.extension}"
-                uploadOneFil(path, tika, backend, "room-icon.${path.extension}", id, null).getOrThrow()
+                uploadFiles(
+                    tika,
+                    backend,
+                    listOf(Triple(path, "$id/${"room-icon.${path.extension}"}", null))
+                ).getOrThrow()
                 Triple(it, p, id)
             }
         }
@@ -143,15 +148,20 @@ class AddPreset : Subcommand("add", "add entry") {
                 it.community != null
             }.forEach { (t, u) ->
                 if (t) {
-                    addTopicsIntoCommunity(u, userList, parentDir)
+                    addTopicsIntoCommunity(u, userList, parentDir, tika)
                 } else {
-                    addTopicsIntoRoom(u, userList, parentDir)
+                    addTopicsIntoRoom(u, userList, parentDir, tika)
                 }
             }
         }.getOrThrow()
     }
 
-    private suspend fun addTopicsIntoRoom(u: List<PresetTopic>, userList: Map<String, User>, parentDir: File) {
+    private suspend fun addTopicsIntoRoom(
+        u: List<PresetTopic>,
+        userList: Map<String, User>,
+        parentDir: File,
+        tika: Tika
+    ) {
         val roomList = u.mapNotNull {
             it.room
         }.distinct().map {
@@ -163,8 +173,8 @@ class AddPreset : Subcommand("add", "add entry") {
             checkRoomIsPrivate(value.id).getOrNull() == true
         }
 
-        insertEncryptedTopic(roomIsPrivate, parentDir, ids, u)
-        insertUnEncryptedTopic(u, roomIsPrivate, parentDir, ids, roomList, userList)
+        insertEncryptedTopicToRoom(roomIsPrivate, parentDir, ids, u, tika, roomList)
+        insertUnEncryptedTopicToRoom(u, roomIsPrivate, parentDir, ids, roomList, userList, tika)
     }
 
     private suspend fun insertRoomTopicBaseLevel(
@@ -210,13 +220,14 @@ class AddPreset : Subcommand("add", "add entry") {
         return ids
     }
 
-    private suspend fun insertUnEncryptedTopic(
+    private suspend fun insertUnEncryptedTopicToRoom(
         presetTopicList: List<PresetTopic>,
         roomIsPrivate: Map<String, Boolean>,
         parentDir: File,
         ids: LongArray,
         roomList: Map<String, Room>,
-        userList1: Map<String, User>
+        userList: Map<String, User>,
+        tika: Tika
     ) {
         val topicsPublic = presetTopicList.mapIndexedNotNull { i, addTopic ->
             if (roomIsPrivate[addTopic.room] != true) {
@@ -239,17 +250,29 @@ class AddPreset : Subcommand("add", "add entry") {
                         else -> ids[second - first.parent!!]
                     },
                     (if (level == 0) ObjectType.ROOM else ObjectType.TOPIC).name,
-                    userList1[first.author]!!.id
+                    userList[first.author]!!.id
                 )
             }
         ).getOrThrow()
+        presetTopicList.forEachIndexed { index, topic ->
+            if (topic.room != null) {
+                val content = getTopicContent(topic, parentDir)
+                uploadFiles(tika, backend, extractMarkdownMediaLink(content).map {
+                    Triple(File(parentDir, "images/topics/$it"), "${userList[topic.author]!!.id}/$it", null)
+                }).getOrThrow()
+            } else {
+                null
+            }
+        }
     }
 
-    private suspend fun insertEncryptedTopic(
+    private suspend fun insertEncryptedTopicToRoom(
         roomIsPrivate: Map<String, Boolean>,
         parentDir: File,
         ids: LongArray,
-        u: List<PresetTopic>
+        u: List<PresetTopic>,
+        tika: Tika,
+        roomList: Map<String, Room>
     ) {
         val topicsPrivate = u.mapIndexedNotNull { i, addTopic ->
             if (roomIsPrivate[addTopic.room] == true) {
@@ -258,7 +281,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 null
             }
         }
-        val rooms = u.mapNotNull {
+        val roomMembers = u.mapNotNull {
             it.room
         }.distinct().map { roomAid ->
             val members = MemberJoins
@@ -272,13 +295,13 @@ class AddPreset : Subcommand("add", "add entry") {
                     it[Users.publicKey] to it[Users.id]
                 }
             roomAid to members
-        }.associateBy { it.first }
+        }.associate { it }
         val encrypted = topicsPrivate.map { (addTopic, index) ->
             val (first, aesBytes) = encrypt(getTopicContent(addTopic, parentDir))
             Tuple4(index, first, aesBytes, addTopic)
         }
         val encryptedKeys = encrypted.flatMap { (index, _, aesBytes, topic) ->
-            rooms[topic.room]!!.second.map {
+            roomMembers[topic.room]!!.map {
                 val pubKey = it.first
                 val data4 = encryptAesKey(pubKey, aesBytes)
                 Triple(index, data4, it.second)
@@ -293,9 +316,27 @@ class AddPreset : Subcommand("add", "add entry") {
             this[EncryptedTopicKeys.encryptedAes] = ExposedBlob(t4)
             this[EncryptedTopicKeys.uid] = id
         }
+        u.forEachIndexed { index, topic ->
+            if (topic.room != null) {
+                val room = roomList[topic.room]
+                if (room != null) {
+                    val content = getTopicContent(topic, parentDir)
+                    uploadFiles(tika, backend, extractMarkdownMediaLink(content).map {
+                        Triple(File(parentDir, "images/topics/$it"), "${room.id}/$it", null)
+                    }).getOrThrow()
+                }
+            } else {
+                null
+            }
+        }
     }
 
-    private suspend fun addTopicsIntoCommunity(u: List<PresetTopic>, userList: Map<String, User>, parentDir: File) {
+    private suspend fun addTopicsIntoCommunity(
+        u: List<PresetTopic>,
+        userList: Map<String, User>,
+        parentDir: File,
+        tika: Tika
+    ) {
         val communityList = u.mapNotNull {
             it.community
         }.distinct().map {
@@ -310,7 +351,17 @@ class AddPreset : Subcommand("add", "add entry") {
         }.associate {
             it.first to it.second
         }
-        val ids = insertCommunityTopicTopLevel(u, userList, communityList)
+        val ids = insertCommunityTopics(u, userList, communityList)
+        u.forEachIndexed { index, topic ->
+            if (topic.community != null) {
+                val content = getTopicContent(topic, parentDir)
+                uploadFiles(tika, backend, extractMarkdownMediaLink(content).map {
+                    Triple(File(parentDir, "images/topics/$it"), "${userList[topic.author]!!.id}/$it", null)
+                }).getOrThrow()
+            } else {
+                null
+            }
+        }
         backend.topicSearchService.saveDocument(
             u.mapIndexedNotNull { index, topic ->
                 if (topic.community != null) {
@@ -339,7 +390,7 @@ class AddPreset : Subcommand("add", "add entry") {
         ).getOrThrow()
     }
 
-    private suspend fun insertCommunityTopicTopLevel(
+    private suspend fun insertCommunityTopics(
         u: List<PresetTopic>,
         userList: Map<String, User>,
         communityList: Map<String, PrimaryKey>
@@ -409,7 +460,11 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/avatar.${path.extension}"
-                uploadOneFil(path, tika, backend, "avatar.${path.extension}", id, null).getOrThrow()
+                uploadFiles(
+                    tika,
+                    backend,
+                    listOf(Triple(path, "$id/${"avatar.${path.extension}"}", null))
+                ).getOrThrow()
                 Tuple5(it, p, derPublicKey, ad, id)
             }
         }
@@ -443,7 +498,11 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/community-icon.${path.extension}"
-                uploadOneFil(path, tika, backend, "community-icon.${path.extension}", id, null).getOrThrow()
+                uploadFiles(
+                    tika,
+                    backend,
+                    listOf(Triple(path, "$id/${"community-icon.${path.extension}"}", null))
+                ).getOrThrow()
                 Triple(it, p, id)
             }
         }

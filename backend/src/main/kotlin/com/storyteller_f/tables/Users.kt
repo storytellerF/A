@@ -2,7 +2,6 @@ package com.storyteller_f.tables
 
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
-import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey

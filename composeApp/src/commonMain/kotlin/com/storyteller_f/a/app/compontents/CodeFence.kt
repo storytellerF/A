@@ -2,8 +2,6 @@ package com.storyteller_f.a.app.compontents
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -11,31 +9,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.isUnspecified
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.network.ktor3.KtorNetworkFetcherFactory
@@ -44,7 +32,6 @@ import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
-import com.mikepenz.markdown.model.PlaceholderConfig
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.pages.topic.TopicRoute
@@ -56,10 +43,7 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
-import io.github.aakira.napier.Napier
 import io.ktor.http.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.io.asOutputStream
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -213,7 +197,7 @@ fun generateLatexImage(
 ): Result<Pair<Boolean, Path>> {
     return runCatching {
         val key = md5(tex)
-        val output = Path(SystemTemporaryDirectory, "${key}-${backgroundColor}-${textColor}-${size}.png")
+        val output = Path(SystemTemporaryDirectory, "$key-$backgroundColor-$textColor-$size.png")
         if (SystemFileSystem.exists(output)) {
             true to output
         } else {
@@ -221,9 +205,7 @@ fun generateLatexImage(
                 buildTexPainter(tex, backgroundColor, textColor, size, it.asOutputStream()) to output
             }
         }
-
     }
-
 }
 
 @Composable
@@ -269,11 +251,8 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInf
                     info?.let { it1 -> appNav.gotoMedia(info) }
                 }
             )
-
         }
-
     }
-
 }
 
 @Composable
