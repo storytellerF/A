@@ -1,12 +1,17 @@
 package com.storyteller_f.a.app.compontents
 
 import android.graphics.Bitmap
-import androidx.compose.ui.geometry.Size
 import androidx.core.graphics.drawable.toBitmap
 import ru.noties.jlatexmath.JLatexMathDrawable
 import java.io.OutputStream
 
-actual fun buildTexPainter(tex: String, backgroundColor: Int, color: Int, textSize: Float, outputStream: OutputStream): Boolean {
+actual fun buildTexPainter(
+    tex: String,
+    backgroundColor: Int,
+    color: Int,
+    textSize: Float,
+    outputStream: OutputStream
+): Boolean {
     val drawable = JLatexMathDrawable.builder(tex)
         .textSize(textSize)
         .padding(8)

@@ -1,6 +1,5 @@
 package com.storyteller_f.a.app.compontents
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -80,77 +79,99 @@ fun GlobalDialogInternal(message: DialogState, updateNewState: (DialogState) -> 
     }
     when (message) {
         is DialogState.Loading -> {
-            BasicAlertDialog(
-                onDismissRequest,
-                properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
-            ) {
-                Surface(shape = RoundedCornerShape(12.dp), shadowElevation = 10.dp) {
-                    Box(modifier = Modifier.size(100.dp).padding(20.dp)) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
+            LoadingDialog(onDismissRequest)
         }
 
         is DialogState.Error -> {
-            val throwable = message.throwable
-            val scrollState = rememberScrollState()
-            if (throwable is ServerErrorException && throwable.text.startsWith("<html")) {
-                BasicAlertDialog({
-                    onDismissRequest()
-                }) {
-                    DialogContainer {
-                        Column {
-                            ExceptionView(throwable)
-                        }
-                    }
-                }
-            } else {
-                AlertDialog(onDismissRequest, {
-                    Button({
-                        onDismissRequest()
-                    }) {
-                        Text("Close")
-                    }
-                }, title = {
-                    Text(throwable.localizedMessage.toString())
-                }, text = {
-                    @Suppress("KotlinConstantConditions")
-                    if (!AppConfig.IS_PROD) {
-                        val text = throwable.stackTraceToString()
-                        MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
-                            Text(
-                                text,
-                                modifier = Modifier.verticalScroll(scrollState),
-                                maxLines = total.coerceIn(2, 20)
-                            )
-                        }
-                    }
-                })
-            }
-
+            ErrorDialog(message, onDismissRequest)
         }
 
         is DialogState.Text -> {
-            val scrollState = rememberScrollState()
-            AlertDialog(onDismissRequest, {
-                Button({
-                    onDismissRequest()
-                }) {
-                    Text("Close")
-                }
-            }, text = {
-                val text = message.text
-                MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
-                    Text(text, modifier = Modifier.verticalScroll(scrollState), maxLines = total - 10)
-                }
-            })
+            TextDialog(onDismissRequest, message)
         }
 
         DialogState.None -> {}
+    }
+}
+
+@Composable
+private fun TextDialog(
+    onDismissRequest: () -> Unit,
+    message: DialogState.Text
+) {
+    val scrollState = rememberScrollState()
+    AlertDialog(onDismissRequest, {
+        Button({
+            onDismissRequest()
+        }) {
+            Text("Close")
+        }
+    }, text = {
+        val text = message.text
+        MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
+            Text(text, modifier = Modifier.verticalScroll(scrollState), maxLines = total - 10)
+        }
+    })
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun ErrorDialog(
+    message: DialogState.Error,
+    onDismissRequest: () -> Unit
+) {
+    val throwable = message.throwable
+    val scrollState = rememberScrollState()
+    if (throwable is ServerErrorException && throwable.text.startsWith("<html")) {
+        BasicAlertDialog({
+            onDismissRequest()
+        }) {
+            DialogContainer {
+                Column {
+                    ExceptionView(throwable)
+                }
+            }
+        }
+    } else {
+        AlertDialog(onDismissRequest, {
+            Button({
+                onDismissRequest()
+            }) {
+                Text("Close")
+            }
+        }, title = {
+            Text(throwable.localizedMessage.toString())
+        }, text = {
+            @Suppress("KotlinConstantConditions")
+            if (!AppConfig.IS_PROD) {
+                val text = throwable.stackTraceToString()
+                MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
+                    Text(
+                        text,
+                        modifier = Modifier.verticalScroll(scrollState),
+                        maxLines = total.coerceIn(2, 20)
+                    )
+                }
+            }
+        })
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun LoadingDialog(onDismissRequest: () -> Unit) {
+    BasicAlertDialog(
+        onDismissRequest,
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+    ) {
+        Surface(shape = RoundedCornerShape(12.dp), shadowElevation = 10.dp) {
+            Box(modifier = Modifier.size(100.dp).padding(20.dp)) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
     }
 }
 

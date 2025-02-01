@@ -69,7 +69,7 @@ fun UserDialogInternal(userInfo: UserInfo, dismiss: () -> Unit = {}) {
     }
 }
 
- suspend fun signOut(client: HttpClient) {
+suspend fun signOut(client: HttpClient) {
     globalDialogState.use {
         client.signOut()
         LoginViewModel.signOut()

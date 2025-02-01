@@ -3,7 +3,7 @@ package com.storyteller_f.a.server.service
 import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.route.RouteMedia
-import com.storyteller_f.media.uploadOneFil
+import com.storyteller_f.media.uploadFiles
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ServerResponse
@@ -71,16 +71,12 @@ suspend fun RoutingContext.uploadMedia(
 
                         try {
                             file.writeBytes(fileBytes)
-                            val info = uploadOneFil(
-                                file,
+                            val info = uploadFiles(
                                 tika,
                                 backend,
-                                fileName,
-                                it.objectId,
-                                part.contentType.toString()
+                                listOf(Triple(file, "${it.objectId}/$fileName", part.contentType.toString()))
                             ).getOrThrow()
-                            if (info != null)
-                                result.add(info)
+                            result.addAll(info.filterNotNull())
                         } finally {
                             file.delete()
                         }
@@ -94,4 +90,3 @@ suspend fun RoutingContext.uploadMedia(
         Result.success(ServerResponse(result))
     }
 }
-

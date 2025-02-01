@@ -302,7 +302,11 @@ class MediaListViewModel(private val objectId: PrimaryKey, private val objectTyp
     override suspend fun loadInternal() = client.getMediaList(objectId, objectType)
 }
 
-class UserViewModel(private val requestInfo: suspend HttpClient.() -> Result<UserInfo>, client: HttpClient, val init: UserInfo? = null) :
+class UserViewModel(
+    private val requestInfo: suspend HttpClient.() -> Result<UserInfo>,
+    client: HttpClient,
+    val init: UserInfo? = null
+) :
     SimpleViewModel<UserInfo>(client) {
     constructor(userId: PrimaryKey, client: HttpClient, init: UserInfo? = null) : this({
         getUserInfo(userId)

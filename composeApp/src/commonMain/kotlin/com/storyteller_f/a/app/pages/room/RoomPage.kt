@@ -23,9 +23,7 @@ import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
 import com.dokar.sonner.ToastType
-import com.dokar.sonner.Toaster
 import com.dokar.sonner.ToasterState
-import com.dokar.sonner.rememberToasterState
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
@@ -379,17 +377,19 @@ private fun InputGroupSuffix(
             Icons.Default.OpenInFull,
             "open in full",
             modifier = Modifier.clickable {
-                if (alreadyLoginIn)
+                if (alreadyLoginIn) {
                     appNav.gotoTopicCompose(objectType, objectId, false, privateRoomId)
-                else
+                } else {
                     globalDialogState.showMessage("need sign in")
+                }
             }
         )
         Icon(Icons.Filled.PermMedia, contentDescription = null, modifier = Modifier.clickable {
-            if (alreadyLoginIn)
+            if (alreadyLoginIn) {
                 showSheet = true
-            else
+            } else {
                 globalDialogState.showMessage("need sign in")
+            }
         })
     }
     val sheetState = rememberModalBottomSheetState()

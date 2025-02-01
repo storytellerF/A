@@ -6,7 +6,13 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import java.io.OutputStream
 
-expect fun buildTexPainter(tex: String, backgroundColor: Int, color: Int, textSize: Float, outputStream: OutputStream): Boolean
+expect fun buildTexPainter(
+    tex: String,
+    backgroundColor: Int,
+    color: Int,
+    textSize: Float,
+    outputStream: OutputStream
+): Boolean
 
 @Composable
 fun textUnitToPx(textUnit: TextUnit): Float {
@@ -15,7 +21,7 @@ fun textUnitToPx(textUnit: TextUnit): Float {
     return textUnitToPx(textUnit, density)
 }
 
- fun textUnitToPx(textUnit: TextUnit, density: Density): Float {
+fun textUnitToPx(textUnit: TextUnit, density: Density): Float {
     return if (textUnit.isSp) {
         with(density) {
             textUnit.toPx()

@@ -74,7 +74,6 @@ import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.readInlineMath
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -189,6 +188,7 @@ fun CustomMarkdownParagraph(
     )
 }
 
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
     content: String,
     children: List<ASTNode>,
@@ -285,7 +285,9 @@ fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
                     MarkdownTokenTypes.TEXT -> append(child.getUnescapedTextInNode(content))
                     GFMTokenTypes.GFM_AUTOLINK -> if (child.parent == MarkdownElementTypes.LINK_TEXT) {
                         append(child.getUnescapedTextInNode(content))
-                    } else appendAutoLink(content, child, linkTextStyle)
+                    } else {
+                        appendAutoLink(content, child, linkTextStyle)
+                    }
 
                     MarkdownTokenTypes.SINGLE_QUOTE -> append('\'')
                     MarkdownTokenTypes.DOUBLE_QUOTE -> append('\"')
@@ -299,9 +301,13 @@ fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
                     MarkdownTokenTypes.EXCLAMATION_MARK -> append('!')
                     MarkdownTokenTypes.BACKTICK -> append('`')
                     MarkdownTokenTypes.HARD_LINE_BREAK -> append("\n\n")
-                    MarkdownTokenTypes.EMPH -> if (parentType != MarkdownElementTypes.EMPH && parentType != MarkdownElementTypes.STRONG) append(
-                        '*'
-                    )
+                    MarkdownTokenTypes.EMPH -> if (parentType != MarkdownElementTypes.EMPH &&
+                        parentType != MarkdownElementTypes.STRONG
+                    ) {
+                        append(
+                            '*'
+                        )
+                    }
 
                     MarkdownTokenTypes.EOL -> append('\n')
                     MarkdownTokenTypes.WHITE_SPACE -> if (length > 0) {
@@ -313,37 +319,46 @@ fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
                     }
 
                     GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -> {
-                        val tex = readInlineMath(child, content)
-                        val size = textUnitToPx(codeStyle.fontSize, density)
-                        generateLatexImage(
-                            if (child.type == GFMElementTypes.INLINE_MATH) codeStyle.background.toArgb() else 0,
-                            codeStyle.color.toArgb(),
-                            size,
-                            tex
-                        ).getOrNull()?.let { (r, path) ->
-                            val id = "math${child.startOffset}-${child.endOffset}"
-                            val url = "file:///$path"
-                            inlineContentMap[id] = url
-                            when {
-                                !r -> append(tex)
-                                child.type == GFMElementTypes.BLOCK_MATH -> {
-                                    val style = ParagraphStyle()
-                                    pushStyle(style)
-                                    appendInlineContent(id, url)
-                                    pop()
-                                }
-
-                                else -> {
-                                    appendInlineContent(id, url)
-                                }
-                            }
-                        }
-
+                        appendMathContent(child, content, codeStyle, density, inlineContentMap)
                     }
                 }
             }
         } else {
             skipIfNext = null
+        }
+    }
+}
+
+private fun AnnotatedString.Builder.appendMathContent(
+    child: ASTNode,
+    content: String,
+    codeStyle: SpanStyle,
+    density: Density,
+    inlineContentMap: MutableMap<String, String>
+) {
+    val tex = readInlineMath(child, content)
+    val size = textUnitToPx(codeStyle.fontSize, density)
+    generateLatexImage(
+        if (child.type == GFMElementTypes.INLINE_MATH) codeStyle.background.toArgb() else 0,
+        codeStyle.color.toArgb(),
+        size,
+        tex
+    ).getOrNull()?.let { (r, path) ->
+        val id = "math${child.startOffset}-${child.endOffset}"
+        val url = "file:///$path"
+        inlineContentMap[id] = url
+        when {
+            !r -> append(tex)
+            child.type == GFMElementTypes.BLOCK_MATH -> {
+                val style = ParagraphStyle()
+                pushStyle(style)
+                appendInlineContent(id, url)
+                pop()
+            }
+
+            else -> {
+                appendInlineContent(id, url)
+            }
         }
     }
 }
@@ -394,8 +409,9 @@ fun CustomMarkdownText(
     // call drawBehind with the `extended-spans` if provided
     val extendedModifier = if (extendedSpans != null) {
         modifier.drawBehind(extendedSpans)
-    } else modifier
-
+    } else {
+        modifier
+    }
 
     CustomMarkdownText(extendedStyledText, extendedModifier, style, onTextLayout, inlineContentMap, mediaMap)
 }
@@ -414,34 +430,38 @@ fun CustomMarkdownText(
     val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
 
     val hasUrl = content.getStringAnnotations(MARKDOWN_TAG_URL, 0, content.length).any()
-    val textModifier = if (hasUrl) modifier.pointerInput(Unit) {
-        awaitEachGesture {
-            val pointer = awaitFirstDown()
-            val pos = pointer.position // current position
+    val textModifier = if (hasUrl) {
+        modifier.pointerInput(Unit) {
+            awaitEachGesture {
+                val pointer = awaitFirstDown()
+                val pos = pointer.position // current position
 
-            val foundReference = layoutResult.value?.let { layoutResult ->
-                val position = layoutResult.getOffsetForPosition(pos)
-                content.getStringAnnotations(MARKDOWN_TAG_URL, position, position).reversed().firstOrNull()
-                    ?.let { referenceLinkHandler.find(it.item) }
-            }
+                val foundReference = layoutResult.value?.let { layoutResult ->
+                    val position = layoutResult.getOffsetForPosition(pos)
+                    content.getStringAnnotations(MARKDOWN_TAG_URL, position, position).reversed().firstOrNull()
+                        ?.let { referenceLinkHandler.find(it.item) }
+                }
 
-            if (foundReference != null) {
-                pointer.consume() // consume if we clicked on a link
+                if (foundReference != null) {
+                    pointer.consume() // consume if we clicked on a link
 
-                val up = waitForUpOrCancellation()
-                if (up != null) {
-                    up.consume()
+                    val up = waitForUpOrCancellation()
+                    if (up != null) {
+                        up.consume()
 
-                    // wait for finger up to navigate to the link
-                    try {
-                        uriHandler.openUri(foundReference)
-                    } catch (_: Throwable) {
-                        println("Could not open the provided url: $foundReference")
+                        // wait for finger up to navigate to the link
+                        try {
+                            uriHandler.openUri(foundReference)
+                        } catch (_: Throwable) {
+                            println("Could not open the provided url: $foundReference")
+                        }
                     }
                 }
             }
         }
-    } else modifier
+    } else {
+        modifier
+    }
 
     val transformer = LocalImageTransformer.current
 
@@ -538,7 +558,6 @@ private fun buildInlineContentDimensions(
         }
     }
 }
-
 
 @Composable
 fun MarkdownBasicText1(

@@ -8,7 +8,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.dokar.sonner.ToasterState
 import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.globalDialogState
@@ -18,7 +20,9 @@ import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.updateUserInfo
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 sealed class UserSettingOption(open val name: String?) {
     data class Name(override val name: String?) : UserSettingOption(name)
@@ -35,40 +39,17 @@ fun UserSettingPage() {
     val showSheet = showInputDialog is UserSettingOption.Icon
     val sheetState = rememberModalBottomSheetState()
     val my by LoginViewModel.user.collectAsState()
+    val toasterState = LocalToaster.current
+    val showDialog = { option: UserSettingOption ->
+        showInputDialog = option
+    }
     my?.let { m ->
         Scaffold {
-            Column(modifier = Modifier.padding(horizontal = 20.dp).padding(it)) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
-                    showInputDialog = UserSettingOption.Icon(m.avatar?.item?.name)
-                }) {
-                    Text("Icon")
-                    Spacer(modifier = Modifier.weight(1f))
-                    UserIcon(my)
-                }
-                HorizontalDivider()
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
-                    showInputDialog = UserSettingOption.Name(m.nickname)
-                }) {
-                    Text("Name")
-                    Spacer(modifier = Modifier.weight(1f))
-                    my?.nickname?.let { it1 -> Text(it1, textDecoration = TextDecoration.Underline) }
-                }
-                val aid = m.aid
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.height(60.dp).clickable(aid == null) {
-                        showInputDialog = UserSettingOption.Aid(aid)
-                    }) {
-                    Text("Aid")
-                    Spacer(modifier = Modifier.weight(1f))
-                    if (aid == null) {
-                        Text("undefined", textDecoration = TextDecoration.Underline)
-                    } else {
-                        Text(aid)
-                    }
-                }
-            }
+            UserSettingInternal(it, showDialog, m, toasterState)
         }
+    }
+    val closeDialog = {
+        showInputDialog = null
     }
     val client = LocalClient.current
     val scope = rememberCoroutineScope()
@@ -77,45 +58,103 @@ fun UserSettingPage() {
             globalDialogState.use {
                 val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(avatar = info)).getOrThrow()
                 LoginViewModel.updateUser(newInfo)
-                showInputDialog = null
+                closeDialog()
             }
         }
     }
+
     MediaPicker(showSheet, sheetState, null, {
         updateIcon(it)
     }, {
         updateIcon(it)
     }, support = listOf("files")) {
-        showInputDialog = null
+        closeDialog()
     }
+
     showInputDialog?.let {
         InputDialog(true, it.name.orEmpty(), {
-            showInputDialog = null
+            closeDialog()
         }) {
             scope.launch {
-                when (showInputDialog) {
-                    is UserSettingOption.Name -> {
-                        globalDialogState.use {
-                            val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(nickname = it)).getOrThrow()
-                            LoginViewModel.updateUser(newInfo)
-                            bus.emit(OnUpdateUser(newInfo))
-                            showInputDialog = null
-                        }
-                    }
-
-                    is UserSettingOption.Aid -> {
-                        globalDialogState.use {
-                            val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(aid = it)).getOrThrow()
-                            LoginViewModel.updateUser(newInfo)
-                            bus.emit(OnUpdateUser(newInfo))
-                            showInputDialog = null
-                        }
-                    }
-
-                    else -> {}
-                }
+                updateUser(showInputDialog, client, it, closeDialog)
             }
         }
+    }
+}
+
+@Composable
+private fun UserSettingInternal(
+    values: PaddingValues,
+    showDialog: (UserSettingOption) -> Unit,
+    m: UserInfo,
+    toasterState: ToasterState
+) {
+    Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
+        UserSettingOptionView("Icon", {
+            showDialog(UserSettingOption.Icon(m.avatar?.item?.name))
+        }, {
+            UserIcon(m)
+        })
+        UserSettingOptionView("Name", {
+            showDialog(UserSettingOption.Name(m.nickname))
+        }, {
+            Text(m.nickname, textDecoration = TextDecoration.Underline)
+        })
+        val aid = m.aid
+        UserSettingOptionView("Aid", {
+            if (aid == null) {
+                showDialog(UserSettingOption.Aid(aid))
+            } else {
+                toasterState.show("forbid", duration = 1.seconds)
+            }
+        }, {
+            if (aid == null) {
+                Text("undefined", textDecoration = TextDecoration.Underline)
+            } else {
+                Text(aid)
+            }
+        })
+    }
+}
+
+@Composable
+fun UserSettingOptionView(title: String, onClick: () -> Unit, content: @Composable () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
+        onClick()
+    }) {
+        Text(title)
+        Spacer(modifier = Modifier.weight(1f))
+        content()
+    }
+    HorizontalDivider()
+}
+
+private suspend fun updateUser(
+    showInputDialog: UserSettingOption?,
+    client: HttpClient,
+    string: String,
+    closeDialog: () -> Unit
+) {
+    when (showInputDialog) {
+        is UserSettingOption.Name -> {
+            globalDialogState.use {
+                val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(nickname = string)).getOrThrow()
+                LoginViewModel.updateUser(newInfo)
+                bus.emit(OnUpdateUser(newInfo))
+                closeDialog()
+            }
+        }
+
+        is UserSettingOption.Aid -> {
+            globalDialogState.use {
+                val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(aid = string)).getOrThrow()
+                LoginViewModel.updateUser(newInfo)
+                bus.emit(OnUpdateUser(newInfo))
+                closeDialog()
+            }
+        }
+
+        else -> {}
     }
 }
 
