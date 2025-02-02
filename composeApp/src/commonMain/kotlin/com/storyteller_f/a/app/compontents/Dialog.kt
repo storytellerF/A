@@ -122,7 +122,7 @@ private fun ErrorDialog(
 ) {
     val throwable = message.throwable
     val scrollState = rememberScrollState()
-    if (throwable is ServerErrorException && throwable.text.startsWith("<html")) {
+    if (throwable is ServerErrorException && throwable.isHtmlContent()) {
         BasicAlertDialog({
             onDismissRequest()
         }) {
@@ -156,6 +156,8 @@ private fun ErrorDialog(
         })
     }
 }
+
+fun ServerErrorException.isHtmlContent(): Boolean = text.startsWith("<html") || text.startsWith("<!DOCTYPE html")
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)

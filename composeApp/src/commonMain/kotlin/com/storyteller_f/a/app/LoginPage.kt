@@ -24,11 +24,14 @@ import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.app.utils.storeToStorage
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.*
+import io.github.vinceglb.filekit.core.FileKit
+import io.github.vinceglb.filekit.core.extension
+import io.github.vinceglb.filekit.core.pickFile
 import io.ktor.client.*
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun LoginPage() {
@@ -89,11 +92,14 @@ fun SelectLoginPage(loginNav: LoginNav) {
     CenterBox {
         Column(verticalArrangement = Arrangement.spacedBy(40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(Res.string.sign_in), style = MaterialTheme.typography.headlineMedium)
-            OutlinedButton({
-                LoginViewModel.state.value = ClientSession.PrivateKeySignIn("")
-                loginNav.gotoPrivateKey()
-            }, shape = ButtonDefaults.outlinedShape) {
-                Text(stringResource(Res.string.private_key))
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton({
+                    LoginViewModel.state.value = ClientSession.PrivateKeySignIn("")
+                    loginNav.gotoPrivateKey()
+                }, shape = ButtonDefaults.outlinedShape) {
+                    Text(stringResource(Res.string.private_key))
+                }
+                SelectFile(false)
             }
             Text(stringResource(Res.string.go_to_sign_up), modifier = Modifier.clickable {
                 LoginViewModel.state.value = ClientSession.SignUpNone
@@ -108,16 +114,41 @@ fun SelectSignupPage(loginNav: LoginNav) {
     CenterBox {
         Column(verticalArrangement = Arrangement.spacedBy(40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(Res.string.sign_up), style = MaterialTheme.typography.headlineMedium)
-            Button({
-                LoginViewModel.state.value = ClientSession.PrivateKeySignUp("")
-                loginNav.gotoPrivateKey()
-            }) {
-                Text(stringResource(Res.string.private_key))
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button({
+                    LoginViewModel.state.value = ClientSession.PrivateKeySignUp("")
+                    loginNav.gotoPrivateKey()
+                }) {
+                    Text(stringResource(Res.string.private_key))
+                }
+                SelectFile(true)
             }
             Text(stringResource(Res.string.go_to_sign_in), modifier = Modifier.clickable {
                 loginNav.gotoLogin()
             }, textDecoration = TextDecoration.Underline)
         }
+    }
+}
+
+@Composable
+fun SelectFile(isSignUp: Boolean) {
+    val scope = rememberCoroutineScope()
+    val appNav = LocalAppNav.current
+    val client = LocalClient.current
+    val toasterState = LocalToaster.current
+    OutlinedButton({
+        scope.launch {
+            val f = FileKit.pickFile()
+            if (f != null) {
+                if (f.extension == "txt") {
+                    startSign(String(f.readBytes()), appNav, client, isSignUp)
+                } else {
+                    toasterState.show("invalid file ${f.extension}", duration = 1.seconds)
+                }
+            }
+        }
+    }) {
+        Text("Select File")
     }
 }
 
@@ -144,13 +175,17 @@ fun InputPrivateKeyPage() {
                     },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                     keyboardActions = KeyboardActions(onGo = {
-                        startSign(privateKey, scope, appNav, client, isSignUp)
+                        scope.launch {
+                            startSign(privateKey, appNav, client, isSignUp)
+                        }
                     })
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Button({
-                    startSign(privateKey, scope, appNav, client, isSignUp)
+                    scope.launch {
+                        startSign(privateKey, appNav, client, isSignUp)
+                    }
                 }) {
                     Text(
                         stringResource(
@@ -176,17 +211,14 @@ fun InputPrivateKeyPage() {
     }
 }
 
-private fun startSign(
+private suspend fun startSign(
     privateKey: String,
-    scope: CoroutineScope,
     appNav: AppNav,
     client: HttpClient,
     isSignUp: Boolean
 ) {
     if (privateKey.isNotBlank()) {
-        scope.launch {
-            signUpOrSignIn(privateKey, client, isSignUp, appNav::gotoHome) {}
-        }
+        signUpOrSignIn(privateKey, client, isSignUp, appNav::gotoHome) {}
     }
 }
 
