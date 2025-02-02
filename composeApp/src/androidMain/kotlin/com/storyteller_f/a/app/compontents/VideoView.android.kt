@@ -1,14 +1,9 @@
 package com.storyteller_f.a.app.compontents
 
-import android.content.Context
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,34 +16,30 @@ import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.dokar.sonner.ToasterState
-import com.storyteller_f.a.app.LocalToaster
+import com.dokar.sonner.rememberToasterState
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-actual fun VideoView(modifier: Modifier, url: String, contentType: String) {
+actual fun VideoView(modifier: Modifier, url: String, contentType: String, playList: List<PlayItem>) {
     log {
         "Video $url"
     }
-    val toasterState = LocalToaster.current
-    val context = LocalContext.current
-    var size by remember {
-        mutableStateOf<VideoSize?>(null)
-    }
-    val scope = rememberCoroutineScope()
     var currentLoading by remember {
         mutableStateOf(false)
     }
-    val player = remember {
-        rememberMediaPlayer(url, context, toasterState, scope, contentType, {
-            size = it
-        }) {
-            currentLoading = it
+    val player = rememberMediaPlayer(url, contentType, playList, object : VideoListener {
+        override fun onUpdateSize(size: CustomVideoSize) = Unit
+
+        override fun onUpdateLoading(isLoading: Boolean) {
+            currentLoading = isLoading
         }
-    }
+    })
+
     DisposableEffect(player) {
         onDispose {
             log {
@@ -58,54 +49,88 @@ actual fun VideoView(modifier: Modifier, url: String, contentType: String) {
         }
     }
 
-    val shape = RoundedCornerShape(20.dp)
-    Box(modifier = modifier) {
-        AndroidView(
-            factory = {
-                PlayerView(it)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(16f / 9)
-                .background(MaterialTheme.colorScheme.surfaceContainer, shape)
-                .clip(shape)
-        ) {
-            log {
-                "Video $url update"
-            }
-            it.player = player
-        }
-        if (currentLoading && contentType != "application/vnd.apple.mpegurl") {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .height(40.dp)
-            )
-        }
+    var showSheet by remember {
+        mutableStateOf(false)
+    }
+    val sheetState = rememberModalBottomSheetState()
+    VideoViewInternal(currentLoading, contentType, url, player, {
+        showSheet = true
+    }.takeIf { playList.size > 1 })
+    VideoPlaylistPicker(showSheet, sheetState, {
+        showSheet = false
+    }, playList) { e, i ->
+        player.seekTo(i, 0)
+        player.play()
     }
 }
 
+@Composable
+fun VideoViewInternal(
+    currentLoading: Boolean,
+    contentType: String,
+    url: String,
+    player: ExoPlayer,
+    showSheet1: (() -> Unit)? = null
+) {
+    val shape = RoundedCornerShape(20.dp)
+    Column(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.surfaceContainer, shape)
+            .clip(shape)
+    ) {
+        Box(modifier = Modifier) {
+            AndroidView(
+                factory = {
+                    PlayerView(it)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9)
+            ) {
+                log {
+                    "Video $url update"
+                }
+                it.player = player
+            }
+            if (currentLoading && contentType != M3U8_MIMETYPE) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .height(40.dp)
+                )
+            }
+        }
+        OpRow(showSheet1, contentType, url)
+    }
+}
+
+@Composable
 private fun rememberMediaPlayer(
     url: String,
-    context: Context,
-    toasterState: ToasterState,
-    scope: CoroutineScope,
     contentType: String,
-    updateSize: (VideoSize) -> Unit,
-    updateLoading: (Boolean) -> Unit,
+    playList: List<PlayItem>,
+    listener: VideoListener,
 ): ExoPlayer {
     log {
-        "Video $url init"
+        "Video $url rememberMediaPlayer"
     }
-    return ExoPlayer.Builder(context).build().apply {
-        addListener(buildListener(url, toasterState, scope, updateSize, updateLoading))
+    val context = LocalContext.current
+    val toasterState = rememberToasterState()
+    val scope = rememberCoroutineScope()
+    return remember(playList, contentType) {
+        ExoPlayer.Builder(context).build().apply {
+            addListener(buildListener(url, toasterState, scope, listener))
 
-        addMediaItem(MediaItem.Builder().setUri(url).apply {
-            if (contentType == "application/vnd.apple.mpegurl" && !url.endsWith(".m3u8")) {
-                setMimeType(MimeTypes.APPLICATION_M3U8)
-            }
-        }.build())
-        prepare()
+            addMediaItems(playList.map {
+                val url1 = it.url
+                MediaItem.Builder().setUri(url1).apply {
+                    if (contentType == M3U8_MIMETYPE && !url1.endsWith(".m3u8")) {
+                        setMimeType(MimeTypes.APPLICATION_M3U8)
+                    }
+                }.build()
+            })
+            prepare()
+        }
     }
 }
 
@@ -113,13 +138,12 @@ private fun ExoPlayer.buildListener(
     url: String,
     toasterState: ToasterState,
     scope: CoroutineScope,
-    updateSize: (VideoSize) -> Unit,
-    updateLoading: (Boolean) -> Unit,
+    listener: VideoListener,
 ): Player.Listener {
     return object : Player.Listener {
         override fun onVideoSizeChanged(videoSize: VideoSize) {
             super.onVideoSizeChanged(videoSize)
-            updateSize(videoSize)
+            listener.onUpdateSize(CustomVideoSize(videoSize.width, videoSize.height))
         }
 
         override fun onPlayerError(error: PlaybackException) {
@@ -141,7 +165,7 @@ private fun ExoPlayer.buildListener(
 
         override fun onIsLoadingChanged(isLoading: Boolean) {
             super.onIsLoadingChanged(isLoading)
-            updateLoading(isLoading)
+            listener.onUpdateLoading(isLoading)
         }
     }
 }
