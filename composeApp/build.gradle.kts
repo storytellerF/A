@@ -152,6 +152,7 @@ kotlin {
             implementation(libs.uri.kmp)
             implementation(libs.emoji.kt)
             implementation(libs.emoji.compose.m3)
+            implementation(libs.m3u.parser)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

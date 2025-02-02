@@ -67,9 +67,7 @@ fun MediaPicker(
         val currentPage = pagerState.currentPage
         val scope = rememberCoroutineScope()
         ModalBottomSheet(
-            onDismissRequest = {
-                hideSheet()
-            },
+            onDismissRequest = hideSheet,
             dragHandle = null,
             sheetState = sheetState,
             contentWindowInsets = {

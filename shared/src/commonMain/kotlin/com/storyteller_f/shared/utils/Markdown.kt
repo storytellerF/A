@@ -199,4 +199,9 @@ fun getLang(node: ASTNode, content: String): String {
 }
 
 @Serializable
-data class MarkdownObject(val contentType: String, val name: String = "", val url: String = "")
+data class MarkdownObject(
+    val contentType: String,
+    val name: String = "",
+    val url: String = "",
+    val isPlayList: Boolean = false
+)

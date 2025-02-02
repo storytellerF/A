@@ -45,6 +45,7 @@ lifecycleViewmodelCompose = "2.8.7"
 log4jCore = "2.24.3"
 logback = "1.5.15"
 luceneCore = "10.1.0"
+m3uParser = "1.4.0"
 markdown = "0.7.3"
 material3WindowSizeClassMultiplatform = "0.5.0"
 media3Exoplayer = "1.5.1"
@@ -163,6 +164,7 @@ lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", 
 lucene-backward-codecs = { module = "org.apache.lucene:lucene-backward-codecs", version.ref = "luceneCore" }
 lucene-core = { module = "org.apache.lucene:lucene-core", version.ref = "luceneCore" }
 lucene-queryparser = { module = "org.apache.lucene:lucene-queryparser", version.ref = "luceneCore" }
+m3u-parser = { module = "com.github.bjoernpetersen:m3u-parser", version.ref = "m3uParser" }
 markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 material3-window-size = { module = "dev.chrisbanes.material3:material3-window-size-class-multiplatform", version.ref = "material3WindowSizeClassMultiplatform" }
 minio = { module = "io.minio:minio", version.ref = "minio" }

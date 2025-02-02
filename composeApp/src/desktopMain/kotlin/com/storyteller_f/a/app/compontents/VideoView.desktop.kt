@@ -29,7 +29,7 @@ import java.awt.Component
 import java.util.*
 
 @Composable
-actual fun VideoView(modifier: Modifier, url: String, contentType: String) {
+actual fun VideoView(modifier: Modifier, url: String, contentType: String, playList: List<PlayItem>) {
     var isPlaying by remember {
         mutableStateOf(false)
     }

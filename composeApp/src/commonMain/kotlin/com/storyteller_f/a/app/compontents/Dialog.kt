@@ -140,7 +140,7 @@ private fun ErrorDialog(
                 Text("Close")
             }
         }, title = {
-            Text(throwable.localizedMessage.toString())
+            Text(throwable.localizedMessage ?: throwable::class.toString())
         }, text = {
             @Suppress("KotlinConstantConditions")
             if (!AppConfig.IS_PROD) {

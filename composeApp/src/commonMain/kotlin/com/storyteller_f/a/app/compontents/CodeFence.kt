@@ -1,24 +1,35 @@
 package com.storyteller_f.a.app.compontents
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -34,6 +45,7 @@ import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.utils.MarkdownObject
@@ -43,15 +55,22 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.io.asOutputStream
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.serialization.json.Json
+import net.bjoernpetersen.m3u.M3uParser
 import java.net.URI
 import java.security.MessageDigest
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun CustomCodeFence(modal: MarkdownComponentModel, mediaList1: Map<String, MediaInfo>) {
@@ -84,16 +103,7 @@ fun ObjectBlock(
     }
     when (obj.contentType) {
         "video/youtube" -> HighlightCodeBlock(modal)
-        "application/vnd.apple.mpegurl" -> {
-            when {
-                obj.url.trim().isEmpty() -> HighlightCodeBlock(modal)
-                runCatching {
-                    Url(obj.url)
-                }.getOrNull() == null -> HighlightCodeBlock(modal)
-
-                else -> VideoView(modifier = Modifier, obj.url, "application/vnd.apple.mpegurl")
-            }
-        }
+        M3U8_MIMETYPE -> M3UView(obj, modal)
 
         else -> {
             val mediaInfo = mediaList1[obj.name]
@@ -104,7 +114,12 @@ fun ObjectBlock(
 
                 contentType == "application/pdf" -> PdfView(url)
 
-                contentType.startsWith("video/") -> VideoView(modifier = Modifier, url, contentType)
+                contentType.startsWith("video/") -> VideoView(
+                    modifier = Modifier,
+                    url,
+                    contentType,
+                    listOf(PlayItem(url, title = url))
+                )
 
                 contentType.startsWith("audio/") -> AudioView(url)
 
@@ -115,19 +130,69 @@ fun ObjectBlock(
 }
 
 @Composable
+private fun M3UView(
+    obj: MarkdownObject,
+    modal: MarkdownComponentModel
+) {
+    when {
+        obj.url.trim().isEmpty() -> HighlightCodeBlock(modal)
+        runCatching {
+            Url(obj.url)
+        }.getOrNull() == null -> HighlightCodeBlock(modal)
+
+        else -> {
+            val client = LocalClient.current
+            val url = obj.url
+            val contentType = obj.contentType
+            val playList by produceState<List<PlayItem>>(emptyList()) {
+                value = parseM3UPlayList(contentType, url, obj, client)
+            }
+            VideoView(modifier = Modifier, obj.url, M3U8_MIMETYPE, playList)
+        }
+    }
+}
+
+private suspend fun parseM3UPlayList(
+    contentType: String,
+    url: String,
+    obj: MarkdownObject,
+    client: HttpClient
+): List<PlayItem> =
+    if (contentType == M3U8_MIMETYPE && (url.startsWith("http://") || url.startsWith("https://")) && obj.isPlayList) {
+        val entries = withContext(Dispatchers.IO) {
+            val content = client.get(url).bodyAsText()
+            M3uParser.parse(content)
+        }
+        entries.map {
+            PlayItem(it.location.url.toString(), it.metadata["tvg-logo"], it.title)
+        }.distinctBy {
+            it.url
+        }
+    } else {
+        listOf(PlayItem(url, "", url))
+    }
+
+@Composable
 private fun PdfView(url: String) {
     val errorIndicator = rememberVectorPainter(Icons.Default.Error)
     val refreshIndicator = rememberVectorPainter(Icons.Default.Refresh)
     val state = remember(url, errorIndicator, refreshIndicator) {
         RemotePdfState(URI.create(url).toURL(), errorIndicator, refreshIndicator)
     }
-    HorizontalPager(
-        state = rememberPagerState { state.pageCount }
-    ) { i ->
-        PdfPage(
-            state = state,
-            index = i
-        )
+    val shape = RoundedCornerShape(10.dp)
+    Column(
+        modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer, shape)
+            .clip(shape)
+    ) {
+        HorizontalPager(
+            state = rememberPagerState { state.pageCount }
+        ) { i ->
+            PdfPage(
+                state = state,
+                index = i
+            )
+        }
+        OpRow(null, "application/pdf", url)
     }
 }
 
@@ -283,4 +348,41 @@ fun md5(input: String): String {
     val md = MessageDigest.getInstance("MD5")
     val digest = md.digest(input.toByteArray()) // 计算 MD5
     return digest.joinToString("") { "%02x".format(it) } // 转换为十六进制字符串
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun OpRow(
+    showPlayList: (() -> Unit)? = null,
+    contentType: String,
+    url: String
+) {
+    val toasterState = LocalToaster.current
+    FlowRow {
+        val clipboardManager = LocalClipboardManager.current
+
+        if (showPlayList != null) {
+            IconButton({
+                showPlayList()
+            }) {
+                Icon(Icons.AutoMirrored.Default.List, "playlist")
+            }
+        }
+        IconButton({
+            clipboardManager.setText(buildAnnotatedString {
+                append(url)
+            })
+            toasterState.show("copied", duration = 1.seconds)
+        }) {
+            Icon(Icons.Default.ContentCopy, "copy list")
+        }
+        if (contentType != M3U8_MIMETYPE) {
+            val uriHandler = LocalUriHandler.current
+            IconButton({
+                uriHandler.openUri(url)
+            }) {
+                Icon(Icons.Default.Download, "download")
+            }
+        }
+    }
 }
