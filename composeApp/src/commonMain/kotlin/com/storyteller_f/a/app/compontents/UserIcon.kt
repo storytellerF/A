@@ -27,9 +27,7 @@ import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
-fun UserIcon(userInfo: UserInfo?, couldShowDialog: Boolean = true) {
-    val meInfo = LoginViewModel.user.collectAsState()
-    val isMe = meInfo.value?.id == userInfo?.id
+fun UserIcon(userInfo: UserInfo?, isMe: Boolean = false, couldShowDialog: Boolean = true) {
     var showMyDialog by remember {
         mutableStateOf(false)
     }
@@ -43,11 +41,17 @@ fun UserIcon(userInfo: UserInfo?, couldShowDialog: Boolean = true) {
 }
 
 @Composable
-fun UserIconInternal(isMe: Boolean, couldShowDialog: Boolean, url: String?, showDialog: () -> Unit) {
+fun UserIconInternal(
+    isMe: Boolean,
+    couldShowDialog: Boolean,
+    url: String?,
+    showDialog: () -> Unit
+) {
     val appNav = LocalAppNav.current
+    val me by LoginViewModel.user.collectAsState()
     val showDialog by rememberUpdatedState(showDialog)
     val onClick = {
-        if (isMe) {
+        if (isMe && me == null) {
             appNav.gotoLogin()
         } else if (couldShowDialog) {
             showDialog()

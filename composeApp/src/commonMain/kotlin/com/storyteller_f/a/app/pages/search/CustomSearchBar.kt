@@ -76,7 +76,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
                     },
                     trailingIcon = {
                         val userInfo by LoginViewModel.user.collectAsState()
-                        UserIcon(userInfo)
+                        UserIcon(userInfo, true)
                     },
                     placeholder = {
                         SearchPlaceholder(scope)

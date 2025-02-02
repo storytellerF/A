@@ -18,6 +18,7 @@ import com.storyteller_f.a.app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.utils.clearStorage
 import com.storyteller_f.a.app.utils.storeToStorage
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.getUserInfo
@@ -73,6 +74,7 @@ suspend fun signOut(client: HttpClient) {
     globalDialogState.use {
         client.signOut()
         LoginViewModel.signOut()
+        clearStorage()
     }
 }
 

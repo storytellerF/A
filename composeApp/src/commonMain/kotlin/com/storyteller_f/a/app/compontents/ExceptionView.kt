@@ -12,7 +12,7 @@ import io.ktor.client.network.sockets.*
 fun ExceptionView(throwable: Throwable) {
     when (throwable) {
         is ServerErrorException -> {
-            if (throwable.text.isNotBlank() && throwable.text.startsWith("<html")) {
+            if (throwable.text.isNotBlank() && throwable.isHtmlContent()) {
                 val state = rememberRichTextState()
 
                 LaunchedEffect(throwable.message) {
