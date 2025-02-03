@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
+
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,7 +30,6 @@ import com.dokar.sonner.ToasterState
 import com.dokar.sonner.rememberToasterState
 import com.mikepenz.aboutlibraries.ui.compose.m3.*
 import com.storyteller_f.a.app.common.getOrCreateCollection
-import com.storyteller_f.a.app.compontents.DialogState.Text
 import com.storyteller_f.a.app.compontents.GlobalDialog
 import com.storyteller_f.a.app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.pages.community.CommunityPage
@@ -44,6 +45,7 @@ import com.storyteller_f.a.app.pages.user.signOut
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.a.client_lib.addRequestHeaders
+import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
@@ -208,24 +210,30 @@ fun LoginCheck(content: @Composable () -> Unit) {
     val client = LocalClient.current
     val state by LoginViewModel.state.collectAsState(false)
     val user by LoginViewModel.user.collectAsState()
-    val signUpSuccessSession = state
+    val currentState = state
     var tried by remember {
         mutableStateOf(false)
     }
-    LaunchedEffect(signUpSuccessSession, tried) {
+    LaunchedEffect(currentState, tried) {
         if (!tried) {
-            if (signUpSuccessSession is ClientSession.SignUpSuccess) {
-                LoginViewModel.state
-                signUpOrSignIn(signUpSuccessSession.privateKey, client, false, {
+            if (currentState is ClientSession.SignUpSuccess) {
+                globalDialogState.use({
+                    tried = true
+                }, {
                     tried = true
                 }) {
-                    tried = true
+                    val data = client.getData().getOrThrow()
+                    val signature = currentState.session.signature(finalData(data))
+                    val add = currentState.session.address()
+                    val u = client.signIn(add, signature).getOrThrow()
+                    LoginViewModel.updateUser(u)
+                    LoginViewModel.updateSession(data, signature)
                 }
             }
         }
     }
     val scope = rememberCoroutineScope()
-    if (signUpSuccessSession is ClientSession.SignUpSuccess && user == null) {
+    if (currentState is ClientSession.SignUpSuccess && user == null) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             if (tried) {
                 Column {

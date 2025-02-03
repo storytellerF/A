@@ -1,5 +1,16 @@
 package com.storyteller_f.crypto_jvm
 
+import org.bouncycastle.asn1.ASN1ObjectIdentifier
+import org.bouncycastle.asn1.ASN1TaggedObject
+import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.asn1.x500.X500NameBuilder
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
+import org.bouncycastle.cert.X509v3CertificateBuilder
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter
+import org.bouncycastle.crypto.util.AlgorithmIdentifierFactory
 import org.bouncycastle.jcajce.provider.digest.Keccak
 import org.bouncycastle.jce.interfaces.ECPrivateKey
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -7,15 +18,25 @@ import org.bouncycastle.jce.spec.ECPrivateKeySpec
 import org.bouncycastle.jce.spec.ECPublicKeySpec
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
+import org.bouncycastle.operator.ContentSigner
+import org.bouncycastle.operator.bc.BcContentSignerBuilder
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
+import org.bouncycastle.util.BigIntegers
 import org.bouncycastle.util.encoders.Hex
+import org.bouncycastle.x509.X509V3CertificateGenerator
 import java.io.IOException
 import java.io.StringReader
+import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.Security
+import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
+import java.time.Instant
+import java.util.Calendar
+import java.util.Date
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.spec.IvParameterSpec
@@ -137,4 +158,34 @@ object CryptoJvm {
         rsaCipher.init(Cipher.ENCRYPT_MODE, publicKey)
         return rsaCipher.doFinal(aesKey)
     }
+
+    fun generateCert(pemPrivateKeyStr: String): X509Certificate {
+        val privateKey = readPrivateKeyFromPEMString(pemPrivateKeyStr)
+        val publicKey = getPublicKeyFromPrivateKey(privateKey)
+        // 2️⃣ 证书信息
+        val issuer = X500Name("CN=MyCertificate, O=MyCompany, C=US")  // 证书颁发者
+        val subject = X500Name("CN=MyCertificate, O=MyCompany, C=US") // 证书主体（自签名）
+        val serialNumber = BigInteger.valueOf(System.currentTimeMillis()) // 唯一序列号
+        val notBefore = Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24) // 生效时间
+        val notAfter = Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10) // 过期时间 (10 年)
+
+        // 3️⃣ 创建 X509v3 证书
+        val certBuilder: X509v3CertificateBuilder = JcaX509v3CertificateBuilder(
+            issuer, serialNumber, notBefore, notAfter, subject, publicKey
+        )
+
+        // 4️⃣ 使用 ECDSA-SHA256 签名
+        val signer: ContentSigner = JcaContentSignerBuilder("SHA256withECDSA")
+            .setProvider("BC")
+            .build(privateKey)
+
+        // 5️⃣ 生成 X.509 证书
+        val certHolder = certBuilder.build(signer)
+        val certificate: X509Certificate = JcaX509CertificateConverter()
+            .setProvider("BC")
+            .getCertificate(certHolder)
+
+        return certificate
+    }
 }
+

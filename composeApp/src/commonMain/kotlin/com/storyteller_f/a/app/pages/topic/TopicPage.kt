@@ -34,6 +34,7 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -230,7 +231,7 @@ private fun sendTopic(
 suspend fun processEncryptedTopic(info: List<TopicInfo>): List<TopicInfo> {
     val value = LoginViewModel.state.value
     val uid = LoginViewModel.user.value?.id
-    val key = if (value is ClientSession.SignUpSuccess) getDerPrivateKey(value.privateKey) else null
+    val key = if (value is ClientSession.SignUpSuccess) value.session else null
     return info.map { topicInfo ->
         val content = topicInfo.content
         if (content !is TopicContent.Encrypted || uid == null || key == null) {
@@ -240,14 +241,16 @@ suspend fun processEncryptedTopic(info: List<TopicInfo>): List<TopicInfo> {
             topicInfo.copy(
                 content = if (s != null) {
                     runCatching {
-                        decrypt(
-                            key,
+                        key.decrypt(
                             content.encrypted.hexToByteArray(),
                             s.hexToByteArray()
                         )
                     }.fold(onSuccess = {
                         TopicContent.Plain(it)
                     }, onFailure = {
+                        Napier.e(it) {
+                            "decrypt ${topicInfo.id}"
+                        }
                         TopicContent.DecryptFailed(it.message.toString())
                     })
                 } else {

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ca.gosyer.appdirs.AppDirs
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
@@ -55,9 +56,9 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsText
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -262,10 +263,14 @@ fun generateLatexImage(
 ): Result<Pair<Boolean, Path>> {
     return runCatching {
         val key = md5(tex)
-        val output = Path(SystemTemporaryDirectory, "$key-$backgroundColor-$textColor-$size.png")
+        val output = Path(SystemTemporaryDirectory, "latex/$key-$backgroundColor-$textColor-$size.png")
         if (SystemFileSystem.exists(output)) {
             true to output
         } else {
+            output.parent?.let {
+                if (!SystemFileSystem.exists(it))
+                    SystemFileSystem.createDirectories(it)
+            }
             SystemFileSystem.sink(output).buffered().use {
                 buildTexPainter(tex, backgroundColor, textColor, size, it.asOutputStream()) to output
             }

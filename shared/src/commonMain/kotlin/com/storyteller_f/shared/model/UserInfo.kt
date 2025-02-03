@@ -17,10 +17,3 @@ data class UserInfo(
         val EMPTY = UserInfo(DEFAULT_PRIMARY_KEY, "", 0, "", "", null)
     }
 }
-
-@Serializable
-data class LoginUser(
-    val privateKey: String,
-    val publicKey: String,
-    val address: String,
-)
