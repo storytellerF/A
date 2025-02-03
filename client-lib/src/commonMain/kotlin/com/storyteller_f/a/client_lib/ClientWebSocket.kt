@@ -6,6 +6,7 @@ import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -19,7 +20,9 @@ class ClientWebSocket(
 
     init {
         GlobalScope.launch {
-            LoginViewModel.isAlreadySignUp.distinctUntilChanged().collect {
+            combine(LoginViewModel.isAlreadySignUp, LoginViewModel.user) { t1, t2 ->
+                t1 && t2 != null
+            }.distinctUntilChanged().collect {
                 if (it) {
                     while (true) {
                         connectWebSocketIfNeed()

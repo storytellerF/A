@@ -5,6 +5,16 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
+interface LoginUserSession {
+    suspend fun signature(data: String): String
+
+    suspend fun verify(signature: String, data: String): Boolean
+
+    suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): String
+
+    suspend fun address(): String
+}
+
 sealed interface ClientSession {
     data object LoginNone : ClientSession
     data object SignUpNone : ClientSession
@@ -13,7 +23,7 @@ sealed interface ClientSession {
 
     data class PrivateKeySignUp(val privateKey: String) : ClientSession
 
-    data class SignUpSuccess(val privateKey: String, val publicKey: String, val address: String) : ClientSession
+    data class SignUpSuccess(val session: LoginUserSession) : ClientSession
 }
 
 object LoginViewModel {

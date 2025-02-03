@@ -4,6 +4,7 @@ import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.EC
 import dev.whyoleg.cryptography.algorithms.ECDSA
 import dev.whyoleg.cryptography.algorithms.HMAC
+import dev.whyoleg.cryptography.algorithms.SHA256
 import dev.whyoleg.cryptography.algorithms.SHA512
 import kotlinx.serialization.Serializable
 
@@ -26,7 +27,7 @@ suspend fun generateKeyPair(): String {
 suspend fun verify(derPublicKeyStr: String, derSignature: String, data: String): Boolean {
     val publicKey = CryptographyProvider.Default.get(ECDSA).publicKeyDecoder(EC.Curve.P256)
         .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKeyStr.hexToByteArray())
-    return publicKey.signatureVerifier(SHA512, ECDSA.SignatureFormat.DER)
+    return publicKey.signatureVerifier(SHA256, ECDSA.SignatureFormat.DER)
         .tryVerifySignature(data.encodeToByteArray(), derSignature.hexToByteArray())
 }
 
@@ -35,7 +36,7 @@ suspend fun signature(pemPrivateKeyStr: String, data: String): String {
     val privateKey = CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256)
         .decodeFromByteArray(EC.PrivateKey.Format.PEM, pemPrivateKeyStr.encodeToByteArray())
     val signature =
-        privateKey.signatureGenerator(SHA512, ECDSA.SignatureFormat.DER).generateSignature(data.encodeToByteArray())
+        privateKey.signatureGenerator(SHA256, ECDSA.SignatureFormat.DER).generateSignature(data.encodeToByteArray())
     return signature.toHexString()
 }
 

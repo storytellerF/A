@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.storyteller_f.a.app.AppConfig
 import com.storyteller_f.a.client_lib.ServerErrorException
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class DialogSaveState {
@@ -55,6 +56,7 @@ class GlobalDialogController(val state: MutableState<DialogState> = mutableState
             close()
             onSuccess()
         } catch (e: Exception) {
+            e.printStackTrace()
             showError(e)
             onError()
         }

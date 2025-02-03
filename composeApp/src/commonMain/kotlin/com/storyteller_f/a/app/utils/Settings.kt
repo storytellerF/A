@@ -2,33 +2,29 @@ package com.storyteller_f.a.app.utils
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.Settings
-import com.russhwolf.settings.serialization.decodeValueOrNull
-import com.russhwolf.settings.serialization.encodeValue
-import com.russhwolf.settings.serialization.removeValue
 import com.storyteller_f.a.client_lib.ClientSession
 import com.storyteller_f.a.client_lib.LoginViewModel
-import com.storyteller_f.shared.model.LoginUser
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
 
 expect val defaultSettings: Settings
 
-@OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-fun restoreFromStorage() {
-    val loginUser = defaultSettings.decodeValueOrNull(LoginUser.serializer(), "login_user") ?: return
-    val privateKey = loginUser.privateKey
-    val publicKey = loginUser.publicKey
-    val address = loginUser.address
-    LoginViewModel.updateState(ClientSession.SignUpSuccess(privateKey, publicKey, address))
-}
+@Serializable
+data class LoginHistory(val last: String? = null, val current: String? = null)
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-fun storeToStorage() {
-    val state = LoginViewModel.state.value as ClientSession.SignUpSuccess
-    val loginUser = LoginUser(state.privateKey, state.publicKey, state.address)
-    defaultSettings.encodeValue(LoginUser.serializer(), "login_user", loginUser)
+fun restoreFromStorage() {
+    val sessionFactory = buildLoginUserSessionFactory()
+    val (list, _, current) = sessionFactory.savedSession()
+    if (current != null && list.contains(current)) {
+        val session = sessionFactory.buildSession(current)
+        if (session != null)
+            LoginViewModel.updateState(ClientSession.SignUpSuccess(session))
+    }
 }
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 fun clearStorage() {
-    defaultSettings.removeValue<LoginUser>("login_user")
+    val sessionFactory = buildLoginUserSessionFactory()
+    sessionFactory.removeSession("default")
 }

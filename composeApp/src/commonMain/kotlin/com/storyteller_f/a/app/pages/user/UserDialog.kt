@@ -19,7 +19,6 @@ import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.utils.clearStorage
-import com.storyteller_f.a.app.utils.storeToStorage
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.getUserInfo
 import com.storyteller_f.a.client_lib.getUserInfoByAid
@@ -89,7 +88,6 @@ private fun refreshMyInfo(my: UserInfo?, client: HttpClient) {
             client.getUserInfoByAid(aid)
         }.getOrNull()?.let {
             LoginViewModel.updateUser(it)
-            storeToStorage()
         }
     }
 }

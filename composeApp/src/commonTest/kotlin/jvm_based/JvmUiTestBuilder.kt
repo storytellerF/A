@@ -3,8 +3,8 @@ package jvm_based
 import startServer
 import stopServer
 
-fun jvmBasedTest(block: () -> Unit) {
+fun jvmBasedTest(block: (String) -> Unit) {
     val serverProcess = startServer(8080,"..") ?: return
-    block()
+    block("http://localhost:8811")
     stopServer(serverProcess, 8080)
 }

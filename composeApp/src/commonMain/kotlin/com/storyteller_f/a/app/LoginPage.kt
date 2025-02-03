@@ -20,8 +20,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.compontents.MeasureTextLineCount
+import com.storyteller_f.a.app.utils.LoginUser
+import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.app.utils.platform
-import com.storyteller_f.a.app.utils.storeToStorage
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.*
 import io.github.vinceglb.filekit.core.FileKit
@@ -92,7 +93,7 @@ fun SelectLoginPage(loginNav: LoginNav) {
     CenterBox {
         Column(verticalArrangement = Arrangement.spacedBy(40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(Res.string.sign_in), style = MaterialTheme.typography.headlineMedium)
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton({
                     LoginViewModel.state.value = ClientSession.PrivateKeySignIn("")
                     loginNav.gotoPrivateKey()
@@ -239,10 +240,10 @@ suspend fun signUpOrSignIn(
             isSignUp -> client.signUp(publicKey, sig)
             else -> client.signIn(ad, sig)
         }.getOrThrow()
-        LoginViewModel.updateState(ClientSession.SignUpSuccess(privateKey, publicKey, ad))
-        LoginViewModel.updateSession(data, sig)
+        val userSession = buildLoginUserSessionFactory().addSession(LoginUser(privateKey, publicKey, ad))
         LoginViewModel.updateUser(u)
-        storeToStorage()
+        LoginViewModel.updateState(ClientSession.SignUpSuccess(userSession))
+        LoginViewModel.updateSession(data, sig)
     }
 }
 

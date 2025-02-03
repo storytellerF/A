@@ -52,8 +52,7 @@ class ClientCustomAuthProvider : AuthProvider {
             false
         } else {
             kotlin.runCatching {
-                val localPrivateKey = state.privateKey
-                LoginViewModel.updateSession(data, signature(localPrivateKey, finalData(data)))
+                LoginViewModel.updateSession(data, state.session.signature(finalData(data)))
             }.fold({
                 Napier.v(tag = "ClientAuth") {
                     "refreshToken success"

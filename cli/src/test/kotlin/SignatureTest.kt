@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 class SignatureTest {
     @Test
     fun test() {
-        val jsonFilePath = "../../AData/data/preset_user.json"
+        val jsonFilePath = "../../AData/data/0_pre_set_user.json"
         val jsonFile = File(jsonFilePath)
         if (!jsonFile.exists()) return
         addProviderForJvm()
