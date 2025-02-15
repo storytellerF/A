@@ -17,22 +17,26 @@ import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.RefCellStateView
 import com.storyteller_f.a.app.model.CommunityViewModel
 import com.storyteller_f.a.app.model.createCommunityViewModel
+import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
-fun CommunityRefCell(communityId: PrimaryKey) {
+fun CommunityRefCell(communityId: PrimaryKey, onClick: ((CommunityInfo) -> Unit)? = null) {
     val viewModel = createCommunityViewModel(communityId)
-    CommunityRefCellInternal(viewModel)
+    CommunityRefCellInternal(viewModel, onClick)
 }
 
 @Composable
-fun CommunityRefCell(communityAid: String) {
+fun CommunityRefCell(communityAid: String, onClick: ((CommunityInfo) -> Unit)? = null) {
     val viewModel = createCommunityViewModel(communityAid)
-    CommunityRefCellInternal(viewModel)
+    CommunityRefCellInternal(viewModel, onClick)
 }
 
 @Composable
-private fun CommunityRefCellInternal(viewModel: CommunityViewModel) {
+private fun CommunityRefCellInternal(
+    viewModel: CommunityViewModel,
+    onClick: ((CommunityInfo) -> Unit)? = null
+) {
     val communityInfo by viewModel.handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
     val appNav = LocalAppNav.current
@@ -44,10 +48,10 @@ private fun CommunityRefCellInternal(viewModel: CommunityViewModel) {
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
             .clip(shape)
             .clickable {
-                communityInfo?.let { appNav.gotoCommunity(it.id, false) }
+                communityInfo?.let { onClick?.invoke(it) ?: appNav.gotoCommunity(it.id, false) }
             }
             .padding(10.dp)
     ) {
-        CommunityCell(it, true)
+        CommunityCell(it, true, onClick)
     }
 }

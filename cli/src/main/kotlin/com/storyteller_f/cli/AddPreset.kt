@@ -5,11 +5,11 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.ROOM_ID_LENGTH
 import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.uploadFiles
 import com.storyteller_f.shared.*
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetValue
@@ -105,7 +105,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val communityMap = l.mapNotNull {
                 it.community
             }.distinct().map {
-                Community.wrapRow(findCommunityByAId(it).first())
+                Community.wrapRow(findCommunityByAid(it).first())
             }.associateBy { it.aid }
             val idList = Rooms.batchInsert(data) { (it, p, id) ->
                 this[Rooms.id] = id
@@ -139,11 +139,11 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         DatabaseFactory.dbQuery {
             val data = presetValue.topicData!!
-            val userList = data.map {
+            val userList = DatabaseFactory.getUsersByAids(data.map {
                 it.author
-            }.distinct().map {
-                User.wrapRow(findUserByAid(it).first())
-            }.associateBy { it.aid!! }
+            }.distinct()).getOrThrow().associate {
+                it.first.aid!! to it.first
+            }
             data.groupBy {
                 it.community != null
             }.forEach { (t, u) ->
@@ -158,7 +158,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun addTopicsIntoRoom(
         u: List<PresetTopic>,
-        userList: Map<String, User>,
+        userList: Map<String, UserInfo>,
         parentDir: File,
         tika: Tika
     ) {
@@ -179,7 +179,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun insertRoomTopicBaseLevel(
         u: List<PresetTopic>,
-        userList: Map<String, User>,
+        userList: Map<String, UserInfo>,
         roomList: Map<String, Room>
     ): LongArray {
         val ids = LongArray(u.size) {
@@ -226,7 +226,7 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File,
         ids: LongArray,
         roomList: Map<String, Room>,
-        userList: Map<String, User>,
+        userList: Map<String, UserInfo>,
         tika: Tika
     ) {
         val topicsPublic = presetTopicList.mapIndexedNotNull { i, addTopic ->
@@ -333,14 +333,14 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun addTopicsIntoCommunity(
         u: List<PresetTopic>,
-        userList: Map<String, User>,
+        userList: Map<String, UserInfo>,
         parentDir: File,
         tika: Tika
     ) {
         val communityList = u.mapNotNull {
             it.community
         }.distinct().map {
-            val rowCommunity = findCommunityByAId(it).firstOrNull()
+            val rowCommunity = findCommunityByAid(it).firstOrNull()
             if (rowCommunity == null) {
                 error("$it not found")
             } else {
@@ -355,7 +355,8 @@ class AddPreset : Subcommand("add", "add entry") {
         u.forEachIndexed { index, topic ->
             if (topic.community != null) {
                 val content = getTopicContent(topic, parentDir)
-                uploadFiles(tika, backend, extractMarkdownMediaLink(content).map {
+                val mediaLink = extractMarkdownMediaLink(content)
+                uploadFiles(tika, backend, mediaLink.map {
                     Triple(File(parentDir, "images/topics/$it"), "${userList[topic.author]!!.id}/$it", null)
                 }).getOrThrow()
             } else {
@@ -392,7 +393,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun insertCommunityTopics(
         u: List<PresetTopic>,
-        userList: Map<String, User>,
+        userList: Map<String, UserInfo>,
         communityList: Map<String, PrimaryKey>
     ): LongArray {
         val ids = LongArray(u.size) {
@@ -469,10 +470,10 @@ class AddPreset : Subcommand("add", "add entry") {
             }
         }
         DatabaseFactory.dbQuery {
-            Users.batchInsert(data) { (_, userIcon, pubKey, address, id) ->
+            Users.batchInsert(data) { (v, userIcon, pubKey, address, id) ->
                 this[Users.id] = id
                 this[Users.icon] = userIcon
-                this[Users.nickname] = backend.nameService.parse(id)
+                this[Users.nickname] = v.name.takeIf { it.isNotBlank() } ?: backend.nameService.parse(id)
                 this[Users.publicKey] = pubKey
                 this[Users.address] = address
                 this[Users.createdTime] = now()
@@ -511,14 +512,17 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun addCommunity(data: List<Triple<PresetCommunity, String?, PrimaryKey>>) {
         DatabaseFactory.dbQuery {
-            val systemId = findUserByAid("System").first()[Users.id]
-
+            val userMap = data.flatMap {
+                it.first.users.orEmpty() + (it.first.admin ?: "System")
+            }.distinct().map {
+                User.wrapRow(findUserByAid(it).first())
+            }.associateBy { it.aid }
             Communities.batchInsert(data) { (it, communityIcon, id) ->
                 this[Communities.id] = id
                 this[Communities.createdTime] = now()
                 this[Communities.name] = it.name
                 this[Communities.icon] = communityIcon
-                this[Communities.owner] = systemId
+                this[Communities.owner] = userMap[it.admin ?: "System"]!!.id
             }
             Aids.batchInsert(data) { (it, _, id) ->
                 this[Aids.value] = it.id
@@ -526,36 +530,12 @@ class AddPreset : Subcommand("add", "add entry") {
                 this[Aids.objectType] = ObjectType.COMMUNITY
             }
             data.forEach { (c, _, id) ->
-                val users = c.users.orEmpty()
+                val users = (c.users.orEmpty() + (c.admin ?: "System")).distinct()
                 userJoinCommunity(users, id)
             }
 
             data.forEach { (t, _, id) ->
-                val defaultRoomList = listOf(
-                    "${t.id}_general" to "General",
-                    "${t.id}_lobby" to "Lobby",
-                    "${t.id}_support" to "Support"
-                ).map { pair ->
-                    Tuple4(pair.first, pair.second, SnowflakeFactory.nextId(), id)
-                }
-                Rooms.batchInsert(defaultRoomList) { (_, name, roomId, communityId) ->
-                    this[Rooms.id] = roomId
-                    this[Rooms.name] = name
-                    this[Rooms.communityId] = communityId
-                    this[Rooms.creator] = systemId
-                    this[Rooms.createdTime] = now()
-                }
-                Aids.batchInsert(defaultRoomList) { (roomAid, _, roomId, _) ->
-                    this[Aids.value] = roomAid.take(ROOM_ID_LENGTH)
-                    this[Aids.objectId] = roomId
-                    this[Aids.objectType] = ObjectType.ROOM
-                }
-                MemberJoins.batchInsert(defaultRoomList) { (_, _, rId, _) ->
-                    this[MemberJoins.uid] = systemId
-                    this[MemberJoins.objectId] = rId
-                    this[MemberJoins.joinTime] = now()
-                    this[MemberJoins.objectType] = ObjectType.COMMUNITY
-                }
+                createCommunityRooms(id, userMap[t.admin ?: "System"]!!.id, t.id)
             }
         }.getOrThrow()
     }

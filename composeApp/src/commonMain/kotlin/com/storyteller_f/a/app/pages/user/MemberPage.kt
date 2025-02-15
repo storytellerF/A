@@ -16,9 +16,7 @@ import androidx.compose.ui.unit.dp
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
-import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.StateView
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.model.createMemberViewModel
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
@@ -28,9 +26,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
-    val viewModel = createMemberViewModel(objectId, objectType)
-    val items = viewModel.flow.collectAsLazyPagingItems()
-
     Scaffold {
         Column(
             Modifier.fillMaxWidth(),
@@ -43,14 +38,14 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
                 }
             ) {
             }
-            MemberList(items)
+            val viewModel = createMemberViewModel(objectId, objectType)
+            MemberList(viewModel.flow.collectAsLazyPagingItems())
         }
     }
 }
 
 @Composable
-fun MemberList(items: LazyPagingItems<UserInfo>) {
-    val appNav = LocalAppNav.current
+fun MemberList(items: LazyPagingItems<UserInfo>, onClick: ((UserInfo) -> Unit)? = null) {
     StateView(items) {
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
@@ -62,9 +57,7 @@ fun MemberList(items: LazyPagingItems<UserInfo>) {
                     it.id
                 },
             ) { index ->
-                UserCell(items[index], true) {
-                    appNav.gotoUser(it)
-                }
+                UserCell(items[index], true, onClick = onClick)
                 Spacer(modifier = Modifier.height(20.dp))
                 if (index != items.itemCount - 1) {
                     HorizontalDivider()

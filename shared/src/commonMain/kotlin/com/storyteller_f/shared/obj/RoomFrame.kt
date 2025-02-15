@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 sealed interface RoomFrame {
     @Serializable
     @SerialName("message")
-    data class Message(val newTopic: NewTopic, val encryptedAes: Map<PrimaryKey, String> = emptyMap()) : RoomFrame
+    data class Message(val newTopic: NewRoomTopic, val encryptedAes: Map<PrimaryKey, String> = emptyMap()) : RoomFrame
 
     @Serializable
     @SerialName("error")

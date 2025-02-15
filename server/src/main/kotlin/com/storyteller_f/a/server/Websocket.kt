@@ -8,7 +8,7 @@ import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.obj.NewTopic
+import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -132,7 +132,7 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
 }
 
 private suspend fun addTopicAtRoom(
-    newTopic: NewTopic,
+    newTopic: NewRoomTopic,
     uid: PrimaryKey,
     backend: Backend
 ): Result<TopicInfo?> {
@@ -170,7 +170,7 @@ private suspend fun addTopicAtRoom(
 private suspend fun addTopicIntoRoom(
     roomId: PrimaryKey,
     uid: PrimaryKey,
-    newTopic: NewTopic,
+    newTopic: NewRoomTopic,
     backend: Backend
 ): Result<TopicInfo?> {
     return isMemberJoined(roomId, uid).mapResult { bool ->
@@ -178,13 +178,13 @@ private suspend fun addTopicIntoRoom(
             val content = newTopic.content
             val newId = SnowflakeFactory.nextId()
             val topic = Topic(
+                newId,
+                now(),
                 uid,
                 roomId,
                 ObjectType.ROOM,
                 newTopic.parentId,
                 newTopic.parentType,
-                now(),
-                newId,
                 now()
             )
 
@@ -221,7 +221,7 @@ private suspend fun savePlainTopicContent(
     content: TopicContent.Plain,
     backend: Backend
 ): Result<TopicInfo> {
-    return DatabaseFactory.saveTopic1(topic, backend, content)
+    return DatabaseFactory.saveTopic(topic, backend, content)
 }
 
 suspend fun saveEncryptedTopicContent(

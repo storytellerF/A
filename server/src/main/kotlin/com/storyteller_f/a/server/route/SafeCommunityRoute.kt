@@ -7,8 +7,10 @@ import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
+import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.searchMembers
+import io.ktor.server.request.receive
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 
@@ -64,6 +66,12 @@ fun Route.bindProtectedSafeCommunityRoute(backend: Backend, reader: DatabaseRead
     post<RouteCommunities.Id.Exit> {
         usePrincipal(reader) { uid ->
             exitCommunity(it.parent.id, uid, backend)
+        }
+    }
+    post<RouteCommunities> {
+        val newCommunity = call.receive<NewCommunity>()
+        usePrincipal(reader) { uid ->
+            createCommunity(newCommunity, uid, backend)
         }
     }
 }

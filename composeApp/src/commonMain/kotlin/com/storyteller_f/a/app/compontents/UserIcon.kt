@@ -27,7 +27,12 @@ import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
-fun UserIcon(userInfo: UserInfo?, isMe: Boolean = false, couldShowDialog: Boolean = true) {
+fun UserIcon(
+    userInfo: UserInfo?,
+    isMe: Boolean = false,
+    couldShowDialog: Boolean = true,
+    clickCreate: () -> Unit = {}
+) {
     var showMyDialog by remember {
         mutableStateOf(false)
     }
@@ -35,7 +40,7 @@ fun UserIcon(userInfo: UserInfo?, isMe: Boolean = false, couldShowDialog: Boolea
     UserIconInternal(isMe, couldShowDialog, url) { ->
         showMyDialog = true
     }
-    UserDialog(userInfo, showMyDialog) {
+    UserDialog(userInfo, showMyDialog, clickCreate) {
         showMyDialog = false
     }
 }

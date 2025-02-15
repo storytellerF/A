@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Diversity3
+import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -36,9 +37,11 @@ import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
+import com.storyteller_f.a.app.pages.title.TitleList
 import com.storyteller_f.a.app.pages.world.TopicList
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
@@ -60,18 +63,13 @@ private fun UserPageInternal(
     uid: PrimaryKey
 ) {
     val pagerState = rememberPagerState {
-        2
+        3
     }
     val appNav = LocalAppNav.current
     val size = calculateWindowSizeClass()
     when (size.widthSizeClass) {
-        WindowWidthSizeClass.Compact -> {
-            UserCompatInternal(user, my, appNav, pagerState, uid)
-        }
-
-        else -> {
-            UserNonCompatInternal(uid, user)
-        }
+        WindowWidthSizeClass.Compact -> UserCompatInternal(user, my, appNav, pagerState, uid)
+        else -> UserNonCompatInternal(uid, user)
     }
 }
 
@@ -80,20 +78,22 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
     val navs =
         listOf(
             NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
-            NavRoute("/communities", Icons.Default.ChatBubble, "Communities")
+            NavRoute("/communities", Icons.Default.ChatBubble, "Communities"),
+            NavRoute("/titles", Icons.Default.Title, "Titles")
         )
     val navigator = rememberNavController()
     val current by navigator.currentBackStackEntryFlow.collectAsState(null)
     Scaffold {
         Row {
-            CustomRailNav(current?.destination?.route, navs) {
+            val currentEntry = current?.destination?.route
+            CustomRailNav(currentEntry, navs) {
                 navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
             }
             Column {
-                val searchScope = if (current?.destination?.route == "/topics") {
-                    SearchScope.UserTopic(uid)
-                } else {
-                    SearchScope.UserCommunities(uid)
+                val searchScope = when (currentEntry) {
+                    "/topics" -> SearchScope.UserTopic(uid)
+                    "/titles" -> SearchScope.UserReceivedTitle(uid)
+                    else -> SearchScope.UserCommunities(uid)
                 }
                 CustomSearchBar(searchScope) {
                     UserIcon(user)
@@ -101,14 +101,19 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
 
                 NavHost(navigator, "/topics") {
                     composable("/topics") {
-                        val topicsViewModel = createTopicSearchInUserViewModel(SearchScope.UserTopic(uid), "")
+                        val topicsViewModel = createUserTopicsViewModel(uid)
                         val pagingItems = topicsViewModel.flow.collectAsLazyPagingItems()
                         TopicList(pagingItems, showAvatar = false)
                     }
                     composable("/communities") {
-                        val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid, "")
+                        val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid)
                         val pagingItems = communitiesViewModel.flow.collectAsLazyPagingItems()
                         CommunityList(pagingItems)
+                    }
+                    composable("/titles") {
+                        val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
+                        val pagingItems = titlesViewModel.flow.collectAsLazyPagingItems()
+                        TitleList(pagingItems)
                     }
                 }
             }
@@ -140,10 +145,14 @@ private fun UserCompatInternal(
                     val topicsViewModel = createUserTopicsViewModel(uid)
                     val pagingItems = topicsViewModel.flow.collectAsLazyPagingItems()
                     TopicList(pagingItems, showAvatar = false)
-                } else {
-                    val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid, "")
+                } else if (pageIndex == 1) {
+                    val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid)
                     val pagingItems = communitiesViewModel.flow.collectAsLazyPagingItems()
                     CommunityList(pagingItems)
+                } else {
+                    val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
+                    val pagingItems = titlesViewModel.flow.collectAsLazyPagingItems()
+                    TitleList(pagingItems)
                 }
             }
         }
@@ -170,7 +179,8 @@ private fun UserPageBottomNavBar(pagerState: PagerState) {
     val scope = rememberCoroutineScope()
     val navs = listOf(
         NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
-        NavRoute("/communities", Icons.Default.Diversity3, stringResource(Res.string.rooms))
+        NavRoute("/communities", Icons.Default.Diversity3, stringResource(Res.string.rooms)),
+        NavRoute("/titles", Icons.Default.Title, "titles")
     )
     CustomBottomNav(navs[pagerState.currentPage].path, navs) { path ->
         scope.launch {

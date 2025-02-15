@@ -8,6 +8,7 @@ import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
 import com.storyteller_f.buildBackendFromEnv
+import com.storyteller_f.media.loadAvif
 import com.storyteller_f.readEnv
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
@@ -35,6 +36,7 @@ import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
+    loadAvif()
     Napier.base(DebugAntilog())
     SnowflakeFactory.setMachine(0)
 

@@ -80,9 +80,9 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
                 }
             }
             CustomSearchBar(SearchScope.RoomTopic(roomId)) {
-                RoomIcon(roomInfo, size = 40.dp, enableClick = true, showDialog = showDialog, updateShowDialog = {
+                RoomIcon(roomInfo, showDialog = showDialog, size = 40.dp, enableClick = true) {
                     showDialog = it
-                })
+                }
             }
             RoomPageInternal(modifier = Modifier.weight(1f), lazyListState, items)
             val scope = rememberCoroutineScope()
@@ -445,7 +445,7 @@ private fun RoomDialogButtons(
             appNav.gotoMemberPage(roomInfo.id, ObjectType.ROOM)
         }
 
-        if (appNav.currentDestination?.destination?.hasRoute(RoomScreen::class) == true) {
+        if (appNav.hasRoute(RoomScreen::class)) {
             val scope = rememberCoroutineScope()
             val toasterState = LocalToaster.current
             if (roomInfo.isJoined) {

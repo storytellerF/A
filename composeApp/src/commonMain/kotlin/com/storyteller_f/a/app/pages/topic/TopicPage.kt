@@ -29,7 +29,6 @@ import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.decrypt
-import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType

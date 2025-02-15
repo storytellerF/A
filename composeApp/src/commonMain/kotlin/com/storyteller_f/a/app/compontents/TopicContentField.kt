@@ -3,7 +3,6 @@ package com.storyteller_f.a.app.compontents
 import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.permission_denied
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -15,11 +14,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,14 +24,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.ParagraphStyle
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -49,13 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ashampoo.kim.Kim
 import com.ashampoo.kim.common.convertToPhotoMetadata
-import com.mikepenz.markdown.compose.LocalImageTransformer
-import com.mikepenz.markdown.compose.LocalMarkdownAnnotator
-import com.mikepenz.markdown.compose.LocalMarkdownColors
-import com.mikepenz.markdown.compose.LocalMarkdownExtendedSpans
-import com.mikepenz.markdown.compose.LocalMarkdownTypography
-import com.mikepenz.markdown.compose.LocalReferenceLinkHandler
-import com.mikepenz.markdown.compose.Markdown
+import com.mikepenz.markdown.compose.*
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.extendedspans.ExtendedSpans
 import com.mikepenz.markdown.compose.extendedspans.drawBehind
@@ -63,13 +45,7 @@ import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.ImageTransformer
 import com.mikepenz.markdown.model.MarkdownAnnotator
-import com.mikepenz.markdown.utils.MARKDOWN_TAG_URL
-import com.mikepenz.markdown.utils.appendAutoLink
-import com.mikepenz.markdown.utils.appendMarkdownLink
-import com.mikepenz.markdown.utils.buildMarkdownAnnotatedString
-import com.mikepenz.markdown.utils.codeSpanStyle
-import com.mikepenz.markdown.utils.getUnescapedTextInNode
-import com.mikepenz.markdown.utils.linkTextSpanStyle
+import com.mikepenz.markdown.utils.*
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -194,7 +170,6 @@ fun CustomMarkdownParagraph(
     )
 }
 
-@Suppress("LongMethod", "CyclomaticComplexMethod")
 fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
     content: String,
     children: List<ASTNode>,
@@ -211,128 +186,154 @@ fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
             if (annotate == null || !annotate(content, child)) {
                 val parentType = child.parent?.type
 
-                when (child.type) {
-                    // Element types
-                    MarkdownElementTypes.PARAGRAPH -> buildMarkdownAnnotatedString(
-                        content,
-                        child,
-                        linkTextStyle,
-                        codeStyle,
-                        annotator
-                    )
-
-                    MarkdownElementTypes.IMAGE -> child.findChildOfTypeRecursive(
-                        MarkdownElementTypes.LINK_DESTINATION
-                    )?.let {
-                        val id = "image${child.startOffset}-${child.endOffset}"
-                        val url = it.getUnescapedTextInNode(content)
-                        inlineContentMap[id] = url
-                        appendInlineContent(id, url)
-                    }
-
-                    MarkdownElementTypes.EMPH -> {
-                        pushStyle(SpanStyle(fontStyle = FontStyle.Italic))
-                        buildMarkdownAnnotatedString(content, child, linkTextStyle, codeStyle, annotator)
-                        pop()
-                    }
-
-                    MarkdownElementTypes.STRONG -> {
-                        pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                        buildMarkdownAnnotatedString(content, child, linkTextStyle, codeStyle, annotator)
-                        pop()
-                    }
-
-                    GFMElementTypes.STRIKETHROUGH -> {
-                        pushStyle(SpanStyle(textDecoration = TextDecoration.LineThrough))
-                        buildMarkdownAnnotatedString(content, child, linkTextStyle, codeStyle, annotator)
-                        pop()
-                    }
-
-                    MarkdownElementTypes.CODE_SPAN -> {
-                        pushStyle(codeStyle)
-                        append(' ')
-                        buildMarkdownAnnotatedString(
-                            content,
-                            child.children.innerList(),
-                            linkTextStyle,
-                            codeStyle,
-                            annotator
-                        )
-                        append(' ')
-                        pop()
-                    }
-
-                    MarkdownElementTypes.AUTOLINK -> appendAutoLink(content, child, linkTextStyle)
-                    MarkdownElementTypes.INLINE_LINK -> appendMarkdownLink(
-                        content,
-                        child,
-                        linkTextStyle,
-                        codeStyle,
-                        annotator
-                    )
-
-                    MarkdownElementTypes.SHORT_REFERENCE_LINK -> appendMarkdownLink(
-                        content,
-                        child,
-                        linkTextStyle,
-                        codeStyle,
-                        annotator
-                    )
-
-                    MarkdownElementTypes.FULL_REFERENCE_LINK -> appendMarkdownLink(
-                        content,
-                        child,
-                        linkTextStyle,
-                        codeStyle,
-                        annotator
-                    )
-
-                    // Token Types
-                    MarkdownTokenTypes.TEXT -> append(child.getUnescapedTextInNode(content))
-                    GFMTokenTypes.GFM_AUTOLINK -> if (child.parent == MarkdownElementTypes.LINK_TEXT) {
-                        append(child.getUnescapedTextInNode(content))
-                    } else {
-                        appendAutoLink(content, child, linkTextStyle)
-                    }
-
-                    MarkdownTokenTypes.SINGLE_QUOTE -> append('\'')
-                    MarkdownTokenTypes.DOUBLE_QUOTE -> append('\"')
-                    MarkdownTokenTypes.LPAREN -> append('(')
-                    MarkdownTokenTypes.RPAREN -> append(')')
-                    MarkdownTokenTypes.LBRACKET -> append('[')
-                    MarkdownTokenTypes.RBRACKET -> append(']')
-                    MarkdownTokenTypes.LT -> append('<')
-                    MarkdownTokenTypes.GT -> append('>')
-                    MarkdownTokenTypes.COLON -> append(':')
-                    MarkdownTokenTypes.EXCLAMATION_MARK -> append('!')
-                    MarkdownTokenTypes.BACKTICK -> append('`')
-                    MarkdownTokenTypes.HARD_LINE_BREAK -> append("\n\n")
-                    MarkdownTokenTypes.EMPH -> if (parentType != MarkdownElementTypes.EMPH &&
-                        parentType != MarkdownElementTypes.STRONG
-                    ) {
-                        append(
-                            '*'
-                        )
-                    }
-
-                    MarkdownTokenTypes.EOL -> append('\n')
-                    MarkdownTokenTypes.WHITE_SPACE -> if (length > 0) {
-                        append(' ')
-                    }
-
-                    MarkdownTokenTypes.BLOCK_QUOTE -> {
-                        skipIfNext = MarkdownTokenTypes.WHITE_SPACE
-                    }
-
-                    GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -> {
-                        appendMathContent(child, content, codeStyle, density, inlineContentMap)
-                    }
+                processCustomMarkdown(
+                    child,
+                    content,
+                    linkTextStyle,
+                    codeStyle,
+                    annotator,
+                    inlineContentMap,
+                    parentType,
+                    density
+                )?.let {
+                    skipIfNext = it
                 }
             }
         } else {
             skipIfNext = null
         }
     }
+}
+
+@Suppress("LongMethod")
+private fun AnnotatedString.Builder.processCustomMarkdown(
+    child: ASTNode,
+    content: String,
+    linkTextStyle: SpanStyle,
+    codeStyle: SpanStyle,
+    annotator: MarkdownAnnotator?,
+    inlineContentMap: MutableMap<String, String>,
+    parentType: IElementType?,
+    density: Density
+): Any? {
+    when (child.type) {
+        // Element types
+        MarkdownElementTypes.PARAGRAPH -> buildMarkdownAnnotatedString(
+            content,
+            child,
+            linkTextStyle,
+            codeStyle,
+            annotator
+        )
+
+        MarkdownElementTypes.IMAGE -> child.findChildOfTypeRecursive(
+            MarkdownElementTypes.LINK_DESTINATION
+        )?.let {
+            val id = "image${child.startOffset}-${child.endOffset}"
+            val url = it.getUnescapedTextInNode(content)
+            inlineContentMap[id] = url
+            appendInlineContent(id, url)
+        }
+
+        MarkdownElementTypes.EMPH -> {
+            pushStyle(SpanStyle(fontStyle = FontStyle.Italic))
+            buildMarkdownAnnotatedString(content, child, linkTextStyle, codeStyle, annotator)
+            pop()
+        }
+
+        MarkdownElementTypes.STRONG -> {
+            pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+            buildMarkdownAnnotatedString(content, child, linkTextStyle, codeStyle, annotator)
+            pop()
+        }
+
+        GFMElementTypes.STRIKETHROUGH -> {
+            pushStyle(SpanStyle(textDecoration = TextDecoration.LineThrough))
+            buildMarkdownAnnotatedString(content, child, linkTextStyle, codeStyle, annotator)
+            pop()
+        }
+
+        MarkdownElementTypes.CODE_SPAN -> {
+            pushStyle(codeStyle)
+            append(' ')
+            buildMarkdownAnnotatedString(
+                content,
+                child.children.innerList(),
+                linkTextStyle,
+                codeStyle,
+                annotator
+            )
+            append(' ')
+            pop()
+        }
+
+        MarkdownElementTypes.AUTOLINK -> appendAutoLink(content, child, linkTextStyle)
+        MarkdownElementTypes.INLINE_LINK -> appendMarkdownLink(
+            content,
+            child,
+            linkTextStyle,
+            codeStyle,
+            annotator
+        )
+
+        MarkdownElementTypes.SHORT_REFERENCE_LINK -> appendMarkdownLink(
+            content,
+            child,
+            linkTextStyle,
+            codeStyle,
+            annotator
+        )
+
+        MarkdownElementTypes.FULL_REFERENCE_LINK -> appendMarkdownLink(
+            content,
+            child,
+            linkTextStyle,
+            codeStyle,
+            annotator
+        )
+
+        // Token Types
+        MarkdownTokenTypes.TEXT -> append(child.getUnescapedTextInNode(content))
+        GFMTokenTypes.GFM_AUTOLINK -> if (child.parent == MarkdownElementTypes.LINK_TEXT) {
+            append(child.getUnescapedTextInNode(content))
+        } else {
+            appendAutoLink(content, child, linkTextStyle)
+        }
+
+        MarkdownTokenTypes.SINGLE_QUOTE -> append('\'')
+        MarkdownTokenTypes.DOUBLE_QUOTE -> append('\"')
+        MarkdownTokenTypes.LPAREN -> append('(')
+        MarkdownTokenTypes.RPAREN -> append(')')
+        MarkdownTokenTypes.LBRACKET -> append('[')
+        MarkdownTokenTypes.RBRACKET -> append(']')
+        MarkdownTokenTypes.LT -> append('<')
+        MarkdownTokenTypes.GT -> append('>')
+        MarkdownTokenTypes.COLON -> append(':')
+        MarkdownTokenTypes.EXCLAMATION_MARK -> append('!')
+        MarkdownTokenTypes.BACKTICK -> append('`')
+        MarkdownTokenTypes.HARD_LINE_BREAK -> append("\n\n")
+        MarkdownTokenTypes.EMPH -> if (parentType != MarkdownElementTypes.EMPH &&
+            parentType != MarkdownElementTypes.STRONG
+        ) {
+            append(
+                '*'
+            )
+        }
+
+        MarkdownTokenTypes.EOL -> append('\n')
+        MarkdownTokenTypes.WHITE_SPACE -> if (length > 0) {
+            append(' ')
+        }
+
+        MarkdownTokenTypes.BLOCK_QUOTE -> {
+            return MarkdownTokenTypes.WHITE_SPACE
+        }
+
+        GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -> {
+            appendMathContent(child, content, codeStyle, density, inlineContentMap)
+        }
+    }
+    return null
 }
 
 private fun AnnotatedString.Builder.appendMathContent(

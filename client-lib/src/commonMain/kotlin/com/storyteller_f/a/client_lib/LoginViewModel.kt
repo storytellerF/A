@@ -1,9 +1,11 @@
 package com.storyteller_f.a.client_lib
 
+import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.model.UserInfo
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.Serializable
 
 interface LoginUserSession {
     suspend fun signature(data: String): String
@@ -24,6 +26,31 @@ sealed interface ClientSession {
     data class PrivateKeySignUp(val privateKey: String) : ClientSession
 
     data class SignUpSuccess(val session: LoginUserSession) : ClientSession
+}
+
+@Serializable
+data class LoginUser(
+    val privateKey: String,
+    val publicKey: String,
+    val address: String,
+)
+
+class DefaultLoginUserSession(val loginUSer: LoginUser) : LoginUserSession {
+    override suspend fun signature(data: String): String {
+        return com.storyteller_f.shared.signature(loginUSer.privateKey, data)
+    }
+
+    override suspend fun verify(signature: String, data: String): Boolean {
+        return com.storyteller_f.shared.verify(loginUSer.publicKey, signature, data)
+    }
+
+    override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): String {
+        return com.storyteller_f.shared.decrypt(getDerPrivateKey(loginUSer.privateKey), encrypted, encryptedAesKey)
+    }
+
+    override suspend fun address(): String {
+        return com.storyteller_f.shared.calcAddress(loginUSer.publicKey)
+    }
 }
 
 object LoginViewModel {

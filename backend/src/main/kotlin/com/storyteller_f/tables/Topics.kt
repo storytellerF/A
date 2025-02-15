@@ -4,7 +4,7 @@ import com.storyteller_f.*
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.obj.NewTopic
+import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.Tuple4
@@ -27,26 +27,26 @@ object Topics : BaseTable() {
 }
 
 class Topic(
+    id: PrimaryKey,
+    createdTime: LocalDateTime,
     val author: PrimaryKey,
     val parentId: PrimaryKey,
     val parentType: ObjectType,
     val rootId: PrimaryKey,
     val rootType: ObjectType,
-    val lastModifiedTime: LocalDateTime?,
-    id: PrimaryKey,
-    createdTime: LocalDateTime
+    val lastModifiedTime: LocalDateTime?
 ) : BaseObj(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): Topic {
             return Topic(
+                row[Topics.id],
+                row[Topics.createdTime],
                 row[Topics.author],
                 row[Topics.parentId],
                 row[Topics.parentType],
                 row[Topics.rootId],
                 row[Topics.rootType],
-                row[Topics.lastModifiedTime],
-                row[Topics.id],
-                row[Topics.createdTime]
+                row[Topics.lastModifiedTime]
             )
         }
 
@@ -54,8 +54,8 @@ class Topic(
             Topics.id eq topicId
         }
 
-        fun new(info: Topic): PrimaryKey {
-            val newTopicId = Topics.insert {
+        fun new(info: Topic) {
+            return check(Topics.insert {
                 it[id] = info.id
                 it[author] = info.author
                 it[createdTime] = now()
@@ -63,9 +63,9 @@ class Topic(
                 it[parentId] = info.parentId
                 it[rootId] = info.rootId
                 it[rootType] = info.rootType
-            }[Topics.id]
-            assert(info.id == newTopicId)
-            return newTopicId
+            }.insertedCount > 0) {
+                "insert topic failed"
+            }
         }
     }
 }
@@ -85,7 +85,7 @@ suspend fun DatabaseFactory.getSimpleTopic(topicId: PrimaryKey): Result<TopicInf
 fun Topic.toTopicInfo(commentCount: Long = 0, hasComment: Boolean = false, reactionCount: Long = 0): TopicInfo {
     return TopicInfo(
         id = id,
-        content = TopicContent.Plain(""),
+        content = TopicContent.Nil,
         author = author,
         rootId = rootId,
         rootType = rootType,
@@ -102,14 +102,14 @@ fun Topic.toTopicInfo(commentCount: Long = 0, hasComment: Boolean = false, react
     )
 }
 
-suspend fun getCommonTopic(topicId: PrimaryKey, uid: PrimaryKey?): Result<TopicInfo?> {
+suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey, uid: PrimaryKey?): Result<TopicInfo?> {
     val t2 = Topics.alias("t2")
     val commentCount = t2[Topics.id].countDistinct()
     val reactionComment = Reactions.id.countDistinct()
     val containExpression = topicAuthorContains(uid, t2)
 
     val baseSelection = Topics.fields + commentCount + reactionComment
-    return DatabaseFactory.first({
+    return first({
         data1.toTopicInfo(data2, data3, data4)
     }, {
         Tuple4(
@@ -149,7 +149,7 @@ private fun topicAuthorContains(
     return containExpression
 }
 
-suspend fun commonPaginationTopics(
+suspend fun getTopicsPagingByPredicate(
     uid: PrimaryKey?,
     preTopicId: PrimaryKey?,
     nextTopicId: PrimaryKey?,
@@ -157,7 +157,9 @@ suspend fun commonPaginationTopics(
     fillHasCommented: Boolean?,
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<PaginationResult<TopicInfo>> {
-    return commonTopics(uid, preTopicId, nextTopicId, size, fillHasCommented, predicate).mapResult { data ->
+    return getTopicsByPredicate(uid, fillHasCommented, {
+        it.bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
+    }, predicate).mapResult { data ->
         DatabaseFactory.count {
             Topics
                 .selectAll()
@@ -170,12 +172,13 @@ suspend fun commonPaginationTopics(
 
 class TopicSearchTuple(val topicInfo: Topic, val commentCount: Long, val hasComment: Boolean, val reactionCount: Long)
 
-suspend fun commonTopics(
+/**
+ * 根据指定条件获取未填充content 的topic 列表
+ */
+suspend fun getTopicsByPredicate(
     uid: PrimaryKey?,
-    preTopicId: PrimaryKey?,
-    nextTopicId: PrimaryKey?,
-    size: Int,
     fillHasCommented: Boolean?,
+    extraPredicate: (Query) -> Query = { it },
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<List<TopicInfo>> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
@@ -202,7 +205,7 @@ suspend fun commonTopics(
                     else -> it.select(baseSelection)
                 }
             }
-            .where(predicate).groupBy(Topics.id).bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
+            .where(predicate).let(extraPredicate).groupBy(Topics.id)
     }
 }
 
@@ -239,43 +242,13 @@ fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey): List<T
     }
 }
 
-suspend fun DatabaseFactory.getTopicRoot(newTopic: NewTopic) = first({
+suspend fun DatabaseFactory.getTopicRoot(newTopic: NewRoomTopic) = first({
     rootId to rootType
 }, Topic::wrapRow) {
     Topic.findById(newTopic.parentId)
 }
 
-suspend fun DatabaseFactory.getEncryptedTopics(
-    topicId: PrimaryKey,
-    uid: PrimaryKey
-) = dbQuery { getEncryptedTopicContent(listOf(topicId), uid) }
-
 suspend fun DatabaseFactory.saveTopic(
-    topic: Topic,
-    backend: Backend,
-    content: String,
-    rootId: PrimaryKey,
-    rootType: ObjectType,
-    newTopic: NewTopic,
-    uid: PrimaryKey
-) = dbQuery {
-    val newTopicId = Topic.new(topic)
-    backend.topicSearchService.saveDocument(
-        listOf(
-            TopicDocument(
-                newTopicId,
-                content,
-                rootId,
-                rootType.name,
-                newTopic.parentId,
-                newTopic.parentType.name,
-                uid
-            )
-        )
-    ).getOrThrow()
-}
-
-suspend fun DatabaseFactory.saveTopic1(
     topic: Topic,
     backend: Backend,
     content: TopicContent.Plain

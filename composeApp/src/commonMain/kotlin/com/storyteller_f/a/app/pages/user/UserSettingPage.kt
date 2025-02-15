@@ -36,7 +36,6 @@ fun UserSettingPage() {
     var showInputDialog by remember {
         mutableStateOf<UserSettingOption?>(null)
     }
-    val showSheet = showInputDialog is UserSettingOption.Icon
     val sheetState = rememberModalBottomSheetState()
     val my by LoginViewModel.user.collectAsState()
     val toasterState = LocalToaster.current
@@ -63,7 +62,7 @@ fun UserSettingPage() {
         }
     }
 
-    MediaPicker(showSheet, sheetState, null, {
+    MediaPicker(showInputDialog is UserSettingOption.Icon, sheetState, null, {
         updateIcon(it)
     }, {
         updateIcon(it)
@@ -72,7 +71,7 @@ fun UserSettingPage() {
     }
 
     showInputDialog?.let {
-        InputDialog(true, it.name.orEmpty(), {
+        InputDialog(it !is UserSettingOption.Icon, it.name.orEmpty(), {
             closeDialog()
         }) {
             scope.launch {

@@ -4,5 +4,6 @@ enum class ObjectType {
     COMMUNITY,
     ROOM,
     TOPIC,
-    USER
+    USER,
+    TITLE,
 }

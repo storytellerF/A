@@ -1,11 +1,11 @@
-import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
+import com.storyteller_f.shared.obj.NewCommunity
+import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.tables.*
+import com.storyteller_f.tables.addRoomJoin
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -17,12 +17,8 @@ class TopicTest {
     @Test
     fun `test topic search`() {
         test { client, _ ->
-            val newId = SnowflakeFactory.nextId()
-            DatabaseFactory.doCreateCommunity(
-                Community("aid", "name", owner = DEFAULT_PRIMARY_KEY, id = newId, createdTime = now())
-            )
             attachSession(client) {
-                client.joinCommunity(newId)
+                val newId = client.createCommunity(NewCommunity("aid", "name")).getOrThrow().id
                 val lastTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello world").getOrThrow()
                 client.createNewTopic(ObjectType.COMMUNITY, newId, "sysroot").getOrThrow()
                 val firstTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "best world").getOrThrow()
@@ -42,11 +38,7 @@ class TopicTest {
     fun `test topic snapshot`() {
         test { client, _ ->
             attachSession(client) {
-                val newId = SnowflakeFactory.nextId()
-                DatabaseFactory.doCreateCommunity(
-                    Community("aid", "name", null, DEFAULT_PRIMARY_KEY, null, newId, now())
-                ).getOrThrow()
-                client.joinCommunity(newId)
+                val newId = client.createCommunity(NewCommunity("name", "aid")).getOrThrow().id
                 val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello").getOrThrow()
                 client.getTopicSnapshot(topicInfo.id)
             }
@@ -57,13 +49,9 @@ class TopicTest {
     fun `test reaction`() {
         test { client, _ ->
             val emoji = "\uD83D\uDE00"
-            val newCommunity = SnowflakeFactory.nextId()
-            val session1 = attachSession(client) {
-                DatabaseFactory.doCreateCommunity(
-                    Community("aid", "name", owner = DEFAULT_PRIMARY_KEY, id = newCommunity, createdTime = now())
-                ).getOrThrow()
-                client.joinCommunity(newCommunity)
-                val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, newCommunity, "hello").getOrThrow()
+            val session = attachSession(client) {
+                val c = client.createCommunity(NewCommunity("name", "aid")).getOrThrow()
+                val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
                 val reactionInfo = client.addReaction(topicInfo.id, emoji).getOrThrow()
                 assertEquals(emoji, reactionInfo.emoji)
                 assertTrue(reactionInfo.hasReacted)
@@ -71,16 +59,16 @@ class TopicTest {
                 client.addReaction(topicInfo.id, emoji).getOrThrow()
                 topicInfo
             }
-            val topicId = session1.data5.id
+            val topicId = session.custom.id
             attachSession(client) {
-                client.joinCommunity(newCommunity)
+                client.joinCommunity(session.custom.rootId)
                 val reactions = client.getReactions(topicId).getOrThrow()
                 assertEquals(1, reactions.data.size)
                 assertFalse(reactions.data.first().hasReacted)
             }
-            loginSession(client, session1) {
+            loginSession(client, session) {
                 assertTrue(client.deleteReaction(emoji, topicId).getOrThrow())
-                assertEquals(0, client.getReactions(topicId).getOrThrow().data.size)
+                assertListSize(0, client.getReactions(topicId))
             }
         }
     }
@@ -92,7 +80,7 @@ class TopicTest {
                 val media = client.upload(
                     "hello".toByteArray(),
                     "hello.txt",
-                    it.data4,
+                    it.uid,
                     ObjectType.USER,
                     ContentType.defaultForFileExtension("txt")
                 )
@@ -100,20 +88,20 @@ class TopicTest {
                 val info =
                     client.createNewTopic(
                         ObjectType.USER,
-                        it.data4,
+                        it.uid,
                         "![hello.txt](${media.item.noPrefixName})"
                     ).getOrThrow()
                 val plain = info.content as TopicContent.Plain
                 assertEquals(media.item.name, plain.list.first().item.name)
                 // 查询单个topic
-                assertEquals(1, client.getUserTopics(it.data4, null, 10).getOrThrow().data.size)
+                assertListSize(1, client.getUserTopics(it.uid, null, 10))
                 client.createNewTopic(
                     ObjectType.USER,
-                    it.data4,
+                    it.uid,
                     "test"
                 ).getOrThrow()
                 // 查询多个topic
-                assertEquals(2, client.getUserTopics(it.data4, null, 10).getOrThrow().data.size)
+                assertListSize(2, client.getUserTopics(it.uid, null, 10))
             }
         }
     }
@@ -121,12 +109,14 @@ class TopicTest {
     @Test
     fun `test create topic in room`() {
         test { client, wsClient ->
-            val communityId = SnowflakeFactory.nextId()
-            DatabaseFactory.doCreateCommunity(Community("test1", "test1", null, 0, null, communityId, now()))
-            val publicRoomId = SnowflakeFactory.nextId()
-            DatabaseFactory.createRoom(Room("room1", "room1", null, 0, communityId, publicRoomId, now())).getOrThrow()
-            val privateRoomId = SnowflakeFactory.nextId()
-            DatabaseFactory.createRoom(Room("room2", "room2", null, 0, null, privateRoomId, now())).getOrThrow()
+            val custom = attachSession(client) {
+                val communityId = client.createCommunity(NewCommunity("test1", "test1")).getOrThrow().id
+                val publicRoomId =
+                    client.createRoom(NewRoom("room1", "room1", communityId = communityId)).getOrThrow().id
+                val privateRoomId = client.createRoom(NewRoom("room2", "room2")).getOrThrow().id
+                Triple(communityId, publicRoomId, privateRoomId)
+            }.custom
+            val (communityId, publicRoomId, privateRoomId) = custom
             attachSession(client) {
                 client.joinCommunity(communityId).getOrThrow()
                 val roomInfo = client.joinRoom(publicRoomId).getOrThrow()
@@ -134,21 +124,24 @@ class TopicTest {
                     sendMessage(roomInfo, "test", emptyList(), null)
                 }?.join()
                 withContext(Dispatchers.Default) { delay(1000) }
-                assertEquals(1, client.getRoomTopics(publicRoomId, null, 10).getOrThrow().data.size)
-                DatabaseFactory.addRoomJoin(privateRoomId, it.data4, now())
+                assertListSize(1, client.getRoomTopics(publicRoomId, null, 10))
+                DatabaseFactory.addRoomJoin(privateRoomId, it.uid, now()).getOrThrow()
                 val roomInfo2 = client.getRoomInfo(privateRoomId).getOrThrow()
                 val keys = client.requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
                 wsClient.useWebSocket {
                     sendMessage(roomInfo2, "hello", keys, null)
                 }?.join()
                 withContext(Dispatchers.Default) { delay(1000) }
-                val privateRoomTopicList = client.getRoomTopics(privateRoomId, null, 10).getOrThrow().data
-                assertEquals(1, privateRoomTopicList.size)
-                val id = privateRoomTopicList.first().id
-                client.getTopicInfo(id).getOrThrow()
-                assertFails {
-                    client.createNewTopic(ObjectType.TOPIC, id, "forbid use api add topic to room").getOrThrow()
+                assertResponse(1, client.getRoomTopics(privateRoomId, null, 10)) {
+                    val privateRoomTopicList = it.data
+                    assertEquals(1, privateRoomTopicList.size)
+                    val id = privateRoomTopicList.first().id
+                    client.getTopicInfo(id).getOrThrow()
+                    assertFails {
+                        client.createNewTopic(ObjectType.TOPIC, id, "forbid use api add topic to room").getOrThrow()
+                    }
                 }
+
                 assertFails {
                     client.createNewTopic(
                         ObjectType.ROOM,
@@ -164,7 +157,7 @@ class TopicTest {
     fun `test create in user`() {
         test { client, _ ->
             attachSession(client) {
-                client.createNewTopic(ObjectType.USER, it.data4, "hello").getOrThrow()
+                client.createNewTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
             }
         }
     }
@@ -172,14 +165,14 @@ class TopicTest {
     @Test
     fun `test recommend`() {
         test { client, _ ->
-            val communityId = SnowflakeFactory.nextId()
-            DatabaseFactory.doCreateCommunity(
-                Community("c1", "c1", owner = 0, id = communityId, createdTime = now())
-            ).getOrThrow()
+            val custom = attachSession(client) {
+                client.createCommunity(NewCommunity("c1", "c1")).getOrThrow().id
+            }.custom
+
             attachSession(client) {
-                client.joinCommunity(communityId).getOrThrow()
+                client.joinCommunity(custom).getOrThrow()
                 repeat(4) {
-                    client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello $it").getOrThrow()
+                    client.createNewTopic(ObjectType.COMMUNITY, custom, "hello $it").getOrThrow()
                 }
             }
             withContext(Dispatchers.IO) { delay(1000) }

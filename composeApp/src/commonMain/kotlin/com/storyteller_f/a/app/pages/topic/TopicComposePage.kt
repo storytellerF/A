@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -95,7 +96,14 @@ private fun TopicComposeScaffold(
             }
         })
     }) { paddingValues ->
-        Column(modifier = Modifier.padding(top = paddingValues.calculateTopPadding())) {
+        val direction = LocalLayoutDirection.current
+        Column(
+            modifier = Modifier.padding(
+                top = paddingValues.calculateTopPadding(),
+                start = paddingValues.calculateStartPadding(direction),
+                end = paddingValues.calculateRightPadding(direction)
+            )
+        ) {
             TopicComposeInternal(input, enableExperimental, privateRoomId, user) {
                 input = it
             }

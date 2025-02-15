@@ -22,20 +22,23 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
-fun UserRefCell(userId: PrimaryKey) {
+fun UserRefCell(userId: PrimaryKey, couldShowDialog: Boolean = true, onClick: ((UserInfo) -> Unit)? = null) {
     val viewModel = createUserViewModel(userId)
-
-    UserRefCellInternal(viewModel)
+    UserRefCellInternal(viewModel, couldShowDialog, onClick)
 }
 
 @Composable
-fun UserRefCell(userAid: String) {
+fun UserRefCell(userAid: String, couldShowDialog: Boolean = true, onClick: ((UserInfo) -> Unit)? = null) {
     val viewModel = createUserViewModel(userAid)
-    UserRefCellInternal(viewModel)
+    UserRefCellInternal(viewModel, couldShowDialog, onClick)
 }
 
 @Composable
-private fun UserRefCellInternal(viewModel: UserViewModel) {
+private fun UserRefCellInternal(
+    viewModel: UserViewModel,
+    couldShowDialog: Boolean = true,
+    onClick: ((UserInfo) -> Unit)? = null
+) {
     val userInfo by viewModel.handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
     val appNav = LocalAppNav.current
@@ -52,37 +55,41 @@ private fun UserRefCellInternal(viewModel: UserViewModel) {
                 }
             }
     ) { info ->
-        UserCell(info, true) {
-            appNav.gotoUser(it)
-        }
+        UserCell(info, hideBackground = true, couldShowDialog = couldShowDialog, onClick = onClick)
     }
 }
 
 @Composable
 fun UserCell(
     userInfo: UserInfo?,
-    customBackground: Boolean,
-    onClick: (PrimaryKey) -> Unit = {}
+    hideBackground: Boolean,
+    couldShowDialog: Boolean = true,
+    clickable: Boolean = true,
+    onClick: ((UserInfo) -> Unit)? = null
 ) {
     val shape = RoundedCornerShape(8.dp)
-    val id = userInfo?.id
+    val appNav = LocalAppNav.current
     Row(
-        modifier = if (customBackground) {
+        modifier = if (hideBackground) {
             Modifier
-                .fillMaxWidth().clip(shape).clickable(id != null) {
-                    id?.let(onClick)
+                .fillMaxWidth().clip(shape).clickable(userInfo != null && clickable) {
+                    userInfo?.let {
+                        onClick?.invoke(it) ?: appNav.gotoUser(it.id)
+                    }
                 }
         } else {
             Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceDim, shape)
                 .clip(shape)
-                .clickable(id != null) {
-                    id?.let(onClick)
+                .clickable(userInfo != null && clickable) {
+                    userInfo?.let {
+                        onClick?.invoke(it) ?: appNav.gotoUser(it.id)
+                    }
                 }
         }.height(56.dp).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        UserIcon(userInfo)
+        UserIcon(userInfo, couldShowDialog = couldShowDialog && clickable)
         if (userInfo != null) {
             Column {
                 Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)

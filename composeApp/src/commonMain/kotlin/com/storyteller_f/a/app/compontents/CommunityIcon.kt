@@ -20,8 +20,8 @@ import com.storyteller_f.shared.model.CommunityInfo
 @Composable
 fun CommunityIcon(
     communityInfo: CommunityInfo?,
-    iconSize: Dp = 40.dp,
     showDialog: Boolean,
+    iconSize: Dp = 40.dp,
     updateDialog: (Boolean) -> Unit,
 ) {
     val model = communityInfo?.icon?.url

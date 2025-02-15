@@ -56,7 +56,9 @@ class GlobalDialogController(val state: MutableState<DialogState> = mutableState
             close()
             onSuccess()
         } catch (e: Exception) {
-            e.printStackTrace()
+            Napier.e(e) {
+                "global dialog"
+            }
             showError(e)
             onError()
         }

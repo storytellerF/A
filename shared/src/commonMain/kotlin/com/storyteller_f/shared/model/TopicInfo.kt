@@ -47,7 +47,7 @@ data class TopicInfo(
     }
 
     @Serializable
-    data class Extension(val authorInfo: UserInfo?)
+    data class Extension(val authorInfo: UserInfo)
 }
 
 @Serializable

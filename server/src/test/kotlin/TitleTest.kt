@@ -1,0 +1,31 @@
+import com.storyteller_f.a.client_lib.createCommunity
+import com.storyteller_f.a.client_lib.createTitle
+import com.storyteller_f.a.client_lib.userTitles
+import com.storyteller_f.shared.obj.NewCommunity
+import com.storyteller_f.shared.obj.NewTitle
+import com.storyteller_f.shared.obj.TitleSearchType
+import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.TitleType
+import kotlin.test.Test
+
+class TitleTest {
+    @Test
+    fun `test title`() = test { client, _ ->
+        attachSession(client) {
+            val c = client.createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+            val cId = c.id
+            assertListSize(0, client.userTitles(it.uid, null, 10, TitleSearchType.RECEIVER))
+            client.createTitle(
+                NewTitle("c KOL", TitleType.REGULAR, it.uid, cId, ObjectType.COMMUNITY, "hello")
+            ).getOrThrow()
+            assertListTotalSize(1, client.userTitles(it.uid, null, 10, TitleSearchType.RECEIVER))
+            assertListSize(1, client.userTitles(it.uid, null, 10, TitleSearchType.RECEIVER))
+            assertListSize(1, client.userTitles(it.uid, null, 10, TitleSearchType.CREATOR))
+            assertListSize(1, client.userTitles(it.uid, null, 10, TitleSearchType.CREATOR, scopeId = cId))
+            assertListSize(
+                1,
+                client.userTitles(it.uid, null, 10, TitleSearchType.CREATOR, scopeId = cId, type = TitleType.REGULAR)
+            )
+        }
+    }
+}

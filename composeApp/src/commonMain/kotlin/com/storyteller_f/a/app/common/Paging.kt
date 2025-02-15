@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.*
-import com.storyteller_f.a.client_lib.serviceCatching
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
@@ -52,14 +51,12 @@ class SimplePagingSource<KEY : Any, DATUM : Any>(val service: suspend (KEY?) -> 
 }
 
 class RegularPagingSource<DATUM : Any>(
-    val service: suspend HttpClient.(PrimaryKey?) -> ServerResponse<DATUM>,
-    val client: HttpClient
+    val client: HttpClient,
+    val service: suspend HttpClient.(PrimaryKey?) -> Result<ServerResponse<DATUM>>
 ) :
     PagingSource<PrimaryKey, DATUM>() {
     override suspend fun load(params: LoadParams<PrimaryKey>): PagingSourceLoadResult<PrimaryKey, DATUM> {
-        return serviceCatching {
-            client.service(params.key)
-        }.map {
+        return client.service(params.key).map {
             APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
         }.loadResult()
     }

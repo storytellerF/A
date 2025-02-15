@@ -1,26 +1,25 @@
-import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.obj.JoinStatusSearch
-import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
+import com.storyteller_f.shared.obj.NewCommunity
+import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.ktor.client.*
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
 class RoomTest {
     @Test
     fun `test get room`() {
         test { client, _ ->
-            val room1 = SnowflakeFactory.nextId()
-            DatabaseFactory.createRoom(
-                Room("r1", "name1", creator = DEFAULT_PRIMARY_KEY, communityId = 0, id = room1, createdTime = now())
-            ).getOrThrow()
-            client.getRoomInfo(room1).getOrThrow()
+            val roomId = attachSession(client) {
+                val id = client.createCommunity(NewCommunity("name1", "c1")).getOrThrow().id
+                client.createRoom(NewRoom("name1", "r1", communityId = id)).getOrThrow().id
+            }.custom
+            client.getRoomInfo(roomId).getOrThrow()
             client.getRoomInfoByAid("r1").getOrThrow()
         }
     }
@@ -28,28 +27,28 @@ class RoomTest {
     @Test
     fun `test room search`() {
         test { client, _ ->
-            val community1 = SnowflakeFactory.nextId()
-            DatabaseFactory.doCreateCommunity(
-                Community("c1", "name1", owner = DEFAULT_PRIMARY_KEY, id = community1, createdTime = now())
-            ).getOrThrow()
-            val room1 = SnowflakeFactory.nextId()
-            val room2 = SnowflakeFactory.nextId()
-            val room3 = SnowflakeFactory.nextId()
-            createRooms(community1, room1, room2, room3)
+            val custom = attachSession(client) {
+                val cId = client.createCommunity(NewCommunity("name1", "c1")).getOrThrow().id
+                val room1Id = client.createRoom(NewRoom("name1", "r1", communityId = cId)).getOrThrow().id
+                val room2Id = client.createRoom(NewRoom("name2", "r2", communityId = cId)).getOrThrow().id
+                val room3Id = client.createRoom(NewRoom("name3", "r3")).getOrThrow().id
+                cId to listOf(room1Id, room2Id, room3Id)
+            }.custom
+            val room1 = custom.second[0]
+            val room3 = custom.second[2]
             attachSession(client) {
                 assertFails {
                     client.joinRoom(room1).getOrThrow()
                 }
-                client.joinCommunity(community1)
+                client.joinCommunity(custom.first)
                 client.joinRoom(room1)
                 testSearchRoom(1, 10, null, JoinStatusSearch.JOINED, null, null, client)
-                testSearchRoom(1, 10, null, JoinStatusSearch.NOT_JOINED, null, null, client)
-                testSearchRoom(2, 10, null, JoinStatusSearch.UNSPECIFIED, null, null, client)
+                testSearchRoom(4, 10, null, JoinStatusSearch.NOT_JOINED, null, null, client)
+                testSearchRoom(5, 10, null, JoinStatusSearch.UNSPECIFIED, null, null, client)
                 testSearchRoom(1, 10, null, JoinStatusSearch.UNSPECIFIED, "name2", null, client)
-                val join = MemberJoin(it.data4, room3, ObjectType.ROOM, now())
-                DatabaseFactory.createMemberJoin(join).getOrThrow()
+                DatabaseFactory.createMemberJoin(MemberJoin(it.uid, room3, ObjectType.ROOM, now())).getOrThrow()
                 testSearchRoom(2, 10, null, JoinStatusSearch.JOINED, null, null, client)
-                testSearchRoom(2, 10, null, JoinStatusSearch.UNSPECIFIED, null, community1, client)
+                testSearchRoom(5, 10, null, JoinStatusSearch.UNSPECIFIED, null, custom.first, client)
                 client.exitRoom(room1)
                 // 测试幂等
                 client.exitRoom(room1)
@@ -66,77 +65,24 @@ class RoomTest {
         communityId: PrimaryKey?,
         client: HttpClient
     ) {
-        assertEquals(
+        assertListSize(
             expected,
-            client.searchRooms(size, nextRoomId, joinStatusSearch, word, communityId).getOrThrow().data.size
+            client.searchRooms(size, nextRoomId, joinStatusSearch, word, communityId)
         )
-    }
-
-    private suspend fun createRooms(
-        community1: PrimaryKey,
-        room1: PrimaryKey,
-        room2: PrimaryKey,
-        room3: PrimaryKey
-    ) {
-        DatabaseFactory.createRoom(
-            Room(
-                "r1",
-                "name1",
-                creator = DEFAULT_PRIMARY_KEY,
-                communityId = community1,
-                id = room1,
-                createdTime = now()
-            )
-        ).getOrThrow()
-        DatabaseFactory.createRoom(
-            Room(
-                "r2",
-                "name2",
-                creator = DEFAULT_PRIMARY_KEY,
-                communityId = community1,
-                id = room2,
-                createdTime = now()
-            )
-        ).getOrThrow()
-        DatabaseFactory.createRoom(
-            Room(
-                "r3",
-                "name3",
-                creator = DEFAULT_PRIMARY_KEY,
-                id = room3,
-                createdTime = now()
-            )
-        ).getOrThrow()
     }
 
     @Test
     fun `test search room members`() {
         test { client, _ ->
-            val communityId = SnowflakeFactory.nextId()
-            DatabaseFactory.doCreateCommunity(
-                Community("c1", "name1", null, DEFAULT_PRIMARY_KEY, null, communityId, now())
-            ).getOrThrow()
-            val publicRoom = SnowflakeFactory.nextId()
-            DatabaseFactory.createRoom(
-                Room(
-                    "r1",
-                    "name1",
-                    creator = DEFAULT_PRIMARY_KEY,
-                    communityId = communityId,
-                    id = publicRoom,
-                    createdTime = now()
-                )
-            ).getOrThrow()
-            val privateRoom = SnowflakeFactory.nextId()
-            DatabaseFactory.createRoom(
-                Room(
-                    "r2",
-                    "name2",
-                    creator = DEFAULT_PRIMARY_KEY,
-                    id = privateRoom,
-                    createdTime = now()
-                )
-            ).getOrThrow()
+            val custom = attachSession(client) {
+                val cId = client.createCommunity(NewCommunity("name1", "c1")).getOrThrow().id
+                val room1Id = client.createRoom(NewRoom("name1", "r1", communityId = cId)).getOrThrow().id
+                val room3Id = client.createRoom(NewRoom("name3", "r3")).getOrThrow().id
+                cId to listOf(room1Id, room3Id)
+            }.custom
+            val communityId = custom.first
+            val publicRoom = custom.second[0]
+            val privateRoom = custom.second[1]
             attachSession(client) {
                 client.joinCommunity(communityId)
                 client.joinRoom(publicRoom)
@@ -144,18 +90,18 @@ class RoomTest {
                 client.joinRoom(publicRoom)
             }
             attachSession(client) {
-                assertEquals(1, client.searchRoomMembers(publicRoom, null, 10, null).getOrThrow().data.size)
+                assertListSize(2, client.searchRoomMembers(publicRoom, null, 10, null))
                 client.joinCommunity(communityId)
                 client.joinRoom(publicRoom)
-                assertEquals(2, client.searchRoomMembers(publicRoom, null, 10, null).getOrThrow().data.size)
+                assertListSize(3, client.searchRoomMembers(publicRoom, null, 10, null))
                 assertFails {
                     client.searchRoomMembers(privateRoom, null, 10, null).getOrThrow()
                 }
                 assertFails {
                     client.joinRoom(privateRoom).getOrThrow()
                 }
-                DatabaseFactory.createMemberJoin(MemberJoin(it.data4, privateRoom, ObjectType.ROOM, now())).getOrThrow()
-                assertEquals(1, client.searchRoomMembers(privateRoom, null, 10, null).getOrThrow().data.size)
+                DatabaseFactory.createMemberJoin(MemberJoin(it.uid, privateRoom, ObjectType.ROOM, now())).getOrThrow()
+                assertListSize(2, client.searchRoomMembers(privateRoom, null, 10, null))
             }
         }
     }

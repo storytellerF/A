@@ -40,15 +40,6 @@ class MemberJoin(
                 row[MemberJoins.joinTime]
             )
         }
-
-        fun new(join: MemberJoin): Boolean {
-            return MemberJoins.insert { statement ->
-                statement[uid] = join.uid
-                statement[objectId] = join.objectId
-                statement[objectType] = join.objectType
-                statement[joinTime] = join.joinTime
-            }.insertedCount > 0
-        }
     }
 }
 
@@ -66,12 +57,14 @@ suspend fun DatabaseFactory.addRoomJoin(
     room: PrimaryKey,
     id: PrimaryKey,
     time: LocalDateTime
-) = insert {
-    MemberJoins.insert {
+) = dbQuery {
+    check(MemberJoins.insert {
         it[joinTime] = time
         it[objectId] = room
         it[objectType] = ObjectType.ROOM
         it[uid] = id
+    }.insertedCount > 0) {
+        "join room failed"
     }
 }
 
@@ -89,17 +82,26 @@ suspend fun DatabaseFactory.addCommunityJoin(
     id: PrimaryKey,
     community: PrimaryKey,
     time: LocalDateTime
-) = insert {
-    MemberJoins.insert {
+) = dbQuery {
+    check(MemberJoins.insert {
         it[joinTime] = time
         it[uid] = id
         it[objectId] = community
         it[objectType] = ObjectType.COMMUNITY
+    }.insertedCount > 0) {
+        "join community failed"
     }
 }
 
 suspend fun DatabaseFactory.createMemberJoin(join: MemberJoin) = dbQuery {
-    MemberJoin.new(join)
+    check(MemberJoins.insert { statement ->
+        statement[uid] = join.uid
+        statement[objectId] = join.objectId
+        statement[objectType] = join.objectType
+        statement[joinTime] = join.joinTime
+    }.insertedCount > 0) {
+        "join failed"
+    }
 }
 
 suspend fun DatabaseFactory.isRoomJoins1(roomId: PrimaryKey) = mapQuery({

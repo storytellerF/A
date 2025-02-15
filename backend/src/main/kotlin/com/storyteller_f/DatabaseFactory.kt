@@ -45,7 +45,8 @@ object DatabaseFactory {
                 Topics,
                 Users,
                 Reactions,
-                Aids
+                Aids,
+                Titles
             )
         }
     }
@@ -61,7 +62,8 @@ object DatabaseFactory {
                 Topics,
                 Users,
                 Reactions,
-                Aids
+                Aids,
+                Titles
             )
         }
     }
@@ -187,7 +189,7 @@ const val PUBLIC_KEY_LENGTH = 512
 const val ADDRESS_LENGTH = 100
 const val USER_NICKNAME = 20
 const val COMMUNITY_NAME_LENGTH = 10
-const val ROOM_ID_LENGTH = 20
+const val AID_LENGTH = 20
 const val ICON_LENGTH = 1000
 const val ROOM_NAME_LENGTH = 10
 
@@ -209,3 +211,5 @@ fun Table.communityName() = varchar("name", COMMUNITY_NAME_LENGTH).index()
 fun Table.communityIcon() = varchar("icon", ICON_LENGTH).nullable()
 
 fun Table.communityPoster() = varchar("poster", ICON_LENGTH).nullable()
+
+fun Table.titleName() = varchar("name", 20)

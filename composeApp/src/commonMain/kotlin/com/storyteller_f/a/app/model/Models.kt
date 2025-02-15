@@ -15,6 +15,7 @@ import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import io.github.aakira.napier.Napier
@@ -32,6 +33,11 @@ data class OnRoomJoined(val newInfo: RoomInfo)
 data class OnRoomExited(val newInfo: RoomInfo)
 
 data class OnUpdateUser(val newUser: UserInfo)
+
+data class OnTitleCreated(val title: TitleInfo)
+
+data class OnCommunityCreated(val info: CommunityInfo)
+data class OnRoomCreated(val info: RoomInfo)
 
 class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Result<CommunityInfo>, client: HttpClient) :
     SimpleViewModel<CommunityInfo>(client) {
@@ -78,12 +84,8 @@ class CommunitiesViewModel(
     client: HttpClient
 ) : PagingViewModel<PrimaryKey, CommunityInfo>(
     {
-        SimplePagingSource {
-            serviceCatching {
-                client.searchCommunity(10, joinStatusSearch, word, target, it).getOrThrow()
-            }.map {
-                APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
-            }
+        RegularPagingSource(client) {
+            client.searchCommunity(10, joinStatusSearch, word, target, it)
         }
     },
     client = client
@@ -97,12 +99,8 @@ class RoomsViewModel(
     client: HttpClient
 ) : PagingViewModel<PrimaryKey, RoomInfo>(
     {
-        SimplePagingSource {
-            serviceCatching {
-                client.searchRooms(10, it, joinStatusSearch, word, community).getOrThrow()
-            }.map {
-                APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKey())
-            }
+        RegularPagingSource(client) {
+            client.searchRooms(10, it, joinStatusSearch, word, community)
         }
     },
     client = client
@@ -272,12 +270,8 @@ class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<Roo
 class TopicSearchViewModel(word: List<String>, parentId: PrimaryKey?, parentType: ObjectType?, client: HttpClient) :
     PagingViewModel<PrimaryKey, TopicInfo>(
         {
-            SimplePagingSource {
-                serviceCatching {
-                    client.searchTopics(10, word, parentId, parentType, it).getOrThrow()
-                }.map {
-                    APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
-                }
+            RegularPagingSource(client) {
+                client.searchTopics(10, word, parentId, parentType, it)
             }
         },
         client = client
@@ -336,15 +330,14 @@ class MemberViewModel(objectId: PrimaryKey, word: String, objectType: ObjectType
     PagingViewModel<PrimaryKey, UserInfo>(
         {
             RegularPagingSource(
-                {
-                    when (objectType) {
-                        ObjectType.COMMUNITY -> searchCommunityMembers(objectId, it, 10, word)
-                        ObjectType.ROOM -> searchRoomMembers(objectId, it, 10, word)
-                        else -> searchAllMembers(it, 10, word)
-                    }.getOrThrow()
-                },
                 client
-            )
+            ) {
+                when (objectType) {
+                    ObjectType.COMMUNITY -> searchCommunityMembers(objectId, it, 10, word)
+                    ObjectType.ROOM -> searchRoomMembers(objectId, it, 10, word)
+                    else -> searchAllMembers(it, 10, word)
+                }
+            }
         },
         client = client
     )
@@ -442,3 +435,16 @@ class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean, client: Ht
         result
     }
 }
+
+class TitlesViewModel(
+    client: HttpClient,
+    uid: PrimaryKey,
+    searchType: TitleSearchType,
+    status: TitleStatus? = null,
+    type: TitleType? = null,
+    scopeId: PrimaryKey? = null
+) : PagingViewModel<PrimaryKey, TitleInfo>({
+    RegularPagingSource(client) {
+        client.userTitles(uid, it, 10, searchType, status, type, scopeId)
+    }
+}, client = client)

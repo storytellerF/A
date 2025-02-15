@@ -18,11 +18,13 @@ import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.room.RoomList
+import com.storyteller_f.a.app.pages.title.ComposeMenu
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.world.TopicList
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -40,6 +42,8 @@ sealed interface SearchScope {
     data object Member : SearchScope
     data class UserTopic(val userId: PrimaryKey) : SearchScope
     data class UserCommunities(val userId: PrimaryKey) : SearchScope
+    data class UserReceivedTitle(val userId: PrimaryKey) : SearchScope
+    data class UserCreatedTitle(val userId: PrimaryKey) : SearchScope
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,20 +59,54 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
     var active by remember {
         mutableStateOf(false)
     }
-    val onActiveChange = { newValue: Boolean ->
-        active = newValue
+    var showSheet by remember {
+        mutableStateOf(false)
     }
+    CustomSearchBarInternal(appNav, scope, query, {
+        query = it
+    }, searchQuery, {
+        searchQuery = it
+    }, active, {
+        active = it
+    }, leadingIcon) {
+        showSheet = true
+    }
+    val sheetState = rememberModalBottomSheetState()
+    ComposeMenu(showSheet, sheetState, {
+        showSheet = false
+    }) {
+        showSheet = false
+        when (it) {
+            ObjectType.COMMUNITY -> appNav.gotoCommunityCompose()
+            ObjectType.ROOM -> appNav.gotoRoomCompose()
+            ObjectType.TOPIC -> TODO()
+            ObjectType.USER -> TODO()
+            ObjectType.TITLE -> appNav.gotoTitleCompose()
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun CustomSearchBarInternal(
+    appNav: AppNav,
+    scope: SearchScope,
+    query: String,
+    updateQuery: (String) -> Unit,
+    searchQuery: String,
+    updateSearch: (String) -> Unit,
+    active: Boolean,
+    onActiveChange: (Boolean) -> Unit,
+    leadingIcon: @Composable (() -> Unit),
+    clickCreate: () -> Unit
+) {
     Box(modifier = Modifier.fillMaxWidth()) {
         SearchBar(
             inputField = {
                 SearchBarDefaults.InputField(
                     query = query,
-                    onQueryChange = {
-                        query = it
-                    },
-                    onSearch = {
-                        searchQuery = it
-                    },
+                    onQueryChange = updateQuery,
+                    onSearch = updateSearch,
                     expanded = active,
                     onExpandedChange = onActiveChange,
                     leadingIcon = {
@@ -76,7 +114,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
                     },
                     trailingIcon = {
                         val userInfo by LoginViewModel.user.collectAsState()
-                        UserIcon(userInfo, true)
+                        UserIcon(userInfo, true, clickCreate = clickCreate)
                     },
                     placeholder = {
                         SearchPlaceholder(scope)
@@ -135,6 +173,8 @@ private fun SearchPlaceholder(scope: SearchScope) {
                 SearchScope.Member -> Res.string.input_search_members
                 is SearchScope.UserTopic -> Res.string.input_search_topics
                 is SearchScope.UserCommunities -> Res.string.input_search_community
+                is SearchScope.UserReceivedTitle -> Res.string.input_search_user_received_titles
+                is SearchScope.UserCreatedTitle -> Res.string.input_search_user_created_titles
             }
         )
     )
@@ -148,29 +188,32 @@ private fun SearchContent(
     val current = searchQuery.trim()
     when (scope) {
         SearchScope.World -> WorldSearchContent(current)
-
         SearchScope.MyCommunity -> MyCommunitySearchContent(current)
-
         SearchScope.MyRoom -> MyRoomSearchContent(current)
-
         is SearchScope.CommunityTopic -> CommunityTopicSearchContent(current, scope)
-
         is SearchScope.CommunityRoom -> CommunityRoomSearchContent(current, scope)
-
         is SearchScope.RoomTopic -> RoomTopicSearchContent(current, scope)
-
         is SearchScope.TopicTopic -> TopicTopicSearchContent(current, scope)
-
         is SearchScope.CommunityMember -> CommunityMemberSearchContent(current, scope)
-
         is SearchScope.RoomMember -> RoomMemberSearchContent(current, scope)
-
         SearchScope.Member -> MemberSearchContent(current)
-
         is SearchScope.UserTopic -> UserTopicSearchContent(current, scope)
-
         is SearchScope.UserCommunities -> UserCommunitySearchContent(current, scope)
+        is SearchScope.UserReceivedTitle -> UserReceivedTitleSearchContent(current, scope)
+        is SearchScope.UserCreatedTitle -> UserCreatedTitleSearchContent(current, scope)
     }
+}
+
+@Suppress("unused")
+@Composable
+fun UserCreatedTitleSearchContent(x0: String, x1: SearchScope.UserCreatedTitle) {
+    TODO("Not yet implemented")
+}
+
+@Suppress("unused")
+@Composable
+fun UserReceivedTitleSearchContent(x0: String, x1: SearchScope.UserReceivedTitle) {
+    TODO("Not yet implemented")
 }
 
 @Composable
@@ -186,8 +229,7 @@ fun UserCommunitySearchContent(current: String, scope: SearchScope.UserCommuniti
 private fun MemberSearchContent(current: String) {
     if (current.isNotBlank()) {
         val viewModel = createMemberSearchViewModel(current)
-        val items = viewModel.flow.collectAsLazyPagingItems()
-        MemberList(items)
+        MemberList(viewModel.flow.collectAsLazyPagingItems())
     }
 }
 
@@ -195,8 +237,7 @@ private fun MemberSearchContent(current: String) {
 private fun RoomMemberSearchContent(current: String, scope: SearchScope.RoomMember) {
     if (current.isNotBlank()) {
         val viewModel = createSearchMemberInRoomViewModel(scope, current)
-        val items = viewModel.flow.collectAsLazyPagingItems()
-        MemberList(items)
+        MemberList(viewModel.flow.collectAsLazyPagingItems())
     }
 }
 
@@ -204,8 +245,7 @@ private fun RoomMemberSearchContent(current: String, scope: SearchScope.RoomMemb
 private fun CommunityMemberSearchContent(current: String, scope: SearchScope.CommunityMember) {
     if (current.isNotBlank()) {
         val viewModel = createMemberSearchInCommunityViewModel(scope, current)
-        val items = viewModel.flow.collectAsLazyPagingItems()
-        MemberList(items)
+        MemberList(viewModel.flow.collectAsLazyPagingItems())
     }
 }
 
@@ -351,8 +391,7 @@ private fun WorldSearchContent(current: String) {
                 TopicList(topics)
             } else {
                 val viewModel = createMemberSearchViewModel(current)
-                val items = viewModel.flow.collectAsLazyPagingItems()
-                MemberList(items)
+                MemberList(viewModel.flow.collectAsLazyPagingItems())
             }
         }
     }

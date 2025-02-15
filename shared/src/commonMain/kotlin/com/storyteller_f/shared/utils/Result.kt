@@ -22,7 +22,7 @@ suspend fun <T, R> Result<T?>.mapResultNotNull(block: suspend (T) -> Result<R?>)
     }
 }
 
-suspend fun <T : Any, R> Result<T?>.mapNotNull(block: suspend (T) -> R?): Result<R?> {
+suspend fun <T, R> Result<T?>.mapNotNull(block: suspend (T) -> R?): Result<R?> {
     return map { value ->
         if (value == null) {
             null
@@ -32,7 +32,7 @@ suspend fun <T : Any, R> Result<T?>.mapNotNull(block: suspend (T) -> R?): Result
     }
 }
 
-suspend fun <T : Any, R> Result<T?>.mapCatchingNotNull(block: suspend (T) -> R?): Result<R?> {
+suspend fun <T, R> Result<T?>.mapCatchingNotNull(block: suspend (T) -> R?): Result<R?> {
     return mapCatching { value ->
         if (value == null) {
             null
