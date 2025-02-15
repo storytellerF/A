@@ -39,6 +39,8 @@
     <string name="input_search_room">Input to search room</string>
     <string name="input_search_community">Input to search community</string>
     <string name="input_search_topics_and_users">Input to search topics/users</string>
+    <string name="input_search_user_received_titles">Input to search received titles</string>
+    <string name="input_search_user_created_titles">Input to search received titles</string>
     <string name="refresh">Refresh</string>
     <string name="no_content_yet">No content yet</string>
     <string name="copy">Copy</string>

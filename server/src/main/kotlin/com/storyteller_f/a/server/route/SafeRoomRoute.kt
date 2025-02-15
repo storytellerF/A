@@ -8,11 +8,13 @@ import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
+import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.tables.searchMembers
 import com.storyteller_f.tables.searchRooms
+import io.ktor.server.request.receive
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 
@@ -62,7 +64,16 @@ fun Route.bindSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { pre, next, size ->
-                getTopics(it.parent.id, ObjectType.ROOM, uid, backend, pre, next, size, it.fillHasCommented)
+                getTopLevelTopicsInObject(
+                    it.parent.id,
+                    ObjectType.ROOM,
+                    uid,
+                    backend,
+                    pre,
+                    next,
+                    size,
+                    it.fillHasCommented
+                )
             }
         }
     }
@@ -86,6 +97,12 @@ fun Route.bindProtectedSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
     post<RouteRooms.Id.Exit> {
         usePrincipal(reader) { uid ->
             exitRoom(it.parent.id, uid, backend)
+        }
+    }
+    post<RouteRooms> {
+        val newRoom = call.receive<NewRoom>()
+        usePrincipal(reader) {
+            createRoom(newRoom, it, backend)
         }
     }
 }

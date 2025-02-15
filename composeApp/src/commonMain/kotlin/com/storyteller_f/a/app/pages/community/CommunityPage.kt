@@ -16,7 +16,6 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -95,7 +94,7 @@ private fun CommunityNonCompatPageInternal(
                             showDialog = true
                         }
                     }
-                    CommunityIcon(community, 40.dp, showDialog) {
+                    CommunityIcon(community, showDialog) {
                         showDialog = it
                     }
                 }
@@ -151,7 +150,7 @@ private fun CommunityCompatPageInternal(
                         showDialog = true
                     }
                 }
-                CommunityIcon(community, 40.dp, showDialog) {
+                CommunityIcon(community, showDialog) {
                     showDialog = it
                 }
             }
@@ -260,7 +259,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                 .padding(8.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            CommunityIcon(communityInfo, 50.dp, showDialog = false) {}
+            CommunityIcon(communityInfo, showDialog = false, 50.dp) {}
             Column {
                 Text(communityInfo.name)
             }
@@ -271,7 +270,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                 dismiss()
                 nav.gotoMemberPage(communityId, ObjectType.COMMUNITY)
             }
-            if (nav.currentDestination?.destination?.hasRoute(CommunityScreen::class) == true) {
+            if (nav.hasRoute(CommunityScreen::class)) {
                 val scope = rememberCoroutineScope()
                 if (communityInfo.isJoined) {
                     ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_community)) {
@@ -295,6 +294,9 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                 ButtonNav(Icons.Default.Add, "Add") {
                     dismiss()
                     nav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, true, null)
+                }
+                ButtonNav(Icons.Default.Title, "Add Title") {
+                    dismiss()
                 }
             }
         }

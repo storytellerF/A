@@ -4,38 +4,11 @@ import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.russhwolf.settings.serialization.removeValue
+import com.storyteller_f.a.client_lib.DefaultLoginUserSession
+import com.storyteller_f.a.client_lib.LoginUser
 import com.storyteller_f.a.client_lib.LoginUserSession
-import com.storyteller_f.shared.getDerPrivateKey
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.Serializable
-
-
-@Serializable
-data class LoginUser(
-    val privateKey: String,
-    val publicKey: String,
-    val address: String,
-)
-
-
-class DefaultLoginUserSession(val loginUSer: LoginUser) : LoginUserSession {
-    override suspend fun signature(data: String): String {
-        return com.storyteller_f.shared.signature(loginUSer.privateKey, data)
-    }
-
-    override suspend fun verify(signature: String, data: String): Boolean {
-        return com.storyteller_f.shared.verify(loginUSer.publicKey, signature, data)
-    }
-
-    override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): String {
-        return com.storyteller_f.shared.decrypt(getDerPrivateKey(loginUSer.privateKey), encrypted, encryptedAesKey)
-    }
-
-    override suspend fun address(): String {
-        return com.storyteller_f.shared.calcAddress(loginUSer.publicKey)
-    }
-
-}
+import kotlinx.serialization.builtins.serializer
 
 interface LoginUserSessionManager {
     fun savedSession(): SavedSession
@@ -45,7 +18,6 @@ interface LoginUserSessionManager {
     fun buildSession(alias: String): LoginUserSession?
 
     fun removeSession(session: String)
-
 }
 
 class DefaultLoginUserSessionManager : LoginUserSessionManager {
@@ -78,10 +50,8 @@ class DefaultLoginUserSessionManager : LoginUserSessionManager {
     override fun removeSession(session: String) {
         defaultSettings.removeValue(LoginUser.serializer(), "login_user")
     }
-
 }
 
 data class SavedSession(val list: List<String>, val last: String? = null, val current: String? = null)
-
 
 expect fun buildLoginUserSessionFactory(): LoginUserSessionManager

@@ -1,10 +1,12 @@
 package com.storyteller_f.a.server.service
 
+import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
 import com.storyteller_f.a.server.route.RouteCommunities
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
@@ -22,9 +24,9 @@ suspend fun getCommunity(
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
     return DatabaseFactory.getCommonCommunity(
-        fillJoinInfo,
         communityId,
         communityAid,
+        fillJoinInfo,
         id
     ).mapResultNotNull { (info, iconName, coverName) ->
         backend.mediaService.get(AMEDIA_BUCKET, listOf(iconName, coverName)).map { (iconInfo, coverInfo) ->
@@ -43,11 +45,7 @@ suspend fun doUserJoinCommunity(
     } else {
         val time = now()
         DatabaseFactory.addCommunityJoin(uid, communityId, time).mapResult { value ->
-            if (value > 0) {
-                Result.success(community.copy(joinTime = time))
-            } else {
-                Result.failure(BadRequestException("join failed."))
-            }
+            Result.success(community.copy(joinTime = time))
         }.recoverCatching {
             if (it.isDup()) {
                 getCommunity(communityId, null, backend, uid, true)
@@ -92,7 +90,7 @@ suspend fun searchCommunities(
         search.joinStatus,
         search.word
     ).mapResult { (list, count) ->
-        parseCommunityList(backend, list).map { value ->
+        processCommunityList(backend, list).map { value ->
             PaginationResult(value, count)
         }
     }
@@ -121,7 +119,7 @@ private suspend fun searchTargetUserJoinedCommunities(
         DatabaseFactory.count {
             getUserJoinedCommunityQuery(target, true)
         }.mapResult { count ->
-            parseCommunityList(backend, list).mapResult { value ->
+            processCommunityList(backend, list).mapResult { value ->
                 if (uid != null) {
                     processUserJoinedTimeReplace(value, uid, count)
                 } else {
@@ -142,26 +140,11 @@ private suspend fun processUserJoinedTimeReplace(
     val communityIds = value.map {
         it.id
     }
-    return DatabaseFactory.getCommunityByIds(uid, communityIds).map { joinedTimeList ->
+    return DatabaseFactory.getJoinedCommunityByIds(uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         PaginationResult(value.map {
             it.copy(joinTime = map[it.id], extension = CommunityInfo.Extension(it.joinTime))
         }, count)
-    }
-}
-
-private fun parseCommunityList(
-    backend: Backend,
-    list: List<CommunityRawResult>
-): Result<List<CommunityInfo>> {
-    return backend.mediaService.get(AMEDIA_BUCKET, list.flatMap { (_, icon, poster) ->
-        listOf(icon, poster)
-    }).map { icons ->
-        list.mapIndexed { i, communityPair ->
-            val first = icons[i * 2]
-            val second = icons[i * 2 + 1]
-            communityPair.communityInfo.copy(icon = first, poster = second)
-        }
     }
 }
 
@@ -174,7 +157,7 @@ suspend fun getCommunityTopicList(
     search: RouteCommunities.Id.Topics
 ) = checkRootReadPermission(ObjectType.COMMUNITY, it.parent.id, id).mapResultNotNull { permission ->
     if (permission.hasRead) {
-        commonPaginationTopics(id, null, n, s, search.fillHasCommented) {
+        getTopicsPagingByPredicate(id, null, n, s, search.fillHasCommented) {
             Topics.parentId eq search.parent.id
         }.mapResultNotNull { (data, count) ->
             val ids = data.map {
@@ -188,5 +171,43 @@ suspend fun getCommunityTopicList(
         }
     } else {
         Result.failure(ForbiddenException())
+    }
+}
+
+private fun checkCommunityName(newCommunity: NewCommunity): Result<Unit> {
+    val nickname = newCommunity.name
+    return when {
+        nickname.isEmpty() -> Result.failure(CustomBadRequestException("community name is empty"))
+        nickname.length in 1..COMMUNITY_NAME_LENGTH -> Result.success(Unit)
+        else -> Result.failure(CustomBadRequestException("community name must be between in 1 and 20"))
+    }
+}
+
+suspend fun createCommunity(newCommunity: NewCommunity, uid: PrimaryKey, backend: Backend): Result<CommunityInfo> {
+    val firstError = listOf(suspend {
+        checkAid(newCommunity.aid)
+    }, suspend {
+        checkCommunityName(newCommunity)
+    }).firstNotNullOfOrNull {
+        it().exceptionOrNull()
+    }
+    if (firstError != null) return Result.failure(firstError)
+    val id = SnowflakeFactory.nextId()
+    val community = Community(
+        id,
+        now(),
+        newCommunity.aid,
+        newCommunity.name,
+        uid,
+        newCommunity.icon,
+        null
+    )
+    return DatabaseFactory.createCommunity(community).mapResult {
+        processCommunityList(
+            backend,
+            listOf(CommunityRawResult(community.toCommunityIfo(community.createdTime), newCommunity.icon, null))
+        ).map {
+            it.first()
+        }
     }
 }

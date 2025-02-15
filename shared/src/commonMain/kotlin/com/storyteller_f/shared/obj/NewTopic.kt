@@ -6,4 +6,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class NewTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: TopicContent)
+data class NewTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: String)
+
+@Serializable
+data class NewRoomTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: TopicContent)

@@ -4,9 +4,13 @@ import com.ashampoo.kim.common.convertToPhotoMetadata
 import com.ashampoo.kim.jvm.KimJvm
 import com.storyteller_f.Backend
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
+import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
+import io.github.aakira.napier.Napier
 import org.apache.tika.Tika
 import java.io.File
+import javax.imageio.ImageIO
+import javax.imageio.stream.FileImageInputStream
 
 data class UploadPack(
     val name: String,
@@ -32,15 +36,9 @@ fun uploadFiles(
 ): Result<List<MediaInfo?>> {
     val packs = files.map { (file, saveFileName, contentType) ->
         val type = checkContentType(file, tika, contentType)
-        val meta = if (type.second?.startsWith("image") == true) {
-            KimJvm.readMetadata(file)?.convertToPhotoMetadata()?.let {
-                val width = it.widthPx
-                val height = it.heightPx
-                if (width != null && height != null) {
-                    mapOf("width" to width.toString(), "height" to height.toString())
-                } else {
-                    null
-                }
+        val meta = if (type.second.startsWith("image") == true) {
+            getDimension(file, type.second)?.let {
+                mapOf("width" to it.width.toString(), "height" to it.height.toString())
             } ?: emptyMap()
         } else {
             emptyMap()
@@ -55,7 +53,7 @@ private fun checkContentType(
     file: File,
     tika: Tika,
     contentType: String?
-): Pair<String?, String?> {
+): Pair<String?, String> {
     val s = "audio/mp4"
     val mimeType = tika.detect(file)
     return if (contentType == s) {
@@ -67,4 +65,54 @@ private fun checkContentType(
     } else {
         null
     } to mimeType
+}
+
+fun loadAvif() {
+    if (System.getProperty("os.name").contains("Mac")) {
+        System.setProperty("jna.library.path", "/opt/homebrew/lib")
+    } else {
+        System.setProperty("jna.library.path", "/usr/local/lib")
+    }
+}
+
+private fun getDimension(
+    file: File,
+    contentType: String
+): Dimension? {
+    if (contentType != "image/avif") {
+        try {
+            val metadata = KimJvm.readMetadata(file)?.convertToPhotoMetadata()
+            if (metadata != null) {
+                val width = metadata.widthPx
+                val height = metadata.heightPx
+                return if (width != null && height != null) {
+                    Dimension(width, height)
+                } else {
+                    null
+                }
+            }
+        } catch (e: Exception) {
+            Napier.e(e) {
+                "read $file failed"
+            }
+            throw e
+        }
+    }
+    return ImageIO.getImageReadersByMIMEType(contentType).asSequence().firstNotNullOfOrNull { reader ->
+        try {
+            reader.input = FileImageInputStream(file)
+            reader.read(reader.minIndex)
+            Dimension(
+                reader.getWidth(reader.minIndex),
+                reader.getHeight(reader.minIndex)
+            )
+        } catch (e: Throwable) {
+            Napier.e(throwable = e) {
+                "get image dimension failed $file"
+            }
+            null
+        } finally {
+            reader.dispose()
+        }
+    }
 }

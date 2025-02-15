@@ -29,11 +29,7 @@ suspend fun addReaction(
                 val reactionInfo =
                     ReactionInfo(emojiText, topicId, ObjectType.TOPIC, (oldReaction?.count ?: 0) + 1, true)
                 DatabaseFactory.insertReaction(newId, userId, reactionInfo, now).map { i ->
-                    if (i > 0) {
-                        reactionInfo
-                    } else {
-                        null
-                    }
+                    reactionInfo
                 }.recoverError { throwable ->
                     if (throwable.isDup()) {
                         getReaction(userId, topicId, emojiText)

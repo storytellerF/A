@@ -62,9 +62,7 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismiss: ()
     val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
     val toasterState = LocalToaster.current
     DialogContainer {
-        UserCell(authorInfo, true) {
-            appNav.gotoUser(it)
-        }
+        UserCell(authorInfo, true)
         Text("pub: ${topicInfo.createdTime.formatTime()}")
 
         when (topicInfo.rootType) {

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
-
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -17,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.*
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -32,9 +32,12 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.*
 import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.compontents.GlobalDialog
 import com.storyteller_f.a.app.compontents.GlobalDialogController
+import com.storyteller_f.a.app.pages.community.CommunityComposePage
 import com.storyteller_f.a.app.pages.community.CommunityPage
 import com.storyteller_f.a.app.pages.media.MediaPage
+import com.storyteller_f.a.app.pages.room.RoomComposePage
 import com.storyteller_f.a.app.pages.room.RoomPage
+import com.storyteller_f.a.app.pages.title.TitleComposePage
 import com.storyteller_f.a.app.pages.topic.TopicComposePage
 import com.storyteller_f.a.app.pages.topic.TopicPage
 import com.storyteller_f.a.app.pages.topic.processEncryptedTopic
@@ -68,6 +71,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import kotlin.reflect.KClass
 
 object StaticObj {
     init {
@@ -134,6 +138,15 @@ data object UserSettingScreen
 
 @Serializable
 data class MediaScreen(val url: String)
+
+@Serializable
+data object TitleComposeScreen
+
+@Serializable
+data object CommunityComposeScreen
+
+@Serializable
+data object RoomComposeScreen
 
 @Composable
 fun App() {
@@ -263,6 +276,27 @@ fun LoginCheck(content: @Composable () -> Unit) {
 private fun NavGraphBuilder.buildRootNav(
     navigator: NavHostController
 ) {
+    buildMainScreen()
+    composable<AboutScreen> {
+        val libraries by rememberLibraries {
+            Res.readBytes("files/aboutlibraries.json").decodeToString()
+        }
+        Surface {
+            LibrariesContainer(
+                libraries,
+                Modifier.fillMaxSize().statusBarsPadding(),
+                colors = LibraryDefaults.libraryColors(backgroundColor = MaterialTheme.colorScheme.background)
+            )
+        }
+    }
+    composable<MediaScreen> {
+        val route = it.toRoute<MediaScreen>()
+        MediaPage(route.url)
+    }
+    buildComposeScreen(navigator)
+}
+
+private fun NavGraphBuilder.buildMainScreen() {
     composable<HomeScreen> {
         HomePage()
     }
@@ -280,27 +314,10 @@ private fun NavGraphBuilder.buildRootNav(
     composable<TopicScreen> {
         TopicPage(it.toRoute<TopicScreen>().topicId)
     }
-    composable<TopicComposeScreen> {
-        val (objectType, objectId, enableExperimental, privateRoomId) = it.toRoute<TopicComposeScreen>()
-        TopicComposePage(ObjectType.valueOf(objectType), objectId, enableExperimental, privateRoomId) {
-            navigator.popBackStack()
-        }
-    }
+
     composable<MemberScreen> {
         val (objectType, objectId) = it.toRoute<MemberScreen>()
         MemberPage(objectId, ObjectType.valueOf(objectType))
-    }
-    composable<AboutScreen> {
-        val libraries by rememberLibraries {
-            Res.readBytes("files/aboutlibraries.json").decodeToString()
-        }
-        Surface {
-            LibrariesContainer(
-                libraries,
-                Modifier.fillMaxSize().statusBarsPadding(),
-                colors = LibraryDefaults.libraryColors(backgroundColor = MaterialTheme.colorScheme.background)
-            )
-        }
     }
     composable<UserScreen> {
         val route = it.toRoute<UserScreen>()
@@ -309,9 +326,23 @@ private fun NavGraphBuilder.buildRootNav(
     composable<UserSettingScreen> {
         UserSettingPage()
     }
-    composable<MediaScreen> {
-        val route = it.toRoute<MediaScreen>()
-        MediaPage(route.url)
+}
+
+private fun NavGraphBuilder.buildComposeScreen(navigator: NavHostController) {
+    composable<TitleComposeScreen> {
+        TitleComposePage()
+    }
+    composable<CommunityComposeScreen> {
+        CommunityComposePage()
+    }
+    composable<RoomComposeScreen> {
+        RoomComposePage()
+    }
+    composable<TopicComposeScreen> {
+        val (objectType, objectId, enableExperimental, privateRoomId) = it.toRoute<TopicComposeScreen>()
+        TopicComposePage(ObjectType.valueOf(objectType), objectId, enableExperimental, privateRoomId) {
+            navigator.popBackStack()
+        }
     }
 }
 
@@ -345,14 +376,14 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
         enableExperimental: Boolean,
         privateRoomId: PrimaryKey?
     ) {
-        navigator.navigate(route = TopicComposeScreen(objectType.name, objectId, enableExperimental, privateRoomId))
+        navigator.navigate(TopicComposeScreen(objectType.name, objectId, enableExperimental, privateRoomId))
     }
 
     override fun gotoMemberPage(
         objectId: PrimaryKey,
         objectType: ObjectType
     ) {
-        navigator.navigate(route = MemberScreen(objectType.name, objectId))
+        navigator.navigate(MemberScreen(objectType.name, objectId))
     }
 
     override fun gotoAbout() {
@@ -373,6 +404,18 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
 
     override fun gotoMedia(info: MediaInfo) {
         navigator.navigate(MediaScreen(info.url))
+    }
+
+    override fun gotoTitleCompose() {
+        navigator.navigate(TitleComposeScreen)
+    }
+
+    override fun gotoCommunityCompose() {
+        navigator.navigate(CommunityComposeScreen)
+    }
+
+    override fun gotoRoomCompose() {
+        navigator.navigate(RoomComposeScreen)
     }
 }
 
@@ -401,8 +444,16 @@ fun HttpClientConfig<*>.setupRequest(httpUrl: String) {
 
 val bus = MutableSharedFlow<Any>()
 
+inline fun <reified T : Any> AppNav.toRoute(): T? {
+    return currentDestination?.toRoute()
+}
+
 interface AppNav {
     val currentDestination: NavBackStackEntry?
+    fun <T : Any> hasRoute(any: KClass<T>): Boolean {
+        return currentDestination?.destination?.hasRoute(any) == true
+    }
+
     fun gotoLogin()
 
     fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean)
@@ -431,6 +482,12 @@ interface AppNav {
     fun gotoUserSetting()
 
     fun gotoMedia(info: MediaInfo)
+
+    fun gotoTitleCompose()
+
+    fun gotoCommunityCompose()
+
+    fun gotoRoomCompose()
 
     companion object {
         val EMPTY = object : AppNav {
@@ -490,6 +547,18 @@ interface AppNav {
             }
 
             override fun gotoMedia(info: MediaInfo) {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoTitleCompose() {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoCommunityCompose() {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoRoomCompose() {
                 TODO("Not yet implemented")
             }
         }

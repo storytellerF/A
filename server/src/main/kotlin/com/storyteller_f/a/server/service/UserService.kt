@@ -1,5 +1,6 @@
 package com.storyteller_f.a.server.service
 
+import com.storyteller_f.AID_LENGTH
 import com.storyteller_f.Backend
 import com.storyteller_f.CustomBadRequestException
 import com.storyteller_f.DatabaseFactory
@@ -18,23 +19,18 @@ import io.ktor.server.routing.*
 suspend fun RoutingContext.updateUser(id: PrimaryKey, backend: Backend): Result<UserInfo?> {
     val old = call.receive<UserInfo>()
     val newUser = old.copy(nickname = old.nickname.trim(), aid = old.aid?.trim())
-    val result1 = listOf(suspend {
+    val firstError = listOf(suspend {
         checkAidModifyTimes(newUser, id)
     }, suspend {
-        checkAid(newUser)
+        checkAid(newUser.aid, true)
     }, suspend {
         checkNickname(newUser)
     }, suspend {
         checkAvatar(newUser, backend)
     }).firstNotNullOfOrNull {
-        val result = it()
-        if (result.isSuccess) {
-            null
-        } else {
-            result
-        }
+        it().exceptionOrNull()
     }
-    if (result1 != null) return result1.map { null }
+    if (firstError != null) return Result.failure(firstError)
     return DatabaseFactory.updateUser(id, newUser).mapResult {
         if (it) {
             DatabaseFactory.getUser(id, backend)
@@ -60,13 +56,18 @@ private suspend fun checkAidModifyTimes(
     }
 }
 
-private fun checkAid(newUser: UserInfo): Result<Unit> {
-    val aid = newUser.aid
+fun checkAid(aid: String?, supportEmptyAid: Boolean = false): Result<Unit> {
     return when {
-        aid.isNullOrBlank() -> Result.success(Unit)
-        aid.length in 2..20 -> Result.success(Unit)
+        aid.isNullOrBlank() -> if (supportEmptyAid) {
+            Result.success(Unit)
+        } else {
+            Result.failure(
+                CustomBadRequestException("aid is empty")
+            )
+        }
+        aid.length in 2..AID_LENGTH -> Result.success(Unit)
         !aid.all {
-            it in 'A'..'Z' || it in 'a'..'z' || it in '0'..'9' || it == '_' || it == '-'
+            it.isLetterOrDigit() || it == '_' || it == '-'
         } -> {
             Result.failure(CustomBadRequestException("only support alphabet, number, underline and hyphen"))
         }
@@ -78,8 +79,8 @@ private fun checkNickname(newUser: UserInfo): Result<Unit> {
     val nickname = newUser.nickname
     return when {
         nickname.isEmpty() -> Result.success(Unit)
-        nickname.length in 2..USER_NICKNAME -> Result.success(Unit)
-        else -> Result.failure(CustomBadRequestException("user nickname must be between in 2 and 20"))
+        nickname.length in 1..USER_NICKNAME -> Result.success(Unit)
+        else -> Result.failure(CustomBadRequestException("user nickname must be between in 1 and 20"))
     }
 }
 

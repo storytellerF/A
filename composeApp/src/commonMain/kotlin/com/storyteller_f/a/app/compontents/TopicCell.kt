@@ -2,7 +2,10 @@ package com.storyteller_f.a.app.compontents
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -12,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.pages.topic.EmojiPicker
 import com.storyteller_f.a.app.pages.user.UserCell
 import com.storyteller_f.shared.model.TopicInfo
@@ -25,12 +27,9 @@ fun TopicCell(
     contentAlignAvatar: Boolean = true,
     showAvatar: Boolean = true
 ) {
-    val author = info.author
-    val authorViewModel = createUserViewModel(author, info.extension?.authorInfo)
-
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    val authorInfo by authorViewModel.handler.data.collectAsState()
+    val authorInfo = info.extension?.authorInfo
     TopicCellInternal(info, authorInfo, showAvatar, contentAlignAvatar) {
         showBottomSheet = true
     }
@@ -59,9 +58,7 @@ fun TopicCellInternal(
         }.padding(8.dp)
     ) {
         if (showAvatar) {
-            UserCell(authorInfo, true) {
-                appNav.gotoUser(it)
-            }
+            UserCell(authorInfo, true)
         }
         Column(
             if (contentAlignAvatar) {

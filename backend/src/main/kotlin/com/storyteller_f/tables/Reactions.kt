@@ -141,13 +141,15 @@ suspend fun DatabaseFactory.insertReaction(
     userId: PrimaryKey,
     reactionInfo: ReactionInfo,
     now: LocalDateTime
-) = insert {
-    Reactions.insert { statement ->
+) = dbQuery {
+    check(Reactions.insert { statement ->
         statement[id] = newId
         statement[uid] = userId
         statement[objectId] = reactionInfo.objectId
         statement[objectType] = reactionInfo.objectType
         statement[emoji] = reactionInfo.emoji
         statement[createdTime] = now
+    }.insertedCount > 0) {
+        "insert reaction failed"
     }
 }

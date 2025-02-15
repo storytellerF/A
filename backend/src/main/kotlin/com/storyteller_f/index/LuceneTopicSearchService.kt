@@ -100,6 +100,7 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
     override suspend fun searchDocument(
         size: Int,
         word: List<String>?,
+        preTopicId: PrimaryKey?,
         nextTopicId: PrimaryKey?,
         author: PrimaryKey?,
         root: Pair<PrimaryKey?, ObjectType>?,
@@ -109,11 +110,11 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
             try {
                 DirectoryReader.open(it).use { reader ->
                     val searcher = IndexSearcher(reader)
-                    val combinedQuery = buildQuery(nextTopicId, word, root, parent).build()
+                    val combinedQuery = buildQuery(preTopicId, nextTopicId, word, root, parent).build()
                     Napier.i {
                         "lucene search query $combinedQuery"
                     }
-                    val sortById = Sort(SortField("id2", SortField.Type.LONG, true))
+                    val sortById = Sort(SortField("id2", SortField.Type.LONG, preTopicId == null))
                     val docs = searcher.search(combinedQuery, size, sortById)
                     val scoreDocs = docs.scoreDocs
                     PaginationResult(scoreDocs.mapNotNull { doc ->
@@ -135,6 +136,7 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
     }
 
     private fun buildQuery(
+        preTopicId: PrimaryKey?,
         nextTopicId: PrimaryKey?,
         word: List<String>?,
         root: Pair<PrimaryKey?, ObjectType>?,
@@ -146,6 +148,11 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
         if (nextTopicId != null) {
             combinedQuery.add(
                 LongPoint.newRangeQuery("id1", Long.MIN_VALUE, nextTopicId.minus(1)),
+                BooleanClause.Occur.MUST
+            )
+        } else if (preTopicId != null) {
+            combinedQuery.add(
+                LongPoint.newRangeQuery("id1", Long.MIN_VALUE, preTopicId.minus(1)),
                 BooleanClause.Occur.MUST
             )
         }

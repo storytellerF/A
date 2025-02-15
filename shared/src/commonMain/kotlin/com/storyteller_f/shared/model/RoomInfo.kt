@@ -9,11 +9,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RoomInfo(
     override val id: PrimaryKey,
+    val createdTime: LocalDateTime,
     val name: String,
     val aid: String,
     val creator: PrimaryKey,
     val icon: MediaInfo? = null,
-    val createdTime: LocalDateTime,
     val joinedTime: LocalDateTime? = null,
     val communityId: PrimaryKey? = null,
 ) : Identifiable {
@@ -21,6 +21,6 @@ data class RoomInfo(
     val isJoined get() = joinedTime != null
 
     companion object {
-        val EMPTY = RoomInfo(DEFAULT_PRIMARY_KEY, "", "", DEFAULT_PRIMARY_KEY, null, now(), null)
+        val EMPTY = RoomInfo(DEFAULT_PRIMARY_KEY, now(), "", "", DEFAULT_PRIMARY_KEY)
     }
 }

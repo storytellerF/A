@@ -14,15 +14,16 @@ import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
+import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.tables.*
+import com.storyteller_f.tables.Topics
+import com.storyteller_f.tables.getTopicsByPredicate
 import com.storyteller_f.types.PaginationResult
 import io.ktor.server.plugins.*
 import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
 import org.apache.pdfbox.pdmodel.font.PDType0Font
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import rst.pdfbox.layout.elements.Document
 import rst.pdfbox.layout.elements.Paragraph
 import java.awt.GraphicsEnvironment
@@ -31,13 +32,10 @@ import java.io.FileInputStream
 import java.security.KeyStore
 
 suspend fun addTopicAtCommunity(uid: PrimaryKey, backend: Backend, newTopic: NewTopic): Result<TopicInfo?> {
-    if (newTopic.content is TopicContent.Encrypted) {
-        return Result.failure(ForbiddenException("Community only accept unencrypted content."))
-    }
     if (newTopic.parentType == ObjectType.ROOM) {
         return Result.failure(ForbiddenException("can't use api to add topic in room"))
     }
-    val content = (newTopic.content as TopicContent.Plain).plain.trim()
+    val content = newTopic.content.trim()
     if (content.isEmpty()) {
         return Result.failure(CustomBadRequestException("content is empty"))
     }
@@ -54,21 +52,23 @@ suspend fun addTopicAtCommunity(uid: PrimaryKey, backend: Backend, newTopic: New
             hasWrite -> {
                 val newId = SnowflakeFactory.nextId()
                 val topic = Topic(
+                    id = newId,
+                    createdTime = now(),
                     author = uid,
                     parentId = newTopic.parentId,
                     parentType = newTopic.parentType,
                     rootId = rootId,
                     rootType = rootType,
                     lastModifiedTime = now(),
-                    id = newId,
-                    createdTime = now(),
                 )
-                DatabaseFactory.saveTopic(topic, backend, content, rootId, rootType, newTopic, uid).mapResult {
-                    backend.topicSearchService.getDocuments(listOf(newId)).mapResult { documents ->
-                        val topicInfo = topic.toTopicInfo()
-                        processMediaAndAuthor(backend, listOf(topicInfo), documents).map {
-                            it.firstOrNull()
-                        }
+                val plain = TopicContent.Plain(content)
+                DatabaseFactory.saveTopic(topic, backend, plain).mapResult { topicInfo ->
+                    processMediaAndAuthor(
+                        backend,
+                        listOf(topicInfo),
+                        listOf(TopicDocument.fromTopic(topic, plain))
+                    ).map {
+                        it.firstOrNull()
                     }
                 }
             }
@@ -219,34 +219,20 @@ suspend fun getTopic(
         uid
     ).mapResultNotNull { (hasRead, hasJoined, isPrivate) ->
         if (hasRead) {
-            getCommonTopic(topicId, uid).mapResultNotNull { info ->
-                when {
-                    !isPrivate -> backend.topicSearchService.getDocuments(listOf(topicId)).mapResult { value ->
-                        processMediaAndAuthor(backend, listOf(info), value).map {
-                            it.first()
-                        }
-                    }
-
-                    uid == null -> Result.failure(UnauthorizedException())
-                    else -> DatabaseFactory.getEncryptedTopics(topicId, uid).map { value ->
-                        val encrypted = value.firstOrNull()
-                        if (encrypted != null) {
-                            info.copy(content = encrypted, isPrivate = true)
-                        } else {
-                            info
-                        }
-                    }
+            DatabaseFactory.getTopicInfo(topicId, uid).mapResultNotNull { info ->
+                processTopicsContent(isPrivate, backend, listOf(info), uid).map {
+                    it.first()
                 }
             }.mapNotNull { value ->
                 value.copy(hasJoined = hasJoined)
             }
         } else {
-            Result.failure(ForbiddenException())
+            Result.failure(ForbiddenException("Permission Denied"))
         }
     }
 }
 
-suspend fun getTopics(
+suspend fun getTopLevelTopicsInObject(
     parentId: PrimaryKey,
     parentType: ObjectType,
     uid: PrimaryKey? = null,
@@ -256,48 +242,40 @@ suspend fun getTopics(
     size: Int,
     fillHasCommented: Boolean?
 ): Result<PaginationResult<TopicInfo>?> {
-    val predicate: SqlExpressionBuilder.() -> Op<Boolean> = {
-        Topics.parentId eq parentId
-    }
     return checkRootReadPermission(parentType, parentId, uid).mapResultNotNull { (hasRead, _, isPrivate) ->
-        when {
-            !isPrivate -> commonPaginationTopics(
-                uid,
-                preTopicId,
-                nextTopicId,
-                size,
-                fillHasCommented,
-                predicate
-            ).mapResult { (data, count) ->
-                backend.topicSearchService.getDocuments(data.map {
-                    it.id
-                }).mapResult { documents ->
-                    processMediaAndAuthor(backend, data, documents)
-                }.map { topicContents ->
-                    PaginationResult(topicContents, count)
+        if (isPrivate && !hasRead) {
+            Result.failure(ForbiddenException("Permission Denied"))
+        } else {
+            getTopicsPagingByPredicate(uid, preTopicId, nextTopicId, size, fillHasCommented) { ->
+                Topics.parentId eq parentId
+            }.mapResult { (data, count) ->
+                processTopicsContent(isPrivate, backend, data, uid).map {
+                    PaginationResult(it, count)
                 }
             }
+        }
+    }
+}
 
-            hasRead && uid != null -> {
-                commonPaginationTopics(
-                    uid,
-                    preTopicId,
-                    nextTopicId,
-                    size,
-                    fillHasCommented,
-                    predicate
-                ).mapResult { (data, count) ->
-                    DatabaseFactory.getEncryptedTopic(data, uid).map { topicContents ->
-                        PaginationResult(data.mapIndexed { index, l ->
-                            l.copy(content = topicContents[index], isPrivate = true)
-                        }, count)
-                    }
-                }
-            }
+private suspend fun processTopicsContent(
+    isPrivate: Boolean,
+    backend: Backend,
+    data: List<TopicInfo>,
+    uid: PrimaryKey?
+): Result<List<TopicInfo>> = when {
+    !isPrivate -> backend.topicSearchService.getDocuments(data.map {
+        it.id
+    }).mapResult { documents ->
+        processMediaAndAuthor(backend, data, documents)
+    }.map { topicContents ->
+        topicContents
+    }
 
-            else -> {
-                Result.failure(ForbiddenException())
-            }
+    uid == null -> Result.failure(ForbiddenException())
+
+    else -> DatabaseFactory.getEncryptedTopic(data, uid).map { topicContents ->
+        data.mapIndexed { index, l ->
+            l.copy(content = topicContents[index], isPrivate = true)
         }
     }
 }
@@ -312,6 +290,12 @@ data class RootWritePermission(
     val objectType: ObjectType,
     val objectId: PrimaryKey,
     val hasWrite: Boolean
+)
+
+data class RootAdminPermission(
+    val objectType: ObjectType,
+    val objectId: PrimaryKey,
+    val hasAdmin: Boolean
 )
 
 suspend fun checkRootReadPermission(
@@ -349,6 +333,8 @@ suspend fun checkRootReadPermission(
         ObjectType.USER -> DatabaseFactory.getRawUserById(parentId).mapNotNull {
             RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         }
+
+        ObjectType.TITLE -> Result.success(RootReadPermission(true, false, false))
     }
 }
 
@@ -385,10 +371,47 @@ suspend fun checkRootWritePermission(
                 RootWritePermission(parentType, parentId, first.id == uid)
             }
         }
+
+        ObjectType.TITLE -> Result.success(RootWritePermission(parentType, parentId, false))
+    }
+}
+
+suspend fun checkRootAdminPermission(
+    parentType: ObjectType,
+    parentId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootAdminPermission?> {
+    return when (parentType) {
+        ObjectType.TOPIC -> {
+            DatabaseFactory.getTopicRoot(parentId).mapResultNotNull { (rootId, rootType) ->
+                checkRootAdminPermission(rootType, rootId, uid)
+            }
+        }
+
+        ObjectType.ROOM -> {
+            DatabaseFactory.getRoomSource(parentId).mapNotNull {
+                RootAdminPermission(parentType, parentId, it.first.creator == uid)
+            }
+        }
+
+        ObjectType.COMMUNITY -> {
+            DatabaseFactory.getCommonCommunity(parentId).mapNotNull {
+                RootAdminPermission(parentType, parentId, it.communityInfo.owner == uid)
+            }
+        }
+
+        ObjectType.USER -> {
+            DatabaseFactory.getRawUserById(parentId).mapNotNull { (first) ->
+                RootAdminPermission(parentType, parentId, first.id == uid)
+            }
+        }
+
+        ObjectType.TITLE -> Result.success(RootAdminPermission(parentType, parentId, false))
     }
 }
 
 suspend fun searchPublicTopics(
+    preTopicId: PrimaryKey?,
     nextTopicId: PrimaryKey?,
     size: Int,
     search: RouteTopics.Search,
@@ -401,20 +424,20 @@ suspend fun searchPublicTopics(
     return backend.topicSearchService.searchDocument(
         size,
         search.word,
-        nextTopicId,
-        search.author,
-        if (search.rootId != null && search.rootType != null) search.rootId to search.rootType else null,
-        if (search.parentId != null && search.parentType != null) search.parentId to search.parentType else null,
+        preTopicId = preTopicId,
+        nextTopicId = nextTopicId,
+        author = search.author,
+        root = when {
+            search.rootId != null && search.rootType != null -> search.rootId to search.rootType
+            else -> null
+        },
+        parent = when {
+            search.parentId != null && search.parentType != null -> search.parentId to search.parentType
+            else -> null
+        },
     ).mapResult { (list, total) ->
-        val ids = list.map {
-            it.id
-        }
-        commonTopics(uid, null, nextTopicId, size, search.parent.fillHasCommented) {
-            Topics.id inList ids
-        }.mapResult { infos ->
-            processMediaAndAuthor(backend, infos, list).map {
-                PaginationResult(it, total)
-            }
+        processTopicsDocument(uid, search.parent.fillHasCommented, backend, list).map {
+            PaginationResult(it, total)
         }
     }
 }
@@ -462,7 +485,7 @@ suspend fun processMediaAndAuthor(
                 it.id to it
             }
             infos.map {
-                it.copy(extension = TopicInfo.Extension(userMap[it.author]))
+                it.copy(extension = TopicInfo.Extension(userMap[it.author]!!))
             }
         }
     }
@@ -484,24 +507,77 @@ fun documentMediaList(documentList: List<TopicDocument?>): List<Pair<PrimaryKey,
 
 suspend fun recommendTopics(
     backend: Backend,
+    preTopicId: PrimaryKey?,
     nextTopicId: PrimaryKey?,
     size: Int,
     uid: PrimaryKey?,
-    fillHasCommented: Boolean,
+    fillHasCommented: Boolean?,
 ): Result<PaginationResult<TopicInfo>?> {
     return backend.topicSearchService.searchDocument(
         size,
+        preTopicId = preTopicId,
         nextTopicId = nextTopicId,
         parent = null to ObjectType.COMMUNITY,
     ).mapResult { (list, total) ->
-        val ids = list.map {
-            it.id
+        processTopicsDocument(uid, fillHasCommented, backend, list).map {
+            PaginationResult(it, total)
         }
-        commonTopics(uid, null, nextTopicId, size, fillHasCommented) {
-            Topics.id inList ids
-        }.mapResult { infos ->
-            processMediaAndAuthor(backend, infos, list).map {
-                PaginationResult(it, total)
+    }
+}
+
+private suspend fun processTopicsDocument(
+    uid: PrimaryKey?,
+    fillHasCommented: Boolean?,
+    backend: Backend,
+    list: List<TopicDocument>
+): Result<List<TopicInfo>> {
+    val ids = list.map {
+        it.id
+    }
+    return getTopicsByPredicate(uid, fillHasCommented) {
+        Topics.id inList ids
+    }.mapResult { infos ->
+        processMediaAndAuthor(backend, infos, list)
+    }
+}
+
+suspend fun getTopicByIds(
+    ids: List<PrimaryKey>,
+    uid: PrimaryKey?,
+    fillHasCommented: Boolean?,
+    backend: Backend
+): Result<List<TopicInfo>> {
+    val map = ids.map {
+        checkRootReadPermission(ObjectType.TOPIC, it, uid) to it
+    }
+    val private = mutableSetOf<PrimaryKey>()
+    map.forEach { (r, id) ->
+        val exceptionOrNull = r.exceptionOrNull()
+        if (exceptionOrNull != null) {
+            return Result.failure(exceptionOrNull)
+        } else {
+            val permission = r.getOrThrow()
+            when {
+                permission == null -> return Result.failure(Exception("root not exists"))
+                !permission.hasRead -> return Result.failure(ForbiddenException("Permission Denied"))
+                permission.isPrivate -> private.add(id)
+                else -> {}
+            }
+        }
+    }
+    return getTopicsByPredicate(uid, fillHasCommented) {
+        Topics.id inList ids
+    }.mapResult { infos ->
+        val privateList = infos.filter {
+            private.contains(it.id)
+        }
+
+        val publicList = infos.filter {
+            !private.contains(it.id)
+        }
+        processTopicsContent(true, backend, privateList, uid).mapResult { privateContents ->
+            processTopicsContent(false, backend, publicList, uid).map { publicContents ->
+                publicContents + privateContents
             }
         }
     }

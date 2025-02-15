@@ -153,7 +153,6 @@ kotlin {
             implementation(libs.emoji.kt)
             implementation(libs.emoji.compose.m3)
             implementation(libs.m3u.parser)
-            implementation(libs.kotlin.multiplatform.appdirs)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -161,6 +160,7 @@ kotlin {
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(compose.uiTest)
             implementation(projects.testServer.simple)
+            implementation(projects.cryptoJvm)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

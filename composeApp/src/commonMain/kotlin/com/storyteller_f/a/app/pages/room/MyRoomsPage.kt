@@ -36,7 +36,8 @@ fun MyRoomsPage() {
 
 @Composable
 fun RoomList(
-    items: LazyPagingItems<RoomInfo>
+    items: LazyPagingItems<RoomInfo>,
+    onClick: ((RoomInfo) -> Unit)? = null
 ) {
     StateView(items) {
         LazyColumn(
@@ -50,7 +51,7 @@ fun RoomList(
                     it.id.toString()
                 },
             ) { index ->
-                RoomCell(items[index], false)
+                RoomCell(items[index], false, onClick)
             }
         }
     }
@@ -59,7 +60,8 @@ fun RoomList(
 @Composable
 fun RoomCell(
     roomInfo: RoomInfo?,
-    customBackground: Boolean = false
+    customBackground: Boolean = false,
+    onClick: ((RoomInfo) -> Unit)? = null,
 ) {
     val appNav = LocalAppNav.current
     var showDialog by remember {
@@ -75,7 +77,7 @@ fun RoomCell(
                     .background(MaterialTheme.colorScheme.secondaryContainer, shape)
                     .clip(shape)
                     .clickable {
-                        roomInfo?.let { appNav.gotoRoom(it.id, false) }
+                        roomInfo?.let { onClick ?: appNav.gotoRoom(it.id, false) }
                     }
                     .padding(10.dp)
             }
@@ -96,9 +98,9 @@ fun RoomCell(
                 mutableStateOf(false)
             }
             Spacer(modifier = Modifier.weight(1f))
-            CommunityIcon(communityInfo, showDialog = showCommunityDialog, updateDialog = {
+            CommunityIcon(communityInfo, showDialog = showCommunityDialog) {
                 showCommunityDialog = it
-            })
+            }
         }
     }
     if (roomInfo != null) {
@@ -111,9 +113,9 @@ fun RoomCell(
 @Composable
 fun RoomIcon(
     roomInfo: RoomInfo?,
+    showDialog: Boolean,
     size: Dp = 50.dp,
     enableClick: Boolean = false,
-    showDialog: Boolean,
     updateShowDialog: (Boolean) -> Unit,
 ) {
     val iconUrl = roomInfo?.icon?.url

@@ -20,19 +20,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.compontents.MeasureTextLineCount
-import com.storyteller_f.a.app.utils.LoginUser
 import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.*
 import io.github.vinceglb.filekit.core.FileKit
-import io.github.vinceglb.filekit.core.extension
 import io.github.vinceglb.filekit.core.pickFile
 import io.ktor.client.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun LoginPage() {
@@ -136,20 +133,28 @@ fun SelectFile(isSignUp: Boolean) {
     val scope = rememberCoroutineScope()
     val appNav = LocalAppNav.current
     val client = LocalClient.current
-    val toasterState = LocalToaster.current
-    OutlinedButton({
-        scope.launch {
-            val f = FileKit.pickFile()
-            if (f != null) {
-                if (f.extension == "txt") {
+    if (isSignUp) {
+        Button({
+            scope.launch {
+                val f = FileKit.pickFile()
+                if (f != null) {
                     startSign(String(f.readBytes()), appNav, client, isSignUp)
-                } else {
-                    toasterState.show("invalid file ${f.extension}", duration = 1.seconds)
                 }
             }
+        }) {
+            Text("Select File")
         }
-    }) {
-        Text("Select File")
+    } else {
+        OutlinedButton({
+            scope.launch {
+                val f = FileKit.pickFile()
+                if (f != null) {
+                    startSign(String(f.readBytes()), appNav, client, isSignUp)
+                }
+            }
+        }) {
+            Text("Select File")
+        }
     }
 }
 

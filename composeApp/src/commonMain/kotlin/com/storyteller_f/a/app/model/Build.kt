@@ -6,9 +6,12 @@ import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.TitleStatus
+import com.storyteller_f.shared.type.TitleType
 
 @Composable
 fun createSearchCommunitiesViewModel(
@@ -28,7 +31,7 @@ fun createJoinedCommunitiesViewModel() = viewModel(keys = listOf("joined-communi
 @Composable
 fun createTargetUserJoinedCommunitiesViewModel(
     target: PrimaryKey,
-    word: String
+    word: String = ""
 ) = viewModel(keys = listOf("communities", target, word)) {
     CommunitiesViewModel(JoinStatusSearch.JOINED, word, target, it)
 }
@@ -225,4 +228,15 @@ fun createWorldViewModel() = viewModel(keys = listOf("world")) {
 @Composable
 fun createReactionsViewModel(objectId: PrimaryKey) = viewModel(keys = listOf("reactions", objectId)) {
     ReactionsViewModel(objectId, it)
+}
+
+@Composable
+fun createUserTitlesViewModel(
+    uid: PrimaryKey,
+    searchType: TitleSearchType,
+    status: TitleStatus? = null,
+    type: TitleType? = null,
+    scopeId: PrimaryKey? = null
+) = viewModel(keys = listOf("user-titles", uid)) {
+    TitlesViewModel(it, uid, searchType, status, type, scopeId)
 }

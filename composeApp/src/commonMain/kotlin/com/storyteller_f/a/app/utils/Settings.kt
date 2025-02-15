@@ -18,8 +18,9 @@ fun restoreFromStorage() {
     val (list, _, current) = sessionFactory.savedSession()
     if (current != null && list.contains(current)) {
         val session = sessionFactory.buildSession(current)
-        if (session != null)
+        if (session != null) {
             LoginViewModel.updateState(ClientSession.SignUpSuccess(session))
+        }
     }
 }
 

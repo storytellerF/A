@@ -14,13 +14,13 @@ class MediaTest {
                     client.upload(
                         "hello".toByteArray(),
                         "hello.txt",
-                        it.data4,
+                        it.uid,
                         ObjectType.USER,
                         ContentType.defaultForFileExtension("txt")
                     ).getOrThrow()
-                assertEquals("${it.data4}/hello.txt", response.data.first().item.name)
+                assertEquals("${it.uid}/hello.txt", response.data.first().item.name)
 
-                assertEquals(1, client.getMediaList(it.data4, ObjectType.USER).getOrThrow().data.size)
+                assertListSize(1, client.getMediaList(it.uid, ObjectType.USER))
             }
         }
     }

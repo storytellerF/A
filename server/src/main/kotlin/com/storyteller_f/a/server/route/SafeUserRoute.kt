@@ -7,7 +7,8 @@ import com.storyteller_f.a.server.auth.omitPrincipal
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
-import com.storyteller_f.a.server.service.getTopics
+import com.storyteller_f.a.server.service.getTopLevelTopicsInObject
+import com.storyteller_f.a.server.service.getUserTitles
 import com.storyteller_f.a.server.service.updateUser
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -42,7 +43,17 @@ fun Route.bindSafeUserRoute(backend: Backend, reader: DatabaseReader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                getTopics(it.parent.id, ObjectType.USER, id, backend, p, n, s, it.fillHasCommented)
+                getTopLevelTopicsInObject(it.parent.id, ObjectType.USER, id, backend, p, n, s, it.fillHasCommented)
+            }
+        }
+    }
+
+    get<RouteUsers.Id.Titles> { r ->
+        usePrincipalOrNull(reader) {
+            pagination(PrimaryKey::class, {
+                it.id.toString()
+            }) { p, n, s ->
+                getUserTitles(backend, r.parent.id, r.searchType, r.type, r.scopeId, n, s)
             }
         }
     }

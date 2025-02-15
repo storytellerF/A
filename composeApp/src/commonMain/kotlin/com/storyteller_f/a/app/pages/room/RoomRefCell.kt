@@ -17,23 +17,23 @@ import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.RefCellStateView
 import com.storyteller_f.a.app.model.RoomViewModel
 import com.storyteller_f.a.app.model.createRoomViewModel
+import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
-fun RoomRefCell(roomId: PrimaryKey) {
+fun RoomRefCell(roomId: PrimaryKey, onClick: ((RoomInfo) -> Unit)? = null) {
     val viewModel = createRoomViewModel(roomId)
-    RoomRefCellInternal(viewModel)
+    RoomRefCellInternal(viewModel, onClick)
 }
 
 @Composable
-fun RoomRefCell(roomAid: String) {
+fun RoomRefCell(roomAid: String, onClick: ((RoomInfo) -> Unit)? = null) {
     val viewModel = createRoomViewModel(roomAid)
-
-    RoomRefCellInternal(viewModel)
+    RoomRefCellInternal(viewModel, onClick)
 }
 
 @Composable
-private fun RoomRefCellInternal(viewModel: RoomViewModel) {
+private fun RoomRefCellInternal(viewModel: RoomViewModel, onClick: ((RoomInfo) -> Unit)? = null) {
     val roomInfo by viewModel.handler.data.collectAsState()
     val appNav = LocalAppNav.current
     val shape = RoundedCornerShape(10.dp)
@@ -51,6 +51,6 @@ private fun RoomRefCellInternal(viewModel: RoomViewModel) {
             }
             .padding(10.dp)
     ) {
-        RoomCell(it, true)
+        RoomCell(it, true, onClick)
     }
 }

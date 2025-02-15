@@ -1,6 +1,4 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
-import java.io.FileInputStream
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinJvm)
@@ -33,6 +31,7 @@ dependencies {
     implementation(libs.lucene.analysis.common)
     implementation(libs.tika.core)
     implementation(libs.kim)
+    runtimeOnly(libs.vavi.image.avif)
 
     implementation(libs.lucene.backward.codecs)
     testImplementation(libs.elasticsearch)
@@ -49,24 +48,11 @@ sourceSets {
     main {
         resources {
             srcDirs(
-//                layout.buildDirectory.dir("copied/resources"),
-//                layout.buildDirectory.dir("copied-ca/resources"),
                 layout.buildDirectory.dir("merged/services")
             )
         }
     }
 }
-
-
-//val copyTask = tasks.register("copyEnv", Copy::class) {
-//    group = "copy"
-//    from("../${flavor}.env")
-//    enabled = File(rootDir, "${flavor}.env").exists()
-//    into(layout.buildDirectory.dir("copied/resources"))
-//    rename {
-//        ".env"
-//    }
-//}
 
 val mergeServiceFiles = tasks.register("mergeServiceFiles") {
     group = "build"
@@ -104,7 +90,6 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
     }
 }
 
-//tasks.processResources.dependsOn(copyTask)
 tasks.processResources.dependsOn(mergeServiceFiles)
 
 val isProd = project.findProperty("server.prod") == true

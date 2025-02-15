@@ -5,6 +5,7 @@ import android.security.keystore.KeyProtection
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
+import com.storyteller_f.a.client_lib.LoginUser
 import com.storyteller_f.a.client_lib.LoginUserSession
 import com.storyteller_f.crypto_jvm.CryptoJvm
 import com.storyteller_f.shared.calcAddress
@@ -20,15 +21,17 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 actual fun buildLoginUserSessionFactory(): LoginUserSessionManager {
-    val keyStore = KeyStore.getInstance("AndroidKeyStore")
-    keyStore.load(null)
     if (runCatching {
             Cipher.getInstance("ECIES", "AndroidKeyStore")
         }.isSuccess && runCatching {
             Signature.getInstance("SHA256withECDSA")
         }.isSuccess) {
-
-        return AndroidKeyStoreLoginUserSessionManager()
+        try {
+            val keyStore = KeyStore.getInstance("AndroidKeyStore")
+            keyStore.load(null)
+            return AndroidKeyStoreLoginUserSessionManager()
+        } catch (_: Exception) {
+        }
     }
     return DefaultLoginUserSessionManager()
 }
@@ -84,7 +87,7 @@ class AndroidKeyStoreLoginUserSession(val alias: String) : LoginUserSession {
 
         // 初始化 AES 解密
         val aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "AndroidKeyStore")
-        val iv = ByteArray(aesCipher.blockSize)  // 初始向量（IV）
+        val iv = ByteArray(aesCipher.blockSize) // 初始向量（IV）
         val ivSpec = IvParameterSpec(iv)
         aesCipher.init(Cipher.DECRYPT_MODE, aesKey, ivSpec)
 
@@ -105,7 +108,6 @@ class AndroidKeyStoreLoginUserSession(val alias: String) : LoginUserSession {
         println("public $derPublicKeyStr")
         return calcAddress(derPublicKeyStr)
     }
-
 }
 
 class AndroidKeyStoreLoginUserSessionManager : LoginUserSessionManager {
@@ -174,5 +176,4 @@ class AndroidKeyStoreLoginUserSessionManager : LoginUserSessionManager {
         keyStore.load(null)
         keyStore.deleteEntry(session)
     }
-
 }

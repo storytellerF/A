@@ -1,7 +1,7 @@
 package jvm_based
 
-import com.storyteller_f.a.app.utils.LoginUser
 import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
+import com.storyteller_f.a.client_lib.LoginUser
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.encrypt
 import com.storyteller_f.shared.encryptAesKey
@@ -10,11 +10,13 @@ import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.test.assertEquals
+import com.storyteller_f.crypto_jvm.addProviderForJvm
 import kotlin.test.assertTrue
 
 class LoginUserSessionTest : UsingContextTest() {
     @Test
     fun testSession() = runTest {
+        addProviderForJvm()
         val sessionFactory = buildLoginUserSessionFactory()
         assertEquals(0, sessionFactory.savedSession().list.size)
         val privateKey = generateKeyPair()

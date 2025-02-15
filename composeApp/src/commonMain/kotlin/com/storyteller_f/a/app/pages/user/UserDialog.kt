@@ -7,17 +7,20 @@ import a.composeapp.generated.resources.sign_out_prompt
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.UserScreen
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.toRoute
 import com.storyteller_f.a.app.utils.clearStorage
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.getUserInfo
@@ -30,8 +33,9 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserDialogInternal(userInfo: UserInfo, dismiss: () -> Unit = {}) {
+fun UserDialogInternal(userInfo: UserInfo, clickCreate: () -> Unit, dismiss: () -> Unit = {}) {
     val controller = remember {
         CustomAlertDialogController()
     }
@@ -39,14 +43,24 @@ fun UserDialogInternal(userInfo: UserInfo, dismiss: () -> Unit = {}) {
     val client = LocalClient.current
     val my by LoginViewModel.user.collectAsState()
     DialogContainer {
-        UserCell(userInfo, false) {
+        val clickable = !appNav.hasRoute(UserScreen::class) || appNav.toRoute<UserScreen>()?.uid != userInfo.id
+        UserCell(
+            userInfo,
+            false,
+            couldShowDialog = false,
+            clickable = clickable
+        ) {
             dismiss()
-            appNav.gotoUser(it)
+            appNav.gotoUser(it.id)
         }
         Column {
             if (my?.id == userInfo.id) {
                 LaunchedEffect(null) {
                     refreshMyInfo(my, client)
+                }
+                ButtonNav(Icons.Default.Add, "Create") {
+                    dismiss()
+                    clickCreate()
                 }
                 val title = stringResource(Res.string.sign_out_prompt)
                 ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings)) {
@@ -97,13 +111,14 @@ private fun refreshMyInfo(my: UserInfo?, client: HttpClient) {
 fun UserDialog(
     userInfo: UserInfo?,
     showDialog: Boolean,
+    clickCreate: () -> Unit,
     dismiss: () -> Unit
 ) {
     if (userInfo != null && showDialog) {
         BasicAlertDialog({
             dismiss()
         }) {
-            UserDialogInternal(userInfo, dismiss)
+            UserDialogInternal(userInfo, clickCreate, dismiss)
         }
     }
 }

@@ -14,7 +14,7 @@ class UserTest {
     @Test
     fun `test get user`() = test { client, _ ->
         attachSession(client) {
-            val uid = it.data4
+            val uid = it.uid
             assertNotNull(uid)
             val aid = client.getUserInfo(uid).getOrThrow().aid
             assertNull(aid)
@@ -42,7 +42,7 @@ class UserTest {
         val session = attachSession(client) {
         }
         loginSession(client, session) {
-            assertEquals(session.data4, it.data4)
+            assertEquals(session.id, it.uid)
         }
     }
 }

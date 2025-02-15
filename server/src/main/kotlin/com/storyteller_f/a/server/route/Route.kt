@@ -9,8 +9,10 @@ import com.storyteller_f.a.server.webSocketContent
 import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.shared.model.MediaResponse
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.TitleType
 import io.ktor.http.*
 import io.ktor.resources.*
 import io.ktor.server.application.*
@@ -122,6 +124,15 @@ class RouteUsers(val aid: String? = null) {
     class Id(@Suppress("unused") val parent: RouteUsers = RouteUsers(), val id: PrimaryKey) {
         @Resource("topics")
         class Topics(val parent: Id, val fillHasCommented: Boolean? = null)
+
+        @Resource("titles")
+        class Titles(
+            val parent: Id,
+            val searchType: TitleSearchType,
+            val type: TitleType? = null,
+            val scopeId: PrimaryKey? = null,
+            val status: PrimaryKey? = null
+        )
     }
 
     @Resource("update")
@@ -146,6 +157,9 @@ class RouteAccounts {
     class GetData(@Suppress("unused") val parent: RouteAccounts)
 }
 
+@Resource("/titles")
+class RouteTitles
+
 fun Application.commonRoute(backend: Backend, reader: DatabaseReader) {
     routing {
         authenticate {
@@ -158,6 +172,7 @@ fun Application.commonRoute(backend: Backend, reader: DatabaseReader) {
             }
             bindProtectedAccountRoute(reader)
             bindProtectedSafeMediaRoute(backend, reader)
+            bindProtectedTitleRoute(backend, reader)
         }
         authenticate(optional = true) {
             bindSafeRoomRoute(backend, reader)

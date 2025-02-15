@@ -1,13 +1,18 @@
 package com.storyteller_f.tables
 
+import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
+import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.insert
 
 object Communities : BaseTable() {
     val name = communityName()
@@ -17,46 +22,31 @@ object Communities : BaseTable() {
 }
 
 class Community(
+    id: PrimaryKey,
+    createdTime: LocalDateTime,
     val aid: String,
     val name: String,
-    val icon: String? = null,
     val owner: PrimaryKey,
-    val poster: String? = null,
-    id: PrimaryKey,
-    createdTime: LocalDateTime
+    val icon: String? = null,
+    val poster: String? = null
 ) :
     BaseObj(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): Community {
             return Community(
+                row[Communities.id],
+                row[Communities.createdTime],
                 row[Aids.value],
                 row[Communities.name],
-                row[Communities.icon],
                 row[Communities.owner],
-                row[Communities.poster],
-                row[Communities.id],
-                row[Communities.createdTime]
+                row[Communities.icon],
+                row[Communities.poster]
             )
-        }
-
-        fun findById(id: PrimaryKey) = Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-            .select(Communities.fields + Aids.value)
-            .where {
-                Communities.id eq id
-            }
-
-        fun new(community: Community): Boolean {
-            return Communities.insert {
-                it[id] = community.id
-                it[name] = community.name
-                it[owner] = community.owner
-                it[createdTime] = community.createdTime
-            }.insertedCount > 0
         }
     }
 }
 
-fun findCommunityByAId(aid: String): Query {
+fun findCommunityByAid(aid: String): Query {
     return Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
         Aids.value eq aid
     }.limit(1)
@@ -78,16 +68,20 @@ fun Community.toCommunityIfo(
 suspend fun DatabaseFactory.checkCommunityExists(parentId: PrimaryKey) = first({
     it[Communities.id]
 }) {
-    Community.findById(parentId)
+    Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+        .select(Communities.fields + Aids.value)
+        .where {
+            Communities.id eq parentId
+        }
 }
 
 data class CommunityRawResult(val communityInfo: CommunityInfo, val icon: String?, val poster: String?)
 
 suspend fun DatabaseFactory.getCommonCommunity(
-    fillJoinInfo: Boolean?,
-    communityId: PrimaryKey?,
-    communityAid: String?,
-    id: PrimaryKey?
+    communityId: PrimaryKey? = null,
+    communityAid: String? = null,
+    fillJoinInfo: Boolean? = null,
+    id: PrimaryKey? = null
 ): Result<CommunityRawResult?> = first({
     CommunityRawResult(first.toCommunityIfo(second), first.icon, first.poster)
 }, {
@@ -176,7 +170,7 @@ fun getSearchCommunityQuery(
     }
     if (!(word.isNullOrBlank())) {
         query.andWhere {
-            Communities.name like "%$word%"
+            Communities.name like "$word%"
         }
     }
     return query
@@ -214,15 +208,65 @@ suspend fun DatabaseFactory.commonPaginationCommunityList(
     }
 }
 
-suspend fun DatabaseFactory.doCreateCommunity(community: Community) = dbQuery {
-    Community.new(community) && Aids.insert {
+suspend fun DatabaseFactory.createCommunity(community: Community) = dbQuery {
+    addCommunityJoin(community.owner, community.id, community.createdTime).getOrThrow()
+    check(Communities.insert {
+        it[id] = community.id
+        it[name] = community.name
+        it[owner] = community.owner
+        it[createdTime] = community.createdTime
+    }.insertedCount > 0) {
+        "insert community failed"
+    }
+    check(Aids.insert {
         it[value] = community.aid
         it[objectId] = community.id
         it[objectType] = ObjectType.COMMUNITY
-    }.insertedCount > 0
+    }.insertedCount > 0) {
+        "insert aid failed"
+    }
+    createCommunityRooms(community.id, community.owner, community.aid)
 }
 
-suspend fun DatabaseFactory.getCommunityByIds(
+suspend fun createCommunityRooms(
+    id: PrimaryKey,
+    ownerUid: PrimaryKey,
+    communityAid: String
+) {
+    val defaultRoomList = listOf(
+        "${communityAid}_general" to "General",
+        "${communityAid}_lobby" to "Lobby",
+        "${communityAid}_support" to "Support"
+    ).map { pair ->
+        Triple(pair.first, pair.second, SnowflakeFactory.nextId())
+    }
+    check(Rooms.batchInsert(defaultRoomList) { (_, name, roomId) ->
+        this[Rooms.id] = roomId
+        this[Rooms.name] = name
+        this[Rooms.communityId] = id
+        this[Rooms.creator] = ownerUid
+        this[Rooms.createdTime] = now()
+    }.size == defaultRoomList.size) {
+        "insert room failed"
+    }
+    check(Aids.batchInsert(defaultRoomList) { (roomAid, _, roomId) ->
+        this[Aids.value] = roomAid.take(AID_LENGTH)
+        this[Aids.objectId] = roomId
+        this[Aids.objectType] = ObjectType.ROOM
+    }.size == defaultRoomList.size) {
+        "insert room aid failed"
+    }
+    check(MemberJoins.batchInsert(defaultRoomList) { (_, _, rId) ->
+        this[MemberJoins.uid] = ownerUid
+        this[MemberJoins.objectId] = rId
+        this[MemberJoins.joinTime] = now()
+        this[MemberJoins.objectType] = ObjectType.COMMUNITY
+    }.size == defaultRoomList.size) {
+        "join room failed"
+    }
+}
+
+suspend fun DatabaseFactory.getJoinedCommunityByIds(
     uid: PrimaryKey,
     communityIds: List<PrimaryKey>
 ) = mapQuery({
@@ -234,4 +278,29 @@ suspend fun DatabaseFactory.getCommunityByIds(
         .where {
             Communities.id.inList(communityIds)
         }
+}
+
+suspend fun DatabaseFactory.getCommunityByIds(idList: List<PrimaryKey>): Result<List<CommunityRawResult>> {
+    return mapQuery({
+        CommunityRawResult(toCommunityIfo(null), icon, poster)
+    }, Community::wrapRow) {
+        Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
+            Communities.id inList idList
+        }
+    }
+}
+
+fun processCommunityList(
+    backend: Backend,
+    list: List<CommunityRawResult>
+): Result<List<CommunityInfo>> {
+    return backend.mediaService.get(AMEDIA_BUCKET, list.flatMap { (_, icon, poster) ->
+        listOf(icon, poster)
+    }).map { icons ->
+        list.mapIndexed { i, communityPair ->
+            val first = icons[i * 2]
+            val second = icons[i * 2 + 1]
+            communityPair.communityInfo.copy(icon = first, poster = second)
+        }
+    }
 }

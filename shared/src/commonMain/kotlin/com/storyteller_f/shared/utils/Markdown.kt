@@ -132,7 +132,9 @@ fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
                     if (lang == "object") {
                         val content = readCodeFence(node, markdownText)
                         val obj = Json.decodeFromString<MarkdownObject>(content)
-                        list.add(obj.name)
+                        if (obj.name.isNotBlank() && obj.url.isBlank()) {
+                            list.add(obj.name)
+                        }
                     }
                 }
             }

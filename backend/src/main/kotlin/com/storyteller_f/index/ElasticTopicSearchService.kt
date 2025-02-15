@@ -119,12 +119,13 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     override suspend fun searchDocument(
         size: Int,
         word: List<String>?,
+        preTopicId: PrimaryKey?,
         nextTopicId: PrimaryKey?,
         author: PrimaryKey?,
         root: Pair<PrimaryKey?, ObjectType>?,
         parent: Pair<PrimaryKey?, ObjectType>?
     ): Result<PaginationResult<TopicDocument>> {
-        val boolQuery = createTopicSearchQuery(word, root, parent, author, nextTopicId)
+        val boolQuery = createTopicSearchQuery(word, root, parent, author, preTopicId, nextTopicId)
 
         // 构建排序条件：按 ID 升序排序
         val request = SearchRequest.of { s ->
@@ -132,7 +133,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 .query(boolQuery)
                 .sort { sort ->
                     sort.field { f ->
-                        f.field("id").order(SortOrder.Asc)
+                        f.field("id").order(if (preTopicId == null) SortOrder.Asc else SortOrder.Desc)
                     }
                 }.trackScores(true)
         }
@@ -154,6 +155,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
         root: Pair<PrimaryKey?, ObjectType>?,
         parent: Pair<PrimaryKey?, ObjectType>?,
         author: PrimaryKey?,
+        preTopicId: PrimaryKey?,
         nextTopicId: PrimaryKey?
     ): Query {
         val queryList = buildList {
@@ -179,11 +181,19 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                     t.field("author").value(it)
                 }._toQuery())
             }
-            nextTopicId?.let {
+            nextTopicId?.let { n ->
                 add(RangeQuery.of { r ->
                     r.number {
                         it.field("id")
-                            .lt(nextTopicId.toDouble())
+                            .lt(n.toDouble())
+                    }
+                }._toQuery())
+            }
+            preTopicId?.let { p ->
+                add(RangeQuery.of { r ->
+                    r.number {
+                        it.field("id")
+                            .lt(p.toDouble())
                     }
                 }._toQuery())
             }
@@ -244,10 +254,11 @@ private suspend fun <T> useElasticClient(
     block: suspend ElasticsearchAsyncClient.() -> T
 ): Result<T> {
     val point = Exception()
-    val sslContext = if (elasticConnection.certFile.isNotBlank()) {
+    val certFile = elasticConnection.certFile
+    val sslContext = if (certFile.isNotBlank()) {
         val crtStream = withContext(Dispatchers.IO) {
-            Napier.i(message = "cert path ${File(elasticConnection.certFile).canonicalPath}")
-            FileInputStream(elasticConnection.certFile)
+            Napier.i(message = "cert path ${File(certFile).canonicalPath}")
+            FileInputStream(certFile)
         }
         TransportUtils.sslContextFromHttpCaCrt(crtStream)
     } else {

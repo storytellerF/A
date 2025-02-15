@@ -7,6 +7,7 @@ data class PresetCommunity(
     val icon: String? = null,
     val name: String,
     val id: String,
+    val admin: String? = null,
     val users: List<String>? = null,
     val tag: List<String>? = null,
 )

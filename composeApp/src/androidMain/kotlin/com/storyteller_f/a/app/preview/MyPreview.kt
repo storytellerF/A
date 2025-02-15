@@ -27,5 +27,7 @@ private class UserInfoPreviewProvider : PreviewParameterProvider<UserInfo> {
 @Preview
 @Composable
 private fun PreviewMyPage(@PreviewParameter(UserInfoPreviewProvider::class) userInfo: UserInfo) {
-    UserDialogInternal(userInfo = userInfo)
+    UserDialogInternal(userInfo = userInfo, {
+    }) {
+    }
 }

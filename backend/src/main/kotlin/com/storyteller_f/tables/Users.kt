@@ -42,10 +42,6 @@ class User(
             )
         }
 
-        fun findById(it: PrimaryKey) = find {
-            Users.id eq it
-        }
-
         fun find(function: SqlExpressionBuilder.() -> Op<Boolean>): SizedIterable<ResultRow> {
             return Users.selectAll().where(function)
         }
@@ -160,7 +156,7 @@ private fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, wo
             join.select(Users.fields + MemberJoins.joinTime + Aids.value)
         }
     } else {
-        Users.join(Aids, JoinType.LEFT, Rooms.id, Aids.objectId).select(Users.fields + Aids.value)
+        Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).select(Users.fields + Aids.value)
     }
 
     if (!(word.isNullOrBlank())) {
@@ -180,13 +176,7 @@ suspend fun DatabaseFactory.searchMembers(
     word: String?
 ): Result<PaginationResult<UserInfo>> {
     return commonPaginationMemberList(objectId, prePageToken, nextPageToken, size, word).mapResult { (pairs, count) ->
-        backend.mediaService.get(AMEDIA_BUCKET, pairs.map {
-            it.second
-        }).map { value ->
-            PaginationResult(pairs.mapIndexed { index, pair ->
-                pair.first.copy(avatar = value[index])
-            }, count)
-        }
+        processUserList(backend, pairs, count)
     }
 }
 
@@ -206,18 +196,22 @@ suspend fun DatabaseFactory.createUser(
     name: String,
     newId: PrimaryKey,
     pk: String
-): Result<Pair<UserInfo, Nothing?>> = query({
-    toUserInfo() to null
-}) {
-    val user = User(null, pk, ad, null, name, newId, now())
-    Users.insert {
-        it[id] = user.id
-        it[publicKey] = user.publicKey
-        it[address] = user.address
-        it[nickname] = user.nickname
-        it[createdTime] = user.createdTime
+): Result<Pair<UserInfo, Nothing?>> {
+    return query({
+        this to null
+    }) {
+        val user = User(null, pk, ad, null, name, newId, now())
+        check(Users.insert {
+            it[id] = user.id
+            it[publicKey] = user.publicKey
+            it[address] = user.address
+            it[nickname] = user.nickname
+            it[createdTime] = user.createdTime
+        }.insertedCount > 0) {
+            "insert user failed"
+        }
+        user.toUserInfo()
     }
-    user
 }
 
 suspend fun DatabaseFactory.isUserNotExists(pk: String): Result<Boolean> = isEmpty {
@@ -265,7 +259,9 @@ suspend fun DatabaseFactory.updateUser(
 suspend fun DatabaseFactory.checkUserExists(id: Long) = first({
     id
 }, User::wrapRow) {
-    User.findById(id)
+    User.Companion.find {
+        Users.id eq id
+    }
 }
 
 suspend fun DatabaseFactory.getUserAuthDataByAid(predicate: SqlExpressionBuilder.() -> Op<Boolean>) =
@@ -295,4 +291,27 @@ suspend fun DatabaseFactory.getUsersByIds(ids: List<PrimaryKey>, backend: Backen
         }
 }.mapResult {
     fillUserMedia(it, backend)
+}
+
+suspend fun DatabaseFactory.getUsersByAids(ids: List<String>) = mapQuery({
+    toUserInfo() to icon
+}, User::wrapRow) {
+    Users
+        .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+        .select(Users.fields + Aids.value)
+        .where {
+            Aids.value inList ids
+        }
+}
+
+private fun processUserList(
+    backend: Backend,
+    pairs: List<Pair<UserInfo, String?>>,
+    count: Long
+): Result<PaginationResult<UserInfo>> = backend.mediaService.get(AMEDIA_BUCKET, pairs.map {
+    it.second
+}).map { value ->
+    PaginationResult(pairs.mapIndexed { index, pair ->
+        pair.first.copy(avatar = value[index])
+    }, count)
 }

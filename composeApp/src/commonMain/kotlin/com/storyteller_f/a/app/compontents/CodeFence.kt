@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ca.gosyer.appdirs.AppDirs
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
@@ -268,8 +267,9 @@ fun generateLatexImage(
             true to output
         } else {
             output.parent?.let {
-                if (!SystemFileSystem.exists(it))
+                if (!SystemFileSystem.exists(it)) {
                     SystemFileSystem.createDirectories(it)
+                }
             }
             SystemFileSystem.sink(output).buffered().use {
                 buildTexPainter(tex, backgroundColor, textColor, size, it.asOutputStream()) to output

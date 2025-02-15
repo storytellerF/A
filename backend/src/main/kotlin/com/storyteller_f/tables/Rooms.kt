@@ -18,7 +18,6 @@ import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.statements.InsertStatement
 
 object Rooms : BaseTable() {
     val name = roomName()
@@ -28,24 +27,24 @@ object Rooms : BaseTable() {
 }
 
 class Room(
+    id: PrimaryKey,
+    createdTime: LocalDateTime,
     val aid: String,
     val name: String,
-    val icon: String? = null,
     val creator: PrimaryKey,
-    val communityId: PrimaryKey? = null,
-    id: PrimaryKey,
-    createdTime: LocalDateTime
+    val icon: String? = null,
+    val communityId: PrimaryKey? = null
 ) : BaseObj(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): Room {
             return Room(
+                row[Rooms.id],
+                row[Rooms.createdTime],
                 row[Aids.value],
                 row[Rooms.name],
-                row[Rooms.icon],
                 row[Rooms.creator],
-                row[Rooms.communityId],
-                row[Rooms.id],
-                row[Rooms.createdTime]
+                row[Rooms.icon],
+                row[Rooms.communityId]
             )
         }
 
@@ -58,17 +57,6 @@ class Room(
             .select(Rooms.fields + Aids.value).where {
                 Aids.value eq aid
             }
-
-        fun new(room: Room): InsertStatement<Number> {
-            return Rooms.insert { statement ->
-                statement[id] = room.id
-                statement[createdTime] = room.createdTime
-                statement[name] = room.name
-                statement[icon] = room.icon
-                statement[creator] = room.creator
-                statement[communityId] = room.communityId
-            }
-        }
     }
 }
 
@@ -86,15 +74,14 @@ fun mapRoomInfo(it: ResultRow): Pair<RoomInfo, String?> {
     return room.toRoomInfo(joinedTime) to room.icon
 }
 
-private fun Room.toRoomInfo(joinedTime: LocalDateTime?) = RoomInfo(
+fun Room.toRoomInfo(joinedTime: LocalDateTime?) = RoomInfo(
     id,
+    createdTime,
     name,
     aid,
     creator,
-    null,
-    createdTime,
-    joinedTime,
-    communityId
+    joinedTime = joinedTime,
+    communityId = communityId
 )
 
 suspend fun commonPaginationRoomList(
@@ -248,9 +235,9 @@ fun buildRoomPubKeyQuery(roomId: PrimaryKey, getCount: Boolean): Query {
 
 suspend fun DatabaseFactory.getRoomSource(
     roomId: PrimaryKey?,
-    roomAid: String?,
-    fillJoinInfo: Boolean?,
-    uid: PrimaryKey?
+    roomAid: String? = null,
+    fillJoinInfo: Boolean? = null,
+    uid: PrimaryKey? = null,
 ): Result<Pair<RoomInfo, String?>?> = first(::mapRoomInfo) {
     val baseOp = Op.build {
         if (roomId != null) {
@@ -307,7 +294,7 @@ suspend fun searchRooms(
     }
 }
 
-private fun roomsResponse(list: List<Pair<RoomInfo, String?>>, backend: Backend): Result<List<RoomInfo>> {
+fun roomsResponse(list: List<Pair<RoomInfo, String?>>, backend: Backend): Result<List<RoomInfo>> {
     return backend.mediaService.get(AMEDIA_BUCKET, list.map {
         it.second
     }).map { icons ->
@@ -317,10 +304,39 @@ private fun roomsResponse(list: List<Pair<RoomInfo, String?>>, backend: Backend)
     }
 }
 
-suspend fun DatabaseFactory.createRoom(room4: Room): Result<Boolean> = dbQuery {
-    Room.new(room4).insertedCount > 0 && Aids.insert {
-        it[value] = room4.aid
-        it[objectId] = room4.id
+suspend fun DatabaseFactory.createRoom(room: Room): Result<Boolean> = dbQuery {
+    addRoomJoin(room.id, room.creator, room.createdTime)
+    Rooms.insert { statement ->
+        statement[id] = room.id
+        statement[createdTime] = room.createdTime
+        statement[name] = room.name
+        statement[icon] = room.icon
+        statement[creator] = room.creator
+        statement[communityId] = room.communityId
+    }.insertedCount > 0 && Aids.insert {
+        it[value] = room.aid
+        it[objectId] = room.id
         it[objectType] = ObjectType.ROOM
     }.insertedCount > 0
+}
+
+suspend fun DatabaseFactory.getRoomByIds(ids: List<PrimaryKey>): Result<List<Pair<RoomInfo, String?>>> {
+    return mapQuery({
+        toRoomInfo(null) to icon
+    }, Room::wrapRow) {
+        Rooms
+            .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+            .select(Rooms.fields + Aids.value).where {
+                Rooms.id inList ids
+            }
+    }
+}
+
+fun processRoomList(
+    backend: Backend,
+    iconName: String?,
+    info: RoomInfo
+): Result<RoomInfo> = backend.mediaService.get(AMEDIA_BUCKET, listOf(iconName)).map { value ->
+    val icon = value.firstOrNull()
+    info.copy(icon = icon)
 }

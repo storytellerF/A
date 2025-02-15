@@ -23,8 +23,8 @@ fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
         usePrincipalOrNull(reader) { id ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
-            }) { _, n, s ->
-                searchPublicTopics(n, s, it, backend, id)
+            }) { p, n, s ->
+                searchPublicTopics(p, n, s, it, backend, id)
             }
         }
     }
@@ -33,8 +33,8 @@ fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
         usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
-            }) { _, nextPageToken, size ->
-                recommendTopics(backend, nextPageToken, size, uid, it.parent.fillHasCommented == true)
+            }) { prePageToken, nextPageToken, size ->
+                recommendTopics(backend, prePageToken, nextPageToken, size, uid, it.parent.fillHasCommented)
             }
         }
     }
@@ -50,7 +50,16 @@ fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                getTopics(it.parent.id, ObjectType.TOPIC, uid, backend, p, n, s, it.parent.parent.fillHasCommented)
+                getTopLevelTopicsInObject(
+                    it.parent.id,
+                    ObjectType.TOPIC,
+                    uid,
+                    backend,
+                    p,
+                    n,
+                    s,
+                    it.parent.parent.fillHasCommented
+                )
             }
         }
     }

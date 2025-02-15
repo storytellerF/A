@@ -31,8 +31,8 @@ fun MyCommunitiesPage() {
 }
 
 @Composable
-fun CommunityList(items: LazyPagingItems<CommunityInfo>) {
-    StateView(items) {
+fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInfo) -> Unit)? = null) {
+    StateView(items, modifier = Modifier.fillMaxSize()) {
         CommunityConstrains(modifier = Modifier.fillMaxHeight()) { count, gridSpan, itemSpan ->
             LazyVerticalGrid(
                 GridCells.Fixed(count),
@@ -55,8 +55,8 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>) {
                 ) { index ->
                     val communityInfo = items[index]
                     when {
-                        communityInfo?.poster != null -> CommunityGrid(communityInfo)
-                        else -> CommunityCell(communityInfo, false)
+                        communityInfo?.poster != null -> CommunityGrid(communityInfo, onClick)
+                        else -> CommunityCell(communityInfo, false, onClick)
                     }
                 }
             }
@@ -75,14 +75,14 @@ fun CommunityConstrains(modifier: Modifier = Modifier, content: @Composable (Int
 }
 
 @Composable
-fun CommunityGrid(communityInfo: CommunityInfo?) {
+fun CommunityGrid(communityInfo: CommunityInfo?, onClick: ((CommunityInfo) -> Unit)? = null) {
     val appNav = LocalAppNav.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(3f / 4)
             .clickable {
-                communityInfo?.let { appNav.gotoCommunity(it.id, false) }
+                communityInfo?.let { onClick?.invoke(it) ?: appNav.gotoCommunity(it.id, false) }
             }
     ) {
         Box(
@@ -97,7 +97,7 @@ fun CommunityGrid(communityInfo: CommunityInfo?) {
             if (communityInfo != null) {
                 val commonDialogController = rememberCommonDialogController()
                 val shown by commonDialogController.show
-                CommunityIcon(communityInfo, 30.dp, shown, commonDialogController::update)
+                CommunityIcon(communityInfo, shown, 30.dp, commonDialogController::update)
                 Text(
                     communityInfo.name,
                     Modifier,
@@ -112,7 +112,8 @@ fun CommunityGrid(communityInfo: CommunityInfo?) {
 @Composable
 fun CommunityCell(
     communityInfo: CommunityInfo?,
-    customBackground: Boolean = false
+    customBackground: Boolean = false,
+    onClick: ((CommunityInfo) -> Unit)? = null
 ) {
     val appNav = LocalAppNav.current
     Row(
@@ -125,7 +126,7 @@ fun CommunityCell(
                     .background(MaterialTheme.colorScheme.secondaryContainer, shape)
                     .clip(shape)
                     .clickable {
-                        communityInfo?.id?.let { appNav.gotoCommunity(it, false) }
+                        communityInfo?.let { onClick?.invoke(it) ?: appNav.gotoCommunity(it.id, false) }
                     }
                     .padding(10.dp)
             }
@@ -134,12 +135,11 @@ fun CommunityCell(
     ) {
         val commonDialogController = rememberCommonDialogController()
         val shown by commonDialogController.show
-        CommunityIcon(communityInfo, 50.dp, shown, commonDialogController::update)
+        CommunityIcon(communityInfo, shown, 50.dp, commonDialogController::update)
         Text(
             communityInfo?.name.orEmpty(),
-            Modifier,
-            MaterialTheme.colorScheme.onSecondaryContainer,
-            MaterialTheme.typography.labelMedium.fontSize
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            style = MaterialTheme.typography.labelSmall
         )
     }
 }

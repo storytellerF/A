@@ -40,6 +40,7 @@ interface TopicSearchService {
     suspend fun searchDocument(
         size: Int,
         word: List<String>? = null,
+        preTopicId: PrimaryKey? = null,
         nextTopicId: PrimaryKey? = null,
         author: PrimaryKey? = null,
         root: Pair<PrimaryKey?, ObjectType>? = null,

@@ -35,7 +35,6 @@ junit = "4.13.2"
 kim = "0.22.1"
 kotlin = "2.1.0"
 kotlin_buildconfig = "5.5.1"
-kotlinMultiplatformAppdirs = "1.2.0"
 kotlinxCli = "0.3.6"
 kotlinxCoroutinesSwing = "1.10.1"
 kotlinxDatetime = "0.6.1"
@@ -131,7 +130,6 @@ jlatexmath-android-font-greek = { module = "ru.noties:jlatexmath-android-font-gr
 jlayer = { module = "com.github.umjammer:jlayer", version.ref = "jlayer" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kim = { module = "com.ashampoo:kim", version.ref = "kim" }
-kotlin-multiplatform-appdirs = { module = "ca.gosyer:kotlin-multiplatform-appdirs", version.ref = "kotlinMultiplatformAppdirs" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kotlinxCli" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesSwing" }

@@ -8,6 +8,8 @@ import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.TitleStatus
+import com.storyteller_f.shared.type.TitleType
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -23,11 +25,13 @@ fun isAlreadyLogin(): Boolean {
 }
 
 inline fun <R> serviceCatching(block: () -> R): Result<R> {
+    val point = Exception()
     return try {
         val value = block()
         Result.success(value)
     } catch (e: Throwable) {
-        Napier.e(e) {
+        point.initCause(e)
+        Napier.e(point) {
             "serviceCatching"
         }
         Result.failure(e)
@@ -285,7 +289,7 @@ suspend fun HttpClient.createNewTopic(
 ) = serviceCatching {
     post("topics") {
         contentType(ContentType.Application.Json)
-        setBody(NewTopic(objectType, objectId, TopicContent.Plain(input)))
+        setBody(NewTopic(objectType, objectId, input))
     }.body<TopicInfo>()
 }
 
@@ -436,13 +440,13 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
     }
     val message: RoomFrame = RoomFrame.Message(
         if (topicId != null) {
-            NewTopic(
+            NewRoomTopic(
                 ObjectType.TOPIC,
                 topicId,
                 content
             )
         } else {
-            NewTopic(
+            NewRoomTopic(
                 ObjectType.ROOM,
                 roomInfo.id,
                 content
@@ -450,4 +454,51 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
         }
     )
     sendSerialized(message)
+}
+
+suspend fun HttpClient.userTitles(
+    uid: PrimaryKey,
+    nextId: PrimaryKey?,
+    size: Int,
+    searchType: TitleSearchType,
+    status: TitleStatus? = null,
+    type: TitleType? = null,
+    scopeId: PrimaryKey? = null
+) = serviceCatching {
+    get("users/$uid/titles") {
+        url {
+            parameters.append("searchType", searchType.name)
+            if (status != null) {
+                parameters.append("status", status.name)
+            }
+            if (type != null) {
+                parameters.append("type", type.name)
+            }
+            if (scopeId != null) {
+                parameters.append("scopeId", scopeId.toString())
+            }
+            appendPagingQueryParams(size, nextId)
+        }
+    }.body<ServerResponse<TitleInfo>>()
+}
+
+suspend fun HttpClient.createTitle(newTitle: NewTitle) = serviceCatching {
+    post("titles") {
+        contentType(ContentType.Application.Json)
+        setBody(newTitle)
+    }.body<TitleInfo>()
+}
+
+suspend fun HttpClient.createCommunity(newCommunity: NewCommunity) = serviceCatching {
+    post("communities") {
+        contentType(ContentType.Application.Json)
+        setBody(newCommunity)
+    }.body<CommunityInfo>()
+}
+
+suspend fun HttpClient.createRoom(newRoom: NewRoom) = serviceCatching {
+    post("rooms") {
+        contentType(ContentType.Application.Json)
+        setBody(newRoom)
+    }.body<RoomInfo>()
 }
