@@ -45,6 +45,12 @@ fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
         }
     }
 
+    get<RouteTopics> {
+        usePrincipalOrNull(reader) { id ->
+            it.aid?.let { aid -> getTopicByAid(aid, id, backend, it.fillHasCommented) } ?: Result.success(null)
+        }
+    }
+
     get<RouteTopics.Id.Topics> {
         usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {

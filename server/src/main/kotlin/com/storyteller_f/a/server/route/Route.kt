@@ -84,7 +84,7 @@ class RouteRooms(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
 }
 
 @Resource("/topics")
-class RouteTopics(val fillHasCommented: Boolean? = null) {
+class RouteTopics(val fillHasCommented: Boolean? = null, val aid: String? = null) {
     @Resource("search")
     class Search(
         @Suppress("unused") val parent: RouteTopics = RouteTopics(),

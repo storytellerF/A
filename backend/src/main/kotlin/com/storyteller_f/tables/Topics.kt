@@ -14,7 +14,9 @@ import com.storyteller_f.tables.Topic.Companion.wrapRow
 import com.storyteller_f.types.PaginationResult
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 
 object Topics : BaseTable() {
@@ -34,7 +36,8 @@ class Topic(
     val parentType: ObjectType,
     val rootId: PrimaryKey,
     val rootType: ObjectType,
-    val lastModifiedTime: LocalDateTime?
+    val lastModifiedTime: LocalDateTime?,
+    val aid: String? = null,
 ) : BaseObj(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): Topic {
@@ -46,7 +49,8 @@ class Topic(
                 row[Topics.parentType],
                 row[Topics.rootId],
                 row[Topics.rootType],
-                row[Topics.lastModifiedTime]
+                row[Topics.lastModifiedTime],
+                row.getOrNull(Aids.value),
             )
         }
 
@@ -97,16 +101,17 @@ fun Topic.toTopicInfo(commentCount: Long = 0, hasComment: Boolean = false, react
         reactionCount = reactionCount,
         hasComment = hasComment,
         isPrivate = false,
-        lastModifiedTime = now(),
-        extension = null
+        lastModifiedTime = lastModifiedTime,
+        extension = null,
+        aid = aid,
     )
 }
 
-suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey, uid: PrimaryKey?): Result<TopicInfo?> {
+suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey?, aid: String?, uid: PrimaryKey?): Result<TopicInfo?> {
     val t2 = Topics.alias("t2")
     val commentCount = t2[Topics.id].countDistinct()
     val reactionComment = Reactions.id.countDistinct()
-    val containExpression = topicAuthorContains(uid, t2)
+    val containExpression = buildTopicAuthorContainsExpression(uid, t2)
 
     val baseSelection = Topics.fields + commentCount + reactionComment
     return first({
@@ -120,6 +125,7 @@ suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey, uid: PrimaryKey?):
         )
     }) {
         Topics.join(t2, JoinType.LEFT, Topics.id, t2[Topics.parentId])
+            .join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
             .join(Reactions, JoinType.LEFT, Topics.id, Reactions.objectId)
             .let { join ->
                 when {
@@ -128,13 +134,18 @@ suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey, uid: PrimaryKey?):
                 }
             }
             .where {
-                Topics.id eq topicId
+                when {
+                    topicId != null ->Topics.id eq topicId
+                    aid != null -> Aids.value eq aid
+                    else -> throw CustomBadRequestException("aid and id is null")
+                }
+
             }
             .groupBy(Topics.id)
     }
 }
 
-private fun topicAuthorContains(
+private fun buildTopicAuthorContainsExpression(
     uid: PrimaryKey?,
     t2: Alias<Topics>
 ): Max<Long, Long>? {
@@ -184,7 +195,7 @@ suspend fun getTopicsByPredicate(
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
     val t2 = Topics.alias("t2")
     val reactionComment = Reactions.id.countDistinct()
-    val containExpression = topicAuthorContains(uid, t2)
+    val containExpression = buildTopicAuthorContainsExpression(uid, t2)
     val commentCountColumn = t2[Topics.id].countDistinct()
     val baseSelection = Topics.fields + commentCountColumn + reactionComment
     return DatabaseFactory.mapQuery({
@@ -198,6 +209,7 @@ suspend fun getTopicsByPredicate(
         )
     }) {
         Topics.join(t2, JoinType.LEFT, Topics.id, t2[Topics.parentId])
+            .join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
             .join(Reactions, JoinType.LEFT, Topics.id, Reactions.objectId)
             .let {
                 when {
@@ -210,17 +222,14 @@ suspend fun getTopicsByPredicate(
 }
 
 // 加密内容不能处理media，需要客户端处理
-suspend fun DatabaseFactory.getEncryptedTopic(
+@OptIn(ExperimentalStdlibApi::class)
+suspend fun DatabaseFactory.getEncryptedTopicContents(
     data: List<TopicInfo>,
     uid: PrimaryKey
 ) = dbQuery {
-    getEncryptedTopicContent(data.map {
+    val topicId = data.map {
         it.id
-    }, uid)
-}
-
-@OptIn(ExperimentalStdlibApi::class)
-fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey): List<TopicContent.Encrypted> {
+    }
     val aesMap = EncryptedTopicKeys.selectAll().where {
         EncryptedTopicKeys.topicId inList topicId and (EncryptedTopicKeys.uid eq uid)
     }.map {
@@ -235,7 +244,7 @@ fun getEncryptedTopicContent(topicId: List<PrimaryKey>, uid: PrimaryKey): List<T
     }.associate {
         it.topicId to it.content.toHexString()
     }
-    return topicId.map {
+    topicId.map {
         val map = aesMap[it] ?: emptyMap()
         val content = contentMap[it].orEmpty()
         TopicContent.Encrypted(content, map)
