@@ -10,12 +10,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.RefCellStateView
+import com.storyteller_f.a.app.compontents.TopicContentField
+import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.model.TopicViewModel
 import com.storyteller_f.a.app.model.createTopicViewModel
 import com.storyteller_f.a.app.model.createUserViewModel
@@ -63,24 +66,19 @@ fun TopicRefCellInternal(viewModel: TopicViewModel) {
 private fun TopicRefCellContent(
     it: TopicInfo,
 ) {
-    val author = it.author
-    val authorViewModel = createUserViewModel(author)
-    val authorInfo by authorViewModel.handler.data.collectAsState()
+    val authorInfo = it.extension?.authorInfo
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        authorInfo?.let {
-            Text("${authorInfo?.nickname} :")
-        }
+        UserIcon(authorInfo)
         val text = (it.content as? TopicContent.Plain)?.plain.toString()
-        val plain by produceState("", text) {
-            value = extractMarkdownHeadline(text)
+        val plain = remember {
+            extractMarkdownHeadline(text)
         }
         Text(
             plain,
             color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 3
+            maxLines = 4
         )
     }
 }

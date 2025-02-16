@@ -32,6 +32,7 @@ data class PresetTopic(
     val parent: Int? = null,
     // 指定父项时需要根据level 的顺序插入
     val level: Int? = null,
+    val aid: String? = null,
 )
 
 @Serializable

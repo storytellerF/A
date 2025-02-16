@@ -24,7 +24,8 @@ data class TopicInfo(
     val hasComment: Boolean,
     val isPrivate: Boolean,
     val lastModifiedTime: LocalDateTime?,
-    val extension: Extension?
+    val extension: Extension?,
+    val aid: String? = null,
 ) : Identifiable {
     companion object {
         val EMPTY = TopicInfo(

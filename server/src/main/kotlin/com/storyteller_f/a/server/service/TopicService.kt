@@ -219,7 +219,7 @@ suspend fun getTopic(
         uid
     ).mapResultNotNull { (hasRead, hasJoined, isPrivate) ->
         if (hasRead) {
-            DatabaseFactory.getTopicInfo(topicId, uid).mapResultNotNull { info ->
+            DatabaseFactory.getTopicInfo(topicId, null, uid).mapResultNotNull { info ->
                 processTopicsContent(isPrivate, backend, listOf(info), uid).map {
                     it.first()
                 }
@@ -230,6 +230,34 @@ suspend fun getTopic(
             Result.failure(ForbiddenException("Permission Denied"))
         }
     }
+}
+
+suspend fun getTopicByAid(
+    aid: String,
+    uid: PrimaryKey?,
+    backend: Backend,
+    fillHasCommented: Boolean?
+): Result<TopicInfo?> {
+    if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
+    return DatabaseFactory.getTopicInfo(null, aid, uid).mapResultNotNull { info ->
+        checkRootReadPermission(
+            ObjectType.TOPIC,
+            info.id,
+            uid
+        ).mapResultNotNull { (hasRead, hasJoined, isPrivate) ->
+            if (hasRead) {
+                processTopicsContent(isPrivate, backend, listOf(info), uid).map {
+                    it.first()
+                }
+            } else {
+                Result.failure(ForbiddenException("Permission Denied"))
+            }.mapNotNull { value ->
+                value.copy(hasJoined = hasJoined)
+            }
+        }
+
+    }
+
 }
 
 suspend fun getTopLevelTopicsInObject(
@@ -273,7 +301,7 @@ private suspend fun processTopicsContent(
 
     uid == null -> Result.failure(ForbiddenException())
 
-    else -> DatabaseFactory.getEncryptedTopic(data, uid).map { topicContents ->
+    else -> DatabaseFactory.getEncryptedTopicContents(data, uid).map { topicContents ->
         data.mapIndexed { index, l ->
             l.copy(content = topicContents[index], isPrivate = true)
         }

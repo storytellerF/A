@@ -191,12 +191,12 @@ class AddPreset : Subcommand("add", "add entry") {
             val parent = addTopic.parent
             if (parent == null || parent == 0 || level == null || level == 0) {
                 addTopic to index
-                Tuple4(addTopic, index, 0, id)
+                InsertTopicTuple(addTopic, index, 0, id)
             } else {
-                Tuple4(addTopic, index, level, id)
+                InsertTopicTuple(addTopic, index, level, id)
             }
         }.groupBy {
-            it.data3
+            it.level
         }
         // 从最顶层开始
         topLevelTopic.keys.sorted().forEach { level ->
@@ -213,8 +213,15 @@ class AddPreset : Subcommand("add", "add entry") {
             }.map {
                 it[Topics.id]
             }
+            Aids.batchInsert(list.filter {
+                !it.topic.aid.isNullOrBlank()
+            }) { (first, _, _, id) ->
+                this[Aids.value] = first.aid!!
+                this[Aids.objectId] = id
+                this[Aids.objectType] = ObjectType.TOPIC
+            }
             subIds.forEachIndexed { index, l ->
-                ids[list[index].data2] = l
+                ids[list[index].originalIndex] = l
             }
         }
         return ids
@@ -391,6 +398,8 @@ class AddPreset : Subcommand("add", "add entry") {
         ).getOrThrow()
     }
 
+    data class InsertTopicTuple(val topic: PresetTopic, val originalIndex: Int, val level: Int, val id: PrimaryKey)
+
     private suspend fun insertCommunityTopics(
         u: List<PresetTopic>,
         userList: Map<String, UserInfo>,
@@ -405,12 +414,12 @@ class AddPreset : Subcommand("add", "add entry") {
             val level = addTopic.level
             val parent = addTopic.parent
             if (parent == null || parent == 0 || level == null || level == 0) {
-                Tuple4(addTopic, index, 0, id)
+                InsertTopicTuple(addTopic, index, 0, id)
             } else {
-                Tuple4(addTopic, index, level, id)
+                InsertTopicTuple(addTopic, index, level, id)
             }
         }.groupBy {
-            it.data3
+            it.level
         }
         // 根据层级， 从最顶层开始
         topLevelTopic.keys.sorted().forEach { level ->
@@ -428,9 +437,16 @@ class AddPreset : Subcommand("add", "add entry") {
             }.map {
                 it[Topics.id]
             }
+            Aids.batchInsert(list.filter {
+                !it.topic.aid.isNullOrBlank()
+            }) { (first, _, _, id) ->
+                this[Aids.value] = first.aid!!
+                this[Aids.objectId] = id
+                this[Aids.objectType] = ObjectType.TOPIC
+            }
             // 添加完成之后，保存对应的topicId，索引是topic 在初始索引的位置
             subIds.forEachIndexed { index, topicId ->
-                ids[list[index].data2] = topicId
+                ids[list[index].originalIndex] = topicId
             }
         }
         return ids

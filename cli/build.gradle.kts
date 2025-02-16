@@ -48,3 +48,10 @@ tasks.withType<Zip> {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
     }
 }
+
+
+tasks.withType<Sync> {
+    filesMatching("vavi-commons-1.1.10.jar") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
+    }
+}
