@@ -61,10 +61,6 @@ fi
 
 echo "prepare build `date`"
 
-./scripts/tool_scripts/save-env.sh
-
-./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" true
-
 # 构建远端
 #echo "build docker image `date`"
 #HOST_TYPE=local ./scripts/build_scripts/build-server-image.sh
