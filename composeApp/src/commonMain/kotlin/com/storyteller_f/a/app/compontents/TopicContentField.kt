@@ -3,9 +3,6 @@ package com.storyteller_f.a.app.compontents
 import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.permission_denied
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,9 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
@@ -37,6 +32,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ashampoo.kim.Kim
 import com.ashampoo.kim.common.convertToPhotoMetadata
+import com.mikepenz.markdown.annotator.AnnotatorSettings
+import com.mikepenz.markdown.annotator.annotatorSettings
+import com.mikepenz.markdown.annotator.appendAutoLink
+import com.mikepenz.markdown.annotator.appendMarkdownLink
 import com.mikepenz.markdown.compose.*
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.extendedspans.ExtendedSpans
@@ -44,7 +43,6 @@ import com.mikepenz.markdown.compose.extendedspans.drawBehind
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.ImageTransformer
-import com.mikepenz.markdown.model.MarkdownAnnotator
 import com.mikepenz.markdown.utils.*
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.shared.model.MediaInfo
@@ -130,20 +128,15 @@ fun CustomMarkdownParagraph(
     style: TextStyle = LocalMarkdownTypography.current.paragraph,
     mediaMap: Map<String, MediaInfo>
 ) {
-    val annotator = LocalMarkdownAnnotator.current
-    val linkTextSpanStyle = LocalMarkdownTypography.current.linkTextSpanStyle
-    val codeSpanStyle = LocalMarkdownTypography.current.codeSpanStyle
     val density = LocalDensity.current
     val inlineContentMap = remember {
         mutableMapOf<String, String>()
     }
+    val annotatorSettings = annotatorSettings()
     val styledText = remember(
         style,
         content,
         node.children,
-        linkTextSpanStyle,
-        codeSpanStyle,
-        annotator,
         inlineContentMap,
     ) {
         buildAnnotatedString {
@@ -151,9 +144,7 @@ fun CustomMarkdownParagraph(
             customBuildMarkdownAnnotatedString(
                 content,
                 node.children,
-                linkTextSpanStyle,
-                codeSpanStyle,
-                annotator,
+                annotatorSettings,
                 density,
                 inlineContentMap
             )
@@ -173,13 +164,11 @@ fun CustomMarkdownParagraph(
 fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
     content: String,
     children: List<ASTNode>,
-    linkTextStyle: SpanStyle,
-    codeStyle: SpanStyle,
-    annotator: MarkdownAnnotator? = null,
+    annotatorSettings: AnnotatorSettings,
     density: Density,
     inlineContentMap: MutableMap<String, String>
 ) {
-    val annotate = annotator?.annotate
+    val annotate = annotatorSettings.annotator?.annotate
     var skipIfNext: Any? = null
     children.forEach { child ->
         if (skipIfNext == null || skipIfNext != child.type) {
@@ -189,9 +178,7 @@ fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
                 processCustomMarkdown(
                     child,
                     content,
-                    linkTextStyle,
-                    codeStyle,
-                    annotator,
+                    annotatorSettings,
                     inlineContentMap,
                     parentType,
                     density
@@ -209,26 +196,22 @@ fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
 private fun AnnotatedString.Builder.processCustomMarkdown(
     child: ASTNode,
     content: String,
-    linkTextStyle: SpanStyle,
-    codeStyle: SpanStyle,
-    annotator: MarkdownAnnotator?,
+    annotatorSettings: AnnotatorSettings,
     inlineContentMap: MutableMap<String, String>,
     parentType: IElementType?,
     density: Density
 ): Any? {
     when (child.type) {
         // Element types
-        MarkdownElementTypes.PARAGRAPH -> buildMarkdownAnnotatedString(
-            content,
-            child,
-            linkTextStyle,
-            codeStyle,
-            annotator
+        MarkdownElementTypes.PARAGRAPH -> customBuildMarkdownAnnotatedString(
+            content = content,
+            node = child,
+            annotatorSettings = annotatorSettings,
+            density,
+            inlineContentMap
         )
 
-        MarkdownElementTypes.IMAGE -> child.findChildOfTypeRecursive(
-            MarkdownElementTypes.LINK_DESTINATION
-        )?.let {
+        MarkdownElementTypes.IMAGE -> child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)?.let {
             val id = "image${child.startOffset}-${child.endOffset}"
             val url = it.getUnescapedTextInNode(content)
             inlineContentMap[id] = url
@@ -237,67 +220,47 @@ private fun AnnotatedString.Builder.processCustomMarkdown(
 
         MarkdownElementTypes.EMPH -> {
             pushStyle(SpanStyle(fontStyle = FontStyle.Italic))
-            buildMarkdownAnnotatedString(content, child, linkTextStyle, codeStyle, annotator)
+            customBuildMarkdownAnnotatedString(content, child, annotatorSettings, density, inlineContentMap)
             pop()
         }
 
         MarkdownElementTypes.STRONG -> {
             pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-            buildMarkdownAnnotatedString(content, child, linkTextStyle, codeStyle, annotator)
+            customBuildMarkdownAnnotatedString(content, child, annotatorSettings, density, inlineContentMap)
             pop()
         }
 
         GFMElementTypes.STRIKETHROUGH -> {
             pushStyle(SpanStyle(textDecoration = TextDecoration.LineThrough))
-            buildMarkdownAnnotatedString(content, child, linkTextStyle, codeStyle, annotator)
+            customBuildMarkdownAnnotatedString(content, child, annotatorSettings, density, inlineContentMap)
             pop()
         }
 
         MarkdownElementTypes.CODE_SPAN -> {
-            pushStyle(codeStyle)
+            pushStyle(annotatorSettings.codeSpanStyle)
             append(' ')
-            buildMarkdownAnnotatedString(
+            customBuildMarkdownAnnotatedString(
                 content,
                 child.children.innerList(),
-                linkTextStyle,
-                codeStyle,
-                annotator
+                annotatorSettings,
+                density,
+                inlineContentMap
             )
             append(' ')
             pop()
         }
 
-        MarkdownElementTypes.AUTOLINK -> appendAutoLink(content, child, linkTextStyle)
-        MarkdownElementTypes.INLINE_LINK -> appendMarkdownLink(
-            content,
-            child,
-            linkTextStyle,
-            codeStyle,
-            annotator
-        )
-
-        MarkdownElementTypes.SHORT_REFERENCE_LINK -> appendMarkdownLink(
-            content,
-            child,
-            linkTextStyle,
-            codeStyle,
-            annotator
-        )
-
-        MarkdownElementTypes.FULL_REFERENCE_LINK -> appendMarkdownLink(
-            content,
-            child,
-            linkTextStyle,
-            codeStyle,
-            annotator
-        )
+        MarkdownElementTypes.AUTOLINK -> appendAutoLink(content, child, annotatorSettings)
+        MarkdownElementTypes.INLINE_LINK -> appendMarkdownLink(content, child, annotatorSettings)
+        MarkdownElementTypes.SHORT_REFERENCE_LINK -> appendMarkdownLink(content, child, annotatorSettings)
+        MarkdownElementTypes.FULL_REFERENCE_LINK -> appendMarkdownLink(content, child, annotatorSettings)
 
         // Token Types
         MarkdownTokenTypes.TEXT -> append(child.getUnescapedTextInNode(content))
         GFMTokenTypes.GFM_AUTOLINK -> if (child.parent == MarkdownElementTypes.LINK_TEXT) {
             append(child.getUnescapedTextInNode(content))
         } else {
-            appendAutoLink(content, child, linkTextStyle)
+            appendAutoLink(content, child, annotatorSettings)
         }
 
         MarkdownTokenTypes.SINGLE_QUOTE -> append('\'')
@@ -311,26 +274,25 @@ private fun AnnotatedString.Builder.processCustomMarkdown(
         MarkdownTokenTypes.COLON -> append(':')
         MarkdownTokenTypes.EXCLAMATION_MARK -> append('!')
         MarkdownTokenTypes.BACKTICK -> append('`')
-        MarkdownTokenTypes.HARD_LINE_BREAK -> append("\n\n")
-        MarkdownTokenTypes.EMPH -> if (parentType != MarkdownElementTypes.EMPH &&
-            parentType != MarkdownElementTypes.STRONG
-        ) {
-            append(
-                '*'
-            )
+        MarkdownTokenTypes.HARD_LINE_BREAK -> {
+            append('\n')
+            return MarkdownTokenTypes.EOL
+        }
+
+        MarkdownTokenTypes.EMPH -> when {
+            parentType != MarkdownElementTypes.EMPH && parentType != MarkdownElementTypes.STRONG -> {
+                append('*')
+            }
         }
 
         MarkdownTokenTypes.EOL -> append('\n')
-        MarkdownTokenTypes.WHITE_SPACE -> if (length > 0) {
-            append(' ')
-        }
-
+        MarkdownTokenTypes.WHITE_SPACE -> if (length > 0) append(' ')
         MarkdownTokenTypes.BLOCK_QUOTE -> {
             return MarkdownTokenTypes.WHITE_SPACE
         }
 
         GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -> {
-            appendMathContent(child, content, codeStyle, density, inlineContentMap)
+            appendMathContent(child, content, density, inlineContentMap)
         }
     }
     return null
@@ -339,15 +301,14 @@ private fun AnnotatedString.Builder.processCustomMarkdown(
 private fun AnnotatedString.Builder.appendMathContent(
     child: ASTNode,
     content: String,
-    codeStyle: SpanStyle,
     density: Density,
     inlineContentMap: MutableMap<String, String>
 ) {
     val tex = readInlineMath(child, content)
-    val size = textUnitToPx(codeStyle.fontSize, density)
+    val size = textUnitToPx(13.sp, density)
     generateLatexImage(
-        if (child.type == GFMElementTypes.INLINE_MATH) codeStyle.background.toArgb() else 0,
-        codeStyle.color.toArgb(),
+        if (child.type == GFMElementTypes.INLINE_MATH) Color.LightGray.toArgb() else 0,
+        Color.Black.toArgb(),
         size,
         tex
     ).getOrNull()?.let { (r, path) ->
@@ -432,54 +393,19 @@ fun CustomMarkdownText(
     inlineContentMap: Map<String, String>,
     mediaMap: Map<String, MediaInfo>
 ) {
-    val uriHandler = LocalUriHandler.current
-    val referenceLinkHandler = LocalReferenceLinkHandler.current
+    val baseColor = LocalMarkdownColors.current.text
     val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
-
-    val hasUrl = content.getStringAnnotations(MARKDOWN_TAG_URL, 0, content.length).any()
-    val textModifier = if (hasUrl) {
-        modifier.pointerInput(Unit) {
-            awaitEachGesture {
-                val pointer = awaitFirstDown()
-                val pos = pointer.position // current position
-
-                val foundReference = layoutResult.value?.let { layoutResult ->
-                    val position = layoutResult.getOffsetForPosition(pos)
-                    content.getStringAnnotations(MARKDOWN_TAG_URL, position, position).reversed().firstOrNull()
-                        ?.let { referenceLinkHandler.find(it.item) }
-                }
-
-                if (foundReference != null) {
-                    pointer.consume() // consume if we clicked on a link
-
-                    val up = waitForUpOrCancellation()
-                    if (up != null) {
-                        up.consume()
-
-                        // wait for finger up to navigate to the link
-                        try {
-                            uriHandler.openUri(foundReference)
-                        } catch (_: Throwable) {
-                            println("Could not open the provided url: $foundReference")
-                        }
-                    }
-                }
-            }
-        }
-    } else {
-        modifier
-    }
 
     val transformer = LocalImageTransformer.current
 
     BoxWithConstraints {
         val width = convertDpToPx(maxWidth)
         val inlineTextContentMap = buildInlineContentMap(inlineContentMap, width, mediaMap, transformer)
-        MarkdownBasicText1(
+        CustomMarkdownBasicText(
             text = content,
-            modifier = textModifier,
+            modifier = modifier,
             style = style,
-            color = LocalMarkdownColors.current.text,
+            color = baseColor,
             inlineContent = inlineTextContentMap,
             onTextLayout = {
                 layoutResult.value = it
@@ -567,7 +493,7 @@ private fun buildInlineContentDimensions(
 }
 
 @Composable
-fun MarkdownBasicText1(
+fun CustomMarkdownBasicText(
     text: AnnotatedString,
     style: TextStyle,
     modifier: Modifier = Modifier,
@@ -618,3 +544,17 @@ fun MarkdownBasicText1(
         color = { overrideColorOrUnspecified }
     )
 }
+
+fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
+    content: String,
+    node: ASTNode,
+    annotatorSettings: AnnotatorSettings,
+    density: Density,
+    inlineContentMap: MutableMap<String, String>
+) = customBuildMarkdownAnnotatedString(
+    content,
+    node.children,
+    annotatorSettings,
+    density,
+    inlineContentMap
+)
