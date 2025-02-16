@@ -1,6 +1,6 @@
 FROM eclipse-temurin:21-alpine AS builder
 
-RUN apk add bash curl unzip libavif-dev
+RUN apk add bash curl unzip
 
 #^1
 ARG IS_PROD
@@ -29,6 +29,8 @@ RUN --mount=type=cache,target=/root/.gradle \
 RUN mkdir -p ./cli/build/decompressed && tar -xf ./cli/build/distributions/cli.tar -C ./cli/build/decompressed
 
 FROM eclipse-temurin:21-alpine
+
+RUN apk add libavif-dev
 
 RUN mkdir /app
 
