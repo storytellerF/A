@@ -302,7 +302,8 @@ buildkonfig {
     objectName = "AppConfig"
     val properties = Properties().apply {
         val file = layout.projectDirectory.file("../${flavorStr}.env").asFile
-        load(FileInputStream(file))
+        if (file.exists())
+            load(FileInputStream(file))
     }
     val serverUrl = properties["SERVER_URL"] as String
     val wsServerUrl = properties["WS_SERVER_URL"] as String
