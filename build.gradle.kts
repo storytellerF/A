@@ -99,36 +99,3 @@ subprojects {
     }
 
 }
-
-versionCatalogUpdate {
-    // sort the catalog by key (default is true)
-    sortByKey.set(true)
-    // Referenced that are pinned are not automatically updated.
-    // They are also not automatically kept however (use keep for that).
-    pin {
-        // pins all libraries and plugins using the given versions
-        versions.add("agp")
-        groups.add("io.ktor")
-    }
-    keep {
-        versions.addAll(
-            "android-compileSdk",
-            "android-minSdk",
-            "android-targetSdk"
-        )
-        libraries.add(libs.ktor.client.darwin)
-    }
-}
-fun isNonStable(version: String): Boolean {
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.uppercase().contains(it) }
-    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
-    val isStable = stableKeyword || regex.matches(version)
-    return isStable.not()
-}
-
-// https://github.com/ben-manes/gradle-versions-plugin
-tasks.withType<DependencyUpdatesTask> {
-    rejectVersionIf {
-        isNonStable(candidate.version)
-    }
-}
