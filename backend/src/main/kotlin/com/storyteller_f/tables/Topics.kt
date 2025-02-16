@@ -135,11 +135,10 @@ suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey?, aid: String?, uid
             }
             .where {
                 when {
-                    topicId != null ->Topics.id eq topicId
+                    topicId != null -> Topics.id eq topicId
                     aid != null -> Aids.value eq aid
                     else -> throw CustomBadRequestException("aid and id is null")
                 }
-
             }
             .groupBy(Topics.id)
     }
