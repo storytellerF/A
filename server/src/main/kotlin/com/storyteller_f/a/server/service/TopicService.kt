@@ -255,9 +255,7 @@ suspend fun getTopicByAid(
                 value.copy(hasJoined = hasJoined)
             }
         }
-
     }
-
 }
 
 suspend fun getTopLevelTopicsInObject(
