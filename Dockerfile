@@ -1,6 +1,6 @@
 FROM eclipse-temurin:21-alpine AS builder
 
-RUN apk add bash curl unzip
+RUN apk add bash curl unzip libavif-dev
 
 #^1
 ARG IS_PROD
