@@ -1,8 +1,5 @@
 package com.storyteller_f.media
 
-import com.ashampoo.kim.common.convertToPhotoMetadata
-import com.ashampoo.kim.jvm.KimJvm
-import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.MediaItem
 import io.github.aakira.napier.Napier
@@ -63,7 +60,7 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
                     val file = File(root, "$bucketName/$it")
                     if (file.exists()) {
                         val item = stat(it, file)
-                        val dimension = getDimension(file)
+                        val dimension = getDimension(file, item.contentType)
                         MediaInfo("${url}amedia/$it", item, dimension)
                     } else {
                         null
@@ -71,18 +68,6 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
                 }
             }
         })
-    }
-
-    private fun getDimension(
-        file: File
-    ) = KimJvm.readMetadata(file)?.convertToPhotoMetadata()?.let {
-        val width = it.widthPx
-        val height = it.heightPx
-        if (width != null && height != null) {
-            Dimension(width, height)
-        } else {
-            null
-        }
     }
 
     private fun stat(it: String, file: File): MediaItem {
