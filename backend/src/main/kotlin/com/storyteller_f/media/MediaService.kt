@@ -75,7 +75,7 @@ fun loadAvif() {
     }
 }
 
-private fun getDimension(
+fun getDimension(
     file: File,
     contentType: String
 ): Dimension? {
