@@ -1,25 +1,20 @@
 package com.storyteller_f.a.app
 
 import a.composeapp.generated.resources.Res
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.*
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
@@ -28,7 +23,12 @@ import coil3.util.DebugLogger
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.ToasterState
 import com.dokar.sonner.rememberToasterState
-import com.mikepenz.aboutlibraries.ui.compose.m3.*
+import com.kdroid.composenotification.builder.ExperimentalNotificationsApi
+import com.kdroid.composenotification.builder.Notification
+import com.kdroid.composenotification.builder.getNotificationProvider
+import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
+import com.mikepenz.aboutlibraries.ui.compose.m3.LibraryDefaults
+import com.mikepenz.aboutlibraries.ui.compose.m3.rememberLibraries
 import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.compontents.GlobalDialog
 import com.storyteller_f.a.app.compontents.GlobalDialogController
@@ -40,16 +40,16 @@ import com.storyteller_f.a.app.pages.room.RoomPage
 import com.storyteller_f.a.app.pages.title.TitleComposePage
 import com.storyteller_f.a.app.pages.topic.TopicComposePage
 import com.storyteller_f.a.app.pages.topic.TopicPage
-import com.storyteller_f.a.app.pages.topic.processEncryptedTopic
 import com.storyteller_f.a.app.pages.user.MemberPage
 import com.storyteller_f.a.app.pages.user.UserPage
 import com.storyteller_f.a.app.pages.user.UserSettingPage
 import com.storyteller_f.a.app.pages.user.signOut
 import com.storyteller_f.a.app.ui.theme.AppTheme
+import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.a.client_lib.addRequestHeaders
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
@@ -59,16 +59,13 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.websocket.*
-import io.ktor.http.buildUrl
-import io.ktor.http.path
-import io.ktor.http.takeFrom
+import io.ktor.http.*
 import kotbase.MutableDocument
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.reflect.KClass
@@ -183,7 +180,7 @@ fun App2(navigator: NavHostController, httpUrl: String, wsServerUrl: String, con
             setupRequest(httpUrl)
         }
         CompositionLocalProvider(LocalClient provides client) {
-            val ws = buildWsClient(client, wsServerUrl)
+            val ws = remeberWsClient(client, wsServerUrl, appNav)
             CompositionLocalProvider(LocalWsClient provides ws) {
                 GlobalDialog(globalDialogState)
                 val toasterState = rememberToasterState()
@@ -198,24 +195,69 @@ fun App2(navigator: NavHostController, httpUrl: String, wsServerUrl: String, con
     }
 }
 
-private fun buildWsClient(
-    client: HttpClient,
-    wsServerUrl: String
-): ClientWebSocket = ClientWebSocket({
-    client.webSocketSession(buildUrl {
-        takeFrom(wsServerUrl)
-        path("link")
-    }.toString()) {
-        addRequestHeaders(LoginViewModel.session?.first)
-    }
-}) {
-    if (it is RoomFrame.NewTopicInfo) {
-        val info = processEncryptedTopic(listOf(it.topicInfo)).first()
-        updateDocumentInParent(info)
-        Napier.v(tag = "pagination") {
-            "save document $info"
+private fun buildWsListener(
+    appNav: AppNav,
+    messageToasterState: ToasterState,
+    hasPermission: Boolean
+) = object : ClientWsListener {
+    override fun onReceived(frame: RoomFrame) {
+        if (frame is RoomFrame.NewTopicInfo) {
+            val message = frame.topicInfo.content
+            if (message is TopicContent.Plain) {
+                if (platform.isActive) {
+                    if (appNav.toRoute<RoomScreen>()?.roomId != frame.topicInfo.parentId &&
+                        appNav.toRoute<TopicScreen>()?.topicId != frame.topicInfo.parentId
+                    ) {
+                        messageToasterState.show(message)
+                    }
+                } else if (hasPermission) {
+                    sendTopicNotification(message)
+                }
+            }
         }
     }
+
+
+}
+
+@Composable
+private fun remeberWsClient(
+    client: HttpClient,
+    wsServerUrl: String,
+    appNav: AppNav
+): ClientWebSocket {
+    val remember = remember {
+        ClientWebSocket({
+            client.webSocketSession(buildUrl {
+                takeFrom(wsServerUrl)
+                path("link")
+            }.toString()) {
+                addRequestHeaders(LoginViewModel.session?.first)
+            }
+        }) {
+            if (it is RoomFrame.NewTopicInfo) {
+                val info = processEncryptedTopic(listOf(it.topicInfo)).first()
+                updateDocumentInParent(info)
+                Napier.v(tag = "pagination") {
+                    "save document $info"
+                }
+            }
+        }
+    }
+    val messageToasterState = rememberToasterState()
+    Toaster(messageToasterState, alignment = Alignment.TopCenter)
+    val notificationProvider = getNotificationProvider()
+    val hasPermission by notificationProvider.hasPermissionState
+    val listener = remember {
+        buildWsListener(appNav, messageToasterState, hasPermission)
+    }
+    remember.addListener(listener)
+    DisposableEffect(null) {
+        onDispose {
+            remember.removeListener(listener)
+        }
+    }
+    return remember
 }
 
 @Composable
@@ -445,6 +487,7 @@ fun HttpClientConfig<*>.setupRequest(httpUrl: String) {
 val bus = MutableSharedFlow<Any>()
 
 inline fun <reified T : Any> AppNav.toRoute(): T? {
+    if (!hasRoute(T::class)) return null
     return currentDestination?.toRoute()
 }
 
@@ -562,5 +605,33 @@ interface AppNav {
                 TODO("Not yet implemented")
             }
         }
+    }
+}
+
+@OptIn(ExperimentalNotificationsApi::class)
+private fun sendTopicNotification(message: TopicContent.Plain) {
+    Notification(
+        title = "New topic",
+        message = message.plain,
+        onActivated = {
+            Napier.d(
+                message = "Notification 1 activated",
+                tag = "NotificationLog"
+            )
+        },
+        onDismissed = { reason ->
+            Napier.d(
+                message = "Notification 1 dismissed: $reason",
+                tag = "NotificationLog"
+            )
+        },
+        onFailed = {
+            Napier.d(
+                tag = "NotificationLog",
+                message = "Notification 1 failed"
+            )
+        }
+    ) {
+
     }
 }

@@ -35,6 +35,7 @@ import com.storyteller_f.a.app.pages.topic.insertContent
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
@@ -148,50 +149,95 @@ fun RoomInputGroup(
         CustomAlertDialogController()
     }
     val wsClient = LocalWsClient.current
+    val listener = remember {
+        buildInputBoxContentListener(input) {
+            input = ""
+        }
+    }
+    wsClient.addListener(listener)
+    DisposableEffect(null) {
+        onDispose {
+            wsClient.removeListener(listener)
+        }
+    }
     val scope = rememberCoroutineScope()
-    if (roomInfo != null) {
-        val toasterState = LocalToaster.current
-        val keysViewModel = createRoomKeysViewModel(roomId, roomInfo)
-        val objectId = topicId ?: roomId
-        val objectType = if (topicId != null) ObjectType.TOPIC else ObjectType.ROOM
-        val updateInput: (String) -> Unit = {
+    val localState by wsClient.localState.collectAsState()
+    val isSending = localState is LoadingState.Loading
+    val updateInput: (String) -> Unit = {
+        if (!isSending)
             input = it
-        }
-        val c = RoomMessageContext(
-            roomInfo,
-            input,
-            scrollToNew,
-            topicId,
-            scope,
-            toasterState,
-            controller,
-            keysViewModel,
-            wsClient
-        )
-        InputGroupInternal(
-            objectId,
-            objectType,
-            input,
-            MaterialTheme.colorScheme.tertiaryContainer,
-            roomId.takeIf {
-                roomInfo.isPrivate
-            },
-            updateInput,
-            {
-                insertContent(it, updateInput, input)
-                sendRoomTopic(c)
-            },
-        ) {
-            RoomSendButton(input = input) {
-                sendRoomTopic(c)
-            }
-        }
+    }
+    if (roomInfo != null) {
+        RoomInputGroupInternal(roomId, roomInfo, topicId, input, scrollToNew, scope, controller, wsClient, updateInput)
     }
 
     CustomAlertDialog(controller, {
         controller.close()
     }) {
         checkRoomRouteAndAlert(appNav, roomId, startJoinRoom)
+    }
+}
+
+@Composable
+private fun RoomInputGroupInternal(
+    roomId: PrimaryKey,
+    roomInfo: RoomInfo,
+    topicId: PrimaryKey?,
+    input: String,
+    scrollToNew: () -> Unit,
+    scope: CoroutineScope,
+    controller: CustomAlertDialogController,
+    wsClient: ClientWebSocket,
+    updateInput: (String) -> Unit
+) {
+    val toasterState = LocalToaster.current
+    val keysViewModel = createRoomKeysViewModel(roomId, roomInfo)
+    val objectId = topicId ?: roomId
+    val objectType = if (topicId != null) ObjectType.TOPIC else ObjectType.ROOM
+    val c = RoomMessageContext(
+        roomInfo,
+        input,
+        scrollToNew,
+        topicId,
+        scope,
+        toasterState,
+        controller,
+        keysViewModel,
+        wsClient
+    )
+    InputGroupInternal(
+        objectId,
+        objectType,
+        input,
+        MaterialTheme.colorScheme.tertiaryContainer,
+        roomId.takeIf {
+            roomInfo.isPrivate
+        },
+        updateInput,
+        {
+            insertContent(it, updateInput, input)
+            sendRoomTopic(c)
+        },
+    ) {
+        RoomSendButton(input = input) {
+            sendRoomTopic(c)
+        }
+    }
+}
+
+private fun buildInputBoxContentListener(input: String, updateInput: (String) -> Unit): ClientWsListener {
+    return object : ClientWsListener {
+        override fun onReceived(frame: RoomFrame) {
+            if (frame is RoomFrame.NewTopicInfo) {
+                val content = frame.topicInfo.content
+                if (content is TopicContent.Plain) {
+                    if (content.plain == input) {
+                        updateInput("")
+                    }
+                }
+            }
+        }
+
     }
 }
 

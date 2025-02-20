@@ -13,7 +13,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +51,7 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
+import nl.jacobras.humanreadable.HumanReadable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -189,9 +193,17 @@ private fun MediaListView(
                         FileIcon(it)
                         Spacer(modifier = Modifier.width(20.dp))
                         Column {
-                            Text(it.item.noPrefixName)
+                            Text(it.item.noPrefixName, style = MaterialTheme.typography.labelMedium)
                             Spacer(modifier = Modifier.height(10.dp))
-                            Text(it.item.lastModified.formatTime())
+                            Row {
+                                Text(it.item.lastModified.formatTime(), style = MaterialTheme.typography.labelSmall)
+                                Spacer(modifier = Modifier.weight(1f))
+                                Text(HumanReadable.fileSize(it.item.size), style = MaterialTheme.typography.labelSmall)
+                            }
+                            Spacer(modifier = Modifier.height(5.dp))
+                            it.dimension?.let {
+                                Text("w${it.width}·h${it.height}", style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
 

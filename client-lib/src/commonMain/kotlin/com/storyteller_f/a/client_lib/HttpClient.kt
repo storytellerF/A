@@ -1,5 +1,7 @@
 package com.storyteller_f.a.client_lib
 
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicInfo
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.*
@@ -67,6 +69,40 @@ fun HttpClientConfig<*>.defaultClientConfigure() {
                 val exceptionResponseText = exceptionResponse.bodyAsText()
                 throw ServerErrorException(exceptionResponse.status, exceptionResponseText)
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalStdlibApi::class)
+suspend fun processEncryptedTopic(info: List<TopicInfo>): List<TopicInfo> {
+    val value = LoginViewModel.state.value
+    val uid = LoginViewModel.user.value?.id
+    val key = if (value is ClientSession.SignUpSuccess) value.session else null
+    return info.map { topicInfo ->
+        val content = topicInfo.content
+        if (content !is TopicContent.Encrypted || uid == null || key == null) {
+            topicInfo
+        } else {
+            val s = content.encryptedKey[uid]
+            topicInfo.copy(
+                content = if (s != null) {
+                    runCatching {
+                        key.decrypt(
+                            content.encrypted.hexToByteArray(),
+                            s.hexToByteArray()
+                        )
+                    }.fold(onSuccess = {
+                        TopicContent.Plain(it)
+                    }, onFailure = {
+                        Napier.e(it) {
+                            "decrypt ${topicInfo.id}"
+                        }
+                        TopicContent.DecryptFailed(it.message.toString())
+                    })
+                } else {
+                    TopicContent.DecryptFailed("auth failed")
+                }
+            )
         }
     }
 }
