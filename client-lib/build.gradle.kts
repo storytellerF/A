@@ -51,6 +51,7 @@ kotlin {
             implementation(projects.shared)
             implementation(libs.napier)
             implementation(libs.bundles.ktor.client)
+            implementation(libs.kotlinx.datetime)
         }
         jvmMain.dependencies {
             implementation(libs.ktor.client.java)

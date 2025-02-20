@@ -43,7 +43,9 @@ interface TopicSearchService {
         preTopicId: PrimaryKey? = null,
         nextTopicId: PrimaryKey? = null,
         author: PrimaryKey? = null,
-        root: Pair<PrimaryKey?, ObjectType>? = null,
-        parent: Pair<PrimaryKey?, ObjectType>? = null,
+        rootType: ObjectType? = null,
+        parentType: ObjectType? = null,
+        rootIdList: List<PrimaryKey>? = null,
+        parentIdList: List<PrimaryKey>? = null,
     ): Result<PaginationResult<TopicDocument>>
 }

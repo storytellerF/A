@@ -1,12 +1,9 @@
 package com.storyteller_f.index
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient
+import co.elastic.clients.elasticsearch._types.FieldValue
 import co.elastic.clients.elasticsearch._types.SortOrder
-import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery
-import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery
-import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery
-import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery
+import co.elastic.clients.elasticsearch._types.query_dsl.*
 import co.elastic.clients.elasticsearch.core.SearchRequest
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
 import co.elastic.clients.elasticsearch.core.bulk.IndexOperation
@@ -122,10 +119,22 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
         preTopicId: PrimaryKey?,
         nextTopicId: PrimaryKey?,
         author: PrimaryKey?,
-        root: Pair<PrimaryKey?, ObjectType>?,
-        parent: Pair<PrimaryKey?, ObjectType>?
+        rootType: ObjectType?,
+        parentType: ObjectType?,
+        rootIdList: List<PrimaryKey>?,
+        parentIdList: List<PrimaryKey>?
     ): Result<PaginationResult<TopicDocument>> {
-        val boolQuery = createTopicSearchQuery(word, root, parent, author, preTopicId, nextTopicId)
+        val boolQuery =
+            createTopicSearchQuery(
+                word,
+                rootType,
+                parentType,
+                author,
+                preTopicId,
+                nextTopicId,
+                rootIdList,
+                parentIdList
+            )
 
         // 构建排序条件：按 ID 升序排序
         val request = SearchRequest.of { s ->
@@ -152,11 +161,13 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
 
     private fun createTopicSearchQuery(
         word: List<String>?,
-        root: Pair<PrimaryKey?, ObjectType>?,
-        parent: Pair<PrimaryKey?, ObjectType>?,
+        root: ObjectType?,
+        parent: ObjectType?,
         author: PrimaryKey?,
         preTopicId: PrimaryKey?,
-        nextTopicId: PrimaryKey?
+        nextTopicId: PrimaryKey?,
+        rootId: List<PrimaryKey>?,
+        parentId: List<PrimaryKey>?
     ): Query {
         val queryList = buildList {
             word?.let {
@@ -176,6 +187,13 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 add(createParentSearchQuery(it))
             }
 
+            rootId?.let { list ->
+                add(buildIdListTermSearch(list, "rootId"))
+            }
+            parentId?.let { list ->
+                add(buildIdListTermSearch(list, "parentId"))
+            }
+
             author?.let {
                 add(TermQuery.of { t ->
                     t.field("author").value(it)
@@ -193,7 +211,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 add(RangeQuery.of { r ->
                     r.number {
                         it.field("id")
-                            .lt(p.toDouble())
+                            .gt(p.toDouble())
                     }
                 }._toQuery())
             }
@@ -214,26 +232,24 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
         }
     }
 
-    private fun createRootSearchQuery(pair: Pair<PrimaryKey?, ObjectType>): Query = BoolQuery.of { b ->
-        pair.first?.let {
-            b.must(TermQuery.of { t ->
-                t.field("rootId").value(it)
-            }._toQuery())
+    private fun buildIdListTermSearch(list: List<PrimaryKey>, field: String) = TermsQuery.of {
+        it.field(field).terms {
+            it.value(list.map {
+                FieldValue.of(it)
+            })
         }
+    }._toQuery()
+
+    private fun createRootSearchQuery(pair: ObjectType): Query = BoolQuery.of { b ->
         b.must(MatchQuery.of { t ->
-            t.field("rootType").query(pair.second.name)
+            t.field("rootType").query(pair.name)
         }._toQuery())
     }._toQuery()
 
-    private fun createParentSearchQuery(pair: Pair<PrimaryKey?, ObjectType>): Query {
+    private fun createParentSearchQuery(pair: ObjectType): Query {
         val queryList = buildList {
-            pair.first?.let {
-                add(TermQuery.of { t ->
-                    t.field("parentId").value(it)
-                }._toQuery())
-            }
             add(TermQuery.of { t ->
-                t.field("parentType.keyword").value(pair.second.name)
+                t.field("parentType.keyword").value(pair.name)
             }._toQuery())
         }
         return if (queryList.size == 1) {

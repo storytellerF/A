@@ -89,9 +89,9 @@ class RouteTopics(val fillHasCommented: Boolean? = null, val aid: String? = null
     class Search(
         @Suppress("unused") val parent: RouteTopics = RouteTopics(),
         val word: List<String>? = null,
-        val parentId: PrimaryKey? = null,
+        val parentId: List<PrimaryKey>? = null,
         val parentType: ObjectType? = null,
-        val rootId: PrimaryKey? = null,
+        val rootId: List<PrimaryKey>? = null,
         val rootType: ObjectType? = null,
         val author: PrimaryKey? = null,
     )

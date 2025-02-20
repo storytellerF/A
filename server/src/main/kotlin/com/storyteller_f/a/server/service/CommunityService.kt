@@ -82,7 +82,7 @@ suspend fun searchCommunities(
     if (search.joinStatus == JoinStatusSearch.JOINED && search.target != null) {
         return searchTargetUserJoinedCommunities(prePageToken, nextPageToken, size, backend, uid, search.target)
     }
-    return DatabaseFactory.commonPaginationCommunityList(
+    return DatabaseFactory.getPaginationCommunityList(
         uid,
         prePageToken,
         nextPageToken,
