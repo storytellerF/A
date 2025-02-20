@@ -143,6 +143,12 @@ fun Application.module() {
                 requestKey { call ->
                     call.getRateLimitKey(reader)
                 }
+                requestWeight { applicationCall, key ->
+                    when (applicationCall.request.httpMethod) {
+                        HttpMethod.Post -> 10
+                        else -> 1
+                    }
+                }
             }
         }
     }

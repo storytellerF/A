@@ -12,6 +12,7 @@ buildconfig = "0.15.2"
 coil = "3.1.0"
 composableTableVersion = "1.3.0"
 compose-plugin = "1.7.3"
+composeNativeNotification = "0.2.0"
 composePdf = "1.2.0"
 couchbaseLite = "3.1.9-1.1.1"
 cryptographyCore = "0.4.0"
@@ -27,6 +28,7 @@ geoip2 = "4.2.1"
 h2 = "2.3.232"
 haze = "1.3.1"
 highlights = "1.0.0"
+humanReadable = "1.11.0"
 jacksonModuleKotlin = "2.18.2"
 jlatexmath = "1.0.7"
 jlatexmathAndroid = "0.2.0"
@@ -95,6 +97,7 @@ coil = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+compose-native-notification = { module = "io.github.kdroidfilter:compose-native-notification", version.ref = "composeNativeNotification" }
 compose-pdf = { module = "dev.zt64:compose-pdf", version.ref = "composePdf" }
 couchbase-lite = { module = "dev.kotbase:couchbase-lite", version.ref = "couchbaseLite" }
 couchbase-lite-ktx = { module = "dev.kotbase:couchbase-lite-ktx", version.ref = "couchbaseLite" }
@@ -122,6 +125,7 @@ geoip2 = { module = "com.maxmind.geoip2:geoip2", version.ref = "geoip2" }
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 highlights = { module = "dev.snipme:highlights", version.ref = "highlights" }
+human-readable = { module = "nl.jacobras:Human-Readable", version.ref = "humanReadable" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jacksonModuleKotlin" }
 jlatexmath = { module = "org.scilab.forge:jlatexmath", version.ref = "jlatexmath" }
 jlatexmath-android = { module = "ru.noties:jlatexmath-android", version.ref = "jlatexmathAndroid" }

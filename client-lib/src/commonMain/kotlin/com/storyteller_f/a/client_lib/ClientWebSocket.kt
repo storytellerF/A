@@ -1,5 +1,6 @@
 package com.storyteller_f.a.client_lib
 
+import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.websocket.*
@@ -9,6 +10,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 
+interface ClientWsListener {
+    fun onReceived(frame: RoomFrame)
+}
+
 @OptIn(DelicateCoroutinesApi::class)
 class ClientWebSocket(
     val buildConnection: suspend () -> DefaultClientWebSocketSession,
@@ -17,6 +22,7 @@ class ClientWebSocket(
     val connectionHandler = LoadingHandler<DefaultClientWebSocketSession> { }
     val localState = MutableStateFlow<LoadingState?>(null)
     val remoteState = MutableSharedFlow<RoomFrame>()
+    private val listeners = mutableListOf<ClientWsListener>()
 
     init {
         GlobalScope.launch {
@@ -78,10 +84,29 @@ class ClientWebSocket(
         GlobalScope.launch {
             runCatching {
                 while (true) {
-                    val frame = session.receiveDeserialized<RoomFrame>()
-                    onMessage(frame)
+                    when (val frame = session.receiveDeserialized<RoomFrame>()) {
+                        is RoomFrame.Error -> {
+                            remoteState.emit(frame)
+                            onMessage(frame)
+                        }
 
-                    remoteState.emit(frame)
+                        is RoomFrame.NewTopicInfo -> {
+                            val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
+                                val topicInfo = processEncryptedTopic(listOf(frame.topicInfo)).first()
+                                RoomFrame.NewTopicInfo(topicInfo)
+                            } else {
+                                frame
+                            }
+                            onMessage(frame)
+                            listeners.forEach {
+                                it.onReceived(plainFrame)
+                            }
+                        }
+
+                        is RoomFrame.Message -> {
+                            onMessage(frame)
+                        }
+                    }
                 }
             }.onFailure {
                 Napier.e(it, tag = "pagination") {
@@ -91,5 +116,13 @@ class ClientWebSocket(
                 connectionHandler.state.value = null
             }
         }
+    }
+
+    fun addListener(listener: ClientWsListener) {
+        listeners.add(listener)
+    }
+
+    fun removeListener(listener: ClientWsListener) {
+        listeners.remove(listener)
     }
 }

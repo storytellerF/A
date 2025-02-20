@@ -146,6 +146,7 @@ kotlin {
             implementation(libs.couchbase.lite.ktx)
             implementation(libs.couchbase.lite.paging)
             implementation(libs.sunny.chung.composable.table)
+            implementation(libs.compose.native.notification)
 
             implementation(libs.kim)
             implementation(libs.napier)
@@ -153,6 +154,7 @@ kotlin {
             implementation(libs.emoji.kt)
             implementation(libs.emoji.compose.m3)
             implementation(libs.m3u.parser)
+            implementation(libs.human.readable)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

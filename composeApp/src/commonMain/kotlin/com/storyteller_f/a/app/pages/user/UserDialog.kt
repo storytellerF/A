@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
+import com.kdroid.composenotification.builder.getNotificationProvider
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.UserScreen
@@ -33,7 +35,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDialogInternal(userInfo: UserInfo, clickCreate: () -> Unit, dismiss: () -> Unit = {}) {
     val controller = remember {
@@ -43,7 +44,7 @@ fun UserDialogInternal(userInfo: UserInfo, clickCreate: () -> Unit, dismiss: () 
     val client = LocalClient.current
     val my by LoginViewModel.user.collectAsState()
     DialogContainer {
-        val clickable = !appNav.hasRoute(UserScreen::class) || appNav.toRoute<UserScreen>()?.uid != userInfo.id
+        val clickable = appNav.toRoute<UserScreen>()?.uid != userInfo.id
         UserCell(
             userInfo,
             false,
@@ -61,6 +62,21 @@ fun UserDialogInternal(userInfo: UserInfo, clickCreate: () -> Unit, dismiss: () 
                 ButtonNav(Icons.Default.Add, "Create") {
                     dismiss()
                     clickCreate()
+                }
+                val notificationProvider = getNotificationProvider()
+                val hasPermission by notificationProvider.hasPermissionState
+
+                if (!hasPermission) {
+                    ButtonNav(Icons.Default.Notifications, "Grant notification") {
+                        notificationProvider.requestPermission(
+                            onGranted = {
+                                notificationProvider.updatePermissionState(true)
+                            },
+                            onDenied = {
+                                notificationProvider.updatePermissionState(false)
+                            }
+                        )
+                    }
                 }
                 val title = stringResource(Res.string.sign_out_prompt)
                 ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings)) {
