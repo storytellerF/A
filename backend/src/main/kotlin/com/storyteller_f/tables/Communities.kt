@@ -114,7 +114,16 @@ private fun buildCommunityWhereClause(
     }
 }
 
-suspend fun DatabaseFactory.commonCommunityList(
+suspend fun DatabaseFactory.getJoinedCommunityIds(uid: PrimaryKey) = mapQuery({
+    this[Communities.id]
+}) {
+    Communities
+        .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+            MemberJoins.uid eq uid
+        }.select(Communities.id)
+}
+
+suspend fun DatabaseFactory.getCommunityList(
     uid: PrimaryKey?,
     prePageToken: PrimaryKey?,
     nextPageToken: PrimaryKey?,
@@ -191,7 +200,7 @@ fun getUserJoinedCommunityQuery(
     }
 }
 
-suspend fun DatabaseFactory.commonPaginationCommunityList(
+suspend fun DatabaseFactory.getPaginationCommunityList(
     uid: PrimaryKey?,
     prePageToken: PrimaryKey?,
     nextPageToken: PrimaryKey?,
@@ -199,7 +208,7 @@ suspend fun DatabaseFactory.commonPaginationCommunityList(
     joinStatus: JoinStatusSearch?,
     word: String?
 ): Result<Pair<List<CommunityRawResult>, Long>> {
-    return commonCommunityList(uid, prePageToken, nextPageToken, size, joinStatus, word).mapResult { list ->
+    return getCommunityList(uid, prePageToken, nextPageToken, size, joinStatus, word).mapResult { list ->
         count {
             getSearchCommunityQuery(uid, true, joinStatus, word)
         }.map { value ->

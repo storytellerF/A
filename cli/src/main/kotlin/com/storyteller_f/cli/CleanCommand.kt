@@ -31,7 +31,7 @@ class PrintCommand : Subcommand("print", "print") {
         runBlocking {
             val result = backend.topicSearchService.searchDocument(
                 10,
-                parent = null to ObjectType.COMMUNITY
+                parentType = null to ObjectType.COMMUNITY
             ).getOrThrow()
             Napier.i {
                 "total ${result.total} ${result.list.size}"

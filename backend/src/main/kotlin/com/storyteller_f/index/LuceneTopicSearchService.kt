@@ -103,14 +103,16 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
         preTopicId: PrimaryKey?,
         nextTopicId: PrimaryKey?,
         author: PrimaryKey?,
-        root: Pair<PrimaryKey?, ObjectType>?,
-        parent: Pair<PrimaryKey?, ObjectType>?
+        rootType: ObjectType?,
+        parentType: ObjectType?,
+        rootIdList: List<PrimaryKey>?,
+        parentIdList: List<PrimaryKey>?
     ): Result<PaginationResult<TopicDocument>> {
         return useLucene {
             try {
                 DirectoryReader.open(it).use { reader ->
                     val searcher = IndexSearcher(reader)
-                    val combinedQuery = buildQuery(preTopicId, nextTopicId, word, root, parent).build()
+                    val combinedQuery = buildQuery(preTopicId, nextTopicId, word, rootType, parentType, rootIdList, parentIdList).build()
                     Napier.i {
                         "lucene search query $combinedQuery"
                     }
@@ -139,8 +141,10 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
         preTopicId: PrimaryKey?,
         nextTopicId: PrimaryKey?,
         word: List<String>?,
-        root: Pair<PrimaryKey?, ObjectType>?,
-        parent: Pair<PrimaryKey?, ObjectType>?
+        root: ObjectType?,
+        parent: ObjectType?,
+        rootIdList: List<PrimaryKey>?,
+        parentIdList: List<PrimaryKey>?
     ): BooleanQuery.Builder {
         val analyzer = StandardAnalyzer()
         val combinedQuery = BooleanQuery
@@ -173,16 +177,16 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
             }
         }
         root?.let {
-            it.first?.let { rootId ->
-                combinedQuery.add(LongPoint.newExactQuery("rootId", rootId), BooleanClause.Occur.MUST)
-            }
-            combinedQuery.add(TermQuery(Term("rootType", it.second.name)), BooleanClause.Occur.MUST)
+            combinedQuery.add(TermQuery(Term("rootType", it.name)), BooleanClause.Occur.MUST)
         }
         parent?.let {
-            it.first?.let { parentId ->
-                combinedQuery.add(LongPoint.newExactQuery("parentId", parentId), BooleanClause.Occur.MUST)
-            }
-            combinedQuery.add(TermQuery(Term("parentType", it.second.name)), BooleanClause.Occur.MUST)
+            combinedQuery.add(TermQuery(Term("parentType", it.name)), BooleanClause.Occur.MUST)
+        }
+        rootIdList?.let {
+            combinedQuery.add(LongPoint.newSetQuery("rootId", it), BooleanClause.Occur.MUST)
+        }
+        parentIdList?.let {
+            combinedQuery.add(LongPoint.newSetQuery("parentId", it), BooleanClause.Occur.MUST)
         }
         return combinedQuery
     }

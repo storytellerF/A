@@ -5,19 +5,12 @@ import com.storyteller_f.*
 import com.storyteller_f.a.server.route.RouteTopics
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
-import com.storyteller_f.shared.model.AMEDIA_BUCKET
-import com.storyteller_f.shared.model.MediaInfo
-import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.tables.*
-import com.storyteller_f.tables.Topics
-import com.storyteller_f.tables.getTopicsByPredicate
 import com.storyteller_f.types.PaginationResult
 import io.ktor.server.plugins.*
 import org.apache.pdfbox.examples.signature.CreateSignature
@@ -453,14 +446,10 @@ suspend fun searchPublicTopics(
         preTopicId = preTopicId,
         nextTopicId = nextTopicId,
         author = search.author,
-        root = when {
-            search.rootId != null && search.rootType != null -> search.rootId to search.rootType
-            else -> null
-        },
-        parent = when {
-            search.parentId != null && search.parentType != null -> search.parentId to search.parentType
-            else -> null
-        },
+        rootType = search.rootType,
+        parentType = search.parentType,
+        rootIdList = search.rootId,
+        parentIdList = search.parentId
     ).mapResult { (list, total) ->
         processTopicsDocument(uid, search.parent.fillHasCommented, backend, list).map {
             PaginationResult(it, total)
@@ -539,12 +528,23 @@ suspend fun recommendTopics(
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
 ): Result<PaginationResult<TopicInfo>?> {
-    return backend.topicSearchService.searchDocument(
-        size,
-        preTopicId = preTopicId,
-        nextTopicId = nextTopicId,
-        parent = null to ObjectType.COMMUNITY,
-    ).mapResult { (list, total) ->
+    return if (uid != null) {
+        DatabaseFactory.getJoinedCommunityIds(uid).mapResult {
+            backend.topicSearchService.searchDocument(
+                size,
+                preTopicId = preTopicId,
+                nextTopicId = nextTopicId,
+                parentIdList = it
+            )
+        }
+    } else {
+        backend.topicSearchService.searchDocument(
+            size,
+            preTopicId = preTopicId,
+            nextTopicId = nextTopicId,
+            parentType = ObjectType.COMMUNITY,
+        )
+    }.mapResult { (list, total) ->
         processTopicsDocument(uid, fillHasCommented, backend, list).map {
             PaginationResult(it, total)
         }
