@@ -14,15 +14,11 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import com.kdroid.composenotification.builder.getNotificationProvider
-import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.LocalClient
-import com.storyteller_f.a.app.UserScreen
+import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.DialogContainer
-import com.storyteller_f.a.app.globalDialogState
-import com.storyteller_f.a.app.toRoute
 import com.storyteller_f.a.app.utils.clearStorage
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.getUserInfo
@@ -59,33 +55,7 @@ fun UserDialogInternal(userInfo: UserInfo, clickCreate: () -> Unit, dismiss: () 
                 LaunchedEffect(null) {
                     refreshMyInfo(my, client)
                 }
-                ButtonNav(Icons.Default.Add, "Create") {
-                    dismiss()
-                    clickCreate()
-                }
-                val notificationProvider = getNotificationProvider()
-                val hasPermission by notificationProvider.hasPermissionState
-
-                if (!hasPermission) {
-                    ButtonNav(Icons.Default.Notifications, "Grant notification") {
-                        notificationProvider.requestPermission(
-                            onGranted = {
-                                notificationProvider.updatePermissionState(true)
-                            },
-                            onDenied = {
-                                notificationProvider.updatePermissionState(false)
-                            }
-                        )
-                    }
-                }
-                val title = stringResource(Res.string.sign_out_prompt)
-                ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings)) {
-                    dismiss()
-                    appNav.gotoUserSetting()
-                }
-                ButtonNav(Icons.AutoMirrored.Default.Logout, stringResource(Res.string.sign_out)) {
-                    controller.showTitle(title)
-                }
+                UserDialogMenuList(dismiss, clickCreate, appNav, controller)
             }
         }
     }
@@ -96,6 +66,42 @@ fun UserDialogInternal(userInfo: UserInfo, clickCreate: () -> Unit, dismiss: () 
         scope.launch {
             signOut(client)
         }
+    }
+}
+
+@Composable
+private fun UserDialogMenuList(
+    dismiss: () -> Unit,
+    clickCreate: () -> Unit,
+    appNav: AppNav,
+    controller: CustomAlertDialogController
+) {
+    ButtonNav(Icons.Default.Add, "Create") {
+        dismiss()
+        clickCreate()
+    }
+    val notificationProvider = getNotificationProvider()
+    val hasPermission by notificationProvider.hasPermissionState
+
+    if (!hasPermission) {
+        ButtonNav(Icons.Default.Notifications, "Grant notification") {
+            notificationProvider.requestPermission(
+                onGranted = {
+                    notificationProvider.updatePermissionState(true)
+                },
+                onDenied = {
+                    notificationProvider.updatePermissionState(false)
+                }
+            )
+        }
+    }
+    val title = stringResource(Res.string.sign_out_prompt)
+    ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings)) {
+        dismiss()
+        appNav.gotoUserSetting()
+    }
+    ButtonNav(Icons.AutoMirrored.Default.Logout, stringResource(Res.string.sign_out)) {
+        controller.showTitle(title)
     }
 }
 

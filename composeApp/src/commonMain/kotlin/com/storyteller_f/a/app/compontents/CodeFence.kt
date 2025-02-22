@@ -330,8 +330,10 @@ fun convertPxToDp(px: Int): Dp {
     // 获取当前屏幕密度
     val density = LocalDensity.current.density
     // 将像素值转换为 dp
-    return (px / density).dp
+    return pxToDp(px, density)
 }
+
+fun pxToDp(px: Int, density: Float) = (px / density).dp
 
 @Composable
 fun convertPxToSp(px: Int): TextUnit {

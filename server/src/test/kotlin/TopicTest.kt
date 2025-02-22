@@ -121,7 +121,8 @@ class TopicTest {
                 client.joinCommunity(communityId).getOrThrow()
                 val roomInfo = client.joinRoom(publicRoomId).getOrThrow()
                 wsClient.useWebSocket {
-                    sendMessage(roomInfo, "test", emptyList(), null)
+                    sendMessage(roomInfo, "test", emptyList(), null, null) {
+                    }
                 }?.join()
                 withContext(Dispatchers.Default) { delay(1000) }
                 assertListSize(1, client.getRoomTopics(publicRoomId, null, 10))
@@ -129,7 +130,8 @@ class TopicTest {
                 val roomInfo2 = client.getRoomInfo(privateRoomId).getOrThrow()
                 val keys = client.requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
                 wsClient.useWebSocket {
-                    sendMessage(roomInfo2, "hello", keys, null)
+                    sendMessage(roomInfo2, "hello", keys, null, LoadingState.Done) {
+                    }
                 }?.join()
                 withContext(Dispatchers.Default) { delay(1000) }
                 assertResponse(1, client.getRoomTopics(privateRoomId, null, 10)) {

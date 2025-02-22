@@ -18,24 +18,53 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 import java.net.ServerSocket
+import java.util.*
 
 val ext = if (isWin()) "bat" else "sh"
 
-fun main() {
+fun main(args: Array<String>) {
     Napier.base(DebugAntilog())
-    val path = File("scripts/tool_scripts/forward-android-devices.$ext").canonicalPath
-    val process = ProcessBuilder(path).start()
-    check(process.waitFor() == 0)
-    println(process.inputReader().readText())
-    previousDevices.addAll(getConnectedDevices())
-    forceStop(8888)
-    EngineMain.main(emptyArray())
+    println("current path: ${File("").canonicalPath}")
+    val isNested = File("").canonicalPath.endsWith("test-server")
+    if (args.isNotEmpty() && args.any {
+            it == "auto"
+        }) {
+        println("auto mode")
+        val path = File(if (isNested) ".." else ".", "scripts/tool_scripts/forward-android-devices.$ext").canonicalPath
+        val process = ProcessBuilder(path, "9000").start()
+        check(process.waitFor() == 0)
+        println(process.inputReader().readText())
+        previousDevices.addAll(getConnectedDevices())
+        val job = startListening(9000)
+        Runtime.getRuntime().addShutdownHook(object : Thread() {
+            override fun run() {
+                super.run()
+                job.cancel()
+                println("force shutdown")
+            }
+        })
+        val scanner = Scanner(System.`in`)
+        while (true) {
+            if (!scanner.hasNextLine()) {
+                println("manual shutdown")
+                break
+            }
+        }
+    } else {
+        val path = File(if (isNested) ".." else ".", "scripts/tool_scripts/forward-android-devices.$ext").canonicalPath
+        val process = ProcessBuilder(path, "8888").start()
+        check(process.waitFor() == 0)
+        println(process.inputReader().readText())
+        previousDevices.addAll(getConnectedDevices())
+        forceStop(8888)
+        EngineMain.main(emptyArray())
+    }
 }
 
 @Suppress("unused")
 fun Application.module() {
     val processMap = mutableMapOf<Int, Process>()
-    val job = startListening()
+    val job = startListening(8888)
     monitor.subscribe(ApplicationStopped) { application ->
         application.log.info("Server is stopped")
         job.cancel()
@@ -79,7 +108,7 @@ private suspend fun handleStopRoute(
             call.respond(HttpStatusCode.NotFound)
         }
     } else {
-        application.log.info("stop $port server not found")
+        application.log.info("stop port server not found")
         call.respond(HttpStatusCode.NotFound)
     }
 }
@@ -94,16 +123,25 @@ private suspend fun handleStartRoute(
         call.respond(HttpStatusCode.BadRequest)
         return
     }
+    val isNested = File("").canonicalPath.endsWith("test-server")
     val (name, id) = platformInfo
     val port = findAvailablePort()
-    val server = startServer(port, ".")
+    val server = startServer(if (isNested) ".." else ".", port)
     if (server != null) {
         application.log.info("start $port server success")
         processMap[port] = server
         if (name.startsWith("Android", true)) {
-            val path = File("scripts/tool_scripts/forward-special-device.$ext").absolutePath
+            val path =
+                File(if (isNested) ".." else ".", "scripts/tool_scripts/forward-special-device.$ext").canonicalPath
             withContext(Dispatchers.IO) {
-                check(ProcessBuilder(path, id, port.toString()).start().waitFor() == 0)
+                val start = ProcessBuilder(path, id, port.toString()).start()
+                val waitFor = start.waitFor()
+                if (waitFor != 0) {
+                    println(start.inputReader().readText())
+                    System.err.println(start.errorReader().readText())
+                } else {
+                    println("forward $id device success")
+                }
             }
         }
         call.respondText {
@@ -143,7 +181,7 @@ private val previousDevices = mutableSetOf<String>()
 
 // 启动协程监听 ADB 设备连接
 @OptIn(DelicateCoroutinesApi::class)
-fun startListening(): Job {
+fun startListening(port: Int): Job {
     return GlobalScope.launch {
         while (isActive) { // 持续监听直到协程被取消
             val currentDevices = getConnectedDevices()
@@ -151,7 +189,7 @@ fun startListening(): Job {
                 currentDevices.forEach { device ->
                     if (device !in previousDevices) {
                         val code =
-                            ProcessBuilder("adb", "-s", device, "reverse", "tcp:8888", "tcp:8888").start().waitFor()
+                            ProcessBuilder("adb", "-s", device, "reverse", "tcp:$port", "tcp:$port").start().waitFor()
                         println("New device connected: $device exitCode: $code")
                     }
                 }

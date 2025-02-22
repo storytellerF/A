@@ -48,10 +48,10 @@ fun readEnv(map: Map<String, String> = emptyMap()): MergedEnv {
     return MergedEnv(
         listOf(
             map,
+            System.getenv(),
             readFileEnv("../${BackendConfig.FLAVOR}.env"),
             readFileEnv(".env"),
             readResourceEnv(".env"),
-            System.getenv()
         )
     )
 }

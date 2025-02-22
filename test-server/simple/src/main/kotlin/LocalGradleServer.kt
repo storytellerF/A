@@ -8,12 +8,11 @@ import java.util.concurrent.CountDownLatch
 fun runGradle(envFilePath: String, port: Int): Process? {
     val envFile = File(envFilePath, "server/src/test/resources/.env")
     if (!envFile.exists()) {
-        println("${envFile.absolutePath} not exists")
+        println("${envFile.canonicalPath} not exists")
         return null
     }
     val file = File(envFilePath) // 确保这个路径正确，指向包含 gradlew.bat 的父目录
-    val isWin = isWin()
-    val gradleCommand = if (isWin) {
+    val gradleCommand = if (isWin()) {
         // Windows
         File(file, "gradlew.bat").absolutePath
     } else {
@@ -36,9 +35,9 @@ fun runGradle(envFilePath: String, port: Int): Process? {
             ""
         }
     }
-    builder.environment().putAll(pairs)
-    builder.environment()["SERVER_PORT"] = port.toString()
-
+    val environment = builder.environment()
+    environment.putAll(pairs)
+    environment["SERVER_PORT"] = port.toString()
     return builder.start()
 }
 
@@ -54,7 +53,7 @@ fun forceStop(port: Int) {
                 arrayOf(
                     "cmd",
                     "/c",
-                    "for /f \"tokens=5\" %i in ('netstat -ano ^| findstr :$port') do taskkill /PID %i /F\n"
+                    "for /f \"tokens=5\" %i in ('netstat -ano ^| findstr :$port') do taskkill /PID %i /F"
                 )
             )
     }
@@ -66,13 +65,13 @@ fun stopServer(serverProcess: Process, port: Int) {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-fun startServer(port: Int, envFilePath: String): Process? {
+fun startServer(envFileBasePath: String, port: Int): Process? {
     forceStop(port)
-    val serverProcess = runGradle(envFilePath, port) ?: return null
+    val serverProcess = runGradle(envFileBasePath, port) ?: return null
     val latch = CountDownLatch(1)
     GlobalScope.launch {
         serverProcess.inputStream.bufferedReader().use {
-            while (serverProcess.isAlive) {
+            while (serverProcess.isRunning()) {
                 val line = it.readLine() ?: break
                 println(line)
                 if (line.contains("Application started")) {
@@ -83,7 +82,7 @@ fun startServer(port: Int, envFilePath: String): Process? {
     }
     GlobalScope.launch {
         serverProcess.errorStream.bufferedReader().use {
-            while (serverProcess.isAlive) {
+            while (serverProcess.isRunning()) {
                 val line = it.readLine() ?: break
                 if (line.contains("Execution failed for task ':server:")) {
                     error(line)
@@ -96,3 +95,5 @@ fun startServer(port: Int, envFilePath: String): Process? {
     latch.await()
     return serverProcess
 }
+
+private fun Process.isRunning() = runCatching { this@isRunning.exitValue() }.getOrNull() == null

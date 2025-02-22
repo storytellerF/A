@@ -25,6 +25,7 @@ import app.cash.paging.compose.itemKey
 import com.dokar.sonner.ToastType
 import com.dokar.sonner.ToasterState
 import com.storyteller_f.a.app.*
+import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
@@ -33,10 +34,7 @@ import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.topic.MediaPicker
 import com.storyteller_f.a.app.pages.topic.insertContent
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.shared.model.MediaInfo
-import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -104,29 +102,46 @@ private fun RoomPageInternal(
     lazyListState: LazyListState,
     items: LazyPagingItems<TopicInfo>
 ) {
-    LazyColumn(
-        state = lazyListState,
-        modifier = modifier.padding(top = 10.dp),
-        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
-        reverseLayout = true,
-    ) {
-        items(
-            count = items.itemCount,
-            key = items.itemKey { topicInfo ->
-                topicInfo.id.toString()
-            },
-        ) { index ->
-            val next = if (index + 1 < items.itemCount) {
-                items[index + 1]
-            } else {
-                null
+    Box(modifier) {
+        StateView(items) {
+            LazyColumn(
+                state = lazyListState,
+                modifier = Modifier.padding(top = 10.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+                reverseLayout = true,
+            ) {
+                items(
+                    count = items.itemCount,
+                    key = items.itemKey { topicInfo ->
+                        topicInfo.id.toString()
+                    },
+                ) { index ->
+                    val next = if (index + 1 < items.itemCount) {
+                        items[index + 1]
+                    } else {
+                        null
+                    }
+                    val current = items[index]
+                    current?.let { info ->
+                        TopicCell(
+                            info,
+                            false,
+                            next?.author != info.author
+                        )
+                    }
+                }
             }
-            val current = items[index]
-            current?.let { info ->
-                TopicCell(
-                    info,
-                    false,
-                    next?.author != info.author
+        }
+        if (lazyListState.firstVisibleItemScrollOffset > 0) {
+            val scope = rememberCoroutineScope()
+            IconButton({
+                scope.launch {
+                    lazyListState.animateScrollToItem(0, 0)
+                }
+            }, modifier = Modifier.align(Alignment.BottomStart)) {
+                Icon(
+                    Icons.Default.ArrowCircleDown,
+                    "move to newer topic",
                 )
             }
         }
@@ -145,12 +160,13 @@ fun RoomInputGroup(
     var input by remember {
         mutableStateOf("")
     }
+    val my by LoginViewModel.user.collectAsState()
     val controller = remember {
         CustomAlertDialogController()
     }
     val wsClient = LocalWsClient.current
-    val listener = remember {
-        buildInputBoxContentListener(input) {
+    val listener = remember(input, my) {
+        buildInputBoxContentListener(input, my) {
             input = ""
         }
     }
@@ -164,8 +180,9 @@ fun RoomInputGroup(
     val localState by wsClient.localState.collectAsState()
     val isSending = localState is LoadingState.Loading
     val updateInput: (String) -> Unit = {
-        if (!isSending)
+        if (!isSending) {
             input = it
+        }
     }
     if (roomInfo != null) {
         RoomInputGroupInternal(roomId, roomInfo, topicId, input, scrollToNew, scope, controller, wsClient, updateInput)
@@ -225,19 +242,21 @@ private fun RoomInputGroupInternal(
     }
 }
 
-private fun buildInputBoxContentListener(input: String, updateInput: (String) -> Unit): ClientWsListener {
+private fun buildInputBoxContentListener(
+    input: String,
+    userInfo: UserInfo?,
+    updateInput: (String) -> Unit
+): ClientWsListener {
     return object : ClientWsListener {
         override fun onReceived(frame: RoomFrame) {
             if (frame is RoomFrame.NewTopicInfo) {
-                val content = frame.topicInfo.content
-                if (content is TopicContent.Plain) {
-                    if (content.plain == input) {
-                        updateInput("")
-                    }
+                val topicInfo = frame.topicInfo
+                val content = topicInfo.content
+                if (content is TopicContent.Plain && userInfo?.id == topicInfo.author && content.plain == input) {
+                    updateInput("")
                 }
             }
         }
-
     }
 }
 
@@ -256,17 +275,22 @@ class RoomMessageContext(
 private fun sendRoomTopic(
     c: RoomMessageContext
 ) {
-    val keyState = c.keysViewModel.handler.state.value
-    val keyData = c.keysViewModel.handler.data.value
+    val handler = c.keysViewModel.handler
+    val keyState = handler.state.value
+    val keyData = handler.data.value
     if (c.roomInfo.isJoined) {
-        sendMessage(c.roomInfo, c.input, c.scrollToNew, keyState, keyData, c.topicId, wsClient = c.wsClient) {
-            c.scope.launch {
-                c.toasterState.show(
-                    getString(Res.string.private_room_pub_key_loading),
-                    type = ToastType.Info,
-                    duration = 1.seconds
-                )
+        c.wsClient.useWebSocket {
+            sendMessage(c.roomInfo, c.input, keyData, c.topicId, keyState) {
+                c.scope.launch {
+                    c.toasterState.show(
+                        getString(Res.string.private_room_pub_key_loading),
+                        type = ToastType.Info,
+                        duration = 1.seconds
+                    )
+                }
             }
+            delay(500)
+            c.scrollToNew()
         }
     } else {
         c.scope.launch {
@@ -340,29 +364,6 @@ fun CommonInputButton(
 
         else -> {
             CircularProgressIndicator()
-        }
-    }
-}
-
-fun sendMessage(
-    roomInfo: RoomInfo?,
-    input: String,
-    scrollToNew: () -> Unit,
-    keyState: LoadingState?,
-    keyData: List<Pair<PrimaryKey, String>>?,
-    topicId: PrimaryKey?,
-    wsClient: ClientWebSocket,
-    notifyPubKeyStillLoading: () -> Unit
-) {
-    if (roomInfo != null) {
-        if (keyState !is LoadingState.Done || keyData == null) {
-            notifyPubKeyStillLoading()
-            return
-        }
-        wsClient.useWebSocket {
-            sendMessage(roomInfo, input, keyData, topicId)
-            delay(500)
-            scrollToNew()
         }
     }
 }

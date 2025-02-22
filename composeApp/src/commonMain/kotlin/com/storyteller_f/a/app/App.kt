@@ -180,7 +180,7 @@ fun App2(navigator: NavHostController, httpUrl: String, wsServerUrl: String, con
             setupRequest(httpUrl)
         }
         CompositionLocalProvider(LocalClient provides client) {
-            val ws = remeberWsClient(client, wsServerUrl, appNav)
+            val ws = rememberWsClient(client, wsServerUrl, appNav)
             CompositionLocalProvider(LocalWsClient provides ws) {
                 GlobalDialog(globalDialogState)
                 val toasterState = rememberToasterState()
@@ -202,13 +202,17 @@ private fun buildWsListener(
 ) = object : ClientWsListener {
     override fun onReceived(frame: RoomFrame) {
         if (frame is RoomFrame.NewTopicInfo) {
-            val message = frame.topicInfo.content
+            val topicInfo = frame.topicInfo
+            val message = topicInfo.content
             if (message is TopicContent.Plain) {
                 if (platform.isActive) {
-                    if (appNav.toRoute<RoomScreen>()?.roomId != frame.topicInfo.parentId &&
-                        appNav.toRoute<TopicScreen>()?.topicId != frame.topicInfo.parentId
+                    val roomScreen = appNav.toRoute<RoomScreen>()
+                    val topicScreen = appNav.toRoute<TopicScreen>()
+                    if (roomScreen?.roomId != topicInfo.parentId &&
+                        topicScreen?.topicId != topicInfo.parentId
                     ) {
-                        messageToasterState.show(message)
+                        val nickname = topicInfo.extension?.authorInfo?.nickname
+                        messageToasterState.show("$nickname: ${message.plain}")
                     }
                 } else if (hasPermission) {
                     sendTopicNotification(message)
@@ -216,12 +220,10 @@ private fun buildWsListener(
             }
         }
     }
-
-
 }
 
 @Composable
-private fun remeberWsClient(
+private fun rememberWsClient(
     client: HttpClient,
     wsServerUrl: String,
     appNav: AppNav
@@ -230,7 +232,7 @@ private fun remeberWsClient(
         ClientWebSocket({
             client.webSocketSession(buildUrl {
                 takeFrom(wsServerUrl)
-                path("link")
+                appendPathSegments("link")
             }.toString()) {
                 addRequestHeaders(LoginViewModel.session?.first)
             }
@@ -248,7 +250,7 @@ private fun remeberWsClient(
     Toaster(messageToasterState, alignment = Alignment.TopCenter)
     val notificationProvider = getNotificationProvider()
     val hasPermission by notificationProvider.hasPermissionState
-    val listener = remember {
+    val listener = remember(hasPermission) {
         buildWsListener(appNav, messageToasterState, hasPermission)
     }
     remember.addListener(listener)
@@ -291,7 +293,7 @@ fun LoginCheck(content: @Composable () -> Unit) {
     if (currentState is ClientSession.SignUpSuccess && user == null) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             if (tried) {
-                Column {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Button({
                         scope.launch {
                             signOut(client)
@@ -470,6 +472,7 @@ fun updateDocumentInParent(info: TopicInfo) {
 }
 
 fun updateDocument(collectionName: String, info: TopicInfo) {
+    assert(!info.isPrivate || info.content is TopicContent.Encrypted)
     getOrCreateCollection(collectionName).save(
         MutableDocument(
             info.id.toString(),
@@ -488,7 +491,7 @@ val bus = MutableSharedFlow<Any>()
 
 inline fun <reified T : Any> AppNav.toRoute(): T? {
     if (!hasRoute(T::class)) return null
-    return currentDestination?.toRoute()
+    return currentDestination?.toRoute<T>()
 }
 
 interface AppNav {
@@ -632,6 +635,5 @@ private fun sendTopicNotification(message: TopicContent.Plain) {
             )
         }
     ) {
-
     }
 }

@@ -12,14 +12,17 @@ class TopicContentTest : UsingContextTest() {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun `test app`() = jvmBasedTest {
-        runComposeUiTest {
-            setContent {
-                AppInternal(it, it.replace("http", "ws"))
-            }
+    fun testApp() = jvmBasedTest {
+        onActivity {
+            runComposeUiTest {
+                setContent {
+                    AppInternal(it, it.replace("http", "ws"))
+                }
 
-            onNodeWithTag("me").performClick()
+                onNodeWithTag("me").performClick()
+            }
         }
+
     }
 }
 

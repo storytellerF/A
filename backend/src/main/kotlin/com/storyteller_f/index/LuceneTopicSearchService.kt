@@ -112,7 +112,15 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
             try {
                 DirectoryReader.open(it).use { reader ->
                     val searcher = IndexSearcher(reader)
-                    val combinedQuery = buildQuery(preTopicId, nextTopicId, word, rootType, parentType, rootIdList, parentIdList).build()
+                    val combinedQuery = buildQuery(
+                        preTopicId,
+                        nextTopicId,
+                        word,
+                        rootType,
+                        parentType,
+                        rootIdList,
+                        parentIdList
+                    )
                     Napier.i {
                         "lucene search query $combinedQuery"
                     }
@@ -145,7 +153,7 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
         parent: ObjectType?,
         rootIdList: List<PrimaryKey>?,
         parentIdList: List<PrimaryKey>?
-    ): BooleanQuery.Builder {
+    ): BooleanQuery? {
         val analyzer = StandardAnalyzer()
         val combinedQuery = BooleanQuery
             .Builder()
@@ -188,7 +196,7 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
         parentIdList?.let {
             combinedQuery.add(LongPoint.newSetQuery("parentId", it), BooleanClause.Occur.MUST)
         }
-        return combinedQuery
+        return combinedQuery.build()
     }
 
     private fun <R> useLucene(block: (FSDirectory) -> R): Result<R> {

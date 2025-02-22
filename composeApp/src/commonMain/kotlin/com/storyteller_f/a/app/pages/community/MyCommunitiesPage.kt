@@ -33,9 +33,10 @@ fun MyCommunitiesPage() {
 @Composable
 fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInfo) -> Unit)? = null) {
     StateView(items, modifier = Modifier.fillMaxSize()) {
-        CommunityConstrains(modifier = Modifier.fillMaxHeight()) { count, gridSpan, itemSpan ->
+        CommunityConstrains { count, gridSpan, itemSpan ->
             LazyVerticalGrid(
                 GridCells.Fixed(count),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)

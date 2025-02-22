@@ -6,6 +6,7 @@ import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.TitleType
+import io.ktor.http.*
 import kotlin.test.Test
 
 class TitleTest {
