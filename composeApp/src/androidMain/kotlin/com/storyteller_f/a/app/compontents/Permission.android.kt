@@ -8,7 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import com.storyteller_f.a.app.MainActivity
+import androidx.lifecycle.Lifecycle
 import io.github.aakira.napier.Napier
 import java.lang.ref.WeakReference
 
@@ -51,14 +51,17 @@ var mainAppRef: WeakReference<ComponentActivity>? = null
 
 fun bindActivity(activity: ComponentActivity) {
     mainAppRef = WeakReference(activity)
-    val launcher = activity.registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            requestQueue.removeAt(0)
+    val currentState = activity.lifecycle.currentState
+    if (currentState.isAtLeast(Lifecycle.State.CREATED) && !currentState.isAtLeast(Lifecycle.State.DESTROYED)) {
+        val launcher = activity.registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                requestQueue.removeAt(0)
+            }
         }
+        launcherRef = WeakReference(launcher)
     }
-    launcherRef = WeakReference(launcher)
 }
 
 fun unbindActivity() {

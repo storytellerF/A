@@ -6,6 +6,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.apache.http.client.utils.URIBuilder
 import org.apache.tika.Tika
 import java.io.File
 import java.net.URLConnection
@@ -61,7 +62,7 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
                     if (file.exists()) {
                         val item = stat(it, file)
                         val dimension = getDimension(file, item.contentType)
-                        MediaInfo("${url}amedia/$it", item, dimension)
+                        MediaInfo(URIBuilder(url).setPath("amedia/$it").build().toString(), item, dimension)
                     } else {
                         null
                     }

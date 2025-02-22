@@ -1,8 +1,11 @@
 package device_based
 
+import androidx.compose.runtime.*
 import androidx.compose.ui.test.*
+import coil3.compose.LocalPlatformContext
 import com.storyteller_f.a.app.AppInternal
 import com.storyteller_f.a.app.setupRequest
+import com.storyteller_f.a.app.utils.initEnvironment
 import com.storyteller_f.a.client_lib.getClient
 import com.storyteller_f.shared.getPlatform
 import io.ktor.client.plugins.*
@@ -18,10 +21,20 @@ class AppTest {
     @OptIn(ExperimentalTestApi::class)
     @Test
     fun myTest() {
-        test {
+        runServer {
             runComposeUiTest {
                 setContent {
-                    AppInternal(it, it.replace("http", "ws"))
+                    val current = LocalPlatformContext.current
+                    var initDone by remember {
+                        mutableStateOf(false)
+                    }
+                    LaunchedEffect(null) {
+                        initEnvironment(current)
+                        initDone = true
+                    }
+                    if (initDone) {
+                        AppInternal(it, it.replace("http", "ws"))
+                    }
                 }
 
                 onNodeWithTag("me").performClick()
@@ -30,7 +43,7 @@ class AppTest {
 
     }
 
-    private fun test(block: (String) -> Unit) {
+    private fun runServer(block: (String) -> Unit) {
         val ip = "localhost"
         runBlocking {
             val testClient = getClient {

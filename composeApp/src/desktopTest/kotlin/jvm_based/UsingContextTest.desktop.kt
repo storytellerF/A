@@ -10,8 +10,14 @@ actual abstract class UsingContextTest {
     @Before
     fun setup() {
         Assume.assumeTrue(System.getProperty("os.name").orEmpty().contains("win", true))
-        System.load(File(AppConfig.PROJECT_PATH, "src/androidUnitTests/jniLibs/LiteCore.dll").absolutePath)
-        System.load(File(AppConfig.PROJECT_PATH, "src/androidUnitTests/jniLibs/LiteCoreJNI.dll").absolutePath)
+        Assume.assumeNoException(kotlin.runCatching {
+            System.load(File(AppConfig.PROJECT_PATH, "src/androidUnitTests/jniLibs/LiteCore.dll").absolutePath)
+            System.load(File(AppConfig.PROJECT_PATH, "src/androidUnitTests/jniLibs/LiteCoreJNI.dll").absolutePath)
+        }.exceptionOrNull())
         CouchbaseLite.init()
+    }
+
+    actual fun onActivity(block: () -> Unit) {
+        block()
     }
 }

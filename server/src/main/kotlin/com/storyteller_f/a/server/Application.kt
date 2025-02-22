@@ -2,14 +2,11 @@ package com.storyteller_f.a.server
 
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.MergedEnv
+import com.storyteller_f.*
 import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
-import com.storyteller_f.buildBackendFromEnv
 import com.storyteller_f.media.loadAvif
-import com.storyteller_f.readEnv
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.http.*
@@ -41,9 +38,7 @@ fun main(args: Array<String>) {
     SnowflakeFactory.setMachine(0)
 
     val map = readEnv()
-
     processPreSetData(map)
-
     val serverPort = map["SERVER_PORT"].takeIf { it.isNotEmpty() }?.toInt() ?: 80
     val extraArgs = arrayOf("-port=$serverPort")
 
@@ -94,16 +89,8 @@ private fun processPreSetData(env: MergedEnv) {
 
 @Suppress("unused")
 fun Application.module() {
-    val associate = engine.environment.config.toMap().mapNotNull {
-        (it.value as? String)?.let { v ->
-            it.key to v
-        }
-    }.associate { it }
-    val map = readEnv(associate)
-    val backend = buildBackendFromEnv(map)
-    val reader = DatabaseReader.Builder(
-        ClassLoader.getSystemClassLoader().getResourceAsStream("GeoLite2-Country.mmdb")
-    ).build()
+    val reader = buildDatabaseReader()
+    val backend = buildBackend()
     DatabaseFactory.init(backend.config.databaseConnection)
 
     install(ContentNegotiation) {
@@ -155,6 +142,24 @@ fun Application.module() {
     install(Resources)
     configureAuth(backend, reader)
 }
+
+private fun Application.buildBackend(): Backend {
+    val associate = engine.environment.config.toMap().mapNotNull {
+        (it.value as? String)?.let { v ->
+            it.key to v
+        }
+    }.associate { it }
+    val env = readEnv(associate)
+    Napier.i {
+        "start server at ${env["SERVER_PORT"]}"
+    }
+    val backend = buildBackendFromEnv(env)
+    return backend
+}
+
+private fun buildDatabaseReader() = DatabaseReader.Builder(
+    ClassLoader.getSystemClassLoader().getResourceAsStream("GeoLite2-Country.mmdb")
+).build()
 
 private fun buildLog(
     call: ApplicationCall,

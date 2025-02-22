@@ -8,7 +8,6 @@ import androidx.paging.RemoteMediator
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.DialogSaveState
-import com.storyteller_f.a.app.pages.topic.processEncryptedTopic
 import com.storyteller_f.a.app.updateDocument
 import com.storyteller_f.a.app.updateDocumentInParent
 import com.storyteller_f.a.client_lib.*
@@ -436,6 +435,7 @@ class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean, client: Ht
     }
 }
 
+@OptIn(ExperimentalPagingApi::class)
 class TitlesViewModel(
     client: HttpClient,
     uid: PrimaryKey,

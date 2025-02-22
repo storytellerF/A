@@ -2,6 +2,8 @@ package jvm_based
 
 import android.content.ComponentName
 import android.content.ContentProvider
+import androidx.lifecycle.Lifecycle
+import androidx.test.core.app.ActivityScenario
 import com.storyteller_f.a.app.MainActivity
 import kotbase.CouchbaseLite
 import org.junit.Assume
@@ -51,6 +53,19 @@ actual abstract class UsingContextTest {
             // Tests that don't depend on Compose will not have the provider class in classpath and will get
             // ClassNotFoundException. Skip configuring the provider for them.
             null
+        }
+    }
+
+    actual fun onActivity(block: () -> Unit) {
+        // GIVEN
+        val scenario = ActivityScenario.launch(MainActivity::class.java)
+
+        // WHEN
+        scenario.moveToState(Lifecycle.State.CREATED)
+
+        // THEN
+        scenario.onActivity {
+            block()
         }
     }
 }

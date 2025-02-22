@@ -64,17 +64,26 @@ suspend fun RoutingContext.uploadMedia(
             when (part) {
                 is PartData.FileItem -> {
                     val fileName = part.originalFileName as String
-                    val file = File(root, Uuid.random().toString() + fileName)
+                    // total 93
+                    val extension = fileName.substringAfterLast(".").take(10)
+                    val originName = fileName.substringBeforeLast(".")
+                    val uuid = Uuid.random().toHexString()
+                    val name = originName.take(60 - extension.length) + uuid
+                    val newSavedFileName = if (fileName.length > 60) {
+                        "${originName.take(27 - extension.length)}$uuid.$extension"
+                    } else {
+                        fileName
+                    }
+                    val file = File(root, "$name.$extension")
                     // ktor 自带检查，保险起见再次检查
                     if (file.canonicalPath == file.absolutePath) {
                         val fileBytes = part.provider().readRemaining().readByteArray()
-
                         try {
                             file.writeBytes(fileBytes)
                             val info = uploadFiles(
                                 tika,
                                 backend,
-                                listOf(Triple(file, "${it.objectId}/$fileName", part.contentType.toString()))
+                                listOf(Triple(file, "${it.objectId}/$newSavedFileName", part.contentType.toString()))
                             ).getOrThrow()
                             result.addAll(info.filterNotNull())
                         } finally {

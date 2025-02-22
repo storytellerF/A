@@ -109,11 +109,9 @@ class ClientWebSocket(
                     }
                 }
             }.onFailure {
-                Napier.e(it, tag = "pagination") {
-                    "Exception in Client WebSocket"
+                Napier.e(it, tag = "ClientWebSocket") {
+                    "Exception in startListenerWebSocket"
                 }
-                connectionHandler.data.value = null
-                connectionHandler.state.value = null
             }
         }
     }

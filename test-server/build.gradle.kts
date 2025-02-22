@@ -9,7 +9,7 @@ plugins {
 group = "com.storyteller_f.a"
 version = "1.0.0"
 application {
-    mainClass.set("com.storyteller_f.a.server.ApplicationKt")
+    mainClass.set("com.storyteller_f.a.test_server.TestServerApplicationKt")
     applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 
@@ -47,6 +47,7 @@ buildConfig {
 
 tasks.withType<JavaExec> {
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
+    standardInput = System.`in`
 }
 
 tasks.withType<Tar> {

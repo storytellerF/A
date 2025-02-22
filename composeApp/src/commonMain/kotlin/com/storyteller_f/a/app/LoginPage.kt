@@ -149,7 +149,7 @@ fun SelectFile(isSignUp: Boolean) {
             scope.launch {
                 val f = FileKit.pickFile()
                 if (f != null) {
-                    startSign(String(f.readBytes()), appNav, client, isSignUp)
+                    startSign(String(f.readBytes()).replace("\r\n", "\n"), appNav, client, isSignUp)
                 }
             }
         }) {

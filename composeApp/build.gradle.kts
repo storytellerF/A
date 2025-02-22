@@ -406,11 +406,15 @@ tasks.withType(KotlinCompile::class.java).configureEach {
 tasks.getByName("copyNonXmlValueResourcesForCommonMain").dependsOn("exportLibraryDefinitions")
 
 tasks.withType<Test> {
-    if (name == "testDebugUnitTest") {
-        exclude("**/device_based/*")
-    } else if (name == "testReleaseUnitTest") {
-        exclude("**/device_based/*", "**/jvm_based/*")
-    } else if (name == "desktopTest") {
-        exclude("**/device_based/*")
+    when (name) {
+        "testDebugUnitTest" -> {
+            exclude("**/device_based/*")
+        }
+        "testReleaseUnitTest" -> {
+            exclude("**/device_based/*", "**/jvm_based/*")
+        }
+        "desktopTest" -> {
+            exclude("**/device_based/*")
+        }
     }
 }
