@@ -55,6 +55,7 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
+import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -263,6 +264,9 @@ fun generateLatexImage(
     return runCatching {
         val key = md5(tex)
         val output = Path(SystemTemporaryDirectory, "latex/$key-$backgroundColor-$textColor-$size.png")
+        Napier.i {
+            "output $output"
+        }
         if (SystemFileSystem.exists(output)) {
             true to output
         } else {

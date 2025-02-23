@@ -54,7 +54,7 @@ kotlin {
             implementation(libs.kotlinx.datetime)
         }
         jvmMain.dependencies {
-            implementation(libs.ktor.client.java)
+            implementation(libs.ktor.client.okhttp)
         }
         if (buildIosTarget) {
             iosMain.dependencies {
