@@ -20,11 +20,11 @@ import io.ktor.server.routing.Route
 
 fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
     get<RouteTopics.Search> {
-        usePrincipalOrNull(reader) { id ->
+        usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                searchPublicTopics(p, n, s, it, backend, id)
+                searchPublicTopics(p, n, s, it, backend, uid)
             }
         }
     }
@@ -40,14 +40,14 @@ fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
     }
 
     get<RouteTopics.Id> {
-        usePrincipalOrNull(reader) { id ->
-            getTopic(it.id, id, backend, it.parent.fillHasCommented)
+        usePrincipalOrNull(reader) { uid ->
+            getTopic(it.id, uid, backend, it.parent.fillHasCommented)
         }
     }
 
     get<RouteTopics> {
-        usePrincipalOrNull(reader) { id ->
-            it.aid?.let { aid -> getTopicByAid(aid, id, backend, it.fillHasCommented) } ?: Result.success(null)
+        usePrincipalOrNull(reader) { uid ->
+            it.aid?.let { aid -> getTopicByAid(aid, uid, backend, it.fillHasCommented) } ?: Result.success(null)
         }
     }
 
@@ -64,37 +64,38 @@ fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
                     p,
                     n,
                     s,
-                    it.parent.parent.fillHasCommented
+                    it.parent.parent.fillHasCommented,
+                    it.pinType
                 )
             }
         }
     }
     get<RouteTopics.Id.Reactions> {
-        usePrincipalOrNull(reader) { id ->
-            reactionList(it.parent.id, id, it.parent.parent.fillHasCommented)
+        usePrincipalOrNull(reader) { uid ->
+            reactionList(it.parent.id, uid, it.fillHasReacted)
         }
     }
 }
 
 fun Route.bindProtectedSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
     get<RouteTopics.Id.Snapshot> {
-        usePrincipal(reader) { id ->
-            createTopicSnapshot(id, it.parent.id, backend)
+        usePrincipal(reader) { uid ->
+            createTopicSnapshot(uid, it.parent.id, backend)
         }
     }
 
     post<RouteTopics> {
-        usePrincipal(reader) {
+        usePrincipal(reader) { uid ->
             val topic = call.receive<NewTopic>()
-            addTopicAtCommunity(it, backend, topic)
+            addTopicAtCommunity(uid, backend, topic)
         }
     }
 
     post<RouteTopics.Id.Reactions> {
-        usePrincipal(reader) { id ->
+        usePrincipal(reader) { uid ->
             val emoji = call.receive<NewReaction>().emoji
             if (isEmoji(emoji)) {
-                addReaction(id, it.parent.id, emoji)
+                addReaction(uid, it.parent.id, emoji)
             } else {
                 Result.failure(BadRequestException("invalid emoji"))
             }
@@ -102,14 +103,26 @@ fun Route.bindProtectedSafeTopicRoute(backend: Backend, reader: DatabaseReader) 
     }
 
     post<RouteReactions.Delete> {
-        usePrincipal(reader) { id ->
+        usePrincipal(reader) { uid ->
             val deleteReaction = call.receive<DeleteReaction>()
             val emoji = deleteReaction.emoji
             if (isEmoji(emoji)) {
-                deleteReaction(id, emoji, deleteReaction.objectId)
+                deleteReaction(uid, emoji, deleteReaction.objectId)
             } else {
                 Result.failure(BadRequestException("invalid emoji"))
             }
+        }
+    }
+
+    post<RouteTopics.Id.Pin> {
+        usePrincipal(reader) { uid ->
+            updateTopicPin(uid, it.parent.id, true)
+        }
+    }
+
+    post<RouteTopics.Id.Unpin> {
+        usePrincipal(reader) { uid ->
+            updateTopicPin(uid, it.parent.id, false)
         }
     }
 }

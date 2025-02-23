@@ -12,6 +12,7 @@ import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetTopic
+import com.storyteller_f.shared.obj.PresetUser
 import com.storyteller_f.shared.obj.PresetValue
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
@@ -261,17 +262,17 @@ class AddPreset : Subcommand("add", "add entry") {
                 )
             }
         ).getOrThrow()
-        presetTopicList.forEachIndexed { index, topic ->
+        presetTopicList.forEachIndexed { _, topic ->
             if (topic.room != null) {
                 val content = getTopicContent(topic, parentDir)
                 uploadFiles(tika, backend, extractMarkdownMediaLink(content).map {
                     Triple(File(parentDir, "images/topics/$it"), "${userList[topic.author]!!.id}/$it", null)
                 }).getOrThrow()
-            } else {
-                null
             }
         }
     }
+
+    data class EncryptedTopicTuple(val index: Int, val encryptedKey: ByteArray, val aesKey: ByteArray, val presetTopic: PresetTopic)
 
     private suspend fun insertEncryptedTopicToRoom(
         roomIsPrivate: Map<String, Boolean>,
@@ -305,7 +306,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }.associate { it }
         val encrypted = topicsPrivate.map { (addTopic, index) ->
             val (first, aesBytes) = encrypt(getTopicContent(addTopic, parentDir))
-            Tuple4(index, first, aesBytes, addTopic)
+            EncryptedTopicTuple(index, first, aesBytes, addTopic)
         }
         val encryptedKeys = encrypted.flatMap { (index, _, aesBytes, topic) ->
             roomMembers[topic.room]!!.map {
@@ -461,6 +462,8 @@ class AddPreset : Subcommand("add", "add entry") {
         return content
     }
 
+    data class UserPresetTuple(val presetUser: PresetUser, val pic: String?, val publicKey: String, val address: String, val id: PrimaryKey)
+
     private suspend fun addUsers(presetValue: PresetValue, parentDir: File?, tika: Tika) {
         val userList = presetValue.userData ?: return
         Napier.i {
@@ -473,7 +476,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val ad = calcAddress(derPublicKey)
             val icon = it.icon
             if (icon == null) {
-                Tuple5(it, null, derPublicKey, ad, id)
+                UserPresetTuple(it, null, derPublicKey, ad, id)
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/avatar.${path.extension}"
@@ -482,7 +485,7 @@ class AddPreset : Subcommand("add", "add entry") {
                     backend,
                     listOf(Triple(path, "$id/${"avatar.${path.extension}"}", null))
                 ).getOrThrow()
-                Tuple5(it, p, derPublicKey, ad, id)
+                UserPresetTuple(it, p, derPublicKey, ad, id)
             }
         }
         DatabaseFactory.dbQuery {

@@ -7,6 +7,9 @@ import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTopic
+import com.storyteller_f.shared.obj.TopicPinSearch
+import com.storyteller_f.shared.obj.TopicPinSearch.PINNED
+import com.storyteller_f.shared.obj.TopicPinSearch.UNPINNED
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
@@ -17,6 +20,7 @@ import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
 import org.apache.pdfbox.pdmodel.font.PDType0Font
+import org.jetbrains.exposed.sql.and
 import rst.pdfbox.layout.elements.Document
 import rst.pdfbox.layout.elements.Paragraph
 import java.awt.GraphicsEnvironment
@@ -52,7 +56,8 @@ suspend fun addTopicAtCommunity(uid: PrimaryKey, backend: Backend, newTopic: New
                     parentType = newTopic.parentType,
                     rootId = rootId,
                     rootType = rootType,
-                    lastModifiedTime = now(),
+                    false,
+                    lastModifiedTime = null,
                 )
                 val plain = TopicContent.Plain(content)
                 DatabaseFactory.saveTopic(topic, backend, plain).mapResult { topicInfo ->
@@ -259,14 +264,20 @@ suspend fun getTopLevelTopicsInObject(
     preTopicId: PrimaryKey?,
     nextTopicId: PrimaryKey?,
     size: Int,
-    fillHasCommented: Boolean?
+    fillHasCommented: Boolean?,
+    pinType: TopicPinSearch? = null,
 ): Result<PaginationResult<TopicInfo>?> {
     return checkRootReadPermission(parentType, parentId, uid).mapResultNotNull { (hasRead, _, isPrivate) ->
         if (isPrivate && !hasRead) {
             Result.failure(ForbiddenException("Permission Denied"))
         } else {
             getTopicsPagingByPredicate(uid, preTopicId, nextTopicId, size, fillHasCommented) { ->
-                Topics.parentId eq parentId
+                val baseQuery = Topics.parentId eq parentId
+                when (pinType) {
+                    PINNED -> baseQuery and (Topics.pinned eq true)
+                    UNPINNED -> baseQuery and (Topics.pinned eq false)
+                    else -> baseQuery
+                }
             }.mapResult { (data, count) ->
                 processTopicsContent(isPrivate, backend, data, uid).map {
                     PaginationResult(it, count)
@@ -608,3 +619,23 @@ suspend fun getTopicByIds(
         }
     }
 }
+
+suspend fun updateTopicPin(uid: PrimaryKey, topicId: PrimaryKey, newValue: Boolean) =
+    checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultNotNull {
+        if (it.hasAdmin) {
+            DatabaseFactory.getTopicInfo(topicId, null, uid).mapResultNotNull { info ->
+                if (info.isPin == newValue) {
+                    Result.success(info)
+                } else {
+                    DatabaseFactory.updateTopicStatus(topicId, newValue).map {
+                        if (it)
+                            info.copy(isPin = newValue)
+                        else
+                            info
+                    }
+                }
+            }
+        } else {
+            Result.failure(CustomBadRequestException("Permission Denied"))
+        }
+    }

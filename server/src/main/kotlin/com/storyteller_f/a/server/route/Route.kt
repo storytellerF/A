@@ -10,6 +10,7 @@ import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.shared.model.MediaResponse
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.TitleSearchType
+import com.storyteller_f.shared.obj.TopicPinSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleType
@@ -44,7 +45,7 @@ class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = nul
         class Exit(val parent: Id)
 
         @Resource("topics")
-        class Topics(val parent: Id, val fillHasCommented: Boolean? = null)
+        class Topics(val parent: Id, val fillHasCommented: Boolean? = null, val pinType: TopicPinSearch? = null)
     }
 }
 
@@ -76,7 +77,7 @@ class RouteRooms(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
         class PubKeys(val parent: Id)
 
         @Resource("topics")
-        class Topics(val parent: Id, val fillHasCommented: Boolean? = null)
+        class Topics(val parent: Id, val fillHasCommented: Boolean? = null, val pinType: TopicPinSearch? = null)
 
         @Resource("exit")
         class Exit(val parent: Id)
@@ -105,10 +106,16 @@ class RouteTopics(val fillHasCommented: Boolean? = null, val aid: String? = null
         class Snapshot(val parent: Id)
 
         @Resource("topics")
-        class Topics(val parent: Id)
+        class Topics(val parent: Id, val pinType: TopicPinSearch?  = null)
 
         @Resource("reactions")
         class Reactions(val parent: Id, val fillHasReacted: Boolean? = null)
+
+        @Resource("pin")
+        class Pin(val parent: Id)
+
+        @Resource("unpin")
+        class Unpin(val parent: Id)
     }
 }
 
@@ -123,7 +130,7 @@ class RouteUsers(val aid: String? = null) {
     @Resource("{id}")
     class Id(@Suppress("unused") val parent: RouteUsers = RouteUsers(), val id: PrimaryKey) {
         @Resource("topics")
-        class Topics(val parent: Id, val fillHasCommented: Boolean? = null)
+        class Topics(val parent: Id, val fillHasCommented: Boolean? = null, val pinType: TopicPinSearch? = null)
 
         @Resource("titles")
         class Titles(
