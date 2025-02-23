@@ -126,9 +126,14 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null, client: Http
                     }
                 },
                 jsonStringMapper = { json: String ->
-                    kotlin.runCatching {
+                    runCatching {
                         Json.decodeFromString<TopicInfo>(json)
                     }.getOrNull()
+                },
+                extraProcessor = {
+                    processEncryptedTopic(this).map {
+                        extractHeadlineIfPlain(it)
+                    }
                 }
             )
         },
@@ -147,7 +152,6 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null, client: Http
                 } else {
                     loadOnePageTopicList(loadKey, size, TopicPinSearch.UNPINNED)
                 }
-
             }
 
             private suspend fun loadOnePageTopicList(
@@ -155,18 +159,14 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null, client: Http
                 size: Int,
                 pinType: TopicPinSearch
             ): ServerResponse<TopicInfo> {
-                val info = when {
+                return when {
                     id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, size)
                     type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, size, pinType)
                     type == ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, size, pinType)
                     type == ObjectType.USER -> client.getUserTopics(id, loadKey, size, pinType)
                     else -> client.getTopicTopics(id, loadKey, size, pinType)
                 }.getOrThrow()
-                return info.copy(processEncryptedTopic(info.data).map {
-                    extractHeadlineIfPlain(it)
-                })
             }
-
         }),
         client
     ) {

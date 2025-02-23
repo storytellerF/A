@@ -17,10 +17,10 @@ public val ExtendIconPack.KeepOff: ImageVector
             return _keepOff!!
         }
         _keepOff = Builder(name = "KeepOff", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp,
-                viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+            viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
             path(fill = SolidColor(Color(0xFF5f6368)), stroke = null, strokeLineWidth = 0.0f,
-                    strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f,
-                    pathFillType = NonZero) {
+                strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f,
+                pathFillType = NonZero) {
                 moveTo(680.0f, 120.0f)
                 verticalLineToRelative(80.0f)
                 horizontalLineToRelative(-40.0f)
@@ -62,7 +62,7 @@ public val ExtendIconPack.KeepOff: ImageVector
                 close()
             }
         }
-        .build()
+            .build()
         return _keepOff!!
     }
 

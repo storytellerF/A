@@ -7,7 +7,9 @@ import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import kotbase.*
-import kotbase.ktx.*
+import kotbase.ktx.from
+import kotbase.ktx.limit
+import kotbase.ktx.toObjects
 import kotlinx.coroutines.CompletableDeferred
 
 val database by lazy {
@@ -33,6 +35,7 @@ class CustomQueryPagingSource<RowType : Identifiable>(
     private val queryProvider: From.(PrimaryKey?) -> LimitRouter,
     private val mapMapper: ((Map<String, Any?>) -> RowType?)? = null,
     private val jsonStringMapper: ((String) -> RowType?)? = null,
+    private val extraProcessor: suspend List<RowType>.() -> List<RowType> = { this }
 ) : PagingSource<PrimaryKey, RowType>() {
 
     private val collection = getOrCreateCollection(collectionName)
@@ -83,7 +86,7 @@ class CustomQueryPagingSource<RowType : Identifiable>(
                     }
                 }
             map[key ?: (DEFAULT_PRIMARY_KEY)] = listenerToken
-            val data = task.await()
+            val data = task.await().extraProcessor()
             Napier.v(tag = "pagination") {
                 "source nextKey = ${data.lastOrNull()?.id} ${data.size}"
             }
