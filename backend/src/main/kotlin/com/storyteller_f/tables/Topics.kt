@@ -108,7 +108,6 @@ fun Topic.toTopicInfo(commentCount: Long = 0, hasComment: Boolean = false, react
     )
 }
 
-
 suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey?, aid: String?, uid: PrimaryKey?): Result<TopicInfo?> {
     val t2 = Topics.alias("t2")
     val commentCountColumn = t2[Topics.id].countDistinct()

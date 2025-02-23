@@ -164,12 +164,13 @@ suspend fun getCommunityTopicList(
 ): Result<PaginationResult<TopicInfo>?> {
     return checkRootReadPermission(
         ObjectType.COMMUNITY,
-        communityId, id
+        communityId,
+        id
     ).mapResultNotNull { permission ->
         if (permission.hasRead) {
             getTopicsPagingByPredicate(id, preTopicId, nextTopicId, size, fillHasCommented) {
                 val baseQuery = Topics.parentId eq communityId
-                when(pinType) {
+                when (pinType) {
                     PINNED -> baseQuery and (Topics.pinned eq true)
                     UNPINNED -> baseQuery and (Topics.pinned eq false)
                     else -> baseQuery

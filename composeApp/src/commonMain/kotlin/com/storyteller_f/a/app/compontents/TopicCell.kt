@@ -82,5 +82,4 @@ fun TopicCellInternal(
             Icon(ExtendIconPack.Keep, "is pinned", modifier = Modifier.align(Alignment.TopEnd))
         }
     }
-
 }

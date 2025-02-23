@@ -628,10 +628,11 @@ suspend fun updateTopicPin(uid: PrimaryKey, topicId: PrimaryKey, newValue: Boole
                     Result.success(info)
                 } else {
                     DatabaseFactory.updateTopicStatus(topicId, newValue).map {
-                        if (it)
+                        if (it) {
                             info.copy(isPin = newValue)
-                        else
+                        } else {
                             info
+                        }
                     }
                 }
             }

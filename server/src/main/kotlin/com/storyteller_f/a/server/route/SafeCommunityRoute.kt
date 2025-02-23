@@ -12,7 +12,7 @@ import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.searchMembers
-import io.ktor.server.request.receive
+import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 
@@ -52,7 +52,17 @@ fun Route.bindSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                getTopLevelTopicsInObject(it.parent.id, ObjectType.COMMUNITY, uid, backend, p, n, s, it.fillHasCommented, it.pinType)
+                getTopLevelTopicsInObject(
+                    it.parent.id,
+                    ObjectType.COMMUNITY,
+                    uid,
+                    backend,
+                    p,
+                    n,
+                    s,
+                    it.fillHasCommented,
+                    it.pinType
+                )
             }
         }
     }

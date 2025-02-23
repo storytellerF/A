@@ -14,14 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
-import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.LocalClient
-import com.storyteller_f.a.app.LocalToaster
+import com.dokar.sonner.ToasterState
+import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.DialogContainer
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomRefCell
@@ -38,7 +37,6 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.formatTime
-import dev.tclement.fonticons.FontIcon
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
@@ -78,50 +76,62 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismiss: ()
 
             else -> {}
         }
-        Column {
-            val content = topicInfo.content
-            if (content is TopicContent.Plain) {
-                ButtonNav(Icons.Default.ContentCopy, stringResource(Res.string.copy)) {
-                    clipboardManager.setText(annotatedString = buildAnnotatedString {
-                        append(content.plain)
-                    })
-                }
-                val scope = rememberCoroutineScope()
-                val successText = stringResource(Res.string.success)
-                if (alreadyLoginIn) {
-                    val client = LocalClient.current
-                    ButtonNav(Icons.Default.PictureAsPdf, stringResource(Res.string.snapshot)) {
-                        scope.launch {
-                            globalDialogState.use {
-                                client.getTopicSnapshot(topicInfo.id)
-                                toasterState.show(successText, duration = 1.seconds)
-                            }
-                        }
-                    }
-                    ButtonNav(Icons.Default.Add, "Add") {
-                        dismiss()
-                        appNav.gotoTopicCompose(
-                            ObjectType.TOPIC,
-                            topicInfo.id,
-                            true,
-                            topicInfo.rootId.takeIf { topicInfo.rootType == ObjectType.ROOM && topicInfo.isPrivate }
-                        )
-                    }
-                }
+        TopicDialogMenuList(topicInfo, clipboardManager, alreadyLoginIn, toasterState, dismiss, appNav)
+    }
+}
 
+@Composable
+private fun TopicDialogMenuList(
+    topicInfo: TopicInfo,
+    clipboardManager: ClipboardManager,
+    alreadyLoginIn: Boolean,
+    toasterState: ToasterState,
+    dismiss: () -> Unit,
+    appNav: AppNav
+) {
+    Column {
+        val content = topicInfo.content
+        if (content is TopicContent.Plain) {
+            ButtonNav(Icons.Default.ContentCopy, stringResource(Res.string.copy)) {
+                clipboardManager.setText(annotatedString = buildAnnotatedString {
+                    append(content.plain)
+                })
+            }
+            val scope = rememberCoroutineScope()
+            val successText = stringResource(Res.string.success)
+            if (alreadyLoginIn) {
                 val client = LocalClient.current
-
-                ButtonNav(
-                    if (topicInfo.isPin) ExtendIconPack.KeepOff else ExtendIconPack.Keep,
-                    if (topicInfo.isPin) "Unpin" else "Pin"
-                ) {
+                ButtonNav(Icons.Default.PictureAsPdf, stringResource(Res.string.snapshot)) {
                     scope.launch {
                         globalDialogState.use {
-                            if (topicInfo.isPin)
-                                client.unpinTopic(topicInfo.id)
-                            else
-                                client.pinTopic(topicInfo.id)
+                            client.getTopicSnapshot(topicInfo.id)
+                            toasterState.show(successText, duration = 1.seconds)
+                        }
+                    }
+                }
+                ButtonNav(Icons.Default.Add, "Add") {
+                    dismiss()
+                    appNav.gotoTopicCompose(
+                        ObjectType.TOPIC,
+                        topicInfo.id,
+                        true,
+                        topicInfo.rootId.takeIf { topicInfo.rootType == ObjectType.ROOM && topicInfo.isPrivate }
+                    )
+                }
+            }
 
+            val client = LocalClient.current
+
+            ButtonNav(
+                if (topicInfo.isPin) ExtendIconPack.KeepOff else ExtendIconPack.Keep,
+                if (topicInfo.isPin) "Unpin" else "Pin"
+            ) {
+                scope.launch {
+                    globalDialogState.use {
+                        if (topicInfo.isPin) {
+                            client.unpinTopic(topicInfo.id)
+                        } else {
+                            client.pinTopic(topicInfo.id)
                         }
                     }
                 }

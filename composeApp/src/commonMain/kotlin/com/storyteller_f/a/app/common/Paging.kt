@@ -11,7 +11,7 @@ import io.ktor.client.*
 
 @OptIn(ExperimentalPagingApi::class)
 abstract class PagingViewModel<K : Any, V : Any>(
-    sourceBuilder: PagingViewModel<K, V>.() -> PagingSource<K, V>,
+    sourceBuilder: () -> PagingSource<K, V>,
     remoteMediator: RemoteMediator<K, V>? = null,
     val client: HttpClient
 ) :

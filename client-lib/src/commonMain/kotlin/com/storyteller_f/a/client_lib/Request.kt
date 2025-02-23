@@ -76,7 +76,7 @@ suspend fun HttpClient.getRoomTopics(
     roomId: PrimaryKey,
     nextTopicId: PrimaryKey?,
     size: Int,
-    pinType: TopicPinSearch
+    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
     get("rooms/$roomId/topics") {
         url {
@@ -93,7 +93,7 @@ suspend fun HttpClient.getCommunityTopics(
     communityId: PrimaryKey,
     nextCommunityId: PrimaryKey?,
     size: Int,
-    pinType: TopicPinSearch
+    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
     get("communities/$communityId/topics") {
         url {
@@ -110,7 +110,7 @@ suspend fun HttpClient.getUserTopics(
     userId: PrimaryKey,
     nextTopicId: PrimaryKey?,
     size: Int,
-    pinType: TopicPinSearch
+    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
     get("users/$userId/topics") {
         url {
@@ -522,13 +522,11 @@ suspend fun HttpClient.createRoom(newRoom: NewRoom) = serviceCatching {
 }
 
 suspend fun HttpClient.pinTopic(topicId: PrimaryKey) {
-    post("topics/${topicId}/pin") {
-
+    post("topics/$topicId/pin") {
     }.body<TopicInfo>()
 }
 
 suspend fun HttpClient.unpinTopic(topicId: PrimaryKey) {
-    post("topics/${topicId}/unpin") {
-
+    post("topics/$topicId/unpin") {
     }.body<TopicInfo>()
 }

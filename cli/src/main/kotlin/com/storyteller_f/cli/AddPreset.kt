@@ -8,13 +8,18 @@ import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.uploadFiles
-import com.storyteller_f.shared.*
+import com.storyteller_f.shared.calcAddress
+import com.storyteller_f.shared.encrypt
+import com.storyteller_f.shared.encryptAesKey
+import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetUser
 import com.storyteller_f.shared.obj.PresetValue
-import com.storyteller_f.shared.type.*
+import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
+import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
@@ -266,13 +271,41 @@ class AddPreset : Subcommand("add", "add entry") {
             if (topic.room != null) {
                 val content = getTopicContent(topic, parentDir)
                 uploadFiles(tika, backend, extractMarkdownMediaLink(content).map {
-                    Triple(File(parentDir, "images/topics/$it"), "${userList[topic.author]!!.id}/$it", null)
+                    val name = "${userList[topic.author]!!.id}/$it"
+                    Triple(File(parentDir, "images/topics/$it"), name, null)
                 }).getOrThrow()
             }
         }
     }
 
-    data class EncryptedTopicTuple(val index: Int, val encryptedKey: ByteArray, val aesKey: ByteArray, val presetTopic: PresetTopic)
+    data class EncryptedTopicTuple(
+        val index: Int,
+        val encryptedKey: ByteArray,
+        val aesKey: ByteArray,
+        val presetTopic: PresetTopic
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as EncryptedTopicTuple
+
+            if (index != other.index) return false
+            if (!encryptedKey.contentEquals(other.encryptedKey)) return false
+            if (!aesKey.contentEquals(other.aesKey)) return false
+            if (presetTopic != other.presetTopic) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = index
+            result = 31 * result + encryptedKey.contentHashCode()
+            result = 31 * result + aesKey.contentHashCode()
+            result = 31 * result + presetTopic.hashCode()
+            return result
+        }
+    }
 
     private suspend fun insertEncryptedTopicToRoom(
         roomIsPrivate: Map<String, Boolean>,
@@ -324,7 +357,7 @@ class AddPreset : Subcommand("add", "add entry") {
             this[EncryptedTopicKeys.encryptedAes] = ExposedBlob(t4)
             this[EncryptedTopicKeys.uid] = id
         }
-        u.forEachIndexed { index, topic ->
+        u.forEachIndexed { _, topic ->
             if (topic.room != null) {
                 val room = roomList[topic.room]
                 if (room != null) {
@@ -333,8 +366,6 @@ class AddPreset : Subcommand("add", "add entry") {
                         Triple(File(parentDir, "images/topics/$it"), "${room.id}/$it", null)
                     }).getOrThrow()
                 }
-            } else {
-                null
             }
         }
     }
@@ -462,7 +493,13 @@ class AddPreset : Subcommand("add", "add entry") {
         return content
     }
 
-    data class UserPresetTuple(val presetUser: PresetUser, val pic: String?, val publicKey: String, val address: String, val id: PrimaryKey)
+    data class UserPresetTuple(
+        val presetUser: PresetUser,
+        val pic: String?,
+        val publicKey: String,
+        val address: String,
+        val id: PrimaryKey
+    )
 
     private suspend fun addUsers(presetValue: PresetValue, parentDir: File?, tika: Tika) {
         val userList = presetValue.userData ?: return

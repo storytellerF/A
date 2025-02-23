@@ -43,7 +43,17 @@ fun Route.bindSafeUserRoute(backend: Backend, reader: DatabaseReader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                getTopLevelTopicsInObject(it.parent.id, ObjectType.USER, uid, backend, p, n, s, it.fillHasCommented, it.pinType)
+                getTopLevelTopicsInObject(
+                    it.parent.id,
+                    ObjectType.USER,
+                    uid,
+                    backend,
+                    p,
+                    n,
+                    s,
+                    it.fillHasCommented,
+                    it.pinType
+                )
             }
         }
     }

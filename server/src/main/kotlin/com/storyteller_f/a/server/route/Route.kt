@@ -106,7 +106,7 @@ class RouteTopics(val fillHasCommented: Boolean? = null, val aid: String? = null
         class Snapshot(val parent: Id)
 
         @Resource("topics")
-        class Topics(val parent: Id, val pinType: TopicPinSearch?  = null)
+        class Topics(val parent: Id, val pinType: TopicPinSearch? = null)
 
         @Resource("reactions")
         class Reactions(val parent: Id, val fillHasReacted: Boolean? = null)
