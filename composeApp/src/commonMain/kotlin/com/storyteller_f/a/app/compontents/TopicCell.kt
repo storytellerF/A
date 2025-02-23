@@ -2,21 +2,22 @@ package com.storyteller_f.a.app.compontents
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.pages.topic.EmojiPicker
 import com.storyteller_f.a.app.pages.user.UserCell
+import com.storyteller_f.a.app.ui.ExtendIconPack
+import com.storyteller_f.a.app.ui.extendiconpack.Keep
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 
@@ -47,33 +48,39 @@ fun TopicCellInternal(
     authorInfo: UserInfo?,
     showAvatar: Boolean,
     contentAlignAvatar: Boolean,
-    modifier: Modifier = Modifier,
     startAddReaction: () -> Unit
 ) {
     val topicId = topicInfo.id
     val appNav = LocalAppNav.current
-    Column(
-        modifier = modifier.clip(RoundedCornerShape(8.dp)).clickable {
-            appNav.gotoTopic(topicId)
-        }.padding(8.dp)
-    ) {
-        if (showAvatar) {
-            UserCell(authorInfo, true)
-        }
+    Box {
         Column(
-            if (contentAlignAvatar) {
-                Modifier.padding(horizontal = 8.dp)
-            } else {
-                Modifier.fillMaxWidth().padding(start = 48.dp, end = 8.dp)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp).padding(top = 8.dp, bottom = 12.dp)
-            },
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            TopicContentField(topicInfo)
-            InteractionRow(topicInfo, startAddReaction) {
+            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable {
                 appNav.gotoTopic(topicId)
+            }.padding(8.dp)
+        ) {
+            if (showAvatar) {
+                UserCell(authorInfo, true)
+            }
+            Column(
+                if (contentAlignAvatar) {
+                    Modifier.padding(horizontal = 8.dp)
+                } else {
+                    Modifier.fillMaxWidth().padding(start = 48.dp, end = 8.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 12.dp).padding(top = 8.dp, bottom = 12.dp)
+                },
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TopicContentField(topicInfo)
+                InteractionRow(topicInfo, startAddReaction) {
+                    appNav.gotoTopic(topicId)
+                }
             }
         }
+
+        if (topicInfo.isPin) {
+            Icon(ExtendIconPack.Keep, "is pinned", modifier = Modifier.align(Alignment.TopEnd))
+        }
     }
+
 }

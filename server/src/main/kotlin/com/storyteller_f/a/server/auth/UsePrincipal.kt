@@ -19,9 +19,9 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipal(
     reader: DatabaseReader,
     block: (PrimaryKey) -> Result<R?>
 ) {
-    usePrincipalOrNull(reader) {
-        if (it != null) {
-            block(it)
+    usePrincipalOrNull(reader) { uid ->
+        if (uid != null) {
+            block(uid)
         } else {
             Result.failure(UnauthorizedException())
         }

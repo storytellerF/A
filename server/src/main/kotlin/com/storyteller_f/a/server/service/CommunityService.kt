@@ -5,8 +5,11 @@ import com.storyteller_f.*
 import com.storyteller_f.a.server.route.RouteCommunities
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
+import com.storyteller_f.shared.obj.TopicPinSearch
+import com.storyteller_f.shared.obj.TopicPinSearch.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
@@ -14,7 +17,8 @@ import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
-import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.plugins.*
+import org.jetbrains.exposed.sql.and
 
 suspend fun getCommunity(
     communityId: PrimaryKey?,
@@ -149,28 +153,40 @@ private suspend fun processUserJoinedTimeReplace(
 }
 
 suspend fun getCommunityTopicList(
-    it: RouteCommunities.Id.Topics,
     id: PrimaryKey?,
-    n: PrimaryKey?,
-    s: Int,
+    preTopicId: PrimaryKey?,
+    nextTopicId: PrimaryKey?,
+    size: Int,
     backend: Backend,
-    search: RouteCommunities.Id.Topics
-) = checkRootReadPermission(ObjectType.COMMUNITY, it.parent.id, id).mapResultNotNull { permission ->
-    if (permission.hasRead) {
-        getTopicsPagingByPredicate(id, null, n, s, search.fillHasCommented) {
-            Topics.parentId eq search.parent.id
-        }.mapResultNotNull { (data, count) ->
-            val ids = data.map {
-                it.id
-            }
-            backend.topicSearchService.getDocuments(ids).mapResult { list ->
-                processMediaAndAuthor(backend, data, list).map {
-                    PaginationResult(it, count)
+    communityId: PrimaryKey,
+    fillHasCommented: Boolean?,
+    pinType: TopicPinSearch?
+): Result<PaginationResult<TopicInfo>?> {
+    return checkRootReadPermission(
+        ObjectType.COMMUNITY,
+        communityId, id
+    ).mapResultNotNull { permission ->
+        if (permission.hasRead) {
+            getTopicsPagingByPredicate(id, preTopicId, nextTopicId, size, fillHasCommented) {
+                val baseQuery = Topics.parentId eq communityId
+                when(pinType) {
+                    PINNED -> baseQuery and (Topics.pinned eq true)
+                    UNPINNED -> baseQuery and (Topics.pinned eq false)
+                    else -> baseQuery
+                }
+            }.mapResultNotNull { (data, count) ->
+                val ids = data.map {
+                    it.id
+                }
+                backend.topicSearchService.getDocuments(ids).mapResult { list ->
+                    processMediaAndAuthor(backend, data, list).map {
+                        PaginationResult(it, count)
+                    }
                 }
             }
+        } else {
+            Result.failure(ForbiddenException())
         }
-    } else {
-        Result.failure(ForbiddenException())
     }
 }
 

@@ -37,8 +37,9 @@ suspend fun getUserTitles(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
     next: PrimaryKey? = null,
-    limit: Int
-) = DatabaseFactory.userTitles(uid, searchType, type, scopeId, next, limit).mapResult { (list, count) ->
+    limit: Int,
+    pre: PrimaryKey?
+) = DatabaseFactory.userTitles(uid, searchType, type, scopeId, next, limit, pre).mapResult { (list, count) ->
     processTitleList(list, backend, uid).map {
         PaginationResult(it, count)
     }
@@ -151,6 +152,7 @@ suspend fun createTitle(newTitle: NewTitle, uid: PrimaryKey, backend: Backend) =
                 ObjectType.TITLE,
                 title.id,
                 ObjectType.TITLE,
+                false,
                 null
             )
             DatabaseFactory.createTitle(title, topic, newTitle.description, backend).mapResult {

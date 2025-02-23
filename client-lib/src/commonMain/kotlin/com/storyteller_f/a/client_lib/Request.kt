@@ -76,12 +76,14 @@ suspend fun HttpClient.getRoomTopics(
     roomId: PrimaryKey,
     nextTopicId: PrimaryKey?,
     size: Int,
+    pinType: TopicPinSearch
 ) = serviceCatching {
     get("rooms/$roomId/topics") {
         url {
             if (isAlreadyLogin()) {
                 parameters.append("fillHasCommented", "true")
             }
+            parameters.append("pinType", pinType.name)
             appendPagingQueryParams(size, nextTopicId)
         }
     }.body<ServerResponse<TopicInfo>>()
@@ -91,12 +93,14 @@ suspend fun HttpClient.getCommunityTopics(
     communityId: PrimaryKey,
     nextCommunityId: PrimaryKey?,
     size: Int,
+    pinType: TopicPinSearch
 ) = serviceCatching {
     get("communities/$communityId/topics") {
         url {
             if (isAlreadyLogin()) {
                 parameters.append("fillHasCommented", "true")
             }
+            parameters.append("pinType", pinType.name)
             appendPagingQueryParams(size, nextCommunityId)
         }
     }.body<ServerResponse<TopicInfo>>()
@@ -106,12 +110,14 @@ suspend fun HttpClient.getUserTopics(
     userId: PrimaryKey,
     nextTopicId: PrimaryKey?,
     size: Int,
+    pinType: TopicPinSearch
 ) = serviceCatching {
     get("users/$userId/topics") {
         url {
             if (isAlreadyLogin()) {
                 parameters.append("fillHasCommented", "true")
             }
+            parameters.append("pinType", pinType.name)
             appendPagingQueryParams(size, nextTopicId)
         }
     }.body<ServerResponse<TopicInfo>>()
@@ -237,13 +243,19 @@ suspend fun HttpClient.getUserInfoByAid(aid: String) = serviceCatching {
     }.body<UserInfo>()
 }
 
-suspend fun HttpClient.getTopicTopics(topicId: PrimaryKey, nextTopicId: PrimaryKey?, size: Int) =
+suspend fun HttpClient.getTopicTopics(
+    topicId: PrimaryKey,
+    nextTopicId: PrimaryKey?,
+    size: Int,
+    pinType: TopicPinSearch
+) =
     serviceCatching {
         get("topics/$topicId/topics") {
             url {
                 if (isAlreadyLogin()) {
                     parameters.append("fillHasCommented", "true")
                 }
+                parameters.append("pinType", pinType.name)
                 appendPagingQueryParams(size, nextTopicId)
             }
         }.body<ServerResponse<TopicInfo>>()
@@ -507,4 +519,16 @@ suspend fun HttpClient.createRoom(newRoom: NewRoom) = serviceCatching {
         contentType(ContentType.Application.Json)
         setBody(newRoom)
     }.body<RoomInfo>()
+}
+
+suspend fun HttpClient.pinTopic(topicId: PrimaryKey) {
+    post("topics/${topicId}/pin") {
+
+    }.body<TopicInfo>()
+}
+
+suspend fun HttpClient.unpinTopic(topicId: PrimaryKey) {
+    post("topics/${topicId}/unpin") {
+
+    }.body<TopicInfo>()
 }

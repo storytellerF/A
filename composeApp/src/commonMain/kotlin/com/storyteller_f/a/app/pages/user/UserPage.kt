@@ -141,18 +141,22 @@ private fun UserCompatInternal(
                 UserIcon(user)
             }
             HorizontalPager(pagerState) { pageIndex ->
-                if (pageIndex == 0) {
-                    val topicsViewModel = createUserTopicsViewModel(uid)
-                    val pagingItems = topicsViewModel.flow.collectAsLazyPagingItems()
-                    TopicList(pagingItems, showAvatar = false)
-                } else if (pageIndex == 1) {
-                    val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid)
-                    val pagingItems = communitiesViewModel.flow.collectAsLazyPagingItems()
-                    CommunityList(pagingItems)
-                } else {
-                    val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
-                    val pagingItems = titlesViewModel.flow.collectAsLazyPagingItems()
-                    TitleList(pagingItems)
+                when (pageIndex) {
+                    0 -> {
+                        val topicsViewModel = createUserTopicsViewModel(uid)
+                        val pagingItems = topicsViewModel.flow.collectAsLazyPagingItems()
+                        TopicList(pagingItems, showAvatar = false)
+                    }
+                    1 -> {
+                        val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid)
+                        val pagingItems = communitiesViewModel.flow.collectAsLazyPagingItems()
+                        CommunityList(pagingItems)
+                    }
+                    else -> {
+                        val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
+                        val pagingItems = titlesViewModel.flow.collectAsLazyPagingItems()
+                        TitleList(pagingItems)
+                    }
                 }
             }
         }

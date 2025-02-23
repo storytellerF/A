@@ -3,11 +3,13 @@ package com.storyteller_f.a.server.route
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.a.server.auth.omitPrincipal
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.obj.NewCommunity
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.searchMembers
 import io.ktor.server.request.receive
@@ -16,17 +18,17 @@ import io.ktor.server.routing.Route
 
 fun Route.bindSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
     get<RouteCommunities.Search> {
-        usePrincipalOrNull(reader) { id ->
+        usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                searchCommunities(backend, p, n, s, id, it)
+                searchCommunities(backend, p, n, s, uid, it)
             }
         }
     }
 
     get<RouteCommunities.Id.Members> {
-        usePrincipalOrNull(reader) { _ ->
+        omitPrincipal(reader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
@@ -35,22 +37,22 @@ fun Route.bindSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
         }
     }
     get<RouteCommunities.Id> {
-        usePrincipalOrNull(reader) { id ->
-            getCommunity(it.id, null, backend, id, it.parent.fillJoinInfo)
+        usePrincipalOrNull(reader) { uid ->
+            getCommunity(it.id, null, backend, uid, it.parent.fillJoinInfo)
         }
     }
     get<RouteCommunities> {
-        usePrincipalOrNull(reader) { id ->
-            getCommunity(null, it.aid, backend, id, it.fillJoinInfo)
+        usePrincipalOrNull(reader) { uid ->
+            getCommunity(null, it.aid, backend, uid, it.fillJoinInfo)
         }
     }
 
     get<RouteCommunities.Id.Topics> {
-        usePrincipalOrNull(reader) { id ->
+        usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
-            }) { _, n, s ->
-                getCommunityTopicList(it, id, n, s, backend, it)
+            }) { p, n, s ->
+                getTopLevelTopicsInObject(it.parent.id, ObjectType.COMMUNITY, uid, backend, p, n, s, it.fillHasCommented, it.pinType)
             }
         }
     }
@@ -58,8 +60,8 @@ fun Route.bindSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
 
 fun Route.bindProtectedSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
     post<RouteCommunities.Id.Join> {
-        usePrincipal(reader) { id ->
-            doUserJoinCommunity(id, it.parent.id, backend)
+        usePrincipal(reader) { uid ->
+            doUserJoinCommunity(uid, it.parent.id, backend)
         }
     }
 

@@ -20,8 +20,8 @@ import io.ktor.server.routing.Route
 
 fun Route.bindProtectedSafeUserRoute(reader: DatabaseReader, backend: Backend) {
     post<RouteUsers.Update> {
-        usePrincipal(reader) { id ->
-            updateUser(id, backend)
+        usePrincipal(reader) { uid ->
+            updateUser(uid, backend)
         }
     }
 }
@@ -39,21 +39,21 @@ fun Route.bindSafeUserRoute(backend: Backend, reader: DatabaseReader) {
     }
 
     get<RouteUsers.Id.Topics> {
-        usePrincipalOrNull(reader) { id ->
+        usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                getTopLevelTopicsInObject(it.parent.id, ObjectType.USER, id, backend, p, n, s, it.fillHasCommented)
+                getTopLevelTopicsInObject(it.parent.id, ObjectType.USER, uid, backend, p, n, s, it.fillHasCommented, it.pinType)
             }
         }
     }
 
     get<RouteUsers.Id.Titles> { r ->
-        usePrincipalOrNull(reader) {
+        omitPrincipal(reader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                getUserTitles(backend, r.parent.id, r.searchType, r.type, r.scopeId, n, s)
+                getUserTitles(backend, r.parent.id, r.searchType, r.type, r.scopeId, n, s, p)
             }
         }
     }

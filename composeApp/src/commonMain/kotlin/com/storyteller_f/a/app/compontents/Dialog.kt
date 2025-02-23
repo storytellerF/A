@@ -131,7 +131,7 @@ private fun ErrorDialog(
             onDismissRequest()
         }) {
             DialogContainer {
-                Column {
+                Column(modifier = Modifier.heightIn(max = 400.dp)) {
                     ExceptionView(throwable)
                 }
             }
@@ -144,9 +144,8 @@ private fun ErrorDialog(
                 Text("Close")
             }
         }, title = {
-            Text(throwable.localizedMessage ?: throwable::class.toString())
+            Text((throwable.localizedMessage ?: throwable::class.toString()).take(100))
         }, text = {
-            @Suppress("KotlinConstantConditions")
             if (!AppConfig.IS_PROD) {
                 val text = throwable.stackTraceToString()
                 MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->

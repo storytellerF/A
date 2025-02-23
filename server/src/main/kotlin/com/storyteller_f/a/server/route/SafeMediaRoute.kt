@@ -13,8 +13,8 @@ import java.io.File
 
 fun Route.bindProtectedSafeMediaRoute(backend: Backend, reader: DatabaseReader) {
     get<RouteMedia> {
-        usePrincipal(reader) { id ->
-            getMediaList(id, backend, it)
+        usePrincipal(reader) { uid ->
+            getMediaList(uid, backend, it)
         }
     }
 
@@ -27,8 +27,8 @@ fun Route.bindProtectedSafeMediaRoute(backend: Backend, reader: DatabaseReader) 
     val tika = Tika()
 
     post<RouteMedia.Upload> {
-        usePrincipal(reader) { id ->
-            uploadMedia(it, id, root, backend, tika)
+        usePrincipal(reader) { uid ->
+            uploadMedia(it, uid, root, backend, tika)
         }
     }
 }

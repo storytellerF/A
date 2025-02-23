@@ -23,6 +23,7 @@ data class TopicInfo(
     val reactionCount: Long,
     val hasComment: Boolean,
     val isPrivate: Boolean,
+    val isPin: Boolean,
     val lastModifiedTime: LocalDateTime?,
     val extension: Extension?,
     val aid: String? = null,
@@ -42,6 +43,7 @@ data class TopicInfo(
             reactionCount = 0,
             hasComment = false,
             isPrivate = false,
+            isPin = false,
             lastModifiedTime = now(),
             extension = Extension(UserInfo.EMPTY)
         )

@@ -1,6 +1,7 @@
 package com.storyteller_f.a.app.pages.topic
 
 import a.composeapp.generated.resources.Res
+import a.composeapp.generated.resources.no_content_yet
 import a.composeapp.generated.resources.success
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,10 +11,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import app.cash.paging.LoadStateNotLoading
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.dokar.sonner.ToasterState
@@ -27,7 +31,8 @@ import com.storyteller_f.a.app.pages.room.InputGroupInternal
 import com.storyteller_f.a.app.pages.room.RoomInputGroup
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
-import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.a.client_lib.LoadingState
+import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -36,6 +41,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,6 +113,15 @@ private fun TopicPageInternal(
                     HorizontalDivider()
                 }
 
+                if (topics.loadState.refresh is LoadStateNotLoading && topics.itemCount == 0) {
+                    item {
+                        Text(
+                            stringResource(Res.string.no_content_yet),
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
                 nestedStateView(topics) {
                     it?.let { topicInfoRaw -> TopicCell(topicInfoRaw) }
                 }

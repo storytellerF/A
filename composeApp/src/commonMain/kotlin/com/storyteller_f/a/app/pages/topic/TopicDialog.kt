@@ -6,9 +6,7 @@ import a.composeapp.generated.resources.snapshot
 import a.composeapp.generated.resources.success
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -28,13 +26,19 @@ import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomRefCell
 import com.storyteller_f.a.app.pages.user.UserCell
+import com.storyteller_f.a.app.ui.ExtendIconPack
+import com.storyteller_f.a.app.ui.extendiconpack.Keep
+import com.storyteller_f.a.app.ui.extendiconpack.KeepOff
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.getTopicSnapshot
+import com.storyteller_f.a.client_lib.pinTopic
+import com.storyteller_f.a.client_lib.unpinTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.formatTime
+import dev.tclement.fonticons.FontIcon
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
@@ -102,6 +106,23 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismiss: ()
                             true,
                             topicInfo.rootId.takeIf { topicInfo.rootType == ObjectType.ROOM && topicInfo.isPrivate }
                         )
+                    }
+                }
+
+                val client = LocalClient.current
+
+                ButtonNav(
+                    if (topicInfo.isPin) ExtendIconPack.KeepOff else ExtendIconPack.Keep,
+                    if (topicInfo.isPin) "Unpin" else "Pin"
+                ) {
+                    scope.launch {
+                        globalDialogState.use {
+                            if (topicInfo.isPin)
+                                client.unpinTopic(topicInfo.id)
+                            else
+                                client.pinTopic(topicInfo.id)
+
+                        }
                     }
                 }
             }

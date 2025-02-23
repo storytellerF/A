@@ -185,7 +185,8 @@ private suspend fun addTopicIntoRoom(
                 ObjectType.ROOM,
                 newTopic.parentId,
                 newTopic.parentType,
-                now()
+                false,
+                null
             )
 
             checkRoomIsPrivate(roomId).mapResultNotNull { isPrivate ->

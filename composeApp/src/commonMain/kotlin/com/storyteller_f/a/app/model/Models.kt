@@ -15,6 +15,7 @@ import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.obj.TitleSearchType
+import com.storyteller_f.shared.obj.TopicPinSearch
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import io.github.aakira.napier.Napier
@@ -120,6 +121,7 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null, client: Http
                             Expression.intValue(0) equalTo Expression.intValue(0)
                         }
                     }.orderBy {
+                        "pinned".ascending()
                         "id".descending()
                     }
                 },
@@ -130,18 +132,42 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null, client: Http
                 }
             )
         },
-        TopicsRemoteMediator("topics$id") { loadKey, size ->
-            val info = when {
-                id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, size)
-                type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, size)
-                type == ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, size)
-                type == ObjectType.USER -> client.getUserTopics(id, loadKey, size)
-                else -> client.getTopicTopics(id, loadKey, size)
-            }.getOrThrow()
-            info.copy(processEncryptedTopic(info.data).map {
-                extractHeadlineIfPlain(it)
-            })
-        },
+        TopicsRemoteMediator("topics$id", object : NetworkService<TopicInfo> {
+            var loadPinned = true
+            override suspend fun invoke(loadKey: PrimaryKey?, size: Int): ServerResponse<TopicInfo> {
+                return if (loadPinned && id != DEFAULT_PRIMARY_KEY) {
+                    val firstPage = loadOnePageTopicList(loadKey, size, TopicPinSearch.PINNED)
+                    if (firstPage.pagination?.nextPageToken == null) {
+                        loadPinned = false
+                        val secondPage = loadOnePageTopicList(null, size, TopicPinSearch.UNPINNED)
+                        secondPage.copy(data = firstPage.data + secondPage.data)
+                    } else {
+                        firstPage
+                    }
+                } else {
+                    loadOnePageTopicList(loadKey, size, TopicPinSearch.UNPINNED)
+                }
+
+            }
+
+            private suspend fun loadOnePageTopicList(
+                loadKey: PrimaryKey?,
+                size: Int,
+                pinType: TopicPinSearch
+            ): ServerResponse<TopicInfo> {
+                val info = when {
+                    id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, size)
+                    type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, size, pinType)
+                    type == ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, size, pinType)
+                    type == ObjectType.USER -> client.getUserTopics(id, loadKey, size, pinType)
+                    else -> client.getTopicTopics(id, loadKey, size, pinType)
+                }.getOrThrow()
+                return info.copy(processEncryptedTopic(info.data).map {
+                    extractHeadlineIfPlain(it)
+                })
+            }
+
+        }),
         client
     ) {
     init {
@@ -174,10 +200,14 @@ private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
     }
 }
 
+interface NetworkService<T> {
+    suspend fun invoke(loadKey: PrimaryKey?, size: Int): ServerResponse<T>
+}
+
 @OptIn(ExperimentalPagingApi::class)
 class TopicsRemoteMediator(
     private val collectionName: String,
-    val networkService: suspend (PrimaryKey?, Int) -> ServerResponse<TopicInfo>
+    private val networkService: NetworkService<TopicInfo>
 ) :
     RemoteMediator<PrimaryKey, TopicInfo>() {
 
@@ -204,7 +234,7 @@ class TopicsRemoteMediator(
             }
         }
         return try {
-            val response = networkService(loadKey, state.config.pageSize)
+            val response = networkService.invoke(loadKey, state.config.pageSize)
             if (loadType == LoadType.REFRESH) {
                 database.deleteCollection(collectionName)
             }
@@ -215,7 +245,7 @@ class TopicsRemoteMediator(
                 "mediator success $loadKey"
             }
             MediatorResult.Success(
-                endOfPaginationReached = response.data.isEmpty()
+                endOfPaginationReached = response.pagination?.nextPageToken == null
             )
         } catch (e: Exception) {
             Napier.e(e, tag = "pagination") {

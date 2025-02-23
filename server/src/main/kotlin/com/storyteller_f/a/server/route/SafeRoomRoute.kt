@@ -20,21 +20,21 @@ import io.ktor.server.routing.Route
 
 fun Route.bindSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
     get<RouteRooms.Search> {
-        usePrincipalOrNull(reader) { id ->
+        usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, size ->
-                searchRooms(id, backend, p, n, size, it.joinStatus, it.word, it.community)
+                searchRooms(uid, backend, p, n, size, it.joinStatus, it.word, it.community)
             }
         }
     }
 
     get<RouteRooms.Id.Members> {
-        usePrincipalOrNull(reader) { id ->
+        usePrincipalOrNull(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                checkRootReadPermission(ObjectType.ROOM, it.parent.id, id).mapResultNotNull { permission ->
+                checkRootReadPermission(ObjectType.ROOM, it.parent.id, uid).mapResultNotNull { permission ->
                     if (permission.hasRead) {
                         DatabaseFactory.searchMembers(it.parent.id, backend, p, n, s, it.word)
                     } else {
@@ -46,16 +46,16 @@ fun Route.bindSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
     }
 
     get<RouteRooms> {
-        usePrincipalOrNull(reader) { id ->
+        usePrincipalOrNull(reader) { uid ->
             it.aid?.let { aid ->
-                getRoom(null, aid, id, backend, it.fillJoinInfo)
+                getRoom(null, aid, uid, backend, it.fillJoinInfo)
             } ?: Result.success(null)
         }
     }
 
     get<RouteRooms.Id> {
-        usePrincipalOrNull(reader) { id ->
-            getRoom(it.id, null, id, backend, it.parent.fillJoinInfo)
+        usePrincipalOrNull(reader) { uid ->
+            getRoom(it.id, null, uid, backend, it.parent.fillJoinInfo)
         }
     }
 
@@ -72,7 +72,8 @@ fun Route.bindSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
                     pre,
                     next,
                     size,
-                    it.fillHasCommented
+                    it.fillHasCommented,
+                    it.pinType
                 )
             }
         }
@@ -81,16 +82,16 @@ fun Route.bindSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
 
 fun Route.bindProtectedSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
     post<RouteRooms.Id.Join> {
-        usePrincipal(reader) { id ->
-            joinRoom(it.parent.id, id, backend)
+        usePrincipal(reader) { uid ->
+            joinRoom(it.parent.id, uid, backend)
         }
     }
     get<RouteRooms.Id.PubKeys> {
-        usePrincipal(reader) { id ->
+        usePrincipal(reader) { uid ->
             pagination(PrimaryKey::class, {
                 it.first.toString()
             }) { pre, next, size ->
-                getRoomPubKeys(it.parent.id, id, pre, next, size)
+                getRoomPubKeys(it.parent.id, uid, pre, next, size)
             }
         }
     }
@@ -101,8 +102,8 @@ fun Route.bindProtectedSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
     }
     post<RouteRooms> {
         val newRoom = call.receive<NewRoom>()
-        usePrincipal(reader) {
-            createRoom(newRoom, it, backend)
+        usePrincipal(reader) { uid ->
+            createRoom(newRoom, uid, backend)
         }
     }
 }
