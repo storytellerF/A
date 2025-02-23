@@ -15,6 +15,11 @@ actual fun buildTexPainter(
     outputStream: OutputStream
 ): Boolean {
     val formula = TeXFormula(tex)
-    val image = formula.createBufferedImage(TeXConstants.STYLE_DISPLAY, textSize, Color(color), Color(backgroundColor))
+    val image = formula.createBufferedImage(
+        TeXConstants.STYLE_DISPLAY,
+        textSize,
+        Color(color),
+        if (backgroundColor == 0) null else Color(backgroundColor, true)
+    )
     return ImageIO.write(image as BufferedImage, "png", outputStream)
 }
