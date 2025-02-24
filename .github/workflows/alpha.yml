@@ -45,4 +45,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Signed A Bundle
-          path: build/outputs/apk/release/
+          path: |
+            build/outputs/apk/release/
+            build/outputs/pkg/release/

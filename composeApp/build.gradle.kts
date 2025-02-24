@@ -297,6 +297,10 @@ compose.desktop {
             packageName = "com.storyteller_f.a"
             packageVersion = "1.0.0"
         }
+        buildTypes.release.proguard {
+            version.set("7.5.0")
+            isEnabled = false
+        }
     }
 }
 
