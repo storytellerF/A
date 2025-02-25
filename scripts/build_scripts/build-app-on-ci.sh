@@ -61,4 +61,4 @@ mkdir -p "build/outputs/apk/release"
 mkdir -p "build/outputs/pkg/release"
 
 mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/$FLAVOR.apk"
-mv composeApp/build/compose/binaries/main-release/msi/*.msi "build/outputs/pkg/release/$FLAVOR.msi"
+mv composeApp/build/compose/binaries/main-release/deb/*.deb "build/outputs/pkg/release/$FLAVOR.deb"
