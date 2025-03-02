@@ -19,7 +19,7 @@ class ClientWebSocket(
     val buildConnection: suspend () -> DefaultClientWebSocketSession,
     val onMessage: suspend (RoomFrame) -> Unit
 ) {
-    val connectionHandler = LoadingHandler<DefaultClientWebSocketSession> { }
+    val connectionHandler = SimpleLoadingHandler<DefaultClientWebSocketSession> { }
     val localState = MutableStateFlow<LoadingState?>(null)
     val remoteState = MutableSharedFlow<RoomFrame>()
     private val listeners = mutableListOf<ClientWsListener>()

@@ -25,33 +25,33 @@ import kotbase.ktx.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
-data class OnCommunityJoined(val info: CommunityInfo)
-data class OnCommunityExited(val info: CommunityInfo)
+data class OnTopicChanged(val topicInfo: TopicInfo)
 
 data class OnMediaUploaded(val mediaInfos: List<MediaInfo>)
-data class OnRoomJoined(val info: RoomInfo)
-data class OnRoomExited(val info: RoomInfo)
 
 data class OnUserUpdated(val newUser: UserInfo)
 
 data class OnTitleCreated(val title: TitleInfo)
 
 data class OnCommunityCreated(val info: CommunityInfo)
-data class OnRoomCreated(val info: RoomInfo)
-data class OnCommunityUpdated(val info: CommunityInfo)
-data class OnRoomUpdated(val info: RoomInfo)
+data class OnCommunityJoined(val info: CommunityInfo)
+data class OnCommunityExited(val info: CommunityInfo)
 
-class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Result<CommunityInfo>, client: HttpClient) :
+data class OnCommunityUpdated(val info: CommunityInfo)
+data class OnRoomCreated(val info: RoomInfo)
+data class OnRoomJoined(val info: RoomInfo)
+data class OnRoomExited(val info: RoomInfo)
+
+data class OnRoomUpdated(val info: RoomInfo)
+data class OnAddReaction(val topicId: PrimaryKey, val emoji: String)
+data class OnRemoveReaction(val topicId: PrimaryKey, val emoji: String)
+
+abstract class CommunityViewModel(
+    private val requestInfo: suspend HttpClient.() -> Result<CommunityInfo>,
+    client: HttpClient
+) :
     SimpleViewModel<CommunityInfo>(client) {
     val dialog = DialogSaveState()
-
-    constructor(communityId: PrimaryKey, client: HttpClient) : this({
-        getCommunityInfo(communityId, LoginViewModel.currentIsAlreadySignUp)
-    }, client)
-
-    constructor(communityAid: String, client: HttpClient) : this({
-        getCommunityInfoByAid(communityAid, LoginViewModel.currentIsAlreadySignUp)
-    }, client)
 
     init {
         load()
@@ -82,6 +82,28 @@ class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Resul
     }
 
     override suspend fun loadInternal() = requestInfo(client)
+}
+
+class IdCommunityViewModel(client: HttpClient, communityId: PrimaryKey) : CommunityViewModel({
+    getCommunityInfo(communityId)
+}, client) {
+    override val handler: LoadingHandler<CommunityInfo> =
+        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("communities"), communityId.toString()) {
+            "id" equalTo communityId
+        }
+}
+
+class AidCommunityViewModel(client: HttpClient, aid: String) : CommunityViewModel({
+    getCommunityInfoByAid(aid)
+}, client) {
+    override val handler: LoadingHandler<CommunityInfo> = buildCachedLoaderHandler(
+        viewModelScope,
+        ::load,
+        getOrCreateCollection("communities"),
+        aid,
+    ) {
+        "aid" equalTo aid
+    }
 }
 
 @OptIn(ExperimentalPagingApi::class)
@@ -264,19 +286,9 @@ class TopicsRemoteMediator(
     }
 }
 
-class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<RoomInfo>, client: HttpClient) :
-    SimpleViewModel<RoomInfo>(
-        client
-    ) {
+abstract class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<RoomInfo>, client: HttpClient) :
+    SimpleViewModel<RoomInfo>(client) {
     val dialog = DialogSaveState()
-
-    constructor(roomId: PrimaryKey, client: HttpClient) : this({
-        getRoomInfo(roomId)
-    }, client)
-
-    constructor(roomAid: String, client: HttpClient) : this({
-        getRoomInfoByAid(roomAid)
-    }, client)
 
     init {
         load()
@@ -309,6 +321,24 @@ class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<Roo
     override suspend fun loadInternal() = requestInfo(client)
 }
 
+class IdRoomViewModel(client: HttpClient, communityId: PrimaryKey) : RoomViewModel({
+    getRoomInfo(communityId)
+}, client) {
+    override val handler: LoadingHandler<RoomInfo> =
+        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("rooms"), communityId.toString()) {
+            "id" equalTo communityId
+        }
+}
+
+class AidRoomViewModel(client: HttpClient, aid: String) : RoomViewModel({
+    getRoomInfoByAid(aid)
+}, client) {
+    override val handler: LoadingHandler<RoomInfo> =
+        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("rooms"), aid) {
+            "aid" equalTo aid
+        }
+}
+
 @OptIn(ExperimentalPagingApi::class)
 class TopicSearchViewModel(word: List<String>, parentId: PrimaryKey?, parentType: ObjectType?, client: HttpClient) :
     PagingViewModel<PrimaryKey, TopicInfo>(
@@ -336,25 +366,18 @@ class MediaListViewModel(private val objectId: PrimaryKey, private val objectTyp
         }
     }
 
+    override val handler: LoadingHandler<ServerResponse<MediaInfo>> = SimpleLoadingHandler(::load)
+
     override suspend fun loadInternal() = client.getMediaList(objectId, objectType)
 }
 
-class UserViewModel(
+abstract class UserViewModel(
     private val requestInfo: suspend HttpClient.() -> Result<UserInfo>,
-    client: HttpClient,
-    val init: UserInfo? = null
+    client: HttpClient
 ) :
     SimpleViewModel<UserInfo>(client) {
-    constructor(userId: PrimaryKey, client: HttpClient, init: UserInfo? = null) : this({
-        getUserInfo(userId)
-    }, client, init)
-
-    constructor(userAid: String, client: HttpClient, init: UserInfo? = null) : this({
-        getUserInfoByAid(userAid)
-    }, client, init)
 
     init {
-        handler.data.value = init
         load()
         viewModelScope.launch {
             bus.collect {
@@ -366,6 +389,24 @@ class UserViewModel(
     }
 
     override suspend fun loadInternal() = requestInfo(client)
+}
+
+class IdUserViewModel(client: HttpClient, communityId: PrimaryKey) : UserViewModel({
+    getUserInfo(communityId)
+}, client) {
+    override val handler: LoadingHandler<UserInfo> =
+        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("users"), communityId.toString()) {
+            "id" equalTo communityId
+        }
+}
+
+class AidUserViewModel(client: HttpClient, aid: String) : UserViewModel({
+    getUserInfoByAid(aid)
+}, client) {
+    override val handler: LoadingHandler<UserInfo> =
+        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("users"), aid) {
+            "aid" equalTo aid
+        }
 }
 
 @OptIn(ExperimentalPagingApi::class)
@@ -385,14 +426,12 @@ class MemberViewModel(objectId: PrimaryKey, word: String, objectType: ObjectType
         client = client
     )
 
-data class OnTopicChanged(val topicInfo: TopicInfo)
-data class OnAddReaction(val topicId: PrimaryKey, val emoji: String)
-data class OnRemoveReaction(val topicId: PrimaryKey, val emoji: String)
-
 class ReactionsViewModel(private val objectId: PrimaryKey, client: HttpClient) :
     SimpleViewModel<ServerResponse<ReactionInfo>>(
         client
     ) {
+    override val handler: LoadingHandler<ServerResponse<ReactionInfo>> = SimpleLoadingHandler(::load)
+
     init {
         load()
         viewModelScope.launch {
@@ -425,15 +464,8 @@ class ReactionsViewModel(private val objectId: PrimaryKey, client: HttpClient) :
     override suspend fun loadInternal() = client.getReactions(objectId)
 }
 
-class TopicViewModel(private val requestInfo: suspend HttpClient.() -> Result<TopicInfo>, client: HttpClient) :
+abstract class TopicViewModel(private val requestInfo: suspend HttpClient.() -> Result<TopicInfo>, client: HttpClient) :
     SimpleViewModel<TopicInfo>(client) {
-    constructor(topicId: PrimaryKey, client: HttpClient) : this({
-        getTopicInfo(topicId)
-    }, client)
-
-    constructor(topicAid: String, client: HttpClient) : this({
-        getTopicInfoByAid(topicAid)
-    }, client)
 
     init {
         load()
@@ -457,6 +489,24 @@ class TopicViewModel(private val requestInfo: suspend HttpClient.() -> Result<To
     }
 }
 
+class IdTopicViewModel(client: HttpClient, topicId: PrimaryKey) : TopicViewModel({
+    getTopicInfo(topicId)
+}, client) {
+    override val handler: LoadingHandler<TopicInfo> =
+        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("topics"), topicId.toString()) {
+            "id" equalTo topicId
+        }
+}
+
+class AidTopicViewModel(client: HttpClient, aid: String) : TopicViewModel({
+    getTopicInfoByAid(aid)
+}, client) {
+    override val handler: LoadingHandler<TopicInfo> =
+        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("topics"), aid) {
+            "aid" equalTo aid
+        }
+}
+
 class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean, client: HttpClient) :
     SimpleViewModel<List<Pair<PrimaryKey, String>>>(client) {
 
@@ -465,6 +515,8 @@ class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean, client: Ht
             load()
         }
     }
+
+    override val handler: LoadingHandler<List<Pair<PrimaryKey, String>>> = SimpleLoadingHandler(::load)
 
     override suspend fun loadInternal() = runCatching {
         val result = mutableListOf<Pair<PrimaryKey, String>>()
