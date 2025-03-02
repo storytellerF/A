@@ -10,8 +10,8 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import kotlinx.coroutines.launch
 
-abstract class SimpleViewModel<T>(val client: HttpClient) : ViewModel() {
-    val handler = LoadingHandler<T?>(::load)
+abstract class SimpleViewModel<T : Any>(val client: HttpClient) : ViewModel() {
+    abstract val handler: LoadingHandler<T>
 
     abstract suspend fun loadInternal(): Result<T>
 
@@ -24,7 +24,7 @@ abstract class SimpleViewModel<T>(val client: HttpClient) : ViewModel() {
     }
 
     fun update(t: T) {
-        handler.data.value = t
+        handler.update(t)
     }
 }
 

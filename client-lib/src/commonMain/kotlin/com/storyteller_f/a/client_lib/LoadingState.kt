@@ -1,6 +1,17 @@
 package com.storyteller_f.a.client_lib
 
-import kotlinx.coroutines.flow.MutableStateFlow
+import io.github.aakira.napier.Napier
+import kotbase.Collection
+import kotbase.Expression
+import kotbase.MutableDocument
+import kotbase.QueryBuilder.select
+import kotbase.ktx.*
+import kotbase.queryChangeFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.*
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 sealed class LoadingState {
     data object Loading : LoadingState()
@@ -8,9 +19,10 @@ sealed class LoadingState {
     data object Done : LoadingState()
 }
 
-class LoadingHandler<T>(val refresh: () -> Unit) {
-    val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
-    val data: MutableStateFlow<T?> = MutableStateFlow(null)
+interface LoadingHandler<T> {
+    val state: MutableStateFlow<LoadingState?>
+    val data: StateFlow<T?>
+    val refresh: () -> Unit
 
     suspend fun request(
         service: suspend () -> Result<T>,
@@ -19,29 +31,87 @@ class LoadingHandler<T>(val refresh: () -> Unit) {
         state.markLoading()
         service().onSuccess { res ->
             if (res != null) {
-                data.value = res
-                state.markLoaded()
+                done(res)
             } else {
-                state.markError("nil")
+                error(Exception("nil"))
             }
         }.onFailure {
-            state.markError(it)
+            error(it)
         }
     }
 
-    fun done(t: T) {
+    fun done(t: T)
+
+    fun error(error: Throwable)
+
+    fun update(t: T)
+}
+
+class SimpleLoadingHandler<T>(override val refresh: () -> Unit) : LoadingHandler<T> {
+    override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
+    override val data: MutableStateFlow<T?> = MutableStateFlow(null)
+
+    override fun done(t: T) {
         data.value = t
         state.value = LoadingState.Done
     }
 
-    fun error(error: Throwable) {
+    override fun error(error: Throwable) {
         data.value = null
         state.value = LoadingState.Error(error)
     }
+
+    override fun update(t: T) {
+        done(t)
+    }
 }
 
-fun MutableStateFlow<LoadingState?>.markLoaded() {
-    value = LoadingState.Done
+class CachedLoadingHandler<T>(
+    override val refresh: () -> Unit,
+    val id: String,
+    val source: Collection,
+    whereQuery: WhereBuilder.() -> Expression,
+    private val serializer: KSerializer<T>,
+    scope: CoroutineScope
+) : LoadingHandler<T> {
+    override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
+    override val data = select(all()).from(source).where(whereQuery).limit(1).queryChangeFlow().map {
+        if (it.error != null) {
+            Napier.e(it.error) {
+                "exception when query ${it.results}"
+            }
+        }
+        it.results?.toObjects { jsonStr: String ->
+            Json.decodeFromString(serializer, jsonStr)
+        }?.firstOrNull()
+    }.stateIn(scope, SharingStarted.Lazily, null)
+
+    override fun done(t: T) {
+        val string = Json.encodeToString(serializer, t)
+        Napier.i {
+            "save topic $string"
+        }
+        source.save(MutableDocument(id, string))
+        state.value = LoadingState.Done
+    }
+
+    override fun error(error: Throwable) {
+        state.value = LoadingState.Error(error)
+    }
+
+    override fun update(t: T) {
+        done(t)
+    }
+}
+
+inline fun <reified T> buildCachedLoaderHandler(
+    scope: CoroutineScope,
+    noinline refresh: () -> Unit,
+    source: Collection,
+    id: String,
+    noinline whereQuery: WhereBuilder.() -> Expression
+): CachedLoadingHandler<T> {
+    return CachedLoadingHandler(refresh, id, source, whereQuery, serializer(), scope)
 }
 
 fun MutableStateFlow<LoadingState?>.markError(e: Throwable) {

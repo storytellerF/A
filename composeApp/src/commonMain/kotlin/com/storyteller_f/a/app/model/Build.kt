@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
@@ -39,12 +38,12 @@ fun createTargetUserJoinedCommunitiesViewModel(
 @Composable
 fun createCommunityViewModel(communityId: PrimaryKey) =
     viewModel(keys = listOf("community", communityId)) {
-        CommunityViewModel(communityId, it)
+        IdCommunityViewModel(it, communityId)
     }
 
 @Composable
 fun createCommunityViewModel(communityAid: String) = viewModel(keys = listOf("community", communityAid)) {
-    CommunityViewModel(communityAid, it)
+    AidCommunityViewModel(it, communityAid)
 }
 
 @Composable
@@ -61,7 +60,7 @@ fun createJoinedRoomsViewModel() = viewModel {
 @Composable
 fun createRoomViewModel(roomId: PrimaryKey) =
     viewModel(keys = listOf("room", roomId)) {
-        RoomViewModel(roomId, it)
+        IdRoomViewModel(it, roomId)
     }
 
 @Composable
@@ -90,7 +89,7 @@ fun createRoomKeysViewModel(
 
 @Composable
 fun createRoomViewModel(roomAid: String) = viewModel(keys = listOf("room", roomAid)) {
-    RoomViewModel(roomAid, it)
+    AidRoomViewModel(it, roomAid)
 }
 
 @Composable
@@ -152,7 +151,7 @@ fun createTopicSearchInCommunityViewModel(
 @Composable
 fun createTopicViewModel(topicId: PrimaryKey) =
     viewModel(keys = listOf("topic", topicId)) {
-        TopicViewModel(topicId, it)
+        IdTopicViewModel(it, topicId)
     }
 
 @Composable
@@ -163,7 +162,7 @@ fun createTopicsInTopicViewModel(topicId: PrimaryKey) =
 
 @Composable
 fun createTopicViewModel(topicAid: String) = viewModel(keys = listOf("topic", topicAid)) {
-    TopicViewModel(topicAid, it)
+    AidTopicViewModel(it, topicAid)
 }
 
 @Composable
@@ -212,12 +211,12 @@ fun createMemberViewModel(
 
 @Composable
 fun createUserViewModel(userAid: String) = viewModel(keys = listOf("user", userAid)) {
-    UserViewModel(userAid, it)
+    AidUserViewModel(it, userAid)
 }
 
 @Composable
-fun createUserViewModel(userId: PrimaryKey, init: UserInfo? = null) = viewModel(keys = listOf("user", userId)) {
-    UserViewModel(userId, it, init)
+fun createUserViewModel(userId: PrimaryKey) = viewModel(keys = listOf("user", userId)) {
+    IdUserViewModel(it, userId)
 }
 
 @Composable

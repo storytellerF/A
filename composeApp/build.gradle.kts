@@ -4,6 +4,7 @@ import com.google.common.base.CaseFormat
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -50,13 +51,13 @@ kotlin {
 
     androidTarget {
 //        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-//        compilerOptions {
-//            jvmTarget.set(JvmTarget.JVM_11)
-//        }
-        compilations.all {
-            @Suppress("DEPRECATION")
-            kotlinOptions { jvmTarget = "21" }
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
         }
+//        compilations.all {
+//            @Suppress("DEPRECATION")
+//            kotlinOptions { jvmTarget = "21" }
+//        }
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
     }
@@ -141,7 +142,7 @@ kotlin {
             implementation(libs.fonticons.core)
             implementation(libs.krop.ui)
             implementation(libs.multiplatform.settings)
-            implementation(libs.multiplatform.settings.no.arg)
+//            implementation(libs.multiplatform.settings.no.arg)
             implementation(libs.multiplatform.settings.serialization)
             implementation(libs.couchbase.lite)
             implementation(libs.couchbase.lite.ktx)

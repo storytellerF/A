@@ -131,7 +131,7 @@ fun CenterBox(content: @Composable () -> Unit) {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun <T> StateView(
-    handler: LoadingHandler<T?>,
+    handler: LoadingHandler<T>,
     extraRefresh: () -> Unit = {},
     modifier: Modifier = Modifier,
     content: @Composable (T) -> Unit
@@ -227,7 +227,7 @@ private fun <T : Identifiable> LazyListScope.nestedStateList(
 
 @Composable
 fun <T : Any> RefCellStateView(
-    handler: LoadingHandler<T?>,
+    handler: LoadingHandler<T>,
     modifier: Modifier = Modifier,
     content: @Composable (T) -> Unit
 ) {
