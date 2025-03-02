@@ -9,6 +9,7 @@ import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.obj.NewCommunity
+import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.searchMembers
@@ -41,6 +42,7 @@ fun Route.bindSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
             getCommunity(it.id, null, backend, uid, it.parent.fillJoinInfo)
         }
     }
+
     get<RouteCommunities> {
         usePrincipalOrNull(reader) { uid ->
             getCommunity(null, it.aid, backend, uid, it.fillJoinInfo)
@@ -84,6 +86,12 @@ fun Route.bindProtectedSafeCommunityRoute(backend: Backend, reader: DatabaseRead
         val newCommunity = call.receive<NewCommunity>()
         usePrincipal(reader) { uid ->
             createCommunity(newCommunity, uid, backend)
+        }
+    }
+
+    post<RouteCommunities.Id> {
+        usePrincipal(reader) { uid ->
+            updateCommunity(it.id, backend, call.receive<UpdateCommunityBody>(), uid)
         }
     }
 }

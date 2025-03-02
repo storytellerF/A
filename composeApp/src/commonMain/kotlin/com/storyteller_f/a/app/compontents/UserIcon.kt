@@ -30,45 +30,47 @@ import com.storyteller_f.shared.model.UserInfo
 fun UserIcon(
     userInfo: UserInfo?,
     isMe: Boolean = false,
-    couldShowDialog: Boolean = true,
-    clickCreate: () -> Unit = {}
+    setClickEvent: Boolean = true,
+    clickCreate: () -> Unit = {},
 ) {
-    var showMyDialog by remember {
+    var showUserDialog by remember {
         mutableStateOf(false)
     }
     val url = userInfo?.avatar?.url
-    UserIconInternal(isMe, couldShowDialog, url) { ->
-        showMyDialog = true
+    val appNav = LocalAppNav.current
+    val me by LoginViewModel.user.collectAsState()
+    val onClick = {
+        when {
+            isMe && me == null -> appNav.gotoLogin()
+            else -> showUserDialog = true
+        }
     }
-    UserDialog(userInfo, showMyDialog, clickCreate) {
-        showMyDialog = false
+    UserIconInternal(url, isMe, setClickEvent, onClick)
+    UserDialog(userInfo, showUserDialog, clickCreate) {
+        showUserDialog = false
     }
 }
 
 @Composable
 fun UserIconInternal(
+    avatarUrl: String?,
     isMe: Boolean,
-    couldShowDialog: Boolean,
-    url: String?,
-    showDialog: () -> Unit
+    setClickEvent: Boolean,
+    onClick: () -> Unit
 ) {
-    val appNav = LocalAppNav.current
-    val me by LoginViewModel.user.collectAsState()
-    val showDialog by rememberUpdatedState(showDialog)
-    val onClick = {
-        if (isMe && me == null) {
-            appNav.gotoLogin()
-        } else if (couldShowDialog) {
-            showDialog()
-        }
-    }
     val size = 40.dp
     val modifier = if (isMe) Modifier.testTag("me") else Modifier
-    if (url != null) {
+    if (avatarUrl != null) {
         AsyncImage(
-            globalLoader(url),
+            globalLoader(avatarUrl),
             contentDescription = "avatar",
-            modifier = modifier.size(size).clip(CircleShape).clickable(couldShowDialog, onClick = onClick),
+            modifier = modifier.size(size).clip(CircleShape).let {
+                if (setClickEvent) {
+                    it.clickable(onClick = onClick)
+                } else {
+                    it
+                }
+            },
             contentScale = ContentScale.Crop
         )
     } else {
@@ -78,7 +80,13 @@ fun UserIconInternal(
             modifier = modifier.size(size)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
-                .clickable(couldShowDialog, onClick = onClick)
+                .let {
+                    if (setClickEvent) {
+                        it.clickable(onClick = onClick)
+                    } else {
+                        it
+                    }
+                }
                 .padding(size / 5)
         )
     }

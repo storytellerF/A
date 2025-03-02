@@ -79,7 +79,7 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
                 }
             }
             CustomSearchBar(SearchScope.RoomTopic(roomId)) {
-                RoomIcon(roomInfo, showDialog = showDialog, size = 40.dp, enableClick = true) {
+                RoomIcon(roomInfo, showDialog = showDialog, size = 40.dp, setClickEvent = true) {
                     showDialog = it
                 }
             }
@@ -231,10 +231,6 @@ private fun RoomInputGroupInternal(
             roomInfo.isPrivate
         },
         updateInput,
-        {
-            insertContent(it, updateInput, input)
-            sendRoomTopic(c)
-        },
     ) {
         RoomSendButton(input = input) {
             sendRoomTopic(c)
@@ -376,7 +372,6 @@ fun InputGroupInternal(
     backgroundColor: Color,
     privateRoomId: PrimaryKey?,
     updateInput: (String) -> Unit,
-    uploadSuccess: (MediaInfo) -> Unit,
     sendButton: @Composable () -> Unit
 ) {
     Row(
@@ -390,7 +385,7 @@ fun InputGroupInternal(
         OutlinedTextField(input, {
             updateInput(it)
         }, modifier = Modifier.weight(1f), suffix = {
-            InputGroupSuffix(input, updateInput, objectType, objectId, privateRoomId, uploadSuccess)
+            InputGroupSuffix(input, updateInput, objectType, objectId, privateRoomId)
         })
 
         Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
@@ -406,8 +401,7 @@ private fun InputGroupSuffix(
     updateInput: (String) -> Unit,
     objectType: ObjectType,
     objectId: PrimaryKey,
-    privateRoomId: PrimaryKey?,
-    uploadSuccess: (MediaInfo) -> Unit
+    privateRoomId: PrimaryKey?
 ) {
     val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
     var showSheet by remember {
@@ -441,8 +435,8 @@ private fun InputGroupSuffix(
     }
     val sheetState = rememberModalBottomSheetState()
     MediaPicker(showSheet, sheetState, privateRoomId, { info ->
-        insertContent(info, updateInput, input)
-    }, uploadSuccess) {
+        insertContent(info.first(), updateInput, input)
+    }) {
         showSheet = false
     }
 }
@@ -462,7 +456,7 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
             RoomIcon(
                 roomInfo,
                 showDialog = shown,
-                updateShowDialog = commonDialogController::update,
+                onClickIcon = commonDialogController::update,
             )
             Column {
                 Text(roomInfo.name)
@@ -484,9 +478,9 @@ private fun RoomDialogButtons(
     appNav: AppNav,
     roomInfo: RoomInfo,
 ) {
+    val me by LoginViewModel.user.collectAsState()
     val client = LocalClient.current
     Column {
-        ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings))
         ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
             dismiss()
             appNav.gotoMemberPage(roomInfo.id, ObjectType.ROOM)
@@ -518,6 +512,13 @@ private fun RoomDialogButtons(
                             )
                         }
                     }
+                }
+            }
+
+            if (roomInfo.creator == me?.id) {
+                ButtonNav(Icons.Default.Settings, "Settings") {
+                    dismiss()
+                    appNav.gotoRoomSetting(roomInfo.id)
                 }
             }
         }

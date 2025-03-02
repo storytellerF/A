@@ -11,6 +11,7 @@ import com.storyteller_f.a.server.remoteIp
 import com.storyteller_f.a.server.route.RouteAccounts
 import com.storyteller_f.a.server.route.commonRoute
 import com.storyteller_f.shared.*
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.filterNull
@@ -139,7 +140,9 @@ private suspend fun RoutingContext.signIn(backend: Backend, reader: DatabaseRead
         BadRequestException("user not found")
     }.onSuccess { (info, icon, publicKey) ->
         if (verify(publicKey, pack.sig, f)) {
-            toFinalUserInfo(info to icon, backend = backend).onSuccess { value ->
+            processUserList(backend, listOf(info to icon)).map {
+                it.first()
+            }.onSuccess { value ->
                 val id = value.id
                 saveSuccessSessionOnFirst(id, reader)
                 call.respond(value)
@@ -174,7 +177,9 @@ private suspend fun RoutingContext.signUp(backend: Backend, reader: DatabaseRead
                 val name = backend.nameService.parse(newId)
                 DatabaseFactory.createUser(ad, name, newId, pack.pk).mapResult { value ->
                     saveSuccessSessionOnFirst(newId, reader)
-                    toFinalUserInfo(value, backend)
+                    processUserList(backend, listOf<Pair<UserInfo, String?>>(value)).map {
+                        it.first()
+                    }
                 }
             } else {
                 Result.failure(BadRequestException("User exists."))

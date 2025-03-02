@@ -4,20 +4,13 @@ import com.storyteller_f.*
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.types.PaginationResult
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
 
 object Rooms : BaseTable() {
     val name = roomName()
@@ -84,7 +77,7 @@ fun Room.toRoomInfo(joinedTime: LocalDateTime?) = RoomInfo(
     communityId = communityId
 )
 
-suspend fun commonPaginationRoomList(
+suspend fun getRoomPaginationList(
     uid: PrimaryKey?,
     preRoomId: PrimaryKey?,
     nextRoomId: PrimaryKey?,
@@ -279,7 +272,7 @@ suspend fun searchRooms(
     word: String?,
     community: PrimaryKey?
 ): Result<PaginationResult<RoomInfo>?> {
-    return commonPaginationRoomList(
+    return getRoomPaginationList(
         uid,
         preRoomId,
         nextRoomId,
@@ -288,13 +281,13 @@ suspend fun searchRooms(
         word,
         community
     ).mapResult { (list, count) ->
-        roomsResponse(list, backend).map { value ->
+        processRoomList(list, backend).map { value ->
             PaginationResult(value, count)
         }
     }
 }
 
-fun roomsResponse(list: List<Pair<RoomInfo, String?>>, backend: Backend): Result<List<RoomInfo>> {
+suspend fun processRoomList(list: List<Pair<RoomInfo, String?>>, backend: Backend): Result<List<RoomInfo>> {
     return backend.mediaService.get(AMEDIA_BUCKET, list.map {
         it.second
     }).map { icons ->
@@ -332,11 +325,28 @@ suspend fun DatabaseFactory.getRoomByIds(ids: List<PrimaryKey>): Result<List<Pai
     }
 }
 
-fun processRoomList(
-    backend: Backend,
-    iconName: String?,
-    info: RoomInfo
-): Result<RoomInfo> = backend.mediaService.get(AMEDIA_BUCKET, listOf(iconName)).map { value ->
-    val icon = value.firstOrNull()
-    info.copy(icon = icon)
+suspend fun DatabaseFactory.updateRoom(
+    id: PrimaryKey,
+    body: UpdateRoomBody
+) = dbQuery {
+    listOf({
+        val newIcon = body.icon
+        val newName = body.name
+        if (!newName.isNullOrBlank() || !newIcon.isNullOrBlank()) {
+            Rooms.update({
+                Rooms.id eq id
+            }) {
+                if (!newName.isNullOrBlank()) {
+                    it[name] = newName
+                }
+                if (!newIcon.isNullOrBlank()) {
+                    it[icon] = newIcon
+                }
+            } > 0
+        } else {
+            true
+        }
+    }).all {
+        it()
+    }
 }

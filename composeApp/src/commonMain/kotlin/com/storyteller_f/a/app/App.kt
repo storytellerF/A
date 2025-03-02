@@ -6,7 +6,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
@@ -34,9 +33,11 @@ import com.storyteller_f.a.app.compontents.GlobalDialog
 import com.storyteller_f.a.app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.pages.community.CommunityComposePage
 import com.storyteller_f.a.app.pages.community.CommunityPage
+import com.storyteller_f.a.app.pages.community.CommunitySettingPage
 import com.storyteller_f.a.app.pages.media.MediaPage
 import com.storyteller_f.a.app.pages.room.RoomComposePage
 import com.storyteller_f.a.app.pages.room.RoomPage
+import com.storyteller_f.a.app.pages.room.RoomSettingPage
 import com.storyteller_f.a.app.pages.title.TitleComposePage
 import com.storyteller_f.a.app.pages.topic.TopicComposePage
 import com.storyteller_f.a.app.pages.topic.TopicPage
@@ -145,6 +146,12 @@ data object CommunityComposeScreen
 
 @Serializable
 data object RoomComposeScreen
+
+@Serializable
+data class CommunitySettingScreen(val communityId: PrimaryKey)
+
+@Serializable
+data class RoomSettingScreen(val roomId: PrimaryKey)
 
 @Composable
 fun App() {
@@ -266,7 +273,7 @@ private fun rememberWsClient(
 @Composable
 fun LoginCheck(content: @Composable () -> Unit) {
     val client = LocalClient.current
-    val state by LoginViewModel.state.collectAsState(false)
+    val state by LoginViewModel.state.collectAsState()
     val user by LoginViewModel.user.collectAsState()
     val currentState = state
     var tried by remember {
@@ -275,11 +282,7 @@ fun LoginCheck(content: @Composable () -> Unit) {
     LaunchedEffect(currentState, tried) {
         if (!tried) {
             if (currentState is ClientSession.SignUpSuccess) {
-                globalDialogState.use({
-                    tried = true
-                }, {
-                    tried = true
-                }) {
+                globalDialogState.use {
                     val data = client.getData().getOrThrow()
                     val signature = currentState.session.signature(finalData(data))
                     val add = currentState.session.address()
@@ -287,6 +290,7 @@ fun LoginCheck(content: @Composable () -> Unit) {
                     LoginViewModel.updateUser(u)
                     LoginViewModel.updateSession(data, signature)
                 }
+                tried = true
             }
         }
     }
@@ -308,11 +312,15 @@ fun LoginCheck(content: @Composable () -> Unit) {
                         Text("Retry")
                     }
                 }
-            } else {
-                CircularProgressIndicator(modifier = Modifier.size(40.dp))
             }
         }
+        Napier.i {
+            "render waiting"
+        }
     } else {
+        Napier.i {
+            "render content"
+        }
         content()
     }
 }
@@ -370,6 +378,14 @@ private fun NavGraphBuilder.buildMainScreen() {
     }
     composable<UserSettingScreen> {
         UserSettingPage()
+    }
+    composable<CommunitySettingScreen> {
+        val communityId = it.toRoute<CommunitySettingScreen>().communityId
+        CommunitySettingPage(communityId)
+    }
+    composable<RoomSettingScreen> {
+        val roomId = it.toRoute<RoomSettingScreen>().roomId
+        RoomSettingPage(roomId)
     }
 }
 
@@ -462,6 +478,14 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
     override fun gotoRoomCompose() {
         navigator.navigate(RoomComposeScreen)
     }
+
+    override fun gotoCommunitySetting(communityId: PrimaryKey) {
+        navigator.navigate(CommunitySettingScreen(communityId))
+    }
+
+    override fun gotoRoomSetting(roomId: PrimaryKey) {
+        navigator.navigate(RoomSettingScreen(roomId))
+    }
 }
 
 fun getAsyncImageLoader(context: PlatformContext) =
@@ -536,6 +560,10 @@ interface AppNav {
 
     fun gotoRoomCompose()
 
+    fun gotoCommunitySetting(communityId: PrimaryKey)
+
+    fun gotoRoomSetting(roomId: PrimaryKey)
+
     companion object {
         val EMPTY = object : AppNav {
             override val currentDestination: NavBackStackEntry
@@ -606,6 +634,14 @@ interface AppNav {
             }
 
             override fun gotoRoomCompose() {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoCommunitySetting(communityId: PrimaryKey) {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoRoomSetting(roomId: PrimaryKey) {
                 TODO("Not yet implemented")
             }
         }

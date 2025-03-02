@@ -189,14 +189,6 @@ private fun TopicInputGroup(
         {
             input = it
         },
-        { mediaInfo ->
-            insertContent(mediaInfo, {
-                input = it
-            }, input)
-            sendTopic(scope, sendState, topic, input, {
-                input = it
-            }, focusManager, toasterState, client, scrollTo)
-        },
     ) {
         CommonInputButton(LoadingState.Done, input, isSending) {
             if (!isSending) {

@@ -111,12 +111,8 @@ private fun TopicComposeScaffold(
     }
     val sheetState = rememberModalBottomSheetState()
     MediaPicker(showSheet, sheetState, privateRoomId, { info ->
-        insertContent(info, {
+        insertContent(info.first(), {
             input = it
-        }, input)
-    }, {
-        insertContent(it, { s ->
-            input = s
         }, input)
     }) {
         showSheet = false

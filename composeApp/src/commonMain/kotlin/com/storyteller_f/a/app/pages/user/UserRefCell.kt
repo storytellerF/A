@@ -22,21 +22,20 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
-fun UserRefCell(userId: PrimaryKey, couldShowDialog: Boolean = true, onClick: ((UserInfo) -> Unit)? = null) {
+fun UserRefCell(userId: PrimaryKey, onClick: ((UserInfo) -> Unit)? = null) {
     val viewModel = createUserViewModel(userId)
-    UserRefCellInternal(viewModel, couldShowDialog, onClick)
+    UserRefCellInternal(viewModel, onClick)
 }
 
 @Composable
-fun UserRefCell(userAid: String, couldShowDialog: Boolean = true, onClick: ((UserInfo) -> Unit)? = null) {
+fun UserRefCell(userAid: String, onClick: ((UserInfo) -> Unit)? = null) {
     val viewModel = createUserViewModel(userAid)
-    UserRefCellInternal(viewModel, couldShowDialog, onClick)
+    UserRefCellInternal(viewModel, onClick)
 }
 
 @Composable
 private fun UserRefCellInternal(
     viewModel: UserViewModel,
-    couldShowDialog: Boolean = true,
     onClick: ((UserInfo) -> Unit)? = null
 ) {
     val userInfo by viewModel.handler.data.collectAsState()
@@ -55,7 +54,7 @@ private fun UserRefCellInternal(
                 }
             }
     ) { info ->
-        UserCell(info, hideBackground = true, couldShowDialog = couldShowDialog, onClick = onClick)
+        UserCell(info, hideBackground = true, onClickCell = onClick)
     }
 }
 
@@ -63,9 +62,8 @@ private fun UserRefCellInternal(
 fun UserCell(
     userInfo: UserInfo?,
     hideBackground: Boolean,
-    couldShowDialog: Boolean = true,
     clickable: Boolean = true,
-    onClick: ((UserInfo) -> Unit)? = null
+    onClickCell: ((UserInfo) -> Unit)? = null
 ) {
     val shape = RoundedCornerShape(8.dp)
     val appNav = LocalAppNav.current
@@ -74,7 +72,7 @@ fun UserCell(
             Modifier
                 .fillMaxWidth().clip(shape).clickable(userInfo != null && clickable) {
                     userInfo?.let {
-                        onClick?.invoke(it) ?: appNav.gotoUser(it.id)
+                        onClickCell?.invoke(it) ?: appNav.gotoUser(it.id)
                     }
                 }
         } else {
@@ -82,14 +80,14 @@ fun UserCell(
                 .clip(shape)
                 .clickable(userInfo != null && clickable) {
                     userInfo?.let {
-                        onClick?.invoke(it) ?: appNav.gotoUser(it.id)
+                        onClickCell?.invoke(it) ?: appNav.gotoUser(it.id)
                     }
                 }
         }.height(56.dp).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        UserIcon(userInfo, couldShowDialog = couldShowDialog && clickable)
+        UserIcon(userInfo, setClickEvent = clickable)
         if (userInfo != null) {
             Column {
                 Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)

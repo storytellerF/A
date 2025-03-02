@@ -40,6 +40,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.formatTime
+import com.storyteller_f.shared.utils.mapNotNull
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.core.FileKit
 import io.github.vinceglb.filekit.core.extension
@@ -59,8 +60,7 @@ fun MediaPicker(
     showSheet: Boolean,
     sheetState: SheetState,
     privateRoomId: PrimaryKey?,
-    clickItem: (MediaInfo) -> Unit,
-    uploadSuccess: (MediaInfo) -> Unit,
+    clickItem: (List<MediaInfo>) -> Unit,
     support: List<String> = listOf("files", "audio recorder"),
     hideSheet: () -> Unit
 ) {
@@ -78,7 +78,7 @@ fun MediaPicker(
                 WindowInsets(0)
             },
         ) {
-            val tabs = listOf(Icons.Default.UploadFile to "files", Icons.Default.Mic to "audio recorder").filter {
+            val tabs = listOf(Icons.Default.Cloud to "files", Icons.Default.Mic to "audio recorder").filter {
                 support.contains(it.second)
             }
             PrimaryTabRow(currentPage, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
@@ -95,9 +95,9 @@ fun MediaPicker(
             HorizontalPager(pagerState, modifier = Modifier.height(300.dp)) {
                 if (tabs[it].second == "files") {
                     val userInfo by LoginViewModel.user.collectAsState()
-                    userInfo?.let { it1 -> MediaListView(privateRoomId, it1, clickItem, uploadSuccess) }
+                    userInfo?.let { it1 -> MediaListView(privateRoomId, it1, clickItem) }
                 } else {
-                    AudioRecorder(privateRoomId, uploadSuccess)
+                    AudioRecorder(privateRoomId, clickItem)
                 }
             }
         }
@@ -105,7 +105,7 @@ fun MediaPicker(
 }
 
 @Composable
-fun AudioRecorder(privateRoomId: PrimaryKey?, uploadSuccess: (MediaInfo) -> Unit) {
+fun AudioRecorder(privateRoomId: PrimaryKey?, uploadSuccess: (List<MediaInfo>) -> Unit) {
     val isRecording by Recorder.isRecording
     val isGranted by isPermissionGranted(Permission.Audio)
     val client = LocalClient.current
@@ -127,7 +127,7 @@ fun AudioRecorder(privateRoomId: PrimaryKey?, uploadSuccess: (MediaInfo) -> Unit
 private fun BoxScope.RecorderButton(
     isGranted: Boolean,
     isRecording: Boolean,
-    uploadSuccess: (MediaInfo) -> Unit,
+    uploadSuccess: (List<MediaInfo>) -> Unit,
     privateRoomId: PrimaryKey?,
     client: HttpClient
 ) {
@@ -145,7 +145,9 @@ private fun BoxScope.RecorderButton(
                             Napier.i {
                                 "save to $path"
                             }
-                            uploadPath(privateRoomId, path, client, uploadSuccess)
+                            uploadPath(privateRoomId, path, client).mapNotNull {
+                                uploadSuccess(it)
+                            }
                         } else {
                             globalDialogState.use {
                                 Recorder.startRecord()
@@ -168,8 +170,7 @@ private fun BoxScope.RecorderButton(
 private fun MediaListView(
     privateRoomId: PrimaryKey?,
     user: UserInfo,
-    clickItem: (MediaInfo) -> Unit,
-    uploadSuccess: (MediaInfo) -> Unit
+    clickItem: (List<MediaInfo>) -> Unit,
 ) {
     val client = LocalClient.current
     val list = createMediaListViewModel(privateRoomId, user.id)
@@ -178,7 +179,9 @@ private fun MediaListView(
         Row {
             IconButton({
                 scope.launch {
-                    selectFileAndUpload(privateRoomId, client, uploadSuccess)
+                    selectFileAndUpload(privateRoomId, client) {
+                        clickItem(it)
+                    }
                 }
             }) {
                 Icon(Icons.Default.UploadFile, "upload file")
@@ -188,7 +191,7 @@ private fun MediaListView(
             LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
                 items(it.data) {
                     Row(modifier = Modifier.fillMaxWidth().clickable {
-                        clickItem(it)
+                        clickItem(listOf(it))
                     }) {
                         FileIcon(it)
                         Spacer(modifier = Modifier.width(20.dp))
@@ -237,44 +240,45 @@ private fun FileIcon(it: MediaInfo) {
 private suspend fun selectFileAndUpload(
     privateRoomId: PrimaryKey?,
     client: HttpClient,
-    uploadSuccess: (MediaInfo) -> Unit
+    uploadSuccess: (List<MediaInfo>) -> Unit
 ) {
-    val my = LoginViewModel.user.value
+    val my = LoginViewModel.user.value ?: return
     globalDialogState.use {
-        val id = my?.id
+        val id = my.id
         val f = FileKit.pickFile()
         if (f != null) {
             upload(
-                f.getSize(),
+                id,
                 privateRoomId,
                 f.name,
-                id,
                 ContentType.defaultForFileExtension(f.extension),
-                uploadSuccess,
+                f.getSize(),
                 client
             ) {
                 f.readBytes()
             }
+        } else {
+            null
         }
+    }.getOrNull()?.let {
+        uploadSuccess(it)
     }
 }
 
-private suspend fun uploadPath(
+suspend fun uploadPath(
     privateRoomId: PrimaryKey?,
     path: Path,
-    client: HttpClient,
-    uploadSuccess: (MediaInfo) -> Unit
-) {
-    val my = LoginViewModel.user.value
-    val meta = SystemFileSystem.metadataOrNull(path) ?: return
-    globalDialogState.use {
+    client: HttpClient
+): Result<List<MediaInfo>?> {
+    val my = LoginViewModel.user.value ?: return Result.success(null)
+    val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
+    return globalDialogState.use {
         upload(
-            meta.size,
+            my.id,
             privateRoomId,
             path.name,
-            my?.id,
             ContentType.defaultForFilePath(path.toString()),
-            uploadSuccess,
+            meta.size,
             client
         ) {
             SystemFileSystem.source(path).buffered().readByteArray()
@@ -282,16 +286,15 @@ private suspend fun uploadPath(
     }
 }
 
-private suspend fun upload(
-    size: Long?,
+suspend fun upload(
+    id: PrimaryKey,
     privateRoomId: PrimaryKey?,
     name: String,
-    id: PrimaryKey?,
     contentType: ContentType,
-    uploadSuccess: (MediaInfo) -> Unit,
+    size: Long?,
     client: HttpClient,
     readStream: suspend () -> ByteArray
-) {
+): List<MediaInfo> {
     if (size != null && size <= 100 * 1024 * 1024) {
         val stream = readStream()
         val response = when {
@@ -303,20 +306,16 @@ private suspend fun upload(
                 contentType
             ).getOrThrow()
 
-            id != null -> client.upload(
+            else -> client.upload(
                 stream,
                 name,
                 id,
                 ObjectType.USER,
                 contentType
             ).getOrThrow()
-
-            else -> throw Exception()
         }
-        response.data.firstOrNull()?.let {
-            bus.emit(OnMediaUploaded(it))
-            uploadSuccess(it)
-        }
+        bus.emit(OnMediaUploaded(response.data))
+        return response.data
     } else {
         throw Exception("size is null or size too big")
     }

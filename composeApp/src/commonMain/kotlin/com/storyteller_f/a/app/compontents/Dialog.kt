@@ -49,18 +49,18 @@ class GlobalDialogController(val state: MutableState<DialogState> = mutableState
         state.value = DialogState.None
     }
 
-    suspend fun use(onSuccess: () -> Unit = {}, onError: () -> Unit = {}, block: suspend () -> Unit) {
+    suspend fun <T : Any> use(block: suspend () -> T?): Result<T?> {
         try {
             showLoading()
-            block()
+            val t = block()
             close()
-            onSuccess()
+            return Result.success(t)
         } catch (e: Exception) {
             Napier.e(e) {
                 "global dialog"
             }
             showError(e)
-            onError()
+            return Result.failure(e)
         }
     }
 }

@@ -65,8 +65,6 @@ private fun PreviewRoom(@PreviewParameter(MessageListProvider::class) topicInfos
             MaterialTheme.colorScheme.tertiaryContainer,
             null,
             {},
-            {},
-
         ) {
         }
     }
@@ -105,8 +103,6 @@ private fun PreviewInputGroup() {
         "test",
         MaterialTheme.colorScheme.tertiaryContainer,
         null,
-        {},
-        {
-        }
+        {}
     ) {}
 }

@@ -57,7 +57,7 @@ fun MemberList(items: LazyPagingItems<UserInfo>, onClick: ((UserInfo) -> Unit)? 
                     it.id
                 },
             ) { index ->
-                UserCell(items[index], true, onClick = onClick)
+                UserCell(items[index], true, onClickCell = onClick)
                 Spacer(modifier = Modifier.height(20.dp))
                 if (index != items.itemCount - 1) {
                     HorizontalDivider()

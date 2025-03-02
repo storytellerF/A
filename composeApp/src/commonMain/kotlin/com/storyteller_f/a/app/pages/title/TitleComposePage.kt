@@ -7,31 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Diversity1
-import androidx.compose.material.icons.filled.Diversity3
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Title
-import androidx.compose.material.icons.filled.Topic
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,17 +36,13 @@ import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.UserRefCell
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.createTitle
-import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleType
-import io.ktor.client.HttpClient
+import io.ktor.client.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -106,10 +79,10 @@ fun TitleComposeInternal() {
     val scope = rememberCoroutineScope()
     CommonComposePage({
         scope.launch {
-            globalDialogState.use({
+            if (globalDialogState.use {
+                    createTitle(titleType, receiver, titleScope, client, name, content)
+                }.isSuccess) {
                 appNav.back()
-            }) {
-                createTitle(titleType, receiver, titleScope, client, name, content)
             }
         }
     }) {
@@ -271,9 +244,7 @@ private fun TitleScopeEditor(
                     }
 
                     ObjectType.TOPIC -> TODO()
-                    ObjectType.USER -> UserRefCell(it.first) {
-                        updateTitleScope()
-                    }
+                    ObjectType.USER -> UserRefCell(it.first)
 
                     ObjectType.TITLE -> TODO()
                 }

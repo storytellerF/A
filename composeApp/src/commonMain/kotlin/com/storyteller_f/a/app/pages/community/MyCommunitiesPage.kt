@@ -3,11 +3,14 @@ package com.storyteller_f.a.app.pages.community
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,8 +19,9 @@ import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.common.*
+import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.compontents.CommunityIcon
+import com.storyteller_f.a.app.compontents.CommunityPoster
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.model.createJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.utils.lcm
@@ -86,10 +90,7 @@ fun CommunityGrid(communityInfo: CommunityInfo?, onClick: ((CommunityInfo) -> Un
                 communityInfo?.let { onClick?.invoke(it) ?: appNav.gotoCommunity(it.id, false) }
             }
     ) {
-        Box(
-            modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(14.dp))
-                .fillMaxSize()
-        )
+        CommunityPoster(communityInfo)
         Row(
             modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -98,7 +99,7 @@ fun CommunityGrid(communityInfo: CommunityInfo?, onClick: ((CommunityInfo) -> Un
             if (communityInfo != null) {
                 val commonDialogController = rememberCommonDialogController()
                 val shown by commonDialogController.show
-                CommunityIcon(communityInfo, shown, 30.dp, commonDialogController::update)
+                CommunityIcon(communityInfo, shown, 30.dp, onClickIcon = commonDialogController::update)
                 Text(
                     communityInfo.name,
                     Modifier,
@@ -136,7 +137,7 @@ fun CommunityCell(
     ) {
         val commonDialogController = rememberCommonDialogController()
         val shown by commonDialogController.show
-        CommunityIcon(communityInfo, shown, 50.dp, commonDialogController::update)
+        CommunityIcon(communityInfo, shown, 50.dp, onClickIcon = commonDialogController::update)
         Text(
             communityInfo?.name.orEmpty(),
             color = MaterialTheme.colorScheme.onSecondaryContainer,

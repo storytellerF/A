@@ -228,10 +228,10 @@ suspend fun HttpClient.getUserInfo(id: PrimaryKey) = serviceCatching {
     get("users/$id").body<UserInfo>()
 }
 
-suspend fun HttpClient.updateUserInfo(newUserInfo: UserInfo) = serviceCatching {
+suspend fun HttpClient.updateUserInfo(newInfo: UpdateUserBody) = serviceCatching {
     post("users/update") {
         contentType(ContentType.Application.Json)
-        setBody(newUserInfo)
+        setBody(newInfo)
     }.body<UserInfo>()
 }
 
@@ -529,4 +529,18 @@ suspend fun HttpClient.pinTopic(topicId: PrimaryKey) {
 suspend fun HttpClient.unpinTopic(topicId: PrimaryKey) {
     post("topics/$topicId/unpin") {
     }.body<TopicInfo>()
+}
+
+suspend fun HttpClient.updateCommunityInfo(newInfo: UpdateCommunityBody, id: PrimaryKey) = serviceCatching {
+    post("communities/$id") {
+        contentType(ContentType.Application.Json)
+        setBody(newInfo)
+    }.body<CommunityInfo>()
+}
+
+suspend fun HttpClient.updateRoomInfo(newInfo: UpdateRoomBody, id: PrimaryKey) = serviceCatching {
+    post("rooms/$id") {
+        contentType(ContentType.Application.Json)
+        setBody(newInfo)
+    }.body<RoomInfo>()
 }

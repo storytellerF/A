@@ -5,6 +5,7 @@ import com.storyteller_f.*
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
@@ -77,7 +78,7 @@ suspend fun DatabaseFactory.checkCommunityExists(parentId: PrimaryKey) = first({
 
 data class CommunityRawResult(val communityInfo: CommunityInfo, val icon: String?, val poster: String?)
 
-suspend fun DatabaseFactory.getCommonCommunity(
+suspend fun DatabaseFactory.getCommunity(
     communityId: PrimaryKey? = null,
     communityAid: String? = null,
     fillJoinInfo: Boolean? = null,
@@ -275,7 +276,7 @@ suspend fun createCommunityRooms(
     }
 }
 
-suspend fun DatabaseFactory.getJoinedCommunityByIds(
+suspend fun DatabaseFactory.getCommunityJoinedTimeByIds(
     uid: PrimaryKey,
     communityIds: List<PrimaryKey>
 ) = mapQuery({
@@ -299,7 +300,7 @@ suspend fun DatabaseFactory.getCommunityByIds(idList: List<PrimaryKey>): Result<
     }
 }
 
-fun processCommunityList(
+suspend fun processCommunityList(
     backend: Backend,
     list: List<CommunityRawResult>
 ): Result<List<CommunityInfo>> {
@@ -311,5 +312,35 @@ fun processCommunityList(
             val second = icons[i * 2 + 1]
             communityPair.communityInfo.copy(icon = first, poster = second)
         }
+    }
+}
+
+suspend fun DatabaseFactory.updateCommunity(
+    id: PrimaryKey,
+    body: UpdateCommunityBody
+) = dbQuery {
+    listOf({
+        val newIcon = body.icon
+        val newName = body.name
+        val newPoster = body.poster
+        if (!newName.isNullOrBlank() || !newIcon.isNullOrBlank() || !newPoster.isNullOrBlank()) {
+            Communities.update({
+                Communities.id eq id
+            }) {
+                if (!newName.isNullOrBlank()) {
+                    it[name] = newName
+                }
+                if (!newIcon.isNullOrBlank()) {
+                    it[icon] = newIcon
+                }
+                if (!newPoster.isNullOrBlank()) {
+                    it[poster] = newPoster
+                }
+            } > 0
+        } else {
+            true
+        }
+    }).all {
+        it()
     }
 }

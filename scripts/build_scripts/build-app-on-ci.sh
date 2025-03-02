@@ -54,7 +54,7 @@ while IFS= read -r line; do
     export "$key"="$value"
 done < $TEMP_FILE
 
-./gradlew composeApp:build
+./gradlew composeApp:assembleRelease
 ./gradlew composeApp:packageReleaseMsi && ./gradlew composeApp:packageReleaseDeb && ./gradlew composeApp:packageReleaseDmg
 
 mkdir -p "build/outputs/apk/release"

@@ -3,7 +3,8 @@ package com.storyteller_f.a.app.pages.community
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.*
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,7 +19,6 @@ import com.storyteller_f.a.client_lib.createCommunity
 import com.storyteller_f.shared.obj.NewCommunity
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityComposePage() {
     var name by remember {
@@ -32,11 +32,11 @@ fun CommunityComposePage() {
     val scope = rememberCoroutineScope()
     CommonComposePage({
         scope.launch {
-            globalDialogState.use({
+            if (globalDialogState.use {
+                    val community = client.createCommunity(NewCommunity(name, aid)).getOrThrow()
+                    bus.emit(OnCommunityCreated(community))
+                }.isSuccess) {
                 appNav.back()
-            }) {
-                val community = client.createCommunity(NewCommunity(name, aid)).getOrThrow()
-                bus.emit(OnCommunityCreated(community))
             }
         }
     }) {

@@ -15,7 +15,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
-import com.storyteller_f.shared.utils.mapNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
@@ -26,7 +25,7 @@ import com.storyteller_f.tables.getCommunityByIds
 import com.storyteller_f.tables.getRoomByIds
 import com.storyteller_f.tables.getUsersByIds
 import com.storyteller_f.tables.processCommunityList
-import com.storyteller_f.tables.roomsResponse
+import com.storyteller_f.tables.processRoomList
 import com.storyteller_f.tables.userTitles
 import com.storyteller_f.types.PaginationResult
 
@@ -84,7 +83,7 @@ private suspend fun processTitleList(
         DatabaseFactory.getCommunityByIds(communityIdList).mapResult {
             processCommunityList(backend, it).mapResult { communityList ->
                 DatabaseFactory.getRoomByIds(roomIdList).mapResult {
-                    roomsResponse(it, backend).mapResult { roomList ->
+                    processRoomList(it, backend).mapResult { roomList ->
                         getTopicByIds(topicIdList, uid, false, backend).map { topicList ->
                             processTitleList(userList, communityList, roomList, list, topicList)
                         }

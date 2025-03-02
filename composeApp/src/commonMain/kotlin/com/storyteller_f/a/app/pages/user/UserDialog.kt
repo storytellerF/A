@@ -40,12 +40,10 @@ fun UserDialogInternal(userInfo: UserInfo, clickCreate: () -> Unit, dismiss: () 
     val client = LocalClient.current
     val my by LoginViewModel.user.collectAsState()
     DialogContainer {
-        val clickable = appNav.toRoute<UserScreen>()?.uid != userInfo.id
         UserCell(
             userInfo,
             false,
-            couldShowDialog = false,
-            clickable = clickable
+            clickable = false,
         ) {
             dismiss()
             appNav.gotoUser(it.id)
