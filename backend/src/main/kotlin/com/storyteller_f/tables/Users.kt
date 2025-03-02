@@ -3,6 +3,7 @@ package com.storyteller_f.tables
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
@@ -69,39 +70,18 @@ fun User.toUserInfo(): UserInfo {
     return UserInfo(id, address, 0, aid, nickname, null)
 }
 
-fun toFinalUserInfo(p: Pair<UserInfo, String?>, backend: Backend): Result<UserInfo> {
-    val (userInfo, icon) = p
-    return backend.mediaService.get(AMEDIA_BUCKET, listOf(icon)).map { value ->
-        userInfo.copy(avatar = value.firstOrNull())
-    }
-}
-
-fun DatabaseFactory.fillUserMedia(p: List<Pair<UserInfo, String?>>, backend: Backend): Result<List<UserInfo>> {
-    val userInfos = p.map {
-        it.first
-    }
-    val icons = p.map {
-        it.second
-    }
-    return backend.mediaService.get(AMEDIA_BUCKET, icons).map { value ->
-        value.mapIndexed { index, avatar ->
-            userInfos[index].copy(avatar = avatar)
-        }
-    }
-}
-
 suspend fun DatabaseFactory.getUserByAid(
     aid: String,
     backend: Backend
 ) = getRawUserByAid(aid).mapResultNotNull {
-    toFinalUserInfo(it, backend)
+    processUserList(backend, listOf(it)).map(List<UserInfo>::first)
 }
 
 suspend fun DatabaseFactory.getUser(
     it: PrimaryKey,
     backend: Backend
 ) = getRawUserById(it).mapResultNotNull {
-    toFinalUserInfo(it, backend)
+    processUserList(backend, listOf(it)).map(List<UserInfo>::first)
 }
 
 suspend fun DatabaseFactory.getRawUserByAid(aid: String) = first({
@@ -176,7 +156,9 @@ suspend fun DatabaseFactory.searchMembers(
     word: String?
 ): Result<PaginationResult<UserInfo>> {
     return commonPaginationMemberList(objectId, prePageToken, nextPageToken, size, word).mapResult { (pairs, count) ->
-        processUserList(backend, pairs, count)
+        processUserList(backend, pairs).map {
+            PaginationResult(it, count)
+        }
     }
 }
 
@@ -222,18 +204,19 @@ suspend fun DatabaseFactory.isUserNotExists(pk: String): Result<Boolean> = isEmp
 
 suspend fun DatabaseFactory.updateUser(
     id: PrimaryKey,
-    newUser: UserInfo
+    newUser: UpdateUserBody
 ) = dbQuery {
     listOf({
-        val avatar = newUser.avatar?.item?.name
-        if (newUser.nickname.isNotEmpty() || avatar?.isNotEmpty() == true) {
+        val avatar = newUser.avatar
+        val name = newUser.nickname
+        if (!name.isNullOrBlank() || !avatar.isNullOrBlank()) {
             Users.update({
                 Users.id eq id
             }) {
-                if (newUser.nickname.isNotEmpty()) {
-                    it[nickname] = newUser.nickname
+                if (!name.isNullOrBlank()) {
+                    it[nickname] = name
                 }
-                if (avatar?.isNotEmpty() == true) {
+                if (!avatar.isNullOrBlank()) {
                     it[icon] = avatar
                 }
             } > 0
@@ -259,7 +242,7 @@ suspend fun DatabaseFactory.updateUser(
 suspend fun DatabaseFactory.checkUserExists(id: Long) = first({
     id
 }, User::wrapRow) {
-    User.Companion.find {
+    User.find {
         Users.id eq id
     }
 }
@@ -290,7 +273,7 @@ suspend fun DatabaseFactory.getUsersByIds(ids: List<PrimaryKey>, backend: Backen
             Users.id inList ids
         }
 }.mapResult {
-    fillUserMedia(it, backend)
+    processUserList(backend, it)
 }
 
 suspend fun DatabaseFactory.getUsersByAids(ids: List<String>) = mapQuery({
@@ -304,14 +287,13 @@ suspend fun DatabaseFactory.getUsersByAids(ids: List<String>) = mapQuery({
         }
 }
 
-private fun processUserList(
+suspend fun processUserList(
     backend: Backend,
-    pairs: List<Pair<UserInfo, String?>>,
-    count: Long
-): Result<PaginationResult<UserInfo>> = backend.mediaService.get(AMEDIA_BUCKET, pairs.map {
+    pairs: List<Pair<UserInfo, String?>>
+): Result<List<UserInfo>> = backend.mediaService.get(AMEDIA_BUCKET, pairs.map {
     it.second
 }).map { value ->
-    PaginationResult(pairs.mapIndexed { index, pair ->
+    pairs.mapIndexed { index, pair ->
         pair.first.copy(avatar = value[index])
-    }, count)
+    }
 }

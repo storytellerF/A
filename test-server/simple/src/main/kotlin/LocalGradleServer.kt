@@ -53,7 +53,7 @@ fun forceStop(port: Int) {
                 arrayOf(
                     "cmd",
                     "/c",
-                    "for /f \"tokens=5\" %i in ('netstat -ano ^| findstr :$port') do taskkill /PID %i /F"
+                    """for /f "tokens=5" %i in ('netstat -ano ^| findstr :$port') do taskkill /PID %i /F"""
                 )
             )
     }

@@ -8,12 +8,14 @@ import io.github.aakira.napier.Napier
 import io.minio.*
 import io.minio.errors.ErrorResponseException
 import io.minio.http.Method
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.toKotlinLocalDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.Result
 
 class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
-    override fun clean(bucketName: String): Result<Unit> {
+    override suspend fun clean(bucketName: String): Result<Unit> {
         return useMinIoClient(connection) {
             if (bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 removeAllObject(bucketName)
@@ -21,7 +23,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override fun list(bucketName: String, prefix: String): Result<List<MediaInfo>> {
+    override suspend fun list(bucketName: String, prefix: String): Result<List<MediaInfo>> {
         return useMinIoClient(connection) {
             val names = listObjects(
                 ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build()
@@ -61,7 +63,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         ) to dimension
     }
 
-    override fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>> {
+    override suspend fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>> {
         return useMinIoClient(connection) {
             objList.map {
                 if (it == null) {
@@ -87,7 +89,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>> {
+    override suspend fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>> {
         return useMinIoClient(connection) {
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
@@ -113,7 +115,10 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
     }
 }
 
-private fun <R> useMinIoClient(minIoConnection: MinIoConnection, block: MinioClient.() -> R): Result<R> {
+private suspend fun <R> useMinIoClient(
+    minIoConnection: MinIoConnection,
+    block: suspend MinioClient.() -> R
+): Result<R> {
     val point = Exception()
     return runCatching {
         MinioClient.builder()
@@ -121,7 +126,9 @@ private fun <R> useMinIoClient(minIoConnection: MinIoConnection, block: MinioCli
             .credentials(minIoConnection.user, minIoConnection.pass)
             .build().use {
                 try {
-                    it.block()
+                    withContext(Dispatchers.IO) {
+                        it.block()
+                    }
                 } catch (e: Exception) {
                     Napier.e(throwable = point) {
                         "minio error $e"

@@ -1,21 +1,14 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.Backend
-import com.storyteller_f.COMMUNITY_NAME_LENGTH
-import com.storyteller_f.CustomBadRequestException
-import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.ForbiddenException
-import com.storyteller_f.isDup
+import com.storyteller_f.*
+import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.NewRoom
+import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultNotNull
-import com.storyteller_f.shared.utils.now
-import com.storyteller_f.shared.utils.recoverError
+import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import io.ktor.server.plugins.*
@@ -91,8 +84,8 @@ suspend fun getRoom(
     if (roomId == null && roomAid == null) {
         return Result.failure(BadRequestException("roomId or roomAid must be set."))
     }
-    return DatabaseFactory.getRoomSource(roomId, roomAid, fillJoinInfo, uid).mapResultNotNull { (info, iconName) ->
-        processRoomList(backend, iconName, info)
+    return DatabaseFactory.getRoomSource(roomId, roomAid, fillJoinInfo, uid).mapResultNotNull {
+        processRoomList(listOf(it), backend).map(List<RoomInfo>::first)
     }
 }
 
@@ -127,10 +120,59 @@ suspend fun createRoom(newRoom: NewRoom, uid: PrimaryKey, backend: Backend): Res
             val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
             DatabaseFactory.createRoom(room)
                 .mapResult {
-                    processRoomList(backend, room.icon, room.toRoomInfo(room.createdTime))
+                    processRoomList(
+                        listOf(room.toRoomInfo(room.createdTime) to room.icon),
+                        backend
+                    ).map(List<RoomInfo>::first)
                 }
         } else {
             Result.failure(ForbiddenException())
+        }
+    }
+}
+
+suspend fun updateRoom(id: PrimaryKey, backend: Backend, old: UpdateRoomBody, uid: PrimaryKey): Result<RoomInfo?> {
+    val newRoom = old.copy(name = old.name?.trim(), icon = old.icon?.trim())
+    return checkRootAdminPermission(ObjectType.ROOM, id, uid).mapResultNotNull {
+        if (it.hasAdmin) {
+            val firstError = listOf(suspend {
+                when (checkNickname(newRoom.name, 1..COMMUNITY_NAME_LENGTH)) {
+                    StringCheckResult.RANGE_MISMATCH -> Result.failure(
+                        CustomBadRequestException("community name must be between in 1 and 20")
+                    )
+                    else -> Result.success(Unit)
+                }
+            }, suspend {
+                checkIcon(backend, newRoom.icon, Dimension(1, 1)).mapResult { checkResult ->
+                    when (checkResult) {
+                        MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
+                        MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
+                            CustomBadRequestException("only support image")
+                        )
+                        MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
+                            CustomBadRequestException("dimension mismatch")
+                        )
+                        else -> Result.success(Unit)
+                    }
+                }
+            }).firstNotNullOfOrNull {
+                it().exceptionOrNull()
+            }
+            if (firstError != null) {
+                Result.failure(firstError)
+            } else {
+                DatabaseFactory.updateRoom(id, newRoom).mapResult { updateSuccess ->
+                    if (updateSuccess) {
+                        DatabaseFactory.getRoomSource(id, null, true, uid).mapResultNotNull {
+                            processRoomList(listOf(it), backend).map(List<RoomInfo>::first)
+                        }
+                    } else {
+                        Result.success(null)
+                    }
+                }
+            }
+        } else {
+            Result.failure(CustomBadRequestException("forbid"))
         }
     }
 }

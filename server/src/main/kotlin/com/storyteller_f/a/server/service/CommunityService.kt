@@ -3,13 +3,11 @@ package com.storyteller_f.a.server.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
 import com.storyteller_f.a.server.route.RouteCommunities
-import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
-import com.storyteller_f.shared.obj.TopicPinSearch
-import com.storyteller_f.shared.obj.TopicPinSearch.*
+import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
@@ -18,7 +16,6 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import io.ktor.server.plugins.*
-import org.jetbrains.exposed.sql.and
 
 suspend fun getCommunity(
     communityId: PrimaryKey?,
@@ -27,15 +24,13 @@ suspend fun getCommunity(
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
-    return DatabaseFactory.getCommonCommunity(
+    return DatabaseFactory.getCommunity(
         communityId,
         communityAid,
         fillJoinInfo,
         id
-    ).mapResultNotNull { (info, iconName, coverName) ->
-        backend.mediaService.get(AMEDIA_BUCKET, listOf(iconName, coverName)).map { (iconInfo, coverInfo) ->
-            info.copy(icon = iconInfo, poster = coverInfo)
-        }
+    ).mapResultNotNull {
+        processCommunityList(backend, listOf(it)).map(List<CommunityInfo>::first)
     }
 }
 
@@ -144,7 +139,7 @@ private suspend fun processUserJoinedTimeReplace(
     val communityIds = value.map {
         it.id
     }
-    return DatabaseFactory.getJoinedCommunityByIds(uid, communityIds).map { joinedTimeList ->
+    return DatabaseFactory.getCommunityJoinedTimeByIds(uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         PaginationResult(value.map {
             it.copy(joinTime = map[it.id], extension = CommunityInfo.Extension(it.joinTime))
@@ -152,59 +147,17 @@ private suspend fun processUserJoinedTimeReplace(
     }
 }
 
-suspend fun getCommunityTopicList(
-    id: PrimaryKey?,
-    preTopicId: PrimaryKey?,
-    nextTopicId: PrimaryKey?,
-    size: Int,
-    backend: Backend,
-    communityId: PrimaryKey,
-    fillHasCommented: Boolean?,
-    pinType: TopicPinSearch?
-): Result<PaginationResult<TopicInfo>?> {
-    return checkRootReadPermission(
-        ObjectType.COMMUNITY,
-        communityId,
-        id
-    ).mapResultNotNull { permission ->
-        if (permission.hasRead) {
-            getTopicsPagingByPredicate(id, preTopicId, nextTopicId, size, fillHasCommented) {
-                val baseQuery = Topics.parentId eq communityId
-                when (pinType) {
-                    PINNED -> baseQuery and (Topics.pinned eq true)
-                    UNPINNED -> baseQuery and (Topics.pinned eq false)
-                    else -> baseQuery
-                }
-            }.mapResultNotNull { (data, count) ->
-                val ids = data.map {
-                    it.id
-                }
-                backend.topicSearchService.getDocuments(ids).mapResult { list ->
-                    processMediaAndAuthor(backend, data, list).map {
-                        PaginationResult(it, count)
-                    }
-                }
-            }
-        } else {
-            Result.failure(ForbiddenException())
-        }
-    }
-}
-
-private fun checkCommunityName(newCommunity: NewCommunity): Result<Unit> {
-    val nickname = newCommunity.name
-    return when {
-        nickname.isEmpty() -> Result.failure(CustomBadRequestException("community name is empty"))
-        nickname.length in 1..COMMUNITY_NAME_LENGTH -> Result.success(Unit)
-        else -> Result.failure(CustomBadRequestException("community name must be between in 1 and 20"))
-    }
-}
-
 suspend fun createCommunity(newCommunity: NewCommunity, uid: PrimaryKey, backend: Backend): Result<CommunityInfo> {
     val firstError = listOf(suspend {
         checkAid(newCommunity.aid)
     }, suspend {
-        checkCommunityName(newCommunity)
+        when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
+            StringCheckResult.RANGE_MISMATCH -> Result.failure(
+                CustomBadRequestException("community name must be between in 1 and 20")
+            )
+            StringCheckResult.EMPTY -> Result.failure(CustomBadRequestException("community name is empty"))
+            StringCheckResult.SUCCESS -> Result.success(Unit)
+        }
     }).firstNotNullOfOrNull {
         it().exceptionOrNull()
     }
@@ -225,6 +178,70 @@ suspend fun createCommunity(newCommunity: NewCommunity, uid: PrimaryKey, backend
             listOf(CommunityRawResult(community.toCommunityIfo(community.createdTime), newCommunity.icon, null))
         ).map {
             it.first()
+        }
+    }
+}
+
+suspend fun updateCommunity(
+    id: PrimaryKey,
+    backend: Backend,
+    old: UpdateCommunityBody,
+    uid: PrimaryKey
+): Result<CommunityInfo?> {
+    val newCommunity = old.copy(name = old.name?.trim(), icon = old.icon?.trim(), poster = old.poster?.trim())
+    return checkRootAdminPermission(ObjectType.COMMUNITY, id, uid).mapResultNotNull {
+        if (it.hasAdmin) {
+            val firstError = listOf(suspend {
+                when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
+                    StringCheckResult.RANGE_MISMATCH -> Result.failure(
+                        CustomBadRequestException("community name must be between in 1 and 20")
+                    )
+                    else -> Result.success(Unit)
+                }
+            }, suspend {
+                checkIcon(backend, newCommunity.icon, Dimension(1, 1)).mapResult { checkResult ->
+                    when (checkResult) {
+                        MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
+                        MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
+                            CustomBadRequestException("only support image")
+                        )
+                        MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
+                            CustomBadRequestException("dimension mismatch")
+                        )
+                        else -> Result.success(Unit)
+                    }
+                }
+            }, suspend {
+                checkIcon(backend, newCommunity.poster, Dimension(3, 4)).mapResult { checkResult ->
+                    when (checkResult) {
+                        MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("poster not found"))
+                        MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
+                            CustomBadRequestException("only support image")
+                        )
+                        MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
+                            CustomBadRequestException("dimension mismatch")
+                        )
+                        else -> Result.success(Unit)
+                    }
+                }
+            }).firstNotNullOfOrNull {
+                it().exceptionOrNull()
+            }
+            if (firstError != null) {
+                Result.failure(firstError)
+            } else {
+                DatabaseFactory.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
+                    if (updateSuccess) {
+                        DatabaseFactory.getCommunity(id, null, true, uid).mapResultNotNull {
+                            processCommunityList(backend, listOf(it)).map(List<CommunityInfo>::first)
+                        }
+                    } else {
+                        Result.success(null)
+                    }
+                }
+            }
+        } else {
+            Result.failure(CustomBadRequestException("forbid"))
         }
     }
 }

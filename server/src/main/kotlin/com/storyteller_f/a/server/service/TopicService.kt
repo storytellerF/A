@@ -425,7 +425,7 @@ suspend fun checkRootAdminPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            DatabaseFactory.getCommonCommunity(parentId).mapNotNull {
+            DatabaseFactory.getCommunity(parentId).mapNotNull {
                 RootAdminPermission(parentType, parentId, it.communityInfo.owner == uid)
             }
         }

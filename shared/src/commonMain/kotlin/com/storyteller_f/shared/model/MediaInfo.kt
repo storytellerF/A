@@ -2,6 +2,7 @@ package com.storyteller_f.shared.model
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
+import kotlin.math.abs
 
 const val AMEDIA_BUCKET = "amedia"
 
@@ -22,3 +23,8 @@ data class MediaItem(
 
 @Serializable
 class MediaResponse(val file: String, val contentType: String)
+
+fun checkMediaDimensionRatioMatch(dimension: Dimension, aspectRatio: Dimension): Boolean {
+    val aspectHeight = dimension.width.toFloat() * aspectRatio.height / aspectRatio.width
+    return abs(aspectHeight - dimension.height) < 1
+}

@@ -20,23 +20,23 @@ data class UploadPack(
 )
 
 interface MediaService {
-    fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>>
+    suspend fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>>
 
-    fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>>
+    suspend fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>>
 
-    fun clean(bucketName: String): Result<Unit>
+    suspend fun clean(bucketName: String): Result<Unit>
 
-    fun list(bucketName: String, prefix: String): Result<List<MediaInfo>>
+    suspend fun list(bucketName: String, prefix: String): Result<List<MediaInfo>>
 }
 
-fun uploadFiles(
+suspend fun uploadFiles(
     tika: Tika,
     backend: Backend,
     files: List<Triple<File, String, String?>>
 ): Result<List<MediaInfo?>> {
     val packs = files.map { (file, saveFileName, contentType) ->
         val type = checkContentType(file, tika, contentType)
-        val meta = if (type.second.startsWith("image") == true) {
+        val meta = if (type.second.startsWith("image")) {
             getDimension(file, type.second)?.let {
                 mapOf("width" to it.width.toString(), "height" to it.height.toString())
             } ?: emptyMap()

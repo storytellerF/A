@@ -85,7 +85,7 @@ fun RoomCell(
     ) {
         val commonDialogController = rememberCommonDialogController()
         val shown by commonDialogController.show
-        RoomIcon(roomInfo, showDialog = shown, updateShowDialog = commonDialogController::update)
+        RoomIcon(roomInfo, showDialog = shown, onClickIcon = commonDialogController::update)
         Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(roomInfo?.name.orEmpty(), color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
@@ -115,8 +115,8 @@ fun RoomIcon(
     roomInfo: RoomInfo?,
     showDialog: Boolean,
     size: Dp = 50.dp,
-    enableClick: Boolean = false,
-    updateShowDialog: (Boolean) -> Unit,
+    setClickEvent: Boolean = false,
+    onClickIcon: (Boolean) -> Unit,
 ) {
     val iconUrl = roomInfo?.icon?.url
     val radius = 8.dp
@@ -125,8 +125,14 @@ fun RoomIcon(
         AsyncImage(
             globalLoader(iconUrl),
             contentDescription = "${roomInfo.name}'s icon",
-            modifier = Modifier.size(size).clip(shape).clickable(enableClick) {
-                updateShowDialog(true)
+            modifier = Modifier.size(size).clip(shape).let {
+                if (setClickEvent) {
+                    it.clickable {
+                        onClickIcon(true)
+                    }
+                } else {
+                    it
+                }
             }
         )
     } else {
@@ -134,8 +140,14 @@ fun RoomIcon(
             modifier = Modifier.size(size)
                 .background(MaterialTheme.colorScheme.tertiaryContainer, shape)
                 .clip(shape)
-                .clickable(enableClick) {
-                    updateShowDialog(true)
+                .let {
+                    if (setClickEvent) {
+                        it.clickable {
+                            onClickIcon(true)
+                        }
+                    } else {
+                        it
+                    }
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -144,7 +156,7 @@ fun RoomIcon(
     }
     roomInfo?.id?.let {
         RoomDialog(showDialog, roomInfo) {
-            updateShowDialog(false)
+            onClickIcon(false)
         }
     }
 }

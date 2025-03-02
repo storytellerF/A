@@ -224,7 +224,9 @@ private suspend fun startSign(
     isSignUp: Boolean
 ) {
     if (privateKey.isNotBlank()) {
-        signUpOrSignIn(privateKey, client, isSignUp, appNav::gotoHome) {}
+        if (signUpOrSignIn(privateKey, client, isSignUp).isSuccess) {
+            appNav.gotoHome()
+        }
     }
 }
 
@@ -232,10 +234,8 @@ suspend fun signUpOrSignIn(
     privateKey: String,
     client: HttpClient,
     isSignUp: Boolean,
-    done: () -> Unit,
-    onError: () -> Unit
-) {
-    globalDialogState.use(done, onError) {
+): Result<Unit?> {
+    return globalDialogState.use {
         val data = client.getData().getOrThrow()
         val f = finalData(data)
         val sig = signature(privateKey, f)

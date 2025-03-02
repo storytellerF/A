@@ -15,8 +15,8 @@ class CleanCommand : Subcommand("clean", "clean all data") {
         Napier.i {
             "database tables removed."
         }
-        backend.mediaService.clean(AMEDIA_BUCKET).getOrThrow()
         runBlocking {
+            backend.mediaService.clean(AMEDIA_BUCKET).getOrThrow()
             backend.topicSearchService.clean().getOrThrow()
         }
         Napier.i {

@@ -34,11 +34,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.PlatformContext
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
+import coil3.size.Size
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
@@ -62,6 +64,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.io.RawSink
 import kotlinx.io.asOutputStream
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -270,16 +273,20 @@ fun generateLatexImage(
         if (SystemFileSystem.exists(output)) {
             true to output
         } else {
-            output.parent?.let {
-                if (!SystemFileSystem.exists(it)) {
-                    SystemFileSystem.createDirectories(it)
-                }
-            }
-            SystemFileSystem.sink(output).buffered().use {
+            output.sink().buffered().use {
                 buildTexPainter(tex, backgroundColor, textColor, size, it.asOutputStream()) to output
             }
         }
     }
+}
+
+fun Path.sink(): RawSink {
+    parent?.let {
+        if (!SystemFileSystem.exists(it)) {
+            SystemFileSystem.createDirectories(it)
+        }
+    }
+    return SystemFileSystem.sink(this)
 }
 
 @Composable
@@ -287,12 +294,18 @@ private fun imageRequestInMarkdown(
     info: MediaInfo?
 ): ImageRequest {
     val client = LocalClient.current
-    return ImageRequest.Builder(LocalPlatformContext.current)
-        .fetcherFactory(KtorNetworkFetcherFactory(client))
-        .data(info?.url)
-        .size(coil3.size.Size.ORIGINAL)
-        .build()
+    val context = LocalPlatformContext.current
+    return imageRequest(context, client, info).build()
 }
+
+fun imageRequest(
+    context: PlatformContext,
+    client: HttpClient,
+    info: MediaInfo?
+) = ImageRequest.Builder(context)
+    .fetcherFactory(KtorNetworkFetcherFactory(client))
+    .data(info?.url)
+    .size(Size.ORIGINAL)
 
 @Composable
 fun getSize(info: MediaInfo?): Pair<Float, Float>? {

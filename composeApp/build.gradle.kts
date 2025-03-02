@@ -139,7 +139,7 @@ kotlin {
             implementation(libs.haze)
             implementation(libs.zoomimage.compose.coil3)
             implementation(libs.fonticons.core)
-
+            implementation(libs.krop.ui)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
             implementation(libs.multiplatform.settings.serialization)

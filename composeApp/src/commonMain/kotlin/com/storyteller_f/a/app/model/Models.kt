@@ -25,19 +25,21 @@ import kotbase.ktx.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
-data class OnCommunityJoined(val newInfo: CommunityInfo)
-data class OnCommunityExited(val newInfo: CommunityInfo)
+data class OnCommunityJoined(val info: CommunityInfo)
+data class OnCommunityExited(val info: CommunityInfo)
 
-data class OnMediaUploaded(val mediaInfo: MediaInfo)
-data class OnRoomJoined(val newInfo: RoomInfo)
-data class OnRoomExited(val newInfo: RoomInfo)
+data class OnMediaUploaded(val mediaInfos: List<MediaInfo>)
+data class OnRoomJoined(val info: RoomInfo)
+data class OnRoomExited(val info: RoomInfo)
 
-data class OnUpdateUser(val newUser: UserInfo)
+data class OnUserUpdated(val newUser: UserInfo)
 
 data class OnTitleCreated(val title: TitleInfo)
 
 data class OnCommunityCreated(val info: CommunityInfo)
 data class OnRoomCreated(val info: RoomInfo)
+data class OnCommunityUpdated(val info: CommunityInfo)
+data class OnRoomUpdated(val info: RoomInfo)
 
 class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Result<CommunityInfo>, client: HttpClient) :
     SimpleViewModel<CommunityInfo>(client) {
@@ -58,14 +60,20 @@ class CommunityViewModel(private val requestInfo: suspend HttpClient.() -> Resul
                 val id = handler.data.value?.id
                 when (i) {
                     is OnCommunityJoined -> {
-                        if (i.newInfo.id == id) {
-                            update(i.newInfo)
+                        if (i.info.id == id) {
+                            update(i.info)
                         }
                     }
 
                     is OnCommunityExited -> {
-                        if (i.newInfo.id == id) {
-                            update(i.newInfo)
+                        if (i.info.id == id) {
+                            update(i.info)
+                        }
+                    }
+
+                    is OnCommunityUpdated -> {
+                        if (i.info.id == id) {
+                            update(i.info)
                         }
                     }
                 }
@@ -277,14 +285,20 @@ class RoomViewModel(private val requestInfo: suspend HttpClient.() -> Result<Roo
                 val id = handler.data.value?.id
                 when (i) {
                     is OnRoomJoined -> {
-                        if (i.newInfo.id == id) {
-                            update(i.newInfo)
+                        if (i.info.id == id) {
+                            update(i.info)
                         }
                     }
 
                     is OnRoomExited -> {
-                        if (i.newInfo.id == id) {
-                            update(i.newInfo)
+                        if (i.info.id == id) {
+                            update(i.info)
+                        }
+                    }
+
+                    is OnRoomUpdated -> {
+                        if (i.info.id == id) {
+                            update(i.info)
                         }
                     }
                 }
@@ -315,7 +329,7 @@ class MediaListViewModel(private val objectId: PrimaryKey, private val objectTyp
                 if (it is OnMediaUploaded) {
                     val old = handler.data.value ?: ServerResponse(emptyList())
                     update(old.copy(data = old.data.toMutableList().apply {
-                        add(0, it.mediaInfo)
+                        addAll(0, it.mediaInfos)
                     }))
                 }
             }
@@ -344,7 +358,7 @@ class UserViewModel(
         load()
         viewModelScope.launch {
             bus.collect {
-                if (it is OnUpdateUser && it.newUser.id == handler.data.value?.id) {
+                if (it is OnUserUpdated && it.newUser.id == handler.data.value?.id) {
                     update(it.newUser)
                 }
             }

@@ -2,80 +2,194 @@ package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.dokar.sonner.ToasterState
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.compose.LocalPlatformContext
+import com.attafitamim.krop.core.crop.*
+import com.attafitamim.krop.core.images.ImageBitmapSrc
+import com.attafitamim.krop.ui.ImageCropperDialog
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.UserIcon
+import com.storyteller_f.a.app.compontents.imageRequest
 import com.storyteller_f.a.app.globalDialogState
-import com.storyteller_f.a.app.model.OnUpdateUser
+import com.storyteller_f.a.app.model.OnUserUpdated
 import com.storyteller_f.a.app.pages.topic.MediaPicker
+import com.storyteller_f.a.app.pages.topic.uploadPath
+import com.storyteller_f.a.app.utils.ImageFormat
+import com.storyteller_f.a.app.utils.androidAllowHardware
+import com.storyteller_f.a.app.utils.coilImageToImageBitmap
+import com.storyteller_f.a.app.utils.saveImageBitmap
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.updateUserInfo
+import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
-import io.ktor.client.HttpClient
+import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
+import com.storyteller_f.shared.obj.UpdateUserBody
+import com.storyteller_f.shared.utils.mapNotNull
+import com.storyteller_f.shared.utils.mapResult
+import io.ktor.client.*
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
-sealed class UserSettingOption(open val name: String?) {
-    data class Name(override val name: String?) : UserSettingOption(name)
-    data class Aid(override val name: String?) : UserSettingOption(name)
-    data class Icon(override val name: String?) : UserSettingOption(name)
+sealed class SettingOption(open val value: String?) {
+    data class Name(override val value: String?) : SettingOption(value)
+    data class Aid(override val value: String?) : SettingOption(value)
+    data class Icon(override val value: String?) : SettingOption(value)
+    data class Poster(override val value: String?) : SettingOption(value)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserSettingPage() {
-    var showInputDialog by remember {
-        mutableStateOf<UserSettingOption?>(null)
+    var currentOption by remember {
+        mutableStateOf<SettingOption?>(null)
     }
     val sheetState = rememberModalBottomSheetState()
     val my by LoginViewModel.user.collectAsState()
-    val toasterState = LocalToaster.current
-    val showDialog = { option: UserSettingOption ->
-        showInputDialog = option
+    val showDialog = { option: SettingOption ->
+        currentOption = option
+    }
+    val closeDialog = {
+        currentOption = null
     }
     my?.let { m ->
         Scaffold {
-            UserSettingInternal(it, showDialog, m, toasterState)
-        }
-    }
-    val closeDialog = {
-        showInputDialog = null
-    }
-    val client = LocalClient.current
-    val scope = rememberCoroutineScope()
-    val updateIcon = { info: MediaInfo ->
-        scope.launch {
-            globalDialogState.use {
-                val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(avatar = info)).getOrThrow()
-                LoginViewModel.updateUser(newInfo)
-                closeDialog()
+            UserSettingInternal(it, showDialog, m)
+            val client = LocalClient.current
+            val scope = rememberCoroutineScope()
+            ObjectSettingDialog(closeDialog, currentOption, sheetState, {
+                scope.launch {
+                    globalDialogState.use {
+                        val newInfo = client.updateUserInfo(UpdateUserBody(avatar = it.item.name)).getOrThrow()
+                        LoginViewModel.updateUser(newInfo)
+                        closeDialog()
+                    }
+                }
+            }) {
+                scope.launch {
+                    updateUser(currentOption, client, it, closeDialog)
+                }
             }
         }
     }
+}
 
-    MediaPicker(showInputDialog is UserSettingOption.Icon, sheetState, null, {
-        updateIcon(it)
-    }, {
-        updateIcon(it)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ObjectSettingDialog(
+    closeDialog: () -> Unit,
+    currentOption: SettingOption?,
+    sheetState: SheetState,
+    onInputMedia: (MediaInfo) -> Unit,
+    onInputString: (String) -> Unit
+) {
+    val client = LocalClient.current
+    val context = LocalPlatformContext.current
+    val scope = rememberCoroutineScope()
+    val imageCropper = rememberImageCropper()
+
+    val ratio = when (currentOption) {
+        is SettingOption.Poster -> AspectRatio(3, 4)
+        else -> AspectRatio(1, 1)
+    }
+    val cropState = imageCropper.cropState
+    if (cropState != null) {
+        ImageCropperDialog(
+            state = cropState,
+            cropperStyle(
+                shapes = listOf(RectCropShape),
+                aspects = listOf(ratio)
+            )
+        )
+    }
+
+    MediaPicker(currentOption is SettingOption.Icon || currentOption is SettingOption.Poster, sheetState, null, {
+        val info = it.first()
+        val dimension = info.dimension
+        if (dimension == null || !info.item.contentType.startsWith("image/")) {
+            globalDialogState.showMessage("invalid image: ${info.item.contentType} $dimension")
+        } else {
+            scope.launch {
+                val finalInfo = cropImageIfNeed(context, client, info, imageCropper, dimension, ratio)
+                finalInfo.mapNotNull(onInputMedia)
+            }
+        }
     }, support = listOf("files")) {
         closeDialog()
     }
 
-    showInputDialog?.let {
-        InputDialog(it !is UserSettingOption.Icon, it.name.orEmpty(), {
+    currentOption?.let {
+        InputDialog(it !is SettingOption.Icon && it !is SettingOption.Poster, it.value.orEmpty(), {
             closeDialog()
-        }) {
-            scope.launch {
-                updateUser(showInputDialog, client, it, closeDialog)
+        }, onInputString)
+    }
+}
+
+private suspend fun cropImageIfNeed(
+    context: PlatformContext,
+    client: HttpClient,
+    info: MediaInfo,
+    imageCropper: ImageCropper,
+    dimension: Dimension,
+    aspectRatio: AspectRatio
+): Result<MediaInfo?> {
+    return if (checkMediaDimensionRatioMatch(dimension, Dimension(aspectRatio.x, aspectRatio.y))) {
+        Result.success(info)
+    } else {
+        cropImage(context, client, info, imageCropper)
+    }
+}
+
+private suspend fun cropImage(
+    context: PlatformContext,
+    client: HttpClient,
+    info: MediaInfo,
+    imageCropper: ImageCropper
+): Result<MediaInfo?> {
+    val image = globalDialogState.use {
+        ImageLoader(context)
+            .execute(imageRequest(context, client, info).androidAllowHardware(false).build())
+            .image?.coilImageToImageBitmap()
+    }
+    return image.mapResult {
+        if (it == null) {
+            globalDialogState.showMessage("please retry")
+            Result.success(null)
+        } else {
+            when (val result = imageCropper.cropSrc(ImageBitmapSrc(it))) {
+                CropResult.Cancelled -> {
+                    Result.success(null)
+                }
+
+                is CropError -> {
+                    globalDialogState.showMessage("failed: ${result.name}")
+                    Result.success(null)
+                }
+
+                is CropResult.Success -> {
+                    globalDialogState.use {
+                        val data = saveImageBitmap(
+                            result.bitmap,
+                            info.item.noPrefixName,
+                            when (info.item.contentType) {
+                                "image/jpeg" -> ImageFormat.JPEG
+                                else -> ImageFormat.PNG
+                            }
+                        )
+                        uploadPath(null, data, client).getOrThrow()?.first()
+                    }
+                }
             }
         }
     }
@@ -84,25 +198,26 @@ fun UserSettingPage() {
 @Composable
 private fun UserSettingInternal(
     values: PaddingValues,
-    showDialog: (UserSettingOption) -> Unit,
+    showDialog: (SettingOption) -> Unit,
     m: UserInfo,
-    toasterState: ToasterState
 ) {
+    val toasterState = LocalToaster.current
+
     Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
-        UserSettingOptionView("Icon", {
-            showDialog(UserSettingOption.Icon(m.avatar?.item?.name))
+        SettingOptionView("Icon", {
+            showDialog(SettingOption.Icon(m.avatar?.item?.name))
         }, {
-            UserIcon(m)
+            UserIcon(m, setClickEvent = false)
         })
-        UserSettingOptionView("Name", {
-            showDialog(UserSettingOption.Name(m.nickname))
+        SettingOptionView("Name", {
+            showDialog(SettingOption.Name(m.nickname))
         }, {
             Text(m.nickname, textDecoration = TextDecoration.Underline)
         })
         val aid = m.aid
-        UserSettingOptionView("Aid", {
+        SettingOptionView("Aid", {
             if (aid == null) {
-                showDialog(UserSettingOption.Aid(aid))
+                showDialog(SettingOption.Aid(aid))
             } else {
                 toasterState.show("forbid", duration = 1.seconds)
             }
@@ -117,10 +232,11 @@ private fun UserSettingInternal(
 }
 
 @Composable
-fun UserSettingOptionView(title: String, onClick: () -> Unit, content: @Composable () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(60.dp).clickable {
+fun SettingOptionView(title: String, onClick: () -> Unit, content: @Composable () -> Unit) {
+    val shape = RoundedCornerShape(8.dp)
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clip(shape).clickable {
         onClick()
-    }) {
+    }.padding(18.dp)) {
         Text(title)
         Spacer(modifier = Modifier.weight(1f))
         content()
@@ -129,31 +245,23 @@ fun UserSettingOptionView(title: String, onClick: () -> Unit, content: @Composab
 }
 
 private suspend fun updateUser(
-    showInputDialog: UserSettingOption?,
+    showInputDialog: SettingOption?,
     client: HttpClient,
     string: String,
     closeDialog: () -> Unit
 ) {
-    when (showInputDialog) {
-        is UserSettingOption.Name -> {
-            globalDialogState.use {
-                val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(nickname = string)).getOrThrow()
-                LoginViewModel.updateUser(newInfo)
-                bus.emit(OnUpdateUser(newInfo))
-                closeDialog()
-            }
-        }
+    val body = when (showInputDialog) {
+        is SettingOption.Name -> UpdateUserBody(nickname = string)
 
-        is UserSettingOption.Aid -> {
-            globalDialogState.use {
-                val newInfo = client.updateUserInfo(UserInfo.EMPTY.copy(aid = string)).getOrThrow()
-                LoginViewModel.updateUser(newInfo)
-                bus.emit(OnUpdateUser(newInfo))
-                closeDialog()
-            }
-        }
+        is SettingOption.Aid -> UpdateUserBody(aid = string)
 
-        else -> {}
+        else -> null
+    } ?: return
+    globalDialogState.use {
+        val newInfo = client.updateUserInfo(body).getOrThrow()
+        LoginViewModel.updateUser(newInfo)
+        bus.emit(OnUserUpdated(newInfo))
+        closeDialog()
     }
 }
 

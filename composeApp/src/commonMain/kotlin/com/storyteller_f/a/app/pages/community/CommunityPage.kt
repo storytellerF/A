@@ -28,7 +28,9 @@ import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.world.TopicList
-import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.exitCommunity
+import com.storyteller_f.a.client_lib.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -259,44 +261,63 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                 .padding(8.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            CommunityIcon(communityInfo, showDialog = false, 50.dp) {}
+            CommunityIcon(communityInfo, showDialog = false, 50.dp, setClickEvent = false) {}
             Column {
                 Text(communityInfo.name)
             }
         }
-        val client = LocalClient.current
-        Column {
-            ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
-                dismiss()
-                nav.gotoMemberPage(communityId, ObjectType.COMMUNITY)
+        CommunityMenus(dismiss, nav, communityId, communityInfo)
+    }
+}
+
+@Composable
+private fun CommunityMenus(
+    dismiss: () -> Unit,
+    nav: AppNav,
+    communityId: PrimaryKey,
+    communityInfo: CommunityInfo
+) {
+    val client = LocalClient.current
+    Column {
+        ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
+            dismiss()
+            nav.gotoMemberPage(communityId, ObjectType.COMMUNITY)
+        }
+        if (nav.hasRoute(CommunityScreen::class)) {
+            val scope = rememberCoroutineScope()
+            if (communityInfo.isJoined) {
+                ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_community)) {
+                    scope.launch {
+                        globalDialogState.use {
+                            val info = client.exitCommunity(communityId).getOrThrow()
+                            bus.emit(OnCommunityExited(info))
+                        }
+                    }
+                }
+            } else {
+                ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_community)) {
+                    scope.launch {
+                        globalDialogState.use {
+                            val info = client.joinCommunity(communityId).getOrThrow()
+                            bus.emit(OnCommunityJoined(info))
+                        }
+                    }
+                }
             }
-            if (nav.hasRoute(CommunityScreen::class)) {
-                val scope = rememberCoroutineScope()
-                if (communityInfo.isJoined) {
-                    ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_community)) {
-                        scope.launch {
-                            globalDialogState.use {
-                                val info = client.exitCommunity(communityId).getOrThrow()
-                                bus.emit(OnCommunityExited(info))
-                            }
-                        }
-                    }
-                } else {
-                    ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_community)) {
-                        scope.launch {
-                            globalDialogState.use {
-                                val info = client.joinCommunity(communityId).getOrThrow()
-                                bus.emit(OnCommunityJoined(info))
-                            }
-                        }
-                    }
-                }
-                ButtonNav(Icons.Default.Add, "Add") {
-                    dismiss()
-                    nav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, true, null)
-                }
+            ButtonNav(Icons.Default.Add, "Add") {
+                dismiss()
+                nav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, true, null)
+            }
+            val my by LoginViewModel.user.collectAsState()
+            if (my?.id == communityInfo.owner) {
                 ButtonNav(Icons.Default.Title, "Add Title") {
                     dismiss()
+                    nav.gotoTitleCompose()
+                }
+
+                ButtonNav(Icons.Default.Settings, "Settings") {
+                    dismiss()
+                    nav.gotoCommunitySetting(communityId)
                 }
             }
         }
