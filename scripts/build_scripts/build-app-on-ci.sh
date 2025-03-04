@@ -2,6 +2,7 @@
 set -e
 FLAVOR=$1
 URL=$2
+TARGET=$3
 IS_PROD="true"
 
 # 自动根据系统环境设置换行符格式
@@ -54,11 +55,38 @@ while IFS= read -r line; do
     export "$key"="$value"
 done < $TEMP_FILE
 
-./gradlew composeApp:assembleRelease
-./gradlew composeApp:packageReleaseMsi && ./gradlew composeApp:packageReleaseDeb && ./gradlew composeApp:packageReleaseDmg
-
-mkdir -p "build/outputs/apk/release"
-mkdir -p "build/outputs/pkg/release"
-
-mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/$FLAVOR.apk"
-mv composeApp/build/compose/binaries/main-release/deb/*.deb "build/outputs/pkg/release/$FLAVOR.deb"
+case "$TARGET" in
+    android)
+        echo "Running Android-specific command..."
+        # 在这里添加 Android 相关命令
+        ./gradlew composeApp:assembleRelease
+        mkdir -p "build/outputs/apk/release"
+        mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/$FLAVOR.apk"
+        ;;
+    desktop-msi)
+        echo "Running DesktopMsi-specific command..."
+        ./gradlew composeApp:packageReleaseMsi
+        mkdir -p "build/outputs/pkg/release"
+        mv composeApp/build/compose/binaries/main-release/msi/*.msi "build/outputs/pkg/release/$FLAVOR.msi"
+        ;;
+    desktop-deb)
+        echo "Running DesktopDeb-specific command..."
+        ./gradlew composeApp:packageReleaseDeb
+        mkdir -p "build/outputs/pkg/release"
+        mv composeApp/build/compose/binaries/main-release/deb/*.deb "build/outputs/pkg/release/$FLAVOR.deb"
+        ;;
+    desktop-dmg)
+        echo "Running DesktopDmg-specific command..."
+        ./gradlew composeApp:packageReleaseDmg
+        mkdir -p "build/outputs/pkg/release"
+        mv composeApp/build/compose/binaries/main-release/dmg/*.dmg "build/outputs/pkg/release/$FLAVOR.dmg"
+        ;;
+    *)
+        echo "Invalid target: $TARGET. Use 'android' or 'desktop-*'."
+        echo "Running Android-specific command..."
+        # 在这里添加 Android 相关命令
+        ./gradlew composeApp:assembleRelease
+        mkdir -p "build/outputs/apk/release"
+        mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/$FLAVOR.apk"
+        ;;
+esac
