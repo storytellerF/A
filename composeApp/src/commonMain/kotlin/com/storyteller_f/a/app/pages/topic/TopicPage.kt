@@ -180,15 +180,17 @@ private fun TopicInputGroup(
     }
     val client = LocalClient.current
     val isSending = sendState.value is LoadingState.Loading
+    val appNav = LocalAppNav.current
     InputGroupInternal(
-        topic.id,
-        ObjectType.TOPIC,
         input,
         MaterialTheme.colorScheme.secondaryContainer,
-        null,
+        topic.rootId.takeIf { topic.isPrivate },
         {
             input = it
         },
+        {
+            appNav.gotoTopicCompose(ObjectType.TOPIC, topic.id, false, topic.rootId.takeIf { topic.isPrivate })
+        }
     ) {
         CommonInputButton(LoadingState.Done, input, isSending) {
             if (!isSending) {

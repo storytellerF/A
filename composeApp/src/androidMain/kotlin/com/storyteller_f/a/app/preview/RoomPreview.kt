@@ -19,7 +19,6 @@ import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.PresetValue
-import com.storyteller_f.shared.type.ObjectType
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -59,12 +58,11 @@ private fun PreviewRoom(@PreviewParameter(MessageListProvider::class) topicInfos
             }
         }
         InputGroupInternal(
-            0,
-            ObjectType.ROOM,
             "test",
             MaterialTheme.colorScheme.tertiaryContainer,
             null,
             {},
+            {}
         ) {
         }
     }
@@ -98,11 +96,10 @@ private fun PreviewRooms(@PreviewParameter(RoomsProvider::class) roomInfo: RoomI
 private fun PreviewInputGroup() {
     val roomInfo = RoomInfo.EMPTY
     InputGroupInternal(
-        roomInfo.id,
-        ObjectType.ROOM,
         "test",
         MaterialTheme.colorScheme.tertiaryContainer,
         null,
+        {},
         {}
     ) {}
 }
