@@ -1,16 +1,13 @@
 package com.storyteller_f.a.app.model
 
 import androidx.compose.runtime.Composable
+import com.storyteller_f.a.app.UploadSession
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.TitleSearchType
-import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TitleStatus
-import com.storyteller_f.shared.type.TitleType
+import com.storyteller_f.shared.type.*
 
 @Composable
 fun createSearchCommunitiesViewModel(
@@ -239,3 +236,9 @@ fun createUserTitlesViewModel(
 ) = viewModel(keys = listOf("user-titles", uid)) {
     TitlesViewModel(it, uid, searchType, status, type, scopeId)
 }
+
+@Composable
+fun createUploadViewModel(myUid: PrimaryKey, uploadSession: UploadSession) =
+    viewModel(keys = listOf("upload", uploadSession.name)) {
+        UploadViewModel(it, uploadSession, myUid)
+    }

@@ -14,12 +14,12 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
+import com.storyteller_f.a.app.compontents.SettingOptionView
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnRoomUpdated
 import com.storyteller_f.a.app.model.createRoomViewModel
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.pages.user.SettingOption
-import com.storyteller_f.a.app.pages.user.SettingOptionView
 import com.storyteller_f.a.client_lib.updateRoomInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody

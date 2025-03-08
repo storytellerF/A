@@ -1,13 +1,9 @@
 package com.storyteller_f.a.app.pages.user
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
@@ -19,6 +15,7 @@ import com.attafitamim.krop.ui.ImageCropperDialog
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
+import com.storyteller_f.a.app.compontents.SettingOptionView
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.compontents.imageRequest
 import com.storyteller_f.a.app.globalDialogState
@@ -203,7 +200,7 @@ private fun UserSettingInternal(
 ) {
     val toasterState = LocalToaster.current
 
-    Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
+    Column(modifier = Modifier.padding(values).padding(horizontal = 20.dp)) {
         SettingOptionView("Icon", {
             showDialog(SettingOption.Icon(m.avatar?.item?.name))
         }, {
@@ -229,19 +226,6 @@ private fun UserSettingInternal(
             }
         })
     }
-}
-
-@Composable
-fun SettingOptionView(title: String, onClick: () -> Unit, content: @Composable () -> Unit) {
-    val shape = RoundedCornerShape(8.dp)
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clip(shape).clickable {
-        onClick()
-    }.padding(18.dp)) {
-        Text(title)
-        Spacer(modifier = Modifier.weight(1f))
-        content()
-    }
-    HorizontalDivider()
 }
 
 private suspend fun updateUser(

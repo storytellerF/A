@@ -19,6 +19,8 @@ import kotlin.time.Duration.Companion.seconds
 
 class ServerErrorException(val status: HttpStatusCode, val text: String) : Exception("$status $text")
 
+val globalCookiesStorage = AcceptAllCookiesStorage()
+
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
 fun HttpClientConfig<*>.defaultClientConfigure() {
@@ -40,7 +42,9 @@ fun HttpClientConfig<*>.defaultClientConfigure() {
         }
         level = LogLevel.HEADERS
     }
-    install(HttpCookies)
+    install(HttpCookies) {
+        storage = globalCookiesStorage
+    }
     install(HttpRequestRetry) {
         retryIf { request, response ->
             if (response.status == HttpStatusCode.Unauthorized) {

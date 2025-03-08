@@ -248,12 +248,12 @@ private suspend fun selectFileAndUpload(
         val f = FileKit.pickFile()
         if (f != null) {
             upload(
-                id,
-                privateRoomId,
+                client,
                 f.name,
                 ContentType.defaultForFileExtension(f.extension),
                 f.getSize(),
-                client
+                id,
+                privateRoomId
             ) {
                 f.readBytes()
             }
@@ -274,12 +274,12 @@ suspend fun uploadPath(
     val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
     return globalDialogState.use {
         upload(
-            my.id,
-            privateRoomId,
+            client,
             path.name,
             ContentType.defaultForFilePath(path.toString()),
             meta.size,
-            client
+            my.id,
+            privateRoomId
         ) {
             SystemFileSystem.source(path).buffered().readByteArray()
         }
@@ -287,12 +287,12 @@ suspend fun uploadPath(
 }
 
 suspend fun upload(
-    id: PrimaryKey,
-    privateRoomId: PrimaryKey?,
+    client: HttpClient,
     name: String,
     contentType: ContentType,
     size: Long?,
-    client: HttpClient,
+    myUid: PrimaryKey,
+    privateRoomId: PrimaryKey?,
     readStream: suspend () -> ByteArray
 ): List<MediaInfo> {
     if (size != null && size <= 100 * 1024 * 1024) {
@@ -309,7 +309,7 @@ suspend fun upload(
             else -> client.upload(
                 stream,
                 name,
-                id,
+                myUid,
                 ObjectType.USER,
                 contentType
             ).getOrThrow()
