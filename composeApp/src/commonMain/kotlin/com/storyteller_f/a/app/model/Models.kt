@@ -54,7 +54,6 @@ abstract class CommunityViewModel(
     val dialog = DialogSaveState()
 
     init {
-        load()
         viewModelScope.launch {
             bus.collect { i ->
                 val id = handler.data.value?.id
@@ -91,6 +90,9 @@ class IdCommunityViewModel(client: HttpClient, communityId: PrimaryKey) : Commun
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("communities"), communityId.toString()) {
             "id" equalTo communityId
         }
+    init {
+        load()
+    }
 }
 
 class AidCommunityViewModel(client: HttpClient, aid: String) : CommunityViewModel({
@@ -103,6 +105,9 @@ class AidCommunityViewModel(client: HttpClient, aid: String) : CommunityViewMode
         aid,
     ) {
         "aid" equalTo aid
+    }
+    init {
+        load()
     }
 }
 
@@ -291,7 +296,6 @@ abstract class RoomViewModel(private val requestInfo: suspend HttpClient.() -> R
     val dialog = DialogSaveState()
 
     init {
-        load()
         viewModelScope.launch {
             bus.collect { i ->
                 val id = handler.data.value?.id
@@ -328,6 +332,9 @@ class IdRoomViewModel(client: HttpClient, communityId: PrimaryKey) : RoomViewMod
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("rooms"), communityId.toString()) {
             "id" equalTo communityId
         }
+    init {
+        load()
+    }
 }
 
 class AidRoomViewModel(client: HttpClient, aid: String) : RoomViewModel({
@@ -337,6 +344,9 @@ class AidRoomViewModel(client: HttpClient, aid: String) : RoomViewModel({
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("rooms"), aid) {
             "aid" equalTo aid
         }
+    init {
+        load()
+    }
 }
 
 @OptIn(ExperimentalPagingApi::class)
@@ -352,6 +362,8 @@ class TopicSearchViewModel(word: List<String>, parentId: PrimaryKey?, parentType
 
 class MediaListViewModel(private val objectId: PrimaryKey, private val objectType: ObjectType, client: HttpClient) :
     SimpleViewModel<ServerResponse<MediaInfo>>(client) {
+    override val handler: LoadingHandler<ServerResponse<MediaInfo>> = SimpleLoadingHandler(::load)
+
     init {
         load()
         viewModelScope.launch {
@@ -366,8 +378,6 @@ class MediaListViewModel(private val objectId: PrimaryKey, private val objectTyp
         }
     }
 
-    override val handler: LoadingHandler<ServerResponse<MediaInfo>> = SimpleLoadingHandler(::load)
-
     override suspend fun loadInternal() = client.getMediaList(objectId, objectType)
 }
 
@@ -378,7 +388,6 @@ abstract class UserViewModel(
     SimpleViewModel<UserInfo>(client) {
 
     init {
-        load()
         viewModelScope.launch {
             bus.collect {
                 if (it is OnUserUpdated && it.newUser.id == handler.data.value?.id) {
@@ -398,6 +407,9 @@ class IdUserViewModel(client: HttpClient, communityId: PrimaryKey) : UserViewMod
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("users"), communityId.toString()) {
             "id" equalTo communityId
         }
+    init {
+        load()
+    }
 }
 
 class AidUserViewModel(client: HttpClient, aid: String) : UserViewModel({
@@ -407,6 +419,9 @@ class AidUserViewModel(client: HttpClient, aid: String) : UserViewModel({
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("users"), aid) {
             "aid" equalTo aid
         }
+    init {
+        load()
+    }
 }
 
 @OptIn(ExperimentalPagingApi::class)
@@ -468,7 +483,6 @@ abstract class TopicViewModel(private val requestInfo: suspend HttpClient.() -> 
     SimpleViewModel<TopicInfo>(client) {
 
     init {
-        load()
         viewModelScope.launch {
             bus.collect { value ->
                 val id = handler.data.value?.id
@@ -496,6 +510,9 @@ class IdTopicViewModel(client: HttpClient, topicId: PrimaryKey) : TopicViewModel
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("topics"), topicId.toString()) {
             "id" equalTo topicId
         }
+    init {
+        load()
+    }
 }
 
 class AidTopicViewModel(client: HttpClient, aid: String) : TopicViewModel({
@@ -505,6 +522,9 @@ class AidTopicViewModel(client: HttpClient, aid: String) : TopicViewModel({
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("topics"), aid) {
             "aid" equalTo aid
         }
+    init {
+        load()
+    }
 }
 
 class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean, client: HttpClient) :

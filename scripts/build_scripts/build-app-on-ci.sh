@@ -27,25 +27,7 @@ EOF
 
 ./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$IS_PROD"
 
-TEMP_FILE=./temp
-# 解析SECRETS_CONTEXT 到文件
-# Pipe the JSON string into jq
-echo "$SECRETS_CONTEXT" |
-# Convert JSON object into an array of key-value pairs
-jq -r 'to_entries |
-# Map over each key-value pair
-.[] |
-# Format each pair as "KEY=VALUE" and append it all to the environment file
-"\(.key)=\(.value)"' >> $TEMP_FILE
-
-while IFS= read -r line; do
-    # Ignore empty lines and comments
-    [[ -z "$line" || "$line" =~ ^# ]] && continue
-    IFS='=' read -r key value <<< "$line"
-    export "$key"="$value"
-done < $TEMP_FILE
-#从文件写入环境变量
-while IFS= read -r line; do
+echo "$SECRETS_CONTEXT" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' | while IFS= read -r line; do
     # Ignore empty lines and comments
     [[ -z "$line" || "$line" =~ ^# ]] && continue
     IFS='=' read -r key value <<< "$line"
@@ -53,7 +35,7 @@ while IFS= read -r line; do
     [[ ! "$key" =~ ^[Ss][Tt][Oo][Rr][Yy][Tt][Ee][Ll][Ll][Ee][Rr]_[Ff] ]] && continue
 
     export "$key"="$value"
-done < $TEMP_FILE
+done
 
 case "$TARGET" in
     android)
@@ -83,10 +65,5 @@ case "$TARGET" in
         ;;
     *)
         echo "Invalid target: $TARGET. Use 'android' or 'desktop-*'."
-        echo "Running Android-specific command..."
-        # 在这里添加 Android 相关命令
-        ./gradlew composeApp:assembleRelease
-        mkdir -p "build/outputs/apk/release"
-        mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/$FLAVOR.apk"
         ;;
 esac

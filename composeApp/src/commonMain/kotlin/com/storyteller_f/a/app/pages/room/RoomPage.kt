@@ -222,15 +222,19 @@ private fun RoomInputGroupInternal(
         keysViewModel,
         wsClient
     )
+    val appNav = LocalAppNav.current
     InputGroupInternal(
-        objectId,
-        objectType,
         input,
         MaterialTheme.colorScheme.tertiaryContainer,
         roomId.takeIf {
             roomInfo.isPrivate
         },
         updateInput,
+        {
+            appNav.gotoTopicCompose(objectType, objectId, false, roomId.takeIf {
+                roomInfo.isPrivate
+            })
+        }
     ) {
         RoomSendButton(input = input) {
             sendRoomTopic(c)
@@ -366,12 +370,11 @@ fun CommonInputButton(
 
 @Composable
 fun InputGroupInternal(
-    objectId: PrimaryKey,
-    objectType: ObjectType,
     input: String,
     backgroundColor: Color,
     privateRoomId: PrimaryKey?,
     updateInput: (String) -> Unit,
+    gotoCompose: () -> Unit,
     sendButton: @Composable () -> Unit
 ) {
     Row(
@@ -385,7 +388,7 @@ fun InputGroupInternal(
         OutlinedTextField(input, {
             updateInput(it)
         }, modifier = Modifier.weight(1f), suffix = {
-            InputGroupSuffix(input, updateInput, objectType, objectId, privateRoomId)
+            InputGroupSuffix(input, updateInput, privateRoomId, gotoCompose)
         })
 
         Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
@@ -399,9 +402,8 @@ fun InputGroupInternal(
 private fun InputGroupSuffix(
     input: String,
     updateInput: (String) -> Unit,
-    objectType: ObjectType,
-    objectId: PrimaryKey,
-    privateRoomId: PrimaryKey?
+    privateRoomId: PrimaryKey?,
+    gotoCompose: () -> Unit
 ) {
     val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
     var showSheet by remember {
@@ -413,13 +415,12 @@ private fun InputGroupSuffix(
                 updateInput("")
             })
         }
-        val appNav = LocalAppNav.current
         Icon(
             Icons.Default.OpenInFull,
             "open in full",
             modifier = Modifier.clickable {
                 if (alreadyLoginIn) {
-                    appNav.gotoTopicCompose(objectType, objectId, false, privateRoomId)
+                    gotoCompose()
                 } else {
                     globalDialogState.showMessage("need sign in")
                 }
