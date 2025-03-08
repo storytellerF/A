@@ -1,8 +1,14 @@
 package com.storyteller_f.a.app
 
 import a.composeapp.generated.resources.Res
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,7 +73,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.reflect.KClass
@@ -168,35 +173,44 @@ fun AppInternal(httpUrl: String, wsServerUrl: String) {
             getAsyncImageLoader(it)
         }
         val navigator = rememberNavController()
-        App2(navigator, httpUrl, wsServerUrl) {
-            NavHost(navigator, startDestination = HomeScreen) {
-                buildRootNav(navigator)
+        val appNav = remember<AppNav> {
+            newAppNav(navigator)
+        }
+        CompositionLocalProvider(LocalAppNav provides appNav) {
+            CommonEntry(httpUrl, wsServerUrl, {
+                appNav.toRoute<RoomScreen>()?.roomId
+            }, {
+                appNav.toRoute<TopicScreen>()?.topicId
+            }) {
+                NavHost(navigator, startDestination = HomeScreen) {
+                    buildRootNav(navigator)
+                }
             }
         }
     }
 }
 
 @Composable
-fun App2(navigator: NavHostController, httpUrl: String, wsServerUrl: String, content: @Composable () -> Unit) {
-    val appNav = remember {
-        newAppNav(navigator)
+fun CommonEntry(
+    httpUrl: String,
+    wsServerUrl: String,
+    roomScreenId: () -> PrimaryKey?,
+    topicScreenId: () -> PrimaryKey?,
+    content: @Composable () -> Unit
+) {
+    val client = getClient {
+        defaultClientConfigure()
+        setupRequest(httpUrl)
     }
-
-    CompositionLocalProvider(LocalAppNav provides appNav) {
-        val client = getClient {
-            defaultClientConfigure()
-            setupRequest(httpUrl)
-        }
-        CompositionLocalProvider(LocalClient provides client) {
-            val ws = rememberWsClient(client, wsServerUrl, appNav)
-            CompositionLocalProvider(LocalWsClient provides ws) {
-                GlobalDialog(globalDialogState)
-                val toasterState = rememberToasterState()
-                Toaster(toasterState, alignment = Alignment.Center)
-                CompositionLocalProvider(LocalToaster provides toasterState) {
-                    LoginCheck {
-                        content()
-                    }
+    CompositionLocalProvider(LocalClient provides client) {
+        val ws = rememberWsClient(client, wsServerUrl, roomScreenId, topicScreenId)
+        CompositionLocalProvider(LocalWsClient provides ws) {
+            GlobalDialog(globalDialogState)
+            val toasterState = rememberToasterState()
+            Toaster(toasterState, alignment = Alignment.Center)
+            CompositionLocalProvider(LocalToaster provides toasterState) {
+                LoginCheck {
+                    content()
                 }
             }
         }
@@ -204,9 +218,10 @@ fun App2(navigator: NavHostController, httpUrl: String, wsServerUrl: String, con
 }
 
 private fun buildWsListener(
-    appNav: AppNav,
     messageToasterState: ToasterState,
-    hasPermission: Boolean
+    hasPermission: Boolean,
+    roomScreenId: () -> PrimaryKey?,
+    topicScreenId: () -> PrimaryKey?,
 ) = object : ClientWsListener {
     override fun onReceived(frame: RoomFrame) {
         if (frame is RoomFrame.NewTopicInfo) {
@@ -214,10 +229,10 @@ private fun buildWsListener(
             val message = topicInfo.content
             if (message is TopicContent.Plain) {
                 if (platform.isActive) {
-                    val roomScreen = appNav.toRoute<RoomScreen>()
-                    val topicScreen = appNav.toRoute<TopicScreen>()
-                    if (roomScreen?.roomId != topicInfo.parentId &&
-                        topicScreen?.topicId != topicInfo.parentId
+                    val roomId = roomScreenId()
+                    val topicId = topicScreenId()
+                    if (roomId != topicInfo.parentId &&
+                        topicId != topicInfo.parentId
                     ) {
                         val nickname = topicInfo.extension?.authorInfo?.nickname
                         messageToasterState.show("$nickname: ${message.plain}")
@@ -234,7 +249,8 @@ private fun buildWsListener(
 private fun rememberWsClient(
     client: HttpClient,
     wsServerUrl: String,
-    appNav: AppNav
+    roomScreenId: () -> PrimaryKey?,
+    topicScreenId: () -> PrimaryKey?,
 ): ClientWebSocket {
     val remember = remember {
         ClientWebSocket({
@@ -259,7 +275,7 @@ private fun rememberWsClient(
     val notificationProvider = getNotificationProvider()
     val hasPermission by notificationProvider.hasPermissionState
     val listener = remember(hasPermission) {
-        buildWsListener(appNav, messageToasterState, hasPermission)
+        buildWsListener(messageToasterState, hasPermission, roomScreenId, topicScreenId)
     }
     remember.addListener(listener)
     DisposableEffect(null) {
@@ -280,7 +296,7 @@ fun LoginCheck(content: @Composable () -> Unit) {
         mutableStateOf(false)
     }
     LaunchedEffect(currentState, tried) {
-        if (!tried) {
+        if (!tried && user == null) {
             if (currentState is ClientSession.SignUpSuccess) {
                 globalDialogState.use {
                     val data = client.getData().getOrThrow()

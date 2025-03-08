@@ -1,13 +1,16 @@
 package com.storyteller_f.a.app.model
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
+import com.storyteller_f.a.app.UploadSession
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.DialogSaveState
+import com.storyteller_f.a.app.pages.topic.upload
 import com.storyteller_f.a.app.updateDocument
 import com.storyteller_f.a.app.updateDocumentInParent
 import com.storyteller_f.a.client_lib.*
@@ -22,6 +25,7 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import kotbase.Expression
 import kotbase.ktx.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
@@ -90,6 +94,7 @@ class IdCommunityViewModel(client: HttpClient, communityId: PrimaryKey) : Commun
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("communities"), communityId.toString()) {
             "id" equalTo communityId
         }
+
     init {
         load()
     }
@@ -106,6 +111,7 @@ class AidCommunityViewModel(client: HttpClient, aid: String) : CommunityViewMode
     ) {
         "aid" equalTo aid
     }
+
     init {
         load()
     }
@@ -332,6 +338,7 @@ class IdRoomViewModel(client: HttpClient, communityId: PrimaryKey) : RoomViewMod
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("rooms"), communityId.toString()) {
             "id" equalTo communityId
         }
+
     init {
         load()
     }
@@ -344,6 +351,7 @@ class AidRoomViewModel(client: HttpClient, aid: String) : RoomViewModel({
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("rooms"), aid) {
             "aid" equalTo aid
         }
+
     init {
         load()
     }
@@ -407,6 +415,7 @@ class IdUserViewModel(client: HttpClient, communityId: PrimaryKey) : UserViewMod
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("users"), communityId.toString()) {
             "id" equalTo communityId
         }
+
     init {
         load()
     }
@@ -419,6 +428,7 @@ class AidUserViewModel(client: HttpClient, aid: String) : UserViewModel({
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("users"), aid) {
             "aid" equalTo aid
         }
+
     init {
         load()
     }
@@ -510,6 +520,7 @@ class IdTopicViewModel(client: HttpClient, topicId: PrimaryKey) : TopicViewModel
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("topics"), topicId.toString()) {
             "id" equalTo topicId
         }
+
     init {
         load()
     }
@@ -522,6 +533,7 @@ class AidTopicViewModel(client: HttpClient, aid: String) : TopicViewModel({
         buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("topics"), aid) {
             "aid" equalTo aid
         }
+
     init {
         load()
     }
@@ -564,3 +576,41 @@ class TitlesViewModel(
         client.userTitles(uid, it, 10, searchType, status, type, scopeId)
     }
 }, client = client)
+
+class UploadViewModel(client: HttpClient, private val uploader: UploadSession, myUid: PrimaryKey) : ViewModel() {
+    private val queue = Channel<Int> {
+    }
+    val handlers = uploader.list.mapIndexed { i, e ->
+        SimpleLoadingHandler<MediaInfo> {
+            retry(i)
+        } to e
+    }
+
+    init {
+        viewModelScope.launch {
+            for (e in queue) {
+                val (handler, clientFile) = handlers[e]
+                handler.request {
+                    runCatching {
+                        upload(client, clientFile.name, clientFile.contentType, clientFile.size, myUid, null) {
+                            clientFile.readAll() ?: throw Exception("read file failed")
+                        }.first()
+                    }
+                }
+            }
+        }
+        viewModelScope.launch {
+            uploader.list.forEachIndexed { i, _ ->
+                queue.send(i)
+            }
+        }
+    }
+
+    fun retry(index: Int) {
+        viewModelScope.launch {
+            if (index in 0 until uploader.list.size && handlers[index].first.state.value is LoadingState.Error) {
+                queue.send(index)
+            }
+        }
+    }
+}

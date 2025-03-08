@@ -14,12 +14,12 @@ import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.CommunityPoster
+import com.storyteller_f.a.app.compontents.SettingOptionView
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnCommunityUpdated
 import com.storyteller_f.a.app.model.createCommunityViewModel
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.pages.user.SettingOption
-import com.storyteller_f.a.app.pages.user.SettingOptionView
 import com.storyteller_f.a.client_lib.updateCommunityInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody

@@ -33,6 +33,19 @@ import com.storyteller_f.shared.model.Identifiable
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
+const val REFRESH_AFTER = 300L
+
+private fun LoadState?.toLoadingState() =
+    when (this) {
+        null -> null
+
+        is LoadStateLoading -> LoadingState.Loading
+
+        is LoadStateError -> LoadingState.Error(error)
+
+        is LoadStateNotLoading -> LoadingState.Done
+    }
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun <T : Any> StateView(
@@ -49,7 +62,10 @@ fun <T : Any> StateView(
     LaunchedEffect(key1 = refreshing, key2 = refresh) {
         // 增加延时，确保真正进入刷新状态
         delay(REFRESH_AFTER)
-        if (refreshing && refresh !is LoadStateLoading) refreshing = false
+        if (refreshing) {
+            // 刷新结束或者当前没有内容时停止刷新，如果没有内容会使用列表刷新控件
+            if (refresh !is LoadStateLoading || pagingItems.itemCount == 0) refreshing = false
+        }
     }
     val loadState by produceState<androidx.paging.LoadState?>(null, key1 = refresh) {
         delay(100)
@@ -63,18 +79,38 @@ fun <T : Any> StateView(
     }
 }
 
-const val REFRESH_AFTER = 300L
-
-private fun LoadState?.toLoadingState() =
-    when (this) {
-        null -> null
-
-        is LoadStateLoading -> LoadingState.Loading
-
-        is LoadStateError -> LoadingState.Error(error)
-
-        is LoadStateNotLoading -> LoadingState.Done
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun <T> StateView(
+    handler: LoadingHandler<T>,
+    extraRefresh: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    content: @Composable (T) -> Unit
+) {
+    val state by handler.state.collectAsState()
+    val data by handler.data.collectAsState()
+    var refreshing by remember { mutableStateOf(false) }
+    val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
+        refreshing = true
+        handler.refresh()
+        extraRefresh()
+    })
+    LaunchedEffect(key1 = refreshing, key2 = state) {
+        delay(REFRESH_AFTER)
+        if (refreshing && state !is LoadingState.Loading) refreshing = false
     }
+    Box(modifier = modifier.pullRefresh(refreshState)) {
+        StateViewInternal(state, refresh = {
+            handler.refresh()
+            extraRefresh()
+        }, 1) {
+            data?.let {
+                content(it)
+            }
+        }
+        PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
+    }
+}
 
 @Composable
 private fun StateViewInternal(
@@ -125,39 +161,6 @@ fun CenterBox(content: @Composable () -> Unit) {
     val scrollState = rememberScrollState()
     Box(modifier = Modifier.fillMaxSize().verticalScroll(scrollState), contentAlignment = Alignment.Center) {
         content()
-    }
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun <T> StateView(
-    handler: LoadingHandler<T>,
-    extraRefresh: () -> Unit = {},
-    modifier: Modifier = Modifier,
-    content: @Composable (T) -> Unit
-) {
-    val state by handler.state.collectAsState()
-    val data by handler.data.collectAsState()
-    var refreshing by remember { mutableStateOf(false) }
-    val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
-        refreshing = true
-        handler.refresh()
-        extraRefresh()
-    })
-    LaunchedEffect(key1 = refreshing, key2 = state) {
-        delay(REFRESH_AFTER)
-        if (refreshing && state !is LoadingState.Loading) refreshing = false
-    }
-    Box(modifier = modifier.pullRefresh(refreshState)) {
-        StateViewInternal(state, refresh = {
-            handler.refresh()
-            extraRefresh()
-        }, 1) {
-            data?.let {
-                content(it)
-            }
-        }
-        PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
 }
 
