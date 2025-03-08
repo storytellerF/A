@@ -74,10 +74,10 @@ jobs:
           cache: gradle
 
       - name: Build mini msi
-        run: "C:\Program Files\Git\bin\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh mini www.acommunity.link desktop-msi"
+        run: "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh mini www.acommunity.link desktop-msi"
 
       - name: Build koyeb msi
-        run: "C:\Program Files\Git\bin\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh koyeb respectable-jobie-anabn-3d54150c.koyeb.app/server/ desktop-msi"
+        run: "C:\\Program Files\\Git\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh koyeb respectable-jobie-anabn-3d54150c.koyeb.app/server/ desktop-msi"
 
       - uses: actions/upload-artifact@v4
         with:
