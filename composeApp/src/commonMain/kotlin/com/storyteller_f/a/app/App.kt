@@ -65,6 +65,7 @@ import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.*
+import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
 import kotbase.MutableDocument
@@ -198,9 +199,11 @@ fun CommonEntry(
     topicScreenId: () -> PrimaryKey?,
     content: @Composable () -> Unit
 ) {
-    val client = getClient {
-        defaultClientConfigure()
-        setupRequest(httpUrl)
+    val client = remember {
+        getClient {
+            defaultClientConfigure()
+            setupRequest(httpUrl)
+        }
     }
     CompositionLocalProvider(LocalClient provides client) {
         val ws = rememberWsClient(client, wsServerUrl, roomScreenId, topicScreenId)

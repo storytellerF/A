@@ -34,7 +34,7 @@ dependencies {
     runtimeOnly(libs.vavi.image.avif)
 
     implementation(libs.lucene.backward.codecs)
-    testImplementation(libs.elasticsearch)
+    testImplementation(libs.testcontainers.elasticsearch)
 }
 
 tasks.test {

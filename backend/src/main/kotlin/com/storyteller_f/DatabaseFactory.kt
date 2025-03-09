@@ -1,13 +1,14 @@
 package com.storyteller_f
 
 import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
+import com.storyteller_f.shared.utils.md5
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.io.File
 
 object DatabaseFactory {
 
@@ -72,7 +73,7 @@ object DatabaseFactory {
         val r = Exception()
         return runCatching {
             newSuspendedTransaction(Dispatchers.IO) {
-                debug = true
+                debug = isEnableExplain
                 try {
                     block()
                 } catch (e: Throwable) {
@@ -161,25 +162,20 @@ object DatabaseFactory {
         block().count()
     }
 
-    suspend fun insert(block: () -> InsertStatement<Number>): Result<Int> = dbQuery {
-        block().insertedCount
-    }
-
     private fun <T> Transaction.explainQuery(block: () -> SizedIterable<T>) {
         if (isEnableExplain) {
             val result = explain {
                 block()
             }.toList().joinToString("\n")
-            if (result.contains("Sort") ||
-                result.contains("GroupAggregate") ||
-                result.contains("Seq") ||
-                result.contains(
-                    "Nested Loop"
-                )
-            ) {
-                Napier.i(tag = "explain result") {
-                    "result: $result\nstatements: $statements"
+            val file = File("./build/test/${md5(statements.toString())}.explain")
+            file.parentFile?.let {
+                if (!it.exists()) {
+                    it.mkdirs()
                 }
+            }
+            file.writeText("$statements\n$result\n")
+            Napier.i(tag = "explain result") {
+                "result: $result\nstatements: $statements"
             }
         }
     }

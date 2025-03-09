@@ -82,8 +82,8 @@ private suspend fun processTitleList(
     return DatabaseFactory.getUsersByIds(uidList, backend).mapResult { userList ->
         DatabaseFactory.getCommunityByIds(communityIdList).mapResult {
             processCommunityList(backend, it).mapResult { communityList ->
-                DatabaseFactory.getRoomByIds(roomIdList).mapResult {
-                    processRoomList(it, backend).mapResult { roomList ->
+                DatabaseFactory.getRoomByIds(roomIdList).mapResult { roomPairs ->
+                    processRoomList(roomPairs, backend).mapResult { roomList ->
                         getTopicByIds(topicIdList, uid, false, backend).map { topicList ->
                             processTitleList(userList, communityList, roomList, list, topicList)
                         }

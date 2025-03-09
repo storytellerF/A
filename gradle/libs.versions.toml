@@ -54,7 +54,8 @@ markdown = "0.7.3"
 material3WindowSizeClassMultiplatform = "0.5.0"
 media3Exoplayer = "1.5.1"
 minio = "8.5.17"
-minioVersion = "1.20.5"
+mysqlConnectorJava = "8.0.33"
+testContainer = "1.20.6"
 mosaicRuntime = "0.16.0"
 multiplatformMarkdownRenderer = "0.31.0-rc01"
 multiplatformSettingsNoArg = "1.3.0"
@@ -65,7 +66,6 @@ pdfbox = "3.0.4"
 pdfboxLayout = "3.0.0-rc.0"
 pgjdbcNg = "0.8.9"
 postgresql = "42.7.5"
-postgresqlVersion = "1.20.5"
 recordCore = "0.4.0"
 richeditorCompose = "1.0.0-rc11"
 robolectric = "4.14.1"
@@ -111,7 +111,8 @@ desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref 
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detektVersion" }
 detekt-rules-libraries = { module = "io.gitlab.arturbosch.detekt:detekt-rules-libraries", version.ref = "detektVersion" }
 detekt-rules-ruleauthors = { module = "io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors", version.ref = "detektVersion" }
-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "minioVersion" }
+mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnectorJava" }
+testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearchJava" }
 emoji-compose-m3 = { module = "org.kodein.emoji:emoji-compose-m3", version.ref = "emojiKt" }
 emoji-kt = { module = "org.kodein.emoji:emoji-kt", version.ref = "emojiKt" }
@@ -199,8 +200,9 @@ slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" 
 sonner = "io.github.dokar3:sonner:0.3.8"
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 sunny-chung-composable-table = { module = "io.github.sunny-chung:composable-table", version.ref = "composableTableVersion" }
-testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "minioVersion" }
-testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "postgresqlVersion" }
+testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "testContainer" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testContainer" }
+testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testContainer" }
 tika-core = { module = "org.apache.tika:tika-core", version.ref = "tikaCore" }
 krop-ui = { module = "com.attafitamim.krop:ui", version.ref = "krop-ui" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }

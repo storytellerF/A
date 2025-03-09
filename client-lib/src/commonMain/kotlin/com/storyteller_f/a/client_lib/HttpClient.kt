@@ -10,10 +10,11 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.websocket.*
-import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.util.date.*
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
 
@@ -23,7 +24,7 @@ val globalCookiesStorage = AcceptAllCookiesStorage()
 
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
-fun HttpClientConfig<*>.defaultClientConfigure() {
+fun HttpClientConfig<*>.defaultClientConfigure(cookiesStorage: CookiesStorage = globalCookiesStorage) {
     expectSuccess = true
     install(Auth) {
         custom {
@@ -43,10 +44,10 @@ fun HttpClientConfig<*>.defaultClientConfigure() {
         level = LogLevel.HEADERS
     }
     install(HttpCookies) {
-        storage = globalCookiesStorage
+        storage = cookiesStorage
     }
     install(HttpRequestRetry) {
-        retryIf { request, response ->
+        retryIf { _, response ->
             if (response.status == HttpStatusCode.Unauthorized) {
                 val data = LoginViewModel.session?.first
                 val r = response.headers["www-authenticate"]

@@ -37,17 +37,23 @@ dependencies {
     implementation(libs.h2)
     implementation(libs.kim)
 
+    testImplementation(libs.mysql.connector.java)
     testImplementation(projects.clientLib)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test)
+    testImplementation(libs.testcontainers.elasticsearch)
     testImplementation(libs.testcontainers.minio)
-    testImplementation(libs.elasticsearch)
     testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.mysql)
 }
 
 
 
 tasks.withType<JavaExec> {
+    jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
+}
+
+tasks.withType<Test> {
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 

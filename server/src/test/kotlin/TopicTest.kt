@@ -126,7 +126,7 @@ class TopicTest {
                 }?.join()
                 withContext(Dispatchers.Default) { delay(1000) }
                 assertListSize(1, client.getRoomTopics(publicRoomId, null, 10))
-                DatabaseFactory.addRoomJoin(privateRoomId, it.uid, now()).getOrThrow()
+                DatabaseFactory.addRoomJoin(privateRoomId, it.uid, now(), roomInfo.memberCount).getOrThrow()
                 val roomInfo2 = client.getRoomInfo(privateRoomId).getOrThrow()
                 val keys = client.requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
                 wsClient.useWebSocket {

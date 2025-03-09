@@ -6,13 +6,8 @@ import com.storyteller_f.objectType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.jetbrains.exposed.sql.selectAll
 
 object MemberJoins : Table() {
     val uid = customPrimaryKey("uid").index()
@@ -56,8 +51,18 @@ suspend fun isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?) = if (uid == 
 suspend fun DatabaseFactory.addRoomJoin(
     room: PrimaryKey,
     id: PrimaryKey,
-    time: LocalDateTime
+    time: LocalDateTime,
+    oldMemberCount: Long
 ) = dbQuery {
+    addRoomJoinRaw(room, id, time, oldMemberCount)
+}
+
+fun addRoomJoinRaw(
+    room: PrimaryKey,
+    id: PrimaryKey,
+    time: LocalDateTime,
+    oldMemberCount: Long
+) {
     check(MemberJoins.insert {
         it[joinTime] = time
         it[objectId] = room
@@ -65,6 +70,13 @@ suspend fun DatabaseFactory.addRoomJoin(
         it[uid] = id
     }.insertedCount > 0) {
         "join room failed"
+    }
+    check(Rooms.update({
+        Rooms.id eq room and (Rooms.memberCount eq oldMemberCount)
+    }) {
+        it[memberCount] = oldMemberCount + 1
+    } > 0) {
+        "modify room member count failed"
     }
 }
 
@@ -81,8 +93,18 @@ suspend fun DatabaseFactory.exit(containerId: PrimaryKey, id: PrimaryKey): Resul
 suspend fun DatabaseFactory.addCommunityJoin(
     id: PrimaryKey,
     community: PrimaryKey,
-    time: LocalDateTime
+    time: LocalDateTime,
+    oldMemberCount: Long
 ) = dbQuery {
+    addCommunityJoinRaw(id, community, time, oldMemberCount)
+}
+
+fun addCommunityJoinRaw(
+    id: PrimaryKey,
+    community: PrimaryKey,
+    time: LocalDateTime,
+    oldMemberCount: Long
+) {
     check(MemberJoins.insert {
         it[joinTime] = time
         it[uid] = id
@@ -90,6 +112,13 @@ suspend fun DatabaseFactory.addCommunityJoin(
         it[objectType] = ObjectType.COMMUNITY
     }.insertedCount > 0) {
         "join community failed"
+    }
+    check(Communities.update({
+        Communities.id eq community and (Communities.memberCount eq oldMemberCount)
+    }) {
+        it[memberCount] = oldMemberCount + 1
+    } > 0) {
+        "modify community member count failed"
     }
 }
 

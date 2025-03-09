@@ -26,7 +26,7 @@ suspend fun getRoomPubKeys(
                 PaginationResult(data, count)
             }
         } else {
-            Result.failure(ForbiddenException("Permission denied."))
+            Result.failure(ForbiddenException("Permission denied"))
         }
     }
 }
@@ -46,7 +46,7 @@ suspend fun joinRoom(
             isMemberJoined(communityId, uid).mapResult { hasJoined ->
                 if (hasJoined) {
                     val time = now()
-                    DatabaseFactory.addRoomJoin(roomId, uid, time).mapResult { affectedCount ->
+                    DatabaseFactory.addRoomJoin(roomId, uid, time, roomInfo.memberCount).mapResult { affectedCount ->
                         Result.success(roomInfo.copy(joinedTime = time))
                     }.recoverError { exception ->
                         if (exception.isDup()) {
@@ -117,7 +117,7 @@ suspend fun createRoom(newRoom: NewRoom, uid: PrimaryKey, backend: Backend): Res
     }.mapResultNotNull {
         if (it) {
             val roomId = SnowflakeFactory.nextId()
-            val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
+            val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, 0, newRoom.icon, communityId)
             DatabaseFactory.createRoom(room)
                 .mapResult {
                     processRoomList(

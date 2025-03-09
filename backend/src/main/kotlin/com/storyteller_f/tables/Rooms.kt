@@ -17,6 +17,7 @@ object Rooms : BaseTable() {
     val icon = roomIcon()
     val creator = customPrimaryKey("creator").index()
     val communityId = customPrimaryKey("community_id").index().nullable()
+    val memberCount = long("member_count")
 }
 
 class Room(
@@ -25,6 +26,7 @@ class Room(
     val aid: String,
     val name: String,
     val creator: PrimaryKey,
+    val memberCount: Long,
     val icon: String? = null,
     val communityId: PrimaryKey? = null
 ) : BaseObj(id, createdTime) {
@@ -36,6 +38,7 @@ class Room(
                 row[Aids.value],
                 row[Rooms.name],
                 row[Rooms.creator],
+                row[Rooms.memberCount],
                 row[Rooms.icon],
                 row[Rooms.communityId]
             )
@@ -73,6 +76,7 @@ fun Room.toRoomInfo(joinedTime: LocalDateTime?) = RoomInfo(
     name,
     aid,
     creator,
+    memberCount,
     joinedTime = joinedTime,
     communityId = communityId
 )
@@ -86,7 +90,9 @@ suspend fun getRoomPaginationList(
     word: String?,
     community: PrimaryKey?
 ): Result<Pair<List<Pair<RoomInfo, String?>>, Long>> {
-    return DatabaseFactory.mapQuery(::mapRoomInfo) {
+    return DatabaseFactory.mapQuery({
+        mapRoomInfo(this)
+    }) {
         buildRoomSearchQuery(uid, false, joinStatusSearch, word, community).bindPaginationQuery(
             Rooms,
             preRoomId,
@@ -175,6 +181,7 @@ private fun buildJoinedRoomSearchQuery(
         .join(MemberJoins, JoinType.INNER, Rooms.id, MemberJoins.objectId) {
             MemberJoins.uid eq uid
         }
+
     if (getCount) {
         join.selectAll()
     } else {
@@ -231,12 +238,16 @@ suspend fun DatabaseFactory.getRoomSource(
     roomAid: String? = null,
     fillJoinInfo: Boolean? = null,
     uid: PrimaryKey? = null,
-): Result<Pair<RoomInfo, String?>?> = first(::mapRoomInfo) {
+) = first({
+    mapRoomInfo(it)
+}) {
     val baseOp = Op.build {
         if (roomId != null) {
             Rooms.id eq roomId
+        } else if (roomAid != null) {
+            Aids.value eq roomAid
         } else {
-            Aids.value eq roomAid!!
+            throw CustomBadRequestException("must be specify id or aid")
         }
     }
 
@@ -297,26 +308,30 @@ suspend fun processRoomList(list: List<Pair<RoomInfo, String?>>, backend: Backen
     }
 }
 
-suspend fun DatabaseFactory.createRoom(room: Room): Result<Boolean> = dbQuery {
-    addRoomJoin(room.id, room.creator, room.createdTime)
-    Rooms.insert { statement ->
+suspend fun DatabaseFactory.createRoom(room: Room) = dbQuery {
+    check(Rooms.insert { statement ->
         statement[id] = room.id
         statement[createdTime] = room.createdTime
         statement[name] = room.name
         statement[icon] = room.icon
         statement[creator] = room.creator
         statement[communityId] = room.communityId
-    }.insertedCount > 0 && Aids.insert {
+        statement[memberCount] = room.memberCount
+    }.insertedCount > 0) {
+        "create room failed"
+    }
+    check(Aids.insert {
         it[value] = room.aid
         it[objectId] = room.id
         it[objectType] = ObjectType.ROOM
-    }.insertedCount > 0
+    }.insertedCount > 0) {
+        "create aid failed"
+    }
+    addRoomJoinRaw(room.id, room.creator, room.createdTime, room.memberCount)
 }
 
 suspend fun DatabaseFactory.getRoomByIds(ids: List<PrimaryKey>): Result<List<Pair<RoomInfo, String?>>> {
-    return mapQuery({
-        toRoomInfo(null) to icon
-    }, Room::wrapRow) {
+    return mapQuery({ this }, { mapRoomInfo(it) }) {
         Rooms
             .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
             .select(Rooms.fields + Aids.value).where {
@@ -325,6 +340,7 @@ suspend fun DatabaseFactory.getRoomByIds(ids: List<PrimaryKey>): Result<List<Pai
     }
 }
 
+@Suppress("MoveLambdaOutsideParentheses")
 suspend fun DatabaseFactory.updateRoom(
     id: PrimaryKey,
     body: UpdateRoomBody
@@ -348,5 +364,33 @@ suspend fun DatabaseFactory.updateRoom(
         }
     }).all {
         it()
+    }
+}
+
+fun batchCreateCommunityRooms(rooms: List<Room>) {
+    check(Rooms.batchInsert(rooms) {
+        this[Rooms.id] = it.id
+        this[Rooms.name] = it.name
+        this[Rooms.communityId] = it.communityId
+        this[Rooms.creator] = it.creator
+        this[Rooms.createdTime] = it.createdTime
+        this[Rooms.memberCount] = it.memberCount
+    }.size == rooms.size) {
+        "insert room failed"
+    }
+    check(Aids.batchInsert(rooms) {
+        this[Aids.value] = it.aid.take(AID_LENGTH)
+        this[Aids.objectId] = it.id
+        this[Aids.objectType] = ObjectType.ROOM
+    }.size == rooms.size) {
+        "insert room aid failed"
+    }
+    check(MemberJoins.batchInsert(rooms) {
+        this[MemberJoins.uid] = it.creator
+        this[MemberJoins.objectId] = it.id
+        this[MemberJoins.joinTime] = it.createdTime
+        this[MemberJoins.objectType] = ObjectType.ROOM
+    }.size == rooms.size) {
+        "join room failed"
     }
 }
