@@ -24,6 +24,7 @@ class CommunityTest {
             client.createCommunity(NewCommunity("c1", "aid")).getOrThrow().id
         }.custom
         val community = client.getCommunityInfo(newId).getOrThrow()
+        assertEquals(1, community.memberCount)
         assertEquals(newId, client.getCommunityInfoByAid(community.aid).getOrThrow().id)
     }
 

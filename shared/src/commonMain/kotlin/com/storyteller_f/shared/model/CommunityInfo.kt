@@ -13,6 +13,7 @@ data class CommunityInfo(
     val name: String,
     val owner: PrimaryKey,
     val createTime: LocalDateTime,
+    val memberCount: Long,
     val icon: MediaInfo? = null,
     val poster: MediaInfo? = null,
     val joinTime: LocalDateTime? = null,
@@ -24,6 +25,6 @@ data class CommunityInfo(
     data class Extension(val targetUserJoinedTime: LocalDateTime? = null)
 
     companion object {
-        val EMPTY = CommunityInfo(DEFAULT_PRIMARY_KEY, "", "", DEFAULT_PRIMARY_KEY, now(), null, null, now())
+        val EMPTY = CommunityInfo(DEFAULT_PRIMARY_KEY, "", "", DEFAULT_PRIMARY_KEY, now(), 0, null, null, now())
     }
 }

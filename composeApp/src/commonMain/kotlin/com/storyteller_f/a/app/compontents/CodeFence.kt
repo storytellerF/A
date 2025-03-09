@@ -52,6 +52,7 @@ import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.utils.MarkdownObject
 import com.storyteller_f.shared.utils.getLang
+import com.storyteller_f.shared.utils.md5
 import com.storyteller_f.shared.utils.readCodeFence
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
@@ -73,7 +74,6 @@ import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.serialization.json.Json
 import net.bjoernpetersen.m3u.M3uParser
 import java.net.URI
-import java.security.MessageDigest
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -366,12 +366,6 @@ fun pxToSp(px: Int, density: Float): TextUnit = (px / density).sp
 fun convertDpToPx(dp: Dp): Int {
     val density = LocalDensity.current.density
     return (dp.value * density).toInt()
-}
-
-fun md5(input: String): String {
-    val md = MessageDigest.getInstance("MD5")
-    val digest = md.digest(input.toByteArray()) // 计算 MD5
-    return digest.joinToString("") { "%02x".format(it) } // 转换为十六进制字符串
 }
 
 @OptIn(ExperimentalLayoutApi::class)

@@ -28,7 +28,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.security.KeyStore
 
-suspend fun addTopicAtCommunity(uid: PrimaryKey, backend: Backend, newTopic: NewTopic): Result<TopicInfo?> {
+suspend fun createPublicTopic(uid: PrimaryKey, backend: Backend, newTopic: NewTopic): Result<TopicInfo?> {
     if (newTopic.parentType == ObjectType.ROOM) {
         return Result.failure(ForbiddenException("can't use api to add topic in room"))
     }
@@ -86,7 +86,7 @@ suspend fun createTopicSnapshot(uid: PrimaryKey, topicId: PrimaryKey, backend: B
                     createTopicSnapshot(value, first, backend, uid)
                 }
             } else {
-                Result.failure(ForbiddenException("Permission denied."))
+                Result.failure(ForbiddenException("Permission denied"))
             }
         }
     }
@@ -397,8 +397,12 @@ suspend fun checkRootWritePermission(
         }
 
         ObjectType.USER -> {
-            DatabaseFactory.getRawUserById(parentId).mapNotNull { (first) ->
-                RootWritePermission(parentType, parentId, first.id == uid)
+            if (uid == parentId) {
+                DatabaseFactory.getRawUserById(parentId).mapNotNull { (userInfo) ->
+                    RootWritePermission(parentType, parentId, userInfo.id == uid)
+                }
+            } else {
+                Result.failure(ForbiddenException("Permission denied"))
             }
         }
 
@@ -502,15 +506,13 @@ suspend fun processMediaAndAuthor(
                 info.copy(content = TopicContent.Plain(document.content, m))
             } ?: info
         }
-    }.mapResult { infos ->
-        val ids = infos.map {
+    }.mapResult { list ->
+        val ids = list.map {
             it.author
         }
         DatabaseFactory.getUsersByIds(ids, backend).map { users ->
-            val userMap = users.associate {
-                it.id to it
-            }
-            infos.map {
+            val userMap = users.associateBy { it.id }
+            list.map {
                 it.copy(extension = TopicInfo.Extension(userMap[it.author]!!))
             }
         }

@@ -34,7 +34,10 @@ import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.topic.MediaPicker
 import com.storyteller_f.a.app.pages.topic.insertContent
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -160,13 +163,13 @@ fun RoomInputGroup(
     var input by remember {
         mutableStateOf("")
     }
-    val my by LoginViewModel.user.collectAsState()
+    val myInfo by LoginViewModel.user.collectAsState()
     val controller = remember {
         CustomAlertDialogController()
     }
     val wsClient = LocalWsClient.current
-    val listener = remember(input, my) {
-        buildInputBoxContentListener(input, my) {
+    val listener = remember(input, myInfo) {
+        buildInputBoxContentListener(input, myInfo) {
             input = ""
         }
     }
@@ -176,16 +179,14 @@ fun RoomInputGroup(
             wsClient.removeListener(listener)
         }
     }
-    val scope = rememberCoroutineScope()
-    val localState by wsClient.localState.collectAsState()
-    val isSending = localState is LoadingState.Loading
-    val updateInput: (String) -> Unit = {
-        if (!isSending) {
-            input = it
-        }
-    }
     if (roomInfo != null) {
-        RoomInputGroupInternal(roomId, roomInfo, topicId, input, scrollToNew, scope, controller, wsClient, updateInput)
+        val localState by wsClient.localState.collectAsState()
+        val isSending = localState is LoadingState.Loading
+        RoomInputGroupInternal(roomId, roomInfo, topicId, input, scrollToNew, controller, wsClient) {
+            if (!isSending) {
+                input = it
+            }
+        }
     }
 
     CustomAlertDialog(controller, {
@@ -202,26 +203,17 @@ private fun RoomInputGroupInternal(
     topicId: PrimaryKey?,
     input: String,
     scrollToNew: () -> Unit,
-    scope: CoroutineScope,
     controller: CustomAlertDialogController,
     wsClient: ClientWebSocket,
     updateInput: (String) -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     val toasterState = LocalToaster.current
     val keysViewModel = createRoomKeysViewModel(roomId, roomInfo)
+    val keysData by keysViewModel.handler.data.collectAsState()
+    val keysState by keysViewModel.handler.state.collectAsState()
     val objectId = topicId ?: roomId
     val objectType = if (topicId != null) ObjectType.TOPIC else ObjectType.ROOM
-    val c = RoomMessageContext(
-        roomInfo,
-        input,
-        scrollToNew,
-        topicId,
-        scope,
-        toasterState,
-        controller,
-        keysViewModel,
-        wsClient
-    )
     val appNav = LocalAppNav.current
     InputGroupInternal(
         input,
@@ -234,10 +226,32 @@ private fun RoomInputGroupInternal(
             appNav.gotoTopicCompose(objectType, objectId, false, roomId.takeIf {
                 roomInfo.isPrivate
             })
+        },
+        {
+            Row {
+                when (val ks = keysState) {
+                    LoadingState.Done -> Text("✅")
+                    is LoadingState.Error -> Text(ks.e.localizedMessage?.take(10) ?: "!")
+                    null, LoadingState.Loading -> CircularProgressIndicator(modifier = Modifier.size(10.dp))
+                }
+                Text("${keysData?.size ?: 0}/${roomInfo.memberCount}")
+            }
         }
     ) {
         RoomSendButton(input = input) {
-            sendRoomTopic(c)
+            sendRoomTopic(
+                RoomMessageContext(
+                    roomInfo,
+                    input,
+                    scrollToNew,
+                    topicId,
+                    scope,
+                    toasterState,
+                    controller,
+                    keysViewModel,
+                    wsClient
+                )
+            )
         }
     }
 }
@@ -375,24 +389,30 @@ fun InputGroupInternal(
     privateRoomId: PrimaryKey?,
     updateInput: (String) -> Unit,
     gotoCompose: () -> Unit,
+    topContent: @Composable () -> Unit = {},
     sendButton: @Composable () -> Unit
 ) {
-    Row(
-        modifier = Modifier.background(
+    Column(
+        Modifier.background(
             backgroundColor,
             shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
         ).padding(horizontal = 20.dp).padding(top = 10.dp).navigationBarsPadding().imePadding().imeAnimation(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        OutlinedTextField(input, {
-            updateInput(it)
-        }, modifier = Modifier.weight(1f), suffix = {
-            InputGroupSuffix(input, updateInput, privateRoomId, gotoCompose)
-        })
+        topContent()
+        Row(
+            modifier = Modifier.padding(bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            OutlinedTextField(input, {
+                updateInput(it)
+            }, modifier = Modifier.weight(1f), suffix = {
+                InputGroupSuffix(input, updateInput, privateRoomId, gotoCompose)
+            })
 
-        Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-            sendButton()
+            Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                sendButton()
+            }
         }
     }
 }

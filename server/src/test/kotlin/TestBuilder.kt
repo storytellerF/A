@@ -13,19 +13,16 @@ import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
+import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
 import org.testcontainers.containers.MinIOContainer
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.elasticsearch.ElasticsearchContainer
-import kotlin.collections.Map
-import kotlin.collections.forEach
-import kotlin.collections.listOf
 import kotlin.collections.set
-import kotlin.collections.toMutableMap
 import kotlin.test.assertEquals
 
 fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, ClientWebSocket) -> Unit) {
@@ -42,7 +39,7 @@ fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, Cl
         doTest(env, receivedFrame, block)
     }
 
-    if (freeMemory >= 1024) {
+    if (freeMemory >= 400) {
         runBlocking {
             val env = readResourceEnv(".env")!!.toMutableMap()
             ElasticsearchContainer(
@@ -65,16 +62,16 @@ fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, Cl
                             env["MINIO_URL"] = minioContainer.s3URL
                             env["MINIO_NAME"] = minioContainer.userName
                             env["MINIO_PASS"] = minioContainer.password
-                            PostgreSQLContainer(
-                                "pgvector/pgvector:pg16"
-                            ).waitingFor(Wait.forSuccessfulCommand("pg_isready")).use { postgreSQLContainer ->
-                                postgreSQLContainer.start()
-                                println("jdbc: ${postgreSQLContainer.jdbcUrl}")
-                                env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl
-                                env["DATABASE_DRIVER"] = postgreSQLContainer.driverClassName
-                                env["DATABASE_USER"] = postgreSQLContainer.username
-                                env["DATABASE_PASS"] = postgreSQLContainer.password
-                                env["DATABASE_DB"] = postgreSQLContainer.databaseName
+                            MySQLContainer(
+                                "mysql:5.7.34"
+                            ).use { mySQLContainer ->
+                                mySQLContainer.start()
+                                println("jdbc: ${mySQLContainer.jdbcUrl}")
+                                env["DATABASE_URI"] = mySQLContainer.jdbcUrl
+                                env["DATABASE_DRIVER"] = mySQLContainer.driverClassName
+                                env["DATABASE_USER"] = mySQLContainer.username
+                                env["DATABASE_PASS"] = mySQLContainer.password
+                                env["DATABASE_DB"] = mySQLContainer.databaseName
                                 doTest(env, receivedFrame, block)
                             }
                         }
@@ -94,7 +91,9 @@ private fun doTest(
     }
     DatabaseFactory.clean(backend.config.databaseConnection)
     DatabaseFactory.init(backend.config.databaseConnection)
-    DatabaseFactory.enableExplain()
+    if (env["DATABASE_URI"]?.contains("mysql", false) == true) {
+        DatabaseFactory.enableExplain()
+    }
     println("prepared resource")
     testApplication {
         environment {
@@ -108,7 +107,7 @@ private fun doTest(
             module()
         }
         val client = createClient {
-            defaultClientConfigure()
+            defaultClientConfigure(AcceptAllCookiesStorage())
         }
         val wsClient = ClientWebSocket({
             client.webSocketSession("/link") {

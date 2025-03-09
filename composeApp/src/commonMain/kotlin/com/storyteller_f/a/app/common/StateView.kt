@@ -85,7 +85,7 @@ fun <T> StateView(
     handler: LoadingHandler<T>,
     extraRefresh: () -> Unit = {},
     modifier: Modifier = Modifier,
-    content: @Composable (T) -> Unit
+    content: @Composable (T & Any) -> Unit
 ) {
     val state by handler.state.collectAsState()
     val data by handler.data.collectAsState()

@@ -12,14 +12,13 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.insert
 
 object Communities : BaseTable() {
     val name = communityName()
     val icon = communityIcon()
     val poster = communityPoster()
     val owner = customPrimaryKey("owner").index()
+    val memberCount = long("member_count")
 }
 
 class Community(
@@ -28,6 +27,7 @@ class Community(
     val aid: String,
     val name: String,
     val owner: PrimaryKey,
+    val memberCount: Long,
     val icon: String? = null,
     val poster: String? = null
 ) :
@@ -40,6 +40,7 @@ class Community(
                 row[Aids.value],
                 row[Communities.name],
                 row[Communities.owner],
+                row[Communities.memberCount],
                 row[Communities.icon],
                 row[Communities.poster]
             )
@@ -61,9 +62,8 @@ fun Community.toCommunityIfo(
     name,
     owner,
     createdTime,
-    null,
-    null,
-    joinTime
+    memberCount,
+    joinTime = joinTime
 )
 
 suspend fun DatabaseFactory.checkCommunityExists(parentId: PrimaryKey) = first({
@@ -219,12 +219,12 @@ suspend fun DatabaseFactory.getPaginationCommunityList(
 }
 
 suspend fun DatabaseFactory.createCommunity(community: Community) = dbQuery {
-    addCommunityJoin(community.owner, community.id, community.createdTime).getOrThrow()
     check(Communities.insert {
         it[id] = community.id
         it[name] = community.name
         it[owner] = community.owner
         it[createdTime] = community.createdTime
+        it[memberCount] = community.memberCount
     }.insertedCount > 0) {
         "insert community failed"
     }
@@ -235,6 +235,7 @@ suspend fun DatabaseFactory.createCommunity(community: Community) = dbQuery {
     }.insertedCount > 0) {
         "insert aid failed"
     }
+    addCommunityJoinRaw(community.owner, community.id, community.createdTime, community.memberCount)
     createCommunityRooms(community.id, community.owner, community.aid)
 }
 
@@ -243,37 +244,15 @@ suspend fun createCommunityRooms(
     ownerUid: PrimaryKey,
     communityAid: String
 ) {
-    val defaultRoomList = listOf(
-        "${communityAid}_general" to "General",
-        "${communityAid}_lobby" to "Lobby",
-        "${communityAid}_support" to "Support"
-    ).map { pair ->
-        Triple(pair.first, pair.second, SnowflakeFactory.nextId())
-    }
-    check(Rooms.batchInsert(defaultRoomList) { (_, name, roomId) ->
-        this[Rooms.id] = roomId
-        this[Rooms.name] = name
-        this[Rooms.communityId] = id
-        this[Rooms.creator] = ownerUid
-        this[Rooms.createdTime] = now()
-    }.size == defaultRoomList.size) {
-        "insert room failed"
-    }
-    check(Aids.batchInsert(defaultRoomList) { (roomAid, _, roomId) ->
-        this[Aids.value] = roomAid.take(AID_LENGTH)
-        this[Aids.objectId] = roomId
-        this[Aids.objectType] = ObjectType.ROOM
-    }.size == defaultRoomList.size) {
-        "insert room aid failed"
-    }
-    check(MemberJoins.batchInsert(defaultRoomList) { (_, _, rId) ->
-        this[MemberJoins.uid] = ownerUid
-        this[MemberJoins.objectId] = rId
-        this[MemberJoins.joinTime] = now()
-        this[MemberJoins.objectType] = ObjectType.COMMUNITY
-    }.size == defaultRoomList.size) {
-        "join room failed"
-    }
+    batchCreateCommunityRooms(
+        listOf(
+            "${communityAid}_general" to "General",
+            "${communityAid}_lobby" to "Lobby",
+            "${communityAid}_support" to "Support"
+        ).map { pair ->
+            Room(SnowflakeFactory.nextId(), now(), pair.first, pair.second, ownerUid, 1, communityId = id)
+        }
+    )
 }
 
 suspend fun DatabaseFactory.getCommunityJoinedTimeByIds(

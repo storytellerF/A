@@ -87,7 +87,7 @@ fun Route.bindProtectedSafeTopicRoute(backend: Backend, reader: DatabaseReader) 
     post<RouteTopics> {
         usePrincipal(reader) { uid ->
             val topic = call.receive<NewTopic>()
-            addTopicAtCommunity(uid, backend, topic)
+            createPublicTopic(uid, backend, topic)
         }
     }
 

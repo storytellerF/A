@@ -43,7 +43,7 @@ suspend fun doUserJoinCommunity(
         Result.success(community)
     } else {
         val time = now()
-        DatabaseFactory.addCommunityJoin(uid, communityId, time).mapResult { value ->
+        DatabaseFactory.addCommunityJoin(uid, communityId, time, community.memberCount).mapResult {
             Result.success(community.copy(joinTime = time))
         }.recoverCatching {
             if (it.isDup()) {
@@ -169,6 +169,7 @@ suspend fun createCommunity(newCommunity: NewCommunity, uid: PrimaryKey, backend
         newCommunity.aid,
         newCommunity.name,
         uid,
+        0,
         newCommunity.icon,
         null
     )

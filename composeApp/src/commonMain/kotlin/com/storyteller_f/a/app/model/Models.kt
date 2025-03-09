@@ -541,14 +541,13 @@ class AidTopicViewModel(client: HttpClient, aid: String) : TopicViewModel({
 
 class RoomKeysViewModel(private val id: PrimaryKey, private: Boolean, client: HttpClient) :
     SimpleViewModel<List<Pair<PrimaryKey, String>>>(client) {
+    override val handler: LoadingHandler<List<Pair<PrimaryKey, String>>> = SimpleLoadingHandler(::load)
 
     init {
         if (private) {
             load()
         }
     }
-
-    override val handler: LoadingHandler<List<Pair<PrimaryKey, String>>> = SimpleLoadingHandler(::load)
 
     override suspend fun loadInternal() = runCatching {
         val result = mutableListOf<Pair<PrimaryKey, String>>()
@@ -606,7 +605,7 @@ class UploadViewModel(client: HttpClient, private val uploader: UploadSession, m
         }
     }
 
-    fun retry(index: Int) {
+    private fun retry(index: Int) {
         viewModelScope.launch {
             if (index in 0 until uploader.list.size && handlers[index].first.state.value is LoadingState.Error) {
                 queue.send(index)

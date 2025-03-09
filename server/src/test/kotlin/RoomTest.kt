@@ -9,6 +9,7 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.ktor.client.*
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
 class RoomTest {
@@ -19,7 +20,7 @@ class RoomTest {
                 val id = client.createCommunity(NewCommunity("name1", "c1")).getOrThrow().id
                 client.createRoom(NewRoom("name1", "r1", communityId = id)).getOrThrow().id
             }.custom
-            client.getRoomInfo(roomId).getOrThrow()
+            assertEquals(1, client.getRoomInfo(roomId).getOrThrow().memberCount)
             client.getRoomInfoByAid("r1").getOrThrow()
         }
     }

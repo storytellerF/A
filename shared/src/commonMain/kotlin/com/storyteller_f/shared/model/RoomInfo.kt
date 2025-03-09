@@ -13,6 +13,7 @@ data class RoomInfo(
     val name: String,
     val aid: String,
     val creator: PrimaryKey,
+    val memberCount: Long,
     val icon: MediaInfo? = null,
     val joinedTime: LocalDateTime? = null,
     val communityId: PrimaryKey? = null,
@@ -21,6 +22,6 @@ data class RoomInfo(
     val isJoined get() = joinedTime != null
 
     companion object {
-        val EMPTY = RoomInfo(DEFAULT_PRIMARY_KEY, now(), "", "", DEFAULT_PRIMARY_KEY)
+        val EMPTY = RoomInfo(DEFAULT_PRIMARY_KEY, now(), "", "", DEFAULT_PRIMARY_KEY, 0)
     }
 }
