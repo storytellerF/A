@@ -34,8 +34,11 @@ echo "$SECRETS_CONTEXT" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' | while
     # Check if key starts with "storyteller_f" (case-insensitive)
     [[ ! "$key" =~ ^[Ss][Tt][Oo][Rr][Yy][Tt][Ee][Ll][Ll][Ee][Rr]_[Ff] ]] && continue
 
-    export "$key"="$value"
-done
+    echo "export $key=$value"
+done > ./secrets_env.sh
+
+# 然后在 shell 中执行：
+. ./secrets_env.sh
 
 case "$TARGET" in
     android)
