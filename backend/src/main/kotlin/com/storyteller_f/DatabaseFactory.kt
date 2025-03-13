@@ -14,8 +14,8 @@ object DatabaseFactory {
 
     private var isEnableExplain = false
 
-    fun enableExplain() {
-        isEnableExplain = true
+    fun enableExplain(value: Boolean) {
+        isEnableExplain = value
     }
 
     private fun connect(connection: DatabaseConnection) {
@@ -167,7 +167,10 @@ object DatabaseFactory {
             val result = explain {
                 block()
             }.toList().joinToString("\n")
-            val file = File("./build/test/${md5(statements.toString())}.explain")
+            val input = statements.toString()
+            val end = input.indexOf(']', 1) + 1
+            val pureStatements = input.substring(end).trim()
+            val file = File("./build/test/${db.dialect.name}/${md5(pureStatements)}.explain")
             file.parentFile?.let {
                 if (!it.exists()) {
                     it.mkdirs()

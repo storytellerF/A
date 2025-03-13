@@ -20,10 +20,12 @@ import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.MySQLContainer
+import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 import kotlin.collections.set
 import kotlin.test.assertEquals
+import kotlin.use
 
 fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, ClientWebSocket) -> Unit) {
     Napier.base(DebugAntilog())
@@ -39,44 +41,70 @@ fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, Cl
         doTest(env, receivedFrame, block)
     }
 
-    if (freeMemory >= 400) {
-        runBlocking {
-            val env = readResourceEnv(".env")!!.toMutableMap()
-            ElasticsearchContainer(
-                "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
-            )
-                // disable SSL
-                .withEnv("xpack.security.transport.ssl.enabled", "false")
-                .withEnv("xpack.security.http.ssl.enabled", "false").use { elasticClient ->
-                    elasticClient.start()
-                    env["SEARCH_SERVICE"] = "elastic"
-                    env["ELASTIC_NAME"] = "elastic"
-                    env["ELASTIC_PASSWORD"] = "changeme"
-                    env["ELASTIC_URL"] = "http://${elasticClient.httpHostAddress}"
-                    MinIOContainer(
-                        "minio/minio:RELEASE.2024-12-18T13-15-44Z"
-                    ).waitingFor(Wait.forSuccessfulCommand("curl -I http://localhost:9000/minio/health/live"))
-                        .use { minioContainer ->
-                            minioContainer.start()
-                            env["MEDIA_SERVICE"] = "minio"
-                            env["MINIO_URL"] = minioContainer.s3URL
-                            env["MINIO_NAME"] = minioContainer.userName
-                            env["MINIO_PASS"] = minioContainer.password
+    if (freeMemory >= 100) {
+        startTestContainerTest(receivedFrame, true, block)
+        startTestContainerTest(receivedFrame, false, block)
+    }
+}
+
+private fun startTestContainerTest(
+    receivedFrame: (RoomFrame) -> Unit,
+    databaseTypeIsMysql: Boolean,
+    block: suspend (HttpClient, ClientWebSocket) -> Unit
+) {
+    runBlocking {
+        val env = readResourceEnv(".env")!!.toMutableMap()
+        ElasticsearchContainer(
+            "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
+        )
+            // disable SSL
+            .withEnv("xpack.security.transport.ssl.enabled", "false")
+            .withEnv("xpack.security.http.ssl.enabled", "false").use { elasticClient ->
+                elasticClient.start()
+                env["SEARCH_SERVICE"] = "elastic"
+                env["ELASTIC_NAME"] = "elastic"
+                env["ELASTIC_PASSWORD"] = "changeme"
+                env["ELASTIC_URL"] = "http://${elasticClient.httpHostAddress}"
+                MinIOContainer(
+                    "minio/minio:RELEASE.2024-12-18T13-15-44Z"
+                ).waitingFor(Wait.forSuccessfulCommand("curl -I http://localhost:9000/minio/health/live"))
+                    .use { minioContainer ->
+                        minioContainer.start()
+                        env["MEDIA_SERVICE"] = "minio"
+                        env["MINIO_URL"] = minioContainer.s3URL
+                        env["MINIO_NAME"] = minioContainer.userName
+                        env["MINIO_PASS"] = minioContainer.password
+                        if (databaseTypeIsMysql) {
                             MySQLContainer(
-                                "mysql:5.7.34"
-                            ).use { mySQLContainer ->
-                                mySQLContainer.start()
-                                println("jdbc: ${mySQLContainer.jdbcUrl}")
-                                env["DATABASE_URI"] = mySQLContainer.jdbcUrl
-                                env["DATABASE_DRIVER"] = mySQLContainer.driverClassName
-                                env["DATABASE_USER"] = mySQLContainer.username
-                                env["DATABASE_PASS"] = mySQLContainer.password
-                                env["DATABASE_DB"] = mySQLContainer.databaseName
+                                "mysql:8.0"
+                            ).withUrlParam("characterEncoding", "utf8")
+                                .withUrlParam("useUnicode", "true")
+                                .withUrlParam("connectionCollation", "utf8mb4_unicode_ci").use { mySQLContainer ->
+                                    mySQLContainer.start()
+                                    println("jdbc: ${mySQLContainer.jdbcUrl}")
+                                    env["DATABASE_URI"] = mySQLContainer.jdbcUrl
+                                    env["DATABASE_DRIVER"] = mySQLContainer.driverClassName
+                                    env["DATABASE_USER"] = mySQLContainer.username
+                                    env["DATABASE_PASS"] = mySQLContainer.password
+                                    env["DATABASE_DB"] = mySQLContainer.databaseName
+                                    doTest(env, receivedFrame, block)
+                                }
+                        } else {
+                            PostgreSQLContainer(
+                                "pgvector/pgvector:pg16"
+                            ).waitingFor(Wait.forSuccessfulCommand("pg_isready")).use { postgreSQLContainer ->
+                                postgreSQLContainer.start()
+                                println("jdbc: ${postgreSQLContainer.jdbcUrl}")
+                                env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl
+                                env["DATABASE_DRIVER"] = postgreSQLContainer.driverClassName
+                                env["DATABASE_USER"] = postgreSQLContainer.username
+                                env["DATABASE_PASS"] = postgreSQLContainer.password
+                                env["DATABASE_DB"] = postgreSQLContainer.databaseName
                                 doTest(env, receivedFrame, block)
                             }
                         }
-                }
-        }
+                    }
+            }
     }
 }
 
@@ -91,9 +119,7 @@ private fun doTest(
     }
     DatabaseFactory.clean(backend.config.databaseConnection)
     DatabaseFactory.init(backend.config.databaseConnection)
-    if (env["DATABASE_URI"]?.contains("mysql", false) == true) {
-        DatabaseFactory.enableExplain()
-    }
+    DatabaseFactory.enableExplain(true)
     println("prepared resource")
     testApplication {
         environment {
@@ -121,6 +147,7 @@ private fun doTest(
     }
 
     println("clean resource")
+    DatabaseFactory.enableExplain(false)
     runBlocking {
         backend.topicSearchService.clean()
     }
