@@ -45,6 +45,7 @@ dependencies {
     testImplementation(libs.testcontainers.minio)
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.testcontainers.mysql)
+    testImplementation(libs.sql.formatter)
 }
 
 

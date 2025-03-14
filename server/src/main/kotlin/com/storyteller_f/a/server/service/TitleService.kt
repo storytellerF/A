@@ -79,18 +79,42 @@ private suspend fun processTitleList(
             add(it.descriptionTopicId)
         }
     }.distinct()
-    return DatabaseFactory.getUsersByIds(uidList, backend).mapResult { userList ->
-        DatabaseFactory.getCommunityByIds(communityIdList).mapResult {
-            processCommunityList(backend, it).mapResult { communityList ->
-                DatabaseFactory.getRoomByIds(roomIdList).mapResult { roomPairs ->
-                    processRoomList(roomPairs, backend).mapResult { roomList ->
-                        getTopicByIds(topicIdList, uid, false, backend).map { topicList ->
-                            processTitleList(userList, communityList, roomList, list, topicList)
-                        }
-                    }
-                }
-            }
+    val userList = if (uidList.isNotEmpty()) {
+        val result = DatabaseFactory.getUsersByIds(uidList, backend)
+        val throwable = result.exceptionOrNull()
+        if (throwable != null) {
+            return Result.failure(throwable)
         }
+        result.getOrThrow()
+    } else {
+        emptyList()
+    }
+    val communityList = if (communityIdList.isNotEmpty()) {
+        val result = DatabaseFactory.getCommunityByIds(communityIdList).mapResult {
+            processCommunityList(backend, it)
+        }
+        val throwable = result.exceptionOrNull()
+        if (throwable != null) {
+            return Result.failure(throwable)
+        }
+        result.getOrThrow()
+    } else {
+        emptyList()
+    }
+    val roomList = if (roomIdList.isNotEmpty()) {
+        val result = DatabaseFactory.getRoomByIds(roomIdList).mapResult {
+            processRoomList(it, backend)
+        }
+        val throwable = result.exceptionOrNull()
+        if (throwable != null) {
+            return Result.failure(throwable)
+        }
+        result.getOrThrow()
+    } else {
+        emptyList()
+    }
+    return getTopicByIds(topicIdList, uid, false, backend).map { topicList ->
+        processTitleList(userList, communityList, roomList, list, topicList)
     }
 }
 

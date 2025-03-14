@@ -91,7 +91,8 @@ private fun processPreSetData(env: MergedEnv) {
 fun Application.module() {
     val reader = buildDatabaseReader()
     val backend = buildBackend()
-    DatabaseFactory.init(backend.config.databaseConnection)
+    DatabaseFactory.connect(backend.config.databaseConnection)
+    DatabaseFactory.init()
 
     install(ContentNegotiation) {
         json()

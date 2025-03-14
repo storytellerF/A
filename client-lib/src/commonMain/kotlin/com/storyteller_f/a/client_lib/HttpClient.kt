@@ -18,7 +18,10 @@ import io.ktor.util.date.*
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
 
-class ServerErrorException(val status: HttpStatusCode, val text: String) : Exception("$status $text")
+class ServerErrorException(val status: HttpStatusCode, val text: String, cause: Exception) : Exception(
+    "$status $text",
+    cause
+)
 
 val globalCookiesStorage = AcceptAllCookiesStorage()
 
@@ -72,7 +75,7 @@ fun HttpClientConfig<*>.defaultClientConfigure(cookiesStorage: CookiesStorage = 
             if (exception is ResponseException) {
                 val exceptionResponse = exception.response
                 val exceptionResponseText = exceptionResponse.bodyAsText()
-                throw ServerErrorException(exceptionResponse.status, exceptionResponseText)
+                throw ServerErrorException(exceptionResponse.status, exceptionResponseText, exception)
             }
         }
     }
