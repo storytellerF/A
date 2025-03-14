@@ -1,39 +1,27 @@
 package com.storyteller_f
 
 import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
-import com.storyteller_f.shared.utils.md5
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.io.File
 
 object DatabaseFactory {
 
-    private var isEnableExplain = false
+    private var onExplainResult: ((String, String, String, String) -> Unit)? = null
 
-    fun enableExplain(value: Boolean) {
-        isEnableExplain = value
+    fun enableExplain(value: ((String, String, String, String) -> Unit)?) {
+        onExplainResult = value
     }
 
-    private fun connect(connection: DatabaseConnection) {
+    fun connect(connection: DatabaseConnection) {
         val (uri, driver, user, password) = connection
         Database.connect(uri, driver, user, password)
     }
 
-    fun clean(connection: DatabaseConnection) {
-        connect(connection)
-        clean()
-    }
-
-    fun init(connection: DatabaseConnection) {
-        connect(connection)
-        init()
-    }
-
-    private fun init() {
+    fun init() {
         transaction {
             addLogger(StdOutSqlLogger)
 
@@ -73,7 +61,6 @@ object DatabaseFactory {
         val r = Exception()
         return runCatching {
             newSuspendedTransaction(Dispatchers.IO) {
-                debug = isEnableExplain
                 try {
                     block()
                 } catch (e: Throwable) {
@@ -94,13 +81,34 @@ object DatabaseFactory {
     suspend fun <T, R> query(transform: T.() -> R, block: Transaction.() -> T): Result<R> =
         dbQuery { transform(block()) }
 
+    private suspend fun <T, R> dbSearch(transform: SizedIterable<T>.() -> R, block: () -> SizedIterable<T>): Result<R> {
+        val r = Exception()
+        return runCatching {
+            newSuspendedTransaction(Dispatchers.IO) {
+                debug = onExplainResult != null
+                try {
+                    explainQuery<T>(r, block)
+                    transform(block())
+                } catch (e: Throwable) {
+                    if (e !is UnauthorizedException) {
+                        Napier.e(e, "database failed") {
+                            "$statements\nat ${r.stackTraceToString()}"
+                        }
+                    }
+                    throw e
+                }
+            }
+        }
+    }
+
     /**
      * 带有transform
      */
     suspend fun <T, R> mapQuery(transform: T.() -> R, block: () -> SizedIterable<T>): Result<List<R>> =
-        dbQuery {
-            explainQuery(block)
-            block().map(transform)
+        dbSearch({
+            map(transform)
+        }) {
+            block()
         }
 
     /**
@@ -111,9 +119,10 @@ object DatabaseFactory {
         resultRowTransform: (T) -> R1,
         block: () -> SizedIterable<T>
     ): Result<List<R>> =
-        dbQuery {
-            explainQuery(block)
-            block().map(resultRowTransform).map(transform)
+        dbSearch({
+            map(resultRowTransform).map(transform)
+        }) {
+            block()
         }
 
     /**
@@ -126,9 +135,10 @@ object DatabaseFactory {
         transform: R1.() -> T,
         resultRowTransform: (R) -> R1,
         block: () -> SizedIterable<R>
-    ): Result<T?> = dbQuery {
-        explainQuery(block)
-        block().limit(1).firstOrNull()?.let(resultRowTransform)?.let { transform(it) }
+    ): Result<T?> = dbSearch({
+        limit(1).firstOrNull()?.let(resultRowTransform)?.let { transform(it) }
+    }) {
+        block()
     }
 
     /**
@@ -139,46 +149,46 @@ object DatabaseFactory {
     suspend fun <R, R1> first(
         resultRowTransform: (R) -> R1,
         block: () -> SizedIterable<R>
-    ): Result<R1?> = dbQuery {
-        explainQuery(block)
-        block().limit(1).firstOrNull()?.let(resultRowTransform)
+    ): Result<R1?> = dbSearch({
+        limit(1).firstOrNull()?.let(resultRowTransform)
+    }) {
+        block()
     }
 
     /**
      * 检查数据是不是空
      */
-    suspend fun <T> isEmpty(block: () -> SizedIterable<T>): Result<Boolean> = dbQuery {
-        explainQuery(block)
-        block().limit(1).empty()
+    suspend fun <T> isEmpty(block: () -> SizedIterable<T>): Result<Boolean> = dbSearch({
+        limit(1).empty()
+    }) {
+        block()
     }
 
-    suspend fun <T> isNotEmpty(block: () -> SizedIterable<T>): Result<Boolean> = dbQuery {
-        explainQuery(block)
-        !block().limit(1).empty()
+    suspend fun <T> isNotEmpty(block: () -> SizedIterable<T>): Result<Boolean> = dbSearch({
+        !(limit(1).empty())
+    }) {
+        block()
     }
 
-    suspend fun <T> count(block: () -> SizedIterable<T>): Result<Long> = dbQuery {
-        explainQuery(block)
-        block().count()
+    suspend fun <T> count(block: () -> SizedIterable<T>): Result<Long> = dbSearch({
+        count()
+    }) {
+        block()
     }
 
-    private fun <T> Transaction.explainQuery(block: () -> SizedIterable<T>) {
-        if (isEnableExplain) {
+    private fun <T> Transaction.explainQuery(point: Exception, block: () -> SizedIterable<T>) {
+        onExplainResult?.let {
             val result = explain {
                 block()
             }.toList().joinToString("\n")
-            val input = statements.toString()
-            val end = input.indexOf(']', 1) + 1
-            val pureStatements = input.substring(end).trim()
-            val file = File("./build/test/${db.dialect.name}/${md5(pureStatements)}.explain")
-            file.parentFile?.let {
-                if (!it.exists()) {
-                    it.mkdirs()
-                }
+            val input = statements.toString().split("\n").firstOrNull {
+                it.isNotEmpty() && !it.contains("INFORMATION_SCHEMA")
             }
-            file.writeText("$statements\n$result\n")
-            Napier.i(tag = "explain result") {
-                "result: $result\nstatements: $statements"
+            if (input != null) {
+                val s = "explain"
+                val end = input.indexOf(s, ignoreCase = true) + s.length
+                val pureStatements = input.substring(end).trim()
+                it(db.dialect.name, pureStatements, result, point.stackTraceToString())
             }
         }
     }

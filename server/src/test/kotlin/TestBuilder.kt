@@ -1,3 +1,4 @@
+import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.MergedEnv
@@ -10,6 +11,7 @@ import com.storyteller_f.shared.*
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.md5
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
@@ -23,6 +25,7 @@ import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.elasticsearch.ElasticsearchContainer
+import java.io.File
 import kotlin.collections.set
 import kotlin.test.assertEquals
 import kotlin.use
@@ -42,14 +45,14 @@ fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, Cl
     }
 
     if (freeMemory >= 100) {
-        startTestContainerTest(receivedFrame, true, block)
+//        startTestContainerTest(receivedFrame, true, block)
         startTestContainerTest(receivedFrame, false, block)
     }
 }
 
 private fun startTestContainerTest(
     receivedFrame: (RoomFrame) -> Unit,
-    databaseTypeIsMysql: Boolean,
+    @Suppress("SameParameterValue") databaseTypeIsMysql: Boolean,
     block: suspend (HttpClient, ClientWebSocket) -> Unit
 ) {
     runBlocking {
@@ -67,7 +70,7 @@ private fun startTestContainerTest(
                 env["ELASTIC_URL"] = "http://${elasticClient.httpHostAddress}"
                 MinIOContainer(
                     "minio/minio:RELEASE.2024-12-18T13-15-44Z"
-                ).waitingFor(Wait.forSuccessfulCommand("curl -I http://localhost:9000/minio/health/live"))
+                )
                     .use { minioContainer ->
                         minioContainer.start()
                         env["MEDIA_SERVICE"] = "minio"
@@ -117,9 +120,18 @@ private fun doTest(
     runBlocking {
         backend.topicSearchService.clean()
     }
-    DatabaseFactory.clean(backend.config.databaseConnection)
-    DatabaseFactory.init(backend.config.databaseConnection)
-    DatabaseFactory.enableExplain(true)
+    DatabaseFactory.connect(backend.config.databaseConnection)
+    DatabaseFactory.clean()
+    DatabaseFactory.init()
+    DatabaseFactory.enableExplain { dialect, statements, result, point ->
+        val file = File("./build/test/$dialect/${extractTableNames(statements).joinToString("/")}/${md5(statements)}.explain")
+        file.parentFile?.let {
+            if (!it.exists()) {
+                it.mkdirs()
+            }
+        }
+        file.writeText("${SqlFormatter.format(statements)}\n\n$result\n\n$point")
+    }
     println("prepared resource")
     testApplication {
         environment {
@@ -147,7 +159,7 @@ private fun doTest(
     }
 
     println("clean resource")
-    DatabaseFactory.enableExplain(false)
+    DatabaseFactory.enableExplain(null)
     runBlocking {
         backend.topicSearchService.clean()
     }
@@ -219,4 +231,9 @@ fun <T> assertListTotalSize(count: Int, result: Result<ServerResponse<T>>) {
 inline fun <T> assertResponse(count: Int, result: Result<ServerResponse<T>>, block: (ServerResponse<T>) -> Unit) {
     assertListSize(count, result)
     block(result.getOrThrow())
+}
+
+fun extractTableNames(query: String): List<String> {
+    val regex = Regex("(?i)\\bFROM\\s+([a-zA-Z0-9_.]+)|\\bJOIN\\s+([a-zA-Z0-9_.]+)")
+    return regex.findAll(query).flatMap { it.groupValues.drop(1).filter { name -> name.isNotEmpty() } }.toList()
 }

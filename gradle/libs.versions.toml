@@ -55,6 +55,7 @@ material3WindowSizeClassMultiplatform = "0.5.0"
 media3Exoplayer = "1.5.1"
 minio = "8.5.17"
 mysqlConnectorJava = "8.0.33"
+sqlFormatter = "2.0.5"
 testContainer = "1.20.6"
 mosaicRuntime = "0.16.0"
 multiplatformMarkdownRenderer = "0.31.0-rc01"
@@ -112,6 +113,7 @@ detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", 
 detekt-rules-libraries = { module = "io.gitlab.arturbosch.detekt:detekt-rules-libraries", version.ref = "detektVersion" }
 detekt-rules-ruleauthors = { module = "io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors", version.ref = "detektVersion" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnectorJava" }
+sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
 testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearchJava" }
 emoji-compose-m3 = { module = "org.kodein.emoji:emoji-compose-m3", version.ref = "emojiKt" }

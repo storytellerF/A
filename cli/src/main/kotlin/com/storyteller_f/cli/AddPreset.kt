@@ -86,7 +86,8 @@ class AddPreset : Subcommand("add", "add entry") {
             exitProcess(1)
         }
         addProviderForJvm()
-        DatabaseFactory.init(backend.config.databaseConnection)
+        DatabaseFactory.connect(backend.config.databaseConnection)
+        DatabaseFactory.init()
         Napier.i {
             "database init done."
         }
