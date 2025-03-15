@@ -16,6 +16,14 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 
+class TopicSearchTuple(
+    val topicInfo: Topic,
+    val commentCount: Long,
+    val hasComment: Boolean,
+    val reactionCount: Long,
+    val aid: String?
+)
+
 object Topics : BaseTable() {
     val author = customPrimaryKey("author").index()
     val parentId = customPrimaryKey("parent_id").index()
@@ -74,19 +82,12 @@ class Topic(
     }
 }
 
-suspend fun DatabaseFactory.getTopicRoot(parentId: PrimaryKey): Result<Pair<PrimaryKey, ObjectType>?> = first({
-    rootId to rootType
-}, Topic::wrapRow) {
-    Topic.findById(parentId)
-}
-
-suspend fun DatabaseFactory.getSimpleTopic(topicId: PrimaryKey): Result<TopicInfo?> = first({
-    toTopicInfo(0, false)
-}, Topic::wrapRow) {
-    Topic.findById(topicId)
-}
-
-fun Topic.toTopicInfo(commentCount: Long = 0, hasComment: Boolean = false, reactionCount: Long = 0): TopicInfo {
+fun Topic.toTopicInfo(
+    commentCount: Long = 0,
+    hasComment: Boolean = false,
+    reactionCount: Long = 0,
+    aidValue: String? = null
+): TopicInfo {
     return TopicInfo(
         id = id,
         content = TopicContent.Nil,
@@ -104,8 +105,38 @@ fun Topic.toTopicInfo(commentCount: Long = 0, hasComment: Boolean = false, react
         isPin = isPin,
         lastModifiedTime = lastModifiedTime,
         extension = null,
-        aid = aid,
+        aid = aidValue ?: aid,
     )
+}
+
+suspend fun DatabaseFactory.getTopicRoot(parentId: PrimaryKey): Result<Pair<PrimaryKey, ObjectType>?> = first({
+    rootId to rootType
+}, Topic::wrapRow) {
+    Topic.findById(parentId)
+}
+
+/**
+ * 用于生成snapshot
+ */
+suspend fun DatabaseFactory.getSimpleTopic(topicId: PrimaryKey): Result<TopicInfo?> = first({
+    toTopicInfo()
+}, Topic::wrapRow) {
+    Topic.findById(topicId)
+}
+
+private fun buildTopicAuthorContainsExpression(
+    uid: PrimaryKey?,
+    t2: Alias<Topics>
+): Max<Long, Long>? {
+    val containExpression = if (uid != null) {
+        Expression.build {
+            val expr = case().When(t2[Topics.author].eq(uid), longLiteral(1)).Else(longLiteral(0))
+            Max(expr, LongColumnType())
+        }
+    } else {
+        null
+    }
+    return containExpression
 }
 
 suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey?, aid: String?, uid: PrimaryKey?): Result<TopicInfo?> {
@@ -113,15 +144,17 @@ suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey?, aid: String?, uid
     val commentCountColumn = t2[Topics.id].countDistinct()
     val reactionCountColumn = Reactions.id.countDistinct()
     val containColumn = buildTopicAuthorContainsExpression(uid, t2)
-    val baseSelection = Topics.fields + commentCountColumn + reactionCountColumn
+    val aidsValue = Aids.value.max()
+    val baseSelection = Topics.fields + commentCountColumn + reactionCountColumn + aidsValue
     return first({
-        topicInfo.toTopicInfo(this.commentCount, hasComment, reactionCount)
+        topicInfo.toTopicInfo(commentCount, hasComment, reactionCount, aid)
     }, {
         TopicSearchTuple(
             wrapRow(it),
             it[commentCountColumn],
             if (containColumn != null) it[containColumn] == 1L else false,
-            it[reactionCountColumn]
+            it[reactionCountColumn],
+            it[aidsValue]
         )
     }) {
         Topics.join(t2, JoinType.LEFT, Topics.id, t2[Topics.parentId])
@@ -144,19 +177,44 @@ suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey?, aid: String?, uid
     }
 }
 
-private fun buildTopicAuthorContainsExpression(
+/**
+ * 根据指定条件获取未填充content 的topic 列表
+ */
+suspend fun getTopicsByPredicate(
     uid: PrimaryKey?,
-    t2: Alias<Topics>
-): Max<Long, Long>? {
-    val containExpression = if (uid != null) {
-        Expression.build {
-            val expr = case().When(t2[Topics.author].eq(uid), longLiteral(1)).Else(longLiteral(0))
-            Max<Long, Long>(expr, LongColumnType())
-        }
-    } else {
-        null
+    fillHasCommented: Boolean?,
+    extraPredicate: (Query) -> Query = { it },
+    predicate: SqlExpressionBuilder.() -> Op<Boolean>
+): Result<List<TopicInfo>> {
+    if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
+    val t2 = Topics.alias("t2")
+    val reactionCountColumn = Reactions.id.countDistinct()
+    val containColumn = buildTopicAuthorContainsExpression(uid, t2)
+    val commentCountColumn = t2[Topics.id].countDistinct()
+    val aidsValue = Aids.value.max()
+    val baseSelection = Topics.fields + commentCountColumn + reactionCountColumn + aidsValue
+    return DatabaseFactory.mapQuery({
+        topicInfo.toTopicInfo(commentCount, hasComment, reactionCount, aid)
+    }, {
+        TopicSearchTuple(
+            wrapRow(it),
+            it[commentCountColumn],
+            if (containColumn != null) (it[containColumn] == 1L) else false,
+            it[reactionCountColumn],
+            it[aidsValue]
+        )
+    }) {
+        Topics.join(t2, JoinType.LEFT, Topics.id, t2[Topics.parentId])
+            .join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+            .join(Reactions, JoinType.LEFT, Topics.id, Reactions.objectId)
+            .let {
+                when {
+                    containColumn != null -> it.select(baseSelection + containColumn)
+                    else -> it.select(baseSelection)
+                }
+            }
+            .where(predicate).let(extraPredicate).groupBy(Topics.id)
     }
-    return containExpression
 }
 
 suspend fun getTopicsPagingByPredicate(
@@ -177,46 +235,6 @@ suspend fun getTopicsPagingByPredicate(
         }.map { count ->
             PaginationResult(data, count)
         }
-    }
-}
-
-class TopicSearchTuple(val topicInfo: Topic, val commentCount: Long, val hasComment: Boolean, val reactionCount: Long)
-
-/**
- * 根据指定条件获取未填充content 的topic 列表
- */
-suspend fun getTopicsByPredicate(
-    uid: PrimaryKey?,
-    fillHasCommented: Boolean?,
-    extraPredicate: (Query) -> Query = { it },
-    predicate: SqlExpressionBuilder.() -> Op<Boolean>
-): Result<List<TopicInfo>> {
-    if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    val t2 = Topics.alias("t2")
-    val reactionCountColumn = Reactions.id.countDistinct()
-    val containColumn = buildTopicAuthorContainsExpression(uid, t2)
-    val commentCountColumn = t2[Topics.id].countDistinct()
-    val baseSelection = Topics.fields + commentCountColumn + reactionCountColumn
-    return DatabaseFactory.mapQuery({
-        topicInfo.toTopicInfo(commentCount, hasComment, reactionCount)
-    }, {
-        TopicSearchTuple(
-            wrapRow(it),
-            it[commentCountColumn],
-            if (containColumn != null) (it[containColumn] == 1L) else false,
-            it[reactionCountColumn]
-        )
-    }) {
-        Topics.join(t2, JoinType.LEFT, Topics.id, t2[Topics.parentId])
-            .join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-            .join(Reactions, JoinType.LEFT, Topics.id, Reactions.objectId)
-            .let {
-                when {
-                    containColumn != null -> it.select(baseSelection + containColumn)
-                    else -> it.select(baseSelection)
-                }
-            }
-            .where(predicate).let(extraPredicate).groupBy(Topics.id)
     }
 }
 
@@ -265,7 +283,6 @@ suspend fun DatabaseFactory.saveTopic(
     backend.topicSearchService.saveDocument(
         listOf(TopicDocument.fromTopic(topic, content))
     ).getOrThrow()
-
     topic.toTopicInfo().copy(content = content)
 }
 

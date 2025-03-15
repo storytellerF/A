@@ -28,10 +28,23 @@ val database by lazy {
     }
 }
 
-fun getOrCreateCollection(collectionName: String) =
-    database.defaultScope.getCollection(collectionName) ?: database.createCollection(
+fun getOrCreateCollection(collectionName: String): Collection {
+    val collection = database.defaultScope.getCollection(collectionName) ?: database.createCollection(
         collectionName
     )
+    if (collectionName.startsWith("communities_")) {
+        collection.createIndex(
+            "poster_index",
+            ValueIndexConfiguration("poster")
+        )
+    } else if (collectionName.startsWith("topics_") && collectionName != "topics_keys") {
+        collection.createIndex(
+            "pinned_index",
+            ValueIndexConfiguration("pinned")
+        )
+    }
+    return collection
+}
 
 class CustomQueryPagingSource<Key : Any, RowType : Any>(
     private val select: Select,
@@ -124,12 +137,8 @@ fun saveSectionLoadParams(
             collection.delete(it)
         }
     } else {
-        collection.save(
-            kotbase.MutableDocument(
-                id.toString(),
-                Json.encodeToString(key)
-            )
-        )
+        val json = Json.encodeToString(key)
+        collection.save(id, json)
     }
 }
 
@@ -234,7 +243,7 @@ inline fun <reified T : Identifiable> singleSourceMediator(
     },
     { info, _ ->
         getOrCreateCollection(collectionName).save(
-            kotbase.MutableDocument(
+            MutableDocument(
                 info.id.toString(),
                 Json.encodeToString(info)
             )

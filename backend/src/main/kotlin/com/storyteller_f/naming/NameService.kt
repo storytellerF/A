@@ -10,8 +10,8 @@ class NameService {
     private val countList = mutableListOf<Int>()
 
     init {
-        this::class.java.classLoader.getResourceAsStream("charset")!!.bufferedReader().use {
-            it.readText().split("\n").filterIndexed { index, element ->
+        this::class.java.classLoader.getResourceAsStream("charset")!!.bufferedReader().use { reader ->
+            reader.readText().split("\n").filter { element ->
                 !element.startsWith("//")
             }.map {
                 val split = it.trim().split(Regex("[ \\t]"))
