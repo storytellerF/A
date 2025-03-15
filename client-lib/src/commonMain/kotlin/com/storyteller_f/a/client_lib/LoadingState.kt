@@ -3,7 +3,6 @@ package com.storyteller_f.a.client_lib
 import io.github.aakira.napier.Napier
 import kotbase.Collection
 import kotbase.Expression
-import kotbase.MutableDocument
 import kotbase.QueryBuilder.select
 import kotbase.ktx.*
 import kotbase.queryChangeFlow
@@ -68,11 +67,11 @@ class SimpleLoadingHandler<T>(override val refresh: () -> Unit) : LoadingHandler
 
 class CachedLoadingHandler<T>(
     override val refresh: () -> Unit,
-    val id: String,
     val source: Collection,
     whereQuery: WhereBuilder.() -> Expression,
     private val serializer: KSerializer<T>,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    val saveDocument: Collection.(String, T) -> Unit
 ) : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
     override val data = select(all()).from(source).where(whereQuery).limit(1).queryChangeFlow().map {
@@ -91,12 +90,12 @@ class CachedLoadingHandler<T>(
         Napier.i {
             "save topic $string"
         }
-        source.save(MutableDocument(id, string))
+        source.saveDocument(string, t)
         state.value = LoadingState.Done
     }
 
     override fun error(error: Throwable) {
-        state.value = LoadingState.Error(error)
+        state.markError(error)
     }
 
     override fun update(t: T) {
@@ -105,13 +104,13 @@ class CachedLoadingHandler<T>(
 }
 
 inline fun <reified T> buildCachedLoaderHandler(
-    scope: CoroutineScope,
     noinline refresh: () -> Unit,
+    scope: CoroutineScope,
     source: Collection,
-    id: String,
+    noinline updateDocument: Collection.(String, T) -> Unit,
     noinline whereQuery: WhereBuilder.() -> Expression
 ): CachedLoadingHandler<T> {
-    return CachedLoadingHandler(refresh, id, source, whereQuery, serializer(), scope)
+    return CachedLoadingHandler(refresh, source, whereQuery, serializer(), scope, updateDocument)
 }
 
 fun MutableStateFlow<LoadingState?>.markError(e: Throwable) {

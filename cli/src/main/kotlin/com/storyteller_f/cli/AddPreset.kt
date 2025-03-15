@@ -428,13 +428,7 @@ class AddPreset : Subcommand("add", "add entry") {
         list: List<PresetTopic>,
         userMap: Map<String, UserInfo>
     ): (PresetTopic) -> PrimaryKey {
-        val rootId: (PresetTopic) -> PrimaryKey = if (objectType == ObjectType.USER) {
-            val communityMap = getCommunityMap(list)
-            val rootId: (PresetTopic) -> PrimaryKey = {
-                communityMap[it.community]!!
-            }
-            rootId
-        } else {
+        return if (objectType == ObjectType.USER) {
             val userIdMap = userMap.mapValues {
                 it.value.id
             }
@@ -442,8 +436,13 @@ class AddPreset : Subcommand("add", "add entry") {
                 userIdMap[it.author]!!
             }
             rootId
+        } else {
+            val communityMap = getCommunityMap(list)
+            val rootId: (PresetTopic) -> PrimaryKey = {
+                communityMap[it.community]!!
+            }
+            rootId
         }
-        return rootId
     }
 
     private fun getCommunityMap(list: List<PresetTopic>): Map<String, PrimaryKey> {
@@ -495,21 +494,20 @@ class AddPreset : Subcommand("add", "add entry") {
             val level = addTopic.level
             val parent = addTopic.parent
             if (parent == null || parent == 0 || level == null || level == 0) {
-                addTopic to index
                 InsertTopicTuple(addTopic, index, 0, id)
             } else {
                 InsertTopicTuple(addTopic, index, level, id)
             }
         }
         // 从最顶层开始
-        Topics.batchInsert(topLevelTopic) { (first, index, _, id) ->
+        Topics.batchInsert(topLevelTopic) { (first, index, level, id) ->
             this[Topics.author] = userList[first.author]!!.id
             this[Topics.createdTime] = now()
             this[Topics.rootId] = roomList[first.room]!!.id
             this[Topics.rootType] = ObjectType.ROOM
             this[Topics.parentId] =
-                if (first.level == 0) roomList[first.room]!!.id else topLevelTopic[index - first.parent!!].id
-            this[Topics.parentType] = if (first.level == 0) ObjectType.ROOM else ObjectType.TOPIC
+                if (level == 0) roomList[first.room]!!.id else topLevelTopic[index - first.parent!!].id
+            this[Topics.parentType] = if (level == 0) ObjectType.ROOM else ObjectType.TOPIC
             this[Topics.id] = id
         }
         Aids.batchInsert(topLevelTopic.filter {
@@ -650,8 +648,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
         }
 
-        Topics.batchInsert(topLevelTopic) { (first, index, _, id) ->
-            val level = first.level
+        Topics.batchInsert(topLevelTopic) { (first, index, level, id) ->
             this[Topics.id] = id
             this[Topics.author] = userList[first.author]!!.id
             this[Topics.createdTime] = now()

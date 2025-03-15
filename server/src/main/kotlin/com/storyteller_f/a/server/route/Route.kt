@@ -9,6 +9,7 @@ import com.storyteller_f.a.server.webSocketContent
 import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.shared.model.MediaResponse
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.obj.PosterSearch
 import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.obj.TopicPinSearch
 import com.storyteller_f.shared.type.ObjectType
@@ -31,6 +32,7 @@ class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = nul
         val joinStatus: JoinStatusSearch? = null,
         val word: String? = null,
         val target: PrimaryKey? = null,
+        val hasPoster: PosterSearch? = null,
     )
 
     @Resource("{id}")

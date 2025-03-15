@@ -5,6 +5,7 @@ import com.storyteller_f.*
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.obj.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -16,7 +17,7 @@ import org.jetbrains.exposed.sql.*
 object Communities : BaseTable() {
     val name = communityName()
     val icon = communityIcon()
-    val poster = communityPoster()
+    val poster = communityPoster().index()
     val owner = customPrimaryKey("owner").index()
     val memberCount = long("member_count")
 }
@@ -124,31 +125,12 @@ suspend fun DatabaseFactory.getJoinedCommunityIds(uid: PrimaryKey) = mapQuery({
         }.select(Communities.id)
 }
 
-suspend fun DatabaseFactory.getCommunityList(
-    uid: PrimaryKey?,
-    prePageToken: PrimaryKey?,
-    nextPageToken: PrimaryKey?,
-    size: Int,
-    joinStatus: JoinStatusSearch?,
-    word: String?
-): Result<List<CommunityRawResult>> = mapQuery({
-    CommunityRawResult(first.toCommunityIfo(null), first.icon, first.poster)
-}, {
-    Community.wrapRow(it) to it.getOrNull(MemberJoins.joinTime)
-}) {
-    getSearchCommunityQuery(uid, false, joinStatus, word).bindPaginationQuery(
-        Communities,
-        prePageToken,
-        nextPageToken,
-        size
-    )
-}
-
 fun getSearchCommunityQuery(
     uid: PrimaryKey?,
     getCount: Boolean,
     joinStatusSearch: JoinStatusSearch?,
-    word: String?
+    word: String?,
+    hasPosterSearch: PosterSearch?
 ): Query {
     val query = when (joinStatusSearch) {
         JoinStatusSearch.JOINED -> {
@@ -183,7 +165,25 @@ fun getSearchCommunityQuery(
             Communities.name like "$word%"
         }
     }
+    query.bindPosterSearch(hasPosterSearch)
     return query
+}
+
+fun Query.bindPosterSearch(
+    hasPosterSearch: PosterSearch?
+): Query {
+    when (hasPosterSearch) {
+        PosterSearch.HAS_POSTER -> andWhere {
+            Communities.poster.isNotNull()
+        }
+
+        PosterSearch.NO_POSTER -> andWhere {
+            Communities.poster.isNull()
+        }
+
+        else -> {}
+    }
+    return this
 }
 
 fun getUserJoinedCommunityQuery(
@@ -207,11 +207,23 @@ suspend fun DatabaseFactory.getPaginationCommunityList(
     nextPageToken: PrimaryKey?,
     size: Int,
     joinStatus: JoinStatusSearch?,
-    word: String?
+    word: String?,
+    hasPosterSearch: PosterSearch?,
 ): Result<Pair<List<CommunityRawResult>, Long>> {
-    return getCommunityList(uid, prePageToken, nextPageToken, size, joinStatus, word).mapResult { list ->
+    return mapQuery({
+        CommunityRawResult(first.toCommunityIfo(null), first.icon, first.poster)
+    }, {
+        Community.wrapRow(it) to it.getOrNull(MemberJoins.joinTime)
+    }) {
+        getSearchCommunityQuery(uid, false, joinStatus, word, hasPosterSearch).bindPaginationQuery(
+            Communities,
+            prePageToken,
+            nextPageToken,
+            size
+        )
+    }.mapResult { list ->
         count {
-            getSearchCommunityQuery(uid, true, joinStatus, word)
+            getSearchCommunityQuery(uid, true, joinStatus, word, hasPosterSearch)
         }.map { value ->
             list to value
         }

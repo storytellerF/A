@@ -3,9 +3,6 @@ package com.storyteller_f.a.app.model
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
-import androidx.paging.LoadType
-import androidx.paging.PagingState
-import androidx.paging.RemoteMediator
 import com.storyteller_f.a.app.UploadSession
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.common.*
@@ -15,15 +12,12 @@ import com.storyteller_f.a.app.updateDocument
 import com.storyteller_f.a.app.updateDocumentInParent
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.JoinStatusSearch
-import com.storyteller_f.shared.obj.ServerResponse
-import com.storyteller_f.shared.obj.TitleSearchType
-import com.storyteller_f.shared.obj.TopicPinSearch
+import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
-import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import kotbase.Expression
+import kotbase.Ordering
 import kotbase.ktx.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -51,8 +45,8 @@ data class OnAddReaction(val topicId: PrimaryKey, val emoji: String)
 data class OnRemoveReaction(val topicId: PrimaryKey, val emoji: String)
 
 abstract class CommunityViewModel(
-    private val requestInfo: suspend HttpClient.() -> Result<CommunityInfo>,
-    client: HttpClient
+    client: HttpClient,
+    private val requestInfo: suspend HttpClient.() -> Result<CommunityInfo>
 ) :
     SimpleViewModel<CommunityInfo>(client) {
     val dialog = DialogSaveState()
@@ -87,11 +81,19 @@ abstract class CommunityViewModel(
     override suspend fun loadInternal() = requestInfo(client)
 }
 
-class IdCommunityViewModel(client: HttpClient, communityId: PrimaryKey) : CommunityViewModel({
+class IdCommunityViewModel(client: HttpClient, communityId: PrimaryKey) : CommunityViewModel(client, {
     getCommunityInfo(communityId)
-}, client) {
+}) {
     override val handler: LoadingHandler<CommunityInfo> =
-        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("communities"), communityId.toString()) {
+        buildCachedLoaderHandler(
+            ::load,
+            viewModelScope,
+            getOrCreateCollection("communities"),
+            { data, t ->
+                save(kotbase.MutableDocument(communityId.toString(), data))
+                save(kotbase.MutableDocument(t.aid, data))
+            }
+        ) {
             "id" equalTo communityId
         }
 
@@ -100,14 +102,17 @@ class IdCommunityViewModel(client: HttpClient, communityId: PrimaryKey) : Commun
     }
 }
 
-class AidCommunityViewModel(client: HttpClient, aid: String) : CommunityViewModel({
+class AidCommunityViewModel(client: HttpClient, aid: String) : CommunityViewModel(client, {
     getCommunityInfoByAid(aid)
-}, client) {
+}) {
     override val handler: LoadingHandler<CommunityInfo> = buildCachedLoaderHandler(
-        viewModelScope,
         ::load,
+        viewModelScope,
         getOrCreateCollection("communities"),
-        aid,
+        { data, t ->
+            save(kotbase.MutableDocument(aid, data))
+            save(kotbase.MutableDocument(t.id.toString(), data))
+        }
     ) {
         "aid" equalTo aid
     }
@@ -119,17 +124,71 @@ class AidCommunityViewModel(client: HttpClient, aid: String) : CommunityViewMode
 
 @OptIn(ExperimentalPagingApi::class)
 class CommunitiesViewModel(
+    client: HttpClient,
     private val joinStatusSearch: JoinStatusSearch,
     private val word: String,
     private val target: PrimaryKey? = null,
-    client: HttpClient
-) : PagingViewModel<PrimaryKey, CommunityInfo>(
+    private val collectionName: String = "communities_${word}_${target}_$joinStatusSearch"
+) : PagingViewModel<SectionLoadParams<PrimaryKey>, CommunityInfo>(
+    client,
+    CustomRemoteMediator(
+        collectionName,
+        {
+            if (it != null) {
+                getSectionLoadParams(collectionName, it.id)
+            } else {
+                SectionLoadParams(1, null)
+            }
+        },
+        { info, key ->
+            saveSectionLoadParams(collectionName, key, info.id)
+            getOrCreateCollection(collectionName).save(
+                kotbase.MutableDocument(
+                    info.id.toString(),
+                    Json.encodeToString(info)
+                )
+            )
+        },
+        SectionPagingSource(
+            listOf(
+                RegularPagingSource(client) { key, size ->
+                    client.searchCommunity(size, joinStatusSearch, word, target, key, PosterSearch.HAS_POSTER)
+                },
+                RegularPagingSource(client) { key, size ->
+                    client.searchCommunity(size, joinStatusSearch, word, target, key, PosterSearch.NO_POSTER)
+                }
+            )
+        )
+    ),
     {
-        RegularPagingSource(client) {
-            client.searchCommunity(10, joinStatusSearch, word, target, it)
-        }
-    },
-    client = client
+        CustomQueryPagingSource(
+            select = select(all()),
+            collectionName = collectionName,
+            key = { info ->
+                info?.id?.let {
+                    SectionLoadParams(0, it)
+                }
+            },
+            queryProvider = {
+                where {
+                    val param = it?.param
+                    if (param != null) {
+                        "id" lessThan param
+                    } else {
+                        Expression.intValue(0) equalTo Expression.intValue(0)
+                    }
+                }.orderBy {
+                    Ordering.expression(Expression.property("poster").isNotValued())
+                    "id".descending()
+                }
+            },
+            jsonStringMapper = { json: String ->
+                runCatching {
+                    Json.decodeFromString<CommunityInfo>(json)
+                }.getOrNull()
+            }
+        )
+    }
 )
 
 @OptIn(ExperimentalPagingApi::class)
@@ -137,27 +196,74 @@ class RoomsViewModel(
     private val joinStatusSearch: JoinStatusSearch,
     private val word: String,
     val community: PrimaryKey? = null,
-    client: HttpClient
+    client: HttpClient,
+    private val collectionName: String = "rooms_${word}_$community"
 ) : PagingViewModel<PrimaryKey, RoomInfo>(
-    {
-        RegularPagingSource(client) {
-            client.searchRooms(10, it, joinStatusSearch, word, community)
+    client,
+    singleSourceMediator(
+        collectionName,
+        RegularPagingSource(client) { key, size ->
+            searchRooms(size, key, joinStatusSearch, word, community)
         }
-    },
-    client = client
+    ),
+    {
+        singleSourceDatabaseSource(collectionName)
+    }
 )
 
 @OptIn(ExperimentalPagingApi::class)
-class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null, client: HttpClient) :
-    PagingViewModel<PrimaryKey, TopicInfo>(
+class TopicsViewModel(
+    id: PrimaryKey,
+    val type: ObjectType? = null,
+    client: HttpClient,
+    private val collectionName: String = "topics$id"
+) :
+    PagingViewModel<SectionLoadParams<PrimaryKey>, TopicInfo>(
+        client,
+        CustomRemoteMediator(
+            collectionName,
+            { topicInfo ->
+                if (topicInfo != null) {
+                    getSectionLoadParams(collectionName, topicInfo.id)
+                } else {
+                    SectionLoadParams(1, null)
+                }
+            },
+            { info, key ->
+                saveSectionLoadParams(collectionName, key, info.id)
+                updateDocument(collectionName, info)
+            },
+            if (id == DEFAULT_PRIMARY_KEY) {
+                SectionPagingSource(listOf(RegularPagingSource(client) { loadKey, size ->
+                    getRecommendTopics(loadKey, size)
+                }))
+            } else {
+                SectionPagingSource(
+                    listOf(
+                        RegularPagingSource(client) { loadKey, size ->
+                            getTopicList(type, id, loadKey, size, TopicPinSearch.PINNED)
+                        },
+                        RegularPagingSource(client) { loadKey, size ->
+                            getTopicList(type, id, loadKey, size, TopicPinSearch.UNPINNED)
+                        }
+                    )
+                )
+            }
+        ),
         {
             CustomQueryPagingSource(
                 select = select(all()),
-                collectionName = "topics$id",
+                collectionName = collectionName,
+                key = { info ->
+                    info?.id?.let {
+                        SectionLoadParams(0, it)
+                    }
+                },
                 queryProvider = {
                     where {
-                        if (it != null) {
-                            "id" lessThan it
+                        val param = it?.param
+                        if (param != null) {
+                            "id" lessThan param
                         } else {
                             Expression.intValue(0) equalTo Expression.intValue(0)
                         }
@@ -177,39 +283,7 @@ class TopicsViewModel(id: PrimaryKey, val type: ObjectType? = null, client: Http
                     }
                 }
             )
-        },
-        TopicsRemoteMediator("topics$id", object : NetworkService<TopicInfo> {
-            var loadPinned = true
-            override suspend fun invoke(loadKey: PrimaryKey?, size: Int): ServerResponse<TopicInfo> {
-                return if (loadPinned && id != DEFAULT_PRIMARY_KEY) {
-                    val firstPage = loadOnePageTopicList(loadKey, size, TopicPinSearch.PINNED)
-                    if (firstPage.pagination?.nextPageToken == null) {
-                        loadPinned = false
-                        val secondPage = loadOnePageTopicList(null, size, TopicPinSearch.UNPINNED)
-                        secondPage.copy(data = firstPage.data + secondPage.data)
-                    } else {
-                        firstPage
-                    }
-                } else {
-                    loadOnePageTopicList(loadKey, size, TopicPinSearch.UNPINNED)
-                }
-            }
-
-            private suspend fun loadOnePageTopicList(
-                loadKey: PrimaryKey?,
-                size: Int,
-                pinType: TopicPinSearch
-            ): ServerResponse<TopicInfo> {
-                return when {
-                    id == DEFAULT_PRIMARY_KEY -> client.getRecommendTopics(loadKey, size)
-                    type == ObjectType.ROOM -> client.getRoomTopics(id, loadKey, size, pinType)
-                    type == ObjectType.COMMUNITY -> client.getCommunityTopics(id, loadKey, size, pinType)
-                    type == ObjectType.USER -> client.getUserTopics(id, loadKey, size, pinType)
-                    else -> client.getTopicTopics(id, loadKey, size, pinType)
-                }.getOrThrow()
-            }
-        }),
-        client
+        }
     ) {
     init {
         viewModelScope.launch {
@@ -238,62 +312,6 @@ private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
         it.copy(content = TopicContent.Extracted(extractMarkdownHeadline(content.plain), content.list, content.plain))
     } else {
         it
-    }
-}
-
-interface NetworkService<T> {
-    suspend fun invoke(loadKey: PrimaryKey?, size: Int): ServerResponse<T>
-}
-
-@OptIn(ExperimentalPagingApi::class)
-class TopicsRemoteMediator(
-    private val collectionName: String,
-    private val networkService: NetworkService<TopicInfo>
-) :
-    RemoteMediator<PrimaryKey, TopicInfo>() {
-
-    override suspend fun load(
-        loadType: LoadType,
-        state: PagingState<PrimaryKey, TopicInfo>
-    ): MediatorResult {
-        Napier.v(tag = "pagination") {
-            "mediator load $loadType"
-        }
-        val loadKey = when (loadType) {
-            LoadType.REFRESH -> null
-            LoadType.PREPEND -> return MediatorResult.Success(
-                endOfPaginationReached = true
-            )
-
-            LoadType.APPEND -> {
-                val lastItem = state.lastItemOrNull()
-                    ?: return MediatorResult.Success(
-                        endOfPaginationReached = true
-                    )
-
-                lastItem.id
-            }
-        }
-        return try {
-            val response = networkService.invoke(loadKey, state.config.pageSize)
-            if (loadType == LoadType.REFRESH) {
-                database.deleteCollection(collectionName)
-            }
-            response.data.forEach {
-                updateDocument(collectionName, it)
-            }
-            Napier.v(tag = "pagination") {
-                "mediator success $loadKey"
-            }
-            MediatorResult.Success(
-                endOfPaginationReached = response.pagination?.nextPageToken == null
-            )
-        } catch (e: Exception) {
-            Napier.e(e, tag = "pagination") {
-                "mediator load error"
-            }
-            MediatorResult.Error(e)
-        }
     }
 }
 
@@ -335,7 +353,15 @@ class IdRoomViewModel(client: HttpClient, communityId: PrimaryKey) : RoomViewMod
     getRoomInfo(communityId)
 }, client) {
     override val handler: LoadingHandler<RoomInfo> =
-        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("rooms"), communityId.toString()) {
+        buildCachedLoaderHandler(
+            ::load,
+            viewModelScope,
+            getOrCreateCollection("rooms"),
+            { data, t ->
+                save(communityId.toString(), data)
+                save(t.aid, data)
+            }
+        ) {
             "id" equalTo communityId
         }
 
@@ -348,7 +374,10 @@ class AidRoomViewModel(client: HttpClient, aid: String) : RoomViewModel({
     getRoomInfoByAid(aid)
 }, client) {
     override val handler: LoadingHandler<RoomInfo> =
-        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("rooms"), aid) {
+        buildCachedLoaderHandler(::load, viewModelScope, getOrCreateCollection("rooms"), { data, t ->
+            save(aid, data)
+            save(t.id, data)
+        }) {
             "aid" equalTo aid
         }
 
@@ -358,14 +387,51 @@ class AidRoomViewModel(client: HttpClient, aid: String) : RoomViewModel({
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class TopicSearchViewModel(word: List<String>, parentId: PrimaryKey?, parentType: ObjectType?, client: HttpClient) :
+class TopicSearchViewModel(
+    word: List<String>,
+    parentId: PrimaryKey?,
+    parentType: ObjectType?,
+    client: HttpClient,
+    private val collectionName: String = "topics_search_${word}_$parentId"
+) :
     PagingViewModel<PrimaryKey, TopicInfo>(
-        {
-            RegularPagingSource(client) {
-                client.searchTopics(10, word, parentId, parentType, it)
+        client = client,
+        remoteMediator = singleSourceMediator(
+            collectionName,
+            RegularPagingSource(client) { key, size ->
+                client.searchTopics(size, word, parentId, parentType, key)
+            }
+        ),
+        sourceBuilder = {
+            singleSourceDatabaseSource(collectionName)
+        }
+    )
+
+private inline fun <reified T : Identifiable> singleSourceDatabaseSource(collectionName: String) =
+    CustomQueryPagingSource(
+        select = select(all()),
+        collectionName = collectionName,
+        key = { info ->
+            info?.id
+        },
+        queryProvider = {
+            where {
+                val param = it
+                if (param != null) {
+                    "id" lessThan param
+                } else {
+                    Expression.intValue(0) equalTo Expression.intValue(0)
+                }
+            }.orderBy {
+                Ordering.expression(Expression.property("poster").isNotValued())
+                "id".descending()
             }
         },
-        client = client
+        jsonStringMapper = { json: String ->
+            runCatching {
+                Json.decodeFromString<T>(json)
+            }.getOrNull()
+        }
     )
 
 class MediaListViewModel(private val objectId: PrimaryKey, private val objectType: ObjectType, client: HttpClient) :
@@ -412,7 +478,15 @@ class IdUserViewModel(client: HttpClient, communityId: PrimaryKey) : UserViewMod
     getUserInfo(communityId)
 }, client) {
     override val handler: LoadingHandler<UserInfo> =
-        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("users"), communityId.toString()) {
+        buildCachedLoaderHandler(
+            ::load,
+            viewModelScope,
+            getOrCreateCollection("users"),
+            { data, t ->
+                save(communityId, data)
+                t.aid?.let { save(it, data) }
+            }
+        ) {
             "id" equalTo communityId
         }
 
@@ -425,7 +499,10 @@ class AidUserViewModel(client: HttpClient, aid: String) : UserViewModel({
     getUserInfoByAid(aid)
 }, client) {
     override val handler: LoadingHandler<UserInfo> =
-        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("users"), aid) {
+        buildCachedLoaderHandler(::load, viewModelScope, getOrCreateCollection("users"), { data, t ->
+            save(aid, data)
+            save(t.id, data)
+        }) {
             "aid" equalTo aid
         }
 
@@ -435,20 +512,30 @@ class AidUserViewModel(client: HttpClient, aid: String) : UserViewModel({
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class MemberViewModel(objectId: PrimaryKey, word: String, objectType: ObjectType, client: HttpClient) :
+class MemberViewModel(
+    objectId: PrimaryKey,
+    word: String,
+    objectType: ObjectType,
+    client: HttpClient,
+    private val collectionName: String = "members_${objectId}_${word}_$"
+) :
     PagingViewModel<PrimaryKey, UserInfo>(
-        {
+        client = client,
+        remoteMediator = singleSourceMediator(
+            collectionName,
             RegularPagingSource(
                 client
-            ) {
+            ) { key, size ->
                 when (objectType) {
-                    ObjectType.COMMUNITY -> searchCommunityMembers(objectId, it, 10, word)
-                    ObjectType.ROOM -> searchRoomMembers(objectId, it, 10, word)
-                    else -> searchAllMembers(it, 10, word)
+                    ObjectType.COMMUNITY -> searchCommunityMembers(objectId, key, size, word)
+                    ObjectType.ROOM -> searchRoomMembers(objectId, key, size, word)
+                    else -> searchAllMembers(key, size, word)
                 }
             }
-        },
-        client = client
+        ),
+        sourceBuilder = {
+            singleSourceDatabaseSource(collectionName)
+        }
     )
 
 class ReactionsViewModel(private val objectId: PrimaryKey, client: HttpClient) :
@@ -517,7 +604,15 @@ class IdTopicViewModel(client: HttpClient, topicId: PrimaryKey) : TopicViewModel
     getTopicInfo(topicId)
 }, client) {
     override val handler: LoadingHandler<TopicInfo> =
-        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("topics"), topicId.toString()) {
+        buildCachedLoaderHandler(
+            ::load,
+            viewModelScope,
+            getOrCreateCollection("topics"),
+            { data, t ->
+                save(topicId, data)
+                t.aid?.let { save(it, data) }
+            }
+        ) {
             "id" equalTo topicId
         }
 
@@ -530,7 +625,10 @@ class AidTopicViewModel(client: HttpClient, aid: String) : TopicViewModel({
     getTopicInfoByAid(aid)
 }, client) {
     override val handler: LoadingHandler<TopicInfo> =
-        buildCachedLoaderHandler(viewModelScope, ::load, getOrCreateCollection("topics"), aid) {
+        buildCachedLoaderHandler(::load, viewModelScope, getOrCreateCollection("topics"), { data, t ->
+            save(aid, data)
+            save(t.id, data)
+        }) {
             "aid" equalTo aid
         }
 
@@ -569,12 +667,29 @@ class TitlesViewModel(
     searchType: TitleSearchType,
     status: TitleStatus? = null,
     type: TitleType? = null,
-    scopeId: PrimaryKey? = null
-) : PagingViewModel<PrimaryKey, TitleInfo>({
-    RegularPagingSource(client) {
-        client.userTitles(uid, it, 10, searchType, status, type, scopeId)
+    scopeId: PrimaryKey? = null,
+    private val collectionName: String = "titles_${uid}_${searchType}_${status}_${type}_$scopeId"
+) : PagingViewModel<PrimaryKey, TitleInfo>(
+    client = client,
+    remoteMediator = CustomRemoteMediator(
+        collectionName,
+        {
+            it?.id
+        },
+        { info, _ ->
+            getOrCreateCollection(collectionName).save(
+                info.id,
+                Json.encodeToString(info)
+            )
+        },
+        RegularPagingSource(client) { key, size ->
+            client.userTitles(uid, key, size, searchType, status, type, scopeId)
+        }
+    ),
+    sourceBuilder = {
+        singleSourceDatabaseSource(collectionName)
     }
-}, client = client)
+)
 
 class UploadViewModel(client: HttpClient, private val uploader: UploadSession, myUid: PrimaryKey) : ViewModel() {
     private val queue = Channel<Int> {
