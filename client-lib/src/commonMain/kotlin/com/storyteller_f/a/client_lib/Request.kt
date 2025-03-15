@@ -7,6 +7,7 @@ import com.storyteller_f.shared.encryptAesKey
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.ObjectType.*
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
@@ -150,12 +151,14 @@ suspend fun HttpClient.searchCommunity(
     joinStatusSearch: JoinStatusSearch,
     word: String? = null,
     target: PrimaryKey? = null,
-    nextCommunityId: PrimaryKey? = null
+    nextCommunityId: PrimaryKey? = null,
+    hasPosterSearch: PosterSearch? = null,
 ) = serviceCatching {
     get("communities/search") {
         url {
             word?.let { value -> parameters.append("word", value) }
             target?.let { value -> parameters.append("target", value.toString()) }
+            hasPosterSearch?.let { value -> parameters.append("hasPoster", value.name) }
             parameters.append("joinStatus", joinStatusSearch.name)
             appendPagingQueryParams(size, nextCommunityId)
         }
@@ -459,13 +462,13 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
     val message: RoomFrame = RoomFrame.Message(
         if (topicId != null) {
             NewRoomTopic(
-                ObjectType.TOPIC,
+                TOPIC,
                 topicId,
                 content
             )
         } else {
             NewRoomTopic(
-                ObjectType.ROOM,
+                ROOM,
                 roomInfo.id,
                 content
             )
@@ -543,4 +546,18 @@ suspend fun HttpClient.updateRoomInfo(newInfo: UpdateRoomBody, id: PrimaryKey) =
         contentType(ContentType.Application.Json)
         setBody(newInfo)
     }.body<RoomInfo>()
+}
+
+suspend fun HttpClient.getTopicList(
+    type: ObjectType?,
+    id: PrimaryKey,
+    loadKey: PrimaryKey?,
+    size: Int,
+    pinSearch: TopicPinSearch
+) = when (type) {
+    ROOM -> getRoomTopics(id, loadKey, size, pinSearch)
+    COMMUNITY -> getCommunityTopics(id, loadKey, size, pinSearch)
+    USER -> getUserTopics(id, loadKey, size, pinSearch)
+    TOPIC -> getTopicTopics(id, loadKey, size, pinSearch)
+    else -> Result.failure(IllegalArgumentException("unrecognized $type"))
 }

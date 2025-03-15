@@ -1,16 +1,20 @@
 package com.storyteller_f.a.app.common
 
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.LoadType
 import androidx.paging.PagingState
+import androidx.paging.RemoteMediator
 import app.cash.paging.*
 import com.storyteller_f.shared.model.Identifiable
-import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import kotbase.*
+import kotbase.Collection
 import kotbase.ktx.from
 import kotbase.ktx.limit
 import kotbase.ktx.toObjects
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.serialization.json.Json
 
 val database by lazy {
     Database(
@@ -29,14 +33,15 @@ fun getOrCreateCollection(collectionName: String) =
         collectionName
     )
 
-class CustomQueryPagingSource<RowType : Identifiable>(
+class CustomQueryPagingSource<Key : Any, RowType : Any>(
     private val select: Select,
     collectionName: String,
-    private val queryProvider: From.(PrimaryKey?) -> LimitRouter,
+    private val key: (RowType?) -> Key?,
+    private val queryProvider: From.(Key?) -> LimitRouter,
     private val mapMapper: ((Map<String, Any?>) -> RowType?)? = null,
     private val jsonStringMapper: ((String) -> RowType?)? = null,
     private val extraProcessor: suspend List<RowType>.() -> List<RowType> = { this }
-) : PagingSource<PrimaryKey, RowType>() {
+) : PagingSource<Key, RowType>() {
 
     private val collection = getOrCreateCollection(collectionName)
 
@@ -48,7 +53,7 @@ class CustomQueryPagingSource<RowType : Identifiable>(
         }
     }
 
-    override fun getRefreshKey(state: PagingState<PrimaryKey, RowType>): PrimaryKey? {
+    override fun getRefreshKey(state: PagingState<Key, RowType>): Key? {
         return null
     }
 
@@ -60,11 +65,11 @@ class CustomQueryPagingSource<RowType : Identifiable>(
         }
     }
 
-    val map = mutableMapOf<PrimaryKey, ListenerToken>()
+    val map = mutableMapOf<Key?, ListenerToken>()
 
     override suspend fun load(
-        params: PagingSourceLoadParams<PrimaryKey>
-    ): PagingSourceLoadResult<PrimaryKey, RowType> {
+        params: PagingSourceLoadParams<Key>
+    ): PagingSourceLoadResult<Key, RowType> {
         val key = params.key
         if (key == null) {
             removeAllToken()
@@ -85,15 +90,12 @@ class CustomQueryPagingSource<RowType : Identifiable>(
                         else -> task.complete(results.toObjects())
                     }
                 }
-            map[key ?: (DEFAULT_PRIMARY_KEY)] = listenerToken
+            map[key] = listenerToken
             val data = task.await().extraProcessor()
-            Napier.v(tag = "pagination") {
-                "source nextKey = ${data.lastOrNull()?.id} ${data.size}"
-            }
             PagingSourceLoadResultPage(
                 data = data,
                 prevKey = null,
-                nextKey = data.lastOrNull()?.id,
+                nextKey = key(data.lastOrNull()),
             )
         } catch (e: Exception) {
             Napier.e(e, tag = "pagination") {
@@ -110,3 +112,133 @@ class CustomQueryPagingSource<RowType : Identifiable>(
         map.clear()
     }
 }
+
+fun saveSectionLoadParams(
+    collectionName: String,
+    key: SectionLoadParams<PrimaryKey>?,
+    id: PrimaryKey
+) {
+    val collection = getOrCreateCollection("${collectionName}_key")
+    if (key == null) {
+        collection.getDocument(id.toString())?.let {
+            collection.delete(it)
+        }
+    } else {
+        collection.save(
+            kotbase.MutableDocument(
+                id.toString(),
+                Json.encodeToString(key)
+            )
+        )
+    }
+}
+
+fun getSectionLoadParams(
+    collectionName: String,
+    id: PrimaryKey
+) = getOrCreateCollection(collectionName).getDocument(id.toString())?.toJSON()?.let {
+    Json.decodeFromString<SectionLoadParams<PrimaryKey>>(it)
+}
+
+@OptIn(ExperimentalPagingApi::class)
+class CustomRemoteMediator<Key : Any, Datum : Any>(
+    private val collectionName: String,
+    private val key: (Datum?) -> Key?,
+    private val update: (Datum, Key?) -> Unit,
+    private val networkService: PagingSource<Key, Datum>
+) :
+    RemoteMediator<Key, Datum>() {
+
+    override suspend fun load(
+        loadType: LoadType,
+        state: PagingState<Key, Datum>
+    ): MediatorResult {
+        Napier.v(tag = "pagination") {
+            "mediator load $loadType"
+        }
+        val loadKey = when (loadType) {
+            LoadType.REFRESH -> null
+            LoadType.PREPEND -> return MediatorResult.Success(
+                endOfPaginationReached = true
+            )
+
+            LoadType.APPEND -> {
+                val lastItem = state.lastItemOrNull()
+                key(lastItem)
+            }
+        }
+        return try {
+            val params = when (loadKey) {
+                null -> PagingSourceLoadParamsRefresh<Key>(
+                    null,
+                    state.config.pageSize,
+                    state.config.enablePlaceholders
+                )
+
+                else -> PagingSourceLoadParamsAppend(
+                    loadKey,
+                    state.config.pageSize,
+                    state.config.enablePlaceholders
+                )
+            }
+            when (val loadResult = networkService.load(params)) {
+                is PagingSourceLoadResultError<Key, Datum> -> {
+                    MediatorResult.Error(loadResult.throwable)
+                }
+
+                is PagingSourceLoadResultInvalid<Key, Datum> -> {
+                    MediatorResult.Error(Exception("invalid"))
+                }
+
+                is PagingSourceLoadResultPage<Key, Datum> -> {
+                    val data = loadResult.data
+                    val nextKey = loadResult.nextKey
+                    if (loadType == LoadType.REFRESH) {
+                        database.deleteCollection(collectionName)
+                    }
+                    data.forEach {
+                        update(it, nextKey)
+                    }
+                    Napier.v(tag = "pagination") {
+                        "mediator success $loadKey"
+                    }
+                    MediatorResult.Success(
+                        endOfPaginationReached = nextKey == null
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            Napier.e(e, tag = "pagination") {
+                "mediator load error"
+            }
+            MediatorResult.Error(e)
+        }
+    }
+}
+
+fun Collection.save(id: PrimaryKey, data: String) {
+    save(MutableDocument(id.toString(), data))
+}
+
+fun Collection.save(id: String, data: String) {
+    save(MutableDocument(id, data))
+}
+
+inline fun <reified T : Identifiable> singleSourceMediator(
+    collectionName: String,
+    pagingSource: RegularPagingSource<T>
+) = CustomRemoteMediator(
+    collectionName,
+    {
+        it?.id
+    },
+    { info, _ ->
+        getOrCreateCollection(collectionName).save(
+            kotbase.MutableDocument(
+                info.id.toString(),
+                Json.encodeToString(info)
+            )
+        )
+    },
+    pagingSource
+)

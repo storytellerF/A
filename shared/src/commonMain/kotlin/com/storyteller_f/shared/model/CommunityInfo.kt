@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CommunityInfo(
-    val id: PrimaryKey,
+    override val id: PrimaryKey,
     val aid: String,
     val name: String,
     val owner: PrimaryKey,
@@ -18,7 +18,7 @@ data class CommunityInfo(
     val poster: MediaInfo? = null,
     val joinTime: LocalDateTime? = null,
     val extension: Extension? = null,
-) {
+) : Identifiable {
     val isJoined get() = joinTime != null
 
     @Serializable

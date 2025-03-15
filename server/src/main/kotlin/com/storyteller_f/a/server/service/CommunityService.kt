@@ -7,6 +7,7 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
+import com.storyteller_f.shared.obj.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -79,7 +80,15 @@ suspend fun searchCommunities(
     search: RouteCommunities.Search
 ): Result<PaginationResult<CommunityInfo>?> {
     if (search.joinStatus == JoinStatusSearch.JOINED && search.target != null) {
-        return searchTargetUserJoinedCommunities(prePageToken, nextPageToken, size, backend, uid, search.target)
+        return searchTargetUserJoinedCommunities(
+            uid,
+            prePageToken,
+            nextPageToken,
+            size,
+            backend,
+            search.target,
+            search.hasPoster
+        )
     }
     return DatabaseFactory.getPaginationCommunityList(
         uid,
@@ -87,7 +96,8 @@ suspend fun searchCommunities(
         nextPageToken,
         size,
         search.joinStatus,
-        search.word
+        search.word,
+        search.hasPoster
     ).mapResult { (list, count) ->
         processCommunityList(backend, list).map { value ->
             PaginationResult(value, count)
@@ -96,19 +106,20 @@ suspend fun searchCommunities(
 }
 
 private suspend fun searchTargetUserJoinedCommunities(
+    uid: PrimaryKey?,
     prePageToken: PrimaryKey?,
     nextPageToken: PrimaryKey?,
     size: Int,
     backend: Backend,
-    uid: PrimaryKey?,
-    target: PrimaryKey
+    target: PrimaryKey,
+    hasPosterSearch: PosterSearch?
 ): Result<PaginationResult<CommunityInfo>> {
     return DatabaseFactory.mapQuery({
         CommunityRawResult(first.toCommunityIfo(second), first.icon, first.poster)
     }, {
         Community.wrapRow(it) to it[MemberJoins.joinTime]
     }) {
-        getUserJoinedCommunityQuery(target, false).bindPaginationQuery(
+        getUserJoinedCommunityQuery(target, false).bindPosterSearch(hasPosterSearch).bindPaginationQuery(
             Communities,
             prePageToken,
             nextPageToken,
@@ -116,7 +127,7 @@ private suspend fun searchTargetUserJoinedCommunities(
         )
     }.mapResult { list ->
         DatabaseFactory.count {
-            getUserJoinedCommunityQuery(target, true)
+            getUserJoinedCommunityQuery(target, true).bindPosterSearch(hasPosterSearch)
         }.mapResult { count ->
             processCommunityList(backend, list).mapResult { value ->
                 if (uid != null) {
@@ -155,6 +166,7 @@ suspend fun createCommunity(newCommunity: NewCommunity, uid: PrimaryKey, backend
             StringCheckResult.RANGE_MISMATCH -> Result.failure(
                 CustomBadRequestException("community name must be between in 1 and 20")
             )
+
             StringCheckResult.EMPTY -> Result.failure(CustomBadRequestException("community name is empty"))
             StringCheckResult.SUCCESS -> Result.success(Unit)
         }
@@ -197,6 +209,7 @@ suspend fun updateCommunity(
                     StringCheckResult.RANGE_MISMATCH -> Result.failure(
                         CustomBadRequestException("community name must be between in 1 and 20")
                     )
+
                     else -> Result.success(Unit)
                 }
             }, suspend {
@@ -206,9 +219,11 @@ suspend fun updateCommunity(
                         MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
                             CustomBadRequestException("only support image")
                         )
+
                         MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
                             CustomBadRequestException("dimension mismatch")
                         )
+
                         else -> Result.success(Unit)
                     }
                 }
@@ -219,9 +234,11 @@ suspend fun updateCommunity(
                         MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
                             CustomBadRequestException("only support image")
                         )
+
                         MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
                             CustomBadRequestException("dimension mismatch")
                         )
+
                         else -> Result.success(Unit)
                     }
                 }

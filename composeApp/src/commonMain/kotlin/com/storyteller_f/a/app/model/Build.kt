@@ -16,12 +16,12 @@ fun createSearchCommunitiesViewModel(
 ) = viewModel(
     keys = listOf("search-community", finalOption.name, query)
 ) {
-    CommunitiesViewModel(finalOption, query, client = it)
+    CommunitiesViewModel(it, finalOption, query)
 }
 
 @Composable
 fun createJoinedCommunitiesViewModel() = viewModel(keys = listOf("joined-communities")) {
-    CommunitiesViewModel(JoinStatusSearch.JOINED, "", client = it)
+    CommunitiesViewModel(it, JoinStatusSearch.JOINED, "")
 }
 
 @Composable
@@ -29,7 +29,7 @@ fun createTargetUserJoinedCommunitiesViewModel(
     target: PrimaryKey,
     word: String = ""
 ) = viewModel(keys = listOf("communities", target, word)) {
-    CommunitiesViewModel(JoinStatusSearch.JOINED, word, target, it)
+    CommunitiesViewModel(it, JoinStatusSearch.JOINED, word, target)
 }
 
 @Composable

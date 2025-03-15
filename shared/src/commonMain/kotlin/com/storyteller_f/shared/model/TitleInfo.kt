@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TitleInfo(
-    val id: PrimaryKey,
+    override val id: PrimaryKey,
     val createdTime: LocalDateTime,
     val type: TitleType,
     val creator: PrimaryKey,
@@ -18,7 +18,7 @@ data class TitleInfo(
     val name: String,
     val descriptionTopicId: PrimaryKey,
     val extension: Extension? = null
-) {
+) : Identifiable {
     @Serializable
     data class Extension(
         val creatorInfo: UserInfo,
