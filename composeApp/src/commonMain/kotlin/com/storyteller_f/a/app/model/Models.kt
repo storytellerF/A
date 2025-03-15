@@ -216,7 +216,7 @@ class TopicsViewModel(
     id: PrimaryKey,
     val type: ObjectType? = null,
     client: HttpClient,
-    private val collectionName: String = "topics$id"
+    private val collectionName: String = "topics_$id"
 ) :
     PagingViewModel<SectionLoadParams<PrimaryKey>, TopicInfo>(
         client,
@@ -294,10 +294,10 @@ class TopicsViewModel(
                         updateDocumentInParent(extractHeadlineIfPlain(topicInfo))
                     } else if (id == DEFAULT_PRIMARY_KEY) {
                         // 尝试更新到推荐
-                        if (select(all()).from(getOrCreateCollection("topics0"))
+                        if (select(all()).from(getOrCreateCollection("topics_0"))
                                 .where(Expression.property("id").equalTo(topicInfo.id)).execute().next() != null
                         ) {
-                            updateDocument("topics0", extractHeadlineIfPlain(topicInfo))
+                            updateDocument("topics_0", extractHeadlineIfPlain(topicInfo))
                         }
                     }
                 }

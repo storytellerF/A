@@ -35,6 +35,7 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.rememberLibraries
 import com.storyteller_f.a.app.common.getOrCreateCollection
+import com.storyteller_f.a.app.common.save
 import com.storyteller_f.a.app.compontents.GlobalDialog
 import com.storyteller_f.a.app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.pages.community.CommunityComposePage
@@ -65,10 +66,8 @@ import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
-import kotbase.MutableDocument
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -511,18 +510,13 @@ fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
 
 fun updateDocumentInParent(info: TopicInfo) {
-    val collectionName = "topics${info.parentId}"
+    val collectionName = "topics_${info.parentId}"
     updateDocument(collectionName, info)
 }
 
 fun updateDocument(collectionName: String, info: TopicInfo) {
     assert(!info.isPrivate || info.content is TopicContent.Encrypted)
-    getOrCreateCollection(collectionName).save(
-        MutableDocument(
-            info.id.toString(),
-            Json.encodeToString(info)
-        )
-    )
+    getOrCreateCollection(collectionName).save(info.id, Json.encodeToString(info))
 }
 
 fun HttpClientConfig<*>.setupRequest(httpUrl: String) {
