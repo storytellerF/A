@@ -7,6 +7,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Topic.Companion.wrapRow
@@ -274,12 +275,16 @@ suspend fun DatabaseFactory.getTopicRoot(newTopic: NewRoomTopic) = first({
     Topic.findById(newTopic.parentId)
 }
 
-suspend fun DatabaseFactory.saveTopic(
+suspend fun DatabaseFactory.savePlainTopic(
     topic: Topic,
     backend: Backend,
     content: TopicContent.Plain
 ) = dbQuery {
     Topic.new(topic)
+    insertMediaRefs(topic.id, ObjectType.TOPIC, extractMarkdownMediaLink(content.plain).map {
+        topic.author to it
+    }).getOrThrow()
+
     backend.topicSearchService.saveDocument(
         listOf(TopicDocument.fromTopic(topic, content))
     ).getOrThrow()
@@ -289,22 +294,21 @@ suspend fun DatabaseFactory.saveTopic(
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun DatabaseFactory.saveEncryptedTopic(
     topic: Topic,
-    encryptedContent: String,
-    encryptedAes: Map<PrimaryKey, String>
+    content: TopicContent.Encrypted,
 ) = dbQuery {
     Topic.new(topic)
     EncryptedTopics.insert {
-        it[content] = ExposedBlob(encryptedContent.hexToByteArray())
+        it[this.content] = ExposedBlob(content.encrypted.hexToByteArray())
         it[topicId] = topic.id
     }
-    EncryptedTopicKeys.batchInsert(encryptedAes.keys) {
+    EncryptedTopicKeys.batchInsert(content.encryptedKey.keys) {
         this[EncryptedTopicKeys.topicId] = topic.id
         this[EncryptedTopicKeys.uid] = it
         this[EncryptedTopicKeys.encryptedAes] =
-            ExposedBlob(encryptedAes[it]!!.hexToByteArray())
+            ExposedBlob(content.encryptedKey[it]!!.hexToByteArray())
     }
     topic.toTopicInfo(hasComment = false)
-        .copy(content = TopicContent.Encrypted(encryptedContent, encryptedAes), isPrivate = true)
+        .copy(content = TopicContent.Encrypted(content.encrypted, content.encryptedKey), isPrivate = true)
 }
 
 suspend fun DatabaseFactory.updateTopicStatus(topicId: PrimaryKey, newValue: Boolean): Result<Boolean> {
