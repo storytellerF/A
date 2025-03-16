@@ -60,7 +60,7 @@ suspend fun createPublicTopic(uid: PrimaryKey, backend: Backend, newTopic: NewTo
                     lastModifiedTime = null,
                 )
                 val plain = TopicContent.Plain(content)
-                DatabaseFactory.saveTopic(topic, backend, plain).mapResult { topicInfo ->
+                DatabaseFactory.savePlainTopic(topic, backend, plain).mapResult { topicInfo ->
                     processMediaAndAuthor(
                         backend,
                         listOf(topicInfo),

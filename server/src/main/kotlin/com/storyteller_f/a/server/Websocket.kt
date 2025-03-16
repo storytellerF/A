@@ -196,17 +196,19 @@ private suspend fun addTopicIntoRoom(
                             ForbiddenException("Private room only accept encrypted content.")
                         )
 
-                        isKeyVerified(roomId, content.encryptedKey).getOrNull() == true -> saveEncryptedTopicContent(
+                        isKeyVerified(
+                            roomId,
+                            content.encryptedKey
+                        ).getOrNull() == true -> DatabaseFactory.saveEncryptedTopic(
                             topic,
-                            content.encryptedKey,
-                            content.encrypted
+                            content
                         )
 
                         else -> Result.failure(ForbiddenException("Private room only accept encrypted content."))
                     }
                 } else {
                     when (content) {
-                        is TopicContent.Plain -> savePlainTopicContent(topic, content, backend = backend)
+                        is TopicContent.Plain -> DatabaseFactory.savePlainTopic(topic, backend = backend, content = content)
                         else -> Result.failure(ForbiddenException("Public room only accept unencrypted content."))
                     }
                 }
@@ -216,20 +218,6 @@ private suspend fun addTopicIntoRoom(
         }
     }
 }
-
-private suspend fun savePlainTopicContent(
-    topic: Topic,
-    content: TopicContent.Plain,
-    backend: Backend
-): Result<TopicInfo> {
-    return DatabaseFactory.saveTopic(topic, backend, content)
-}
-
-suspend fun saveEncryptedTopicContent(
-    topic: Topic,
-    encryptedAes: Map<PrimaryKey, String>,
-    encryptedContent: String
-) = DatabaseFactory.saveEncryptedTopic(topic, encryptedContent, encryptedAes)
 
 private suspend fun isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Result<Boolean> {
     return DatabaseFactory.isRoomJoins1(roomId).map { value ->

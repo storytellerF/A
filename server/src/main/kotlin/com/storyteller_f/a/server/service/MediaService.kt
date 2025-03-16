@@ -67,9 +67,11 @@ suspend fun RoutingContext.uploadMedia(
                     // total 93
                     val extension = fileName.substringAfterLast(".").take(10)
                     val originName = fileName.substringBeforeLast(".")
+                    //length 32
                     val uuid = Uuid.random().toHexString()
                     val name = originName.take(60 - extension.length) + uuid
                     val newSavedFileName = if (fileName.length > 60) {
+                        //60 - 32 - 1 = 27
                         "${originName.take(27 - extension.length)}$uuid.$extension"
                     } else {
                         fileName
