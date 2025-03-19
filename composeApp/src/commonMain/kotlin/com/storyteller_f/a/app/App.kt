@@ -36,8 +36,7 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.rememberLibraries
 import com.storyteller_f.a.app.common.getOrCreateCollection
 import com.storyteller_f.a.app.common.save
-import com.storyteller_f.a.app.compontents.GlobalDialog
-import com.storyteller_f.a.app.compontents.GlobalDialogController
+import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.pages.community.CommunityComposePage
 import com.storyteller_f.a.app.pages.community.CommunityPage
 import com.storyteller_f.a.app.pages.community.CommunitySettingPage
@@ -172,18 +171,29 @@ fun AppInternal(httpUrl: String, wsServerUrl: String) {
         setSingletonImageLoaderFactory {
             getAsyncImageLoader(it)
         }
-        val navigator = rememberNavController()
-        val appNav = remember<AppNav> {
-            newAppNav(navigator)
-        }
-        CompositionLocalProvider(LocalAppNav provides appNav) {
-            CommonEntry(httpUrl, wsServerUrl, {
-                appNav.toRoute<RoomScreen>()?.roomId
-            }, {
-                appNav.toRoute<TopicScreen>()?.topicId
-            }) {
-                NavHost(navigator, startDestination = HomeScreen) {
-                    buildRootNav(navigator)
+        CommonEntry(httpUrl) {
+            val s by savedSession
+            val localSession = s
+            val isPip = rememberIsInPipMode()
+            if (isPip && localSession != null) {
+                VideoView(localSession.id, localSession.contentType, localSession.playList, localSession.coverMediaInfo)
+            } else {
+                val navigator = rememberNavController()
+                val appNav = remember<AppNav> {
+                    newAppNav(navigator)
+                }
+                CompositionLocalProvider(LocalAppNav provides appNav) {
+                    val client = LocalClient.current
+                    val ws = rememberWsClient(client, wsServerUrl, {
+                        appNav.toRoute<RoomScreen>()?.roomId
+                    }, {
+                        appNav.toRoute<TopicScreen>()?.topicId
+                    })
+                    CompositionLocalProvider(LocalWsClient provides ws) {
+                        NavHost(navigator, startDestination = HomeScreen) {
+                            buildRootNav(navigator)
+                        }
+                    }
                 }
             }
         }
@@ -193,9 +203,6 @@ fun AppInternal(httpUrl: String, wsServerUrl: String) {
 @Composable
 fun CommonEntry(
     httpUrl: String,
-    wsServerUrl: String,
-    roomScreenId: () -> PrimaryKey?,
-    topicScreenId: () -> PrimaryKey?,
     content: @Composable () -> Unit
 ) {
     val client = remember {
@@ -205,15 +212,12 @@ fun CommonEntry(
         }
     }
     CompositionLocalProvider(LocalClient provides client) {
-        val ws = rememberWsClient(client, wsServerUrl, roomScreenId, topicScreenId)
-        CompositionLocalProvider(LocalWsClient provides ws) {
-            GlobalDialog(globalDialogState)
-            val toasterState = rememberToasterState()
-            Toaster(toasterState, alignment = Alignment.Center)
-            CompositionLocalProvider(LocalToaster provides toasterState) {
-                LoginCheck {
-                    content()
-                }
+        GlobalDialog(globalDialogState)
+        val toasterState = rememberToasterState()
+        Toaster(toasterState, alignment = Alignment.Center)
+        CompositionLocalProvider(LocalToaster provides toasterState) {
+            LoginCheck {
+                content()
             }
         }
     }

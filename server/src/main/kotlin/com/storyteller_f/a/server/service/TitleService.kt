@@ -79,6 +79,24 @@ private suspend fun processTitleList(
             add(it.descriptionTopicId)
         }
     }.distinct()
+    return getRelatedObject(
+        uidList,
+        backend,
+        communityIdList,
+        roomIdList
+    ).mapResult { (userList, roomList, communityList) ->
+        getTopicByIds(topicIdList, uid, false, backend).map { topicList ->
+            processTitleList(userList, communityList, roomList, list, topicList)
+        }
+    }
+}
+
+private suspend fun getRelatedObject(
+    uidList: List<PrimaryKey>,
+    backend: Backend,
+    communityIdList: List<PrimaryKey>,
+    roomIdList: List<PrimaryKey>
+): Result<Triple<List<UserInfo>, List<RoomInfo>, List<CommunityInfo>>> {
     val userList = if (uidList.isNotEmpty()) {
         val result = DatabaseFactory.getUsersByIds(uidList, backend)
         val throwable = result.exceptionOrNull()
@@ -113,9 +131,7 @@ private suspend fun processTitleList(
     } else {
         emptyList()
     }
-    return getTopicByIds(topicIdList, uid, false, backend).map { topicList ->
-        processTitleList(userList, communityList, roomList, list, topicList)
-    }
+    return Result.success(Triple(userList, roomList, communityList))
 }
 
 private fun processTitleList(

@@ -1,7 +1,5 @@
 package com.storyteller_f.a.app.compontents
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,12 +9,12 @@ import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.shared.model.MediaInfo
 import io.github.aakira.napier.Napier
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery
 import uk.co.caprica.vlcj.player.base.MediaPlayer
@@ -29,7 +27,7 @@ import java.awt.Component
 import java.util.*
 
 @Composable
-actual fun VideoView(modifier: Modifier, url: String, contentType: String, playList: List<PlayItem>) {
+actual fun VideoView(id: String, contentType: String, playList: List<PlayItem>, coverMediaInfo: MediaInfo?) {
     var isPlaying by remember {
         mutableStateOf(false)
     }
@@ -48,11 +46,11 @@ actual fun VideoView(modifier: Modifier, url: String, contentType: String, playL
             override fun error(mediaPlayer: MediaPlayer?) {
                 super.error(mediaPlayer)
                 Napier.i {
-                    "Video $url error"
+                    "Video $id error"
                 }
             }
         }).apply {
-            mediaPlayer().media().prepare(url)
+            mediaPlayer().media().prepare(id)
         }
     }
     val mediaPlayer = mediaPlayerComponent.mediaPlayer()
@@ -63,10 +61,7 @@ actual fun VideoView(modifier: Modifier, url: String, contentType: String, playL
         }
     }
     val shape = RoundedCornerShape(20.dp)
-    Column(
-        modifier = modifier.background(MaterialTheme.colorScheme.surfaceContainer, shape)
-
-    ) {
+    CodeBlock {
         SwingPanel(
             factory = {
                 mediaPlayerComponent
@@ -128,4 +123,9 @@ private fun isMacOS(): Boolean {
         .getProperty("os.name", "generic")
         .lowercase(Locale.ENGLISH)
     return "mac" in os || "darwin" in os
+}
+
+@Composable
+actual fun rememberIsInPipMode(): Boolean {
+    return false
 }

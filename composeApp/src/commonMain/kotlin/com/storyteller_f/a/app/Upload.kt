@@ -51,8 +51,7 @@ class Uploader(val session: MutableState<UploadSession?>)
 @Composable
 fun Upload(uploader: Uploader) {
     val httpUrl = AppConfig.SERVER_URL
-    val wsServerUrl = AppConfig.WS_SERVER_URL
-    CommonEntry(httpUrl, wsServerUrl, { null }, { null }) {
+    CommonEntry(httpUrl) {
         val my by LoginViewModel.user.collectAsState()
         val session by uploader.session
         session?.let { UploadInternal(my, it) }

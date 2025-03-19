@@ -1,12 +1,6 @@
 package com.storyteller_f.a.app.compontents
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -17,19 +11,40 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.storyteller_f.shared.model.MediaInfo
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 const val M3U8_MIMETYPE = "application/vnd.apple.mpegurl"
 
+@OptIn(ExperimentalUuidApi::class)
+data class MediaPlayerSession(
+    val uuid: Uuid?,
+    val id: String,
+    val contentType: String,
+    val playList: List<PlayItem>,
+    val coverMediaInfo: MediaInfo?,
+    val videoSize: CustomVideoSize? = null,
+)
+
+var savedSession: MutableState<MediaPlayerSession?> = mutableStateOf(null)
+
 @Composable
-expect fun VideoView(modifier: Modifier, url: String, contentType: String, playList: List<PlayItem>)
+expect fun VideoView(id: String, contentType: String, playList: List<PlayItem>, coverMediaInfo: MediaInfo?)
+
+@Composable
+expect fun rememberIsInPipMode(): Boolean
 
 data class CustomVideoSize(val width: Int, val height: Int)
 
 interface VideoListener {
+    fun onPlayStateChange(isPlaying: Boolean)
     fun onUpdateSize(size: CustomVideoSize)
     fun onUpdateLoading(isLoading: Boolean)
 }

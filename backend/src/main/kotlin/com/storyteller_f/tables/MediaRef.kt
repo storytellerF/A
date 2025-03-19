@@ -9,7 +9,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.insert
 
 object MediaRefs : Table() {
     val objectId = customPrimaryKey("object_id")
@@ -31,7 +30,11 @@ class MediaRef(val objectId: PrimaryKey, val objectType: ObjectType, val author:
     }
 }
 
-suspend fun DatabaseFactory.insertMediaRefs(objectId1: PrimaryKey, objectType1: ObjectType, mediaName: List<Pair<PrimaryKey, String>>): Result<List<ResultRow>> {
+suspend fun DatabaseFactory.insertMediaRefs(
+    objectId1: PrimaryKey,
+    objectType1: ObjectType,
+    mediaName: List<Pair<PrimaryKey, String>>
+): Result<List<ResultRow>> {
     return dbQuery {
         MediaRefs.batchInsert(mediaName) {
             this[MediaRefs.objectId] = objectId1

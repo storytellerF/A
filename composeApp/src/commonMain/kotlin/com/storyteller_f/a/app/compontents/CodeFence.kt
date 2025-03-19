@@ -4,13 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Error
@@ -40,7 +40,6 @@ import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
-import coil3.size.Size
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
@@ -118,12 +117,15 @@ fun ObjectBlock(
 
                 contentType == "application/pdf" -> PdfView(url)
 
-                contentType.startsWith("video/") -> VideoView(
-                    modifier = Modifier,
-                    url,
-                    contentType,
-                    listOf(PlayItem(url, title = url))
-                )
+                contentType.startsWith("video/") -> {
+                    val coverInfo = mediaList1[obj.cover]
+                    VideoView(
+                        url,
+                        contentType,
+                        listOf(PlayItem(url, title = url)),
+                        coverInfo
+                    )
+                }
 
                 contentType.startsWith("audio/") -> AudioView(url)
 
@@ -146,25 +148,21 @@ private fun M3UView(
 
         else -> {
             val client = LocalClient.current
-            val url = obj.url
-            val contentType = obj.contentType
             val playList by produceState<List<PlayItem>>(emptyList()) {
-                value = parseM3UPlayList(contentType, url, obj, client)
+                value = parseM3UPlayList(obj, client)
             }
-            VideoView(modifier = Modifier, obj.url, M3U8_MIMETYPE, playList)
+            VideoView(obj.url, M3U8_MIMETYPE, playList, null)
         }
     }
 }
 
 private suspend fun parseM3UPlayList(
-    contentType: String,
-    url: String,
     obj: MarkdownObject,
     client: HttpClient
 ): List<PlayItem> =
-    if (contentType == M3U8_MIMETYPE && (url.startsWith("http://") || url.startsWith("https://")) && obj.isPlayList) {
+    if ((obj.url.startsWith("http://") || obj.url.startsWith("https://")) && obj.isPlayList) {
         val entries = withContext(Dispatchers.IO) {
-            val content = client.get(url).bodyAsText()
+            val content = client.get(obj.url).bodyAsText()
             M3uParser.parse(content)
         }
         entries.map {
@@ -173,9 +171,10 @@ private suspend fun parseM3UPlayList(
             it.url
         }
     } else {
-        listOf(PlayItem(url, "", url))
+        listOf(PlayItem(obj.url, "", obj.url))
     }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PdfView(url: String) {
     val errorIndicator = rememberVectorPainter(Icons.Default.Error)
@@ -183,11 +182,7 @@ private fun PdfView(url: String) {
     val state = remember(url, errorIndicator, refreshIndicator) {
         RemotePdfState(URI.create(url).toURL(), errorIndicator, refreshIndicator)
     }
-    val shape = RoundedCornerShape(10.dp)
-    Column(
-        modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer, shape)
-            .clip(shape)
-    ) {
+    CodeBlock {
         HorizontalPager(
             state = rememberPagerState { state.pageCount }
         ) { i ->
@@ -196,7 +191,24 @@ private fun PdfView(url: String) {
                 index = i
             )
         }
-        OpRow(null, "application/pdf", url)
+        val toasterState = LocalToaster.current
+        FlowRow {
+            val clipboardManager = LocalClipboardManager.current
+            IconButton({
+                clipboardManager.setText(buildAnnotatedString {
+                    append(url)
+                })
+                toasterState.show("copied", duration = 1.seconds)
+            }) {
+                Icon(Icons.Default.ContentCopy, "copy list")
+            }
+            val uriHandler = LocalUriHandler.current
+            IconButton({
+                uriHandler.openUri(url)
+            }) {
+                Icon(Icons.Default.Download, "download")
+            }
+        }
     }
 }
 
@@ -290,7 +302,7 @@ fun Path.sink(): RawSink {
 }
 
 @Composable
-private fun imageRequestInMarkdown(
+fun imageRequestInMarkdown(
     info: MediaInfo?
 ): ImageRequest {
     val client = LocalClient.current
@@ -305,7 +317,6 @@ fun imageRequest(
 ) = ImageRequest.Builder(context)
     .fetcherFactory(KtorNetworkFetcherFactory(client))
     .data(info?.url)
-    .size(Size.ORIGINAL)
 
 @Composable
 fun getSize(info: MediaInfo?): Pair<Float, Float>? {
@@ -328,11 +339,11 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInf
         val info = mediaMap[link]
         return if (link.startsWith("file:///")) {
             val painter = rememberAsyncImagePainter(model = link.substring(7))
-            return ImageData(painter)
+            ImageData(painter)
         } else {
             val model = imageRequestInMarkdown(info)
             val painter = rememberAsyncImagePainter(model = model)
-            return ImageData(
+            ImageData(
                 painter,
                 modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
                     info?.let { it1 -> appNav.gotoMedia(info) }
@@ -368,39 +379,15 @@ fun convertDpToPx(dp: Dp): Int {
     return (dp.value * density).toInt()
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun OpRow(
-    showPlayList: (() -> Unit)? = null,
-    contentType: String,
-    url: String
-) {
-    val toasterState = LocalToaster.current
-    FlowRow {
-        val clipboardManager = LocalClipboardManager.current
+fun CodeBlock(block: @Composable ColumnScope.() -> Unit) {
+    val shape = RoundedCornerShape(20.dp)
+    Column(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.surfaceContainer, shape)
+            .clip(shape)
 
-        if (showPlayList != null) {
-            IconButton({
-                showPlayList()
-            }) {
-                Icon(Icons.AutoMirrored.Default.List, "playlist")
-            }
-        }
-        IconButton({
-            clipboardManager.setText(buildAnnotatedString {
-                append(url)
-            })
-            toasterState.show("copied", duration = 1.seconds)
-        }) {
-            Icon(Icons.Default.ContentCopy, "copy list")
-        }
-        if (contentType != M3U8_MIMETYPE) {
-            val uriHandler = LocalUriHandler.current
-            IconButton({
-                uriHandler.openUri(url)
-            }) {
-                Icon(Icons.Default.Download, "download")
-            }
-        }
+    ) {
+        block()
     }
 }

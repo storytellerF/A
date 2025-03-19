@@ -205,5 +205,6 @@ data class MarkdownObject(
     val contentType: String,
     val name: String = "",
     val url: String = "",
-    val isPlayList: Boolean = false
+    val isPlayList: Boolean = false,
+    val cover: String = ""
 )
