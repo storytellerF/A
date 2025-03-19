@@ -203,7 +203,8 @@ const val COMMUNITY_NAME_LENGTH = 10
 const val AID_LENGTH = 20
 const val ICON_LENGTH = 1000
 const val ROOM_NAME_LENGTH = 10
-//最长60，如果超过60 会进行裁切然后在后面添加uuid，保存时预留一部分空间
+
+// 最长60，如果超过60 会进行裁切然后在后面添加uuid，保存时预留一部分空间
 const val MEDIA_NAME_LENGTH = 120
 
 fun Throwable.isDup(): Boolean {

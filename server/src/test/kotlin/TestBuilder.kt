@@ -124,7 +124,9 @@ private fun doTest(
     DatabaseFactory.clean()
     DatabaseFactory.init()
     DatabaseFactory.enableExplain { dialect, statements, result, point ->
-        val file = File("./build/test/$dialect/${extractTableNames(statements).joinToString("/")}/${md5(statements)}.explain")
+        val file = File(
+            "./build/test/$dialect/${extractTableNames(statements).joinToString("/")}/${md5(statements)}.explain"
+        )
         file.parentFile?.let {
             if (!it.exists()) {
                 it.mkdirs()

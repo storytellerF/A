@@ -1,18 +1,52 @@
 package com.storyteller_f.a.app
 
 import android.app.NotificationManager
+import android.content.ComponentName
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionCommands
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.MoreExecutors
 import com.kdroid.composenotification.builder.AndroidChannelConfig
 import com.kdroid.composenotification.builder.NotificationInitializer.notificationInitializer
 import com.storyteller_f.a.app.compontents.bindActivity
 import com.storyteller_f.a.app.compontents.unbindActivity
+import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.core.FileKit
+import java.util.concurrent.Future
 
 class MainActivity : ComponentActivity() {
+    private var controllerFuture: Future<MediaController>? = null
+    override fun onStart() {
+        super.onStart()
+        val sessionToken =
+            SessionToken(this, ComponentName(this, PlaybackService::class.java))
+        val l2 = object : MediaController.Listener {
+            override fun onAvailableSessionCommandsChanged(controller: MediaController, commands: SessionCommands) {
+                super.onAvailableSessionCommandsChanged(controller, commands)
+                Napier.d {
+                    "MediaController onAvailableSessionCommandsChanged"
+                }
+            }
+
+            override fun onDisconnected(controller: MediaController) {
+                super.onDisconnected(controller)
+                Napier.d {
+                    "MediaController onDisconnected"
+                }
+            }
+        }
+        val future = MediaController.Builder(this, sessionToken).setListener(l2).buildAsync()
+        controllerFuture = future
+        future.addListener({
+            MediaProvider.controller = future.get()
+        }, MoreExecutors.directExecutor())
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         commonForActivity()
@@ -27,6 +61,7 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         unbindActivity()
+        controllerFuture?.let { MediaController.releaseFuture(it) }
     }
 }
 

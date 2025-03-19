@@ -547,7 +547,7 @@ suspend fun recommendTopics(
                 size,
                 preTopicId = preTopicId,
                 nextTopicId = nextTopicId,
-                parentIdList = it
+                rootIdList = it
             )
         }
     } else {

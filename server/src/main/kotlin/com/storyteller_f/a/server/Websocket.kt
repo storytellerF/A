@@ -208,7 +208,11 @@ private suspend fun addTopicIntoRoom(
                     }
                 } else {
                     when (content) {
-                        is TopicContent.Plain -> DatabaseFactory.savePlainTopic(topic, backend = backend, content = content)
+                        is TopicContent.Plain -> DatabaseFactory.savePlainTopic(
+                            topic,
+                            backend = backend,
+                            content = content
+                        )
                         else -> Result.failure(ForbiddenException("Public room only accept unencrypted content."))
                     }
                 }

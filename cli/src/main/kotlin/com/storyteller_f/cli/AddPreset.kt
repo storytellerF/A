@@ -560,7 +560,7 @@ class AddPreset : Subcommand("add", "add entry") {
             userMap[presetTopic.author]!!.id to it
         }
         uploadFiles(tika, backend, mediaNames.map { (author, p) ->
-            Triple(File(parentDir, "images/topics/$p"), "${author}/$p", null)
+            Triple(File(parentDir, "images/topics/$p"), "$author/$p", null)
         }).getOrThrow()
         DatabaseFactory.insertMediaRefs(topicId, ObjectType.TOPIC, mediaNames)
     }
