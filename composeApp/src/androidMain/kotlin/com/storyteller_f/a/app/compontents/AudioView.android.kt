@@ -1,32 +1,46 @@
 package com.storyteller_f.a.app.compontents
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
+import com.storyteller_f.a.app.LocalMediaPlaySession
+import com.storyteller_f.a.app.common.CenterBox
+import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.utils.MarkdownObject
 import io.github.aakira.napier.log
+import kotlin.uuid.ExperimentalUuidApi
 
+@OptIn(ExperimentalUuidApi::class)
 @Composable
-actual fun AudioView(url: String) {
+actual fun AudioView(obj: RemoteMediaItem, coverInfo: MediaInfo?) {
+    val url = obj.url
+    val contentType = obj.contentType
+    MediaPlayerInternal(url) { player, playingSession, currentSession ->
+        ObjectBlock {
+            Box {
+                when {
+                    playingSession == null -> PlayerWaiting(currentSession, null, MarkdownObject(contentType, url))
+                    playingSession.uuid == currentSession.uuid -> AudioPlayer(player, currentSession)
+                    playingSession.id == currentSession.id -> PlayerOccupy(currentSession)
+                    else -> PlayerWaiting(currentSession, null, MarkdownObject(contentType, url))
+                }
+            }
+        }
+    }
     log {
         "Audio $url"
     }
@@ -74,28 +88,45 @@ actual fun AudioView(url: String) {
             player.pause()
         }
     }
-    val shape = RoundedCornerShape(20.dp)
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .height(100.dp)
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainer, shape)
-            .clip(shape)
+}
+
+@Composable
+private fun AudioPlayer(
+    player: MediaController,
+    currentSession: LocalMediaPlaySession
+) {
+    val (currentIsLoading, currentIsPlaying) = listenPlayerState(player, currentSession)
+
+    Row(
+        modifier = Modifier.padding(20.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        if (currentLoading) {
-            CircularProgressIndicator(modifier = Modifier.size(40.dp))
-        } else {
-            IconButton({
-                if (player.isPlaying) {
-                    player.pause()
-                } else if (!player.isLoading) {
-                    player.play()
-                }
-            }) {
-                when {
-                    currentPlaying -> Icon(Icons.Default.PauseCircle, "pause", modifier = Modifier.size(40.dp))
-                    else -> Icon(Icons.Default.PlayCircle, "play", modifier = Modifier.size(40.dp))
+        Box(modifier = Modifier.size(60.dp))
+        CenterBox {
+            if (currentIsLoading.value) {
+                CircularProgressIndicator(modifier = Modifier.size(40.dp))
+            } else {
+                IconButton({
+                    if (player.isPlaying) {
+                        player.pause()
+                    } else if (!player.isLoading) {
+                        player.play()
+                    }
+                }) {
+                    when {
+                        currentIsPlaying.value -> Icon(
+                            Icons.Default.PauseCircle,
+                            "pause",
+                            modifier = Modifier.size(40.dp)
+                        )
+
+                        else -> Icon(
+                            Icons.Default.PlayCircle,
+                            "play",
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
                 }
             }
         }

@@ -17,30 +17,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.storyteller_f.a.app.MediaPlaySession
 import com.storyteller_f.shared.model.MediaInfo
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
+import kotlinx.serialization.Serializable
 
 const val M3U8_MIMETYPE = "application/vnd.apple.mpegurl"
 
-@OptIn(ExperimentalUuidApi::class)
-data class MediaPlayerSession(
-    val uuid: Uuid?,
-    val id: String,
-    val contentType: String,
-    val playList: List<PlayItem>,
-    val coverMediaInfo: MediaInfo?,
-    val videoSize: CustomVideoSize? = null,
-)
+var savedSession: MutableState<MediaPlaySession.Video?> = mutableStateOf(null)
 
-var savedSession: MutableState<MediaPlayerSession?> = mutableStateOf(null)
+data class RemoteMediaItem(val url: String, val contentType: String, val userInputContentType: String, val isM3U8PlayList: Boolean)
 
 @Composable
-expect fun VideoView(id: String, contentType: String, playList: List<PlayItem>, coverMediaInfo: MediaInfo?)
+expect fun VideoView(
+    obj: RemoteMediaItem,
+    coverMediaInfo: MediaInfo?,
+    isEmbed: Boolean
+)
 
 @Composable
 expect fun rememberIsInPipMode(): Boolean
 
+@Serializable
 data class CustomVideoSize(val width: Int, val height: Int)
 
 interface VideoListener {
@@ -49,6 +46,7 @@ interface VideoListener {
     fun onUpdateLoading(isLoading: Boolean)
 }
 
+@Serializable
 data class PlayItem(val url: String, val icon: String? = null, val title: String? = null)
 
 @OptIn(ExperimentalMaterial3Api::class)

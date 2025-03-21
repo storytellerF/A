@@ -20,8 +20,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -106,7 +104,7 @@ fun ObjectBlock(
     }
     when (obj.contentType) {
         "video/youtube" -> HighlightCodeBlock(modal)
-        M3U8_MIMETYPE -> M3UView(obj, modal)
+        M3U8_MIMETYPE -> M3UView(obj, modal, mediaList1)
 
         else -> {
             val mediaInfo = mediaList1[obj.name]
@@ -120,14 +118,16 @@ fun ObjectBlock(
                 contentType.startsWith("video/") -> {
                     val coverInfo = mediaList1[obj.cover]
                     VideoView(
-                        url,
-                        contentType,
-                        listOf(PlayItem(url, title = url)),
-                        coverInfo
+                        RemoteMediaItem(url, contentType, obj.contentType, false),
+                        coverInfo,
+                        true
                     )
                 }
 
-                contentType.startsWith("audio/") -> AudioView(url)
+                contentType.startsWith("audio/") -> {
+                    val coverInfo = mediaList1[obj.cover]
+                    AudioView(RemoteMediaItem(url, contentType, obj.contentType, false), coverInfo)
+                }
 
                 else -> HighlightCodeBlock(modal)
             }
@@ -138,7 +138,8 @@ fun ObjectBlock(
 @Composable
 private fun M3UView(
     obj: MarkdownObject,
-    modal: MarkdownComponentModel
+    modal: MarkdownComponentModel,
+    mediaList1: Map<String, MediaInfo>,
 ) {
     when {
         obj.url.trim().isEmpty() -> HighlightCodeBlock(modal)
@@ -147,20 +148,17 @@ private fun M3UView(
         }.getOrNull() == null -> HighlightCodeBlock(modal)
 
         else -> {
-            val client = LocalClient.current
-            val playList by produceState<List<PlayItem>>(emptyList()) {
-                value = parseM3UPlayList(obj, client)
-            }
-            VideoView(obj.url, M3U8_MIMETYPE, playList, null)
+            val coverInfo = mediaList1[obj.cover]
+            VideoView(RemoteMediaItem(obj.url, M3U8_MIMETYPE, M3U8_MIMETYPE, obj.isPlayList), coverInfo, true)
         }
     }
 }
 
-private suspend fun parseM3UPlayList(
-    obj: MarkdownObject,
+suspend fun parseM3UPlayList(
+    obj: RemoteMediaItem,
     client: HttpClient
 ): List<PlayItem> =
-    if ((obj.url.startsWith("http://") || obj.url.startsWith("https://")) && obj.isPlayList) {
+    if ((obj.url.startsWith("http://") || obj.url.startsWith("https://")) && obj.isM3U8PlayList) {
         val entries = withContext(Dispatchers.IO) {
             val content = client.get(obj.url).bodyAsText()
             M3uParser.parse(content)
@@ -182,7 +180,7 @@ private fun PdfView(url: String) {
     val state = remember(url, errorIndicator, refreshIndicator) {
         RemotePdfState(URI.create(url).toURL(), errorIndicator, refreshIndicator)
     }
-    CodeBlock {
+    ObjectBlock {
         HorizontalPager(
             state = rememberPagerState { state.pageCount }
         ) { i ->
@@ -380,7 +378,7 @@ fun convertDpToPx(dp: Dp): Int {
 }
 
 @Composable
-fun CodeBlock(block: @Composable ColumnScope.() -> Unit) {
+fun ObjectBlock(block: @Composable ColumnScope.() -> Unit) {
     val shape = RoundedCornerShape(20.dp)
     Column(
         modifier = Modifier

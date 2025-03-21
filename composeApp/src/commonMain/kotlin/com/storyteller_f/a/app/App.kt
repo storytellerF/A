@@ -61,6 +61,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.MarkdownObject
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
@@ -71,10 +72,13 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.reflect.KClass
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 object StaticObj {
     init {
@@ -140,7 +144,31 @@ data class MemberScreen(val objectType: String, val objectId: PrimaryKey)
 data object UserSettingScreen
 
 @Serializable
-data class MediaScreen(val url: String)
+sealed interface MediaPlaySession {
+    @OptIn(ExperimentalUuidApi::class)
+    @Serializable
+    @SerialName("video")
+    data class Video(
+        val obj: MarkdownObject,
+        val contentType: String,
+        val playList: List<PlayItem>,
+        val coverMedia: MediaInfo?,
+        val uuid: Uuid?,
+        val videoSize: CustomVideoSize?
+    ) : MediaPlaySession {
+        val id = obj.url
+    }
+
+    @Serializable
+    @SerialName("image")
+    data class Image(val mediaInfo: MediaInfo) : MediaPlaySession
+}
+
+@OptIn(ExperimentalUuidApi::class)
+data class LocalMediaPlaySession(val id: String, val uuid: Uuid)
+
+@Serializable
+data class MediaScreen(val json: String)
 
 @Serializable
 data object TitleComposeScreen
@@ -174,11 +202,12 @@ fun AppInternal(httpUrl: String, wsServerUrl: String) {
         CommonEntry(httpUrl) {
             val s by savedSession
             val localSession = s
+            val navigator = rememberNavController()
+
             val isPip = rememberIsInPipMode()
             if (isPip && localSession != null) {
-                VideoView(localSession.id, localSession.contentType, localSession.playList, localSession.coverMediaInfo)
+                MediaPage(localSession)
             } else {
-                val navigator = rememberNavController()
                 val appNav = remember<AppNav> {
                     newAppNav(navigator)
                 }
@@ -366,7 +395,8 @@ private fun NavGraphBuilder.buildRootNav(
     }
     composable<MediaScreen> {
         val route = it.toRoute<MediaScreen>()
-        MediaPage(route.url)
+        val pack = Json.decodeFromString<MediaPlaySession>(route.json)
+        MediaPage(pack)
     }
     buildComposeScreen(navigator)
 }
@@ -486,7 +516,7 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
     }
 
     override fun gotoMedia(info: MediaInfo) {
-        navigator.navigate(MediaScreen(info.url))
+        navigator.navigate(MediaScreen(Json.encodeToString(MediaPlaySession.Image(info))))
     }
 
     override fun gotoTitleCompose() {

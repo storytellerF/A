@@ -27,7 +27,12 @@ import java.awt.Component
 import java.util.*
 
 @Composable
-actual fun VideoView(id: String, contentType: String, playList: List<PlayItem>, coverMediaInfo: MediaInfo?) {
+actual fun VideoView(
+    obj: RemoteMediaItem,
+    coverMediaInfo: MediaInfo?,
+    isEmbed: Boolean
+) {
+    val id = obj.url
     var isPlaying by remember {
         mutableStateOf(false)
     }
@@ -61,7 +66,7 @@ actual fun VideoView(id: String, contentType: String, playList: List<PlayItem>, 
         }
     }
     val shape = RoundedCornerShape(20.dp)
-    CodeBlock {
+    ObjectBlock {
         SwingPanel(
             factory = {
                 mediaPlayerComponent
