@@ -17,13 +17,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.shared.model.MediaInfo
 import io.github.aakira.napier.log
 import javazoom.jl.player.FactoryRegistry
 import javazoom.jl.player.JavaSoundAudioDeviceFactory
 import javazoom.jl.player.jlp
 
 @Composable
-actual fun AudioView(url: String) {
+actual fun AudioView(obj: RemoteMediaItem, coverInfo: MediaInfo?) {
+    val url = obj.url
     log {
         "Audio $url"
     }

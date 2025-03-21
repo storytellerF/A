@@ -21,41 +21,28 @@ object DatabaseFactory {
         Database.connect(uri, driver, user, password)
     }
 
+    private val tables = arrayOf(Aids,
+        Communities,
+        EncryptedTopics,
+        EncryptedTopicKeys,
+        MediaRefs,
+        MemberJoins,
+        Reactions,
+        Rooms,
+        Titles,
+        Topics,
+        Users)
+
     fun init() {
         transaction {
             addLogger(StdOutSqlLogger)
-
-            SchemaUtils.create(
-                Aids,
-                Communities,
-                EncryptedTopics,
-                EncryptedTopicKeys,
-                MediaRefs,
-                MemberJoins,
-                Reactions,
-                Rooms,
-                Titles,
-                Topics,
-                Users
-            )
+            SchemaUtils.create(*tables)
         }
     }
 
     fun clean() {
         transaction {
-            SchemaUtils.drop(
-                Aids,
-                Communities,
-                EncryptedTopics,
-                EncryptedTopicKeys,
-                MediaRefs,
-                MemberJoins,
-                Reactions,
-                Rooms,
-                Titles,
-                Topics,
-                Users
-            )
+            SchemaUtils.drop(*tables)
         }
     }
 
