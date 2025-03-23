@@ -121,8 +121,7 @@ private fun doTest(
         backend.topicSearchService.clean()
     }
     DatabaseFactory.connect(backend.config.databaseConnection)
-    DatabaseFactory.clean()
-    DatabaseFactory.init()
+    DatabaseFactory.init(true)
     DatabaseFactory.enableExplain { dialect, statements, result, point ->
         val file = File(
             "./build/test/$dialect/${extractTableNames(statements).joinToString("/")}/${md5(statements)}.explain"

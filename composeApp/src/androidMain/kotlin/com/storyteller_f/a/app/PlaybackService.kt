@@ -16,7 +16,10 @@ object MediaProvider {
     var controller: MediaController? = null
 
     @Synchronized
-    fun get(currentSession: MediaPlaySession.Video, init: (MediaController, MediaPlaySession.Video) -> Unit) {
+    fun get(
+        currentSession: MediaPlaySession.VideoOrAudio,
+        init: (MediaController, MediaPlaySession.VideoOrAudio) -> Unit
+    ) {
         val c = controller ?: return
         val session = savedSession.value
         if (currentSession.uuid == session?.uuid) {
@@ -27,8 +30,8 @@ object MediaProvider {
     }
 
     @Synchronized
-    fun release(currentSession: MediaPlaySession.Video) {
-        if (currentSession == savedSession.value) {
+    fun release(currentSession: LocalMediaPlaySession) {
+        if (currentSession.uuid == savedSession.value?.uuid) {
             controller?.stop()
             savedSession.value = null
         }
@@ -93,6 +96,7 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
+    @androidx.media3.common.util.UnstableApi
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
         Napier.d {

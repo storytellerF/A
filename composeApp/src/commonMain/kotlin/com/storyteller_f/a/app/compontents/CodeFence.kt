@@ -5,8 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -103,7 +103,32 @@ fun ObjectBlock(
         json.decodeFromString<MarkdownObject>(c)
     }
     when (obj.contentType) {
-        "video/youtube" -> HighlightCodeBlock(modal)
+        YOUTUBE_MIMETYPE -> {
+            val coverInfo = mediaList1[obj.cover]
+            val name = "Youtube:${com.eygraber.uri.Uri.parse(obj.url).getQueryParameter("v")}"
+            VideoView(
+                RemoteMediaItem(obj.url, YOUTUBE_MIMETYPE, YOUTUBE_MIMETYPE, false, name, coverInfo, obj.title),
+                true
+            )
+        }
+
+        SOUND_CLOUD_MIME_TYPE -> {
+            val coverInfo = mediaList1[obj.cover]
+            val name = "SoundCloud:${com.eygraber.uri.Uri.parse(obj.url).lastPathSegment}"
+            AudioView(
+                RemoteMediaItem(
+                    obj.url,
+                    SOUND_CLOUD_MIME_TYPE,
+                    SOUND_CLOUD_MIME_TYPE,
+                    false,
+                    name,
+                    coverInfo,
+                    obj.title
+                ),
+                true
+            )
+        }
+
         M3U8_MIMETYPE -> M3UView(obj, modal, mediaList1)
 
         else -> {
@@ -118,15 +143,17 @@ fun ObjectBlock(
                 contentType.startsWith("video/") -> {
                     val coverInfo = mediaList1[obj.cover]
                     VideoView(
-                        RemoteMediaItem(url, contentType, obj.contentType, false),
-                        coverInfo,
+                        RemoteMediaItem(url, contentType, obj.contentType, false, obj.name, coverInfo, obj.title),
                         true
                     )
                 }
 
                 contentType.startsWith("audio/") -> {
                     val coverInfo = mediaList1[obj.cover]
-                    AudioView(RemoteMediaItem(url, contentType, obj.contentType, false), coverInfo)
+                    AudioView(
+                        RemoteMediaItem(url, contentType, obj.contentType, false, obj.name, coverInfo, obj.title),
+                        true
+                    )
                 }
 
                 else -> HighlightCodeBlock(modal)
@@ -149,7 +176,10 @@ private fun M3UView(
 
         else -> {
             val coverInfo = mediaList1[obj.cover]
-            VideoView(RemoteMediaItem(obj.url, M3U8_MIMETYPE, M3U8_MIMETYPE, obj.isPlayList), coverInfo, true)
+            VideoView(
+                RemoteMediaItem(obj.url, M3U8_MIMETYPE, M3U8_MIMETYPE, obj.isPlayList, obj.url, coverInfo, obj.title),
+                true
+            )
         }
     }
 }
@@ -157,22 +187,21 @@ private fun M3UView(
 suspend fun parseM3UPlayList(
     obj: RemoteMediaItem,
     client: HttpClient
-): List<PlayItem> =
+): List<ConstPlayItem> =
     if ((obj.url.startsWith("http://") || obj.url.startsWith("https://")) && obj.isM3U8PlayList) {
         val entries = withContext(Dispatchers.IO) {
             val content = client.get(obj.url).bodyAsText()
             M3uParser.parse(content)
         }
         entries.map {
-            PlayItem(it.location.url.toString(), it.metadata["tvg-logo"], it.title)
+            ConstPlayItem(it.location.url.toString(), it.metadata["tvg-logo"], it.title)
         }.distinctBy {
-            it.url
+            it.id
         }
     } else {
-        listOf(PlayItem(obj.url, "", obj.url))
+        listOf(ConstPlayItem(obj.url, "", obj.url))
     }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PdfView(url: String) {
     val errorIndicator = rememberVectorPainter(Icons.Default.Error)
@@ -180,14 +209,12 @@ private fun PdfView(url: String) {
     val state = remember(url, errorIndicator, refreshIndicator) {
         RemotePdfState(URI.create(url).toURL(), errorIndicator, refreshIndicator)
     }
-    ObjectBlock {
+    ObjectBlock(300.dp) {
         HorizontalPager(
-            state = rememberPagerState { state.pageCount }
+            state = rememberPagerState { state.pageCount },
+            modifier = Modifier.weight(1f)
         ) { i ->
-            PdfPage(
-                state = state,
-                index = i
-            )
+            PdfPage(state = state, index = i)
         }
         val toasterState = LocalToaster.current
         FlowRow {
@@ -374,14 +401,17 @@ fun pxToSp(px: Int, density: Float): TextUnit = (px / density).sp
 @Composable
 fun convertDpToPx(dp: Dp): Int {
     val density = LocalDensity.current.density
-    return (dp.value * density).toInt()
+    return dpToPx(dp, density)
 }
 
+fun dpToPx(dp: Dp, density: Float) = (dp.value * density).toInt()
+
 @Composable
-fun ObjectBlock(block: @Composable ColumnScope.() -> Unit) {
+fun ObjectBlock(maxHeight: Dp = 200.dp, block: @Composable ColumnScope.() -> Unit) {
     val shape = RoundedCornerShape(20.dp)
     Column(
         modifier = Modifier
+            .heightIn(max = maxHeight)
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
             .clip(shape)
 

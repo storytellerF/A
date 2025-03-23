@@ -14,6 +14,7 @@ composableTableVersion = "1.3.0"
 compose-plugin = "1.7.3"
 composeNativeNotification = "0.2.0"
 composePdf = "1.2.0"
+composeWebview = "0.33.6"
 core = "2.0.0"
 couchbaseLite = "3.1.9-1.1.1"
 cryptographyCore = "0.4.0"
@@ -55,6 +56,8 @@ material3WindowSizeClassMultiplatform = "0.5.0"
 media3Exoplayer = "1.5.1"
 minio = "8.5.17"
 mysqlConnectorJava = "8.0.33"
+newpipeextractor = "0.24.5"
+newpipeextractorVersion = "v0.24.5"
 sqlFormatter = "2.0.5"
 testContainer = "1.20.6"
 mosaicRuntime = "0.16.0"
@@ -101,8 +104,10 @@ coil = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 compose-native-notification = { module = "io.github.kdroidfilter:compose-native-notification", version.ref = "composeNativeNotification" }
 compose-pdf = { module = "dev.zt64:compose-pdf", version.ref = "composePdf" }
+compose-webview = { module = "io.github.kevinnzou:compose-webview", version.ref = "composeWebview" }
 fonticons-core = { module = "dev.tclement.fonticons:core", version.ref = "core" }
 couchbase-lite = { module = "dev.kotbase:couchbase-lite", version.ref = "couchbaseLite" }
 couchbase-lite-ktx = { module = "dev.kotbase:couchbase-lite-ktx", version.ref = "couchbaseLite" }
@@ -113,6 +118,7 @@ desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref 
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detektVersion" }
 detekt-rules-libraries = { module = "io.gitlab.arturbosch.detekt:detekt-rules-libraries", version.ref = "detektVersion" }
 detekt-rules-ruleauthors = { module = "io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors", version.ref = "detektVersion" }
+github-newpipeextractor = { module = "com.github.teamnewpipe.NewPipeExtractor:NewPipeExtractor", version.ref = "newpipeextractorVersion" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnectorJava" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
 testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }
@@ -234,6 +240,7 @@ coil = [
     "coil-compose",
     "coil-compose-core",
     "coil-network-ktor",
+    "coil-svg"
 ]
 ktor-client = [
     "ktor-client-auth",

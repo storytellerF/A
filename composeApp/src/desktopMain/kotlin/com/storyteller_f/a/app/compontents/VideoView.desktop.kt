@@ -2,7 +2,6 @@ package com.storyteller_f.a.app.compontents
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PauseCircle
@@ -14,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.shared.model.MediaInfo
 import io.github.aakira.napier.Napier
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery
 import uk.co.caprica.vlcj.player.base.MediaPlayer
@@ -29,7 +27,6 @@ import java.util.*
 @Composable
 actual fun VideoView(
     obj: RemoteMediaItem,
-    coverMediaInfo: MediaInfo?,
     isEmbed: Boolean
 ) {
     val id = obj.url
@@ -71,7 +68,7 @@ actual fun VideoView(
             factory = {
                 mediaPlayerComponent
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.weight(1f)
                 .aspectRatio(16f / 9).clip(shape)
         ) {
         }

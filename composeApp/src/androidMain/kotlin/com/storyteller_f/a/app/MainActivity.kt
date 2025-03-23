@@ -40,11 +40,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        val future = MediaController.Builder(this, sessionToken).setListener(l2).buildAsync()
-        controllerFuture = future
-        future.addListener({
-            MediaProvider.controller = future.get()
-        }, MoreExecutors.directExecutor())
+        if (!isRunningOnRobolectric) {
+            val future = MediaController.Builder(this, sessionToken).setListener(l2).buildAsync()
+            controllerFuture = future
+            future.addListener({
+                MediaProvider.controller = future.get()
+            }, MoreExecutors.directExecutor())
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,3 +85,11 @@ fun ComponentActivity.commonForActivity() {
     enableEdgeToEdge()
     WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
 }
+
+val isRunningOnRobolectric: Boolean
+    get() = try {
+        Class.forName("org.robolectric.Robolectric")
+        true
+    } catch (_: ClassNotFoundException) {
+        false
+    }

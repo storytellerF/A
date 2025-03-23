@@ -99,6 +99,8 @@ kotlin {
             implementation(libs.androidx.media3.session)
             implementation(libs.record.core)
             implementation(projects.cryptoJvm)
+            implementation(libs.github.newpipeextractor)
+            implementation(libs.compose.webview)
         }
         androidUnitTest.dependencies {
             implementation(libs.androidx.ui.test.junit4.android)
@@ -189,6 +191,11 @@ kotlin {
             }
         }
     }
+}
+
+composeCompiler {
+    reportsDestination = layout.buildDirectory.dir("compose_compiler")
+    metricsDestination = layout.buildDirectory.dir("compose_compiler")
 }
 
 fun getenv(key: String): String? {

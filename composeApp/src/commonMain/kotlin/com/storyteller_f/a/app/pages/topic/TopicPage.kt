@@ -6,6 +6,7 @@ import a.composeapp.generated.resources.success
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Topic
@@ -92,46 +93,59 @@ private fun TopicPageInternal(
             }
         }
         val lazyListState = rememberLazyListState()
-        StateView(viewModel.handler, {
-            topics.refresh()
-        }, modifier = Modifier.weight(1f)) {
-            LazyColumn(
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                state = lazyListState,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                item {
-                    TopicContentField(it)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    InteractionRow(it, {
-                        startAddReaction()
-                    }) {
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider()
-                }
-
-                if (topics.loadState.refresh is LoadStateNotLoading && topics.itemCount == 0) {
-                    item {
-                        Text(
-                            stringResource(Res.string.no_content_yet),
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-                nestedStateView(topics) {
-                    it?.let { topicInfoRaw -> TopicCell(topicInfoRaw) }
-                }
-            }
-        }
+        TopicPageContentInternal(viewModel, topics, lazyListState, startAddReaction)
         val scope = rememberCoroutineScope()
         topic?.let {
             TopicPageInputGroup(it, topicId) {
                 scope.launch {
                     delay(200)
                     lazyListState.animateScrollToItem(1)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.TopicPageContentInternal(
+    viewModel: TopicViewModel,
+    topics: LazyPagingItems<TopicInfo>,
+    lazyListState: LazyListState,
+    startAddReaction: () -> Unit
+) {
+    StateView(viewModel.handler, {
+        topics.refresh()
+    }, modifier = Modifier.Companion.weight(1f)) {
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            state = lazyListState,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            item {
+                TopicContentField(it)
+                Spacer(modifier = Modifier.height(12.dp))
+                InteractionRow(it, {
+                    startAddReaction()
+                }) {
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider()
+            }
+
+            if (topics.loadState.refresh is LoadStateNotLoading && topics.itemCount == 0) {
+                item {
+                    Text(
+                        stringResource(Res.string.no_content_yet),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            nestedStateView(topics) { subInfo, i ->
+                subInfo?.let { it1 -> TopicCell(it1) }
+                if (topics.itemCount - 1 != i) {
+                    HorizontalDivider()
                 }
             }
         }

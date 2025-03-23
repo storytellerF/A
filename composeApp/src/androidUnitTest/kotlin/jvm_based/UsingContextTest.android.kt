@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.ContentProvider
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
+import com.storyteller_f.a.app.AApplication
 import com.storyteller_f.a.app.MainActivity
 import kotbase.CouchbaseLite
 import org.junit.Assume
@@ -25,13 +26,16 @@ actual abstract class UsingContextTest {
         Assume.assumeTrue(System.getProperty("os.name").orEmpty().contains("win", true))
         System.loadLibrary("LiteCore")
         System.loadLibrary("LiteCoreJNI")
+        RuntimeEnvironment.setApplicationSupplier {
+            AApplication()
+        }
         val app = RuntimeEnvironment.getApplication()
-        Shadows.shadowOf(app.packageManager).addActivityIfNotPresent(
-            ComponentName(
-                app.packageName,
-                MainActivity::class.simpleName!!,
-            )
-        )
+//        Shadows.shadowOf(app.packageManager).addActivityIfNotPresent(
+//            ComponentName(
+//                app.packageName,
+//                MainActivity::class.simpleName!!,
+//            )
+//        )
         CouchbaseLite.init(app, true)
         setupAndroidContextProvider()
     }

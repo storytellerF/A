@@ -33,9 +33,12 @@ object DatabaseFactory {
         Topics,
         Users)
 
-    fun init() {
+    fun init(dropBeforeInit: Boolean = false) {
         transaction {
             addLogger(StdOutSqlLogger)
+            if (dropBeforeInit) {
+                SchemaUtils.drop(*tables)
+            }
             SchemaUtils.create(*tables)
         }
     }

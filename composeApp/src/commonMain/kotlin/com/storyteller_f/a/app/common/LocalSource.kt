@@ -24,7 +24,7 @@ val database by lazy {
         )
     ).apply {
         Database.log.console.domains = LogDomain.ALL_DOMAINS
-        Database.log.console.level = LogLevel.INFO
+        Database.log.console.level = LogLevel.WARNING
     }
 }
 
@@ -145,7 +145,7 @@ fun saveSectionLoadParams(
 fun getSectionLoadParams(
     collectionName: String,
     id: PrimaryKey
-) = getOrCreateCollection(collectionName).getDocument(id.toString())?.toJSON()?.let {
+) = getOrCreateCollection("${collectionName}_key").getDocument(id.toString())?.toJSON()?.let {
     Json.decodeFromString<SectionLoadParams<PrimaryKey>>(it)
 }
 

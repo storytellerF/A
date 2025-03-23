@@ -18,7 +18,6 @@ import com.mikepenz.markdown.compose.*
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
-import com.mikepenz.markdown.utils.*
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -29,14 +28,15 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun TopicContentField(
     topicInfo: TopicInfo,
+    isEmbed: Boolean = false
 ) {
     when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
-            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain)
+            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain, isEmbed)
         }
 
         is TopicContent.Extracted -> {
-            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain)
+            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain, isEmbed)
         }
 
         is TopicContent.Encrypted -> {
@@ -62,6 +62,7 @@ private fun TopicContentFieldInternal(
     topicInfo: TopicInfo,
     rawMediaList: List<MediaInfo>,
     plain: String,
+    isEmbed: Boolean
 ) {
     val mediaList = if (isPrivate) {
         val list = createMediaListViewModel(topicInfo.rootId, 0)
@@ -80,7 +81,7 @@ private fun TopicContentFieldInternal(
         components = markdownComponents(codeFence = {
             CustomCodeFence(it, mediaMap)
         }, codeBlock = { HighlightCodeBlock(it) }, paragraph = {
-            CustomMarkdownParagraph(it.content, it.node, mediaMap = mediaMap)
+            CustomMarkdownParagraph(it.content, it.node, mediaMap = mediaMap, isEmbed = isEmbed)
         })
     )
 }
@@ -91,7 +92,8 @@ fun CustomMarkdownParagraph(
     node: ASTNode,
     modifier: Modifier = Modifier,
     style: TextStyle = LocalMarkdownTypography.current.paragraph,
-    mediaMap: Map<String, MediaInfo>
+    mediaMap: Map<String, MediaInfo>,
+    isEmbed: Boolean
 ) {
     val density = LocalDensity.current
     val inlineContentMap = remember {
@@ -122,6 +124,7 @@ fun CustomMarkdownParagraph(
         modifier = modifier,
         style = style,
         inlineContentMap = inlineContentMap,
-        mediaMap = mediaMap
+        mediaMap = mediaMap,
+        isEmbed = isEmbed
     )
 }

@@ -61,7 +61,6 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.MarkdownObject
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
@@ -148,11 +147,10 @@ sealed interface MediaPlaySession {
     @OptIn(ExperimentalUuidApi::class)
     @Serializable
     @SerialName("video")
-    data class Video(
-        val obj: MarkdownObject,
+    data class VideoOrAudio(
+        val obj: RemoteMediaItem,
         val contentType: String,
-        val playList: List<PlayItem>,
-        val coverMedia: MediaInfo?,
+        val playList: List<ConstPlayItem>,
         val uuid: Uuid?,
         val videoSize: CustomVideoSize?
     ) : MediaPlaySession {
