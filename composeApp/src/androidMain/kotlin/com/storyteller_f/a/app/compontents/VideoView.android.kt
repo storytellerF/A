@@ -36,8 +36,6 @@ import com.storyteller_f.a.app.LocalMediaPlaySession
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.MediaPlaySession
 import com.storyteller_f.a.app.MediaPlayerActivity
-import com.storyteller_f.shared.model.MediaInfo
-import com.storyteller_f.shared.utils.MarkdownObject
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import kotlinx.coroutines.launch
@@ -57,23 +55,24 @@ const val EXTRA_CONTROL_PAUSE = 2
 @Composable
 actual fun VideoView(
     obj: RemoteMediaItem,
-    coverMediaInfo: MediaInfo?,
     isEmbed: Boolean,
 ) {
     val contentType = obj.contentType
-    MediaPlayerInternal(obj.url) { player, playingSession, currentSession ->
+    MediaPlayerInternal(obj.url, isEmbed) { player, playingSession, currentSession ->
         var showSheet by remember {
             mutableStateOf(false)
         }
         if (isEmbed) {
             ObjectBlock {
-                VideoPlayer(playingSession, currentSession, player, coverMediaInfo, true, obj)
+                Box(modifier = Modifier.weight(1f)) {
+                    VideoPlayer(playingSession, currentSession, player, true, obj)
+                }
                 VideoOpRow(currentSession, playingSession, contentType) {
-                    showSheet = false
+                    showSheet = true
                 }
             }
         } else {
-            VideoPlayer(playingSession, currentSession, player, coverMediaInfo, false, obj)
+            VideoPlayer(playingSession, currentSession, player, false, obj)
         }
         val sheetState = rememberModalBottomSheetState()
         if (playingSession?.uuid == currentSession.uuid) {
@@ -90,28 +89,29 @@ actual fun VideoView(
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 private fun VideoPlayer(
-    playingSession: MediaPlaySession.Video?,
+    playingSession: MediaPlaySession.VideoOrAudio?,
     currentSession: LocalMediaPlaySession,
     player: MediaController,
-    coverMediaInfo: MediaInfo?,
     isEmbed: Boolean,
     obj: RemoteMediaItem
 ) {
     val contentType = obj.contentType
-    val ratio = if (playingSession?.videoSize != null && playingSession.uuid == currentSession.uuid && !isEmbed) {
-        playingSession.videoSize.width.toFloat() / playingSession.videoSize.height
-    } else {
-        16f / 9
+    val ratio = remember(playingSession, currentSession, isEmbed) {
+        if (playingSession?.videoSize != null && playingSession.uuid == currentSession.uuid && !isEmbed) {
+            playingSession.videoSize.width.toFloat() / playingSession.videoSize.height
+        } else {
+            16f / 9
+        }
     }
     Napier.d {
         "Video ${currentSession.uuid} ratio $ratio ${playingSession?.uuid} ${playingSession?.videoSize} $isEmbed"
     }
     Box(modifier = Modifier.aspectRatio(ratio)) {
         when {
-            playingSession == null -> PlayerWaiting(currentSession, coverMediaInfo, obj)
+            playingSession == null -> PlayerWaiting(currentSession, obj)
             playingSession.uuid == currentSession.uuid -> AndroidPlayer(currentSession, player, contentType)
             playingSession.id == currentSession.id -> PlayerOccupy(currentSession)
-            else -> PlayerWaiting(currentSession, coverMediaInfo, obj)
+            else -> PlayerWaiting(currentSession, obj)
         }
     }
 }
@@ -125,7 +125,7 @@ private fun BoxScope.AndroidPlayer(
 ) {
     val (currentIsLoading, currentIsPlaying) = listenPlayerState(player, currentSession)
     // [8, 12]
-    val pipModifier = buildPlayerModifier(currentIsPlaying.value, player)
+    val pipModifier = buildPlayerModifier(currentIsPlaying, player)
     AndroidView(
         factory = {
             PlayerView(it).apply {
@@ -139,37 +139,33 @@ private fun BoxScope.AndroidPlayer(
         }
         it.player = player
     }
-    if (currentIsLoading.value && contentType != M3U8_MIMETYPE) {
+    if (currentIsLoading && contentType != M3U8_MIMETYPE) {
         CircularProgressIndicator(
             modifier = Modifier.Companion
                 .align(Alignment.Center)
                 .height(40.dp)
         )
     }
-    CheckEnterPip(currentIsPlaying.value)
+    CheckEnterPipPre31(currentIsPlaying)
     PlayerBroadcastReceiver(player)
 }
 
 @Composable
-private fun CheckEnterPip(currentIsPlaying: Boolean) {
+private fun CheckEnterPipPre31(currentIsPlaying: Boolean) {
     val context = LocalContext.current
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
         Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     ) {
         DisposableEffect(context) {
-            val onUserLeaveBehavior: () -> Unit = {
+            val onUserLeaveBehavior = Runnable {
                 if (currentIsPlaying) {
                     context.findActivity()
                         .enterPictureInPictureMode(PictureInPictureParams.Builder().build())
                 }
             }
-            context.findActivity().addOnUserLeaveHintListener(
-                onUserLeaveBehavior
-            )
+            context.findActivity().addOnUserLeaveHintListener(onUserLeaveBehavior)
             onDispose {
-                context.findActivity().removeOnUserLeaveHintListener(
-                    onUserLeaveBehavior
-                )
+                context.findActivity().removeOnUserLeaveHintListener(onUserLeaveBehavior)
             }
         }
     }
@@ -180,9 +176,12 @@ private fun buildPlayerModifier(
     currentIsPlaying: Boolean,
     player: MediaController
 ): Modifier {
+    log {
+        "Video buildPlayerModifier $currentIsPlaying"
+    }
     val context = LocalContext.current
 
-    val pipModifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         Modifier.onGloballyPositioned { layoutCoordinates ->
             val sourceRect = layoutCoordinates.boundsInWindow().toAndroidRectF().toRect()
             val builder = PictureInPictureParams.Builder()
@@ -201,29 +200,25 @@ private fun buildPlayerModifier(
     } else {
         Modifier
     }
-    return pipModifier
 }
 
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 private fun VideoOpRow(
     localMediaPlaySession: LocalMediaPlaySession,
-    playingSession: MediaPlaySession.Video?,
+    playingSession: MediaPlaySession.VideoOrAudio?,
     contentType: String,
-    closeSheet: () -> Unit
+    showSheet: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val toasterState = LocalToaster.current
     FlowRow {
         val clipboardManager = LocalClipboard.current
+        val isActive = localMediaPlaySession.uuid == playingSession?.uuid
 
-        if (localMediaPlaySession.uuid == playingSession?.uuid) {
-            if (playingSession.playList.size > 1) {
-                IconButton(closeSheet) {
-                    Icon(Icons.AutoMirrored.Default.List, "playlist")
-                }
-            }
+        IconButton(showSheet, enabled = isActive) {
+            Icon(Icons.AutoMirrored.Default.List, "playlist")
         }
         IconButton({
             scope.launch {
@@ -241,25 +236,25 @@ private fun VideoOpRow(
                 Icon(Icons.Default.Download, "download")
             }
         }
-        if (localMediaPlaySession.uuid == playingSession?.uuid) {
-            IconButton({
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.findActivity().enterPictureInPictureMode(
-                        PictureInPictureParams.Builder().build()
-                    )
-                } else {
-                    toasterState.show("not support")
-                }
-            }) {
-                Icon(Icons.Default.PictureInPicture, "pip")
+        IconButton({
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.findActivity().enterPictureInPictureMode(
+                    PictureInPictureParams.Builder().build()
+                )
+            } else {
+                toasterState.show("not support")
             }
-            IconButton({
+        }, enabled = isActive) {
+            Icon(Icons.Default.PictureInPicture, "pip")
+        }
+        IconButton({
+            if (localMediaPlaySession.uuid == playingSession?.uuid) {
                 context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
                     putExtra("json", Json.encodeToString<MediaPlaySession>(playingSession))
                 })
-            }) {
-                Icon(Icons.Default.Fullscreen, "fullscreen")
             }
+        }, enabled = isActive) {
+            Icon(Icons.Default.Fullscreen, "fullscreen")
         }
     }
 }
@@ -282,9 +277,7 @@ actual fun rememberIsInPipMode(): Boolean {
             val observer = Consumer<PictureInPictureModeChangedInfo> { info ->
                 pipMode = info.isInPictureInPictureMode
             }
-            activity.addOnPictureInPictureModeChangedListener(
-                observer
-            )
+            activity.addOnPictureInPictureModeChangedListener(observer)
             onDispose { activity.removeOnPictureInPictureModeChangedListener(observer) }
         }
         return pipMode

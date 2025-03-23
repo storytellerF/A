@@ -1,33 +1,40 @@
 package com.storyteller_f.a.app.compontents
 
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.TapAndPlay
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.media3.common.*
 import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
 import com.dokar.sonner.ToasterState
-import com.storyteller_f.a.app.LocalMediaPlaySession
-import com.storyteller_f.a.app.LocalToaster
-import com.storyteller_f.a.app.MediaPlaySession
-import com.storyteller_f.a.app.MediaProvider
-import com.storyteller_f.shared.model.MediaInfo
-import com.storyteller_f.shared.utils.MarkdownObject
+import com.storyteller_f.a.app.*
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import io.ktor.client.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import org.schabi.newpipe.ReCaptchaActivity
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.StreamingService
+import org.schabi.newpipe.extractor.StreamingService.LinkType.*
+import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
+import org.schabi.newpipe.extractor.playlist.PlaylistInfo
+import org.schabi.newpipe.extractor.stream.StreamInfo
+import org.schabi.newpipe.extractor.stream.StreamType
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -35,7 +42,8 @@ import kotlin.uuid.Uuid
 @Composable
 fun MediaPlayerInternal(
     id: String,
-    block: @Composable (MediaController, MediaPlaySession.Video?, LocalMediaPlaySession) -> Unit
+    isEmbed: Boolean,
+    block: @Composable (MediaController, MediaPlaySession.VideoOrAudio?, LocalMediaPlaySession) -> Unit
 ) {
     val uuid = rememberSaveable {
         Uuid.random()
@@ -55,7 +63,7 @@ fun MediaPlayerInternal(
             "MediaPlayerInternal $uuid check switch ${playingSession?.uuid} ${currentSession.uuid}"
         }
         playingSession?.let {
-            if (it.uuid == null && it.id == currentSession.id || isPip) {
+            if (it.uuid == null && it.id == currentSession.id || !isEmbed) {
                 MediaProvider.switch(currentSession)
             }
         }
@@ -65,7 +73,7 @@ fun MediaPlayerInternal(
             Napier.d {
                 "MediaPlayerInternal $uuid dispose $isPip"
             }
-            MediaProvider.releaseView(currentSession)
+            MediaProvider.release(currentSession)
         }
     }
     block(player, playingSession, currentSession)
@@ -80,14 +88,12 @@ fun BoxScope.PlayerOccupy(currentSession: LocalMediaPlaySession) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun BoxScope.PlayerWaiting(
     localMediaPlaySession: LocalMediaPlaySession,
-    coverMediaInfo: MediaInfo?,
     obj: RemoteMediaItem
 ) {
-    val contentType = obj.contentType
+    val coverMediaInfo = obj.coverMediaInfo
     if (coverMediaInfo != null) {
         val request = imageRequestInMarkdown(coverMediaInfo)
         AsyncImage(request, contentDescription = "cover", modifier = Modifier.fillMaxSize())
@@ -96,27 +102,144 @@ fun BoxScope.PlayerWaiting(
     val client = remember {
         HttpClient()
     }
+    val context = LocalContext.current
     IconButton({
         scope.launch {
-            val playList = if (contentType == M3U8_MIMETYPE) {
-                parseM3UPlayList(obj, client)
-            } else {
-                listOf(PlayItem(obj.url))
-            }
-            val newSession = MediaPlaySession.Video(
+            startPlay(obj, client, localMediaPlaySession, context)
+        }
+    }, modifier = Modifier.Companion.align(Alignment.Center)) {
+        Icon(Icons.Default.PlayArrow, "play")
+    }
+    if (obj.contentType == M3U8_MIMETYPE || obj.contentType == YOUTUBE_MIMETYPE) {
+        Text(
+            obj.title ?: obj.url,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(10.dp)
+        )
+    } else {
+        Text(
+            obj.title ?: obj.name,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(10.dp)
+        )
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+private suspend fun startPlay(
+    obj: RemoteMediaItem,
+    client: HttpClient,
+    localMediaPlaySession: LocalMediaPlaySession,
+    context: Context
+) {
+    val contentType = obj.contentType
+    globalDialogState.use {
+        val playList = when (contentType) {
+            M3U8_MIMETYPE -> parseM3UPlayList(obj, client)
+            YOUTUBE_MIMETYPE, SOUND_CLOUD_MIME_TYPE -> getPlaylistFromNewPipe(obj, context)
+            else -> listOf(ConstPlayItem(obj.url, title = obj.url))
+        }
+        if (playList.isNotEmpty()) {
+            val newSession = MediaPlaySession.VideoOrAudio(
                 obj,
                 contentType,
                 playList,
-                coverMediaInfo,
                 localMediaPlaySession.uuid,
                 null
             )
             MediaProvider.get(newSession) { player, s ->
                 player.playNewMedia(s.playList, contentType)
             }
+        } else {
+            throw Exception("can't play")
         }
-    }, modifier = Modifier.Companion.align(Alignment.Center)) {
-        Icon(Icons.Default.PlayArrow, "play")
+    }
+}
+
+suspend fun getPlaylistFromNewPipe(obj: RemoteMediaItem, context: Context): List<ConstPlayItem> {
+    val s = NewPipe.getServiceByUrl(obj.url)
+    val name = when (obj.contentType) {
+        YOUTUBE_MIMETYPE -> "YouTube"
+        SOUND_CLOUD_MIME_TYPE -> "SoundCloud"
+        else -> null
+    } ?: return emptyList()
+    if (s.serviceInfo.name != name) {
+        return emptyList()
+    }
+    val supportStreamType = if (obj.contentType.startsWith("video/")) {
+        listOf(StreamType.VIDEO_STREAM)
+    } else {
+        listOf(StreamType.AUDIO_STREAM)
+    }
+    try {
+        return withContext(Dispatchers.IO) {
+            val type = s.getLinkTypeByUrl(obj.url)
+            when (type) {
+                null, NONE, CHANNEL -> emptyList()
+                STREAM -> getPlayItemFromStreamInfo(StreamInfo.getInfo(s, obj.url))
+                PLAYLIST -> getPlayListInList(s, obj, supportStreamType)
+            }
+        }
+    } catch (e: ReCaptchaException) {
+        context.startActivity(Intent(context, ReCaptchaActivity::class.java).apply {
+            putExtra(ReCaptchaActivity.RECAPTCHA_URL_EXTRA, e.url)
+        })
+        return emptyList()
+    }
+}
+
+private fun getPlayListInList(
+    s: StreamingService,
+    obj: RemoteMediaItem,
+    supportStreamType: List<StreamType>
+): List<ConstPlayItem> {
+    val playlistInfo = PlaylistInfo.getInfo(s, obj.url)
+    return buildList {
+        addAll(playlistInfo.relatedItems.take(1).flatMap {
+            if (supportStreamType.contains(it.streamType)) {
+                getPlayItemFromStreamInfo(StreamInfo.getInfo(s, it.url))
+            } else {
+                emptyList()
+            }
+        })
+        while (playlistInfo.hasNextPage() && playlistInfo.nextPage.id == playlistInfo.id) {
+            val itemsPage = PlaylistInfo.getMoreItems(s, obj.url, playlistInfo.nextPage)
+            if (itemsPage.errors.isNotEmpty()) {
+                itemsPage.errors.forEach {
+                    Napier.e(it) {
+                        "parse youtube"
+                    }
+                }
+            }
+            addAll(itemsPage.items.take(1).flatMap {
+                getPlayItemFromStreamInfo(StreamInfo.getInfo(s, it.url))
+            })
+            playlistInfo.nextPage = itemsPage.nextPage
+        }
+    }
+}
+
+private fun getPlayItemFromStreamInfo(info: StreamInfo): List<ConstPlayItem> {
+    return when (val streamType = info.streamType) {
+        StreamType.VIDEO_STREAM -> {
+            val firstOrNull = info.videoStreams.firstOrNull()
+            firstOrNull?.let { it1 -> ConstPlayItem(it1.content, info.thumbnails.firstOrNull()?.url, info.name) }
+                ?.let {
+                    listOf(it)
+                } ?: emptyList()
+        }
+
+        StreamType.AUDIO_STREAM -> {
+            val firstOrNull = info.audioStreams.firstOrNull()
+            firstOrNull?.let { it1 -> ConstPlayItem(it1.content, info.thumbnails.firstOrNull()?.url, info.name) }
+                ?.let {
+                    listOf(it)
+                } ?: emptyList()
+        }
+
+        else -> throw Exception("unsupported type $streamType")
     }
 }
 
@@ -125,19 +248,22 @@ fun BoxScope.PlayerWaiting(
 fun listenPlayerState(
     player: MediaController,
     currentSession: LocalMediaPlaySession
-): Pair<MutableState<Boolean>, MutableState<Boolean>> {
-    val currentLoading = remember {
-        mutableStateOf(false)
+): Triple<Boolean, Boolean, MediaItem?> {
+    var currentLoading by remember {
+        mutableStateOf(player.isLoading)
     }
-    val currentIsPlaying = remember {
-        mutableStateOf(false)
+    var currentIsPlaying by remember {
+        mutableStateOf(player.isPlaying)
+    }
+    var currentPlaying by remember {
+        mutableStateOf<MediaItem?>(null)
     }
     val toasterState = LocalToaster.current
     val scope = rememberCoroutineScope()
     DisposableEffect(currentSession, player) {
         val customListener = buildListener(player, currentSession.id, toasterState, scope, object : VideoListener {
             override fun onPlayStateChange(isPlaying: Boolean) {
-                currentIsPlaying.value = isPlaying
+                currentIsPlaying = isPlaying
             }
 
             override fun onUpdateSize(size: CustomVideoSize) {
@@ -148,7 +274,11 @@ fun listenPlayerState(
             }
 
             override fun onUpdateLoading(isLoading: Boolean) {
-                currentLoading.value = isLoading
+                currentLoading = isLoading
+            }
+
+            override fun onMediaItemChanged(mediaId: String?, currentMediaItemIndex: Int) {
+                currentPlaying = player.getMediaItemAt(currentMediaItemIndex)
             }
         })
         player.addListener(customListener)
@@ -159,17 +289,18 @@ fun listenPlayerState(
             player.removeListener(customListener)
         }
     }
-    return Pair(currentLoading, currentIsPlaying)
+    return Triple(currentLoading, currentIsPlaying, currentPlaying)
 }
 
 private fun MediaController.playNewMedia(
-    playList: List<PlayItem>,
+    playList: List<ConstPlayItem>,
     contentType: String
 ) {
     clearMediaItems()
+
     addMediaItems(playList.map { playItem ->
-        val url1 = playItem.url
-        MediaItem.Builder().setUri(url1)
+        val uri = playItem.url
+        MediaItem.Builder().setUri(uri)
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setArtworkUri(playItem.icon?.let { Uri.parse(it) })
@@ -177,7 +308,7 @@ private fun MediaController.playNewMedia(
                     .build()
             )
             .apply {
-                if (contentType == M3U8_MIMETYPE && !url1.endsWith(".m3u8")) {
+                if (contentType == M3U8_MIMETYPE && !uri.endsWith(".m3u8")) {
                     setMimeType(MimeTypes.APPLICATION_M3U8)
                 }
             }.build()
@@ -229,6 +360,11 @@ private fun buildListener(
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
             listener.onPlayStateChange(isPlaying)
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            super.onMediaItemTransition(mediaItem, reason)
+            listener.onMediaItemChanged(mediaItem?.mediaId, player.currentMediaItemIndex)
         }
     }
 }

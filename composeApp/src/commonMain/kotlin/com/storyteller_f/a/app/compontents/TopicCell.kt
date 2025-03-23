@@ -71,7 +71,7 @@ fun TopicCellInternal(
                 },
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TopicContentField(topicInfo)
+                TopicContentField(topicInfo, true)
                 InteractionRow(topicInfo, startAddReaction) {
                     appNav.gotoTopic(topicId)
                 }

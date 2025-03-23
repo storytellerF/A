@@ -15,6 +15,8 @@ import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import io.ktor.utils.io.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.io.readByteArray
 import org.apache.tika.Tika
 import java.io.File
@@ -81,13 +83,17 @@ suspend fun RoutingContext.uploadMedia(
                     if (file.canonicalPath == file.absolutePath) {
                         val fileBytes = part.provider().readRemaining().readByteArray()
                         try {
-                            file.writeBytes(fileBytes)
-                            val info = uploadFiles(
-                                tika,
-                                backend,
-                                listOf(Triple(file, "${it.objectId}/$newSavedFileName", part.contentType.toString()))
-                            ).getOrThrow()
-                            result.addAll(info.filterNotNull())
+                            withContext(Dispatchers.IO) {
+                                file.writeBytes(fileBytes)
+                                val info = uploadFiles(
+                                    tika,
+                                    backend,
+                                    listOf(
+                                        Triple(file, "${it.objectId}/$newSavedFileName", part.contentType.toString())
+                                    )
+                                ).getOrThrow()
+                                result.addAll(info.filterNotNull())
+                            }
                         } finally {
                             file.delete()
                         }

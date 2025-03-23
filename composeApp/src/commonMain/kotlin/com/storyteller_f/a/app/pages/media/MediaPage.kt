@@ -19,9 +19,9 @@ fun MediaPage(session: MediaPlaySession) {
             )
         }
 
-        is MediaPlaySession.Video -> {
+        is MediaPlaySession.VideoOrAudio -> {
             CenterBox {
-                VideoView(session.obj, session.coverMedia, false)
+                VideoView(session.obj, false)
             }
         }
     }

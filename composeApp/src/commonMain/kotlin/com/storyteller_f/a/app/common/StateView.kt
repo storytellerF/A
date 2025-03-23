@@ -164,7 +164,10 @@ fun CenterBox(content: @Composable () -> Unit) {
     }
 }
 
-fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, content: @Composable (T?) -> Unit) {
+fun <T : Identifiable> LazyListScope.nestedStateView(
+    items: LazyPagingItems<T>,
+    content: @Composable (T?, Int) -> Unit
+) {
     when (items.loadState.refresh.toLoadingState()) {
         is LoadingState.Loading -> {
             item {
@@ -216,7 +219,7 @@ fun <T : Identifiable> LazyListScope.nestedStateView(items: LazyPagingItems<T>, 
 
 private fun <T : Identifiable> LazyListScope.nestedStateList(
     items: LazyPagingItems<T>,
-    content: @Composable (T?) -> Unit
+    content: @Composable (T?, Int) -> Unit
 ) {
     items(
         items.itemCount,
@@ -224,7 +227,7 @@ private fun <T : Identifiable> LazyListScope.nestedStateList(
             it.id.toString()
         }
     ) {
-        content(items[it])
+        content(items[it], it)
     }
 }
 

@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ashampoo.kim.Kim
 import com.ashampoo.kim.common.convertToPhotoMetadata
@@ -240,7 +241,8 @@ private fun buildInlineContentMap(
     inlineContentMap: Map<String, String>,
     maxWidth: Int,
     mediaMap: Map<String, MediaInfo>,
-    transformer: ImageTransformer
+    transformer: ImageTransformer,
+    isEmbed: Boolean
 ): Map<String, InlineTextContent> {
     val dimensionMap = buildInlineContentDimensions(inlineContentMap, mediaMap)
     val density = LocalDensity.current.density
@@ -252,10 +254,12 @@ private fun buildInlineContentMap(
                 InlineTextContent(Placeholder(0.sp, 0.sp, PlaceholderVerticalAlign.Bottom)) {}
             } else if (pair != null) {
                 val width = minOf(maxWidth, pair.first)
-                val height = minOf(width * pair.second / pair.first, width * 2)
+                val height =
+                    minOf(width * pair.second / pair.first, if (isEmbed) dpToPx(300.dp, density) else width * 2)
+                val recalculatedWidth = height * pair.first / pair.second
                 map[key] = InlineTextContent(
                     Placeholder(
-                        pxToSp(width, density),
+                        pxToSp(recalculatedWidth, density),
                         pxToSp(height, density),
                         PlaceholderVerticalAlign.Bottom
                     )
@@ -333,7 +337,8 @@ fun CustomMarkdownText(
     style: TextStyle = LocalMarkdownTypography.current.text,
     extendedSpans: ExtendedSpans? = LocalMarkdownExtendedSpans.current.extendedSpans?.invoke(),
     inlineContentMap: Map<String, String>,
-    mediaMap: Map<String, MediaInfo>
+    mediaMap: Map<String, MediaInfo>,
+    isEmbed: Boolean
 ) {
     // extend the annotated string with `extended-spans` styles if provided
     val extendedStyledText = if (extendedSpans != null) {
@@ -360,17 +365,26 @@ fun CustomMarkdownText(
         modifier
     }
 
-    CustomMarkdownText(extendedStyledText, extendedModifier, style, onTextLayout, inlineContentMap, mediaMap)
+    CustomMarkdownTextInternal(
+        extendedStyledText,
+        extendedModifier,
+        style,
+        onTextLayout,
+        inlineContentMap,
+        mediaMap,
+        isEmbed
+    )
 }
 
 @Composable
-fun CustomMarkdownText(
+private fun CustomMarkdownTextInternal(
     content: AnnotatedString,
     modifier: Modifier = Modifier,
     style: TextStyle = LocalMarkdownTypography.current.text,
     onTextLayout: (TextLayoutResult) -> Unit,
     inlineContentMap: Map<String, String>,
-    mediaMap: Map<String, MediaInfo>
+    mediaMap: Map<String, MediaInfo>,
+    isEmbed: Boolean
 ) {
     val baseColor = LocalMarkdownColors.current.text
     val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -379,7 +393,7 @@ fun CustomMarkdownText(
 
     BoxWithConstraints {
         val width = convertDpToPx(maxWidth)
-        val inlineTextContentMap = buildInlineContentMap(inlineContentMap, width, mediaMap, transformer)
+        val inlineTextContentMap = buildInlineContentMap(inlineContentMap, width, mediaMap, transformer, isEmbed)
         CustomMarkdownBasicText(
             text = content,
             modifier = modifier,
