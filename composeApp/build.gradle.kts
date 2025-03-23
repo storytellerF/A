@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.LintOptions
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import com.google.common.base.CaseFormat
@@ -277,6 +278,9 @@ android {
     dependencies {
         coreLibraryDesugaring(libs.desugar.jdk.libs)
         debugImplementation(compose.uiTooling)
+    }
+    lint {
+        disable.add("RememberReturnType")
     }
 }
 
