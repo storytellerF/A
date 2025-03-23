@@ -30,6 +30,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.toRect
 import androidx.core.util.Consumer
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
 import com.storyteller_f.a.app.LocalMediaPlaySession
@@ -116,6 +117,7 @@ private fun VideoPlayer(
     }
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 private fun BoxScope.AndroidPlayer(

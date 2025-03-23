@@ -7,9 +7,11 @@ import android.util.Log
 import android.webkit.*
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
+import androidx.compose.ui.Modifier
 import com.kevinnzou.web.*
 import org.schabi.newpipe.extractor.utils.Utils
 
@@ -55,7 +57,7 @@ class ReCaptchaActivity : ComponentActivity() {
                         super.onPageFinished(view, url)
                         handleCookiesFromUrl(url)
                     }
-                }, navigator = navigator)
+                }, navigator = navigator, modifier = Modifier.padding(it))
             }
         }
         CookieManager.getInstance().removeAllCookies(null)

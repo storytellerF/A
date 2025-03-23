@@ -23,7 +23,6 @@ import kotlinx.coroutines.runBlocking
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 import java.io.File
 import kotlin.collections.set
@@ -95,7 +94,7 @@ private fun startTestContainerTest(
                         } else {
                             PostgreSQLContainer(
                                 "pgvector/pgvector:pg16"
-                            ).waitingFor(Wait.forSuccessfulCommand("pg_isready")).use { postgreSQLContainer ->
+                            ).use { postgreSQLContainer ->
                                 postgreSQLContainer.start()
                                 println("jdbc: ${postgreSQLContainer.jdbcUrl}")
                                 env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl

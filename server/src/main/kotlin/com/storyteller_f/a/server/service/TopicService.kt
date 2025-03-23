@@ -576,7 +576,9 @@ private suspend fun processTopicsDocument(
     return getTopicsByPredicate(uid, fillHasCommented) {
         Topics.id inList ids
     }.mapResult { infos ->
-        processMediaAndAuthor(backend, infos, list)
+        processMediaAndAuthor(backend, infos.sortedByDescending {
+            it.id
+        }, list)
     }
 }
 

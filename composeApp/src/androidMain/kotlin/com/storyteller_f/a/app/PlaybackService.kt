@@ -2,6 +2,7 @@ package com.storyteller_f.a.app
 
 import android.content.Intent
 import androidx.media3.common.Player.*
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
@@ -96,7 +97,7 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
-    @androidx.media3.common.util.UnstableApi
+    @androidx.annotation.OptIn(UnstableApi::class)
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
         Napier.d {
@@ -108,6 +109,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     private inner class MyCallback : MediaSession.Callback {
+        @androidx.annotation.OptIn(UnstableApi::class)
         override fun onConnect(
             session: MediaSession,
             controller: MediaSession.ControllerInfo

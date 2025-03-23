@@ -140,9 +140,10 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
         val request = SearchRequest.of { s ->
             s.index(TOPIC_INDEX_NAME) // 指定索引名称
                 .query(boolQuery)
+                .size(size)
                 .sort { sort ->
                     sort.field { f ->
-                        f.field("id").order(if (preTopicId == null) SortOrder.Asc else SortOrder.Desc)
+                        f.field("id").order(if (preTopicId == null) SortOrder.Desc else SortOrder.Asc)
                     }
                 }.trackScores(true)
         }
