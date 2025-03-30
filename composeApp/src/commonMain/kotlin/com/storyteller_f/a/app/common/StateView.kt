@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.cash.paging.LoadState
 import app.cash.paging.LoadStateError
@@ -168,18 +169,15 @@ fun <T : Identifiable> LazyListScope.nestedStateView(
     items: LazyPagingItems<T>,
     content: @Composable (T?, Int) -> Unit
 ) {
-    when (items.loadState.refresh.toLoadingState()) {
-        is LoadingState.Loading -> {
-            item {
-                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            }
+    if (items.loadState.refresh is LoadStateNotLoading && items.itemCount == 0) {
+        item {
+            Text(
+                stringResource(Res.string.no_content_yet),
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
         }
-
-        else -> {}
     }
-    nestedStateList(items, content)
     when (val refreshState = items.loadState.refresh.toLoadingState()) {
         is LoadingState.Loading -> {
             item {
@@ -204,6 +202,12 @@ fun <T : Identifiable> LazyListScope.nestedStateView(
                 }
             }
         }
+
+        else -> {}
+    }
+    nestedStateList(items, content)
+    when (items.loadState.refresh.toLoadingState()) {
+        is LoadingState.Loading, is LoadingState.Error -> {}
 
         else -> {
             if (items.loadState.append is LoadStateLoading) {

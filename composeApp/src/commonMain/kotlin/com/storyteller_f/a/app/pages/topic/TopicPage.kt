@@ -133,15 +133,6 @@ private fun ColumnScope.TopicPageContentInternal(
                 HorizontalDivider()
             }
 
-            if (topics.loadState.refresh is LoadStateNotLoading && topics.itemCount == 0) {
-                item {
-                    Text(
-                        stringResource(Res.string.no_content_yet),
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
             nestedStateView(topics) { subInfo, i ->
                 subInfo?.let { it1 -> TopicCell(it1) }
                 if (topics.itemCount - 1 != i) {

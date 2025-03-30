@@ -3,15 +3,14 @@ package com.storyteller_f.a.app.compontents
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.TapAndPlay
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -43,6 +42,7 @@ import kotlin.uuid.Uuid
 fun MediaPlayerInternal(
     id: String,
     isEmbed: Boolean,
+    contentType: String,
     block: @Composable (MediaController, MediaPlaySession.VideoOrAudio?, LocalMediaPlaySession) -> Unit
 ) {
     val uuid = rememberSaveable {
@@ -60,10 +60,10 @@ fun MediaPlayerInternal(
     val isPip = rememberIsInPipMode()
     LaunchedEffect(playingSession, currentSession) {
         log {
-            "MediaPlayerInternal $uuid check switch ${playingSession?.uuid} ${currentSession.uuid}"
+            "MediaPlayerInternal $uuid check switch ${playingSession?.uuids} ${currentSession.uuid}"
         }
         playingSession?.let {
-            if (it.uuid == null && it.id == currentSession.id || !isEmbed) {
+            if (it.uuids.lastOrNull() == null && it.id == currentSession.id || !isEmbed) {
                 MediaProvider.switch(currentSession)
             }
         }
@@ -76,7 +76,43 @@ fun MediaPlayerInternal(
             MediaProvider.release(currentSession)
         }
     }
-    block(player, playingSession, currentSession)
+    MediaPlayerContainer(isEmbed, playingSession, player, currentSession, contentType, block)
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
+@Composable
+fun MediaPlayerContainer(
+    isEmbed: Boolean,
+    playingSession: MediaPlaySession.VideoOrAudio?,
+    player: MediaController,
+    currentSession: LocalMediaPlaySession,
+    contentType: String,
+    block: @Composable (MediaController, MediaPlaySession.VideoOrAudio?, LocalMediaPlaySession) -> Unit
+) {
+    var showSheet by remember {
+        mutableStateOf(false)
+    }
+    if (isEmbed) {
+        ObjectBlock {
+            Box(modifier = Modifier.weight(1f)) {
+                block(player, playingSession, currentSession)
+            }
+            VideoOrAudioOpRow(currentSession, playingSession, contentType) {
+                showSheet = true
+            }
+        }
+    } else {
+        block(player, playingSession, currentSession)
+    }
+    val sheetState = rememberModalBottomSheetState()
+    if (playingSession?.uuids?.lastOrNull() == currentSession.uuid) {
+        VideoPlaylistPicker(showSheet, sheetState, {
+            showSheet = false
+        }, playingSession.playList) { _, i ->
+            player.seekTo(i, 0)
+            player.play()
+        }
+    }
 }
 
 @Composable
@@ -115,14 +151,16 @@ fun BoxScope.PlayerWaiting(
             obj.title ?: obj.url,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(10.dp)
+                .padding(10.dp),
+            maxLines = 2
         )
     } else {
         Text(
             obj.title ?: obj.name,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(10.dp)
+                .padding(10.dp),
+            maxLines = 2
         )
     }
 }
@@ -146,7 +184,7 @@ private suspend fun startPlay(
                 obj,
                 contentType,
                 playList,
-                localMediaPlaySession.uuid,
+                listOf(localMediaPlaySession.uuid),
                 null
             )
             MediaProvider.get(newSession) { player, s ->
@@ -243,12 +281,18 @@ private fun getPlayItemFromStreamInfo(info: StreamInfo): List<ConstPlayItem> {
     }
 }
 
+data class MediaPlayerState(
+    val currentLoading: Boolean,
+    val currentIsPlaying: Boolean,
+    val currentPlayingItem: MediaItem?
+)
+
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 fun listenPlayerState(
     player: MediaController,
     currentSession: LocalMediaPlaySession
-): Triple<Boolean, Boolean, MediaItem?> {
+): MediaPlayerState {
     var currentLoading by remember {
         mutableStateOf(player.isLoading)
     }
@@ -278,18 +322,22 @@ fun listenPlayerState(
             }
 
             override fun onMediaItemChanged(mediaId: String?, currentMediaItemIndex: Int) {
-                currentPlaying = player.getMediaItemAt(currentMediaItemIndex)
+                currentPlaying = if (currentMediaItemIndex < player.mediaItemCount) {
+                    player.getMediaItemAt(currentMediaItemIndex)
+                } else {
+                    null
+                }
             }
         })
         player.addListener(customListener)
         onDispose {
-            log {
+            Napier.d {
                 "Video ${currentSession.uuid} release listener"
             }
             player.removeListener(customListener)
         }
     }
-    return Triple(currentLoading, currentIsPlaying, currentPlaying)
+    return MediaPlayerState(currentLoading, currentIsPlaying, currentPlaying)
 }
 
 private fun MediaController.playNewMedia(
