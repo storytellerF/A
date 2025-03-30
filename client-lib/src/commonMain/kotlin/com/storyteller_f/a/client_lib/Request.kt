@@ -442,16 +442,10 @@ suspend fun HttpClient.upload(
 suspend fun DefaultClientWebSocketSession.sendMessage(
     roomInfo: RoomInfo,
     input: String,
-    keyData: List<Pair<PrimaryKey, String>>?,
-    topicId: PrimaryKey?,
-    keyState: LoadingState?,
-    notifyPubKeyStillLoading: () -> Unit
+    keyData: List<Pair<PrimaryKey, String>>,
+    topicId: PrimaryKey?
 ) {
     val content = if (roomInfo.isPrivate) {
-        if (keyState !is LoadingState.Done || keyData == null) {
-            notifyPubKeyStillLoading()
-            return
-        }
         val (encrypted, aes) = encrypt(input)
         TopicContent.Encrypted(encrypted.toHexString(), keyData.associate {
             it.first to encryptAesKey(it.second, aes).toHexString()

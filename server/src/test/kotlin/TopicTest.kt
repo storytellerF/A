@@ -3,6 +3,7 @@ import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.NewRoom
+import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.addRoomJoin
@@ -108,7 +109,10 @@ class TopicTest {
 
     @Test
     fun `test create topic in room`() {
-        test { client, wsClient ->
+        val receivedFrame = mutableListOf<RoomFrame>()
+        test({
+            receivedFrame.add(it)
+        }) { client, wsClient ->
             val custom = attachSession(client) {
                 val communityId = client.createCommunity(NewCommunity("test1", "test1")).getOrThrow().id
                 val publicRoomId =
@@ -121,19 +125,27 @@ class TopicTest {
                 client.joinCommunity(communityId).getOrThrow()
                 val roomInfo = client.joinRoom(publicRoomId).getOrThrow()
                 wsClient.useWebSocket {
-                    sendMessage(roomInfo, "test", emptyList(), null, null) {
-                    }
+                    sendMessage(roomInfo, "test", emptyList(), null)
                 }?.join()
-                withContext(Dispatchers.Default) { delay(1000) }
+                while (true) {
+                    if (receivedFrame.size == 1) {
+                        break
+                    }
+                    delay(100)
+                }
                 assertListSize(1, client.getRoomTopics(publicRoomId, null, 10))
                 DatabaseFactory.addRoomJoin(privateRoomId, it.uid, now(), roomInfo.memberCount).getOrThrow()
                 val roomInfo2 = client.getRoomInfo(privateRoomId).getOrThrow()
                 val keys = client.requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
                 wsClient.useWebSocket {
-                    sendMessage(roomInfo2, "hello", keys, null, LoadingState.Done) {
-                    }
+                    sendMessage(roomInfo2, "hello", keys, null)
                 }?.join()
-                withContext(Dispatchers.Default) { delay(1000) }
+                while (true) {
+                    if (receivedFrame.size == 2) {
+                        break
+                    }
+                    delay(100)
+                }
                 assertResponse(1, client.getRoomTopics(privateRoomId, null, 10)) {
                     val privateRoomTopicList = it.data
                     assertEquals(1, privateRoomTopicList.size)
@@ -152,6 +164,7 @@ class TopicTest {
                     ).getOrThrow()
                 }
             }
+            receivedFrame.clear()
         }
     }
 

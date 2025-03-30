@@ -1,5 +1,5 @@
 cmd /c .\gradlew.bat build || exit /b
-@REM start cmd /c .\gradlew.bat test-server:run
+start cmd /c .\gradlew.bat test-server:run
 
 echo Waiting for port 8888 to become available...
 :wait_for_port

@@ -24,22 +24,23 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
     override suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit> {
         return useLucene {
             IndexWriter(it, IndexWriterConfig(analyzer)).use { writer ->
-                val seqNo = writer.addDocuments(
-                    topics.map { document ->
-                        val doc = Document()
-                        doc.add(LongField("id1", document.id, Field.Store.YES))
-                        doc.add(NumericDocValuesField("id2", document.id))
-                        doc.add(TextField("content", document.content, Field.Store.YES))
-                        doc.add(LongField("rootId", document.rootId, Field.Store.YES))
-                        doc.add(LongField("parentId", document.parentId, Field.Store.YES))
-                        doc.add(StringField("rootType", document.rootType, Field.Store.YES))
-                        doc.add(StringField("parentType", document.parentType, Field.Store.YES))
-                        doc.add(LongField("author", document.author, Field.Store.YES))
-                        doc
-                    }
-                )
+                topics.asSequence().map { document ->
+                    val doc = Document()
+                    doc.add(LongField("id1", document.id, Field.Store.YES))
+                    doc.add(NumericDocValuesField("id2", document.id))
+                    doc.add(TextField("content", document.content, Field.Store.YES))
+                    doc.add(LongField("rootId", document.rootId, Field.Store.YES))
+                    doc.add(LongField("parentId", document.parentId, Field.Store.YES))
+                    doc.add(StringField("rootType", document.rootType, Field.Store.YES))
+                    doc.add(StringField("parentType", document.parentType, Field.Store.YES))
+                    doc.add(LongField("author", document.author, Field.Store.YES))
+                    doc
+                }.forEach {
+                    writer.addDocument(it)
+                }
+                val commit = writer.commit()
                 Napier.d {
-                    "save document $seqNo in `lucene`"
+                    "save document in `lucene` $commit"
                 }
             }
         }
