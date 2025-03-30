@@ -60,7 +60,7 @@ private fun BoxScope.AudioPlayer(
     obj: RemoteMediaItem,
     playingSession: MediaPlaySession.VideoOrAudio
 ) {
-    AndroidPlayerContainer(currentSession, player, obj.contentType) { pipModifier, state ->
+    AndroidPlayerContainer(currentSession, player) { pipModifier, state ->
         val coverMediaInfo = obj.coverMediaInfo
         Row(
             modifier = pipModifier.padding(10.dp),
@@ -101,9 +101,11 @@ private fun AudioPlayerInternal(
         } else {
             val title =
                 state.currentPlayingItem?.mediaMetadata?.title?.toString() ?: playingSession.obj.title
-                ?: playingSession.obj.name
+                    ?: playingSession.obj.name
             Text(
-                title, maxLines = 2, modifier = Modifier
+                title,
+                maxLines = 2,
+                modifier = Modifier
                     .basicMarquee()
                     .padding(horizontal = 20.dp)
             )

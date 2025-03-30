@@ -27,7 +27,6 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer
 import java.io.File
 import kotlin.collections.set
 import kotlin.test.assertEquals
-import kotlin.use
 
 fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, ClientWebSocket) -> Unit) {
     Napier.base(DebugAntilog())
@@ -38,10 +37,7 @@ fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, Cl
     SnowflakeFactory.setMachine(0)
     addProviderForJvm()
 
-    run {
-        val env = readResourceEnv(".env")!!
-        doTest(env, receivedFrame, block)
-    }
+    doTest(readResourceEnv(".env")!!, receivedFrame, block)
 
     if (freeMemory >= 100) {
 //        startTestContainerTest(receivedFrame, true, block)

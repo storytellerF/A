@@ -2,11 +2,13 @@ package com.storyteller_f.index
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient
 import co.elastic.clients.elasticsearch._types.FieldValue
+import co.elastic.clients.elasticsearch._types.Refresh
 import co.elastic.clients.elasticsearch._types.SortOrder
 import co.elastic.clients.elasticsearch._types.query_dsl.*
 import co.elastic.clients.elasticsearch.core.SearchRequest
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
 import co.elastic.clients.elasticsearch.core.bulk.IndexOperation
+import co.elastic.clients.json.JsonData
 import co.elastic.clients.json.jackson.JacksonJsonpMapper
 import co.elastic.clients.transport.TransportUtils
 import co.elastic.clients.transport.rest_client.RestClientTransport
@@ -40,7 +42,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 val topic = topics.first()
                 useElasticClient(connection) {
                     val response = index {
-                        it.index(TOPIC_INDEX_NAME).id(topic.id.toString()).document(topic)
+                        it.index(TOPIC_INDEX_NAME).id(topic.id.toString()).document(topic).refresh(Refresh.WaitFor)
                     }.await()
                     Napier.i(tag = "elastic save") {
                         response.toString()
@@ -61,7 +63,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                                         .build()
                                 )
                             }
-                        })
+                        }).refresh(Refresh.WaitFor)
                     }.await()
                     Napier.i(tag = "elastic save bulk") {
                         response.toString()
@@ -167,8 +169,8 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
         author: PrimaryKey?,
         preTopicId: PrimaryKey?,
         nextTopicId: PrimaryKey?,
-        rootId: List<PrimaryKey>?,
-        parentId: List<PrimaryKey>?
+        rootIdList: List<PrimaryKey>?,
+        parentIdList: List<PrimaryKey>?
     ): Query {
         val queryList = buildList {
             word?.let {
@@ -188,10 +190,10 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 add(createParentSearchQuery(it))
             }
 
-            rootId?.let { list ->
+            rootIdList?.let { list ->
                 add(buildIdListTermSearch(list, "rootId"))
             }
-            parentId?.let { list ->
+            parentIdList?.let { list ->
                 add(buildIdListTermSearch(list, "parentId"))
             }
 
@@ -202,17 +204,15 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
             }
             nextTopicId?.let { n ->
                 add(RangeQuery.of { r ->
-                    r.number {
-                        it.field("id")
-                            .lt(n.toDouble())
+                    r.untyped {
+                        it.field("id").lt(JsonData.of(n))
                     }
                 }._toQuery())
             }
             preTopicId?.let { p ->
                 add(RangeQuery.of { r ->
-                    r.number {
-                        it.field("id")
-                            .gt(p.toDouble())
+                    r.untyped {
+                        it.field("id").gt(JsonData.of(p))
                     }
                 }._toQuery())
             }
@@ -234,9 +234,9 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     }
 
     private fun buildIdListTermSearch(list: List<PrimaryKey>, field: String) = TermsQuery.of {
-        it.field(field).terms {
-            it.value(list.map {
-                FieldValue.of(it)
+        it.field(field).terms { builder ->
+            builder.value(list.map { id ->
+                FieldValue.of(id)
             })
         }
     }._toQuery()
