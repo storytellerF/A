@@ -86,7 +86,11 @@ private fun VideoPlayer(
     Box(modifier = Modifier.aspectRatio(ratio)) {
         when {
             playingSession == null -> PlayerWaiting(currentSession, obj)
-            playingSession.uuids.lastOrNull() == currentSession.uuid -> VideoPlayerInternal(currentSession, player, contentType)
+            playingSession.uuids.lastOrNull() == currentSession.uuid -> VideoPlayerInternal(
+                currentSession,
+                player,
+                contentType
+            )
             playingSession.id == currentSession.id -> PlayerOccupy(currentSession)
             else -> PlayerWaiting(currentSession, obj)
         }
@@ -94,13 +98,14 @@ private fun VideoPlayer(
 }
 
 @OptIn(ExperimentalUuidApi::class)
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
 private fun BoxScope.VideoPlayerInternal(
     currentSession: LocalMediaPlaySession,
     player: MediaController,
     contentType: String
 ) {
-    AndroidPlayerContainer(currentSession, player, contentType) { pipModifier, (currentIsLoading) ->
+    AndroidPlayerContainer(currentSession, player) { pipModifier, (currentIsLoading) ->
         AndroidView(
             factory = {
                 PlayerView(it).apply {
@@ -129,7 +134,6 @@ private fun BoxScope.VideoPlayerInternal(
 fun BoxScope.AndroidPlayerContainer(
     currentSession: LocalMediaPlaySession,
     player: MediaController,
-    contentType: String,
     block: @Composable BoxScope.(Modifier, MediaPlayerState) -> Unit
 ) {
     val playerState = listenPlayerState(player, currentSession)

@@ -8,8 +8,6 @@ import com.storyteller_f.a.app.MediaPlaySession
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.compontents.AudioView
 import com.storyteller_f.a.app.compontents.VideoView
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 @Composable
 fun MediaPage(session: MediaPlaySession) {

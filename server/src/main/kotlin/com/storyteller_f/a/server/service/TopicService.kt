@@ -573,6 +573,9 @@ private suspend fun processTopicsDocument(
     val ids = list.map {
         it.id
     }
+    if (ids.isEmpty()) {
+        return Result.success(emptyList())
+    }
     return getTopicsByPredicate(uid, fillHasCommented) {
         Topics.id inList ids
     }.mapResult { infos ->
@@ -588,6 +591,9 @@ suspend fun getTopicByIds(
     fillHasCommented: Boolean?,
     backend: Backend
 ): Result<List<TopicInfo>> {
+    if (ids.isEmpty()) {
+        return Result.success(emptyList())
+    }
     val map = ids.map {
         checkRootReadPermission(ObjectType.TOPIC, it, uid) to it
     }
