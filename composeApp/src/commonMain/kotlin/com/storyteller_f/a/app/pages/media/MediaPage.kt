@@ -6,7 +6,10 @@ import androidx.compose.ui.Modifier
 import com.github.panpf.zoomimage.CoilZoomAsyncImage
 import com.storyteller_f.a.app.MediaPlaySession
 import com.storyteller_f.a.app.common.CenterBox
+import com.storyteller_f.a.app.compontents.AudioView
 import com.storyteller_f.a.app.compontents.VideoView
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Composable
 fun MediaPage(session: MediaPlaySession) {
@@ -21,7 +24,12 @@ fun MediaPage(session: MediaPlaySession) {
 
         is MediaPlaySession.VideoOrAudio -> {
             CenterBox {
-                VideoView(session.obj, false)
+                val remoteMediaItem = session.obj
+                if (remoteMediaItem.contentType.startsWith("video")) {
+                    VideoView(remoteMediaItem, false)
+                } else {
+                    AudioView(remoteMediaItem, false)
+                }
             }
         }
     }

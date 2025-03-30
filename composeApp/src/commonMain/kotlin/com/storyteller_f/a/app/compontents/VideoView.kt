@@ -17,6 +17,8 @@ import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.MediaPlaySession
 import com.storyteller_f.shared.model.MediaInfo
 import kotlinx.serialization.Serializable
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 const val M3U8_MIMETYPE = "application/vnd.apple.mpegurl"
 const val YOUTUBE_MIMETYPE = "video/youtube"

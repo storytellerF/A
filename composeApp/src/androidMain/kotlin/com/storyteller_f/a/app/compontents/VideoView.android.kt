@@ -52,38 +52,14 @@ const val EXTRA_CONTROL_TYPE = "control_type"
 const val EXTRA_CONTROL_PLAY = 1
 const val EXTRA_CONTROL_PAUSE = 2
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
 actual fun VideoView(
     obj: RemoteMediaItem,
     isEmbed: Boolean,
 ) {
     val contentType = obj.contentType
-    MediaPlayerInternal(obj.url, isEmbed) { player, playingSession, currentSession ->
-        var showSheet by remember {
-            mutableStateOf(false)
-        }
-        if (isEmbed) {
-            ObjectBlock {
-                Box(modifier = Modifier.weight(1f)) {
-                    VideoPlayer(playingSession, currentSession, player, true, obj)
-                }
-                VideoOpRow(currentSession, playingSession, contentType) {
-                    showSheet = true
-                }
-            }
-        } else {
-            VideoPlayer(playingSession, currentSession, player, false, obj)
-        }
-        val sheetState = rememberModalBottomSheetState()
-        if (playingSession?.uuid == currentSession.uuid) {
-            VideoPlaylistPicker(showSheet, sheetState, {
-                showSheet = false
-            }, playingSession.playList) { _, i ->
-                player.seekTo(i, 0)
-                player.play()
-            }
-        }
+    MediaPlayerInternal(obj.url, isEmbed, contentType) { player, playingSession, currentSession ->
+        VideoPlayer(playingSession, currentSession, player, isEmbed, obj)
     }
 }
 
@@ -98,57 +74,69 @@ private fun VideoPlayer(
 ) {
     val contentType = obj.contentType
     val ratio = remember(playingSession, currentSession, isEmbed) {
-        if (playingSession?.videoSize != null && playingSession.uuid == currentSession.uuid && !isEmbed) {
+        if (playingSession?.videoSize != null && playingSession.uuids.lastOrNull() == currentSession.uuid && !isEmbed) {
             playingSession.videoSize.width.toFloat() / playingSession.videoSize.height
         } else {
             16f / 9
         }
     }
     Napier.d {
-        "Video ${currentSession.uuid} ratio $ratio ${playingSession?.uuid} ${playingSession?.videoSize} $isEmbed"
+        "Video ${currentSession.uuid} ratio $ratio ${playingSession?.uuids} ${playingSession?.videoSize} $isEmbed"
     }
     Box(modifier = Modifier.aspectRatio(ratio)) {
         when {
             playingSession == null -> PlayerWaiting(currentSession, obj)
-            playingSession.uuid == currentSession.uuid -> AndroidPlayer(currentSession, player, contentType)
+            playingSession.uuids.lastOrNull() == currentSession.uuid -> VideoPlayerInternal(currentSession, player, contentType)
             playingSession.id == currentSession.id -> PlayerOccupy(currentSession)
             else -> PlayerWaiting(currentSession, obj)
         }
     }
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalUuidApi::class)
 @Composable
-private fun BoxScope.AndroidPlayer(
+private fun BoxScope.VideoPlayerInternal(
     currentSession: LocalMediaPlaySession,
     player: MediaController,
     contentType: String
 ) {
-    val (currentIsLoading, currentIsPlaying) = listenPlayerState(player, currentSession)
-    // [8, 12]
-    val pipModifier = buildPlayerModifier(currentIsPlaying, player)
-    AndroidView(
-        factory = {
-            PlayerView(it).apply {
-                controllerShowTimeoutMs = 1000
+    AndroidPlayerContainer(currentSession, player, contentType) { pipModifier, (currentIsLoading) ->
+        AndroidView(
+            factory = {
+                PlayerView(it).apply {
+                    controllerShowTimeoutMs = 1000
+                }
+            },
+            modifier = pipModifier.fillMaxSize()
+        ) {
+            log {
+                "Video ${currentSession.uuid} update"
             }
-        },
-        modifier = pipModifier.fillMaxSize()
-    ) {
-        log {
-            "Video ${currentSession.uuid} update"
+            it.player = player
         }
-        it.player = player
+        if (currentIsLoading && contentType != M3U8_MIMETYPE) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .height(40.dp)
+            )
+        }
     }
-    if (currentIsLoading && contentType != M3U8_MIMETYPE) {
-        CircularProgressIndicator(
-            modifier = Modifier.Companion
-                .align(Alignment.Center)
-                .height(40.dp)
-        )
-    }
-    CheckEnterPipPre31(currentIsPlaying)
+}
+
+@androidx.annotation.OptIn(UnstableApi::class)
+@Composable
+fun BoxScope.AndroidPlayerContainer(
+    currentSession: LocalMediaPlaySession,
+    player: MediaController,
+    contentType: String,
+    block: @Composable BoxScope.(Modifier, MediaPlayerState) -> Unit
+) {
+    val playerState = listenPlayerState(player, currentSession)
+    // [8, 12]
+    val pipModifier = buildPlayerModifier(playerState.currentIsPlaying, player)
+    block(pipModifier, playerState)
+    CheckEnterPipPre31(playerState.currentIsPlaying)
     PlayerBroadcastReceiver(player)
 }
 
@@ -206,7 +194,7 @@ private fun buildPlayerModifier(
 
 @OptIn(ExperimentalUuidApi::class)
 @Composable
-private fun VideoOpRow(
+fun VideoOrAudioOpRow(
     localMediaPlaySession: LocalMediaPlaySession,
     playingSession: MediaPlaySession.VideoOrAudio?,
     contentType: String,
@@ -217,7 +205,7 @@ private fun VideoOpRow(
     val toasterState = LocalToaster.current
     FlowRow {
         val clipboardManager = LocalClipboard.current
-        val isActive = localMediaPlaySession.uuid == playingSession?.uuid
+        val isActive = localMediaPlaySession.uuid == playingSession?.uuids?.lastOrNull()
 
         IconButton(showSheet, enabled = isActive) {
             Icon(Icons.AutoMirrored.Default.List, "playlist")
@@ -250,7 +238,7 @@ private fun VideoOpRow(
             Icon(Icons.Default.PictureInPicture, "pip")
         }
         IconButton({
-            if (localMediaPlaySession.uuid == playingSession?.uuid) {
+            if (localMediaPlaySession.uuid == playingSession?.uuids?.lastOrNull()) {
                 context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
                     putExtra("json", Json.encodeToString<MediaPlaySession>(playingSession))
                 })

@@ -151,7 +151,7 @@ sealed interface MediaPlaySession {
         val obj: RemoteMediaItem,
         val contentType: String,
         val playList: List<ConstPlayItem>,
-        val uuid: Uuid?,
+        val uuids: List<Uuid>,
         val videoSize: CustomVideoSize?
     ) : MediaPlaySession {
         val id = obj.url
@@ -203,6 +203,9 @@ fun AppInternal(httpUrl: String, wsServerUrl: String) {
             val navigator = rememberNavController()
 
             val isPip = rememberIsInPipMode()
+            Napier.d {
+                "App Entry $isPip $localSession"
+            }
             if (isPip && localSession != null) {
                 MediaPage(localSession)
             } else {

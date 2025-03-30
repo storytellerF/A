@@ -23,7 +23,7 @@ object MediaProvider {
     ) {
         val c = controller ?: return
         val session = savedSession.value
-        if (currentSession.uuid == session?.uuid) {
+        if (session?.id == currentSession.id) {
             return
         }
         init(c, currentSession)
@@ -32,35 +32,40 @@ object MediaProvider {
 
     @Synchronized
     fun release(currentSession: LocalMediaPlaySession) {
-        if (currentSession.uuid == savedSession.value?.uuid) {
-            controller?.stop()
-            savedSession.value = null
+        Napier.d {
+            "MediaProvider release $currentSession"
         }
-    }
-
-    @Synchronized
-    fun releaseView(currentSession: LocalMediaPlaySession) {
-        val current = savedSession.value
-        if (currentSession.uuid == current?.uuid) {
-            savedSession.value = current.copy(uuid = null)
+        val session = savedSession.value ?: return
+        val u = session.uuids.lastOrNull() ?: return
+        if (u == currentSession.uuid) {
+            val new = session.uuids.subList(0, session.uuids.size - 1)
+            if (new.isEmpty()) {
+                controller?.stop()
+                savedSession.value = null
+            } else {
+                savedSession.value = session.copy(uuids = new)
+            }
         }
     }
 
     @Synchronized
     fun switch(currentSession: LocalMediaPlaySession) {
         val session = savedSession.value ?: return
-        if (session.id == currentSession.id) {
+        val u = session.uuids.lastOrNull() ?: return
+        if (session.id == currentSession.id && currentSession.uuid != u) {
             Napier.d {
-                "Video ${currentSession.uuid} switch"
+                "Video ${currentSession.uuid} switch to ${currentSession.uuid}"
             }
-            savedSession.value = session.copy(uuid = currentSession.uuid)
+            val new = session.uuids + currentSession.uuid
+            savedSession.value = session.copy(uuids = new)
         }
     }
 
     @Synchronized
     fun update(currentSession: LocalMediaPlaySession, size: CustomVideoSize) {
         val session = savedSession.value ?: return
-        if (session.id == currentSession.id && session.uuid == currentSession.uuid) {
+        val u = session.uuids.lastOrNull() ?: return
+        if (session.id == currentSession.id && currentSession.uuid == u) {
             savedSession.value = session.copy(videoSize = size)
         }
     }
