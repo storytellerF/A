@@ -293,16 +293,18 @@ private fun sendRoomTopic(
     val keyState = handler.state.value
     val keyData = handler.data.value
     if (c.roomInfo.isJoined) {
-        c.wsClient.useWebSocket {
-            sendMessage(c.roomInfo, c.input, keyData, c.topicId, keyState) {
-                c.scope.launch {
-                    c.toasterState.show(
-                        getString(Res.string.private_room_pub_key_loading),
-                        type = ToastType.Info,
-                        duration = 1.seconds
-                    )
-                }
+        if (keyState !is LoadingState.Done || keyData == null) {
+            c.scope.launch {
+                c.toasterState.show(
+                    getString(Res.string.private_room_pub_key_loading),
+                    type = ToastType.Info,
+                    duration = 1.seconds
+                )
             }
+            return
+        }
+        c.wsClient.useWebSocket {
+            sendMessage(c.roomInfo, c.input, keyData, c.topicId)
             delay(500)
             c.scrollToNew()
         }
