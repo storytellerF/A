@@ -130,7 +130,10 @@ private fun doTest(
                 it.mkdirs()
             }
         }
-        file.writeText("${SqlFormatter.format(statements)}\n\n$result\n\n$point")
+        val newText = "${SqlFormatter.format(statements)}\n\n$result\n\n$point"
+        if (!file.exists() || file.readText() != newText) {
+            file.writeText(newText)
+        }
     }
     println("prepared resource")
     testApplication {
