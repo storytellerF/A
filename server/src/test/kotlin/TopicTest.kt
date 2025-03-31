@@ -53,9 +53,11 @@ class TopicTest {
             val session = attachSession(client) {
                 val c = client.createCommunity(NewCommunity("name", "aid")).getOrThrow()
                 val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
-                val reactionInfo = client.addReaction(topicInfo.id, emoji).getOrThrow()
-                assertEquals(emoji, reactionInfo.emoji)
-                assertTrue(reactionInfo.hasReacted)
+                repeat(4) {
+                    val reactionInfo = client.addReaction(topicInfo.id, emoji).getOrThrow()
+                    assertEquals(emoji, reactionInfo.emoji)
+                    assertTrue(reactionInfo.hasReacted)
+                }
                 // 测试幂等
                 client.addReaction(topicInfo.id, emoji).getOrThrow()
                 topicInfo
