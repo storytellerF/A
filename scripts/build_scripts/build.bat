@@ -1,4 +1,7 @@
+set AVD_NAME=ATest
 cmd /c .\gradlew.bat build || exit /b
+cmd /c .\scripts\tool_scripts\create-avd.bat || exit /b
+cmd /c .\scripts\tool_scripts\start-wait-avd.bat || exit /b
 start cmd /c .\gradlew.bat test-server:run
 
 echo Waiting for port 8888 to become available...
@@ -16,4 +19,6 @@ cmd /c .\gradlew.bat :composeApp:connectedAndroidTest || exit /b
 cmd /c .\gradlew.bat :composeApp:desktopTest || exit /b
 @REM ./gradlew :composeApp:wasmJsTest
 @REM ./gradlew :composeApp:iosSimulatorArm64Test
-cmd /c "for /f \"tokens=5\" %i in ('netstat -ano ^| findstr :8888') do taskkill /PID %i /F"
+for /f "tokens=5" %%i in ('netstat -ano ^| findstr :8888') do taskkill /PID %%i /F
+
+adb emu kill

@@ -1,6 +1,5 @@
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.report.ReportMergeTask
-import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 
 plugins {
@@ -75,16 +74,16 @@ subprojects {
             tasks.withType<Detekt>().map { it.sarifReportFile })
     }
 }
-
+val composeModules = listOf("composeApp", "shared")
+val jvmLibModules = listOf("server", "crypto-jvm", "backend", "client-lib")
 dependencies {
-    listOf("server", "crypto-jvm", "backend").forEach {
+    (composeModules + jvmLibModules.forEach {
         kover(project(":$it"))
-    }
+    })
 }
 
 subprojects {
-    val jvmLibModules = listOf("server", "crypto-jvm", "backend")
-    if (jvmLibModules.contains(name)) {
+    if ((jvmLibModules + composeModules).contains(name)) {
         apply(plugin = "org.jetbrains.kotlinx.kover")
         kover {
             reports {
