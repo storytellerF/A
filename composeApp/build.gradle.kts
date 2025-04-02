@@ -50,14 +50,9 @@ kotlin {
     }
 
     androidTarget {
-//        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
-//        compilations.all {
-//            @Suppress("DEPRECATION")
-//            kotlinOptions { jvmTarget = "21" }
-//        }
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
     }
@@ -106,6 +101,9 @@ kotlin {
             implementation(libs.androidx.ui.test.junit4.android)
             implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
+        }
+        androidInstrumentedTest.dependencies {
+            implementation(libs.leakcanary.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)

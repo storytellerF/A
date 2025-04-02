@@ -49,43 +49,84 @@ class SectionPagingSource<DATUM : Any>(
     ): PagingSourceLoadResult<SectionLoadParams<PrimaryKey>, DATUM> {
         val index = params.key?.index ?: 0
         val key = params.key?.param
-        val service = services.getOrNull(index)
-        return service?.load(
+        return load(index, key, params.loadSize, params.placeholdersEnabled)
+    }
+
+    private suspend fun load(
+        index: Int,
+        key: PrimaryKey?,
+        loadSize: Int,
+        placeholdersEnabled: Boolean
+    ): LoadResult<SectionLoadParams<PrimaryKey>, DATUM> {
+        val service = services.getOrNull(index) ?: return PagingSourceLoadResultPage(
+            data = emptyList(), prevKey = null, // Only paging forward.
+            nextKey = null
+        )
+        val pageResult = service.load(
             if (key == null) {
-                PagingSourceLoadParamsRefresh(null, params.loadSize, params.placeholdersEnabled)
+                PagingSourceLoadParamsRefresh(null, loadSize, placeholdersEnabled)
             } else {
-                PagingSourceLoadParamsAppend(key, params.loadSize, params.placeholdersEnabled)
+                PagingSourceLoadParamsAppend(key, loadSize, placeholdersEnabled)
             }
-        )?.loadResult(index)
-            ?: PagingSourceLoadResultPage(
-                data = emptyList(), prevKey = null, // Only paging forward.
-                nextKey = null
+        )
+        return when (pageResult) {
+            is PagingSourceLoadResultError<PrimaryKey, DATUM> -> PagingSourceLoadResultError(pageResult.throwable)
+            is PagingSourceLoadResultInvalid<PrimaryKey, DATUM> -> PagingSourceLoadResultInvalid()
+            is PagingSourceLoadResultPage<PrimaryKey, DATUM> -> load(loadSize, pageResult, index, placeholdersEnabled)
+        }
+    }
+
+    private suspend fun load(
+        loadSize: Int,
+        prePageResult: PagingSourceLoadResultPage<PrimaryKey, DATUM>,
+        index: Int,
+        placeholdersEnabled: Boolean
+    ): LoadResult<SectionLoadParams<PrimaryKey>, DATUM> {
+        return if (loadSize - prePageResult.data.size > 0) {
+            getNextParams(prePageResult.nextKey, index)?.let {
+                when (val nextPageResult = load(it.index, it.param, loadSize, placeholdersEnabled)) {
+                    is PagingSourceLoadResultError<SectionLoadParams<PrimaryKey>, DATUM> -> PagingSourceLoadResultError(
+                        nextPageResult.throwable
+                    )
+
+                    is PagingSourceLoadResultInvalid<SectionLoadParams<PrimaryKey>, DATUM> -> PagingSourceLoadResultInvalid()
+                    is PagingSourceLoadResultPage<SectionLoadParams<PrimaryKey>, DATUM> -> {
+                        //合并两页
+                        PagingSourceLoadResultPage(
+                            prePageResult.data + nextPageResult.data,
+                            null,
+                            nextPageResult.nextKey
+                        )
+                    }
+                }
+
+            } ?: PagingSourceLoadResultPage(
+                prePageResult.data,
+                null,
+                getNextParams(prePageResult.nextKey, index)
+            )
+        } else
+            PagingSourceLoadResultPage(
+                prePageResult.data,
+                null,
+                getNextParams(prePageResult.nextKey, index)
             )
     }
 
-    private fun PagingSourceLoadResult<PrimaryKey, DATUM>.loadResult(
+    private fun getNextParams(
+        nextToken: PrimaryKey?,
         index: Int
-    ): PagingSourceLoadResult<SectionLoadParams<PrimaryKey>, DATUM> = when (this) {
-        is PagingSourceLoadResultError<PrimaryKey, DATUM> -> PagingSourceLoadResultError(throwable)
-        is PagingSourceLoadResultInvalid<PrimaryKey, DATUM> -> PagingSourceLoadResultInvalid()
-        is PagingSourceLoadResultPage<PrimaryKey, DATUM> -> {
-            val pagination = nextKey
-            PagingSourceLoadResultPage(
-                data,
-                null,
-                if (pagination != null) {
-                    SectionLoadParams(index, pagination)
-                } else {
-                    val newIndex = index + 1
-                    if (newIndex >= services.size) {
-                        null
-                    } else {
-                        SectionLoadParams(newIndex, null)
-                    }
-                }
-            )
+    ): SectionLoadParams<PrimaryKey>? =
+        if (nextToken != null) {
+            SectionLoadParams(index, nextToken)
+        } else {
+            val newIndex = index + 1
+            if (newIndex >= services.size) {
+                null
+            } else {
+                SectionLoadParams(newIndex, null)
+            }
         }
-    }
 
     override fun getRefreshKey(state: PagingState<SectionLoadParams<PrimaryKey>, DATUM>) = null
 }

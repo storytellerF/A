@@ -2,7 +2,6 @@ package com.storyteller_f.cli
 
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.shared.model.AMEDIA_BUCKET
-import com.storyteller_f.shared.type.ObjectType
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ExperimentalCli
 import kotlinx.cli.Subcommand
@@ -31,8 +30,7 @@ class PrintCommand : Subcommand("print", "print") {
     override fun execute() {
         runBlocking {
             val result = backend.topicSearchService.searchDocument(
-                10,
-                parentType = ObjectType.COMMUNITY
+                10
             ).getOrThrow()
             Napier.i {
                 "total ${result.total} ${result.list.size}"

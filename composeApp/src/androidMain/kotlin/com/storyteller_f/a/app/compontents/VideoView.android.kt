@@ -137,7 +137,6 @@ fun BoxScope.AndroidPlayerContainer(
     block: @Composable BoxScope.(Modifier, MediaPlayerState) -> Unit
 ) {
     val playerState = listenPlayerState(player, currentSession)
-    // [8, 12]
     val pipModifier = buildPlayerModifier(playerState.currentIsPlaying, player)
     block(pipModifier, playerState)
     CheckEnterPipPre31(playerState.currentIsPlaying)

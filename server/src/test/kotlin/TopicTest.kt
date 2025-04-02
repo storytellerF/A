@@ -64,6 +64,9 @@ class TopicTest {
             }
             val topicId = session.custom.id
             attachSession(client) {
+                assertFails {
+                    client.addReaction(topicId, emoji).getOrThrow()
+                }
                 client.joinCommunity(session.custom.rootId)
                 val reactions = client.getReactions(topicId).getOrThrow()
                 assertEquals(1, reactions.data.size)
