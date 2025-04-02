@@ -74,7 +74,7 @@ private fun BoxScope.AudioPlayer(
                 modifier = Modifier
                     .aspectRatio(1f)
                     .clip(CircleShape)
-                    .weight(1f),
+                    .fillMaxHeight(),
                 fallback = rememberVectorPainter(Icons.Default.Audiotrack)
             )
             Box(

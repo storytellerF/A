@@ -4,7 +4,6 @@ import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.*
 import com.storyteller_f.a.server.common.checkParameter
-import com.storyteller_f.a.server.route.RouteTopics.Id
 import com.storyteller_f.a.server.webSocketContent
 import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.shared.model.MediaResponse
@@ -92,11 +91,8 @@ class RouteTopics(val fillHasCommented: Boolean? = null, val aid: String? = null
     class Search(
         @Suppress("unused") val parent: RouteTopics = RouteTopics(),
         val word: List<String>? = null,
-        val parentId: List<PrimaryKey>? = null,
+        val parentId: PrimaryKey? = null,
         val parentType: ObjectType? = null,
-        val rootId: List<PrimaryKey>? = null,
-        val rootType: ObjectType? = null,
-        val author: PrimaryKey? = null,
     )
 
     @Resource("recommend")

@@ -46,6 +46,7 @@ kotlinxSerializationJson = "1.8.0"
 kover = "0.9.1"
 krop-ui = "0.1.6"
 ktor = "3.1.1"
+leakcanaryAndroid = "2.14"
 lifecycleViewmodelCompose = "2.8.7"
 log4jCore = "2.24.3"
 logback = "1.5.18"
@@ -118,6 +119,7 @@ detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", 
 detekt-rules-libraries = { module = "io.gitlab.arturbosch.detekt:detekt-rules-libraries", version.ref = "detektVersion" }
 detekt-rules-ruleauthors = { module = "io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors", version.ref = "detektVersion" }
 github-newpipeextractor = { module = "com.github.teamnewpipe.NewPipeExtractor:NewPipeExtractor", version.ref = "newpipeextractorVersion" }
+leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnectorJava" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
 testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }

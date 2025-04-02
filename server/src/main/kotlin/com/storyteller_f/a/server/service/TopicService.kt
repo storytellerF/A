@@ -3,6 +3,7 @@ package com.storyteller_f.a.server.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
 import com.storyteller_f.a.server.route.RouteTopics
+import com.storyteller_f.index.DocumentSearch
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.model.*
@@ -452,23 +453,26 @@ suspend fun searchPublicTopics(
     backend: Backend,
     uid: PrimaryKey?
 ): Result<PaginationResult<TopicInfo>?> {
-    if (search.rootType != null && search.rootType != ObjectType.COMMUNITY && search.rootType != ObjectType.USER) {
-        return Result.failure(BadRequestException("can't search private topic"))
-    }
-    return backend.topicSearchService.searchDocument(
-        size,
-        search.word,
-        preTopicId = preTopicId,
-        nextTopicId = nextTopicId,
-        author = search.author,
-        rootType = search.rootType,
-        parentType = search.parentType,
-        rootIdList = search.rootId,
-        parentIdList = search.parentId
-    ).mapResult { (list, total) ->
-        processTopicsDocument(uid, search.parent.fillHasCommented, backend, list).map {
-            PaginationResult(it, total)
+    return if (search.parentId != null && search.parentType != null) {
+        checkRootReadPermission(search.parentType, search.parentId, uid).mapResultNotNull {
+            if (it.isPrivate) {
+                Result.failure(BadRequestException("can't search in private chat"))
+            } else {
+                backend.topicSearchService.searchDocument(
+                    size,
+                    search.word,
+                    preTopicId = preTopicId,
+                    nextTopicId = nextTopicId,
+                    documentSearch = DocumentSearch.Topics(search.parentId)
+                ).mapResult { (list, total) ->
+                    processTopicsDocument(uid, search.parent.fillHasCommented, backend, list).map {
+                        PaginationResult(it, total)
+                    }
+                }
+            }
         }
+    } else {
+        Result.failure(BadRequestException("invalid param"))
     }
 }
 
@@ -547,7 +551,7 @@ suspend fun recommendTopics(
                 size,
                 preTopicId = preTopicId,
                 nextTopicId = nextTopicId,
-                rootIdList = it
+                documentSearch = DocumentSearch.Recommend(uid, it)
             )
         }
     } else {
@@ -555,7 +559,7 @@ suspend fun recommendTopics(
             size,
             preTopicId = preTopicId,
             nextTopicId = nextTopicId,
-            parentType = ObjectType.COMMUNITY,
+            documentSearch = DocumentSearch.RecommendNotLogin
         )
     }.mapResult { (list, total) ->
         processTopicsDocument(uid, fillHasCommented, backend, list).map {
