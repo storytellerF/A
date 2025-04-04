@@ -2,7 +2,7 @@ package com.storyteller_f.tables
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
-import com.storyteller_f.shared.model.AMEDIA_BUCKET
+import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.PosterSearch
@@ -291,11 +291,21 @@ suspend fun DatabaseFactory.getCommunityByIds(idList: List<PrimaryKey>): Result<
     }
 }
 
+suspend fun DatabaseFactory.getCommunityByAids(idList: List<String>): Result<List<CommunityRawResult>> {
+    return mapQuery({
+        CommunityRawResult(toCommunityIfo(null), icon, poster)
+    }, Community::wrapRow) {
+        Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
+            Aids.value inList idList
+        }
+    }
+}
+
 suspend fun processCommunityList(
     backend: Backend,
     list: List<CommunityRawResult>
 ): Result<List<CommunityInfo>> {
-    return backend.mediaService.get(AMEDIA_BUCKET, list.flatMap { (_, icon, poster) ->
+    return backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, list.flatMap { (_, icon, poster) ->
         listOf(icon, poster)
     }).map { icons ->
         list.mapIndexed { i, communityPair ->

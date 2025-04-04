@@ -2,9 +2,11 @@ package com.storyteller_f.shared.model
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
+import java.io.File
+import java.nio.file.Path
 import kotlin.math.abs
 
-const val AMEDIA_BUCKET = "amedia"
+const val AMEDIA_DEFAULT_BUCKET = "default"
 
 @Serializable
 data class Dimension(val width: Int, val height: Int)
@@ -21,8 +23,9 @@ data class MediaItem(
     val lastModified: LocalDateTime
 )
 
-@Serializable
-class MediaResponse(val file: String, val contentType: String)
+class FileResponse(val file: File)
+
+class PathResponse(val file: Path)
 
 fun checkMediaDimensionRatioMatch(dimension: Dimension, aspectRatio: Dimension): Boolean {
     val aspectHeight = dimension.width.toFloat() * aspectRatio.height / aspectRatio.width

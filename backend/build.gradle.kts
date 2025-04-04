@@ -32,8 +32,9 @@ dependencies {
     implementation(libs.tika.core)
     implementation(libs.kim)
     runtimeOnly(libs.vavi.image.avif)
-
+    implementation(libs.memoryfilesystem)
     implementation(libs.lucene.backward.codecs)
+    
     testImplementation(libs.testcontainers.elasticsearch)
 }
 

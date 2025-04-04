@@ -5,6 +5,7 @@ import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -109,8 +110,14 @@ class ClientWebSocket(
                     }
                 }
             }.onFailure {
-                Napier.e(it, tag = "ClientWebSocket") {
-                    "Exception in startListenerWebSocket"
+                if (it is ClosedReceiveChannelException) {
+                    Napier.i(tag = "ClientWebSocket") {
+                        "Server closed"
+                    }
+                } else {
+                    Napier.e(it, tag = "ClientWebSocket") {
+                        "Exception in startListenerWebSocket"
+                    }
                 }
             }
         }

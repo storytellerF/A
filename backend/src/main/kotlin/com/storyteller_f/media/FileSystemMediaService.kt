@@ -5,51 +5,41 @@ import com.storyteller_f.shared.model.MediaItem
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toKotlinInstant
 import kotlinx.datetime.toLocalDateTime
 import org.apache.http.client.utils.URIBuilder
 import org.apache.tika.Tika
-import java.io.File
 import java.net.URLConnection
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.*
 
-class FileSystemMediaService(private val url: String, base: String) : MediaService {
-    private val root = File(base).canonicalFile
+class FileSystemMediaService(private val url: String, val base: Path) : MediaService {
     private val tika = Tika()
 
     init {
-        Napier.i {
-            "media path ${root.canonicalPath}"
+        if (!base.exists()) {
+            base.createDirectories()
         }
-        if (!root.exists()) {
-            val r = root.mkdirs()
-            assert(r)
+        Napier.i {
+            "media path ${base.toRealPath().pathString}"
         }
     }
 
     override suspend fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>> {
         return withContext(Dispatchers.IO) {
-            val file = File(root, bucketName)
-            if (!file.exists()) {
-                val r = file.mkdir()
-                if (!r) {
-                    return@withContext Result.failure(Exception("bucket $bucketName create failed"))
-                }
+            val bucketPath = base.resolve(bucketName)
+            if (!bucketPath.exists()) {
+                bucketPath.createDirectories()
             }
 
             list.map { uploadPack ->
-                val target = File(file, uploadPack.name)
-                target.parentFile?.let {
-                    if (!it.exists()) {
-                        val r = it.mkdirs()
-                        if (!r) {
-                            return@withContext Result.failure(Exception("create $it failed"))
-                        }
-                    }
-                }
-                Files.copy(uploadPack.path.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                val target = bucketPath.resolve(uploadPack.name)
+                target.createParentDirectories()
+                Files.copy(uploadPack.path.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
             }
             get(bucketName, list.map {
                 it.name
@@ -63,10 +53,10 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
                 when (it) {
                     null -> null
                     else -> {
-                        val file = File(root, "$bucketName/$it")
-                        if (file.exists()) {
-                            val item = stat(it, file)
-                            val dimension = getDimension(file, item.contentType)
+                        val mediaPath = base.resolve("$bucketName/$it")
+                        if (mediaPath.exists()) {
+                            val item = stat(it, mediaPath)
+                            val dimension = getDimension(mediaPath, item.contentType)
                             MediaInfo(URIBuilder(url).setPath("amedia/$it").build().toString(), item, dimension)
                         } else {
                             null
@@ -77,46 +67,58 @@ class FileSystemMediaService(private val url: String, base: String) : MediaServi
         }
     }
 
-    private suspend fun stat(it: String, file: File): MediaItem {
+    private suspend fun stat(it: String, file: Path): MediaItem {
         return withContext(Dispatchers.IO) {
             val contentType = kotlin.runCatching {
                 tika.detect(file)
-            }.getOrNull() ?: URLConnection.guessContentTypeFromName(file.path)
+            }.getOrNull() ?: URLConnection.guessContentTypeFromName(file.pathString)
                 ?: org.apache.http.entity.ContentType.APPLICATION_OCTET_STREAM.mimeType
             MediaItem(
                 it,
                 contentType,
-                file.length(),
+                file.fileSize(),
                 it.substringAfter("/"),
-                Instant.fromEpochMilliseconds(file.lastModified()).toLocalDateTime(TimeZone.UTC)
+                file.getLastModifiedTime().toInstant().toKotlinInstant().toLocalDateTime(TimeZone.UTC)
             )
         }
     }
 
+    @OptIn(ExperimentalPathApi::class)
     override suspend fun clean(bucketName: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
-            val file = File(root, bucketName)
-            file.deleteRecursively()
-            Result.success(Unit)
+            runCatching {
+                val bucketPath = base.resolve(bucketName)
+                bucketPath.deleteRecursively()
+            }
         }
     }
 
     override suspend fun list(bucketName: String, prefix: String): Result<List<MediaInfo>> {
         return withContext(Dispatchers.IO) {
-            val file = File(root, "$bucketName/$prefix")
-            get(bucketName, file.listFiles().orEmpty().map {
-                "${prefix}${it.name}"
-            }).map {
+            val p = base.resolve("$bucketName/$prefix")
+            val children = buildList<String?> {
+                p.visitFileTree(1) {
+                    onVisitFile { file, _ ->
+                        add("$prefix${file.name}")
+                        FileVisitResult.CONTINUE
+                    }
+                }
+            }
+            get(bucketName, children).map {
                 it.filterNotNull()
             }
         }
     }
 
-    fun getResponse(it: List<String>): File? {
-        val file = File(root, "amedia/${it.joinToString("/")}")
-        if (file.canonicalPath != file.absolutePath) {
-            return null
-        }
-        return file
+    fun getResponse(it: List<String>): Path? {
+        return kotlin.runCatching {
+            val path = base.resolve("amedia/${it.joinToString("/")}")
+            val file = path.toRealPath()
+            if (file.pathString != path.pathString) {
+                null
+            } else {
+                file
+            }
+        }.getOrNull()
     }
 }

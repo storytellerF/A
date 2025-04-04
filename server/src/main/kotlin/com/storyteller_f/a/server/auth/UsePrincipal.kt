@@ -4,7 +4,9 @@ import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.CustomBadRequestException
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.UnauthorizedException
-import com.storyteller_f.shared.model.MediaResponse
+import com.storyteller_f.a.server.ServerConfig
+import com.storyteller_f.shared.model.FileResponse
+import com.storyteller_f.shared.model.PathResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -13,7 +15,6 @@ import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
-import java.io.File
 
 suspend inline fun <reified R : Any> RoutingContext.usePrincipal(
     reader: DatabaseReader,
@@ -29,9 +30,9 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipal(
 }
 
 suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(reader: DatabaseReader, block: () -> Result<R?>) {
-    usePrincipalOrNull(reader) {
+    callRespond<R>({
         block()
-    }
+    }, null, reader)
 }
 
 suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
@@ -39,12 +40,20 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
     block: (PrimaryKey?) -> Result<R?>
 ) {
     val uid = call.principal<CustomPrincipal>()?.uid
-    // 有可能存在bug 导致block 抛出异常，所以需要进行一次try catch
+    callRespond<R>(block, uid, reader)
+}
+
+suspend inline fun <reified R : Any> RoutingContext.callRespond(
+    block: (PrimaryKey?) -> Result<R?>,
+    uid: PrimaryKey?,
+    reader: DatabaseReader
+) {
     try {
         block(uid).onSuccess {
             when (it) {
                 null -> call.respond(HttpStatusCode.NotFound)
-                is MediaResponse -> call.respondFile(File(it.file))
+                is FileResponse -> call.respondFile(it.file)
+                is PathResponse -> call.respondPath(it.file)
                 is Unit -> call.respond(HttpStatusCode.OK)
                 else -> call.respond(it)
             }
@@ -81,7 +90,10 @@ suspend fun RoutingContext.respondError(e: Throwable, reader: DatabaseReader): B
         }
 
         else -> {
-            call.respond(HttpStatusCode.InternalServerError, e.localizedMessage ?: e.toString())
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                if (ServerConfig.IS_PROD) "" else (e.message ?: e.toString())
+            )
             return false
         }
     }

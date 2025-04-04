@@ -170,26 +170,6 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 }
             }
 
-            when (documentSearch) {
-                is DocumentSearch.Recommend -> {
-                    add(buildParentIdListTermSearch(documentSearch.communities) to true)
-                    add(TermQuery.of { t ->
-                        t.field("author").value(documentSearch.uid)
-                    }._toQuery() to false)
-                }
-
-                DocumentSearch.RecommendNotLogin -> {
-                    add(TermQuery.of { t ->
-                        t.field("parentType.keyword").value(ObjectType.COMMUNITY.name)
-                    }._toQuery() to true)
-                }
-
-                is DocumentSearch.Topics -> {
-                    add(buildParentIdListTermSearch(listOf(documentSearch.parentId)) to true)
-                }
-
-                DocumentSearch.All -> {}
-            }
             nextTopicId?.let { n ->
                 add(RangeQuery.of { r ->
                     r.untyped {
@@ -204,6 +184,8 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                     }
                 }._toQuery() to true)
             }
+
+            createTopicSearchQuery(documentSearch)
         }
 
         Napier.i {
@@ -214,24 +196,49 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
         } else {
             BoolQuery.of { b ->
                 queryList.forEach {
-                    if (it.second)
+                    if (it.second) {
                         b.must(it.first)
-                    else
+                    } else {
                         b.mustNot(it.first)
+                    }
                 }
                 b
             }._toQuery()
         }
     }
 
+    private fun MutableList<Pair<Query, Boolean>>.createTopicSearchQuery(
+        documentSearch: DocumentSearch
+    ) {
+        when (documentSearch) {
+            is DocumentSearch.Recommend -> {
+                add(buildParentIdListTermSearch(documentSearch.communities) to true)
+                add(TermQuery.of { t ->
+                    t.field("author").value(documentSearch.uid)
+                }._toQuery() to false)
+            }
+
+            DocumentSearch.RecommendNotLogin, DocumentSearch.CommunityRoot -> {
+                add(TermQuery.of { t ->
+                    t.field("parentType.keyword").value(ObjectType.COMMUNITY.name)
+                }._toQuery() to true)
+            }
+
+            is DocumentSearch.Topics -> {
+                add(buildParentIdListTermSearch(listOf(documentSearch.parentId)) to true)
+            }
+
+            DocumentSearch.All -> {}
+        }
+    }
+
     private fun buildParentIdListTermSearch(list: List<PrimaryKey>) = TermsQuery.of {
-        it.field("parent").terms { builder ->
+        it.field("parentId").terms { builder ->
             builder.value(list.map { id ->
                 FieldValue.of(id)
             })
         }
     }._toQuery()
-
 }
 
 private suspend fun <T> useElasticClient(

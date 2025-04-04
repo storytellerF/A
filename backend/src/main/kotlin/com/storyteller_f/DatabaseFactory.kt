@@ -17,6 +17,9 @@ object DatabaseFactory {
     }
 
     fun connect(connection: DatabaseConnection) {
+        Napier.d {
+            "connect $connection"
+        }
         val (uri, driver, user, password) = connection
         Database.connect(uri, driver, user, password)
     }
@@ -58,7 +61,7 @@ object DatabaseFactory {
                 } catch (e: Throwable) {
                     if (e !is UnauthorizedException) {
                         Napier.e(e, "database failed") {
-                            "$statements\nat ${r.stackTraceToString()}"
+                            "${connection.connection}"
                         }
                     }
                     throw e
@@ -79,12 +82,13 @@ object DatabaseFactory {
             newSuspendedTransaction(Dispatchers.IO) {
                 debug = onExplainResult != null
                 try {
-                    explainQuery<T>(r, block)
+                    explainQuery(r, block)
                     transform(block())
                 } catch (e: Throwable) {
                     if (e !is UnauthorizedException) {
-                        Napier.e(e, "database failed") {
-                            "$statements\nat ${r.stackTraceToString()}"
+                        r.initCause(e)
+                        Napier.e(r, "database failed") {
+                            "${connection.connection}"
                         }
                     }
                     throw e
@@ -173,6 +177,7 @@ object DatabaseFactory {
             val result = explain {
                 block()
             }.toList().joinToString("\n")
+            assert(statements.isNotEmpty())
             val input = statements.toString().split("\n").firstOrNull {
                 it.isNotEmpty() && !it.contains("INFORMATION_SCHEMA")
             }

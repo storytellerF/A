@@ -3,6 +3,7 @@ package com.storyteller_f.a.server.auth
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
+import com.storyteller_f.CustomBadRequestException
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.AidCredential
@@ -132,28 +133,24 @@ suspend fun ApplicationCall.respondUnauthorizedResponse(reader: DatabaseReader) 
     respond(UnauthorizedResponse(HttpAuthHeader.Single("Custom", data)))
 }
 
-private suspend fun RoutingContext.signIn(backend: Backend, reader: DatabaseReader) {
+private suspend fun RoutingContext.signIn(backend: Backend, reader: DatabaseReader): Result<UserInfo> {
     val pack = call.receive<SignInPack>()
     val data = call.getData(reader)
     val f = finalData(data)
-    DatabaseFactory.getUserByAddress(pack.ad).filterNull {
+    return DatabaseFactory.getUserByAddress(pack.ad).filterNull {
         BadRequestException("user not found")
-    }.onSuccess { (info, icon, publicKey) ->
+    }.mapResult { (info, icon, publicKey) ->
         if (verify(publicKey, pack.sig, f)) {
             processUserList(backend, listOf(info to icon)).map {
                 it.first()
-            }.onSuccess { value ->
+            }.map { value ->
                 val id = value.id
                 saveSuccessSessionOnFirst(id, reader)
-                call.respond(value)
-            }.onFailure {
-                call.respond(HttpStatusCode.BadRequest, "media service get failed.")
+                value
             }
         } else {
-            call.respond(HttpStatusCode.BadRequest, "verify failed.")
+            Result.failure(BadRequestException("Verify failed"))
         }
-    }.onFailure {
-        call.respond(HttpStatusCode.BadRequest, it.message.toString())
     }
 }
 
@@ -165,11 +162,11 @@ private fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey, reader: Dat
     }
 }
 
-private suspend fun RoutingContext.signUp(backend: Backend, reader: DatabaseReader) {
+private suspend fun RoutingContext.signUp(backend: Backend, reader: DatabaseReader): Result<UserInfo> {
     val pack = call.receive<SignUpPack>()
     val data = call.getData(reader)
     val f = finalData(data)
-    if (verify(pack.pk, pack.sig, f)) {
+    return if (verify(pack.pk, pack.sig, f)) {
         DatabaseFactory.isUserNotExists(pack.pk).mapResult { bool ->
             if (bool) {
                 val ad = calcAddress(pack.pk)
@@ -182,15 +179,11 @@ private suspend fun RoutingContext.signUp(backend: Backend, reader: DatabaseRead
                     }
                 }
             } else {
-                Result.failure(BadRequestException("User exists."))
+                Result.failure(BadRequestException("User exists"))
             }
-        }.onSuccess {
-            call.respond(it)
-        }.onFailure { exception ->
-            call.respond(HttpStatusCode.BadRequest, exception.message.toString())
         }
     } else {
-        call.respond(HttpStatusCode.BadRequest, "Verify failed.")
+        Result.failure(CustomBadRequestException("Verify failed"))
     }
 }
 
@@ -267,7 +260,6 @@ private fun ApplicationCall.getData(reader: DatabaseReader): String {
     return data
 }
 
-@OptIn(ExperimentalUuidApi::class)
 private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession, String> {
     val remote = remoteIp(reader).first().first
     return when (val session = sessions.get(UserSession::class)) {
@@ -342,15 +334,21 @@ fun Application.configureAuth(backend: Backend, reader: DatabaseReader) {
 
 fun Route.bindUnprotectedAccountRoute(backend: Backend, databaseReader: DatabaseReader) {
     get<RouteAccounts.GetData> {
-        call.respondText(call.getData(databaseReader))
+        omitPrincipal(databaseReader) {
+            Result.success(call.getData(databaseReader))
+        }
     }
 
     post<RouteAccounts.SignUp> {
-        signUp(backend, databaseReader)
+        omitPrincipal(databaseReader) {
+            signUp(backend, databaseReader)
+        }
     }
 
     post<RouteAccounts.SignIn> {
-        signIn(backend, databaseReader)
+        omitPrincipal(databaseReader) {
+            signIn(backend, databaseReader)
+        }
     }
 }
 
