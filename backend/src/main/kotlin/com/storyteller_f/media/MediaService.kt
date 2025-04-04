@@ -3,7 +3,7 @@ package com.storyteller_f.media
 import com.ashampoo.kim.common.convertToPhotoMetadata
 import com.ashampoo.kim.jvm.KimJvm
 import com.storyteller_f.Backend
-import com.storyteller_f.shared.model.AMEDIA_BUCKET
+import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import io.github.aakira.napier.Napier
@@ -11,11 +11,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.tika.Tika
 import java.io.File
-import java.io.FileInputStream
+import java.nio.file.Path
 import javax.imageio.ImageIO
-import javax.imageio.stream.FileImageInputStream
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamConstants
+import kotlin.io.path.inputStream
 
 data class UploadPack(
     val name: String,
@@ -40,9 +40,9 @@ suspend fun uploadFiles(
     files: List<Triple<File, String, String?>>
 ): Result<List<MediaInfo?>> {
     val packs = files.map { (file, saveFileName, contentType) ->
-        val type = checkContentType(file, tika, contentType)
+        val type = checkContentType(file.toPath(), tika, contentType)
         val meta = if (type.second.startsWith("image")) {
-            getDimension(file, type.second)?.let {
+            getDimension(file.toPath(), type.second)?.let {
                 mapOf("width" to it.width.toString(), "height" to it.height.toString())
             } ?: emptyMap()
         } else {
@@ -51,11 +51,11 @@ suspend fun uploadFiles(
         UploadPack(saveFileName, file, contentType, meta)
     }
 
-    return backend.mediaService.upload(AMEDIA_BUCKET, packs)
+    return backend.mediaService.upload(AMEDIA_DEFAULT_BUCKET, packs)
 }
 
 private fun checkContentType(
-    file: File,
+    file: Path,
     tika: Tika,
     contentType: String?
 ): Pair<String?, String> {
@@ -81,9 +81,9 @@ fun loadAvif() {
     }
 }
 
-suspend fun getSvgSize(file: File): Pair<String?, Pair<String?, String?>> {
+suspend fun getSvgSize(file: Path): Pair<String?, Pair<String?, String?>> {
     return withContext(Dispatchers.IO) {
-        FileInputStream(file).use {
+        file.inputStream().use {
             val factory = XMLInputFactory.newInstance()
             val reader = factory.createXMLStreamReader(it)
             try {
@@ -108,7 +108,7 @@ suspend fun getSvgSize(file: File): Pair<String?, Pair<String?, String?>> {
 }
 
 suspend fun getDimension(
-    file: File,
+    file: Path,
     contentType: String
 ): Dimension? {
     if (contentType == "image/svg+xml") {
@@ -122,12 +122,14 @@ suspend fun getDimension(
     }
     return ImageIO.getImageReadersByMIMEType(contentType).asSequence().firstNotNullOfOrNull { reader ->
         try {
-            reader.input = FileImageInputStream(file)
-            reader.read(reader.minIndex)
-            Dimension(
-                reader.getWidth(reader.minIndex),
-                reader.getHeight(reader.minIndex)
-            )
+            file.inputStream().use {
+                reader.input = it
+                reader.read(reader.minIndex)
+                Dimension(
+                    reader.getWidth(reader.minIndex),
+                    reader.getHeight(reader.minIndex)
+                )
+            }
         } catch (e: Throwable) {
             Napier.e(throwable = e) {
                 "get image dimension failed $file"
@@ -139,7 +141,7 @@ suspend fun getDimension(
     }
 }
 
-private fun getAvifDimension(file: File): Dimension? {
+private fun getAvifDimension(file: Path): Dimension? {
     try {
         val metadata = KimJvm.readMetadata(file)?.convertToPhotoMetadata()
         if (metadata != null) {
@@ -158,7 +160,7 @@ private fun getAvifDimension(file: File): Dimension? {
     return null
 }
 
-private suspend fun getSvgDimension(file: File): Dimension? {
+private suspend fun getSvgDimension(file: Path): Dimension? {
     val (viewBox, pair) = getSvgSize(file)
     if (viewBox != null) {
         val viewBoxSizeList = viewBox.split(" ").map {

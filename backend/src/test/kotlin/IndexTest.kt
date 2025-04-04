@@ -1,3 +1,4 @@
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.storyteller_f.ElasticConnection
 import com.storyteller_f.index.ElasticTopicSearchService
 import com.storyteller_f.index.LuceneTopicSearchService
@@ -41,6 +42,6 @@ fun testIndex(block: suspend (TopicSearchService) -> Unit) {
                 )
                 block(service)
             }
-        block(LuceneTopicSearchService(Path("../deploy_test/lucene_data/index")))
+        block(LuceneTopicSearchService(MemoryFileSystemBuilder.newLinux().build().getPath("/documents"), true))
     }
 }

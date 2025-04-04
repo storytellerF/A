@@ -1,7 +1,7 @@
 package com.storyteller_f.a.server.service
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.model.AMEDIA_BUCKET
+import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
@@ -116,7 +116,7 @@ suspend fun checkIcon(
     aspectRatio: Dimension? = null
 ): Result<MediaCheckResult> {
     return if (!iconName.isNullOrBlank()) {
-        backend.mediaService.get(AMEDIA_BUCKET, listOf(iconName)).map {
+        backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, listOf(iconName)).map {
             val mediaInfo = it.firstOrNull()
             val dimension = mediaInfo?.dimension
             when {

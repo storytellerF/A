@@ -1,7 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.model.AMEDIA_BUCKET
+import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
@@ -49,15 +49,6 @@ class User(
     }
 }
 
-fun findUserByAid(aid: String) = Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
-    Aids.value eq aid
-}.limit(1)
-
-private fun findUserById(it: PrimaryKey): Query =
-    Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
-        Users.id eq it
-    }.limit(1)
-
 suspend fun DatabaseFactory.getUserAid(id: PrimaryKey): Result<String?> = first({
     it[Aids.value]
 }) {
@@ -87,13 +78,17 @@ suspend fun DatabaseFactory.getUser(
 suspend fun DatabaseFactory.getRawUserByAid(aid: String) = first({
     toUserInfo() to icon
 }, User::wrapRow) {
-    findUserByAid(aid)
+    Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
+        Aids.value eq aid
+    }.limit(1)
 }
 
 suspend fun DatabaseFactory.getRawUserById(it: PrimaryKey): Result<Pair<UserInfo, String?>?> = first({
     toUserInfo() to icon
 }, User::wrapRow) {
-    findUserById(it)
+    Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
+        Users.id eq it
+    }.limit(1)
 }
 
 suspend fun DatabaseFactory.commonPaginationMemberList(
@@ -290,7 +285,7 @@ suspend fun DatabaseFactory.getUsersByAids(ids: List<String>) = mapQuery({
 suspend fun processUserList(
     backend: Backend,
     pairs: List<Pair<UserInfo, String?>>
-): Result<List<UserInfo>> = backend.mediaService.get(AMEDIA_BUCKET, pairs.map {
+): Result<List<UserInfo>> = backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, pairs.map {
     it.second
 }).map { value ->
     pairs.mapIndexed { index, pair ->

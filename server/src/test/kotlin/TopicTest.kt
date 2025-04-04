@@ -190,7 +190,7 @@ class TopicTest {
             }.custom
             val custom2 = attachSession(client) {
                 val id = client.createCommunity(NewCommunity("c2", "c2")).getOrThrow().id
-//                client.createNewTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
+                client.createNewTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
                 id
             }.custom
 
@@ -201,7 +201,7 @@ class TopicTest {
                 }
             }
             withContext(Dispatchers.IO) { delay(1000) }
-            assertEquals(4, client.getRecommendTopics(null, 10).getOrThrow().data.size)
+            assertEquals(5, client.getRecommendTopics(null, 10).getOrThrow().data.size)
             attachSession(client) {
                 client.joinCommunity(custom2).getOrThrow()
                 client.createNewTopic(ObjectType.COMMUNITY, custom2, "only").getOrThrow()

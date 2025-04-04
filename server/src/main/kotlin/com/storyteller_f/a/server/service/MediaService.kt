@@ -4,7 +4,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.route.RouteMedia
 import com.storyteller_f.media.uploadFiles
-import com.storyteller_f.shared.model.AMEDIA_BUCKET
+import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
@@ -37,7 +37,7 @@ suspend fun getMediaList(
         uid
     ).mapResultNotNull { (_, _, hasWrite) ->
         if (hasWrite) {
-            backend.mediaService.list(AMEDIA_BUCKET, "$uid/").map { names ->
+            backend.mediaService.list(AMEDIA_DEFAULT_BUCKET, "$uid/").map { names ->
                 ServerResponse(names.sortedByDescending { info ->
                     info.item.lastModified
                 })

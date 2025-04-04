@@ -17,7 +17,7 @@ data class TopicDocument(
     companion object {
         fun fromTopic(topic: Topic, content: TopicContent.Plain): TopicDocument {
             return TopicDocument(
-                topic.id,
+                id = topic.id,
                 content = content.plain,
                 rootId = topic.rootId,
                 rootType = topic.rootType.name,
@@ -34,6 +34,7 @@ sealed interface DocumentSearch {
     data class Topics(val parentId: PrimaryKey) : DocumentSearch
     data object RecommendNotLogin : DocumentSearch
     data object All : DocumentSearch
+    data object CommunityRoot : DocumentSearch
 }
 
 interface TopicSearchService {

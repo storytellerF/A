@@ -1,3 +1,5 @@
+@echo off
+setlocal enabledelayedexpansion
 set AVD_NAME=ATest
 cmd /c .\gradlew.bat build || exit /b
 cmd /c .\scripts\tool_scripts\create-avd.bat || exit /b

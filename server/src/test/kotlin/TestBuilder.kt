@@ -1,10 +1,8 @@
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.MergedEnv
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.a.server.module
-import com.storyteller_f.buildBackendFromEnv
 import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.readResourceEnv
 import com.storyteller_f.shared.*
@@ -111,12 +109,6 @@ private fun doTest(
     receivedFrame: (RoomFrame) -> Unit = {},
     block: suspend (HttpClient, ClientWebSocket) -> Unit
 ) {
-    val backend = buildBackendFromEnv(MergedEnv(listOf(env)))
-    runBlocking {
-        backend.topicSearchService.clean()
-    }
-    DatabaseFactory.connect(backend.config.databaseConnection)
-    DatabaseFactory.init(true)
     DatabaseFactory.enableExplain { dialect, statements, result, point ->
         val file = File(
             "./build/test/$dialect/${extractTableNames(statements).joinToString("/")}/${md5(statements)}.explain"
@@ -131,7 +123,6 @@ private fun doTest(
             file.writeText(newText)
         }
     }
-    println("prepared resource")
     testApplication {
         environment {
             config = MapApplicationConfig().apply {
@@ -157,12 +148,7 @@ private fun doTest(
         block(client, wsClient)
     }
 
-    println("clean resource")
     DatabaseFactory.enableExplain(null)
-    runBlocking {
-        backend.topicSearchService.clean()
-    }
-    DatabaseFactory.clean()
 }
 
 data class SessionTuple(

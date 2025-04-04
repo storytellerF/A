@@ -6,7 +6,7 @@ import com.storyteller_f.a.server.auth.*
 import com.storyteller_f.a.server.common.checkParameter
 import com.storyteller_f.a.server.webSocketContent
 import com.storyteller_f.media.FileSystemMediaService
-import com.storyteller_f.shared.model.MediaResponse
+import com.storyteller_f.shared.model.PathResponse
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.PosterSearch
 import com.storyteller_f.shared.obj.TitleSearchType
@@ -14,7 +14,6 @@ import com.storyteller_f.shared.obj.TopicPinSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleType
-import io.ktor.http.*
 import io.ktor.resources.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -22,6 +21,7 @@ import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import kotlin.io.path.exists
 
 @Resource("/communities")
 class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
@@ -197,12 +197,12 @@ fun Routing.bindUnauthenticatedRoute(backend: Backend, reader: DatabaseReader) {
 
     get("/amedia/{path...}") {
         omitPrincipal(reader) {
-            checkParameter<List<String>, MediaResponse>("path") { paths ->
+            checkParameter<List<String>, PathResponse>("path") { paths ->
                 val service = backend.mediaService
                 if (service is FileSystemMediaService) {
-                    val file = service.getResponse(paths)
-                    if (file?.exists() == true) {
-                        val value = MediaResponse(file.path, ContentType.defaultForFile(file).toString())
+                    val path = service.getResponse(paths)
+                    if (path?.exists() == true) {
+                        val value = PathResponse(path)
                         Result.success(value)
                     } else {
                         Result.success(null)

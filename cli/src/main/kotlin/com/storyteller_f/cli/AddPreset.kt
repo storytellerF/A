@@ -158,12 +158,12 @@ class AddPreset : Subcommand("add", "add entry") {
             "topics count ${presetValue.topicData?.size}"
         }
         val data = presetValue.topicData!!
+        val userMap = DatabaseFactory.getUsersByAids(data.map {
+            it.author
+        }.distinct()).getOrThrow().associate {
+            it.first.aid!! to it.first
+        }
         DatabaseFactory.dbQuery {
-            val userMap = DatabaseFactory.getUsersByAids(data.map {
-                it.author
-            }.distinct()).getOrThrow().associate {
-                it.first.aid!! to it.first
-            }
             data.groupBy {
                 when {
                     it.community != null -> ObjectType.COMMUNITY
@@ -295,13 +295,11 @@ class AddPreset : Subcommand("add", "add entry") {
                 Triple(it, p, id)
             }
         }
-        val userMap = DatabaseFactory.dbQuery {
-            data.flatMap {
-                it.first.users.orEmpty() + (it.first.admin ?: "System")
-            }.distinct().map {
-                User.wrapRow(findUserByAid(it).first())
-            }.associateBy { it.aid }
-        }.getOrThrow()
+        val userMap = DatabaseFactory.getUsersByAids(data.flatMap {
+            it.first.users.orEmpty() + (it.first.admin ?: "System")
+        }.distinct()).getOrThrow().associate {
+            it.first.aid to it.first
+        }
         val l1 = data.map {
             it.first.users?.map { s ->
                 userMap[s]!!.id
@@ -381,19 +379,18 @@ class AddPreset : Subcommand("add", "add entry") {
                 Triple(it, p, id)
             }
         }
-        val (userMap, communityMap) = DatabaseFactory.dbQuery {
-            val userMap = l.flatMap {
-                it.users + it.admin
-            }.distinct().map {
-                User.wrapRow(findUserByAid(it).first())
-            }.associateBy { it.aid }
-            val communityMap = l.mapNotNull {
-                it.community
-            }.distinct().map {
-                Community.wrapRow(findCommunityByAid(it).first())
-            }.associateBy { it.aid }
-            userMap to communityMap
-        }.getOrThrow()
+
+        val userMap = DatabaseFactory.getUsersByAids(l.flatMap {
+            it.users + it.admin
+        }.distinct()).getOrThrow().associate {
+            it.first.aid to it.first
+        }
+
+        val communityMap = DatabaseFactory.getCommunityByAids(l.mapNotNull {
+            it.community
+        }.distinct()).getOrThrow().associate {
+            it.communityInfo.aid to it.communityInfo
+        }
         return data.map { (first, second, third) ->
             Room(
                 third,

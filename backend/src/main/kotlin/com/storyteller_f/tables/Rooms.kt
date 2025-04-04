@@ -1,7 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.model.AMEDIA_BUCKET
+import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.UpdateRoomBody
@@ -299,7 +299,7 @@ suspend fun searchRooms(
 }
 
 suspend fun processRoomList(list: List<Pair<RoomInfo, String?>>, backend: Backend): Result<List<RoomInfo>> {
-    return backend.mediaService.get(AMEDIA_BUCKET, list.map {
+    return backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, list.map {
         it.second
     }).map { icons ->
         list.mapIndexed { i, roomPair ->

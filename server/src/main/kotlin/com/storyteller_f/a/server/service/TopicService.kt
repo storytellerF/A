@@ -116,7 +116,10 @@ private suspend fun createTopicSnapshot(
                         documents.content,
                         backend.snapshotVerify
                     ).mapResultNotNull {
-                        backend.mediaService.upload(AMEDIA_BUCKET, listOf(UploadPack(name, pdfFile))).mapResult {
+                        backend.mediaService.upload(
+                            AMEDIA_DEFAULT_BUCKET,
+                            listOf(UploadPack(name, pdfFile))
+                        ).mapResult {
                             pdfFile.delete()
                             Result.success(it.firstOrNull())
                         }
@@ -453,26 +456,33 @@ suspend fun searchPublicTopics(
     backend: Backend,
     uid: PrimaryKey?
 ): Result<PaginationResult<TopicInfo>?> {
+    if (search.word != null && search.word.map {
+            it.length
+        }.sum() > 20) {
+        return Result.failure(CustomBadRequestException("word too long"))
+    }
     return if (search.parentId != null && search.parentType != null) {
         checkRootReadPermission(search.parentType, search.parentId, uid).mapResultNotNull {
             if (it.isPrivate) {
                 Result.failure(BadRequestException("can't search in private chat"))
             } else {
-                backend.topicSearchService.searchDocument(
-                    size,
-                    search.word,
-                    preTopicId = preTopicId,
-                    nextTopicId = nextTopicId,
-                    documentSearch = DocumentSearch.Topics(search.parentId)
-                ).mapResult { (list, total) ->
-                    processTopicsDocument(uid, search.parent.fillHasCommented, backend, list).map {
-                        PaginationResult(it, total)
-                    }
-                }
+                Result.success(DocumentSearch.Topics(search.parentId))
             }
         }
     } else {
-        Result.failure(BadRequestException("invalid param"))
+        Result.success(DocumentSearch.CommunityRoot)
+    }.mapResultNotNull {
+        backend.topicSearchService.searchDocument(
+            size,
+            search.word,
+            preTopicId = preTopicId,
+            nextTopicId = nextTopicId,
+            documentSearch = it
+        ).mapResult { (list, total) ->
+            processTopicsDocument(uid, search.parent.fillHasCommented, backend, list).map {
+                PaginationResult(it, total)
+            }
+        }
     }
 }
 
@@ -495,7 +505,7 @@ suspend fun processMediaAndAuthor(
     val mediaMap = mediaList.groupBy {
         it.first
     }
-    return backend.mediaService.get(AMEDIA_BUCKET, mediaNameList).map { mediaUrls ->
+    return backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, mediaNameList).map { mediaUrls ->
         val mediaInfoMap = mediaUrls.filterNotNull().mapIndexed { index, url ->
             mediaNameList[index] to url
         }.associate {

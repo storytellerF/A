@@ -85,13 +85,14 @@ class SectionPagingSource<DATUM : Any>(
         return if (loadSize - prePageResult.data.size > 0) {
             getNextParams(prePageResult.nextKey, index)?.let {
                 when (val nextPageResult = load(it.index, it.param, loadSize, placeholdersEnabled)) {
-                    is PagingSourceLoadResultError<SectionLoadParams<PrimaryKey>, DATUM> -> PagingSourceLoadResultError(
-                        nextPageResult.throwable
-                    )
+                    is PagingSourceLoadResultError<SectionLoadParams<PrimaryKey>, DATUM> ->
+                        PagingSourceLoadResultError(nextPageResult.throwable)
 
-                    is PagingSourceLoadResultInvalid<SectionLoadParams<PrimaryKey>, DATUM> -> PagingSourceLoadResultInvalid()
+                    is PagingSourceLoadResultInvalid<SectionLoadParams<PrimaryKey>, DATUM> ->
+                        PagingSourceLoadResultInvalid()
+
                     is PagingSourceLoadResultPage<SectionLoadParams<PrimaryKey>, DATUM> -> {
-                        //合并两页
+                        // 合并两页
                         PagingSourceLoadResultPage(
                             prePageResult.data + nextPageResult.data,
                             null,
@@ -99,18 +100,18 @@ class SectionPagingSource<DATUM : Any>(
                         )
                     }
                 }
-
             } ?: PagingSourceLoadResultPage(
                 prePageResult.data,
                 null,
                 getNextParams(prePageResult.nextKey, index)
             )
-        } else
+        } else {
             PagingSourceLoadResultPage(
                 prePageResult.data,
                 null,
                 getNextParams(prePageResult.nextKey, index)
             )
+        }
     }
 
     private fun getNextParams(

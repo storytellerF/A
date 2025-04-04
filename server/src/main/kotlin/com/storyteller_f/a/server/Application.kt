@@ -92,7 +92,7 @@ fun Application.module() {
     val reader = buildDatabaseReader()
     val backend = buildBackend()
     DatabaseFactory.connect(backend.config.databaseConnection)
-    DatabaseFactory.init()
+    DatabaseFactory.init(backend.config.databaseConnection.uri.endsWith("DB_CLOSE_DELAY=-1;"))
 
     install(ContentNegotiation) {
         json()
@@ -119,7 +119,7 @@ fun Application.module() {
         contentConverter = KotlinxWebsocketSerializationConverter(Json)
     }
     install(Sessions) {
-        cookie<UserSession>("user_session") {
+        cookie<UserSession>("user_session", SessionStorageMemory()) {
             cookie.path = "/"
             cookie.maxAgeInSeconds = 3600
         }

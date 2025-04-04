@@ -55,6 +55,7 @@ m3uParser = "1.4.0"
 markdown = "0.7.3"
 material3WindowSizeClassMultiplatform = "0.5.0"
 media3Exoplayer = "1.5.1"
+memoryfilesystem = "2.8.1"
 minio = "8.5.17"
 mysqlConnectorJava = "8.0.33"
 newpipeextractorVersion = "v0.24.5"
@@ -120,6 +121,7 @@ detekt-rules-libraries = { module = "io.gitlab.arturbosch.detekt:detekt-rules-li
 detekt-rules-ruleauthors = { module = "io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors", version.ref = "detektVersion" }
 github-newpipeextractor = { module = "com.github.teamnewpipe.NewPipeExtractor:NewPipeExtractor", version.ref = "newpipeextractorVersion" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
+memoryfilesystem = { module = "com.github.marschall:memoryfilesystem", version.ref = "memoryfilesystem" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnectorJava" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
 testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }

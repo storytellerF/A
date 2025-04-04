@@ -1,5 +1,6 @@
 package com.storyteller_f
 
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.storyteller_f.backend.BackendConfig
 import com.storyteller_f.index.ElasticTopicSearchService
 import com.storyteller_f.index.LuceneTopicSearchService
@@ -110,7 +111,15 @@ private fun mediaService(env: MergedEnv): MediaService {
         "filesystem" -> {
             val url = env["SERVER_URL"]
             val base = env["FILE_SYSTEM_MEDIA_PATH"]
-            FileSystemMediaService(url, base)
+            val p = if (base.isBlank()) {
+                Napier.i {
+                    "use in-memory amedia"
+                }
+                MemoryFileSystemBuilder.newLinux().build().getPath("/amedia")
+            } else {
+                Paths.get(base)
+            }
+            FileSystemMediaService(url, p)
         }
 
         else -> throw UnsupportedOperationException("unsupported media service type ${env["MEDIA_SERVICE"]}")
@@ -131,11 +140,15 @@ private fun topicDocumentService(
 
         "lucene" -> {
             val luceneBase = env["LUCENE_BASE_PATH"]
-            val path = Paths.get(luceneBase.removeSurrounding("'"), "index")
-            Napier.i {
-                "lucene path $path"
+            val (path, isInMemory) = if (luceneBase.isBlank()) {
+                Napier.i {
+                    "use in-memory document service"
+                }
+                MemoryFileSystemBuilder.newLinux().build().getPath("/documents") to true
+            } else {
+                Paths.get(luceneBase) to false
             }
-            LuceneTopicSearchService(path)
+            LuceneTopicSearchService(path, isInMemory)
         }
 
         else -> throw UnsupportedOperationException("unsupported search service type [$type]")

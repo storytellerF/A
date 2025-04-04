@@ -28,7 +28,6 @@ deploy/docker-images
 deploy/amedia
 scripts/download-image.sh
 deploy/preset.zip
-deploy_test
 node_modules
 bin
 remote.pem

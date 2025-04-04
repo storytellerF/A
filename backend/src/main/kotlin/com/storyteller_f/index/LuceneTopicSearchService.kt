@@ -12,22 +12,31 @@ import org.apache.lucene.index.*
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
 import org.apache.lucene.search.*
 import org.apache.lucene.store.FSDirectory
+import org.apache.lucene.store.NIOFSDirectory
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
 
-class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
+class LuceneTopicSearchService(private val path: Path, private val isInMemory: Boolean = false) : TopicSearchService {
+    init {
+        Napier.i {
+            "lucene path $path"
+        }
+        if (!path.exists()) {
+            path.createDirectories()
+        }
+    }
+
     private val analyzer = StandardAnalyzer()
 
     override suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit> {
         return useLucene {
             IndexWriter(it, IndexWriterConfig(analyzer)).use { writer ->
-                topics.asSequence().map { document ->
+                val seq = writer.addDocuments(topics.map { document ->
                     document.saveAsDocument()
-                }.forEach { document ->
-                    writer.addDocument(document)
-                }
-                val commit = writer.commit()
+                })
                 Napier.d {
-                    "save document in `lucene` $commit"
+                    "lucene save document $seq"
                 }
             }
         }
@@ -170,7 +179,7 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
                 combinedQuery.add(LongPoint.newExactQuery("author", documentSearch.uid), BooleanClause.Occur.MUST_NOT)
             }
 
-            DocumentSearch.RecommendNotLogin -> {
+            DocumentSearch.RecommendNotLogin, DocumentSearch.CommunityRoot -> {
                 combinedQuery.add(TermQuery(Term("parentType", ObjectType.COMMUNITY.name)), BooleanClause.Occur.MUST)
             }
 
@@ -193,7 +202,11 @@ class LuceneTopicSearchService(private val path: Path) : TopicSearchService {
 
     private fun <R> useLucene(block: (FSDirectory) -> R): Result<R> {
         return runCatching {
-            FSDirectory.open(path).use(block)
+            if (isInMemory) {
+                NIOFSDirectory(path).use(block)
+            } else {
+                FSDirectory.open(path).use(block)
+            }
         }
     }
 }
@@ -204,11 +217,11 @@ private fun restoreDocument(
 ): TopicDocument = TopicDocument(
     id,
     document.get("content"),
-    document.get("rootId").toPrimaryKey(),
-    document.get("rootType"),
-    document.get("parentId").toPrimaryKey(),
-    document.get("parentType"),
-    document.get("author").toPrimaryKey()
+    rootId = document.get("rootId").toPrimaryKey(),
+    rootType = document.get("rootType"),
+    parentId = document.get("parentId").toPrimaryKey(),
+    parentType = document.get("parentType"),
+    author = document.get("author").toPrimaryKey()
 )
 
 private fun TopicDocument.saveAsDocument(): Document {

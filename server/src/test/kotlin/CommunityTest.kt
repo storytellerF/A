@@ -11,10 +11,7 @@ import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlin.test.*
 
 class CommunityTest {
@@ -45,7 +42,6 @@ class CommunityTest {
             assertTrue(communityInfo.isJoined)
             // 再次发起创建话题
             client.createNewTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
-            withContext(Dispatchers.IO) { delay(1000) }
             assertListSize(
                 1,
                 client.searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY)
