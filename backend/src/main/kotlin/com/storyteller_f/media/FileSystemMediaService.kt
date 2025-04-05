@@ -60,7 +60,11 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
                         if (mediaPath.exists()) {
                             val item = stat(it, mediaPath)
                             val dimension = getDimension(mediaPath, item.contentType)
-                            MediaInfo(URIBuilder(url).setPath("amedia/${AMEDIA_DEFAULT_BUCKET}/$it").build().toString(), item, dimension)
+                            MediaInfo(
+                                URIBuilder(url).setPath("amedia/${AMEDIA_DEFAULT_BUCKET}/$it").build().toString(),
+                                item,
+                                dimension
+                            )
                         } else {
                             null
                         }

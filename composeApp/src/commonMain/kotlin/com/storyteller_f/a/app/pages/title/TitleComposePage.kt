@@ -53,7 +53,7 @@ fun TitleComposePage() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TitleComposeInternal() {
     var name by remember {
@@ -66,7 +66,7 @@ fun TitleComposeInternal() {
         mutableStateOf<Pair<PrimaryKey, ObjectType>?>(null)
     }
     var titleType by remember {
-        mutableStateOf<TitleType>(TitleType.REGULAR)
+        mutableStateOf(TitleType.REGULAR)
     }
     var receiver by remember {
         mutableStateOf<PrimaryKey?>(null)
@@ -139,7 +139,6 @@ fun CommonComposePage(onCheck: () -> Unit, content: @Composable () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TitleComposeInternal2(
     name: String,
@@ -324,7 +323,7 @@ private suspend fun createTitle(
     bus.emit(OnTitleCreated(title))
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ObjectPicker(
     showSheet: Boolean,
@@ -347,7 +346,7 @@ fun ObjectPicker(
         ) {
             Column(modifier = Modifier.height(300.dp).padding(top = 20.dp)) {
                 var currentType by remember {
-                    mutableStateOf<ObjectType>(supportObjectType[0])
+                    mutableStateOf(supportObjectType[0])
                 }
                 TypeSelector(supportObjectType, currentType, {
                     currentType = it
@@ -453,7 +452,7 @@ fun ObjectList(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComposeMenu(
     showSheet: Boolean,

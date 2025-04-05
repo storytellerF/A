@@ -1,6 +1,9 @@
 package com.storyteller_f.a.app.utils
 
+import android.content.ClipData
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
 import androidx.lifecycle.Lifecycle
 import com.storyteller_f.a.app.compontents.mainAppRef
 import com.storyteller_f.a.app.initFromContext
@@ -16,4 +19,8 @@ actual fun initEnvironment(context: Any) {
     if (context is ComponentActivity) {
         context.initFromContext()
     }
+}
+
+actual suspend fun Clipboard.setText(string: String) {
+    this.setClipEntry(ClipEntry(ClipData.newPlainText(string, "text")))
 }

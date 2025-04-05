@@ -195,5 +195,4 @@ class PathImageInputStream(val it: InputStream) : ImageInputStreamImpl() {
         b ?: return -1
         return it.read(b, off, len)
     }
-
 }
