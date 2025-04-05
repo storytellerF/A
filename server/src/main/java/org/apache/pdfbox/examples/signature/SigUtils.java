@@ -16,8 +16,7 @@
 
 package org.apache.pdfbox.examples.signature;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static org.apache.pdfbox.examples.signature.Log.LOG;
 import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSBase;
 import org.apache.pdfbox.cos.COSDictionary;
@@ -62,7 +61,6 @@ import java.util.*;
  * @author Tilman Hausherr
  */
 public class SigUtils {
-    private static final Logger LOG = LogManager.getLogger(SigUtils.class);
 
     private SigUtils() {
     }

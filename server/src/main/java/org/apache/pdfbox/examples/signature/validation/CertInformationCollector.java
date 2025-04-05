@@ -17,8 +17,8 @@
 
 package org.apache.pdfbox.examples.signature.validation;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import static org.apache.pdfbox.examples.signature.Log.LOG;
 import org.apache.pdfbox.examples.signature.SigUtils;
 import org.apache.pdfbox.examples.signature.cert.CertificateVerifier;
 import org.apache.pdfbox.pdmodel.encryption.SecurityProvider;
@@ -57,7 +57,6 @@ import java.util.Set;
  * @author Alexis Suter
  */
 public class CertInformationCollector {
-    private static final Logger LOG = LogManager.getLogger(CertInformationCollector.class);
 
     private static final int MAX_CERTIFICATE_CHAIN_DEPTH = 5;
 
