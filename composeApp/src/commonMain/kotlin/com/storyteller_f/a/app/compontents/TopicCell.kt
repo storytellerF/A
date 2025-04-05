@@ -92,7 +92,7 @@ private fun RecentComment(topicId: PrimaryKey) {
     val topics = createTopicsInTopicViewModel(topicId)
     val lazyPagingItems = topics.flow.collectAsLazyPagingItems()
     val recentCount = min(2, lazyPagingItems.itemCount)
-    if (recentCount > 0)
+    if (recentCount > 0) {
         Column(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(10.dp))
@@ -124,4 +124,5 @@ private fun RecentComment(topicId: PrimaryKey) {
                 }
             }
         }
+    }
 }

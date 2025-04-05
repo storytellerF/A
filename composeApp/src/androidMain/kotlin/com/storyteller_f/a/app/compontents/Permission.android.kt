@@ -2,6 +2,7 @@ package com.storyteller_f.a.app.compontents
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,7 +41,11 @@ actual fun requestPermission(permission: Permission) {
     }
     val p = when (permission) {
         is Permission.Audio -> Manifest.permission.RECORD_AUDIO
-        else -> return
+        is Permission.Notification -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.POST_NOTIFICATIONS
+        } else {
+            return
+        }
     }
     requestQueue.add(permission)
     launcher.launch(p)

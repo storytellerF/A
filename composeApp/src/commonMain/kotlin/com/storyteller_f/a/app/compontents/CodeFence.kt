@@ -21,13 +21,13 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -46,6 +46,7 @@ import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.pages.topic.TopicRoute
+import com.storyteller_f.a.app.utils.setText
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.utils.MarkdownObject
 import com.storyteller_f.shared.utils.getLang
@@ -61,6 +62,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.io.RawSink
 import kotlinx.io.asOutputStream
@@ -217,13 +219,14 @@ private fun PdfView(url: String) {
             PdfPage(state = state, index = i)
         }
         val toasterState = LocalToaster.current
+        val scope = rememberCoroutineScope()
         FlowRow {
-            val clipboardManager = LocalClipboardManager.current
+            val clipboardManager = LocalClipboard.current
             IconButton({
-                clipboardManager.setText(buildAnnotatedString {
-                    append(url)
-                })
-                toasterState.show("copied", duration = 1.seconds)
+                scope.launch {
+                    clipboardManager.setText(url)
+                    toasterState.show("copied", duration = 1.seconds)
+                }
             }) {
                 Icon(Icons.Default.ContentCopy, "copy list")
             }

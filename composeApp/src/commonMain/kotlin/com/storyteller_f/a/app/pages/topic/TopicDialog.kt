@@ -14,8 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.ClipboardManager
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.buildAnnotatedString
 import com.dokar.sonner.ToasterState
 import com.storyteller_f.a.app.*
@@ -28,6 +28,7 @@ import com.storyteller_f.a.app.pages.user.UserCell
 import com.storyteller_f.a.app.ui.ExtendIconPack
 import com.storyteller_f.a.app.ui.extendiconpack.Keep
 import com.storyteller_f.a.app.ui.extendiconpack.KeepOff
+import com.storyteller_f.a.app.utils.setText
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.getTopicSnapshot
 import com.storyteller_f.a.client_lib.pinTopic
@@ -59,7 +60,7 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
 
 @Composable
 fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismiss: () -> Unit) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
     val appNav = LocalAppNav.current
     val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
     val toasterState = LocalToaster.current
@@ -83,21 +84,21 @@ fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismiss: ()
 @Composable
 private fun TopicDialogMenuList(
     topicInfo: TopicInfo,
-    clipboardManager: ClipboardManager,
+    clipboardManager: Clipboard,
     alreadyLoginIn: Boolean,
     toasterState: ToasterState,
     dismiss: () -> Unit,
     appNav: AppNav
 ) {
+    val scope = rememberCoroutineScope()
     Column {
         val content = topicInfo.content
         if (content is TopicContent.Plain) {
             ButtonNav(Icons.Default.ContentCopy, stringResource(Res.string.copy)) {
-                clipboardManager.setText(annotatedString = buildAnnotatedString {
-                    append(content.plain)
-                })
+                scope.launch {
+                    clipboardManager.setText(content.plain)
+                }
             }
-            val scope = rememberCoroutineScope()
             val successText = stringResource(Res.string.success)
             if (alreadyLoginIn) {
                 val client = LocalClient.current
@@ -139,3 +140,4 @@ private fun TopicDialogMenuList(
         }
     }
 }
+

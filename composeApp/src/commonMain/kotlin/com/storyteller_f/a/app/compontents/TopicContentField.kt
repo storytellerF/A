@@ -53,7 +53,6 @@ fun TopicContentField(
                     }
                     else -> {}
                 }
-
             }
         }
 
