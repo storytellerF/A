@@ -125,57 +125,55 @@ suspend fun DatabaseFactory.getSimpleTopic(topicId: PrimaryKey): Result<TopicInf
     Topic.findById(topicId)
 }
 
-private fun buildTopicAuthorContainsExpression(
-    uid: PrimaryKey?,
-    t2: Alias<Topics>
-): Max<Long, Long>? {
-    val containExpression = if (uid != null) {
-        Expression.build {
-            val expr = case().When(t2[Topics.author].eq(uid), longLiteral(1)).Else(longLiteral(0))
-            Max(expr, LongColumnType())
-        }
-    } else {
-        null
-    }
-    return containExpression
-}
-
 suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey?, aid: String?, uid: PrimaryKey?): Result<TopicInfo?> {
-    val t2 = Topics.alias("t2")
-    val commentCountColumn = t2[Topics.id].countDistinct()
-    val reactionCountColumn = Reactions.id.countDistinct()
-    val containColumn = buildTopicAuthorContainsExpression(uid, t2)
-    val aidsValue = Aids.value.max()
-    val baseSelection = Topics.fields + commentCountColumn + reactionCountColumn + aidsValue
+    val (query, resultRowTransform) = getTopicBuilder(uid)
     return first({
         topicInfo.toTopicInfo(commentCount, hasComment, reactionCount, aid)
-    }, {
+    }, resultRowTransform) {
+        query.andWhere {
+            when {
+                topicId != null -> Topics.id eq topicId
+                aid != null -> Aids.value eq aid
+                else -> throw CustomBadRequestException("aid and id is null")
+            }
+        }.groupBy(Topics.id)
+    }
+}
+
+private fun getTopicBuilder(uid: PrimaryKey?): Pair<Query, (ResultRow) -> TopicSearchTuple> {
+    val t2 = Topics.alias("t2")
+    val t3 = Topics.alias("t3")
+    val commentCountColumn = t2[Topics.id].countDistinct()
+    val selfCommentColumn = t3[Topics.author].max()
+    val reactionCountColumn = Reactions.id.countDistinct()
+    val aidsValue = Aids.value.max()
+    val baseSelection = Topics.fields + commentCountColumn + reactionCountColumn + aidsValue
+    val query = Topics.join(t2, JoinType.LEFT, Topics.id, t2[Topics.parentId])
+        .join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+        .join(Reactions, JoinType.LEFT, Topics.id, Reactions.objectId)
+        .select(baseSelection)
+    if (uid != null) {
+        query.adjustColumnSet {
+            join(t3, JoinType.LEFT, Topics.id, t3[Topics.parentId]) {
+                t3[Topics.author] eq uid
+            }
+        }.adjustSelect {
+            select(baseSelection + selfCommentColumn)
+        }
+    }
+
+    val resultRowTransform: (ResultRow) -> TopicSearchTuple = {
         TopicSearchTuple(
             wrapRow(it),
             it[commentCountColumn],
-            if (containColumn != null) it[containColumn] == 1L else false,
+            it.getOrNull(selfCommentColumn)?.let {
+                it > 0
+            } ?: false,
             it[reactionCountColumn],
             it[aidsValue]
         )
-    }) {
-        Topics.join(t2, JoinType.LEFT, Topics.id, t2[Topics.parentId])
-            .join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-            .join(Reactions, JoinType.LEFT, Topics.id, Reactions.objectId)
-            .let { join ->
-                when {
-                    containColumn != null -> join.select(baseSelection + containColumn)
-                    else -> join.select(baseSelection)
-                }
-            }
-            .where {
-                when {
-                    topicId != null -> Topics.id eq topicId
-                    aid != null -> Aids.value eq aid
-                    else -> throw CustomBadRequestException("aid and id is null")
-                }
-            }
-            .groupBy(Topics.id)
     }
+    return Pair(query, resultRowTransform)
 }
 
 /**
@@ -188,33 +186,11 @@ suspend fun getTopicsByPredicate(
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<List<TopicInfo>> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    val t2 = Topics.alias("t2")
-    val reactionCountColumn = Reactions.id.countDistinct()
-    val containColumn = buildTopicAuthorContainsExpression(uid, t2)
-    val commentCountColumn = t2[Topics.id].countDistinct()
-    val aidsValue = Aids.value.max()
-    val baseSelection = Topics.fields + commentCountColumn + reactionCountColumn + aidsValue
+    val (query, resultRowTransform) = getTopicBuilder(uid)
     return DatabaseFactory.mapQuery({
         topicInfo.toTopicInfo(commentCount, hasComment, reactionCount, aid)
-    }, {
-        TopicSearchTuple(
-            wrapRow(it),
-            it[commentCountColumn],
-            if (containColumn != null) (it[containColumn] == 1L) else false,
-            it[reactionCountColumn],
-            it[aidsValue]
-        )
-    }) {
-        Topics.join(t2, JoinType.LEFT, Topics.id, t2[Topics.parentId])
-            .join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-            .join(Reactions, JoinType.LEFT, Topics.id, Reactions.objectId)
-            .let {
-                when {
-                    containColumn != null -> it.select(baseSelection + containColumn)
-                    else -> it.select(baseSelection)
-                }
-            }
-            .where(predicate).let(extraPredicate).groupBy(Topics.id)
+    }, resultRowTransform) {
+        query.andWhere(predicate).let(extraPredicate).groupBy(Topics.id)
     }
 }
 

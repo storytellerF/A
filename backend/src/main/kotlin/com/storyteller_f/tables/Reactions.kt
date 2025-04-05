@@ -44,58 +44,54 @@ suspend fun commonReactions(
     uid: PrimaryKey?,
     objectId: PrimaryKey
 ): Result<List<ReactionInfo>> {
-    val countExpression = Reactions.uid.count()
-    val baseSelection = listOf(
-        Reactions.emoji,
-        countExpression,
+    val (countExpression, resultRowTransform: (ResultRow) -> Triple<String, Long, Boolean>, query) = getReactionBuilder(
+        uid
     )
-    val selection = reactionAuthorContains(uid)
-
     return DatabaseFactory.mapQuery({
-        ReactionInfo(first, objectId, ObjectType.TOPIC, second, third == 1L)
-    }, {
-        Triple(
-            it[Reactions.emoji],
-            it[countExpression],
-            when {
-                selection != null -> it[selection]
-                else -> 0
-            }
-        )
-    }) {
-        Reactions.select(
-            when {
-                selection != null -> baseSelection + selection
-                else -> baseSelection
-            }
-        ).where {
+        ReactionInfo(first, objectId, ObjectType.TOPIC, second, third)
+    }, resultRowTransform) {
+        query.andWhere {
             Reactions.objectId eq objectId
         }.groupBy(Reactions.emoji).orderBy(countExpression, SortOrder.DESC)
     }
 }
 
-private fun reactionAuthorContains(uid: PrimaryKey?): Max<Long, Long>? {
-    return when {
-        uid != null -> reactionAuthorContainsIfUidNotNull(uid)
-        else -> null
+private fun getReactionBuilder(
+    uid: PrimaryKey?
+): Triple<Count, (ResultRow) -> Triple<String, Long, Boolean>, Query> {
+    val r2 = Reactions.alias("r2")
+    val countExpression = r2[Reactions.uid].countDistinct()
+    val baseSelection = listOf(
+        Reactions.emoji,
+        countExpression,
+    )
+    val selection = r2[Reactions.uid].max()
+    val resultRowTransform: (ResultRow) -> Triple<String, Long, Boolean> = {
+        Triple(
+            it[Reactions.emoji],
+            it[countExpression],
+            it[selection] != null
+        )
     }
-}
-
-private fun reactionAuthorContainsIfUidNotNull(uid: PrimaryKey): Max<Long, Long> = Expression.build {
-    val expr = case().When(Reactions.uid.eq(uid), longLiteral(1)).Else(longLiteral(0))
-    Max(expr, LongColumnType())
+    val query = if (uid != null) {
+        Reactions.join(r2, JoinType.LEFT, Reactions.objectId, r2[Reactions.objectId]) {
+            r2[Reactions.emoji] eq Reactions.emoji and (r2[Reactions.uid] eq uid)
+        }.select(baseSelection + selection)
+    } else {
+        Reactions.select(baseSelection)
+    }
+    return Triple(countExpression, resultRowTransform, query)
 }
 
 suspend fun getReaction(uid: PrimaryKey, objectId: PrimaryKey, emojiText: String): Result<ReactionInfo?> {
-    val containsExpression = reactionAuthorContainsIfUidNotNull(uid)
-    val countExpression = Reactions.id.count()
+    val (_, resultRowTransform: (ResultRow) -> Triple<String, Long, Boolean>, query) = getReactionBuilder(
+        uid
+    )
     return DatabaseFactory.first({
-        ReactionInfo(emojiText, objectId, ObjectType.TOPIC, first, second == 1L)
-    }, {
-        Pair(it[countExpression], it[containsExpression])
-    }) {
-        Reactions.select(countExpression, containsExpression).where {
-            (Reactions.objectId eq objectId) and (Reactions.emoji eq emojiText)
+        ReactionInfo(emojiText, objectId, ObjectType.TOPIC, second, third)
+    }, resultRowTransform) {
+        query.andWhere {
+            Reactions.objectId eq objectId and (Reactions.emoji eq emojiText)
         }.groupBy(Reactions.emoji)
     }
 }

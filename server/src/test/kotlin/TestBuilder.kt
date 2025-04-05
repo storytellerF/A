@@ -10,7 +10,6 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.md5
-import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
@@ -27,7 +26,7 @@ import kotlin.collections.set
 import kotlin.test.assertEquals
 
 fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, ClientWebSocket) -> Unit) {
-    Napier.base(DebugAntilog())
+    Napier.base(logger)
     val freeMemory = Runtime.getRuntime().freeMemory() / (1024 * 1024)
     Napier.i {
         "free ${freeMemory}MiB"
