@@ -4,22 +4,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.LocalAppNav
+import com.storyteller_f.a.app.model.createTopicsInTopicViewModel
 import com.storyteller_f.a.app.pages.topic.EmojiPicker
 import com.storyteller_f.a.app.pages.user.UserCell
 import com.storyteller_f.a.app.ui.ExtendIconPack
 import com.storyteller_f.a.app.ui.extendiconpack.Keep
+import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.type.PrimaryKey
+import kotlin.math.min
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,6 +77,7 @@ fun TopicCellInternal(
                 InteractionRow(topicInfo, startAddReaction) {
                     appNav.gotoTopic(topicId)
                 }
+                RecentComment(topicId)
             }
         }
 
@@ -82,4 +85,43 @@ fun TopicCellInternal(
             Icon(ExtendIconPack.Keep, "is pinned", modifier = Modifier.align(Alignment.TopEnd))
         }
     }
+}
+
+@Composable
+private fun RecentComment(topicId: PrimaryKey) {
+    val topics = createTopicsInTopicViewModel(topicId)
+    val lazyPagingItems = topics.flow.collectAsLazyPagingItems()
+    val recentCount = min(2, lazyPagingItems.itemCount)
+    if (recentCount > 0)
+        Column(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(10.dp))
+                .padding(8.dp)
+        ) {
+            repeat(recentCount) {
+                val info = lazyPagingItems[it]
+                if (info != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        info.extension?.authorInfo?.nickname?.let { nickname -> Text("$nickname:") }
+                        when (val content = info.content) {
+                            is TopicContent.Extracted -> {
+                                Text(content.plain, maxLines = 1)
+                            }
+
+                            is TopicContent.Plain -> {
+                                Text(content.plain, maxLines = 1)
+                            }
+
+                            else -> {
+                                Text("invalid")
+                            }
+                        }
+                    }
+                }
+            }
+        }
 }
