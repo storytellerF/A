@@ -155,16 +155,14 @@ object DatabaseFactory {
     /**
      * 检查数据是不是空
      */
-    suspend fun <T> isEmpty(block: () -> SizedIterable<T>): Result<Boolean> = dbSearch({
-        limit(1).empty()
-    }) {
-        block()
+    suspend fun <T> isEmpty(block: () -> SizedIterable<T>): Result<Boolean> = isNotEmpty(block).map {
+        !it
     }
 
-    suspend fun <T> isNotEmpty(block: () -> SizedIterable<T>): Result<Boolean> = dbSearch({
-        !(limit(1).empty())
-    }) {
-        block()
+    suspend fun <T> isNotEmpty(block: () -> SizedIterable<T>): Result<Boolean> = dbQuery({
+        block().count()
+    }).map {
+        it > 0
     }
 
     suspend fun <T> count(block: () -> SizedIterable<T>): Result<Long> = dbSearch({

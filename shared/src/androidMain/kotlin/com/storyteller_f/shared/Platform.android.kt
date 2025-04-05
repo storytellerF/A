@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
+import io.github.aakira.napier.Antilog
+import io.github.aakira.napier.DebugAntilog
 import java.lang.ref.WeakReference
 
 lateinit var contextRef: WeakReference<Context>
@@ -16,3 +18,5 @@ class AndroidPlatform : Platform {
 }
 
 actual fun getPlatform(): Platform = AndroidPlatform()
+actual val logger: Antilog
+    get() = DebugAntilog()

@@ -55,6 +55,7 @@ import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.finalData
+import com.storyteller_f.shared.logger
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -62,7 +63,6 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.*
@@ -82,7 +82,7 @@ import kotlin.uuid.Uuid
 
 object StaticObj {
     init {
-        Napier.base(DebugAntilog())
+        Napier.base(logger)
     }
 }
 

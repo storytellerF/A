@@ -1,7 +1,7 @@
 package com.storyteller_f.a.test_server
 
+import com.storyteller_f.shared.logger
 import forceStop
-import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -25,7 +25,7 @@ import java.util.*
 val ext = if (isWin()) "bat" else "sh"
 
 fun main(args: Array<String>) {
-    Napier.base(DebugAntilog())
+    Napier.base(logger)
     println("current path: ${File("").canonicalPath}")
     val isNested = File("").canonicalPath.endsWith("test-server")
     if (args.isNotEmpty() && args.any {
