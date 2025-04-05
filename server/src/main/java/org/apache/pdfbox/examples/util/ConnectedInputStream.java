@@ -19,6 +19,7 @@ package org.apache.pdfbox.examples.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.regex.Pattern;
 
 /**
  * Delegate class to close the connection when the class gets closed.

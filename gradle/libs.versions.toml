@@ -23,7 +23,6 @@ desugar_jdk_libs = "2.1.5"
 detektVersion = "1.23.8"
 easylauncher = "6.4.0"
 elasticsearchJava = "8.17.2"
-emoji-reader = "2.0.6"
 emojiKt = "2.2.0"
 exposedVersion = "0.60.0"
 filekitCompose = "0.8.8"
@@ -49,13 +48,12 @@ krop-ui = "0.1.6"
 ktor = "3.1.1"
 leakcanaryAndroid = "2.14"
 lifecycleViewmodelCompose = "2.8.7"
-log4jCore = "2.24.3"
 logback = "1.5.18"
 luceneCore = "10.1.0"
 m3uParser = "1.4.0"
 markdown = "0.7.3"
 material3WindowSizeClassMultiplatform = "0.5.0"
-media3Exoplayer = "1.5.1"
+media3Exoplayer = "1.6.0"
 memoryfilesystem = "2.8.1"
 minio = "8.5.17"
 mysqlConnectorJava = "8.0.33"
@@ -130,7 +128,6 @@ testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", ve
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearchJava" }
 emoji-compose-m3 = { module = "org.kodein.emoji:emoji-compose-m3", version.ref = "emojiKt" }
 emoji-kt = { module = "org.kodein.emoji:emoji-kt", version.ref = "emojiKt" }
-emoji-reader-jvm = { module = "com.github.YvesCheung.EmojiReader:lib-jvm", version.ref = "emoji-reader" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposedVersion" }
 exposed-crypt = { module = "org.jetbrains.exposed:exposed-crypt", version.ref = "exposedVersion" }
 exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposedVersion" }
@@ -179,8 +176,6 @@ ktor-server-sessions = { module = "io.ktor:ktor-server-sessions", version.ref = 
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "androidx-lifecycleProcess" }
-log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4jCore" }
-log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4jCore" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", version.ref = "luceneCore" }
 lucene-backward-codecs = { module = "org.apache.lucene:lucene-backward-codecs", version.ref = "luceneCore" }
@@ -196,7 +191,6 @@ multiplatform-markdown-renderer-code = { module = "com.mikepenz:multiplatform-ma
 multiplatform-markdown-renderer-coil3 = { module = "com.mikepenz:multiplatform-markdown-renderer-coil3", version.ref = "multiplatformMarkdownRenderer" }
 multiplatform-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "multiplatformMarkdownRenderer" }
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatformSettingsNoArg" }
-multiplatform-settings-no-arg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettingsNoArg" }
 multiplatform-settings-serialization = { module = "com.russhwolf:multiplatform-settings-serialization", version.ref = "multiplatformSettingsNoArg" }
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }

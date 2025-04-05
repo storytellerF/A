@@ -74,4 +74,8 @@ sealed interface TopicContent {
     @Serializable
     @SerialName("decrypted-failed")
     data class DecryptFailed(val message: String) : TopicContent
+
+    @Serializable
+    @SerialName("invalid")
+    data object Invalid : TopicContent
 }

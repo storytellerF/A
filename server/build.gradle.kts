@@ -28,7 +28,7 @@ dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.pdfbox)
     implementation(libs.napier)
-    implementation(libs.emoji.reader.jvm)
+    
     implementation(libs.geoip2)
     implementation(libs.tika.core)
     implementation(libs.pdfbox.layout)

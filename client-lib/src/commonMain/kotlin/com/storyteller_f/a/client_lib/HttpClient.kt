@@ -2,6 +2,7 @@ package com.storyteller_f.a.client_lib
 
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.utils.checkContent
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.*
@@ -14,7 +15,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
-import io.ktor.util.date.*
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
 
@@ -100,7 +100,11 @@ suspend fun processEncryptedTopic(info: List<TopicInfo>): List<TopicInfo> {
                             s.hexToByteArray()
                         )
                     }.fold(onSuccess = {
-                        TopicContent.Plain(it)
+                        if (checkContent(it)) {
+                            TopicContent.Plain(it)
+                        } else {
+                            TopicContent.Invalid
+                        }
                     }, onFailure = {
                         Napier.e(it) {
                             "decrypt ${topicInfo.id}"

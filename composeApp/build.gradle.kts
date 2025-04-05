@@ -82,7 +82,7 @@ kotlin {
 
             implementation(libs.androidx.activity.compose)
 
-            implementation(libs.emoji.reader.jvm)
+
             implementation(libs.lifecycle.process)
             implementation(libs.jlatexmath.android)
             implementation(libs.jlatexmath.android.font.cyrillic)
@@ -144,7 +144,6 @@ kotlin {
             implementation(libs.fonticons.core)
             implementation(libs.krop.ui)
             implementation(libs.multiplatform.settings)
-//            implementation(libs.multiplatform.settings.no.arg)
             implementation(libs.multiplatform.settings.serialization)
             implementation(libs.couchbase.lite)
             implementation(libs.couchbase.lite.ktx)
@@ -170,7 +169,7 @@ kotlin {
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
-            implementation(libs.emoji.reader.jvm)
+            
             implementation(libs.jlatexmath)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.vlcj)

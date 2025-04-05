@@ -24,7 +24,9 @@ fun Route.bindProtectedSafeMediaRoute(backend: Backend, reader: DatabaseReader) 
         error("create atemp failed")
     }
 
-    val tika = Tika()
+    val tika by lazy {
+        Tika()
+    }
 
     post<RouteMedia.Upload> {
         usePrincipal(reader) { uid ->
