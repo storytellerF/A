@@ -16,8 +16,6 @@
  */
 package org.apache.pdfbox.examples.signature;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.pdfbox.util.Hex;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
@@ -37,6 +35,8 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Random;
 
+import static org.apache.pdfbox.examples.signature.Log.LOG;
+
 /**
  * Time Stamping Authority (TSA) Client [RFC 3161].
  *
@@ -44,7 +44,6 @@ import java.util.Random;
  * @author John Hewson
  */
 public class TSAClient {
-    private static final Logger LOG = LogManager.getLogger(TSAClient.class);
 
     private static final DigestAlgorithmIdentifierFinder ALGORITHM_OID_FINDER =
             new DefaultDigestAlgorithmIdentifierFinder();

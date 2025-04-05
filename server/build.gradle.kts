@@ -18,6 +18,7 @@ kotlin {
 }
 
 dependencies {
+    //only for exposed
     runtimeOnly(libs.logback)
 
     implementation(libs.cryptography.provider.jdk)
@@ -30,8 +31,6 @@ dependencies {
     implementation(libs.emoji.reader.jvm)
     implementation(libs.geoip2)
     implementation(libs.tika.core)
-    implementation(libs.log4j.core)
-    implementation(libs.log4j.api)
     implementation(libs.pdfbox.layout)
     implementation(projects.cryptoJvm)
     implementation(libs.h2)

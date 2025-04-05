@@ -17,8 +17,7 @@
 
 package org.apache.pdfbox.examples.signature.validation;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static org.apache.pdfbox.examples.signature.Log.LOG;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.*;
 import org.apache.pdfbox.examples.signature.SigUtils;
@@ -65,7 +64,6 @@ import java.util.*;
  * @author Alexis Suter
  */
 public class AddValidationInformation {
-    private static final Logger LOG = LogManager.getLogger(AddValidationInformation.class);
     private final Map<X509Certificate, COSStream> certMap = new HashMap<>();
     private final Set<X509Certificate> foundRevocationInformation = new HashSet<>();
     private final Set<X509Certificate> ocspChecked = new HashSet<>();

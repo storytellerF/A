@@ -16,8 +16,8 @@
  */
 package org.apache.pdfbox.examples.signature.validation;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import static org.apache.pdfbox.examples.signature.Log.LOG;
 import org.apache.pdfbox.examples.signature.validation.CertInformationCollector.CertSignatureInformation;
 import org.apache.pdfbox.util.Hex;
 import org.bouncycastle.asn1.ASN1Encodable;
@@ -34,7 +34,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
 
 public class CertInformationHelper {
-    private static final Logger LOG = LogManager.getLogger(CertInformationHelper.class);
 
     private CertInformationHelper() {
     }

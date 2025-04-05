@@ -16,8 +16,6 @@
  */
 package org.apache.pdfbox.examples.signature.cert;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.pdfbox.examples.signature.SigUtils;
 import org.apache.pdfbox.pdmodel.encryption.SecurityProvider;
 import org.bouncycastle.asn1.DEROctetString;
@@ -58,13 +56,15 @@ import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
+import static org.apache.pdfbox.examples.signature.Log.LOG;
+
+
 /**
  * Helper Class for OCSP-Operations with bouncy castle.
  *
  * @author Alexis Suter
  */
 public class OcspHelper {
-    private static final Logger LOG = LogManager.getLogger(OcspHelper.class);
     // SecureRandom.getInstanceStrong() would be better, but sometimes blocks on Linux
     private static final Random RANDOM = new SecureRandom();
     private final X509Certificate issuerCertificate;

@@ -60,7 +60,8 @@ object DatabaseFactory {
                     block()
                 } catch (e: Throwable) {
                     if (e !is UnauthorizedException) {
-                        Napier.e(e, "database failed") {
+                        r.initCause(e)
+                        Napier.e(r, "database failed") {
                             "${connection.connection}"
                         }
                     }

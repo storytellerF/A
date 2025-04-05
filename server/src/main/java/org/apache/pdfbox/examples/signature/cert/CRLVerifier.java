@@ -19,8 +19,6 @@
 
 package org.apache.pdfbox.examples.signature.cert;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.pdfbox.examples.signature.SigUtils;
 import org.apache.pdfbox.pdmodel.encryption.SecurityProvider;
 import org.bouncycastle.asn1.ASN1IA5String;
@@ -44,12 +42,13 @@ import java.security.GeneralSecurityException;
 import java.security.cert.*;
 import java.util.*;
 
+import static org.apache.pdfbox.examples.signature.Log.LOG;
+
 /**
  * Copied from Apache CXF 2.4.9, initial version:
  * <a href="https://svn.apache.org/repos/asf/cxf/tags/cxf-2.4.9/distribution/src/main/release/samples/sts_issue_operation/src/main/java/demo/sts/provider/cert/">...</a>
  */
 public final class CRLVerifier {
-    private static final Logger LOG = LogManager.getLogger(CRLVerifier.class);
 
     private CRLVerifier() {
     }
