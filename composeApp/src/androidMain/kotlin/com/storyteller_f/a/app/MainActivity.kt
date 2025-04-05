@@ -3,9 +3,12 @@ package com.storyteller_f.a.app
 import android.app.NotificationManager
 import android.content.ComponentName
 import android.os.Bundle
+import android.view.View
+import android.view.ViewTreeObserver
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommands
@@ -15,6 +18,8 @@ import com.kdroid.composenotification.builder.AndroidChannelConfig
 import com.kdroid.composenotification.builder.NotificationInitializer.notificationInitializer
 import com.storyteller_f.a.app.compontents.bindActivity
 import com.storyteller_f.a.app.compontents.unbindActivity
+import com.storyteller_f.a.client_lib.LoadingState
+import com.storyteller_f.a.client_lib.LoginViewModel
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.core.FileKit
 import java.util.concurrent.Future
@@ -51,13 +56,38 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setupForSplash()
         commonForActivity()
-
         initFromContext()
-
         setContent {
             App()
         }
+    }
+
+    private fun setupForSplash() {
+        installSplashScreen()
+        val content = findViewById<View>(android.R.id.content)
+        content.viewTreeObserver.addOnPreDrawListener(
+            object : ViewTreeObserver.OnPreDrawListener {
+                override fun onPreDraw(): Boolean {
+                    // Check whether the initial data is ready.
+                    val loadingState = LoginViewModel.retryLoginState.value
+                    val retried = LoginViewModel.appStartLoginRetried.value
+                    Napier.i {
+                        "$retried $loadingState"
+                    }
+                    val firstDone = retried && (loadingState != null && loadingState !is LoadingState.Loading)
+                    return if (firstDone) {
+                        // The content is ready. Start drawing.
+                        content.viewTreeObserver.removeOnPreDrawListener(this)
+                        true
+                    } else {
+                        // The content isn't ready. Suspend.
+                        false
+                    }
+                }
+            }
+        )
     }
 
     override fun onDestroy() {

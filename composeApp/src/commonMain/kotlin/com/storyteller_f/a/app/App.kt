@@ -58,6 +58,7 @@ import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -327,42 +328,66 @@ fun LoginCheck(content: @Composable () -> Unit) {
     val client = LocalClient.current
     val state by LoginViewModel.state.collectAsState()
     val user by LoginViewModel.user.collectAsState()
-    val currentState = state
-    var tried by remember {
-        mutableStateOf(false)
-    }
-    LaunchedEffect(currentState, tried) {
-        if (!tried && user == null) {
-            if (currentState is ClientSession.SignUpSuccess) {
-                globalDialogState.use {
-                    val data = client.getData().getOrThrow()
-                    val signature = currentState.session.signature(finalData(data))
-                    val add = currentState.session.address()
-                    val u = client.signIn(add, signature).getOrThrow()
-                    LoginViewModel.updateUser(u)
-                    LoginViewModel.updateSession(data, signature)
+    val retryState by LoginViewModel.retryLoginState.collectAsState()
+    LoginCheckInternal(state, user, client, retryState, {
+        if (it && !LoginViewModel.appStartLoginRetried.value) {
+            LoginViewModel.appStartLoginRetried.value = true
+        }
+    }, {
+        LoginViewModel.retryLoginState.value = it
+    }, content)
+}
+
+@Composable
+private fun LoginCheckInternal(
+    state: ClientSession,
+    user: UserInfo?,
+    client: HttpClient,
+    retryState: LoadingState?,
+    updateTried: (Boolean) -> Unit,
+    updateRetryState: (LoadingState?) -> Unit,
+    content: @Composable () -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(state, retryState) {
+        if (user == null && state is ClientSession.SignUpSuccess) {
+            if (retryState == null) {
+                updateRetryState(LoadingState.Loading)
+                updateTried(true)
+                scope.launch {
+                    globalDialogState.use {
+                        val data = client.getData().getOrThrow()
+                        val signature = state.session.signature(finalData(data))
+                        val add = state.session.address()
+                        val u = client.signIn(add, signature).getOrThrow()
+                        LoginViewModel.updateUser(u)
+                        LoginViewModel.updateSession(data, signature)
+                    }.onSuccess {
+                        updateRetryState(LoadingState.Done)
+                    }.onFailure {
+                        updateRetryState(LoadingState.Error(it))
+                    }
                 }
-                tried = true
             }
+        } else {
+            updateTried(true)
+            updateRetryState(LoadingState.Done)
         }
     }
-    val scope = rememberCoroutineScope()
-    if (currentState is ClientSession.SignUpSuccess && user == null) {
+    if (state is ClientSession.SignUpSuccess && user == null && retryState !is LoadingState.Loading) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            if (tried) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Button({
-                        scope.launch {
-                            signOut(client)
-                        }
-                    }) {
-                        Text("Sign out")
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Button({
+                    scope.launch {
+                        signOut(client)
                     }
-                    Button({
-                        tried = false
-                    }) {
-                        Text("Retry")
-                    }
+                }) {
+                    Text("Sign out")
+                }
+                Button({
+                    updateRetryState(null)
+                }) {
+                    Text("Retry")
                 }
             }
         }

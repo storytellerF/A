@@ -372,7 +372,7 @@ fun CommonInputButton(
 
         is LoadingState.Error -> {
             IconButton({
-                globalDialogState.showError(state.e)
+                globalDialogState.showErrorState(state.e)
             }) {
                 Icon(Icons.Default.Error, stringResource(Res.string.error))
             }

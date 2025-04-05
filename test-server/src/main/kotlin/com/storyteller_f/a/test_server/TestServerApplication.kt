@@ -11,6 +11,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import isWin
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
 import startServer
 import stopServer
@@ -63,14 +65,15 @@ fun main(args: Array<String>) {
 
 @Suppress("unused")
 fun Application.module() {
-    val processMap = mutableMapOf<Int, Process>()
+    val processMap = mutableMapOf<Int, Process?>()
+    val processLock = Mutex()
     val job = startListening(8888)
     monitor.subscribe(ApplicationStopped) { application ->
         application.log.info("Server is stopped")
         job.cancel()
         processMap.forEach {
             application.log.info("stop :${it.key}")
-            stopServer(it.value, it.key)
+            it.value?.let { it1 -> stopServer(it1, it.key) }
         }
         // Release resources and unsubscribe from events
         monitor.unsubscribe(ApplicationStarted) {}
@@ -83,60 +86,71 @@ fun Application.module() {
             }
         }
         post("/start") {
-            handleStartRoute(processMap, call)
+            call.handleStartRoute(processMap, processLock)
         }
         post("/stop") {
-            handleStopRoute(processMap, call)
+            call.handleStopRoute(processMap, processLock)
         }
     }
 }
 
-private suspend fun handleStopRoute(
-    processMap: MutableMap<Int, Process>,
-    call: RoutingCall,
+private suspend fun RoutingCall.handleStopRoute(
+    processMap: MutableMap<Int, Process?>,
+    processLock: Mutex,
 ) {
-    val application = call.application
-    val port = call.receiveText().toIntOrNull()
+    val application = application
+    val port = receiveText().toIntOrNull()
     if (port != null) {
-        val server = processMap.remove(port)
+        val server = processLock.withLock {
+            processMap.remove(port)
+        }
         if (server != null) {
             application.log.info("stop $port server success")
             stopServer(server, port)
-            call.respond(HttpStatusCode.OK)
+            respond(HttpStatusCode.OK)
         } else {
             application.log.info("stop $port server not found process")
-            call.respond(HttpStatusCode.NotFound)
+            respond(HttpStatusCode.NotFound)
         }
     } else {
         application.log.info("stop port server not found")
-        call.respond(HttpStatusCode.NotFound)
+        respond(HttpStatusCode.NotFound)
     }
 }
 
-private suspend fun handleStartRoute(
-    processMap: MutableMap<Int, Process>,
-    call: RoutingCall
+private suspend fun RoutingCall.handleStartRoute(
+    processMap: MutableMap<Int, Process?>,
+    processLock: Mutex
 ) {
-    val application = call.application
-    val platformInfo = call.receiveText().split("\n")
+    val application = application
+    val platformInfo = receiveText().split("\n")
     if (platformInfo.size < 2) {
-        call.respond(HttpStatusCode.BadRequest)
+        respond(HttpStatusCode.BadRequest)
         return
     }
     val isNested = File("").canonicalPath.endsWith("test-server")
     val (name, id) = platformInfo
-    val port = findAvailablePort()
+    val port = processLock.withLock {
+        val port = findAvailablePort {
+            !processMap.containsKey(it)
+        }
+        processMap[port] = null
+        port
+    }
+
     val server = startServer(if (isNested) ".." else ".", port)
     if (server != null) {
         application.log.info("start $port server success")
-        processMap[port] = server
+        processLock.withLock {
+            processMap[port] = server
+        }
         if (name.startsWith("Android", true)) {
             val path =
                 File(if (isNested) ".." else ".", "scripts/tool_scripts/forward-special-device.$ext").canonicalPath
             withContext(Dispatchers.IO) {
                 val start = ProcessBuilder(path, id, port.toString()).start()
-                val waitFor = start.waitFor()
-                if (waitFor != 0) {
+                val serverResult = start.waitFor()
+                if (serverResult != 0) {
                     println(start.inputReader().readText())
                     System.err.println(start.errorReader().readText())
                 } else {
@@ -144,12 +158,15 @@ private suspend fun handleStartRoute(
                 }
             }
         }
-        call.respondText {
+        respondText {
             port.toString()
         }
     } else {
+        processLock.withLock {
+            processMap.remove(port)
+        }
         application.log.info("start $port server failed")
-        call.respond(HttpStatusCode.InternalServerError)
+        respond(HttpStatusCode.InternalServerError)
     }
 }
 
@@ -164,11 +181,11 @@ fun isPortAvailable(port: Int): Boolean {
 }
 
 // 获取一个未被使用的端口号
-fun findAvailablePort(startingPort: Int = 8080, maxRetries: Int = 100): Int {
+fun findAvailablePort(startingPort: Int = 8080, maxRetries: Int = 100, usable: (Int) -> Boolean): Int {
     var port = startingPort
     var retries = 0
     while (retries < maxRetries) {
-        if (isPortAvailable(port)) {
+        if (isPortAvailable(port) && usable(port)) {
             return port // 找到空闲端口
         }
         port++ // 尝试下一个端口

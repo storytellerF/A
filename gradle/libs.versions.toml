@@ -16,6 +16,7 @@ composeNativeNotification = "0.2.0"
 composePdf = "1.2.0"
 composeWebview = "0.33.6"
 core = "2.0.0"
+coreSplashscreen = "1.0.1"
 couchbaseLite = "3.1.9-1.1.1"
 cryptographyCore = "0.4.0"
 desugar_jdk_libs = "2.1.5"
@@ -89,6 +90,7 @@ zoomimageComposeCoil3 = "1.1.2"
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibrariesComposeM3" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibrariesCore" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3Exoplayer" }

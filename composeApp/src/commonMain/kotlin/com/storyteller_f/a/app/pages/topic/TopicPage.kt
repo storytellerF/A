@@ -225,7 +225,7 @@ private fun sendTopic(
             toasterState.show(getString(Res.string.success), duration = 1.seconds)
             scrollTo()
         } catch (e: Exception) {
-            globalDialogState.showError(e)
+            globalDialogState.showErrorState(e)
         } finally {
             sendState.value = LoadingState.Done
         }

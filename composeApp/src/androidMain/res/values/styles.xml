@@ -6,4 +6,10 @@
     <style name="App" parent="Base">
 
     </style>
+
+    <style name="Splash" parent="Theme.SplashScreen">
+        <item name="postSplashScreenTheme">@style/App</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="windowSplashScreenBackground">#4C662B</item>
+    </style>
 </resources>
