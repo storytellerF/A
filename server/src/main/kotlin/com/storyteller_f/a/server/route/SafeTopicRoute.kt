@@ -11,8 +11,8 @@ import com.storyteller_f.shared.obj.NewReaction
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.safeFirstUnicode
 import com.storyteller_f.tables.deleteReaction
-import com.yy.mobile.emoji.EmojiReader
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
@@ -127,4 +127,6 @@ fun Route.bindProtectedSafeTopicRoute(backend: Backend, reader: DatabaseReader) 
     }
 }
 
-private fun isEmoji(emoji: String) = EmojiReader.getTextLength(emoji) == 1 && EmojiReader.isEmojiOfCharIndex(emoji, 0)
+private fun isEmoji(emoji: String): Boolean {
+    return emoji.safeFirstUnicode()?.length == emoji.length
+}

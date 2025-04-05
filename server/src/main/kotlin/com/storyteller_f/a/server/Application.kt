@@ -1,5 +1,6 @@
 package com.storyteller_f.a.server
 
+import ch.qos.logback.classic.LoggerContext
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
@@ -14,17 +15,18 @@ import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.origin
-import io.ktor.server.plugins.ratelimit.RateLimit
+import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.request.*
-import io.ktor.server.resources.Resources
+import io.ktor.server.resources.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.io.File
 import java.net.InetAddress
@@ -89,6 +91,10 @@ private fun processPreSetData(env: MergedEnv) {
 
 @Suppress("unused")
 fun Application.module() {
+    val loggerMap = (LoggerFactory.getILoggerFactory() as LoggerContext).loggerList
+    loggerMap.forEach {
+        println("Logger name: ${it.name}")
+    }
     val reader = buildDatabaseReader()
     val backend = buildBackend()
     DatabaseFactory.connect(backend.config.databaseConnection)

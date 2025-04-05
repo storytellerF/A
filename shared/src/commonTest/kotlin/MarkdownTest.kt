@@ -1,13 +1,12 @@
 import com.storyteller_f.shared.utils.*
-import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.acceptChildren
 import org.intellij.markdown.ast.visitors.Visitor
 import org.intellij.markdown.flavours.gfm.GFMElementTypes
-import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class MarkdownTest {
     @Test
@@ -76,6 +75,13 @@ class MarkdownTest {
             }
 
         })
+    }
+
+    @Test
+    fun `test check content`() {
+        assertTrue(checkContent("a"))
+        assertTrue(checkContent("👌"))
+        assertEquals("👌", "👌abc".safeFirstUnicode())
     }
 
 }

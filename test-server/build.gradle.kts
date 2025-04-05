@@ -18,7 +18,7 @@ kotlin {
 }
 
 dependencies {
-    runtimeOnly(libs.logback)
+    implementation(libs.logback)
 
     implementation(libs.cryptography.provider.jdk)
     implementation(libs.bcpkix.jdk18on)
@@ -27,11 +27,9 @@ dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.pdfbox)
     implementation(libs.napier)
-    implementation(libs.emoji.reader.jvm)
+    
     implementation(libs.geoip2)
     implementation(libs.simplemagic)
-    implementation(libs.log4j.core)
-    implementation(libs.log4j.api)
     implementation(libs.pdfbox.layout)
     implementation(projects.cryptoJvm)
     implementation(libs.h2)

@@ -33,10 +33,15 @@ suspend fun createPublicTopic(uid: PrimaryKey, backend: Backend, newTopic: NewTo
     if (newTopic.parentType == ObjectType.ROOM) {
         return Result.failure(ForbiddenException("can't use api to add topic in room"))
     }
+
     val content = newTopic.content.trim()
+
     if (content.isEmpty()) {
         return Result.failure(CustomBadRequestException("content is empty"))
+    } else if (!checkContent(content)) {
+        return Result.failure(CustomBadRequestException("invalid"))
     }
+
     return checkRootWritePermission(
         newTopic.parentType,
         newTopic.parentId,

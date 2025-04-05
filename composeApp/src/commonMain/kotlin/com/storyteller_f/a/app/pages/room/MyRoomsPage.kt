@@ -24,8 +24,8 @@ import com.storyteller_f.a.app.compontents.globalLoader
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.model.createCommunityViewModel
 import com.storyteller_f.a.app.model.createJoinedRoomsViewModel
-import com.storyteller_f.a.app.utils.safeFirstUnicode
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.utils.safeFirstUnicode
 
 @Composable
 fun MyRoomsPage() {
@@ -151,7 +151,7 @@ fun RoomIcon(
                 },
             contentAlignment = Alignment.Center
         ) {
-            Text(roomInfo?.name?.safeFirstUnicode()?.toString() ?: "")
+            Text(roomInfo?.name?.safeFirstUnicode() ?: "")
         }
     }
     roomInfo?.id?.let {
