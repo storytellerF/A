@@ -1,5 +1,6 @@
 package com.storyteller_f.a.app.compontents
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -33,7 +34,7 @@ sealed interface DialogState {
 }
 
 class GlobalDialogController(val state: MutableState<DialogState> = mutableStateOf(DialogState.None)) {
-    fun showError(error: Throwable) {
+    fun showErrorState(error: Throwable) {
         state.value = DialogState.Error(error)
     }
 
@@ -41,25 +42,27 @@ class GlobalDialogController(val state: MutableState<DialogState> = mutableState
         state.value = DialogState.Text(message)
     }
 
-    fun showLoading() {
+    private fun showLoadingState() {
         state.value = DialogState.Loading
     }
 
-    fun close() {
+    fun showCloseState() {
         state.value = DialogState.None
     }
 
-    suspend fun <T : Any> use(block: suspend () -> T?): Result<T?> {
+    suspend fun <T : Any> use(
+        block: suspend () -> T?
+    ): Result<T?> {
         try {
-            showLoading()
-            val t = block()
-            close()
-            return Result.success(t)
+            showLoadingState()
+            val result = block()
+            showCloseState()
+            return Result.success(result)
         } catch (e: Exception) {
             Napier.e(e) {
                 "global dialog"
             }
-            showError(e)
+            showErrorState(e)
             return Result.failure(e)
         }
     }
@@ -81,104 +84,111 @@ fun GlobalDialogInternal(message: DialogState, updateNewState: (DialogState) -> 
     val onDismissRequest = {
         updateNewState(DialogState.None)
     }
-    when (message) {
-        is DialogState.Loading -> {
-            LoadingDialog(onDismissRequest)
-        }
+    if (message != DialogState.None) {
+        val scrollState = rememberScrollState()
 
-        is DialogState.Error -> {
-            ErrorDialog(message, onDismissRequest)
+        BasicAlertDialog(
+            onDismissRequest,
+            properties = if (message is DialogState.Loading) {
+                DialogProperties(
+                    dismissOnClickOutside = false,
+                    dismissOnBackPress = false
+                )
+            } else {
+                DialogProperties()
+            }
+        ) {
+            DialogContainer {
+                GlobalDialogContent(message, scrollState, onDismissRequest)
+            }
         }
-
-        is DialogState.Text -> {
-            TextDialog(onDismissRequest, message)
-        }
-
-        DialogState.None -> {}
     }
 }
 
 @Composable
-private fun TextDialog(
-    onDismissRequest: () -> Unit,
-    message: DialogState.Text
+private fun ColumnScope.GlobalDialogContent(
+    message: DialogState,
+    scrollState: ScrollState,
+    onDismissRequest: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
-    AlertDialog(onDismissRequest, {
+    when (message) {
+        is DialogState.Error -> {
+            ErrorDialogContent(message, scrollState, onDismissRequest)
+        }
+
+        DialogState.Loading -> {
+            LoadingDialogContent()
+        }
+
+        is DialogState.Text -> {
+            TextDialogContent(message, scrollState, onDismissRequest)
+        }
+
+        else -> {}
+    }
+}
+
+@Composable
+private fun LoadingDialogContent() {
+    Box(modifier = Modifier.size(100.dp).padding(20.dp)) {
+        CircularProgressIndicator(
+            modifier = Modifier.align(Alignment.Center),
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun ColumnScope.TextDialogContent(
+    message: DialogState.Text,
+    scrollState: ScrollState,
+    onDismissRequest: () -> Unit
+) {
+    val text = message.text
+    MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
+        Text(text, modifier = Modifier.verticalScroll(scrollState), maxLines = total - 10)
+    }
+    Box(contentAlignment = Alignment.CenterEnd) {
         Button({
             onDismissRequest()
         }) {
             Text("Close")
         }
-    }, text = {
-        val text = message.text
-        MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
-            Text(text, modifier = Modifier.verticalScroll(scrollState), maxLines = total - 10)
-        }
-    })
+    }
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun ErrorDialog(
+private fun ColumnScope.ErrorDialogContent(
     message: DialogState.Error,
+    scrollState: ScrollState,
     onDismissRequest: () -> Unit
 ) {
     val throwable = message.throwable
-    val scrollState = rememberScrollState()
     if (throwable is ServerErrorException && throwable.isHtmlContent()) {
-        BasicAlertDialog({
-            onDismissRequest()
-        }) {
-            DialogContainer {
-                Column(modifier = Modifier.heightIn(max = 400.dp)) {
-                    ExceptionView(throwable)
-                }
+        ExceptionView(throwable)
+    } else {
+        Text((throwable.localizedMessage ?: throwable::class.toString()).take(100))
+        if (!AppConfig.IS_PROD) {
+            val text = throwable.stackTraceToString()
+            MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
+                Text(
+                    text,
+                    modifier = Modifier.verticalScroll(scrollState),
+                    maxLines = total.coerceIn(2, 20)
+                )
             }
         }
-    } else {
-        AlertDialog(onDismissRequest, {
+        Box(contentAlignment = Alignment.CenterEnd) {
             Button({
                 onDismissRequest()
             }) {
                 Text("Close")
             }
-        }, title = {
-            Text((throwable.localizedMessage ?: throwable::class.toString()).take(100))
-        }, text = {
-            if (!AppConfig.IS_PROD) {
-                val text = throwable.stackTraceToString()
-                MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
-                    Text(
-                        text,
-                        modifier = Modifier.verticalScroll(scrollState),
-                        maxLines = total.coerceIn(2, 20)
-                    )
-                }
-            }
-        })
+        }
     }
 }
 
 fun ServerErrorException.isHtmlContent(): Boolean = text.startsWith("<html") || text.startsWith("<!DOCTYPE html")
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun LoadingDialog(onDismissRequest: () -> Unit) {
-    BasicAlertDialog(
-        onDismissRequest,
-        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
-    ) {
-        Surface(shape = RoundedCornerShape(12.dp), shadowElevation = 10.dp) {
-            Box(modifier = Modifier.size(100.dp).padding(20.dp)) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun ButtonNav(icon: ImageVector, title: String, onClick: () -> Unit = {}) {

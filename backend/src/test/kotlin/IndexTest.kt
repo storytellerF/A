@@ -6,7 +6,6 @@ import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.index.TopicSearchService
 import kotlinx.coroutines.runBlocking
 import org.testcontainers.elasticsearch.ElasticsearchContainer
-import kotlin.io.path.Path
 import kotlin.test.Test
 
 class IndexTest {

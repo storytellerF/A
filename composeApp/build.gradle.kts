@@ -96,6 +96,7 @@ kotlin {
             implementation(projects.cryptoJvm)
             implementation(libs.github.newpipeextractor)
             implementation(libs.compose.webview)
+            implementation(libs.androidx.core.splashscreen)
         }
         androidUnitTest.dependencies {
             implementation(libs.androidx.ui.test.junit4.android)
@@ -288,6 +289,7 @@ dependencies {
 }
 
 easylauncher {
+    iconNames.addAll("@mipmap/ic_launcher", "@mipmap/ic_launcher_round")
     buildTypes {
         register("debug") {
             filters(chromeLike(label = flavorStr), greenRibbonFilter("debug"))

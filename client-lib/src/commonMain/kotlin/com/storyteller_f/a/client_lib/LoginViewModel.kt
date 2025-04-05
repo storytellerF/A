@@ -71,6 +71,8 @@ object LoginViewModel {
     val isAlreadySignUp = state.map {
         it is ClientSession.SignUpSuccess
     }
+    val appStartLoginRetried = MutableStateFlow(false)
+    val retryLoginState = MutableStateFlow<LoadingState?>(null)
 
     fun updateSession(data: String, signature: String?) {
         session = data to signature

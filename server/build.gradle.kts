@@ -18,8 +18,8 @@ kotlin {
 }
 
 dependencies {
-    //only for exposed
-    runtimeOnly(libs.logback)
+    //only for exposed & ktor
+    implementation(libs.logback)
 
     implementation(libs.cryptography.provider.jdk)
     implementation(libs.bcpkix.jdk18on)

@@ -107,7 +107,7 @@ private fun UploadItem(
             LoadingState.Done -> Icon(Icons.Default.Done, "done")
             is LoadingState.Error -> {
                 IconButton({
-                    globalDialogState.showError(state.e)
+                    globalDialogState.showErrorState(state.e)
                 }) {
                     Icon(Icons.Default.Error, "error")
                 }
