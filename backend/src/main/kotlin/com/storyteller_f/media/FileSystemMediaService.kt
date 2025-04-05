@@ -1,5 +1,6 @@
 package com.storyteller_f.media
 
+import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.MediaItem
 import io.github.aakira.napier.Napier
@@ -17,13 +18,15 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.*
 
-class FileSystemMediaService(private val url: String, val base: Path) : MediaService {
+class FileSystemMediaService(private val url: String, base: Path) : MediaService {
     private val tika = Tika()
+    private val base = if (!base.exists()) {
+        base.createDirectories()
+    } else {
+        base.toRealPath()
+    }
 
     init {
-        if (!base.exists()) {
-            base.createDirectories()
-        }
         Napier.i {
             "media path ${base.toRealPath().pathString}"
         }
@@ -57,7 +60,7 @@ class FileSystemMediaService(private val url: String, val base: Path) : MediaSer
                         if (mediaPath.exists()) {
                             val item = stat(it, mediaPath)
                             val dimension = getDimension(mediaPath, item.contentType)
-                            MediaInfo(URIBuilder(url).setPath("amedia/$it").build().toString(), item, dimension)
+                            MediaInfo(URIBuilder(url).setPath("amedia/${AMEDIA_DEFAULT_BUCKET}/$it").build().toString(), item, dimension)
                         } else {
                             null
                         }
@@ -112,9 +115,9 @@ class FileSystemMediaService(private val url: String, val base: Path) : MediaSer
 
     fun getResponse(it: List<String>): Path? {
         return kotlin.runCatching {
-            val path = base.resolve("amedia/${it.joinToString("/")}")
+            val path = base.resolve(it.joinToString("/"))
             val file = path.toRealPath()
-            if (file.pathString != path.pathString) {
+            if (file.pathString != path.absolutePathString()) {
                 null
             } else {
                 file

@@ -11,8 +11,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.tika.Tika
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Path
 import javax.imageio.ImageIO
+import javax.imageio.stream.ImageInputStreamImpl
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamConstants
 import kotlin.io.path.inputStream
@@ -123,7 +125,7 @@ suspend fun getDimension(
     return ImageIO.getImageReadersByMIMEType(contentType).asSequence().firstNotNullOfOrNull { reader ->
         try {
             file.inputStream().use {
-                reader.input = it
+                reader.input = PathImageInputStream(it)
                 reader.read(reader.minIndex)
                 Dimension(
                     reader.getWidth(reader.minIndex),
@@ -182,4 +184,16 @@ private suspend fun getSvgDimension(file: Path): Dimension? {
         return Dimension(width, height)
     }
     return null
+}
+
+class PathImageInputStream(val it: InputStream) : ImageInputStreamImpl() {
+    override fun read(): Int {
+        return it.read()
+    }
+
+    override fun read(b: ByteArray?, off: Int, len: Int): Int {
+        b ?: return -1
+        return it.read(b, off, len)
+    }
+
 }

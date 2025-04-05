@@ -39,15 +39,21 @@ fun TopicContentField(
             TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain, isEmbed)
         }
 
-        is TopicContent.Encrypted -> {
+        is TopicContent.Encrypted, is TopicContent.DecryptFailed, is TopicContent.Invalid -> {
             Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                Text(stringResource(Res.string.permission_denied))
-            }
-        }
+                when (content) {
+                    is TopicContent.DecryptFailed -> {
+                        Text(content.message)
+                    }
+                    is TopicContent.Encrypted -> {
+                        Text(stringResource(Res.string.permission_denied))
+                    }
+                    TopicContent.Invalid -> {
+                        Text("invalid")
+                    }
+                    else -> {}
+                }
 
-        is TopicContent.DecryptFailed -> {
-            Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                Text(content.message)
             }
         }
 

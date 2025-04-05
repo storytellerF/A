@@ -60,23 +60,23 @@ private fun getReactionBuilder(
     uid: PrimaryKey?
 ): Triple<Count, (ResultRow) -> Triple<String, Long, Boolean>, Query> {
     val r2 = Reactions.alias("r2")
-    val countExpression = r2[Reactions.uid].countDistinct()
+    val countExpression = Reactions.uid.countDistinct()
     val baseSelection = listOf(
         Reactions.emoji,
         countExpression,
     )
-    val selection = r2[Reactions.uid].max()
+    val hasCommentExpression = r2[Reactions.uid].max()
     val resultRowTransform: (ResultRow) -> Triple<String, Long, Boolean> = {
         Triple(
             it[Reactions.emoji],
             it[countExpression],
-            it[selection] != null
+            it.getOrNull(hasCommentExpression) != null
         )
     }
     val query = if (uid != null) {
         Reactions.join(r2, JoinType.LEFT, Reactions.objectId, r2[Reactions.objectId]) {
             r2[Reactions.emoji] eq Reactions.emoji and (r2[Reactions.uid] eq uid)
-        }.select(baseSelection + selection)
+        }.select(baseSelection + hasCommentExpression)
     } else {
         Reactions.select(baseSelection)
     }
