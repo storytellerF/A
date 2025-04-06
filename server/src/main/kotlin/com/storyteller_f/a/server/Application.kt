@@ -24,7 +24,6 @@ import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
@@ -105,17 +104,14 @@ fun Application.module() {
     }
     install(CallLogging) {
         level = Level.INFO
+        callIdMdc("call-id")
         format { call ->
             buildLog(call, reader)
         }
     }
     install(CallId) {
         header(HttpHeaders.XRequestId)
-        generate {
-            runBlocking {
-                SnowflakeFactory.nextId().toString(36)
-            }
-        }
+        generate()
     }
     install(WebSockets) {
         pingPeriod = 15.seconds
