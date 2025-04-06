@@ -150,6 +150,7 @@ kotlin {
             implementation(libs.couchbase.lite.paging)
             implementation(libs.sunny.chung.composable.table)
             implementation(libs.compose.native.notification)
+            implementation(libs.fonticons.core)
 
             implementation(libs.kim)
             implementation(libs.napier)

@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -31,6 +32,7 @@ fun UserIcon(
     userInfo: UserInfo?,
     isMe: Boolean = false,
     setClickEvent: Boolean = true,
+    size: Dp = 40.dp,
     clickCreate: () -> Unit = {},
 ) {
     var showUserDialog by remember {
@@ -45,7 +47,7 @@ fun UserIcon(
             else -> showUserDialog = true
         }
     }
-    UserIconInternal(url, isMe, setClickEvent, onClick)
+    UserIconInternal(url, isMe, setClickEvent, size = size, onClick = onClick)
     UserDialog(userInfo, showUserDialog, clickCreate) {
         showUserDialog = false
     }
@@ -56,9 +58,9 @@ fun UserIconInternal(
     avatarUrl: String?,
     isMe: Boolean,
     setClickEvent: Boolean,
+    size: Dp = 40.dp,
     onClick: () -> Unit
 ) {
-    val size = 40.dp
     val modifier = if (isMe) Modifier.testTag("me") else Modifier
     if (avatarUrl != null) {
         AsyncImage(

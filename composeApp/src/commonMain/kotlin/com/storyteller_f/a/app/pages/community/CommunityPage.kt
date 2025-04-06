@@ -283,7 +283,9 @@ private fun CommunityMenus(
             dismiss()
             nav.gotoMemberPage(communityId, ObjectType.COMMUNITY)
         }
-        if (nav.hasRoute(CommunityScreen::class)) {
+        val appNav = LocalAppNav.current
+        val isCommunityPage by appNav.hasRouteFlow<CommunityScreen>().collectAsState(false)
+        if (isCommunityPage) {
             val scope = rememberCoroutineScope()
             if (communityInfo.isJoined) {
                 ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_community)) {

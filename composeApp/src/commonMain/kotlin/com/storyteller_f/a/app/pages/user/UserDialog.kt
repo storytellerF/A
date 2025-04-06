@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
+import androidx.compose.ui.unit.dp
 import com.kdroid.composenotification.builder.getNotificationProvider
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.ButtonNav
@@ -38,12 +39,17 @@ fun UserDialogInternal(userInfo: UserInfo, clickCreate: () -> Unit, dismiss: () 
     }
     val appNav = LocalAppNav.current
     val client = LocalClient.current
+    val isUserPage by appNav.hasRouteFlow<UserScreen> {
+        it.uid == userInfo.id
+    }.collectAsState(false)
     val my by LoginViewModel.user.collectAsState()
     DialogContainer {
         UserCell(
             userInfo,
             false,
             clickable = false,
+            cellClickable = !isUserPage,
+            size = 60.dp
         ) {
             dismiss()
             appNav.gotoUser(it.id)

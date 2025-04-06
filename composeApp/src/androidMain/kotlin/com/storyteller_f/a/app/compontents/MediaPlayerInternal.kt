@@ -56,7 +56,7 @@ fun MediaPlayerInternal(
         "MediaPlayerInternal $uuid recomposing"
     }
     val player = MediaProvider.controller ?: return
-    val playingSession by savedSession
+    val playingSession by playerSession
     val isPip = rememberIsInPipMode()
     LaunchedEffect(playingSession, currentSession) {
         log {

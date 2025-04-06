@@ -6,7 +6,9 @@ import a.composeapp.generated.resources.snapshot
 import a.composeapp.generated.resources.success
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -16,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.text.buildAnnotatedString
 import com.dokar.sonner.ToasterState
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.ButtonNav
@@ -25,9 +26,7 @@ import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomRefCell
 import com.storyteller_f.a.app.pages.user.UserCell
-import com.storyteller_f.a.app.ui.ExtendIconPack
-import com.storyteller_f.a.app.ui.extendiconpack.Keep
-import com.storyteller_f.a.app.ui.extendiconpack.KeepOff
+import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.setText
 import com.storyteller_f.a.client_lib.LoginViewModel
 import com.storyteller_f.a.client_lib.getTopicSnapshot
@@ -124,7 +123,7 @@ private fun TopicDialogMenuList(
             val client = LocalClient.current
 
             ButtonNav(
-                if (topicInfo.isPin) ExtendIconPack.KeepOff else ExtendIconPack.Keep,
+                if (topicInfo.isPin) MaterialSymbolsOutlined.KeepOff else MaterialSymbolsOutlined.Keep,
                 if (topicInfo.isPin) "Unpin" else "Pin"
             ) {
                 scope.launch {
