@@ -15,12 +15,12 @@ import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.model.createTopicsInTopicViewModel
 import com.storyteller_f.a.app.pages.topic.EmojiPicker
 import com.storyteller_f.a.app.pages.user.UserCell
-import com.storyteller_f.a.app.ui.ExtendIconPack
-import com.storyteller_f.a.app.ui.extendiconpack.Keep
+import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
+import dev.tclement.fonticons.FontIcon
 import kotlin.math.min
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,7 +82,7 @@ fun TopicCellInternal(
         }
 
         if (topicInfo.isPin) {
-            Icon(ExtendIconPack.Keep, "is pinned", modifier = Modifier.align(Alignment.TopEnd))
+            FontIcon(MaterialSymbolsOutlined.Keep, "is pinned", modifier = Modifier.align(Alignment.TopEnd))
         }
     }
 }

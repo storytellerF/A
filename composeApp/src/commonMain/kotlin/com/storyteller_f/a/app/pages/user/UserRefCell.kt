@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.RefCellStateView
@@ -63,6 +64,8 @@ fun UserCell(
     userInfo: UserInfo?,
     hideBackground: Boolean,
     clickable: Boolean = true,
+    cellClickable: Boolean = true,
+    size: Dp = 40.dp,
     onClickCell: ((UserInfo) -> Unit)? = null
 ) {
     val shape = RoundedCornerShape(8.dp)
@@ -70,7 +73,7 @@ fun UserCell(
     Row(
         modifier = if (hideBackground) {
             Modifier
-                .fillMaxWidth().clip(shape).clickable(userInfo != null && clickable) {
+                .fillMaxWidth().clip(shape).clickable(userInfo != null && cellClickable) {
                     userInfo?.let {
                         onClickCell?.invoke(it) ?: appNav.gotoUser(it.id)
                     }
@@ -78,16 +81,16 @@ fun UserCell(
         } else {
             Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceDim, shape)
                 .clip(shape)
-                .clickable(userInfo != null && clickable) {
+                .clickable(userInfo != null && cellClickable) {
                     userInfo?.let {
                         onClickCell?.invoke(it) ?: appNav.gotoUser(it.id)
                     }
                 }
-        }.height(56.dp).padding(8.dp),
+        }.padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        UserIcon(userInfo, setClickEvent = clickable)
+        UserIcon(userInfo, setClickEvent = clickable, size = size)
         if (userInfo != null) {
             Column {
                 Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)

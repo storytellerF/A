@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.storyteller_f.a.app.AppConfig
 import com.storyteller_f.a.client_lib.ServerErrorException
+import dev.tclement.fonticons.FontIcon
+import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -139,7 +141,7 @@ private fun LoadingDialogContent() {
 }
 
 @Composable
-private fun ColumnScope.TextDialogContent(
+private fun TextDialogContent(
     message: DialogState.Text,
     scrollState: ScrollState,
     onDismissRequest: () -> Unit
@@ -158,7 +160,7 @@ private fun ColumnScope.TextDialogContent(
 }
 
 @Composable
-private fun ColumnScope.ErrorDialogContent(
+private fun ErrorDialogContent(
     message: DialogState.Error,
     scrollState: ScrollState,
     onDismissRequest: () -> Unit
@@ -190,8 +192,24 @@ private fun ColumnScope.ErrorDialogContent(
 
 fun ServerErrorException.isHtmlContent(): Boolean = text.startsWith("<html") || text.startsWith("<!DOCTYPE html")
 
+sealed interface IconRes {
+    data class Vector(val vector: ImageVector) : IconRes
+    data class Font(val char: Char, val description: String = "") : IconRes
+}
+
 @Composable
 fun ButtonNav(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
+    ButtonNav(IconRes.Vector(icon), title, onClick)
+}
+
+@Composable
+fun ButtonNav(icon: Char, title: String, onClick: () -> Unit = {}) {
+    ButtonNav(IconRes.Font(icon), title, onClick)
+}
+
+
+@Composable
+fun ButtonNav(icon: IconRes, title: String, onClick: () -> Unit = {}) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -199,7 +217,19 @@ fun ButtonNav(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
             onClick()
         }.padding(horizontal = 8.dp, vertical = 12.dp)
     ) {
-        Icon(imageVector = icon, contentDescription = title)
+        when (icon) {
+            is IconRes.Font -> {
+                ProvideIconParameters(
+                    size = 20.dp,
+                    tintProvider = LocalContentColor
+                ) {
+                    FontIcon(icon.char, icon.description)
+                }
+            }
+            is IconRes.Vector -> {
+                Icon(imageVector = icon.vector, contentDescription = title)
+            }
+        }
         Text(title)
     }
 }
@@ -214,9 +244,6 @@ fun DialogContainer(block: @Composable ColumnScope.() -> Unit) {
 }
 
 class CustomAlertDialogController(val state: MutableState<CustomAlertDialogState?> = mutableStateOf(null)) {
-    fun showMessage(message: String) {
-        state.value = CustomAlertDialogState(null, message)
-    }
 
     fun showMessage(title: String, message: String) {
         state.value = CustomAlertDialogState(title, message)
@@ -224,10 +251,6 @@ class CustomAlertDialogController(val state: MutableState<CustomAlertDialogState
 
     fun showTitle(title: String) {
         state.value = CustomAlertDialogState(title, "")
-    }
-
-    fun showError(throwable: Throwable) {
-        state.value = CustomAlertDialogState(null, throwable.message.toString())
     }
 
     fun close() {
@@ -248,17 +271,17 @@ fun CustomAlertDialog(controller: CustomAlertDialogController, dismiss: () -> Un
 @Composable
 fun CustomAlertDialogInternal(
     dismiss: () -> Unit,
-    it1: CustomAlertDialogState,
+    dialogState: CustomAlertDialogState,
     onClickOk: () -> Unit
 ) {
     AlertDialog({
         dismiss()
     }, title = {
-        it1.title?.let {
+        dialogState.title?.let {
             Text(it)
         }
     }, text = {
-        Text(it1.message)
+        Text(dialogState.message)
     }, confirmButton = {
         Button({
             dismiss()
@@ -277,9 +300,6 @@ fun rememberCommonDialogController(): CommonDialogController {
 }
 
 class CommonDialogController(val show: MutableState<Boolean> = mutableStateOf(false)) {
-    fun dismiss() {
-        show.value = false
-    }
 
     fun update(new: Boolean) {
         show.value = new

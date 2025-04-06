@@ -508,8 +508,8 @@ private fun RoomDialogButtons(
             dismiss()
             appNav.gotoMemberPage(roomInfo.id, ObjectType.ROOM)
         }
-
-        if (appNav.hasRoute(RoomScreen::class)) {
+        val isCommunityPage by appNav.hasRouteFlow<RoomScreen>().collectAsState(false)
+        if (isCommunityPage) {
             val scope = rememberCoroutineScope()
             val toasterState = LocalToaster.current
             if (roomInfo.isJoined) {

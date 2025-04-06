@@ -22,7 +22,7 @@ const val M3U8_MIMETYPE = "application/vnd.apple.mpegurl"
 const val YOUTUBE_MIMETYPE = "video/youtube"
 const val SOUND_CLOUD_MIME_TYPE = "audio/sound.cloud"
 
-var savedSession: MutableState<MediaPlaySession.VideoOrAudio?> = mutableStateOf(null)
+val playerSession: MutableState<MediaPlaySession.VideoOrAudio?> = mutableStateOf(null)
 
 @Serializable
 data class RemoteMediaItem(

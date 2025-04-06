@@ -5,13 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
@@ -51,6 +50,7 @@ import com.storyteller_f.a.app.pages.user.MemberPage
 import com.storyteller_f.a.app.pages.user.UserPage
 import com.storyteller_f.a.app.pages.user.UserSettingPage
 import com.storyteller_f.a.app.pages.user.signOut
+import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
@@ -63,6 +63,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.*
@@ -70,7 +71,9 @@ import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -199,32 +202,38 @@ fun AppInternal(httpUrl: String, wsServerUrl: String) {
             getAsyncImageLoader(it)
         }
         CommonEntry(httpUrl) {
-            val s by savedSession
-            val localSession = s
-            val navigator = rememberNavController()
-
+            val s by playerSession
             val isPip = rememberIsInPipMode()
-            Napier.d {
-                "App Entry $isPip $localSession"
-            }
-            if (isPip && localSession != null) {
-                MediaPage(localSession)
-            } else {
-                val appNav = remember<AppNav> {
-                    newAppNav(navigator)
-                }
-                CompositionLocalProvider(LocalAppNav provides appNav) {
-                    val client = LocalClient.current
-                    val ws = rememberWsClient(client, wsServerUrl, {
-                        appNav.toRoute<RoomScreen>()?.roomId
-                    }, {
-                        appNav.toRoute<TopicScreen>()?.topicId
-                    })
-                    CompositionLocalProvider(LocalWsClient provides ws) {
-                        NavHost(navigator, startDestination = HomeScreen) {
-                            buildRootNav(navigator)
-                        }
-                    }
+
+            AppInternal(isPip, s, wsServerUrl)
+        }
+    }
+}
+
+@Composable
+private fun AppInternal(
+    isPip: Boolean,
+    localSession: MediaPlaySession.VideoOrAudio?,
+    wsServerUrl: String
+) {
+    val navigator = rememberNavController()
+
+    if (isPip && localSession != null) {
+        MediaPage(localSession)
+    } else {
+        val appNav = remember<AppNav> {
+            newAppNav(navigator)
+        }
+        CompositionLocalProvider(LocalAppNav provides appNav) {
+            val client = LocalClient.current
+            val ws = rememberWsClient(client, wsServerUrl, {
+                appNav.toRoute<RoomScreen>()?.roomId
+            }, {
+                appNav.toRoute<TopicScreen>()?.topicId
+            })
+            CompositionLocalProvider(LocalWsClient provides ws) {
+                NavHost(navigator, startDestination = HomeScreen) {
+                    buildRootNav(navigator)
                 }
             }
         }
@@ -247,8 +256,15 @@ fun CommonEntry(
         val toasterState = rememberToasterState()
         Toaster(toasterState, alignment = Alignment.Center)
         CompositionLocalProvider(LocalToaster provides toasterState) {
-            LoginCheck {
-                content()
+            ProvideIconParameters(
+                iconFont = MaterialSymbolsOutlined.rememberIconFont(),
+                size = 20.dp,
+                tintProvider = LocalContentColor,
+                weight = FontWeight.Normal
+            ) {
+                LoginCheck {
+                    content()
+                }
             }
         }
     }
@@ -488,6 +504,8 @@ private fun NavGraphBuilder.buildComposeScreen(navigator: NavHostController) {
 private fun newAppNav(navigator: NavHostController) = object : AppNav {
     override val currentDestination: NavBackStackEntry?
         get() = navigator.currentBackStackEntry
+    override val currentDestinationFlow: Flow<NavBackStackEntry>
+        get() = navigator.currentBackStackEntryFlow
 
     override fun gotoLogin() {
         navigator.navigate(route = LoginScreen)
@@ -592,8 +610,17 @@ inline fun <reified T : Any> AppNav.toRoute(): T? {
     return currentDestination?.toRoute<T>()
 }
 
+inline fun <reified T : Any> AppNav.hasRouteFlow(crossinline block: (T) -> Boolean = { true }): Flow<Boolean> {
+    return currentDestinationFlow.map {
+        it.destination.hasRoute<T>() && block(it.toRoute<T>())
+    }
+}
+
 interface AppNav {
     val currentDestination: NavBackStackEntry?
+
+    val currentDestinationFlow: Flow<NavBackStackEntry>
+
     fun <T : Any> hasRoute(any: KClass<T>): Boolean {
         return currentDestination?.destination?.hasRoute(any) == true
     }
@@ -640,6 +667,9 @@ interface AppNav {
     companion object {
         val EMPTY = object : AppNav {
             override val currentDestination: NavBackStackEntry
+                get() = TODO("Not yet implemented")
+
+            override val currentDestinationFlow: Flow<NavBackStackEntry>
                 get() = TODO("Not yet implemented")
 
             override fun gotoLogin() {

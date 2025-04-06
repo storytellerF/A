@@ -10,11 +10,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.Diversity3
-import androidx.compose.material.icons.filled.Title
-import androidx.compose.material.icons.filled.Topic
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -68,7 +64,7 @@ private fun UserPageInternal(
     val appNav = LocalAppNav.current
     val size = calculateWindowSizeClass()
     when (size.widthSizeClass) {
-        WindowWidthSizeClass.Compact -> UserCompatInternal(user, my, appNav, pagerState, uid)
+        WindowWidthSizeClass.Compact -> UserCompatInternal(uid, user, my, appNav, pagerState)
         else -> UserNonCompatInternal(uid, user)
     }
 }
@@ -95,8 +91,11 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
                     "/titles" -> SearchScope.UserReceivedTitle(uid)
                     else -> SearchScope.UserCommunities(uid)
                 }
+                val my by LoginViewModel.user.collectAsState()
                 CustomSearchBar(searchScope) {
-                    UserIcon(user)
+                    if (uid != my?.id) {
+                        UserIcon(user)
+                    }
                 }
 
                 NavHost(navigator, "/topics") {
@@ -123,11 +122,11 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
 
 @Composable
 private fun UserCompatInternal(
+    uid: PrimaryKey,
     user: UserInfo?,
     my: UserInfo?,
     appNav: AppNav,
-    pagerState: PagerState,
-    uid: PrimaryKey
+    pagerState: PagerState
 ) {
     Scaffold(floatingActionButton = {
         UserComposeButton(user, my, appNav)
@@ -138,7 +137,9 @@ private fun UserCompatInternal(
             modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
         ) {
             CustomSearchBar(SearchScope.UserTopic(uid)) {
-                UserIcon(user)
+                if (uid != my?.id) {
+                    UserIcon(user)
+                }
             }
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
@@ -147,11 +148,13 @@ private fun UserCompatInternal(
                         val pagingItems = topicsViewModel.flow.collectAsLazyPagingItems()
                         TopicList(pagingItems, showAvatar = false)
                     }
+
                     1 -> {
                         val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid)
                         val pagingItems = communitiesViewModel.flow.collectAsLazyPagingItems()
                         CommunityList(pagingItems)
                     }
+
                     else -> {
                         val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
                         val pagingItems = titlesViewModel.flow.collectAsLazyPagingItems()
