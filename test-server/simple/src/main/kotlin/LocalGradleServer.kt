@@ -73,7 +73,6 @@ fun startServer(envFileBasePath: String, port: Int): Process? {
         serverProcess.inputStream.bufferedReader().use {
             while (serverProcess.isRunning()) {
                 val line = it.readLine() ?: break
-                println(line)
                 if (line.contains("Application started")) {
                     latch.countDown()
                 }
@@ -86,8 +85,6 @@ fun startServer(envFileBasePath: String, port: Int): Process? {
                 val line = it.readLine() ?: break
                 if (line.contains("Execution failed for task ':server:")) {
                     error(line)
-                } else {
-                    System.err.println(line)
                 }
             }
         }

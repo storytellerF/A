@@ -207,7 +207,6 @@ fun ButtonNav(icon: Char, title: String, onClick: () -> Unit = {}) {
     ButtonNav(IconRes.Font(icon), title, onClick)
 }
 
-
 @Composable
 fun ButtonNav(icon: IconRes, title: String, onClick: () -> Unit = {}) {
     Row(

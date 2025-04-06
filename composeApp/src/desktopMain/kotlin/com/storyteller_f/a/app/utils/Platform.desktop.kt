@@ -9,6 +9,7 @@ actual val platform: Platform
     get() = Platform(false)
 
 actual fun initEnvironment(context: Any) = Unit
+
 @OptIn(ExperimentalComposeUiApi::class)
 actual suspend fun Clipboard.setText(string: String) {
     this.awtClipboard?.setContents(StringSelection(string), null)
