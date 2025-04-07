@@ -296,11 +296,44 @@ suspend fun getTopLevelTopicsInObject(
     }
 }
 
+private suspend fun processTopicExtension(
+    processedTopics: List<TopicInfo>,
+    uid: PrimaryKey?,
+    isPrivate: Boolean,
+    backend: Backend,
+) = DatabaseFactory.getUsersByIds(processedTopics.map {
+    it.author
+}.distinct(), backend).mapResult { users ->
+    val userMap = users.associateBy { it.id }
+    val subTopics = processedTopics.flatMap { t ->
+        getTopicsByPredicate(uid, false, {
+            it.bindPaginationQuery(Topics, null, null, 2)
+        }, true, {
+            Topics.parentId eq t.id
+        }).getOrThrow()
+    }
+    if (subTopics.isEmpty()) {
+        Result.success(emptyList())
+    } else {
+        processTopicsContent(isPrivate, backend, subTopics, uid, false)
+    }.map { processedSubTopics ->
+        val processedSubTopicMap = processedSubTopics.groupBy {
+            it.parentId
+        }
+        processedTopics.map {
+            val authorInfo = userMap[it.author] ?: throw CustomBadRequestException("author is null")
+            it.copy(extension = TopicInfo.Extension(authorInfo, subTopics = processedSubTopicMap[it.id].orEmpty()))
+        }
+    }
+
+}
+
 private suspend fun processTopicsContent(
     isPrivate: Boolean,
     backend: Backend,
     data: List<TopicInfo>,
-    uid: PrimaryKey?
+    uid: PrimaryKey?,
+    addLatestSubTopic: Boolean = true
 ): Result<List<TopicInfo>> = when {
     !isPrivate -> backend.topicSearchService.getDocuments(data.map {
         it.id
@@ -317,6 +350,11 @@ private suspend fun processTopicsContent(
             l.copy(content = topicContents[index], isPrivate = true)
         }
     }
+}.mapResult {
+    if (addLatestSubTopic)
+        processTopicExtension(it, uid, isPrivate, backend)
+    else
+        Result.success(it)
 }
 
 data class RootReadPermission(
@@ -525,16 +563,6 @@ suspend fun processMediaAndAuthor(
                 info.copy(content = TopicContent.Plain(document.content, m))
             } ?: info
         }
-    }.mapResult { list ->
-        val ids = list.map {
-            it.author
-        }
-        DatabaseFactory.getUsersByIds(ids, backend).map { users ->
-            val userMap = users.associateBy { it.id }
-            list.map {
-                it.copy(extension = TopicInfo.Extension(userMap[it.author]!!))
-            }
-        }
     }
 }
 
@@ -600,7 +628,9 @@ private suspend fun processTopicsDocument(
     }.mapResult { infos ->
         processMediaAndAuthor(backend, infos.sortedByDescending {
             it.id
-        }, list)
+        }, list).mapResult {
+            processTopicExtension(it, uid, false, backend)
+        }
     }
 }
 

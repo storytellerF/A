@@ -4,7 +4,6 @@ import com.storyteller_f.*
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
@@ -183,6 +182,7 @@ suspend fun getTopicsByPredicate(
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
     extraPredicate: (Query) -> Query = { it },
+    addPinOrder: Boolean = false,
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<List<TopicInfo>> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
@@ -190,7 +190,8 @@ suspend fun getTopicsByPredicate(
     return DatabaseFactory.mapQuery({
         topicInfo.toTopicInfo(commentCount, hasComment, reactionCount, aid)
     }, resultRowTransform) {
-        query.andWhere(predicate).let(extraPredicate).groupBy(Topics.id)
+        query.andWhere(predicate).let(extraPredicate)
+            .groupBy(*if (addPinOrder) arrayOf(Topics.pinned, Topics.id) else arrayOf(Topics.id))
     }
 }
 
@@ -204,7 +205,7 @@ suspend fun getTopicsPagingByPredicate(
 ): Result<PaginationResult<TopicInfo>> {
     return getTopicsByPredicate(uid, fillHasCommented, {
         it.bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
-    }, predicate).mapResult { data ->
+    }, predicate = predicate).mapResult { data ->
         DatabaseFactory.count {
             Topics
                 .selectAll()
@@ -243,12 +244,6 @@ suspend fun DatabaseFactory.getEncryptedTopicContents(
         val content = contentMap[it].orEmpty()
         TopicContent.Encrypted(content, map)
     }
-}
-
-suspend fun DatabaseFactory.getTopicRoot(newTopic: NewRoomTopic) = first({
-    rootId to rootType
-}, Topic::wrapRow) {
-    Topic.findById(newTopic.parentId)
 }
 
 suspend fun DatabaseFactory.savePlainTopic(
