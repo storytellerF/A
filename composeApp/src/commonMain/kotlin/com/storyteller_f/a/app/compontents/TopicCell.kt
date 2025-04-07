@@ -1,10 +1,14 @@
 package com.storyteller_f.a.app.compontents
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,6 +18,7 @@ import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.model.createTopicsInTopicViewModel
 import com.storyteller_f.a.app.pages.topic.EmojiPicker
+import com.storyteller_f.a.app.pages.topic.TopicDropdownMenu
 import com.storyteller_f.a.app.pages.user.UserCell
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.shared.model.TopicContent
@@ -44,6 +49,7 @@ fun TopicCell(
 /**
  * @param contentAlignAvatar true 代表和头像左边缘对其，否则和用户名对其
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TopicCellInternal(
     topicInfo: TopicInfo,
@@ -54,9 +60,12 @@ fun TopicCellInternal(
 ) {
     val topicId = topicInfo.id
     val appNav = LocalAppNav.current
+    var expanded by remember { mutableStateOf(false) }
     Box {
         Column(
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable {
+            modifier = Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {
+                expanded = true
+            }, onLongClickLabel = "topic menu") {
                 appNav.gotoTopic(topicId)
             }.padding(8.dp)
         ) {
@@ -82,9 +91,17 @@ fun TopicCellInternal(
         }
 
         if (topicInfo.isPin) {
-            FontIcon(MaterialSymbolsOutlined.Keep, "is pinned", modifier = Modifier.align(Alignment.TopEnd))
+            FontIcon(
+                MaterialSymbolsOutlined.Keep,
+                "is pinned",
+                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+            )
+        }
+        TopicDropdownMenu(expanded, topicInfo) {
+            expanded = false
         }
     }
+
 }
 
 @Composable
