@@ -14,9 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.model.createTopicsInTopicViewModel
 import com.storyteller_f.a.app.pages.topic.EmojiPicker
 import com.storyteller_f.a.app.pages.topic.TopicDropdownMenu
 import com.storyteller_f.a.app.pages.user.UserCell
@@ -24,9 +22,7 @@ import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.type.PrimaryKey
 import dev.tclement.fonticons.FontIcon
-import kotlin.math.min
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +82,7 @@ fun TopicCellInternal(
                 InteractionRow(topicInfo, startAddReaction) {
                     appNav.gotoTopic(topicId)
                 }
-                RecentComment(topicId)
+                SubTopics(topicInfo)
             }
         }
 
@@ -105,37 +101,33 @@ fun TopicCellInternal(
 }
 
 @Composable
-private fun RecentComment(topicId: PrimaryKey) {
-    val topics = createTopicsInTopicViewModel(topicId)
-    val lazyPagingItems = topics.flow.collectAsLazyPagingItems()
-    val recentCount = min(2, lazyPagingItems.itemCount)
-    if (recentCount > 0) {
+private fun SubTopics(topicInfo: TopicInfo) {
+    val topics = topicInfo.extension?.subTopics.orEmpty()
+    if (topics.isNotEmpty()) {
         Column(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(10.dp))
                 .padding(8.dp)
         ) {
-            repeat(recentCount) {
-                val info = lazyPagingItems[it]
-                if (info != null) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        info.extension?.authorInfo?.nickname?.let { nickname -> Text("$nickname:") }
-                        when (val content = info.content) {
-                            is TopicContent.Extracted -> {
-                                Text(content.plain, maxLines = 1)
-                            }
+            repeat(topics.size) {
+                val info = topics[it]
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    info.extension?.authorInfo?.nickname?.let { nickname -> Text("$nickname:") }
+                    when (val content = info.content) {
+                        is TopicContent.Extracted -> {
+                            Text(content.plain, maxLines = 1)
+                        }
 
-                            is TopicContent.Plain -> {
-                                Text(content.plain, maxLines = 1)
-                            }
+                        is TopicContent.Plain -> {
+                            Text(content.plain, maxLines = 1)
+                        }
 
-                            else -> {
-                                Text("invalid")
-                            }
+                        else -> {
+                            Text("invalid")
                         }
                     }
                 }

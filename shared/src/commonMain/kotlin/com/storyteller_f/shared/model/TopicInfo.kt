@@ -50,7 +50,7 @@ data class TopicInfo(
     }
 
     @Serializable
-    data class Extension(val authorInfo: UserInfo)
+    data class Extension(val authorInfo: UserInfo, val subTopics: List<TopicInfo> = emptyList())
 }
 
 @Serializable

@@ -138,7 +138,7 @@ private suspend fun addTopicAtRoom(
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.getTopicRoot(newTopic).mapResultNotNull { (id, type) ->
+            DatabaseFactory.getTopicRoot(newTopic.parentId).mapResultNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
                     addTopicIntoRoom(
                         id,
