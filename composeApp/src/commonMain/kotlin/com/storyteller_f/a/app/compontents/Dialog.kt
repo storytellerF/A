@@ -48,13 +48,13 @@ class GlobalDialogController(val state: MutableState<DialogState> = mutableState
         state.value = DialogState.Loading
     }
 
-    fun showCloseState() {
+    private fun showCloseState() {
         state.value = DialogState.None
     }
 
-    suspend fun <T : Any> use(
-        block: suspend () -> T?
-    ): Result<T?> {
+    suspend fun <T> use(
+        block: suspend () -> T
+    ): Result<T> {
         try {
             showLoadingState()
             val result = block()
@@ -216,20 +216,26 @@ fun ButtonNav(icon: IconRes, title: String, onClick: () -> Unit = {}) {
             onClick()
         }.padding(horizontal = 8.dp, vertical = 12.dp)
     ) {
-        when (icon) {
-            is IconRes.Font -> {
-                ProvideIconParameters(
-                    size = 20.dp,
-                    tintProvider = LocalContentColor
-                ) {
-                    FontIcon(icon.char, icon.description)
-                }
-            }
-            is IconRes.Vector -> {
-                Icon(imageVector = icon.vector, contentDescription = title)
+        CustomIcon(icon, title)
+        Text(title)
+    }
+}
+
+@Composable
+fun CustomIcon(icon: IconRes, title: String) {
+    when (icon) {
+        is IconRes.Font -> {
+            ProvideIconParameters(
+                size = 20.dp,
+                tintProvider = LocalContentColor
+            ) {
+                FontIcon(icon.char, icon.description)
             }
         }
-        Text(title)
+
+        is IconRes.Vector -> {
+            Icon(imageVector = icon.vector, contentDescription = title)
+        }
     }
 }
 

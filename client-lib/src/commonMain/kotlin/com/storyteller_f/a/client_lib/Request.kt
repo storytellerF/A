@@ -518,12 +518,12 @@ suspend fun HttpClient.createRoom(newRoom: NewRoom) = serviceCatching {
     }.body<RoomInfo>()
 }
 
-suspend fun HttpClient.pinTopic(topicId: PrimaryKey) {
+suspend fun HttpClient.pinTopic(topicId: PrimaryKey) = serviceCatching {
     post("topics/$topicId/pin") {
     }.body<TopicInfo>()
 }
 
-suspend fun HttpClient.unpinTopic(topicId: PrimaryKey) {
+suspend fun HttpClient.unpinTopic(topicId: PrimaryKey) = serviceCatching {
     post("topics/$topicId/unpin") {
     }.body<TopicInfo>()
 }

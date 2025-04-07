@@ -9,9 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,7 +19,11 @@ import androidx.compose.ui.platform.LocalClipboard
 import com.dokar.sonner.ToasterState
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.ButtonNav
+import com.storyteller_f.a.app.compontents.CustomIcon
 import com.storyteller_f.a.app.compontents.DialogContainer
+import com.storyteller_f.a.app.compontents.IconRes
+import com.storyteller_f.a.app.model.OnRoomUpdated
+import com.storyteller_f.a.app.model.OnTopicChanged
 import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomRefCell
@@ -37,6 +39,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.formatTime
+import io.ktor.client.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
@@ -127,15 +130,53 @@ private fun TopicDialogMenuList(
                 if (topicInfo.isPin) "Unpin" else "Pin"
             ) {
                 scope.launch {
-                    globalDialogState.use {
-                        if (topicInfo.isPin) {
-                            client.unpinTopic(topicInfo.id)
-                        } else {
-                            client.pinTopic(topicInfo.id)
-                        }
+                    pinOrUnpinTopic(topicInfo, client).onSuccess {
+                        dismiss()
                     }
                 }
             }
         }
+    }
+}
+
+suspend fun pinOrUnpinTopic(
+    topicInfo: TopicInfo,
+    client: HttpClient
+) : Result<TopicInfo> {
+    return globalDialogState.use {
+        if (topicInfo.isPin) {
+            client.unpinTopic(topicInfo.id)
+        } else {
+            client.pinTopic(topicInfo.id)
+        }.getOrThrow()
+    }
+}
+
+@Composable
+fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val client = LocalClient.current
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismissRequest
+    ) {
+        val title = if (topicInfo.isPin) "Unpin" else "Pin"
+        DropdownMenuItem(
+            leadingIcon = {
+                CustomIcon(
+                    IconRes.Font(if (topicInfo.isPin) MaterialSymbolsOutlined.KeepOff else MaterialSymbolsOutlined.Keep),
+                    title
+                )
+            },
+            text = { Text(title) },
+            onClick = {
+                scope.launch {
+                    pinOrUnpinTopic(topicInfo, client).onSuccess {
+                        onDismissRequest()
+                        bus.emit(OnTopicChanged(it))
+                    }
+                }
+            }
+        )
     }
 }
