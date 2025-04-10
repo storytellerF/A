@@ -20,6 +20,7 @@ plugins {
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.easylauncher)
     alias(libs.plugins.serialization)
+    alias(libs.plugins.screenshot)
     id("com.mikepenz.aboutlibraries.plugin")
 }
 
@@ -117,7 +118,7 @@ kotlin {
             implementation(libs.navigation.compose)
 
 
-            implementation(projects.shared)
+            api(projects.shared)
             implementation(projects.clientLib)
 
             implementation(libs.material3.window.size)
@@ -150,7 +151,6 @@ kotlin {
             implementation(libs.couchbase.lite.paging)
             implementation(libs.sunny.chung.composable.table)
             implementation(libs.compose.native.notification)
-            implementation(libs.fonticons.core)
 
             implementation(libs.kim)
             implementation(libs.napier)
@@ -277,10 +277,14 @@ android {
     dependencies {
         coreLibraryDesugaring(libs.desugar.jdk.libs)
         debugImplementation(compose.uiTooling)
+        screenshotTestImplementation(libs.androidx.ui.tooling)
+        screenshotTestImplementation(compose.runtime)
     }
     lint {
         disable.add("RememberReturnType")
     }
+    @Suppress("UnstableApiUsage")
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 }
 
 //https://developer.android.com/develop/ui/compose/testing#setup
