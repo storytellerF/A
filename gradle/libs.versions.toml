@@ -79,6 +79,7 @@ slf4jSimple = "2.0.16"
 sqliteJdbc = "3.49.1.0"
 tikaCore = "3.1.0"
 uiTestJunit4Android = "1.7.8"
+uiTooling = "1.8.0-rc03"
 uriKmp = "0.0.19"
 vaviImageAvif = "0.0.7"
 vlcj = "4.8.3"
@@ -98,6 +99,7 @@ androidx-media3-session = { module = "androidx.media3:media3-session", version.r
 androidx-ui-test-junit4-android = { module = "androidx.compose.ui:ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "uiTestJunit4Android" }
 androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiTestJunit4Android" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
 bcpkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bcprovJdk18on" }
 bcprov-jdk18on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bcprovJdk18on" }
 bctls-jdk18on = { module = "org.bouncycastle:bctls-jdk18on", version.ref = "bcprovJdk18on" }
@@ -230,7 +232,7 @@ kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
-screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot"}
+screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 [bundles]

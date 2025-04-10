@@ -8,6 +8,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 
@@ -15,14 +17,46 @@ interface ClientWsListener {
     fun onReceived(frame: RoomFrame)
 }
 
+interface ClientWebSocket {
+    val connectionHandler: LoadingHandler<DefaultClientWebSocketSession>
+    val localState: StateFlow<LoadingState?>
+    val remoteState: SharedFlow<RoomFrame>
+    fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job?
+    fun addListener(listener: ClientWsListener)
+    fun removeListener(listener: ClientWsListener)
+
+    companion object {
+        val EMPTY = object : ClientWebSocket {
+            override val connectionHandler: LoadingHandler<DefaultClientWebSocketSession>
+                get() = TODO("Not yet implemented")
+            override val localState: StateFlow<LoadingState?>
+                get() = TODO("Not yet implemented")
+            override val remoteState: SharedFlow<RoomFrame>
+                get() = TODO("Not yet implemented")
+
+            override fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job? {
+                TODO("Not yet implemented")
+            }
+
+            override fun addListener(listener: ClientWsListener) {
+                TODO("Not yet implemented")
+            }
+
+            override fun removeListener(listener: ClientWsListener) {
+                TODO("Not yet implemented")
+            }
+        }
+    }
+}
+
 @OptIn(DelicateCoroutinesApi::class)
-class ClientWebSocket(
+class ClientWebSocketImpl(
     val buildConnection: suspend () -> DefaultClientWebSocketSession,
     val onMessage: suspend (RoomFrame) -> Unit
-) {
-    val connectionHandler = SimpleLoadingHandler<DefaultClientWebSocketSession> { }
-    val localState = MutableStateFlow<LoadingState?>(null)
-    val remoteState = MutableSharedFlow<RoomFrame>()
+) : ClientWebSocket {
+    override val connectionHandler = SimpleLoadingHandler<DefaultClientWebSocketSession> { }
+    override val localState = MutableStateFlow<LoadingState?>(null)
+    override val remoteState = MutableSharedFlow<RoomFrame>()
     private val listeners = mutableListOf<ClientWsListener>()
 
     init {
@@ -42,7 +76,7 @@ class ClientWebSocket(
         }
     }
 
-    fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job? {
+    override fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job? {
         val old = connectionHandler.data.value
         return if (old != null && old.isActive) {
             GlobalScope.launch {
@@ -123,11 +157,11 @@ class ClientWebSocket(
         }
     }
 
-    fun addListener(listener: ClientWsListener) {
+    override fun addListener(listener: ClientWsListener) {
         listeners.add(listener)
     }
 
-    fun removeListener(listener: ClientWsListener) {
+    override fun removeListener(listener: ClientWsListener) {
         listeners.remove(listener)
     }
 }

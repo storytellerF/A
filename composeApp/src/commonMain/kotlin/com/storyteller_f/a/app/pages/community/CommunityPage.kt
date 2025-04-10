@@ -253,7 +253,6 @@ fun CommunityDialog(
 
 @Composable
 fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
-    val nav = LocalAppNav.current
     val communityId = communityInfo.id
     DialogContainer {
         Row(
@@ -266,17 +265,17 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                 Text(communityInfo.name)
             }
         }
-        CommunityMenus(dismiss, nav, communityId, communityInfo)
+        CommunityMenus(dismiss, communityId, communityInfo)
     }
 }
 
 @Composable
 private fun CommunityMenus(
     dismiss: () -> Unit,
-    nav: AppNav,
     communityId: PrimaryKey,
     communityInfo: CommunityInfo
 ) {
+    val nav = LocalAppNav.current
     val client = LocalClient.current
     Column {
         ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {

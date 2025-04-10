@@ -100,10 +100,7 @@ val LocalClient = compositionLocalOf {
 }
 
 val LocalWsClient = compositionLocalOf {
-    ClientWebSocket({
-        error("")
-    }) {
-    }
+    ClientWebSocket.EMPTY
 }
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -197,16 +194,11 @@ fun App() {
 @Composable
 fun AppInternal(httpUrl: String, wsServerUrl: String) {
     StaticObj
-    AppTheme(dynamicColor = true) {
-        setSingletonImageLoaderFactory {
-            getAsyncImageLoader(it)
-        }
-        CommonEntry(httpUrl) {
-            val s by playerSession
-            val isPip = rememberIsInPipMode()
+    CommonEntry(httpUrl) {
+        val s by playerSession
+        val isPip = rememberIsInPipMode()
 
-            AppInternal(isPip, s, wsServerUrl)
-        }
+        AppInternal(isPip, s, wsServerUrl)
     }
 }
 
@@ -245,26 +237,50 @@ fun CommonEntry(
     httpUrl: String,
     content: @Composable () -> Unit
 ) {
-    val client = remember {
-        getClient {
-            defaultClientConfigure()
-            setupRequest(httpUrl)
+    AppTheme(dynamicColor = true) {
+        setSingletonImageLoaderFactory {
+            getAsyncImageLoader(it)
+        }
+        val client = remember {
+            if (httpUrl.isEmpty()) {
+                HttpClient()
+            } else {
+                getClient {
+                    defaultClientConfigure()
+                    setupRequest(httpUrl)
+                }
+            }
+        }
+        CompositionLocalProvider(LocalClient provides client) {
+            GlobalDialog(globalDialogState)
+            val toasterState = rememberToasterState()
+            Toaster(toasterState, alignment = Alignment.Center)
+            CompositionLocalProvider(LocalToaster provides toasterState) {
+                ProvideIconParameters(
+                    iconFont = MaterialSymbolsOutlined.rememberIconFont(),
+                    size = 20.dp,
+                    tintProvider = LocalContentColor,
+                    weight = FontWeight.Normal
+                ) {
+                    LoginCheck {
+                        content()
+                    }
+                }
+            }
         }
     }
-    CompositionLocalProvider(LocalClient provides client) {
-        GlobalDialog(globalDialogState)
-        val toasterState = rememberToasterState()
-        Toaster(toasterState, alignment = Alignment.Center)
-        CompositionLocalProvider(LocalToaster provides toasterState) {
-            ProvideIconParameters(
-                iconFont = MaterialSymbolsOutlined.rememberIconFont(),
-                size = 20.dp,
-                tintProvider = LocalContentColor,
-                weight = FontWeight.Normal
-            ) {
-                LoginCheck {
-                    content()
-                }
+}
+
+@Composable
+fun TestContainer(block: @Composable () -> Unit) {
+    CommonEntry("") {
+        val appNav = remember<AppNav> {
+            AppNav.EMPTY
+        }
+        CompositionLocalProvider(LocalAppNav provides appNav) {
+            val ws = ClientWebSocket.EMPTY
+            CompositionLocalProvider(LocalWsClient provides ws) {
+                block()
             }
         }
     }
@@ -306,7 +322,7 @@ private fun rememberWsClient(
     topicScreenId: () -> PrimaryKey?,
 ): ClientWebSocket {
     val remember = remember {
-        ClientWebSocket({
+        ClientWebSocketImpl({
             client.webSocketSession(buildUrl {
                 takeFrom(wsServerUrl)
                 appendPathSegments("link")
