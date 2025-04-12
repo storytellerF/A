@@ -5,62 +5,30 @@ import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import app.cash.paging.*
+import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.a.client_lib.Expression
 import com.storyteller_f.shared.model.Identifiable
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import kotbase.*
 import kotbase.Collection
-import kotbase.ktx.from
-import kotbase.ktx.limit
-import kotbase.ktx.toObjects
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
-
-val database by lazy {
-    Database(
-        "a-db",
-        DatabaseConfigurationFactory.newConfig(
-            okio.FileSystem.SYSTEM_TEMPORARY_DIRECTORY.resolve("a-client").toString()
-        )
-    ).apply {
-        Database.log.console.domains = LogDomain.ALL_DOMAINS
-        Database.log.console.level = LogLevel.WARNING
-    }
-}
-
-fun getOrCreateCollection(collectionName: String): Collection {
-    val collection = database.defaultScope.getCollection(collectionName) ?: database.createCollection(
-        collectionName
-    )
-    if (collectionName.startsWith("communities_")) {
-        collection.createIndex(
-            "poster_index",
-            ValueIndexConfiguration("poster")
-        )
-    } else if (collectionName.startsWith("topics_") && collectionName != "topics_keys") {
-        collection.createIndex(
-            "pinned_index",
-            ValueIndexConfiguration("pinned")
-        )
-    }
-    return collection
-}
+import kotlinx.serialization.serializer
 
 class CustomQueryPagingSource<Key : Any, RowType : Any>(
-    private val select: Select,
     collectionName: String,
+    val databaseSource: DatabaseSource,
+    val serializer: KSerializer<RowType>,
     private val key: (RowType?) -> Key?,
-    private val queryProvider: From.(Key?) -> LimitRouter,
-    private val mapMapper: ((Map<String, Any?>) -> RowType?)? = null,
-    private val jsonStringMapper: ((String) -> RowType?)? = null,
+    private val queryProvider: (Key?) -> Expression?,
+    private val order: List<Order>,
     private val extraProcessor: suspend List<RowType>.() -> List<RowType> = { this }
 ) : PagingSource<Key, RowType>() {
 
-    private val collection = getOrCreateCollection(collectionName)
+    private val collection = databaseSource.getCollection(collectionName)
 
     init {
-        require(mapMapper != null || jsonStringMapper != null) { "At least one mapper must be not null" }
-
         registerInvalidatedCallback {
             removeAllToken()
         }
@@ -70,15 +38,7 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
         return null
     }
 
-    private fun ResultSet.toObjects(): List<RowType> {
-        return if (mapMapper != null) {
-            toObjects(mapMapper)
-        } else {
-            toObjects(jsonStringMapper!!)
-        }
-    }
-
-    val map = mutableMapOf<Key?, ListenerToken>()
+    val map = mutableMapOf<Key?, ObserverToken<RowType>>()
 
     override suspend fun load(
         params: PagingSourceLoadParams<Key>
@@ -91,19 +51,11 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
             "source load $key"
         }
         return try {
-            val task = CompletableDeferred<List<RowType>>()
-            val listenerToken = select.from(collection)
-                .queryProvider(key)
-                .limit(params.loadSize)
-                .addChangeListener {
-                    val results = it.results
-                    when {
-                        task.isCompleted -> invalidate()
-                        results == null -> task.completeExceptionally(it.error ?: Exception("it.error is null"))
-                        else -> task.complete(results.toObjects())
-                    }
-                }
-            map[key] = listenerToken
+            val observerToken = collection.observe(queryProvider(key), params.loadSize, order, serializer) {
+                invalidate()
+            }
+            val task = observerToken.task
+            map[key] = observerToken
             val data = task.await().extraProcessor()
             PagingSourceLoadResultPage(
                 data = data,
@@ -129,29 +81,29 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
 fun saveSectionLoadParams(
     collectionName: String,
     key: SectionLoadParams<PrimaryKey>?,
-    id: PrimaryKey
+    id: PrimaryKey,
+    databaseSource: DatabaseSource
 ) {
-    val collection = getOrCreateCollection("${collectionName}_key")
+    val collection = databaseSource.getCollection("${collectionName}_key")
     if (key == null) {
-        collection.getDocument(id.toString())?.let {
-            collection.delete(it)
-        }
+        collection.deleteDocument(id.toString())
     } else {
         val json = Json.encodeToString(key)
-        collection.save(id, json)
+        collection.saveDocument(id.toString(), json)
     }
 }
 
 fun getSectionLoadParams(
     collectionName: String,
-    id: PrimaryKey
-) = getOrCreateCollection("${collectionName}_key").getDocument(id.toString())?.toJSON()?.let {
-    Json.decodeFromString<SectionLoadParams<PrimaryKey>>(it)
-}
+    id: PrimaryKey,
+    databaseSource: DatabaseSource,
+) = databaseSource.getCollection("${collectionName}_key")
+    .getDocument(id.toString(), serializer<SectionLoadParams<PrimaryKey>>())
 
 @OptIn(ExperimentalPagingApi::class)
 class CustomRemoteMediator<Key : Any, Datum : Any>(
     private val collectionName: String,
+    private val databaseSource: DatabaseSource,
     private val key: (Datum?) -> Key?,
     private val update: (Datum, Key?) -> Unit,
     private val networkService: PagingSource<Key, Datum>
@@ -203,7 +155,7 @@ class CustomRemoteMediator<Key : Any, Datum : Any>(
                     val data = loadResult.data
                     val nextKey = loadResult.nextKey
                     if (loadType == LoadType.REFRESH) {
-                        database.deleteCollection(collectionName)
+                        databaseSource.deleteCollection(collectionName)
                     }
                     data.forEach {
                         update(it, nextKey)
@@ -235,18 +187,18 @@ fun Collection.save(id: String, data: String) {
 
 inline fun <reified T : Identifiable> singleSourceMediator(
     collectionName: String,
-    pagingSource: RegularPagingSource<T>
+    pagingSource: RegularPagingSource<T>,
+    databaseSource: DatabaseSource,
 ) = CustomRemoteMediator(
     collectionName,
+    databaseSource,
     {
         it?.id
     },
     { info, _ ->
-        getOrCreateCollection(collectionName).save(
-            MutableDocument(
-                info.id.toString(),
-                Json.encodeToString(info)
-            )
+        databaseSource.getCollection(collectionName).save(
+            info.id.toString(),
+            Json.encodeToString(info)
         )
     },
     pagingSource

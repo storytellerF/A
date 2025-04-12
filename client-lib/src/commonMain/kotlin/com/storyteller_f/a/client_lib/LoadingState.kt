@@ -3,11 +3,11 @@ package com.storyteller_f.a.client_lib
 import io.github.aakira.napier.Napier
 import kotbase.Collection
 import kotbase.Expression
-import kotbase.QueryBuilder.select
-import kotbase.ktx.*
-import kotbase.queryChangeFlow
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
@@ -65,32 +65,28 @@ class SimpleLoadingHandler<T>(override val refresh: () -> Unit) : LoadingHandler
     }
 }
 
-class CachedLoadingHandler<T>(
+class CachedLoadingHandler<T : Any>(
     override val refresh: () -> Unit,
-    val source: Collection,
-    whereQuery: WhereBuilder.() -> Expression,
     private val serializer: KSerializer<T>,
+    val saveDocument: com.storyteller_f.a.client_lib.Collection.(String, T) -> Unit,
     scope: CoroutineScope,
-    val saveDocument: Collection.(String, T) -> Unit
+    expression: com.storyteller_f.a.client_lib.Expression,
+    name: String,
+    databaseSource: DatabaseSource,
 ) : LoadingHandler<T> {
+    private val collection = databaseSource.getCollection(name)
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
-    override val data = select(all()).from(source).where(whereQuery).limit(1).queryChangeFlow().map {
-        if (it.error != null) {
-            Napier.e(it.error) {
-                "exception when query ${it.results}"
-            }
-        }
-        it.results?.toObjects { jsonStr: String ->
-            Json.decodeFromString(serializer, jsonStr)
-        }?.firstOrNull()
-    }.stateIn(scope, SharingStarted.Lazily, null)
+    override val data = collection.getData(
+        serializer,
+        expression
+    ).stateIn(scope, SharingStarted.Lazily, null)
 
     override fun done(t: T) {
         val string = Json.encodeToString(serializer, t)
         Napier.i {
             "save topic $string"
         }
-        source.saveDocument(string, t)
+        collection.saveDocument(string, t)
         state.value = LoadingState.Done
     }
 
@@ -101,16 +97,6 @@ class CachedLoadingHandler<T>(
     override fun update(t: T) {
         done(t)
     }
-}
-
-inline fun <reified T> buildCachedLoaderHandler(
-    noinline refresh: () -> Unit,
-    scope: CoroutineScope,
-    source: Collection,
-    noinline updateDocument: Collection.(String, T) -> Unit,
-    noinline whereQuery: WhereBuilder.() -> Expression
-): CachedLoadingHandler<T> {
-    return CachedLoadingHandler(refresh, source, whereQuery, serializer(), scope, updateDocument)
 }
 
 fun MutableStateFlow<LoadingState?>.markError(e: Throwable) {

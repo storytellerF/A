@@ -25,11 +25,10 @@ import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
-import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.TopicContentField
-import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.model.OnTopicCreated
 import com.storyteller_f.a.app.model.createMediaListViewModel
-import com.storyteller_f.a.app.updateDocumentInParent
 import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.MediaInfo
@@ -263,7 +262,7 @@ private fun TopicComposeSubmitButton(
             scope.launch {
                 globalDialogState.use {
                     val info = client.createNewTopic(objectType, objectId, finalInput).getOrThrow()
-                    updateDocumentInParent(info)
+                    bus.emit(OnTopicCreated(info))
                     backPrePage()
                 }
             }

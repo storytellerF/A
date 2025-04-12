@@ -9,7 +9,6 @@ import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
 import com.storyteller_f.media.loadAvif
 import com.storyteller_f.shared.logger
-import com.storyteller_f.shared.newHmacSha512
 import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*

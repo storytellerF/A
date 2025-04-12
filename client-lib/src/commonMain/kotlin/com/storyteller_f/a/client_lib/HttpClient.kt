@@ -17,7 +17,6 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
-import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
@@ -60,28 +59,11 @@ fun HttpClientConfig<*>.defaultClientConfigure(cookiesStorage: CookiesStorage = 
         storage = cookiesStorage
     }
     install(HttpRequestRetry) {
-        val atomicInt = AtomicInt(0)
         retryIf { _, response ->
-            if (response.status == HttpStatusCode.Unauthorized) {
-                atomicInt.addAndFetch(1)
-                val data = SignInViewModel.session?.first
-                val r = response.headers["www-authenticate"]
-                Napier.i(tag = "ClientAuth") {
-                    "unauthorized ${r == data} $r $data"
-                }
-                data != r
-                false
-            } else {
-                atomicInt.addAndFetch(-1)
-                response.status == HttpStatusCode.TooManyRequests
-            }
+            response.status == HttpStatusCode.TooManyRequests
         }
         delayMillis {
-            val delay = atomicInt.load() * 1000L
-            Napier.i(tag = "ClientAuth") {
-                "new delay $delay"
-            }
-            delay
+            0
         }
     }
     install(WebSockets) {
