@@ -141,7 +141,7 @@ private fun TopicDialogMenuList(
 suspend fun pinOrUnpinTopic(
     topicInfo: TopicInfo,
     client: HttpClient
-) : Result<TopicInfo> {
+): Result<TopicInfo> {
     return globalDialogState.use {
         if (topicInfo.isPin) {
             client.unpinTopic(topicInfo.id)
@@ -163,7 +163,9 @@ fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest:
         DropdownMenuItem(
             leadingIcon = {
                 CustomIcon(
-                    IconRes.Font(if (topicInfo.isPin) MaterialSymbolsOutlined.KeepOff else MaterialSymbolsOutlined.Keep),
+                    IconRes.Font(
+                        if (topicInfo.isPin) MaterialSymbolsOutlined.KeepOff else MaterialSymbolsOutlined.Keep
+                    ),
                     title
                 )
             },

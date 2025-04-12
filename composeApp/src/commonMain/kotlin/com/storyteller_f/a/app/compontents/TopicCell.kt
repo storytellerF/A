@@ -97,7 +97,6 @@ fun TopicCellInternal(
             expanded = false
         }
     }
-
 }
 
 @Composable

@@ -33,9 +33,8 @@ import com.kdroid.composenotification.builder.getNotificationProvider
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.rememberLibraries
-import com.storyteller_f.a.app.common.getOrCreateCollection
-import com.storyteller_f.a.app.common.save
 import com.storyteller_f.a.app.compontents.*
+import com.storyteller_f.a.app.model.OnTopicCreated
 import com.storyteller_f.a.app.pages.community.CommunityComposePage
 import com.storyteller_f.a.app.pages.community.CommunityPage
 import com.storyteller_f.a.app.pages.community.CommunitySettingPage
@@ -106,6 +105,10 @@ val LocalWsClient = compositionLocalOf {
 @OptIn(DelicateCoroutinesApi::class)
 val LocalToaster = compositionLocalOf {
     ToasterState(GlobalScope)
+}
+
+val LocalDatabase = compositionLocalOf {
+    DatabaseSource.EMPTY
 }
 
 @Serializable
@@ -217,8 +220,7 @@ private fun MainAppPage(
             newAppNav(navigator)
         }
         CompositionLocalProvider(LocalAppNav provides appNav) {
-            val client = LocalClient.current
-            val ws = rememberWsClient(client, wsServerUrl, {
+            val ws = rememberWsClient(wsServerUrl, {
                 appNav.toRoute<RoomScreen>()?.roomId
             }, {
                 appNav.toRoute<TopicScreen>()?.topicId
@@ -241,29 +243,34 @@ fun CommonEntry(
         setSingletonImageLoaderFactory {
             getAsyncImageLoader(it)
         }
-        val client = remember {
-            if (httpUrl.isEmpty()) {
-                HttpClient()
-            } else {
-                getClient {
-                    defaultClientConfigure()
-                    setupRequest(httpUrl)
+        val database = remember {
+            createKotbase()
+        }
+        CompositionLocalProvider(LocalDatabase provides KotbaseDatabaseSource(database)) {
+            val client = remember {
+                if (httpUrl.isEmpty()) {
+                    HttpClient()
+                } else {
+                    getClient {
+                        defaultClientConfigure()
+                        setupRequest(httpUrl)
+                    }
                 }
             }
-        }
-        CompositionLocalProvider(LocalClient provides client) {
-            GlobalDialog(globalDialogState)
-            val toasterState = rememberToasterState()
-            Toaster(toasterState, alignment = Alignment.Center)
-            CompositionLocalProvider(LocalToaster provides toasterState) {
-                ProvideIconParameters(
-                    iconFont = MaterialSymbolsOutlined.rememberIconFont(),
-                    size = 20.dp,
-                    tintProvider = LocalContentColor,
-                    weight = FontWeight.Normal
-                ) {
-                    LoginCheck {
-                        content()
+            CompositionLocalProvider(LocalClient provides client) {
+                GlobalDialog(globalDialogState)
+                val toasterState = rememberToasterState()
+                Toaster(toasterState, alignment = Alignment.Center)
+                CompositionLocalProvider(LocalToaster provides toasterState) {
+                    ProvideIconParameters(
+                        iconFont = MaterialSymbolsOutlined.rememberIconFont(),
+                        size = 20.dp,
+                        tintProvider = LocalContentColor,
+                        weight = FontWeight.Normal
+                    ) {
+                        LoginCheck {
+                            content()
+                        }
                     }
                 }
             }
@@ -316,11 +323,11 @@ private fun buildWsListener(
 
 @Composable
 private fun rememberWsClient(
-    client: HttpClient,
     wsServerUrl: String,
     roomScreenId: () -> PrimaryKey?,
     topicScreenId: () -> PrimaryKey?,
 ): ClientWebSocket {
+    val client = LocalClient.current
     val remember = remember {
         ClientWebSocketImpl({ userInfo, sig ->
             client.webSocketSession(buildUrl {
@@ -332,7 +339,7 @@ private fun rememberWsClient(
         }) {
             if (it is RoomFrame.NewTopicInfo) {
                 val info = processEncryptedTopic(listOf(it.topicInfo)).first()
-                updateDocumentInParent(info)
+                bus.emit(OnTopicCreated(info))
                 Napier.v(tag = "pagination") {
                     "save document $info"
                 }
@@ -603,14 +610,14 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
 fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
 
-fun updateDocumentInParent(info: TopicInfo) {
+fun saveTopicInDatabaseByParent(info: TopicInfo, databaseSource: DatabaseSource) {
     val collectionName = "topics_${info.parentId}"
-    updateDocument(collectionName, info)
+    saveTopicInDatabase(collectionName, info, databaseSource)
 }
 
-fun updateDocument(collectionName: String, info: TopicInfo) {
+fun saveTopicInDatabase(collectionName: String, info: TopicInfo, databaseSource: DatabaseSource) {
     assert(!info.isPrivate || info.content is TopicContent.Encrypted)
-    getOrCreateCollection(collectionName).save(info.id, Json.encodeToString(info))
+    databaseSource.getCollection(collectionName).save(info.id, Json.encodeToString(info))
 }
 
 fun HttpClientConfig<*>.setupRequest(httpUrl: String) {

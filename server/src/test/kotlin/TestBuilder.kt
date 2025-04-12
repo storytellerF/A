@@ -6,7 +6,6 @@ import com.storyteller_f.a.server.module
 import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.readResourceEnv
 import com.storyteller_f.shared.*
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey

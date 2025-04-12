@@ -218,7 +218,7 @@ private fun sendTopic(
         sendState.value = LoadingState.Loading
         try {
             val info = client.createNewTopic(ObjectType.TOPIC, topic.id, input).getOrThrow()
-            updateDocumentInParent(info)
+            bus.emit(OnTopicCreated(info))
             updateInput("")
             focusManager.clearFocus()
             bus.emit(OnTopicChanged(topic.copy(commentCount = topic.commentCount + 1)))
