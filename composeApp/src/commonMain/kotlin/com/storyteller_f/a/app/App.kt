@@ -198,12 +198,12 @@ fun AppInternal(httpUrl: String, wsServerUrl: String) {
         val s by playerSession
         val isPip = rememberIsInPipMode()
 
-        AppInternal(isPip, s, wsServerUrl)
+        MainAppPage(isPip, s, wsServerUrl)
     }
 }
 
 @Composable
-private fun AppInternal(
+private fun MainAppPage(
     isPip: Boolean,
     localSession: MediaPlaySession.VideoOrAudio?,
     wsServerUrl: String
@@ -322,12 +322,12 @@ private fun rememberWsClient(
     topicScreenId: () -> PrimaryKey?,
 ): ClientWebSocket {
     val remember = remember {
-        ClientWebSocketImpl({
+        ClientWebSocketImpl({ userInfo, sig ->
             client.webSocketSession(buildUrl {
                 takeFrom(wsServerUrl)
                 appendPathSegments("link")
             }.toString()) {
-                addRequestHeaders(LoginViewModel.session?.first)
+                addRequestHeaders(userInfo, sig)
             }
         }) {
             if (it is RoomFrame.NewTopicInfo) {
@@ -358,15 +358,15 @@ private fun rememberWsClient(
 @Composable
 fun LoginCheck(content: @Composable () -> Unit) {
     val client = LocalClient.current
-    val state by LoginViewModel.state.collectAsState()
-    val user by LoginViewModel.user.collectAsState()
-    val retryState by LoginViewModel.retryLoginState.collectAsState()
+    val state by SignInViewModel.state.collectAsState()
+    val user by SignInViewModel.user.collectAsState()
+    val retryState by SignInViewModel.retryLoginState.collectAsState()
     LoginCheckInternal(state, user, client, retryState, {
-        if (it && !LoginViewModel.appStartLoginRetried.value) {
-            LoginViewModel.appStartLoginRetried.value = true
+        if (it && !SignInViewModel.appStartLoginRetried.value) {
+            SignInViewModel.appStartLoginRetried.value = true
         }
     }, {
-        LoginViewModel.retryLoginState.value = it
+        SignInViewModel.retryLoginState.value = it
     }, content)
 }
 
@@ -382,7 +382,7 @@ private fun LoginCheckInternal(
 ) {
     val scope = rememberCoroutineScope()
     LaunchedEffect(state, retryState) {
-        if (user == null && state is ClientSession.SignUpSuccess) {
+        if (user == null && state is ClientSession.SignInSuccess) {
             if (retryState == null) {
                 updateRetryState(LoadingState.Loading)
                 updateTried(true)
@@ -392,8 +392,8 @@ private fun LoginCheckInternal(
                         val signature = state.session.signature(finalData(data))
                         val add = state.session.address()
                         val u = client.signIn(add, signature).getOrThrow()
-                        LoginViewModel.updateUser(u)
-                        LoginViewModel.updateSession(data, signature)
+                        SignInViewModel.updateUser(u)
+                        SignInViewModel.updateSession(data, signature)
                     }.onSuccess {
                         updateRetryState(LoadingState.Done)
                     }.onFailure {
@@ -406,7 +406,7 @@ private fun LoginCheckInternal(
             updateRetryState(LoadingState.Done)
         }
     }
-    if (state is ClientSession.SignUpSuccess && user == null && retryState !is LoadingState.Loading) {
+    if (state is ClientSession.SignInSuccess && user == null && retryState !is LoadingState.Loading) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Button({

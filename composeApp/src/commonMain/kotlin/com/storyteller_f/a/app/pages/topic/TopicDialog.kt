@@ -22,7 +22,6 @@ import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.CustomIcon
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.compontents.IconRes
-import com.storyteller_f.a.app.model.OnRoomUpdated
 import com.storyteller_f.a.app.model.OnTopicChanged
 import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
@@ -30,7 +29,7 @@ import com.storyteller_f.a.app.pages.room.RoomRefCell
 import com.storyteller_f.a.app.pages.user.UserCell
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.setText
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.getTopicSnapshot
 import com.storyteller_f.a.client_lib.pinTopic
 import com.storyteller_f.a.client_lib.unpinTopic
@@ -64,7 +63,7 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
 fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismiss: () -> Unit) {
     val clipboardManager = LocalClipboard.current
     val appNav = LocalAppNav.current
-    val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
+    val alreadyLoginIn by SignInViewModel.isAlreadySignUp.collectAsState(false)
     val toasterState = LocalToaster.current
     DialogContainer {
         UserCell(authorInfo, true)

@@ -1,6 +1,7 @@
 package com.storyteller_f.a.client_lib
 
 import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.websocket.*
@@ -51,7 +52,7 @@ interface ClientWebSocket {
 
 @OptIn(DelicateCoroutinesApi::class)
 class ClientWebSocketImpl(
-    val buildConnection: suspend () -> DefaultClientWebSocketSession,
+    val buildConnection: suspend (UserInfo, String) -> DefaultClientWebSocketSession,
     val onMessage: suspend (RoomFrame) -> Unit
 ) : ClientWebSocket {
     override val connectionHandler = SimpleLoadingHandler<DefaultClientWebSocketSession> { }
@@ -61,12 +62,12 @@ class ClientWebSocketImpl(
 
     init {
         GlobalScope.launch {
-            combine(LoginViewModel.isAlreadySignUp, LoginViewModel.user) { t1, t2 ->
-                t1 && t2 != null
-            }.distinctUntilChanged().collect {
-                if (it) {
+            combine(SignInViewModel.state, SignInViewModel.user) { t1, t2 ->
+                t1 to t2
+            }.distinctUntilChanged().collect { (t1, t2) ->
+                if (t1 is ClientSession.SignInSuccess && t2 != null) {
                     while (true) {
-                        connectWebSocketIfNeed()
+                        connectWebSocketIfNeed(t2)
                         delay(5000)
                     }
                 } else {
@@ -93,8 +94,9 @@ class ClientWebSocketImpl(
         }
     }
 
-    private suspend fun connectWebSocketIfNeed() {
-        if (!LoginViewModel.currentIsAlreadySignUp) return
+    private suspend fun connectWebSocketIfNeed(t2: UserInfo) {
+        val (key, sig) = SignInViewModel.session ?: return
+        if (sig == null) return
         when (connectionHandler.state.value) {
             is LoadingState.Loading -> return
             is LoadingState.Done -> {
@@ -106,7 +108,7 @@ class ClientWebSocketImpl(
             null -> {}
         }
         try {
-            val session = buildConnection()
+            val session = buildConnection(t2, key)
 
             startListenerWebSocket(session)
             connectionHandler.done(session)

@@ -92,7 +92,7 @@ fun SelectLoginPage(loginNav: LoginNav) {
             Text(stringResource(Res.string.sign_in), style = MaterialTheme.typography.headlineMedium)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton({
-                    LoginViewModel.state.value = ClientSession.PrivateKeySignIn("")
+                    SignInViewModel.state.value = ClientSession.PrivateKeySignIn("")
                     loginNav.gotoPrivateKey()
                 }, shape = ButtonDefaults.outlinedShape) {
                     Text(stringResource(Res.string.private_key))
@@ -100,7 +100,7 @@ fun SelectLoginPage(loginNav: LoginNav) {
                 SelectFile(false)
             }
             Text(stringResource(Res.string.go_to_sign_up), modifier = Modifier.clickable {
-                LoginViewModel.state.value = ClientSession.SignUpNone
+                SignInViewModel.state.value = ClientSession.SignUpNone
                 loginNav.gotoSignUp()
             }, textDecoration = TextDecoration.Underline)
         }
@@ -114,7 +114,7 @@ fun SelectSignupPage(loginNav: LoginNav) {
             Text(stringResource(Res.string.sign_up), style = MaterialTheme.typography.headlineMedium)
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button({
-                    LoginViewModel.state.value = ClientSession.PrivateKeySignUp("")
+                    SignInViewModel.state.value = ClientSession.PrivateKeySignUp("")
                     loginNav.gotoPrivateKey()
                 }) {
                     Text(stringResource(Res.string.private_key))
@@ -160,8 +160,8 @@ fun SelectFile(isSignUp: Boolean) {
 
 @Composable
 fun InputPrivateKeyPage() {
-    val privateKey by LoginViewModel.inputtedPrivateKey.collectAsState("")
-    val isSignUp by LoginViewModel.isSignUpFlow.collectAsState(false)
+    val privateKey by SignInViewModel.inputtedPrivateKey.collectAsState("")
+    val isSignUp by SignInViewModel.isSignUpFlow.collectAsState(false)
     val scope = rememberCoroutineScope()
     val appNav = LocalAppNav.current
     val client = LocalClient.current
@@ -171,7 +171,7 @@ fun InputPrivateKeyPage() {
                 OutlinedTextField(
                     privateKey,
                     onValueChange = {
-                        LoginViewModel.updatePrivateKey(it)
+                        SignInViewModel.updatePrivateKey(it)
                     },
                     modifier = Modifier.padding(top = 10.dp).fillMaxWidth(),
                     maxLines = max(lineCount, 2),
@@ -206,7 +206,7 @@ fun InputPrivateKeyPage() {
                 if (isSignUp) {
                     Button({
                         scope.launch {
-                            LoginViewModel.updatePrivateKey(generateKeyPair())
+                            SignInViewModel.updatePrivateKey(generateKeyPair())
                         }
                     }) {
                         Text(stringResource(Res.string.auto_generate))
@@ -246,9 +246,9 @@ suspend fun signUpOrSignIn(
             else -> client.signIn(ad, sig)
         }.getOrThrow()
         val userSession = buildLoginUserSessionFactory().addSession(LoginUser(privateKey, publicKey, ad))
-        LoginViewModel.updateUser(u)
-        LoginViewModel.updateState(ClientSession.SignUpSuccess(userSession))
-        LoginViewModel.updateSession(data, sig)
+        SignInViewModel.updateUser(u)
+        SignInViewModel.updateState(ClientSession.SignInSuccess(userSession))
+        SignInViewModel.updateSession(data, sig)
     }
 }
 

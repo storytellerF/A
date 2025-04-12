@@ -9,6 +9,7 @@ import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
 import com.storyteller_f.media.loadAvif
 import com.storyteller_f.shared.logger
+import com.storyteller_f.shared.newHmacSha512
 import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
@@ -24,6 +25,7 @@ import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
+import io.ktor.util.*
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
@@ -121,9 +123,13 @@ fun Application.module() {
         contentConverter = KotlinxWebsocketSerializationConverter(Json)
     }
     install(Sessions) {
-        cookie<UserSession>("user_session", SessionStorageMemory()) {
+        val secretEncryptKey = hex("00112233445566778899aabbccddeeff")
+        val secretSignKey = hex("6819b57a326945c1968f45236589")
+        cookie<UserSession>("user_session") {
             cookie.path = "/"
             cookie.maxAgeInSeconds = 3600
+
+            transform(SessionTransportTransformerEncrypt(secretEncryptKey, secretSignKey))
         }
     }
     if (backend.config.isProd) {

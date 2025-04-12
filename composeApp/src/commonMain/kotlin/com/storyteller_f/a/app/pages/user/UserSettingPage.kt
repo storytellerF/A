@@ -26,7 +26,7 @@ import com.storyteller_f.a.app.utils.ImageFormat
 import com.storyteller_f.a.app.utils.androidAllowHardware
 import com.storyteller_f.a.app.utils.coilImageToImageBitmap
 import com.storyteller_f.a.app.utils.saveImageBitmap
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
@@ -53,7 +53,7 @@ fun UserSettingPage() {
         mutableStateOf<SettingOption?>(null)
     }
     val sheetState = rememberModalBottomSheetState()
-    val my by LoginViewModel.user.collectAsState()
+    val my by SignInViewModel.user.collectAsState()
     val showDialog = { option: SettingOption ->
         currentOption = option
     }
@@ -69,7 +69,7 @@ fun UserSettingPage() {
                 scope.launch {
                     globalDialogState.use {
                         val newInfo = client.updateUserInfo(UpdateUserBody(avatar = it.item.name)).getOrThrow()
-                        LoginViewModel.updateUser(newInfo)
+                        SignInViewModel.updateUser(newInfo)
                         closeDialog()
                     }
                 }
@@ -243,7 +243,7 @@ private suspend fun updateUser(
     } ?: return
     globalDialogState.use {
         val newInfo = client.updateUserInfo(body).getOrThrow()
-        LoginViewModel.updateUser(newInfo)
+        SignInViewModel.updateUser(newInfo)
         bus.emit(OnUserUpdated(newInfo))
         closeDialog()
     }

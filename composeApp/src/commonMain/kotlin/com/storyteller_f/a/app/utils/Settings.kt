@@ -2,7 +2,7 @@ package com.storyteller_f.a.app.utils
 
 import com.russhwolf.settings.Settings
 import com.storyteller_f.a.client_lib.ClientSession
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import kotlinx.serialization.Serializable
 
 expect val defaultSettings: Settings
@@ -16,7 +16,7 @@ fun restoreFromStorage() {
     if (current != null && list.contains(current)) {
         val session = sessionFactory.buildSession(current)
         if (session != null) {
-            LoginViewModel.updateState(ClientSession.SignUpSuccess(session))
+            SignInViewModel.updateState(ClientSession.SignInSuccess(session))
         }
     }
 }

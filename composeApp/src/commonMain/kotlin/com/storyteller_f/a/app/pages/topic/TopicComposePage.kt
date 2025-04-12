@@ -30,7 +30,7 @@ import com.storyteller_f.a.app.compontents.TopicContentField
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.a.app.updateDocumentInParent
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -50,7 +50,7 @@ fun TopicComposePage(
     privateRoomId: PrimaryKey?,
     backPrePage: () -> Unit
 ) {
-    val user by LoginViewModel.user.collectAsState()
+    val user by SignInViewModel.user.collectAsState()
     user?.let {
         TopicComposeScaffold(
             it,

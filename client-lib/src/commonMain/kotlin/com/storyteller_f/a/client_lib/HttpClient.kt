@@ -7,6 +7,7 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.auth.*
+import io.ktor.client.plugins.callid.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.logging.*
@@ -16,7 +17,11 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class ServerErrorException(val status: HttpStatusCode, val text: String, cause: Exception) : Exception(
     "$status $text",
@@ -27,6 +32,7 @@ val globalCookiesStorage = AcceptAllCookiesStorage()
 
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
+@OptIn(ExperimentalUuidApi::class, ExperimentalAtomicApi::class)
 fun HttpClientConfig<*>.defaultClientConfigure(cookiesStorage: CookiesStorage = globalCookiesStorage) {
     expectSuccess = true
     install(Auth) {
@@ -37,6 +43,10 @@ fun HttpClientConfig<*>.defaultClientConfigure(cookiesStorage: CookiesStorage = 
         json(Json {
             ignoreUnknownKeys = true
         })
+    }
+    install(CallId) {
+        generate { Uuid.random().toString() }
+        addToHeader(HttpHeaders.XRequestId)
     }
     install(Logging) {
         logger = object : Logger {
@@ -50,20 +60,28 @@ fun HttpClientConfig<*>.defaultClientConfigure(cookiesStorage: CookiesStorage = 
         storage = cookiesStorage
     }
     install(HttpRequestRetry) {
+        val atomicInt = AtomicInt(0)
         retryIf { _, response ->
             if (response.status == HttpStatusCode.Unauthorized) {
-                val data = LoginViewModel.session?.first
+                atomicInt.addAndFetch(1)
+                val data = SignInViewModel.session?.first
                 val r = response.headers["www-authenticate"]
-                Napier.i {
-                    "unauthorized $r $data"
+                Napier.i(tag = "ClientAuth") {
+                    "unauthorized ${r == data} $r $data"
                 }
                 data != r
+                false
             } else {
+                atomicInt.addAndFetch(-1)
                 response.status == HttpStatusCode.TooManyRequests
             }
         }
         delayMillis {
-            0
+            val delay = atomicInt.load() * 1000L
+            Napier.i(tag = "ClientAuth") {
+                "new delay $delay"
+            }
+            delay
         }
     }
     install(WebSockets) {
@@ -83,9 +101,9 @@ fun HttpClientConfig<*>.defaultClientConfigure(cookiesStorage: CookiesStorage = 
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun processEncryptedTopic(info: List<TopicInfo>): List<TopicInfo> {
-    val value = LoginViewModel.state.value
-    val uid = LoginViewModel.user.value?.id
-    val key = if (value is ClientSession.SignUpSuccess) value.session else null
+    val value = SignInViewModel.state.value
+    val uid = SignInViewModel.user.value?.id
+    val key = if (value is ClientSession.SignInSuccess) value.session else null
     return info.map { topicInfo ->
         val content = topicInfo.content
         if (content !is TopicContent.Encrypted || uid == null || key == null) {

@@ -33,7 +33,7 @@ import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.room.RoomRefCell
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.UserRefCell
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.createTitle
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.JoinStatusSearch
@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TitleComposePage() {
-    val user by LoginViewModel.user.collectAsState()
+    val user by SignInViewModel.user.collectAsState()
     user?.let {
         TitleComposeInternal()
     }

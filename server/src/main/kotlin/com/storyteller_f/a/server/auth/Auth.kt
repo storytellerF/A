@@ -6,8 +6,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.CustomBadRequestException
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.ServerConfig
-import com.storyteller_f.a.server.auth.CustomCredential.AidCredential
-import com.storyteller_f.a.server.auth.CustomCredential.IdCredential
+import com.storyteller_f.a.server.auth.CustomCredential.*
 import com.storyteller_f.a.server.remoteIp
 import com.storyteller_f.a.server.route.RouteAccounts
 import com.storyteller_f.a.server.route.commonRoute
@@ -19,7 +18,6 @@ import com.storyteller_f.shared.utils.filterNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
-import io.ktor.http.*
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -36,30 +34,21 @@ import kotlin.uuid.Uuid
 sealed class CustomCredential(open val sig: String) {
     data class IdCredential(val id: PrimaryKey, override val sig: String) : CustomCredential(sig)
     data class AidCredential(val aid: String, override val sig: String) : CustomCredential(sig)
+    data class AddressCredential(val ad: String, override val sig: String) : CustomCredential(sig)
 }
 
 private fun HttpAuthHeader.Parameterized.customCredential(): CustomCredential? {
-    val sig = parameters.firstOrNull {
-        it.name == "sig"
-    }?.value
-    return if (sig != null) {
-        val id = parameters.firstOrNull {
-            it.name == "id"
-        }?.value?.toLong()
-        if (id != null) {
-            IdCredential(id, sig)
-        } else {
-            val aid = parameters.firstOrNull {
-                it.name == "aid"
-            }?.value
-            if (aid != null) {
-                AidCredential(aid, sig)
-            } else {
-                null
-            }
-        }
-    } else {
-        null
+    if (parameters.size > 2) return null
+    val listMap = parameters.associate {
+        it.name to it.value
+    }
+    val sig = listMap["sig"] ?: return null
+    return listMap["id"]?.toLongOrNull()?.let {
+        IdCredential(it, sig)
+    } ?: listMap["aid"]?.let {
+        AidCredential(it, sig)
+    } ?: listMap["ad"]?.let {
+        AddressCredential(it, sig)
     }
 }
 
@@ -230,8 +219,13 @@ private suspend fun getUserAuthData(credential: CustomCredential): Result<Pair<S
         is AidCredential -> DatabaseFactory.getUserAuthDataByAid {
             Aids.value eq credential.aid
         }
+
         is IdCredential -> DatabaseFactory.getUserAuthDataBy {
             Users.id eq credential.id
+        }
+
+        is AddressCredential -> DatabaseFactory.getUserAuthDataBy {
+            Users.address eq credential.ad
         }
     }
 }

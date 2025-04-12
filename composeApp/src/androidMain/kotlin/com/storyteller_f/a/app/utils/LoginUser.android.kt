@@ -9,13 +9,15 @@ import com.storyteller_f.a.client_lib.LoginUser
 import com.storyteller_f.a.client_lib.LoginUserSession
 import com.storyteller_f.crypto_jvm.CryptoJvm
 import com.storyteller_f.shared.calcAddress
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import java.security.KeyFactory
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
-import java.util.Base64
+import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -36,11 +38,13 @@ actual fun buildLoginUserSessionFactory(): LoginUserSessionManager {
     return DefaultLoginUserSessionManager()
 }
 
-class AndroidKeyStoreLoginUserSession(val alias: String) : LoginUserSession {
+class AndroidKeyStoreLoginUserSession(private val alias: String) : LoginUserSession {
     @OptIn(ExperimentalStdlibApi::class)
     override suspend fun signature(data: String): String {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null)
+        withContext(Dispatchers.IO) {
+            keyStore.load(null)
+        }
 
         // 获取私钥
         val privateKey = keyStore.getKey(alias, null) as PrivateKey
@@ -56,7 +60,9 @@ class AndroidKeyStoreLoginUserSession(val alias: String) : LoginUserSession {
     @OptIn(ExperimentalStdlibApi::class)
     override suspend fun verify(signature: String, data: String): Boolean {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null)
+        withContext(Dispatchers.IO) {
+            keyStore.load(null)
+        }
 
         // 获取公钥
         val publicKey = keyStore.getCertificate(alias).publicKey
@@ -71,7 +77,9 @@ class AndroidKeyStoreLoginUserSession(val alias: String) : LoginUserSession {
     override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): String {
         // 获取 Android Keystore 实例
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null)
+        withContext(Dispatchers.IO) {
+            keyStore.load(null)
+        }
 
         // 获取私钥
         val privateKeyEntry = keyStore.getEntry(alias, null) as KeyStore.PrivateKeyEntry
@@ -102,7 +110,9 @@ class AndroidKeyStoreLoginUserSession(val alias: String) : LoginUserSession {
     override suspend fun address(): String {
         // 获取 Android Keystore 实例
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null)
+        withContext(Dispatchers.IO) {
+            keyStore.load(null)
+        }
 
         val derPublicKeyStr = keyStore.getCertificate("default").publicKey.encoded.toHexString()
         println("public $derPublicKeyStr")
@@ -110,6 +120,7 @@ class AndroidKeyStoreLoginUserSession(val alias: String) : LoginUserSession {
     }
 }
 
+@Suppress("SameParameterValue")
 class AndroidKeyStoreLoginUserSessionManager : LoginUserSessionManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun savedSession(): SavedSession {
@@ -129,11 +140,11 @@ class AndroidKeyStoreLoginUserSessionManager : LoginUserSessionManager {
         return AndroidKeyStoreLoginUserSession(current)
     }
 
-    override fun buildSession(alias: String): LoginUserSession? {
+    override fun buildSession(alias: String): LoginUserSession {
         return AndroidKeyStoreLoginUserSession(alias)
     }
 
-    fun importEcdsaPrivateKey(alias: String, pemPrivateKey: String) {
+    private fun importEcdsaPrivateKey(alias: String, pemPrivateKey: String) {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
         if (keyStore.containsAlias(alias)) {

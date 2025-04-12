@@ -33,7 +33,7 @@ import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnMediaUploaded
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.a.app.utils.Recorder
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.upload
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
@@ -94,7 +94,7 @@ fun MediaPicker(
             }
             HorizontalPager(pagerState, modifier = Modifier.height(300.dp)) {
                 if (tabs[it].second == "files") {
-                    val userInfo by LoginViewModel.user.collectAsState()
+                    val userInfo by SignInViewModel.user.collectAsState()
                     userInfo?.let { it1 -> MediaListView(privateRoomId, it1, clickItem) }
                 } else {
                     AudioRecorder(privateRoomId, clickItem)
@@ -242,7 +242,7 @@ private suspend fun selectFileAndUpload(
     client: HttpClient,
     uploadSuccess: (List<MediaInfo>) -> Unit
 ) {
-    val my = LoginViewModel.user.value ?: return
+    val my = SignInViewModel.user.value ?: return
     globalDialogState.use {
         val id = my.id
         val f = FileKit.pickFile()
@@ -270,7 +270,7 @@ suspend fun uploadPath(
     path: Path,
     client: HttpClient
 ): Result<List<MediaInfo>?> {
-    val my = LoginViewModel.user.value ?: return Result.success(null)
+    val my = SignInViewModel.user.value ?: return Result.success(null)
     val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
     return globalDialogState.use {
         upload(

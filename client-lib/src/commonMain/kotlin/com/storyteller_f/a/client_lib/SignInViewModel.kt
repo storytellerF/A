@@ -18,14 +18,14 @@ interface LoginUserSession {
 }
 
 sealed interface ClientSession {
-    data object LoginNone : ClientSession
+    data object SignInNone : ClientSession
     data object SignUpNone : ClientSession
     data class PrivateKeySignIn(val privateKey: String) :
         ClientSession
 
     data class PrivateKeySignUp(val privateKey: String) : ClientSession
 
-    data class SignUpSuccess(val session: LoginUserSession) : ClientSession
+    data class SignInSuccess(val session: LoginUserSession) : ClientSession
 }
 
 @Serializable
@@ -53,8 +53,8 @@ class DefaultLoginUserSession(val loginUSer: LoginUser) : LoginUserSession {
     }
 }
 
-object LoginViewModel {
-    val state = MutableStateFlow<ClientSession>(ClientSession.LoginNone)
+object SignInViewModel {
+    val state = MutableStateFlow<ClientSession>(ClientSession.SignInNone)
     val inputtedPrivateKey = state.map {
         when (it) {
             is ClientSession.PrivateKeySignIn -> it.privateKey
@@ -67,9 +67,9 @@ object LoginViewModel {
     }
     var session: Pair<String, String?>? = null
     val user = MutableStateFlow<UserInfo?>(null)
-    val currentIsAlreadySignUp get() = state.value is ClientSession.SignUpSuccess
+    val currentIsAlreadySignUp get() = state.value is ClientSession.SignInSuccess
     val isAlreadySignUp = state.map {
-        it is ClientSession.SignUpSuccess
+        it is ClientSession.SignInSuccess
     }
     val appStartLoginRetried = MutableStateFlow(false)
     val retryLoginState = MutableStateFlow<LoadingState?>(null)
@@ -103,7 +103,7 @@ object LoginViewModel {
     }
 
     fun signOut() {
-        state.value = ClientSession.LoginNone
+        state.value = ClientSession.SignInNone
         user.value = null
         session = null
     }

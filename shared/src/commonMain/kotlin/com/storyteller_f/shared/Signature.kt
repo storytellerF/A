@@ -81,6 +81,13 @@ suspend fun newHmacSha512(): String {
         .toHexString()
 }
 
+@OptIn(ExperimentalStdlibApi::class)
+suspend fun newHmacSha256(): String {
+    return CryptographyProvider.Default.get(HMAC).keyGenerator(SHA256).generateKey()
+        .encodeToByteArray(HMAC.Key.Format.RAW)
+        .toHexString()
+}
+
 expect suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): String
 expect suspend fun calcAddress(derPublicKeyStr: String): String
 expect suspend fun encrypt(data: String): Pair<ByteArray, ByteArray>

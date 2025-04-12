@@ -124,16 +124,15 @@ suspend fun DatabaseFactory.getSimpleTopic(topicId: PrimaryKey): Result<TopicInf
     Topic.findById(topicId)
 }
 
-suspend fun DatabaseFactory.getTopicInfo(topicId: PrimaryKey?, aid: String?, uid: PrimaryKey?): Result<TopicInfo?> {
+suspend fun DatabaseFactory.getTopicInfo(fetch: ObjectFetch, uid: PrimaryKey?): Result<TopicInfo?> {
     val (query, resultRowTransform) = getTopicBuilder(uid)
     return first({
         topicInfo.toTopicInfo(commentCount, hasComment, reactionCount, aid)
     }, resultRowTransform) {
         query.andWhere {
-            when {
-                topicId != null -> Topics.id eq topicId
-                aid != null -> Aids.value eq aid
-                else -> throw CustomBadRequestException("aid and id is null")
+            when (fetch) {
+                is ObjectFetch.IdFetch -> Topics.id eq fetch.id
+                is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
             }
         }.groupBy(Topics.id)
     }

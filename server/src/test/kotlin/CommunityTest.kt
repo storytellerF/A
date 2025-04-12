@@ -1,6 +1,7 @@
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.hmacSign
 import com.storyteller_f.shared.hmacVerify
+import com.storyteller_f.shared.newHmacSha256
 import com.storyteller_f.shared.newHmacSha512
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
@@ -103,7 +104,8 @@ class CommunityTest {
     @Test
     fun `test hmac`() {
         runBlocking {
-            val hmacKey = newHmacSha512()
+            val hmacKey = newHmacSha256()
+            println(hmacKey)
             val s = hmacSign(hmacKey, "text")
             assertTrue(hmacVerify(hmacKey, s, "text"))
         }

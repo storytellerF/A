@@ -67,7 +67,7 @@ suspend fun createPublicTopic(uid: PrimaryKey, backend: Backend, newTopic: NewTo
                 )
                 val plain = TopicContent.Plain(content)
                 DatabaseFactory.savePlainTopic(topic, backend, plain).mapResult { topicInfo ->
-                    processMediaAndAuthor(
+                    processTopicMedia(
                         backend,
                         listOf(topicInfo),
                         listOf(TopicDocument.fromTopic(topic, plain))
@@ -226,7 +226,7 @@ suspend fun getTopic(
         uid
     ).mapResultNotNull { (hasRead, hasJoined, isPrivate) ->
         if (hasRead) {
-            DatabaseFactory.getTopicInfo(topicId, null, uid).mapResultNotNull { info ->
+            DatabaseFactory.getTopicInfo(ObjectFetch.IdFetch(topicId), uid).mapResultNotNull { info ->
                 processTopicsContent(isPrivate, backend, listOf(info), uid).map {
                     it.first()
                 }
@@ -246,7 +246,7 @@ suspend fun getTopicByAid(
     fillHasCommented: Boolean?
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return DatabaseFactory.getTopicInfo(null, aid, uid).mapResultNotNull { info ->
+    return DatabaseFactory.getTopicInfo(ObjectFetch.AidFetch(aid), uid).mapResultNotNull { info ->
         checkRootReadPermission(
             ObjectType.TOPIC,
             info.id,
@@ -301,31 +301,45 @@ private suspend fun processTopicExtension(
     uid: PrimaryKey?,
     isPrivate: Boolean,
     backend: Backend,
+    addLatestSubTopic: Boolean,
 ) = DatabaseFactory.getUsersByIds(processedTopics.map {
     it.author
 }.distinct(), backend).mapResult { users ->
     val userMap = users.associateBy { it.id }
-    val subTopics = processedTopics.flatMap { t ->
-        getTopicsByPredicate(uid, false, {
-            it.bindPaginationQuery(Topics, null, null, 2)
-        }, true, {
-            Topics.parentId eq t.id
-        }).getOrThrow()
-    }
-    if (subTopics.isEmpty()) {
-        Result.success(emptyList())
+    if (addLatestSubTopic) {
+        val subTopics = processedTopics.flatMap { t ->
+            getTopicsByPredicate(uid, false, {
+                it.bindPaginationQuery(Topics, null, null, 2)
+            }, true, {
+                Topics.parentId eq t.id
+            }).getOrThrow()
+        }
+        if (subTopics.isEmpty()) {
+            Result.success(emptyList())
+        } else {
+            processTopicsContent(isPrivate, backend, subTopics, uid, false)
+        }.map { processedSubTopics ->
+            processedSubTopics.groupBy {
+                it.parentId
+            }
+        }
     } else {
-        processTopicsContent(isPrivate, backend, subTopics, uid, false)
-    }.map { processedSubTopics ->
-        val processedSubTopicMap = processedSubTopics.groupBy {
-            it.parentId
+        Result.success(emptyMap())
+    }.map { processedSubTopicMap ->
+        val reactionMap = processedTopics.associate {
+            it.id to reactionList(it.id, uid, uid != null).getOrNull()?.data
         }
         processedTopics.map {
             val authorInfo = userMap[it.author] ?: throw CustomBadRequestException("author is null")
-            it.copy(extension = TopicInfo.Extension(authorInfo, subTopics = processedSubTopicMap[it.id].orEmpty()))
+            it.copy(
+                extension = TopicInfo.Extension(
+                    authorInfo,
+                    subTopics = processedSubTopicMap[it.id],
+                    reactions = reactionMap[it.id],
+                )
+            )
         }
     }
-
 }
 
 private suspend fun processTopicsContent(
@@ -338,7 +352,7 @@ private suspend fun processTopicsContent(
     !isPrivate -> backend.topicSearchService.getDocuments(data.map {
         it.id
     }).mapResult { documents ->
-        processMediaAndAuthor(backend, data, documents)
+        processTopicMedia(backend, data, documents)
     }.map { topicContents ->
         topicContents
     }
@@ -351,10 +365,7 @@ private suspend fun processTopicsContent(
         }
     }
 }.mapResult {
-    if (addLatestSubTopic)
-        processTopicExtension(it, uid, isPrivate, backend)
-    else
-        Result.success(it)
+    processTopicExtension(it, uid, isPrivate, backend, addLatestSubTopic)
 }
 
 data class RootReadPermission(
@@ -529,7 +540,7 @@ suspend fun searchPublicTopics(
     }
 }
 
-suspend fun processMediaAndAuthor(
+suspend fun processTopicMedia(
     backend: Backend,
     infos: List<TopicInfo>,
     documentList: List<TopicDocument?>
@@ -626,10 +637,10 @@ private suspend fun processTopicsDocument(
     return getTopicsByPredicate(uid, fillHasCommented) {
         Topics.id inList ids
     }.mapResult { infos ->
-        processMediaAndAuthor(backend, infos.sortedByDescending {
+        processTopicMedia(backend, infos.sortedByDescending {
             it.id
         }, list).mapResult {
-            processTopicExtension(it, uid, false, backend)
+            processTopicExtension(it, uid, false, backend, true)
         }
     }
 }
@@ -682,7 +693,7 @@ suspend fun getTopicByIds(
 suspend fun updateTopicPin(uid: PrimaryKey, topicId: PrimaryKey, newValue: Boolean) =
     checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultNotNull {
         if (it.hasAdmin) {
-            DatabaseFactory.getTopicInfo(topicId, null, uid).mapResultNotNull { info ->
+            DatabaseFactory.getTopicInfo(ObjectFetch.IdFetch(topicId), uid).mapResultNotNull { info ->
                 if (info.isPin == newValue) {
                     Result.success(info)
                 } else {

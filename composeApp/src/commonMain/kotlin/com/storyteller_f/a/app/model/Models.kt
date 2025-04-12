@@ -554,7 +554,7 @@ class ReactionsViewModel(private val objectId: PrimaryKey, client: HttpClient) :
                             when {
                                 info.emoji != it.emoji -> info
                                 info.hasReacted -> info
-                                else -> info.copy(count = info.count, hasReacted = true)
+                                else -> info.copy(count = info.count + 1, hasReacted = true)
                             }
                         }
                     }

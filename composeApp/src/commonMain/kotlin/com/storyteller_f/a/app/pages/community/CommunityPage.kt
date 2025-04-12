@@ -28,7 +28,7 @@ import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.world.TopicList
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.exitCommunity
 import com.storyteller_f.a.client_lib.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
@@ -309,7 +309,7 @@ private fun CommunityMenus(
                 dismiss()
                 nav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, true, null)
             }
-            val my by LoginViewModel.user.collectAsState()
+            val my by SignInViewModel.user.collectAsState()
             if (my?.id == communityInfo.owner) {
                 ButtonNav(Icons.Default.Title, "Add Title") {
                     dismiss()
