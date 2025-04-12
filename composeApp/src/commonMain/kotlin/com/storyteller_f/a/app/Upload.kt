@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.model.createUploadViewModel
 import com.storyteller_f.a.client_lib.LoadingState
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.SimpleLoadingHandler
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
@@ -50,7 +50,7 @@ class Uploader(val session: MutableState<UploadSession?>)
 fun Upload(uploader: Uploader) {
     val httpUrl = AppConfig.SERVER_URL
     CommonEntry(httpUrl) {
-        val my by LoginViewModel.user.collectAsState()
+        val my by SignInViewModel.user.collectAsState()
         val session by uploader.session
         session?.let { UploadInternal(my, it) }
     }

@@ -21,7 +21,7 @@ import com.storyteller_f.a.app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.utils.clearStorage
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.getUserInfo
 import com.storyteller_f.a.client_lib.getUserInfoByAid
 import com.storyteller_f.a.client_lib.signOut
@@ -42,7 +42,7 @@ fun UserDialogInternal(userInfo: UserInfo, clickCreate: () -> Unit, dismiss: () 
     val isUserPage by appNav.hasRouteFlow<UserScreen> {
         it.uid == userInfo.id
     }.collectAsState(false)
-    val my by LoginViewModel.user.collectAsState()
+    val my by SignInViewModel.user.collectAsState()
     DialogContainer {
         UserCell(
             userInfo,
@@ -112,7 +112,7 @@ private fun UserDialogMenuList(
 suspend fun signOut(client: HttpClient) {
     globalDialogState.use {
         client.signOut()
-        LoginViewModel.signOut()
+        SignInViewModel.signOut()
         clearStorage()
     }
 }
@@ -127,7 +127,7 @@ private fun refreshMyInfo(my: UserInfo?, client: HttpClient) {
         } else {
             client.getUserInfoByAid(aid)
         }.getOrNull()?.let {
-            LoginViewModel.updateUser(it)
+            SignInViewModel.updateUser(it)
         }
     }
 }

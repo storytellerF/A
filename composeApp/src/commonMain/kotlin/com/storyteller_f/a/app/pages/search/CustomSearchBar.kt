@@ -22,7 +22,7 @@ import com.storyteller_f.a.app.pages.title.ComposeMenu
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.world.TopicList
 import com.storyteller_f.a.app.utils.platform
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -113,7 +113,7 @@ private fun CustomSearchBarInternal(
                         MergedLeadingIcon(leadingIcon, active, appNav)
                     },
                     trailingIcon = {
-                        val userInfo by LoginViewModel.user.collectAsState()
+                        val userInfo by SignInViewModel.user.collectAsState()
                         UserIcon(userInfo, true, clickCreate = clickCreate)
                     },
                     placeholder = {
@@ -302,7 +302,7 @@ private fun MyRoomSearchContent(current: String) {
             mutableStateOf(JoinStatusSearch.JOINED)
         }
 
-        val isAlreadySignUp by LoginViewModel.isAlreadySignUp.collectAsState(false)
+        val isAlreadySignUp by SignInViewModel.isAlreadySignUp.collectAsState(false)
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
             val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
@@ -333,7 +333,7 @@ private fun MyCommunitySearchContent(query: String) {
         var currentOption by remember {
             mutableStateOf(JoinStatusSearch.JOINED)
         }
-        val isAlreadySignUp by LoginViewModel.isAlreadySignUp.collectAsState(false)
+        val isAlreadySignUp by SignInViewModel.isAlreadySignUp.collectAsState(false)
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
             val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)

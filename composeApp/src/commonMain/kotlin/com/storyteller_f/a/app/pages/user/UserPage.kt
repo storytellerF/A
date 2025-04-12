@@ -35,7 +35,7 @@ import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.title.TitleList
 import com.storyteller_f.a.app.pages.world.TopicList
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.type.ObjectType
@@ -47,7 +47,7 @@ import org.jetbrains.compose.resources.stringResource
 fun UserPage(uid: PrimaryKey) {
     val userViewModel = createUserViewModel(uid)
     val user by userViewModel.handler.data.collectAsState()
-    val my by LoginViewModel.user.collectAsState()
+    val my by SignInViewModel.user.collectAsState()
     UserPageInternal(user, my, uid)
 }
 
@@ -91,7 +91,7 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
                     "/titles" -> SearchScope.UserReceivedTitle(uid)
                     else -> SearchScope.UserCommunities(uid)
                 }
-                val my by LoginViewModel.user.collectAsState()
+                val my by SignInViewModel.user.collectAsState()
                 CustomSearchBar(searchScope) {
                     if (uid != my?.id) {
                         UserIcon(user)

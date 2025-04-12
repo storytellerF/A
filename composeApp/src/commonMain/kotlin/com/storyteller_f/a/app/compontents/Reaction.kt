@@ -9,7 +9,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.*
-import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.model.OnAddReaction
 import com.storyteller_f.a.app.model.OnRemoveReaction
 import com.storyteller_f.a.app.model.OnTopicChanged
@@ -92,7 +91,7 @@ private fun InteractionRowEnd(
     val remainingItems = scope.totalItemCount - scope.shownItemCount
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Pill(icon = Icons.Outlined.AddReaction) {
-            if (LoginViewModel.currentIsAlreadySignUp) {
+            if (isAlreadyLogin()) {
                 startAddReaction()
             } else {
                 appNav.gotoLogin()

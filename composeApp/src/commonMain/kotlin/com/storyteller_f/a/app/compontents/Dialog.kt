@@ -132,7 +132,7 @@ private fun ColumnScope.GlobalDialogContent(
 
 @Composable
 private fun LoadingDialogContent() {
-    Box(modifier = Modifier.size(100.dp).padding(20.dp)) {
+    Box(modifier = Modifier.size(100.dp).padding(20.dp), contentAlignment = Alignment.Center) {
         CircularProgressIndicator(
             modifier = Modifier.align(Alignment.Center),
             color = MaterialTheme.colorScheme.primary

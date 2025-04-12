@@ -24,7 +24,7 @@ import coil3.request.crossfade
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.pages.user.UserDialog
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
@@ -40,7 +40,7 @@ fun UserIcon(
     }
     val url = userInfo?.avatar?.url
     val appNav = LocalAppNav.current
-    val me by LoginViewModel.user.collectAsState()
+    val me by SignInViewModel.user.collectAsState()
     val onClick = {
         when {
             isMe && me == null -> appNav.gotoLogin()

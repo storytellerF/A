@@ -61,26 +61,27 @@ fun User.toUserInfo(): UserInfo {
     return UserInfo(id, address, 0, aid, nickname, null)
 }
 
-suspend fun DatabaseFactory.getUserByAid(
-    aid: String,
-    backend: Backend
-) = getRawUserByAid(aid).mapResultNotNull {
-    processUserList(backend, listOf(it)).map(List<UserInfo>::first)
+sealed interface ObjectFetch {
+    data class AidFetch(val aid: String) : ObjectFetch
+    data class IdFetch(val id: PrimaryKey) : ObjectFetch
 }
 
 suspend fun DatabaseFactory.getUser(
-    it: PrimaryKey,
+    fetch: ObjectFetch,
     backend: Backend
-) = getRawUserById(it).mapResultNotNull {
-    processUserList(backend, listOf(it)).map(List<UserInfo>::first)
-}
-
-suspend fun DatabaseFactory.getRawUserByAid(aid: String) = first({
-    toUserInfo() to icon
-}, User::wrapRow) {
-    Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
-        Aids.value eq aid
-    }.limit(1)
+): Result<UserInfo?> {
+    return first({
+        toUserInfo() to icon
+    }, User::wrapRow) {
+        Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
+            when (fetch) {
+                is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
+                is ObjectFetch.IdFetch -> Users.id eq fetch.id
+            }
+        }
+    }.mapResultNotNull {
+        processUserList(backend, listOf(it)).map(List<UserInfo>::first)
+    }
 }
 
 suspend fun DatabaseFactory.getRawUserById(it: PrimaryKey): Result<Pair<UserInfo, String?>?> = first({

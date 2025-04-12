@@ -6,6 +6,7 @@ import com.storyteller_f.a.server.module
 import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.readResourceEnv
 import com.storyteller_f.shared.*
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
@@ -14,6 +15,8 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.websocket.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
@@ -136,9 +139,9 @@ private fun doTest(
         val client = createClient {
             defaultClientConfigure(AcceptAllCookiesStorage())
         }
-        val wsClient = ClientWebSocket({
+        val wsClient = ClientWebSocketImpl({ userInfo, sig ->
             client.webSocketSession("/link") {
-                addRequestHeaders(LoginViewModel.session?.first)
+                addRequestHeaders(userInfo, sig)
             }
         }) {
             receivedFrame(it)
@@ -177,12 +180,12 @@ suspend fun <R> attachSession(
     val sign = signature(priKey, data)
     val userInfo = client.signUp(pubKey, sign).getOrThrow()
     val session = DefaultLoginUserSession(LoginUser(priKey, pubKey, address))
-    LoginViewModel.updateState(ClientSession.SignUpSuccess(session))
-    LoginViewModel.updateUser(userInfo)
-    LoginViewModel.updateSession(rawData, sign)
+    SignInViewModel.updateState(ClientSession.SignInSuccess(session))
+    SignInViewModel.updateUser(userInfo)
+    SignInViewModel.updateSession(rawData, sign)
     val r = block(SessionTuple(priKey, pubKey, address, userInfo.id))
     client.signOut().getOrThrow()
-    LoginViewModel.signOut()
+    SignInViewModel.signOut()
     return SessionOuterTuple(priKey, pubKey, address, userInfo.id, r)
 }
 
@@ -197,9 +200,9 @@ suspend fun <R1, R2> loginSession(
     val sign = signature(privateKey, data)
     val userInfo = client.signIn(address, sign).getOrThrow()
     val session1 = DefaultLoginUserSession(LoginUser(privateKey, publicKey, address))
-    LoginViewModel.updateState(ClientSession.SignUpSuccess(session1))
-    LoginViewModel.updateUser(userInfo)
-    LoginViewModel.updateSession(rawData, sign)
+    SignInViewModel.updateState(ClientSession.SignInSuccess(session1))
+    SignInViewModel.updateUser(userInfo)
+    SignInViewModel.updateSession(rawData, sign)
     val r2 = block(SessionTuple(session.privateKey, session.publicKey, session.address, session.id))
     return SessionOuterTuple(privateKey, publicKey, address, userInfo.id, r2)
 }

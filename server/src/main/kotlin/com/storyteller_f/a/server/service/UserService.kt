@@ -8,6 +8,7 @@ import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.tables.ObjectFetch
 import com.storyteller_f.tables.getUser
 import com.storyteller_f.tables.getUserAid
 import com.storyteller_f.tables.updateUser
@@ -44,7 +45,7 @@ suspend fun updateUser(id: PrimaryKey, backend: Backend, old: UpdateUserBody): R
     if (firstError != null) return Result.failure(firstError)
     return DatabaseFactory.updateUser(id, newUser).mapResult {
         if (it) {
-            DatabaseFactory.getUser(id, backend)
+            DatabaseFactory.getUser(ObjectFetch.IdFetch(id), backend)
         } else {
             Result.success(null)
         }

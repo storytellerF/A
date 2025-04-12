@@ -22,7 +22,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 
 fun isAlreadyLogin(): Boolean {
-    return LoginViewModel.currentIsAlreadySignUp
+    return SignInViewModel.currentIsAlreadySignUp
 }
 
 inline fun <R> serviceCatching(block: () -> R): Result<R> {

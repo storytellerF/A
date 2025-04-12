@@ -19,7 +19,7 @@ import com.kdroid.composenotification.builder.NotificationInitializer.notificati
 import com.storyteller_f.a.app.compontents.bindActivity
 import com.storyteller_f.a.app.compontents.unbindActivity
 import com.storyteller_f.a.client_lib.LoadingState
-import com.storyteller_f.a.client_lib.LoginViewModel
+import com.storyteller_f.a.client_lib.SignInViewModel
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.core.FileKit
 import java.util.concurrent.Future
@@ -71,8 +71,8 @@ class MainActivity : ComponentActivity() {
             object : ViewTreeObserver.OnPreDrawListener {
                 override fun onPreDraw(): Boolean {
                     // Check whether the initial data is ready.
-                    val loadingState = LoginViewModel.retryLoginState.value
-                    val retried = LoginViewModel.appStartLoginRetried.value
+                    val loadingState = SignInViewModel.retryLoginState.value
+                    val retried = SignInViewModel.appStartLoginRetried.value
                     Napier.i {
                         "$retried $loadingState"
                     }

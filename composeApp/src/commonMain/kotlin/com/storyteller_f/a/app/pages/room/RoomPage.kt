@@ -163,7 +163,7 @@ fun RoomInputGroup(
     var input by remember {
         mutableStateOf("")
     }
-    val myInfo by LoginViewModel.user.collectAsState()
+    val myInfo by SignInViewModel.user.collectAsState()
     val controller = remember {
         CustomAlertDialogController()
     }
@@ -427,7 +427,7 @@ private fun InputGroupSuffix(
     privateRoomId: PrimaryKey?,
     gotoCompose: () -> Unit
 ) {
-    val alreadyLoginIn by LoginViewModel.isAlreadySignUp.collectAsState(false)
+    val alreadyLoginIn by SignInViewModel.isAlreadySignUp.collectAsState(false)
     var showSheet by remember {
         mutableStateOf(false)
     }
@@ -501,7 +501,7 @@ private fun RoomDialogButtons(
     appNav: AppNav,
     roomInfo: RoomInfo,
 ) {
-    val me by LoginViewModel.user.collectAsState()
+    val me by SignInViewModel.user.collectAsState()
     val client = LocalClient.current
     Column {
         ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
