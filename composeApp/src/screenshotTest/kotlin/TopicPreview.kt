@@ -42,7 +42,6 @@ fun ReactionPreview() {
         1,
         false,
         TopicInfo.EMPTY,
-        1,
         {}
     ) {
 

@@ -1,8 +1,5 @@
 package com.storyteller_f.a.client_lib
 
-import io.github.aakira.napier.Napier
-import kotbase.Collection
-import kotbase.Expression
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -10,7 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.serializer
 
 sealed class LoadingState {
     data object Loading : LoadingState()
@@ -66,28 +62,29 @@ class SimpleLoadingHandler<T>(override val refresh: () -> Unit) : LoadingHandler
 }
 
 class CachedLoadingHandler<T : Any>(
+    databaseSource: DatabaseSource,
+    name: String,
+    scope: CoroutineScope,
+    expression: Expression,
     override val refresh: () -> Unit,
     private val serializer: KSerializer<T>,
-    val saveDocument: com.storyteller_f.a.client_lib.Collection.(String, T) -> Unit,
-    scope: CoroutineScope,
-    expression: com.storyteller_f.a.client_lib.Expression,
-    name: String,
-    databaseSource: DatabaseSource,
+    val saveDocument: Collection.(String, T) -> Unit,
 ) : LoadingHandler<T> {
     private val collection = databaseSource.getCollection(name)
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
-    override val data = collection.getData(
+    override val data = collection.observe(
         serializer,
         expression
     ).stateIn(scope, SharingStarted.Lazily, null)
 
     override fun done(t: T) {
-        val string = Json.encodeToString(serializer, t)
-        Napier.i {
-            "save topic $string"
+        try {
+            val data = Json.encodeToString(serializer, t)
+            collection.saveDocument(data, t)
+            state.markDown()
+        } catch (e: Exception) {
+            error(e)
         }
-        collection.saveDocument(string, t)
-        state.value = LoadingState.Done
     }
 
     override fun error(error: Throwable) {
@@ -101,6 +98,10 @@ class CachedLoadingHandler<T : Any>(
 
 fun MutableStateFlow<LoadingState?>.markError(e: Throwable) {
     value = LoadingState.Error(e)
+}
+
+fun MutableStateFlow<LoadingState?>.markDown() {
+    value = LoadingState.Done
 }
 
 fun MutableStateFlow<LoadingState?>.markError(e: String) {

@@ -37,3 +37,5 @@
 -dontwarn java.beans.IntrospectionException
 -dontwarn java.beans.Introspector
 -dontwarn java.beans.PropertyDescriptor
+
+-keep class de.kherud.llama.** { *; }

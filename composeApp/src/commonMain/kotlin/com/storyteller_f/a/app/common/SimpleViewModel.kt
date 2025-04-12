@@ -38,11 +38,11 @@ inline fun <reified VM : ViewModel> viewModel(
     val client = LocalClient.current
     val databaseSource = LocalDatabase.current
     Napier.i {
-        "viewModel ${VM::class.simpleName} $keys"
+        "viewModel ${VM::class.simpleName}$keys composable"
     }
     return viewModel(key = keys?.joinToString(), initializer = {
         Napier.i {
-            "viewModel build ${VM::class.simpleName} $keys"
+            "viewModel ${VM::class.simpleName}$keys build"
         }
         factory(client, databaseSource)
     })

@@ -2,6 +2,7 @@ package com.storyteller_f.a.app
 
 import android.app.Application
 import android.content.Context
+import android.os.StrictMode
 import com.storyteller_f.a.app.utils.restoreFromStorage
 import com.storyteller_f.crypto_jvm.addProviderForAndroid
 import com.storyteller_f.shared.contextRef
@@ -15,6 +16,11 @@ import java.lang.ref.WeakReference
 class AApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        StrictMode.setVmPolicy(
+            StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
+                .detectLeakedClosableObjects()
+                .build()
+        )
         contextRef = WeakReference(this)
         addProviderForAndroid()
         restoreFromStorage()

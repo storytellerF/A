@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.io.File
 import java.net.InetAddress
+import java.security.SecureRandom
 import kotlin.jvm.optionals.getOrNull
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
@@ -115,40 +116,58 @@ fun Application.module() {
         generate()
     }
     install(WebSockets) {
-        pingPeriod = 15.seconds
-        timeout = 15.seconds
-        maxFrameSize = Long.MAX_VALUE
-        masking = false
-        contentConverter = KotlinxWebsocketSerializationConverter(Json)
+        setupWebSockets()
     }
     install(Sessions) {
-        val secretEncryptKey = hex("00112233445566778899aabbccddeeff")
-        val secretSignKey = hex("6819b57a326945c1968f45236589")
-        cookie<UserSession>("user_session") {
-            cookie.path = "/"
-            cookie.maxAgeInSeconds = 3600
-
-            transform(SessionTransportTransformerEncrypt(secretEncryptKey, secretSignKey))
-        }
+        setupSessions()
     }
     if (backend.config.isProd) {
-        install(RateLimit) {
-            global {
-                rateLimiter(limit = 10, refillPeriod = 1.seconds)
-                requestKey { call ->
-                    call.getRateLimitKey(reader)
-                }
-                requestWeight { applicationCall, key ->
-                    when (applicationCall.request.httpMethod) {
-                        HttpMethod.Post -> 10
-                        else -> 1
-                    }
+        setupRateLimit(reader)
+    }
+    install(Resources)
+    configureAuth(backend, reader)
+}
+
+private fun WebSockets.WebSocketOptions.setupWebSockets() {
+    pingPeriod = 15.seconds
+    timeout = 15.seconds
+    maxFrameSize = Long.MAX_VALUE
+    masking = false
+    contentConverter = KotlinxWebsocketSerializationConverter(Json)
+}
+
+private fun Application.setupRateLimit(reader: DatabaseReader) {
+    install(RateLimit) {
+        global {
+            rateLimiter(limit = 10, refillPeriod = 1.seconds)
+            requestKey { call ->
+                call.getRateLimitKey(reader)
+            }
+            requestWeight { applicationCall, key ->
+                when (applicationCall.request.httpMethod) {
+                    HttpMethod.Post -> 10
+                    else -> 1
                 }
             }
         }
     }
-    install(Resources)
-    configureAuth(backend, reader)
+}
+
+private fun SessionsConfig.setupSessions() {
+    val secureRandom = SecureRandom()
+    val secretEncryptKey = ByteArray(16).apply {
+        secureRandom.nextBytes(this)
+    }
+    val secretSignKey = ByteArray(14).apply {
+        secureRandom.nextBytes(this)
+    }
+
+    cookie<UserSession>("user_session") {
+        cookie.path = "/"
+        cookie.maxAgeInSeconds = 3600
+
+        transform(SessionTransportTransformerEncrypt(secretEncryptKey, secretSignKey))
+    }
 }
 
 private fun Application.buildBackend(): Backend {
