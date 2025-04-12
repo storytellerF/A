@@ -81,6 +81,7 @@ class MarkdownTest {
     fun `test check content`() {
         assertTrue(checkContent("a"))
         assertTrue(checkContent("👌"))
+        assertTrue(checkContent("\n"))
         assertEquals("👌", "👌abc".safeFirstUnicode())
     }
 

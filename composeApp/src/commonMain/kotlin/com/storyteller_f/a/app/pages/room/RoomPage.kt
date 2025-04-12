@@ -41,6 +41,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.checkContent
 import io.ktor.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -293,6 +294,10 @@ private fun sendRoomTopic(
     val keyState = handler.state.value
     val keyData = handler.data.value
     if (c.roomInfo.isJoined) {
+        if (!checkContent(c.input)) {
+            c.toasterState.show("invalid", duration = 1.seconds)
+            return
+        }
         if (keyState !is LoadingState.Done || keyData == null) {
             c.scope.launch {
                 c.toasterState.show(

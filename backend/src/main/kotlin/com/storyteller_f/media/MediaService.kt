@@ -74,6 +74,7 @@ private fun checkContentType(
     } to mimeType
 }
 
+// 在windows 中安装的libavif 名称不符合条件，需要手动改名
 fun loadAvif() {
     val osName = System.getProperty("os.name")
     when {

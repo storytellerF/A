@@ -33,6 +33,7 @@ import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.checkContent
 import io.ktor.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -214,6 +215,10 @@ private fun sendTopic(
     client: HttpClient,
     scrollTo: () -> Unit
 ) {
+    if (!checkContent(input)) {
+        toasterState.show("invalid")
+        return
+    }
     scope.launch {
         sendState.value = LoadingState.Loading
         try {
