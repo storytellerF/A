@@ -140,7 +140,6 @@ exposed-money = { module = "org.jetbrains.exposed:exposed-money", version.ref = 
 filekit-compose = { module = "io.github.vinceglb:filekit-compose", version.ref = "filekitCompose" }
 geoip2 = { module = "com.maxmind.geoip2:geoip2", version.ref = "geoip2" }
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
-haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 highlights = { module = "dev.snipme:highlights", version.ref = "highlights" }
 human-readable = { module = "nl.jacobras:Human-Readable", version.ref = "humanReadable" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jacksonModuleKotlin" }

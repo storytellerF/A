@@ -1,27 +1,16 @@
 package com.storyteller_f.a.app.common
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.paging.ExperimentalPagingApi
 import app.cash.paging.*
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import io.ktor.client.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
-@OptIn(ExperimentalPagingApi::class)
-abstract class PagingViewModel<K : Any, V : Any>(
-    val client: HttpClient,
-    remoteMediator: RemoteMediator<K, V>? = null,
-    sourceBuilder: () -> PagingSource<K, V>
-) : ViewModel() {
-    val flow = Pager(
-        PagingConfig(pageSize = 20),
-        remoteMediator = remoteMediator,
-    ) {
-        sourceBuilder()
-    }.flow.cachedIn(viewModelScope)
+abstract class PagingViewModel<K : Any, V : Any> : ViewModel() {
+    abstract val flow: Flow<PagingData<V>>
 }
 
 fun <KEY : Any, DATUM : Any> Result<APagingData<KEY, DATUM>>.loadResult(): PagingSourceLoadResult<KEY, DATUM> {

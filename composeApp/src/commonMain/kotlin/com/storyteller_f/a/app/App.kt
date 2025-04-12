@@ -34,7 +34,7 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.rememberLibraries
 import com.storyteller_f.a.app.compontents.*
-import com.storyteller_f.a.app.model.OnTopicCreated
+import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.community.CommunityComposePage
 import com.storyteller_f.a.app.pages.community.CommunityPage
 import com.storyteller_f.a.app.pages.community.CommunitySettingPage
@@ -55,10 +55,7 @@ import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.logger
-import com.storyteller_f.shared.model.MediaInfo
-import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -77,6 +74,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.reflect.KClass
 import kotlin.uuid.ExperimentalUuidApi
@@ -244,9 +242,14 @@ fun CommonEntry(
             getAsyncImageLoader(it)
         }
         val database = remember {
-            createKotbase()
+            KotbaseDatabaseSource(createKotbase())
         }
-        CompositionLocalProvider(LocalDatabase provides KotbaseDatabaseSource(database)) {
+        LaunchedEffect(database) {
+            bus.collect { event ->
+                processEvent(event, database)
+            }
+        }
+        CompositionLocalProvider(LocalDatabase provides database) {
             val client = remember {
                 if (httpUrl.isEmpty()) {
                     HttpClient()
@@ -278,10 +281,99 @@ fun CommonEntry(
     }
 }
 
+private fun processEvent(event: Any, database: KotbaseDatabaseSource) {
+    when (event) {
+        is OnAddReaction -> processOnAddReaction(database, event)
+
+        is OnRemoveReaction -> processRemoveReaction(database, event)
+
+        is OnCommunityJoined -> database.getCollection("communities").save(event.info.id, event.info)
+
+        is OnCommunityExited -> database.getCollection("communities").save(event.info.id, event.info)
+
+        is OnCommunityUpdated -> database.getCollection("communities").save(event.info.id, event.info)
+        is OnTopicChanged -> processTopicChanged(event, database)
+
+        is OnTopicCreated -> processTopicCreated(event, database)
+
+        is OnRoomJoined -> database.getCollection("rooms").save(event.info.id, event.info)
+
+        is OnRoomExited -> database.getCollection("rooms").save(event.info.id, event.info)
+
+        is OnRoomUpdated -> database.getCollection("rooms").save(event.info.id, event.info)
+
+        is OnUserUpdated -> database.getCollection("users").save(event.info.id, event.info)
+    }
+}
+
+private fun processTopicCreated(
+    event: OnTopicCreated,
+    database: KotbaseDatabaseSource
+) {
+    val topicInfo = event.topicInfo
+    database.getCollection("topics_${topicInfo.parentId}").save(topicInfo.id, topicInfo)
+    with(database.getCollection("topics")) {
+        save(topicInfo.id, topicInfo)
+        topicInfo.aid?.let { save(it, topicInfo) }
+    }
+}
+
+private fun processTopicChanged(
+    event: OnTopicChanged,
+    database: KotbaseDatabaseSource
+) {
+    val topicInfo = event.topicInfo
+    database.getCollection("topics_${topicInfo.parentId}").save(topicInfo.id, topicInfo)
+    with(database.getCollection("topics")) {
+        save(topicInfo.id, topicInfo)
+        topicInfo.aid?.let { save(it, topicInfo) }
+    }
+    // 尝试更新到推荐
+    with(database.getCollection("topics_0")) {
+        if (exists(Expression.IdEq("id", topicInfo.id))) {
+            save(topicInfo.id, topicInfo)
+        }
+    }
+}
+
+private fun processRemoveReaction(
+    database: KotbaseDatabaseSource,
+    event: OnRemoveReaction
+) {
+    database.getCollection("topic").update(event.topicId, serializer<TopicInfo>()) { old ->
+        val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
+        val new = extension.reactions.orEmpty().map { info ->
+            when {
+                info.emoji != event.emoji -> info
+                !info.hasReacted -> info
+                else -> info.copy(count = info.count - 1, hasReacted = false)
+            }
+        }
+        old.copy(extension = extension.copy(reactions = new), reactionCount = old.reactionCount + 1)
+    }
+}
+
+private fun processOnAddReaction(
+    database: KotbaseDatabaseSource,
+    event: OnAddReaction
+) {
+    database.getCollection("topic").update(event.topicId, serializer<TopicInfo>()) { old ->
+        val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
+        val new = extension.reactions.orEmpty().map { info ->
+            when {
+                info.emoji != event.emoji -> info
+                info.hasReacted -> info
+                else -> info.copy(count = info.count + 1, hasReacted = true)
+            }
+        }
+        old.copy(extension = extension.copy(reactions = new), reactionCount = old.reactionCount + 1)
+    }
+}
+
 @Composable
 fun TestContainer(block: @Composable () -> Unit) {
     CommonEntry("") {
-        val appNav = remember<AppNav> {
+        val appNav = remember {
             AppNav.EMPTY
         }
         CompositionLocalProvider(LocalAppNav provides appNav) {
@@ -609,16 +701,6 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
 
 fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
-
-fun saveTopicInDatabaseByParent(info: TopicInfo, databaseSource: DatabaseSource) {
-    val collectionName = "topics_${info.parentId}"
-    saveTopicInDatabase(collectionName, info, databaseSource)
-}
-
-fun saveTopicInDatabase(collectionName: String, info: TopicInfo, databaseSource: DatabaseSource) {
-    assert(!info.isPrivate || info.content is TopicContent.Encrypted)
-    databaseSource.getCollection(collectionName).save(info.id, Json.encodeToString(info))
-}
 
 fun HttpClientConfig<*>.setupRequest(httpUrl: String) {
     defaultRequest {

@@ -140,7 +140,6 @@ kotlin {
             implementation(libs.compose.pdf)
             implementation(libs.aboutlibraries.core)
             implementation(libs.aboutlibraries.compose.m3)
-            implementation(libs.haze)
             implementation(libs.zoomimage.compose.coil3)
             implementation(libs.fonticons.core)
             implementation(libs.krop.ui)
@@ -170,7 +169,7 @@ kotlin {
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
-            
+
             implementation(libs.jlatexmath)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.vlcj)
@@ -215,6 +214,7 @@ android {
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+    val jllamaLib = file("../java-llama.cpp")
 
     defaultConfig {
         applicationId = "com.storyteller_f.a.$flavorId"
@@ -223,6 +223,30 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        @Suppress("UnstableApiUsage")
+        externalNativeBuild {
+            cmake {
+                // Add a flags if needed
+                cppFlags += "-fdeclspec"
+                arguments += "-DCMAKE_SOURCE_DIR=${jllamaLib}"
+            }
+        }
+    }
+    // Declare c++ sources
+    externalNativeBuild {
+        cmake {
+            path = file("$jllamaLib/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
+    // Declare java sources
+    sourceSets {
+        named("main") {
+            // Add source directory for java-llama.cpp
+            java.srcDir("$jllamaLib/src/main/java")
+        }
     }
     signingConfigs {
         val signStorePath = when {

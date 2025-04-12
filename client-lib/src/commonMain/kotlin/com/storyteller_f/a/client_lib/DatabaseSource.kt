@@ -38,25 +38,37 @@ class KotbaseObserverToken<T>(
 
 interface Collection {
     fun saveDocument(id: String, string: String)
-
-    fun <T : Any> getData(serializer: KSerializer<T>, expression: Expression): Flow<T?>
-
+    fun <T : Any> observe(serializer: KSerializer<T>, expression: Expression): Flow<T?>
     fun <T> getDocument(expression: Expression, serializer: KSerializer<T>): T?
     fun <T> getDocument(key: String, serializer: KSerializer<T>): T?
     fun exists(expression: Expression): Boolean
     fun deleteDocument(key: String)
-    fun <T> observe(
+    fun <T> observeList(
         expression: Expression?,
         size: Int,
         order: List<Order>,
         serializer: KSerializer<T>,
         invalidate: () -> Unit
     ): ObserverToken<T>
+
+    fun <T> getDocument(id: PrimaryKey, serializer: KSerializer<T>): T? {
+        return getDocument(id.toString(), serializer)
+    }
+
+    fun deleteDocument(id: PrimaryKey) {
+        deleteDocument(id.toString())
+    }
+
+    fun <T> update(id: PrimaryKey, serializer: KSerializer<T>, block: (T) -> T) {
+        val document = getDocument(id, serializer) ?: return
+        val value = block(document)
+        saveDocument(id.toString(), Json.encodeToString(serializer, value))
+    }
 }
 
 sealed interface Expression {
-    data class One(val field: String, val value: PrimaryKey) : Expression
-    data class Two(val field: String, val value: String) : Expression
+    data class IdEq(val field: String, val value: PrimaryKey) : Expression
+    data class StrEq(val field: String, val value: String) : Expression
     data class Less(val field: String, val value: PrimaryKey) : Expression
 }
 
@@ -82,7 +94,7 @@ class KotbaseCollection(private val collection: kotbase.Collection) : Collection
         collection.save(MutableDocument(id, string))
     }
 
-    override fun <T : Any> getData(serializer: KSerializer<T>, expression: Expression): Flow<T?> {
+    override fun <T : Any> observe(serializer: KSerializer<T>, expression: Expression): Flow<T?> {
         return select(all()).from(collection).where(getExpressionBuilder(expression)).limit(1).queryChangeFlow().map {
             if (it.error != null) {
                 Napier.e(throwable = it.error) {
@@ -117,11 +129,11 @@ class KotbaseCollection(private val collection: kotbase.Collection) : Collection
     private fun getExpressionBuilder(expression: Expression): WhereBuilder.() -> kotbase.Expression =
         {
             when (expression) {
-                is Expression.One -> {
+                is Expression.IdEq -> {
                     (expression.field) equalTo (expression.value)
                 }
 
-                is Expression.Two -> {
+                is Expression.StrEq -> {
                     (expression.field) equalTo (expression.value)
                 }
 
@@ -135,7 +147,7 @@ class KotbaseCollection(private val collection: kotbase.Collection) : Collection
         }
     }
 
-    override fun <T> observe(
+    override fun <T> observeList(
         expression: Expression?,
         size: Int,
         order: List<Order>,
@@ -228,4 +240,12 @@ fun Collection.save(key: String, data: String) {
 
 fun Collection.save(key: PrimaryKey, data: String) {
     saveDocument(key.toString(), data)
+}
+
+inline fun <reified T : Any> Collection.save(key: PrimaryKey, data: T) {
+    saveDocument(key.toString(), Json.encodeToString(data))
+}
+
+inline fun <reified T : Any> Collection.save(key: String, data: T) {
+    saveDocument(key, Json.encodeToString(data))
 }

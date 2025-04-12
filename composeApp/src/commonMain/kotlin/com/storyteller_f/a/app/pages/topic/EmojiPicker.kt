@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.globalDialogState
-import com.storyteller_f.a.app.model.OnTopicChanged
+import com.storyteller_f.a.app.model.OnAddReaction
 import com.storyteller_f.a.client_lib.addReaction
 import com.storyteller_f.shared.model.TopicInfo
 import kotlinx.coroutines.launch
@@ -57,6 +57,14 @@ fun EmojiPicker(
 }
 
 @Composable
+fun SheetContainer(block: @Composable ColumnScope.() -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().consumeWindowInsets(WindowInsets.navigationBars)) {
+        Spacer(modifier = Modifier.height(20.dp))
+        block()
+    }
+}
+
+@Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun EmojiPickerInternal(
     query: String,
@@ -65,8 +73,7 @@ private fun EmojiPickerInternal(
     hideSheet: () -> Unit,
     updateQuery: (String) -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxWidth().consumeWindowInsets(WindowInsets.navigationBars)) {
-        Spacer(modifier = Modifier.height(20.dp))
+    SheetContainer {
         TextField(
             query,
             {
@@ -131,7 +138,7 @@ private fun EmojiItem(
         scope.launch {
             globalDialogState.use {
                 client.addReaction(topic.id, emoji.details.string)
-                bus.emit(OnTopicChanged(topic.copy(reactionCount = topic.reactionCount + 1)))
+                bus.emit(OnAddReaction(topic.id, emoji.details.string))
                 sheetState.hide()
             }
         }.invokeOnCompletion {

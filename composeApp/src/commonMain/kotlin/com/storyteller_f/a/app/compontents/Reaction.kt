@@ -1,9 +1,17 @@
 package com.storyteller_f.a.app.compontents
 
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Comment
 import androidx.compose.material.icons.outlined.AddReaction
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.SubcomposeMeasureScope
@@ -16,16 +24,16 @@ import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnAddReaction
 import com.storyteller_f.a.app.model.OnRemoveReaction
-import com.storyteller_f.a.app.model.OnTopicChanged
-import com.storyteller_f.a.app.model.createReactionsViewModel
+import com.storyteller_f.a.app.model.createTopicViewModel
+import com.storyteller_f.a.app.pages.topic.SheetContainer
 import com.storyteller_f.a.app.pages.world.Pill
-import com.storyteller_f.a.client_lib.LoadingState
 import com.storyteller_f.a.client_lib.addReaction
 import com.storyteller_f.a.client_lib.deleteReaction
 import com.storyteller_f.a.client_lib.isAlreadyLogin
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.type.PrimaryKey
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @Composable
@@ -34,27 +42,16 @@ fun InteractionRow(
     startAddReaction: () -> Unit,
     startAddComment: () -> Unit
 ) {
-    val objectId = topicInfo.id
-    val commentCount = topicInfo.commentCount
-    val hasComment = topicInfo.hasComment
-    val reactionCount = topicInfo.reactionCount
-    val reactionsViewModel = createReactionsViewModel(objectId)
-    val reactions by reactionsViewModel.handler.data.collectAsState()
-    val refresh by reactionsViewModel.handler.state.collectAsState()
-    val itemCount = reactions?.data?.size ?: 0
-    LaunchedEffect(refresh, itemCount, reactionCount) {
-        if (refresh != null && refresh is LoadingState.Done && itemCount.toLong() != reactionCount) {
-            reactionsViewModel.handler.refresh()
-        }
-    }
+    val topicViewModel = createTopicViewModel(topicInfo.id)
+    val reactions by topicViewModel.handler.data.map {
+        it?.extension?.reactions
+    }.collectAsState(null)
     val appNav = LocalAppNav.current
-    val data = (reactions ?: ServerResponse(emptyList())).data
     InteractionRowInternal(
-        data,
-        commentCount,
-        hasComment,
+        reactions.orEmpty(),
+        topicInfo.commentCount,
+        topicInfo.hasComment,
         topicInfo,
-        reactionCount,
         startAddComment
     ) {
         if (isAlreadyLogin()) {
@@ -65,25 +62,27 @@ fun InteractionRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InteractionRowInternal(
     data: List<ReactionInfo>,
     commentCount: Long,
     hasComment: Boolean,
     topicInfo: TopicInfo,
-    reactionCount: Long,
     startAddComment: () -> Unit,
     startAddReaction: () -> Unit
 ) {
+    var showBottomSheet by remember { mutableStateOf(false) }
     EmojiRow(
         data,
-        { emojiUsed ->
+        {
+            if (it < data.size) {
+                Pill(text = "+${data.size - it}") {
+                    showBottomSheet = true
+                }
+            }
             Pill(icon = Icons.Outlined.AddReaction) {
                 startAddReaction()
-            }
-            if (emojiUsed < data.size) {
-                Pill(text = "+${data.size - emojiUsed}") {
-                }
             }
         },
         { index ->
@@ -94,11 +93,15 @@ fun InteractionRowInternal(
             }
             if (data.isNotEmpty()) {
                 data.getOrNull(index)?.let { info ->
-                    EmojiCell(topicInfo, reactionCount, info)
+                    EmojiCell(topicInfo.id, info)
                 }
             }
         }
     )
+    val sheetState = rememberModalBottomSheetState()
+    EmojiSheet(showBottomSheet, sheetState, topicInfo.id, data) {
+        showBottomSheet = false
+    }
 }
 
 @Composable
@@ -195,6 +198,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
                 // index++ 会导致退出循环，需要循环后面手动补上最后一行
                 index++
             }
+
             rows.size == 0 -> {
                 // 当前还没有完整的一行，并且需要折行
                 rows.add(currentRow)
@@ -208,6 +212,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
                     it.width
                 } + (horizontalPx.roundToPx() * (placeableList.size - 1))
             }
+
             else -> {
                 // 再加一行就成了第二行，后面会退出循环，清空防止再次加一行
                 rows.add(currentRow)
@@ -230,8 +235,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
 
 @Composable
 private fun EmojiCell(
-    topicInfo: TopicInfo,
-    reactionCount: Long,
+    topicId: PrimaryKey,
     info: ReactionInfo
 ) {
     val scope = rememberCoroutineScope()
@@ -243,17 +247,51 @@ private fun EmojiCell(
             if (hasReacted) {
                 scope.launch {
                     globalDialogState.use {
-                        client.deleteReaction(string, topicInfo.id)
-                        bus.emit(OnTopicChanged(topicInfo.copy(reactionCount = reactionCount - 1)))
-                        bus.emit(OnRemoveReaction(topicInfo.id, string))
+                        client.deleteReaction(string, topicId)
+                        bus.emit(OnRemoveReaction(topicId, string))
                     }
                 }
             } else {
                 scope.launch {
                     globalDialogState.use {
-                        client.addReaction(topicInfo.id, string)
-                        bus.emit(OnTopicChanged(topicInfo.copy(reactionCount = reactionCount + 1)))
-                        bus.emit(OnAddReaction(topicInfo.id, string))
+                        client.addReaction(topicId, string)
+                        bus.emit(OnAddReaction(topicId, string))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EmojiSheet(
+    showSheet: Boolean,
+    sheetState: SheetState,
+    topicId: PrimaryKey,
+    list: List<ReactionInfo>,
+    hideSheet: () -> Unit
+) {
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                hideSheet()
+            },
+            dragHandle = null,
+            sheetState = sheetState,
+            contentWindowInsets = {
+                WindowInsets(0)
+            },
+        ) {
+            val scrollState = rememberScrollState()
+            SheetContainer {
+                FlowRow(
+                    modifier = Modifier.verticalScroll(scrollState).height(300.dp).padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    list.forEach {
+                        EmojiCell(topicId, it)
                     }
                 }
             }

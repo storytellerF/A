@@ -17,7 +17,6 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -31,7 +30,7 @@ val globalCookiesStorage = AcceptAllCookiesStorage()
 
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
-@OptIn(ExperimentalUuidApi::class, ExperimentalAtomicApi::class)
+@OptIn(ExperimentalUuidApi::class)
 fun HttpClientConfig<*>.defaultClientConfigure(cookiesStorage: CookiesStorage = globalCookiesStorage) {
     expectSuccess = true
     install(Auth) {
@@ -48,12 +47,6 @@ fun HttpClientConfig<*>.defaultClientConfigure(cookiesStorage: CookiesStorage = 
         addToHeader(HttpHeaders.XRequestId)
     }
     install(Logging) {
-        logger = object : Logger {
-            override fun log(message: String) {
-                Napier.v(tag = "HTTP Client", throwable = null, message = message)
-            }
-        }
-        level = LogLevel.HEADERS
     }
     install(HttpCookies) {
         storage = cookiesStorage
