@@ -3,6 +3,7 @@ import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.NewRoom
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
@@ -11,6 +12,8 @@ import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.io.Buffer
+import kotlinx.io.writeString
 import kotlin.test.*
 
 class TopicTest {
@@ -84,11 +87,15 @@ class TopicTest {
         test { client, _ ->
             attachSession(client) {
                 val media = client.upload(
-                    "hello".toByteArray(),
+                    ObjectTuple(it.uid, ObjectType.USER),
+                    5,
                     "hello.txt",
-                    it.uid,
-                    ObjectType.USER,
-                    ContentType.defaultForFileExtension("txt")
+                    ContentType.defaultForFileExtension("txt"),
+                    {
+                        Buffer().apply {
+                            writeString("hello")
+                        }
+                    }
                 )
                     .getOrThrow().data.first()
                 val info =
@@ -130,7 +137,7 @@ class TopicTest {
                 client.joinCommunity(communityId).getOrThrow()
                 val roomInfo = client.joinRoom(publicRoomId).getOrThrow()
                 wsClient.useWebSocket {
-                    sendMessage(roomInfo, "test", emptyList(), null)
+                    sendMessage(ObjectTuple(roomInfo.id, ObjectType.ROOM), roomInfo.isPrivate, "test", emptyList())
                 }?.join()
                 while (true) {
                     if (receivedFrame.size == 1) {
@@ -143,7 +150,7 @@ class TopicTest {
                 val roomInfo2 = client.getRoomInfo(privateRoomId).getOrThrow()
                 val keys = client.requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
                 wsClient.useWebSocket {
-                    sendMessage(roomInfo2, "hello", keys, null)
+                    sendMessage(ObjectTuple(roomInfo2.id, ObjectType.ROOM), roomInfo2.isPrivate, "hello", keys)
                 }?.join()
                 while (true) {
                     if (receivedFrame.size == 2) {

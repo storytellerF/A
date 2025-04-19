@@ -16,13 +16,11 @@ import io.ktor.server.plugins.*
 suspend fun getRoomPubKeys(
     roomId: PrimaryKey,
     userId: PrimaryKey,
-    pre: PrimaryKey?,
-    next: PrimaryKey?,
-    size: Int
+    pagingFetch: PagingFetch
 ): Result<PaginationResult<Pair<PrimaryKey, String>>?> {
     return isMemberJoined(roomId, userId).mapResult {
         if (it) {
-            DatabaseFactory.commonPaginationRoomPubKeyList(roomId, pre, next, size).map { (data, count) ->
+            DatabaseFactory.commonPaginationRoomPubKeyList(roomId, pagingFetch).map { (data, count) ->
                 PaginationResult(data, count)
             }
         } else {

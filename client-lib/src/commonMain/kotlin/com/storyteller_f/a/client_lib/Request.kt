@@ -20,6 +20,7 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.utils.io.core.*
 
 fun isAlreadyLogin(): Boolean {
     return SignInViewModel.currentIsAlreadySignUp
@@ -409,25 +410,25 @@ suspend fun HttpClient.getMediaList(objectId: PrimaryKey, objectType: ObjectType
 }
 
 suspend fun HttpClient.upload(
-    stream: ByteArray,
+    objectTuple: ObjectTuple,
+    size: Long,
     name: String,
-    objectId: PrimaryKey,
-    objectType: ObjectType,
-    contentType: ContentType
+    contentType: ContentType,
+    block: () -> Input
 ) = serviceCatching {
     post("amedia/upload") {
         url {
-            parameters.append("objectId", objectId.toString())
-            parameters.append("objectType", objectType.name)
+            parameters.append("objectId", objectTuple.objectId.toString())
+            parameters.append("objectType", objectTuple.objectType.name)
         }
         setBody(
             MultiPartFormDataContent(
                 formData {
                     append("description", "amedia")
-                    append("file", stream, Headers.build {
+                    appendInput("file", Headers.build {
                         append(HttpHeaders.ContentType, contentType)
                         append(HttpHeaders.ContentDisposition, "filename=\"$name\"")
-                    })
+                    }, size, block)
                 },
                 boundary = "WebAppBoundary"
             )
@@ -440,12 +441,12 @@ suspend fun HttpClient.upload(
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun DefaultClientWebSocketSession.sendMessage(
-    roomInfo: RoomInfo,
+    parentTarget: ObjectTuple,
+    isPrivate: Boolean,
     input: String,
     keyData: List<Pair<PrimaryKey, String>>,
-    topicId: PrimaryKey?
 ) {
-    val content = if (roomInfo.isPrivate) {
+    val content = if (isPrivate) {
         val (encrypted, aes) = encrypt(input)
         TopicContent.Encrypted(encrypted.toHexString(), keyData.associate {
             it.first to encryptAesKey(it.second, aes).toHexString()
@@ -454,19 +455,11 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
         TopicContent.Plain(input)
     }
     val message: RoomFrame = RoomFrame.Message(
-        if (topicId != null) {
-            NewRoomTopic(
-                TOPIC,
-                topicId,
-                content
-            )
-        } else {
-            NewRoomTopic(
-                ROOM,
-                roomInfo.id,
-                content
-            )
-        }
+        NewRoomTopic(
+            parentTarget.objectType,
+            parentTarget.objectId,
+            content
+        )
     )
     sendSerialized(message)
 }

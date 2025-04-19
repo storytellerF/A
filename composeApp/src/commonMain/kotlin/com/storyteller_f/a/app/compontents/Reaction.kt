@@ -7,7 +7,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Comment
 import androidx.compose.material.icons.outlined.AddReaction
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
@@ -25,6 +24,7 @@ import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnAddReaction
 import com.storyteller_f.a.app.model.OnRemoveReaction
 import com.storyteller_f.a.app.model.createTopicViewModel
+import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.a.app.pages.topic.SheetContainer
 import com.storyteller_f.a.app.pages.world.Pill
 import com.storyteller_f.a.client_lib.addReaction
@@ -272,27 +272,16 @@ private fun EmojiSheet(
     list: List<ReactionInfo>,
     hideSheet: () -> Unit
 ) {
-    if (showSheet) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                hideSheet()
-            },
-            dragHandle = null,
-            sheetState = sheetState,
-            contentWindowInsets = {
-                WindowInsets(0)
-            },
-        ) {
-            val scrollState = rememberScrollState()
-            SheetContainer {
-                FlowRow(
-                    modifier = Modifier.verticalScroll(scrollState).height(300.dp).padding(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    list.forEach {
-                        EmojiCell(topicId, it)
-                    }
+    BaseSheet(showSheet, sheetState, hideSheet) {
+        val scrollState = rememberScrollState()
+        SheetContainer {
+            FlowRow(
+                modifier = Modifier.verticalScroll(scrollState).height(300.dp).padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                list.forEach {
+                    EmojiCell(topicId, it)
                 }
             }
         }

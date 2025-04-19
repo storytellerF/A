@@ -10,6 +10,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
 import io.ktor.http.*
+import kotlinx.io.Source
+import kotlinx.io.asSource
+import kotlinx.io.buffered
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -48,10 +51,8 @@ class ClipFile(
     override val id: String
         get() = itemAt.uri.toString()
 
-    override fun readAll(): ByteArray? {
-        return contentResolver.openInputStream(itemAt.uri)?.buffered()?.use {
-            it.readBytes()
-        }
+    override fun source(): Source? {
+        return contentResolver.openInputStream(itemAt.uri)?.asSource()?.buffered()
     }
 }
 

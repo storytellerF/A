@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -19,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
-import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
 import com.dokar.sonner.ToastType
@@ -36,8 +34,8 @@ import com.storyteller_f.a.app.pages.topic.insertContent
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -52,11 +50,8 @@ import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
-    val viewModel = createRoomTopicsViewModel(roomId)
-    val items = viewModel.flow.collectAsLazyPagingItems()
     val room = createRoomViewModel(roomId)
     val roomInfo by room.handler.data.collectAsState()
-    val lazyListState = rememberLazyListState()
     val snackBarHost = remember {
         SnackbarHostState()
     }
@@ -87,14 +82,8 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
                     showDialog = it
                 }
             }
-            RoomPageInternal(modifier = Modifier.weight(1f), lazyListState, items)
-            val scope = rememberCoroutineScope()
-            RoomInputGroup(roomId, roomInfo, null, {
+            RoomPageInternal(Modifier.weight(1f), roomId, roomInfo) {
                 showDialog = true
-            }) {
-                scope.launch {
-                    lazyListState.animateScrollToItem(0)
-                }
             }
         }
     }
@@ -103,50 +92,64 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
 @Composable
 private fun RoomPageInternal(
     modifier: Modifier,
-    lazyListState: LazyListState,
-    items: LazyPagingItems<TopicInfo>
+    roomId: PrimaryKey,
+    roomInfo: RoomInfo?,
+    updateDialog: (Boolean) -> Unit
 ) {
-    Box(modifier) {
-        StateView(items) {
-            LazyColumn(
-                state = lazyListState,
-                modifier = Modifier.padding(top = 10.dp),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
-                reverseLayout = true,
-            ) {
-                items(
-                    count = items.itemCount,
-                    key = items.itemKey { topicInfo ->
-                        topicInfo.id.toString()
-                    },
-                ) { index ->
-                    val next = if (index + 1 < items.itemCount) {
-                        items[index + 1]
-                    } else {
-                        null
-                    }
-                    val current = items[index]
-                    current?.let { info ->
-                        TopicCell(
-                            info,
-                            false,
-                            next?.author != info.author
-                        )
+    val lazyListState = rememberLazyListState()
+    val viewModel = createRoomTopicsViewModel(roomId)
+    val items = viewModel.flow.collectAsLazyPagingItems()
+    Column {
+        Box(modifier) {
+            StateView(items) {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier.padding(top = 10.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+                    reverseLayout = true,
+                ) {
+                    items(
+                        count = items.itemCount,
+                        key = items.itemKey { topicInfo ->
+                            topicInfo.id.toString()
+                        },
+                    ) { index ->
+                        val next = if (index + 1 < items.itemCount) {
+                            items[index + 1]
+                        } else {
+                            null
+                        }
+                        val current = items[index]
+                        current?.let { info ->
+                            TopicCell(
+                                info,
+                                false,
+                                next?.author != info.author
+                            )
+                        }
                     }
                 }
             }
-        }
-        if (lazyListState.firstVisibleItemScrollOffset > 0) {
-            val scope = rememberCoroutineScope()
-            IconButton({
-                scope.launch {
-                    lazyListState.animateScrollToItem(0, 0)
+            if (lazyListState.firstVisibleItemScrollOffset > 0) {
+                val scope = rememberCoroutineScope()
+                IconButton({
+                    scope.launch {
+                        lazyListState.animateScrollToItem(0, 0)
+                    }
+                }, modifier = Modifier.align(Alignment.BottomStart)) {
+                    Icon(
+                        Icons.Default.ArrowCircleDown,
+                        "move to newer topic",
+                    )
                 }
-            }, modifier = Modifier.align(Alignment.BottomStart)) {
-                Icon(
-                    Icons.Default.ArrowCircleDown,
-                    "move to newer topic",
-                )
+            }
+        }
+        val scope = rememberCoroutineScope()
+        RoomInputGroup(roomId, roomInfo, ObjectTuple(roomId, ObjectType.ROOM), {
+            updateDialog(true)
+        }) {
+            scope.launch {
+                lazyListState.animateScrollToItem(0)
             }
         }
     }
@@ -156,7 +159,7 @@ private fun RoomPageInternal(
 fun RoomInputGroup(
     roomId: PrimaryKey,
     roomInfo: RoomInfo?,
-    topicId: PrimaryKey?,
+    parentTarget: ObjectTuple,
     startJoinRoom: () -> Unit,
     scrollToNew: () -> Unit,
 ) {
@@ -183,7 +186,12 @@ fun RoomInputGroup(
     if (roomInfo != null) {
         val localState by wsClient.localState.collectAsState()
         val isSending = localState is LoadingState.Loading
-        RoomInputGroupInternal(roomId, roomInfo, topicId, input, scrollToNew, controller, wsClient) {
+        val mediaTarget = if (roomInfo.isPrivate) {
+            ObjectTuple(roomInfo.id, ObjectType.ROOM)
+        } else {
+            ObjectTuple(myInfo?.id ?: 0, ObjectType.USER)
+        }
+        RoomInputGroupInternal(roomId, roomInfo, parentTarget, input, scrollToNew, controller, wsClient, mediaTarget) {
             if (!isSending) {
                 input = it
             }
@@ -201,11 +209,12 @@ fun RoomInputGroup(
 private fun RoomInputGroupInternal(
     roomId: PrimaryKey,
     roomInfo: RoomInfo,
-    topicId: PrimaryKey?,
+    parentTarget: ObjectTuple,
     input: String,
     scrollToNew: () -> Unit,
     controller: CustomAlertDialogController,
     wsClient: ClientWebSocket,
+    mediaTarget: ObjectTuple,
     updateInput: (String) -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -213,21 +222,17 @@ private fun RoomInputGroupInternal(
     val keysViewModel = createRoomKeysViewModel(roomId, roomInfo)
     val keysData by keysViewModel.handler.data.collectAsState()
     val keysState by keysViewModel.handler.state.collectAsState()
-    val objectId = topicId ?: roomId
-    val objectType = if (topicId != null) ObjectType.TOPIC else ObjectType.ROOM
     val appNav = LocalAppNav.current
     InputGroupInternal(
         input,
         MaterialTheme.colorScheme.tertiaryContainer,
-        roomId.takeIf {
-            roomInfo.isPrivate
-        },
         updateInput,
         {
-            appNav.gotoTopicCompose(objectType, objectId, false, roomId.takeIf {
+            appNav.gotoTopicCompose(parentTarget.objectType, parentTarget.objectId, false, roomId.takeIf {
                 roomInfo.isPrivate
             })
         },
+        mediaTarget,
         {
             Row {
                 when (val ks = keysState) {
@@ -241,17 +246,15 @@ private fun RoomInputGroupInternal(
     ) {
         RoomSendButton(input = input) {
             sendRoomTopic(
-                RoomMessageContext(
-                    roomInfo,
-                    input,
-                    scrollToNew,
-                    topicId,
-                    scope,
-                    toasterState,
-                    controller,
-                    keysViewModel,
-                    wsClient
-                )
+                roomInfo,
+                input,
+                scrollToNew,
+                scope,
+                toasterState,
+                controller,
+                keysViewModel,
+                wsClient,
+                parentTarget
             )
         }
     }
@@ -275,32 +278,28 @@ private fun buildInputBoxContentListener(
     }
 }
 
-class RoomMessageContext(
-    val roomInfo: RoomInfo,
-    val input: String,
-    val scrollToNew: () -> Unit,
-    val topicId: PrimaryKey?,
-    val scope: CoroutineScope,
-    val toasterState: ToasterState,
-    val alertDialogState: CustomAlertDialogController,
-    val keysViewModel: RoomKeysViewModel,
-    val wsClient: ClientWebSocket
-)
-
 private fun sendRoomTopic(
-    c: RoomMessageContext
+    roomInfo: RoomInfo,
+    input: String,
+    scrollToNew: () -> Unit,
+    scope: CoroutineScope,
+    toasterState: ToasterState,
+    alertDialogState: CustomAlertDialogController,
+    keysViewModel: RoomKeysViewModel,
+    wsClient: ClientWebSocket,
+    parentTarget: ObjectTuple
 ) {
-    val handler = c.keysViewModel.handler
+    val handler = keysViewModel.handler
     val keyState = handler.state.value
     val keyData = handler.data.value
-    if (c.roomInfo.isJoined) {
-        if (!checkContent(c.input)) {
-            c.toasterState.show("invalid", duration = 1.seconds)
+    if (roomInfo.isJoined) {
+        if (!checkContent(input)) {
+            toasterState.show("invalid", duration = 1.seconds)
             return
         }
         if (keyState !is LoadingState.Done || keyData == null) {
-            c.scope.launch {
-                c.toasterState.show(
+            scope.launch {
+                toasterState.show(
                     getString(Res.string.private_room_pub_key_loading),
                     type = ToastType.Info,
                     duration = 1.seconds
@@ -308,16 +307,16 @@ private fun sendRoomTopic(
             }
             return
         }
-        c.wsClient.useWebSocket {
-            sendMessage(c.roomInfo, c.input, keyData, c.topicId)
+        wsClient.useWebSocket {
+            sendMessage(parentTarget, roomInfo.isPrivate, input, keyData)
             delay(500)
-            c.scrollToNew()
+            scrollToNew()
         }
     } else {
-        c.scope.launch {
+        scope.launch {
             val title = getString(Res.string.permission_denied)
             val message = getString(Res.string.join_room_prompt)
-            c.alertDialogState.showMessage(title, message)
+            alertDialogState.showMessage(title, message)
         }
     }
 }
@@ -393,9 +392,9 @@ fun CommonInputButton(
 fun InputGroupInternal(
     input: String,
     backgroundColor: Color,
-    privateRoomId: PrimaryKey?,
     updateInput: (String) -> Unit,
     gotoCompose: () -> Unit,
+    mediaTarget: ObjectTuple,
     topContent: @Composable () -> Unit = {},
     sendButton: @Composable () -> Unit
 ) {
@@ -414,7 +413,7 @@ fun InputGroupInternal(
             OutlinedTextField(input, {
                 updateInput(it)
             }, modifier = Modifier.weight(1f), suffix = {
-                InputGroupSuffix(input, updateInput, privateRoomId, gotoCompose)
+                InputGroupSuffix(input, updateInput, mediaTarget, gotoCompose)
             })
 
             Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
@@ -429,7 +428,7 @@ fun InputGroupInternal(
 private fun InputGroupSuffix(
     input: String,
     updateInput: (String) -> Unit,
-    privateRoomId: PrimaryKey?,
+    mediaTarget: ObjectTuple,
     gotoCompose: () -> Unit
 ) {
     val alreadyLoginIn by SignInViewModel.isAlreadySignUp.collectAsState(false)
@@ -462,7 +461,7 @@ private fun InputGroupSuffix(
         })
     }
     val sheetState = rememberModalBottomSheetState()
-    MediaPicker(showSheet, sheetState, privateRoomId, { info ->
+    MediaPicker(showSheet, sheetState, mediaTarget, { info ->
         insertContent(info.first(), updateInput, input)
     }) {
         showSheet = false
@@ -546,7 +545,7 @@ private fun RoomDialogButtons(
             if (roomInfo.creator == me?.id) {
                 ButtonNav(Icons.Default.Settings, "Settings") {
                     dismiss()
-                    appNav.gotoRoomSetting(roomInfo.id)
+                    appNav.gotoSettingPage(roomInfo.id, ObjectType.ROOM)
                 }
             }
         }

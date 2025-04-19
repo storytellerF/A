@@ -224,7 +224,7 @@ private suspend fun addTopicIntoRoom(
 }
 
 private suspend fun isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Result<Boolean> {
-    return DatabaseFactory.isRoomJoins1(roomId).map { value ->
+    return DatabaseFactory.userListJoinedRoom(roomId).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()

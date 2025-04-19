@@ -113,14 +113,12 @@ suspend fun DatabaseFactory.userTitles(
     searchType: TitleSearchType,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
-    next: PrimaryKey?,
-    limit: Int,
-    pre: PrimaryKey?
+    pagingFetch: PagingFetch
 ): Result<PaginationResult<TitleInfo>> {
     return mapQuery({
         toTitleInfo()
     }, Title::wrapRow) {
-        buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(Titles, pre, next, limit)
+        buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(Titles, pagingFetch)
     }.mapResult { list ->
         count {
             buildTitleSearchQuery(searchType, uid, type, scopeId)

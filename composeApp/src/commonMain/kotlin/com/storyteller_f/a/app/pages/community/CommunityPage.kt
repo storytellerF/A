@@ -318,7 +318,7 @@ private fun CommunityMenus(
 
                 ButtonNav(Icons.Default.Settings, "Settings") {
                     dismiss()
-                    nav.gotoCommunitySetting(communityId)
+                    nav.gotoSettingPage(communityId, ObjectType.COMMUNITY)
                 }
             }
         }

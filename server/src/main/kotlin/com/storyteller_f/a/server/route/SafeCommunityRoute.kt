@@ -12,6 +12,8 @@ import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.tables.ObjectFetch
+import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.tables.searchMembers
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
@@ -23,7 +25,7 @@ fun Route.bindSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                searchCommunities(backend, p, n, s, uid, it)
+                searchCommunities(backend, uid, it, PagingFetch(p, n, s))
             }
         }
     }
@@ -33,19 +35,21 @@ fun Route.bindSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                DatabaseFactory.searchMembers(it.parent.id, backend, p, n, s, it.word)
+                DatabaseFactory.searchMembers(it.parent.id, backend, it.word, PagingFetch(p, n, s))
             }
         }
     }
     get<RouteCommunities.Id> {
         usePrincipalOrNull(reader) { uid ->
-            getCommunity(it.id, null, backend, uid, it.parent.fillJoinInfo)
+            getCommunity(ObjectFetch.IdFetch(it.id), backend, uid, it.parent.fillJoinInfo)
         }
     }
 
     get<RouteCommunities> {
         usePrincipalOrNull(reader) { uid ->
-            getCommunity(null, it.aid, backend, uid, it.fillJoinInfo)
+            it.aid?.let { aid ->
+                getCommunity(ObjectFetch.AidFetch(aid), backend, uid, it.fillJoinInfo)
+            }
         }
     }
 
@@ -59,10 +63,8 @@ fun Route.bindSafeCommunityRoute(backend: Backend, reader: DatabaseReader) {
                     ObjectType.COMMUNITY,
                     uid,
                     backend,
-                    p,
-                    n,
-                    s,
                     it.fillHasCommented,
+                    PagingFetch(p, n, s),
                     it.pinType
                 )
             }

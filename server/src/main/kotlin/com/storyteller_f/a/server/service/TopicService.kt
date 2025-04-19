@@ -270,17 +270,15 @@ suspend fun getTopLevelTopicsInObject(
     parentType: ObjectType,
     uid: PrimaryKey? = null,
     backend: Backend,
-    preTopicId: PrimaryKey?,
-    nextTopicId: PrimaryKey?,
-    size: Int,
     fillHasCommented: Boolean?,
+    pagingFetch: PagingFetch,
     pinType: TopicPinSearch? = null,
 ): Result<PaginationResult<TopicInfo>?> {
     return checkRootReadPermission(parentType, parentId, uid).mapResultNotNull { (hasRead, _, isPrivate) ->
         if (isPrivate && !hasRead) {
             Result.failure(ForbiddenException("Permission Denied"))
         } else {
-            getTopicsPagingByPredicate(uid, preTopicId, nextTopicId, size, fillHasCommented) { ->
+            getTopicsPagingByPredicate(uid, fillHasCommented, pagingFetch) { ->
                 val baseQuery = Topics.parentId eq parentId
                 when (pinType) {
                     PINNED -> baseQuery and (Topics.pinned eq true)
@@ -309,7 +307,7 @@ private suspend fun processTopicExtension(
     if (addLatestSubTopic) {
         val subTopics = processedTopics.flatMap { t ->
             getTopicsByPredicate(uid, false, {
-                it.bindPaginationQuery(Topics, null, null, 2)
+                it.bindPaginationQuery(Topics, PagingFetch(null, null, 2))
             }, true, {
                 Topics.parentId eq t.id
             }).getOrThrow()
@@ -487,7 +485,7 @@ suspend fun checkRootAdminPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            DatabaseFactory.getCommunity(parentId).mapNotNull {
+            DatabaseFactory.getCommunity(ObjectFetch.IdFetch(parentId)).mapNotNull {
                 RootAdminPermission(parentType, parentId, it.communityInfo.owner == uid)
             }
         }
@@ -626,7 +624,7 @@ private suspend fun processTopicsDocument(
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
     backend: Backend,
-    list: List<TopicDocument>
+    list: List<TopicDocument>,
 ): Result<List<TopicInfo>> {
     val ids = list.map {
         it.id
@@ -697,8 +695,8 @@ suspend fun updateTopicPin(uid: PrimaryKey, topicId: PrimaryKey, newValue: Boole
                 if (info.isPin == newValue) {
                     Result.success(info)
                 } else {
-                    DatabaseFactory.updateTopicStatus(topicId, newValue).map {
-                        if (it) {
+                    DatabaseFactory.updateTopicStatus(topicId, newValue).map { isSuccess ->
+                        if (isSuccess) {
                             info.copy(isPin = newValue)
                         } else {
                             info

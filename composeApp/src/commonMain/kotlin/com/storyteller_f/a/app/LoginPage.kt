@@ -24,8 +24,9 @@ import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.*
-import io.github.vinceglb.filekit.core.FileKit
-import io.github.vinceglb.filekit.core.pickFile
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.openFilePicker
+import io.github.vinceglb.filekit.readBytes
 import io.ktor.client.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -136,10 +137,7 @@ fun SelectFile(isSignUp: Boolean) {
     if (isSignUp) {
         Button({
             scope.launch {
-                val f = FileKit.pickFile()
-                if (f != null) {
-                    startSign(String(f.readBytes()), appNav, client, isSignUp)
-                }
+                startSignFromFile(appNav, client, true)
             }
         }) {
             Text("Select File")
@@ -147,14 +145,22 @@ fun SelectFile(isSignUp: Boolean) {
     } else {
         OutlinedButton({
             scope.launch {
-                val f = FileKit.pickFile()
-                if (f != null) {
-                    startSign(String(f.readBytes()).replace("\r\n", "\n"), appNav, client, isSignUp)
-                }
+                startSignFromFile(appNav, client, false)
             }
         }) {
             Text("Select File")
         }
+    }
+}
+
+private suspend fun startSignFromFile(
+    appNav: AppNav,
+    client: HttpClient,
+    isSignUp: Boolean
+) {
+    val f = FileKit.openFilePicker()
+    if (f != null) {
+        startSign(String(f.readBytes()).replace("\r\n", "\n"), appNav, client, isSignUp)
     }
 }
 

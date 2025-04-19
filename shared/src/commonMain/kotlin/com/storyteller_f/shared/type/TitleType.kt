@@ -9,3 +9,7 @@ enum class TitleStatus {
     OK,
     EXPIRED
 }
+
+class GPTOutput(val text: String)
+
+class GPTModel(val key: String, val value: String)

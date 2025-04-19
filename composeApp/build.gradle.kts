@@ -29,6 +29,7 @@ val buildWasmTarget = project.findProperty("target.wasm") == "true"
 val flavorStr = project.findProperty("buildkonfig.flavor") as String
 val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavorStr)!!
 val isProd = project.findProperty("server.prod") == "true"
+val isLlamaEnable = project.findProperty("llama.enable") == "true"
 
 kotlin {
     if (buildWasmTarget) {
@@ -83,7 +84,6 @@ kotlin {
 
             implementation(libs.androidx.activity.compose)
 
-
             implementation(libs.lifecycle.process)
             implementation(libs.jlatexmath.android)
             implementation(libs.jlatexmath.android.font.cyrillic)
@@ -98,6 +98,8 @@ kotlin {
             implementation(libs.github.newpipeextractor)
             implementation(libs.compose.webview)
             implementation(libs.androidx.core.splashscreen)
+            if (isLlamaEnable)
+                implementation(":android-llama-cpp")
         }
         androidUnitTest.dependencies {
             implementation(libs.androidx.ui.test.junit4.android)
@@ -136,7 +138,7 @@ kotlin {
             implementation(libs.sonner)
             implementation(libs.highlights)
             implementation(libs.richeditor.compose)
-            implementation(libs.filekit.compose)
+            implementation(libs.bundles.filekit)
             implementation(libs.compose.pdf)
             implementation(libs.aboutlibraries.core)
             implementation(libs.aboutlibraries.compose.m3)
@@ -150,6 +152,7 @@ kotlin {
             implementation(libs.couchbase.lite.paging)
             implementation(libs.sunny.chung.composable.table)
             implementation(libs.compose.native.notification)
+            implementation(libs.compose.preferences)
 
             implementation(libs.kim)
             implementation(libs.napier)
@@ -158,6 +161,8 @@ kotlin {
             implementation(libs.emoji.compose.m3)
             implementation(libs.m3u.parser)
             implementation(libs.human.readable)
+            implementation(libs.kfswatch)
+            implementation(libs.tasks.genai)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -175,6 +180,7 @@ kotlin {
             implementation(libs.vlcj)
             implementation(libs.jlayer)
             implementation(projects.cryptoJvm)
+            implementation(libs.llama)
         }
         desktopTest.dependencies {
             implementation(compose.desktop.currentOs)
@@ -213,8 +219,6 @@ android {
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
-    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
-    val jllamaLib = file("../java-llama.cpp")
 
     defaultConfig {
         applicationId = "com.storyteller_f.a.$flavorId"
@@ -223,31 +227,8 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        @Suppress("UnstableApiUsage")
-        externalNativeBuild {
-            cmake {
-                // Add a flags if needed
-                cppFlags += "-fdeclspec"
-                arguments += "-DCMAKE_SOURCE_DIR=${jllamaLib}"
-            }
-        }
-    }
-    // Declare c++ sources
-    externalNativeBuild {
-        cmake {
-            path = file("$jllamaLib/CMakeLists.txt")
-            version = "3.22.1"
-        }
     }
 
-    // Declare java sources
-    sourceSets {
-        named("main") {
-            // Add source directory for java-llama.cpp
-            java.srcDir("$jllamaLib/src/main/java")
-        }
-    }
     signingConfigs {
         val signStorePath = when {
             signPath != null -> File(signPath)

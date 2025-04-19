@@ -14,7 +14,7 @@ suspend fun <T, R : Any> RoutingContext.pagination(
     nextKeyBuilder: (T) -> String,
     block: suspend (R?, R?, Int) -> Result<PaginationResult<T>?>
 ): Result<ServerResponse<T>?> {
-    val v = kotlin.runCatching {
+    val v = runCatching {
         val size = call.queryParameters.getOrFailCompact<Int>("size")
 
         require(size > 0) {

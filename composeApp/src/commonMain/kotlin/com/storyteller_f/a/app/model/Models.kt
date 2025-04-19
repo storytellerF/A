@@ -21,6 +21,7 @@ import io.ktor.client.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.io.buffered
 import kotlinx.serialization.serializer
 
 data class OnTopicChanged(val topicInfo: TopicInfo)
@@ -532,8 +533,14 @@ class UploadViewModel(client: HttpClient, private val uploader: UploadSession, m
                 val (handler, clientFile) = handlers[e]
                 handler.request {
                     runCatching {
-                        upload(client, clientFile.name, clientFile.contentType, clientFile.size, myUid, null) {
-                            clientFile.readAll() ?: throw Exception("read file failed")
+                        upload(
+                            client,
+                            myUid ob ObjectType.USER,
+                            clientFile.size,
+                            clientFile.name,
+                            clientFile.contentType
+                        ) {
+                            clientFile.source()?.buffered() ?: throw Exception("upload failed")
                         }.first()
                     }
                 }

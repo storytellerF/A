@@ -76,7 +76,7 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
 
     private suspend fun stat(it: String, file: Path): MediaItem {
         return withContext(Dispatchers.IO) {
-            val contentType = kotlin.runCatching {
+            val contentType = runCatching {
                 tika.detect(file)
             }.getOrNull() ?: URLConnection.guessContentTypeFromName(file.pathString)
                 ?: org.apache.http.entity.ContentType.APPLICATION_OCTET_STREAM.mimeType
@@ -118,7 +118,7 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
     }
 
     fun getResponse(it: List<String>): Path? {
-        return kotlin.runCatching {
+        return runCatching {
             val path = base.resolve(it.joinToString("/"))
             val file = path.toRealPath()
             if (file.pathString != path.absolutePathString()) {

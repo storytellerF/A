@@ -35,6 +35,7 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.rememberLibraries
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
+import com.storyteller_f.a.app.pages.PreferencePage
 import com.storyteller_f.a.app.pages.community.CommunityComposePage
 import com.storyteller_f.a.app.pages.community.CommunityPage
 import com.storyteller_f.a.app.pages.community.CommunitySettingPage
@@ -55,7 +56,10 @@ import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.logger
-import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -143,6 +147,9 @@ data class MemberScreen(val objectType: String, val objectId: PrimaryKey)
 
 @Serializable
 data object UserSettingScreen
+
+@Serializable
+data object PreferenceScreen
 
 @Serializable
 sealed interface MediaPlaySession {
@@ -588,6 +595,9 @@ private fun NavGraphBuilder.buildMainScreen() {
     composable<UserSettingScreen> {
         UserSettingPage()
     }
+    composable<PreferenceScreen> {
+        PreferencePage()
+    }
     composable<CommunitySettingScreen> {
         val communityId = it.toRoute<CommunitySettingScreen>().communityId
         CommunitySettingPage(communityId)
@@ -674,6 +684,10 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
         navigator.navigate(UserSettingScreen)
     }
 
+    override fun gotoPreference() {
+        navigator.navigate(PreferenceScreen)
+    }
+
     override fun gotoMedia(info: MediaInfo) {
         navigator.navigate(MediaScreen(Json.encodeToString(MediaPlaySession.Image(info))))
     }
@@ -690,12 +704,12 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
         navigator.navigate(RoomComposeScreen)
     }
 
-    override fun gotoCommunitySetting(communityId: PrimaryKey) {
-        navigator.navigate(CommunitySettingScreen(communityId))
-    }
-
-    override fun gotoRoomSetting(roomId: PrimaryKey) {
-        navigator.navigate(RoomSettingScreen(roomId))
+    override fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType) {
+        if (objectType == ObjectType.COMMUNITY) {
+            navigator.navigate(CommunitySettingScreen(objectId))
+        } else {
+            navigator.navigate(RoomSettingScreen(objectId))
+        }
     }
 }
 
@@ -757,6 +771,8 @@ interface AppNav {
 
     fun gotoUserSetting()
 
+    fun gotoPreference()
+
     fun gotoMedia(info: MediaInfo)
 
     fun gotoTitleCompose()
@@ -765,9 +781,7 @@ interface AppNav {
 
     fun gotoRoomCompose()
 
-    fun gotoCommunitySetting(communityId: PrimaryKey)
-
-    fun gotoRoomSetting(roomId: PrimaryKey)
+    fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType)
 
     companion object {
         val EMPTY = object : AppNav {
@@ -829,6 +843,10 @@ interface AppNav {
                 TODO("Not yet implemented")
             }
 
+            override fun gotoPreference() {
+                TODO("Not yet implemented")
+            }
+
             override fun gotoMedia(info: MediaInfo) {
                 TODO("Not yet implemented")
             }
@@ -845,11 +863,7 @@ interface AppNav {
                 TODO("Not yet implemented")
             }
 
-            override fun gotoCommunitySetting(communityId: PrimaryKey) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoRoomSetting(roomId: PrimaryKey) {
+            override fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType) {
                 TODO("Not yet implemented")
             }
         }

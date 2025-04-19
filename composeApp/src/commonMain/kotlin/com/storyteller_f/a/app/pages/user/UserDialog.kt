@@ -20,6 +20,7 @@ import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.DialogContainer
+import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.clearStorage
 import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.getUserInfo
@@ -61,6 +62,10 @@ fun UserDialogInternal(userInfo: UserInfo, clickCreate: () -> Unit, dismiss: () 
                 }
                 UserDialogMenuList(dismiss, clickCreate, appNav, controller)
             }
+            ButtonNav(Icons.Default.Settings, "preference") {
+                dismiss()
+                appNav.gotoPreference()
+            }
         }
     }
     val scope = rememberCoroutineScope()
@@ -100,7 +105,7 @@ private fun UserDialogMenuList(
         }
     }
     val title = stringResource(Res.string.sign_out_prompt)
-    ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings)) {
+    ButtonNav(MaterialSymbolsOutlined.SettingsAccountBox, stringResource(Res.string.settings)) {
         dismiss()
         appNav.gotoUserSetting()
     }

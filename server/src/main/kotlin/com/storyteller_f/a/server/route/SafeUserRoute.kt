@@ -14,6 +14,7 @@ import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.ObjectFetch
+import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.tables.getUser
 import com.storyteller_f.tables.searchMembers
 import io.ktor.server.request.*
@@ -50,10 +51,8 @@ fun Route.bindSafeUserRoute(backend: Backend, reader: DatabaseReader) {
                     ObjectType.USER,
                     uid,
                     backend,
-                    p,
-                    n,
-                    s,
                     it.fillHasCommented,
+                    PagingFetch(p, n, s),
                     it.pinType
                 )
             }
@@ -75,7 +74,7 @@ fun Route.bindSafeUserRoute(backend: Backend, reader: DatabaseReader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, s ->
-                DatabaseFactory.searchMembers(null, backend, p, n, s, it.word)
+                DatabaseFactory.searchMembers(null, backend, it.word, PagingFetch(p, n, s))
             }
         }
     }

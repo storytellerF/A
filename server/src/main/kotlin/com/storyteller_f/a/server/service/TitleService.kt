@@ -18,15 +18,7 @@ import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.tables.Title
-import com.storyteller_f.tables.Topic
-import com.storyteller_f.tables.createTitle
-import com.storyteller_f.tables.getCommunityByIds
-import com.storyteller_f.tables.getRoomByIds
-import com.storyteller_f.tables.getUsersByIds
-import com.storyteller_f.tables.processCommunityList
-import com.storyteller_f.tables.processRoomList
-import com.storyteller_f.tables.userTitles
+import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 
 suspend fun getUserTitles(
@@ -38,7 +30,13 @@ suspend fun getUserTitles(
     next: PrimaryKey? = null,
     limit: Int,
     pre: PrimaryKey?
-) = DatabaseFactory.userTitles(uid, searchType, type, scopeId, next, limit, pre).mapResult { (list, count) ->
+) = DatabaseFactory.userTitles(
+    uid,
+    searchType,
+    type,
+    scopeId,
+    PagingFetch(pre, next, limit)
+).mapResult { (list, count) ->
     processTitleList(list, backend, uid).map {
         PaginationResult(it, count)
     }
