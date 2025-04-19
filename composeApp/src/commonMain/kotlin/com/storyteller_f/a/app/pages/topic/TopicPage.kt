@@ -5,7 +5,6 @@ import a.composeapp.generated.resources.success
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Topic
@@ -15,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.dokar.sonner.ToasterState
 import com.storyteller_f.a.app.*
@@ -29,8 +27,10 @@ import com.storyteller_f.a.app.pages.room.RoomInputGroup
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.client_lib.LoadingState
+import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkContent
@@ -45,10 +45,6 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun TopicPage(topicId: PrimaryKey) {
     val viewModel = createTopicViewModel(topicId)
-    val topic by viewModel.handler.data.collectAsState()
-
-    val topicsViewModel = createTopicsInTopicViewModel(topicId)
-    val topics = topicsViewModel.flow.collectAsLazyPagingItems()
     val snackBarHost = remember {
         SnackbarHostState()
     }
@@ -58,9 +54,10 @@ fun TopicPage(topicId: PrimaryKey) {
     Scaffold(snackbarHost = {
         SnackbarHost(snackBarHost)
     }) {
-        TopicPageInternal(topicId, topic, viewModel, topics) {
+        TopicPageInternal(topicId, viewModel) {
             showBottomSheet = true
         }
+        val topic by viewModel.handler.data.collectAsState()
         topic?.let {
             EmojiPicker(sheetState, showBottomSheet, it) {
                 showBottomSheet = false
@@ -72,9 +69,7 @@ fun TopicPage(topicId: PrimaryKey) {
 @Composable
 private fun TopicPageInternal(
     topicId: PrimaryKey,
-    topic: TopicInfo?,
     viewModel: TopicViewModel,
-    topics: LazyPagingItems<TopicInfo>,
     startAddReaction: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -85,55 +80,57 @@ private fun TopicPageInternal(
             Icon(Icons.Default.Topic, "topic", modifier = Modifier.clickable {
                 showDialog = true
             })
+            val topic by viewModel.handler.data.collectAsState()
             TopicDialog(topic, showDialog) {
                 showDialog = false
             }
         }
-        val lazyListState = rememberLazyListState()
-        TopicPageContentInternal(viewModel, topics, lazyListState, startAddReaction)
-        val scope = rememberCoroutineScope()
-        topic?.let {
-            TopicPageInputGroup(it, topicId) {
-                scope.launch {
-                    delay(200)
-                    lazyListState.animateScrollToItem(1)
-                }
-            }
-        }
+        TopicPageContent(topicId, viewModel, startAddReaction)
     }
 }
 
 @Composable
-private fun ColumnScope.TopicPageContentInternal(
+private fun ColumnScope.TopicPageContent(
+    topicId: PrimaryKey,
     viewModel: TopicViewModel,
-    topics: LazyPagingItems<TopicInfo>,
-    lazyListState: LazyListState,
     startAddReaction: () -> Unit
 ) {
+    val topicsViewModel = createTopicsInTopicViewModel(topicId)
+    val topics = topicsViewModel.flow.collectAsLazyPagingItems()
+    val lazyListState = rememberLazyListState()
     StateView(viewModel.handler, {
         topics.refresh()
     }, modifier = Modifier.Companion.weight(1f)) {
-        LazyColumn(
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            state = lazyListState,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            item {
-                TopicContentField(it)
-                Spacer(modifier = Modifier.height(12.dp))
-                InteractionRow(it, {
-                    startAddReaction()
-                }) {
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider()
-            }
-
-            nestedStateView(topics) { subInfo, i ->
-                subInfo?.let { it1 -> TopicCell(it1) }
-                if (topics.itemCount - 1 != i) {
+        Column {
+            LazyColumn(
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                state = lazyListState,
+                modifier = Modifier.weight(1f).fillMaxWidth()
+            ) {
+                item {
+                    TopicContentField(it)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    InteractionRow(it, {
+                        startAddReaction()
+                    }) {
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                     HorizontalDivider()
+                }
+
+                nestedStateView(topics) { subInfo, i ->
+                    subInfo?.let { it1 -> TopicCell(it1) }
+                    if (topics.itemCount - 1 != i) {
+                        HorizontalDivider()
+                    }
+                }
+            }
+            val scope = rememberCoroutineScope()
+            TopicPageInputGroup(it, it.id) {
+                scope.launch {
+                    delay(200)
+                    lazyListState.animateScrollToItem(1)
                 }
             }
         }
@@ -153,7 +150,7 @@ private fun TopicPageInputGroup(
         val roomId = topic.rootId
         val room = createRoomViewModel(roomId)
         val roomInfo by room.handler.data.collectAsState()
-        RoomInputGroup(topic.rootId, roomInfo, topicId, {}, scrollTo)
+        RoomInputGroup(topic.rootId, roomInfo, ObjectTuple(topicId, ObjectType.TOPIC), {}, scrollTo)
     } else {
         TopicInputGroup(scrollTo, topic)
     }
@@ -183,16 +180,17 @@ private fun TopicInputGroup(
     val client = LocalClient.current
     val isSending = sendState.value is LoadingState.Loading
     val appNav = LocalAppNav.current
+    val my by SignInViewModel.user.collectAsState()
     InputGroupInternal(
         input,
         MaterialTheme.colorScheme.secondaryContainer,
-        topic.rootId.takeIf { topic.isPrivate },
         {
             input = it
         },
         {
             appNav.gotoTopicCompose(ObjectType.TOPIC, topic.id, false, topic.rootId.takeIf { topic.isPrivate })
-        }
+        },
+        if (topic.isPrivate) ObjectTuple(topic.rootId, topic.rootType) else ObjectTuple(my?.id ?: 0, ObjectType.USER)
     ) {
         CommonInputButton(LoadingState.Done, input, isSending) {
             if (!isSending) {

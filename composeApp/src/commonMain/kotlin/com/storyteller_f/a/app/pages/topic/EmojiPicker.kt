@@ -37,7 +37,21 @@ fun EmojiPicker(
     var query by remember {
         mutableStateOf("")
     }
+    BaseSheet(showSheet, sheetState, hideSheet) {
+        EmojiPickerInternal(query, topic, sheetState, hideSheet) {
+            query = it
+        }
+    }
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BaseSheet(
+    showSheet: Boolean,
+    sheetState: SheetState,
+    hideSheet: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
     if (showSheet) {
         ModalBottomSheet(
             onDismissRequest = {
@@ -49,9 +63,7 @@ fun EmojiPicker(
                 WindowInsets(0)
             },
         ) {
-            EmojiPickerInternal(query, topic, sheetState, hideSheet) {
-                query = it
-            }
+            content()
         }
     }
 }

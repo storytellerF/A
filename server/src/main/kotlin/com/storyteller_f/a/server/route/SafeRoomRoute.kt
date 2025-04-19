@@ -13,6 +13,7 @@ import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResultNotNull
+import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.tables.searchMembers
 import com.storyteller_f.tables.searchRooms
 import io.ktor.server.request.receive
@@ -25,7 +26,7 @@ fun Route.bindSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
             pagination(PrimaryKey::class, {
                 it.id.toString()
             }) { p, n, size ->
-                searchRooms(uid, backend, p, n, size, it.joinStatus, it.word, it.community)
+                searchRooms(uid, backend, it.joinStatus, it.word, it.community, PagingFetch(p, n, size))
             }
         }
     }
@@ -37,7 +38,7 @@ fun Route.bindSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
             }) { p, n, s ->
                 checkRootReadPermission(ObjectType.ROOM, it.parent.id, uid).mapResultNotNull { permission ->
                     if (permission.hasRead) {
-                        DatabaseFactory.searchMembers(it.parent.id, backend, p, n, s, it.word)
+                        DatabaseFactory.searchMembers(it.parent.id, backend, it.word, PagingFetch(p, n, s))
                     } else {
                         Result.failure(UnauthorizedException())
                     }
@@ -70,10 +71,8 @@ fun Route.bindSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
                     ObjectType.ROOM,
                     uid,
                     backend,
-                    pre,
-                    next,
-                    size,
                     it.fillHasCommented,
+                    PagingFetch(pre, next, size),
                     it.pinType
                 )
             }
@@ -92,7 +91,7 @@ fun Route.bindProtectedSafeRoomRoute(backend: Backend, reader: DatabaseReader) {
             pagination(PrimaryKey::class, {
                 it.first.toString()
             }) { pre, next, size ->
-                getRoomPubKeys(it.parent.id, uid, pre, next, size)
+                getRoomPubKeys(it.parent.id, uid, PagingFetch(pre, next, size))
             }
         }
     }

@@ -67,12 +67,17 @@ fun Pill(
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(20.dp)
+    val background = when {
+        selected -> MaterialTheme.colorScheme.secondaryContainer
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
+    val textColor = when {
+        selected -> MaterialTheme.colorScheme.onSecondaryContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
     Row(
         modifier = Modifier.background(
-            when {
-                selected -> MaterialTheme.colorScheme.secondaryContainer
-                else -> MaterialTheme.colorScheme.surfaceVariant
-            },
+            background,
             shape
         )
             .height(28.dp)
@@ -89,7 +94,7 @@ fun Pill(
                 icon,
                 contentDescription = text,
                 modifier = Modifier.size(15.dp),
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                tint = textColor
             )
 
             emoji != null -> {
@@ -97,7 +102,7 @@ fun Pill(
             }
         }
         if (text != null) {
-            Text(text, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 12.sp)
+            Text(text, color = textColor, fontSize = 12.sp)
         }
     }
 }

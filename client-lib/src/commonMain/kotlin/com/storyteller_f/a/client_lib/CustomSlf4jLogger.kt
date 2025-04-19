@@ -25,7 +25,7 @@ class CustomSLF4JServiceProvider : SLF4JServiceProvider {
     }
 
     override fun getRequestedApiVersion(): String {
-        return "1.0.0"
+        return "2.0.0"
     }
 
     override fun initialize() = Unit

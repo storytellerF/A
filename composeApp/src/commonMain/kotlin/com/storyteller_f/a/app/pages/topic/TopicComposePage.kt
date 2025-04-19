@@ -25,8 +25,10 @@ import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
-import com.storyteller_f.a.app.*
+import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.TopicContentField
+import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnTopicCreated
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.a.client_lib.SignInViewModel
@@ -34,7 +36,7 @@ import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
@@ -52,12 +54,18 @@ fun TopicComposePage(
     val user by SignInViewModel.user.collectAsState()
     user?.let {
         TopicComposeScaffold(
-            it,
             objectType,
             objectId,
+            if (privateRoomId != null) {
+                ObjectTuple(privateRoomId, ObjectType.ROOM)
+            } else {
+                ObjectTuple(
+                    it.id,
+                    ObjectType.USER
+                )
+            },
             backPrePage,
-            enableExperimental,
-            privateRoomId
+            enableExperimental
         )
     }
 }
@@ -65,12 +73,11 @@ fun TopicComposePage(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun TopicComposeScaffold(
-    user: UserInfo,
     objectType: ObjectType,
     objectId: PrimaryKey,
+    mediaTarget: ObjectTuple,
     backPrePage: () -> Unit,
-    enableExperimental: Boolean,
-    privateRoomId: PrimaryKey?
+    enableExperimental: Boolean
 ) {
     var input by remember {
         mutableStateOf("")
@@ -103,13 +110,13 @@ private fun TopicComposeScaffold(
                 end = paddingValues.calculateRightPadding(direction)
             )
         ) {
-            TopicComposeInternal(input, enableExperimental, privateRoomId, user) {
+            TopicComposeInternal(input, enableExperimental, mediaTarget) {
                 input = it
             }
         }
     }
     val sheetState = rememberModalBottomSheetState()
-    MediaPicker(showSheet, sheetState, privateRoomId, { info ->
+    MediaPicker(showSheet, sheetState, mediaTarget, { info ->
         insertContent(info.first(), {
             input = it
         }, input)
@@ -123,11 +130,10 @@ private fun TopicComposeScaffold(
 private fun TopicComposeInternal(
     input: String,
     enableExperimental: Boolean,
-    privateRoomId: PrimaryKey?,
-    user: UserInfo,
+    mediaTarget: ObjectTuple,
     updateInput: (String) -> Unit
 ) {
-    val mediaListViewModel = createMediaListViewModel(privateRoomId, user.id)
+    val mediaListViewModel = createMediaListViewModel(mediaTarget)
 
     val pagerState = rememberPagerState {
         3

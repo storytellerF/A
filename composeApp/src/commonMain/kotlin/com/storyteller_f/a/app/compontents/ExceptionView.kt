@@ -3,13 +3,14 @@ package com.storyteller_f.a.app.compontents
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichText
 import com.storyteller_f.a.client_lib.ServerErrorException
 import io.ktor.client.network.sockets.*
 
 @Composable
-fun ExceptionView(throwable: Throwable) {
+fun ExceptionView(throwable: Throwable, modifier: Modifier = Modifier) {
     when (throwable) {
         is ServerErrorException -> {
             if (throwable.text.isNotBlank() && throwable.isHtmlContent()) {
@@ -19,18 +20,18 @@ fun ExceptionView(throwable: Throwable) {
                     state.setHtml(throwable.text)
                 }
 
-                RichText(state = state)
+                RichText(state = state, modifier = modifier)
             } else {
-                Text("${throwable.status} ${throwable.text}")
+                Text("${throwable.status} ${throwable.text}", modifier)
             }
         }
 
         is SocketTimeoutException, is ConnectTimeoutException -> {
-            Text("Timeout")
+            Text("Timeout", modifier)
         }
 
         else -> {
-            Text((throwable.message ?: throwable::class.simpleName ?: throwable.toString()).take(100))
+            Text((throwable.message ?: throwable::class.simpleName ?: throwable.toString()).take(100), modifier)
         }
     }
 }

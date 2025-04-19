@@ -9,7 +9,7 @@ import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.media.MediaService
 import com.storyteller_f.media.MinIoMediaService
 import com.storyteller_f.naming.NameService
-import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.tables.PagingFetch
 import io.github.aakira.napier.Napier
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.SortOrder
@@ -165,20 +165,21 @@ private fun databaseConnection(env: MergedEnv): DatabaseConnection {
 
 fun Query.bindPaginationQuery(
     table: BaseTable,
-    prePageToken: PrimaryKey?,
-    nextPageToken: PrimaryKey?,
-    size: Int
+    pagingFetch: PagingFetch
 ): Query {
-    if (nextPageToken != null) {
+    val n = pagingFetch.next
+    val p = pagingFetch.pre
+    val s = pagingFetch.size
+    if (n != null) {
         andWhere {
-            table.id less nextPageToken
+            table.id less n
         }
-    } else if (prePageToken != null) {
+    } else if (p != null) {
         andWhere {
-            table.id greater prePageToken
+            table.id greater p
         }
     }
-    return orderBy(table.id, SortOrder.DESC).limit(size)
+    return orderBy(table.id, SortOrder.DESC).limit(s)
 }
 
 class UnauthorizedException : Exception()

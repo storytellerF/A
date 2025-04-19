@@ -12,6 +12,7 @@ import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.safeFirstEmoji
+import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.tables.deleteReaction
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
@@ -61,10 +62,8 @@ fun Route.bindSafeTopicRoute(backend: Backend, reader: DatabaseReader) {
                     ObjectType.TOPIC,
                     uid,
                     backend,
-                    p,
-                    n,
-                    s,
                     it.parent.parent.fillHasCommented,
+                    PagingFetch(p, n, s),
                     it.pinType
                 )
             }

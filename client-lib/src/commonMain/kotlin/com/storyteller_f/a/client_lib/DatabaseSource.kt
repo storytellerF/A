@@ -196,7 +196,11 @@ class KotbaseCollection(private val collection: kotbase.Collection) : Collection
 }
 
 fun createKotbase(): Database {
-    val p = SystemFileSystem.resolve(Path(SystemTemporaryDirectory, "a-client"))
+    val path = Path(SystemTemporaryDirectory, "a-client")
+    if (!SystemFileSystem.exists(path)) {
+        SystemFileSystem.createDirectories(path)
+    }
+    val p = SystemFileSystem.resolve(path)
     return Database(
         "a-db",
         DatabaseConfigurationFactory.newConfig(p.toString())

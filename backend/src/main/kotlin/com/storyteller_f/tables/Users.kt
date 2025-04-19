@@ -66,6 +66,8 @@ sealed interface ObjectFetch {
     data class IdFetch(val id: PrimaryKey) : ObjectFetch
 }
 
+data class PagingFetch(val pre: PrimaryKey?, val next: PrimaryKey?, val size: Int)
+
 suspend fun DatabaseFactory.getUser(
     fetch: ObjectFetch,
     backend: Backend
@@ -94,10 +96,8 @@ suspend fun DatabaseFactory.getRawUserById(it: PrimaryKey): Result<Pair<UserInfo
 
 suspend fun DatabaseFactory.commonPaginationMemberList(
     objectId: PrimaryKey?,
-    prePageToken: PrimaryKey?,
-    nextPageToken: PrimaryKey?,
-    size: Int,
-    word: String?
+    word: String?,
+    pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<UserInfo, String?>>, Long>> {
     return mapQuery({
         first.toUserInfo() to second
@@ -106,9 +106,7 @@ suspend fun DatabaseFactory.commonPaginationMemberList(
     }) {
         buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(
             Users,
-            prePageToken,
-            nextPageToken,
-            size
+            pagingFetch
         )
     }.mapResult { pairs ->
         count {
@@ -146,12 +144,10 @@ private fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, wo
 suspend fun DatabaseFactory.searchMembers(
     objectId: PrimaryKey?,
     backend: Backend,
-    prePageToken: PrimaryKey?,
-    nextPageToken: PrimaryKey?,
-    size: Int,
-    word: String?
+    word: String?,
+    pagingFetch: PagingFetch
 ): Result<PaginationResult<UserInfo>> {
-    return commonPaginationMemberList(objectId, prePageToken, nextPageToken, size, word).mapResult { (pairs, count) ->
+    return commonPaginationMemberList(objectId, word, pagingFetch).mapResult { (pairs, count) ->
         processUserList(backend, pairs).map {
             PaginationResult(it, count)
         }
@@ -272,7 +268,7 @@ suspend fun DatabaseFactory.getUsersByIds(ids: List<PrimaryKey>, backend: Backen
     processUserList(backend, it)
 }
 
-suspend fun DatabaseFactory.getUsersByAids(ids: List<String>) = mapQuery({
+suspend fun DatabaseFactory.getRawUsersByAids(ids: List<String>) = mapQuery({
     toUserInfo() to icon
 }, User::wrapRow) {
     Users

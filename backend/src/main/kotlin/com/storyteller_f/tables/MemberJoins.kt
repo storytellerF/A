@@ -133,7 +133,7 @@ suspend fun DatabaseFactory.createMemberJoin(join: MemberJoin) = dbQuery {
     }
 }
 
-suspend fun DatabaseFactory.isRoomJoins1(roomId: PrimaryKey) = mapQuery({
+suspend fun DatabaseFactory.userListJoinedRoom(roomId: PrimaryKey) = mapQuery({
     MemberJoin.wrapRow(this)
 }) {
     MemberJoins.selectAll().where {

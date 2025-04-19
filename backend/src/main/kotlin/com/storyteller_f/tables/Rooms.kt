@@ -83,21 +83,17 @@ fun Room.toRoomInfo(joinedTime: LocalDateTime?) = RoomInfo(
 
 suspend fun getRoomPaginationList(
     uid: PrimaryKey?,
-    preRoomId: PrimaryKey?,
-    nextRoomId: PrimaryKey?,
-    size: Int,
     joinStatusSearch: JoinStatusSearch?,
     word: String?,
-    community: PrimaryKey?
+    community: PrimaryKey?,
+    pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<RoomInfo, String?>>, Long>> {
     return DatabaseFactory.mapQuery({
         mapRoomInfo(this)
     }) {
         buildRoomSearchQuery(uid, false, joinStatusSearch, word, community).bindPaginationQuery(
             Rooms,
-            preRoomId,
-            nextRoomId,
-            size
+            pagingFetch
         )
     }.mapResult { list ->
         DatabaseFactory.count {
@@ -199,14 +195,12 @@ suspend fun DatabaseFactory.getRoomCommunityId(parentId: PrimaryKey): Result<Pri
 
 suspend fun DatabaseFactory.commonPaginationRoomPubKeyList(
     roomId: PrimaryKey,
-    pre: PrimaryKey?,
-    next: PrimaryKey?,
-    size: Int
+    pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<Long, String>>, Long>> {
     return mapQuery({
         this[Users.id] to this[Users.publicKey]
     }) {
-        buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, pre, next, size)
+        buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, pagingFetch)
     }.mapResult { data ->
         count {
             buildRoomPubKeyQuery(roomId, true)
@@ -276,21 +270,17 @@ suspend fun DatabaseFactory.getRoomSource(
 suspend fun searchRooms(
     uid: PrimaryKey?,
     backend: Backend,
-    preRoomId: PrimaryKey?,
-    nextRoomId: PrimaryKey?,
-    size: Int,
     joinStatusSearch: JoinStatusSearch?,
     word: String?,
-    community: PrimaryKey?
+    community: PrimaryKey?,
+    pagingFetch: PagingFetch
 ): Result<PaginationResult<RoomInfo>?> {
     return getRoomPaginationList(
         uid,
-        preRoomId,
-        nextRoomId,
-        size,
         joinStatusSearch,
         word,
-        community
+        community,
+        pagingFetch
     ).mapResult { (list, count) ->
         processRoomList(list, backend).map { value ->
             PaginationResult(value, count)

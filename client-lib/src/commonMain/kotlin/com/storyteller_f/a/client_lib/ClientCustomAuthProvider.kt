@@ -53,7 +53,7 @@ class ClientCustomAuthProvider : AuthProvider {
         return if (state == null || data == null) {
             false
         } else {
-            kotlin.runCatching {
+            runCatching {
                 SignInViewModel.updateSession(data, state.session.signature(finalData(data)))
             }.fold({
                 Napier.v(tag = "ClientAuth") {

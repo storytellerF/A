@@ -158,7 +158,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "topics count ${presetValue.topicData?.size}"
         }
         val data = presetValue.topicData!!
-        val userMap = DatabaseFactory.getUsersByAids(data.map {
+        val userMap = DatabaseFactory.getRawUsersByAids(data.map {
             it.author
         }.distinct()).getOrThrow().associate {
             it.first.aid!! to it.first
@@ -295,7 +295,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 Triple(it, p, id)
             }
         }
-        val userMap = DatabaseFactory.getUsersByAids(data.flatMap {
+        val userMap = DatabaseFactory.getRawUsersByAids(data.flatMap {
             it.first.users.orEmpty() + (it.first.admin ?: "System")
         }.distinct()).getOrThrow().associate {
             it.first.aid to it.first
@@ -380,7 +380,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
         }
 
-        val userMap = DatabaseFactory.getUsersByAids(l.flatMap {
+        val userMap = DatabaseFactory.getRawUsersByAids(l.flatMap {
             it.users + it.admin
         }.distinct()).getOrThrow().associate {
             it.first.aid to it.first
@@ -409,7 +409,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
     }
 
-    private fun getRootIdFunc(
+    private suspend fun getRootIdFunc(
         objectType: ObjectType,
         list: List<PresetTopic>,
         userMap: Map<String, UserInfo>
@@ -431,22 +431,12 @@ class AddPreset : Subcommand("add", "add entry") {
         }
     }
 
-    private fun getCommunityMap(list: List<PresetTopic>): Map<String, PrimaryKey> {
-        val communityMap = list.mapNotNull {
+    private suspend fun getCommunityMap(list: List<PresetTopic>): Map<String, PrimaryKey> {
+        return DatabaseFactory.getCommunityByAids(list.mapNotNull {
             it.community
-        }.distinct().map {
-            val rowCommunity = findCommunityByAid(it).firstOrNull()
-            if (rowCommunity == null) {
-                error("$it not found")
-            } else {
-                Community.wrapRow(rowCommunity).let { community ->
-                    community.aid to community.id
-                }
-            }
-        }.associate {
-            it.first to it.second
+        }).getOrThrow().associate {
+            it.communityInfo.aid to it.communityInfo.id
         }
-        return communityMap
     }
 
     private suspend fun addTopicsIntoRoom(

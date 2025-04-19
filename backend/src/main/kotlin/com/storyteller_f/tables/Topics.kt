@@ -4,6 +4,8 @@ import com.storyteller_f.*
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
@@ -109,8 +111,8 @@ fun Topic.toTopicInfo(
     )
 }
 
-suspend fun DatabaseFactory.getTopicRoot(parentId: PrimaryKey): Result<Pair<PrimaryKey, ObjectType>?> = first({
-    rootId to rootType
+suspend fun DatabaseFactory.getTopicRoot(parentId: PrimaryKey): Result<ObjectTuple?> = first({
+    rootId ob rootType
 }, Topic::wrapRow) {
     Topic.findById(parentId)
 }
@@ -196,14 +198,12 @@ suspend fun getTopicsByPredicate(
 
 suspend fun getTopicsPagingByPredicate(
     uid: PrimaryKey?,
-    preTopicId: PrimaryKey?,
-    nextTopicId: PrimaryKey?,
-    size: Int,
     fillHasCommented: Boolean?,
+    pagingFetch: PagingFetch,
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<PaginationResult<TopicInfo>> {
     return getTopicsByPredicate(uid, fillHasCommented, {
-        it.bindPaginationQuery(Topics, preTopicId, nextTopicId, size)
+        it.bindPaginationQuery(Topics, pagingFetch)
     }, predicate = predicate).mapResult { data ->
         DatabaseFactory.count {
             Topics

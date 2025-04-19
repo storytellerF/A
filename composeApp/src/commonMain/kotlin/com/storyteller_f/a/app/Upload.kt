@@ -23,6 +23,7 @@ import com.storyteller_f.a.client_lib.SimpleLoadingHandler
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import io.ktor.http.*
+import kotlinx.io.Source
 
 @Stable
 interface ClientFile {
@@ -31,7 +32,7 @@ interface ClientFile {
     val size: Long
     val id: String
 
-    fun readAll(): ByteArray?
+    fun source(): Source?
 }
 
 class UploadSession(val name: String, val list: List<ClientFile>) {

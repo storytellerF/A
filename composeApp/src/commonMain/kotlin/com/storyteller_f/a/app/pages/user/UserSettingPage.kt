@@ -1,6 +1,8 @@
 package com.storyteller_f.a.app.pages.user
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -32,7 +34,9 @@ import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.mapNotNull
 import com.storyteller_f.shared.utils.mapResult
 import io.ktor.client.*
@@ -111,18 +115,26 @@ fun ObjectSettingDialog(
         )
     }
 
-    MediaPicker(currentOption is SettingOption.Icon || currentOption is SettingOption.Poster, sheetState, null, {
-        val info = it.first()
-        val dimension = info.dimension
-        if (dimension == null || !info.item.contentType.startsWith("image/")) {
-            globalDialogState.showMessage("invalid image: ${info.item.contentType} $dimension")
-        } else {
-            scope.launch {
-                val finalInfo = cropImageIfNeed(context, client, info, imageCropper, dimension, ratio)
-                finalInfo.mapNotNull(onInputMedia)
+    val my by SignInViewModel.user.collectAsState()
+    val mediaTarget = ObjectTuple(my?.id ?: 0, ObjectType.USER)
+    MediaPicker(
+        currentOption is SettingOption.Icon || currentOption is SettingOption.Poster,
+        sheetState,
+        mediaTarget,
+        {
+            val info = it.first()
+            val dimension = info.dimension
+            if (dimension == null || !info.item.contentType.startsWith("image/")) {
+                globalDialogState.showMessage("invalid image: ${info.item.contentType} $dimension")
+            } else {
+                scope.launch {
+                    val finalInfo = cropImageIfNeed(context, client, info, imageCropper, dimension, ratio, mediaTarget)
+                    finalInfo.mapNotNull(onInputMedia)
+                }
             }
-        }
-    }, support = listOf("files")) {
+        },
+        support = listOf("files")
+    ) {
         closeDialog()
     }
 
@@ -139,12 +151,13 @@ private suspend fun cropImageIfNeed(
     info: MediaInfo,
     imageCropper: ImageCropper,
     dimension: Dimension,
-    aspectRatio: AspectRatio
+    aspectRatio: AspectRatio,
+    mediaTarget: ObjectTuple
 ): Result<MediaInfo?> {
     return if (checkMediaDimensionRatioMatch(dimension, Dimension(aspectRatio.x, aspectRatio.y))) {
         Result.success(info)
     } else {
-        cropImage(context, client, info, imageCropper)
+        cropImage(context, client, info, imageCropper, mediaTarget)
     }
 }
 
@@ -152,7 +165,8 @@ private suspend fun cropImage(
     context: PlatformContext,
     client: HttpClient,
     info: MediaInfo,
-    imageCropper: ImageCropper
+    imageCropper: ImageCropper,
+    mediaTarget: ObjectTuple
 ): Result<MediaInfo?> {
     val image = globalDialogState.use {
         ImageLoader(context)
@@ -184,7 +198,7 @@ private suspend fun cropImage(
                                 else -> ImageFormat.PNG
                             }
                         )
-                        uploadPath(null, data, client).getOrThrow()?.first()
+                        uploadPath(data, client, mediaTarget).getOrThrow()?.first()
                     }
                 }
             }

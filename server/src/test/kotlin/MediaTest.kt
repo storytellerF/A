@@ -1,7 +1,10 @@
 import com.storyteller_f.a.client_lib.getMediaList
 import com.storyteller_f.a.client_lib.upload
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.http.*
+import kotlinx.io.Buffer
+import kotlinx.io.writeString
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -12,11 +15,15 @@ class MediaTest {
             attachSession(client) {
                 val response =
                     client.upload(
-                        "hello".toByteArray(),
+                        ObjectTuple(it.uid, ObjectType.USER),
+                        5,
                         "hello.txt",
-                        it.uid,
-                        ObjectType.USER,
-                        ContentType.defaultForFileExtension("txt")
+                        ContentType.defaultForFileExtension("txt"),
+                        {
+                            Buffer().apply {
+                                writeString("hello")
+                            }
+                        }
                     ).getOrThrow()
                 assertEquals("${it.uid}/hello.txt", response.data.first().item.name)
 

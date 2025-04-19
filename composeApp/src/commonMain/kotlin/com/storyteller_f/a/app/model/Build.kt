@@ -6,6 +6,7 @@ import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.type.*
 
@@ -190,14 +191,9 @@ fun createMemberSearchInCommunityViewModel(
 
 @Composable
 fun createMediaListViewModel(
-    privateRoomId: PrimaryKey?,
-    uid: PrimaryKey
-) = viewModel(keys = listOf("media", uid, privateRoomId)) { client, databaseSource ->
-    if (privateRoomId != null) {
-        MediaListViewModel(client, privateRoomId, ObjectType.ROOM)
-    } else {
-        MediaListViewModel(client, uid, ObjectType.USER)
-    }
+    objectTuple: ObjectTuple
+) = viewModel(keys = listOf("media", objectTuple.objectId)) { client, _ ->
+    MediaListViewModel(client, objectTuple.objectId, objectTuple.objectType)
 }
 
 @Composable

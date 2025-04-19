@@ -10,7 +10,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionToken
@@ -21,19 +20,14 @@ import com.storyteller_f.a.app.compontents.bindActivity
 import com.storyteller_f.a.app.compontents.unbindActivity
 import com.storyteller_f.a.client_lib.LoadingState
 import com.storyteller_f.a.client_lib.SignInViewModel
-import de.kherud.llama.InferenceParameters
-import de.kherud.llama.LlamaModel
-import de.kherud.llama.ModelParameters
-import de.kherud.llama.args.MiroStat
 import io.github.aakira.napier.Napier
-import io.github.vinceglb.filekit.core.FileKit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.io.File
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.init
 import java.util.concurrent.Future
 
 class MainActivity : ComponentActivity() {
     private var controllerFuture: Future<MediaController>? = null
+
     override fun onStart() {
         super.onStart()
         val sessionToken =
@@ -64,36 +58,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch(Dispatchers.IO) {
-            if (File("/data/local/tmp/qwen1_5-7b-chat-q2_k.gguf").exists()) {
-                val modelParams = ModelParameters()
-                    .setModel("/data/local/tmp/qwen1_5-7b-chat-q2_k.gguf")
-                    .setGpuLayers(43)
-
-                LlamaModel(modelParams).use { model ->
-                    Napier.i(tag = "model") {
-                        "load done"
-                    }
-                    val inferParams = InferenceParameters(
-                        """
-This is a conversation between User and Llama, a friendly chatbot.
-Llama is helpful, kind, honest, good at writing, and never fails to answer any requests immediately and with precision.
-User: Translate Hello to chinese
-Llama: """
-                    )
-                        .setTemperature(0.7f)
-                        .setPenalizeNl(true)
-                        .setMiroStat(MiroStat.V2)
-                        .setStopStrings("User:")
-                    for (output in model.generate(inferParams)) {
-                        Napier.i(tag = "model") {
-                            output.text
-                        }
-                    }
-                }
-            }
-        }
         setupForSplash()
+        FileKit.init(this)
         commonForActivity()
         initFromContext()
         setContent {
@@ -136,7 +102,6 @@ Llama: """
 
 fun ComponentActivity.initFromContext() {
     bindActivity(this)
-    FileKit.init(this)
     notificationInitializer(
         defaultChannelConfig = AndroidChannelConfig(
             channelId = "Regular",

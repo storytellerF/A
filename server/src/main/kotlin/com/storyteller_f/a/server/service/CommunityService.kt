@@ -19,15 +19,13 @@ import com.storyteller_f.types.PaginationResult
 import io.ktor.server.plugins.*
 
 suspend fun getCommunity(
-    communityId: PrimaryKey?,
-    communityAid: String?,
+    objectFetch: ObjectFetch,
     backend: Backend,
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
     return DatabaseFactory.getCommunity(
-        communityId,
-        communityAid,
+        objectFetch,
         fillJoinInfo,
         id
     ).mapResultNotNull {
@@ -39,7 +37,7 @@ suspend fun doUserJoinCommunity(
     uid: PrimaryKey,
     communityId: PrimaryKey,
     backend: Backend
-) = getCommunity(communityId, null, backend, uid, true).mapResultNotNull { community ->
+) = getCommunity(ObjectFetch.IdFetch(communityId), backend, uid, true).mapResultNotNull { community ->
     if (community.joinTime != null) {
         Result.success(community)
     } else {
@@ -48,7 +46,7 @@ suspend fun doUserJoinCommunity(
             Result.success(community.copy(joinTime = time))
         }.recoverCatching {
             if (it.isDup()) {
-                getCommunity(communityId, null, backend, uid, true)
+                getCommunity(ObjectFetch.IdFetch(communityId), backend, uid, true)
             } else {
                 Result.failure(it)
             }
@@ -57,7 +55,7 @@ suspend fun doUserJoinCommunity(
 }
 
 suspend fun exitCommunity(communityId: PrimaryKey, id: PrimaryKey, backend: Backend) =
-    getCommunity(communityId, null, backend, id, true).mapResultNotNull { info ->
+    getCommunity(ObjectFetch.IdFetch(communityId), backend, id, true).mapResultNotNull { info ->
         if (info.joinTime == null) {
             Result.success(info)
         } else {
@@ -73,31 +71,25 @@ suspend fun exitCommunity(communityId: PrimaryKey, id: PrimaryKey, backend: Back
 
 suspend fun searchCommunities(
     backend: Backend,
-    prePageToken: PrimaryKey?,
-    nextPageToken: PrimaryKey?,
-    size: Int,
     uid: PrimaryKey?,
-    search: RouteCommunities.Search
+    search: RouteCommunities.Search,
+    pagingFetch: PagingFetch
 ): Result<PaginationResult<CommunityInfo>?> {
     if (search.joinStatus == JoinStatusSearch.JOINED && search.target != null) {
         return searchTargetUserJoinedCommunities(
             uid,
-            prePageToken,
-            nextPageToken,
-            size,
             backend,
             search.target,
-            search.hasPoster
+            search.hasPoster,
+            pagingFetch
         )
     }
     return DatabaseFactory.getPaginationCommunityList(
         uid,
-        prePageToken,
-        nextPageToken,
-        size,
         search.joinStatus,
         search.word,
-        search.hasPoster
+        search.hasPoster,
+        pagingFetch
     ).mapResult { (list, count) ->
         processCommunityList(backend, list).map { value ->
             PaginationResult(value, count)
@@ -107,12 +99,10 @@ suspend fun searchCommunities(
 
 private suspend fun searchTargetUserJoinedCommunities(
     uid: PrimaryKey?,
-    prePageToken: PrimaryKey?,
-    nextPageToken: PrimaryKey?,
-    size: Int,
     backend: Backend,
     target: PrimaryKey,
-    hasPosterSearch: PosterSearch?
+    hasPosterSearch: PosterSearch?,
+    pagingFetch: PagingFetch
 ): Result<PaginationResult<CommunityInfo>> {
     return DatabaseFactory.mapQuery({
         CommunityRawResult(first.toCommunityIfo(second), first.icon, first.poster)
@@ -121,9 +111,7 @@ private suspend fun searchTargetUserJoinedCommunities(
     }) {
         getUserJoinedCommunityQuery(target, false).bindPosterSearch(hasPosterSearch).bindPaginationQuery(
             Communities,
-            prePageToken,
-            nextPageToken,
-            size
+            pagingFetch
         )
     }.mapResult { list ->
         DatabaseFactory.count {
@@ -250,8 +238,8 @@ suspend fun updateCommunity(
             } else {
                 DatabaseFactory.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        DatabaseFactory.getCommunity(id, null, true, uid).mapResultNotNull {
-                            processCommunityList(backend, listOf(it)).map(List<CommunityInfo>::first)
+                        DatabaseFactory.getCommunity(ObjectFetch.IdFetch(id), true, uid).mapResultNotNull { rawResult ->
+                            processCommunityList(backend, listOf(rawResult)).map(List<CommunityInfo>::first)
                         }
                     } else {
                         Result.success(null)

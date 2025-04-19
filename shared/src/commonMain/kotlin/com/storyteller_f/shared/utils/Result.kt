@@ -56,9 +56,22 @@ suspend fun <T> Result<T?>.filterNull(block: suspend () -> Throwable): Result<T>
 }
 
 suspend fun <T> Result<T>.recoverError(block: suspend (Throwable) -> Result<T>): Result<T> {
-    if (isSuccess) {
-        return this
+    return if (isSuccess) {
+        this
     } else {
-        return block(exceptionOrNull()!!)
+        block(exceptionOrNull()!!)
     }
+}
+
+suspend fun <T1, T2> merge(result1: () -> Result<T1>, result2: () -> Result<T2>): Result<Pair<T1, T2>> {
+    val r1 = result1()
+    val t1 = r1.exceptionOrNull()
+    if (t1 != null) return Result.failure(t1)
+    val s1 = r1.getOrThrow()
+
+    val r2 = result2()
+    val t2 = r2.exceptionOrNull()
+    if (t2 != null) return Result.failure(t2)
+    val s2 = r2.getOrThrow()
+    return Result.success(Pair(s1, s2))
 }

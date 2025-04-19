@@ -49,12 +49,6 @@ class Community(
     }
 }
 
-fun findCommunityByAid(aid: String): Query {
-    return Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
-        Aids.value eq aid
-    }.limit(1)
-}
-
 fun Community.toCommunityIfo(
     joinTime: LocalDateTime?
 ): CommunityInfo = CommunityInfo(
@@ -80,8 +74,7 @@ suspend fun DatabaseFactory.checkCommunityExists(parentId: PrimaryKey) = first({
 data class CommunityRawResult(val communityInfo: CommunityInfo, val icon: String?, val poster: String?)
 
 suspend fun DatabaseFactory.getCommunity(
-    communityId: PrimaryKey? = null,
-    communityAid: String? = null,
+    objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
     id: PrimaryKey? = null
 ): Result<CommunityRawResult?> = first({
@@ -92,27 +85,23 @@ suspend fun DatabaseFactory.getCommunity(
     when {
         fillJoinInfo != true -> Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
             .select(Communities.fields + Aids.value)
-            .where(buildCommunityWhereClause(communityId, communityAid))
+            .where(buildCommunityWhereClause(objectFetch))
 
         id == null -> throw UnauthorizedException()
         else -> Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
             .join(MemberJoins, JoinType.LEFT, Communities.id, MemberJoins.objectId) {
                 MemberJoins.uid eq id
             }.select(Communities.fields + MemberJoins.joinTime + Aids.value)
-            .where(buildCommunityWhereClause(communityId, communityAid))
+            .where(buildCommunityWhereClause(objectFetch))
     }
 }
 
 private fun buildCommunityWhereClause(
-    communityId: PrimaryKey?,
-    communityAid: String?
+    objectFetch: ObjectFetch
 ): SqlExpressionBuilder.() -> Op<Boolean> = {
-    if (communityId != null) {
-        Communities.id eq communityId
-    } else if (communityAid != null) {
-        Aids.value eq communityAid
-    } else {
-        throw CustomBadRequestException("aid must be set.")
+    when (objectFetch) {
+        is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
+        is ObjectFetch.IdFetch -> Communities.id eq objectFetch.id
     }
 }
 
@@ -203,12 +192,10 @@ fun getUserJoinedCommunityQuery(
 
 suspend fun DatabaseFactory.getPaginationCommunityList(
     uid: PrimaryKey?,
-    prePageToken: PrimaryKey?,
-    nextPageToken: PrimaryKey?,
-    size: Int,
     joinStatus: JoinStatusSearch?,
     word: String?,
     hasPosterSearch: PosterSearch?,
+    pagingFetch: PagingFetch
 ): Result<Pair<List<CommunityRawResult>, Long>> {
     return mapQuery({
         CommunityRawResult(first.toCommunityIfo(null), first.icon, first.poster)
@@ -217,9 +204,7 @@ suspend fun DatabaseFactory.getPaginationCommunityList(
     }) {
         getSearchCommunityQuery(uid, false, joinStatus, word, hasPosterSearch).bindPaginationQuery(
             Communities,
-            prePageToken,
-            nextPageToken,
-            size
+            pagingFetch
         )
     }.mapResult { list ->
         count {
@@ -320,7 +305,7 @@ suspend fun DatabaseFactory.updateCommunity(
     id: PrimaryKey,
     body: UpdateCommunityBody
 ) = dbQuery {
-    listOf({
+    listOf {
         val newIcon = body.icon
         val newName = body.name
         val newPoster = body.poster
@@ -341,7 +326,7 @@ suspend fun DatabaseFactory.updateCommunity(
         } else {
             true
         }
-    }).all {
+    }.all {
         it()
     }
 }

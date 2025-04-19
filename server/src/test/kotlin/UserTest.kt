@@ -2,9 +2,11 @@ import com.storyteller_f.a.client_lib.getUserInfo
 import com.storyteller_f.a.client_lib.getUserInfoByAid
 import com.storyteller_f.a.client_lib.updateUserInfo
 import com.storyteller_f.a.client_lib.upload
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.http.*
+import kotlinx.io.Buffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -27,8 +29,19 @@ class UserTest {
             assertEquals("test", client.getUserInfo(uid).getOrThrow().nickname)
             // 更新头像
             val stream = ClassLoader.getSystemClassLoader().getResourceAsStream("avatar1.png")!!
+            val bytes = stream.readBytes()
             val info =
-                client.upload(stream.readBytes(), "avatar1.png", uid, ObjectType.USER, ContentType.parse("image/png"))
+                client.upload(
+                    ObjectTuple(it.uid, ObjectType.USER),
+                    bytes.size.toLong(),
+                    "avatar1.png",
+                    ContentType.parse("image/png"),
+                    {
+                        Buffer().apply {
+                            write(bytes)
+                        }
+                    }
+                )
                     .getOrThrow().data.first()
             assertEquals(
                 "avatar1.png",

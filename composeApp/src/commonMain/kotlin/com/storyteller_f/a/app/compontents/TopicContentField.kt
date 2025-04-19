@@ -22,6 +22,7 @@ import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.obj.ob
 import org.intellij.markdown.ast.ASTNode
 import org.jetbrains.compose.resources.stringResource
 
@@ -32,11 +33,11 @@ fun TopicContentField(
 ) {
     when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
-            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain, isEmbed)
+            TopicContentFieldInternal(topicInfo, content.list, content.plain, isEmbed)
         }
 
         is TopicContent.Extracted -> {
-            TopicContentFieldInternal(topicInfo.isPrivate, topicInfo, content.list, content.plain, isEmbed)
+            TopicContentFieldInternal(topicInfo, content.list, content.plain, isEmbed)
         }
 
         is TopicContent.Encrypted, is TopicContent.DecryptFailed, is TopicContent.Invalid -> {
@@ -63,14 +64,13 @@ fun TopicContentField(
 
 @Composable
 private fun TopicContentFieldInternal(
-    isPrivate: Boolean,
     topicInfo: TopicInfo,
     rawMediaList: List<MediaInfo>,
     plain: String,
     isEmbed: Boolean
 ) {
-    val mediaList = if (isPrivate) {
-        val list = createMediaListViewModel(topicInfo.rootId, 0)
+    val mediaList = if (topicInfo.isPrivate) {
+        val list = createMediaListViewModel(topicInfo.rootId ob topicInfo.rootType)
         val media by list.handler.data.collectAsState()
         media?.data.orEmpty()
     } else {

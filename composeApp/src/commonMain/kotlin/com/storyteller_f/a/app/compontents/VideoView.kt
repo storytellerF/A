@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.MediaPlaySession
+import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.shared.model.MediaInfo
 import kotlinx.serialization.Serializable
 
@@ -79,44 +80,35 @@ fun VideoPlaylistPicker(
     playList: List<PlayItem>,
     onClick: (PlayItem, Int) -> Unit
 ) {
-    if (showSheet) {
-        ModalBottomSheet(
-            hideSheet,
-            sheetState = sheetState,
-            dragHandle = null,
-            contentWindowInsets = {
-                WindowInsets(0)
-            },
+    BaseSheet(showSheet, sheetState, hideSheet) {
+        LazyColumn(
+            modifier = Modifier.height(300.dp).fillMaxSize(),
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            LazyColumn(
-                modifier = Modifier.height(300.dp).fillMaxSize(),
-                contentPadding = PaddingValues(20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(playList.size, key = {
-                    playList[it].id
-                }) {
-                    Row(
-                        modifier = Modifier.height(40.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        val icon = playList[it].icon
-                        if (!icon.isNullOrBlank()) {
-                            AsyncImage(icon, "icon", modifier = Modifier.height(30.dp))
-                        } else {
-                            Box(modifier = Modifier.height(30.dp))
-                        }
-                        Text(
-                            playList[it].title ?: "unknown",
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                        IconButton({
-                            onClick(playList[it], it)
-                        }) {
-                            Icon(Icons.AutoMirrored.Default.PlaylistPlay, "play")
-                        }
+            items(playList.size, key = {
+                playList[it].id
+            }) {
+                Row(
+                    modifier = Modifier.height(40.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val icon = playList[it].icon
+                    if (!icon.isNullOrBlank()) {
+                        AsyncImage(icon, "icon", modifier = Modifier.height(30.dp))
+                    } else {
+                        Box(modifier = Modifier.height(30.dp))
+                    }
+                    Text(
+                        playList[it].title ?: "unknown",
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                    IconButton({
+                        onClick(playList[it], it)
+                    }) {
+                        Icon(Icons.AutoMirrored.Default.PlaylistPlay, "play")
                     }
                 }
             }

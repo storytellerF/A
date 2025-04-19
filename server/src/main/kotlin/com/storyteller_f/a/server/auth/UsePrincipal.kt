@@ -37,19 +37,24 @@ suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(reader: Databa
 
 suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
     reader: DatabaseReader,
-    block: (PrimaryKey?) -> Result<R?>
+    block: (PrimaryKey?) -> Result<R?>?
 ) {
     val uid = call.principal<CustomPrincipal>()?.uid
     callRespond<R>(block, uid, reader)
 }
 
 suspend inline fun <reified R : Any> RoutingContext.callRespond(
-    block: (PrimaryKey?) -> Result<R?>,
+    block: (PrimaryKey?) -> Result<R?>?,
     uid: PrimaryKey?,
     reader: DatabaseReader
 ) {
     try {
-        block(uid).onSuccess {
+        val result = block(uid)
+        if (result == null) {
+            call.respond(HttpStatusCode.NotFound)
+            return
+        }
+        result.onSuccess {
             when (it) {
                 null -> call.respond(HttpStatusCode.NotFound)
                 is FileResponse -> call.respondFile(it.file)

@@ -31,6 +31,7 @@ import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.room.RoomRefCell
+import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.UserRefCell
 import com.storyteller_f.a.client_lib.SignInViewModel
@@ -38,6 +39,8 @@ import com.storyteller_f.a.client_lib.createTitle
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewTitle
+import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleType
@@ -62,7 +65,7 @@ fun TitleComposeInternal() {
         mutableStateOf("")
     }
     var titleScope by remember {
-        mutableStateOf<Pair<PrimaryKey, ObjectType>?>(null)
+        mutableStateOf<ObjectTuple?>(null)
     }
     var titleType by remember {
         mutableStateOf(TitleType.REGULAR)
@@ -104,7 +107,7 @@ fun TitleComposeInternal() {
                 titleScope = it
                 showSheet = ""
             } else if (s == "receiver") {
-                receiver = it.first
+                receiver = it.objectId
                 showSheet = ""
             }
         }
@@ -144,7 +147,7 @@ fun TitleComposeInternal2(
     updateName: (String) -> Unit,
     titleType: TitleType,
     updateTitleType: (TitleType) -> Unit,
-    titleScope: Pair<PrimaryKey, ObjectType>?,
+    titleScope: ObjectTuple?,
     updateTitleScope: () -> Unit,
     receiver: PrimaryKey?,
     content: String,
@@ -221,7 +224,7 @@ private fun ReceiverEditor(
 private fun TitleScopeEditor(
     shape: RoundedCornerShape,
     showSheet: (String) -> Unit,
-    titleScope: Pair<PrimaryKey, ObjectType>?,
+    titleScope: ObjectTuple?,
     updateTitleScope: () -> Unit
 ) {
     Row(
@@ -232,17 +235,17 @@ private fun TitleScopeEditor(
     ) {
         titleScope.let {
             if (it != null) {
-                when (it.second) {
-                    ObjectType.COMMUNITY -> CommunityRefCell(it.first) {
+                when (it.objectType) {
+                    ObjectType.COMMUNITY -> CommunityRefCell(it.objectId) {
                         updateTitleScope()
                     }
 
-                    ObjectType.ROOM -> RoomRefCell(it.first) {
+                    ObjectType.ROOM -> RoomRefCell(it.objectId) {
                         updateTitleScope()
                     }
 
                     ObjectType.TOPIC -> TODO()
-                    ObjectType.USER -> UserRefCell(it.first)
+                    ObjectType.USER -> UserRefCell(it.objectId)
 
                     ObjectType.TITLE -> TODO()
                 }
@@ -302,7 +305,7 @@ private fun TitleTypeSelector(
 private suspend fun createTitle(
     titleType: TitleType?,
     receiver: PrimaryKey?,
-    titleScope: Pair<PrimaryKey, ObjectType>?,
+    titleScope: ObjectTuple?,
     client: HttpClient,
     name: String,
     content: String,
@@ -317,7 +320,7 @@ private suspend fun createTitle(
         "titleScope is empty"
     }
     val title =
-        client.createTitle(NewTitle(name, titleType, receiver, titleScope.first, titleScope.second, content))
+        client.createTitle(NewTitle(name, titleType, receiver, titleScope.objectId, titleScope.objectType, content))
             .getOrThrow()
     bus.emit(OnTitleCreated(title))
 }
@@ -329,37 +332,28 @@ fun ObjectPicker(
     sheetState: SheetState,
     hideSheet: () -> Unit,
     supportObjectType: List<ObjectType>,
-    onCheck: (Pair<PrimaryKey, ObjectType>) -> Unit
+    onCheck: (ObjectTuple) -> Unit
 ) {
-    if (showSheet) {
+    BaseSheet(showSheet, sheetState, hideSheet) {
         var input by remember {
             mutableStateOf("")
         }
-        ModalBottomSheet(
-            onDismissRequest = hideSheet,
-            dragHandle = null,
-            sheetState = sheetState,
-            contentWindowInsets = {
-                WindowInsets(0)
-            },
-        ) {
-            Column(modifier = Modifier.height(300.dp).padding(top = 20.dp)) {
-                var currentType by remember {
-                    mutableStateOf(supportObjectType[0])
-                }
-                TypeSelector(supportObjectType, currentType, {
-                    currentType = it
-                }, input) {
-                    input = it
-                }
-                ObjectList(input, currentType, {
-                    onCheck(it.id to ObjectType.COMMUNITY)
-                }, {
-                    onCheck(it.id to ObjectType.ROOM)
-                }, {
-                    onCheck(it.id to ObjectType.USER)
-                })
+        Column(modifier = Modifier.height(300.dp).padding(top = 20.dp)) {
+            var currentType by remember {
+                mutableStateOf(supportObjectType[0])
             }
+            TypeSelector(supportObjectType, currentType, {
+                currentType = it
+            }, input) {
+                input = it
+            }
+            ObjectList(input, currentType, {
+                onCheck(it.id ob ObjectType.COMMUNITY)
+            }, {
+                onCheck(it.id ob ObjectType.ROOM)
+            }, {
+                onCheck(it.id ob ObjectType.USER)
+            })
         }
     }
 }
@@ -459,30 +453,21 @@ fun ComposeMenu(
     hideSheet: () -> Unit,
     onCheck: (ObjectType) -> Unit
 ) {
-    if (showSheet) {
-        ModalBottomSheet(
-            onDismissRequest = hideSheet,
-            dragHandle = null,
-            sheetState = sheetState,
-            contentWindowInsets = {
-                WindowInsets(0)
-            },
+    BaseSheet(showSheet, sheetState, hideSheet) {
+        Column(
+            modifier = Modifier.height(300.dp).padding(top = 20.dp).padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(
-                modifier = Modifier.height(300.dp).padding(top = 20.dp).padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ComposeMenuItem(Icons.Default.Diversity3, "create community") {
-                    onCheck(ObjectType.COMMUNITY)
-                }
+            ComposeMenuItem(Icons.Default.Diversity3, "create community") {
+                onCheck(ObjectType.COMMUNITY)
+            }
 
-                ComposeMenuItem(Icons.Default.ChatBubble, "create room") {
-                    onCheck(ObjectType.ROOM)
-                }
+            ComposeMenuItem(Icons.Default.ChatBubble, "create room") {
+                onCheck(ObjectType.ROOM)
+            }
 
-                ComposeMenuItem(Icons.Default.Title, "create title") {
-                    onCheck(ObjectType.TITLE)
-                }
+            ComposeMenuItem(Icons.Default.Title, "create title") {
+                onCheck(ObjectType.TITLE)
             }
         }
     }

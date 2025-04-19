@@ -1,5 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
+val isLlamaEnable = providers.gradleProperty("llama.enable").get() == "true"
+
 rootProject.name = "A"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
@@ -49,3 +51,5 @@ include(":client-cli")
 include(":crypto-jvm")
 include(":test-server")
 include(":test-server:simple")
+if (isLlamaEnable)
+    include(":android-llama-cpp")

@@ -15,8 +15,9 @@ plugins {
     alias(libs.plugins.kover)
     id("io.gitlab.arturbosch.detekt").version("1.23.7")
     id("com.mikepenz.aboutlibraries.plugin") version "11.2.3" apply false
-    id("com.github.ben-manes.versions") version "0.51.0"
+    id("com.github.ben-manes.versions") version "0.52.0"
     id("nl.littlerobots.version-catalog-update") version "0.8.5"
+    alias(libs.plugins.kotlin.android) apply false
 }
 
 val detektReportMergeSarif by tasks.registering(ReportMergeTask::class) {
