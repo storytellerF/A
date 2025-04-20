@@ -38,10 +38,14 @@ class AndroidEdgeGPT : GPT {
     }
 
     private fun getLlamaBuildMethod(): Pair<Any?, Method?> {
-        val clazz = Class.forName("com.storyteller_f.android_llama_cpp.LibraryKt")
-        val instance = clazz.getConstructor().newInstance()
-        val method = clazz.getMethod("buildLlampCpp")
-        return Pair(instance, method)
+        try {
+            val clazz = Class.forName("com.storyteller_f.android_llama_cpp.LibraryKt")
+            val instance = clazz.getConstructor().newInstance()
+            val method = clazz.getMethod("buildLlampCpp")
+            return Pair(instance, method)
+        } catch (_: Exception) {
+            return null to null
+        }
     }
 
     private fun buildMediaPipe(path: String, prompt: String): Flow<GPTOutput> {

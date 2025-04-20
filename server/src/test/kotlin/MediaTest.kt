@@ -18,13 +18,12 @@ class MediaTest {
                         ObjectTuple(it.uid, ObjectType.USER),
                         5,
                         "hello.txt",
-                        ContentType.defaultForFileExtension("txt"),
-                        {
-                            Buffer().apply {
-                                writeString("hello")
-                            }
+                        ContentType.defaultForFileExtension("txt")
+                    ) {
+                        Buffer().apply {
+                            writeString("hello")
                         }
-                    ).getOrThrow()
+                    }.getOrThrow()
                 assertEquals("${it.uid}/hello.txt", response.data.first().item.name)
 
                 assertListSize(1, client.getMediaList(it.uid, ObjectType.USER))

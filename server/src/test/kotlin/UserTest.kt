@@ -35,13 +35,12 @@ class UserTest {
                     ObjectTuple(it.uid, ObjectType.USER),
                     bytes.size.toLong(),
                     "avatar1.png",
-                    ContentType.parse("image/png"),
-                    {
-                        Buffer().apply {
-                            write(bytes)
-                        }
+                    ContentType.parse("image/png")
+                ) {
+                    Buffer().apply {
+                        write(bytes)
                     }
-                )
+                }
                     .getOrThrow().data.first()
             assertEquals(
                 "avatar1.png",
