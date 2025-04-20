@@ -32,7 +32,6 @@ dependencies {
     implementation(libs.geoip2)
     implementation(libs.tika.core)
     implementation(libs.pdfbox.layout)
-    implementation(projects.cryptoJvm)
     implementation(libs.h2)
     implementation(libs.kim)
 

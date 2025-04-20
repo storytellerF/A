@@ -29,7 +29,11 @@ import java.io.File
 import java.io.FileInputStream
 import java.security.KeyStore
 
-suspend fun createPublicTopic(uid: PrimaryKey, backend: Backend, newTopic: NewTopic): Result<TopicInfo?> {
+suspend fun createPublicTopic(
+    backend: Backend,
+    uid: PrimaryKey,
+    newTopic: NewTopic
+): Result<TopicInfo?> {
     if (newTopic.parentType == ObjectType.ROOM) {
         return Result.failure(ForbiddenException("can't use api to add topic in room"))
     }
@@ -43,6 +47,7 @@ suspend fun createPublicTopic(uid: PrimaryKey, backend: Backend, newTopic: NewTo
     }
 
     return checkRootWritePermission(
+        backend,
         newTopic.parentType,
         newTopic.parentId,
         uid
@@ -66,7 +71,7 @@ suspend fun createPublicTopic(uid: PrimaryKey, backend: Backend, newTopic: NewTo
                     lastModifiedTime = null,
                 )
                 val plain = TopicContent.Plain(content)
-                DatabaseFactory.savePlainTopic(topic, backend, plain).mapResult { topicInfo ->
+                DatabaseFactory.savePlainTopic(backend, topic, plain).mapResult { topicInfo ->
                     processTopicMedia(
                         backend,
                         listOf(topicInfo),
@@ -84,12 +89,16 @@ suspend fun createPublicTopic(uid: PrimaryKey, backend: Backend, newTopic: NewTo
     }
 }
 
-suspend fun createTopicSnapshot(uid: PrimaryKey, topicId: PrimaryKey, backend: Backend): Result<MediaInfo?> {
-    return DatabaseFactory.getRawUserById(uid).mapResultNotNull { (first) ->
-        checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultNotNull { (hasRead) ->
+suspend fun createTopicSnapshot(
+    backend: Backend,
+    uid: PrimaryKey,
+    topicId: PrimaryKey
+): Result<MediaInfo?> {
+    return DatabaseFactory.getRawUserById(backend, uid).mapResultNotNull { (first) ->
+        checkRootReadPermission(backend, ObjectType.TOPIC, topicId, uid).mapResultNotNull { (hasRead) ->
             if (hasRead) {
-                DatabaseFactory.getSimpleTopic(topicId).mapResultNotNull { value ->
-                    createTopicSnapshot(value, first, backend, uid)
+                DatabaseFactory.getSimpleTopic(backend, topicId).mapResultNotNull { value ->
+                    createTopicSnapshot(backend, value, first, uid)
                 }
             } else {
                 Result.failure(ForbiddenException("Permission denied"))
@@ -99,15 +108,15 @@ suspend fun createTopicSnapshot(uid: PrimaryKey, topicId: PrimaryKey, backend: B
 }
 
 private suspend fun createTopicSnapshot(
+    backend: Backend,
     topicInfo: TopicInfo,
     creatorInfo: UserInfo,
-    backend: Backend,
     uid: PrimaryKey
 ): Result<MediaInfo?> {
     val topicId = topicInfo.id
     return backend.topicSearchService.getDocuments(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultNotNull { documents ->
-            DatabaseFactory.getRawUserById(topicInfo.author).mapResultNotNull { (first) ->
+            DatabaseFactory.getRawUserById(backend, topicInfo.author).mapResultNotNull { (first) ->
                 val name = "$uid/$topicId.pdf"
                 val pdfFile = File("/tmp/$name")
                 val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
@@ -214,20 +223,25 @@ private fun loadSystemFont(
 }
 
 suspend fun getTopic(
+    backend: Backend,
     topicId: PrimaryKey,
     uid: PrimaryKey?,
-    backend: Backend,
     fillHasCommented: Boolean?
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
     return checkRootReadPermission(
+        backend,
         ObjectType.TOPIC,
         topicId,
         uid
     ).mapResultNotNull { (hasRead, hasJoined, isPrivate) ->
         if (hasRead) {
-            DatabaseFactory.getTopicInfo(ObjectFetch.IdFetch(topicId), uid).mapResultNotNull { info ->
-                processTopicsContent(isPrivate, backend, listOf(info), uid).map {
+            DatabaseFactory.getTopicInfo(
+                backend,
+                ObjectFetch.IdFetch(topicId),
+                uid
+            ).mapResultNotNull { info ->
+                processTopicsContent(backend, isPrivate, listOf(info), uid).map {
                     it.first()
                 }
             }.mapNotNull { value ->
@@ -240,20 +254,21 @@ suspend fun getTopic(
 }
 
 suspend fun getTopicByAid(
+    backend: Backend,
     aid: String,
     uid: PrimaryKey?,
-    backend: Backend,
     fillHasCommented: Boolean?
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return DatabaseFactory.getTopicInfo(ObjectFetch.AidFetch(aid), uid).mapResultNotNull { info ->
+    return DatabaseFactory.getTopicInfo(backend, ObjectFetch.AidFetch(aid), uid).mapResultNotNull { info ->
         checkRootReadPermission(
+            backend,
             ObjectType.TOPIC,
             info.id,
             uid
         ).mapResultNotNull { (hasRead, hasJoined, isPrivate) ->
             if (hasRead) {
-                processTopicsContent(isPrivate, backend, listOf(info), uid).map {
+                processTopicsContent(backend, isPrivate, listOf(info), uid).map {
                     it.first()
                 }
             } else {
@@ -266,19 +281,24 @@ suspend fun getTopicByAid(
 }
 
 suspend fun getTopLevelTopicsInObject(
+    backend: Backend,
     parentId: PrimaryKey,
     parentType: ObjectType,
     uid: PrimaryKey? = null,
-    backend: Backend,
     fillHasCommented: Boolean?,
     pagingFetch: PagingFetch,
     pinType: TopicPinSearch? = null,
 ): Result<PaginationResult<TopicInfo>?> {
-    return checkRootReadPermission(parentType, parentId, uid).mapResultNotNull { (hasRead, _, isPrivate) ->
+    return checkRootReadPermission(
+        backend,
+        parentType,
+        parentId,
+        uid
+    ).mapResultNotNull { (hasRead, _, isPrivate) ->
         if (isPrivate && !hasRead) {
             Result.failure(ForbiddenException("Permission Denied"))
         } else {
-            getTopicsPagingByPredicate(uid, fillHasCommented, pagingFetch) { ->
+            getTopicsPagingByPredicate(backend, uid, fillHasCommented, pagingFetch) { ->
                 val baseQuery = Topics.parentId eq parentId
                 when (pinType) {
                     PINNED -> baseQuery and (Topics.pinned eq true)
@@ -286,7 +306,7 @@ suspend fun getTopLevelTopicsInObject(
                     else -> baseQuery
                 }
             }.mapResult { (data, count) ->
-                processTopicsContent(isPrivate, backend, data, uid).map {
+                processTopicsContent(backend, isPrivate, data, uid).map {
                     PaginationResult(it, count)
                 }
             }
@@ -295,18 +315,18 @@ suspend fun getTopLevelTopicsInObject(
 }
 
 private suspend fun processTopicExtension(
+    backend: Backend,
     processedTopics: List<TopicInfo>,
     uid: PrimaryKey?,
     isPrivate: Boolean,
-    backend: Backend,
     addLatestSubTopic: Boolean,
-) = DatabaseFactory.getUsersByIds(processedTopics.map {
+) = DatabaseFactory.getUsersByIds(backend, processedTopics.map {
     it.author
-}.distinct(), backend).mapResult { users ->
+}.distinct()).mapResult { users ->
     val userMap = users.associateBy { it.id }
     if (addLatestSubTopic) {
         val subTopics = processedTopics.flatMap { t ->
-            getTopicsByPredicate(uid, false, {
+            getTopicsByPredicate(backend, uid, false, {
                 it.bindPaginationQuery(Topics, PagingFetch(null, null, 2))
             }, true, {
                 Topics.parentId eq t.id
@@ -315,7 +335,7 @@ private suspend fun processTopicExtension(
         if (subTopics.isEmpty()) {
             Result.success(emptyList())
         } else {
-            processTopicsContent(isPrivate, backend, subTopics, uid, false)
+            processTopicsContent(backend, isPrivate, subTopics, uid, false)
         }.map { processedSubTopics ->
             processedSubTopics.groupBy {
                 it.parentId
@@ -325,7 +345,7 @@ private suspend fun processTopicExtension(
         Result.success(emptyMap())
     }.map { processedSubTopicMap ->
         val reactionMap = processedTopics.associate {
-            it.id to reactionList(it.id, uid, uid != null).getOrNull()?.data
+            it.id to reactionList(backend, it.id, uid, uid != null).getOrNull()?.data
         }
         processedTopics.map {
             val authorInfo = userMap[it.author] ?: throw CustomBadRequestException("author is null")
@@ -341,8 +361,8 @@ private suspend fun processTopicExtension(
 }
 
 private suspend fun processTopicsContent(
-    isPrivate: Boolean,
     backend: Backend,
+    isPrivate: Boolean,
     data: List<TopicInfo>,
     uid: PrimaryKey?,
     addLatestSubTopic: Boolean = true
@@ -357,13 +377,13 @@ private suspend fun processTopicsContent(
 
     uid == null -> Result.failure(ForbiddenException())
 
-    else -> DatabaseFactory.getEncryptedTopicContents(data, uid).map { topicContents ->
+    else -> DatabaseFactory.getEncryptedTopicContents(backend, data, uid).map { topicContents ->
         data.mapIndexed { index, l ->
             l.copy(content = topicContents[index], isPrivate = true)
         }
     }
 }.mapResult {
-    processTopicExtension(it, uid, isPrivate, backend, addLatestSubTopic)
+    processTopicExtension(backend, it, uid, isPrivate, addLatestSubTopic)
 }
 
 data class RootReadPermission(
@@ -385,23 +405,24 @@ data class RootAdminPermission(
 )
 
 suspend fun checkRootReadPermission(
+    backend: Backend,
     parentType: ObjectType,
     parentId: PrimaryKey,
     uid: PrimaryKey?,
 ): Result<RootReadPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.getTopicRoot(parentId).mapResultNotNull { (rootId, rootType) ->
-                checkRootReadPermission(rootType, rootId, uid)
+            DatabaseFactory.getTopicRoot(backend, parentId).mapResultNotNull { (rootId, rootType) ->
+                checkRootReadPermission(backend, rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            DatabaseFactory.getRoomCommunityId(parentId).mapResult { communityId ->
+            DatabaseFactory.getRoomCommunityId(backend, parentId).mapResult { communityId ->
                 if (communityId == null && uid == null) {
                     Result.failure(UnauthorizedException())
                 } else {
-                    isMemberJoined(parentId, uid).map { hasJoined ->
+                    isMemberJoined(backend, parentId, uid).map { hasJoined ->
                         RootReadPermission(hasJoined || communityId != null, hasJoined, communityId == null)
                     }
                 }
@@ -409,44 +430,45 @@ suspend fun checkRootReadPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            DatabaseFactory.checkCommunityExists(parentId).mapResultNotNull {
-                isMemberJoined(parentId, uid).map { hasJoined ->
+            DatabaseFactory.checkCommunityExists(backend, parentId).mapResultNotNull {
+                isMemberJoined(backend, parentId, uid).map { hasJoined ->
                     RootReadPermission(true, hasJoined, false)
                 }
             }
         }
 
-        ObjectType.USER -> DatabaseFactory.getRawUserById(parentId).mapNotNull {
+        ObjectType.USER -> DatabaseFactory.getRawUserById(backend, parentId).mapNotNull {
             RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         }
 
-        ObjectType.TITLE -> Result.success(RootReadPermission(true, false, false))
+        ObjectType.TITLE -> Result.success(RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false))
     }
 }
 
 suspend fun checkRootWritePermission(
+    backend: Backend,
     parentType: ObjectType,
     parentId: PrimaryKey,
     uid: PrimaryKey,
 ): Result<RootWritePermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.getTopicRoot(parentId).mapResultNotNull { (rootId, rootType) ->
-                checkRootWritePermission(rootType, rootId, uid)
+            DatabaseFactory.getTopicRoot(backend, parentId).mapResultNotNull { (rootId, rootType) ->
+                checkRootWritePermission(backend, rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            DatabaseFactory.getRoomCommunityId(parentId).mapResult {
-                isMemberJoined(parentId, uid).map { hasJoined ->
+            DatabaseFactory.getRoomCommunityId(backend, parentId).mapResult {
+                isMemberJoined(backend, parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
             }
         }
 
         ObjectType.COMMUNITY -> {
-            DatabaseFactory.checkCommunityExists(parentId).mapResultNotNull {
-                isMemberJoined(parentId, uid).map { hasJoined ->
+            DatabaseFactory.checkCommunityExists(backend, parentId).mapResultNotNull {
+                isMemberJoined(backend, parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
             }
@@ -454,7 +476,7 @@ suspend fun checkRootWritePermission(
 
         ObjectType.USER -> {
             if (uid == parentId) {
-                DatabaseFactory.getRawUserById(parentId).mapNotNull { (userInfo) ->
+                DatabaseFactory.getRawUserById(backend, parentId).mapNotNull { (userInfo) ->
                     RootWritePermission(parentType, parentId, userInfo.id == uid)
                 }
             } else {
@@ -467,31 +489,32 @@ suspend fun checkRootWritePermission(
 }
 
 suspend fun checkRootAdminPermission(
+    backend: Backend,
     parentType: ObjectType,
     parentId: PrimaryKey,
     uid: PrimaryKey,
 ): Result<RootAdminPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.getTopicRoot(parentId).mapResultNotNull { (rootId, rootType) ->
-                checkRootAdminPermission(rootType, rootId, uid)
+            DatabaseFactory.getTopicRoot(backend, parentId).mapResultNotNull { (rootId, rootType) ->
+                checkRootAdminPermission(backend, rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            DatabaseFactory.getRoomSource(parentId).mapNotNull {
+            DatabaseFactory.getRoomSource(backend, parentId).mapNotNull {
                 RootAdminPermission(parentType, parentId, it.first.creator == uid)
             }
         }
 
         ObjectType.COMMUNITY -> {
-            DatabaseFactory.getCommunity(ObjectFetch.IdFetch(parentId)).mapNotNull {
+            DatabaseFactory.getCommunity(backend, ObjectFetch.IdFetch(parentId)).mapNotNull {
                 RootAdminPermission(parentType, parentId, it.communityInfo.owner == uid)
             }
         }
 
         ObjectType.USER -> {
-            DatabaseFactory.getRawUserById(parentId).mapNotNull { (first) ->
+            DatabaseFactory.getRawUserById(backend, parentId).mapNotNull { (first) ->
                 RootAdminPermission(parentType, parentId, first.id == uid)
             }
         }
@@ -501,20 +524,19 @@ suspend fun checkRootAdminPermission(
 }
 
 suspend fun searchPublicTopics(
-    preTopicId: PrimaryKey?,
-    nextTopicId: PrimaryKey?,
+    backend: Backend,
     size: Int,
     search: RouteTopics.Search,
-    backend: Backend,
+    pagingFetch: PagingFetch,
     uid: PrimaryKey?
 ): Result<PaginationResult<TopicInfo>?> {
-    if (search.word != null && search.word.map {
+    if (search.word != null && search.word.sumOf {
             it.length
-        }.sum() > 20) {
+        } > 20) {
         return Result.failure(CustomBadRequestException("word too long"))
     }
     return if (search.parentId != null && search.parentType != null) {
-        checkRootReadPermission(search.parentType, search.parentId, uid).mapResultNotNull {
+        checkRootReadPermission(backend, search.parentType, search.parentId, uid).mapResultNotNull {
             if (it.isPrivate) {
                 Result.failure(BadRequestException("can't search in private chat"))
             } else {
@@ -523,15 +545,14 @@ suspend fun searchPublicTopics(
         }
     } else {
         Result.success(DocumentSearch.CommunityRoot)
-    }.mapResultNotNull {
+    }.mapResultNotNull { documentSearch ->
         backend.topicSearchService.searchDocument(
             size,
             search.word,
-            preTopicId = preTopicId,
-            nextTopicId = nextTopicId,
-            documentSearch = it
+            documentSearch = documentSearch,
+            pagingFetch
         ).mapResult { (list, total) ->
-            processTopicsDocument(uid, search.parent.fillHasCommented, backend, list).map {
+            processTopicsDocument(backend, uid, search.parent.fillHasCommented, list).map {
                 PaginationResult(it, total)
             }
         }
@@ -591,39 +612,36 @@ fun documentMediaList(documentList: List<TopicDocument?>): List<Pair<PrimaryKey,
 
 suspend fun recommendTopics(
     backend: Backend,
-    preTopicId: PrimaryKey?,
-    nextTopicId: PrimaryKey?,
     size: Int,
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
+    pagingFetch: PagingFetch
 ): Result<PaginationResult<TopicInfo>?> {
     return if (uid != null) {
-        DatabaseFactory.getJoinedCommunityIds(uid).mapResult {
+        DatabaseFactory.getJoinedCommunityIds(backend, uid).mapResult {
             backend.topicSearchService.searchDocument(
                 size,
-                preTopicId = preTopicId,
-                nextTopicId = nextTopicId,
-                documentSearch = DocumentSearch.Recommend(uid, it)
+                documentSearch = DocumentSearch.Recommend(uid, it),
+                pagingFetch = pagingFetch
             )
         }
     } else {
         backend.topicSearchService.searchDocument(
             size,
-            preTopicId = preTopicId,
-            nextTopicId = nextTopicId,
-            documentSearch = DocumentSearch.RecommendNotLogin
+            documentSearch = DocumentSearch.RecommendNotLogin,
+            pagingFetch = pagingFetch
         )
     }.mapResult { (list, total) ->
-        processTopicsDocument(uid, fillHasCommented, backend, list).map {
+        processTopicsDocument(backend, uid, fillHasCommented, list).map {
             PaginationResult(it, total)
         }
     }
 }
 
 private suspend fun processTopicsDocument(
+    backend: Backend,
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
-    backend: Backend,
     list: List<TopicDocument>,
 ): Result<List<TopicInfo>> {
     val ids = list.map {
@@ -632,28 +650,28 @@ private suspend fun processTopicsDocument(
     if (ids.isEmpty()) {
         return Result.success(emptyList())
     }
-    return getTopicsByPredicate(uid, fillHasCommented) {
+    return getTopicsByPredicate(backend, uid, fillHasCommented) {
         Topics.id inList ids
     }.mapResult { infos ->
         processTopicMedia(backend, infos.sortedByDescending {
             it.id
         }, list).mapResult {
-            processTopicExtension(it, uid, false, backend, true)
+            processTopicExtension(backend, it, uid, isPrivate = false, addLatestSubTopic = true)
         }
     }
 }
 
 suspend fun getTopicByIds(
+    backend: Backend,
     ids: List<PrimaryKey>,
     uid: PrimaryKey?,
-    fillHasCommented: Boolean?,
-    backend: Backend
+    fillHasCommented: Boolean?
 ): Result<List<TopicInfo>> {
     if (ids.isEmpty()) {
         return Result.success(emptyList())
     }
     val map = ids.map {
-        checkRootReadPermission(ObjectType.TOPIC, it, uid) to it
+        checkRootReadPermission(backend, ObjectType.TOPIC, it, uid) to it
     }
     val private = mutableSetOf<PrimaryKey>()
     map.forEach { (r, id) ->
@@ -670,7 +688,7 @@ suspend fun getTopicByIds(
             }
         }
     }
-    return getTopicsByPredicate(uid, fillHasCommented) {
+    return getTopicsByPredicate(backend, uid, fillHasCommented) {
         Topics.id inList ids
     }.mapResult { infos ->
         val privateList = infos.filter {
@@ -680,22 +698,31 @@ suspend fun getTopicByIds(
         val publicList = infos.filter {
             !private.contains(it.id)
         }
-        processTopicsContent(true, backend, privateList, uid).mapResult { privateContents ->
-            processTopicsContent(false, backend, publicList, uid).map { publicContents ->
+        processTopicsContent(backend, true, privateList, uid).mapResult { privateContents ->
+            processTopicsContent(backend, false, publicList, uid).map { publicContents ->
                 publicContents + privateContents
             }
         }
     }
 }
 
-suspend fun updateTopicPin(uid: PrimaryKey, topicId: PrimaryKey, newValue: Boolean) =
-    checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultNotNull {
+suspend fun updateTopicPin(
+    backend: Backend,
+    uid: PrimaryKey,
+    topicId: PrimaryKey,
+    newValue: Boolean
+) =
+    checkRootAdminPermission(backend, ObjectType.TOPIC, topicId, uid).mapResultNotNull {
         if (it.hasAdmin) {
-            DatabaseFactory.getTopicInfo(ObjectFetch.IdFetch(topicId), uid).mapResultNotNull { info ->
+            DatabaseFactory.getTopicInfo(
+                backend,
+                ObjectFetch.IdFetch(topicId),
+                uid
+            ).mapResultNotNull { info ->
                 if (info.isPin == newValue) {
                     Result.success(info)
                 } else {
-                    DatabaseFactory.updateTopicStatus(topicId, newValue).map { isSuccess ->
+                    DatabaseFactory.updateTopicStatus(backend, topicId, newValue).map { isSuccess ->
                         if (isSuccess) {
                             info.copy(isPin = newValue)
                         } else {

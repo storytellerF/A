@@ -100,7 +100,7 @@ suspend fun processEncryptedTopic(info: List<TopicInfo>): List<TopicInfo> {
                         }
                     }, onFailure = {
                         Napier.e(it) {
-                            "decrypt ${topicInfo.id}"
+                            "decrypt ${topicInfo.id} failed"
                         }
                         TopicContent.DecryptFailed(it.message.toString())
                     })

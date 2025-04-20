@@ -49,13 +49,14 @@ class User(
     }
 }
 
-suspend fun DatabaseFactory.getUserAid(id: PrimaryKey): Result<String?> = first({
-    it[Aids.value]
-}) {
-    Aids.selectAll().where {
-        Aids.objectId eq id
+suspend fun DatabaseFactory.getUserAid(backend: Backend, id: PrimaryKey): Result<String?> =
+    first(backend, {
+        it[Aids.value]
+    }) {
+        Aids.selectAll().where {
+            Aids.objectId eq id
+        }
     }
-}
 
 fun User.toUserInfo(): UserInfo {
     return UserInfo(id, address, 0, aid, nickname, null)
@@ -69,10 +70,10 @@ sealed interface ObjectFetch {
 data class PagingFetch(val pre: PrimaryKey?, val next: PrimaryKey?, val size: Int)
 
 suspend fun DatabaseFactory.getUser(
-    fetch: ObjectFetch,
-    backend: Backend
+    backend: Backend,
+    fetch: ObjectFetch
 ): Result<UserInfo?> {
-    return first({
+    return first(backend, {
         toUserInfo() to icon
     }, User::wrapRow) {
         Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
@@ -86,7 +87,10 @@ suspend fun DatabaseFactory.getUser(
     }
 }
 
-suspend fun DatabaseFactory.getRawUserById(it: PrimaryKey): Result<Pair<UserInfo, String?>?> = first({
+suspend fun DatabaseFactory.getRawUserById(
+    backend: Backend,
+    it: PrimaryKey
+): Result<Pair<UserInfo, String?>?> = first(backend, {
     toUserInfo() to icon
 }, User::wrapRow) {
     Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
@@ -95,11 +99,12 @@ suspend fun DatabaseFactory.getRawUserById(it: PrimaryKey): Result<Pair<UserInfo
 }
 
 suspend fun DatabaseFactory.commonPaginationMemberList(
+    backend: Backend,
     objectId: PrimaryKey?,
     word: String?,
     pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<UserInfo, String?>>, Long>> {
-    return mapQuery({
+    return mapQuery(backend, {
         first.toUserInfo() to second
     }, {
         User.wrapRow(it) to it[Users.icon]
@@ -109,7 +114,7 @@ suspend fun DatabaseFactory.commonPaginationMemberList(
             pagingFetch
         )
     }.mapResult { pairs ->
-        count {
+        count(backend) {
             buildSearchMembersQuery(objectId, true, word)
         }.map { value ->
             pairs to value
@@ -142,19 +147,22 @@ private fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, wo
 }
 
 suspend fun DatabaseFactory.searchMembers(
-    objectId: PrimaryKey?,
     backend: Backend,
+    objectId: PrimaryKey?,
     word: String?,
     pagingFetch: PagingFetch
 ): Result<PaginationResult<UserInfo>> {
-    return commonPaginationMemberList(objectId, word, pagingFetch).mapResult { (pairs, count) ->
+    return commonPaginationMemberList(backend, objectId, word, pagingFetch).mapResult { (pairs, count) ->
         processUserList(backend, pairs).map {
             PaginationResult(it, count)
         }
     }
 }
 
-suspend fun DatabaseFactory.getUserByAddress(ad: String): Result<Triple<UserInfo, String?, String>?> = first({
+suspend fun DatabaseFactory.getUserByAddress(
+    backend: Backend,
+    ad: String
+): Result<Triple<UserInfo, String?, String>?> = first(backend, {
     Triple(toUserInfo(), icon, publicKey)
 }, User::wrapRow) {
     Users
@@ -166,12 +174,13 @@ suspend fun DatabaseFactory.getUserByAddress(ad: String): Result<Triple<UserInfo
 }
 
 suspend fun DatabaseFactory.createUser(
+    backend: Backend,
     ad: String,
     name: String,
     newId: PrimaryKey,
     pk: String
 ): Result<Pair<UserInfo, Nothing?>> {
-    return query({
+    return query(backend, {
         this to null
     }) {
         val user = User(null, pk, ad, null, name, newId, now())
@@ -188,16 +197,20 @@ suspend fun DatabaseFactory.createUser(
     }
 }
 
-suspend fun DatabaseFactory.isUserNotExists(pk: String): Result<Boolean> = isEmpty {
-    User.find {
-        Users.publicKey eq pk
+suspend fun DatabaseFactory.isUserNotExists(backend: Backend, pk: String): Result<Boolean> =
+    isEmpty(
+        backend
+    ) {
+        User.find {
+            Users.publicKey eq pk
+        }
     }
-}
 
 suspend fun DatabaseFactory.updateUser(
+    backend: Backend,
     id: PrimaryKey,
     newUser: UpdateUserBody
-) = dbQuery {
+) = dbQuery(backend) {
     listOf({
         val avatar = newUser.avatar
         val name = newUser.nickname
@@ -231,16 +244,20 @@ suspend fun DatabaseFactory.updateUser(
     }
 }
 
-suspend fun DatabaseFactory.checkUserExists(id: Long) = first({
-    id
-}, User::wrapRow) {
-    User.find {
-        Users.id eq id
+suspend fun DatabaseFactory.checkUserExists(backend: Backend, id: Long) =
+    first(backend, {
+        id
+    }, User::wrapRow) {
+        User.find {
+            Users.id eq id
+        }
     }
-}
 
-suspend fun DatabaseFactory.getUserAuthDataByAid(predicate: SqlExpressionBuilder.() -> Op<Boolean>) =
-    first({
+suspend fun DatabaseFactory.getUserAuthDataByAid(
+    backend: Backend,
+    predicate: SqlExpressionBuilder.() -> Op<Boolean>
+) =
+    first(backend, {
         it[Users.publicKey] to it[Users.id]
     }) {
         Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -248,14 +265,20 @@ suspend fun DatabaseFactory.getUserAuthDataByAid(predicate: SqlExpressionBuilder
             .where(predicate)
     }
 
-suspend fun DatabaseFactory.getUserAuthDataBy(predicate: SqlExpressionBuilder.() -> Op<Boolean>) =
-    first({
+suspend fun DatabaseFactory.getUserAuthDataBy(
+    backend: Backend,
+    predicate: SqlExpressionBuilder.() -> Op<Boolean>
+) =
+    first(backend, {
         it[Users.publicKey] to it[Users.id]
     }) {
         Users.select(listOf(Users.publicKey, Users.id)).where(predicate)
     }
 
-suspend fun DatabaseFactory.getUsersByIds(ids: List<PrimaryKey>, backend: Backend) = mapQuery({
+suspend fun DatabaseFactory.getUsersByIds(
+    backend: Backend,
+    ids: List<PrimaryKey>
+) = mapQuery(backend, {
     toUserInfo() to icon
 }, User::wrapRow) {
     Users
@@ -268,16 +291,17 @@ suspend fun DatabaseFactory.getUsersByIds(ids: List<PrimaryKey>, backend: Backen
     processUserList(backend, it)
 }
 
-suspend fun DatabaseFactory.getRawUsersByAids(ids: List<String>) = mapQuery({
-    toUserInfo() to icon
-}, User::wrapRow) {
-    Users
-        .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-        .select(Users.fields + Aids.value)
-        .where {
-            Aids.value inList ids
-        }
-}
+suspend fun DatabaseFactory.getRawUsersByAids(backend: Backend, ids: List<String>) =
+    mapQuery(backend, {
+        toUserInfo() to icon
+    }, User::wrapRow) {
+        Users
+            .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+            .select(Users.fields + Aids.value)
+            .where {
+                Aids.value inList ids
+            }
+    }
 
 suspend fun processUserList(
     backend: Backend,

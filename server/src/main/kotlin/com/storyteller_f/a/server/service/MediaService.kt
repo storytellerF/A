@@ -24,14 +24,15 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 suspend fun getMediaList(
-    uid: PrimaryKey,
     backend: Backend,
+    uid: PrimaryKey,
     routeMedia: RouteMedia
 ): Result<ServerResponse<MediaInfo?>?> {
     if (routeMedia.objectType == ObjectType.TOPIC) {
         return Result.failure(BadRequestException("can't get topic media"))
     }
     return checkRootWritePermission(
+        backend,
         routeMedia.objectType,
         routeMedia.objectId,
         uid
@@ -50,15 +51,15 @@ suspend fun getMediaList(
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun RoutingContext.uploadMedia(
+    backend: Backend,
     it: RouteMedia.Upload,
     id: PrimaryKey,
     root: File,
-    backend: Backend,
     tika: Tika,
 ) = if (it.parent.objectType == ObjectType.TOPIC) {
     Result.failure(BadRequestException("can't upload to topic"))
 } else {
-    checkRootWritePermission(it.parent.objectType, it.parent.objectId, id).mapResultNotNull {
+    checkRootWritePermission(backend, it.parent.objectType, it.parent.objectId, id).mapResultNotNull {
         val multipartData = call.receiveMultipart()
         val result = mutableListOf<MediaInfo>()
 

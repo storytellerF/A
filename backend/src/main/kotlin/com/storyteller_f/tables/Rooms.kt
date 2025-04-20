@@ -56,8 +56,8 @@ class Room(
     }
 }
 
-suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
-    return DatabaseFactory.first({
+suspend fun checkRoomIsPrivate(backend: Backend, roomId: PrimaryKey): Result<Boolean?> {
+    return DatabaseFactory.first(backend, {
         it[Rooms.communityId] == null
     }) {
         Room.findRoomById(roomId)
@@ -82,13 +82,14 @@ fun Room.toRoomInfo(joinedTime: LocalDateTime?) = RoomInfo(
 )
 
 suspend fun getRoomPaginationList(
+    backend: Backend,
     uid: PrimaryKey?,
     joinStatusSearch: JoinStatusSearch?,
     word: String?,
     community: PrimaryKey?,
     pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<RoomInfo, String?>>, Long>> {
-    return DatabaseFactory.mapQuery({
+    return DatabaseFactory.mapQuery(backend, {
         mapRoomInfo(this)
     }) {
         buildRoomSearchQuery(uid, false, joinStatusSearch, word, community).bindPaginationQuery(
@@ -96,7 +97,7 @@ suspend fun getRoomPaginationList(
             pagingFetch
         )
     }.mapResult { list ->
-        DatabaseFactory.count {
+        DatabaseFactory.count(backend) {
             buildRoomSearchQuery(uid, true, joinStatusSearch, word, community)
         }.map { value ->
             list to value
@@ -187,22 +188,24 @@ private fun buildJoinedRoomSearchQuery(
     throw UnauthorizedException()
 }
 
-suspend fun DatabaseFactory.getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?> = first({
-    it[Rooms.communityId]
-}) {
-    Room.findRoomById(parentId)
-}
+suspend fun DatabaseFactory.getRoomCommunityId(backend: Backend, parentId: PrimaryKey): Result<PrimaryKey?> =
+    first(backend, {
+        it[Rooms.communityId]
+    }) {
+        Room.findRoomById(parentId)
+    }
 
 suspend fun DatabaseFactory.commonPaginationRoomPubKeyList(
+    backend: Backend,
     roomId: PrimaryKey,
     pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<Long, String>>, Long>> {
-    return mapQuery({
+    return mapQuery(backend, {
         this[Users.id] to this[Users.publicKey]
     }) {
         buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, pagingFetch)
     }.mapResult { data ->
-        count {
+        count(backend) {
             buildRoomPubKeyQuery(roomId, true)
         }.map { value ->
             data to value
@@ -228,11 +231,12 @@ fun buildRoomPubKeyQuery(roomId: PrimaryKey, getCount: Boolean): Query {
 }
 
 suspend fun DatabaseFactory.getRoomSource(
+    backend: Backend,
     roomId: PrimaryKey?,
     roomAid: String? = null,
     fillJoinInfo: Boolean? = null,
     uid: PrimaryKey? = null,
-) = first({
+) = first(backend, {
     mapRoomInfo(it)
 }) {
     val baseOp = Op.build {
@@ -268,14 +272,15 @@ suspend fun DatabaseFactory.getRoomSource(
 }
 
 suspend fun searchRooms(
-    uid: PrimaryKey?,
     backend: Backend,
+    uid: PrimaryKey?,
     joinStatusSearch: JoinStatusSearch?,
     word: String?,
     community: PrimaryKey?,
     pagingFetch: PagingFetch
 ): Result<PaginationResult<RoomInfo>?> {
     return getRoomPaginationList(
+        backend,
         uid,
         joinStatusSearch,
         word,
@@ -298,7 +303,7 @@ suspend fun processRoomList(list: List<Pair<RoomInfo, String?>>, backend: Backen
     }
 }
 
-suspend fun DatabaseFactory.createRoom(room: Room) = dbQuery {
+suspend fun DatabaseFactory.createRoom(backend: Backend, room: Room) = dbQuery(backend) {
     check(Rooms.insert { statement ->
         statement[id] = room.id
         statement[createdTime] = room.createdTime
@@ -320,8 +325,11 @@ suspend fun DatabaseFactory.createRoom(room: Room) = dbQuery {
     addRoomJoinRaw(room.id, room.creator, room.createdTime, room.memberCount)
 }
 
-suspend fun DatabaseFactory.getRoomByIds(ids: List<PrimaryKey>): Result<List<Pair<RoomInfo, String?>>> {
-    return mapQuery({ this }, { mapRoomInfo(it) }) {
+suspend fun DatabaseFactory.getRoomByIds(
+    backend: Backend,
+    ids: List<PrimaryKey>
+): Result<List<Pair<RoomInfo, String?>>> {
+    return mapQuery(backend, { this }, { mapRoomInfo(it) }) {
         Rooms
             .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
             .select(Rooms.fields + Aids.value).where {
@@ -332,9 +340,10 @@ suspend fun DatabaseFactory.getRoomByIds(ids: List<PrimaryKey>): Result<List<Pai
 
 @Suppress("MoveLambdaOutsideParentheses")
 suspend fun DatabaseFactory.updateRoom(
+    backend: Backend,
     id: PrimaryKey,
     body: UpdateRoomBody
-) = dbQuery {
+) = dbQuery(backend) {
     listOf({
         val newIcon = body.icon
         val newName = body.name

@@ -1,6 +1,5 @@
 package com.storyteller_f.a.server
 
-import ch.qos.logback.classic.LoggerContext
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
@@ -24,9 +23,7 @@ import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
-import io.ktor.util.*
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.io.File
 import java.net.InetAddress
@@ -92,14 +89,9 @@ private fun processPreSetData(env: MergedEnv) {
 
 @Suppress("unused")
 fun Application.module() {
-    val loggerMap = (LoggerFactory.getILoggerFactory() as LoggerContext).loggerList
-    loggerMap.forEach {
-        println("Logger name: ${it.name}")
-    }
     val reader = buildDatabaseReader()
-    val backend = buildBackend()
-    DatabaseFactory.connect(backend.config.databaseConnection)
-    DatabaseFactory.init(backend.config.databaseConnection.uri.endsWith("DB_CLOSE_DELAY=-1;"))
+    val connected = buildBackend()
+    DatabaseFactory.init(connected, connected.config.databaseConnection.uri.endsWith("DB_CLOSE_DELAY=-1;"))
 
     install(ContentNegotiation) {
         json()
@@ -121,11 +113,11 @@ fun Application.module() {
     install(Sessions) {
         setupSessions()
     }
-    if (backend.config.isProd) {
+    if (connected.config.isProd) {
         setupRateLimit(reader)
     }
     install(Resources)
-    configureAuth(backend, reader)
+    configureAuth(reader, connected)
 }
 
 private fun WebSockets.WebSocketOptions.setupWebSockets() {
@@ -180,8 +172,7 @@ private fun Application.buildBackend(): Backend {
     Napier.i {
         "start server at ${env["SERVER_PORT"]}"
     }
-    val backend = buildBackendFromEnv(env)
-    return backend
+    return buildBackendFromEnv(env)
 }
 
 private fun buildDatabaseReader() = DatabaseReader.Builder(

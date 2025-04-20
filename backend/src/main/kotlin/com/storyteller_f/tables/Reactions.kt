@@ -41,13 +41,14 @@ class Reaction(
 }
 
 suspend fun commonReactions(
+    backend: Backend,
     uid: PrimaryKey?,
     objectId: PrimaryKey
 ): Result<List<ReactionInfo>> {
     val (countExpression, resultRowTransform: (ResultRow) -> Triple<String, Long, Boolean>, query) = getReactionBuilder(
         uid
     )
-    return DatabaseFactory.mapQuery({
+    return DatabaseFactory.mapQuery(backend, {
         ReactionInfo(first, objectId, ObjectType.TOPIC, second, third)
     }, resultRowTransform) {
         query.andWhere {
@@ -83,11 +84,16 @@ private fun getReactionBuilder(
     return Triple(countExpression, resultRowTransform, query)
 }
 
-suspend fun getReaction(uid: PrimaryKey, objectId: PrimaryKey, emojiText: String): Result<ReactionInfo?> {
+suspend fun getReaction(
+    backend: Backend,
+    uid: PrimaryKey,
+    objectId: PrimaryKey,
+    emojiText: String
+): Result<ReactionInfo?> {
     val (_, resultRowTransform: (ResultRow) -> Triple<String, Long, Boolean>, query) = getReactionBuilder(
         uid
     )
-    return DatabaseFactory.first({
+    return DatabaseFactory.first(backend, {
         ReactionInfo(emojiText, objectId, ObjectType.TOPIC, second, third)
     }, resultRowTransform) {
         query.andWhere {
@@ -96,8 +102,13 @@ suspend fun getReaction(uid: PrimaryKey, objectId: PrimaryKey, emojiText: String
     }
 }
 
-suspend fun getSingleReaction(uid: PrimaryKey, emoji: String, objectId: PrimaryKey): Result<SingleReactionInfo?> {
-    return DatabaseFactory.first({
+suspend fun getSingleReaction(
+    backend: Backend,
+    uid: PrimaryKey,
+    emoji: String,
+    objectId: PrimaryKey
+): Result<SingleReactionInfo?> {
+    return DatabaseFactory.first(backend, {
         SingleReactionInfo(id, emoji, objectId, objectType, createdTime, uid)
     }, {
         Reaction.wrapRow(it)
@@ -109,19 +120,23 @@ suspend fun getSingleReaction(uid: PrimaryKey, emoji: String, objectId: PrimaryK
 }
 
 suspend fun deleteReaction(
+    backend: Backend,
     uid: PrimaryKey,
     emoji: String,
     objectId: PrimaryKey
-): Result<Boolean> = getSingleReaction(uid, emoji, objectId).mapResult {
+): Result<Boolean> = getSingleReaction(backend, uid, emoji, objectId).mapResult {
     if (it == null) {
         Result.success(true)
     } else {
-        DatabaseFactory.deleteReaction(it.id)
+        DatabaseFactory.deleteReaction(backend, it.id)
     }
 }
 
-suspend fun DatabaseFactory.deleteReaction(reactionId: PrimaryKey): Result<Boolean> {
-    return dbQuery {
+suspend fun DatabaseFactory.deleteReaction(
+    backend: Backend,
+    reactionId: PrimaryKey
+): Result<Boolean> {
+    return dbQuery(backend) {
         Reactions.deleteWhere { builder ->
             with(builder) {
                 id eq reactionId
@@ -133,11 +148,12 @@ suspend fun DatabaseFactory.deleteReaction(reactionId: PrimaryKey): Result<Boole
 }
 
 suspend fun DatabaseFactory.insertReaction(
+    backend: Backend,
     newId: PrimaryKey,
     userId: PrimaryKey,
     reactionInfo: ReactionInfo,
     now: LocalDateTime
-) = dbQuery {
+) = dbQuery(backend) {
     check(Reactions.insert { statement ->
         statement[id] = newId
         statement[uid] = userId

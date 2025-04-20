@@ -1,5 +1,6 @@
 package com.storyteller_f.tables
 
+import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.customPrimaryKey
 import com.storyteller_f.objectType
@@ -38,22 +39,24 @@ class MemberJoin(
     }
 }
 
-suspend fun isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?) = if (uid == null) {
-    Result.success(false)
-} else {
-    DatabaseFactory.isNotEmpty {
-        MemberJoins.selectAll().where {
-            (MemberJoins.objectId eq objectId) and (MemberJoins.uid eq uid)
+suspend fun isMemberJoined(backend: Backend, objectId: PrimaryKey, uid: PrimaryKey?) =
+    if (uid == null) {
+        Result.success(false)
+    } else {
+        DatabaseFactory.isNotEmpty(backend) {
+            MemberJoins.selectAll().where {
+                (MemberJoins.objectId eq objectId) and (MemberJoins.uid eq uid)
+            }
         }
     }
-}
 
 suspend fun DatabaseFactory.addRoomJoin(
+    backend: Backend,
     room: PrimaryKey,
     id: PrimaryKey,
     time: LocalDateTime,
     oldMemberCount: Long
-) = dbQuery {
+) = dbQuery(backend) {
     addRoomJoinRaw(room, id, time, oldMemberCount)
 }
 
@@ -80,8 +83,12 @@ fun addRoomJoinRaw(
     }
 }
 
-suspend fun DatabaseFactory.exit(containerId: PrimaryKey, id: PrimaryKey): Result<Int> {
-    return dbQuery {
+suspend fun DatabaseFactory.exit(
+    backend: Backend,
+    containerId: PrimaryKey,
+    id: PrimaryKey
+): Result<Int> {
+    return dbQuery(backend) {
         MemberJoins.deleteWhere {
             with(it) {
                 objectId eq containerId and (uid eq id)
@@ -91,11 +98,12 @@ suspend fun DatabaseFactory.exit(containerId: PrimaryKey, id: PrimaryKey): Resul
 }
 
 suspend fun DatabaseFactory.addCommunityJoin(
+    backend: Backend,
     id: PrimaryKey,
     community: PrimaryKey,
     time: LocalDateTime,
     oldMemberCount: Long
-) = dbQuery {
+) = dbQuery(backend) {
     addCommunityJoinRaw(id, community, time, oldMemberCount)
 }
 
@@ -122,7 +130,9 @@ fun addCommunityJoinRaw(
     }
 }
 
-suspend fun DatabaseFactory.createMemberJoin(join: MemberJoin) = dbQuery {
+suspend fun DatabaseFactory.createMemberJoin(backend: Backend, join: MemberJoin) = dbQuery(
+    backend
+) {
     check(MemberJoins.insert { statement ->
         statement[uid] = join.uid
         statement[objectId] = join.objectId
@@ -133,10 +143,11 @@ suspend fun DatabaseFactory.createMemberJoin(join: MemberJoin) = dbQuery {
     }
 }
 
-suspend fun DatabaseFactory.userListJoinedRoom(roomId: PrimaryKey) = mapQuery({
-    MemberJoin.wrapRow(this)
-}) {
-    MemberJoins.selectAll().where {
-        MemberJoins.objectId eq roomId
+suspend fun DatabaseFactory.userListJoinedRoom(backend: Backend, roomId: PrimaryKey) =
+    mapQuery(backend, {
+        MemberJoin.wrapRow(this)
+    }) {
+        MemberJoins.selectAll().where {
+            MemberJoins.objectId eq roomId
+        }
     }
-}

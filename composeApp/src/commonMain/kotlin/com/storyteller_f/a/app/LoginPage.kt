@@ -24,6 +24,8 @@ import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.*
+import com.storyteller_f.shared.calcAddress
+import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes

@@ -14,15 +14,17 @@ import com.storyteller_f.types.PaginationResult
 import io.ktor.server.plugins.*
 
 suspend fun getRoomPubKeys(
+    backend: Backend,
     roomId: PrimaryKey,
     userId: PrimaryKey,
     pagingFetch: PagingFetch
 ): Result<PaginationResult<Pair<PrimaryKey, String>>?> {
-    return isMemberJoined(roomId, userId).mapResult {
+    return isMemberJoined(backend, roomId, userId).mapResult {
         if (it) {
-            DatabaseFactory.commonPaginationRoomPubKeyList(roomId, pagingFetch).map { (data, count) ->
-                PaginationResult(data, count)
-            }
+            DatabaseFactory.commonPaginationRoomPubKeyList(backend, roomId, pagingFetch)
+                .map { (data, count) ->
+                    PaginationResult(data, count)
+                }
         } else {
             Result.failure(ForbiddenException("Permission denied"))
         }
@@ -30,10 +32,10 @@ suspend fun getRoomPubKeys(
 }
 
 suspend fun joinRoom(
+    backend: Backend,
     roomId: PrimaryKey,
-    uid: PrimaryKey,
-    backend: Backend
-) = getRoom(roomId, null, uid, backend, true).mapResultNotNull { roomInfo ->
+    uid: PrimaryKey
+) = getRoom(backend, roomId, null, uid, true).mapResultNotNull { roomInfo ->
     if (roomInfo.joinedTime != null) {
         Result.success(roomInfo)
     } else {
@@ -41,14 +43,20 @@ suspend fun joinRoom(
         if (communityId == null) {
             Result.failure(ForbiddenException("Join failed."))
         } else {
-            isMemberJoined(communityId, uid).mapResult { hasJoined ->
+            isMemberJoined(backend, communityId, uid).mapResult { hasJoined ->
                 if (hasJoined) {
                     val time = now()
-                    DatabaseFactory.addRoomJoin(roomId, uid, time, roomInfo.memberCount).mapResult { affectedCount ->
+                    DatabaseFactory.addRoomJoin(
+                        backend,
+                        roomId,
+                        uid,
+                        time,
+                        roomInfo.memberCount
+                    ).mapResult { affectedCount ->
                         Result.success(roomInfo.copy(joinedTime = time))
                     }.recoverError { exception ->
                         if (exception.isDup()) {
-                            getRoom(roomId, null, uid, backend, true)
+                            getRoom(backend, roomId, null, uid, true)
                         } else {
                             Result.failure(exception)
                         }
@@ -61,28 +69,28 @@ suspend fun joinRoom(
     }
 }
 
-suspend fun exitRoom(roomId: PrimaryKey, id: PrimaryKey, backend: Backend) =
-    getRoom(roomId, null, id, backend, true).mapResultNotNull { info ->
+suspend fun exitRoom(backend: Backend, roomId: PrimaryKey, id: PrimaryKey) =
+    getRoom(backend, roomId, null, id, true).mapResultNotNull { info ->
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            DatabaseFactory.exit(roomId, id).map { i ->
+            DatabaseFactory.exit(backend, roomId, id).map { i ->
                 info.copy(joinedTime = null)
             }
         }
     }
 
 suspend fun getRoom(
+    backend: Backend,
     roomId: PrimaryKey?,
     roomAid: String?,
     uid: PrimaryKey?,
-    backend: Backend,
     fillJoinInfo: Boolean?
 ): Result<RoomInfo?> {
     if (roomId == null && roomAid == null) {
         return Result.failure(BadRequestException("roomId or roomAid must be set."))
     }
-    return DatabaseFactory.getRoomSource(roomId, roomAid, fillJoinInfo, uid).mapResultNotNull {
+    return DatabaseFactory.getRoomSource(backend, roomId, roomAid, fillJoinInfo, uid).mapResultNotNull {
         processRoomList(listOf(it), backend).map(List<RoomInfo>::first)
     }
 }
@@ -96,7 +104,11 @@ private fun checkRoomName(newRoom: NewRoom): Result<Unit> {
     }
 }
 
-suspend fun createRoom(newRoom: NewRoom, uid: PrimaryKey, backend: Backend): Result<RoomInfo?> {
+suspend fun createRoom(
+    backend: Backend,
+    newRoom: NewRoom,
+    uid: PrimaryKey
+): Result<RoomInfo?> {
     val firstError = listOf(suspend {
         checkAid(newRoom.aid)
     }, suspend {
@@ -107,7 +119,7 @@ suspend fun createRoom(newRoom: NewRoom, uid: PrimaryKey, backend: Backend): Res
     if (firstError != null) return Result.failure(firstError)
     val communityId = newRoom.communityId
     return if (communityId != null) {
-        checkRootAdminPermission(ObjectType.COMMUNITY, communityId, uid).mapNotNull {
+        checkRootAdminPermission(backend, ObjectType.COMMUNITY, communityId, uid).mapNotNull {
             it.hasAdmin
         }
     } else {
@@ -116,7 +128,7 @@ suspend fun createRoom(newRoom: NewRoom, uid: PrimaryKey, backend: Backend): Res
         if (it) {
             val roomId = SnowflakeFactory.nextId()
             val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, 0, newRoom.icon, communityId)
-            DatabaseFactory.createRoom(room)
+            DatabaseFactory.createRoom(backend, room)
                 .mapResult {
                     processRoomList(
                         listOf(room.toRoomInfo(room.createdTime) to room.icon),
@@ -129,15 +141,21 @@ suspend fun createRoom(newRoom: NewRoom, uid: PrimaryKey, backend: Backend): Res
     }
 }
 
-suspend fun updateRoom(id: PrimaryKey, backend: Backend, old: UpdateRoomBody, uid: PrimaryKey): Result<RoomInfo?> {
+suspend fun updateRoom(
+    backend: Backend,
+    id: PrimaryKey,
+    old: UpdateRoomBody,
+    uid: PrimaryKey
+): Result<RoomInfo?> {
     val newRoom = old.copy(name = old.name?.trim(), icon = old.icon?.trim())
-    return checkRootAdminPermission(ObjectType.ROOM, id, uid).mapResultNotNull {
-        if (it.hasAdmin) {
+    return checkRootAdminPermission(backend, ObjectType.ROOM, id, uid).mapResultNotNull { permission ->
+        if (permission.hasAdmin) {
             val firstError = listOf(suspend {
                 when (checkNickname(newRoom.name, 1..COMMUNITY_NAME_LENGTH)) {
                     StringCheckResult.RANGE_MISMATCH -> Result.failure(
                         CustomBadRequestException("community name must be between in 1 and 20")
                     )
+
                     else -> Result.success(Unit)
                 }
             }, suspend {
@@ -147,9 +165,11 @@ suspend fun updateRoom(id: PrimaryKey, backend: Backend, old: UpdateRoomBody, ui
                         MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
                             CustomBadRequestException("only support image")
                         )
+
                         MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
                             CustomBadRequestException("dimension mismatch")
                         )
+
                         else -> Result.success(Unit)
                     }
                 }
@@ -159,9 +179,9 @@ suspend fun updateRoom(id: PrimaryKey, backend: Backend, old: UpdateRoomBody, ui
             if (firstError != null) {
                 Result.failure(firstError)
             } else {
-                DatabaseFactory.updateRoom(id, newRoom).mapResult { updateSuccess ->
+                DatabaseFactory.updateRoom(backend, id, newRoom).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        DatabaseFactory.getRoomSource(id, null, true, uid).mapResultNotNull {
+                        DatabaseFactory.getRoomSource(backend, id, null, true, uid).mapResultNotNull {
                             processRoomList(listOf(it), backend).map(List<RoomInfo>::first)
                         }
                     } else {

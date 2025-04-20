@@ -4,6 +4,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
+import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.types.PaginationResult
 import io.github.aakira.napier.Napier
 import org.apache.lucene.analysis.standard.StandardAnalyzer
@@ -97,21 +98,20 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
     override suspend fun searchDocument(
         size: Int,
         word: List<String>?,
-        preTopicId: PrimaryKey?,
-        nextTopicId: PrimaryKey?,
-        documentSearch: DocumentSearch
+        documentSearch: DocumentSearch,
+        pagingFetch: PagingFetch?
     ): Result<PaginationResult<TopicDocument>> {
         return useLucene {
             try {
                 DirectoryReader.open(it).use { reader ->
                     val searcher = IndexSearcher(reader)
                     val combinedQuery = buildQuery(
-                        preTopicId,
-                        nextTopicId,
+                        pagingFetch?.pre,
+                        pagingFetch?.next,
                         word,
                         documentSearch
                     )
-                    val sortById = Sort(SortField("id2", SortField.Type.LONG, preTopicId == null))
+                    val sortById = Sort(SortField("id2", SortField.Type.LONG, pagingFetch?.pre == null))
                     Napier.i {
                         "lucene search query $combinedQuery $sortById"
                     }
@@ -128,7 +128,7 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
                         }
                     }, docs.totalHits.value)
                 }
-            } catch (e: IndexNotFoundException) {
+            } catch (_: IndexNotFoundException) {
                 PaginationResult(emptyList(), 0)
             }
         }

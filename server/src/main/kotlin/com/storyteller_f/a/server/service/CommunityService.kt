@@ -19,12 +19,13 @@ import com.storyteller_f.types.PaginationResult
 import io.ktor.server.plugins.*
 
 suspend fun getCommunity(
-    objectFetch: ObjectFetch,
     backend: Backend,
+    objectFetch: ObjectFetch,
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
     return DatabaseFactory.getCommunity(
+        backend,
         objectFetch,
         fillJoinInfo,
         id
@@ -34,19 +35,24 @@ suspend fun getCommunity(
 }
 
 suspend fun doUserJoinCommunity(
+    backend: Backend,
     uid: PrimaryKey,
-    communityId: PrimaryKey,
-    backend: Backend
-) = getCommunity(ObjectFetch.IdFetch(communityId), backend, uid, true).mapResultNotNull { community ->
+    communityId: PrimaryKey
+) = getCommunity(
+    backend,
+    ObjectFetch.IdFetch(communityId),
+    uid,
+    true
+).mapResultNotNull { community ->
     if (community.joinTime != null) {
         Result.success(community)
     } else {
         val time = now()
-        DatabaseFactory.addCommunityJoin(uid, communityId, time, community.memberCount).mapResult {
+        DatabaseFactory.addCommunityJoin(backend, uid, communityId, time, community.memberCount).mapResult {
             Result.success(community.copy(joinTime = time))
         }.recoverCatching {
             if (it.isDup()) {
-                getCommunity(ObjectFetch.IdFetch(communityId), backend, uid, true)
+                getCommunity(backend, ObjectFetch.IdFetch(communityId), uid, true)
             } else {
                 Result.failure(it)
             }
@@ -54,12 +60,16 @@ suspend fun doUserJoinCommunity(
     }
 }
 
-suspend fun exitCommunity(communityId: PrimaryKey, id: PrimaryKey, backend: Backend) =
-    getCommunity(ObjectFetch.IdFetch(communityId), backend, id, true).mapResultNotNull { info ->
+suspend fun exitCommunity(
+    backend: Backend,
+    communityId: PrimaryKey,
+    id: PrimaryKey
+) =
+    getCommunity(backend, ObjectFetch.IdFetch(communityId), id, true).mapResultNotNull { info ->
         if (info.joinTime == null) {
             Result.success(info)
         } else {
-            DatabaseFactory.exit(communityId, id).mapResult { i ->
+            DatabaseFactory.exit(backend, communityId, id).mapResult { i ->
                 if (i > 0) {
                     Result.success(info.copy(joinTime = null))
                 } else {
@@ -77,14 +87,15 @@ suspend fun searchCommunities(
 ): Result<PaginationResult<CommunityInfo>?> {
     if (search.joinStatus == JoinStatusSearch.JOINED && search.target != null) {
         return searchTargetUserJoinedCommunities(
-            uid,
             backend,
+            uid,
             search.target,
             search.hasPoster,
             pagingFetch
         )
     }
     return DatabaseFactory.getPaginationCommunityList(
+        backend,
         uid,
         search.joinStatus,
         search.word,
@@ -98,13 +109,13 @@ suspend fun searchCommunities(
 }
 
 private suspend fun searchTargetUserJoinedCommunities(
-    uid: PrimaryKey?,
     backend: Backend,
+    uid: PrimaryKey?,
     target: PrimaryKey,
     hasPosterSearch: PosterSearch?,
     pagingFetch: PagingFetch
 ): Result<PaginationResult<CommunityInfo>> {
-    return DatabaseFactory.mapQuery({
+    return DatabaseFactory.mapQuery(backend, {
         CommunityRawResult(first.toCommunityIfo(second), first.icon, first.poster)
     }, {
         Community.wrapRow(it) to it[MemberJoins.joinTime]
@@ -114,12 +125,12 @@ private suspend fun searchTargetUserJoinedCommunities(
             pagingFetch
         )
     }.mapResult { list ->
-        DatabaseFactory.count {
+        DatabaseFactory.count(backend) {
             getUserJoinedCommunityQuery(target, true).bindPosterSearch(hasPosterSearch)
         }.mapResult { count ->
             processCommunityList(backend, list).mapResult { value ->
                 if (uid != null) {
-                    processUserJoinedTimeReplace(value, uid, count)
+                    processUserJoinedTimeReplace(backend, value, uid, count)
                 } else {
                     Result.success(PaginationResult(value.map {
                         it.copy(joinTime = null, extension = CommunityInfo.Extension(it.joinTime))
@@ -131,6 +142,7 @@ private suspend fun searchTargetUserJoinedCommunities(
 }
 
 private suspend fun processUserJoinedTimeReplace(
+    backend: Backend,
     value: List<CommunityInfo>,
     uid: PrimaryKey,
     count: Long
@@ -138,7 +150,7 @@ private suspend fun processUserJoinedTimeReplace(
     val communityIds = value.map {
         it.id
     }
-    return DatabaseFactory.getCommunityJoinedTimeByIds(uid, communityIds).map { joinedTimeList ->
+    return DatabaseFactory.getCommunityJoinedTimeByIds(backend, uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         PaginationResult(value.map {
             it.copy(joinTime = map[it.id], extension = CommunityInfo.Extension(it.joinTime))
@@ -146,7 +158,11 @@ private suspend fun processUserJoinedTimeReplace(
     }
 }
 
-suspend fun createCommunity(newCommunity: NewCommunity, uid: PrimaryKey, backend: Backend): Result<CommunityInfo> {
+suspend fun createCommunity(
+    backend: Backend,
+    newCommunity: NewCommunity,
+    uid: PrimaryKey
+): Result<CommunityInfo> {
     val firstError = listOf(suspend {
         checkAid(newCommunity.aid)
     }, suspend {
@@ -173,7 +189,7 @@ suspend fun createCommunity(newCommunity: NewCommunity, uid: PrimaryKey, backend
         newCommunity.icon,
         null
     )
-    return DatabaseFactory.createCommunity(community).mapResult {
+    return DatabaseFactory.createCommunity(backend, community).mapResult {
         processCommunityList(
             backend,
             listOf(CommunityRawResult(community.toCommunityIfo(community.createdTime), newCommunity.icon, null))
@@ -184,61 +200,23 @@ suspend fun createCommunity(newCommunity: NewCommunity, uid: PrimaryKey, backend
 }
 
 suspend fun updateCommunity(
-    id: PrimaryKey,
     backend: Backend,
+    id: PrimaryKey,
     old: UpdateCommunityBody,
     uid: PrimaryKey
 ): Result<CommunityInfo?> {
     val newCommunity = old.copy(name = old.name?.trim(), icon = old.icon?.trim(), poster = old.poster?.trim())
-    return checkRootAdminPermission(ObjectType.COMMUNITY, id, uid).mapResultNotNull {
-        if (it.hasAdmin) {
-            val firstError = listOf(suspend {
-                when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
-                    StringCheckResult.RANGE_MISMATCH -> Result.failure(
-                        CustomBadRequestException("community name must be between in 1 and 20")
-                    )
-
-                    else -> Result.success(Unit)
-                }
-            }, suspend {
-                checkIcon(backend, newCommunity.icon, Dimension(1, 1)).mapResult { checkResult ->
-                    when (checkResult) {
-                        MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
-                        MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
-                            CustomBadRequestException("only support image")
-                        )
-
-                        MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
-                            CustomBadRequestException("dimension mismatch")
-                        )
-
-                        else -> Result.success(Unit)
-                    }
-                }
-            }, suspend {
-                checkIcon(backend, newCommunity.poster, Dimension(3, 4)).mapResult { checkResult ->
-                    when (checkResult) {
-                        MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("poster not found"))
-                        MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
-                            CustomBadRequestException("only support image")
-                        )
-
-                        MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
-                            CustomBadRequestException("dimension mismatch")
-                        )
-
-                        else -> Result.success(Unit)
-                    }
-                }
-            }).firstNotNullOfOrNull {
-                it().exceptionOrNull()
-            }
-            if (firstError != null) {
-                Result.failure(firstError)
-            } else {
-                DatabaseFactory.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
+    return checkRootAdminPermission(backend, ObjectType.COMMUNITY, id, uid).mapResultNotNull { permission ->
+        if (permission.hasAdmin) {
+            checkBeforeUpdateCommunity(newCommunity, backend).mapResult {
+                DatabaseFactory.updateCommunity(backend, id, newCommunity).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        DatabaseFactory.getCommunity(ObjectFetch.IdFetch(id), true, uid).mapResultNotNull { rawResult ->
+                        DatabaseFactory.getCommunity(
+                            backend,
+                            ObjectFetch.IdFetch(id),
+                            true,
+                            uid
+                        ).mapResultNotNull { rawResult ->
                             processCommunityList(backend, listOf(rawResult)).map(List<CommunityInfo>::first)
                         }
                     } else {
@@ -249,5 +227,57 @@ suspend fun updateCommunity(
         } else {
             Result.failure(CustomBadRequestException("forbid"))
         }
+    }
+}
+
+private suspend fun checkBeforeUpdateCommunity(
+    newCommunity: UpdateCommunityBody,
+    backend: Backend,
+): Result<Unit> {
+    val firstError = listOf(suspend {
+        when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
+            StringCheckResult.RANGE_MISMATCH -> Result.failure(
+                CustomBadRequestException("community name must be between in 1 and 20")
+            )
+
+            else -> Result.success(Unit)
+        }
+    }, suspend {
+        checkIcon(backend, newCommunity.icon, Dimension(1, 1)).mapResult { checkResult ->
+            when (checkResult) {
+                MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
+                MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
+                    CustomBadRequestException("only support image")
+                )
+
+                MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
+                    CustomBadRequestException("dimension mismatch")
+                )
+
+                else -> Result.success(Unit)
+            }
+        }
+    }, suspend {
+        checkIcon(backend, newCommunity.poster, Dimension(3, 4)).mapResult { checkResult ->
+            when (checkResult) {
+                MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("poster not found"))
+                MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
+                    CustomBadRequestException("only support image")
+                )
+
+                MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
+                    CustomBadRequestException("dimension mismatch")
+                )
+
+                else -> Result.success(Unit)
+            }
+        }
+    }).firstNotNullOfOrNull {
+        it().exceptionOrNull()
+    }
+    return if (firstError != null) {
+        Result.failure(firstError)
+    } else {
+        Result.success(Unit)
     }
 }

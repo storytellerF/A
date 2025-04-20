@@ -61,23 +61,25 @@ fun Community.toCommunityIfo(
     joinTime = joinTime
 )
 
-suspend fun DatabaseFactory.checkCommunityExists(parentId: PrimaryKey) = first({
-    it[Communities.id]
-}) {
-    Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-        .select(Communities.fields + Aids.value)
-        .where {
-            Communities.id eq parentId
-        }
-}
+suspend fun DatabaseFactory.checkCommunityExists(backend: Backend, parentId: PrimaryKey) =
+    first(backend, {
+        it[Communities.id]
+    }) {
+        Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+            .select(Communities.fields + Aids.value)
+            .where {
+                Communities.id eq parentId
+            }
+    }
 
 data class CommunityRawResult(val communityInfo: CommunityInfo, val icon: String?, val poster: String?)
 
 suspend fun DatabaseFactory.getCommunity(
+    backend: Backend,
     objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
     id: PrimaryKey? = null
-): Result<CommunityRawResult?> = first({
+): Result<CommunityRawResult?> = first(backend, {
     CommunityRawResult(first.toCommunityIfo(second), first.icon, first.poster)
 }, {
     Community.wrapRow(it) to if (fillJoinInfo == true) it[MemberJoins.joinTime] else null
@@ -105,14 +107,15 @@ private fun buildCommunityWhereClause(
     }
 }
 
-suspend fun DatabaseFactory.getJoinedCommunityIds(uid: PrimaryKey) = mapQuery({
-    this[Communities.id]
-}) {
-    Communities
-        .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-            MemberJoins.uid eq uid
-        }.select(Communities.id)
-}
+suspend fun DatabaseFactory.getJoinedCommunityIds(backend: Backend, uid: PrimaryKey) =
+    mapQuery(backend, {
+        this[Communities.id]
+    }) {
+        Communities
+            .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+                MemberJoins.uid eq uid
+            }.select(Communities.id)
+    }
 
 fun getSearchCommunityQuery(
     uid: PrimaryKey?,
@@ -191,13 +194,14 @@ fun getUserJoinedCommunityQuery(
 }
 
 suspend fun DatabaseFactory.getPaginationCommunityList(
+    backend: Backend,
     uid: PrimaryKey?,
     joinStatus: JoinStatusSearch?,
     word: String?,
     hasPosterSearch: PosterSearch?,
     pagingFetch: PagingFetch
 ): Result<Pair<List<CommunityRawResult>, Long>> {
-    return mapQuery({
+    return mapQuery(backend, {
         CommunityRawResult(first.toCommunityIfo(null), first.icon, first.poster)
     }, {
         Community.wrapRow(it) to it.getOrNull(MemberJoins.joinTime)
@@ -207,7 +211,7 @@ suspend fun DatabaseFactory.getPaginationCommunityList(
             pagingFetch
         )
     }.mapResult { list ->
-        count {
+        count(backend) {
             getSearchCommunityQuery(uid, true, joinStatus, word, hasPosterSearch)
         }.map { value ->
             list to value
@@ -215,7 +219,9 @@ suspend fun DatabaseFactory.getPaginationCommunityList(
     }
 }
 
-suspend fun DatabaseFactory.createCommunity(community: Community) = dbQuery {
+suspend fun DatabaseFactory.createCommunity(backend: Backend, community: Community) = dbQuery(
+    backend
+) {
     check(Communities.insert {
         it[id] = community.id
         it[name] = community.name
@@ -253,9 +259,10 @@ suspend fun createCommunityRooms(
 }
 
 suspend fun DatabaseFactory.getCommunityJoinedTimeByIds(
+    backend: Backend,
     uid: PrimaryKey,
     communityIds: List<PrimaryKey>
-) = mapQuery({
+) = mapQuery(backend, {
     this[Communities.id] to this[MemberJoins.joinTime]
 }) {
     Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
@@ -266,8 +273,11 @@ suspend fun DatabaseFactory.getCommunityJoinedTimeByIds(
         }
 }
 
-suspend fun DatabaseFactory.getCommunityByIds(idList: List<PrimaryKey>): Result<List<CommunityRawResult>> {
-    return mapQuery({
+suspend fun DatabaseFactory.getCommunityByIds(
+    backend: Backend,
+    idList: List<PrimaryKey>
+): Result<List<CommunityRawResult>> {
+    return mapQuery(backend, {
         CommunityRawResult(toCommunityIfo(null), icon, poster)
     }, Community::wrapRow) {
         Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
@@ -276,8 +286,11 @@ suspend fun DatabaseFactory.getCommunityByIds(idList: List<PrimaryKey>): Result<
     }
 }
 
-suspend fun DatabaseFactory.getCommunityByAids(idList: List<String>): Result<List<CommunityRawResult>> {
-    return mapQuery({
+suspend fun DatabaseFactory.getCommunityByAids(
+    backend: Backend,
+    idList: List<String>
+): Result<List<CommunityRawResult>> {
+    return mapQuery(backend, {
         CommunityRawResult(toCommunityIfo(null), icon, poster)
     }, Community::wrapRow) {
         Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
@@ -302,9 +315,10 @@ suspend fun processCommunityList(
 }
 
 suspend fun DatabaseFactory.updateCommunity(
+    backend: Backend,
     id: PrimaryKey,
     body: UpdateCommunityBody
-) = dbQuery {
+) = dbQuery(backend) {
     listOf {
         val newIcon = body.icon
         val newName = body.name

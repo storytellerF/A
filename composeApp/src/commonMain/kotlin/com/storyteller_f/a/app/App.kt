@@ -204,8 +204,8 @@ fun App() {
 
 @Composable
 fun AppInternal(httpUrl: String, wsServerUrl: String) {
-    StaticObj
     CommonEntry(httpUrl) {
+        StaticObj
         val s by playerSession
         val isPip = rememberIsInPipMode()
 
@@ -252,7 +252,7 @@ fun CommonEntry(
             getAsyncImageLoader(it)
         }
         val database = remember {
-            KotbaseDatabaseSource(createKotbase())
+            createPlatformDatabaseSource()
         }
         LaunchedEffect(database) {
             bus.collect { event ->
@@ -297,7 +297,7 @@ fun CommonEntry(
     }
 }
 
-private fun processEvent(event: Any, database: KotbaseDatabaseSource) {
+private fun processEvent(event: Any, database: DatabaseSource) {
     when (event) {
         is OnAddReaction -> processOnAddReaction(database, event)
 
@@ -324,7 +324,7 @@ private fun processEvent(event: Any, database: KotbaseDatabaseSource) {
 
 private fun processTopicCreated(
     event: OnTopicCreated,
-    database: KotbaseDatabaseSource
+    database: DatabaseSource
 ) {
     val topicInfo = event.topicInfo
     database.getCollection("topics_${topicInfo.parentId}").save(topicInfo.id, topicInfo)
@@ -336,7 +336,7 @@ private fun processTopicCreated(
 
 private fun processTopicChanged(
     event: OnTopicChanged,
-    database: KotbaseDatabaseSource
+    database: DatabaseSource
 ) {
     val topicInfo = event.topicInfo
     database.getCollection("topics_${topicInfo.parentId}").save(topicInfo.id, topicInfo)
@@ -353,7 +353,7 @@ private fun processTopicChanged(
 }
 
 private fun processRemoveReaction(
-    database: KotbaseDatabaseSource,
+    database: DatabaseSource,
     event: OnRemoveReaction
 ) {
     database.getCollection("topic").update(event.topicId, serializer<TopicInfo>()) { old ->
@@ -370,7 +370,7 @@ private fun processRemoveReaction(
 }
 
 private fun processOnAddReaction(
-    database: KotbaseDatabaseSource,
+    database: DatabaseSource,
     event: OnAddReaction
 ) {
     database.getCollection("topic").update(event.topicId, serializer<TopicInfo>()) { old ->

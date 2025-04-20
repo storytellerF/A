@@ -1,9 +1,10 @@
 package com.storyteller_f.shared.utils
 
-import java.security.MessageDigest
+import dev.whyoleg.cryptography.CryptographyProvider
+import dev.whyoleg.cryptography.DelicateCryptographyApi
+import dev.whyoleg.cryptography.algorithms.MD5
 
+@OptIn(DelicateCryptographyApi::class, ExperimentalStdlibApi::class)
 fun md5(input: String): String {
-    val md = MessageDigest.getInstance("MD5")
-    val digest = md.digest(input.toByteArray()) // 计算 MD5
-    return digest.joinToString("") { "%02x".format(it) } // 转换为十六进制字符串
+    return CryptographyProvider.Default.get(MD5).hasher().hashBlocking(input.encodeToByteArray()).toHexString()
 }

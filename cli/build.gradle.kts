@@ -10,8 +10,8 @@ dependencies {
     runtimeOnly(libs.sqlite.jdbc)
     runtimeOnly(libs.slf4j.simple)
     testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
 
-    implementation(projects.cryptoJvm)
     implementation(projects.shared)
     implementation(projects.backend)
     implementation(libs.kotlinx.cli)

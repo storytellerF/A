@@ -3,7 +3,6 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.a.server.module
-import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.readResourceEnv
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.obj.RoomFrame
@@ -14,8 +13,6 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.websocket.*
-import io.ktor.client.request.*
-import io.ktor.http.*
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
@@ -24,8 +21,9 @@ import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 import java.io.File
-import kotlin.collections.set
 import kotlin.test.assertEquals
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, ClientWebSocket) -> Unit) {
     Napier.base(logger)
@@ -34,14 +32,26 @@ fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, Cl
         "free ${freeMemory}MiB"
     }
     SnowflakeFactory.setMachine(0)
-    addProviderForJvm()
+    loadIfNeed()
 
-    doTest(readResourceEnv(".env")!!, receivedFrame, block)
+    startInMemoryTest(receivedFrame, block)
 
     if (freeMemory >= 100) {
 //        startTestContainerTest(receivedFrame, true, block)
         startTestContainerTest(receivedFrame, false, block)
     }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+private fun startInMemoryTest(
+    receivedFrame: (RoomFrame) -> Unit,
+    block: suspend (HttpClient, ClientWebSocket) -> Unit
+) {
+    val env = readResourceEnv(".env")!! + Pair(
+        "DATABASE_URI",
+        "jdbc:h2:mem:${Uuid.random().toHexString()};DB_CLOSE_DELAY=-1;"
+    )
+    doTest(env, receivedFrame, block)
 }
 
 private fun startTestContainerTest(

@@ -7,6 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.postgresql.util.PSQLException
+import java.net.ConnectException
 
 object DatabaseFactory {
 
@@ -16,15 +18,16 @@ object DatabaseFactory {
         onExplainResult = value
     }
 
-    fun connect(connection: DatabaseConnection) {
+    fun connect(connection: DatabaseConnection): Database {
         Napier.d {
             "connect $connection"
         }
         val (uri, driver, user, password) = connection
-        Database.connect(uri, driver, user, password)
+        return Database.connect(uri, driver, user, password)
     }
 
-    private val tables = arrayOf(Aids,
+    private val tables = arrayOf(
+        Aids,
         Communities,
         EncryptedTopics,
         EncryptedTopicKeys,
@@ -34,38 +37,70 @@ object DatabaseFactory {
         Rooms,
         Titles,
         Topics,
-        Users)
+        Users
+    )
 
-    fun init(dropBeforeInit: Boolean = false) {
-        transaction {
-            addLogger(StdOutSqlLogger)
+    fun init(backend: Backend, dropBeforeInit: Boolean = false) {
+        Napier.i(tag = "database") {
+            "init"
+        }
+        transaction(backend.database) {
             if (dropBeforeInit) {
                 SchemaUtils.drop(*tables)
+            }
+            Napier.i(tag = "database") {
+                "create tables"
             }
             SchemaUtils.create(*tables)
         }
     }
 
-    fun clean() {
-        transaction {
+    fun clean(backend: Backend) {
+        Napier.i(tag = "database") {
+            "clean"
+        }
+        transaction(backend.database) {
+            Napier.i(tag = "database") {
+                "drop tables"
+            }
             SchemaUtils.drop(*tables)
         }
     }
 
-    suspend fun <T> dbQuery(block: suspend Transaction.() -> T): Result<T> {
-        val r = Exception()
+    private fun Transaction.handleDatabaseException(e: Throwable, point: Exception): Nothing {
+        if (e is UnauthorizedException) {
+            throw e
+        }
+        val dialectName = connection.metadata {
+            databaseDialectName
+        }
+        val isConnectFailed = e is PSQLException && e.cause is ConnectException
+
+        val n = if (point.cause == null) {
+            point.initCause(e)
+            point
+        } else {
+            Exception("retry failed", e)
+        }
+        Napier.e(n, "database failed") {
+            val isRetry = point.cause != null
+            if (isConnectFailed) {
+                "$dialectName connect failed $isRetry"
+            } else {
+                "$dialectName query failed $isRetry"
+            }
+        }
+        throw Exception(if (isConnectFailed) "database connect failed" else "database query failed", e)
+    }
+
+    suspend fun <T> dbQuery(backend: Backend, block: suspend Transaction.() -> T): Result<T> {
+        val point = Exception()
         return runCatching {
-            newSuspendedTransaction(Dispatchers.IO) {
+            newSuspendedTransaction(Dispatchers.IO, backend.database) {
                 try {
                     block()
                 } catch (e: Throwable) {
-                    if (e !is UnauthorizedException) {
-                        r.initCause(e)
-                        Napier.e(r, "database failed") {
-                            "${connection.connection}"
-                        }
-                    }
-                    throw e
+                    handleDatabaseException(e, point)
                 }
             }
         }
@@ -74,25 +109,27 @@ object DatabaseFactory {
     /**
      * 带有transform
      */
-    suspend fun <T, R> query(transform: T.() -> R, block: Transaction.() -> T): Result<R> =
-        dbQuery { transform(block()) }
+    suspend fun <T, R> query(
+        backend: Backend,
+        transform: T.() -> R,
+        block: Transaction.() -> T
+    ): Result<R> =
+        dbQuery(backend) { transform(block()) }
 
-    private suspend fun <T, R> dbSearch(transform: SizedIterable<T>.() -> R, block: () -> SizedIterable<T>): Result<R> {
-        val r = Exception()
+    private suspend fun <T, R> dbSearch(
+        backend: Backend,
+        transform: SizedIterable<T>.() -> R,
+        block: () -> SizedIterable<T>
+    ): Result<R> {
+        val point = Exception()
         return runCatching {
-            newSuspendedTransaction(Dispatchers.IO) {
+            newSuspendedTransaction(Dispatchers.IO, backend.database) {
                 debug = onExplainResult != null
                 try {
-                    explainQuery(r, block)
+                    explainQuery(point, block)
                     transform(block())
                 } catch (e: Throwable) {
-                    if (e !is UnauthorizedException) {
-                        r.initCause(e)
-                        Napier.e(r, "database failed") {
-                            "${connection.connection}"
-                        }
-                    }
-                    throw e
+                    handleDatabaseException(e, point)
                 }
             }
         }
@@ -101,8 +138,12 @@ object DatabaseFactory {
     /**
      * 带有transform
      */
-    suspend fun <T, R> mapQuery(transform: T.() -> R, block: () -> SizedIterable<T>): Result<List<R>> =
-        dbSearch({
+    suspend fun <T, R> mapQuery(
+        backend: Backend,
+        transform: T.() -> R,
+        block: () -> SizedIterable<T>
+    ): Result<List<R>> =
+        dbSearch(backend, {
             map(transform)
         }) {
             block()
@@ -112,11 +153,12 @@ object DatabaseFactory {
      * 带有transform
      */
     suspend fun <T, R, R1> mapQuery(
+        backend: Backend,
         transform: R1.() -> R,
         resultRowTransform: (T) -> R1,
         block: () -> SizedIterable<T>
     ): Result<List<R>> =
-        dbSearch({
+        dbSearch(backend, {
             map(resultRowTransform).map(transform)
         }) {
             block()
@@ -129,10 +171,11 @@ object DatabaseFactory {
      * @param resultRowTransform 主要用于将ResultRow 转换成普通数据
      */
     suspend fun <T, R, R1> first(
+        backend: Backend,
         transform: R1.() -> T,
         resultRowTransform: (R) -> R1,
         block: () -> SizedIterable<R>
-    ): Result<T?> = dbSearch({
+    ): Result<T?> = dbSearch(backend, {
         limit(1).firstOrNull()?.let(resultRowTransform)?.let { transform(it) }
     }) {
         block()
@@ -144,9 +187,10 @@ object DatabaseFactory {
      * @param resultRowTransform 主要用于将ResultRow 转换成普通数据
      */
     suspend fun <R, R1> first(
+        backend: Backend,
         resultRowTransform: (R) -> R1,
         block: () -> SizedIterable<R>
-    ): Result<R1?> = dbSearch({
+    ): Result<R1?> = dbSearch(backend, {
         limit(1).firstOrNull()?.let(resultRowTransform)
     }) {
         block()
@@ -155,21 +199,26 @@ object DatabaseFactory {
     /**
      * 检查数据是不是空
      */
-    suspend fun <T> isEmpty(block: () -> SizedIterable<T>): Result<Boolean> = isNotEmpty(block).map {
-        !it
-    }
+    suspend fun <T> isEmpty(backend: Backend, block: () -> SizedIterable<T>): Result<Boolean> =
+        isNotEmpty(backend, block).map {
+            !it
+        }
 
-    suspend fun <T> isNotEmpty(block: () -> SizedIterable<T>): Result<Boolean> = dbQuery({
+    suspend fun <T> isNotEmpty(
+        backend: Backend,
+        block: () -> SizedIterable<T>
+    ): Result<Boolean> = dbQuery(backend, {
         block().count()
     }).map {
         it > 0
     }
 
-    suspend fun <T> count(block: () -> SizedIterable<T>): Result<Long> = dbSearch({
-        count()
-    }) {
-        block()
-    }
+    suspend fun <T> count(backend: Backend, block: () -> SizedIterable<T>): Result<Long> =
+        dbSearch(backend, {
+            count()
+        }) {
+            block()
+        }
 
     private fun <T> Transaction.explainQuery(point: Exception, block: () -> SizedIterable<T>) {
         onExplainResult?.let {
@@ -177,8 +226,8 @@ object DatabaseFactory {
                 block()
             }.toList().joinToString("\n")
             assert(statements.isNotEmpty())
-            val input = statements.toString().split("\n").firstOrNull {
-                it.isNotEmpty() && !it.contains("INFORMATION_SCHEMA")
+            val input = statements.toString().split("\n").firstOrNull { statement ->
+                statement.isNotEmpty() && !statement.contains("INFORMATION_SCHEMA")
             }
             if (input != null) {
                 val s = "explain"

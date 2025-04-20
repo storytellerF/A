@@ -94,7 +94,6 @@ kotlin {
             implementation(libs.androidx.media3.ui)
             implementation(libs.androidx.media3.session)
             implementation(libs.record.core)
-            implementation(projects.cryptoJvm)
             implementation(libs.github.newpipeextractor)
             implementation(libs.compose.webview)
             implementation(libs.androidx.core.splashscreen)
@@ -171,7 +170,6 @@ kotlin {
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(compose.uiTest)
             implementation(projects.testServer.simple)
-            implementation(projects.cryptoJvm)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -180,7 +178,6 @@ kotlin {
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.vlcj)
             implementation(libs.jlayer)
-            implementation(projects.cryptoJvm)
             implementation(libs.llama)
             implementation(libs.androidx.datastore.preferences.core)
         }

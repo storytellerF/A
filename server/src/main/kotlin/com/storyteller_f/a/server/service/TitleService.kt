@@ -4,11 +4,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ForbiddenException
-import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TitleInfo
-import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.type.ObjectType
@@ -31,20 +27,21 @@ suspend fun getUserTitles(
     limit: Int,
     pre: PrimaryKey?
 ) = DatabaseFactory.userTitles(
+    backend,
     uid,
     searchType,
     type,
     scopeId,
     PagingFetch(pre, next, limit)
 ).mapResult { (list, count) ->
-    processTitleList(list, backend, uid).map {
+    processTitleList(backend, list, uid).map {
         PaginationResult(it, count)
     }
 }
 
 private suspend fun processTitleList(
-    list: List<TitleInfo>,
     backend: Backend,
+    list: List<TitleInfo>,
     uid: PrimaryKey?
 ): Result<List<TitleInfo>> {
     val uidList = list.flatMap {
@@ -78,25 +75,25 @@ private suspend fun processTitleList(
         }
     }.distinct()
     return getRelatedObject(
-        uidList,
         backend,
+        uidList,
         communityIdList,
         roomIdList
     ).mapResult { (userList, roomList, communityList) ->
-        getTopicByIds(topicIdList, uid, false, backend).map { topicList ->
+        getTopicByIds(backend, topicIdList, uid, false).map { topicList ->
             processTitleList(userList, communityList, roomList, list, topicList)
         }
     }
 }
 
 private suspend fun getRelatedObject(
-    uidList: List<PrimaryKey>,
     backend: Backend,
+    uidList: List<PrimaryKey>,
     communityIdList: List<PrimaryKey>,
     roomIdList: List<PrimaryKey>
 ): Result<Triple<List<UserInfo>, List<RoomInfo>, List<CommunityInfo>>> {
     val userList = if (uidList.isNotEmpty()) {
-        val result = DatabaseFactory.getUsersByIds(uidList, backend)
+        val result = DatabaseFactory.getUsersByIds(backend, uidList)
         val throwable = result.exceptionOrNull()
         if (throwable != null) {
             return Result.failure(throwable)
@@ -106,7 +103,7 @@ private suspend fun getRelatedObject(
         emptyList()
     }
     val communityList = if (communityIdList.isNotEmpty()) {
-        val result = DatabaseFactory.getCommunityByIds(communityIdList).mapResult {
+        val result = DatabaseFactory.getCommunityByIds(backend, communityIdList).mapResult {
             processCommunityList(backend, it)
         }
         val throwable = result.exceptionOrNull()
@@ -118,7 +115,7 @@ private suspend fun getRelatedObject(
         emptyList()
     }
     val roomList = if (roomIdList.isNotEmpty()) {
-        val result = DatabaseFactory.getRoomByIds(roomIdList).mapResult {
+        val result = DatabaseFactory.getRoomByIds(backend, roomIdList).mapResult {
             processRoomList(it, backend)
         }
         val throwable = result.exceptionOrNull()
@@ -139,18 +136,10 @@ private fun processTitleList(
     list: List<TitleInfo>,
     topicList: List<TopicInfo>,
 ): List<TitleInfo> {
-    val userMap = userList.associate {
-        it.id to it
-    }
-    val communityMap = communityList.associate {
-        it.id to it
-    }
-    val roomMap = roomList.associate {
-        it.id to it
-    }
-    val topicMap = topicList.associate {
-        it.id to it
-    }
+    val userMap = userList.associateBy { it.id }
+    val communityMap = communityList.associateBy { it.id }
+    val roomMap = roomList.associateBy { it.id }
+    val topicMap = topicList.associateBy { it.id }
     return list.map {
         val extension = TitleInfo.Extension(
             userMap[it.creator]!!,
@@ -177,9 +166,18 @@ private fun processTitleList(
     }
 }
 
-suspend fun createTitle(newTitle: NewTitle, uid: PrimaryKey, backend: Backend) =
-    checkRootAdminPermission(newTitle.scopeType, newTitle.scopeId, uid).mapResultNotNull {
-        if (it.hasAdmin) {
+suspend fun createTitle(
+    backend: Backend,
+    newTitle: NewTitle,
+    uid: PrimaryKey
+) =
+    checkRootAdminPermission(
+        backend,
+        newTitle.scopeType,
+        newTitle.scopeId,
+        uid
+    ).mapResultNotNull { permission ->
+        if (permission.hasAdmin) {
             val title = toTitle(newTitle, uid)
             val topic = Topic(
                 title.descriptionTopicId,
@@ -192,8 +190,13 @@ suspend fun createTitle(newTitle: NewTitle, uid: PrimaryKey, backend: Backend) =
                 false,
                 null
             )
-            DatabaseFactory.createTitle(title, topic, newTitle.description, backend).mapResult {
-                processTitleList(listOf(it), backend, uid).map {
+            DatabaseFactory.createTitle(
+                backend,
+                title,
+                topic,
+                newTitle.description
+            ).mapResult { created ->
+                processTitleList(backend, listOf(created), uid).map {
                     it.first()
                 }
             }

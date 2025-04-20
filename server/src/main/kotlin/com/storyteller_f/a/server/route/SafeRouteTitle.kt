@@ -8,11 +8,11 @@ import com.storyteller_f.a.server.service.createTitle
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.TitleType
-import io.ktor.server.request.receive
+import io.ktor.server.request.*
 import io.ktor.server.resources.post
 import io.ktor.server.routing.Route
 
-val titleMap = mutableMapOf<ObjectType, List<TitleType>>(
+val titleMap = mutableMapOf(
     ObjectType.COMMUNITY to listOf(
         TitleType.REGULAR,
         TitleType.JOIN
@@ -29,14 +29,14 @@ val titleMap = mutableMapOf<ObjectType, List<TitleType>>(
     )
 )
 
-fun Route.bindProtectedTitleRoute(backend: Backend, reader: DatabaseReader) {
+fun Route.bindProtectedTitleRoute(reader: DatabaseReader, backend: Backend) {
     post<RouteTitles> {
         val title = call.receive<NewTitle>()
         usePrincipal(reader) { uid ->
             val supportType = titleMap[title.scopeType]
             if (supportType != null) {
                 if (supportType.contains(title.type)) {
-                    createTitle(title, uid, backend)
+                    createTitle(backend, title, uid)
                 } else {
                     Result.failure(ForbiddenException("unsupported title type ${title.type} in ${title.scopeType}"))
                 }

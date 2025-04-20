@@ -16,6 +16,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.ElasticConnection
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.types.PaginationResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
@@ -118,16 +119,14 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     override suspend fun searchDocument(
         size: Int,
         word: List<String>?,
-        preTopicId: PrimaryKey?,
-        nextTopicId: PrimaryKey?,
-        documentSearch: DocumentSearch
+        documentSearch: DocumentSearch,
+        pagingFetch: PagingFetch?
     ): Result<PaginationResult<TopicDocument>> {
         val boolQuery =
             createTopicSearchQuery(
                 word,
-                preTopicId,
-                nextTopicId,
-                documentSearch
+                documentSearch,
+                pagingFetch
             )
 
         // 构建排序条件：按 ID 升序排序
@@ -137,7 +136,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 .size(size)
                 .sort { sort ->
                     sort.field { f ->
-                        f.field("id").order(if (preTopicId == null) SortOrder.Desc else SortOrder.Asc)
+                        f.field("id").order(if (pagingFetch?.pre == null) SortOrder.Desc else SortOrder.Asc)
                     }
                 }.trackScores(true)
         }
@@ -156,9 +155,8 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
 
     private fun createTopicSearchQuery(
         word: List<String>?,
-        preTopicId: PrimaryKey?,
-        nextTopicId: PrimaryKey?,
-        documentSearch: DocumentSearch
+        documentSearch: DocumentSearch,
+        pagingFetch: PagingFetch?,
     ): Query {
         val queryList = buildList {
             word?.let {
@@ -170,14 +168,14 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 }
             }
 
-            nextTopicId?.let { n ->
+            pagingFetch?.next?.let { n ->
                 add(RangeQuery.of { r ->
                     r.untyped {
                         it.field("id").lt(JsonData.of(n))
                     }
                 }._toQuery() to true)
             }
-            preTopicId?.let { p ->
+            pagingFetch?.pre?.let { p ->
                 add(RangeQuery.of { r ->
                     r.untyped {
                         it.field("id").gt(JsonData.of(p))

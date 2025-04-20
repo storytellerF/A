@@ -4,8 +4,8 @@ import android.app.Application
 import android.content.Context
 import android.os.StrictMode
 import com.storyteller_f.a.app.utils.restoreFromStorage
-import com.storyteller_f.crypto_jvm.addProviderForAndroid
 import com.storyteller_f.shared.contextRef
+import com.storyteller_f.shared.loadIfNeed
 import org.schabi.newpipe.DownloaderImpl
 import org.schabi.newpipe.ReCaptchaActivity
 import org.schabi.newpipe.extractor.NewPipe
@@ -22,7 +22,7 @@ class AApplication : Application() {
                 .build()
         )
         contextRef = WeakReference(this)
-        addProviderForAndroid()
+        loadIfNeed()
         restoreFromStorage()
         setCookiesToDownloader(DownloaderImpl)
         NewPipe.init(DownloaderImpl, Localization.DEFAULT, ContentCountry.DEFAULT)

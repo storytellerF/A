@@ -2,8 +2,8 @@ package com.storyteller_f.a.client_lib
 
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
-import com.storyteller_f.shared.encrypt
-import com.storyteller_f.shared.encryptAesKey
+import com.storyteller_f.shared.eciesEncrypt
+import com.storyteller_f.shared.encryptData
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
@@ -20,6 +20,7 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.util.internal.initCauseBridge
 import io.ktor.utils.io.core.*
 
 fun isAlreadyLogin(): Boolean {
@@ -32,7 +33,7 @@ inline fun <R> serviceCatching(block: () -> R): Result<R> {
         val value = block()
         Result.success(value)
     } catch (e: Throwable) {
-        point.initCause(e)
+        point.initCauseBridge(e)
         Napier.e(point) {
             "serviceCatching"
         }
@@ -447,9 +448,9 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
     keyData: List<Pair<PrimaryKey, String>>,
 ) {
     val content = if (isPrivate) {
-        val (encrypted, aes) = encrypt(input)
+        val (encrypted, aes) = encryptData(input)
         TopicContent.Encrypted(encrypted.toHexString(), keyData.associate {
-            it.first to encryptAesKey(it.second, aes).toHexString()
+            it.first to eciesEncrypt(it.second, aes).toHexString()
         })
     } else {
         TopicContent.Plain(input)

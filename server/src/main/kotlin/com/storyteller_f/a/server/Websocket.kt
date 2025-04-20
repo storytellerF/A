@@ -28,11 +28,14 @@ import kotlinx.coroutines.launch
 val messageResponseFlow = MutableSharedFlow<RoomFrame.NewTopicInfo>()
 val sharedFlow = messageResponseFlow.asSharedFlow()
 
-suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend, reader: DatabaseReader) {
+suspend fun DefaultWebSocketServerSession.webSocketContent(
+    reader: DatabaseReader,
+    backend: Backend
+) {
     val job = launch {
         sharedFlow.collect { frame ->
             usePrincipalOrNull { uid ->
-                sendToMember(frame, uid)
+                sendToMember(backend, frame, uid)
             }
         }
     }
@@ -42,7 +45,7 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend, rea
             val frame = receiveDeserialized<RoomFrame>()
             usePrincipalOrNull { uid ->
                 if (uid != null) {
-                    processUserMessage(frame, uid, backend)
+                    processUserMessage(backend, frame, uid)
                 }
             }
         } catch (e: Exception) {
@@ -54,13 +57,14 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(backend: Backend, rea
 }
 
 private suspend fun DefaultWebSocketServerSession.sendToMember(
+    backend: Backend,
     frame: RoomFrame.NewTopicInfo,
     uid: PrimaryKey?
 ) {
     val info = frame.topicInfo
     if (uid != null) {
         call.application.log.info("distribution ${info.id}")
-        isMemberJoined(info.rootId, uid).onSuccess { value ->
+        isMemberJoined(backend, info.rootId, uid).onSuccess { value ->
             if (value && uid != info.author) {
                 sendSerialized(frame as RoomFrame)
             }
@@ -90,9 +94,9 @@ private fun DefaultWebSocketServerSession.printWsError(
 }
 
 private suspend fun DefaultWebSocketServerSession.processUserMessage(
+    backend: Backend,
     frame: RoomFrame,
-    uid: PrimaryKey,
-    backend: Backend
+    uid: PrimaryKey
 ) {
     try {
         if (frame is RoomFrame.Message) {
@@ -112,7 +116,7 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
                 sendSerialized(RoomFrame.Error("not support message type") as RoomFrame)
                 return
             }
-            addTopicAtRoom(newTopic, uid, backend = backend).onSuccess {
+            addTopicAtRoom(backend, newTopic, uid).onSuccess {
                 if (it == null) {
                     sendSerialized(RoomFrame.Error("not found") as RoomFrame)
                 } else {
@@ -132,19 +136,19 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
 }
 
 private suspend fun addTopicAtRoom(
+    backend: Backend,
     newTopic: NewRoomTopic,
-    uid: PrimaryKey,
-    backend: Backend
+    uid: PrimaryKey
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.getTopicRoot(newTopic.parentId).mapResultNotNull { (id, type) ->
+            DatabaseFactory.getTopicRoot(backend, newTopic.parentId).mapResultNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
                     addTopicIntoRoom(
+                        backend,
                         id,
                         uid,
-                        newTopic,
-                        backend
+                        newTopic
                     )
                 } else {
                     Result.failure(ForbiddenException())
@@ -154,10 +158,10 @@ private suspend fun addTopicAtRoom(
 
         ObjectType.ROOM -> {
             addTopicIntoRoom(
+                backend,
                 newTopic.parentId,
                 uid,
-                newTopic,
-                backend
+                newTopic
             )
         }
 
@@ -168,12 +172,12 @@ private suspend fun addTopicAtRoom(
 }
 
 private suspend fun addTopicIntoRoom(
+    backend: Backend,
     roomId: PrimaryKey,
     uid: PrimaryKey,
-    newTopic: NewRoomTopic,
-    backend: Backend
+    newTopic: NewRoomTopic
 ): Result<TopicInfo?> {
-    return isMemberJoined(roomId, uid).mapResult { bool ->
+    return isMemberJoined(backend, roomId, uid).mapResult { bool ->
         if (bool) {
             val content = newTopic.content
             val newId = SnowflakeFactory.nextId()
@@ -189,7 +193,7 @@ private suspend fun addTopicIntoRoom(
                 null
             )
 
-            checkRoomIsPrivate(roomId).mapResultNotNull { isPrivate ->
+            checkRoomIsPrivate(backend, roomId).mapResultNotNull { isPrivate ->
                 if (isPrivate) {
                     when {
                         content !is TopicContent.Encrypted -> Result.failure(
@@ -197,9 +201,11 @@ private suspend fun addTopicIntoRoom(
                         )
 
                         isKeyVerified(
+                            backend,
                             roomId,
                             content.encryptedKey
                         ).getOrNull() == true -> DatabaseFactory.saveEncryptedTopic(
+                            backend,
                             topic,
                             content
                         )
@@ -209,10 +215,11 @@ private suspend fun addTopicIntoRoom(
                 } else {
                     when (content) {
                         is TopicContent.Plain -> DatabaseFactory.savePlainTopic(
+                            backend,
                             topic,
-                            backend = backend,
                             content = content
                         )
+
                         else -> Result.failure(ForbiddenException("Public room only accept unencrypted content."))
                     }
                 }
@@ -223,8 +230,12 @@ private suspend fun addTopicIntoRoom(
     }
 }
 
-private suspend fun isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Result<Boolean> {
-    return DatabaseFactory.userListJoinedRoom(roomId).map { value ->
+private suspend fun isKeyVerified(
+    backend: Backend,
+    roomId: PrimaryKey,
+    encryptedAes: Map<PrimaryKey, String>
+): Result<Boolean> {
+    return DatabaseFactory.userListJoinedRoom(backend, roomId).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()

@@ -2,6 +2,7 @@ package com.storyteller_f.index
 
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.tables.Topic
 import com.storyteller_f.types.PaginationResult
 
@@ -47,8 +48,7 @@ interface TopicSearchService {
     suspend fun searchDocument(
         size: Int,
         word: List<String>? = null,
-        preTopicId: PrimaryKey? = null,
-        nextTopicId: PrimaryKey? = null,
-        documentSearch: DocumentSearch = DocumentSearch.All
+        documentSearch: DocumentSearch = DocumentSearch.All,
+        pagingFetch: PagingFetch? = null
     ): Result<PaginationResult<TopicDocument>>
 }

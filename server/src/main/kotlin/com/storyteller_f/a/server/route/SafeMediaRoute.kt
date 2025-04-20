@@ -11,10 +11,10 @@ import io.ktor.server.routing.*
 import org.apache.tika.Tika
 import java.io.File
 
-fun Route.bindProtectedSafeMediaRoute(backend: Backend, reader: DatabaseReader) {
+fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteMedia> {
         usePrincipal(reader) { uid ->
-            getMediaList(uid, backend, it)
+            getMediaList(backend, uid, it)
         }
     }
 
@@ -30,7 +30,7 @@ fun Route.bindProtectedSafeMediaRoute(backend: Backend, reader: DatabaseReader) 
 
     post<RouteMedia.Upload> {
         usePrincipal(reader) { uid ->
-            uploadMedia(it, uid, root, backend, tika)
+            uploadMedia(backend, it, uid, root, tika)
         }
     }
 }
