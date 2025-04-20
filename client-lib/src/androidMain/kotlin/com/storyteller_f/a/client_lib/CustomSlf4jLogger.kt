@@ -4,10 +4,12 @@ import io.github.aakira.napier.LogLevel
 import io.github.aakira.napier.Napier
 import org.slf4j.ILoggerFactory
 import org.slf4j.IMarkerFactory
+import org.slf4j.Logger
 import org.slf4j.Marker
 import org.slf4j.event.Level
+import org.slf4j.helpers.AbstractLogger
+import org.slf4j.helpers.BasicMDCAdapter
 import org.slf4j.helpers.BasicMarkerFactory
-import org.slf4j.helpers.NOPMDCAdapter
 import org.slf4j.spi.MDCAdapter
 import org.slf4j.spi.SLF4JServiceProvider
 
@@ -21,7 +23,7 @@ class CustomSLF4JServiceProvider : SLF4JServiceProvider {
     }
 
     override fun getMDCAdapter(): MDCAdapter {
-        return NOPMDCAdapter()
+        return BasicMDCAdapter()
     }
 
     override fun getRequestedApiVersion(): String {
@@ -32,12 +34,12 @@ class CustomSLF4JServiceProvider : SLF4JServiceProvider {
 }
 
 class CustomLoggerFactory : ILoggerFactory {
-    override fun getLogger(name: String?): org.slf4j.Logger {
+    override fun getLogger(name: String?): Logger {
         return CustomSlf4jLogger(name ?: "Default")
     }
 }
 
-class CustomSlf4jLogger(private val customName: String) : org.slf4j.helpers.AbstractLogger() {
+class CustomSlf4jLogger(private val customName: String) : AbstractLogger() {
     override fun isTraceEnabled(): Boolean {
         return false
     }
@@ -91,17 +93,24 @@ class CustomSlf4jLogger(private val customName: String) : org.slf4j.helpers.Abst
     ) {
         level ?: return
         messagePattern ?: return
+        if (!arguments.isNullOrEmpty()) {
+            Napier.w(tag = customName) {
+                "argument is not empty $arguments"
+            }
+        }
         Napier.log(
-            when (level) {
-                Level.ERROR -> LogLevel.ERROR
-                Level.WARN -> LogLevel.WARNING
-                Level.INFO -> LogLevel.INFO
-                Level.DEBUG -> LogLevel.DEBUG
-                Level.TRACE -> LogLevel.VERBOSE
-            },
+            getLevel(level),
             customName,
             throwable,
             messagePattern
         )
+    }
+
+    private fun getLevel(level: Level): LogLevel = when (level) {
+        Level.ERROR -> LogLevel.ERROR
+        Level.WARN -> LogLevel.WARNING
+        Level.INFO -> LogLevel.INFO
+        Level.DEBUG -> LogLevel.DEBUG
+        Level.TRACE -> LogLevel.VERBOSE
     }
 }

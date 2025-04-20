@@ -7,7 +7,7 @@ import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.storyteller_f.a.client_lib.LoginUser
 import com.storyteller_f.a.client_lib.LoginUserSession
-import com.storyteller_f.crypto_jvm.CryptoJvm
+import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.calcAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

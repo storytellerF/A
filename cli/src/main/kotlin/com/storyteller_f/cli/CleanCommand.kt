@@ -10,14 +10,15 @@ import kotlinx.coroutines.runBlocking
 @OptIn(ExperimentalCli::class)
 class CleanCommand : Subcommand("clean", "clean all data") {
     override fun execute() {
-        DatabaseFactory.connect(backend.config.databaseConnection)
-        DatabaseFactory.clean()
+        val connected = backend
+        DatabaseFactory.connect(connected.config.databaseConnection)
+        DatabaseFactory.clean(connected)
         Napier.i {
             "database tables removed."
         }
         runBlocking {
-            backend.mediaService.clean(AMEDIA_DEFAULT_BUCKET).getOrThrow()
-            backend.topicSearchService.clean().getOrThrow()
+            connected.mediaService.clean(AMEDIA_DEFAULT_BUCKET).getOrThrow()
+            connected.topicSearchService.clean().getOrThrow()
         }
         Napier.i {
             "clean done."
@@ -30,7 +31,7 @@ class PrintCommand : Subcommand("print", "print") {
     override fun execute() {
         runBlocking {
             val result = backend.topicSearchService.searchDocument(
-                10
+                10,
             ).getOrThrow()
             Napier.i {
                 "total ${result.total} ${result.list.size}"

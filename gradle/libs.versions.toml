@@ -41,7 +41,7 @@ kim = "0.23"
 kotlin = "2.1.20"
 kotlin_buildconfig = "5.5.4"
 kotlinxCli = "0.3.6"
-kotlinxCoroutinesSwing = "1.10.1"
+kotlinxCoroutinesSwing = "1.10.2"
 kotlinxDatetime = "0.6.2"
 kotlinxSerializationJson = "1.8.0"
 kover = "0.9.1"
@@ -60,6 +60,7 @@ memoryfilesystem = "2.8.1"
 minio = "8.5.17"
 mysqlConnectorJava = "8.0.33"
 newpipeextractorVersion = "v0.24.5"
+slf4jApi = "2.0.17"
 sqlFormatter = "2.0.5"
 tasksGenai = "0.10.23"
 testContainer = "1.20.6"
@@ -120,6 +121,8 @@ compose-native-notification = { module = "io.github.kdroidfilter:compose-native-
 compose-pdf = { module = "dev.zt64:compose-pdf", version.ref = "composePdf" }
 compose-preferences = { group = "io.github.strabled", name = "ComposePreferences", version.ref = "composePreferences" }
 compose-webview = { module = "io.github.kevinnzou:compose-webview", version.ref = "composeWebview" }
+cryptography-provider-openssl3-prebuilt = { module = "dev.whyoleg.cryptography:cryptography-provider-openssl3-prebuilt", version.ref = "cryptographyCore" }
+cryptography-provider-webcrypto = { module = "dev.whyoleg.cryptography:cryptography-provider-webcrypto", version.ref = "cryptographyCore" }
 fonticons-core = { module = "dev.tclement.fonticons:core", version.ref = "core" }
 couchbase-lite = { module = "dev.kotbase:couchbase-lite", version.ref = "couchbaseLite" }
 couchbase-lite-ktx = { module = "dev.kotbase:couchbase-lite-ktx", version.ref = "couchbaseLite" }
@@ -132,10 +135,12 @@ detekt-rules-libraries = { module = "io.gitlab.arturbosch.detekt:detekt-rules-li
 detekt-rules-ruleauthors = { module = "io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors", version.ref = "detektVersion" }
 github-newpipeextractor = { module = "com.github.teamnewpipe.NewPipeExtractor:NewPipeExtractor", version.ref = "newpipeextractorVersion" }
 kfswatch = { module = "io.github.irgaly.kfswatch:kfswatch", version.ref = "kfswatch" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesSwing" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
 llama = { module = "de.kherud:llama", version.ref = "llama" }
 memoryfilesystem = { module = "com.github.marschall:memoryfilesystem", version.ref = "memoryfilesystem" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnectorJava" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4jApi" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
 tasks-genai = { module = "com.google.mediapipe:tasks-genai", version.ref = "tasksGenai" }
 testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }

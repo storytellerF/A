@@ -2,11 +2,13 @@ package com.storyteller_f.a.server.route
 
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
-import com.storyteller_f.a.server.auth.*
+import com.storyteller_f.a.server.auth.bindProtectedAccountRoute
+import com.storyteller_f.a.server.auth.bindUnprotectedAccountRoute
+import com.storyteller_f.a.server.auth.omitPrincipal
+import com.storyteller_f.a.server.common.PathResponse
 import com.storyteller_f.a.server.common.checkParameter
 import com.storyteller_f.a.server.webSocketContent
 import com.storyteller_f.media.FileSystemMediaService
-import com.storyteller_f.shared.model.PathResponse
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.PosterSearch
 import com.storyteller_f.shared.obj.TitleSearchType
@@ -165,32 +167,32 @@ class RouteAccounts {
 @Resource("/titles")
 class RouteTitles
 
-fun Application.commonRoute(backend: Backend, reader: DatabaseReader) {
+fun Application.commonRoute(reader: DatabaseReader, backend: Backend) {
     routing {
         authenticate {
-            bindProtectedSafeRoomRoute(backend, reader)
-            bindProtectedSafeTopicRoute(backend, reader)
-            bindProtectedSafeCommunityRoute(backend, reader)
+            bindProtectedSafeRoomRoute(reader, backend)
+            bindProtectedSafeTopicRoute(reader, backend)
+            bindProtectedSafeCommunityRoute(reader, backend)
             bindProtectedSafeUserRoute(reader, backend)
             webSocket("/link") {
-                webSocketContent(backend, reader)
+                webSocketContent(reader, backend)
             }
             bindProtectedAccountRoute(reader)
-            bindProtectedSafeMediaRoute(backend, reader)
-            bindProtectedTitleRoute(backend, reader)
+            bindProtectedSafeMediaRoute(reader, backend)
+            bindProtectedTitleRoute(reader, backend)
         }
         authenticate(optional = true) {
-            bindSafeRoomRoute(backend, reader)
-            bindSafeTopicRoute(backend, reader)
-            bindSafeCommunityRoute(backend, reader)
-            bindSafeUserRoute(backend, reader)
+            bindSafeRoomRoute(reader, backend)
+            bindSafeTopicRoute(reader, backend)
+            bindSafeCommunityRoute(reader, backend)
+            bindSafeUserRoute(reader, backend)
         }
-        bindUnprotectedAccountRoute(backend, reader)
-        bindUnauthenticatedRoute(backend, reader)
+        bindUnprotectedAccountRoute(reader, backend)
+        bindUnauthenticatedRoute(reader, backend)
     }
 }
 
-fun Routing.bindUnauthenticatedRoute(backend: Backend, reader: DatabaseReader) {
+fun Routing.bindUnauthenticatedRoute(reader: DatabaseReader, backend: Backend) {
     get("/ping") {
         call.respondText("pong")
     }

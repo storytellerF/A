@@ -111,7 +111,10 @@ fun Topic.toTopicInfo(
     )
 }
 
-suspend fun DatabaseFactory.getTopicRoot(parentId: PrimaryKey): Result<ObjectTuple?> = first({
+suspend fun DatabaseFactory.getTopicRoot(
+    backend: Backend,
+    parentId: PrimaryKey
+): Result<ObjectTuple?> = first(backend, {
     rootId ob rootType
 }, Topic::wrapRow) {
     Topic.findById(parentId)
@@ -120,15 +123,22 @@ suspend fun DatabaseFactory.getTopicRoot(parentId: PrimaryKey): Result<ObjectTup
 /**
  * 用于生成snapshot
  */
-suspend fun DatabaseFactory.getSimpleTopic(topicId: PrimaryKey): Result<TopicInfo?> = first({
+suspend fun DatabaseFactory.getSimpleTopic(
+    backend: Backend,
+    topicId: PrimaryKey
+): Result<TopicInfo?> = first(backend, {
     toTopicInfo()
 }, Topic::wrapRow) {
     Topic.findById(topicId)
 }
 
-suspend fun DatabaseFactory.getTopicInfo(fetch: ObjectFetch, uid: PrimaryKey?): Result<TopicInfo?> {
+suspend fun DatabaseFactory.getTopicInfo(
+    backend: Backend,
+    fetch: ObjectFetch,
+    uid: PrimaryKey?
+): Result<TopicInfo?> {
     val (query, resultRowTransform) = getTopicBuilder(uid)
-    return first({
+    return first(backend, {
         topicInfo.toTopicInfo(commentCount, hasComment, reactionCount, aid)
     }, resultRowTransform) {
         query.andWhere {
@@ -180,6 +190,7 @@ private fun getTopicBuilder(uid: PrimaryKey?): Pair<Query, (ResultRow) -> TopicS
  * 根据指定条件获取未填充content 的topic 列表
  */
 suspend fun getTopicsByPredicate(
+    backend: Backend,
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
     extraPredicate: (Query) -> Query = { it },
@@ -188,7 +199,7 @@ suspend fun getTopicsByPredicate(
 ): Result<List<TopicInfo>> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
     val (query, resultRowTransform) = getTopicBuilder(uid)
-    return DatabaseFactory.mapQuery({
+    return DatabaseFactory.mapQuery(backend, {
         topicInfo.toTopicInfo(commentCount, hasComment, reactionCount, aid)
     }, resultRowTransform) {
         query.andWhere(predicate).let(extraPredicate)
@@ -197,15 +208,16 @@ suspend fun getTopicsByPredicate(
 }
 
 suspend fun getTopicsPagingByPredicate(
+    backend: Backend,
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
     pagingFetch: PagingFetch,
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<PaginationResult<TopicInfo>> {
-    return getTopicsByPredicate(uid, fillHasCommented, {
+    return getTopicsByPredicate(backend, uid, fillHasCommented, {
         it.bindPaginationQuery(Topics, pagingFetch)
     }, predicate = predicate).mapResult { data ->
-        DatabaseFactory.count {
+        DatabaseFactory.count(backend) {
             Topics
                 .selectAll()
                 .where(predicate)
@@ -218,9 +230,10 @@ suspend fun getTopicsPagingByPredicate(
 // 加密内容不能处理media，需要客户端处理
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun DatabaseFactory.getEncryptedTopicContents(
+    backend: Backend,
     data: List<TopicInfo>,
     uid: PrimaryKey
-) = dbQuery {
+) = dbQuery(backend) {
     val topicId = data.map {
         it.id
     }
@@ -246,12 +259,12 @@ suspend fun DatabaseFactory.getEncryptedTopicContents(
 }
 
 suspend fun DatabaseFactory.savePlainTopic(
-    topic: Topic,
     backend: Backend,
+    topic: Topic,
     content: TopicContent.Plain
-) = dbQuery {
+) = dbQuery(backend) {
     Topic.new(topic)
-    insertMediaRefs(topic.id, ObjectType.TOPIC, extractMarkdownMediaLink(content.plain).map {
+    insertMediaRefs(backend, topic.id, ObjectType.TOPIC, extractMarkdownMediaLink(content.plain).map {
         topic.author to it
     }).getOrThrow()
 
@@ -263,9 +276,10 @@ suspend fun DatabaseFactory.savePlainTopic(
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun DatabaseFactory.saveEncryptedTopic(
+    backend: Backend,
     topic: Topic,
     content: TopicContent.Encrypted,
-) = dbQuery {
+) = dbQuery(backend) {
     Topic.new(topic)
     EncryptedTopics.insert {
         it[this.content] = ExposedBlob(content.encrypted.hexToByteArray())
@@ -281,8 +295,12 @@ suspend fun DatabaseFactory.saveEncryptedTopic(
         .copy(content = TopicContent.Encrypted(content.encrypted, content.encryptedKey), isPrivate = true)
 }
 
-suspend fun DatabaseFactory.updateTopicStatus(topicId: PrimaryKey, newValue: Boolean): Result<Boolean> {
-    return dbQuery {
+suspend fun DatabaseFactory.updateTopicStatus(
+    backend: Backend,
+    topicId: PrimaryKey,
+    newValue: Boolean
+): Result<Boolean> {
+    return dbQuery(backend) {
         Topics.update({
             Topics.id eq topicId
         }) {

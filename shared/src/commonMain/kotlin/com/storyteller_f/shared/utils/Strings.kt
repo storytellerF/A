@@ -7,17 +7,8 @@ package com.storyteller_f.shared.utils
  * N: any kind of numeric character in any script.
  * S: math symbols, currency signs, dingbats, box-drawing characters, etc.
  */
-fun checkContent(content: String): Boolean {
-    val regexp = "^[\\p{L}\\p{N}\\p{P}\\p{Z}\\p{S}\n\\p{IsEmoji}]+$"
-    return regexp.toRegex().matches(content)
-}
+expect fun checkContent(text: String): Boolean
 
-fun String.safeFirstUnicode(): String? {
-    val regexp = "^[\\p{L}\\p{N}\\p{P}\\p{Z}\\p{S}\\p{IsEmoji}]"
-    return regexp.toRegex().find(this)?.groupValues?.getOrNull(0)
-}
+expect fun safeFirstUnicode(text: String): String?
 
-fun String.safeFirstEmoji(): String? {
-    val regexp = "^\\p{IsEmoji}"
-    return regexp.toRegex().find(this)?.groupValues?.getOrNull(0)
-}
+expect fun safeFirstEmoji(text: String): String?

@@ -4,7 +4,7 @@ import com.kdroid.composenotification.builder.AppConfig
 import com.kdroid.composenotification.builder.NotificationInitializer
 import com.storyteller_f.a.app.App
 import com.storyteller_f.a.app.utils.restoreFromStorage
-import com.storyteller_f.crypto_jvm.addProviderForJvm
+import com.storyteller_f.shared.loadIfNeed
 import java.awt.*
 import kotlin.math.ceil
 import kotlin.system.exitProcess
@@ -42,7 +42,7 @@ fun main() {
             appName = "My awesome app",
         )
     )
-    addProviderForJvm()
+    loadIfNeed()
     restoreFromStorage()
     application {
         Window(

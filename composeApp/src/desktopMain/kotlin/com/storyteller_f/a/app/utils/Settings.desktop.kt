@@ -1,7 +1,6 @@
 package com.storyteller_f.a.app.utils
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
@@ -16,16 +15,18 @@ import java.util.prefs.Preferences
 actual val defaultSettings: Settings
     get() = PreferencesSettings(Preferences.userRoot())
 
-@Composable
-actual fun customDataStoreManager(): DataStoreManager {
-    val scope = rememberCoroutineScope()
-    return DataStoreManager(
+private val store by lazy {
+    DataStoreManager(
         PreferenceDataStoreFactory.createWithPath(
-            scope = scope,
             produceFile = {
                 val pb = SystemFileSystem.resolve(Path(SystemTemporaryDirectory, "main.preferences_pb"))
                 pb.toFile().toOkioPath()
             }
         )
     )
+}
+
+@Composable
+actual fun customDataStoreManager(): DataStoreManager {
+    return store
 }

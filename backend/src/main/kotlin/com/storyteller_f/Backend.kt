@@ -11,6 +11,7 @@ import com.storyteller_f.media.MinIoMediaService
 import com.storyteller_f.naming.NameService
 import com.storyteller_f.tables.PagingFetch
 import io.github.aakira.napier.Napier
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.andWhere
@@ -24,7 +25,8 @@ class Backend(
     val snapshotVerify: Pair<String, String>,
     val topicSearchService: TopicSearchService,
     val mediaService: MediaService,
-    val nameService: NameService
+    val nameService: NameService,
+    val database: Database
 )
 
 class Config(
@@ -95,7 +97,8 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         env["SNAPSHOT_KEYSTORE_PATH"] to env["SNAPSHOT_KEY_PASS"],
         topicDocumentService,
         mediaService,
-        NameService()
+        NameService(),
+        DatabaseFactory.connect(databaseConnection)
     )
 }
 

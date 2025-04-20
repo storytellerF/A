@@ -1,7 +1,9 @@
 package com.storyteller_f.a.server.common
 
+import com.storyteller_f.shared.model.Identifiable
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapCatchingNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.types.PaginationResult
@@ -9,14 +11,47 @@ import io.ktor.server.routing.*
 import io.ktor.util.converters.*
 import kotlin.reflect.KClass
 
+interface PagingGenerator<in T, R : Any> {
+    fun parse(prePageToken: String?, nextPageToken: String?): Pair<R?, R?>
+
+    fun generate(list: List<T>, size: Int): Pair<String?, String?>
+}
+
+abstract class CustomPagingGenerator<T>(val block: (T) -> String) : PagingGenerator<T, PrimaryKey> {
+    override fun parse(prePageToken: String?, nextPageToken: String?): Pair<PrimaryKey?, PrimaryKey?> {
+        val (parsedPrePageToken, parsedNextPageToken) = when {
+            !nextPageToken.isNullOrBlank() -> null to getPageToken(PrimaryKey::class, nextPageToken)
+            !prePageToken.isNullOrBlank() -> getPageToken(PrimaryKey::class, prePageToken) to null
+            else -> null to null
+        }
+        return Pair(parsedPrePageToken, parsedNextPageToken)
+    }
+
+    override fun generate(list: List<T>, size: Int): Pair<String?, String?> {
+        val next = if (size <= list.size) {
+            block(list.last())
+        } else {
+            null
+        }
+        val pre = if (list.isNotEmpty()) {
+            block(list.first())
+        } else {
+            null
+        }
+        return pre to next
+    }
+}
+
+object IdentityPagingGenerator : CustomPagingGenerator<Identifiable>({
+    it.id.toString()
+})
+
 suspend fun <T, R : Any> RoutingContext.pagination(
-    pageTokenType: KClass<R>,
-    nextKeyBuilder: (T) -> String,
+    generator: PagingGenerator<T, R>,
     block: suspend (R?, R?, Int) -> Result<PaginationResult<T>?>
 ): Result<ServerResponse<T>?> {
     val v = runCatching {
         val size = call.queryParameters.getOrFailCompact<Int>("size")
-
         require(size > 0) {
             "Invalid query size"
         }
@@ -26,25 +61,12 @@ suspend fun <T, R : Any> RoutingContext.pagination(
         require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) {
             "Invalid query"
         }
-        val (parsedPrePageToken, parsedNextPageToken) = when {
-            !nextPageToken.isNullOrBlank() -> null to getPageToken(pageTokenType, nextPageToken)
-            !prePageToken.isNullOrBlank() -> getPageToken<R>(pageTokenType, prePageToken) to null
-            else -> null to null
-        }
+        val (parsedPrePageToken, parsedNextPageToken) = generator.parse(prePageToken, nextPageToken)
         Triple(parsedPrePageToken, parsedNextPageToken, size)
     }
     return v.mapResult { (prePageToken, nextPageToken, size) ->
         block(prePageToken, nextPageToken, size).mapCatchingNotNull { (list, count) ->
-            val next = if (size == list.size) {
-                nextKeyBuilder(list.last())
-            } else {
-                null
-            }
-            val pre = if (list.isNotEmpty()) {
-                nextKeyBuilder(list.first())
-            } else {
-                null
-            }
+            val (pre, next) = generator.generate(list, size)
             ServerResponse(list, Pagination(next, pre, count))
         }
     }

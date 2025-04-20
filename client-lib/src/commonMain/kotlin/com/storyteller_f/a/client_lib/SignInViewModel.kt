@@ -1,5 +1,6 @@
 package com.storyteller_f.a.client_lib
 
+import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.model.UserInfo
 import io.github.aakira.napier.Napier
@@ -45,11 +46,15 @@ class DefaultLoginUserSession(val loginUSer: LoginUser) : LoginUserSession {
     }
 
     override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): String {
-        return com.storyteller_f.shared.decrypt(getDerPrivateKey(loginUSer.privateKey), encrypted, encryptedAesKey)
+        return com.storyteller_f.shared.decryptMessage(
+            getDerPrivateKey(loginUSer.privateKey),
+            encrypted,
+            encryptedAesKey
+        )
     }
 
     override suspend fun address(): String {
-        return com.storyteller_f.shared.calcAddress(loginUSer.publicKey)
+        return calcAddress(loginUSer.publicKey)
     }
 }
 

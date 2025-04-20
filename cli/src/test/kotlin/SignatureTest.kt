@@ -1,10 +1,10 @@
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.storyteller_f.crypto_jvm.addProviderForJvm
 import com.storyteller_f.shared.*
+import com.storyteller_f.shared.eciesEncrypt
 import com.storyteller_f.shared.obj.PresetValue
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -16,12 +16,12 @@ class SignatureTest {
         val jsonFilePath = "../../AData/data/0_pre_set_user.json"
         val jsonFile = File(jsonFilePath)
         if (!jsonFile.exists()) return
-        addProviderForJvm()
+        loadIfNeed()
 
         val presetValue =
             ObjectMapper().registerModule(KotlinModule.Builder().build())
                 .readValue<PresetValue>(jsonFile.readText())
-        runBlocking {
+        runTest {
             val data = "hello"
             presetValue.userData!!.forEach {
                 val privateKeyStr = File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
@@ -37,19 +37,19 @@ class SignatureTest {
         val jsonFilePath = "../../AData/data/preset_user.json"
         val jsonFile = File(jsonFilePath)
         if (!jsonFile.exists()) return
-        addProviderForJvm()
+        loadIfNeed()
 
         val presetValue =
             ObjectMapper().registerModule(KotlinModule.Builder().build())
                 .readValue<PresetValue>(jsonFile.readText())
-        runBlocking {
+        runTest {
             val data = "hello"
             presetValue.userData!!.forEach {
                 val privateKeyStr = File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
                 val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr)
-                val (encrypted, aes) = encrypt(data)
-                val encryptedAes = encryptAesKey(derPublicKeyStr, aes)
-                val decrypted = decrypt(getDerPrivateKey(privateKeyStr), encrypted, encryptedAes)
+                val (encrypted, aes) = encryptData(data)
+                val encryptedAes = eciesEncrypt(derPublicKeyStr, aes)
+                val decrypted = decryptMessage(getDerPrivateKey(privateKeyStr), encrypted, encryptedAes)
                 assertEquals(data, decrypted)
             }
         }

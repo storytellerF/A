@@ -21,7 +21,7 @@ fun extractMarkdownHeadline(markdownText: String): String {
     var headline = ""
     var captureContent = false
 
-    val typeList = markdownTypes()
+    val typeList = markdownElementTypes()
 
     parsedTree.accept(object : Visitor {
         override fun visitNode(node: ASTNode) {
@@ -43,7 +43,7 @@ fun extractMarkdownHeadline(markdownText: String): String {
                 }
 
                 typeList.any {
-                    type.name == it
+                    type.name == it.name
                 } -> {
                     // Stop capturing when encountering the first second-level header
                     captureContent = false
@@ -68,7 +68,7 @@ fun extractHeadParagraph(
     val paragraphs = StringBuilder()
     val parsedTree = astNode(markdownText)
     var captureContent = false
-    val typeList = markdownTypes()
+    val typeList = markdownElementTypes()
     parsedTree.accept(object : Visitor {
         override fun visitNode(node: ASTNode) {
             val type = node.type
@@ -90,7 +90,7 @@ fun extractHeadParagraph(
                 }
 
                 typeList.any {
-                    it == type.name
+                    it.name == type.name
                 } -> {
                     if (paragraphs.length <= 100) {
                         val content = markdownText.substring(node.startOffset, node.endOffset).trim()
@@ -108,10 +108,43 @@ fun extractHeadParagraph(
     return paragraphs.toString().trim()
 }
 
-fun markdownTypes(): List<String> {
-    return MarkdownElementTypes::class.java.fields.mapNotNull {
-        (it.get(MarkdownElementTypes) as? IElementType)?.name
-    }
+fun markdownElementTypes(): List<IElementType> {
+    return listOf(
+        MarkdownElementTypes.MARKDOWN_FILE,
+        MarkdownElementTypes.UNORDERED_LIST,
+        MarkdownElementTypes.ORDERED_LIST,
+        MarkdownElementTypes.LIST_ITEM,
+        MarkdownElementTypes.BLOCK_QUOTE,
+        MarkdownElementTypes.CODE_FENCE,
+        MarkdownElementTypes.CODE_BLOCK,
+        MarkdownElementTypes.CODE_SPAN,
+        MarkdownElementTypes.HTML_BLOCK,
+        MarkdownElementTypes.PARAGRAPH,
+        MarkdownElementTypes.EMPH,
+        MarkdownElementTypes.STRONG,
+
+        MarkdownElementTypes.LINK_DEFINITION,
+        MarkdownElementTypes.LINK_LABEL,
+        MarkdownElementTypes.LINK_DESTINATION,
+        MarkdownElementTypes.LINK_TITLE,
+        MarkdownElementTypes.LINK_TEXT,
+        MarkdownElementTypes.INLINE_LINK,
+        MarkdownElementTypes.FULL_REFERENCE_LINK,
+        MarkdownElementTypes.SHORT_REFERENCE_LINK,
+        MarkdownElementTypes.IMAGE,
+
+        MarkdownElementTypes.AUTOLINK,
+
+        MarkdownElementTypes.SETEXT_1,
+        MarkdownElementTypes.SETEXT_2,
+
+        MarkdownElementTypes.ATX_1,
+        MarkdownElementTypes.ATX_2,
+        MarkdownElementTypes.ATX_3,
+        MarkdownElementTypes.ATX_4,
+        MarkdownElementTypes.ATX_5,
+        MarkdownElementTypes.ATX_6,
+    )
 }
 
 fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {

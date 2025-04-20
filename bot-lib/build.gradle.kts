@@ -1,6 +1,5 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
@@ -9,40 +8,34 @@ plugins {
     alias(libs.plugins.serialization)
 }
 
-val buildIosTarget = project.findProperty("target.ios") == true
-val buildWasmTarget = project.findProperty("target.wasm") == true
 kotlin {
-    if (buildWasmTarget) {
-        @OptIn(ExperimentalWasmDsl::class)
-        wasmJs {
-            browser {
-                commonWebpackConfig {
-                    devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
-                        static = (static ?: mutableListOf()).apply {
-                            // Serve sources to debug inside browser
-                            add(project.projectDir.path)
-                        }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser {
+            commonWebpackConfig {
+                devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
+                    static = (static ?: mutableListOf()).apply {
+                        // Serve sources to debug inside browser
+                        add(project.projectDir.path)
                     }
                 }
             }
         }
     }
 
-    
+
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
 
-    if (buildIosTarget) {
-        iosX64()
-        iosArm64()
-        iosSimulatorArm64()
-    }
-    
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
     jvm()
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(libs.bcprov.jdk18on)

@@ -122,11 +122,14 @@ suspend fun ApplicationCall.respondUnauthorizedResponse(reader: DatabaseReader) 
     respond(UnauthorizedResponse(HttpAuthHeader.Single("Custom", data)))
 }
 
-private suspend fun RoutingContext.signIn(backend: Backend, reader: DatabaseReader): Result<UserInfo> {
+private suspend fun RoutingContext.signIn(
+    backend: Backend,
+    reader: DatabaseReader
+): Result<UserInfo> {
     val pack = call.receive<SignInPack>()
     val data = call.getData(reader)
     val f = finalData(data)
-    return DatabaseFactory.getUserByAddress(pack.ad).filterNull {
+    return DatabaseFactory.getUserByAddress(backend, pack.ad).filterNull {
         BadRequestException("user not found")
     }.mapResult { (info, icon, publicKey) ->
         if (verify(publicKey, pack.sig, f)) {
@@ -151,17 +154,20 @@ private fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey, reader: Dat
     }
 }
 
-private suspend fun RoutingContext.signUp(backend: Backend, reader: DatabaseReader): Result<UserInfo> {
+private suspend fun RoutingContext.signUp(
+    backend: Backend,
+    reader: DatabaseReader
+): Result<UserInfo> {
     val pack = call.receive<SignUpPack>()
     val data = call.getData(reader)
     val f = finalData(data)
     return if (verify(pack.pk, pack.sig, f)) {
-        DatabaseFactory.isUserNotExists(pack.pk).mapResult { bool ->
+        DatabaseFactory.isUserNotExists(backend, pack.pk).mapResult { bool ->
             if (bool) {
                 val ad = calcAddress(pack.pk)
                 val newId = SnowflakeFactory.nextId()
                 val name = backend.nameService.parse(newId)
-                DatabaseFactory.createUser(ad, name, newId, pack.pk).mapResult { value ->
+                DatabaseFactory.createUser(backend, ad, name, newId, pack.pk).mapResult { value ->
                     saveSuccessSessionOnFirst(newId, reader)
                     processUserList(backend, listOf<Pair<UserInfo, String?>>(value)).map {
                         it.first()
@@ -177,6 +183,7 @@ private suspend fun RoutingContext.signUp(backend: Backend, reader: DatabaseRead
 }
 
 private suspend fun ApplicationCall.checkApiRequest(
+    backend: Backend,
     credential: CustomCredential,
     session: UserSession.Pending
 ): CustomPrincipal? {
@@ -184,7 +191,7 @@ private suspend fun ApplicationCall.checkApiRequest(
     return when {
         !ServerConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            if (DatabaseFactory.getRawUserById(id).getOrNull() != null) {
+            if (DatabaseFactory.getRawUserById(backend, id).getOrNull() != null) {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             } else {
@@ -193,7 +200,7 @@ private suspend fun ApplicationCall.checkApiRequest(
         }
 
         sig.isNotBlank() && session.data.isNotBlank() -> {
-            getUserAuthData(credential).getOrNull()?.let { (pubKey, id) ->
+            getUserAuthData(backend, credential).getOrNull()?.let { (pubKey, id) ->
                 if (verify(
                         pubKey,
                         sig,
@@ -214,17 +221,20 @@ private suspend fun ApplicationCall.checkApiRequest(
     }
 }
 
-private suspend fun getUserAuthData(credential: CustomCredential): Result<Pair<String, Long>?> {
+private suspend fun getUserAuthData(
+    backend: Backend,
+    credential: CustomCredential
+): Result<Pair<String, Long>?> {
     return when (credential) {
-        is AidCredential -> DatabaseFactory.getUserAuthDataByAid {
+        is AidCredential -> DatabaseFactory.getUserAuthDataByAid(backend) {
             Aids.value eq credential.aid
         }
 
-        is IdCredential -> DatabaseFactory.getUserAuthDataBy {
+        is IdCredential -> DatabaseFactory.getUserAuthDataBy(backend) {
             Users.id eq credential.id
         }
 
-        is AddressCredential -> DatabaseFactory.getUserAuthDataBy {
+        is AddressCredential -> DatabaseFactory.getUserAuthDataBy(backend) {
             Users.address eq credential.ad
         }
     }
@@ -237,11 +247,11 @@ private fun ApplicationCall.saveSuccessSession(
     sessions.set<UserSession>(UserSession.Success(session.data, session.remote, id))
 }
 
-private suspend fun checkDevWsLink(call: ApplicationCall): CustomPrincipal? {
+private suspend fun checkDevWsLink(backend: Backend, call: ApplicationCall): CustomPrincipal? {
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        DatabaseFactory.checkUserExists(id).getOrNull()?.let {
+        DatabaseFactory.checkUserExists(backend, id).getOrNull()?.let {
             CustomPrincipal(it)
         }
     } else {
@@ -302,7 +312,7 @@ fun ApplicationCall.getRateLimitKey(databaseReader: DatabaseReader): Comparable<
     }
 }
 
-fun Application.configureAuth(backend: Backend, reader: DatabaseReader) {
+fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
     install(Authentication) {
         custom {
             databaseReader = reader
@@ -311,9 +321,9 @@ fun Application.configureAuth(backend: Backend, reader: DatabaseReader) {
                     is UserSession.Success -> CustomPrincipal(session.id)
                     is UserSession.Pending -> {
                         when {
-                            credential != null -> call.checkApiRequest(credential, session)
+                            credential != null -> call.checkApiRequest(backend, credential, session)
                             backend.config.isProd -> null
-                            else -> checkDevWsLink(call)
+                            else -> checkDevWsLink(backend, call)
                         }
                     }
                 }
@@ -323,10 +333,13 @@ fun Application.configureAuth(backend: Backend, reader: DatabaseReader) {
             }
         }
     }
-    commonRoute(backend, reader)
+    commonRoute(reader, backend)
 }
 
-fun Route.bindUnprotectedAccountRoute(backend: Backend, databaseReader: DatabaseReader) {
+fun Route.bindUnprotectedAccountRoute(
+    databaseReader: DatabaseReader,
+    backend: Backend
+) {
     get<RouteAccounts.GetData> {
         omitPrincipal(databaseReader) {
             Result.success(call.getData(databaseReader))

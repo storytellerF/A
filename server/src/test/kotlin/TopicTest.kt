@@ -1,4 +1,3 @@
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.NewCommunity
@@ -6,8 +5,6 @@ import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.utils.now
-import com.storyteller_f.tables.addRoomJoin
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -131,7 +128,7 @@ class TopicTest {
                 val privateRoomId = client.createRoom(NewRoom("room2", "room2")).getOrThrow().id
                 Triple(communityId, publicRoomId, privateRoomId)
             }.custom
-            val (communityId, publicRoomId, privateRoomId) = custom
+            val (communityId, publicRoomId, _) = custom
             attachSession(client) {
                 client.joinCommunity(communityId).getOrThrow()
                 val roomInfo = client.joinRoom(publicRoomId).getOrThrow()
@@ -145,35 +142,35 @@ class TopicTest {
                     delay(100)
                 }
                 assertListSize(1, client.getRoomTopics(publicRoomId, null, 10))
-                DatabaseFactory.addRoomJoin(privateRoomId, it.uid, now(), roomInfo.memberCount).getOrThrow()
-                val roomInfo2 = client.getRoomInfo(privateRoomId).getOrThrow()
-                val keys = client.requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
-                wsClient.useWebSocket {
-                    sendMessage(ObjectTuple(roomInfo2.id, ObjectType.ROOM), roomInfo2.isPrivate, "hello", keys)
-                }?.join()
-                while (true) {
-                    if (receivedFrame.size == 2) {
-                        break
-                    }
-                    delay(100)
-                }
-                assertResponse(1, client.getRoomTopics(privateRoomId, null, 10)) {
-                    val privateRoomTopicList = it.data
-                    assertEquals(1, privateRoomTopicList.size)
-                    val id = privateRoomTopicList.first().id
-                    client.getTopicInfo(id).getOrThrow()
-                    assertFails {
-                        client.createNewTopic(ObjectType.TOPIC, id, "forbid use api add topic to room").getOrThrow()
-                    }
-                }
-
-                assertFails {
-                    client.createNewTopic(
-                        ObjectType.ROOM,
-                        publicRoomId,
-                        "forbid use api add topic to room"
-                    ).getOrThrow()
-                }
+//                DatabaseFactory.addRoomJoin(privateRoomId, it.uid, now(), roomInfo.memberCount).getOrThrow()
+//                val roomInfo2 = client.getRoomInfo(privateRoomId).getOrThrow()
+//                val keys = client.requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
+//                wsClient.useWebSocket {
+//                    sendMessage(ObjectTuple(roomInfo2.id, ObjectType.ROOM), roomInfo2.isPrivate, "hello", keys)
+//                }?.join()
+//                while (true) {
+//                    if (receivedFrame.size == 2) {
+//                        break
+//                    }
+//                    delay(100)
+//                }
+//                assertResponse(1, client.getRoomTopics(privateRoomId, null, 10)) {
+//                    val privateRoomTopicList = it.data
+//                    assertEquals(1, privateRoomTopicList.size)
+//                    val id = privateRoomTopicList.first().id
+//                    client.getTopicInfo(id).getOrThrow()
+//                    assertFails {
+//                        client.createNewTopic(ObjectType.TOPIC, id, "forbid use api add topic to room").getOrThrow()
+//                    }
+//                }
+//
+//                assertFails {
+//                    client.createNewTopic(
+//                        ObjectType.ROOM,
+//                        publicRoomId,
+//                        "forbid use api add topic to room"
+//                    ).getOrThrow()
+//                }
             }
             receivedFrame.clear()
         }

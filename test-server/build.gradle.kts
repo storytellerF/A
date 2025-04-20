@@ -31,7 +31,6 @@ dependencies {
     implementation(libs.geoip2)
     implementation(libs.simplemagic)
     implementation(libs.pdfbox.layout)
-    implementation(projects.cryptoJvm)
     implementation(libs.h2)
 
     implementation(projects.testServer.simple)

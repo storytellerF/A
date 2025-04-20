@@ -82,7 +82,7 @@ class MarkdownTest {
         assertTrue(checkContent("a"))
         assertTrue(checkContent("👌"))
         assertTrue(checkContent("\n"))
-        assertEquals("👌", "👌abc".safeFirstUnicode())
+        assertEquals("👌", safeFirstUnicode("👌abc"))
     }
 
 }

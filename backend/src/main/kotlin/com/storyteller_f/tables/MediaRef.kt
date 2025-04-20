@@ -1,9 +1,6 @@
 package com.storyteller_f.tables
 
-import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.MEDIA_NAME_LENGTH
-import com.storyteller_f.customPrimaryKey
-import com.storyteller_f.objectType
+import com.storyteller_f.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.sql.ResultRow
@@ -31,11 +28,12 @@ class MediaRef(val objectId: PrimaryKey, val objectType: ObjectType, val author:
 }
 
 suspend fun DatabaseFactory.insertMediaRefs(
+    backend: Backend,
     objectId1: PrimaryKey,
     objectType1: ObjectType,
     mediaName: List<Pair<PrimaryKey, String>>
 ): Result<List<ResultRow>> {
-    return dbQuery {
+    return dbQuery(backend) {
         MediaRefs.batchInsert(mediaName) {
             this[MediaRefs.objectId] = objectId1
             this[MediaRefs.objectType] = objectType1

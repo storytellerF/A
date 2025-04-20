@@ -1,13 +1,7 @@
 package com.storyteller_f.tables
 
-import com.storyteller_f.Backend
-import com.storyteller_f.BaseObj
-import com.storyteller_f.BaseTable
-import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.bindPaginationQuery
-import com.storyteller_f.customPrimaryKey
+import com.storyteller_f.*
 import com.storyteller_f.index.TopicDocument
-import com.storyteller_f.objectType
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.TitleSearchType
@@ -16,16 +10,9 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.titleName
-import com.storyteller_f.titleStatus
-import com.storyteller_f.titleType
 import com.storyteller_f.types.PaginationResult
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
 
 object Titles : BaseTable() {
     val creator = customPrimaryKey("creator").index()
@@ -77,12 +64,12 @@ class Title(
 }
 
 suspend fun DatabaseFactory.createTitle(
+    backend: Backend,
     title: Title,
     topic: Topic,
-    description: String,
-    backend: Backend
+    description: String
 ): Result<TitleInfo> {
-    return dbQuery {
+    return dbQuery(backend) {
         check(Titles.insert {
             it[id] = title.id
             it[createdTime] = title.createdTime
@@ -98,7 +85,9 @@ suspend fun DatabaseFactory.createTitle(
             "insert title failed"
         }
         Topic.new(topic)
-        backend.topicSearchService.saveDocument(listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(description))))
+        backend.topicSearchService.saveDocument(
+            listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(description)))
+        )
             .getOrThrow()
         title.toTitleInfo()
     }
@@ -109,18 +98,19 @@ fun Title.toTitleInfo(): TitleInfo {
 }
 
 suspend fun DatabaseFactory.userTitles(
+    backend: Backend,
     uid: PrimaryKey,
     searchType: TitleSearchType,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
     pagingFetch: PagingFetch
 ): Result<PaginationResult<TitleInfo>> {
-    return mapQuery({
+    return mapQuery(backend, {
         toTitleInfo()
     }, Title::wrapRow) {
         buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(Titles, pagingFetch)
     }.mapResult { list ->
-        count {
+        count(backend) {
             buildTitleSearchQuery(searchType, uid, type, scopeId)
         }.map { count ->
             PaginationResult(list, count)

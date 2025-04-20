@@ -151,12 +151,10 @@ fun RoomIcon(
                 },
             contentAlignment = Alignment.Center
         ) {
-            Text(roomInfo?.name?.safeFirstUnicode() ?: "")
+            Text(roomInfo?.name?.let { safeFirstUnicode(it) } ?: "")
         }
     }
-    roomInfo?.id?.let {
-        RoomDialog(showDialog, roomInfo) {
-            onClickIcon(false)
-        }
+    RoomDialog(showDialog, roomInfo) {
+        onClickIcon(false)
     }
 }

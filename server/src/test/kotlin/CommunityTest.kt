@@ -1,7 +1,4 @@
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.shared.hmacSign
-import com.storyteller_f.shared.hmacVerify
-import com.storyteller_f.shared.newHmacSha256
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.NewTopic
@@ -11,7 +8,6 @@ import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import kotlinx.coroutines.runBlocking
 import kotlin.test.*
 
 class CommunityTest {
@@ -97,16 +93,6 @@ class CommunityTest {
                     }
                 }
             }
-        }
-    }
-
-    @Test
-    fun `test hmac`() {
-        runBlocking {
-            val hmacKey = newHmacSha256()
-            println(hmacKey)
-            val s = hmacSign(hmacKey, "text")
-            assertTrue(hmacVerify(hmacKey, s, "text"))
         }
     }
 

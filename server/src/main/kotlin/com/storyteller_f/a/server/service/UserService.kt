@@ -14,10 +14,14 @@ import com.storyteller_f.tables.getUserAid
 import com.storyteller_f.tables.updateUser
 import io.ktor.server.plugins.*
 
-suspend fun updateUser(id: PrimaryKey, backend: Backend, old: UpdateUserBody): Result<UserInfo?> {
+suspend fun updateUser(
+    backend: Backend,
+    id: PrimaryKey,
+    old: UpdateUserBody
+): Result<UserInfo?> {
     val newUser = old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar?.trim())
     val firstError = listOf(suspend {
-        checkAidModifyTimes(newUser, id)
+        checkAidModifyTimes(backend, newUser, id)
     }, suspend {
         checkAid(newUser.aid, true)
     }, suspend {
@@ -43,9 +47,9 @@ suspend fun updateUser(id: PrimaryKey, backend: Backend, old: UpdateUserBody): R
         it().exceptionOrNull()
     }
     if (firstError != null) return Result.failure(firstError)
-    return DatabaseFactory.updateUser(id, newUser).mapResult {
+    return DatabaseFactory.updateUser(backend, id, newUser).mapResult {
         if (it) {
-            DatabaseFactory.getUser(ObjectFetch.IdFetch(id), backend)
+            DatabaseFactory.getUser(backend, ObjectFetch.IdFetch(id))
         } else {
             Result.success(null)
         }
@@ -53,13 +57,14 @@ suspend fun updateUser(id: PrimaryKey, backend: Backend, old: UpdateUserBody): R
 }
 
 private suspend fun checkAidModifyTimes(
+    backend: Backend,
     newUser: UpdateUserBody,
     id: PrimaryKey
 ) = if (newUser.aid.isNullOrBlank()) {
     Result.success(Unit)
 } else {
     // check aid is null
-    DatabaseFactory.getUserAid(id).mapResult {
+    DatabaseFactory.getUserAid(backend, id).mapResult {
         if (it != null) {
             Result.failure(BadRequestException("aid is not null."))
         } else {

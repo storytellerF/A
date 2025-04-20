@@ -55,7 +55,7 @@ fun CommunityIcon(
                 },
             contentAlignment = Alignment.Center
         ) {
-            CharSequenceText(communityInfo?.name?.safeFirstUnicode() ?: "")
+            CharSequenceText(communityInfo?.name?.let { safeFirstUnicode(it) } ?: "")
         }
     }
     CommunityDialog(communityInfo, showDialog) {

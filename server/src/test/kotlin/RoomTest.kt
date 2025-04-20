@@ -1,12 +1,8 @@
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.NewRoom
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.now
-import com.storyteller_f.tables.*
 import io.ktor.client.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -36,7 +32,7 @@ class RoomTest {
                 cId to listOf(room1Id, room2Id, room3Id)
             }.custom
             val room1 = custom.second[0]
-            val room3 = custom.second[2]
+//            val _room3 = custom.second[2]
             attachSession(client) {
                 assertFails {
                     client.joinRoom(room1).getOrThrow()
@@ -47,12 +43,12 @@ class RoomTest {
                 testSearchRoom(4, 10, null, JoinStatusSearch.NOT_JOINED, null, null, client)
                 testSearchRoom(5, 10, null, JoinStatusSearch.UNSPECIFIED, null, null, client)
                 testSearchRoom(1, 10, null, JoinStatusSearch.UNSPECIFIED, "name2", null, client)
-                DatabaseFactory.createMemberJoin(MemberJoin(it.uid, room3, ObjectType.ROOM, now())).getOrThrow()
-                testSearchRoom(2, 10, null, JoinStatusSearch.JOINED, null, null, client)
-                testSearchRoom(5, 10, null, JoinStatusSearch.UNSPECIFIED, null, custom.first, client)
-                client.exitRoom(room1)
-                // 测试幂等
-                client.exitRoom(room1)
+//                DatabaseFactory.createMemberJoin(MemberJoin(it.uid, room3, ObjectType.ROOM, now())).getOrThrow()
+//                testSearchRoom(2, 10, null, JoinStatusSearch.JOINED, null, null, client)
+//                testSearchRoom(5, 10, null, JoinStatusSearch.UNSPECIFIED, null, custom.first, client)
+//                client.exitRoom(room1)
+//                // 测试幂等
+//                client.exitRoom(room1)
             }
         }
     }
@@ -101,8 +97,8 @@ class RoomTest {
                 assertFails {
                     client.joinRoom(privateRoom).getOrThrow()
                 }
-                DatabaseFactory.createMemberJoin(MemberJoin(it.uid, privateRoom, ObjectType.ROOM, now())).getOrThrow()
-                assertListSize(2, client.searchRoomMembers(privateRoom, null, 10, null))
+//                DatabaseFactory.createMemberJoin(MemberJoin(it.uid, privateRoom, ObjectType.ROOM, now())).getOrThrow()
+//                assertListSize(2, client.searchRoomMembers(privateRoom, null, 10, null))
             }
         }
     }

@@ -5,8 +5,8 @@ import com.storyteller_f.CustomBadRequestException
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.UnauthorizedException
 import com.storyteller_f.a.server.ServerConfig
-import com.storyteller_f.shared.model.FileResponse
-import com.storyteller_f.shared.model.PathResponse
+import com.storyteller_f.a.server.common.FileResponse
+import com.storyteller_f.a.server.common.PathResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -64,7 +64,7 @@ suspend inline fun <reified R : Any> RoutingContext.callRespond(
             }
         }.onFailure {
             if (!respondError(it, reader)) {
-                call.application.log.error("Occur exception", it)
+                call.application.log.error("Occur server exception", it)
             }
         }
     } catch (e: Exception) {
