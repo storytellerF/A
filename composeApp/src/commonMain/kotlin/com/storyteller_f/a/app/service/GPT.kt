@@ -6,7 +6,9 @@ import io.github.irgaly.kfswatch.KfsDirectoryWatcher
 import io.github.irgaly.kfswatch.KfsDirectoryWatcherEvent
 import io.github.irgaly.kfswatch.KfsEvent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -56,6 +58,7 @@ fun buildTranslatePrompt(content: String, target: String, current: String): Pair
     } to "###END###"
 }
 
+@OptIn(FlowPreview::class)
 fun observeModels(
     scope: CoroutineScope,
     path: Path,
@@ -67,7 +70,7 @@ fun observeModels(
     }
     return merge(watcher.onEventFlow, flow {
         emit(KfsDirectoryWatcherEvent("", "", KfsEvent.Create))
-    }).map {
+    }).debounce(1000).map {
         SystemFileSystem.list(path).filter { child ->
             supportList.any {
                 child.name.endsWith(it)

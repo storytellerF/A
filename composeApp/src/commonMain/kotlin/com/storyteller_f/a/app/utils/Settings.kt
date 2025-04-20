@@ -1,11 +1,16 @@
 package com.storyteller_f.a.app.utils
 
+import androidx.compose.runtime.Composable
 import com.russhwolf.settings.Settings
 import com.storyteller_f.a.client_lib.ClientSession
 import com.storyteller_f.a.client_lib.SignInViewModel
+import com.strabled.composepreferences.utilis.DataStoreManager
 import kotlinx.serialization.Serializable
 
 expect val defaultSettings: Settings
+
+@Composable
+expect fun customDataStoreManager(): DataStoreManager
 
 @Serializable
 data class LoginHistory(val last: String? = null, val current: String? = null)

@@ -98,6 +98,7 @@ kotlin {
             implementation(libs.github.newpipeextractor)
             implementation(libs.compose.webview)
             implementation(libs.androidx.core.splashscreen)
+            implementation(libs.androidx.datastore.preferences.core)
             if (isLlamaEnable)
                 implementation(":android-llama-cpp")
         }
@@ -181,6 +182,7 @@ kotlin {
             implementation(libs.jlayer)
             implementation(projects.cryptoJvm)
             implementation(libs.llama)
+            implementation(libs.androidx.datastore.preferences.core)
         }
         desktopTest.dependencies {
             implementation(compose.desktop.currentOs)
@@ -286,7 +288,7 @@ android {
         screenshotTestImplementation(compose.runtime)
     }
     lint {
-        disable.add("RememberReturnType")
+        disable.addAll(arrayOf("RememberReturnType", "UnusedMaterial3ScaffoldPaddingParameter"))
     }
     @Suppress("UnstableApiUsage")
     experimentalProperties["android.experimental.enableScreenshotTest"] = true

@@ -52,6 +52,7 @@ import com.storyteller_f.a.app.pages.user.UserSettingPage
 import com.storyteller_f.a.app.pages.user.signOut
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.ui.theme.AppTheme
+import com.storyteller_f.a.app.utils.customDataStoreManager
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.finalData
@@ -63,6 +64,8 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.strabled.composepreferences.ProvideDataStoreManager
+import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
@@ -278,8 +281,14 @@ fun CommonEntry(
                         tintProvider = LocalContentColor,
                         weight = FontWeight.Normal
                     ) {
-                        LoginCheck {
-                            content()
+                        val dataStoreManager = customDataStoreManager()
+                        ProvideDataStoreManager(dataStoreManager) {
+                            setPreferences {
+                                "gpt_model" defaultValue ""
+                            }
+                            LoginCheck {
+                                content()
+                            }
                         }
                     }
                 }

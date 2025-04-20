@@ -90,13 +90,12 @@ class TopicTest {
                     ObjectTuple(it.uid, ObjectType.USER),
                     5,
                     "hello.txt",
-                    ContentType.defaultForFileExtension("txt"),
-                    {
-                        Buffer().apply {
-                            writeString("hello")
-                        }
+                    ContentType.defaultForFileExtension("txt")
+                ) {
+                    Buffer().apply {
+                        writeString("hello")
                     }
-                )
+                }
                     .getOrThrow().data.first()
                 val info =
                     client.createNewTopic(
