@@ -15,7 +15,7 @@ import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResultNotNull
-import com.storyteller_f.tables.PagingFetch
+import com.storyteller_f.tables.ObjectFetch
 import com.storyteller_f.tables.searchMembers
 import com.storyteller_f.tables.searchRooms
 import io.ktor.server.request.*
@@ -25,18 +25,18 @@ import io.ktor.server.routing.Route
 fun Route.bindSafeRoomRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteRooms.Search> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { p, n, size ->
-                searchRooms(backend, uid, it.joinStatus, it.word, it.community, PagingFetch(p, n, size))
+            pagination(IdentityPagingGenerator) { f ->
+                searchRooms(backend, uid, it.joinStatus, it.word, it.community, f)
             }
         }
     }
 
     get<RouteRooms.Id.Members> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { p, n, s ->
+            pagination(IdentityPagingGenerator) { f ->
                 checkRootReadPermission(backend, ObjectType.ROOM, it.parent.id, uid).mapResultNotNull { permission ->
                     if (permission.hasRead) {
-                        DatabaseFactory.searchMembers(backend, it.parent.id, it.word, PagingFetch(p, n, s))
+                        DatabaseFactory.searchMembers(backend, it.parent.id, it.word, f)
                     } else {
                         Result.failure(UnauthorizedException())
                     }
@@ -48,27 +48,27 @@ fun Route.bindSafeRoomRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteRooms> {
         usePrincipalOrNull(reader) { uid ->
             it.aid?.let { aid ->
-                getRoom(backend, null, aid, uid, it.fillJoinInfo)
+                getRoom(backend, ObjectFetch.AidFetch(aid), uid, it.fillJoinInfo)
             } ?: Result.success(null)
         }
     }
 
     get<RouteRooms.Id> {
         usePrincipalOrNull(reader) { uid ->
-            getRoom(backend, it.id, null, uid, it.parent.fillJoinInfo)
+            getRoom(backend, ObjectFetch.IdFetch(it.id), uid, it.parent.fillJoinInfo)
         }
     }
 
     get<RouteRooms.Id.Topics> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { pre, next, size ->
+            pagination(IdentityPagingGenerator) { f ->
                 getTopLevelTopicsInObject(
                     backend,
                     it.parent.id,
                     ObjectType.ROOM,
                     uid,
                     it.fillHasCommented,
-                    PagingFetch(pre, next, size),
+                    f,
                     it.pinType
                 )
             }
@@ -86,8 +86,8 @@ fun Route.bindProtectedSafeRoomRoute(reader: DatabaseReader, backend: Backend) {
         usePrincipal(reader) { uid ->
             pagination(object : CustomPagingGenerator<Pair<PrimaryKey, String>>({
                 it.first.toString()
-            }) {}) { pre, next, size ->
-                getRoomPubKeys(backend, it.parent.id, uid, PagingFetch(pre, next, size))
+            }) {}) { f ->
+                getRoomPubKeys(backend, it.parent.id, uid, f)
             }
         }
     }

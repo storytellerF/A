@@ -69,7 +69,6 @@ import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
-import io.ktor.client.plugins.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -265,8 +264,7 @@ fun CommonEntry(
                     HttpClient()
                 } else {
                     getClient {
-                        defaultClientConfigure()
-                        setupRequest(httpUrl)
+                        defaultClientConfigure(httpUrl = httpUrl)
                     }
                 }
             }
@@ -286,7 +284,11 @@ fun CommonEntry(
                             setPreferences {
                                 "gpt_model" defaultValue ""
                             }
-                            LoginCheck {
+                            if (AppConfig.ENABLE_LOGIN_CHECK) {
+                                LoginCheck {
+                                    content()
+                                }
+                            } else {
                                 content()
                             }
                         }
@@ -724,12 +726,6 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
 
 fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
-
-fun HttpClientConfig<*>.setupRequest(httpUrl: String) {
-    defaultRequest {
-        url(httpUrl)
-    }
-}
 
 val bus = MutableSharedFlow<Any>()
 

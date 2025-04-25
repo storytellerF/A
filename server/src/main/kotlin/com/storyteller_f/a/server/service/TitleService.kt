@@ -16,6 +16,7 @@ import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.types.PagingFetch
 
 suspend fun getUserTitles(
     backend: Backend,
@@ -23,16 +24,14 @@ suspend fun getUserTitles(
     searchType: TitleSearchType,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
-    next: PrimaryKey? = null,
-    limit: Int,
-    pre: PrimaryKey?
+    fetch: PagingFetch
 ) = DatabaseFactory.userTitles(
     backend,
+    fetch,
     uid,
     searchType,
     type,
-    scopeId,
-    PagingFetch(pre, next, limit)
+    scopeId
 ).mapResult { (list, count) ->
     processTitleList(backend, list, uid).map {
         PaginationResult(it, count)

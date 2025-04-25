@@ -5,7 +5,7 @@ import com.storyteller_f.a.client_lib.LoginUser
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.eciesEncrypt
 import com.storyteller_f.shared.encryptData
-import com.storyteller_f.shared.generateKeyPair
+import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
 import com.storyteller_f.shared.loadIfNeed
 import kotlinx.coroutines.test.runTest
@@ -19,7 +19,7 @@ class LoginUserSessionTest : UsingContextTest() {
         loadIfNeed()
         val sessionFactory = buildLoginUserSessionFactory()
         assertEquals(0, sessionFactory.savedSession().list.size)
-        val privateKey = generateKeyPair()
+        val privateKey = generateECDSAPemPrivateKey()
         val publicKey = getDerPublicKeyFromPrivateKey(privateKey)
         val ad = calcAddress(publicKey)
         val addSession = sessionFactory.addSession(LoginUser(privateKey, publicKey, ad))

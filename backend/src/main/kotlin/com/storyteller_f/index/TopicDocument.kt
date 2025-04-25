@@ -2,9 +2,9 @@ package com.storyteller_f.index
 
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.tables.Topic
 import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.types.PagingFetch
 
 data class TopicDocument(
     val id: PrimaryKey,
@@ -46,7 +46,6 @@ interface TopicSearchService {
     suspend fun clean(): Result<Unit>
 
     suspend fun searchDocument(
-        size: Int,
         word: List<String>? = null,
         documentSearch: DocumentSearch = DocumentSearch.All,
         pagingFetch: PagingFetch? = null

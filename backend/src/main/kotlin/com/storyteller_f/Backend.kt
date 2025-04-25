@@ -9,7 +9,7 @@ import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.media.MediaService
 import com.storyteller_f.media.MinIoMediaService
 import com.storyteller_f.naming.NameService
-import com.storyteller_f.tables.PagingFetch
+import com.storyteller_f.types.PagingFetch
 import io.github.aakira.napier.Napier
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Query

@@ -16,6 +16,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.types.PagingFetch
 import io.ktor.server.plugins.*
 import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -502,7 +503,7 @@ suspend fun checkRootAdminPermission(
         }
 
         ObjectType.ROOM -> {
-            DatabaseFactory.getRoomSource(backend, parentId).mapNotNull {
+            DatabaseFactory.getRoomSource(backend, ObjectFetch.IdFetch(parentId), true, uid).mapNotNull {
                 RootAdminPermission(parentType, parentId, it.first.creator == uid)
             }
         }
@@ -525,7 +526,6 @@ suspend fun checkRootAdminPermission(
 
 suspend fun searchPublicTopics(
     backend: Backend,
-    size: Int,
     search: RouteTopics.Search,
     pagingFetch: PagingFetch,
     uid: PrimaryKey?
@@ -547,7 +547,6 @@ suspend fun searchPublicTopics(
         Result.success(DocumentSearch.CommunityRoot)
     }.mapResultNotNull { documentSearch ->
         backend.topicSearchService.searchDocument(
-            size,
             search.word,
             documentSearch = documentSearch,
             pagingFetch
@@ -612,7 +611,6 @@ fun documentMediaList(documentList: List<TopicDocument?>): List<Pair<PrimaryKey,
 
 suspend fun recommendTopics(
     backend: Backend,
-    size: Int,
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
     pagingFetch: PagingFetch
@@ -620,14 +618,12 @@ suspend fun recommendTopics(
     return if (uid != null) {
         DatabaseFactory.getJoinedCommunityIds(backend, uid).mapResult {
             backend.topicSearchService.searchDocument(
-                size,
                 documentSearch = DocumentSearch.Recommend(uid, it),
                 pagingFetch = pagingFetch
             )
         }
     } else {
         backend.topicSearchService.searchDocument(
-            size,
             documentSearch = DocumentSearch.RecommendNotLogin,
             pagingFetch = pagingFetch
         )

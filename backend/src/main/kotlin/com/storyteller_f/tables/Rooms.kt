@@ -9,6 +9,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.types.PagingFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -232,20 +233,16 @@ fun buildRoomPubKeyQuery(roomId: PrimaryKey, getCount: Boolean): Query {
 
 suspend fun DatabaseFactory.getRoomSource(
     backend: Backend,
-    roomId: PrimaryKey?,
-    roomAid: String? = null,
+    objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
     uid: PrimaryKey? = null,
 ) = first(backend, {
     mapRoomInfo(it)
 }) {
     val baseOp = Op.build {
-        if (roomId != null) {
-            Rooms.id eq roomId
-        } else if (roomAid != null) {
-            Aids.value eq roomAid
-        } else {
-            throw CustomBadRequestException("must be specify id or aid")
+        when (objectFetch) {
+            is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
+            is ObjectFetch.IdFetch -> Rooms.id eq objectFetch.id
         }
     }
 

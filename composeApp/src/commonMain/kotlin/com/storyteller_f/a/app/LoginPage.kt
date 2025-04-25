@@ -162,7 +162,7 @@ private suspend fun startSignFromFile(
 ) {
     val f = FileKit.openFilePicker()
     if (f != null) {
-        startSign(String(f.readBytes()).replace("\r\n", "\n"), appNav, client, isSignUp)
+        startSign(appNav, client, String(f.readBytes()).replace("\r\n", "\n"), isSignUp)
     }
 }
 
@@ -190,7 +190,7 @@ fun InputPrivateKeyPage() {
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                     keyboardActions = KeyboardActions(onGo = {
                         scope.launch {
-                            startSign(privateKey, appNav, client, isSignUp)
+                            startSign(appNav, client, privateKey, isSignUp)
                         }
                     })
                 )
@@ -198,7 +198,7 @@ fun InputPrivateKeyPage() {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Button({
                     scope.launch {
-                        startSign(privateKey, appNav, client, isSignUp)
+                        startSign(appNav, client, privateKey, isSignUp)
                     }
                 }) {
                     Text(
@@ -214,7 +214,7 @@ fun InputPrivateKeyPage() {
                 if (isSignUp) {
                     Button({
                         scope.launch {
-                            SignInViewModel.updatePrivateKey(generateKeyPair())
+                            SignInViewModel.updatePrivateKey(generateECDSAPemPrivateKey())
                         }
                     }) {
                         Text(stringResource(Res.string.auto_generate))
@@ -226,9 +226,9 @@ fun InputPrivateKeyPage() {
 }
 
 private suspend fun startSign(
-    privateKey: String,
     appNav: AppNav,
     client: HttpClient,
+    privateKey: String,
     isSignUp: Boolean
 ) {
     if (privateKey.isNotBlank()) {

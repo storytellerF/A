@@ -16,8 +16,8 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.ElasticConnection
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.types.PagingFetch
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
@@ -117,7 +117,6 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     }
 
     override suspend fun searchDocument(
-        size: Int,
         word: List<String>?,
         documentSearch: DocumentSearch,
         pagingFetch: PagingFetch?
@@ -133,7 +132,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
         val request = SearchRequest.of { s ->
             s.index(TOPIC_INDEX_NAME) // 指定索引名称
                 .query(boolQuery)
-                .size(size)
+                .size(pagingFetch?.size ?: 10)
                 .sort { sort ->
                     sort.field { f ->
                         f.field("id").order(if (pagingFetch?.pre == null) SortOrder.Desc else SortOrder.Asc)

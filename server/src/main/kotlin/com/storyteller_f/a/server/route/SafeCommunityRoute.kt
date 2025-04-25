@@ -13,7 +13,6 @@ import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.tables.ObjectFetch
-import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.tables.searchMembers
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
@@ -22,16 +21,16 @@ import io.ktor.server.routing.Route
 fun Route.bindSafeCommunityRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteCommunities.Search> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { p, n, s ->
-                searchCommunities(backend, uid, it, PagingFetch(p, n, s))
+            pagination(IdentityPagingGenerator) { f ->
+                searchCommunities(backend, uid, it, f)
             }
         }
     }
 
     get<RouteCommunities.Id.Members> {
         omitPrincipal(reader) {
-            pagination(IdentityPagingGenerator) { p, n, s ->
-                DatabaseFactory.searchMembers(backend, it.parent.id, it.word, PagingFetch(p, n, s))
+            pagination(IdentityPagingGenerator) { f ->
+                DatabaseFactory.searchMembers(backend, it.parent.id, it.word, f)
             }
         }
     }
@@ -51,14 +50,14 @@ fun Route.bindSafeCommunityRoute(reader: DatabaseReader, backend: Backend) {
 
     get<RouteCommunities.Id.Topics> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { p, n, s ->
+            pagination(IdentityPagingGenerator) { f ->
                 getTopLevelTopicsInObject(
                     backend,
                     it.parent.id,
                     ObjectType.COMMUNITY,
                     uid,
                     it.fillHasCommented,
-                    PagingFetch(p, n, s),
+                    f,
                     it.pinType
                 )
             }

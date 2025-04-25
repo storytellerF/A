@@ -20,7 +20,7 @@ plugins {
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.easylauncher)
     alias(libs.plugins.serialization)
-    alias(libs.plugins.screenshot)
+//    alias(libs.plugins.screenshot)
     id("com.mikepenz.aboutlibraries.plugin")
 }
 
@@ -169,7 +169,7 @@ kotlin {
 
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(compose.uiTest)
-            implementation(projects.testServer.simple)
+            implementation(projects.testServer.localServerLib)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -281,14 +281,14 @@ android {
     dependencies {
         coreLibraryDesugaring(libs.desugar.jdk.libs)
         debugImplementation(compose.uiTooling)
-        screenshotTestImplementation(libs.androidx.ui.tooling)
-        screenshotTestImplementation(compose.runtime)
+//        screenshotTestImplementation(libs.androidx.ui.tooling)
+//        screenshotTestImplementation(compose.runtime)
     }
     lint {
         disable.addAll(arrayOf("RememberReturnType", "UnusedMaterial3ScaffoldPaddingParameter"))
     }
-    @Suppress("UnstableApiUsage")
-    experimentalProperties["android.experimental.enableScreenshotTest"] = true
+//    @Suppress("UnstableApiUsage")
+//    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 }
 
 //https://developer.android.com/develop/ui/compose/testing#setup
@@ -344,6 +344,7 @@ buildkonfig {
         buildConfigField(STRING, "WS_SERVER_URL", wsServerUrl ?: "", const = true)
         buildConfigField(BOOLEAN, "IS_PROD", isProd.toString(), const = true)
         buildConfigField(STRING, "FLAVOR", flavorStr, const = true)
+        buildConfigField(BOOLEAN, "ENABLE_LOGIN_CHECK", "false", const = true)
     }
 }
 

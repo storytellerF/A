@@ -268,7 +268,7 @@ private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession
     val remote = remoteIp(reader).first().first
     return when (val session = sessions.get(UserSession::class)) {
         null -> {
-            val (data, newSession) = createPendingSession(remote)
+            val (data, newSession) = this.createPendingSession(remote)
             sessions.set<UserSession>(newSession)
             newSession to data
         }
@@ -277,7 +277,7 @@ private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession
             if (remote == session.remote) {
                 session to session.data
             } else {
-                val (data, value) = createPendingSession(remote)
+                val (data, value) = this.createPendingSession(remote)
                 sessions.set<UserSession>(value)
                 value to data
             }
@@ -287,7 +287,7 @@ private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession
             if (remote == session.remote) {
                 session to session.data
             } else {
-                val (data, value) = createPendingSession(remote)
+                val (data, value) = this.createPendingSession(remote)
                 sessions.set<UserSession>(value)
                 value to data
             }
@@ -296,11 +296,12 @@ private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession
 }
 
 @OptIn(ExperimentalUuidApi::class)
-private fun createPendingSession(remote: String): Pair<String, UserSession.Pending> {
+private fun ApplicationCall.createPendingSession(remote: String): Pair<String, UserSession.Pending> {
     Napier.i {
         "pending session $remote"
     }
-    val data = Uuid.random().toString()
+    val aTs = request.header("a-ts")?.toLongOrNull()
+    val data = aTs?.toString() ?: Uuid.random().toString()
     val value = UserSession.Pending(data, remote)
     return Pair(data, value)
 }

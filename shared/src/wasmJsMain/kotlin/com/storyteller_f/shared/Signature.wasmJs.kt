@@ -5,7 +5,7 @@ actual suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Stri
 }
 
 actual suspend fun calcAddress(derPublicKeyStr: String): String {
-    TODO("Not yet implemented")
+    return createKeccakHash("keccak256").update(derPublicKeyStr).digest("hex")
 }
 
 actual fun loadIfNeed() = Unit

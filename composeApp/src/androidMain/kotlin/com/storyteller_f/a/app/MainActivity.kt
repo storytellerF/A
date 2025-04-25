@@ -69,28 +69,30 @@ class MainActivity : ComponentActivity() {
 
     private fun setupForSplash() {
         installSplashScreen()
-        val content = findViewById<View>(android.R.id.content)
-        content.viewTreeObserver.addOnPreDrawListener(
-            object : ViewTreeObserver.OnPreDrawListener {
-                override fun onPreDraw(): Boolean {
-                    // Check whether the initial data is ready.
-                    val loadingState = SignInViewModel.retryLoginState.value
-                    val retried = SignInViewModel.appStartLoginRetried.value
-                    Napier.i {
-                        "$retried $loadingState"
-                    }
-                    val firstDone = retried && (loadingState != null && loadingState !is LoadingState.Loading)
-                    return if (firstDone) {
-                        // The content is ready. Start drawing.
-                        content.viewTreeObserver.removeOnPreDrawListener(this)
-                        true
-                    } else {
-                        // The content isn't ready. Suspend.
-                        false
+        if (AppConfig.ENABLE_LOGIN_CHECK) {
+            val content = findViewById<View>(android.R.id.content)
+            content.viewTreeObserver.addOnPreDrawListener(
+                object : ViewTreeObserver.OnPreDrawListener {
+                    override fun onPreDraw(): Boolean {
+                        // Check whether the initial data is ready.
+                        val loadingState = SignInViewModel.retryLoginState.value
+                        val retried = SignInViewModel.appStartLoginRetried.value
+                        Napier.i {
+                            "$retried $loadingState"
+                        }
+                        val firstDone = retried && (loadingState != null && loadingState !is LoadingState.Loading)
+                        return if (firstDone) {
+                            // The content is ready. Start drawing.
+                            content.viewTreeObserver.removeOnPreDrawListener(this)
+                            true
+                        } else {
+                            // The content isn't ready. Suspend.
+                            false
+                        }
                     }
                 }
-            }
-        )
+            )
+        }
     }
 
     override fun onDestroy() {

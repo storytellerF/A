@@ -4,8 +4,8 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
-import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.types.PagingFetch
 import io.github.aakira.napier.Napier
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.*
@@ -96,7 +96,6 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
     }
 
     override suspend fun searchDocument(
-        size: Int,
         word: List<String>?,
         documentSearch: DocumentSearch,
         pagingFetch: PagingFetch?
@@ -115,7 +114,7 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
                     Napier.i {
                         "lucene search query $combinedQuery $sortById"
                     }
-                    val docs = searcher.search(combinedQuery, size, sortById)
+                    val docs = searcher.search(combinedQuery, pagingFetch?.size ?: 0, sortById)
                     val scoreDocs = docs.scoreDocs
                     PaginationResult(scoreDocs.mapNotNull { doc ->
                         searcher.storedFields().document(doc.doc)?.let { document ->

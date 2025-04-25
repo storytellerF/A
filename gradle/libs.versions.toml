@@ -1,7 +1,7 @@
 [versions]
 aboutlibrariesComposeM3 = "11.2.3"
 aboutlibrariesCore = "11.2.3"
-agp = "8.7.3"
+agp = "8.9.2"
 android-compileSdk = "35"
 android-minSdk = "24"
 android-targetSdk = "35"
@@ -20,7 +20,7 @@ core = "2.0.0"
 coreSplashscreen = "1.0.1"
 couchbaseLite = "3.1.9-1.1.1"
 cryptographyCore = "0.4.0"
-datastorePreferencesCore = "1.1.4"
+datastorePreferencesCore = "1.1.5"
 desugar_jdk_libs = "2.1.5"
 detektVersion = "1.23.8"
 easylauncher = "6.4.0"
@@ -60,7 +60,6 @@ memoryfilesystem = "2.8.1"
 minio = "8.5.17"
 mysqlConnectorJava = "8.0.33"
 newpipeextractorVersion = "v0.24.5"
-slf4jApi = "2.0.17"
 sqlFormatter = "2.0.5"
 tasksGenai = "0.10.23"
 testContainer = "1.20.6"
@@ -82,8 +81,8 @@ simplemagic = "1.17"
 slf4jSimple = "2.0.16"
 sqliteJdbc = "3.49.1.0"
 tikaCore = "3.1.0"
-uiTestJunit4Android = "1.7.8"
-uiTooling = "1.8.0-rc03"
+uiTestJunit4Android = "1.8.0"
+uiTooling = "1.8.0"
 uriKmp = "0.0.19"
 vaviImageAvif = "0.0.7"
 vlcj = "4.8.3"
@@ -140,7 +139,6 @@ leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", ve
 llama = { module = "de.kherud:llama", version.ref = "llama" }
 memoryfilesystem = { module = "com.github.marschall:memoryfilesystem", version.ref = "memoryfilesystem" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnectorJava" }
-slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4jApi" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
 tasks-genai = { module = "com.google.mediapipe:tasks-genai", version.ref = "tasksGenai" }
 testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }
