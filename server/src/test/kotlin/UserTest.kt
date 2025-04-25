@@ -54,7 +54,7 @@ class UserTest {
         val session = attachSession(client) {
         }
         loginSession(client, session) {
-            assertEquals(session.id, it.uid)
+            assertEquals(session.uid, it.uid)
         }
     }
 }

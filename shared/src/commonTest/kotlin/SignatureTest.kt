@@ -1,18 +1,11 @@
-import com.storyteller_f.shared.calcAddress
-import com.storyteller_f.shared.eciesDecrypt
-import com.storyteller_f.shared.decryptData
-import com.storyteller_f.shared.eciesEncrypt
-import com.storyteller_f.shared.encryptData
-import com.storyteller_f.shared.generateKeyPair
-import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
-import com.storyteller_f.shared.getPlatform
-import com.storyteller_f.shared.loadIfNeed
+import com.storyteller_f.shared.*
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.EC
 import dev.whyoleg.cryptography.algorithms.ECDSA
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 
 class SignatureTest {
     @OptIn(ExperimentalStdlibApi::class)
@@ -34,11 +27,9 @@ class SignatureTest {
     fun `test address`() {
         loadIfNeed()
         runTest {
-            if (getPlatform().name.startsWith("android", true)) {
-                val keyPair = generateKeyPair()
-                val key = getDerPublicKeyFromPrivateKey(keyPair)
-                println(calcAddress(key))
-            }
+            val keyPair = generateECDSAPemPrivateKey()
+            val key = getDerPublicKeyFromPrivateKey(keyPair)
+            println(calcAddress(key))
         }
 
     }

@@ -3,9 +3,12 @@ package com.storyteller_f.a.client_lib
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.UtcOffset
+import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
 
 interface LoginUserSession {
@@ -70,6 +73,21 @@ object SignInViewModel {
     val isSignUpFlow = state.map {
         it is ClientSession.PrivateKeySignUp
     }
+
+    // 用于header 和server 协商被签名的数据
+    private var currentStamp = 0L
+    val currentData: Long get() {
+        val nowSeconds = now().toInstant(UtcOffset.ZERO).epochSeconds
+        return if (currentStamp + 60 * 3 < nowSeconds) {
+            // 超时，需要替换新的
+            currentStamp = nowSeconds
+            nowSeconds
+        } else {
+            currentStamp
+        }
+    }
+
+    // currentData 是本地使用的，但是还是需要依据server 的为准
     var session: Pair<String, String?>? = null
     val user = MutableStateFlow<UserInfo?>(null)
     val currentIsAlreadySignUp get() = state.value is ClientSession.SignInSuccess

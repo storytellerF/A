@@ -30,9 +30,7 @@ class CleanCommand : Subcommand("clean", "clean all data") {
 class PrintCommand : Subcommand("print", "print") {
     override fun execute() {
         runBlocking {
-            val result = backend.topicSearchService.searchDocument(
-                10,
-            ).getOrThrow()
+            val result = backend.topicSearchService.searchDocument().getOrThrow()
             Napier.i {
                 "total ${result.total} ${result.list.size}"
             }

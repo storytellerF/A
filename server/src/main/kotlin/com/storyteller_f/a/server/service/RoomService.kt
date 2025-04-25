@@ -5,13 +5,15 @@ import com.storyteller_f.*
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.NewRoom
+import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
-import io.ktor.server.plugins.*
+import com.storyteller_f.types.PagingFetch
 
 suspend fun getRoomPubKeys(
     backend: Backend,
@@ -35,32 +37,31 @@ suspend fun joinRoom(
     backend: Backend,
     roomId: PrimaryKey,
     uid: PrimaryKey
-) = getRoom(backend, roomId, null, uid, true).mapResultNotNull { roomInfo ->
+) = getRoom(backend, ObjectFetch.IdFetch(roomId), uid, true).mapResultNotNull { roomInfo ->
     if (roomInfo.joinedTime != null) {
         Result.success(roomInfo)
     } else {
         val communityId = roomInfo.communityId
         if (communityId == null) {
-            Result.failure(ForbiddenException("Join failed."))
+            // 检查是否存在title
+            DatabaseFactory.userTitles(
+                backend,
+                PagingFetch(null, null, 1),
+                uid,
+                TitleSearchType.RECEIVER,
+                TitleType.JOIN,
+                roomId
+            ).mapResult {
+                if (it.list.firstOrNull() != null) {
+                    directJoinRoom(backend, uid, roomInfo)
+                } else {
+                    Result.failure(ForbiddenException("Join failed."))
+                }
+            }
         } else {
             isMemberJoined(backend, communityId, uid).mapResult { hasJoined ->
                 if (hasJoined) {
-                    val time = now()
-                    DatabaseFactory.addRoomJoin(
-                        backend,
-                        roomId,
-                        uid,
-                        time,
-                        roomInfo.memberCount
-                    ).mapResult { affectedCount ->
-                        Result.success(roomInfo.copy(joinedTime = time))
-                    }.recoverError { exception ->
-                        if (exception.isDup()) {
-                            getRoom(backend, roomId, null, uid, true)
-                        } else {
-                            Result.failure(exception)
-                        }
-                    }
+                    directJoinRoom(backend, uid, roomInfo)
                 } else {
                     Result.failure(ForbiddenException("you should join community first."))
                 }
@@ -69,8 +70,31 @@ suspend fun joinRoom(
     }
 }
 
+private suspend fun directJoinRoom(
+    backend: Backend,
+    uid: PrimaryKey,
+    roomInfo: RoomInfo
+): Result<RoomInfo?> {
+    val time = now()
+    return DatabaseFactory.addRoomJoin(
+        backend,
+        roomInfo.id,
+        uid,
+        time,
+        roomInfo.memberCount
+    ).mapResult { affectedCount ->
+        Result.success(roomInfo.copy(joinedTime = time))
+    }.recoverError { exception ->
+        if (exception.isDup()) {
+            getRoom(backend, ObjectFetch.IdFetch(roomInfo.id), uid, true)
+        } else {
+            Result.failure(exception)
+        }
+    }
+}
+
 suspend fun exitRoom(backend: Backend, roomId: PrimaryKey, id: PrimaryKey) =
-    getRoom(backend, roomId, null, id, true).mapResultNotNull { info ->
+    getRoom(backend, ObjectFetch.IdFetch(roomId), id, true).mapResultNotNull { info ->
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
@@ -82,15 +106,11 @@ suspend fun exitRoom(backend: Backend, roomId: PrimaryKey, id: PrimaryKey) =
 
 suspend fun getRoom(
     backend: Backend,
-    roomId: PrimaryKey?,
-    roomAid: String?,
+    objectFetch: ObjectFetch,
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<RoomInfo?> {
-    if (roomId == null && roomAid == null) {
-        return Result.failure(BadRequestException("roomId or roomAid must be set."))
-    }
-    return DatabaseFactory.getRoomSource(backend, roomId, roomAid, fillJoinInfo, uid).mapResultNotNull {
+    return DatabaseFactory.getRoomSource(backend, objectFetch, fillJoinInfo, uid).mapResultNotNull {
         processRoomList(listOf(it), backend).map(List<RoomInfo>::first)
     }
 }
@@ -181,9 +201,10 @@ suspend fun updateRoom(
             } else {
                 DatabaseFactory.updateRoom(backend, id, newRoom).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        DatabaseFactory.getRoomSource(backend, id, null, true, uid).mapResultNotNull {
-                            processRoomList(listOf(it), backend).map(List<RoomInfo>::first)
-                        }
+                        DatabaseFactory.getRoomSource(backend, ObjectFetch.IdFetch(id), true, uid)
+                            .mapResultNotNull {
+                                processRoomList(listOf(it), backend).map(List<RoomInfo>::first)
+                            }
                     } else {
                         Result.success(null)
                     }

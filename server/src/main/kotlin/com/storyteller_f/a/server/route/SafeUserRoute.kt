@@ -14,7 +14,6 @@ import com.storyteller_f.a.server.service.updateUser
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.tables.ObjectFetch
-import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.tables.getUser
 import com.storyteller_f.tables.searchMembers
 import io.ktor.server.request.*
@@ -45,14 +44,14 @@ fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
 
     get<RouteUsers.Id.Topics> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { p, n, s ->
+            pagination(IdentityPagingGenerator) { f ->
                 getTopLevelTopicsInObject(
                     backend,
                     it.parent.id,
                     ObjectType.USER,
                     uid,
                     it.fillHasCommented,
-                    PagingFetch(p, n, s),
+                    f,
                     it.pinType
                 )
             }
@@ -61,16 +60,16 @@ fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
 
     get<RouteUsers.Id.Titles> { r ->
         omitPrincipal(reader) {
-            pagination(IdentityPagingGenerator) { p, n, s ->
-                getUserTitles(backend, r.parent.id, r.searchType, r.type, r.scopeId, n, s, p)
+            pagination(IdentityPagingGenerator) { f ->
+                getUserTitles(backend, r.parent.id, r.searchType, r.type, r.scopeId, f)
             }
         }
     }
 
     get<RouteUsers.Search> {
         omitPrincipal(reader) {
-            pagination(IdentityPagingGenerator) { p, n, s ->
-                DatabaseFactory.searchMembers(backend, null, it.word, PagingFetch(p, n, s))
+            pagination(IdentityPagingGenerator) { f ->
+                DatabaseFactory.searchMembers(backend, null, it.word, f)
             }
         }
     }

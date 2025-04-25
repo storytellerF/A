@@ -12,6 +12,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.websocket.*
+import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
@@ -31,10 +32,19 @@ val globalCookiesStorage = AcceptAllCookiesStorage()
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
 @OptIn(ExperimentalUuidApi::class)
-fun HttpClientConfig<*>.defaultClientConfigure(cookiesStorage: CookiesStorage = globalCookiesStorage) {
+fun HttpClientConfig<*>.defaultClientConfigure(
+    cookiesStorage: CookiesStorage = globalCookiesStorage,
+    httpUrl: String? = null
+) {
     expectSuccess = true
     install(Auth) {
         custom {
+        }
+    }
+    defaultRequest {
+        header("a-ts", SignInViewModel.currentData.toString())
+        if (httpUrl != null) {
+            url(httpUrl)
         }
     }
     install(ContentNegotiation) {

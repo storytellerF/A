@@ -11,6 +11,7 @@ import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.types.PagingFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -99,11 +100,11 @@ fun Title.toTitleInfo(): TitleInfo {
 
 suspend fun DatabaseFactory.userTitles(
     backend: Backend,
+    pagingFetch: PagingFetch,
     uid: PrimaryKey,
     searchType: TitleSearchType,
     type: TitleType? = null,
-    scopeId: PrimaryKey? = null,
-    pagingFetch: PagingFetch
+    scopeId: PrimaryKey? = null
 ): Result<PaginationResult<TitleInfo>> {
     return mapQuery(backend, {
         toTitleInfo()

@@ -13,6 +13,7 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.Topic.Companion.wrapRow
 import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.types.PagingFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime

@@ -15,7 +15,7 @@ fun finalData(data: String, salt: String = "a"): String {
     return (data + salt).toCharArray().sorted().joinToString("")
 }
 
-suspend fun generateKeyPair(): String {
+suspend fun generateECDSAPemPrivateKey(): String {
     val keyPair = CryptographyProvider.Default.get(ECDSA).keyPairGenerator(EC.Curve.P256).generateKey()
     return keyPair.privateKey.encodeToByteArray(EC.PrivateKey.Format.PEM).decodeToString()
 }

@@ -7,16 +7,19 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.serialization)
 }
-
+val buildIosTarget = project.findProperty("target.ios") == "true"
+val buildWasmTarget = project.findProperty("target.wasm") == "true"
 kotlin {
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser {
-            commonWebpackConfig {
-                devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
-                    static = (static ?: mutableListOf()).apply {
-                        // Serve sources to debug inside browser
-                        add(project.projectDir.path)
+    if (buildWasmTarget) {
+        @OptIn(ExperimentalWasmDsl::class)
+        wasmJs {
+            browser {
+                commonWebpackConfig {
+                    devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
+                        static = (static ?: mutableListOf()).apply {
+                            // Serve sources to debug inside browser
+                            add(project.projectDir.path)
+                        }
                     }
                 }
             }
@@ -30,9 +33,11 @@ kotlin {
         }
     }
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    if (buildIosTarget) {
+        iosX64()
+        iosArm64()
+        iosSimulatorArm64()
+    }
 
     jvm()
 

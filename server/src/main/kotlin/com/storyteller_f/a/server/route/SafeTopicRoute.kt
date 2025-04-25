@@ -12,7 +12,6 @@ import com.storyteller_f.shared.obj.NewReaction
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.safeFirstEmoji
-import com.storyteller_f.tables.PagingFetch
 import com.storyteller_f.tables.deleteReaction
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
@@ -22,21 +21,20 @@ import io.ktor.server.routing.Route
 fun Route.bindSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteTopics.Search> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { p, n, s ->
-                searchPublicTopics(backend, s, it, PagingFetch(p, n, s), uid)
+            pagination(IdentityPagingGenerator) { f ->
+                searchPublicTopics(backend, it, f, uid)
             }
         }
     }
 
     get<RouteTopics.Recommend> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { prePageToken, nextPageToken, size ->
+            pagination(IdentityPagingGenerator) { f ->
                 recommendTopics(
                     backend,
-                    size,
                     uid,
                     it.parent.fillHasCommented,
-                    PagingFetch(prePageToken, nextPageToken, size)
+                    f
                 )
             }
         }
@@ -58,14 +56,14 @@ fun Route.bindSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
 
     get<RouteTopics.Id.Topics> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { p, n, s ->
+            pagination(IdentityPagingGenerator) { f ->
                 getTopLevelTopicsInObject(
                     backend,
                     it.parent.id,
                     ObjectType.TOPIC,
                     uid,
                     it.parent.parent.fillHasCommented,
-                    PagingFetch(p, n, s),
+                    f,
                     it.pinType
                 )
             }

@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -8,21 +9,30 @@ plugins {
     alias(libs.plugins.serialization)
 }
 
+val buildIosTarget = project.findProperty("target.ios") == "true"
+val buildWasmTarget = project.findProperty("target.wasm") == "true"
 kotlin {
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser {
-            commonWebpackConfig {
-                devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
-                    static = (static ?: mutableListOf()).apply {
-                        // Serve sources to debug inside browser
-                        add(project.projectDir.path)
+    if (buildWasmTarget) {
+        @OptIn(ExperimentalWasmDsl::class)
+        wasmJs {
+            browser {
+                commonWebpackConfig {
+                    devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
+                        static = (static ?: mutableListOf()).apply {
+                            // Serve sources to debug inside browser
+                            add(project.projectDir.path)
+                        }
+                    }
+                }
+                testTask {
+                    useKarma {
+                        useChrome()
                     }
                 }
             }
-        }
-        compilerOptions {
-            freeCompilerArgs.add("-Xwasm-attach-js-exception")
+            compilerOptions {
+                freeCompilerArgs.add("-Xwasm-attach-js-exception")
+            }
         }
     }
 
@@ -32,9 +42,11 @@ kotlin {
         }
     }
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    if (buildIosTarget) {
+        iosX64()
+        iosArm64()
+        iosSimulatorArm64()
+    }
 
     jvm()
 
@@ -71,22 +83,30 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(libs.cryptography.provider.jdk)
+            implementation(libs.logback)
         }
         jvmMain {
             dependsOn(cJvmMain)
         }
-        iosMain.dependencies {
-            implementation(libs.cryptography.provider.openssl3.prebuilt)
+        if (buildIosTarget) {
+            iosMain.dependencies {
+                implementation(libs.cryptography.provider.openssl3.prebuilt)
+            }
+            iosMain {
+                dependsOn(noPjvmMain)
+            }
         }
-        iosMain {
-            dependsOn(noPjvmMain)
-        }
-        wasmJsMain.dependencies {
-            implementation(libs.cryptography.provider.webcrypto)
-            implementation(npm("@noble/hashes", "1.7.2"))
-        }
-        wasmJsMain {
-            dependsOn(noPjvmMain)
+        if (buildWasmTarget) {
+            wasmJsMain.dependencies {
+                implementation(libs.cryptography.provider.webcrypto)
+                implementation(npm("@noble/hashes", "1.7.2"))
+                implementation(npm("ethereum-cryptography", "3.1.0"))
+                implementation(npm("keccak", "3.0.4"))
+                implementation(npm("@noble/curves", "1.0.0"))
+            }
+            wasmJsMain {
+                dependsOn(noPjvmMain)
+            }
         }
     }
 }

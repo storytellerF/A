@@ -33,7 +33,7 @@ dependencies {
     implementation(libs.pdfbox.layout)
     implementation(libs.h2)
 
-    implementation(projects.testServer.simple)
+    implementation(projects.testServer.localServerLib)
 }
 
 val isProd = project.findProperty("server.prod") == true

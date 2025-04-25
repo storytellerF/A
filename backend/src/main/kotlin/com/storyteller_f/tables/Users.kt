@@ -10,6 +10,7 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.types.PagingFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -66,8 +67,6 @@ sealed interface ObjectFetch {
     data class AidFetch(val aid: String) : ObjectFetch
     data class IdFetch(val id: PrimaryKey) : ObjectFetch
 }
-
-data class PagingFetch(val pre: PrimaryKey?, val next: PrimaryKey?, val size: Int)
 
 suspend fun DatabaseFactory.getUser(
     backend: Backend,
