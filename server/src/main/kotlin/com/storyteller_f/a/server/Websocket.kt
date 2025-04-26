@@ -5,9 +5,11 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ForbiddenException
+import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
@@ -102,24 +104,31 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
         if (frame is RoomFrame.Message) {
             val newTopic = frame.newTopic
             val content = newTopic.content
-            if (content is TopicContent.Plain) {
-                if (content.plain.isBlank()) {
-                    sendSerialized(RoomFrame.Error("plain is empty") as RoomFrame)
+            when (content) {
+                is TopicContent.Plain -> {
+                    if (content.plain.isBlank()) {
+                        sendSerialized(RoomFrame.Error("plain is empty") as RoomFrame)
+                        return
+                    }
+                }
+
+                is TopicContent.Encrypted -> {
+                    if (content.encrypted.isBlank()) {
+                        sendSerialized(RoomFrame.Error("message is empty") as RoomFrame)
+                        return
+                    }
+                }
+
+                else -> {
+                    sendSerialized(RoomFrame.Error("not support message type") as RoomFrame)
                     return
                 }
-            } else if (content is TopicContent.Encrypted) {
-                if (content.encrypted.isBlank()) {
-                    sendSerialized(RoomFrame.Error("message is empty") as RoomFrame)
-                    return
-                }
-            } else {
-                sendSerialized(RoomFrame.Error("not support message type") as RoomFrame)
-                return
             }
             addTopicAtRoom(backend, newTopic, uid).onSuccess {
                 if (it == null) {
                     sendSerialized(RoomFrame.Error("not found") as RoomFrame)
                 } else {
+                    addUserLog(backend, uid, UserLogType.CREATE, it.tuple())
                     val raw = RoomFrame.NewTopicInfo(it)
                     sendSerialized(raw as RoomFrame)
                     messageResponseFlow.emit(raw)

@@ -28,6 +28,9 @@ data class TopicInfo(
     val extension: Extension?,
     val aid: String? = null,
 ) : Identifiable {
+    override val objectType: ObjectType
+        get() = ObjectType.TOPIC
+
     companion object {
         val EMPTY = TopicInfo(
             id = DEFAULT_PRIMARY_KEY,

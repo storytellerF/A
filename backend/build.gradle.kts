@@ -9,8 +9,6 @@ group = "com.storyteller_f"
 version = "unspecified"
 
 dependencies {
-    testImplementation(kotlin("test"))
-
     api(libs.exposed.core)
     api(libs.exposed.dao)
     api(libs.exposed.crypt)
@@ -25,7 +23,6 @@ dependencies {
     implementation(projects.shared)
     implementation(libs.minio)
     implementation(libs.elasticsearch.java)
-    implementation(libs.jackson.module.kotlin)
     implementation(libs.lucene.core)
     implementation(libs.lucene.queryparser)
     implementation(libs.lucene.analysis.common)
@@ -34,7 +31,9 @@ dependencies {
     runtimeOnly(libs.vavi.image.avif)
     implementation(libs.memoryfilesystem)
     implementation(libs.lucene.backward.codecs)
-    
+    implementation(libs.kotlinx.coroutines.slf4j)
+
+    testImplementation(kotlin("test"))
     testImplementation(libs.testcontainers.elasticsearch)
 }
 

@@ -117,7 +117,7 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
         bucketName: String,
         names: List<CopyPack>
     ): Result<List<MediaInfo?>> {
-       return withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.IO) {
             val bucketPath = base.resolve(bucketName)
             val newNames = names.map {
                 val p = bucketPath.resolve(it.origin)

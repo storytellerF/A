@@ -2,6 +2,7 @@ package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
+import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.route.RouteTopics
 import com.storyteller_f.index.DocumentSearch
 import com.storyteller_f.index.TopicDocument
@@ -73,6 +74,7 @@ suspend fun createPublicTopic(
                 )
                 val plain = TopicContent.Plain(content)
                 DatabaseFactory.savePlainTopic(backend, topic, plain).mapResult { topicInfo ->
+                    addUserLog(backend, uid, UserLogType.CREATE, topicInfo.tuple())
                     processTopicMedia(
                         backend,
                         listOf(topicInfo),

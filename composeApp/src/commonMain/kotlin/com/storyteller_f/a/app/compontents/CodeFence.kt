@@ -357,7 +357,8 @@ fun getSize(info: MediaInfo?): Pair<Float, Float>? {
     return s
 }
 
-class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>, val objectTuple: ObjectTuple) : ImageTransformer {
+class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>, val objectTuple: ObjectTuple) :
+    ImageTransformer {
     @Composable
     override fun transform(link: String): ImageData {
         val appNav = LocalAppNav.current

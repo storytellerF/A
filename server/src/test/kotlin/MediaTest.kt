@@ -34,7 +34,6 @@ class MediaTest {
                 assertEquals("${it.uid}/hello.txt", response.data.first().item.name)
                 assertListSize(1, client.getMediaList(it.uid, ObjectType.USER))
             }
-
         }
     }
 }

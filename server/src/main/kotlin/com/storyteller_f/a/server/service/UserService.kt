@@ -1,11 +1,15 @@
 package com.storyteller_f.a.server.service
 
 import com.storyteller_f.*
+import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
 import com.storyteller_f.shared.obj.UpdateUserBody
+import com.storyteller_f.shared.obj.ob
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.tables.ObjectFetch
@@ -16,12 +20,12 @@ import io.ktor.server.plugins.*
 
 suspend fun updateUser(
     backend: Backend,
-    id: PrimaryKey,
+    uid: PrimaryKey,
     old: UpdateUserBody
 ): Result<UserInfo?> {
     val newUser = old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar?.trim())
     val firstError = listOf(suspend {
-        checkAidModifyTimes(backend, newUser, id)
+        checkAidModifyTimes(backend, newUser, uid)
     }, suspend {
         checkAid(newUser.aid, true)
     }, suspend {
@@ -47,9 +51,10 @@ suspend fun updateUser(
         it().exceptionOrNull()
     }
     if (firstError != null) return Result.failure(firstError)
-    return DatabaseFactory.updateUser(backend, id, newUser).mapResult {
+    return DatabaseFactory.updateUser(backend, uid, newUser).mapResult {
         if (it) {
-            DatabaseFactory.getUser(backend, ObjectFetch.IdFetch(id))
+            addUserLog(backend, uid, UserLogType.UPDATE, uid ob ObjectType.USER)
+            DatabaseFactory.getUser(backend, ObjectFetch.IdFetch(uid))
         } else {
             Result.success(null)
         }

@@ -91,7 +91,7 @@ private fun processPreSetData(env: MergedEnv) {
 fun Application.module() {
     val reader = buildDatabaseReader()
     val connected = buildBackend()
-    DatabaseFactory.init(connected, connected.config.databaseConnection.uri.endsWith("DB_CLOSE_DELAY=-1;"))
+    DatabaseFactory.init(connected)
 
     install(ContentNegotiation) {
         json()

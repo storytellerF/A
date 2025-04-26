@@ -4,11 +4,13 @@ import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.slf4j.MDCContext
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.util.PSQLException
 import java.net.ConnectException
+import kotlin.coroutines.CoroutineContext
 
 object DatabaseFactory {
 
@@ -40,14 +42,11 @@ object DatabaseFactory {
         Users
     )
 
-    fun init(backend: Backend, dropBeforeInit: Boolean = false) {
+    fun init(backend: Backend) {
         Napier.i(tag = "database") {
             "init"
         }
         transaction(backend.database) {
-            if (dropBeforeInit) {
-                SchemaUtils.drop(*tables)
-            }
             Napier.i(tag = "database") {
                 "create tables"
             }
@@ -96,7 +95,7 @@ object DatabaseFactory {
     suspend fun <T> dbQuery(backend: Backend, block: suspend Transaction.() -> T): Result<T> {
         val point = Exception()
         return runCatching {
-            newSuspendedTransaction(Dispatchers.IO, backend.database) {
+            newSuspendedTransaction(Dispatchers.IO + MDCContext(), backend.database) {
                 try {
                     block()
                 } catch (e: Throwable) {
@@ -123,7 +122,7 @@ object DatabaseFactory {
     ): Result<R> {
         val point = Exception()
         return runCatching {
-            newSuspendedTransaction(Dispatchers.IO, backend.database) {
+            newSuspendedTransaction(Dispatchers.IO + MDCContext(), backend.database) {
                 debug = onExplainResult != null
                 try {
                     explainQuery(point, block)

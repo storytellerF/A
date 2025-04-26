@@ -4,6 +4,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ForbiddenException
+import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.obj.TitleSearchType
@@ -195,6 +196,7 @@ suspend fun createTitle(
                 topic,
                 newTitle.description
             ).mapResult { created ->
+                addUserLog(backend, uid, UserLogType.CREATE, created.tuple())
                 processTitleList(backend, listOf(created), uid).map {
                     it.first()
                 }

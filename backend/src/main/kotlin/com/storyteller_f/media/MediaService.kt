@@ -40,7 +40,7 @@ interface MediaService {
 
     suspend fun list(bucketName: String, prefix: String): Result<List<MediaInfo>>
 
-    suspend fun copy(bucketName: String, names: List<CopyPack>) : Result<List<MediaInfo?>>
+    suspend fun copy(bucketName: String, names: List<CopyPack>): Result<List<MediaInfo?>>
 }
 
 suspend fun uploadFiles(

@@ -2,13 +2,16 @@ package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
+import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.route.RouteCommunities
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
+import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
@@ -50,6 +53,7 @@ suspend fun doUserJoinCommunity(
     } else {
         val time = now()
         DatabaseFactory.addCommunityJoin(backend, uid, communityId, time, community.memberCount).mapResult {
+            addUserLog(backend, uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
             Result.success(community.copy(joinTime = time))
         }.recoverCatching {
             if (it.isDup()) {
@@ -72,6 +76,7 @@ suspend fun exitCommunity(
         } else {
             DatabaseFactory.exit(backend, communityId, id).mapResult { i ->
                 if (i > 0) {
+                    addUserLog(backend, id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
                     Result.success(info.copy(joinTime = null))
                 } else {
                     Result.failure(BadRequestException("exit failed"))
@@ -191,9 +196,11 @@ suspend fun createCommunity(
         null
     )
     return DatabaseFactory.createCommunity(backend, community).mapResult {
+        val communityInfo = community.toCommunityIfo(community.createdTime)
+        addUserLog(backend, uid, UserLogType.CREATE, communityInfo.tuple())
         processCommunityList(
             backend,
-            listOf(CommunityRawResult(community.toCommunityIfo(community.createdTime), newCommunity.icon, null))
+            listOf(CommunityRawResult(communityInfo, newCommunity.icon, null))
         ).map {
             it.first()
         }

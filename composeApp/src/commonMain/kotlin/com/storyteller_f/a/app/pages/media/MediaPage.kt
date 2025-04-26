@@ -81,7 +81,9 @@ fun ImageSheet(
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
     BaseSheet(
-        showSheet, sheetState, hideSheet
+        showSheet,
+        sheetState,
+        hideSheet
     ) {
         Column(modifier = Modifier.height(200.dp).padding(20.dp)) {
             ButtonNav(MaterialSymbolsOutlined.FileCopy, "copy") {
