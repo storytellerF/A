@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import org.apache.hc.core5.http.ConnectionClosedException
+import org.apache.hc.core5.http.ContentType
 import java.io.File
 import java.io.FileInputStream
 import java.net.ConnectException
@@ -252,13 +253,18 @@ private suspend fun <T> useElasticClient(
                 b.host(elasticConnection.url)
                     .usernameAndPassword(elasticConnection.name, elasticConnection.pass)
                     .sslContext(sslContext)
+                    .transportOptions {
+                        it.addHeader("Accept", ContentType.APPLICATION_JSON.mimeType)
+                            .addHeader("Content-Type", ContentType.APPLICATION_JSON.mimeType)
+                    }
             }.block()
         } catch (e: Exception) {
             if (e is ConnectException || e is ConnectionClosedException) {
                 throw Exception("elastic service unavailable", e)
             } else {
+                point.initCause(e)
                 Napier.e(throwable = point) {
-                    "elastic error $e"
+                    "elastic error"
                 }
                 throw e
             }

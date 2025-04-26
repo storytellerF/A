@@ -33,6 +33,7 @@ dependencies {
     implementation(libs.lucene.backward.codecs)
     implementation(libs.kotlinx.coroutines.slf4j)
 
+    testImplementation(libs.commons.logging)
     testImplementation(kotlin("test"))
     testImplementation(libs.testcontainers.elasticsearch)
 }
@@ -99,4 +100,8 @@ buildConfig {
     className = "BackendConfig"
     buildConfigField<Boolean>("IS_PROD", isProd)
     buildConfigField<String>("FLAVOR", flavor)
+}
+
+tasks.withType<Test> {
+    jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
