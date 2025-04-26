@@ -33,7 +33,7 @@ fun testIndex(block: suspend (TopicSearchService) -> Unit) {
                 elasticClient.start()
                 val service = ElasticTopicSearchService(
                     ElasticConnection(
-                        elasticClient.httpHostAddress,
+                        "http://${elasticClient.httpHostAddress}",
                         "",
                         "elastic",
                         "changeme"
