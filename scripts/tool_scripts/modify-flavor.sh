@@ -1,16 +1,16 @@
 #!/bin/sh
 FLAVOR=$1
-IS_PROD=$2
+BUILD_TYPE=$2
 
-if [ -z "$FLAVOR" ] || [ -z "$IS_PROD" ]; then
-  echo "FLAVOR and IS_PROD must be set"
+if [ -z "$FLAVOR" ] || [ -z "$BUILD_TYPE" ]; then
+  echo "FLAVOR and BUILD_TYPE must be set"
   exit 1
 fi
 
 if [ "$(uname)" = "Darwin" ]; then
     sed -i '' "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
-      sed -i '' "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
+      sed -i '' "s/server.buildType=dev/server.buildType=${BUILD_TYPE}/" gradle.properties
 else
     sed -i "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
-      sed -i "s/server.prod=false/server.prod=${IS_PROD}/" gradle.properties
+      sed -i "s/server.buildType=dev/server.buildType=${BUILD_TYPE}/" gradle.properties
 fi

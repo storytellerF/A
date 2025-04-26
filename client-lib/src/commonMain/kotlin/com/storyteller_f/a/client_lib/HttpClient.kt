@@ -97,12 +97,10 @@ suspend fun processEncryptedTopic(info: List<TopicInfo>): List<TopicInfo> {
             val s = content.encryptedKey[uid]
             topicInfo.copy(
                 content = if (s != null) {
-                    runCatching {
-                        key.decrypt(
-                            content.encrypted.hexToByteArray(),
-                            s.hexToByteArray()
-                        )
-                    }.fold(onSuccess = {
+                    key.decrypt(
+                        content.encrypted.hexToByteArray(),
+                        s.hexToByteArray()
+                    ).fold(onSuccess = {
                         if (checkContent(it)) {
                             TopicContent.Plain(it)
                         } else {

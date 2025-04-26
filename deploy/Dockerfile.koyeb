@@ -24,7 +24,7 @@ RUN ./scripts/download_scripts/manual-download-docker-image.sh
 ENV HOST_TYPE=local
 
 RUN --mount=type=cache,target=/root/.gradle \
-    ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
+    ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${BUILD_TYPE}
 
 FROM koyeb/docker-compose
 

@@ -220,6 +220,6 @@ fun Routing.bindUnauthenticatedRoute(reader: DatabaseReader, backend: Backend) {
     }
 
     get {
-        call.respondText("${backend.config.flavor} ${backend.config.isProd}")
+        call.respondText("${backend.config.flavor} ${backend.config.buildType}")
     }
 }

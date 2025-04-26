@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.jakewharton.mosaic.LocalTerminal
+import com.jakewharton.mosaic.LocalTerminalState
 import com.jakewharton.mosaic.layout.background
 import com.jakewharton.mosaic.layout.height
 import com.jakewharton.mosaic.layout.size
@@ -31,55 +31,57 @@ import kotlinx.coroutines.delay
 private val BrightGreen = Color(100, 255, 100)
 private val BrightBlue = Color(60, 140, 230)
 
-fun main() = runMosaicBlocking {
-    Column {
-        val terminal = LocalTerminal.current
-        Text(
-            buildAnnotatedString {
-                append("\uD83D\uDDA5\uFE0F")
-                append("  ")
-                append("Terminal(")
-                withStyle(SpanStyle(color = BrightGreen)) {
-                    append("width=")
-                }
-                withStyle(
-                    SpanStyle(
-                        color = BrightBlue,
-                        textStyle = TextStyle.Bold + TextStyle.Underline,
-                    ),
-                ) {
-                    append(terminal.size.width.toString())
-                }
-                append(", ")
-                withStyle(SpanStyle(color = BrightGreen)) {
-                    append("height=")
-                }
-                withStyle(
-                    SpanStyle(
-                        color = BrightBlue,
-                        textStyle = TextStyle.Bold + TextStyle.Underline,
-                    ),
-                ) {
-                    append(terminal.size.height.toString())
-                }
-                append(")")
-                append(" ")
-                append("\uD83D\uDDA5\uFE0F")
-            },
-        )
-        Spacer(modifier = Modifier.height(1))
-        GradientsBlock()
-    }
+fun main() {
+    runMosaicBlocking {
+        Column {
+            val terminal = LocalTerminalState.current
+            Text(
+                buildAnnotatedString {
+                    append("\uD83D\uDDA5\uFE0F")
+                    append("  ")
+                    append("Terminal(")
+                    withStyle(SpanStyle(color = BrightGreen)) {
+                        append("width=")
+                    }
+                    withStyle(
+                        SpanStyle(
+                            color = BrightBlue,
+                            textStyle = TextStyle.Bold,
+                        ),
+                    ) {
+                        append(terminal.size.width.toString())
+                    }
+                    append(", ")
+                    withStyle(SpanStyle(color = BrightGreen)) {
+                        append("height=")
+                    }
+                    withStyle(
+                        SpanStyle(
+                            color = BrightBlue,
+                            textStyle = TextStyle.Bold,
+                        ),
+                    ) {
+                        append(terminal.size.height.toString())
+                    }
+                    append(")")
+                    append(" ")
+                    append("\uD83D\uDDA5\uFE0F")
+                },
+            )
+            Spacer(modifier = Modifier.height(1))
+            GradientsBlock()
+        }
 
-    LaunchedEffect(Unit) {
-        awaitCancellation()
+        LaunchedEffect(Unit) {
+            awaitCancellation()
+        }
     }
 }
 
 @Suppress("UnusedReceiverParameter") // instead of ignore rule: compose:multiple-emitters-check
 @Composable
 private fun ColumnScope.GradientsBlock() {
-    val screenHalfWidth = LocalTerminal.current.size.width / 2
+    val screenHalfWidth = LocalTerminalState.current.size.width / 2
     var gradientWidth by remember { mutableIntStateOf(0) }
     val gradientWidthDiff by remember(screenHalfWidth) {
         derivedStateOf { (screenHalfWidth - gradientWidth) / 5 }

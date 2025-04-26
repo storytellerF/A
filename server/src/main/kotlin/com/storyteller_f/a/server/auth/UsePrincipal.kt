@@ -97,7 +97,7 @@ suspend fun RoutingContext.respondError(e: Throwable, reader: DatabaseReader): B
         else -> {
             call.respond(
                 HttpStatusCode.InternalServerError,
-                if (ServerConfig.IS_PROD) "" else (e.message ?: e.toString())
+                if (ServerConfig.BUILD_TYPE == "prod") "" else (e.message ?: e.toString())
             )
             return false
         }

@@ -9,7 +9,9 @@ import co.elastic.clients.elasticsearch.core.SearchRequest
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
 import co.elastic.clients.elasticsearch.core.bulk.IndexOperation
 import co.elastic.clients.json.JsonData
+import co.elastic.clients.json.jackson.JacksonJsonpMapper
 import co.elastic.clients.transport.TransportUtils
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.ElasticConnection
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -256,7 +258,9 @@ private suspend fun <T> useElasticClient(
                     .transportOptions {
                         it.addHeader("Accept", ContentType.APPLICATION_JSON.mimeType)
                             .addHeader("Content-Type", ContentType.APPLICATION_JSON.mimeType)
-                    }
+                    }.jsonMapper(JacksonJsonpMapper().apply {
+                        objectMapper().registerKotlinModule()
+                    })
             }.block()
         } catch (e: Exception) {
             if (e is ConnectException || e is ConnectionClosedException) {

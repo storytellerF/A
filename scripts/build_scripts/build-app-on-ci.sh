@@ -3,7 +3,7 @@ set -e
 FLAVOR=$1
 URL=$2
 TARGET=$3
-IS_PROD="true"
+BUILD_TYPE="prod"
 
 # 自动根据系统环境设置换行符格式
 use_windows_newline=false
@@ -25,7 +25,7 @@ SERVER_URL=https://${URL}${newline}
 WS_SERVER_URL=wss://${URL}${newline}
 EOF
 
-./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$IS_PROD"
+./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$BUILD_TYPE"
 
 echo "$SECRETS_CONTEXT" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' | while IFS= read -r line; do
     # Ignore empty lines and comments

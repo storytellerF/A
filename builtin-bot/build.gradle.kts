@@ -15,8 +15,8 @@ dependencies {
 
 }
 
-val isProd = project.findProperty("server.prod") == true
+val buildType = project.findProperty("server.buildType") as String
 
 buildConfig {
-    buildConfigField<Boolean>("IS_PROD", isProd)
+    buildConfigField<String>("BUILD_TYPE", buildType)
 }

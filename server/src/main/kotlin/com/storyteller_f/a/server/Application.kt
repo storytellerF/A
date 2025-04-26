@@ -81,7 +81,7 @@ fun Application.module() {
     install(Sessions) {
         setupSessions()
     }
-    if (backend.config.isProd) {
+    if (backend.config.buildType == "prod") {
         setupRateLimit(reader)
     }
     install(Resources)

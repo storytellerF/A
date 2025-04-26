@@ -218,7 +218,7 @@ fun InputPrivateKeyPage() {
                 if (isSignUp) {
                     Button({
                         scope.launch {
-                            SignInViewModel.updatePrivateKey(generateECDSAPemPrivateKey())
+                            SignInViewModel.updatePrivateKey(generateECDSAPemPrivateKey().getOrThrow())
                         }
                     }) {
                         Text(stringResource(Res.string.auto_generate))
@@ -250,9 +250,9 @@ suspend fun signUpOrSignIn(
     return globalDialogState.use {
         val data = client.getData().getOrThrow()
         val f = finalData(data)
-        val sig = signature(privateKey, f)
-        val publicKey = getDerPublicKeyFromPrivateKey(privateKey)
-        val ad = calcAddress(publicKey)
+        val sig = signature(privateKey, f).getOrThrow()
+        val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
+        val ad = calcAddress(publicKey).getOrThrow()
         val u = when {
             isSignUp -> client.signUp(publicKey, sig)
             else -> client.signIn(ad, sig)

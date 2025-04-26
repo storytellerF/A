@@ -13,7 +13,7 @@ import kotlinx.serialization.builtins.serializer
 interface LoginUserSessionManager {
     fun savedSession(): SavedSession
 
-    fun addSession(session: LoginUser): LoginUserSession
+    suspend fun addSession(session: LoginUser): LoginUserSession
 
     fun buildSession(alias: String): LoginUserSession?
 
@@ -33,7 +33,7 @@ class DefaultLoginUserSessionManager : LoginUserSessionManager {
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override fun addSession(session: LoginUser): LoginUserSession {
+    override suspend fun addSession(session: LoginUser): LoginUserSession {
         val loginUser = LoginUser(session.privateKey, session.publicKey, session.address)
         defaultSettings.encodeValue("login_user", loginUser)
         defaultSettings.encodeValue("login_history", LoginHistory("default", "default"))
