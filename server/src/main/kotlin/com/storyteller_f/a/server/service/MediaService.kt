@@ -3,13 +3,16 @@ package com.storyteller_f.a.server.service
 import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.route.RouteMedia
+import com.storyteller_f.media.CopyPack
 import com.storyteller_f.media.uploadFiles
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapResultNotNull
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import io.ktor.http.content.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
@@ -36,7 +39,7 @@ suspend fun getMediaList(
         routeMedia.objectType,
         routeMedia.objectId,
         uid
-    ).mapResultNotNull { (_, _, hasWrite) ->
+    ).mapResultIfNotNull { (_, _, hasWrite) ->
         if (hasWrite) {
             backend.mediaService.list(AMEDIA_DEFAULT_BUCKET, "$uid/").map { names ->
                 ServerResponse(names.sortedByDescending { info ->
@@ -59,7 +62,7 @@ suspend fun RoutingContext.uploadMedia(
 ) = if (it.parent.objectType == ObjectType.TOPIC) {
     Result.failure(BadRequestException("can't upload to topic"))
 } else {
-    checkRootWritePermission(backend, it.parent.objectType, it.parent.objectId, id).mapResultNotNull {
+    checkRootWritePermission(backend, it.parent.objectType, it.parent.objectId, id).mapResultIfNotNull {
         val multipartData = call.receiveMultipart()
         val result = mutableListOf<MediaInfo>()
 
@@ -67,19 +70,8 @@ suspend fun RoutingContext.uploadMedia(
             when (part) {
                 is PartData.FileItem -> {
                     val fileName = part.originalFileName as String
-                    // total 93
-                    val extension = fileName.substringAfterLast(".").take(10)
-                    val originName = fileName.substringBeforeLast(".")
-                    // length 32
-                    val uuid = Uuid.random().toHexString()
-                    val name = originName.take(60 - extension.length) + uuid
-                    val newSavedFileName = if (fileName.length > 60) {
-                        // 60 - 32 - 1 = 27
-                        "${originName.take(27 - extension.length)}$uuid.$extension"
-                    } else {
-                        fileName
-                    }
-                    val file = File(root, "$name.$extension")
+                    val (newSavedName, newSavedFileName) = newFileName(fileName)
+                    val file = File(root, newSavedFileName)
                     // ktor 自带检查，保险起见再次检查
                     if (file.canonicalPath == file.absolutePath) {
                         val fileBytes = part.provider().readRemaining().readByteArray()
@@ -90,7 +82,7 @@ suspend fun RoutingContext.uploadMedia(
                                     tika,
                                     backend,
                                     listOf(
-                                        Triple(file, "${it.objectId}/$newSavedFileName", part.contentType.toString())
+                                        Triple(file, "${it.objectId}/$newSavedName", part.contentType.toString())
                                     )
                                 ).getOrThrow()
                                 result.addAll(info.filterNotNull())
@@ -106,5 +98,57 @@ suspend fun RoutingContext.uploadMedia(
             part.dispose()
         }
         Result.success(ServerResponse(result))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+private fun newFileName(fileName: String): Pair<String, String> {
+    val extension = fileName.substringAfterLast(".").take(10)
+    val originName = fileName.substringBeforeLast(".")
+    // length 32
+    val uuid = Uuid.random().toHexString()
+    val newSavedName = if (fileName.length > 60) {
+        // 60 - 32 - 1 = 27
+        "${originName.take(27 - extension.length)}$uuid.$extension"
+    } else {
+        fileName
+    }
+    return Pair(newSavedName, "${originName.take(60 - extension.length)}$uuid.$extension")
+}
+
+@OptIn(ExperimentalUuidApi::class)
+private fun newCopiedFileName(fileName: String): String {
+    val extension = fileName.substringAfterLast(".").take(10)
+    val originName = fileName.substringBeforeLast(".")
+    // length 32
+    val uuid = Uuid.random().toHexString()
+    return "${originName.take(27 - extension.length)}$uuid.$extension"
+}
+
+suspend fun copyMedia(
+    backend: Backend,
+    noPrefixName: String,
+    uid: PrimaryKey,
+    objectTuple: ObjectTuple
+): Result<ServerResponse<MediaInfo?>?> {
+    return checkRootReadPermission(backend, objectTuple.objectType, objectTuple.objectId, uid).mapResultIfNotNull {
+        if (it.hasRead) {
+            backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, listOf("$uid/$noPrefixName")).map {
+                if (it.firstOrNull() == null) {
+                    "$uid/$noPrefixName"
+                } else {
+                    "$uid/${newCopiedFileName(noPrefixName)}"
+                }
+            }.mapResult {
+                backend.mediaService.copy(
+                    AMEDIA_DEFAULT_BUCKET,
+                    listOf(CopyPack("${objectTuple.objectId}/$noPrefixName", it))
+                ).map { list ->
+                    ServerResponse(list, null)
+                }
+            }
+        } else {
+            Result.failure(ForbiddenException("Permission denied"))
+        }
     }
 }

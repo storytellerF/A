@@ -5,7 +5,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.buildBackendFromEnv
 import com.storyteller_f.media.loadAvif
 import com.storyteller_f.readEnv
-import com.storyteller_f.shared.logger
+import com.storyteller_f.shared.kmpLogger
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import kotlinx.cli.ArgParser
@@ -18,7 +18,7 @@ fun main(args: Array<String>) {
     loadAvif()
     SnowflakeFactory.setMachine(0)
     backend = buildBackendFromEnv(readEnv())
-    Napier.base(logger)
+    Napier.base(kmpLogger)
     log {
         args.contentToString()
     }

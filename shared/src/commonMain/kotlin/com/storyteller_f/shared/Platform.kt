@@ -9,4 +9,4 @@ interface Platform {
 
 expect fun getPlatform(): Platform
 
-expect val logger: Antilog
+expect val kmpLogger: Antilog

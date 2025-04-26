@@ -37,7 +37,7 @@ suspend fun joinRoom(
     backend: Backend,
     roomId: PrimaryKey,
     uid: PrimaryKey
-) = getRoom(backend, ObjectFetch.IdFetch(roomId), uid, true).mapResultNotNull { roomInfo ->
+) = getRoom(backend, ObjectFetch.IdFetch(roomId), uid, true).mapResultIfNotNull { roomInfo ->
     if (roomInfo.joinedTime != null) {
         Result.success(roomInfo)
     } else {
@@ -94,7 +94,7 @@ private suspend fun directJoinRoom(
 }
 
 suspend fun exitRoom(backend: Backend, roomId: PrimaryKey, id: PrimaryKey) =
-    getRoom(backend, ObjectFetch.IdFetch(roomId), id, true).mapResultNotNull { info ->
+    getRoom(backend, ObjectFetch.IdFetch(roomId), id, true).mapResultIfNotNull { info ->
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
@@ -110,7 +110,7 @@ suspend fun getRoom(
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<RoomInfo?> {
-    return DatabaseFactory.getRoomSource(backend, objectFetch, fillJoinInfo, uid).mapResultNotNull {
+    return DatabaseFactory.getRoomSource(backend, objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
         processRoomList(listOf(it), backend).map(List<RoomInfo>::first)
     }
 }
@@ -139,12 +139,12 @@ suspend fun createRoom(
     if (firstError != null) return Result.failure(firstError)
     val communityId = newRoom.communityId
     return if (communityId != null) {
-        checkRootAdminPermission(backend, ObjectType.COMMUNITY, communityId, uid).mapNotNull {
+        checkRootAdminPermission(backend, ObjectType.COMMUNITY, communityId, uid).mapIfNotNull {
             it.hasAdmin
         }
     } else {
         Result.success(true)
-    }.mapResultNotNull {
+    }.mapResultIfNotNull {
         if (it) {
             val roomId = SnowflakeFactory.nextId()
             val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, 0, newRoom.icon, communityId)
@@ -168,7 +168,7 @@ suspend fun updateRoom(
     uid: PrimaryKey
 ): Result<RoomInfo?> {
     val newRoom = old.copy(name = old.name?.trim(), icon = old.icon?.trim())
-    return checkRootAdminPermission(backend, ObjectType.ROOM, id, uid).mapResultNotNull { permission ->
+    return checkRootAdminPermission(backend, ObjectType.ROOM, id, uid).mapResultIfNotNull { permission ->
         if (permission.hasAdmin) {
             val firstError = listOf(suspend {
                 when (checkNickname(newRoom.name, 1..COMMUNITY_NAME_LENGTH)) {
@@ -202,7 +202,7 @@ suspend fun updateRoom(
                 DatabaseFactory.updateRoom(backend, id, newRoom).mapResult { updateSuccess ->
                     if (updateSuccess) {
                         DatabaseFactory.getRoomSource(backend, ObjectFetch.IdFetch(id), true, uid)
-                            .mapResultNotNull {
+                            .mapResultIfNotNull {
                                 processRoomList(listOf(it), backend).map(List<RoomInfo>::first)
                             }
                     } else {

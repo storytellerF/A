@@ -20,7 +20,7 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.util.internal.initCauseBridge
+import io.ktor.util.internal.*
 import io.ktor.utils.io.core.*
 
 fun isAlreadyLogin(): Boolean {
@@ -418,10 +418,7 @@ suspend fun HttpClient.upload(
     block: () -> Input
 ) = serviceCatching {
     post("amedia/upload") {
-        url {
-            parameters.append("objectId", objectTuple.objectId.toString())
-            parameters.append("objectType", objectTuple.objectType.name)
-        }
+        appendObjectTuple(objectTuple)
         setBody(
             MultiPartFormDataContent(
                 formData {
@@ -439,6 +436,17 @@ suspend fun HttpClient.upload(
         }
     }.body<ServerResponse<MediaInfo>>()
 }
+
+suspend fun HttpClient.copy(objectTuple: ObjectTuple, noPrefixName: String) =
+    serviceCatching {
+        post("amedia/copy") {
+            appendObjectTuple(objectTuple)
+
+            contentType(ContentType.Application.Json)
+            setBody(NewMedia(noPrefixName))
+        }.body<ServerResponse<MediaInfo>>()
+    }
+
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun DefaultClientWebSocketSession.sendMessage(
@@ -548,4 +556,11 @@ suspend fun HttpClient.getTopicList(
     USER -> getUserTopics(id, loadKey, size, pinSearch)
     TOPIC -> getTopicTopics(id, loadKey, size, pinSearch)
     else -> Result.failure(IllegalArgumentException("unrecognized $type"))
+}
+
+private fun HttpRequestBuilder.appendObjectTuple(objectTuple: ObjectTuple) {
+    url {
+        parameters.append("objectId", objectTuple.objectId.toString())
+        parameters.append("objectType", objectTuple.objectType.name)
+    }
 }

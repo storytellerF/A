@@ -37,7 +37,7 @@ import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.utils.mapNotNull
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import io.ktor.client.*
 import kotlinx.coroutines.launch
@@ -129,7 +129,7 @@ fun ObjectSettingDialog(
             } else {
                 scope.launch {
                     val finalInfo = cropImageIfNeed(context, client, info, imageCropper, dimension, ratio, mediaTarget)
-                    finalInfo.mapNotNull(onInputMedia)
+                    finalInfo.mapIfNotNull(onInputMedia)
                 }
             }
         },

@@ -223,21 +223,27 @@ private fun HomePager(
 
 @Composable
 private fun UserHost(content: @Composable (UserInfo) -> Unit) {
-    val appNav = LocalAppNav.current
     val user by SignInViewModel.user.collectAsState()
     val localUser = user
     if (localUser != null) {
         content(localUser)
     } else {
         CenterBox {
-            Button({
-                appNav.gotoLogin()
-            }) {
-                Icon(Icons.AutoMirrored.Default.Login, stringResource(Res.string.sign_in))
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(stringResource(Res.string.sign_in))
-            }
+            LoginButton()
         }
+    }
+}
+
+@Composable
+fun LoginButton(extra: () -> Unit = {}) {
+    val appNav = LocalAppNav.current
+    Button({
+        extra()
+        appNav.gotoLogin()
+    }) {
+        Icon(Icons.AutoMirrored.Default.Login, stringResource(Res.string.sign_in))
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(stringResource(Res.string.sign_in))
     }
 }
 

@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -209,10 +210,11 @@ fun ButtonNav(icon: Char, title: String, onClick: () -> Unit = {}) {
 
 @Composable
 fun ButtonNav(icon: IconRes, title: String, onClick: () -> Unit = {}) {
+    val shape = RoundedCornerShape(8.dp)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth().clickable {
+        modifier = Modifier.fillMaxWidth().clip(shape).clickable {
             onClick()
         }.padding(horizontal = 8.dp, vertical = 12.dp)
     ) {

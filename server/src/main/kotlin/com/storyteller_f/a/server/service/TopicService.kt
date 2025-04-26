@@ -52,7 +52,7 @@ suspend fun createPublicTopic(
         newTopic.parentType,
         newTopic.parentId,
         uid
-    ).mapResultNotNull { (rootType, rootId, hasWrite) ->
+    ).mapResultIfNotNull { (rootType, rootId, hasWrite) ->
         when {
             rootType == ObjectType.ROOM -> {
                 Result.failure(ForbiddenException("can't use api to add topic in room"))
@@ -95,10 +95,10 @@ suspend fun createTopicSnapshot(
     uid: PrimaryKey,
     topicId: PrimaryKey
 ): Result<MediaInfo?> {
-    return DatabaseFactory.getRawUserById(backend, uid).mapResultNotNull { (first) ->
-        checkRootReadPermission(backend, ObjectType.TOPIC, topicId, uid).mapResultNotNull { (hasRead) ->
+    return DatabaseFactory.getRawUserById(backend, uid).mapResultIfNotNull { (first) ->
+        checkRootReadPermission(backend, ObjectType.TOPIC, topicId, uid).mapResultIfNotNull { (hasRead) ->
             if (hasRead) {
-                DatabaseFactory.getSimpleTopic(backend, topicId).mapResultNotNull { value ->
+                DatabaseFactory.getSimpleTopic(backend, topicId).mapResultIfNotNull { value ->
                     createTopicSnapshot(backend, value, first, uid)
                 }
             } else {
@@ -116,8 +116,8 @@ private suspend fun createTopicSnapshot(
 ): Result<MediaInfo?> {
     val topicId = topicInfo.id
     return backend.topicSearchService.getDocuments(listOf(topicId)).map { value -> value.firstOrNull() }
-        .mapResultNotNull { documents ->
-            DatabaseFactory.getRawUserById(backend, topicInfo.author).mapResultNotNull { (first) ->
+        .mapResultIfNotNull { documents ->
+            DatabaseFactory.getRawUserById(backend, topicInfo.author).mapResultIfNotNull { (first) ->
                 val name = "$uid/$topicId.pdf"
                 val pdfFile = File("/tmp/$name")
                 val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
@@ -130,7 +130,7 @@ private suspend fun createTopicSnapshot(
                         signedFile,
                         documents.content,
                         backend.snapshotVerify
-                    ).mapResultNotNull {
+                    ).mapResultIfNotNull {
                         backend.mediaService.upload(
                             AMEDIA_DEFAULT_BUCKET,
                             listOf(UploadPack(name, pdfFile))
@@ -235,17 +235,17 @@ suspend fun getTopic(
         ObjectType.TOPIC,
         topicId,
         uid
-    ).mapResultNotNull { (hasRead, hasJoined, isPrivate) ->
+    ).mapResultIfNotNull { (hasRead, hasJoined, isPrivate) ->
         if (hasRead) {
             DatabaseFactory.getTopicInfo(
                 backend,
                 ObjectFetch.IdFetch(topicId),
                 uid
-            ).mapResultNotNull { info ->
+            ).mapResultIfNotNull { info ->
                 processTopicsContent(backend, isPrivate, listOf(info), uid).map {
                     it.first()
                 }
-            }.mapNotNull { value ->
+            }.mapIfNotNull { value ->
                 value.copy(hasJoined = hasJoined)
             }
         } else {
@@ -261,20 +261,20 @@ suspend fun getTopicByAid(
     fillHasCommented: Boolean?
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return DatabaseFactory.getTopicInfo(backend, ObjectFetch.AidFetch(aid), uid).mapResultNotNull { info ->
+    return DatabaseFactory.getTopicInfo(backend, ObjectFetch.AidFetch(aid), uid).mapResultIfNotNull { info ->
         checkRootReadPermission(
             backend,
             ObjectType.TOPIC,
             info.id,
             uid
-        ).mapResultNotNull { (hasRead, hasJoined, isPrivate) ->
+        ).mapResultIfNotNull { (hasRead, hasJoined, isPrivate) ->
             if (hasRead) {
                 processTopicsContent(backend, isPrivate, listOf(info), uid).map {
                     it.first()
                 }
             } else {
                 Result.failure(ForbiddenException("Permission Denied"))
-            }.mapNotNull { value ->
+            }.mapIfNotNull { value ->
                 value.copy(hasJoined = hasJoined)
             }
         }
@@ -295,7 +295,7 @@ suspend fun getTopLevelTopicsInObject(
         parentType,
         parentId,
         uid
-    ).mapResultNotNull { (hasRead, _, isPrivate) ->
+    ).mapResultIfNotNull { (hasRead, _, isPrivate) ->
         if (isPrivate && !hasRead) {
             Result.failure(ForbiddenException("Permission Denied"))
         } else {
@@ -413,7 +413,7 @@ suspend fun checkRootReadPermission(
 ): Result<RootReadPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.getTopicRoot(backend, parentId).mapResultNotNull { (rootId, rootType) ->
+            DatabaseFactory.getTopicRoot(backend, parentId).mapResultIfNotNull { (rootId, rootType) ->
                 checkRootReadPermission(backend, rootType, rootId, uid)
             }
         }
@@ -431,14 +431,14 @@ suspend fun checkRootReadPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            DatabaseFactory.checkCommunityExists(backend, parentId).mapResultNotNull {
+            DatabaseFactory.checkCommunityExists(backend, parentId).mapResultIfNotNull {
                 isMemberJoined(backend, parentId, uid).map { hasJoined ->
                     RootReadPermission(true, hasJoined, false)
                 }
             }
         }
 
-        ObjectType.USER -> DatabaseFactory.getRawUserById(backend, parentId).mapNotNull {
+        ObjectType.USER -> DatabaseFactory.getRawUserById(backend, parentId).mapIfNotNull {
             RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         }
 
@@ -454,7 +454,7 @@ suspend fun checkRootWritePermission(
 ): Result<RootWritePermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.getTopicRoot(backend, parentId).mapResultNotNull { (rootId, rootType) ->
+            DatabaseFactory.getTopicRoot(backend, parentId).mapResultIfNotNull { (rootId, rootType) ->
                 checkRootWritePermission(backend, rootType, rootId, uid)
             }
         }
@@ -468,7 +468,7 @@ suspend fun checkRootWritePermission(
         }
 
         ObjectType.COMMUNITY -> {
-            DatabaseFactory.checkCommunityExists(backend, parentId).mapResultNotNull {
+            DatabaseFactory.checkCommunityExists(backend, parentId).mapResultIfNotNull {
                 isMemberJoined(backend, parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
@@ -477,7 +477,7 @@ suspend fun checkRootWritePermission(
 
         ObjectType.USER -> {
             if (uid == parentId) {
-                DatabaseFactory.getRawUserById(backend, parentId).mapNotNull { (userInfo) ->
+                DatabaseFactory.getRawUserById(backend, parentId).mapIfNotNull { (userInfo) ->
                     RootWritePermission(parentType, parentId, userInfo.id == uid)
                 }
             } else {
@@ -497,25 +497,25 @@ suspend fun checkRootAdminPermission(
 ): Result<RootAdminPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.getTopicRoot(backend, parentId).mapResultNotNull { (rootId, rootType) ->
+            DatabaseFactory.getTopicRoot(backend, parentId).mapResultIfNotNull { (rootId, rootType) ->
                 checkRootAdminPermission(backend, rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            DatabaseFactory.getRoomSource(backend, ObjectFetch.IdFetch(parentId), true, uid).mapNotNull {
+            DatabaseFactory.getRoomSource(backend, ObjectFetch.IdFetch(parentId), true, uid).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, it.first.creator == uid)
             }
         }
 
         ObjectType.COMMUNITY -> {
-            DatabaseFactory.getCommunity(backend, ObjectFetch.IdFetch(parentId)).mapNotNull {
+            DatabaseFactory.getCommunity(backend, ObjectFetch.IdFetch(parentId)).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, it.communityInfo.owner == uid)
             }
         }
 
         ObjectType.USER -> {
-            DatabaseFactory.getRawUserById(backend, parentId).mapNotNull { (first) ->
+            DatabaseFactory.getRawUserById(backend, parentId).mapIfNotNull { (first) ->
                 RootAdminPermission(parentType, parentId, first.id == uid)
             }
         }
@@ -536,7 +536,7 @@ suspend fun searchPublicTopics(
         return Result.failure(CustomBadRequestException("word too long"))
     }
     return if (search.parentId != null && search.parentType != null) {
-        checkRootReadPermission(backend, search.parentType, search.parentId, uid).mapResultNotNull {
+        checkRootReadPermission(backend, search.parentType, search.parentId, uid).mapResultIfNotNull {
             if (it.isPrivate) {
                 Result.failure(BadRequestException("can't search in private chat"))
             } else {
@@ -545,7 +545,7 @@ suspend fun searchPublicTopics(
         }
     } else {
         Result.success(DocumentSearch.CommunityRoot)
-    }.mapResultNotNull { documentSearch ->
+    }.mapResultIfNotNull { documentSearch ->
         backend.topicSearchService.searchDocument(
             search.word,
             documentSearch = documentSearch,
@@ -708,13 +708,13 @@ suspend fun updateTopicPin(
     topicId: PrimaryKey,
     newValue: Boolean
 ) =
-    checkRootAdminPermission(backend, ObjectType.TOPIC, topicId, uid).mapResultNotNull {
+    checkRootAdminPermission(backend, ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
         if (it.hasAdmin) {
             DatabaseFactory.getTopicInfo(
                 backend,
                 ObjectFetch.IdFetch(topicId),
                 uid
-            ).mapResultNotNull { info ->
+            ).mapResultIfNotNull { info ->
                 if (info.isPin == newValue) {
                     Result.success(info)
                 } else {

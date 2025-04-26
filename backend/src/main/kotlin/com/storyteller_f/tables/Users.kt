@@ -7,7 +7,7 @@ import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultNotNull
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PagingFetch
@@ -81,7 +81,7 @@ suspend fun DatabaseFactory.getUser(
                 is ObjectFetch.IdFetch -> Users.id eq fetch.id
             }
         }
-    }.mapResultNotNull {
+    }.mapResultIfNotNull {
         processUserList(backend, listOf(it)).map(List<UserInfo>::first)
     }
 }

@@ -72,8 +72,8 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
 @Composable
 fun CommunityConstrains(modifier: Modifier = Modifier, content: @Composable (Int, Int, Int) -> Unit) {
     BoxWithConstraints(modifier) {
-        val gridCount = (maxWidth / 128.dp).toInt()
-        val itemCount = (maxWidth / 160.dp).toInt()
+        val gridCount = (this.maxWidth / 128.dp).toInt()
+        val itemCount = (this.maxWidth / 160.dp).toInt()
         val lcm = lcm(gridCount, itemCount)
         content(lcm, lcm / gridCount, lcm / itemCount)
     }

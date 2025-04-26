@@ -56,11 +56,12 @@ import com.storyteller_f.a.app.utils.customDataStoreManager
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.finalData
-import com.storyteller_f.shared.logger
+import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -83,13 +84,18 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 object StaticObj {
     init {
-        Napier.base(logger)
+        Napier.base(kmpLogger)
     }
+}
+
+val json = Json {
+    ignoreUnknownKeys = true
 }
 
 val globalDialogState = GlobalDialogController()
@@ -170,7 +176,7 @@ sealed interface MediaPlaySession {
 
     @Serializable
     @SerialName("image")
-    data class Image(val mediaInfo: MediaInfo) : MediaPlaySession
+    data class Image(val mediaInfo: MediaInfo, val objectTuple: ObjectTuple) : MediaPlaySession
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -478,31 +484,26 @@ fun LoginCheck(content: @Composable () -> Unit) {
     val state by SignInViewModel.state.collectAsState()
     val user by SignInViewModel.user.collectAsState()
     val retryState by SignInViewModel.retryLoginState.collectAsState()
-    LoginCheckInternal(state, user, client, retryState, {
-        if (it && !SignInViewModel.appStartLoginRetried.value) {
-            SignInViewModel.appStartLoginRetried.value = true
-        }
-    }, {
-        SignInViewModel.retryLoginState.value = it
-    }, content)
+    val updateRetryState = { newState: LoadingState? ->
+        SignInViewModel.retryLoginState.value = newState
+    }
+    AutoRetryLogin(state, retryState, user, updateRetryState, client)
+    LoginCheckPageInternal(client, state, user, content, updateRetryState)
 }
 
 @Composable
-private fun LoginCheckInternal(
+private fun AutoRetryLogin(
     state: ClientSession,
-    user: UserInfo?,
-    client: HttpClient,
     retryState: LoadingState?,
-    updateTried: (Boolean) -> Unit,
-    updateRetryState: (LoadingState?) -> Unit,
-    content: @Composable () -> Unit
+    user: UserInfo?,
+    updateRetryState: (LoadingState) -> Unit,
+    client: HttpClient
 ) {
     val scope = rememberCoroutineScope()
     LaunchedEffect(state, retryState) {
         if (user == null && state is ClientSession.SignInSuccess) {
             if (retryState == null) {
                 updateRetryState(LoadingState.Loading)
-                updateTried(true)
                 scope.launch {
                     globalDialogState.use {
                         val data = client.getData().getOrThrow()
@@ -513,17 +514,29 @@ private fun LoginCheckInternal(
                         SignInViewModel.updateSession(data, signature)
                     }.onSuccess {
                         updateRetryState(LoadingState.Done)
+                        SignInViewModel.appStartLoginRetried.value = true
                     }.onFailure {
                         updateRetryState(LoadingState.Error(it))
+                        SignInViewModel.appStartLoginRetried.value = true
                     }
                 }
             }
         } else {
-            updateTried(true)
-            updateRetryState(LoadingState.Done)
+            SignInViewModel.appStartLoginRetried.value = true
         }
     }
-    if (state is ClientSession.SignInSuccess && user == null && retryState !is LoadingState.Loading) {
+}
+
+@Composable
+private fun LoginCheckPageInternal(
+    client: HttpClient,
+    state: ClientSession,
+    user: UserInfo?,
+    content: @Composable () -> Unit,
+    updateRetryState: (LoadingState?) -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    if (state is ClientSession.SignInSuccess && user == null) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Button({
@@ -570,7 +583,7 @@ private fun NavGraphBuilder.buildRootNav(
     }
     composable<MediaScreen> {
         val route = it.toRoute<MediaScreen>()
-        val pack = Json.decodeFromString<MediaPlaySession>(route.json)
+        val pack = json.decodeFromString<MediaPlaySession>(route.json)
         MediaPage(pack)
     }
     buildComposeScreen(navigator)
@@ -699,8 +712,9 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
         navigator.navigate(PreferenceScreen)
     }
 
-    override fun gotoMedia(info: MediaInfo) {
-        navigator.navigate(MediaScreen(Json.encodeToString(MediaPlaySession.Image(info))))
+    override fun gotoMedia(info: MediaInfo, objectTuple: ObjectTuple) {
+        val route = MediaScreen(json.encodeToString<MediaPlaySession>(MediaPlaySession.Image(info, objectTuple)))
+        navigator.navigate(route)
     }
 
     override fun gotoTitleCompose() {
@@ -778,7 +792,7 @@ interface AppNav {
 
     fun gotoPreference()
 
-    fun gotoMedia(info: MediaInfo)
+    fun gotoMedia(info: MediaInfo, objectTuple: ObjectTuple)
 
     fun gotoTitleCompose()
 
@@ -852,7 +866,7 @@ interface AppNav {
                 TODO("Not yet implemented")
             }
 
-            override fun gotoMedia(info: MediaInfo) {
+            override fun gotoMedia(info: MediaInfo, objectTuple: ObjectTuple) {
                 TODO("Not yet implemented")
             }
 
@@ -900,4 +914,8 @@ private fun sendTopicNotification(message: TopicContent.Plain) {
         }
     ) {
     }
+}
+
+fun ToasterState.showShortToast(message: String) {
+    show(message, duration = 1.seconds)
 }

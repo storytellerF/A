@@ -45,9 +45,11 @@ import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.LocalToaster
+import com.storyteller_f.a.app.json
 import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.a.app.utils.setText
 import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.utils.MarkdownObject
 import com.storyteller_f.shared.utils.getLang
 import com.storyteller_f.shared.utils.md5
@@ -70,7 +72,6 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
-import kotlinx.serialization.json.Json
 import net.bjoernpetersen.m3u.M3uParser
 import java.net.URI
 import kotlin.time.Duration.Companion.seconds
@@ -89,10 +90,6 @@ fun CustomCodeFence(modal: MarkdownComponentModel, mediaList1: Map<String, Media
 
         else -> HighlightCodeBlock(modal)
     }
-}
-
-private val json = Json {
-    ignoreUnknownKeys = true
 }
 
 @Composable
@@ -360,7 +357,7 @@ fun getSize(info: MediaInfo?): Pair<Float, Float>? {
     return s
 }
 
-class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>) : ImageTransformer {
+class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>, val objectTuple: ObjectTuple) : ImageTransformer {
     @Composable
     override fun transform(link: String): ImageData {
         val appNav = LocalAppNav.current
@@ -374,7 +371,7 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInf
             ImageData(
                 painter,
                 modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
-                    info?.let { it1 -> appNav.gotoMedia(info) }
+                    info?.let { it1 -> appNav.gotoMedia(info, objectTuple) }
                 }
             )
         }

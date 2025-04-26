@@ -3,6 +3,7 @@ package com.storyteller_f.a.client_lib
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -77,8 +78,8 @@ object SignInViewModel {
     // 用于header 和server 协商被签名的数据
     private var currentStamp = 0L
     val currentData: Long get() {
-        val nowSeconds = now().toInstant(UtcOffset.ZERO).epochSeconds
-        return if (currentStamp + 60 * 3 < nowSeconds) {
+        val (nowSeconds, isValid) = checkTsIsValid(currentStamp, 60 * 3)
+        return if (!isValid) {
             // 超时，需要替换新的
             currentStamp = nowSeconds
             nowSeconds

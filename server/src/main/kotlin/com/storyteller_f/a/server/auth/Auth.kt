@@ -14,6 +14,7 @@ import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
+import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.filterNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.tables.*
@@ -124,9 +125,9 @@ suspend fun ApplicationCall.respondUnauthorizedResponse(reader: DatabaseReader) 
 
 private suspend fun RoutingContext.signIn(
     backend: Backend,
-    reader: DatabaseReader
+    reader: DatabaseReader,
+    pack: SignInPack
 ): Result<UserInfo> {
-    val pack = call.receive<SignInPack>()
     val data = call.getData(reader)
     val f = finalData(data)
     return DatabaseFactory.getUserByAddress(backend, pack.ad).filterNull {
@@ -156,9 +157,9 @@ private fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey, reader: Dat
 
 private suspend fun RoutingContext.signUp(
     backend: Backend,
-    reader: DatabaseReader
+    reader: DatabaseReader,
+    pack: SignUpPack
 ): Result<UserInfo> {
-    val pack = call.receive<SignUpPack>()
     val data = call.getData(reader)
     val f = finalData(data)
     return if (verify(pack.pk, pack.sig, f)) {
@@ -301,7 +302,10 @@ private fun ApplicationCall.createPendingSession(remote: String): Pair<String, U
         "pending session $remote"
     }
     val aTs = request.header("a-ts")?.toLongOrNull()
-    val data = aTs?.toString() ?: Uuid.random().toString()
+    val data = when {
+        aTs != null && checkTsIsValid(aTs, 60 * 5).second -> aTs.toString()
+        else -> Uuid.random().toString()
+    }
     val value = UserSession.Pending(data, remote)
     return Pair(data, value)
 }
@@ -349,13 +353,13 @@ fun Route.bindUnprotectedAccountRoute(
 
     post<RouteAccounts.SignUp> {
         omitPrincipal(databaseReader) {
-            signUp(backend, databaseReader)
+            signUp(backend, databaseReader, call.receive<SignUpPack>())
         }
     }
 
     post<RouteAccounts.SignIn> {
         omitPrincipal(databaseReader) {
-            signIn(backend, databaseReader)
+            signIn(backend, databaseReader, call.receive<SignInPack>())
         }
     }
 }

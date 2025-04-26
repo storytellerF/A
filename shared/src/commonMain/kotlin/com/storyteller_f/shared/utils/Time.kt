@@ -24,3 +24,12 @@ fun LocalDateTime.formatTime(): String {
         second()
     }.format(toLocalDateTime)
 }
+
+/**
+ * 检查指定时间戳是否在指定范围内
+ */
+fun checkTsIsValid(currentStamp: Long, offset: Int): Pair<Long, Boolean> {
+    val nowSeconds = now().toInstant(UtcOffset.ZERO).epochSeconds
+    val isValid = currentStamp + offset < nowSeconds
+    return Pair(nowSeconds, isValid)
+}

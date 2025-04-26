@@ -37,6 +37,7 @@ import com.storyteller_f.a.app.LocalMediaPlaySession
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.MediaPlaySession
 import com.storyteller_f.a.app.MediaPlayerActivity
+import com.storyteller_f.a.app.json
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import kotlinx.coroutines.launch
@@ -243,7 +244,7 @@ fun VideoOrAudioOpRow(
         IconButton({
             if (localMediaPlaySession.uuid == playingSession?.uuids?.lastOrNull()) {
                 context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
-                    putExtra("json", Json.encodeToString<MediaPlaySession>(playingSession))
+                    putExtra("json", json.encodeToString<MediaPlaySession>(playingSession))
                 })
             }
         }, enabled = isActive) {
