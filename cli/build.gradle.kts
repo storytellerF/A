@@ -8,7 +8,6 @@ version = "unspecified"
 
 dependencies {
     runtimeOnly(libs.sqlite.jdbc)
-    runtimeOnly(libs.slf4j.simple)
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)
 

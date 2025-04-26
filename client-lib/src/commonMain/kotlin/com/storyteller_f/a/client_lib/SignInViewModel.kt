@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
 interface LoginUserSession {
     suspend fun signature(data: String): String
 
-    suspend fun verify(signature: String, data: String): Boolean
+    suspend fun verify(signature: String, data: String): Result<Boolean>
 
     suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): String
 
@@ -42,7 +42,7 @@ class DefaultLoginUserSession(val loginUSer: LoginUser) : LoginUserSession {
         return com.storyteller_f.shared.signature(loginUSer.privateKey, data)
     }
 
-    override suspend fun verify(signature: String, data: String): Boolean {
+    override suspend fun verify(signature: String, data: String): Result<Boolean> {
         return com.storyteller_f.shared.verify(loginUSer.publicKey, signature, data)
     }
 

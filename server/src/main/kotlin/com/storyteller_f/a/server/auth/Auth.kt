@@ -18,10 +18,7 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
-import com.storyteller_f.shared.utils.checkTsIsValid
-import com.storyteller_f.shared.utils.filterNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
 import io.ktor.http.auth.*
@@ -138,17 +135,19 @@ private suspend fun RoutingContext.signIn(
     return DatabaseFactory.getUserByAddress(backend, pack.ad).filterNull {
         BadRequestException("user not found")
     }.mapResult { (info, icon, publicKey) ->
-        if (verify(publicKey, pack.sig, f)) {
-            addUserLog(backend, info.id, UserLogType.SIGN_IN, info.id ob ObjectType.USER)
-            processUserList(backend, listOf(info to icon)).map {
-                it.first()
-            }.map { value ->
-                val id = value.id
-                saveSuccessSessionOnFirst(id, reader)
-                value
+        verify(publicKey, pack.sig, f).mapResult {
+            if (it) {
+                addUserLog(backend, info.id, UserLogType.SIGN_IN, info.id ob ObjectType.USER)
+                processUserList(backend, listOf(info to icon)).map {
+                    it.first()
+                }.map { value ->
+                    val id = value.id
+                    saveSuccessSessionOnFirst(id, reader)
+                    value
+                }
+            } else {
+                Result.failure(BadRequestException("Verify failed"))
             }
-        } else {
-            Result.failure(BadRequestException("Verify failed"))
         }
     }
 }
@@ -181,25 +180,28 @@ private suspend fun RoutingContext.signUp(
 ): Result<UserInfo> {
     val data = call.getData(reader)
     val f = finalData(data)
-    return if (verify(pack.pk, pack.sig, f)) {
-        DatabaseFactory.isUserNotExists(backend, pack.pk).mapResult { userNotExists ->
-            if (userNotExists) {
-                val ad = calcAddress(pack.pk)
-                val newId = SnowflakeFactory.nextId()
-                val name = backend.nameService.parse(newId)
-                DatabaseFactory.createUser(backend, ad, name, newId, pack.pk).mapResult { value ->
-                    addUserLog(backend, newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
-                    saveSuccessSessionOnFirst(newId, reader)
-                    processUserList(backend, listOf<Pair<UserInfo, String?>>(value)).map {
-                        it.first()
+    return verify(pack.pk, pack.sig, f).mapResult {
+        if (it) {
+            DatabaseFactory.isUserNotExists(backend, pack.pk).mapResult { userNotExists ->
+                if (userNotExists) {
+                    calcAddress(pack.pk).mapResult { ad ->
+                        val newId = SnowflakeFactory.nextId()
+                        val name = backend.nameService.parse(newId)
+                        DatabaseFactory.createUser(backend, ad, name, newId, pack.pk).mapResult { value ->
+                            addUserLog(backend, newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
+                            saveSuccessSessionOnFirst(newId, reader)
+                            processUserList(backend, listOf<Pair<UserInfo, String?>>(value)).map { userList ->
+                                userList.first()
+                            }
+                        }
                     }
+                } else {
+                    Result.failure(BadRequestException("User exists"))
                 }
-            } else {
-                Result.failure(BadRequestException("User exists"))
             }
+        } else {
+            Result.failure(CustomBadRequestException("Verify failed"))
         }
-    } else {
-        Result.failure(CustomBadRequestException("Verify failed"))
     }
 }
 
@@ -221,18 +223,17 @@ private suspend fun ApplicationCall.checkApiRequest(
         }
 
         sig.isNotBlank() && session.data.isNotBlank() -> {
-            getUserAuthData(backend, credential).getOrNull()?.let { (pubKey, id) ->
-                if (verify(
-                        pubKey,
-                        sig,
-                        finalData(session.data)
-                    )
-                ) {
-                    saveSuccessSession(session, id)
-                    CustomPrincipal(id)
-                } else {
-                    null
+            getUserAuthData(backend, credential).mapResultIfNotNull { (pubKey, id) ->
+                verify(
+                    pubKey,
+                    sig,
+                    finalData(session.data)
+                ).map {
+                    id
                 }
+            }.getOrNull()?.let {
+                saveSuccessSession(session, it)
+                CustomPrincipal(it)
             }
         }
 

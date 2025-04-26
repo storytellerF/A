@@ -73,6 +73,7 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
                 LaunchedEffect(null) {
                     refreshMyInfo(my, client)
                 }
+                ButtonNav(MaterialSymbolsOutlined.Star, "acg ${userInfo.acg}")
                 UserDialogMenuList(dismiss, clickCreate, appNav, controller)
             }
             ButtonNav(Icons.Default.Settings, "preference") {

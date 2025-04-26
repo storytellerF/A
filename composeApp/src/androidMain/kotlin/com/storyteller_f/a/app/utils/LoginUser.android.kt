@@ -58,7 +58,7 @@ class AndroidKeyStoreLoginUserSession(private val alias: String) : LoginUserSess
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    override suspend fun verify(signature: String, data: String): Boolean {
+    override suspend fun verify(signature: String, data: String): Result<Boolean> {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
         withContext(Dispatchers.IO) {
             keyStore.load(null)

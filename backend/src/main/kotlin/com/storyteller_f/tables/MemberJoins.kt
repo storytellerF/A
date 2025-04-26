@@ -17,7 +17,7 @@ object MemberJoins : Table() {
     val joinTime = datetime("join_time")
 
     init {
-        index("member-join-main", true, objectId, uid)
+        index("member-joins-main", true, objectId, uid)
     }
 }
 
@@ -144,9 +144,7 @@ suspend fun DatabaseFactory.createMemberJoin(backend: Backend, join: MemberJoin)
 }
 
 suspend fun DatabaseFactory.userListJoinedRoom(backend: Backend, roomId: PrimaryKey) =
-    mapQuery(backend, {
-        MemberJoin.wrapRow(this)
-    }) {
+    mapQuery(backend, MemberJoin::wrapRow) {
         MemberJoins.selectAll().where {
             MemberJoins.objectId eq roomId
         }

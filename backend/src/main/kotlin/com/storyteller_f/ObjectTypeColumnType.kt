@@ -19,4 +19,4 @@ class ObjectTypeColumnType : ColumnType<ObjectType>() {
     }
 }
 
-fun Table.objectType(name: String) = registerColumn(name, ObjectTypeColumnType())
+fun Table.objectType(name: String) = enumerationByName<ObjectType>(name, 10)
