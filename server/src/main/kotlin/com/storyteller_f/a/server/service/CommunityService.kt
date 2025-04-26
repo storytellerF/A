@@ -12,7 +12,7 @@ import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultNotNull
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
@@ -30,7 +30,7 @@ suspend fun getCommunity(
         objectFetch,
         fillJoinInfo,
         id
-    ).mapResultNotNull {
+    ).mapResultIfNotNull {
         processCommunityList(backend, listOf(it)).map(List<CommunityInfo>::first)
     }
 }
@@ -44,7 +44,7 @@ suspend fun doUserJoinCommunity(
     ObjectFetch.IdFetch(communityId),
     uid,
     true
-).mapResultNotNull { community ->
+).mapResultIfNotNull { community ->
     if (community.joinTime != null) {
         Result.success(community)
     } else {
@@ -66,7 +66,7 @@ suspend fun exitCommunity(
     communityId: PrimaryKey,
     id: PrimaryKey
 ) =
-    getCommunity(backend, ObjectFetch.IdFetch(communityId), id, true).mapResultNotNull { info ->
+    getCommunity(backend, ObjectFetch.IdFetch(communityId), id, true).mapResultIfNotNull { info ->
         if (info.joinTime == null) {
             Result.success(info)
         } else {
@@ -207,7 +207,7 @@ suspend fun updateCommunity(
     uid: PrimaryKey
 ): Result<CommunityInfo?> {
     val newCommunity = old.copy(name = old.name?.trim(), icon = old.icon?.trim(), poster = old.poster?.trim())
-    return checkRootAdminPermission(backend, ObjectType.COMMUNITY, id, uid).mapResultNotNull { permission ->
+    return checkRootAdminPermission(backend, ObjectType.COMMUNITY, id, uid).mapResultIfNotNull { permission ->
         if (permission.hasAdmin) {
             checkBeforeUpdateCommunity(newCommunity, backend).mapResult {
                 DatabaseFactory.updateCommunity(backend, id, newCommunity).mapResult { updateSuccess ->
@@ -217,7 +217,7 @@ suspend fun updateCommunity(
                             ObjectFetch.IdFetch(id),
                             true,
                             uid
-                        ).mapResultNotNull { rawResult ->
+                        ).mapResultIfNotNull { rawResult ->
                             processCommunityList(backend, listOf(rawResult)).map(List<CommunityInfo>::first)
                         }
                     } else {

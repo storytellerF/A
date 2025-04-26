@@ -12,7 +12,7 @@ suspend fun <T, R> Result<T>.mapResult(block: suspend (T) -> Result<R>): Result<
     }
 }
 
-suspend fun <T, R> Result<T?>.mapResultNotNull(block: suspend (T) -> Result<R?>): Result<R?> {
+suspend fun <T, R> Result<T?>.mapResultIfNotNull(block: suspend (T) -> Result<R?>): Result<R?> {
     return mapResult { t ->
         if (t == null) {
             Result.success(null)
@@ -22,7 +22,7 @@ suspend fun <T, R> Result<T?>.mapResultNotNull(block: suspend (T) -> Result<R?>)
     }
 }
 
-suspend fun <T, R> Result<T?>.mapNotNull(block: suspend (T) -> R?): Result<R?> {
+suspend fun <T, R> Result<T?>.mapIfNotNull(block: suspend (T) -> R?): Result<R?> {
     return map { value ->
         if (value == null) {
             null

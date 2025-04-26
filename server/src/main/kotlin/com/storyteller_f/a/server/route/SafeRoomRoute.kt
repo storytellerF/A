@@ -14,7 +14,7 @@ import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapResultNotNull
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.tables.ObjectFetch
 import com.storyteller_f.tables.searchMembers
 import com.storyteller_f.tables.searchRooms
@@ -34,7 +34,7 @@ fun Route.bindSafeRoomRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteRooms.Id.Members> {
         usePrincipalOrNull(reader) { uid ->
             pagination(IdentityPagingGenerator) { f ->
-                checkRootReadPermission(backend, ObjectType.ROOM, it.parent.id, uid).mapResultNotNull { permission ->
+                checkRootReadPermission(backend, ObjectType.ROOM, it.parent.id, uid).mapResultIfNotNull { permission ->
                     if (permission.hasRead) {
                         DatabaseFactory.searchMembers(backend, it.parent.id, it.word, f)
                     } else {

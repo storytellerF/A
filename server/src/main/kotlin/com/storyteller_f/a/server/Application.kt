@@ -7,7 +7,7 @@ import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
 import com.storyteller_f.media.loadAvif
-import com.storyteller_f.shared.logger
+import com.storyteller_f.shared.kmpLogger
 import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
@@ -34,7 +34,7 @@ import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
     loadAvif()
-    Napier.base(logger)
+    Napier.base(kmpLogger)
     SnowflakeFactory.setMachine(0)
 
     val map = readEnv()

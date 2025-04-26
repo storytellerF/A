@@ -56,6 +56,9 @@ class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = nul
 class RouteMedia(val objectId: PrimaryKey, val objectType: ObjectType) {
     @Resource("upload")
     class Upload(@Suppress("unused") val parent: RouteMedia)
+
+    @Resource("copy")
+    class Copy(val parent: RouteMedia)
 }
 
 @Resource("/rooms")

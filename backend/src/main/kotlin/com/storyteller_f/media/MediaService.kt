@@ -26,14 +26,21 @@ data class UploadPack(
     val meta: Map<String, String> = emptyMap()
 )
 
+data class CopyPack(val origin: String, val new: String)
+
 interface MediaService {
     suspend fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>>
 
-    suspend fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>>
+    /**
+     * @param names 完整的name
+     */
+    suspend fun get(bucketName: String, names: List<String?>): Result<List<MediaInfo?>>
 
     suspend fun clean(bucketName: String): Result<Unit>
 
     suspend fun list(bucketName: String, prefix: String): Result<List<MediaInfo>>
+
+    suspend fun copy(bucketName: String, names: List<CopyPack>) : Result<List<MediaInfo?>>
 }
 
 suspend fun uploadFiles(

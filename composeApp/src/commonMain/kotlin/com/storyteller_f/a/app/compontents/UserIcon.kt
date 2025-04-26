@@ -21,10 +21,8 @@ import coil3.compose.LocalPlatformContext
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.pages.user.UserDialog
-import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
@@ -39,25 +37,19 @@ fun UserIcon(
         mutableStateOf(false)
     }
     val url = userInfo?.avatar?.url
-    val appNav = LocalAppNav.current
-    val me by SignInViewModel.user.collectAsState()
-    val onClick = {
-        when {
-            isMe && me == null -> appNav.gotoLogin()
-            else -> showUserDialog = true
-        }
+    UserIconInternal(isMe, setClickEvent, url, size = size) { ->
+        showUserDialog = true
     }
-    UserIconInternal(url, isMe, setClickEvent, size = size, onClick = onClick)
-    UserDialog(userInfo, showUserDialog, clickCreate) {
+    UserDialog(isMe, userInfo, showUserDialog, clickCreate) {
         showUserDialog = false
     }
 }
 
 @Composable
 fun UserIconInternal(
-    avatarUrl: String?,
     isMe: Boolean,
     setClickEvent: Boolean,
+    avatarUrl: String?,
     size: Dp = 40.dp,
     onClick: () -> Unit
 ) {

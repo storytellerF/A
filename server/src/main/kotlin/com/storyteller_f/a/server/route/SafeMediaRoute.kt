@@ -3,8 +3,12 @@ package com.storyteller_f.a.server.route
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
+import com.storyteller_f.a.server.service.copyMedia
 import com.storyteller_f.a.server.service.getMediaList
 import com.storyteller_f.a.server.service.uploadMedia
+import com.storyteller_f.shared.obj.NewMedia
+import com.storyteller_f.shared.obj.ObjectTuple
+import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.resources.post
 import io.ktor.server.routing.*
@@ -31,6 +35,13 @@ fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) 
     post<RouteMedia.Upload> {
         usePrincipal(reader) { uid ->
             uploadMedia(backend, it, uid, root, tika)
+        }
+    }
+
+    post<RouteMedia.Copy> {
+        usePrincipal(reader) { uid ->
+            val newMedia = call.receive<NewMedia>()
+            copyMedia(backend, newMedia.noPrefixName, uid, ObjectTuple(it.parent.objectId, it.parent.objectType))
         }
     }
 }

@@ -12,7 +12,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultNotNull
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
@@ -175,7 +175,7 @@ suspend fun createTitle(
         newTitle.scopeType,
         newTitle.scopeId,
         uid
-    ).mapResultNotNull { permission ->
+    ).mapResultIfNotNull { permission ->
         if (permission.hasAdmin) {
             val title = toTitle(newTitle, uid)
             val topic = Topic(

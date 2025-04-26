@@ -22,7 +22,9 @@ import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
+import com.storyteller_f.shared.type.ObjectType
 import org.intellij.markdown.ast.ASTNode
 import org.jetbrains.compose.resources.stringResource
 
@@ -69,12 +71,12 @@ private fun TopicContentFieldInternal(
     plain: String,
     isEmbed: Boolean
 ) {
-    val mediaList = if (topicInfo.isPrivate) {
+    val (mediaList, objectTuple) = if (topicInfo.isPrivate) {
         val list = createMediaListViewModel(topicInfo.rootId ob topicInfo.rootType)
         val media by list.handler.data.collectAsState()
-        media?.data.orEmpty()
+        media?.data.orEmpty() to ObjectTuple(topicInfo.rootId, topicInfo.rootType)
     } else {
-        rawMediaList
+        rawMediaList to ObjectTuple(topicInfo.author, ObjectType.USER)
     }
     val mediaMap = mediaList.associateBy { it.item.noPrefixName }
     Markdown(
@@ -82,7 +84,7 @@ private fun TopicContentFieldInternal(
         modifier = Modifier.fillMaxWidth().testTag("content"),
         colors = markdownColor(),
         typography = markdownTypography(),
-        imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap),
+        imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap, objectTuple),
         components = markdownComponents(codeFence = {
             CustomCodeFence(it, mediaMap)
         }, codeBlock = { HighlightCodeBlock(it) }, paragraph = {

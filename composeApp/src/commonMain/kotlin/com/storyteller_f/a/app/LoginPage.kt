@@ -24,8 +24,6 @@ import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.*
-import com.storyteller_f.shared.calcAddress
-import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
@@ -52,12 +50,12 @@ fun LoginPage() {
                     Icon(Icons.AutoMirrored.Default.ArrowBack, "back to pre page")
                 }
             }
-            NavHost(navigator, "/select_login") {
-                composable("/select_login") {
-                    SelectLoginPage(nav)
+            NavHost(navigator, "/select_signIn") {
+                composable("/select_signIn") {
+                    SelectSignInPage(nav)
                 }
-                composable("/select_signup") {
-                    SelectSignupPage(nav)
+                composable("/select_signUp") {
+                    SelectSignUpPage(nav)
                 }
                 composable("/input_private_key") {
                     InputPrivateKeyPage()
@@ -76,24 +74,27 @@ private fun buildLoginNav(navigator: NavHostController) = object : LoginNav {
     }
 
     override fun gotoSignUp() {
-        if (!navigator.popBackStack("/select_signup", false)) {
-            navigator.navigate("/select_signup")
+        if (!navigator.popBackStack("/select_signUp", false)) {
+            navigator.navigate("/select_signUp")
         }
     }
 
     override fun gotoLogin() {
-        if (!navigator.popBackStack("/select_login", false)) {
-            navigator.navigate("/select_login")
+        if (!navigator.popBackStack("/select_signIn", false)) {
+            navigator.navigate("/select_signIn")
         }
     }
 }
 
 @Composable
-fun SelectLoginPage(loginNav: LoginNav) {
+fun SelectSignInPage(loginNav: LoginNav) {
     CenterBox {
         Column(verticalArrangement = Arrangement.spacedBy(40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(Res.string.sign_in), style = MaterialTheme.typography.headlineMedium)
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 OutlinedButton({
                     SignInViewModel.state.value = ClientSession.PrivateKeySignIn("")
                     loginNav.gotoPrivateKey()
@@ -111,11 +112,14 @@ fun SelectLoginPage(loginNav: LoginNav) {
 }
 
 @Composable
-fun SelectSignupPage(loginNav: LoginNav) {
+fun SelectSignUpPage(loginNav: LoginNav) {
     CenterBox {
         Column(verticalArrangement = Arrangement.spacedBy(40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(Res.string.sign_up), style = MaterialTheme.typography.headlineMedium)
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Button({
                     SignInViewModel.state.value = ClientSession.PrivateKeySignUp("")
                     loginNav.gotoPrivateKey()

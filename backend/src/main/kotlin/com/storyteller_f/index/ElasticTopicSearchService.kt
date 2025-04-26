@@ -9,10 +9,7 @@ import co.elastic.clients.elasticsearch.core.SearchRequest
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
 import co.elastic.clients.elasticsearch.core.bulk.IndexOperation
 import co.elastic.clients.json.JsonData
-import co.elastic.clients.json.jackson.JacksonJsonpMapper
 import co.elastic.clients.transport.TransportUtils
-import co.elastic.clients.transport.rest_client.RestClientTransport
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.ElasticConnection
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -22,15 +19,11 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
-import org.apache.http.ConnectionClosedException
-import org.apache.http.HttpHost
-import org.apache.http.auth.AuthScope
-import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.impl.client.BasicCredentialsProvider
-import org.elasticsearch.client.RestClient
+import org.apache.hc.core5.http.ConnectionClosedException
 import java.io.File
 import java.io.FileInputStream
 import java.net.ConnectException
+
 
 private const val TOPIC_INDEX_NAME = "topics"
 
@@ -254,32 +247,13 @@ private suspend fun <T> useElasticClient(
         null
     }
 
-    val credsProv = BasicCredentialsProvider().apply {
-        setCredentials(
-            AuthScope.ANY,
-            UsernamePasswordCredentials(elasticConnection.name, elasticConnection.pass)
-        )
-    }
     return runCatching {
         try {
-            RestClient
-                .builder(HttpHost.create(elasticConnection.url))
-                .setHttpClientConfigCallback { p0 ->
-                    if (sslContext != null) {
-                        p0.setSSLContext(sslContext)
-                    }
-                    p0.setDefaultCredentialsProvider(credsProv)
-                }
-                .build().use { restClient ->
-                    RestClientTransport(
-                        restClient,
-                        JacksonJsonpMapper().apply {
-                            objectMapper().registerKotlinModule()
-                        }
-                    ).use { transport ->
-                        ElasticsearchAsyncClient(transport).block()
-                    }
-                }
+            ElasticsearchAsyncClient.of { b ->
+                b.host(elasticConnection.url)
+                    .usernameAndPassword(elasticConnection.name, elasticConnection.pass)
+                    .sslContext(sslContext)
+            }.block()
         } catch (e: Exception) {
             if (e is ConnectException || e is ConnectionClosedException) {
                 throw Exception("elastic service unavailable", e)

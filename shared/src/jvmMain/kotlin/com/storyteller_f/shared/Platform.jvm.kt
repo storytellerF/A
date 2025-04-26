@@ -3,11 +3,6 @@ package com.storyteller_f.shared
 import io.github.aakira.napier.Antilog
 import io.github.aakira.napier.LogLevel
 import org.slf4j.LoggerFactory
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.util.*
-import java.util.logging.*
-import java.util.logging.Formatter
 import java.util.regex.Pattern
 
 class JVMPlatform : Platform {
@@ -18,33 +13,10 @@ class JVMPlatform : Platform {
 
 actual fun getPlatform(): Platform = JVMPlatform()
 
-class CustomAntilog(
-    private val handler: List<Handler> = listOf()
-) : Antilog() {
+class CustomAntilog() : Antilog() {
 
     companion object {
         private const val CALL_STACK_INDEX = 8
-    }
-
-    private val consoleHandler = ConsoleHandler().apply {
-        level = Level.ALL
-        formatter = object : Formatter() {
-            override fun format(record: LogRecord?): String {
-                record ?: return ""
-                val zdt = ZonedDateTime.ofInstant(record.instant, ZoneId.systemDefault())
-                val message = formatMessage(record)
-                val threadName = Thread.currentThread().name
-                return String.format(
-                    Locale.getDefault(),
-                    "%1\$tF %1\$tT.%1\$tL [%2\$s]  %3$-5s %4\$s%n",
-                    zdt,
-                    threadName,
-                    record.level,
-                    message,
-                )
-            }
-
-        }
     }
 
     private val logger = LoggerFactory.getLogger(CustomAntilog::class.java)
@@ -63,13 +35,14 @@ class CustomAntilog(
             else -> message
         }
 
+        val log = buildLog(tag, fullMessage)
         when (priority) {
-            LogLevel.VERBOSE -> logger.trace(buildLog(tag, fullMessage))
-            LogLevel.DEBUG -> logger.debug(buildLog(tag, fullMessage))
-            LogLevel.INFO -> logger.info(buildLog(tag, fullMessage))
-            LogLevel.WARNING -> logger.warn(buildLog(tag, fullMessage))
-            LogLevel.ERROR -> logger.error(buildLog(tag, fullMessage))
-            LogLevel.ASSERT -> logger.error(buildLog(tag, fullMessage))
+            LogLevel.VERBOSE -> logger.trace(log)
+            LogLevel.DEBUG -> logger.debug(log)
+            LogLevel.INFO -> logger.info(log)
+            LogLevel.WARNING -> logger.warn(log)
+            LogLevel.ERROR -> logger.error(log)
+            LogLevel.ASSERT -> logger.error(log)
         }
     }
 
@@ -77,7 +50,7 @@ class CustomAntilog(
         val t = tag ?: Thread.currentThread().stackTrace[CALL_STACK_INDEX].run {
             "${createStackElementTag(className)}$${methodName}"
         }
-        return "$t - $message ${Thread.currentThread().stackTrace[CALL_STACK_INDEX]}"
+        return "$t - $message - ${Thread.currentThread().stackTrace[CALL_STACK_INDEX]}"
     }
 
     private fun createStackElementTag(className: String): String {
@@ -93,5 +66,5 @@ class CustomAntilog(
 }
 
 
-actual val logger: Antilog
+actual val kmpLogger: Antilog
     get() = CustomAntilog()

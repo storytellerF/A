@@ -9,7 +9,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toKotlinInstant
 import kotlinx.datetime.toLocalDateTime
-import org.apache.http.client.utils.URIBuilder
+import org.apache.hc.core5.http.ContentType.APPLICATION_OCTET_STREAM
+import org.apache.hc.core5.net.URIBuilder
 import org.apache.tika.Tika
 import java.net.URLConnection
 import java.nio.file.FileVisitResult
@@ -35,13 +36,8 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
     override suspend fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>> {
         return withContext(Dispatchers.IO) {
             val bucketPath = base.resolve(bucketName)
-            if (!bucketPath.exists()) {
-                bucketPath.createDirectories()
-            }
-
             list.map { uploadPack ->
-                val target = bucketPath.resolve(uploadPack.name)
-                target.createParentDirectories()
+                val target = bucketPath.resolve(uploadPack.name).createParentDirectories()
                 Files.copy(uploadPack.path.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
             }
             get(bucketName, list.map {
@@ -50,9 +46,9 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
         }
     }
 
-    override suspend fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>> {
+    override suspend fun get(bucketName: String, names: List<String?>): Result<List<MediaInfo?>> {
         return withContext(Dispatchers.IO) {
-            Result.success(objList.map {
+            Result.success(names.map {
                 when (it) {
                     null -> null
                     else -> {
@@ -79,7 +75,7 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
             val contentType = runCatching {
                 tika.detect(file)
             }.getOrNull() ?: URLConnection.guessContentTypeFromName(file.pathString)
-                ?: org.apache.http.entity.ContentType.APPLICATION_OCTET_STREAM.mimeType
+                ?: APPLICATION_OCTET_STREAM.mimeType
             MediaItem(
                 it,
                 contentType,
@@ -114,6 +110,25 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
             get(bucketName, children).map {
                 it.filterNotNull()
             }
+        }
+    }
+
+    override suspend fun copy(
+        bucketName: String,
+        names: List<CopyPack>
+    ): Result<List<MediaInfo?>> {
+       return withContext(Dispatchers.IO) {
+            val bucketPath = base.resolve(bucketName)
+            val newNames = names.map {
+                val p = bucketPath.resolve(it.origin)
+                if (!p.exists()) {
+                    throw Exception("${it.origin} not exists")
+                }
+                val targetFile = bucketPath.resolve(it.new).createParentDirectories()
+                p.copyTo(targetFile, true)
+                it.new
+            }
+            get(bucketName, newNames)
         }
     }
 

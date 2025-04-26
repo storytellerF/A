@@ -26,7 +26,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 fun test(receivedFrame: (RoomFrame) -> Unit = {}, block: suspend (HttpClient, ClientWebSocket) -> Unit) {
-    Napier.base(logger)
+    Napier.base(kmpLogger)
     val freeMemory = Runtime.getRuntime().freeMemory() / (1024 * 1024)
     Napier.i {
         "free ${freeMemory}MiB"

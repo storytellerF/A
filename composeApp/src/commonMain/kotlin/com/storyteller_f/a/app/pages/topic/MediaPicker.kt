@@ -38,7 +38,7 @@ import com.storyteller_f.a.client_lib.upload
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.utils.formatTime
-import com.storyteller_f.shared.utils.mapNotNull
+import com.storyteller_f.shared.utils.mapIfNotNull
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.*
 import io.github.vinceglb.filekit.dialogs.openFilePicker
@@ -136,7 +136,7 @@ private fun BoxScope.RecorderButton(
                             Napier.i {
                                 "save to $path"
                             }
-                            uploadPath(path, client, mediaTarget).mapNotNull {
+                            uploadPath(path, client, mediaTarget).mapIfNotNull {
                                 uploadSuccess(it)
                             }
                         } else {

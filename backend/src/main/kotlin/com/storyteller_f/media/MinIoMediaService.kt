@@ -4,6 +4,7 @@ import com.storyteller_f.MinIoConnection
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.MediaItem
+import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
 import io.minio.*
 import io.minio.errors.ErrorResponseException
@@ -12,24 +13,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.toKotlinLocalDateTime
 import java.util.concurrent.TimeUnit
-import kotlin.Exception
-import kotlin.Pair
 import kotlin.Result
-import kotlin.String
-import kotlin.Unit
-import kotlin.apply
-import kotlin.collections.List
 import kotlin.collections.filterNotNull
-import kotlin.collections.forEach
-import kotlin.collections.map
 import kotlin.getOrThrow
 import kotlin.map
-import kotlin.runCatching
-import kotlin.text.startsWith
-import kotlin.text.substringAfter
-import kotlin.text.toIntOrNull
-import kotlin.to
-import kotlin.use
 
 class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
     override suspend fun clean(bucketName: String): Result<Unit> {
@@ -50,6 +37,27 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
             get(bucketName, names).map {
                 it.filterNotNull()
             }.getOrThrow()
+        }
+    }
+
+    override suspend fun copy(
+        bucketName: String,
+        names: List<CopyPack>
+    ): Result<List<MediaInfo?>> {
+        return useMinIoClient(connection) {
+            names.map {
+                copyObject(
+                    CopyObjectArgs.builder()
+                        .bucket(bucketName)
+                        .`object`(it.new)
+                        .metadataDirective(Directive.COPY)
+                        .taggingDirective(Directive.COPY)
+                        .source(CopySource.builder().bucket(bucketName).`object`(it.origin).build())
+                        .build()
+                ).`object`()
+            }
+        }.mapResult {
+            get(bucketName, it)
         }
     }
 
@@ -80,9 +88,9 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         ) to dimension
     }
 
-    override suspend fun get(bucketName: String, objList: List<String?>): Result<List<MediaInfo?>> {
+    override suspend fun get(bucketName: String, names: List<String?>): Result<List<MediaInfo?>> {
         return useMinIoClient(connection) {
-            objList.map {
+            names.map {
                 if (it == null) {
                     null
                 } else {
@@ -112,20 +120,19 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
             }
             val names = list.map { (objName, picFullPath, type, meta) ->
-                val response = uploadObject(
+                uploadObject(
                     UploadObjectArgs.builder()
                         .bucket(bucketName)
                         .`object`(objName)
                         .filename(picFullPath.absolutePath)
                         .userMetadata(meta)
-                        .apply {
+                        .apply<UploadObjectArgs.Builder> {
                             if (type != null) {
                                 contentType(type)
                             }
                         }
                         .build()
-                )
-                response.`object`()
+                ).`object`()
             }
             get(bucketName, names).getOrThrow()
         }
@@ -147,8 +154,9 @@ private suspend fun <R> useMinIoClient(
                         it.block()
                     }
                 } catch (e: Exception) {
+                    point.initCause(e)
                     Napier.e(throwable = point) {
-                        "minio error $e"
+                        "minio error"
                     }
                     throw e
                 }

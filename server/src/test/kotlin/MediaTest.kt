@@ -1,6 +1,8 @@
+import com.storyteller_f.a.client_lib.copy
 import com.storyteller_f.a.client_lib.getMediaList
 import com.storyteller_f.a.client_lib.upload
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.http.*
 import kotlinx.io.Buffer
@@ -12,7 +14,7 @@ class MediaTest {
     @Test
     fun `test upload media`() {
         test { client, _ ->
-            attachSession(client) {
+            val firstTuple = attachSession(client) {
                 val response =
                     client.upload(
                         ObjectTuple(it.uid, ObjectType.USER),
@@ -25,9 +27,14 @@ class MediaTest {
                         }
                     }.getOrThrow()
                 assertEquals("${it.uid}/hello.txt", response.data.first().item.name)
-
                 assertListSize(1, client.getMediaList(it.uid, ObjectType.USER))
             }
+            attachSession(client) {
+                val response = client.copy(firstTuple.uid ob ObjectType.USER, "hello.txt").getOrThrow()
+                assertEquals("${it.uid}/hello.txt", response.data.first().item.name)
+                assertListSize(1, client.getMediaList(it.uid, ObjectType.USER))
+            }
+
         }
     }
 }

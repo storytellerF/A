@@ -13,7 +13,7 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultNotNull
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.ktor.server.application.*
@@ -142,7 +142,7 @@ private suspend fun addTopicAtRoom(
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.getTopicRoot(backend, newTopic.parentId).mapResultNotNull { (id, type) ->
+            DatabaseFactory.getTopicRoot(backend, newTopic.parentId).mapResultIfNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
                     addTopicIntoRoom(
                         backend,
@@ -193,7 +193,7 @@ private suspend fun addTopicIntoRoom(
                 null
             )
 
-            checkRoomIsPrivate(backend, roomId).mapResultNotNull { isPrivate ->
+            checkRoomIsPrivate(backend, roomId).mapResultIfNotNull { isPrivate ->
                 if (isPrivate) {
                     when {
                         content !is TopicContent.Encrypted -> Result.failure(

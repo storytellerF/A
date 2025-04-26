@@ -4,7 +4,10 @@ import a.composeapp.generated.resources.Res
 import a.composeapp.generated.resources.settings
 import a.composeapp.generated.resources.sign_out
 import a.composeapp.generated.resources.sign_out_prompt
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
@@ -13,6 +16,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.kdroid.composenotification.builder.getNotificationProvider
 import com.storyteller_f.a.app.*
@@ -34,29 +39,37 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun UserDialogInternal(userInfo: UserInfo, clickCreate: () -> Unit, dismiss: () -> Unit = {}) {
+fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Unit, dismiss: () -> Unit = {}) {
     val controller = remember {
         CustomAlertDialogController()
     }
     val appNav = LocalAppNav.current
     val client = LocalClient.current
-    val isUserPage by appNav.hasRouteFlow<UserScreen> {
-        it.uid == userInfo.id
-    }.collectAsState(false)
-    val my by SignInViewModel.user.collectAsState()
     DialogContainer {
-        UserCell(
-            userInfo,
-            false,
-            clickable = false,
-            cellClickable = !isUserPage,
-            size = 60.dp
-        ) {
-            dismiss()
-            appNav.gotoUser(it.id)
+        val my by SignInViewModel.user.collectAsState()
+        if (userInfo == null && isMe) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth()) {
+                LoginButton {
+                    dismiss()
+                }
+            }
+        } else {
+            val isUserPage by appNav.hasRouteFlow<UserScreen> {
+                it.uid == userInfo?.id
+            }.collectAsState(false)
+            UserCell(
+                userInfo,
+                false,
+                clickable = false,
+                cellClickable = !isUserPage,
+                size = 60.dp
+            ) {
+                dismiss()
+                appNav.gotoUser(it.id)
+            }
         }
         Column {
-            if (my?.id == userInfo.id) {
+            if (userInfo != null && my?.id == userInfo.id) {
                 LaunchedEffect(null) {
                     refreshMyInfo(my, client)
                 }
@@ -140,16 +153,17 @@ private fun refreshMyInfo(my: UserInfo?, client: HttpClient) {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun UserDialog(
+    isMe: Boolean,
     userInfo: UserInfo?,
     showDialog: Boolean,
     clickCreate: () -> Unit,
     dismiss: () -> Unit
 ) {
-    if (userInfo != null && showDialog) {
+    if (showDialog) {
         BasicAlertDialog({
             dismiss()
         }) {
-            UserDialogInternal(userInfo, clickCreate, dismiss)
+            UserDialogInternal(isMe, userInfo, clickCreate, dismiss)
         }
     }
 }

@@ -8,7 +8,7 @@ import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultNotNull
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverError
 import com.storyteller_f.tables.commonReactions
@@ -22,7 +22,7 @@ suspend fun addReaction(
     topicId: PrimaryKey,
     emojiText: String
 ): Result<ReactionInfo?> {
-    return checkRootWritePermission(backend, ObjectType.TOPIC, topicId, userId).mapResultNotNull {
+    return checkRootWritePermission(backend, ObjectType.TOPIC, topicId, userId).mapResultIfNotNull {
         if (it.hasWrite) {
             DatabaseFactory.getSimpleTopic(backend, topicId).mapResult { topic ->
                 val newId = SnowflakeFactory.nextId()
