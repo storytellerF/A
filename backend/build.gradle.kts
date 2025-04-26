@@ -23,6 +23,7 @@ dependencies {
     implementation(projects.shared)
     implementation(libs.minio)
     implementation(libs.elasticsearch.java)
+    implementation(libs.jackson.module.kotlin)
     implementation(libs.lucene.core)
     implementation(libs.lucene.queryparser)
     implementation(libs.lucene.analysis.common)
@@ -93,12 +94,12 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
 
 tasks.processResources.dependsOn(mergeServiceFiles)
 
-val isProd = project.findProperty("server.prod") == true
+val buildType = project.findProperty("server.buildType") as String
 val flavor = project.findProperty("buildkonfig.flavor").toString()
 
 buildConfig {
     className = "BackendConfig"
-    buildConfigField<Boolean>("IS_PROD", isProd)
+    buildConfigField<String>("BUILD_TYPE", buildType)
     buildConfigField<String>("FLAVOR", flavor)
 }
 

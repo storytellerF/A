@@ -455,9 +455,9 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
     keyData: List<Pair<PrimaryKey, String>>,
 ) {
     val content = if (isPrivate) {
-        val (encrypted, aes) = encryptData(input)
+        val (encrypted, aes) = encryptData(input).getOrThrow()
         TopicContent.Encrypted(encrypted.toHexString(), keyData.associate {
-            it.first to eciesEncrypt(it.second, aes).toHexString()
+            it.first to eciesEncrypt(it.second, aes).getOrThrow().toHexString()
         })
     } else {
         TopicContent.Plain(input)

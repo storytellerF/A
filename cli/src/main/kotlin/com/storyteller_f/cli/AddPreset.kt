@@ -340,8 +340,10 @@ class AddPreset : Subcommand("add", "add entry") {
         return userList.map {
             val id = SnowflakeFactory.nextId()
             val derPublicKey =
-                getDerPublicKeyFromPrivateKey(File(parentDir, it.privateKey).readText().replace("\r\n", "\n"))
-            val ad = calcAddress(derPublicKey)
+                getDerPublicKeyFromPrivateKey(
+                    File(parentDir, it.privateKey).readText().replace("\r\n", "\n")
+                ).getOrThrow()
+            val ad = calcAddress(derPublicKey).getOrThrow()
             val icon = it.icon
             if (icon == null) {
                 UserPresetTuple(it, null, derPublicKey, ad, id)
@@ -363,7 +365,8 @@ class AddPreset : Subcommand("add", "add entry") {
                 it.pic,
                 it.presetUser.name.takeIf { s -> s.isNotBlank() } ?: backend.nameService.parse(it.id),
                 it.id,
-                now()
+                now(),
+                0
             )
         }
     }
@@ -598,13 +601,13 @@ class AddPreset : Subcommand("add", "add entry") {
             roomAid to members
         }.associate { it }
         val encrypted = topicsPrivate.map { (addTopic, index) ->
-            val (first, aesBytes) = encryptData(getTopicContent(addTopic, parentDir))
+            val (first, aesBytes) = encryptData(getTopicContent(addTopic, parentDir)).getOrThrow()
             EncryptedTopicTuple(index, first, aesBytes, addTopic)
         }
         val encryptedKeys = encrypted.flatMap { (index, _, aesBytes, topic) ->
             roomMembers[topic.room]!!.map {
                 val pubKey = it.first
-                val data4 = eciesEncrypt(pubKey, aesBytes)
+                val data4 = eciesEncrypt(pubKey, aesBytes).getOrThrow()
                 Triple(index, data4, it.second)
             }
         }

@@ -3,7 +3,7 @@ FROM eclipse-temurin:21-alpine AS builder
 RUN apk add bash curl unzip
 
 #^1
-ARG IS_PROD
+ARG BUILD_TYPE
 ARG FLAVOR
 ARG BUILD_ON
 #!1
@@ -24,7 +24,7 @@ RUN ./scripts/download_scripts/download-data.sh
 ENV HOST_TYPE=docker
 
 RUN --mount=type=cache,target=/root/.gradle \
-    ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
+    ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${BUILD_TYPE}
 
 RUN mkdir -p ./cli/build/decompressed && tar -xf ./cli/build/distributions/cli.tar -C ./cli/build/decompressed
 

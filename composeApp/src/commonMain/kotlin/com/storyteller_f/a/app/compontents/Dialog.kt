@@ -171,7 +171,7 @@ private fun ErrorDialogContent(
         ExceptionView(throwable)
     } else {
         Text((throwable.localizedMessage ?: throwable::class.toString()).take(100))
-        if (!AppConfig.IS_PROD) {
+        if (AppConfig.BUILD_TYPE != "prod") {
             val text = throwable.stackTraceToString()
             MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
                 Text(

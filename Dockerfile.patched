@@ -6,8 +6,8 @@ RUN apk add bash curl unzip
 #patched
 #!1
 
-ARG IS_PROD
-ENV IS_PROD=$IS_PROD
+ARG BUILD_TYPE
+ENV BUILD_TYPE=$BUILD_TYPE
 ARG FLAVOR
 ENV FLAVOR=$FLAVOR
 ARG BUILD_ON
@@ -117,7 +117,7 @@ WORKDIR /app
 COPY . .
 
 COPY <<EOF ./${FLAVOR}.env
-IS_PROD=${IS_PROD}
+BUILD_TYPE=${BUILD_TYPE}
 FLAVOR=${FLAVOR}
 BUILD_ON=${BUILD_ON}
 COMPOSE_PROFILES=${COMPOSE_PROFILES}
@@ -180,7 +180,7 @@ RUN ./scripts/download_scripts/download-data.sh
 ENV HOST_TYPE=docker
 
 RUN --mount=type=cache,target=/root/.gradle \
-    ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
+    ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${BUILD_TYPE}
 
 RUN mkdir -p ./cli/build/decompressed && tar -xf ./cli/build/distributions/cli.tar -C ./cli/build/decompressed
 

@@ -7,7 +7,7 @@ RUN apt-get install -y --no-install-recommends \
     unzip \
     jq
 
-ARG IS_PROD
+ARG BUILD_TYPE
 ARG FLAVOR
 ARG BUILD_ON
 ARG COMPOSE_PROFILES
@@ -68,7 +68,7 @@ WORKDIR /app
 COPY . .
 
 COPY <<EOF ./${FLAVOR}.env
-IS_PROD=${IS_PROD}
+BUILD_TYPE=${BUILD_TYPE}
 FLAVOR=${FLAVOR}
 BUILD_ON=${BUILD_ON}
 COMPOSE_PROFILES=${COMPOSE_PROFILES}
@@ -135,13 +135,13 @@ RUN ./scripts/download_scripts/manual-download-docker-image.sh
 ENV HOST_TYPE=local
 
 RUN --mount=type=cache,target=/root/.gradle \
-    ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${IS_PROD}
+    ./scripts/build_scripts/build-all-in-flavor.sh ${FLAVOR} ${BUILD_TYPE}
 
 FROM koyeb/docker-compose
 
 RUN apk add --no-cache git
 
-ARG IS_PROD
+ARG BUILD_TYPE
 ARG FLAVOR
 ARG BUILD_ON
 ARG COMPOSE_PROFILES

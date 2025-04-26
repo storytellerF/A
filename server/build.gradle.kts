@@ -53,12 +53,12 @@ tasks.withType<Test> {
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 
-val isProd = project.findProperty("server.prod") == true
+val buildType = project.findProperty("server.buildType") as String
 val flavor = project.findProperty("buildkonfig.flavor").toString()
 
 buildConfig {
     className = "ServerConfig"
-    buildConfigField<Boolean>("IS_PROD", isProd)
+    buildConfigField<String>("BUILD_TYPE", buildType)
     buildConfigField<String>("FLAVOR", flavor)
 }
 

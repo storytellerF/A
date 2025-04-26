@@ -181,12 +181,12 @@ suspend fun <R> attachSession(
     client: HttpClient,
     block: suspend (SessionTuple) -> R
 ): SessionOuterTuple<R> {
-    val priKey = generateECDSAPemPrivateKey()
-    val pubKey = getDerPublicKeyFromPrivateKey(priKey)
-    val address = calcAddress(pubKey)
+    val priKey = generateECDSAPemPrivateKey().getOrThrow()
+    val pubKey = getDerPublicKeyFromPrivateKey(priKey).getOrThrow()
+    val address = calcAddress(pubKey).getOrThrow()
     val rawData = client.getData().getOrThrow()
     val data = finalData(rawData)
-    val sign = signature(priKey, data)
+    val sign = signature(priKey, data).getOrThrow()
     val userInfo = client.signUp(pubKey, sign).getOrThrow()
     val session = DefaultLoginUserSession(LoginUser(priKey, pubKey, address))
     SignInViewModel.updateState(ClientSession.SignInSuccess(session))
@@ -206,7 +206,7 @@ suspend fun <R1, R2> loginSession(
     val rawData = client.getData().getOrThrow()
     val data = finalData(rawData)
     val (privateKey, publicKey, address) = session
-    val sign = signature(privateKey, data)
+    val sign = signature(privateKey, data).getOrThrow()
     val userInfo = client.signIn(address, sign).getOrThrow()
     assertEquals(session.uid, userInfo.id)
     val loginUserSession = DefaultLoginUserSession(LoginUser(privateKey, publicKey, address))

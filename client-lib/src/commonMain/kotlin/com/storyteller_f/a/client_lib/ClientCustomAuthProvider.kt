@@ -54,7 +54,7 @@ class ClientCustomAuthProvider : AuthProvider {
             false
         } else {
             runCatching {
-                SignInViewModel.updateSession(data, state.session.signature(finalData(data)))
+                SignInViewModel.updateSession(data, state.session.signature(finalData(data)).getOrThrow())
             }.fold({
                 Napier.v(tag = "ClientAuth") {
                     "refreshToken success"

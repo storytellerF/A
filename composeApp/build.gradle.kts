@@ -28,7 +28,7 @@ val buildIosTarget = project.findProperty("target.ios") == "true"
 val buildWasmTarget = project.findProperty("target.wasm") == "true"
 val flavorStr = project.findProperty("buildkonfig.flavor") as String
 val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavorStr)!!
-val isProd = project.findProperty("server.prod") == "true"
+val buildType = project.findProperty("server.buildType") as String
 val isLlamaEnable = project.findProperty("llama.enable") == "true"
 
 kotlin {
@@ -341,7 +341,7 @@ buildkonfig {
         buildConfigField(STRING, "PROJECT_PATH", layout.projectDirectory.asFile.absolutePath, const = true)
         buildConfigField(STRING, "SERVER_URL", serverUrl ?: "", const = true)
         buildConfigField(STRING, "WS_SERVER_URL", wsServerUrl ?: "", const = true)
-        buildConfigField(BOOLEAN, "IS_PROD", isProd.toString(), const = true)
+        buildConfigField(STRING, "BUILD_TYPE", buildType, const = true)
         buildConfigField(STRING, "FLAVOR", flavorStr, const = true)
         buildConfigField(BOOLEAN, "ENABLE_LOGIN_CHECK", "false", const = true)
     }

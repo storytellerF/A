@@ -212,7 +212,7 @@ private suspend fun ApplicationCall.checkApiRequest(
 ): CustomPrincipal? {
     val sig = credential.sig
     return when {
-        !ServerConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
+        ServerConfig.BUILD_TYPE != "prod" && credential is IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
             if (DatabaseFactory.getRawUserById(backend, id).getOrNull() != null) {
                 saveSuccessSession(session, id)
@@ -348,7 +348,7 @@ fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
                     is UserSession.Pending -> {
                         when {
                             credential != null -> call.checkApiRequest(backend, credential, session)
-                            backend.config.isProd -> null
+                            backend.config.buildType == "prod" -> null
                             else -> checkDevWsLink(backend, call)
                         }
                     }

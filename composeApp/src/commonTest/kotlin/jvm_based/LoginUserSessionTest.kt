@@ -2,12 +2,7 @@ package jvm_based
 
 import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.client_lib.LoginUser
-import com.storyteller_f.shared.calcAddress
-import com.storyteller_f.shared.eciesEncrypt
-import com.storyteller_f.shared.encryptData
-import com.storyteller_f.shared.generateECDSAPemPrivateKey
-import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
-import com.storyteller_f.shared.loadIfNeed
+import com.storyteller_f.shared.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -19,16 +14,16 @@ class LoginUserSessionTest : UsingContextTest() {
         loadIfNeed()
         val sessionFactory = buildLoginUserSessionFactory()
         assertEquals(0, sessionFactory.savedSession().list.size)
-        val privateKey = generateECDSAPemPrivateKey()
-        val publicKey = getDerPublicKeyFromPrivateKey(privateKey)
-        val ad = calcAddress(publicKey)
+        val privateKey = generateECDSAPemPrivateKey().getOrThrow()
+        val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
+        val ad = calcAddress(publicKey).getOrThrow()
         val addSession = sessionFactory.addSession(LoginUser(privateKey, publicKey, ad))
         assertEquals(1, sessionFactory.savedSession().list.size)
-        val signature = addSession.signature("test")
-        assertTrue(addSession.verify(signature, "test"))
-        val encrypt = encryptData("hello")
-        val encryptAesKey = eciesEncrypt(publicKey, encrypt.second)
-        assertEquals("hello", addSession.decrypt(encrypt.first, encryptAesKey))
+        val signature = addSession.signature("test").getOrThrow()
+        assertTrue(addSession.verify(signature, "test").getOrThrow())
+        val encrypt = encryptData("hello").getOrThrow()
+        val encryptAesKey = eciesEncrypt(publicKey, encrypt.second).getOrThrow()
+        assertEquals("hello", addSession.decrypt(encrypt.first, encryptAesKey).getOrThrow())
         sessionFactory.buildSession("default")
         sessionFactory.removeSession("default")
         assertEquals(0, sessionFactory.savedSession().list.size)

@@ -4,19 +4,20 @@ import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.checkTsIsValid
+import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 
 interface LoginUserSession {
-    suspend fun signature(data: String): String
+    suspend fun signature(data: String): Result<String>
 
     suspend fun verify(signature: String, data: String): Result<Boolean>
 
-    suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): String
+    suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String>
 
-    suspend fun address(): String
+    suspend fun address(): Result<String>
 }
 
 sealed interface ClientSession {
@@ -38,7 +39,7 @@ data class LoginUser(
 )
 
 class DefaultLoginUserSession(val loginUSer: LoginUser) : LoginUserSession {
-    override suspend fun signature(data: String): String {
+    override suspend fun signature(data: String): Result<String> {
         return com.storyteller_f.shared.signature(loginUSer.privateKey, data)
     }
 
@@ -46,15 +47,17 @@ class DefaultLoginUserSession(val loginUSer: LoginUser) : LoginUserSession {
         return com.storyteller_f.shared.verify(loginUSer.publicKey, signature, data)
     }
 
-    override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): String {
-        return com.storyteller_f.shared.decryptMessage(
-            getDerPrivateKey(loginUSer.privateKey),
-            encrypted,
-            encryptedAesKey
-        )
+    override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String> {
+        return getDerPrivateKey(loginUSer.privateKey).mapResult { derPrivateKeyStr ->
+            com.storyteller_f.shared.decryptMessage(
+                derPrivateKeyStr,
+                encrypted,
+                encryptedAesKey
+            )
+        }
     }
 
-    override suspend fun address(): String {
+    override suspend fun address(): Result<String> {
         return calcAddress(loginUSer.publicKey)
     }
 }

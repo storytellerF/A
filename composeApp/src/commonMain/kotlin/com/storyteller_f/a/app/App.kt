@@ -507,8 +507,8 @@ private fun AutoRetryLogin(
                 scope.launch {
                     globalDialogState.use {
                         val data = client.getData().getOrThrow()
-                        val signature = state.session.signature(finalData(data))
-                        val add = state.session.address()
+                        val signature = state.session.signature(finalData(data)).getOrThrow()
+                        val add = state.session.address().getOrThrow()
                         val u = client.signIn(add, signature).getOrThrow()
                         SignInViewModel.updateUser(u)
                         SignInViewModel.updateSession(data, signature)

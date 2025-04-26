@@ -10,3 +10,6 @@ application {
 dependencies {
     implementation(libs.mosaic.runtime)
 }
+tasks.withType<JavaExec> {
+    standardInput = System.`in`
+}

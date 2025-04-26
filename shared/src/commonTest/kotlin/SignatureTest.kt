@@ -11,13 +11,13 @@ class SignatureTest {
     @Test
     fun `test encrypt`() {
         runTest {
-            val (encrypted, aesKey) = encryptData("hello")
-            assertEquals("hello", decryptData(encrypted, aesKey))
+            val (encrypted, aesKey) = encryptData("hello").getOrThrow()
+            assertEquals("hello", decryptData(encrypted, aesKey).getOrThrow())
             val keyPair = CryptographyProvider.Default.get(ECDSA).keyPairGenerator(EC.Curve.P256).generateKey()
             val derPublicKey = keyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.DER)
             val derPrivateKey = keyPair.privateKey.encodeToByteArray(EC.PrivateKey.Format.DER)
-            val encrypt = eciesEncrypt(derPublicKey.toHexString(), "hello".encodeToByteArray())
-            val decrypted = eciesDecrypt(derPrivateKey.toHexString(), encrypt)
+            val encrypt = eciesEncrypt(derPublicKey.toHexString(), "hello".encodeToByteArray()).getOrThrow()
+            val decrypted = eciesDecrypt(derPrivateKey.toHexString(), encrypt).getOrThrow()
             assertEquals("hello", decrypted.decodeToString())
         }
     }
@@ -26,9 +26,9 @@ class SignatureTest {
     fun `test address`() {
         loadIfNeed()
         runTest {
-            val keyPair = generateECDSAPemPrivateKey()
-            val key = getDerPublicKeyFromPrivateKey(keyPair)
-            println(calcAddress(key))
+            val keyPair = generateECDSAPemPrivateKey().getOrThrow()
+            val key = getDerPublicKeyFromPrivateKey(keyPair).getOrThrow()
+            println(calcAddress(key).getOrThrow())
         }
 
     }

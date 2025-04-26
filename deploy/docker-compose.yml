@@ -35,7 +35,7 @@ services:
     build:
       context: ..
       args:
-        IS_PROD: ${IS_PROD}
+        BUILD_TYPE: ${BUILD_TYPE}
         FLAVOR: ${FLAVOR}
         HOST_TYPE: docker
         BUILD_ON: ${BUILD_ON}

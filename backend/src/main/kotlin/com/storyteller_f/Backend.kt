@@ -31,7 +31,7 @@ class Backend(
 
 class Config(
     val databaseConnection: DatabaseConnection,
-    val isProd: Boolean,
+    val buildType: String,
     val flavor: String
 )
 
@@ -84,10 +84,10 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 
     val databaseConnection = databaseConnection(env)
 
-    val isProd = env["IS_PROD"].toBoolean()
+    val buildType = env["BUILD_TYPE"]
     val flavor = env["FLAVOR"]
 
-    val config = Config(databaseConnection, isProd, flavor)
+    val config = Config(databaseConnection, buildType, flavor)
 
     val topicDocumentService = topicDocumentService(env)
     val mediaService = mediaService(env)
