@@ -329,11 +329,11 @@ private suspend fun processTopicExtension(
     val userMap = users.associateBy { it.id }
     if (addLatestSubTopic) {
         val subTopics = processedTopics.flatMap { t ->
-            getTopicsByPredicate(backend, uid, false, {
+            getTopicsByPredicate(backend, uid, false, true, {
                 it.bindPaginationQuery(Topics, PagingFetch(null, null, 2))
-            }, true, {
+            }) {
                 Topics.parentId eq t.id
-            }).getOrThrow()
+            }.getOrThrow()
         }
         if (subTopics.isEmpty()) {
             Result.success(emptyList())

@@ -19,6 +19,7 @@ object Users : BaseTable() {
     val address = userAddress()
     val icon = userIcon()
     val nickname = userName()
+    val acgAmount = long("acg_amount").default(0)
 }
 
 class User(
@@ -28,9 +29,9 @@ class User(
     val icon: String?,
     val nickname: String,
     id: PrimaryKey,
-    createdTime: LocalDateTime
-) :
-    BaseObj(id, createdTime) {
+    createdTime: LocalDateTime,
+    val acgAmount: Long,
+) : BaseObj(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): User {
             return User(
@@ -40,7 +41,8 @@ class User(
                 row[Users.icon],
                 row[Users.nickname],
                 row[Users.id],
-                row[Users.createdTime]
+                row[Users.createdTime],
+                row[Users.acgAmount]
             )
         }
 
@@ -182,7 +184,7 @@ suspend fun DatabaseFactory.createUser(
     return query(backend, {
         this to null
     }) {
-        val user = User(null, pk, ad, null, name, newId, now())
+        val user = User(null, pk, ad, null, name, newId, now(), 0)
         check(Users.insert {
             it[id] = user.id
             it[publicKey] = user.publicKey
@@ -294,11 +296,20 @@ suspend fun DatabaseFactory.getRawUsersByAids(backend: Backend, ids: List<String
     mapQuery(backend, {
         toUserInfo() to icon
     }, User::wrapRow) {
-        Users
-            .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+        Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
             .select(Users.fields + Aids.value)
             .where {
                 Aids.value inList ids
+            }
+    }
+
+suspend fun DatabaseFactory.getUserAcgByIds(backend: Backend, ids: List<PrimaryKey>) =
+    mapQuery(backend, {
+        it[Users.id] to it[Users.acgAmount]
+    }) {
+        Users.select(Users.fields)
+            .where {
+                Users.id inList ids
             }
     }
 

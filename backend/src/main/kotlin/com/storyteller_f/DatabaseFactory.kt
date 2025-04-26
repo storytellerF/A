@@ -10,7 +10,6 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.util.PSQLException
 import java.net.ConnectException
-import kotlin.coroutines.CoroutineContext
 
 object DatabaseFactory {
 
@@ -39,7 +38,9 @@ object DatabaseFactory {
         Rooms,
         Titles,
         Topics,
-        Users
+        Users,
+        UserLogs,
+        TaskRecords
     )
 
     fun init(backend: Backend) {
@@ -139,7 +140,7 @@ object DatabaseFactory {
      */
     suspend fun <T, R> mapQuery(
         backend: Backend,
-        transform: T.() -> R,
+        transform: (T) -> R,
         block: () -> SizedIterable<T>
     ): Result<List<R>> =
         dbSearch(backend, {

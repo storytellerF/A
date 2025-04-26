@@ -110,7 +110,7 @@ private fun buildCommunityWhereClause(
 
 suspend fun DatabaseFactory.getJoinedCommunityIds(backend: Backend, uid: PrimaryKey) =
     mapQuery(backend, {
-        this[Communities.id]
+        it[Communities.id]
     }) {
         Communities
             .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
@@ -264,7 +264,7 @@ suspend fun DatabaseFactory.getCommunityJoinedTimeByIds(
     uid: PrimaryKey,
     communityIds: List<PrimaryKey>
 ) = mapQuery(backend, {
-    this[Communities.id] to this[MemberJoins.joinTime]
+    it[Communities.id] to it[MemberJoins.joinTime]
 }) {
     Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
         MemberJoins.uid eq uid

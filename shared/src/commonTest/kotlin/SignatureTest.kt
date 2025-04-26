@@ -5,7 +5,6 @@ import dev.whyoleg.cryptography.algorithms.ECDSA
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
 
 class SignatureTest {
     @OptIn(ExperimentalStdlibApi::class)

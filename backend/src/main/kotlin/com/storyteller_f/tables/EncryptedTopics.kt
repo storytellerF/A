@@ -26,7 +26,7 @@ object EncryptedTopicKeys : Table() {
     val encryptedAes = blob("encrypted_aes")
 
     init {
-        index("encrypted-topic-key-main", true, topicId, uid)
+        index("encrypted-topics-main", true, topicId, uid)
     }
 }
 

@@ -25,13 +25,17 @@ class UserLogTypeColumnType : ColumnType<UserLogType>() {
     }
 }
 
-fun Table.userLogType(name: String) = registerColumn(name, UserLogTypeColumnType())
+fun Table.userLogType(name: String) = enumerationByName<UserLogType>(name, 10)
 
 object UserLogs : BaseTable() {
     val uid = customPrimaryKey("uid")
     val type = userLogType("type")
     val objectId = customPrimaryKey("object_id")
     val objectType = objectType("object_type")
+
+    init {
+        index("user-logs-main", false, uid, type, objectId)
+    }
 }
 
 class UserLog(

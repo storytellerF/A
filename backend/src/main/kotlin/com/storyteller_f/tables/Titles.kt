@@ -30,7 +30,7 @@ class TitleTypeColumnType : ColumnType<TitleType>() {
     }
 }
 
-fun Table.titleType(name: String) = registerColumn(name, TitleTypeColumnType())
+fun Table.titleType(name: String) = enumerationByName<TitleType>(name, 10)
 
 class TitleStatusColumnType : ColumnType<TitleStatus>() {
     override fun sqlType(): String {
@@ -47,7 +47,7 @@ class TitleStatusColumnType : ColumnType<TitleStatus>() {
     }
 }
 
-fun Table.titleStatus(name: String) = registerColumn(name, TitleStatusColumnType())
+fun Table.titleStatus(name: String) = enumerationByName<TitleStatus>(name, 10)
 
 object Titles : BaseTable() {
     val creator = customPrimaryKey("creator").index()
@@ -60,10 +60,10 @@ object Titles : BaseTable() {
     val descriptionTopicId = customPrimaryKey("description_topic_id")
 
     init {
-        index("titles-creator", false, creator, type, scopeId)
-        index("titles-receiver", false, receiver, type, scopeId)
-        index("titles-creator-status", false, creator, status, type, scopeId)
-        index("titles-receiver-status", false, receiver, status, type, scopeId)
+        index("creator", false, creator, type, scopeId)
+        index("receiver", false, receiver, type, scopeId)
+        index("creator-status", false, creator, status, type, scopeId)
+        index("receiver-status", false, receiver, status, type, scopeId)
     }
 }
 

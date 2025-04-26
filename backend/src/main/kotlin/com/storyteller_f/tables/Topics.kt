@@ -6,6 +6,7 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
+import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
@@ -194,8 +195,8 @@ suspend fun getTopicsByPredicate(
     backend: Backend,
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
-    extraPredicate: (Query) -> Query = { it },
     addPinOrder: Boolean = false,
+    addPagingQuery: (Query) -> Query = { it },
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<List<TopicInfo>> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
@@ -203,7 +204,7 @@ suspend fun getTopicsByPredicate(
     return DatabaseFactory.mapQuery(backend, {
         topicInfo.toTopicInfo(commentCount, hasComment, reactionCount, aid)
     }, resultRowTransform) {
-        query.andWhere(predicate).let(extraPredicate)
+        query.andWhere(predicate).let(addPagingQuery)
             .groupBy(*if (addPinOrder) arrayOf(Topics.pinned, Topics.id) else arrayOf(Topics.id))
     }
 }
@@ -215,7 +216,7 @@ suspend fun getTopicsPagingByPredicate(
     pagingFetch: PagingFetch,
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<PaginationResult<TopicInfo>> {
-    return getTopicsByPredicate(backend, uid, fillHasCommented, {
+    return getTopicsByPredicate(backend, uid, fillHasCommented, addPagingQuery = {
         it.bindPaginationQuery(Topics, pagingFetch)
     }, predicate = predicate).mapResult { data ->
         DatabaseFactory.count(backend) {
@@ -307,5 +308,17 @@ suspend fun DatabaseFactory.updateTopicStatus(
         }) {
             it[pinned] = newValue
         } > 0
+    }
+}
+
+suspend fun DatabaseFactory.getRawTopics(backend: Backend, firstId: PrimaryKey): Result<List<Topic>> {
+    return mapQuery(backend, Topic::wrapRow) {
+        val query = Topics.selectAll()
+        if (firstId != DEFAULT_PRIMARY_KEY) {
+            query.andWhere {
+                Topics.id less firstId
+            }
+        }
+        query.orderBy(Topics.id, SortOrder.ASC)
     }
 }

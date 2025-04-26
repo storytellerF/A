@@ -562,7 +562,7 @@ class AddPreset : Subcommand("add", "add entry") {
             userMap[presetTopic.author]!!.id to it
         }
         uploadFiles(tika, backend, mediaNames.map { (author, p) ->
-            Triple(File(parentDir, "images/topics/$p"), "$author/$p", null)
+            Triple(File(parentDir, "medias/topics/$p"), "$author/$p", null)
         }).getOrThrow()
         DatabaseFactory.insertMediaRefs(backend, topicId, ObjectType.TOPIC, mediaNames)
     }
@@ -608,9 +608,9 @@ class AddPreset : Subcommand("add", "add entry") {
                 Triple(index, data4, it.second)
             }
         }
-        EncryptedTopics.batchInsert(encrypted) { (index, second) ->
+        EncryptedTopics.batchInsert(encrypted) { (index, bytes) ->
             this[EncryptedTopics.topicId] = tuples[index].id
-            this[EncryptedTopics.content] = ExposedBlob(second)
+            this[EncryptedTopics.content] = ExposedBlob(bytes)
         }
         EncryptedTopicKeys.batchInsert(encryptedKeys) { (index, t4, id) ->
             this[EncryptedTopicKeys.topicId] = tuples[index].id
@@ -622,7 +622,7 @@ class AddPreset : Subcommand("add", "add entry") {
             if (room != null) {
                 val content = getTopicContent(topic.first, parentDir)
                 uploadFiles(tika, backend, extractMarkdownMediaLink(content).map {
-                    Triple(File(parentDir, "images/topics/$it"), "${room.id}/$it", null)
+                    Triple(File(parentDir, "medias/topics/$it"), "${room.id}/$it", null)
                 }).getOrThrow()
             }
         }

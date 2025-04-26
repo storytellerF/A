@@ -90,9 +90,7 @@ suspend fun getRoomPaginationList(
     community: PrimaryKey?,
     pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<RoomInfo, String?>>, Long>> {
-    return DatabaseFactory.mapQuery(backend, {
-        mapRoomInfo(this)
-    }) {
+    return DatabaseFactory.mapQuery(backend, ::mapRoomInfo) {
         buildRoomSearchQuery(uid, false, joinStatusSearch, word, community).bindPaginationQuery(
             Rooms,
             pagingFetch
@@ -202,7 +200,7 @@ suspend fun DatabaseFactory.commonPaginationRoomPubKeyList(
     pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<Long, String>>, Long>> {
     return mapQuery(backend, {
-        this[Users.id] to this[Users.publicKey]
+        it[Users.id] to it[Users.publicKey]
     }) {
         buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, pagingFetch)
     }.mapResult { data ->
