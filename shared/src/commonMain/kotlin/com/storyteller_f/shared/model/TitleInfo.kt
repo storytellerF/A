@@ -19,6 +19,9 @@ data class TitleInfo(
     val descriptionTopicId: PrimaryKey,
     val extension: Extension? = null
 ) : Identifiable {
+    override val objectType: ObjectType
+        get() = ObjectType.TITLE
+
     @Serializable
     data class Extension(
         val creatorInfo: UserInfo,

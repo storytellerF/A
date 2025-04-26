@@ -4,12 +4,9 @@ import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.checkTsIsValid
-import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.UtcOffset
-import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
 
 interface LoginUserSession {

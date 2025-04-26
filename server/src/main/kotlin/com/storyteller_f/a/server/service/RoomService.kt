@@ -2,11 +2,14 @@ package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
+import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.obj.TitleSearchType
 import com.storyteller_f.shared.obj.UpdateRoomBody
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleType
@@ -82,7 +85,8 @@ private suspend fun directJoinRoom(
         uid,
         time,
         roomInfo.memberCount
-    ).mapResult { affectedCount ->
+    ).mapResult {
+        addUserLog(backend, uid, UserLogType.JOIN, roomInfo.tuple())
         Result.success(roomInfo.copy(joinedTime = time))
     }.recoverError { exception ->
         if (exception.isDup()) {
@@ -93,12 +97,13 @@ private suspend fun directJoinRoom(
     }
 }
 
-suspend fun exitRoom(backend: Backend, roomId: PrimaryKey, id: PrimaryKey) =
-    getRoom(backend, ObjectFetch.IdFetch(roomId), id, true).mapResultIfNotNull { info ->
+suspend fun exitRoom(backend: Backend, roomId: PrimaryKey, uid: PrimaryKey) =
+    getRoom(backend, ObjectFetch.IdFetch(roomId), uid, true).mapResultIfNotNull { info ->
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            DatabaseFactory.exit(backend, roomId, id).map { i ->
+            DatabaseFactory.exit(backend, roomId, uid).map {
+                addUserLog(backend, uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
                 info.copy(joinedTime = null)
             }
         }

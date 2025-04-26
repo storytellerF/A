@@ -24,7 +24,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.net.ConnectException
 
-
 private const val TOPIC_INDEX_NAME = "topics"
 
 class ElasticTopicSearchService(private val connection: ElasticConnection) : TopicSearchService {
