@@ -169,7 +169,7 @@ kotlin {
 
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(compose.uiTest)
-            implementation(projects.testServer.localServerLib)
+            implementation(projects.localServer.lib)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

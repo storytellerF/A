@@ -33,7 +33,7 @@ dependencies {
     implementation(libs.pdfbox.layout)
     implementation(libs.h2)
 
-    implementation(projects.testServer.localServerLib)
+    implementation(projects.localServer.lib)
 }
 
 val buildType = project.findProperty("server.buildType") as String
