@@ -3,12 +3,15 @@ package com.storyteller_f.media
 import com.ashampoo.kim.common.convertToPhotoMetadata
 import com.ashampoo.kim.jvm.KimJvm
 import com.storyteller_f.Backend
-import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
+import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.tables.uploadFiles
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDateTime
 import org.apache.tika.Tika
 import java.io.File
 import java.io.InputStream
@@ -17,50 +20,53 @@ import javax.imageio.ImageIO
 import javax.imageio.stream.ImageInputStreamImpl
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamConstants
+import kotlin.collections.map
 import kotlin.io.path.inputStream
 
 data class UploadPack(
-    val name: String,
     val path: File,
-    val contentType: String? = null,
-    val meta: Map<String, String> = emptyMap()
+    val name: String,
+    val noPrefixName: String,
+    val owner: PrimaryKey,
+    val size: Long,
+    val contentType: String = "",
+    val overrideContentType: String? = null,
+    val dimension: Dimension? = null
 )
 
 data class CopyPack(val origin: String, val new: String)
 
 interface MediaService {
-    suspend fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>>
+    suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<Pair<String, LocalDateTime>?>>
 
     /**
      * @param names 完整的name
      */
-    suspend fun get(bucketName: String, names: List<String?>): Result<List<MediaInfo?>>
+    suspend fun get(bucketName: String, names: List<String?>): Result<List<Pair<String, LocalDateTime>?>>
 
     suspend fun clean(bucketName: String): Result<Unit>
 
-    suspend fun list(bucketName: String, prefix: String): Result<List<MediaInfo>>
+    suspend fun list(bucketName: String, prefix: String): Result<List<Pair<String, LocalDateTime>>>
 
-    suspend fun copy(bucketName: String, names: List<CopyPack>): Result<List<MediaInfo?>>
+    suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<Pair<String, LocalDateTime>?>>
 }
 
 suspend fun uploadFiles(
     tika: Tika,
     backend: Backend,
-    files: List<Triple<File, String, String?>>
+    files: List<UploadPack>
 ): Result<List<MediaInfo?>> {
-    val packs = files.map { (file, saveFileName, contentType) ->
-        val type = checkContentType(file.toPath(), tika, contentType)
-        val meta = if (type.second.startsWith("image")) {
-            getDimension(file.toPath(), type.second)?.let {
-                mapOf("width" to it.width.toString(), "height" to it.height.toString())
-            } ?: emptyMap()
+    val packs = files.map {
+        val (overrideType, detectedType) = checkContentType(it.path.toPath(), tika, it.overrideContentType)
+        val dimension = if (detectedType.startsWith("image")) {
+            getDimension(it.path.toPath(), detectedType)
         } else {
-            emptyMap()
+            null
         }
-        UploadPack(saveFileName, file, contentType, meta)
+        it.copy(contentType = detectedType, overrideContentType = overrideType, dimension = dimension)
     }
 
-    return backend.mediaService.upload(AMEDIA_DEFAULT_BUCKET, packs)
+    return DatabaseFactory.uploadFiles(backend, packs)
 }
 
 private fun checkContentType(
@@ -70,14 +76,10 @@ private fun checkContentType(
 ): Pair<String?, String> {
     val s = "audio/mp4"
     val mimeType = tika.detect(file)
-    return if (contentType == s) {
-        if (mimeType == s) {
-            s
-        } else {
-            null
-        }
-    } else {
-        null
+    return when {
+        contentType != s -> null
+        mimeType == s -> s
+        else -> null
     } to mimeType
 }
 

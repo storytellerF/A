@@ -2,7 +2,6 @@ package com.storyteller_f.a.server.service
 
 import com.storyteller_f.*
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -11,11 +10,9 @@ import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.tables.ObjectFetch
-import com.storyteller_f.tables.getUser
-import com.storyteller_f.tables.getUserAid
-import com.storyteller_f.tables.updateUser
+import com.storyteller_f.tables.*
 import io.ktor.server.plugins.*
 
 suspend fun updateUser(
@@ -125,14 +122,14 @@ suspend fun checkIcon(
     backend: Backend,
     iconName: String?,
     aspectRatio: Dimension? = null
-): Result<MediaCheckResult> {
+): Result<MediaCheckResult?> {
     return if (!iconName.isNullOrBlank()) {
-        backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, listOf(iconName)).map {
+        DatabaseFactory.getMediaInfoList(backend, listOf(iconName)).mapIfNotNull {
             val mediaInfo = it.firstOrNull()
             val dimension = mediaInfo?.dimension
             when {
                 mediaInfo == null -> MediaCheckResult.NOT_FOUND
-                !mediaInfo.item.contentType.startsWith("image/") -> MediaCheckResult.CONTENT_TYPE_MISMATCH
+                !mediaInfo.contentType.startsWith("image/") -> MediaCheckResult.CONTENT_TYPE_MISMATCH
                 aspectRatio != null && (dimension == null || !checkMediaDimensionRatioMatch(
                     dimension,
                     aspectRatio

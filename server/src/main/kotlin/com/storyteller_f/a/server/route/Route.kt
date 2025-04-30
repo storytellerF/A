@@ -59,6 +59,9 @@ class RouteMedia(val objectId: PrimaryKey, val objectType: ObjectType) {
 
     @Resource("copy")
     class Copy(val parent: RouteMedia)
+
+    @Resource("all")
+    class All(val parent: RouteMedia)
 }
 
 @Resource("/rooms")

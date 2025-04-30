@@ -8,11 +8,6 @@ import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
 import com.storyteller_f.media.loadAvif
 import com.storyteller_f.shared.kmpLogger
-import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
-import com.storyteller_f.shared.utils.now
-import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
@@ -28,10 +23,7 @@ import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.update
 import org.slf4j.event.Level
 import java.io.File
 import java.net.InetAddress
@@ -59,8 +51,6 @@ fun Application.module() {
     val backend = buildBackend()
     DatabaseFactory.init(backend)
 
-    runTask(backend)
-
     install(ContentNegotiation) {
         json()
     }
@@ -87,75 +77,6 @@ fun Application.module() {
     install(Resources)
     configureAuth(reader, backend)
 }
-
-private fun Application.runTask(backend: Backend) {
-    launch {
-        while (true) {
-            Napier.i(tag = "task") {
-                "execute ${now()}"
-            }
-            getAcgTaskListFromTopics(backend).mapResultIfNotNull { (acgList, userAcgMap, list) ->
-                DatabaseFactory.dbQuery(backend) {
-                    acgList.forEach { (id, acg) ->
-                        userAcgMap[id]?.let { oldAcgAmount ->
-                            Users.update({
-                                Users.id eq id
-                            }) {
-                                it[Users.acgAmount] = oldAcgAmount + acg
-                            }
-                        }
-                    }
-
-                    addTaskRecord(
-                        TaskRecord(
-                            SnowflakeFactory.nextId(),
-                            now(),
-                            TaskRecordType.TOPIC_ACG,
-                            list.last().id
-                        )
-                    )
-                }
-            }.onSuccess {
-                delay(1000)
-                Napier.i(tag = "task") {
-                    "task success $it"
-                }
-            }.onFailure {
-                delay(1000)
-                Napier.i(tag = "task", throwable = it) {
-                    "task failed"
-                }
-            }
-        }
-    }
-}
-
-private suspend fun getAcgTaskListFromTopics(
-    backend: Backend,
-) =
-    DatabaseFactory.getLatestTaskRecord(backend, TaskRecordType.TOPIC_ACG).mapResult {
-        DatabaseFactory.getRawTopics(backend, it?.processedId ?: 0)
-    }.mapResult { list ->
-        if (list.isNotEmpty()) {
-            val acgList = list.groupBy {
-                it.author
-            }.mapValues {
-                it.value.count()
-            }.toList()
-            val uids = acgList.map {
-                it.first
-            }
-            DatabaseFactory.getUserAcgByIds(backend, uids).map { list ->
-                list.associate {
-                    it.first to it.second
-                }
-            }.map { userAcgMap ->
-                Triple(acgList, userAcgMap, list)
-            }
-        } else {
-            Result.success(null)
-        }
-    }
 
 private fun WebSockets.WebSocketOptions.setupWebSockets() {
     pingPeriod = 15.seconds

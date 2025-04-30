@@ -1,12 +1,12 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PagingFetch
@@ -30,7 +30,7 @@ class Room(
     val memberCount: Long,
     val icon: String? = null,
     val communityId: PrimaryKey? = null
-) : BaseObj(id, createdTime) {
+) : BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): Room {
             return Room(
@@ -282,16 +282,16 @@ suspend fun searchRooms(
         community,
         pagingFetch
     ).mapResult { (list, count) ->
-        processRoomList(list, backend).map { value ->
+        processRoomList(list, backend).mapIfNotNull { value ->
             PaginationResult(value, count)
         }
     }
 }
 
-suspend fun processRoomList(list: List<Pair<RoomInfo, String?>>, backend: Backend): Result<List<RoomInfo>> {
-    return backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, list.map {
+suspend fun processRoomList(list: List<Pair<RoomInfo, String?>>, backend: Backend): Result<List<RoomInfo>?> {
+    return DatabaseFactory.getMediaInfoList(backend, list.map {
         it.second
-    }).map { icons ->
+    }).mapIfNotNull { icons ->
         list.mapIndexed { i, roomPair ->
             roomPair.first.copy(icon = icons[i])
         }

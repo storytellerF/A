@@ -24,18 +24,19 @@ dependencies {
     implementation(projects.backend)
     implementation(libs.bundles.ktor.server)
     implementation(libs.pdfbox)
-    implementation(libs.napier)
-    
+
     implementation(libs.geoip2)
     implementation(libs.tika.core)
     implementation(libs.pdfbox.layout)
     implementation(libs.h2)
     implementation(libs.kim)
 
+    @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")
     testImplementation(libs.mysql.connector.java)
     testImplementation(projects.clientLib)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test)
+    @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")
     testImplementation(libs.testcontainers.elasticsearch)
     testImplementation(libs.testcontainers.minio)
     testImplementation(libs.testcontainers.postgresql)
@@ -59,6 +60,7 @@ val flavor = project.findProperty("buildkonfig.flavor").toString()
 buildConfig {
     className = "ServerConfig"
     buildConfigField<String>("BUILD_TYPE", buildType)
+    buildConfigField<Boolean>("IS_PROD", buildType == "prod")
     buildConfigField<String>("FLAVOR", flavor)
 }
 

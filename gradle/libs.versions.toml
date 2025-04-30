@@ -225,7 +225,6 @@ record-core = { module = "dev.theolm.record:record-core", version.ref = "recordC
 richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditorCompose" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 simplemagic = { module = "com.j256.simplemagic:simplemagic", version.ref = "simplemagic" }
-slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 sonner = "io.github.dokar3:sonner:0.3.8"
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 sunny-chung-composable-table = { module = "io.github.sunny-chung:composable-table", version.ref = "composableTableVersion" }

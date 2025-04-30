@@ -1,9 +1,7 @@
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.obj.PresetValue
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -18,9 +16,9 @@ class SignatureTest {
         if (!jsonFile.exists()) return
         loadIfNeed()
 
-        val presetValue =
-            ObjectMapper().registerModule(KotlinModule.Builder().build())
-                .readValue<PresetValue>(jsonFile.readText())
+        val presetValue = Json {
+            ignoreUnknownKeys = true
+        }.decodeFromString<PresetValue>(jsonFile.readText())
         runTest {
             val data = "hello"
             presetValue.userData!!.forEach {
@@ -39,9 +37,9 @@ class SignatureTest {
         if (!jsonFile.exists()) return
         loadIfNeed()
 
-        val presetValue =
-            ObjectMapper().registerModule(KotlinModule.Builder().build())
-                .readValue<PresetValue>(jsonFile.readText())
+        val presetValue = Json {
+            ignoreUnknownKeys = true
+        }.decodeFromString<PresetValue>(jsonFile.readText())
         runTest {
             val data = "hello"
             presetValue.userData!!.forEach {

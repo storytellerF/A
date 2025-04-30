@@ -42,28 +42,28 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
     }
     Scaffold {
         communityInfo?.let { it1 ->
-            CommunitySettingInternal(it, {
-                currentOption = it
+            CommunitySettingInternal(it, { opt ->
+                currentOption = opt
             }, it1)
         }
         val client = LocalClient.current
         val scope = rememberCoroutineScope()
-        ObjectSettingDialog(closeDialog, currentOption, sheetState, {
+        ObjectSettingDialog(closeDialog, currentOption, sheetState, { media ->
             scope.launch {
                 globalDialogState.use {
                     val body = if (currentOption is SettingOption.Poster) {
-                        UpdateCommunityBody(poster = it.item.name)
+                        UpdateCommunityBody(poster = media.name)
                     } else {
-                        UpdateCommunityBody(icon = it.item.name)
+                        UpdateCommunityBody(icon = media.name)
                     }
                     val newInfo = client.updateCommunityInfo(body, communityId).getOrThrow()
                     communityViewModel.update(newInfo)
                     closeDialog()
                 }
             }
-        }, {
+        }, { input ->
             scope.launch {
-                updateCommunity(currentOption, client, it, closeDialog, communityId)
+                updateCommunity(currentOption, client, input, closeDialog, communityId)
             }
         })
     }
@@ -78,12 +78,12 @@ private fun CommunitySettingInternal(
     val toasterState = LocalToaster.current
     Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
         SettingOptionView("Icon", {
-            showDialog(SettingOption.Icon(communityInfo.icon?.item?.name))
+            showDialog(SettingOption.Icon(communityInfo.icon?.name))
         }, {
             CommunityIcon(communityInfo, showDialog = false, setClickEvent = false) {}
         })
         SettingOptionView("Poster", {
-            showDialog(SettingOption.Poster(communityInfo.poster?.item?.name))
+            showDialog(SettingOption.Poster(communityInfo.poster?.name))
         }, {
             Box(modifier = Modifier.width(100.dp).aspectRatio(3 / 4f)) {
                 CommunityPoster(communityInfo)

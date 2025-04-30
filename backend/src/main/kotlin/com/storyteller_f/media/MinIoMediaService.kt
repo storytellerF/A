@@ -1,9 +1,6 @@
 package com.storyteller_f.media
 
 import com.storyteller_f.MinIoConnection
-import com.storyteller_f.shared.model.Dimension
-import com.storyteller_f.shared.model.MediaInfo
-import com.storyteller_f.shared.model.MediaItem
 import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
 import io.minio.*
@@ -11,6 +8,7 @@ import io.minio.errors.ErrorResponseException
 import io.minio.http.Method
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.toKotlinLocalDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.Result
@@ -23,11 +21,18 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         return useMinIoClient(connection) {
             if (bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 removeAllObject(bucketName)
+                Napier.i {
+                    "clean media done"
+                }
+            } else {
+                Napier.i {
+                    "bucket not exists"
+                }
             }
         }
     }
 
-    override suspend fun list(bucketName: String, prefix: String): Result<List<MediaInfo>> {
+    override suspend fun list(bucketName: String, prefix: String): Result<List<Pair<String, LocalDateTime>>> {
         return useMinIoClient(connection) {
             val names = listObjects(
                 ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build()
@@ -42,17 +47,22 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
 
     override suspend fun copy(
         bucketName: String,
-        names: List<CopyPack>
-    ): Result<List<MediaInfo?>> {
+        copyPacks: List<CopyPack>
+    ): Result<List<Pair<String, LocalDateTime>?>> {
         return useMinIoClient(connection) {
-            names.map {
+            copyPacks.map {
                 copyObject(
                     CopyObjectArgs.builder()
                         .bucket(bucketName)
                         .`object`(it.new)
                         .metadataDirective(Directive.COPY)
                         .taggingDirective(Directive.COPY)
-                        .source(CopySource.builder().bucket(bucketName).`object`(it.origin).build())
+                        .source(
+                            CopySource.builder()
+                                .bucket(bucketName)
+                                .`object`(it.origin)
+                                .build()
+                        )
                         .build()
                 ).`object`()
             }
@@ -61,44 +71,18 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    private fun MinioClient.stat(
-        bucketName: String,
-        objName: String
-    ): Pair<MediaItem, Dimension?> {
-        val statObject =
-            statObject(StatObjectArgs.builder().bucket(bucketName).`object`(objName).build())
-        val dimension = if (statObject.contentType().startsWith("image")) {
-            val metadata = statObject.userMetadata()
-            val width = metadata["width"]?.toIntOrNull()
-            val height = metadata["height"]?.toIntOrNull()
-            if (width != null && height != null) {
-                Dimension(width, height)
-            } else {
-                null
-            }
-        } else {
-            null
-        }
-        return MediaItem(
-            objName,
-            statObject.contentType(),
-            statObject.size(),
-            objName.substringAfter("/"),
-            statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime()
-        ) to dimension
-    }
-
-    override suspend fun get(bucketName: String, names: List<String?>): Result<List<MediaInfo?>> {
+    override suspend fun get(bucketName: String, names: List<String?>): Result<List<Pair<String, LocalDateTime>?>> {
         return useMinIoClient(connection) {
             names.map {
                 if (it == null) {
                     null
                 } else {
                     try {
+                        val statObject =
+                            statObject(StatObjectArgs.builder().bucket(bucketName).`object`(it).build())
                         val url = getMinioObjectUrl(bucketName, it)
                         if (url != null) {
-                            val (item, dimension) = stat(bucketName, it)
-                            MediaInfo(url, item, dimension)
+                            url to statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime()
                         } else {
                             null
                         }
@@ -114,21 +98,31 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override suspend fun upload(bucketName: String, list: List<UploadPack>): Result<List<MediaInfo?>> {
+    override suspend fun upload(
+        bucketName: String,
+        uploadPacks: List<UploadPack>
+    ): Result<List<Pair<String, LocalDateTime>?>> {
         return useMinIoClient(connection) {
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
             }
-            val names = list.map { (objName, picFullPath, type, meta) ->
+            val names = uploadPacks.map {
                 uploadObject(
                     UploadObjectArgs.builder()
                         .bucket(bucketName)
-                        .`object`(objName)
-                        .filename(picFullPath.absolutePath)
-                        .userMetadata(meta)
+                        .`object`(it.name)
+                        .filename(it.path.absolutePath)
                         .apply<UploadObjectArgs.Builder> {
-                            if (type != null) {
-                                contentType(type)
+                            if (it.overrideContentType != null) {
+                                contentType(it.overrideContentType)
+                            }
+                            if (it.dimension != null) {
+                                userMetadata(
+                                    mapOf(
+                                        "width" to it.dimension.width.toString(),
+                                        "height" to it.dimension.height.toString()
+                                    )
+                                )
                             }
                         }
                         .build()

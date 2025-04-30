@@ -1,11 +1,11 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
@@ -31,7 +31,7 @@ class User(
     id: PrimaryKey,
     createdTime: LocalDateTime,
     val acgAmount: Long,
-) : BaseObj(id, createdTime) {
+) : BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): User {
             return User(
@@ -84,7 +84,7 @@ suspend fun DatabaseFactory.getUser(
             }
         }
     }.mapResultIfNotNull {
-        processUserList(backend, listOf(it)).map(List<UserInfo>::first)
+        processUserList(backend, listOf(it)).mapIfNotNull(List<UserInfo>::first)
     }
 }
 
@@ -152,9 +152,9 @@ suspend fun DatabaseFactory.searchMembers(
     objectId: PrimaryKey?,
     word: String?,
     pagingFetch: PagingFetch
-): Result<PaginationResult<UserInfo>> {
+): Result<PaginationResult<UserInfo>?> {
     return commonPaginationMemberList(backend, objectId, word, pagingFetch).mapResult { (pairs, count) ->
-        processUserList(backend, pairs).map {
+        processUserList(backend, pairs).mapIfNotNull {
             PaginationResult(it, count)
         }
     }
@@ -316,9 +316,9 @@ suspend fun DatabaseFactory.getUserAcgByIds(backend: Backend, ids: List<PrimaryK
 suspend fun processUserList(
     backend: Backend,
     pairs: List<Pair<UserInfo, String?>>
-): Result<List<UserInfo>> = backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, pairs.map {
+) = DatabaseFactory.getMediaInfoList(backend, pairs.map {
     it.second
-}).map { value ->
+}).mapIfNotNull { value ->
     pairs.mapIndexed { index, pair ->
         pair.first.copy(avatar = value[index])
     }

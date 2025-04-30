@@ -26,7 +26,7 @@ class Reaction(
     val objectType: ObjectType,
     id: PrimaryKey,
     createdTime: LocalDateTime
-) : BaseObj(id, createdTime) {
+) : BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(resultRow: ResultRow): Reaction {
             return Reaction(

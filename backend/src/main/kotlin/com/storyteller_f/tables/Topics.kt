@@ -49,7 +49,7 @@ class Topic(
     val isPin: Boolean,
     val lastModifiedTime: LocalDateTime?,
     val aid: String? = null,
-) : BaseObj(id, createdTime) {
+) : BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): Topic {
             return Topic(
@@ -174,15 +174,15 @@ private fun getTopicBuilder(uid: PrimaryKey?): Pair<Query, (ResultRow) -> TopicS
         }
     }
 
-    val resultRowTransform: (ResultRow) -> TopicSearchTuple = {
+    val resultRowTransform: (ResultRow) -> TopicSearchTuple = { resultRow ->
         TopicSearchTuple(
-            wrapRow(it),
-            it[commentCountColumn],
-            it.getOrNull(selfCommentColumn)?.let {
+            wrapRow(resultRow),
+            resultRow[commentCountColumn],
+            resultRow.getOrNull(selfCommentColumn)?.let {
                 it > 0
             } ?: false,
-            it[reactionCountColumn],
-            it[aidsValue]
+            resultRow[reactionCountColumn],
+            resultRow[aidsValue]
         )
     }
     return Pair(query, resultRowTransform)

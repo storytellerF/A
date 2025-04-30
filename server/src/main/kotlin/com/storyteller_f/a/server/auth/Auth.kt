@@ -129,18 +129,18 @@ private suspend fun RoutingContext.signIn(
     backend: Backend,
     reader: DatabaseReader,
     pack: SignInPack
-): Result<UserInfo> {
+): Result<UserInfo?> {
     val data = call.getData(reader)
     val f = finalData(data)
     return DatabaseFactory.getUserByAddress(backend, pack.ad).filterNull {
         BadRequestException("user not found")
     }.mapResult { (info, icon, publicKey) ->
-        verify(publicKey, pack.sig, f).mapResult {
-            if (it) {
+        verify(publicKey, pack.sig, f).mapResult { isVerified ->
+            if (isVerified) {
                 addUserLog(backend, info.id, UserLogType.SIGN_IN, info.id ob ObjectType.USER)
-                processUserList(backend, listOf(info to icon)).map {
+                processUserList(backend, listOf(info to icon)).mapIfNotNull {
                     it.first()
-                }.map { value ->
+                }.mapIfNotNull { value ->
                     val id = value.id
                     saveSuccessSessionOnFirst(id, reader)
                     value
@@ -177,7 +177,7 @@ private suspend fun RoutingContext.signUp(
     backend: Backend,
     reader: DatabaseReader,
     pack: SignUpPack
-): Result<UserInfo> {
+): Result<UserInfo?> {
     val data = call.getData(reader)
     val f = finalData(data)
     return verify(pack.pk, pack.sig, f).mapResult {
@@ -190,7 +190,7 @@ private suspend fun RoutingContext.signUp(
                         DatabaseFactory.createUser(backend, ad, name, newId, pack.pk).mapResult { value ->
                             addUserLog(backend, newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
                             saveSuccessSessionOnFirst(newId, reader)
-                            processUserList(backend, listOf<Pair<UserInfo, String?>>(value)).map { userList ->
+                            processUserList(backend, listOf<Pair<UserInfo, String?>>(value)).mapIfNotNull { userList ->
                                 userList.first()
                             }
                         }

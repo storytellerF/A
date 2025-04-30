@@ -12,6 +12,6 @@ abstract class BaseTable : Table() {
     override val primaryKey = PrimaryKey(id)
 }
 
-abstract class BaseObj(val id: PrimaryKey, val createdTime: LocalDateTime)
+abstract class BaseEntity(val id: PrimaryKey, val createdTime: LocalDateTime)
 
 fun Table.customPrimaryKey(name: String) = long(name)

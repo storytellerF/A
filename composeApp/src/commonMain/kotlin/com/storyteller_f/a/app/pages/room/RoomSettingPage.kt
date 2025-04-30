@@ -40,9 +40,9 @@ fun RoomSettingPage(roomId: PrimaryKey) {
     val closeDialog = {
         currentOption = null
     }
-    Scaffold {
+    Scaffold { padding ->
         roomInfo?.let { it1 ->
-            RoomSettingInternal(it, { option: SettingOption ->
+            RoomSettingInternal(padding, { option: SettingOption ->
                 currentOption = option
             }, it1)
         }
@@ -51,7 +51,7 @@ fun RoomSettingPage(roomId: PrimaryKey) {
         ObjectSettingDialog(closeDialog, currentOption, sheetState, {
             scope.launch {
                 globalDialogState.use {
-                    val body = UpdateRoomBody(icon = it.item.name)
+                    val body = UpdateRoomBody(icon = it.name)
                     val newInfo = client.updateRoomInfo(body, roomId).getOrThrow()
                     bus.emit(OnRoomUpdated(newInfo))
                 }
@@ -73,7 +73,7 @@ private fun RoomSettingInternal(
     val toasterState = LocalToaster.current
     Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
         SettingOptionView("Icon", {
-            showDialog(SettingOption.Icon(roomInfo.icon?.item?.name))
+            showDialog(SettingOption.Icon(roomInfo.icon?.name))
         }, {
             RoomIcon(roomInfo, showDialog = false, setClickEvent = false) {}
         })

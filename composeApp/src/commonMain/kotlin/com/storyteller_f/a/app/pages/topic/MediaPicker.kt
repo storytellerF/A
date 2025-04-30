@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -22,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.bus
@@ -177,25 +178,34 @@ private fun MediaListView(
                 Icon(Icons.Default.UploadFile, "upload file")
             }
         }
-        StateView(list.handler, modifier = Modifier.weight(1f)) {
+        val pagingItems = list.flow.collectAsLazyPagingItems()
+        StateView(pagingItems, modifier = Modifier.weight(1f)) {
             LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
-                items(it.data) {
-                    Row(modifier = Modifier.fillMaxWidth().clickable {
-                        clickItem(listOf(it))
-                    }) {
-                        FileIcon(it)
-                        Spacer(modifier = Modifier.width(20.dp))
-                        Column {
-                            Text(it.item.noPrefixName, style = MaterialTheme.typography.labelMedium)
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Row {
-                                Text(it.item.lastModified.formatTime(), style = MaterialTheme.typography.labelSmall)
-                                Spacer(modifier = Modifier.weight(1f))
-                                Text(HumanReadable.fileSize(it.item.size), style = MaterialTheme.typography.labelSmall)
-                            }
-                            Spacer(modifier = Modifier.height(5.dp))
-                            it.dimension?.let {
-                                Text("w${it.width}·h${it.height}", style = MaterialTheme.typography.labelSmall)
+                items(pagingItems.itemCount, key = pagingItems.itemKey {
+                    it.id
+                }) {
+                    val item = pagingItems[it]
+                    if (item != null) {
+                        Row(modifier = Modifier.fillMaxWidth().clickable {
+                            clickItem(listOf(item))
+                        }) {
+                            FileIcon(item)
+                            Spacer(modifier = Modifier.width(20.dp))
+                            Column {
+                                Text(item.noPrefixName, style = MaterialTheme.typography.labelMedium)
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row {
+                                    Text(item.lastModified.formatTime(), style = MaterialTheme.typography.labelSmall)
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    Text(
+                                        HumanReadable.fileSize(item.size),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(5.dp))
+                                item.dimension?.let {
+                                    Text("w${it.width}·h${it.height}", style = MaterialTheme.typography.labelSmall)
+                                }
                             }
                         }
                     }
@@ -209,12 +219,12 @@ private fun MediaListView(
 
 @Composable
 private fun FileIcon(it: MediaInfo) {
-    val contentType = it.item.contentType
+    val contentType = it.contentType
     val modifier = Modifier.size(40.dp)
     if (contentType.startsWith("image")) {
         AsyncImage(
             it.url,
-            it.item.noPrefixName,
+            it.noPrefixName,
             modifier = modifier.clip(RoundedCornerShape(5.dp)),
             contentScale = ContentScale.Crop
         )
@@ -294,10 +304,10 @@ fun insertContent(
     updateInput: (String) -> Unit,
     input: String
 ) {
-    if (it.item.contentType.startsWith("image/")) {
+    if (it.contentType.startsWith("image/")) {
         updateInput(
             """$input
-![${it.item.noPrefixName}](${it.item.noPrefixName} "${it.item.noPrefixName}")
+![${it.noPrefixName}](${it.noPrefixName} "${it.noPrefixName}")
 """
         )
     } else {
@@ -305,8 +315,8 @@ fun insertContent(
             """$input
 ```object
 {
-    "contentType": "${it.item.contentType}",
-    "name": "${it.item.noPrefixName}"
+    "contentType": "${it.contentType}",
+    "name": "${it.noPrefixName}"
 }
 ```"""
         )

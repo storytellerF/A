@@ -192,8 +192,15 @@ fun createMemberSearchInCommunityViewModel(
 @Composable
 fun createMediaListViewModel(
     objectTuple: ObjectTuple
-) = viewModel(keys = listOf("media", objectTuple.objectId)) { client, _ ->
-    MediaListViewModel(client, objectTuple.objectId, objectTuple.objectType)
+) = viewModel(keys = listOf("media", objectTuple.objectId)) { client, databaseSource ->
+    MediaListViewModel(client, databaseSource, objectTuple.objectId, objectTuple.objectType)
+}
+
+@Composable
+fun createAllMediaListViewModel(
+    objectTuple: ObjectTuple
+) = viewModel(keys = listOf("all-media", objectTuple.objectId)) { client, _ ->
+    AllMediaListViewModel(client, objectTuple.objectId, objectTuple.objectType)
 }
 
 @Composable

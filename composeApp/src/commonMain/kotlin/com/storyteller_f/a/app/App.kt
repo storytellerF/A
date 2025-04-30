@@ -80,7 +80,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.reflect.KClass
@@ -92,10 +91,6 @@ object StaticObj {
     init {
         Napier.base(kmpLogger)
     }
-}
-
-val json = Json {
-    ignoreUnknownKeys = true
 }
 
 val globalDialogState = GlobalDialogController()
@@ -327,6 +322,12 @@ private fun processEvent(event: Any, database: DatabaseSource) {
         is OnRoomUpdated -> database.getCollection("rooms").save(event.info.id, event.info)
 
         is OnUserUpdated -> database.getCollection("users").save(event.info.id, event.info)
+
+        is OnMediaUploaded -> {
+            event.mediaInfos.forEach {
+                database.getCollection("medias_${it.owner}").save(it.id, it)
+            }
+        }
     }
 }
 

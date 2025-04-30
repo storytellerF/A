@@ -33,6 +33,7 @@ object DatabaseFactory {
         EncryptedTopics,
         EncryptedTopicKeys,
         MediaRefs,
+        Medias,
         MemberJoins,
         Reactions,
         Rooms,
@@ -213,11 +214,9 @@ object DatabaseFactory {
         it > 0
     }
 
-    suspend fun <T> count(backend: Backend, block: () -> SizedIterable<T>): Result<Long> =
-        dbSearch(backend, {
-            count()
-        }) {
-            block()
+    suspend fun count(backend: Backend, block: () -> Query): Result<Long> =
+        dbQuery(backend) {
+            block().count()
         }
 
     private fun <T> Transaction.explainQuery(point: Exception, block: () -> SizedIterable<T>) {

@@ -6,6 +6,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
+val json = Json {
+    ignoreUnknownKeys = true
+}
+
 expect fun createPlatformDatabaseSource(): DatabaseSource
 
 interface ObserverToken<T> {

@@ -12,6 +12,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
@@ -33,8 +34,8 @@ suspend fun getUserTitles(
     searchType,
     type,
     scopeId
-).mapResult { (list, count) ->
-    processTitleList(backend, list, uid).map {
+).mapResultIfNotNull { (list, count) ->
+    processTitleList(backend, list, uid).mapIfNotNull {
         PaginationResult(it, count)
     }
 }
@@ -43,7 +44,7 @@ private suspend fun processTitleList(
     backend: Backend,
     list: List<TitleInfo>,
     uid: PrimaryKey?
-): Result<List<TitleInfo>> {
+): Result<List<TitleInfo>?> {
     val uidList = list.flatMap {
         val listOf = listOf(it.receiver, it.creator)
         if (it.scopeType == ObjectType.USER) {
@@ -80,8 +81,8 @@ private suspend fun processTitleList(
         communityIdList,
         roomIdList
     ).mapResult { (userList, roomList, communityList) ->
-        getTopicByIds(backend, topicIdList, uid, false).map { topicList ->
-            processTitleList(userList, communityList, roomList, list, topicList)
+        getTopicByIds(backend, topicIdList, uid, false).mapIfNotNull { topicList ->
+            processTitleList(userList.orEmpty(), communityList.orEmpty(), roomList.orEmpty(), list, topicList)
         }
     }
 }
@@ -91,7 +92,7 @@ private suspend fun getRelatedObject(
     uidList: List<PrimaryKey>,
     communityIdList: List<PrimaryKey>,
     roomIdList: List<PrimaryKey>
-): Result<Triple<List<UserInfo>, List<RoomInfo>, List<CommunityInfo>>> {
+): Result<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>> {
     val userList = if (uidList.isNotEmpty()) {
         val result = DatabaseFactory.getUsersByIds(backend, uidList)
         val throwable = result.exceptionOrNull()
@@ -197,7 +198,7 @@ suspend fun createTitle(
                 newTitle.description
             ).mapResult { created ->
                 addUserLog(backend, uid, UserLogType.CREATE, created.tuple())
-                processTitleList(backend, listOf(created), uid).map {
+                processTitleList(backend, listOf(created), uid).mapIfNotNull {
                     it.first()
                 }
             }

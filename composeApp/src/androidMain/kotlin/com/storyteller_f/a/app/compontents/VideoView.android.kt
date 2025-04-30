@@ -37,7 +37,7 @@ import com.storyteller_f.a.app.LocalMediaPlaySession
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.MediaPlaySession
 import com.storyteller_f.a.app.MediaPlayerActivity
-import com.storyteller_f.a.app.json
+import com.storyteller_f.a.client_lib.json
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import kotlinx.coroutines.launch

@@ -18,7 +18,7 @@ import com.mikepenz.markdown.compose.*
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
-import com.storyteller_f.a.app.model.createMediaListViewModel
+import com.storyteller_f.a.app.model.createAllMediaListViewModel
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -72,13 +72,13 @@ private fun TopicContentFieldInternal(
     isEmbed: Boolean
 ) {
     val (mediaList, objectTuple) = if (topicInfo.isPrivate) {
-        val list = createMediaListViewModel(topicInfo.rootId ob topicInfo.rootType)
+        val list = createAllMediaListViewModel(topicInfo.rootId ob topicInfo.rootType)
         val media by list.handler.data.collectAsState()
         media?.data.orEmpty() to ObjectTuple(topicInfo.rootId, topicInfo.rootType)
     } else {
         rawMediaList to ObjectTuple(topicInfo.author, ObjectType.USER)
     }
-    val mediaMap = mediaList.associateBy { it.item.noPrefixName }
+    val mediaMap = mediaList.associateBy { it.noPrefixName }
     Markdown(
         plain,
         modifier = Modifier.fillMaxWidth().testTag("content"),

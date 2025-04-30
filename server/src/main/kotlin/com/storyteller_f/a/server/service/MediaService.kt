@@ -1,9 +1,10 @@
 package com.storyteller_f.a.server.service
 
 import com.storyteller_f.Backend
+import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.route.RouteMedia
-import com.storyteller_f.media.CopyPack
+import com.storyteller_f.media.UploadPack
 import com.storyteller_f.media.uploadFiles
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
@@ -11,8 +12,15 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.tables.copyMedia
+import com.storyteller_f.tables.getMediaInfoList
+import com.storyteller_f.tables.getPagingMedias
+import com.storyteller_f.tables.getRawMedia
+import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.types.PagingFetch
 import io.ktor.http.content.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
@@ -29,8 +37,9 @@ import kotlin.uuid.Uuid
 suspend fun getMediaList(
     backend: Backend,
     uid: PrimaryKey,
-    routeMedia: RouteMedia
-): Result<ServerResponse<MediaInfo?>?> {
+    routeMedia: RouteMedia,
+    pagingFetch: PagingFetch
+): Result<PaginationResult<MediaInfo>?> {
     if (routeMedia.objectType == ObjectType.TOPIC) {
         return Result.failure(BadRequestException("can't get topic media"))
     }
@@ -41,10 +50,30 @@ suspend fun getMediaList(
         uid
     ).mapResultIfNotNull { (_, _, hasWrite) ->
         if (hasWrite) {
-            backend.mediaService.list(AMEDIA_DEFAULT_BUCKET, "$uid/").map { names ->
-                ServerResponse(names.sortedByDescending { info ->
-                    info.item.lastModified
-                })
+            DatabaseFactory.getPagingMedias(backend, uid, pagingFetch)
+        } else {
+            Result.failure(ForbiddenException("no permission"))
+        }
+    }
+}
+
+suspend fun getAllMediaList(
+    backend: Backend,
+    uid: PrimaryKey,
+    routeMedia: RouteMedia,
+): Result<ServerResponse<MediaInfo>?> {
+    if (routeMedia.objectType == ObjectType.TOPIC) {
+        return Result.failure(BadRequestException("can't get topic media"))
+    }
+    return checkRootWritePermission(
+        backend,
+        routeMedia.objectType,
+        routeMedia.objectId,
+        uid
+    ).mapResultIfNotNull { (_, _, hasWrite) ->
+        if (hasWrite) {
+            DatabaseFactory.getMediaInfoList(backend, uid).mapIfNotNull {
+                ServerResponse(it.filterNotNull(), null)
             }
         } else {
             Result.failure(ForbiddenException("no permission"))
@@ -82,7 +111,16 @@ suspend fun RoutingContext.uploadMedia(
                                     tika,
                                     backend,
                                     listOf(
-                                        Triple(file, "${it.objectId}/$newSavedName", part.contentType.toString())
+                                        UploadPack(
+                                            file,
+                                            "${it.objectId}/$newSavedName",
+                                            newSavedName,
+                                            it.objectId,
+                                            fileBytes.size.toLong(),
+                                            "",
+                                            part.contentType.toString(),
+                                            null
+                                        )
                                     )
                                 ).getOrThrow()
                                 result.addAll(info.filterNotNull())
@@ -131,8 +169,13 @@ suspend fun copyMedia(
     uid: PrimaryKey,
     objectTuple: ObjectTuple
 ): Result<ServerResponse<MediaInfo?>?> {
-    return checkRootReadPermission(backend, objectTuple.objectType, objectTuple.objectId, uid).mapResultIfNotNull {
-        if (it.hasRead) {
+    return checkRootReadPermission(
+        backend,
+        objectTuple.objectType,
+        objectTuple.objectId,
+        uid
+    ).mapResultIfNotNull { permission ->
+        if (permission.hasRead) {
             backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, listOf("$uid/$noPrefixName")).map {
                 if (it.firstOrNull() == null) {
                     "$uid/$noPrefixName"
@@ -140,11 +183,8 @@ suspend fun copyMedia(
                     "$uid/${newCopiedFileName(noPrefixName)}"
                 }
             }.mapResult {
-                backend.mediaService.copy(
-                    AMEDIA_DEFAULT_BUCKET,
-                    listOf(CopyPack("${objectTuple.objectId}/$noPrefixName", it))
-                ).map { list ->
-                    ServerResponse(list, null)
+                DatabaseFactory.getRawMedia(backend, objectTuple.objectId, noPrefixName).mapResultIfNotNull { media ->
+                    DatabaseFactory.copyMedia(backend, media, uid, it)
                 }
             }
         } else {

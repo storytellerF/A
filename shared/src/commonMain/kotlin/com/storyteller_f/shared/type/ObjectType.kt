@@ -6,4 +6,5 @@ enum class ObjectType {
     TOPIC,
     USER,
     TITLE,
+    MEDIA
 }

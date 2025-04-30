@@ -16,8 +16,10 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
+import com.storyteller_f.tables.ObjectFetch.*
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PagingFetch
+import io.ktor.http.ContentType
 import io.ktor.server.plugins.*
 import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -79,7 +81,7 @@ suspend fun createPublicTopic(
                         backend,
                         listOf(topicInfo),
                         listOf(TopicDocument.fromTopic(topic, plain))
-                    ).map {
+                    ).mapIfNotNull {
                         it.firstOrNull()
                     }
                 }
@@ -133,12 +135,23 @@ private suspend fun createTopicSnapshot(
                         documents.content,
                         backend.snapshotVerify
                     ).mapResultIfNotNull {
-                        backend.mediaService.upload(
-                            AMEDIA_DEFAULT_BUCKET,
-                            listOf(UploadPack(name, pdfFile))
-                        ).mapResult {
+                        DatabaseFactory.uploadFiles(
+                            backend,
+                            listOf(
+                                UploadPack(
+                                    pdfFile,
+                                    name,
+                                    "$topicId.pdf",
+                                    uid,
+                                    pdfFile.length(),
+                                    ContentType.Application.Pdf.contentType,
+                                    null,
+                                    null
+                                )
+                            )
+                        ).map {
                             pdfFile.delete()
-                            Result.success(it.firstOrNull())
+                            it.firstOrNull()
                         }
                     }
                 } finally {
@@ -241,10 +254,10 @@ suspend fun getTopic(
         if (hasRead) {
             DatabaseFactory.getTopicInfo(
                 backend,
-                ObjectFetch.IdFetch(topicId),
+                IdFetch(topicId),
                 uid
             ).mapResultIfNotNull { info ->
-                processTopicsContent(backend, isPrivate, listOf(info), uid).map {
+                processTopicsContent(backend, isPrivate, listOf(info), uid).mapIfNotNull {
                     it.first()
                 }
             }.mapIfNotNull { value ->
@@ -263,7 +276,7 @@ suspend fun getTopicByAid(
     fillHasCommented: Boolean?
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return DatabaseFactory.getTopicInfo(backend, ObjectFetch.AidFetch(aid), uid).mapResultIfNotNull { info ->
+    return DatabaseFactory.getTopicInfo(backend, AidFetch(aid), uid).mapResultIfNotNull { info ->
         checkRootReadPermission(
             backend,
             ObjectType.TOPIC,
@@ -271,7 +284,7 @@ suspend fun getTopicByAid(
             uid
         ).mapResultIfNotNull { (hasRead, hasJoined, isPrivate) ->
             if (hasRead) {
-                processTopicsContent(backend, isPrivate, listOf(info), uid).map {
+                processTopicsContent(backend, isPrivate, listOf(info), uid).mapIfNotNull {
                     it.first()
                 }
             } else {
@@ -309,7 +322,7 @@ suspend fun getTopLevelTopicsInObject(
                     else -> baseQuery
                 }
             }.mapResult { (data, count) ->
-                processTopicsContent(backend, isPrivate, data, uid).map {
+                processTopicsContent(backend, isPrivate, data, uid).mapIfNotNull {
                     PaginationResult(it, count)
                 }
             }
@@ -325,11 +338,11 @@ private suspend fun processTopicExtension(
     addLatestSubTopic: Boolean,
 ) = DatabaseFactory.getUsersByIds(backend, processedTopics.map {
     it.author
-}.distinct()).mapResult { users ->
+}.distinct()).mapResultIfNotNull { users ->
     val userMap = users.associateBy { it.id }
     if (addLatestSubTopic) {
         val subTopics = processedTopics.flatMap { t ->
-            getTopicsByPredicate(backend, uid, false, true, {
+            getTopicsByPredicate(backend, uid, fillHasCommented = false, addPinOrder = true, addPagingQuery = {
                 it.bindPaginationQuery(Topics, PagingFetch(null, null, 2))
             }) {
                 Topics.parentId eq t.id
@@ -339,14 +352,14 @@ private suspend fun processTopicExtension(
             Result.success(emptyList())
         } else {
             processTopicsContent(backend, isPrivate, subTopics, uid, false)
-        }.map { processedSubTopics ->
+        }.mapIfNotNull { processedSubTopics ->
             processedSubTopics.groupBy {
                 it.parentId
             }
         }
     } else {
         Result.success(emptyMap())
-    }.map { processedSubTopicMap ->
+    }.mapIfNotNull { processedSubTopicMap ->
         val reactionMap = processedTopics.associate {
             it.id to reactionList(backend, it.id, uid, uid != null).getOrNull()?.data
         }
@@ -369,7 +382,7 @@ private suspend fun processTopicsContent(
     data: List<TopicInfo>,
     uid: PrimaryKey?,
     addLatestSubTopic: Boolean = true
-): Result<List<TopicInfo>> = when {
+): Result<List<TopicInfo>?> = when {
     !isPrivate -> backend.topicSearchService.getDocuments(data.map {
         it.id
     }).mapResult { documents ->
@@ -385,7 +398,7 @@ private suspend fun processTopicsContent(
             l.copy(content = topicContents[index], isPrivate = true)
         }
     }
-}.mapResult {
+}.mapResultIfNotNull {
     processTopicExtension(backend, it, uid, isPrivate, addLatestSubTopic)
 }
 
@@ -445,6 +458,7 @@ suspend fun checkRootReadPermission(
         }
 
         ObjectType.TITLE -> Result.success(RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false))
+        ObjectType.MEDIA -> TODO()
     }
 }
 
@@ -488,6 +502,7 @@ suspend fun checkRootWritePermission(
         }
 
         ObjectType.TITLE -> Result.success(RootWritePermission(parentType, parentId, false))
+        ObjectType.MEDIA -> TODO()
     }
 }
 
@@ -505,13 +520,13 @@ suspend fun checkRootAdminPermission(
         }
 
         ObjectType.ROOM -> {
-            DatabaseFactory.getRoomSource(backend, ObjectFetch.IdFetch(parentId), true, uid).mapIfNotNull {
+            DatabaseFactory.getRoomSource(backend, IdFetch(parentId), true, uid).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, it.first.creator == uid)
             }
         }
 
         ObjectType.COMMUNITY -> {
-            DatabaseFactory.getCommunity(backend, ObjectFetch.IdFetch(parentId)).mapIfNotNull {
+            DatabaseFactory.getCommunity(backend, IdFetch(parentId)).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, it.communityInfo.owner == uid)
             }
         }
@@ -523,6 +538,7 @@ suspend fun checkRootAdminPermission(
         }
 
         ObjectType.TITLE -> Result.success(RootAdminPermission(parentType, parentId, false))
+        ObjectType.MEDIA -> TODO()
     }
 }
 
@@ -553,7 +569,7 @@ suspend fun searchPublicTopics(
             documentSearch = documentSearch,
             pagingFetch
         ).mapResult { (list, total) ->
-            processTopicsDocument(backend, uid, search.parent.fillHasCommented, list).map {
+            processTopicsDocument(backend, uid, search.parent.fillHasCommented, list).mapIfNotNull {
                 PaginationResult(it, total)
             }
         }
@@ -564,7 +580,7 @@ suspend fun processTopicMedia(
     backend: Backend,
     infos: List<TopicInfo>,
     documentList: List<TopicDocument?>
-): Result<List<TopicInfo>> {
+): Result<List<TopicInfo>?> {
     val documentMap = documentList.filterNotNull().associateBy { it.id }
     // id + mediaLink，此处的mediaLink 应该包含前缀，内部会自动添加前缀
     val mediaList = documentMediaList(documentList).filter {
@@ -579,7 +595,7 @@ suspend fun processTopicMedia(
     val mediaMap = mediaList.groupBy {
         it.first
     }
-    return backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, mediaNameList).map { mediaUrls ->
+    return DatabaseFactory.getMediaInfoList(backend, mediaNameList).mapIfNotNull { mediaUrls ->
         val mediaInfoMap = mediaUrls.filterNotNull().mapIndexed { index, url ->
             mediaNameList[index] to url
         }.associate {
@@ -630,7 +646,7 @@ suspend fun recommendTopics(
             pagingFetch = pagingFetch
         )
     }.mapResult { (list, total) ->
-        processTopicsDocument(backend, uid, fillHasCommented, list).map {
+        processTopicsDocument(backend, uid, fillHasCommented, list).mapIfNotNull {
             PaginationResult(it, total)
         }
     }
@@ -641,7 +657,7 @@ private suspend fun processTopicsDocument(
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
     list: List<TopicDocument>,
-): Result<List<TopicInfo>> {
+): Result<List<TopicInfo>?> {
     val ids = list.map {
         it.id
     }
@@ -653,7 +669,7 @@ private suspend fun processTopicsDocument(
     }.mapResult { infos ->
         processTopicMedia(backend, infos.sortedByDescending {
             it.id
-        }, list).mapResult {
+        }, list).mapResultIfNotNull {
             processTopicExtension(backend, it, uid, isPrivate = false, addLatestSubTopic = true)
         }
     }
@@ -664,7 +680,7 @@ suspend fun getTopicByIds(
     ids: List<PrimaryKey>,
     uid: PrimaryKey?,
     fillHasCommented: Boolean?
-): Result<List<TopicInfo>> {
+): Result<List<TopicInfo>?> {
     if (ids.isEmpty()) {
         return Result.success(emptyList())
     }
@@ -696,8 +712,8 @@ suspend fun getTopicByIds(
         val publicList = infos.filter {
             !private.contains(it.id)
         }
-        processTopicsContent(backend, true, privateList, uid).mapResult { privateContents ->
-            processTopicsContent(backend, false, publicList, uid).map { publicContents ->
+        processTopicsContent(backend, true, privateList, uid).mapResultIfNotNull { privateContents ->
+            processTopicsContent(backend, false, publicList, uid).mapIfNotNull { publicContents ->
                 publicContents + privateContents
             }
         }
@@ -714,7 +730,7 @@ suspend fun updateTopicPin(
         if (it.hasAdmin) {
             DatabaseFactory.getTopicInfo(
                 backend,
-                ObjectFetch.IdFetch(topicId),
+                IdFetch(topicId),
                 uid
             ).mapResultIfNotNull { info ->
                 if (info.isPin == newValue) {

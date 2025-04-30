@@ -79,7 +79,7 @@ class Title(
     val status: TitleStatus,
     val descriptionTopicId: PrimaryKey,
 ) :
-    BaseObj(id, createdTime) {
+    BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): Title {
             return Title(

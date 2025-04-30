@@ -116,7 +116,7 @@ suspend fun getRoom(
     fillJoinInfo: Boolean?
 ): Result<RoomInfo?> {
     return DatabaseFactory.getRoomSource(backend, objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
-        processRoomList(listOf(it), backend).map(List<RoomInfo>::first)
+        processRoomList(listOf(it), backend).mapIfNotNull(List<RoomInfo>::first)
     }
 }
 
@@ -158,7 +158,7 @@ suspend fun createRoom(
                     processRoomList(
                         listOf(room.toRoomInfo(room.createdTime) to room.icon),
                         backend
-                    ).map(List<RoomInfo>::first)
+                    ).mapIfNotNull(List<RoomInfo>::first)
                 }
         } else {
             Result.failure(ForbiddenException())
@@ -208,7 +208,7 @@ suspend fun updateRoom(
                     if (updateSuccess) {
                         DatabaseFactory.getRoomSource(backend, ObjectFetch.IdFetch(id), true, uid)
                             .mapResultIfNotNull {
-                                processRoomList(listOf(it), backend).map(List<RoomInfo>::first)
+                                processRoomList(listOf(it), backend).mapIfNotNull(List<RoomInfo>::first)
                             }
                     } else {
                         Result.success(null)

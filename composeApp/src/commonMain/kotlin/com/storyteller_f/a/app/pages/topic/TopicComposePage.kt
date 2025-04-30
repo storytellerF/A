@@ -30,7 +30,7 @@ import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.TopicContentField
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnTopicCreated
-import com.storyteller_f.a.app.model.createMediaListViewModel
+import com.storyteller_f.a.app.model.createAllMediaListViewModel
 import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.MediaInfo
@@ -133,7 +133,7 @@ private fun TopicComposeInternal(
     mediaTarget: ObjectTuple,
     updateInput: (String) -> Unit
 ) {
-    val mediaListViewModel = createMediaListViewModel(mediaTarget)
+    val mediaListViewModel = createAllMediaListViewModel(mediaTarget)
 
     val pagerState = rememberPagerState {
         3

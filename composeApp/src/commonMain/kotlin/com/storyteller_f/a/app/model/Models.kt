@@ -284,7 +284,31 @@ class TopicSearchViewModel(
     }.flow.cachedIn(viewModelScope)
 }
 
-class MediaListViewModel(client: HttpClient, private val objectId: PrimaryKey, private val objectType: ObjectType) :
+class MediaListViewModel(
+    client: HttpClient,
+    databaseSource: DatabaseSource,
+    private val objectId: PrimaryKey,
+    private val objectType: ObjectType
+) :
+    PagingViewModel<PrimaryKey, MediaInfo>() {
+    private val collectionName = "medias_$objectId"
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<MediaInfo>> = Pager(
+        PagingConfig(pageSize = 20),
+        remoteMediator = singleSourceMediator(
+            databaseSource,
+            collectionName,
+            RegularPagingSource(client) { key, size ->
+                client.getMediaList(objectId, objectType, key, size)
+            }
+        ),
+    ) {
+        singleSourceDatabaseSource(collectionName, databaseSource)
+    }.flow.cachedIn(viewModelScope)
+}
+
+class AllMediaListViewModel(client: HttpClient, private val objectId: PrimaryKey, private val objectType: ObjectType) :
     SimpleViewModel<ServerResponse<MediaInfo>>(client) {
     override val handler: LoadingHandler<ServerResponse<MediaInfo>> = SimpleLoadingHandler(::load)
 
@@ -304,7 +328,7 @@ class MediaListViewModel(client: HttpClient, private val objectId: PrimaryKey, p
         }
     }
 
-    override suspend fun loadInternal() = client.getMediaList(objectId, objectType)
+    override suspend fun loadInternal() = client.getAllMediaList(objectId, objectType)
 }
 
 abstract class UserViewModel(

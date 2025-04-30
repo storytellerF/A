@@ -7,17 +7,15 @@ group = "com.storyteller_f"
 version = "unspecified"
 
 dependencies {
-    runtimeOnly(libs.sqlite.jdbc)
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)
 
     implementation(projects.shared)
     implementation(projects.backend)
     implementation(libs.kotlinx.cli)
-    implementation(libs.jackson.module.kotlin)
     implementation(libs.cryptography.provider.jdk)
-    implementation(libs.napier)
     implementation(libs.tika.core)
+    implementation(libs.commons.logging)
 }
 
 tasks.test {

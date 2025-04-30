@@ -1,15 +1,12 @@
 package com.storyteller_f.cli
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.index.TopicDocument
+import com.storyteller_f.media.UploadPack
 import com.storyteller_f.media.uploadFiles
 import com.storyteller_f.shared.*
-import com.storyteller_f.shared.eciesEncrypt
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
@@ -26,6 +23,7 @@ import kotlinx.cli.ArgType
 import kotlinx.cli.ExperimentalCli
 import kotlinx.cli.Subcommand
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import org.apache.tika.Tika
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.batchInsert
@@ -72,6 +70,7 @@ data class UserPresetTuple(
 
 data class InsertTopicTuple(val topic: PresetTopic, val originalIndex: Int, val level: Int, val id: PrimaryKey)
 
+@Suppress("LargeClass")
 @OptIn(ExperimentalCli::class)
 class AddPreset : Subcommand("add", "add entry") {
     private val jsonFilePath by argument(ArgType.String, "json", "json data file path")
@@ -92,9 +91,10 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val jsonFile = File(jsonFilePath)
 
-        val presetValue =
-            ObjectMapper().registerModule(KotlinModule.Builder().build())
-                .readValue<PresetValue>(jsonFile.readText())
+        val presetValue = Json {
+            ignoreUnknownKeys = true
+        }.decodeFromString<PresetValue>(jsonFile.readText())
+
         val parentDir = jsonFile.parentFile.canonicalFile
         val tika = Tika()
         runBlocking {
@@ -299,7 +299,15 @@ class AddPreset : Subcommand("add", "add entry") {
                 uploadFiles(
                     tika,
                     backend,
-                    listOf(Triple(path, "$id/${"community-icon.${path.extension}"}", null))
+                    listOf(
+                        UploadPack(
+                            path,
+                            "$id/${"community-icon.${path.extension}"}",
+                            "community-icon.${path.extension}",
+                            id,
+                            path.length(),
+                        )
+                    )
                 ).getOrThrow()
                 Triple(it, p, id)
             }
@@ -353,7 +361,15 @@ class AddPreset : Subcommand("add", "add entry") {
                 uploadFiles(
                     tika,
                     backend,
-                    listOf(Triple(path, "$id/${"avatar.${path.extension}"}", null))
+                    listOf(
+                        UploadPack(
+                            path,
+                            "$id/${"avatar.${path.extension}"}",
+                            "avatar.${path.extension}",
+                            id,
+                            path.length()
+                        )
+                    )
                 ).getOrThrow()
                 UserPresetTuple(it, p, derPublicKey, ad, id)
             }
@@ -388,7 +404,15 @@ class AddPreset : Subcommand("add", "add entry") {
                 uploadFiles(
                     tika,
                     backend,
-                    listOf(Triple(path, "$id/${"room-icon.${path.extension}"}", null))
+                    listOf(
+                        UploadPack(
+                            path,
+                            "$id/${"room-icon.${path.extension}"}",
+                            "room-icon.${path.extension}",
+                            id,
+                            path.length(),
+                        )
+                    )
                 ).getOrThrow()
                 Triple(it, p, id)
             }
@@ -564,8 +588,9 @@ class AddPreset : Subcommand("add", "add entry") {
         val mediaNames = mediaLink.map {
             userMap[presetTopic.author]!!.id to it
         }
-        uploadFiles(tika, backend, mediaNames.map { (author, p) ->
-            Triple(File(parentDir, "medias/topics/$p"), "$author/$p", null)
+        uploadFiles(tika, backend, mediaNames.map { (author, pic) ->
+            val path = File(parentDir, "medias/topics/$pic")
+            UploadPack(path, "$author/$pic", pic, author, path.length())
         }).getOrThrow()
         DatabaseFactory.insertMediaRefs(backend, topicId, ObjectType.TOPIC, mediaNames)
     }
@@ -625,7 +650,8 @@ class AddPreset : Subcommand("add", "add entry") {
             if (room != null) {
                 val content = getTopicContent(topic.first, parentDir)
                 uploadFiles(tika, backend, extractMarkdownMediaLink(content).map {
-                    Triple(File(parentDir, "medias/topics/$it"), "${room.id}/$it", null)
+                    val path = File(parentDir, "medias/topics/$it")
+                    UploadPack(path, "${room.id}/$it", it, room.id, path.length())
                 }).getOrThrow()
             }
         }

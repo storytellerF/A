@@ -26,13 +26,13 @@ class MediaTest {
                             writeString("hello")
                         }
                     }.getOrThrow()
-                assertEquals("${it.uid}/hello.txt", response.data.first().item.name)
-                assertListSize(1, client.getMediaList(it.uid, ObjectType.USER))
+                assertEquals("${it.uid}/hello.txt", response.data.first().name)
+                assertListSize(1, client.getMediaList(it.uid, ObjectType.USER, null, 10))
             }
             attachSession(client) {
                 val response = client.copy(firstTuple.uid ob ObjectType.USER, "hello.txt").getOrThrow()
-                assertEquals("${it.uid}/hello.txt", response.data.first().item.name)
-                assertListSize(1, client.getMediaList(it.uid, ObjectType.USER))
+                assertEquals("${it.uid}/hello.txt", response.data.first().name)
+                assertListSize(1, client.getMediaList(it.uid, ObjectType.USER, null, 10))
             }
         }
     }
