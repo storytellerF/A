@@ -64,5 +64,4 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     implementation(projects.shared)
-    implementation(libs.napier)
-}
+    }

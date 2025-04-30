@@ -2,13 +2,13 @@ package com.storyteller_f.tables
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
-import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.types.PagingFetch
@@ -33,7 +33,7 @@ class Community(
     val icon: String? = null,
     val poster: String? = null
 ) :
-    BaseObj(id, createdTime) {
+    BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): Community {
             return Community(
@@ -303,10 +303,10 @@ suspend fun DatabaseFactory.getCommunityByAids(
 suspend fun processCommunityList(
     backend: Backend,
     list: List<CommunityRawResult>
-): Result<List<CommunityInfo>> {
-    return backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, list.flatMap { (_, icon, poster) ->
+): Result<List<CommunityInfo>?> {
+    return DatabaseFactory.getMediaInfoList(backend, list.flatMap { (_, icon, poster) ->
         listOf(icon, poster)
-    }).map { icons ->
+    }).mapIfNotNull { icons ->
         list.mapIndexed { i, communityPair ->
             val first = icons[i * 2]
             val second = icons[i * 2 + 1]

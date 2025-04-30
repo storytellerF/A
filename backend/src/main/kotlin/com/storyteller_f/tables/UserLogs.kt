@@ -45,7 +45,7 @@ class UserLog(
     val type: UserLogType,
     val objectId: PrimaryKey,
     val objectType: ObjectType
-) : BaseObj(id, createdTime) {
+) : BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(resultRow: ResultRow): UserLog {
             return UserLog(

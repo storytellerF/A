@@ -65,14 +65,14 @@ fun UserSettingPage() {
         currentOption = null
     }
     my?.let { m ->
-        Scaffold {
-            UserSettingInternal(it, showDialog, m)
+        Scaffold { padding ->
+            UserSettingInternal(padding, showDialog, m)
             val client = LocalClient.current
             val scope = rememberCoroutineScope()
             ObjectSettingDialog(closeDialog, currentOption, sheetState, {
                 scope.launch {
                     globalDialogState.use {
-                        val newInfo = client.updateUserInfo(UpdateUserBody(avatar = it.item.name)).getOrThrow()
+                        val newInfo = client.updateUserInfo(UpdateUserBody(avatar = it.name)).getOrThrow()
                         SignInViewModel.updateUser(newInfo)
                         closeDialog()
                     }
@@ -124,8 +124,8 @@ fun ObjectSettingDialog(
         {
             val info = it.first()
             val dimension = info.dimension
-            if (dimension == null || !info.item.contentType.startsWith("image/")) {
-                globalDialogState.showMessage("invalid image: ${info.item.contentType} $dimension")
+            if (dimension == null || !info.contentType.startsWith("image/")) {
+                globalDialogState.showMessage("invalid image: ${info.contentType} $dimension")
             } else {
                 scope.launch {
                     val finalInfo = cropImageIfNeed(context, client, info, imageCropper, dimension, ratio, mediaTarget)
@@ -192,8 +192,8 @@ private suspend fun cropImage(
                     globalDialogState.use {
                         val data = saveImageBitmap(
                             result.bitmap,
-                            info.item.noPrefixName,
-                            when (info.item.contentType) {
+                            info.noPrefixName,
+                            when (info.contentType) {
                                 "image/jpeg" -> ImageFormat.JPEG
                                 else -> ImageFormat.PNG
                             }
@@ -216,7 +216,7 @@ private fun UserSettingInternal(
 
     Column(modifier = Modifier.padding(values).padding(horizontal = 20.dp)) {
         SettingOptionView("Icon", {
-            showDialog(SettingOption.Icon(m.avatar?.item?.name))
+            showDialog(SettingOption.Icon(m.avatar?.name))
         }, {
             UserIcon(m, setClickEvent = false)
         })

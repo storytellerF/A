@@ -75,7 +75,7 @@ kotlin {
             implementation(libs.cryptography.core)
             api(libs.kotlinx.datetime)
             implementation(libs.markdown)
-            implementation(libs.napier)
+            api(libs.napier)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

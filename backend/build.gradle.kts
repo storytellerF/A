@@ -19,8 +19,7 @@ dependencies {
 
     implementation(libs.pgjdbc.ng)
     implementation(libs.postgresql)
-    implementation(libs.napier)
-    implementation(projects.shared)
+        implementation(projects.shared)
     implementation(libs.minio)
     implementation(libs.elasticsearch.java)
     implementation(libs.jackson.module.kotlin)
@@ -100,6 +99,7 @@ val flavor = project.findProperty("buildkonfig.flavor").toString()
 buildConfig {
     className = "BackendConfig"
     buildConfigField<String>("BUILD_TYPE", buildType)
+    buildConfigField<Boolean>("IS_PROD", buildType == "prod")
     buildConfigField<String>("FLAVOR", flavor)
 }
 

@@ -26,8 +26,7 @@ dependencies {
     implementation(projects.backend)
     implementation(libs.bundles.ktor.server)
     implementation(libs.pdfbox)
-    implementation(libs.napier)
-    
+        
     implementation(libs.geoip2)
     implementation(libs.simplemagic)
     implementation(libs.pdfbox.layout)

@@ -103,10 +103,12 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                     it.index(TOPIC_INDEX_NAME)
                 }.await()
                 Napier.i {
-                    "elastic clean $response"
+                    "elastic clean done $response"
                 }
             } else {
-                Unit
+                Napier.i {
+                    "elastic index not exists"
+                }
             }
         }
     }
@@ -261,7 +263,9 @@ private suspend fun <T> useElasticClient(
                     }.jsonMapper(JacksonJsonpMapper().apply {
                         objectMapper().registerKotlinModule()
                     })
-            }.block()
+            }.use {
+                it.block()
+            }
         } catch (e: Exception) {
             if (e is ConnectException || e is ConnectionClosedException) {
                 throw Exception("elastic service unavailable", e)

@@ -19,7 +19,7 @@ object TaskRecords : BaseTable() {
 }
 
 class TaskRecord(id: PrimaryKey, createdTime: LocalDateTime, val type: TaskRecordType, val processedId: PrimaryKey) :
-    BaseObj(id, createdTime) {
+    BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(resultRow: ResultRow): TaskRecord {
             return TaskRecord(

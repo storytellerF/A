@@ -45,9 +45,9 @@ import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.LocalToaster
-import com.storyteller_f.a.app.json
 import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.a.app.utils.setText
+import com.storyteller_f.a.client_lib.json
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.utils.MarkdownObject
@@ -133,7 +133,7 @@ fun ObjectBlock(
         else -> {
             val mediaInfo = mediaList1[obj.name]
             val url = mediaInfo?.url
-            val contentType = mediaInfo?.item?.contentType
+            val contentType = mediaInfo?.contentType
             when {
                 url == null || contentType == null -> HighlightCodeBlock(modal)
 

@@ -61,7 +61,7 @@ fun <T : Any> StateView(
     })
     val refresh = pagingItems.loadState.refresh
     LaunchedEffect(key1 = refreshing, key2 = refresh) {
-        // 增加延时，确保真正进入刷新状态
+        // 增加延时，确保pagingItems真正进入刷新状态
         delay(REFRESH_AFTER)
         if (refreshing) {
             // 刷新结束或者当前没有内容时停止刷新，如果没有内容会使用列表刷新控件
@@ -73,7 +73,7 @@ fun <T : Any> StateView(
         value = refresh
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        StateViewInternal(state = loadState.toLoadingState(), refresh = {
+        StateViewInternal(state = refresh.toLoadingState(), refresh = {
             pagingItems.refresh()
         }, pagingItems.itemCount, content)
         PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))

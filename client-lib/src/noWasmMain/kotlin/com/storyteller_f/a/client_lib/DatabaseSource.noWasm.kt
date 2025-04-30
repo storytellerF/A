@@ -117,15 +117,21 @@ class KotbaseCollection(private val collection: kotbase.Collection) : Collection
             }
         }
             .limit(size)
-            .addChangeListener {
-                val results = it.results
+            .addChangeListener { queryChange ->
+                val results = queryChange.results
                 when {
                     task.isCompleted -> invalidate()
-                    results == null -> task.completeExceptionally(it.error ?: Exception("it.error is null"))
+                    results == null -> task.completeExceptionally(queryChange.error ?: Exception("it.error is null"))
                     else -> {
-                        task.complete(results.toObjects { json: String ->
-                            Json.decodeFromString(serializer, json)
-                        })
+                        runCatching {
+                            results.toObjects { jsonData: String ->
+                                json.decodeFromString(serializer, jsonData)
+                            }
+                        }.onSuccess {
+                            task.complete(it)
+                        }.onFailure {
+                            task.complete(emptyList())
+                        }
                     }
                 }
             }

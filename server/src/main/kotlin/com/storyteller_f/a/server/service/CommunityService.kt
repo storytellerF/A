@@ -14,6 +14,7 @@ import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
@@ -34,7 +35,7 @@ suspend fun getCommunity(
         fillJoinInfo,
         id
     ).mapResultIfNotNull {
-        processCommunityList(backend, listOf(it)).map(List<CommunityInfo>::first)
+        processCommunityList(backend, listOf(it)).mapIfNotNull(List<CommunityInfo>::first)
     }
 }
 
@@ -108,7 +109,7 @@ suspend fun searchCommunities(
         search.hasPoster,
         pagingFetch
     ).mapResult { (list, count) ->
-        processCommunityList(backend, list).map { value ->
+        processCommunityList(backend, list).mapIfNotNull { value ->
             PaginationResult(value, count)
         }
     }
@@ -120,7 +121,7 @@ private suspend fun searchTargetUserJoinedCommunities(
     target: PrimaryKey,
     hasPosterSearch: PosterSearch?,
     pagingFetch: PagingFetch
-): Result<PaginationResult<CommunityInfo>> {
+): Result<PaginationResult<CommunityInfo>?> {
     return DatabaseFactory.mapQuery(backend, {
         CommunityRawResult(first.toCommunityIfo(second), first.icon, first.poster)
     }, {
@@ -134,7 +135,7 @@ private suspend fun searchTargetUserJoinedCommunities(
         DatabaseFactory.count(backend) {
             getUserJoinedCommunityQuery(target, true).bindPosterSearch(hasPosterSearch)
         }.mapResult { count ->
-            processCommunityList(backend, list).mapResult { value ->
+            processCommunityList(backend, list).mapResultIfNotNull { value ->
                 if (uid != null) {
                     processUserJoinedTimeReplace(backend, value, uid, count)
                 } else {
@@ -168,7 +169,7 @@ suspend fun createCommunity(
     backend: Backend,
     newCommunity: NewCommunity,
     uid: PrimaryKey
-): Result<CommunityInfo> {
+): Result<CommunityInfo?> {
     val firstError = listOf(suspend {
         checkAid(newCommunity.aid)
     }, suspend {
@@ -201,7 +202,7 @@ suspend fun createCommunity(
         processCommunityList(
             backend,
             listOf(CommunityRawResult(communityInfo, newCommunity.icon, null))
-        ).map {
+        ).mapIfNotNull {
             it.first()
         }
     }
@@ -225,7 +226,7 @@ suspend fun updateCommunity(
                             true,
                             uid
                         ).mapResultIfNotNull { rawResult ->
-                            processCommunityList(backend, listOf(rawResult)).map(List<CommunityInfo>::first)
+                            processCommunityList(backend, listOf(rawResult)).mapIfNotNull(List<CommunityInfo>::first)
                         }
                     } else {
                         Result.success(null)

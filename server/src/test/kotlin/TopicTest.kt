@@ -98,10 +98,10 @@ class TopicTest {
                     client.createNewTopic(
                         ObjectType.USER,
                         it.uid,
-                        "![hello.txt](${media.item.noPrefixName})"
+                        "![hello.txt](${media.noPrefixName})"
                     ).getOrThrow()
                 val plain = info.content as TopicContent.Plain
-                assertEquals(media.item.name, plain.list.first().item.name)
+                assertEquals(media.name, plain.list.first().name)
                 // 查询单个topic
                 assertListSize(1, client.getUserTopics(it.uid, null, 10))
                 client.createNewTopic(

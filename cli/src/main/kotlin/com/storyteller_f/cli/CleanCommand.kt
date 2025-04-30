@@ -10,18 +10,17 @@ import kotlinx.coroutines.runBlocking
 @OptIn(ExperimentalCli::class)
 class CleanCommand : Subcommand("clean", "clean all data") {
     override fun execute() {
-        val connected = backend
-        DatabaseFactory.connect(connected.config.databaseConnection)
-        DatabaseFactory.clean(connected)
+        DatabaseFactory.connect(backend.config.databaseConnection)
+        DatabaseFactory.clean(backend)
         Napier.i {
-            "database tables removed."
+            "database tables delete done"
         }
         runBlocking {
-            connected.mediaService.clean(AMEDIA_DEFAULT_BUCKET).getOrThrow()
-            connected.topicSearchService.clean().getOrThrow()
+            backend.mediaService.clean(AMEDIA_DEFAULT_BUCKET).getOrThrow()
+            backend.topicSearchService.clean().getOrThrow()
         }
         Napier.i {
-            "clean done."
+            "clean done"
         }
     }
 }

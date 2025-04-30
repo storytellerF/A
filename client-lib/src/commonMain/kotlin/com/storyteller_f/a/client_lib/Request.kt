@@ -401,14 +401,27 @@ suspend fun HttpClient.signOut() = serviceCatching {
     post("accounts/sign_out")
 }
 
-suspend fun HttpClient.getMediaList(objectId: PrimaryKey, objectType: ObjectType) = serviceCatching {
-    get("amedia") {
-        url {
-            parameters.append("objectId", objectId.toString())
-            parameters.append("objectType", objectType.name)
-        }
-    }.body<ServerResponse<MediaInfo>>()
-}
+suspend fun HttpClient.getMediaList(objectId: PrimaryKey, objectType: ObjectType, nextId: PrimaryKey?, size: Int) =
+    serviceCatching {
+        get("amedia") {
+            url {
+                parameters.append("objectId", objectId.toString())
+                parameters.append("objectType", objectType.name)
+
+                appendPagingQueryParams(size, nextId)
+            }
+        }.body<ServerResponse<MediaInfo>>()
+    }
+
+suspend fun HttpClient.getAllMediaList(objectId: PrimaryKey, objectType: ObjectType) =
+    serviceCatching {
+        get("amedia/all") {
+            url {
+                parameters.append("objectId", objectId.toString())
+                parameters.append("objectType", objectType.name)
+            }
+        }.body<ServerResponse<MediaInfo>>()
+    }
 
 suspend fun HttpClient.upload(
     objectTuple: ObjectTuple,

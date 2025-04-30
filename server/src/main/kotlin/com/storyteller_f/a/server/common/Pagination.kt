@@ -52,7 +52,7 @@ suspend fun <T, F : Fetch> RoutingContext.pagination(
     generator: PagingGenerator<T, F>,
     block: suspend (F) -> Result<PaginationResult<T>?>
 ): Result<ServerResponse<T>?> {
-    val v = runCatching {
+    return this.runCatching {
         val size = call.queryParameters.getOrFailCompact<Int>("size")
         require(size > 0) {
             "Invalid query size"
@@ -63,10 +63,8 @@ suspend fun <T, F : Fetch> RoutingContext.pagination(
         require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) {
             "Invalid query"
         }
-        val fetch = generator.parse(prePageToken, nextPageToken, size)
-        fetch
-    }
-    return v.mapResult { f ->
+        generator.parse(prePageToken, nextPageToken, size)
+    }.mapResult { f ->
         block(f).mapCatchingNotNull { (list, count) ->
             val (pre, next) = generator.generate(list, f.size)
             ServerResponse(list, Pagination(next, pre, count))
