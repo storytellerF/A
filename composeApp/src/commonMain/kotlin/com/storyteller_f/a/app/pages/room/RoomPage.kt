@@ -209,12 +209,8 @@ fun RoomInputGroup(
     if (roomInfo != null) {
         val localState by wsClient.localState.collectAsState()
         val isSending = localState is LoadingState.Loading
-        val mediaTarget = if (roomInfo.isPrivate) {
-            ObjectTuple(roomInfo.id, ObjectType.ROOM)
-        } else {
-            ObjectTuple(myInfo?.id ?: 0, ObjectType.USER)
-        }
-        RoomInputGroupInternal(roomId, roomInfo, parentTarget, input, scrollToNew, mediaTarget) {
+
+        RoomInputGroupInternal(roomId, roomInfo, parentTarget, input, scrollToNew) {
             if (!isSending) {
                 input = it
             }
@@ -235,11 +231,15 @@ private fun RoomInputGroupInternal(
     parentTarget: ObjectTuple,
     input: String,
     scrollToNew: () -> Unit,
-    mediaTarget: ObjectTuple,
     updateInput: (String) -> Unit
 ) {
+    val myInfo by SignInViewModel.user.collectAsState()
     val wsClient = LocalWsClient.current
-
+    val mediaTarget = if (roomInfo.isPrivate) {
+        ObjectTuple(roomInfo.id, ObjectType.ROOM)
+    } else {
+        ObjectTuple(myInfo?.id ?: 0, ObjectType.USER)
+    }
     val controller = remember {
         CustomAlertDialogController()
     }
@@ -324,7 +324,7 @@ private fun sendRoomTopic(
             toasterState.show("invalid", duration = 1.seconds)
             return
         }
-        if (keyState !is LoadingState.Done || keyData == null) {
+        if ((keyState !is LoadingState.Done || keyData == null) && roomInfo.isPrivate) {
             scope.launch {
                 toasterState.show(
                     getString(Res.string.private_room_pub_key_loading),
@@ -335,7 +335,7 @@ private fun sendRoomTopic(
             return
         }
         wsClient.useWebSocket {
-            sendMessage(parentTarget, roomInfo.isPrivate, input, keyData)
+            sendMessage(parentTarget, roomInfo.isPrivate, input, keyData.orEmpty())
             delay(500)
             scrollToNew()
         }

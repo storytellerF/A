@@ -285,13 +285,7 @@ fun CommonEntry(
                             setPreferences {
                                 "gpt_model" defaultValue ""
                             }
-                            if (AppConfig.ENABLE_LOGIN_CHECK) {
-                                LoginCheck {
-                                    content()
-                                }
-                            } else {
-                                content()
-                            }
+                            content()
                         }
                     }
                 }
@@ -446,8 +440,8 @@ private fun rememberWsClient(
 ): ClientWebSocket {
     val client = LocalClient.current
     val remember = remember {
-        ClientWebSocketImpl({ userInfo, sig ->
-            client.webSocketSession(buildUrl {
+        ClientWebSocketImpl(client, { userInfo, sig ->
+            webSocketSession(buildUrl {
                 takeFrom(wsServerUrl)
                 appendPathSegments("link")
             }.toString()) {
@@ -477,92 +471,6 @@ private fun rememberWsClient(
         }
     }
     return remember
-}
-
-@Composable
-fun LoginCheck(content: @Composable () -> Unit) {
-    val client = LocalClient.current
-    val state by SignInViewModel.state.collectAsState()
-    val user by SignInViewModel.user.collectAsState()
-    val retryState by SignInViewModel.retryLoginState.collectAsState()
-    val updateRetryState = { newState: LoadingState? ->
-        SignInViewModel.retryLoginState.value = newState
-    }
-    AutoRetryLogin(state, retryState, user, updateRetryState, client)
-    LoginCheckPageInternal(client, state, user, content, updateRetryState)
-}
-
-@Composable
-private fun AutoRetryLogin(
-    state: ClientSession,
-    retryState: LoadingState?,
-    user: UserInfo?,
-    updateRetryState: (LoadingState) -> Unit,
-    client: HttpClient
-) {
-    val scope = rememberCoroutineScope()
-    LaunchedEffect(state, retryState) {
-        if (user == null && state is ClientSession.SignInSuccess) {
-            if (retryState == null) {
-                updateRetryState(LoadingState.Loading)
-                scope.launch {
-                    globalDialogState.use {
-                        val data = client.getData().getOrThrow()
-                        val signature = state.session.signature(finalData(data)).getOrThrow()
-                        val add = state.session.address().getOrThrow()
-                        val u = client.signIn(add, signature).getOrThrow()
-                        SignInViewModel.updateUser(u)
-                        SignInViewModel.updateSession(data, signature)
-                    }.onSuccess {
-                        updateRetryState(LoadingState.Done)
-                        SignInViewModel.appStartLoginRetried.value = true
-                    }.onFailure {
-                        updateRetryState(LoadingState.Error(it))
-                        SignInViewModel.appStartLoginRetried.value = true
-                    }
-                }
-            }
-        } else {
-            SignInViewModel.appStartLoginRetried.value = true
-        }
-    }
-}
-
-@Composable
-private fun LoginCheckPageInternal(
-    client: HttpClient,
-    state: ClientSession,
-    user: UserInfo?,
-    content: @Composable () -> Unit,
-    updateRetryState: (LoadingState?) -> Unit
-) {
-    val scope = rememberCoroutineScope()
-    if (state is ClientSession.SignInSuccess && user == null) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Button({
-                    scope.launch {
-                        signOut(client)
-                    }
-                }) {
-                    Text("Sign out")
-                }
-                Button({
-                    updateRetryState(null)
-                }) {
-                    Text("Retry")
-                }
-            }
-        }
-        Napier.i {
-            "render waiting"
-        }
-    } else {
-        Napier.i {
-            "render content"
-        }
-        content()
-    }
 }
 
 @OptIn(ExperimentalResourceApi::class)

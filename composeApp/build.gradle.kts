@@ -155,7 +155,7 @@ kotlin {
             implementation(libs.compose.preferences)
 
             implementation(libs.kim)
-                        implementation(libs.uri.kmp)
+            implementation(libs.uri.kmp)
             implementation(libs.emoji.kt)
             implementation(libs.emoji.compose.m3)
             implementation(libs.m3u.parser)
