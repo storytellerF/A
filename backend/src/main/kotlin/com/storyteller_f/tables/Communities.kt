@@ -36,30 +36,34 @@ class Community(
     BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): Community {
-            return Community(
-                row[Communities.id],
-                row[Communities.createdTime],
-                row[Aids.value],
-                row[Communities.name],
-                row[Communities.owner],
-                row[Communities.memberCount],
-                row[Communities.icon],
-                row[Communities.poster]
-            )
+            return with(Communities) {
+                Community(
+                    row[id],
+                    row[createdTime],
+                    row[Aids.value],
+                    row[name],
+                    row[owner],
+                    row[memberCount],
+                    row[icon],
+                    row[poster]
+                )
+            }
         }
     }
 }
 
 fun Community.toCommunityIfo(
-    joinTime: LocalDateTime?
-): CommunityInfo = CommunityInfo(
+    joinTime: LocalDateTime?,
+    lastRead: PrimaryKey?
+) = CommunityInfo(
     id,
     aid,
     name,
     owner,
     createdTime,
     memberCount,
-    joinTime = joinTime
+    joinedTime = joinTime,
+    lastRead = lastRead
 )
 
 suspend fun DatabaseFactory.checkCommunityExists(backend: Backend, parentId: PrimaryKey) =
@@ -73,6 +77,13 @@ suspend fun DatabaseFactory.checkCommunityExists(backend: Backend, parentId: Pri
             }
     }
 
+fun mapCommunityInfo(it: ResultRow): CommunityRawResult {
+    val community = Community.wrapRow(it)
+    val joinedTime = it.getOrNull(MemberJoins.joinedTime)
+    val lastRead = it.getOrNull(UserTopicReads.topicId)
+    return CommunityRawResult(community.toCommunityIfo(joinedTime, lastRead), community.icon, community.poster)
+}
+
 data class CommunityRawResult(val communityInfo: CommunityInfo, val icon: String?, val poster: String?)
 
 suspend fun DatabaseFactory.getCommunity(
@@ -80,22 +91,31 @@ suspend fun DatabaseFactory.getCommunity(
     objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
     id: PrimaryKey? = null
-): Result<CommunityRawResult?> = first(backend, {
-    CommunityRawResult(first.toCommunityIfo(second), first.icon, first.poster)
-}, {
-    Community.wrapRow(it) to if (fillJoinInfo == true) it[MemberJoins.joinTime] else null
-}) {
+): Result<CommunityRawResult?> = first(backend, ::mapCommunityInfo) {
     when {
-        fillJoinInfo != true -> Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-            .select(Communities.fields + Aids.value)
-            .where(buildCommunityWhereClause(objectFetch))
+        fillJoinInfo != true -> {
+            val select = Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                .select(Communities.fields + Aids.value)
+            if (id != null) {
+                select.adjustColumnSet {
+                    join(UserTopicReads, JoinType.LEFT, Communities.id, UserTopicReads.objectId) {
+                        UserTopicReads.uid eq id
+                    }
+                }.adjustSelect {
+                    select(Communities.fields + Aids.value + UserTopicReads.topicId)
+                }
+            }
+            select.where(buildCommunityWhereClause(objectFetch))
+        }
 
-        id == null -> throw UnauthorizedException()
-        else -> Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+        id != null -> Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
             .join(MemberJoins, JoinType.LEFT, Communities.id, MemberJoins.objectId) {
                 MemberJoins.uid eq id
-            }.select(Communities.fields + MemberJoins.joinTime + Aids.value)
+            }
+            .select(Communities.fields + MemberJoins.joinedTime + Aids.value)
             .where(buildCommunityWhereClause(objectFetch))
+
+        else -> throw UnauthorizedException()
     }
 }
 
@@ -137,7 +157,10 @@ fun getSearchCommunityQuery(
         JoinStatusSearch.NOT_JOINED -> {
             if (uid != null) {
                 Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-                    .select(Communities.fields + Aids.value)
+                    .join(UserTopicReads, JoinType.LEFT, Communities.id, UserTopicReads.objectId) {
+                        UserTopicReads.uid eq uid
+                    }
+                    .select(Communities.fields + Aids.value + UserTopicReads.topicId)
                     .where {
                         Communities.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
                             MemberJoins.uid eq uid
@@ -149,8 +172,18 @@ fun getSearchCommunityQuery(
         }
 
         else -> {
-            Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+            val join = Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
                 .select(Communities.fields + Aids.value)
+            if (uid != null) {
+                join.adjustColumnSet {
+                    join(UserTopicReads, JoinType.LEFT, Rooms.id, UserTopicReads.objectId) {
+                        UserTopicReads.uid eq uid
+                    }
+                }.adjustSelect {
+                    select(Communities.fields + Aids.value + UserTopicReads.topicId)
+                }
+            }
+            join
         }
     }
     if (!(word.isNullOrBlank())) {
@@ -180,17 +213,19 @@ fun Query.bindPosterSearch(
 }
 
 fun getUserJoinedCommunityQuery(
-    target: PrimaryKey,
+    uid: PrimaryKey,
     getCount: Boolean
 ): Query {
     val join = Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
         .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-            MemberJoins.uid eq target
+            MemberJoins.uid eq uid
         }
     return if (getCount) {
         join.selectAll()
     } else {
-        join.select(Communities.fields + MemberJoins.joinTime + Aids.value)
+        join.join(UserTopicReads, JoinType.LEFT, Communities.id, UserTopicReads.objectId) {
+            UserTopicReads.uid eq uid
+        }.select(Communities.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
     }
 }
 
@@ -202,11 +237,7 @@ suspend fun DatabaseFactory.getPaginationCommunityList(
     hasPosterSearch: PosterSearch?,
     pagingFetch: PagingFetch
 ): Result<Pair<List<CommunityRawResult>, Long>> {
-    return mapQuery(backend, {
-        CommunityRawResult(first.toCommunityIfo(null), first.icon, first.poster)
-    }, {
-        Community.wrapRow(it) to it.getOrNull(MemberJoins.joinTime)
-    }) {
+    return mapQuery(backend, ::mapCommunityInfo) {
         getSearchCommunityQuery(uid, false, joinStatus, word, hasPosterSearch).bindPaginationQuery(
             Communities,
             pagingFetch
@@ -264,11 +295,11 @@ suspend fun DatabaseFactory.getCommunityJoinedTimeByIds(
     uid: PrimaryKey,
     communityIds: List<PrimaryKey>
 ) = mapQuery(backend, {
-    it[Communities.id] to it[MemberJoins.joinTime]
+    it[Communities.id] to it[MemberJoins.joinedTime]
 }) {
     Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
         MemberJoins.uid eq uid
-    }.select(Communities.id, MemberJoins.joinTime)
+    }.select(Communities.id, MemberJoins.joinedTime)
         .where {
             Communities.id.inList(communityIds)
         }
@@ -279,7 +310,7 @@ suspend fun DatabaseFactory.getCommunityByIds(
     idList: List<PrimaryKey>
 ): Result<List<CommunityRawResult>> {
     return mapQuery(backend, {
-        CommunityRawResult(toCommunityIfo(null), icon, poster)
+        CommunityRawResult(toCommunityIfo(null, null), icon, poster)
     }, Community::wrapRow) {
         Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
             Communities.id inList idList
@@ -292,7 +323,7 @@ suspend fun DatabaseFactory.getCommunityByAids(
     idList: List<String>
 ): Result<List<CommunityRawResult>> {
     return mapQuery(backend, {
-        CommunityRawResult(toCommunityIfo(null), icon, poster)
+        CommunityRawResult(toCommunityIfo(null, null), icon, poster)
     }, Community::wrapRow) {
         Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
             Aids.value inList idList

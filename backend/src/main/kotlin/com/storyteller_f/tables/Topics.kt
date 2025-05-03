@@ -20,14 +20,6 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 
-class TopicSearchTuple(
-    val topicInfo: Topic,
-    val commentCount: Long,
-    val hasComment: Boolean,
-    val reactionCount: Long,
-    val aid: String?
-)
-
 object Topics : BaseTable() {
     val author = customPrimaryKey("author").index()
     val parentId = customPrimaryKey("parent_id").index()
@@ -52,18 +44,20 @@ class Topic(
 ) : BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): Topic {
-            return Topic(
-                row[Topics.id],
-                row[Topics.createdTime],
-                row[Topics.author],
-                row[Topics.parentId],
-                row[Topics.parentType],
-                row[Topics.rootId],
-                row[Topics.rootType],
-                row[Topics.pinned],
-                row[Topics.lastModifiedTime],
-                row.getOrNull(Aids.value),
-            )
+            return with(Topics) {
+                Topic(
+                    row[id],
+                    row[createdTime],
+                    row[author],
+                    row[parentId],
+                    row[parentType],
+                    row[rootId],
+                    row[rootType],
+                    row[pinned],
+                    row[lastModifiedTime],
+                    row.getOrNull(Aids.value),
+                )
+            }
         }
 
         fun findById(topicId: PrimaryKey) = Topics.selectAll().where {
@@ -90,7 +84,8 @@ fun Topic.toTopicInfo(
     commentCount: Long = 0,
     hasComment: Boolean = false,
     reactionCount: Long = 0,
-    aidValue: String? = null
+    aidValue: String? = null,
+    lastRead: PrimaryKey? = null,
 ): TopicInfo {
     return TopicInfo(
         id = id,
@@ -110,6 +105,7 @@ fun Topic.toTopicInfo(
         lastModifiedTime = lastModifiedTime,
         extension = null,
         aid = aidValue ?: aid,
+        lastRead = lastRead,
     )
 }
 
@@ -140,9 +136,7 @@ suspend fun DatabaseFactory.getTopicInfo(
     uid: PrimaryKey?
 ): Result<TopicInfo?> {
     val (query, resultRowTransform) = getTopicBuilder(uid)
-    return first(backend, {
-        topicInfo.toTopicInfo(commentCount, hasComment, reactionCount, aid)
-    }, resultRowTransform) {
+    return first(backend, resultRowTransform) {
         query.andWhere {
             when (fetch) {
                 is ObjectFetch.IdFetch -> Topics.id eq fetch.id
@@ -152,11 +146,12 @@ suspend fun DatabaseFactory.getTopicInfo(
     }
 }
 
-private fun getTopicBuilder(uid: PrimaryKey?): Pair<Query, (ResultRow) -> TopicSearchTuple> {
+private fun getTopicBuilder(uid: PrimaryKey?): Pair<Query, (ResultRow) -> TopicInfo> {
     val t2 = Topics.alias("t2")
     val t3 = Topics.alias("t3")
     val commentCountColumn = t2[Topics.id].countDistinct()
     val selfCommentColumn = t3[Topics.author].max()
+    val selfReadTopic = UserTopicReads.topicId.max()
     val reactionCountColumn = Reactions.id.countDistinct()
     val aidsValue = Aids.value.max()
     val baseSelection = Topics.fields + commentCountColumn + reactionCountColumn + aidsValue
@@ -169,20 +164,23 @@ private fun getTopicBuilder(uid: PrimaryKey?): Pair<Query, (ResultRow) -> TopicS
             join(t3, JoinType.LEFT, Topics.id, t3[Topics.parentId]) {
                 t3[Topics.author] eq uid
             }
+                .join(UserTopicReads, JoinType.LEFT, Topics.id, UserTopicReads.objectId) {
+                    UserTopicReads.uid eq uid
+                }
         }.adjustSelect {
-            select(baseSelection + selfCommentColumn)
+            select(baseSelection + selfCommentColumn + selfReadTopic)
         }
     }
 
-    val resultRowTransform: (ResultRow) -> TopicSearchTuple = { resultRow ->
-        TopicSearchTuple(
-            wrapRow(resultRow),
+    val resultRowTransform: (ResultRow) -> TopicInfo = { resultRow ->
+        wrapRow(resultRow).toTopicInfo(
             resultRow[commentCountColumn],
             resultRow.getOrNull(selfCommentColumn)?.let {
                 it > 0
             } ?: false,
             resultRow[reactionCountColumn],
-            resultRow[aidsValue]
+            resultRow[aidsValue],
+            resultRow[selfReadTopic]
         )
     }
     return Pair(query, resultRowTransform)
@@ -201,9 +199,7 @@ suspend fun getTopicsByPredicate(
 ): Result<List<TopicInfo>> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
     val (query, resultRowTransform) = getTopicBuilder(uid)
-    return DatabaseFactory.mapQuery(backend, {
-        topicInfo.toTopicInfo(commentCount, hasComment, reactionCount, aid)
-    }, resultRowTransform) {
+    return DatabaseFactory.mapQuery(backend, resultRowTransform) {
         query.andWhere(predicate).let(addPagingQuery)
             .groupBy(*if (addPinOrder) arrayOf(Topics.pinned, Topics.id) else arrayOf(Topics.id))
     }

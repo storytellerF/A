@@ -49,13 +49,13 @@ suspend fun doUserJoinCommunity(
     uid,
     true
 ).mapResultIfNotNull { community ->
-    if (community.joinTime != null) {
+    if (community.joinedTime != null) {
         Result.success(community)
     } else {
         val time = now()
         DatabaseFactory.addCommunityJoin(backend, uid, communityId, time, community.memberCount).mapResult {
             addUserLog(backend, uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
-            Result.success(community.copy(joinTime = time))
+            Result.success(community.copy(joinedTime = time))
         }.recoverCatching {
             if (it.isDup()) {
                 getCommunity(backend, ObjectFetch.IdFetch(communityId), uid, true)
@@ -72,13 +72,13 @@ suspend fun exitCommunity(
     id: PrimaryKey
 ) =
     getCommunity(backend, ObjectFetch.IdFetch(communityId), id, true).mapResultIfNotNull { info ->
-        if (info.joinTime == null) {
+        if (info.joinedTime == null) {
             Result.success(info)
         } else {
             DatabaseFactory.exit(backend, communityId, id).mapResult { i ->
                 if (i > 0) {
                     addUserLog(backend, id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
-                    Result.success(info.copy(joinTime = null))
+                    Result.success(info.copy(joinedTime = null))
                 } else {
                     Result.failure(BadRequestException("exit failed"))
                 }
@@ -122,11 +122,7 @@ private suspend fun searchTargetUserJoinedCommunities(
     hasPosterSearch: PosterSearch?,
     pagingFetch: PagingFetch
 ): Result<PaginationResult<CommunityInfo>?> {
-    return DatabaseFactory.mapQuery(backend, {
-        CommunityRawResult(first.toCommunityIfo(second), first.icon, first.poster)
-    }, {
-        Community.wrapRow(it) to it[MemberJoins.joinTime]
-    }) {
+    return DatabaseFactory.mapQuery(backend, ::mapCommunityInfo) {
         getUserJoinedCommunityQuery(target, false).bindPosterSearch(hasPosterSearch).bindPaginationQuery(
             Communities,
             pagingFetch
@@ -140,7 +136,7 @@ private suspend fun searchTargetUserJoinedCommunities(
                     processUserJoinedTimeReplace(backend, value, uid, count)
                 } else {
                     Result.success(PaginationResult(value.map {
-                        it.copy(joinTime = null, extension = CommunityInfo.Extension(it.joinTime))
+                        it.copy(joinedTime = null, extension = CommunityInfo.Extension(it.joinedTime))
                     }, count))
                 }
             }
@@ -160,7 +156,7 @@ private suspend fun processUserJoinedTimeReplace(
     return DatabaseFactory.getCommunityJoinedTimeByIds(backend, uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         PaginationResult(value.map {
-            it.copy(joinTime = map[it.id], extension = CommunityInfo.Extension(it.joinTime))
+            it.copy(joinedTime = map[it.id], extension = CommunityInfo.Extension(it.joinedTime))
         }, count)
     }
 }
@@ -197,7 +193,7 @@ suspend fun createCommunity(
         null
     )
     return DatabaseFactory.createCommunity(backend, community).mapResult {
-        val communityInfo = community.toCommunityIfo(community.createdTime)
+        val communityInfo = community.toCommunityIfo(community.createdTime, null)
         addUserLog(backend, uid, UserLogType.CREATE, communityInfo.tuple())
         processCommunityList(
             backend,

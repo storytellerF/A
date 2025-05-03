@@ -14,7 +14,7 @@ object MemberJoins : Table() {
     val uid = customPrimaryKey("uid").index()
     val objectId = customPrimaryKey("object_id").index()
     val objectType = objectType("object_type")
-    val joinTime = datetime("join_time")
+    val joinedTime = datetime("joined_time")
 
     init {
         index("member-joins-main", true, objectId, uid)
@@ -25,16 +25,18 @@ class MemberJoin(
     val uid: PrimaryKey,
     val objectId: PrimaryKey,
     val objectType: ObjectType,
-    val joinTime: LocalDateTime
+    val joinedTime: LocalDateTime
 ) {
     companion object {
         fun wrapRow(row: ResultRow): MemberJoin {
-            return MemberJoin(
-                row[MemberJoins.uid],
-                row[MemberJoins.objectId],
-                row[MemberJoins.objectType],
-                row[MemberJoins.joinTime]
-            )
+            return with(MemberJoins) {
+                MemberJoin(
+                    row[uid],
+                    row[objectId],
+                    row[objectType],
+                    row[joinedTime]
+                )
+            }
         }
     }
 }
@@ -62,15 +64,15 @@ suspend fun DatabaseFactory.addRoomJoin(
 
 fun addRoomJoinRaw(
     room: PrimaryKey,
-    id: PrimaryKey,
+    userId: PrimaryKey,
     time: LocalDateTime,
     oldMemberCount: Long
 ) {
     check(MemberJoins.insert {
-        it[joinTime] = time
+        it[joinedTime] = time
         it[objectId] = room
         it[objectType] = ObjectType.ROOM
-        it[uid] = id
+        it[this.uid] = userId
     }.insertedCount > 0) {
         "join room failed"
     }
@@ -114,7 +116,7 @@ fun addCommunityJoinRaw(
     oldMemberCount: Long
 ) {
     check(MemberJoins.insert {
-        it[joinTime] = time
+        it[joinedTime] = time
         it[uid] = id
         it[objectId] = community
         it[objectType] = ObjectType.COMMUNITY
@@ -137,7 +139,7 @@ suspend fun DatabaseFactory.createMemberJoin(backend: Backend, join: MemberJoin)
         statement[uid] = join.uid
         statement[objectId] = join.objectId
         statement[objectType] = join.objectType
-        statement[joinTime] = join.joinTime
+        statement[joinedTime] = join.joinedTime
     }.insertedCount > 0) {
         "join failed"
     }

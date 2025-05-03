@@ -2,6 +2,7 @@ package com.storyteller_f.a.app.common
 
 import androidx.lifecycle.ViewModel
 import app.cash.paging.*
+import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
@@ -11,18 +12,6 @@ import kotlinx.serialization.Serializable
 
 abstract class PagingViewModel<K : Any, V : Any> : ViewModel() {
     abstract val flow: Flow<PagingData<V>>
-}
-
-fun <KEY : Any, DATUM : Any> Result<APagingData<KEY, DATUM>>.loadResult(): PagingSourceLoadResult<KEY, DATUM> {
-    return fold(onSuccess = { (data, nextKey) ->
-        PagingSourceLoadResultPage(
-            data = data,
-            prevKey = null, // Only paging forward.
-            nextKey = nextKey
-        )
-    }, onFailure = {
-        PagingSourceLoadResultError(it)
-    })
 }
 
 data class APagingData<K, T>(val data: List<T>, val pagination: K?)
@@ -127,8 +116,23 @@ class RegularPagingSource<DATUM : Any>(
 ) : PagingSource<PrimaryKey, DATUM>() {
     override suspend fun load(params: LoadParams<PrimaryKey>): PagingSourceLoadResult<PrimaryKey, DATUM> {
         return client.service(params.key, params.loadSize).map {
-            APagingData(it.data, it.pagination?.nextPageToken?.toPrimaryKeyOrNull())
-        }.loadResult()
+            APagingData(
+                it.data,
+                Pagination(
+                    it.pagination?.nextPageToken?.toPrimaryKeyOrNull(),
+                    it.pagination?.prePageToken?.toPrimaryKeyOrNull(),
+                    0
+                )
+            )
+        }.fold(onSuccess = { (data, pagination) ->
+            PagingSourceLoadResultPage(
+                data = data,
+                prevKey = null,
+                nextKey = pagination?.nextPageToken
+            )
+        }, onFailure = {
+            PagingSourceLoadResultError(it)
+        })
     }
 
     override fun getRefreshKey(state: PagingState<PrimaryKey, DATUM>): PrimaryKey? {

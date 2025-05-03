@@ -5,7 +5,11 @@ import a.composeapp.generated.resources.no_content_yet
 import a.composeapp.generated.resources.refresh
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
@@ -20,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.paging.CombinedLoadStates
 import app.cash.paging.LoadState
 import app.cash.paging.LoadStateError
 import app.cash.paging.LoadStateLoading
@@ -59,24 +64,112 @@ fun <T : Any> StateView(
         refreshing = true
         pagingItems.refresh()
     })
-    val refresh = pagingItems.loadState.refresh
-    LaunchedEffect(key1 = refreshing, key2 = refresh) {
+    val combinedLoadStates = pagingItems.loadState
+    val refreshLoadState = pagingItems.loadState.refresh
+    LaunchedEffect(key1 = refreshing, key2 = refreshLoadState) {
         // 增加延时，确保pagingItems真正进入刷新状态
         delay(REFRESH_AFTER)
         if (refreshing) {
             // 刷新结束或者当前没有内容时停止刷新，如果没有内容会使用列表刷新控件
-            if (refresh !is LoadStateLoading || pagingItems.itemCount == 0) refreshing = false
+            if (refreshLoadState !is LoadStateLoading || pagingItems.itemCount == 0) refreshing = false
         }
     }
-    val loadState by produceState<androidx.paging.LoadState?>(null, key1 = refresh) {
-        delay(100)
-        value = refresh
-    }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        StateViewInternal(state = refresh.toLoadingState(), refresh = {
-            pagingItems.refresh()
-        }, pagingItems.itemCount, content)
+        when (val state = combinedLoadStates.toLoadingState(pagingItems.itemCount)) {
+            null -> CenterBox {
+                CircularProgressIndicator()
+            }
+
+            is LoadingState.Loading -> if (pagingItems.itemCount == 0) {
+                CenterBox {
+                    CircularProgressIndicator()
+                }
+            } else {
+                content()
+            }
+
+            is LoadingState.Error -> CenterBox {
+                ExceptionCell(state.e) {
+                    pagingItems.refresh()
+                }
+            }
+
+            is LoadingState.Done -> if (pagingItems.itemCount == 0) {
+                CenterBox {
+                    Text(text = stringResource(Res.string.no_content_yet))
+                }
+            } else {
+                content()
+            }
+        }
         PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
+    }
+}
+
+private fun CombinedLoadStates.toLoadingState(itemCount: Int): LoadingState? {
+    val mediatorRefreshState = mediator?.refresh
+    val sourceRefreshState = source.refresh
+    if (mediatorRefreshState is LoadStateError) {
+        if (itemCount == 0) {
+            return LoadingState.Error(mediatorRefreshState.error)
+        } else if (sourceRefreshState is LoadStateNotLoading) {
+            return LoadingState.Done
+        }
+    }
+    return refresh.toLoadingState()
+}
+
+fun <T : Any> LazyListScope.topPrepend(lazyPagingItems: LazyPagingItems<T>) {
+    if (lazyPagingItems.loadState.prepend == LoadStateLoading) {
+        item {
+            Text(
+                text = "Waiting for items to load from the backend",
+                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+            )
+        }
+    }
+    val loadState = lazyPagingItems.loadState.mediator?.refresh
+    if (loadState is LoadStateError && lazyPagingItems.itemCount > 0) {
+        item {
+            ExceptionCell(loadState.error) {
+                lazyPagingItems.refresh()
+            }
+        }
+    }
+}
+
+fun <T : Any> LazyGridScope.topPrepend(pagingItems: LazyPagingItems<T>, count: Int) {
+    if (pagingItems.loadState.prepend == LoadStateLoading) {
+        item(span = {
+            GridItemSpan(count)
+        }) {
+            Text(
+                text = "Waiting for items to load from the backend",
+                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+            )
+        }
+    }
+}
+
+fun <T : Any> LazyListScope.bottomAppending(lazyPagingItems: LazyPagingItems<T>) {
+    if (lazyPagingItems.loadState.append == LoadStateLoading) {
+        item {
+            CircularProgressIndicator(
+                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+            )
+        }
+    }
+}
+
+fun <T : Any> LazyGridScope.bottomAppending(pagingItems: LazyPagingItems<T>, count: Int) {
+    if (pagingItems.loadState.append == LoadStateLoading) {
+        item(span = {
+            GridItemSpan(count)
+        }) {
+            CircularProgressIndicator(
+                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+            )
+        }
     }
 }
 
@@ -101,11 +194,23 @@ fun <T> StateView(
         if (refreshing && state !is LoadingState.Loading) refreshing = false
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        StateViewInternal(state, refresh = {
-            handler.refresh()
-            extraRefresh()
-        }, 1) {
-            data?.let {
+        when (val s = state) {
+            null -> CenterBox {
+                CircularProgressIndicator()
+            }
+
+            is LoadingState.Loading -> CenterBox {
+                CircularProgressIndicator()
+            }
+
+            is LoadingState.Error -> CenterBox {
+                ExceptionCell(s.e) {
+                    handler.refresh()
+                    extraRefresh()
+                }
+            }
+
+            is LoadingState.Done -> data?.let {
                 content(it)
             }
         }
@@ -114,45 +219,19 @@ fun <T> StateView(
 }
 
 @Composable
-private fun StateViewInternal(
-    state: LoadingState?,
-    refresh: () -> Unit,
-    itemCount: Int,
-    content: @Composable () -> Unit
+fun ExceptionCell(
+    throwable: Throwable,
+    extraRefresh: () -> Unit,
 ) {
-    when (state) {
-        null -> CenterBox {
-            CircularProgressIndicator()
-        }
-
-        is LoadingState.Loading -> if (itemCount == 0) {
-            CenterBox {
-                CircularProgressIndicator()
-            }
-        } else {
-            content()
-        }
-
-        is LoadingState.Error -> CenterBox {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                ExceptionView(state.e)
-                Button({
-                    refresh()
-                }, modifier = Modifier) {
-                    Text(stringResource(Res.string.refresh))
-                }
-            }
-        }
-
-        is LoadingState.Done -> if (itemCount == 0) {
-            CenterBox {
-                Text(text = stringResource(Res.string.no_content_yet))
-            }
-        } else {
-            content()
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        ExceptionView(throwable)
+        Button({
+            extraRefresh()
+        }, modifier = Modifier) {
+            Text(stringResource(Res.string.refresh))
         }
     }
 }

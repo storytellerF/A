@@ -19,6 +19,8 @@ import app.cash.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.StateView
+import com.storyteller_f.a.app.common.bottomAppending
+import com.storyteller_f.a.app.common.topPrepend
 import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.globalLoader
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
@@ -45,6 +47,7 @@ fun RoomList(
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            topPrepend(items)
             items(
                 count = items.itemCount,
                 key = items.itemKey {
@@ -53,6 +56,7 @@ fun RoomList(
             ) { index ->
                 RoomCell(items[index], false, onClick)
             }
+            bottomAppending(items)
         }
     }
 }

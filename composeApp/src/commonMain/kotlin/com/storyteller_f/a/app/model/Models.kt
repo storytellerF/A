@@ -20,6 +20,7 @@ import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import io.ktor.client.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.io.buffered
 import kotlinx.serialization.serializer
@@ -170,7 +171,7 @@ class TopicsViewModel(
             {
                 with(databaseSource.getCollection("topics")) {
                     save(it.id, it)
-                    it.aid?.let { save(it, it) }
+                    it.aid?.let { aid -> save(aid, it) }
                 }
             }
         ) {
@@ -585,3 +586,5 @@ class UploadViewModel(client: HttpClient, private val uploader: UploadSession, m
         }
     }
 }
+
+class LoginPageView() : ViewModel()

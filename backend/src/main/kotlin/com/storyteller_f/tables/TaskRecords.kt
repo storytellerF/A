@@ -22,12 +22,14 @@ class TaskRecord(id: PrimaryKey, createdTime: LocalDateTime, val type: TaskRecor
     BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(resultRow: ResultRow): TaskRecord {
-            return TaskRecord(
-                resultRow[TaskRecords.id],
-                resultRow[TaskRecords.createdTime],
-                resultRow[TaskRecords.type],
-                resultRow[TaskRecords.processedId]
-            )
+            return with(TaskRecords) {
+                TaskRecord(
+                    resultRow[id],
+                    resultRow[createdTime],
+                    resultRow[type],
+                    resultRow[processedId]
+                )
+            }
         }
     }
 }

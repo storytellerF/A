@@ -12,6 +12,8 @@ import androidx.compose.ui.unit.dp
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.common.StateView
+import com.storyteller_f.a.app.common.bottomAppending
+import com.storyteller_f.a.app.common.topPrepend
 import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.pages.room.RoomIcon
@@ -27,6 +29,7 @@ fun TitleList(pagingItems: LazyPagingItems<TitleInfo>) {
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            topPrepend(pagingItems)
             items(
                 count = pagingItems.itemCount,
                 key = pagingItems.itemKey {
@@ -38,6 +41,7 @@ fun TitleList(pagingItems: LazyPagingItems<TitleInfo>) {
                     TitleItem(it)
                 }
             }
+            bottomAppending(pagingItems)
         }
     }
 }

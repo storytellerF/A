@@ -13,14 +13,15 @@ data class CommunityInfo(
     val aid: String,
     val name: String,
     val owner: PrimaryKey,
-    val createTime: LocalDateTime,
+    val createdTime: LocalDateTime,
     val memberCount: Long,
     val icon: MediaInfo? = null,
     val poster: MediaInfo? = null,
-    val joinTime: LocalDateTime? = null,
+    val joinedTime: LocalDateTime? = null,
     val extension: Extension? = null,
+    val lastRead: PrimaryKey? = null,
 ) : Identifiable {
-    val isJoined get() = joinTime != null
+    val isJoined get() = joinedTime != null
     override val objectType: ObjectType
         get() = ObjectType.COMMUNITY
 

@@ -24,7 +24,7 @@ sealed interface Order {
     data class Desc(val field: String) : Order
 }
 
-interface Collection {
+interface DatabaseCollection {
     fun saveDocument(id: String, string: String)
     fun <T : Any> observe(serializer: KSerializer<T>, expression: Expression): Flow<T?>
     fun <T> getDocument(expression: Expression, serializer: KSerializer<T>): T?
@@ -61,12 +61,12 @@ sealed interface Expression {
 }
 
 interface DatabaseSource {
-    fun getCollection(name: String): Collection
+    fun getCollection(name: String): DatabaseCollection
     fun deleteCollection(collectionName: String)
 
     companion object {
         val EMPTY = object : DatabaseSource {
-            override fun getCollection(name: String): Collection {
+            override fun getCollection(name: String): DatabaseCollection {
                 TODO("Not yet implemented")
             }
 
@@ -77,18 +77,18 @@ interface DatabaseSource {
     }
 }
 
-fun Collection.save(key: String, data: String) {
+fun DatabaseCollection.save(key: String, data: String) {
     saveDocument(key, data)
 }
 
-fun Collection.save(key: PrimaryKey, data: String) {
+fun DatabaseCollection.save(key: PrimaryKey, data: String) {
     saveDocument(key.toString(), data)
 }
 
-inline fun <reified T : Any> Collection.save(key: PrimaryKey, data: T) {
+inline fun <reified T : Any> DatabaseCollection.save(key: PrimaryKey, data: T) {
     saveDocument(key.toString(), Json.encodeToString(data))
 }
 
-inline fun <reified T : Any> Collection.save(key: String, data: T) {
+inline fun <reified T : Any> DatabaseCollection.save(key: String, data: T) {
     saveDocument(key, Json.encodeToString(data))
 }

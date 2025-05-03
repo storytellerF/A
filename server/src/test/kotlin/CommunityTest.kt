@@ -33,7 +33,7 @@ class CommunityTest {
             }
             // 加入社区
             client.joinCommunity(communityId).getOrThrow()
-            val communityInfo = client.getCommunityInfo(communityId, true).getOrThrow()
+            val communityInfo = client.getCommunityInfo(communityId).getOrThrow()
             // 验证加入成功
             assertTrue(communityInfo.isJoined)
             // 再次发起创建话题

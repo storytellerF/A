@@ -153,6 +153,9 @@ class RouteUsers(val aid: String? = null) {
 
     @Resource("search")
     class Search(@Suppress("unused") val parent: RouteUsers, val word: String? = null)
+
+    @Resource("read")
+    class Read(val parent: RouteUsers)
 }
 
 @Resource("/accounts")

@@ -68,7 +68,7 @@ class CachedLoadingHandler<T : Any>(
     expression: Expression,
     override val refresh: () -> Unit,
     private val serializer: KSerializer<T>,
-    val saveDocument: Collection.(String, T) -> Unit,
+    val saveDocument: DatabaseCollection.(String, T) -> Unit,
 ) : LoadingHandler<T> {
     private val collection = databaseSource.getCollection(name)
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)

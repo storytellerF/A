@@ -30,6 +30,6 @@ fun LocalDateTime.formatTime(): String {
  */
 fun checkTsIsValid(currentStamp: Long, offset: Int): Pair<Long, Boolean> {
     val nowSeconds = now().toInstant(UtcOffset.ZERO).epochSeconds
-    val isValid = currentStamp + offset < nowSeconds
+    val isValid = currentStamp + offset > nowSeconds && currentStamp < nowSeconds
     return Pair(nowSeconds, isValid)
 }

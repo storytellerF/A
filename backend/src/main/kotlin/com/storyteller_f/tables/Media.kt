@@ -54,18 +54,20 @@ class Media(
 ) : BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(resultRow: ResultRow): Media {
-            return Media(
-                resultRow[Medias.id],
-                resultRow[Medias.createdTime],
-                resultRow[Medias.name],
-                resultRow[Medias.fullName],
-                resultRow[Medias.duration],
-                resultRow[Medias.width],
-                resultRow[Medias.height],
-                resultRow[Medias.owner],
-                resultRow[Medias.contentType],
-                resultRow[Medias.size],
-            )
+            return with(Medias) {
+                Media(
+                    resultRow[id],
+                    resultRow[createdTime],
+                    resultRow[name],
+                    resultRow[fullName],
+                    resultRow[duration],
+                    resultRow[width],
+                    resultRow[height],
+                    resultRow[owner],
+                    resultRow[contentType],
+                    resultRow[size],
+                )
+            }
         }
     }
 }
@@ -193,6 +195,11 @@ suspend fun DatabaseFactory.getMediaInfoList(
 }
 
 suspend fun DatabaseFactory.getMediaInfoList(backend: Backend, names: List<String?>): Result<List<MediaInfo?>?> {
+    if (names.filterNotNull().isEmpty()) {
+        return Result.success(List(names.size) {
+            null
+        })
+    }
     return mapQuery(backend, Media::wrapRow) {
         Medias.selectAll().where {
             Medias.fullName inList names.filterNotNull()
@@ -203,7 +210,11 @@ suspend fun DatabaseFactory.getMediaInfoList(backend: Backend, names: List<Strin
             mediaMap[it]?.fullName
         }).map {
             names.mapIndexed { i, e ->
-                it[i]?.let { it1 -> mediaMap[e]?.toMediaInfo(it1) }
+                if (e != null) {
+                    it[i]?.let { it1 -> mediaMap[e]?.toMediaInfo(it1) }
+                } else {
+                    null
+                }
             }
         }
     }

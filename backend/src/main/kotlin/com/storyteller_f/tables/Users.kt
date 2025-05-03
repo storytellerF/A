@@ -34,16 +34,18 @@ class User(
 ) : BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): User {
-            return User(
-                row[Aids.value],
-                row[Users.publicKey],
-                row[Users.address],
-                row[Users.icon],
-                row[Users.nickname],
-                row[Users.id],
-                row[Users.createdTime],
-                row[Users.acgAmount]
-            )
+            return with(Users) {
+                User(
+                    row[Aids.value],
+                    row[publicKey],
+                    row[address],
+                    row[icon],
+                    row[nickname],
+                    row[id],
+                    row[createdTime],
+                    row[acgAmount]
+                )
+            }
         }
 
         fun find(function: SqlExpressionBuilder.() -> Op<Boolean>): SizedIterable<ResultRow> {
@@ -133,7 +135,7 @@ private fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, wo
         if (getCount) {
             join.selectAll()
         } else {
-            join.select(Users.fields + MemberJoins.joinTime + Aids.value)
+            join.select(Users.fields + MemberJoins.joinedTime + Aids.value)
         }
     } else {
         Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).select(Users.fields + Aids.value)
