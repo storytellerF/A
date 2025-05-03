@@ -17,6 +17,8 @@ import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.common.StateView
+import com.storyteller_f.a.app.common.bottomAppending
+import com.storyteller_f.a.app.common.topPrepend
 import com.storyteller_f.a.app.model.createMemberViewModel
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
@@ -51,6 +53,7 @@ fun MemberList(items: LazyPagingItems<UserInfo>, onClick: ((UserInfo) -> Unit)? 
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            topPrepend(items)
             items(
                 count = items.itemCount,
                 key = items.itemKey {
@@ -63,6 +66,7 @@ fun MemberList(items: LazyPagingItems<UserInfo>, onClick: ((UserInfo) -> Unit)? 
                     HorizontalDivider()
                 }
             }
+            bottomAppending(items)
         }
     }
 }

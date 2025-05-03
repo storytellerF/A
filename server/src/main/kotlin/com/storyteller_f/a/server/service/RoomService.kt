@@ -156,7 +156,7 @@ suspend fun createRoom(
             DatabaseFactory.createRoom(backend, room)
                 .mapResult {
                     processRoomList(
-                        listOf(room.toRoomInfo(room.createdTime) to room.icon),
+                        listOf(room.toRoomInfo(room.createdTime, null) to room.icon),
                         backend
                     ).mapIfNotNull(List<RoomInfo>::first)
                 }

@@ -27,6 +27,7 @@ data class TopicInfo(
     val lastModifiedTime: LocalDateTime?,
     val extension: Extension?,
     val aid: String? = null,
+    val lastRead: PrimaryKey? = null,
 ) : Identifiable {
     override val objectType: ObjectType
         get() = ObjectType.TOPIC

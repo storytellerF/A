@@ -126,11 +126,11 @@ suspend fun HttpClient.getUserTopics(
     }.body<ServerResponse<TopicInfo>>()
 }
 
-suspend fun HttpClient.getCommunityInfo(id: PrimaryKey, fillJoinInfo: Boolean = false) =
+suspend fun HttpClient.getCommunityInfo(id: PrimaryKey) =
     serviceCatching {
         get("communities/$id") {
             url {
-                if (fillJoinInfo) {
+                if (isAlreadyLogin()) {
                     parameters.append("fillJoinInfo", "true")
                 }
             }
@@ -574,5 +574,14 @@ private fun HttpRequestBuilder.appendObjectTuple(objectTuple: ObjectTuple) {
     url {
         parameters.append("objectId", objectTuple.objectId.toString())
         parameters.append("objectType", objectTuple.objectType.name)
+    }
+}
+
+suspend fun HttpClient.addReadLog(info: UpdateUserRead): Result<HttpResponse> {
+    return runCatching {
+        post("users/read") {
+            contentType(ContentType.Application.Json)
+            setBody(info)
+        }
     }
 }

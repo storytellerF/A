@@ -18,6 +18,7 @@ data class RoomInfo(
     val icon: MediaInfo? = null,
     val joinedTime: LocalDateTime? = null,
     val communityId: PrimaryKey? = null,
+    val lastRead: PrimaryKey? = null,
 ) : Identifiable {
     val isPrivate get() = communityId == null
     val isJoined get() = joinedTime != null

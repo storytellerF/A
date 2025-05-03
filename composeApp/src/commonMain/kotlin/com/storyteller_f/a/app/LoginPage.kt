@@ -57,8 +57,11 @@ fun LoginPage() {
                 composable("/select_signUp") {
                     SelectSignUpPage(nav)
                 }
-                composable("/input_private_key") {
-                    InputPrivateKeyPage()
+                composable("/signUp_input_private_key") {
+                    InputPrivateKeyPage(true)
+                }
+                composable("/signIn_input_private_key") {
+                    InputPrivateKeyPage(false)
                 }
             }
         }
@@ -67,9 +70,15 @@ fun LoginPage() {
 
 private fun buildLoginNav(navigator: NavHostController) = object : LoginNav {
 
-    override fun gotoPrivateKey() {
-        if (!navigator.popBackStack("/input_private_key", false)) {
-            navigator.navigate("/input_private_key")
+    override fun gotoPrivateKey(isSignUp: Boolean) {
+        if (isSignUp) {
+            if (!navigator.popBackStack("/signIn_input_private_key", false)) {
+                navigator.navigate("/signIn_input_private_key")
+            }
+        } else {
+            if (!navigator.popBackStack("/signUp_input_private_key", false)) {
+                navigator.navigate("/signUp_input_private_key")
+            }
         }
     }
 
@@ -96,15 +105,13 @@ fun SelectSignInPage(loginNav: LoginNav) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 OutlinedButton({
-                    SignInViewModel.state.value = ClientSession.PrivateKeySignIn("")
-                    loginNav.gotoPrivateKey()
+                    loginNav.gotoPrivateKey(false)
                 }, shape = ButtonDefaults.outlinedShape) {
                     Text(stringResource(Res.string.private_key))
                 }
                 SelectFile(false)
             }
             Text(stringResource(Res.string.go_to_sign_up), modifier = Modifier.clickable {
-                SignInViewModel.state.value = ClientSession.SignUpNone
                 loginNav.gotoSignUp()
             }, textDecoration = TextDecoration.Underline)
         }
@@ -121,8 +128,7 @@ fun SelectSignUpPage(loginNav: LoginNav) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Button({
-                    SignInViewModel.state.value = ClientSession.PrivateKeySignUp("")
-                    loginNav.gotoPrivateKey()
+                    loginNav.gotoPrivateKey(true)
                 }) {
                     Text(stringResource(Res.string.private_key))
                 }
@@ -171,9 +177,10 @@ private suspend fun startSignFromFile(
 }
 
 @Composable
-fun InputPrivateKeyPage() {
-    val privateKey by SignInViewModel.inputtedPrivateKey.collectAsState("")
-    val isSignUp by SignInViewModel.isSignUpFlow.collectAsState(false)
+fun InputPrivateKeyPage(isSignUp: Boolean) {
+    var privateKey by remember {
+        mutableStateOf("")
+    }
     val scope = rememberCoroutineScope()
     val appNav = LocalAppNav.current
     val client = LocalClient.current
@@ -183,7 +190,7 @@ fun InputPrivateKeyPage() {
                 OutlinedTextField(
                     privateKey,
                     onValueChange = {
-                        SignInViewModel.updatePrivateKey(it)
+                        privateKey = it
                     },
                     modifier = Modifier.padding(top = 10.dp).fillMaxWidth(),
                     maxLines = max(lineCount, 2),
@@ -218,7 +225,7 @@ fun InputPrivateKeyPage() {
                 if (isSignUp) {
                     Button({
                         scope.launch {
-                            SignInViewModel.updatePrivateKey(generateECDSAPemPrivateKey().getOrThrow())
+                            privateKey = (generateECDSAPemPrivateKey().getOrThrow())
                         }
                     }) {
                         Text(stringResource(Res.string.auto_generate))
@@ -266,26 +273,9 @@ suspend fun signUpOrSignIn(
 
 interface LoginNav {
 
-    fun gotoPrivateKey()
+    fun gotoPrivateKey(isSignUp: Boolean)
 
     fun gotoSignUp()
 
     fun gotoLogin()
-
-    companion object {
-        val DEFAULT = object : LoginNav {
-
-            override fun gotoPrivateKey() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoSignUp() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoLogin() {
-                TODO("Not yet implemented")
-            }
-        }
-    }
 }

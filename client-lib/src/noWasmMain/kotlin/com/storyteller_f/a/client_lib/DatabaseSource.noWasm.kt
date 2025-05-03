@@ -28,7 +28,7 @@ class KotbaseObserverToken<T>(
 }
 
 
-class KotbaseCollection(private val collection: kotbase.Collection) : Collection {
+class KotbaseDatabaseCollection(private val collection: kotbase.Collection) : DatabaseCollection {
     override fun saveDocument(id: String, string: String) {
         collection.save(MutableDocument(id, string))
     }
@@ -174,8 +174,8 @@ class KotbaseDatabaseSource(private val database: Database) : DatabaseSource {
         return collection
     }
 
-    override fun getCollection(name: String): Collection {
-        return KotbaseCollection(getOrCreateCollection(name))
+    override fun getCollection(name: String): DatabaseCollection {
+        return KotbaseDatabaseCollection(getOrCreateCollection(name))
     }
 
     override fun deleteCollection(collectionName: String) {

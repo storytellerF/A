@@ -20,6 +20,8 @@ import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.StateView
+import com.storyteller_f.a.app.common.bottomAppending
+import com.storyteller_f.a.app.common.topPrepend
 import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.CommunityPoster
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
@@ -37,7 +39,7 @@ fun MyCommunitiesPage() {
 @Composable
 fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInfo) -> Unit)? = null) {
     StateView(items, modifier = Modifier.fillMaxSize()) {
-        CommunityConstrains { count, gridSpan, itemSpan ->
+        CommunityConstrains { count, gridCount, itemCount, gridSpan, itemSpan ->
             LazyVerticalGrid(
                 GridCells.Fixed(count),
                 modifier = Modifier.fillMaxSize(),
@@ -45,16 +47,26 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                topPrepend(items, count)
                 items(
                     count = items.itemCount,
                     key = items.itemKey {
                         it.id.toString()
                     },
                     span = {
-                        if (items[it]?.poster != null) {
-                            GridItemSpan(gridSpan)
-                        } else {
-                            GridItemSpan(itemSpan)
+                        when {
+                            items[it]?.poster == null -> GridItemSpan(itemSpan)
+                            items.itemCount > it + 1 && items[it + 1]?.poster == null -> {
+                                val t = (it + 1) % gridCount
+                                if (t == 0) {
+                                    GridItemSpan(gridSpan)
+                                } else {
+                                    GridItemSpan((gridCount + 1 - t) * gridSpan)
+                                }
+                            }
+                            else -> {
+                                GridItemSpan(gridSpan)
+                            }
                         }
                     },
                 ) { index ->
@@ -64,18 +76,19 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
                         else -> CommunityCell(communityInfo, false, onClick)
                     }
                 }
+                bottomAppending(items, count)
             }
         }
     }
 }
 
 @Composable
-fun CommunityConstrains(modifier: Modifier = Modifier, content: @Composable (Int, Int, Int) -> Unit) {
+fun CommunityConstrains(modifier: Modifier = Modifier, content: @Composable (Int, Int, Int, Int, Int) -> Unit) {
     BoxWithConstraints(modifier) {
         val gridCount = (this.maxWidth / 128.dp).toInt()
         val itemCount = (this.maxWidth / 160.dp).toInt()
         val lcm = lcm(gridCount, itemCount)
-        content(lcm, lcm / gridCount, lcm / itemCount)
+        content(lcm, gridCount, itemCount, lcm / gridCount, lcm / itemCount)
     }
 }
 

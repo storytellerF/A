@@ -79,9 +79,9 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
 class CustomRemoteMediator<Key : Any, Datum : Any>(
     private val collectionName: String,
     private val databaseSource: DatabaseSource,
-    private val key: com.storyteller_f.a.client_lib.Collection.(Datum?) -> Key?,
-    private val update:
-    (Datum, Key?, com.storyteller_f.a.client_lib.Collection, com.storyteller_f.a.client_lib.Collection) -> Unit,
+    private val preKey: DatabaseCollection.(Datum?) -> Key?,
+    private val nextKey: DatabaseCollection.(Datum?) -> Key?,
+    private val update: (Datum, Key?, DatabaseCollection, DatabaseCollection) -> Unit,
     private val networkService: PagingSource<Key, Datum>
 ) :
     RemoteMediator<Key, Datum>() {
@@ -93,32 +93,34 @@ class CustomRemoteMediator<Key : Any, Datum : Any>(
         Napier.v(tag = "pagination") {
             "mediator load $loadType"
         }
-        val loadKey = when (loadType) {
-            LoadType.REFRESH -> null
-            LoadType.PREPEND -> return MediatorResult.Success(
-                endOfPaginationReached = true
+        val params = when (loadType) {
+            LoadType.REFRESH -> PagingSourceLoadParamsRefresh<Key>(
+                null,
+                state.config.pageSize,
+                state.config.enablePlaceholders
             )
+
+            LoadType.PREPEND -> {
+                return MediatorResult.Success(endOfPaginationReached = true)
+//                val lastItem = state.firstItemOrNull()
+//                val loadKey = databaseSource.getCollection("${collectionName}_pre_key").preKey(lastItem)
+//                    ?: return MediatorResult.Success(endOfPaginationReached = true)
+//                PagingSourceLoadParamsPrepend(loadKey, state.config.pageSize, state.config.enablePlaceholders)
+            }
 
             LoadType.APPEND -> {
                 val lastItem = state.lastItemOrNull()
-                databaseSource.getCollection("${collectionName}_key").key(lastItem)
-            }
-        }
-        return try {
-            val params = when (loadKey) {
-                null -> PagingSourceLoadParamsRefresh<Key>(
-                    null,
-                    state.config.pageSize,
-                    state.config.enablePlaceholders
-                )
-
-                else -> PagingSourceLoadParamsAppend(
+                val loadKey = databaseSource.getCollection("${collectionName}_next_key").nextKey(lastItem)
+                    ?: return MediatorResult.Success(endOfPaginationReached = true)
+                PagingSourceLoadParamsAppend(
                     loadKey,
                     state.config.pageSize,
                     state.config.enablePlaceholders
                 )
             }
-            mediatorResult(params, loadType, loadKey)
+        }
+        return try {
+            mediatorResult(params, loadType)
         } catch (e: Exception) {
             Napier.e(e, tag = "pagination") {
                 "mediator load error"
@@ -130,7 +132,6 @@ class CustomRemoteMediator<Key : Any, Datum : Any>(
     private suspend fun mediatorResult(
         params: androidx.paging.PagingSource.LoadParams<Key>,
         loadType: LoadType,
-        loadKey: Key?
     ) = when (val loadResult = networkService.load(params)) {
         is PagingSourceLoadResultError<Key, Datum> -> {
             MediatorResult.Error(loadResult.throwable)
@@ -155,7 +156,7 @@ class CustomRemoteMediator<Key : Any, Datum : Any>(
                 )
             }
             Napier.v(tag = "pagination") {
-                "mediator success $loadKey"
+                "mediator success $loadType $params"
             }
             MediatorResult.Success(
                 endOfPaginationReached = nextKey == null
@@ -171,6 +172,9 @@ inline fun <reified T : Identifiable> singleSourceMediator(
 ) = CustomRemoteMediator(
     collectionName,
     databaseSource,
+    {
+        it?.id
+    },
     {
         it?.id
     },
@@ -196,13 +200,20 @@ inline fun <reified T : Identifiable> sectionMediator(
             SectionLoadParams(1, null)
         }
     },
-    { info, key, c, k ->
-        if (key == null) {
-            k.deleteDocument(info.id)
+    {
+        if (it != null) {
+            getDocument(it.id.toString(), serializer<SectionLoadParams<PrimaryKey>>())
         } else {
-            k.save(info.id, key)
+            SectionLoadParams(1, null)
         }
-        c.save(info.id, info)
+    },
+    { info, key, mainCollection, keyCollection ->
+        if (key == null) {
+            keyCollection.deleteDocument(info.id)
+        } else {
+            keyCollection.save(info.id, key)
+        }
+        mainCollection.save(info.id, info)
         extraUpdate(info)
     },
     SectionPagingSource(regularPagingSources(client))

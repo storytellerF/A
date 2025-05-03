@@ -5,9 +5,12 @@ import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.mapResult
-import io.github.aakira.napier.Napier
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
 
 interface LoginUserSession {
@@ -22,12 +25,6 @@ interface LoginUserSession {
 
 sealed interface ClientSession {
     data object SignInNone : ClientSession
-    data object SignUpNone : ClientSession
-    data class PrivateKeySignIn(val privateKey: String) :
-        ClientSession
-
-    data class PrivateKeySignUp(val privateKey: String) : ClientSession
-
     data class SignInSuccess(val session: LoginUserSession) : ClientSession
 }
 
@@ -64,27 +61,17 @@ class DefaultLoginUserSession(val loginUSer: LoginUser) : LoginUserSession {
 
 object SignInViewModel {
     val state = MutableStateFlow<ClientSession>(ClientSession.SignInNone)
-    val inputtedPrivateKey = state.map {
-        when (it) {
-            is ClientSession.PrivateKeySignIn -> it.privateKey
-            is ClientSession.PrivateKeySignUp -> it.privateKey
-            else -> ""
-        }
-    }
-    val isSignUpFlow = state.map {
-        it is ClientSession.PrivateKeySignUp
-    }
 
     // 用于header 和server 协商被签名的数据
     private var currentStamp = 0L
     val currentData: Long get() {
         val (nowSeconds, isValid) = checkTsIsValid(currentStamp, 60 * 3)
-        return if (!isValid) {
+        return if (isValid) {
+            currentStamp
+        } else {
             // 超时，需要替换新的
             currentStamp = nowSeconds
             nowSeconds
-        } else {
-            currentStamp
         }
     }
 
@@ -92,9 +79,11 @@ object SignInViewModel {
     var session: Pair<String, String?>? = null
     val user = MutableStateFlow<UserInfo?>(null)
     val currentIsAlreadySignUp get() = state.value is ClientSession.SignInSuccess
+
+    @OptIn(DelicateCoroutinesApi::class)
     val isAlreadySignUp = state.map {
         it is ClientSession.SignInSuccess
-    }
+    }.stateIn(GlobalScope, SharingStarted.Eagerly, false)
     val appStartLoginRetried = MutableStateFlow(false)
     val retryLoginState = MutableStateFlow<LoadingState?>(null)
 
@@ -104,22 +93,6 @@ object SignInViewModel {
 
     fun updateUser(new: UserInfo) {
         user.value = new
-    }
-
-    fun updatePrivateKey(pemPrivateKey: String) {
-        Napier.v("$pemPrivateKey ${state.value}", tag = "ClientAuth")
-        when (state.value) {
-            is ClientSession.PrivateKeySignIn -> {
-                state.value = ClientSession.PrivateKeySignIn(pemPrivateKey)
-            }
-
-            is ClientSession.PrivateKeySignUp -> {
-                state.value = ClientSession.PrivateKeySignUp(pemPrivateKey)
-            }
-
-            else -> {
-            }
-        }
     }
 
     fun updateState(newState: ClientSession) {

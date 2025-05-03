@@ -17,12 +17,14 @@ object MediaRefs : Table() {
 class MediaRef(val objectId: PrimaryKey, val objectType: ObjectType, val author: PrimaryKey, val mediaName: String) {
     companion object {
         fun wrapRow(resultRow: ResultRow): MediaRef {
-            return MediaRef(
-                resultRow[MediaRefs.objectId],
-                resultRow[MediaRefs.objectType],
-                resultRow[MediaRefs.author],
-                resultRow[MediaRefs.mediaName]
-            )
+            return with(MediaRefs) {
+                MediaRef(
+                    resultRow[objectId],
+                    resultRow[objectType],
+                    resultRow[author],
+                    resultRow[mediaName]
+                )
+            }
         }
     }
 }

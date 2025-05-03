@@ -5,25 +5,9 @@ import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.ColumnType
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
-
-class UserLogTypeColumnType : ColumnType<UserLogType>() {
-    override fun sqlType(): String {
-        return "varchar(10)"
-    }
-
-    override fun valueFromDB(value: Any): UserLogType {
-        if (value is UserLogType) return value
-        return UserLogType.valueOf(value as String)
-    }
-
-    override fun notNullValueToDB(value: UserLogType): Any {
-        return value.name
-    }
-}
 
 fun Table.userLogType(name: String) = enumerationByName<UserLogType>(name, 10)
 
@@ -48,14 +32,16 @@ class UserLog(
 ) : BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(resultRow: ResultRow): UserLog {
-            return UserLog(
-                resultRow[UserLogs.id],
-                resultRow[UserLogs.createdTime],
-                resultRow[UserLogs.uid],
-                resultRow[UserLogs.type],
-                resultRow[UserLogs.objectId],
-                resultRow[UserLogs.objectType]
-            )
+            return with(UserLogs) {
+                UserLog(
+                    resultRow[id],
+                    resultRow[createdTime],
+                    resultRow[uid],
+                    resultRow[type],
+                    resultRow[objectId],
+                    resultRow[objectType]
+                )
+            }
         }
     }
 }

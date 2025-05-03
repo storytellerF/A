@@ -7,11 +7,14 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
 import com.storyteller_f.shared.obj.UpdateUserBody
+import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.ktor.server.plugins.*
 
@@ -140,5 +143,29 @@ suspend fun checkIcon(
         }
     } else {
         Result.success(MediaCheckResult.EMPTY)
+    }
+}
+
+suspend fun addReadLog(backend: Backend, uid: PrimaryKey, tuple: UpdateUserRead): Result<Unit?> {
+    return checkRootReadPermission(
+        backend,
+        tuple.objectTuple.objectType,
+        tuple.objectTuple.objectId,
+        uid
+    ).mapResultIfNotNull {
+        if (it.hasRead) {
+            DatabaseFactory.addReadLog(
+                backend,
+                UserTopicRead(
+                    uid,
+                    now(),
+                    tuple.objectTuple.objectId,
+                    tuple.objectTuple.objectType,
+                    tuple.topicId
+                )
+            )
+        } else {
+            Result.failure(ForbiddenException("Permission denied"))
+        }
     }
 }

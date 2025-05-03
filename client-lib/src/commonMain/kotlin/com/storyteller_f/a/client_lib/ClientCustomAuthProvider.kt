@@ -82,7 +82,8 @@ suspend fun HttpRequestBuilder.addRequestHeaders() {
                 "addRequestHeaders headers $localData $localSignature"
             }
             if (userInfo == null) {
-                headers[HttpHeaders.Authorization] = """Custom ad="${state.session.address()}", sig="$localSignature""""
+                val address = state.session.address().getOrThrow()
+                headers[HttpHeaders.Authorization] = """Custom ad="$address", sig="$localSignature""""
             } else {
                 addRequestHeaders(userInfo, localSignature)
             }

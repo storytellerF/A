@@ -27,6 +27,8 @@ import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.common.StateView
+import com.storyteller_f.a.app.common.bottomAppending
+import com.storyteller_f.a.app.common.topPrepend
 import com.storyteller_f.a.app.compontents.Permission
 import com.storyteller_f.a.app.compontents.isPermissionGranted
 import com.storyteller_f.a.app.compontents.requestPermission
@@ -181,6 +183,7 @@ private fun MediaListView(
         val pagingItems = list.flow.collectAsLazyPagingItems()
         StateView(pagingItems, modifier = Modifier.weight(1f)) {
             LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
+                topPrepend(pagingItems)
                 items(pagingItems.itemCount, key = pagingItems.itemKey {
                     it.id
                 }) {
@@ -212,6 +215,7 @@ private fun MediaListView(
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }
+                bottomAppending(pagingItems)
             }
         }
     }

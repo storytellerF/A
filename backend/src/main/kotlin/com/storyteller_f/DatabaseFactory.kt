@@ -41,6 +41,7 @@ object DatabaseFactory {
         Topics,
         Users,
         UserLogs,
+        UserTopicReads,
         TaskRecords
     )
 

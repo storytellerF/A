@@ -39,7 +39,6 @@ import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.world.WorldPage
 import com.storyteller_f.a.client_lib.SignInViewModel
-import com.storyteller_f.shared.model.UserInfo
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -222,11 +221,10 @@ private fun HomePager(
 }
 
 @Composable
-private fun UserHost(content: @Composable (UserInfo) -> Unit) {
-    val user by SignInViewModel.user.collectAsState()
-    val localUser = user
-    if (localUser != null) {
-        content(localUser)
+private fun UserHost(content: @Composable () -> Unit) {
+    val user by SignInViewModel.isAlreadySignUp.collectAsState(false)
+    if (user) {
+        content()
     } else {
         CenterBox {
             LoginButton()

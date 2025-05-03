@@ -29,13 +29,15 @@ class Reaction(
 ) : BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(resultRow: ResultRow): Reaction {
-            return Reaction(
-                resultRow[Reactions.uid],
-                resultRow[Reactions.objectId],
-                resultRow[Reactions.objectType],
-                resultRow[Reactions.id],
-                resultRow[Reactions.createdTime]
-            )
+            return with(Reactions) {
+                Reaction(
+                    resultRow[uid],
+                    resultRow[objectId],
+                    resultRow[objectType],
+                    resultRow[id],
+                    resultRow[createdTime]
+                )
+            }
         }
     }
 }

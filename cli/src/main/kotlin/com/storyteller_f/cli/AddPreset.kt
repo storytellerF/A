@@ -14,7 +14,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
-import com.storyteller_f.tables.MemberJoins.joinTime
+import com.storyteller_f.tables.MemberJoins.joinedTime
 import com.storyteller_f.tables.MemberJoins.objectId
 import com.storyteller_f.tables.MemberJoins.objectType
 import com.storyteller_f.tables.MemberJoins.uid
@@ -32,10 +32,9 @@ import java.io.File
 import kotlin.system.exitProcess
 
 data class EncryptedTopicTuple(
-    val index: Int,
     val encryptedKey: ByteArray,
     val aesKey: ByteArray,
-    val presetTopic: PresetTopic
+    val presetTopic: InsertTopicTuple
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -43,7 +42,6 @@ data class EncryptedTopicTuple(
 
         other as EncryptedTopicTuple
 
-        if (index != other.index) return false
         if (!encryptedKey.contentEquals(other.encryptedKey)) return false
         if (!aesKey.contentEquals(other.aesKey)) return false
         if (presetTopic != other.presetTopic) return false
@@ -52,8 +50,7 @@ data class EncryptedTopicTuple(
     }
 
     override fun hashCode(): Int {
-        var result = index
-        result = 31 * result + encryptedKey.contentHashCode()
+        var result = encryptedKey.contentHashCode()
         result = 31 * result + aesKey.contentHashCode()
         result = 31 * result + presetTopic.hashCode()
         return result
@@ -125,9 +122,9 @@ class AddPreset : Subcommand("add", "add entry") {
         Napier.i {
             "rooms count ${presetValue.roomData?.size}"
         }
-        val (l2, l1) = getRoomsData(l, parentDir, tika, backend)
+        val (roomList, membersList) = getRoomsData(l, parentDir, tika, backend)
         DatabaseFactory.dbQuery(backend) {
-            Rooms.batchInsert(l2) {
+            Rooms.batchInsert(roomList) {
                 this[Rooms.id] = it.id
                 this[Rooms.icon] = it.icon
                 this[Rooms.name] = it.name
@@ -136,16 +133,16 @@ class AddPreset : Subcommand("add", "add entry") {
                 this[Rooms.createdTime] = it.createdTime
                 this[Rooms.memberCount] = it.memberCount
             }
-            Aids.batchInsert(l2) {
+            Aids.batchInsert(roomList) {
                 this[Aids.value] = it.aid
                 this[Aids.objectId] = it.id
                 this[Aids.objectType] = ObjectType.ROOM
             }
-            l1.forEachIndexed { _, addRoom ->
+            membersList.forEachIndexed { _, addRoom ->
                 MemberJoins.batchInsert(addRoom.first) {
                     this[uid] = it
                     this[objectId] = addRoom.second
-                    this[joinTime] = now()
+                    this[joinedTime] = now()
                     this[objectType] = ObjectType.ROOM
                 }
             }
@@ -162,6 +159,9 @@ class AddPreset : Subcommand("add", "add entry") {
         }.distinct()).getOrThrow().associate {
             it.first.aid!! to it.first
         }
+        val roomMap = DatabaseFactory.getRoomByAids(backend, data.mapNotNull {
+            it.room
+        }).getOrThrow().associateBy { it.aid }
         DatabaseFactory.dbQuery(backend) {
             data.groupBy {
                 when {
@@ -171,7 +171,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 }
             }.forEach { (objectType, list) ->
                 if (objectType == ObjectType.ROOM) {
-                    addTopicsIntoRoom(list, userMap, parentDir, tika, backend)
+                    addTopicsIntoRoom(list, userMap, parentDir, tika, backend, roomMap)
                 } else {
                     addTopics(
                         list,
@@ -233,7 +233,7 @@ class AddPreset : Subcommand("add", "add entry") {
             l1.forEach { (c, communityId) ->
                 MemberJoins.batchInsert(c) {
                     val userId = it
-                    this[joinTime] = now()
+                    this[joinedTime] = now()
                     this[uid] = userId
                     this[objectId] = communityId
                     this[objectType] = ObjectType.COMMUNITY
@@ -483,27 +483,40 @@ class AddPreset : Subcommand("add", "add entry") {
         userList: Map<String, UserInfo>,
         parentDir: File,
         tika: Tika,
-        backend: Backend
+        backend: Backend,
+        roomMap: Map<String, Room>
     ) {
-        val roomList = u.mapNotNull {
-            it.room
-        }.distinct().map {
-            Room.wrapRow(Room.findRoomByAId(it).firstOrNull()!!)
-        }.associateBy { it.aid }
-        val tuples = insertRoomTopic(u, userList, roomList)
+        val tuples = insertRoomTopic(u, userList, roomMap)
         // 检查聊天室是属于社区的还是私有的
-        val roomIsPrivate = roomList.mapValues { (_, value) ->
-            checkRoomIsPrivate(backend, value.id).getOrNull() == true
-        }
 
-        insertEncryptedTopicToRoom(roomIsPrivate, parentDir, tuples, tika, roomList, backend)
-        insertUnEncryptedTopicToRoom(roomIsPrivate, parentDir, tuples, roomList, userList, tika, backend)
+        insertEncryptedTopicToRoom(parentDir, tika, roomMap, backend, tuples.mapIndexedNotNull { i, addTopic ->
+            if (roomMap[addTopic.topic.room]?.communityId == null) {
+                addTopic
+            } else {
+                null
+            }
+        })
+        insertUnEncryptedTopicToRoom(
+            parentDir,
+            tuples,
+            roomMap,
+            userList,
+            tika,
+            backend,
+            tuples.mapIndexedNotNull { i, addTopic ->
+                if (roomMap[addTopic.topic.room]?.communityId != null) {
+                    addTopic.topic to i
+                } else {
+                    null
+                }
+            }
+        )
     }
 
     private suspend fun insertRoomTopic(
         u: List<PresetTopic>,
         userList: Map<String, UserInfo>,
-        roomList: Map<String, Room>
+        roomMap: Map<String, Room>
     ): List<InsertTopicTuple> {
         val topLevelTopic = u.mapIndexed { index, addTopic ->
             val id = SnowflakeFactory.nextId()
@@ -519,10 +532,10 @@ class AddPreset : Subcommand("add", "add entry") {
         Topics.batchInsert(topLevelTopic) { (first, index, level, id) ->
             this[Topics.author] = userList[first.author]!!.id
             this[Topics.createdTime] = now()
-            this[Topics.rootId] = roomList[first.room]!!.id
+            this[Topics.rootId] = roomMap[first.room]!!.id
             this[Topics.rootType] = ObjectType.ROOM
             this[Topics.parentId] =
-                if (level == 0) roomList[first.room]!!.id else topLevelTopic[index - first.parent!!].id
+                if (level == 0) roomMap[first.room]!!.id else topLevelTopic[index - first.parent!!].id
             this[Topics.parentType] = if (level == 0) ObjectType.ROOM else ObjectType.TOPIC
             this[Topics.id] = id
         }
@@ -537,21 +550,14 @@ class AddPreset : Subcommand("add", "add entry") {
     }
 
     private suspend fun insertUnEncryptedTopicToRoom(
-        roomIsPrivate: Map<String, Boolean>,
         parentDir: File,
         tuples: List<InsertTopicTuple>,
-        roomList: Map<String, Room>,
+        roomMap: Map<String, Room>,
         userMap: Map<String, UserInfo>,
         tika: Tika,
-        backend: Backend
+        backend: Backend,
+        topicsPublic: List<Pair<PresetTopic, Int>>
     ) {
-        val topicsPublic = tuples.mapIndexedNotNull { i, addTopic ->
-            if (roomIsPrivate[addTopic.topic.room] != true) {
-                addTopic.topic to i
-            } else {
-                null
-            }
-        }
         backend.topicSearchService.saveDocument(
             topicsPublic.map { (first, second) ->
                 val content = getTopicContent(first, parentDir)
@@ -559,10 +565,10 @@ class AddPreset : Subcommand("add", "add entry") {
                 TopicDocument(
                     tuples[second].id,
                     content,
-                    roomList[first.room]!!.id,
+                    roomMap[first.room]!!.id,
                     ObjectType.ROOM.name,
                     when (level) {
-                        null, 0 -> roomList[first.room]!!.id
+                        null, 0 -> roomMap[first.room]!!.id
                         else -> tuples[second - first.parent!!].id
                     },
                     (if (level == 0) ObjectType.ROOM else ObjectType.TOPIC).name,
@@ -596,21 +602,13 @@ class AddPreset : Subcommand("add", "add entry") {
     }
 
     private suspend fun insertEncryptedTopicToRoom(
-        roomIsPrivate: Map<String, Boolean>,
         parentDir: File,
-        tuples: List<InsertTopicTuple>,
         tika: Tika,
-        roomList: Map<String, Room>,
-        backend: Backend
+        roomMap: Map<String, Room>,
+        backend: Backend,
+        topicsPrivate: List<InsertTopicTuple>
     ) {
-        val topicsPrivate = tuples.mapIndexedNotNull { i, addTopic ->
-            if (roomIsPrivate[addTopic.topic.room] == true) {
-                addTopic.topic to i
-            } else {
-                null
-            }
-        }
-        val roomMembers = tuples.mapNotNull {
+        val roomMembers = topicsPrivate.mapNotNull {
             it.topic.room
         }.distinct().map { roomAid ->
             val members = MemberJoins
@@ -625,30 +623,28 @@ class AddPreset : Subcommand("add", "add entry") {
                 }
             roomAid to members
         }.associate { it }
-        val encrypted = topicsPrivate.map { (addTopic, index) ->
-            val (first, aesBytes) = encryptData(getTopicContent(addTopic, parentDir)).getOrThrow()
-            EncryptedTopicTuple(index, first, aesBytes, addTopic)
+        val encrypted = topicsPrivate.map {
+            val (first, aesBytes) = encryptData(getTopicContent(it.topic, parentDir)).getOrThrow()
+            EncryptedTopicTuple(first, aesBytes, it)
         }
-        val encryptedKeys = encrypted.flatMap { (index, _, aesBytes, topic) ->
-            roomMembers[topic.room]!!.map {
-                val pubKey = it.first
-                val data4 = eciesEncrypt(pubKey, aesBytes).getOrThrow()
-                Triple(index, data4, it.second)
+        val encryptedKeys = encrypted.flatMap { (_, aesBytes, topic) ->
+            roomMembers[topic.topic.room]!!.map { (first, second) ->
+                Triple(topic.id, eciesEncrypt(first, aesBytes).getOrThrow(), second)
             }
         }
-        EncryptedTopics.batchInsert(encrypted) { (index, bytes) ->
-            this[EncryptedTopics.topicId] = tuples[index].id
+        EncryptedTopics.batchInsert(encrypted) { (bytes, _, t) ->
+            this[EncryptedTopics.topicId] = t.id
             this[EncryptedTopics.content] = ExposedBlob(bytes)
         }
         EncryptedTopicKeys.batchInsert(encryptedKeys) { (index, t4, id) ->
-            this[EncryptedTopicKeys.topicId] = tuples[index].id
+            this[EncryptedTopicKeys.topicId] = index
             this[EncryptedTopicKeys.encryptedAes] = ExposedBlob(t4)
             this[EncryptedTopicKeys.uid] = id
         }
-        topicsPrivate.forEachIndexed { _, topic ->
-            val room = roomList[topic.first.room]
+        topicsPrivate.forEach { topic ->
+            val room = roomMap[topic.topic.room]
             if (room != null) {
-                val content = getTopicContent(topic.first, parentDir)
+                val content = getTopicContent(topic.topic, parentDir)
                 uploadFiles(tika, backend, extractMarkdownMediaLink(content).map {
                     val path = File(parentDir, "medias/topics/$it")
                     UploadPack(path, "${room.id}/$it", it, room.id, path.length())

@@ -15,7 +15,9 @@ object EncryptedTopics : Table() {
 class EncryptedTopic(val topicId: PrimaryKey, val content: ByteArray) {
     companion object {
         fun wrapRow(row: ResultRow): EncryptedTopic {
-            return EncryptedTopic(row[EncryptedTopics.topicId], row[EncryptedTopics.content].bytes)
+            return with(EncryptedTopics) {
+                EncryptedTopic(row[topicId], row[content].bytes)
+            }
         }
     }
 }
@@ -33,11 +35,13 @@ object EncryptedTopicKeys : Table() {
 class EncryptedTopicKey(val topicId: PrimaryKey, val uid: PrimaryKey, val encryptedAes: ByteArray) {
     companion object {
         fun wrapRow(row: ResultRow): EncryptedTopicKey {
-            return EncryptedTopicKey(
-                row[EncryptedTopicKeys.topicId],
-                row[EncryptedTopicKeys.uid],
-                row[EncryptedTopicKeys.encryptedAes].bytes
-            )
+            return with(EncryptedTopicKeys) {
+                EncryptedTopicKey(
+                    row[topicId],
+                    row[uid],
+                    row[encryptedAes].bytes
+                )
+            }
         }
     }
 }

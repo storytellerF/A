@@ -27,11 +27,16 @@ import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.clearStorage
+import com.storyteller_f.a.client_lib.ClientSession
 import com.storyteller_f.a.client_lib.SignInViewModel
+import com.storyteller_f.a.client_lib.getData
 import com.storyteller_f.a.client_lib.getUserInfo
 import com.storyteller_f.a.client_lib.getUserInfoByAid
+import com.storyteller_f.a.client_lib.signIn
 import com.storyteller_f.a.client_lib.signOut
+import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.UserInfo
+import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -45,9 +50,15 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
     }
     val appNav = LocalAppNav.current
     val client = LocalClient.current
+    LaunchedEffect(isMe, userInfo) {
+        if (isMe) {
+            refreshMyInfo(userInfo, client)
+        }
+    }
+    val scope = rememberCoroutineScope()
+    val isSignIn by SignInViewModel.isAlreadySignUp.collectAsState()
     DialogContainer {
-        val my by SignInViewModel.user.collectAsState()
-        if (userInfo == null && isMe) {
+        if (!isSignIn && isMe) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth()) {
                 LoginButton {
                     dismiss()
@@ -69,11 +80,8 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
             }
         }
         Column {
-            if (userInfo != null && my?.id == userInfo.id) {
-                LaunchedEffect(null) {
-                    refreshMyInfo(my, client)
-                }
-                ButtonNav(MaterialSymbolsOutlined.Star, "acg ${userInfo.acg}")
+            if (isMe) {
+                ButtonNav(MaterialSymbolsOutlined.Star, "acg ${userInfo?.acg ?: 0}")
                 UserDialogMenuList(dismiss, clickCreate, appNav, controller)
             }
             ButtonNav(Icons.Default.Settings, "preference") {
@@ -82,7 +90,6 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
             }
         }
     }
-    val scope = rememberCoroutineScope()
     CustomAlertDialog(controller, {
         controller.close()
     }) {
@@ -138,15 +145,30 @@ suspend fun signOut(client: HttpClient) {
 
 @OptIn(DelicateCoroutinesApi::class)
 private fun refreshMyInfo(my: UserInfo?, client: HttpClient) {
-    my ?: return
     GlobalScope.launch {
-        val aid = my.aid
-        if (aid.isNullOrBlank()) {
-            client.getUserInfo(my.id)
-        } else {
-            client.getUserInfoByAid(aid)
-        }.getOrNull()?.let {
-            SignInViewModel.updateUser(it)
+        try {
+            if (my == null) {
+                val value = SignInViewModel.state.value
+                if (value is ClientSession.SignInSuccess) {
+                    val data = client.getData().getOrThrow()
+                    val address = value.session.address().getOrThrow()
+                    val signature = value.session.signature(finalData(data)).getOrThrow()
+                    val userInfo = client.signIn(address, signature).getOrThrow()
+                    SignInViewModel.updateUser(userInfo)
+                }
+            } else {
+                val aid = my.aid
+                val userInfo = if (aid.isNullOrBlank()) {
+                    client.getUserInfo(my.id)
+                } else {
+                    client.getUserInfoByAid(aid)
+                }.getOrThrow()
+                SignInViewModel.updateUser(userInfo)
+            }
+        } catch (e: Exception) {
+            Napier.e(e) {
+                "refresh user info"
+            }
         }
     }
 }
