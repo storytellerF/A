@@ -1,9 +1,11 @@
 package com.storyteller_f.a.client_lib
 
+import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
+import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -52,7 +54,8 @@ interface ClientWebSocket {
 
 @OptIn(DelicateCoroutinesApi::class)
 class ClientWebSocketImpl(
-    val buildConnection: suspend (UserInfo, String) -> DefaultClientWebSocketSession,
+    val client: HttpClient,
+    val buildConnection: suspend HttpClient.(UserInfo, String) -> DefaultClientWebSocketSession,
     val onMessage: suspend (RoomFrame) -> Unit
 ) : ClientWebSocket {
     override val connectionHandler = SimpleLoadingHandler<DefaultClientWebSocketSession> { }
@@ -65,13 +68,13 @@ class ClientWebSocketImpl(
             combine(SignInViewModel.state, SignInViewModel.user) { t1, t2 ->
                 t1 to t2
             }.distinctUntilChanged().collect { (t1, t2) ->
-                if (t1 is ClientSession.SignInSuccess && t2 != null) {
-                    while (true) {
+                when {
+                    t1 !is ClientSession.SignInSuccess -> connectionHandler.data.value?.cancel()
+                    t2 == null -> SignInViewModel.retryLogin(client)
+                    else -> while (true) {
                         connectWebSocketIfNeed(t2)
                         delay(5000)
                     }
-                } else {
-                    connectionHandler.data.value?.cancel()
                 }
             }
         }
@@ -95,7 +98,7 @@ class ClientWebSocketImpl(
     }
 
     private suspend fun connectWebSocketIfNeed(t2: UserInfo) {
-        val (key, sig) = SignInViewModel.session ?: return
+        val (_, sig) = SignInViewModel.session ?: return
         if (sig == null) return
         when (connectionHandler.state.value) {
             is LoadingState.Loading -> return
@@ -108,7 +111,7 @@ class ClientWebSocketImpl(
             null -> {}
         }
         try {
-            val session = buildConnection(t2, key)
+            val session = client.buildConnection(t2, sig)
 
             startListenerWebSocket(session)
             connectionHandler.done(session)

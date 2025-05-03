@@ -25,6 +25,8 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toImmutableMap
 import org.intellij.markdown.ast.ASTNode
 import org.jetbrains.compose.resources.stringResource
 
@@ -78,7 +80,7 @@ private fun TopicContentFieldInternal(
     } else {
         rawMediaList to ObjectTuple(topicInfo.author, ObjectType.USER)
     }
-    val mediaMap = mediaList.associateBy { it.noPrefixName }
+    val mediaMap = mediaList.associateBy { it.noPrefixName }.toImmutableMap()
     Markdown(
         plain,
         modifier = Modifier.fillMaxWidth().testTag("content"),
@@ -99,7 +101,7 @@ fun CustomMarkdownParagraph(
     node: ASTNode,
     modifier: Modifier = Modifier,
     style: TextStyle = LocalMarkdownTypography.current.paragraph,
-    mediaMap: Map<String, MediaInfo>,
+    mediaMap: ImmutableMap<String, MediaInfo>,
     isEmbed: Boolean
 ) {
     val density = LocalDensity.current
@@ -111,8 +113,8 @@ fun CustomMarkdownParagraph(
         style,
         content,
         node.children,
-        inlineContentMap,
     ) {
+        inlineContentMap.clear()
         buildAnnotatedString {
             pushStyle(style.toSpanStyle())
             customBuildMarkdownAnnotatedString(
@@ -130,7 +132,7 @@ fun CustomMarkdownParagraph(
         styledText,
         modifier = modifier,
         style = style,
-        inlineContentMap = inlineContentMap,
+        inlineContentMap = inlineContentMap.toImmutableMap(),
         mediaMap = mediaMap,
         isEmbed = isEmbed
     )

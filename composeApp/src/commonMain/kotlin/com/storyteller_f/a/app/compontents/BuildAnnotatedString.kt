@@ -39,6 +39,8 @@ import com.mikepenz.markdown.model.ImageTransformer
 import com.mikepenz.markdown.utils.getUnescapedTextInNode
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.utils.readInlineMath
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -238,48 +240,49 @@ internal fun List<ASTNode>.innerList(): List<ASTNode> = this.subList(1, this.siz
 
 @Composable
 private fun buildInlineContentMap(
-    inlineContentMap: Map<String, String>,
+    inlineContentMap: ImmutableMap<String, String>,
     maxWidth: Int,
     mediaMap: Map<String, MediaInfo>,
     transformer: ImageTransformer,
     isEmbed: Boolean
-): Map<String, InlineTextContent> {
+): ImmutableMap<String, InlineTextContent> {
     val dimensionMap = buildInlineContentDimensions(inlineContentMap, mediaMap)
     val density = LocalDensity.current.density
 
-    return remember {
-        val map = mutableMapOf<String, InlineTextContent>()
-        dimensionMap.forEach { (key, pair) ->
-            if (maxWidth == 0) {
-                InlineTextContent(Placeholder(0.sp, 0.sp, PlaceholderVerticalAlign.Bottom)) {}
-            } else if (pair != null) {
-                val width = minOf(maxWidth, pair.first)
-                val height =
-                    minOf(width * pair.second / pair.first, if (isEmbed) dpToPx(300.dp, density) else width * 2)
-                val recalculatedWidth = height * pair.first / pair.second
-                map[key] = InlineTextContent(
-                    Placeholder(
-                        pxToSp(recalculatedWidth, density),
-                        pxToSp(height, density),
-                        PlaceholderVerticalAlign.Bottom
-                    )
-                ) {
-                    val value = inlineContentMap[key]
-                    transformer.transform(value.orEmpty())?.let { imageData ->
-                        Image(
-                            painter = imageData.painter,
-                            contentDescription = imageData.contentDescription,
-                            modifier = imageData.modifier,
-                            alignment = imageData.alignment,
-                            contentScale = imageData.contentScale,
-                            alpha = imageData.alpha,
-                            colorFilter = imageData.colorFilter
-                        )
-                    }
+    return remember(inlineContentMap, maxWidth, mediaMap) {
+        buildMap {
+            dimensionMap.forEach { (key, pair) ->
+                if (maxWidth == 0) {
+                    InlineTextContent(Placeholder(0.sp, 0.sp, PlaceholderVerticalAlign.Bottom)) {}
+                } else if (pair != null) {
+                    val width = minOf(maxWidth, pair.first)
+                    val height =
+                        minOf(width * pair.second / pair.first, if (isEmbed) dpToPx(300.dp, density) else width * 2)
+                    val recalculatedWidth = height * pair.first / pair.second
+                    put(
+                        key, InlineTextContent(
+                            Placeholder(
+                                pxToSp(recalculatedWidth, density),
+                                pxToSp(height, density),
+                                PlaceholderVerticalAlign.Bottom
+                            )
+                        ) {
+                            val value = inlineContentMap[key]
+                            transformer.transform(value.orEmpty())?.let { imageData ->
+                                Image(
+                                    painter = imageData.painter,
+                                    contentDescription = imageData.contentDescription,
+                                    modifier = imageData.modifier,
+                                    alignment = imageData.alignment,
+                                    contentScale = imageData.contentScale,
+                                    alpha = imageData.alpha,
+                                    colorFilter = imageData.colorFilter
+                                )
+                            }
+                        })
                 }
             }
-        }
-        map
+        }.toImmutableMap()
     }
 }
 
@@ -336,8 +339,8 @@ fun CustomMarkdownText(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalMarkdownTypography.current.text,
     extendedSpans: ExtendedSpans? = LocalMarkdownExtendedSpans.current.extendedSpans?.invoke(),
-    inlineContentMap: Map<String, String>,
-    mediaMap: Map<String, MediaInfo>,
+    inlineContentMap: ImmutableMap<String, String>,
+    mediaMap: ImmutableMap<String, MediaInfo>,
     isEmbed: Boolean
 ) {
     // extend the annotated string with `extended-spans` styles if provided
@@ -382,8 +385,8 @@ private fun CustomMarkdownTextInternal(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalMarkdownTypography.current.text,
     onTextLayout: (TextLayoutResult) -> Unit,
-    inlineContentMap: Map<String, String>,
-    mediaMap: Map<String, MediaInfo>,
+    inlineContentMap: ImmutableMap<String, String>,
+    mediaMap: ImmutableMap<String, MediaInfo>,
     isEmbed: Boolean
 ) {
     val baseColor = LocalMarkdownColors.current.text
@@ -392,7 +395,7 @@ private fun CustomMarkdownTextInternal(
     val transformer = LocalImageTransformer.current
 
     BoxWithConstraints {
-        val width = convertDpToPx(maxWidth)
+        val width = convertDpToPx(this.maxWidth)
         val inlineTextContentMap = buildInlineContentMap(inlineContentMap, width, mediaMap, transformer, isEmbed)
         CustomMarkdownBasicText(
             text = content,
@@ -426,7 +429,7 @@ fun CustomMarkdownBasicText(
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     minLines: Int = 1,
-    inlineContent: Map<String, InlineTextContent> = mapOf(),
+    inlineContent: ImmutableMap<String, InlineTextContent> = mapOf<String, InlineTextContent>().toImmutableMap(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
 ) {
     // Note: This component is ported over from Material2 Text - to remove the dependency on Material

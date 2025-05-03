@@ -1,10 +1,12 @@
 package com.storyteller_f.a.client_lib
 
 import com.storyteller_f.shared.calcAddress
+import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.mapResult
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,20 +66,20 @@ object SignInViewModel {
 
     // 用于header 和server 协商被签名的数据
     private var currentStamp = 0L
-    val currentData: Long get() {
-        val (nowSeconds, isValid) = checkTsIsValid(currentStamp, 60 * 3)
-        return if (isValid) {
-            currentStamp
-        } else {
-            // 超时，需要替换新的
-            currentStamp = nowSeconds
-            nowSeconds
+    val currentData: Long
+        get() {
+            val (nowSeconds, isValid) = checkTsIsValid(currentStamp, 60 * 3)
+            return if (isValid) {
+                currentStamp
+            } else {
+                // 超时，需要替换新的
+                currentStamp = nowSeconds
+                nowSeconds
+            }
         }
-    }
 
     // currentData 是本地使用的，但是还是需要依据server 的为准
     var session: Pair<String, String?>? = null
-    val user = MutableStateFlow<UserInfo?>(null)
     val currentIsAlreadySignUp get() = state.value is ClientSession.SignInSuccess
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -86,13 +88,33 @@ object SignInViewModel {
     }.stateIn(GlobalScope, SharingStarted.Eagerly, false)
     val appStartLoginRetried = MutableStateFlow(false)
     val retryLoginState = MutableStateFlow<LoadingState?>(null)
+    val retryLoginHandler = SimpleLoadingHandler<UserInfo?> {
+
+    }
+    val user get() = retryLoginHandler.data
+
+    suspend fun retryLogin(client: HttpClient) {
+        val t1 = (state.value as? ClientSession.SignInSuccess) ?: return
+        retryLoginHandler.request {
+            client.getData().mapResult { data ->
+                t1.session.address().mapResult { address ->
+                    t1.session.signature(finalData(data)).mapResult { signature ->
+                        client.signIn(address, signature).map {
+                            updateSession(data, signature)
+                            it
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     fun updateSession(data: String, signature: String?) {
         session = data to signature
     }
 
     fun updateUser(new: UserInfo) {
-        user.value = new
+        retryLoginHandler.update(new)
     }
 
     fun updateState(newState: ClientSession) {
@@ -101,7 +123,7 @@ object SignInViewModel {
 
     fun signOut() {
         state.value = ClientSession.SignInNone
-        user.value = null
+        retryLoginHandler.update(null)
         session = null
     }
 }
