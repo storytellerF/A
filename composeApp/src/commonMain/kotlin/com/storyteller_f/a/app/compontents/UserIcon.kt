@@ -16,7 +16,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
@@ -31,16 +30,16 @@ fun UserIcon(
     isMe: Boolean = false,
     setClickEvent: Boolean = true,
     size: Dp = 40.dp,
-    clickCreate: () -> Unit = {},
+    onClickCreate: () -> Unit = {},
 ) {
     var showUserDialog by remember {
         mutableStateOf(false)
     }
     val url = userInfo?.avatar?.url
-    UserIconInternal(isMe, setClickEvent, url, size = size) { ->
+    UserIconInternal(isMe, setClickEvent, url, size = size) {
         showUserDialog = true
     }
-    UserDialog(isMe, userInfo, showUserDialog, clickCreate) {
+    UserDialog(isMe, userInfo, showUserDialog, onClickCreate) {
         showUserDialog = false
     }
 }
@@ -55,8 +54,8 @@ fun UserIconInternal(
 ) {
     val modifier = if (isMe) Modifier.testTag("me") else Modifier
     if (avatarUrl != null) {
-        AsyncImage(
-            globalLoader(avatarUrl),
+        CommonImage(
+            avatarUrl,
             contentDescription = "avatar",
             modifier = modifier.size(size).clip(CircleShape).let {
                 if (setClickEvent) {
@@ -86,13 +85,3 @@ fun UserIconInternal(
     }
 }
 
-@Composable
-fun globalLoader(url: String): ImageRequest {
-    val client = LocalClient.current
-    val platformContext = LocalPlatformContext.current
-    return remember(url) {
-        ImageRequest.Builder(platformContext).data(url).crossfade(true).fetcherFactory(
-            KtorNetworkFetcherFactory(client)
-        ).build()
-    }
-}

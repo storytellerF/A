@@ -3,6 +3,7 @@ package com.storyteller_f.a.client_lib
 import io.github.aakira.napier.Napier
 import kotbase.*
 import kotbase.QueryBuilder.select
+import kotbase.ValueIndexConfiguration
 import kotbase.ktx.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
@@ -156,26 +157,31 @@ fun createKotbase(): Database {
 }
 
 class KotbaseDatabaseSource(private val database: Database) : DatabaseSource {
-    private fun getOrCreateCollection(collectionName: String): kotbase.Collection {
-        val collection = database.defaultScope.getCollection(collectionName) ?: database.createCollection(
-            collectionName
+
+    override fun getCollection(name: String): DatabaseCollection {
+        val collection = database.defaultScope.getCollection(name) ?: database.createCollection(
+            name
         )
-        if (collectionName.startsWith("communities_")) {
+        if (name.startsWith("communities_")) {
             collection.createIndex(
                 "poster_index",
                 ValueIndexConfiguration("poster")
             )
-        } else if (collectionName.startsWith("topics_") && collectionName != "topics_keys") {
+        } else if (name.startsWith("topics_") && name != "topics_keys") {
             collection.createIndex(
                 "pinned_index",
                 ValueIndexConfiguration("pinned")
             )
         }
-        return collection
+        return KotbaseDatabaseCollection(collection)
     }
 
-    override fun getCollection(name: String): DatabaseCollection {
-        return KotbaseDatabaseCollection(getOrCreateCollection(name))
+    override fun getCollectionByPrefix(prefix: String): List<DatabaseCollection> {
+        return database.defaultScope.collections.filter {
+            it.name.startsWith(prefix)
+        }.map {
+            KotbaseDatabaseCollection(it)
+        }
     }
 
     override fun deleteCollection(collectionName: String) {

@@ -115,7 +115,7 @@ private fun CustomSearchBarInternal(
                     },
                     trailingIcon = {
                         val userInfo by SignInViewModel.user.collectAsState()
-                        UserIcon(userInfo, true, clickCreate = clickCreate)
+                        UserIcon(userInfo, true, onClickCreate = clickCreate)
                     },
                     placeholder = {
                         SearchPlaceholder(scope)

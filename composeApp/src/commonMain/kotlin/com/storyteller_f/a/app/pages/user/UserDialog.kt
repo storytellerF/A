@@ -71,7 +71,7 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
             UserCell(
                 userInfo,
                 false,
-                clickable = false,
+                iconClickable = false,
                 cellClickable = !isUserPage,
                 size = 60.dp
             ) {

@@ -64,30 +64,31 @@ fun MediaPicker(
     support: List<String> = listOf("files", "audio recorder"),
     hideSheet: () -> Unit
 ) {
-    val pagerState = rememberPagerState {
-        support.size
-    }
-    val currentPage = pagerState.currentPage
-    val scope = rememberCoroutineScope()
     BaseSheet(showSheet, sheetState, hideSheet) {
+        val pagerState = rememberPagerState {
+            support.size
+        }
         val tabs = listOf(Icons.Default.Cloud to "files", Icons.Default.Mic to "audio recorder").filter {
             support.contains(it.second)
         }
-        PrimaryTabRow(currentPage, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
-            tabs.forEachIndexed { index, pair ->
-                Tab(currentPage == index, {
-                    scope.launch {
-                        pagerState.scrollToPage(index)
+        if (support.size != 1) {
+            val currentPage = pagerState.currentPage
+            val scope = rememberCoroutineScope()
+            PrimaryTabRow(currentPage, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+                tabs.forEachIndexed { index, pair ->
+                    Tab(currentPage == index, {
+                        scope.launch {
+                            pagerState.scrollToPage(index)
+                        }
+                    }) {
+                        Icon(pair.first, pair.second, modifier = Modifier.padding(vertical = 10.dp).size(30.dp))
                     }
-                }) {
-                    Icon(pair.first, pair.second, modifier = Modifier.padding(vertical = 10.dp).size(30.dp))
                 }
             }
         }
         HorizontalPager(pagerState, modifier = Modifier.height(300.dp)) {
             if (tabs[it].second == "files") {
-                val userInfo by SignInViewModel.user.collectAsState()
-                userInfo?.let { it1 -> MediaListView(mediaTarget, clickItem) }
+                MediaListView(mediaTarget, clickItem)
             } else {
                 AudioRecorder(mediaTarget, clickItem)
             }
@@ -177,7 +178,7 @@ private fun MediaListView(
                     }
                 }
             }) {
-                Icon(Icons.Default.UploadFile, "upload file")
+                Icon(Icons.Default.CloudUpload, "upload file")
             }
         }
         val pagingItems = list.flow.collectAsLazyPagingItems()

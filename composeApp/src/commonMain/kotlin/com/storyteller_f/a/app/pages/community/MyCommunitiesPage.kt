@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.times
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
+import com.storyteller_f.a.app.CommunityScreen
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.bottomAppending
@@ -29,8 +30,10 @@ import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.CommunityPoster
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.model.createJoinedCommunitiesViewModel
+import com.storyteller_f.a.app.toRoute
 import com.storyteller_f.a.app.utils.lcm
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.type.PrimaryKey
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
@@ -161,6 +164,7 @@ fun CommunityCell(
     onClick: ((CommunityInfo) -> Unit)? = null
 ) {
     val appNav = LocalAppNav.current
+    val isCommunityPage = appNav.toRoute<CommunityScreen>()?.communityId == communityInfo?.id
     Row(
         modifier = when {
             customBackground -> Modifier
@@ -170,7 +174,7 @@ fun CommunityCell(
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.secondaryContainer, shape)
                     .clip(shape)
-                    .clickable {
+                    .clickable(!isCommunityPage) {
                         communityInfo?.let { onClick?.invoke(it) ?: appNav.gotoCommunity(it.id, false) }
                     }
                     .padding(10.dp)

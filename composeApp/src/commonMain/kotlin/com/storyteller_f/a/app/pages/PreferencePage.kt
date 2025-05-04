@@ -39,7 +39,7 @@ fun PreferencePage() {
                     }
                 },
                 leadingIcon = {
-                    CustomIcon(IconRes.Font(MaterialSymbolsOutlined.Translate), "translate")
+                    CustomIcon(IconRes.Font(MaterialSymbolsOutlined.Translate))
                 },
                 useSelectedInSummary = true,
                 trailingContent = {

@@ -27,18 +27,20 @@ import dev.tclement.fonticons.FontIcon
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicCell(
-    info: TopicInfo,
+    info: TopicInfo?,
     contentAlignAvatar: Boolean = true,
     showAvatar: Boolean = true
 ) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    val authorInfo = info.extension?.authorInfo
+    val authorInfo = info?.extension?.authorInfo
     TopicCellInternal(info, authorInfo, showAvatar, contentAlignAvatar) {
         showBottomSheet = true
     }
-    EmojiPicker(sheetState, showBottomSheet, info) {
-        showBottomSheet = false
+    info?.let {
+        EmojiPicker(sheetState, showBottomSheet, it) {
+            showBottomSheet = false
+        }
     }
 }
 
@@ -48,12 +50,13 @@ fun TopicCell(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TopicCellInternal(
-    topicInfo: TopicInfo,
+    topicInfo: TopicInfo?,
     authorInfo: UserInfo?,
     showAvatar: Boolean,
     contentAlignAvatar: Boolean,
     startAddReaction: () -> Unit
 ) {
+    topicInfo ?: return
     val topicId = topicInfo.id
     val appNav = LocalAppNav.current
     var expanded by remember { mutableStateOf(false) }

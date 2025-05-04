@@ -1,13 +1,19 @@
 package com.storyteller_f.a.app.compontents
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
@@ -24,6 +30,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImagePainter
 import com.ashampoo.kim.Kim
 import com.ashampoo.kim.common.convertToPhotoMetadata
 import com.mikepenz.markdown.annotator.AnnotatorSettings
@@ -40,6 +47,7 @@ import com.mikepenz.markdown.utils.getUnescapedTextInNode
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.utils.readInlineMath
 import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -269,15 +277,42 @@ private fun buildInlineContentMap(
                         ) {
                             val value = inlineContentMap[key]
                             transformer.transform(value.orEmpty())?.let { imageData ->
-                                Image(
-                                    painter = imageData.painter,
-                                    contentDescription = imageData.contentDescription,
-                                    modifier = imageData.modifier,
-                                    alignment = imageData.alignment,
-                                    contentScale = imageData.contentScale,
-                                    alpha = imageData.alpha,
-                                    colorFilter = imageData.colorFilter
-                                )
+                                val painter = imageData.painter
+                                if (painter is AsyncImagePainter) {
+                                    val state by painter.state.collectAsState()
+                                    when (val s = state) {
+                                        is AsyncImagePainter.State.Empty,
+                                        is AsyncImagePainter.State.Loading -> {
+                                            ImageLoading()
+                                        }
+
+                                        is AsyncImagePainter.State.Success -> {
+                                            Image(
+                                                painter = painter,
+                                                contentDescription = imageData.contentDescription,
+                                                modifier = imageData.modifier,
+                                                alignment = imageData.alignment,
+                                                contentScale = imageData.contentScale,
+                                                alpha = imageData.alpha,
+                                                colorFilter = imageData.colorFilter
+                                            )
+                                        }
+
+                                        is AsyncImagePainter.State.Error -> {
+                                            ImageError(s.result.throwable)
+                                        }
+                                    }
+                                } else {
+                                    Image(
+                                        painter = painter,
+                                        contentDescription = imageData.contentDescription,
+                                        modifier = imageData.modifier,
+                                        alignment = imageData.alignment,
+                                        contentScale = imageData.contentScale,
+                                        alpha = imageData.alpha,
+                                        colorFilter = imageData.colorFilter
+                                    )
+                                }
                             }
                         })
                 }
@@ -429,7 +464,7 @@ fun CustomMarkdownBasicText(
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     minLines: Int = 1,
-    inlineContent: ImmutableMap<String, InlineTextContent> = mapOf<String, InlineTextContent>().toImmutableMap(),
+    inlineContent: ImmutableMap<String, InlineTextContent> = persistentMapOf(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
 ) {
     // Note: This component is ported over from Material2 Text - to remove the dependency on Material

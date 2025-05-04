@@ -36,6 +36,7 @@ import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.client_lib.LoadingHandler
 import com.storyteller_f.a.client_lib.LoadingState
 import com.storyteller_f.shared.model.Identifiable
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
@@ -64,7 +65,6 @@ fun <T : Any> StateView(
         refreshing = true
         pagingItems.refresh()
     })
-    val combinedLoadStates = pagingItems.loadState
     val refreshLoadState = pagingItems.loadState.refresh
     LaunchedEffect(key1 = refreshing, key2 = refreshLoadState) {
         // 增加延时，确保pagingItems真正进入刷新状态
@@ -75,7 +75,7 @@ fun <T : Any> StateView(
         }
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        when (val state = combinedLoadStates.toLoadingState(pagingItems.itemCount)) {
+        when (val state = pagingItems.loadState.toLoadingState(pagingItems.itemCount)) {
             null -> CenterBox {
                 CircularProgressIndicator()
             }
@@ -106,17 +106,20 @@ fun <T : Any> StateView(
     }
 }
 
+@Composable
 private fun CombinedLoadStates.toLoadingState(itemCount: Int): LoadingState? {
-    val mediatorRefreshState = mediator?.refresh
-    val sourceRefreshState = source.refresh
-    if (mediatorRefreshState is LoadStateError) {
-        if (itemCount == 0) {
-            return LoadingState.Error(mediatorRefreshState.error)
-        } else if (sourceRefreshState is LoadStateNotLoading) {
-            return LoadingState.Done
+    val state by produceState<LoadingState?>(null, this, itemCount) {
+        delay(100)
+        val mediatorRefreshState = mediator?.refresh
+        val sourceRefreshState = source.refresh
+        value = when {
+            mediatorRefreshState !is LoadStateError -> refresh.toLoadingState()
+            itemCount == 0 -> LoadingState.Error(mediatorRefreshState.error)
+            sourceRefreshState is LoadStateNotLoading -> LoadingState.Done
+            else -> refresh.toLoadingState()
         }
     }
-    return refresh.toLoadingState()
+    return state
 }
 
 fun <T : Any> LazyListScope.topPrepend(lazyPagingItems: LazyPagingItems<T>) {
@@ -173,7 +176,16 @@ fun <T : Any> LazyGridScope.bottomAppending(pagingItems: LazyPagingItems<T>, cou
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun<T> debounceState(v: T): T? {
+    val value by produceState<T?>(null, v) {
+        delay(100)
+        value = v
+    }
+    return value
+}
+
+@OptIn(ExperimentalMaterialApi::class, FlowPreview::class)
 @Composable
 fun <T> StateView(
     handler: LoadingHandler<T>,
@@ -194,7 +206,7 @@ fun <T> StateView(
         if (refreshing && state !is LoadingState.Loading) refreshing = false
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        when (val s = state) {
+        when (val s = debounceState(state)) {
             null -> CenterBox {
                 CircularProgressIndicator()
             }

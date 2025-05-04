@@ -25,6 +25,7 @@ import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.compontents.AudioView
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.VideoView
+import com.storyteller_f.a.app.compontents.globalLoader
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.a.app.showShortToast
@@ -43,7 +44,7 @@ fun MediaPage(session: MediaPlaySession) {
                 }
                 val sheetState = rememberModalBottomSheetState()
                 CoilZoomAsyncImage(
-                    model = session.mediaInfo.url,
+                    model = globalLoader(session.mediaInfo.url),
                     contentDescription = "view image",
                     modifier = Modifier.fillMaxSize(),
                     onLongPress = {
@@ -64,6 +65,16 @@ fun MediaPage(session: MediaPlaySession) {
                 } else {
                     AudioView(remoteMediaItem, false)
                 }
+            }
+        }
+
+        is MediaPlaySession.LocalImage -> {
+            Box {
+                CoilZoomAsyncImage(
+                    model = session.url,
+                    contentDescription = "view image",
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
         }
     }

@@ -21,6 +21,7 @@ import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.bottomAppending
 import com.storyteller_f.a.app.common.topPrepend
+import com.storyteller_f.a.app.compontents.CommonImage
 import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.globalLoader
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
@@ -126,8 +127,8 @@ fun RoomIcon(
     val radius = 8.dp
     val shape = RoundedCornerShape(radius)
     if (iconUrl != null) {
-        AsyncImage(
-            globalLoader(iconUrl),
+        CommonImage(
+            iconUrl,
             contentDescription = "${roomInfo.name}'s icon",
             modifier = Modifier.size(size).clip(shape).let {
                 if (setClickEvent) {

@@ -353,18 +353,18 @@ suspend fun DatabaseFactory.updateCommunity(
         val newIcon = body.icon
         val newName = body.name
         val newPoster = body.poster
-        if (!newName.isNullOrBlank() || !newIcon.isNullOrBlank() || !newPoster.isNullOrBlank()) {
+        if (!newName.isNullOrBlank() || newIcon != null || newPoster != null) {
             Communities.update({
                 Communities.id eq id
             }) {
                 if (!newName.isNullOrBlank()) {
                     it[name] = newName
                 }
-                if (!newIcon.isNullOrBlank()) {
-                    it[icon] = newIcon
+                if (newIcon != null) {
+                    it[icon] = newIcon.ifEmpty { null }
                 }
-                if (!newPoster.isNullOrBlank()) {
-                    it[poster] = newPoster
+                if (newPoster != null) {
+                    it[poster] = newPoster.ifEmpty { null }
                 }
             } > 0
         } else {

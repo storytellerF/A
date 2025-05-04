@@ -217,15 +217,15 @@ suspend fun DatabaseFactory.updateUser(
     listOf({
         val avatar = newUser.avatar
         val name = newUser.nickname
-        if (!name.isNullOrBlank() || !avatar.isNullOrBlank()) {
+        if (!name.isNullOrBlank() || avatar != null) {
             Users.update({
                 Users.id eq id
             }) {
                 if (!name.isNullOrBlank()) {
                     it[nickname] = name
                 }
-                if (!avatar.isNullOrBlank()) {
-                    it[icon] = avatar
+                if (avatar != null) {
+                    it[icon] = avatar.ifEmpty { null }
                 }
             } > 0
         } else {

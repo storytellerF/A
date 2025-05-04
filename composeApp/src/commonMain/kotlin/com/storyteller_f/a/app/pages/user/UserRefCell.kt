@@ -63,7 +63,7 @@ private fun UserRefCellInternal(
 fun UserCell(
     userInfo: UserInfo?,
     hideBackground: Boolean,
-    clickable: Boolean = true,
+    iconClickable: Boolean = true,
     cellClickable: Boolean = true,
     size: Dp = 40.dp,
     onClickCell: ((UserInfo) -> Unit)? = null
@@ -90,7 +90,7 @@ fun UserCell(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        UserIcon(userInfo, setClickEvent = clickable, size = size)
+        UserIcon(userInfo, setClickEvent = iconClickable, size = size)
         if (userInfo != null) {
             Column {
                 Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)

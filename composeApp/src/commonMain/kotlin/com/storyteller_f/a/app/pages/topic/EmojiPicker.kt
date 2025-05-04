@@ -113,7 +113,7 @@ private fun EmojiPickerInternal(
         }
         val emojiSize = 50.dp
         BoxWithConstraints(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            val contentWidth = maxWidth - 40.dp
+            val contentWidth = this.maxWidth - 40.dp
             val count = (contentWidth / emojiSize).toInt()
             val style = if (emojiSize * count == contentWidth) {
                 GridCells.FixedSize(emojiSize)
