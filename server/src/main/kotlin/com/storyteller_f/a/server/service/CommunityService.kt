@@ -9,7 +9,6 @@ import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
-import com.storyteller_f.shared.obj.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
@@ -91,55 +90,21 @@ suspend fun searchCommunities(
     uid: PrimaryKey?,
     search: RouteCommunities.Search,
     pagingFetch: PagingFetch
-): Result<PaginationResult<CommunityInfo>?> {
-    if (search.joinStatus == JoinStatusSearch.JOINED && search.target != null) {
-        return searchTargetUserJoinedCommunities(
-            backend,
-            uid,
-            search.target,
-            search.hasPoster,
-            pagingFetch
-        )
-    }
-    return DatabaseFactory.getPaginationCommunityList(
-        backend,
-        uid,
-        search.joinStatus,
-        search.word,
-        search.hasPoster,
-        pagingFetch
-    ).mapResult { (list, count) ->
-        processCommunityList(backend, list).mapIfNotNull { value ->
-            PaginationResult(value, count)
-        }
-    }
-}
-
-private suspend fun searchTargetUserJoinedCommunities(
-    backend: Backend,
-    uid: PrimaryKey?,
-    target: PrimaryKey,
-    hasPosterSearch: PosterSearch?,
-    pagingFetch: PagingFetch
-): Result<PaginationResult<CommunityInfo>?> {
-    return DatabaseFactory.mapQuery(backend, ::mapCommunityInfo) {
-        getUserJoinedCommunityQuery(target, false).bindPosterSearch(hasPosterSearch).bindPaginationQuery(
-            Communities,
-            pagingFetch
-        )
-    }.mapResult { list ->
-        DatabaseFactory.count(backend) {
-            getUserJoinedCommunityQuery(target, true).bindPosterSearch(hasPosterSearch)
-        }.mapResult { count ->
-            processCommunityList(backend, list).mapResultIfNotNull { value ->
-                if (uid != null) {
-                    processUserJoinedTimeReplace(backend, value, uid, count)
-                } else {
-                    Result.success(PaginationResult(value.map {
-                        it.copy(joinedTime = null, extension = CommunityInfo.Extension(it.joinedTime))
-                    }, count))
-                }
-            }
+) = DatabaseFactory.getPaginationCommunityList(
+    backend,
+    search.target ?: uid,
+    if (search.target == null) JoinStatusSearch.JOINED else search.joinStatus,
+    search.word,
+    search.hasPoster,
+    pagingFetch
+).mapResult { (list, count) ->
+    processCommunityList(backend, list).mapResultIfNotNull { value ->
+        when {
+            search.target == null -> Result.success(PaginationResult(value, count))
+            uid != null -> processUserJoinedTimeReplace(backend, value, uid, count)
+            else -> Result.success(PaginationResult(value.map {
+                it.copy(joinedTime = null, extension = CommunityInfo.Extension(it.joinedTime))
+            }, count))
         }
     }
 }

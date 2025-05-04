@@ -3,6 +3,7 @@ package com.storyteller_f.a.app.pages.community
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -14,7 +15,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
@@ -28,6 +31,12 @@ import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.model.createJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.utils.lcm
 import com.storyteller_f.shared.model.CommunityInfo
+import dev.chrisbanes.haze.HazeDefaults
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
+import dev.chrisbanes.haze.rememberHazeState
 
 @Composable
 fun MyCommunitiesPage() {
@@ -39,15 +48,19 @@ fun MyCommunitiesPage() {
 @Composable
 fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInfo) -> Unit)? = null) {
     StateView(items, modifier = Modifier.fillMaxSize()) {
-        CommunityConstrains { count, gridCount, itemCount, gridSpan, itemSpan ->
+        BoxWithConstraints {
+            val gridCount = (this.maxWidth / 128.dp).toInt()
+            val itemCount = (this.maxWidth / 160.dp).toInt()
+            val lcm = lcm(gridCount, itemCount)
+            val gridSpan = lcm / gridCount
             LazyVerticalGrid(
-                GridCells.Fixed(count),
+                GridCells.Fixed(lcm),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                topPrepend(items, count)
+                topPrepend(items, lcm)
                 items(
                     count = items.itemCount,
                     key = items.itemKey {
@@ -55,7 +68,7 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
                     },
                     span = {
                         when {
-                            items[it]?.poster == null -> GridItemSpan(itemSpan)
+                            items[it]?.poster == null -> GridItemSpan(lcm / itemCount)
                             items.itemCount > it + 1 && items[it + 1]?.poster == null -> {
                                 val t = (it + 1) % gridCount
                                 if (t == 0) {
@@ -64,6 +77,7 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
                                     GridItemSpan((gridCount + 1 - t) * gridSpan)
                                 }
                             }
+
                             else -> {
                                 GridItemSpan(gridSpan)
                             }
@@ -72,53 +86,69 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
                 ) { index ->
                     val communityInfo = items[index]
                     when {
-                        communityInfo?.poster != null -> CommunityGrid(communityInfo, onClick)
+                        communityInfo?.poster != null -> {
+                            val width = if (index + 1 < items.itemCount && items[index + 1]?.poster == null) {
+                                val t = (index + 1) % gridCount
+                                if (t == 0) {
+                                    0.dp
+                                } else {
+                                    val itemWidth =
+                                        (this@BoxWithConstraints.maxWidth - (gridCount - 1) * 10.dp - 40.dp) / gridCount
+                                    (gridCount - t) * itemWidth + (gridCount - t) * 10.dp
+                                }
+                            } else
+                                0.dp
+                            CommunityGrid(communityInfo, width, onClick)
+                        }
+
                         else -> CommunityCell(communityInfo, false, onClick)
                     }
                 }
-                bottomAppending(items, count)
+                bottomAppending(items, lcm)
             }
         }
     }
 }
 
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
-fun CommunityConstrains(modifier: Modifier = Modifier, content: @Composable (Int, Int, Int, Int, Int) -> Unit) {
-    BoxWithConstraints(modifier) {
-        val gridCount = (this.maxWidth / 128.dp).toInt()
-        val itemCount = (this.maxWidth / 160.dp).toInt()
-        val lcm = lcm(gridCount, itemCount)
-        content(lcm, gridCount, itemCount, lcm / gridCount, lcm / itemCount)
-    }
-}
-
-@Composable
-fun CommunityGrid(communityInfo: CommunityInfo?, onClick: ((CommunityInfo) -> Unit)? = null) {
+fun CommunityGrid(communityInfo: CommunityInfo?, padding: Dp, onClick: ((CommunityInfo) -> Unit)? = null) {
     val appNav = LocalAppNav.current
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(3f / 4)
-            .clickable {
-                communityInfo?.let { onClick?.invoke(it) ?: appNav.gotoCommunity(it.id, false) }
-            }
-    ) {
-        CommunityPoster(communityInfo)
-        Row(
-            modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+    val hazeState = rememberHazeState()
+    Box(modifier = Modifier.fillMaxWidth().padding(end = padding)) {
+        val shape = RoundedCornerShape(14.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(3f / 4)
+                .clip(shape)
+                .clickable {
+                    communityInfo?.let { onClick?.invoke(it) ?: appNav.gotoCommunity(it.id, false) }
+                }
         ) {
-            if (communityInfo != null) {
-                val commonDialogController = rememberCommonDialogController()
-                val shown by commonDialogController.show
-                CommunityIcon(communityInfo, shown, 30.dp, onClickIcon = commonDialogController::update)
-                Text(
-                    communityInfo.name,
-                    Modifier,
-                    MaterialTheme.colorScheme.onSecondaryContainer,
-                    MaterialTheme.typography.labelSmall.fontSize
-                )
+            Box(modifier = Modifier.hazeSource(hazeState)) {
+                CommunityPoster(communityInfo)
+            }
+            val radius = 8.dp
+            val shape = RoundedCornerShape(radius)
+            Row(
+                modifier = Modifier.align(Alignment.BottomStart).padding(10.dp)
+                    .clip(shape)
+                    .hazeEffect(hazeState, HazeMaterials.ultraThin()),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (communityInfo != null) {
+                    val commonDialogController = rememberCommonDialogController()
+                    val shown by commonDialogController.show
+                    CommunityIcon(communityInfo, shown, 30.dp, onClickIcon = commonDialogController::update)
+                    Text(
+                        communityInfo.name,
+                        Modifier.fillMaxWidth(),
+                        MaterialTheme.colorScheme.onSecondaryContainer,
+                        MaterialTheme.typography.labelSmall.fontSize
+                    )
+                }
             }
         }
     }

@@ -236,18 +236,16 @@ suspend fun DatabaseFactory.getPaginationCommunityList(
     word: String?,
     hasPosterSearch: PosterSearch?,
     pagingFetch: PagingFetch
-): Result<Pair<List<CommunityRawResult>, Long>> {
-    return mapQuery(backend, ::mapCommunityInfo) {
-        getSearchCommunityQuery(uid, false, joinStatus, word, hasPosterSearch).bindPaginationQuery(
-            Communities,
-            pagingFetch
-        )
-    }.mapResult { list ->
-        count(backend) {
-            getSearchCommunityQuery(uid, true, joinStatus, word, hasPosterSearch)
-        }.map { value ->
-            list to value
-        }
+) = mapQuery(backend, ::mapCommunityInfo) {
+    getSearchCommunityQuery(uid, false, joinStatus, word, hasPosterSearch).bindPaginationQuery(
+        Communities,
+        pagingFetch
+    )
+}.mapResult { list ->
+    count(backend) {
+        getSearchCommunityQuery(uid, true, joinStatus, word, hasPosterSearch)
+    }.map { value ->
+        list to value
     }
 }
 

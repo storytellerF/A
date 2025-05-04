@@ -153,6 +153,8 @@ kotlin {
             implementation(libs.sunny.chung.composable.table)
             implementation(libs.compose.native.notification)
             implementation(libs.compose.preferences)
+            implementation(libs.haze)
+            implementation(libs.haze.materials)
 
             implementation(libs.kim)
             implementation(libs.uri.kmp)
