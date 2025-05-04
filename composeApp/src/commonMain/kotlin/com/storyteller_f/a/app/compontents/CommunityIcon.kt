@@ -27,8 +27,7 @@ fun CommunityIcon(
     onClickIcon: (Boolean) -> Unit,
 ) {
     val model = communityInfo?.icon?.url
-    val radius = 8.dp
-    val shape = RoundedCornerShape(radius)
+    val shape = RoundedCornerShape(8.dp)
     if (model != null) {
         AsyncImage(globalLoader(model), contentDescription = null, Modifier.size(iconSize).clip(shape).let {
             if (setClickEvent) {

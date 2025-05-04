@@ -215,7 +215,7 @@ class AddPreset : Subcommand("add", "add entry") {
         Napier.i {
             "communities count ${presetValue.communityData?.size}"
         }
-        val (l1, l2, l3) = getCommunityData(communityData, parentDir, tika, backend)
+        val (memberList, l2, l3) = getCommunityData(communityData, parentDir, tika, backend)
         DatabaseFactory.dbQuery(backend) {
             Communities.batchInsert(l2) {
                 this[Communities.id] = it.id
@@ -230,11 +230,10 @@ class AddPreset : Subcommand("add", "add entry") {
                 this[Aids.objectId] = it.id
                 this[Aids.objectType] = ObjectType.COMMUNITY
             }
-            l1.forEach { (c, communityId) ->
-                MemberJoins.batchInsert(c) {
-                    val userId = it
+            memberList.forEach { (communityId, uidList) ->
+                MemberJoins.batchInsert(uidList) {
                     this[joinedTime] = now()
-                    this[uid] = userId
+                    this[uid] = it
                     this[objectId] = communityId
                     this[objectType] = ObjectType.COMMUNITY
                 }
@@ -287,7 +286,7 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File?,
         tika: Tika,
         backend: Backend
-    ): Triple<List<Pair<List<PrimaryKey>, PrimaryKey>>, List<Community>, List<Triple<PrimaryKey, PrimaryKey, String>>> {
+    ): Triple<List<Pair<PrimaryKey, List<PrimaryKey>>>, List<Community>, List<Triple<PrimaryKey, PrimaryKey, String>>> {
         val data = communityData.map {
             val id = SnowflakeFactory.nextId()
             val icon = it.icon
@@ -318,9 +317,9 @@ class AddPreset : Subcommand("add", "add entry") {
             it.first.aid to it.first
         }
         val l1 = data.map {
-            it.first.users?.map { s ->
+            it.third to it.first.users?.map { s ->
                 userMap[s]!!.id
-            }.orEmpty() to it.third
+            }.orEmpty() + userMap["System"]!!.id
         }
         val l2 = data.map {
             Community(

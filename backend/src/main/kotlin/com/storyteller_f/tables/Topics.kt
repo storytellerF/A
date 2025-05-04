@@ -180,7 +180,7 @@ private fun getTopicBuilder(uid: PrimaryKey?): Pair<Query, (ResultRow) -> TopicI
             } ?: false,
             resultRow[reactionCountColumn],
             resultRow[aidsValue],
-            resultRow[selfReadTopic]
+            resultRow.getOrNull(selfReadTopic)
         )
     }
     return Pair(query, resultRowTransform)

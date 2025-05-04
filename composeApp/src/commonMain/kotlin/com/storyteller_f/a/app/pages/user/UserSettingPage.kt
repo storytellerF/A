@@ -37,10 +37,10 @@ import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import io.ktor.client.*
 import kotlinx.coroutines.launch
+import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
 sealed class SettingOption(open val value: String?) {
@@ -121,15 +121,20 @@ fun ObjectSettingDialog(
         currentOption is SettingOption.Icon || currentOption is SettingOption.Poster,
         sheetState,
         mediaTarget,
-        {
-            val info = it.first()
+        { mediaList ->
+            val info = mediaList.first()
             val dimension = info.dimension
             if (dimension == null || !info.contentType.startsWith("image/")) {
                 globalDialogState.showMessage("invalid image: ${info.contentType} $dimension")
             } else {
                 scope.launch {
-                    val finalInfo = cropImageIfNeed(context, client, info, imageCropper, dimension, ratio, mediaTarget)
-                    finalInfo.mapIfNotNull(onInputMedia)
+                    cropImageIfNeed(context, client, info, imageCropper, dimension, ratio, mediaTarget).onSuccess {
+                        if (it != null) {
+                            onInputMedia(it)
+                        }
+                    }.onFailure {
+                        globalDialogState.showErrorState(it)
+                    }
                 }
             }
         },
@@ -175,8 +180,7 @@ private suspend fun cropImage(
     }
     return image.mapResult {
         if (it == null) {
-            globalDialogState.showMessage("please retry")
-            Result.success(null)
+            Result.failure(Exception("download failed"))
         } else {
             when (val result = imageCropper.cropSrc(ImageBitmapSrc(it))) {
                 CropResult.Cancelled -> {
@@ -184,17 +188,17 @@ private suspend fun cropImage(
                 }
 
                 is CropError -> {
-                    globalDialogState.showMessage("failed: ${result.name}")
-                    Result.success(null)
+                    Result.failure(Exception(result.name))
                 }
 
                 is CropResult.Success -> {
                     globalDialogState.use {
                         val data = saveImageBitmap(
                             result.bitmap,
-                            info.noPrefixName,
+                            info.noPrefixName.substringBeforeLast("."),
                             when (info.contentType) {
-                                "image/jpeg" -> ImageFormat.JPEG
+                                "image/webp" -> ImageFormat.WEBP
+                                "image/jpeg", "image/jpg" -> ImageFormat.JPEG
                                 else -> ImageFormat.PNG
                             }
                         )

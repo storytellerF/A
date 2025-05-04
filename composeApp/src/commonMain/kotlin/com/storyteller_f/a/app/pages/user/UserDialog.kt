@@ -80,7 +80,7 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
             }
         }
         Column {
-            if (isMe) {
+            if (isMe && isSignIn) {
                 ButtonNav(MaterialSymbolsOutlined.Star, "acg ${userInfo?.acg ?: 0}")
                 UserDialogMenuList(dismiss, clickCreate, appNav, controller)
             }

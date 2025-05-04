@@ -31,6 +31,7 @@ filekitCompose = "0.10.0-beta02"
 font-icon-core = "2.1.0"
 geoip2 = "4.2.1"
 h2 = "2.3.232"
+haze = "1.6.0-beta02"
 highlights = "1.0.0"
 humanReadable = "1.11.0"
 jacksonModuleKotlin = "2.19.0"
@@ -135,6 +136,8 @@ detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", 
 detekt-rules-libraries = { module = "io.gitlab.arturbosch.detekt:detekt-rules-libraries", version.ref = "detektVersion" }
 detekt-rules-ruleauthors = { module = "io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors", version.ref = "detektVersion" }
 github-newpipeextractor = { module = "com.github.teamnewpipe.NewPipeExtractor:NewPipeExtractor", version.ref = "newpipeextractorVersion" }
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 kfswatch = { module = "io.github.irgaly.kfswatch:kfswatch", version.ref = "kfswatch" }
 kotlinx-coroutines-slf4j = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-slf4j", version.ref = "kotlinxCoroutinesSwing" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesSwing" }
