@@ -52,6 +52,6 @@ private fun CommunityRefCellInternal(
             }
             .padding(10.dp)
     ) {
-        CommunityCell(it, true, onClick)
+        CommunityCell( it, true, onClick)
     }
 }

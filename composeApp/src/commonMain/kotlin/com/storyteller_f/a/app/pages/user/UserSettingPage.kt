@@ -17,10 +17,12 @@ import com.attafitamim.krop.ui.ImageCropperDialog
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
+import com.storyteller_f.a.app.compontents.SettingOptionResettableView
 import com.storyteller_f.a.app.compontents.SettingOptionView
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.compontents.imageRequest
 import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.model.OnCommunityUpdated
 import com.storyteller_f.a.app.model.OnUserUpdated
 import com.storyteller_f.a.app.pages.topic.MediaPicker
 import com.storyteller_f.a.app.pages.topic.uploadPath
@@ -29,12 +31,14 @@ import com.storyteller_f.a.app.utils.androidAllowHardware
 import com.storyteller_f.a.app.utils.coilImageToImageBitmap
 import com.storyteller_f.a.app.utils.saveImageBitmap
 import com.storyteller_f.a.client_lib.SignInViewModel
+import com.storyteller_f.a.client_lib.updateCommunityInfo
 import com.storyteller_f.a.client_lib.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.mapResult
@@ -217,9 +221,19 @@ private fun UserSettingInternal(
     m: UserInfo,
 ) {
     val toasterState = LocalToaster.current
-
+    val client = LocalClient.current
+    val scope = rememberCoroutineScope()
     Column(modifier = Modifier.padding(values).padding(horizontal = 20.dp)) {
-        SettingOptionView("Icon", {
+        SettingOptionResettableView("Icon", m.avatar != null,{
+            if (it) {
+                scope.launch {
+                    globalDialogState.use {
+                        val body = UpdateUserBody(avatar = "")
+                        val newInfo = client.updateUserInfo(body).getOrThrow()
+                        bus.emit(OnUserUpdated(newInfo))
+                    }
+                }
+            } else
             showDialog(SettingOption.Icon(m.avatar?.name))
         }, {
             UserIcon(m, setClickEvent = false)

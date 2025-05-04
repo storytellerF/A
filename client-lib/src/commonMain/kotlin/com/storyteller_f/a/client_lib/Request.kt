@@ -542,14 +542,14 @@ suspend fun HttpClient.unpinTopic(topicId: PrimaryKey) = serviceCatching {
     }.body<TopicInfo>()
 }
 
-suspend fun HttpClient.updateCommunityInfo(newInfo: UpdateCommunityBody, id: PrimaryKey) = serviceCatching {
+suspend fun HttpClient.updateCommunityInfo(id: PrimaryKey, newInfo: UpdateCommunityBody) = serviceCatching {
     post("communities/$id") {
         contentType(ContentType.Application.Json)
         setBody(newInfo)
     }.body<CommunityInfo>()
 }
 
-suspend fun HttpClient.updateRoomInfo(newInfo: UpdateRoomBody, id: PrimaryKey) = serviceCatching {
+suspend fun HttpClient.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBody) = serviceCatching {
     post("rooms/$id") {
         contentType(ContentType.Application.Json)
         setBody(newInfo)

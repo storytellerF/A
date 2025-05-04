@@ -194,7 +194,7 @@ private fun ErrorDialogContent(
 fun ServerErrorException.isHtmlContent(): Boolean = text.startsWith("<html") || text.startsWith("<!DOCTYPE html")
 
 sealed interface IconRes {
-    data class Vector(val vector: ImageVector) : IconRes
+    data class Vector(val vector: ImageVector, val description: String = "") : IconRes
     data class Font(val char: Char, val description: String = "") : IconRes
 }
 
@@ -218,25 +218,29 @@ fun ButtonNav(icon: IconRes, title: String, onClick: () -> Unit = {}) {
             onClick()
         }.padding(horizontal = 8.dp, vertical = 12.dp)
     ) {
-        CustomIcon(icon, title)
+        CustomIcon(icon)
         Text(title)
     }
 }
 
 @Composable
-fun CustomIcon(icon: IconRes, title: String) {
+fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
     when (icon) {
         is IconRes.Font -> {
             ProvideIconParameters(
                 size = 20.dp,
                 tintProvider = LocalContentColor
             ) {
-                FontIcon(icon.char, icon.description)
+                FontIcon(icon.char, icon.description, modifier = Modifier.clickable(onClick != null) {
+                    onClick?.invoke()
+                })
             }
         }
 
         is IconRes.Vector -> {
-            Icon(imageVector = icon.vector, contentDescription = title)
+            Icon(imageVector = icon.vector, contentDescription = icon.description, modifier = Modifier.clickable(onClick != null) {
+                onClick?.invoke()
+            })
         }
     }
 }

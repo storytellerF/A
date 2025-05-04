@@ -198,8 +198,7 @@ fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest:
                 CustomIcon(
                     IconRes.Font(
                         if (topicInfo.isPin) MaterialSymbolsOutlined.KeepOff else MaterialSymbolsOutlined.Keep
-                    ),
-                    title
+                    )
                 )
             },
             text = { Text(title) },

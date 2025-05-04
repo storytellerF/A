@@ -361,15 +361,15 @@ suspend fun DatabaseFactory.updateRoom(
     listOf({
         val newIcon = body.icon
         val newName = body.name
-        if (!newName.isNullOrBlank() || !newIcon.isNullOrBlank()) {
+        if (!newName.isNullOrBlank() || newIcon != null) {
             Rooms.update({
                 Rooms.id eq id
             }) {
                 if (!newName.isNullOrBlank()) {
                     it[name] = newName
                 }
-                if (!newIcon.isNullOrBlank()) {
-                    it[icon] = newIcon
+                if (newIcon != null) {
+                    it[icon] = newIcon.ifEmpty { null }
                 }
             } > 0
         } else {

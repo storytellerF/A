@@ -52,7 +52,7 @@ fun TopicList(
                     it.id
                 },
             ) {
-                items[it]?.let { info -> TopicCell(info, contentAlignAvatar, showAvatar) }
+                TopicCell(items[it], contentAlignAvatar, showAvatar)
                 if (it != items.itemCount - 1) {
                     HorizontalDivider()
                 }

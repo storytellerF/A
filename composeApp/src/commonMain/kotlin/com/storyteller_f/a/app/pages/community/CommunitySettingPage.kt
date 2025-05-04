@@ -14,6 +14,7 @@ import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.CommunityPoster
+import com.storyteller_f.a.app.compontents.SettingOptionResettableView
 import com.storyteller_f.a.app.compontents.SettingOptionView
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnCommunityUpdated
@@ -56,8 +57,8 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
                     } else {
                         UpdateCommunityBody(icon = media.name)
                     }
-                    val newInfo = client.updateCommunityInfo(body, communityId).getOrThrow()
-                    communityViewModel.update(newInfo)
+                    val newInfo = client.updateCommunityInfo(communityId, body).getOrThrow()
+                    bus.emit(OnCommunityUpdated(newInfo))
                     closeDialog()
                 }
             }
@@ -76,14 +77,34 @@ private fun CommunitySettingInternal(
     communityInfo: CommunityInfo,
 ) {
     val toasterState = LocalToaster.current
+    val client = LocalClient.current
+    val scope = rememberCoroutineScope()
     Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
-        SettingOptionView("Icon", {
-            showDialog(SettingOption.Icon(communityInfo.icon?.name))
+        SettingOptionResettableView("Icon", communityInfo.icon != null, {
+            if (it) {
+                scope.launch {
+                    globalDialogState.use {
+                        val body = UpdateCommunityBody(icon = "")
+                        val newInfo = client.updateCommunityInfo(communityInfo.id, body).getOrThrow()
+                        bus.emit(OnCommunityUpdated(newInfo))
+                    }
+                }
+            } else
+                showDialog(SettingOption.Icon(communityInfo.icon?.name))
         }, {
             CommunityIcon(communityInfo, showDialog = false, setClickEvent = false) {}
         })
-        SettingOptionView("Poster", {
-            showDialog(SettingOption.Poster(communityInfo.poster?.name))
+        SettingOptionResettableView("Poster", communityInfo.poster != null, {
+            if (it) {
+                scope.launch {
+                    globalDialogState.use {
+                        val body = UpdateCommunityBody(poster = "")
+                        val newInfo = client.updateCommunityInfo(communityInfo.id, body).getOrThrow()
+                        bus.emit(OnCommunityUpdated(newInfo))
+                    }
+                }
+            } else
+                showDialog(SettingOption.Poster(communityInfo.poster?.name))
         }, {
             Box(modifier = Modifier.width(100.dp).aspectRatio(3 / 4f)) {
                 CommunityPoster(communityInfo)
@@ -120,7 +141,7 @@ private suspend fun updateCommunity(
         }
     } ?: return
     globalDialogState.use {
-        val newInfo = client.updateCommunityInfo(body, communityId).getOrThrow()
+        val newInfo = client.updateCommunityInfo(communityId, body).getOrThrow()
         bus.emit(OnCommunityUpdated(newInfo))
         closeDialog()
     }

@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
+import com.storyteller_f.a.app.compontents.SettingOptionResettableView
 import com.storyteller_f.a.app.compontents.SettingOptionView
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnRoomUpdated
@@ -52,7 +53,7 @@ fun RoomSettingPage(roomId: PrimaryKey) {
             scope.launch {
                 globalDialogState.use {
                     val body = UpdateRoomBody(icon = it.name)
-                    val newInfo = client.updateRoomInfo(body, roomId).getOrThrow()
+                    val newInfo = client.updateRoomInfo(roomId, body).getOrThrow()
                     bus.emit(OnRoomUpdated(newInfo))
                 }
             }
@@ -71,9 +72,20 @@ private fun RoomSettingInternal(
     roomInfo: RoomInfo,
 ) {
     val toasterState = LocalToaster.current
+    val client = LocalClient.current
+    val scope = rememberCoroutineScope()
     Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
-        SettingOptionView("Icon", {
-            showDialog(SettingOption.Icon(roomInfo.icon?.name))
+        SettingOptionResettableView("Icon", roomInfo.icon != null, {
+            if (it) {
+                scope.launch {
+                    globalDialogState.use {
+                        val body = UpdateRoomBody(icon = "")
+                        val newInfo = client.updateRoomInfo(roomInfo.id, body).getOrThrow()
+                        bus.emit(OnRoomUpdated(newInfo))
+                    }
+                }
+            } else
+                showDialog(SettingOption.Icon(roomInfo.icon?.name))
         }, {
             RoomIcon(roomInfo, showDialog = false, setClickEvent = false) {}
         })
@@ -108,7 +120,7 @@ private suspend fun updateRoom(
         }
     } ?: return
     globalDialogState.use {
-        val newInfo = client.updateRoomInfo(body, roomId).getOrThrow()
+        val newInfo = client.updateRoomInfo(roomId, body).getOrThrow()
         bus.emit(OnRoomUpdated(newInfo))
         closeDialog()
     }

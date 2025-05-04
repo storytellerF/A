@@ -172,6 +172,10 @@ sealed interface MediaPlaySession {
     @Serializable
     @SerialName("image")
     data class Image(val mediaInfo: MediaInfo, val objectTuple: ObjectTuple) : MediaPlaySession
+
+    @Serializable
+    @SerialName("local-image")
+    data class LocalImage(val url: String) : MediaPlaySession
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -304,7 +308,14 @@ private fun processEvent(event: Any, database: DatabaseSource) {
 
         is OnCommunityExited -> database.getCollection("communities").save(event.info.id, event.info)
 
-        is OnCommunityUpdated -> database.getCollection("communities").save(event.info.id, event.info)
+        is OnCommunityUpdated -> {
+            database.getCollection("communities").save(event.info.id, event.info)
+            database.getCollectionByPrefix("communities_").filter {
+                it.exists(Expression.IdEq("id", event.info.id))
+            }.forEach {
+                it.save(event.info.id, event.info)
+            }
+        }
         is OnTopicChanged -> processTopicChanged(event, database)
 
         is OnTopicCreated -> processTopicCreated(event, database)
@@ -313,9 +324,23 @@ private fun processEvent(event: Any, database: DatabaseSource) {
 
         is OnRoomExited -> database.getCollection("rooms").save(event.info.id, event.info)
 
-        is OnRoomUpdated -> database.getCollection("rooms").save(event.info.id, event.info)
+        is OnRoomUpdated -> {
+            database.getCollection("rooms").save(event.info.id, event.info)
+            database.getCollectionByPrefix("rooms_").filter {
+                it.exists(Expression.IdEq("id", event.info.id))
+            }.forEach {
+                it.save(event.info.id, event.info)
+            }
+        }
 
-        is OnUserUpdated -> database.getCollection("users").save(event.info.id, event.info)
+        is OnUserUpdated -> {
+            database.getCollection("users").save(event.info.id, event.info)
+            database.getCollectionByPrefix("users_").filter {
+                it.exists(Expression.IdEq("id", event.info.id))
+            }.forEach {
+                it.save(event.info.id, event.info)
+            }
+        }
 
         is OnMediaUploaded -> {
             event.mediaInfos.forEach {
@@ -626,6 +651,11 @@ private fun newAppNav(navigator: NavHostController) = object : AppNav {
         navigator.navigate(route)
     }
 
+    override fun gotoLocalImage(url: String) {
+        val route = MediaScreen(json.encodeToString<MediaPlaySession>(MediaPlaySession.LocalImage(url)))
+        navigator.navigate(route)
+    }
+
     override fun gotoTitleCompose() {
         navigator.navigate(TitleComposeScreen)
     }
@@ -703,6 +733,8 @@ interface AppNav {
 
     fun gotoMedia(info: MediaInfo, objectTuple: ObjectTuple)
 
+    fun gotoLocalImage(url: String)
+
     fun gotoTitleCompose()
 
     fun gotoCommunityCompose()
@@ -776,6 +808,10 @@ interface AppNav {
             }
 
             override fun gotoMedia(info: MediaInfo, objectTuple: ObjectTuple) {
+                TODO("Not yet implemented")
+            }
+
+            override fun gotoLocalImage(url: String) {
                 TODO("Not yet implemented")
             }
 
