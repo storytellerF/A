@@ -89,7 +89,7 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
                 ) { index ->
                     val communityInfo = items[index]
                     when {
-                        communityInfo?.poster != null -> {
+                        communityInfo?.hasPoster == true -> {
                             val width = if (index + 1 < items.itemCount && items[index + 1]?.poster == null) {
                                 val t = (index + 1) % gridCount
                                 if (t == 0) {

@@ -124,7 +124,7 @@ class CommunitiesViewModel(
             )
         },
     ) {
-        sectionPagingSource(databaseSource, collectionName, listOf(Order.NotNull("poster"), Order.Desc("id")))
+        sectionPagingSource(databaseSource, collectionName, listOf(Order.Desc("hasPoster"), Order.Desc("id")))
     }.flow.cachedIn(viewModelScope)
 }
 

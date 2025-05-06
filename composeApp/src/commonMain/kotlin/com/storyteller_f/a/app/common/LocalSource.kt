@@ -19,7 +19,7 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
     private val serializer: KSerializer<RowType>,
     private val key: (RowType?) -> Key?,
     private val queryProvider: (Key?) -> Expression?,
-    private val order: List<Order>,
+    private val orders: List<Order>,
     private val extraProcessor: suspend List<RowType>.() -> List<RowType> = { this }
 ) : PagingSource<Key, RowType>() {
 
@@ -35,7 +35,7 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
         return null
     }
 
-    val map = mutableMapOf<Key?, ObserverToken<RowType>>()
+    private val map = mutableMapOf<Key?, ObserverToken<RowType>>()
 
     override suspend fun load(
         params: PagingSourceLoadParams<Key>
@@ -48,7 +48,7 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
             "source load $key"
         }
         return try {
-            val observerToken = collection.observeList(queryProvider(key), params.loadSize, order, serializer) {
+            val observerToken = collection.observeList(queryProvider(key), params.loadSize, orders, serializer) {
                 invalidate()
             }
             val task = observerToken.task
@@ -264,5 +264,5 @@ inline fun <reified T : Identifiable> singleSourceDatabaseSource(
                 null
             }
         },
-        order = listOf(Order.Desc("id")),
+        orders = listOf(Order.Desc("id")),
     )

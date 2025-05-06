@@ -94,7 +94,7 @@ private fun CommunitySettingInternal(
         }, {
             CommunityIcon(communityInfo, showDialog = false, setClickEvent = false) {}
         })
-        SettingOptionResettableView("Poster", communityInfo.poster != null, {
+        SettingOptionResettableView("Poster", communityInfo.hasPoster, {
             if (it) {
                 scope.launch {
                     globalDialogState.use {

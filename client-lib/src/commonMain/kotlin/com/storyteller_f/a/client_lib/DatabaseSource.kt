@@ -19,7 +19,6 @@ interface ObserverToken<T> {
 }
 
 sealed interface Order {
-    data class NotNull(val field: String) : Order
     data class Asc(val field: String) : Order
     data class Desc(val field: String) : Order
 }
@@ -34,7 +33,7 @@ interface DatabaseCollection {
     fun <T> observeList(
         expression: Expression?,
         size: Int,
-        order: List<Order>,
+        orders: List<Order>,
         serializer: KSerializer<T>,
         invalidate: () -> Unit
     ): ObserverToken<T>
