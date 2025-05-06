@@ -90,7 +90,7 @@ class KotbaseDatabaseCollection(private val collection: kotbase.Collection) : Da
     override fun <T> observeList(
         expression: Expression?,
         size: Int,
-        order: List<Order>,
+        orders: List<Order>,
         serializer: KSerializer<T>,
         invalidate: () -> Unit
     ): ObserverToken<T> {
@@ -101,19 +101,10 @@ class KotbaseDatabaseCollection(private val collection: kotbase.Collection) : Da
         } else {
             selectQuery
         }.orderBy {
-            order.forEach {
+            orders.forEach {
                 when (it) {
-                    is Order.Asc -> {
-                        it.field.ascending()
-                    }
-
-                    is Order.Desc -> {
-                        it.field.descending()
-                    }
-
-                    is Order.NotNull -> {
-                        Ordering.expression(kotbase.Expression.property(it.field).isNotValued())
-                    }
+                    is Order.Asc -> it.field.ascending()
+                    is Order.Desc -> it.field.descending()
                 }
             }
         }
