@@ -89,7 +89,6 @@ object SignInViewModel {
     val appStartLoginRetried = MutableStateFlow(false)
     val retryLoginState = MutableStateFlow<LoadingState?>(null)
     val retryLoginHandler = SimpleLoadingHandler<UserInfo?> {
-
     }
     val user get() = retryLoginHandler.data
 

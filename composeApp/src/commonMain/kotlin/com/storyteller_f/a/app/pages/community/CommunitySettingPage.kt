@@ -89,8 +89,9 @@ private fun CommunitySettingInternal(
                         bus.emit(OnCommunityUpdated(newInfo))
                     }
                 }
-            } else
+            } else {
                 showDialog(SettingOption.Icon(communityInfo.icon?.name))
+            }
         }, {
             CommunityIcon(communityInfo, showDialog = false, setClickEvent = false) {}
         })
@@ -103,8 +104,9 @@ private fun CommunitySettingInternal(
                         bus.emit(OnCommunityUpdated(newInfo))
                     }
                 }
-            } else
+            } else {
                 showDialog(SettingOption.Poster(communityInfo.poster?.name))
+            }
         }, {
             Box(modifier = Modifier.width(100.dp).aspectRatio(3 / 4f)) {
                 CommunityPoster(communityInfo)

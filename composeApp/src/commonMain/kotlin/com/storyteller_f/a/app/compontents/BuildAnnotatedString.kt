@@ -1,19 +1,13 @@
 package com.storyteller_f.a.app.compontents
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
@@ -30,7 +24,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImagePainter
 import com.ashampoo.kim.Kim
 import com.ashampoo.kim.common.convertToPhotoMetadata
 import com.mikepenz.markdown.annotator.AnnotatorSettings
@@ -268,7 +261,8 @@ private fun buildInlineContentMap(
                         minOf(width * pair.second / pair.first, if (isEmbed) dpToPx(300.dp, density) else width * 2)
                     val recalculatedWidth = height * pair.first / pair.second
                     put(
-                        key, InlineTextContent(
+                        key,
+                        InlineTextContent(
                             Placeholder(
                                 pxToSp(recalculatedWidth, density),
                                 pxToSp(height, density),
@@ -277,44 +271,10 @@ private fun buildInlineContentMap(
                         ) {
                             val value = inlineContentMap[key]
                             transformer.transform(value.orEmpty())?.let { imageData ->
-                                val painter = imageData.painter
-                                if (painter is AsyncImagePainter) {
-                                    val state by painter.state.collectAsState()
-                                    when (val s = state) {
-                                        is AsyncImagePainter.State.Empty,
-                                        is AsyncImagePainter.State.Loading -> {
-                                            ImageLoading()
-                                        }
-
-                                        is AsyncImagePainter.State.Success -> {
-                                            Image(
-                                                painter = painter,
-                                                contentDescription = imageData.contentDescription,
-                                                modifier = imageData.modifier,
-                                                alignment = imageData.alignment,
-                                                contentScale = imageData.contentScale,
-                                                alpha = imageData.alpha,
-                                                colorFilter = imageData.colorFilter
-                                            )
-                                        }
-
-                                        is AsyncImagePainter.State.Error -> {
-                                            ImageError(s.result.throwable)
-                                        }
-                                    }
-                                } else {
-                                    Image(
-                                        painter = painter,
-                                        contentDescription = imageData.contentDescription,
-                                        modifier = imageData.modifier,
-                                        alignment = imageData.alignment,
-                                        contentScale = imageData.contentScale,
-                                        alpha = imageData.alpha,
-                                        colorFilter = imageData.colorFilter
-                                    )
-                                }
+                                CustomMarkdownImage(imageData)
                             }
-                        })
+                        }
+                    )
                 }
             }
         }.toImmutableMap()

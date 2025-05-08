@@ -1,8 +1,6 @@
 package com.storyteller_f.a.app
 
 import a.composeapp.generated.resources.Res
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.*
@@ -49,13 +47,11 @@ import com.storyteller_f.a.app.pages.topic.TopicPage
 import com.storyteller_f.a.app.pages.user.MemberPage
 import com.storyteller_f.a.app.pages.user.UserPage
 import com.storyteller_f.a.app.pages.user.UserSettingPage
-import com.storyteller_f.a.app.pages.user.signOut
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.app.utils.customDataStoreManager
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -77,7 +73,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer

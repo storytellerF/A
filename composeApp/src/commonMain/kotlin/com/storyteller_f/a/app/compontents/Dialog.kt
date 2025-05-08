@@ -238,7 +238,9 @@ fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
         }
 
         is IconRes.Vector -> {
-            Icon(imageVector = icon.vector, contentDescription = icon.description, modifier = Modifier.clickable(onClick != null) {
+            Icon(imageVector = icon.vector, contentDescription = icon.description, modifier = Modifier.clickable(
+                onClick != null
+            ) {
                 onClick?.invoke()
             })
         }

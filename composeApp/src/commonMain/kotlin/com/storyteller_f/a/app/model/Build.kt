@@ -92,7 +92,7 @@ fun createRoomViewModel(roomAid: String) = viewModel(keys = listOf("room", roomA
 }
 
 @Composable
-fun createRoomTopicsViewModel(roomId: PrimaryKey, roomInfo: RoomInfo) =
+fun createRoomTopicsViewModel(roomId: PrimaryKey) =
     viewModel(keys = listOf("room-topics", roomId)) { client, databaseSource ->
         TopicsViewModel(client, databaseSource, roomId, ObjectType.ROOM)
     }

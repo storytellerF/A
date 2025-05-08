@@ -84,8 +84,9 @@ private fun RoomSettingInternal(
                         bus.emit(OnRoomUpdated(newInfo))
                     }
                 }
-            } else
+            } else {
                 showDialog(SettingOption.Icon(roomInfo.icon?.name))
+            }
         }, {
             RoomIcon(roomInfo, showDialog = false, setClickEvent = false) {}
         })

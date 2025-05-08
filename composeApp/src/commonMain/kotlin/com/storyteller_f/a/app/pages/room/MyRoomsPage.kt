@@ -16,14 +16,12 @@ import androidx.compose.ui.unit.dp
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
-import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.bottomAppending
 import com.storyteller_f.a.app.common.topPrepend
 import com.storyteller_f.a.app.compontents.CommonImage
 import com.storyteller_f.a.app.compontents.CommunityIcon
-import com.storyteller_f.a.app.compontents.globalLoader
 import com.storyteller_f.a.app.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.model.createCommunityViewModel
 import com.storyteller_f.a.app.model.createJoinedRoomsViewModel
