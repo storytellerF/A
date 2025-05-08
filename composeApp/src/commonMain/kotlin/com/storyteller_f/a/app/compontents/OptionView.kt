@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import kotlin.math.exp
 
 @Composable
 fun SettingOptionView(title: String, onClick: () -> Unit, content: @Composable () -> Unit) {
@@ -45,10 +44,11 @@ fun SettingOptionResettableView(
         mutableStateOf(false)
     }
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clip(shape).clickable {
-        if (supportReset)
+        if (supportReset) {
             expended = true
-        else
+        } else {
             onClick(false)
+        }
     }.padding(18.dp)) {
         Text(title)
         Spacer(modifier = Modifier.weight(1f))

@@ -586,5 +586,3 @@ class UploadViewModel(client: HttpClient, private val uploader: UploadSession, m
         }
     }
 }
-
-class LoginPageView() : ViewModel()

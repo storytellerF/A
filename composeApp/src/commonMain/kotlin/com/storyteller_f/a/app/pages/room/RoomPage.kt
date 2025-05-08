@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
+import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemKey
 import com.dokar.sonner.ToastType
@@ -36,6 +38,7 @@ import com.storyteller_f.a.app.pages.topic.insertContent
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
@@ -103,41 +106,16 @@ private fun RoomPageInternal(
     updateDialog: (Boolean) -> Unit
 ) {
     val lazyListState = rememberLazyListState()
-    val viewModel = createRoomTopicsViewModel(roomId, roomInfo)
+    val viewModel = createRoomTopicsViewModel(roomId)
     val items = viewModel.flow.collectAsLazyPagingItems()
     Column {
         Box(modifier) {
-            StateView(items) {
-                LazyColumn(
-                    state = lazyListState,
-                    modifier = Modifier.padding(top = 10.dp),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
-                    reverseLayout = true,
-                ) {
-                    bottomAppending(items)
-                    items(
-                        count = items.itemCount,
-                        key = items.itemKey { topicInfo ->
-                            topicInfo.id.toString()
-                        },
-                    ) { index ->
-                        val next = if (index + 1 < items.itemCount) {
-                            items[index + 1]
-                        } else {
-                            null
-                        }
-                        items[index]?.let { info ->
-                            TopicCell(
-                                info,
-                                false,
-                                next?.author != info.author
-                            )
-                        }
-                    }
-                    topPrepend(items)
+            RoomMessageList(items, lazyListState)
+            val firstVisibleItemScrollOffset by remember {
+                derivedStateOf {
+                    lazyListState.firstVisibleItemScrollOffset
                 }
             }
-            val firstVisibleItemScrollOffset by remember { derivedStateOf { lazyListState.firstVisibleItemScrollOffset } }
             val firstVisibleItemIndex by remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }
             val client = LocalClient.current
             LaunchedEffect(firstVisibleItemIndex, roomInfo) {
@@ -174,6 +152,42 @@ private fun RoomPageInternal(
             scope.launch {
                 lazyListState.animateScrollToItem(0)
             }
+        }
+    }
+}
+
+@Composable
+private fun RoomMessageList(
+    items: LazyPagingItems<TopicInfo>,
+    lazyListState: LazyListState
+) {
+    StateView(items) {
+        LazyColumn(
+            state = lazyListState,
+            modifier = Modifier.padding(top = 10.dp),
+            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+            reverseLayout = true,
+        ) {
+            bottomAppending(items)
+            items(
+                count = items.itemCount,
+                key = items.itemKey { topicInfo ->
+                    topicInfo.id.toString()
+                },
+            ) { index ->
+                val next = if (index + 1 < items.itemCount) {
+                    items[index + 1]
+                } else {
+                    null
+                }
+                val info = items[index]
+                TopicCell(
+                    info,
+                    false,
+                    info != null && next?.author != info.author
+                )
+            }
+            topPrepend(items)
         }
     }
 }
@@ -260,15 +274,19 @@ private fun RoomInputGroupInternal(
         },
         mediaTarget,
         {
-            if (roomInfo.isPrivate)
+            if (roomInfo.isPrivate) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     when (val ks = keysState) {
                         LoadingState.Done -> Text("✅")
                         is LoadingState.Error -> Text(ks.e.localizedMessage?.take(10) ?: "!")
-                        null, LoadingState.Loading -> CircularProgressIndicator(modifier = Modifier.size(10.dp), strokeWidth = 2.dp)
+                        null, LoadingState.Loading -> CircularProgressIndicator(
+                            modifier = Modifier.size(10.dp),
+                            strokeWidth = 2.dp
+                        )
                     }
                     Text("${keysData?.size ?: 0}/${roomInfo.memberCount}")
                 }
+            }
         }
     ) {
         RoomSendButton(input = input) {

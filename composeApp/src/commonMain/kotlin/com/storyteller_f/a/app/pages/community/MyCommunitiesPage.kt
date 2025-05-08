@@ -33,8 +33,6 @@ import com.storyteller_f.a.app.model.createJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.toRoute
 import com.storyteller_f.a.app.utils.lcm
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.type.PrimaryKey
-import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -70,38 +68,14 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
                         it.id.toString()
                     },
                     span = {
-                        when {
-                            items[it]?.poster == null -> GridItemSpan(lcm / itemCount)
-                            items.itemCount > it + 1 && items[it + 1]?.poster == null -> {
-                                val t = (it + 1) % gridCount
-                                if (t == 0) {
-                                    GridItemSpan(gridSpan)
-                                } else {
-                                    GridItemSpan((gridCount + 1 - t) * gridSpan)
-                                }
-                            }
-
-                            else -> {
-                                GridItemSpan(gridSpan)
-                            }
-                        }
+                        getCommunityGridSpan(items, it, lcm, itemCount, gridCount, gridSpan)
                     },
                 ) { index ->
                     val communityInfo = items[index]
                     when {
                         communityInfo?.hasPoster == true -> {
-                            val width = if (index + 1 < items.itemCount && items[index + 1]?.poster == null) {
-                                val t = (index + 1) % gridCount
-                                if (t == 0) {
-                                    0.dp
-                                } else {
-                                    val itemWidth =
-                                        (this@BoxWithConstraints.maxWidth - (gridCount - 1) * 10.dp - 40.dp) / gridCount
-                                    (gridCount - t) * itemWidth + (gridCount - t) * 10.dp
-                                }
-                            } else
-                                0.dp
-                            CommunityGrid(communityInfo, width, onClick)
+                            val padding = getCommunityGridEndPadding(index, items, gridCount)
+                            CommunityGrid(communityInfo, padding, onClick)
                         }
 
                         else -> CommunityCell(communityInfo, false, onClick)
@@ -110,6 +84,49 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
                 bottomAppending(items, lcm)
             }
         }
+    }
+}
+
+private fun BoxWithConstraintsScope.getCommunityGridEndPadding(
+    index: Int,
+    items: LazyPagingItems<CommunityInfo>,
+    gridCount: Int
+): Dp {
+    val padding = if (index + 1 < items.itemCount && items[index + 1]?.poster == null) {
+        val t = (index + 1) % gridCount
+        if (t == 0) {
+            0.dp
+        } else {
+            val itemWidth =
+                (this.maxWidth - (gridCount - 1) * 10.dp - 40.dp) / gridCount
+            (gridCount - t) * itemWidth + (gridCount - t) * 10.dp
+        }
+    } else {
+        0.dp
+    }
+    return padding
+}
+
+private fun getCommunityGridSpan(
+    items: LazyPagingItems<CommunityInfo>,
+    i: Int,
+    lcm: Int,
+    itemCount: Int,
+    gridCount: Int,
+    gridSpan: Int
+): GridItemSpan = when {
+    items[i]?.poster == null -> GridItemSpan(lcm / itemCount)
+    items.itemCount > i + 1 && items[i + 1]?.poster == null -> {
+        val t = (i + 1) % gridCount
+        if (t == 0) {
+            GridItemSpan(gridSpan)
+        } else {
+            GridItemSpan((gridCount + 1 - t) * gridSpan)
+        }
+    }
+
+    else -> {
+        GridItemSpan(gridSpan)
     }
 }
 

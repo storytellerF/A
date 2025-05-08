@@ -22,7 +22,6 @@ import com.storyteller_f.a.app.compontents.SettingOptionView
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.compontents.imageRequest
 import com.storyteller_f.a.app.globalDialogState
-import com.storyteller_f.a.app.model.OnCommunityUpdated
 import com.storyteller_f.a.app.model.OnUserUpdated
 import com.storyteller_f.a.app.pages.topic.MediaPicker
 import com.storyteller_f.a.app.pages.topic.uploadPath
@@ -31,20 +30,17 @@ import com.storyteller_f.a.app.utils.androidAllowHardware
 import com.storyteller_f.a.app.utils.coilImageToImageBitmap
 import com.storyteller_f.a.app.utils.saveImageBitmap
 import com.storyteller_f.a.client_lib.SignInViewModel
-import com.storyteller_f.a.client_lib.updateCommunityInfo
 import com.storyteller_f.a.client_lib.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.mapResult
 import io.ktor.client.*
 import kotlinx.coroutines.launch
-import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
 sealed class SettingOption(open val value: String?) {
@@ -224,7 +220,7 @@ private fun UserSettingInternal(
     val client = LocalClient.current
     val scope = rememberCoroutineScope()
     Column(modifier = Modifier.padding(values).padding(horizontal = 20.dp)) {
-        SettingOptionResettableView("Icon", m.avatar != null,{
+        SettingOptionResettableView("Icon", m.avatar != null, {
             if (it) {
                 scope.launch {
                     globalDialogState.use {
@@ -233,8 +229,9 @@ private fun UserSettingInternal(
                         bus.emit(OnUserUpdated(newInfo))
                     }
                 }
-            } else
-            showDialog(SettingOption.Icon(m.avatar?.name))
+            } else {
+                showDialog(SettingOption.Icon(m.avatar?.name))
+            }
         }, {
             UserIcon(m, setClickEvent = false)
         })

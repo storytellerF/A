@@ -75,6 +75,7 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
     }
 }
 
+@Suppress("unused")
 @OptIn(ExperimentalPagingApi::class)
 class CustomRemoteMediator<Key : Any, Datum : Any>(
     private val collectionName: String,

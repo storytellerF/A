@@ -62,7 +62,7 @@ sealed interface Expression {
 interface DatabaseSource {
     fun getCollection(name: String): DatabaseCollection
 
-    fun getCollectionByPrefix(prefix: String) : List<DatabaseCollection>
+    fun getCollectionByPrefix(prefix: String): List<DatabaseCollection>
     fun deleteCollection(collectionName: String)
 
     companion object {

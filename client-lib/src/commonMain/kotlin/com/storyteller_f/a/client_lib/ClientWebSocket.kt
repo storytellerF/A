@@ -1,6 +1,5 @@
 package com.storyteller_f.a.client_lib
 
-import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame

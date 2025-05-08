@@ -16,11 +16,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil3.compose.LocalPlatformContext
-import coil3.network.ktor3.KtorNetworkFetcherFactory
-import coil3.request.ImageRequest
-import coil3.request.crossfade
-import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.pages.user.UserDialog
 import com.storyteller_f.shared.model.UserInfo
 
@@ -84,4 +79,3 @@ fun UserIconInternal(
         )
     }
 }
-
