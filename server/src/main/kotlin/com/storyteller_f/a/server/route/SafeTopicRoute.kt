@@ -46,9 +46,9 @@ fun Route.bindSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
         }
     }
 
-    get<RouteTopics> {
+    get<RouteTopics.Aid> {
         usePrincipalOrNull(reader) { uid ->
-            it.aid?.let { aid -> getTopicByAid(backend, aid, uid, it.fillHasCommented) } ?: Result.success(
+            it.aid?.let { aid -> getTopicByAid(backend, aid, uid, it.parent.fillHasCommented) } ?: Result.success(
                 null
             )
         }

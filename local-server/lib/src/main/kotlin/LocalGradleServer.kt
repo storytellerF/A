@@ -1,9 +1,9 @@
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import java.io.File
-import java.util.concurrent.CountDownLatch
 
 fun runGradle(envFilePath: String, port: Int): Process? {
     val envFile = File(envFilePath, "server/src/test/resources/.env")
@@ -65,31 +65,31 @@ fun stopServer(serverProcess: Process, port: Int) {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-fun startServer(envFileBasePath: String, port: Int): Process? {
+suspend fun CoroutineScope.startServer(envFileBasePath: String, port: Int): Process? {
     forceStop(port)
     val serverProcess = runGradle(envFileBasePath, port) ?: return null
-    val latch = CountDownLatch(1)
-    GlobalScope.launch {
+    val task = CompletableDeferred<String>()
+    async {
         serverProcess.inputStream.bufferedReader().use {
             while (serverProcess.isRunning()) {
                 val line = it.readLine() ?: break
                 if (line.contains("Application started")) {
-                    latch.countDown()
+                    task.complete(line)
                 }
             }
         }
     }
-    GlobalScope.launch {
+    async {
         serverProcess.errorStream.bufferedReader().use {
             while (serverProcess.isRunning()) {
                 val line = it.readLine() ?: break
                 if (line.contains("Execution failed for task ':server:")) {
-                    error(line)
+                    task.completeExceptionally(RuntimeException(line))
                 }
             }
         }
     }
-    latch.await()
+    task.await()
     return serverProcess
 }
 

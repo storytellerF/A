@@ -148,7 +148,7 @@ private fun doTest(
         val client = createClient {
             defaultClientConfigure(AcceptAllCookiesStorage())
         }
-        val wsClient = ClientWebSocketImpl({ userInfo, sig ->
+        val wsClient = ClientWebSocketImpl(client, { userInfo, sig ->
             client.webSocketSession("/link") {
                 addRequestHeaders(userInfo, sig)
             }

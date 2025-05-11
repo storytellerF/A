@@ -37,7 +37,7 @@ fun Route.bindProtectedSafeUserRoute(reader: DatabaseReader, backend: Backend) {
 }
 
 fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
-    get<RouteUsers> { value ->
+    get<RouteUsers.Aid> { value ->
         omitPrincipal(reader) {
             value.aid?.let { DatabaseFactory.getUser(backend, ObjectFetch.AidFetch(it)) } ?: Result.success(
                 null

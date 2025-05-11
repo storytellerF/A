@@ -5,10 +5,6 @@ plugins {
 group = "com.storyteller_f.worker"
 version = "unspecified"
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(projects.backend)
     implementation(projects.shared)

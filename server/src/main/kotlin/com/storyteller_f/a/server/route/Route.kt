@@ -26,7 +26,7 @@ import io.ktor.server.websocket.*
 import kotlin.io.path.exists
 
 @Resource("/communities")
-class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
+class RouteCommunities(val fillJoinInfo: Boolean? = null) {
     @Resource("search")
     class Search(
         @Suppress("unused") val parent: RouteCommunities = RouteCommunities(),
@@ -35,6 +35,9 @@ class RouteCommunities(val aid: String? = null, val fillJoinInfo: Boolean? = nul
         val target: PrimaryKey? = null,
         val hasPoster: PosterSearch? = null,
     )
+
+    @Resource("aid")
+    class Aid(val parent: RouteCommunities = RouteCommunities(), val aid: String? = null)
 
     @Resource("{id}")
     class Id(val parent: RouteCommunities = RouteCommunities(), val id: PrimaryKey) {
@@ -65,7 +68,7 @@ class RouteMedia(val objectId: PrimaryKey, val objectType: ObjectType) {
 }
 
 @Resource("/rooms")
-class RouteRooms(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
+class RouteRooms(val fillJoinInfo: Boolean? = null) {
     @Resource("search")
     class Search(
         @Suppress("unused") val parent: RouteRooms = RouteRooms(),
@@ -73,6 +76,9 @@ class RouteRooms(val aid: String? = null, val fillJoinInfo: Boolean? = null) {
         val word: String? = null,
         val community: PrimaryKey? = null,
     )
+
+    @Resource("aid")
+    class Aid(val parent: RouteRooms = RouteRooms(), val aid: String? = null)
 
     @Resource("{id}")
     class Id(val parent: RouteRooms = RouteRooms(), val id: PrimaryKey) {
@@ -103,6 +109,9 @@ class RouteTopics(val fillHasCommented: Boolean? = null, val aid: String? = null
         val parentType: ObjectType? = null,
     )
 
+    @Resource("aid")
+    class Aid(val parent: RouteTopics = RouteTopics(), val aid: String? = null)
+
     @Resource("recommend")
     class Recommend(val parent: RouteTopics)
 
@@ -132,7 +141,7 @@ class RouteReactions {
 }
 
 @Resource("/users")
-class RouteUsers(val aid: String? = null) {
+class RouteUsers {
     @Resource("{id}")
     class Id(@Suppress("unused") val parent: RouteUsers = RouteUsers(), val id: PrimaryKey) {
         @Resource("topics")
@@ -147,6 +156,9 @@ class RouteUsers(val aid: String? = null) {
             val status: PrimaryKey? = null
         )
     }
+
+    @Resource("aid")
+    class Aid(@Suppress("unused") val parent: RouteUsers = RouteUsers(), val aid: String? = null)
 
     @Resource("update")
     class Update(@Suppress("unused") val parent: RouteUsers = RouteUsers())

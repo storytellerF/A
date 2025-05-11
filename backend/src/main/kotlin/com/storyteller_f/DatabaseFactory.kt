@@ -1,6 +1,7 @@
 package com.storyteller_f
 
 import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
+import com.storyteller_f.shared.obj.UnauthorizedException
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers

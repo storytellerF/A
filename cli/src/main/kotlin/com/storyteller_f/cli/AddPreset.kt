@@ -239,7 +239,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 }
             }
             l3.forEach { (c, communityId, aid) ->
-                createCommunityRooms(communityId, c, aid)
+                createCommunityRoomsRaw(communityId, c, aid)
             }
         }.getOrThrow()
     }
