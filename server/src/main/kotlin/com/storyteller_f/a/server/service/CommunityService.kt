@@ -93,7 +93,7 @@ suspend fun searchCommunities(
 ) = DatabaseFactory.getPaginationCommunityList(
     backend,
     search.target ?: uid,
-    if (search.target == null) JoinStatusSearch.JOINED else search.joinStatus,
+    if (search.target != null) JoinStatusSearch.JOINED else search.joinStatus,
     search.word,
     search.hasPoster,
     pagingFetch

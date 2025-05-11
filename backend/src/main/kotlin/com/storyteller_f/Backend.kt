@@ -185,6 +185,5 @@ fun Query.bindPaginationQuery(
     return orderBy(table.id, SortOrder.DESC).limit(s)
 }
 
-class UnauthorizedException : Exception()
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)
 class CustomBadRequestException(message: String) : Exception(message)

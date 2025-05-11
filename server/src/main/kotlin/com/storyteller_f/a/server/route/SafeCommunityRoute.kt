@@ -40,10 +40,10 @@ fun Route.bindSafeCommunityRoute(reader: DatabaseReader, backend: Backend) {
         }
     }
 
-    get<RouteCommunities> {
+    get<RouteCommunities.Aid> {
         usePrincipalOrNull(reader) { uid ->
             it.aid?.let { aid ->
-                getCommunity(backend, ObjectFetch.AidFetch(aid), uid, it.fillJoinInfo)
+                getCommunity(backend, ObjectFetch.AidFetch(aid), uid, it.parent.fillJoinInfo)
             }
         }
     }

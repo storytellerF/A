@@ -2,8 +2,7 @@ package com.storyteller_f.tables
 
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.obj.JoinStatusSearch
-import com.storyteller_f.shared.obj.UpdateRoomBody
+import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
@@ -88,14 +87,15 @@ suspend fun getRoomPaginationList(
     community: PrimaryKey?,
     pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<RoomInfo, String?>>, Long>> {
+    val joinSearch = joinStatusSearch.toJoinSearch(uid)
     return DatabaseFactory.mapQuery(backend, ::mapRoomInfo) {
-        buildRoomSearchQuery(uid, false, joinStatusSearch, word, community).bindPaginationQuery(
+        buildRoomSearchQuery(false, joinSearch, word, community).bindPaginationQuery(
             Rooms,
             pagingFetch
         )
     }.mapResult { list ->
         DatabaseFactory.count(backend) {
-            buildRoomSearchQuery(uid, true, joinStatusSearch, word, community)
+            buildRoomSearchQuery(true, joinSearch, word, community)
         }.map { value ->
             list to value
         }
@@ -103,18 +103,59 @@ suspend fun getRoomPaginationList(
 }
 
 private fun buildRoomSearchQuery(
-    uid: PrimaryKey?,
     getCount: Boolean,
-    joinStatusSearch: JoinStatusSearch?,
+    joinStatusSearch: JoinSearch,
     word: String?,
     community: PrimaryKey?
 ): Query {
-    val query = when (joinStatusSearch) {
-        JoinStatusSearch.JOINED -> buildJoinedRoomSearchQuery(uid, getCount)
-        JoinStatusSearch.NOT_JOINED -> buildNotJoinedRoomSearchQuery(uid)
-        else -> buildUnspecifiedRoomSearchQuery(uid, getCount)
+    val query = Rooms
+        .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+        .select(Rooms.fields + Aids.value)
+    when (joinStatusSearch) {
+        is JoinSearch.Joined -> query.adjustColumnSet {
+            join(MemberJoins, JoinType.INNER, Rooms.id, MemberJoins.objectId) {
+                MemberJoins.uid eq joinStatusSearch.uid
+            }
+        }
+
+        is JoinSearch.NotJoined -> query.where {
+            Rooms.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
+                MemberJoins.uid eq joinStatusSearch.uid
+            }) and Rooms.communityId.isNotNull()
+        }
+
+        is JoinSearch.Unspecified -> {
+            val uid = joinStatusSearch.uid
+            if (uid != null) {
+                query.adjustColumnSet {
+                    join(MemberJoins, JoinType.LEFT, Rooms.id, MemberJoins.objectId) {
+                        (MemberJoins.uid eq uid)
+                    }
+                }.andWhere {
+                    (MemberJoins.uid.isNull() and Rooms.communityId.isNotNull()).or(MemberJoins.uid.isNotNull())
+                }
+            } else {
+                query.andWhere {
+                    Rooms.communityId.isNotNull()
+                }
+            }
+        }
     }
-    if (!(word.isNullOrBlank())) {
+    val uid = joinStatusSearch.getUid()
+    if (getCount) {
+        query.adjustSelect {
+            selectAll()
+        }
+    } else if (uid != null) {
+        query.adjustColumnSet {
+            join(UserTopicReads, JoinType.LEFT, Rooms.id, UserTopicReads.objectId) {
+                UserTopicReads.uid eq uid
+            }
+        }.adjustSelect {
+            select(Rooms.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
+        }
+    }
+    if (!word.isNullOrBlank()) {
         query.andWhere {
             Rooms.name like "%$word%"
         }
@@ -125,71 +166,6 @@ private fun buildRoomSearchQuery(
         }
     }
     return query
-}
-
-private fun buildUnspecifiedRoomSearchQuery(
-    uid: PrimaryKey?,
-    getCount: Boolean
-): Query = if (uid != null) {
-    val join = Rooms
-        .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-        .join(MemberJoins, JoinType.LEFT, Rooms.id, MemberJoins.objectId) {
-            (MemberJoins.uid eq uid)
-        }
-    if (getCount) {
-        join.selectAll()
-    } else {
-        join.join(UserTopicReads, JoinType.LEFT, Rooms.id, UserTopicReads.objectId) {
-            UserTopicReads.uid eq uid
-        }.select(Rooms.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
-    }.where {
-        (MemberJoins.uid.isNull() and Rooms.communityId.isNotNull()).or(MemberJoins.uid.isNotNull())
-    }
-} else {
-    Rooms
-        .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-        .select(Rooms.fields + Aids.value)
-        .where {
-            Rooms.communityId.isNotNull()
-        }
-}
-
-private fun buildNotJoinedRoomSearchQuery(
-    uid: PrimaryKey?
-): Query = if (uid != null) {
-    Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-        .join(UserTopicReads, JoinType.LEFT, Rooms.id, UserTopicReads.objectId) {
-            UserTopicReads.uid eq uid
-        }
-        .select(Rooms.fields + Aids.value + UserTopicReads.topicId)
-        .where {
-            Rooms.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
-                MemberJoins.uid eq uid
-            }) and Rooms.communityId.isNotNull()
-        }
-} else {
-    throw UnauthorizedException()
-}
-
-private fun buildJoinedRoomSearchQuery(
-    uid: PrimaryKey?,
-    getCount: Boolean
-): Query = if (uid != null) {
-    val join = Rooms
-        .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-        .join(MemberJoins, JoinType.INNER, Rooms.id, MemberJoins.objectId) {
-            MemberJoins.uid eq uid
-        }
-
-    if (getCount) {
-        join.selectAll()
-    } else {
-        join.join(UserTopicReads, JoinType.LEFT, Rooms.id, UserTopicReads.objectId) {
-            UserTopicReads.uid eq uid
-        }.select(Rooms.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
-    }
-} else {
-    throw UnauthorizedException()
 }
 
 suspend fun DatabaseFactory.getRoomCommunityId(backend: Backend, parentId: PrimaryKey): Result<PrimaryKey?> =

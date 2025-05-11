@@ -45,10 +45,10 @@ fun Route.bindSafeRoomRoute(reader: DatabaseReader, backend: Backend) {
         }
     }
 
-    get<RouteRooms> {
+    get<RouteRooms.Aid> {
         usePrincipalOrNull(reader) { uid ->
             it.aid?.let { aid ->
-                getRoom(backend, ObjectFetch.AidFetch(aid), uid, it.fillJoinInfo)
+                getRoom(backend, ObjectFetch.AidFetch(aid), uid, it.parent.fillJoinInfo)
             } ?: Result.success(null)
         }
     }

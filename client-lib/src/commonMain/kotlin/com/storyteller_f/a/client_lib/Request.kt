@@ -50,7 +50,7 @@ suspend fun HttpClient.getRoomInfo(id: PrimaryKey) = serviceCatching {
 }
 
 suspend fun HttpClient.getRoomInfoByAid(aid: String) = serviceCatching {
-    get("rooms") {
+    get("rooms/aid") {
         url {
             if (isAlreadyLogin()) parameters.append("fillJoinInfo", "true")
             parameters.append("aid", aid)
@@ -138,7 +138,7 @@ suspend fun HttpClient.getCommunityInfo(id: PrimaryKey) =
     }
 
 suspend fun HttpClient.getCommunityInfoByAid(aid: String, fillJoinInfo: Boolean = false) = serviceCatching {
-    get("communities") {
+    get("communities/aid") {
         url {
             if (fillJoinInfo) {
                 parameters.append("fillJoinInfo", "true")
@@ -241,7 +241,7 @@ suspend fun HttpClient.updateUserInfo(newInfo: UpdateUserBody) = serviceCatching
 }
 
 suspend fun HttpClient.getUserInfoByAid(aid: String) = serviceCatching {
-    get("users") {
+    get("users/aid") {
         url {
             parameters.append("aid", aid)
         }
@@ -271,7 +271,7 @@ suspend fun HttpClient.getTopicInfo(id: PrimaryKey) = serviceCatching {
 }
 
 suspend fun HttpClient.getTopicInfoByAid(aid: String) = serviceCatching {
-    get("topics") {
+    get("topics/aid") {
         url {
             parameters.append("aid", aid)
         }

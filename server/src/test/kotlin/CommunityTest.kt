@@ -99,13 +99,13 @@ class CommunityTest {
     @Test
     fun `test search community`() {
         test { client, _ ->
-            val (_, _, _, _, community1) = attachSession(client) {
+            val (_, _, _, _, community1Id) = attachSession(client) {
                 val info = client.createCommunity(NewCommunity("name1", "c1")).getOrThrow()
                 client.createCommunity(NewCommunity("name2", "c2")).getOrThrow()
                 info.id
             }
             attachSession(client) {
-                client.joinCommunity(community1)
+                client.joinCommunity(community1Id)
                 testSearchCommunityCount(client, 1, null, 10, JoinStatusSearch.JOINED, null)
                 testSearchCommunityCount(client, 1, null, 10, JoinStatusSearch.NOT_JOINED, null)
                 testSearchCommunityCount(client, 2, null, 10, JoinStatusSearch.UNSPECIFIED, null)
