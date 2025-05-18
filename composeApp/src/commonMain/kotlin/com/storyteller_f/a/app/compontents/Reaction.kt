@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnAddReaction
@@ -29,7 +29,6 @@ import com.storyteller_f.a.app.pages.topic.SheetContainer
 import com.storyteller_f.a.app.pages.world.Pill
 import com.storyteller_f.a.client_lib.addReaction
 import com.storyteller_f.a.client_lib.deleteReaction
-import com.storyteller_f.a.client_lib.isAlreadyLogin
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -42,6 +41,7 @@ fun InteractionRow(
     startAddReaction: () -> Unit,
     startAddComment: () -> Unit
 ) {
+    val userSessionViewModel = LocalSessionManager.current
     val topicViewModel = createTopicViewModel(topicInfo.id)
     val reactions by topicViewModel.handler.data.map {
         it?.extension?.reactions
@@ -54,7 +54,7 @@ fun InteractionRow(
         topicInfo,
         startAddComment
     ) {
-        if (isAlreadyLogin()) {
+        if (userSessionViewModel.isAlreadyLogin) {
             startAddReaction()
         } else {
             appNav.gotoLogin()
@@ -241,20 +241,20 @@ private fun EmojiCell(
     val scope = rememberCoroutineScope()
     val emoji = info.emoji
     val hasReacted = info.hasReacted
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     Pill(info.count.toString(), emoji = emoji, selected = hasReacted) {
         emoji.let { string ->
             if (hasReacted) {
                 scope.launch {
                     globalDialogState.use {
-                        client.deleteReaction(string, topicId)
+                        sessionManager.deleteReaction(string, topicId)
                         bus.emit(OnRemoveReaction(topicId, string))
                     }
                 }
             } else {
                 scope.launch {
                     globalDialogState.use {
-                        client.addReaction(topicId, string)
+                        sessionManager.addReaction(topicId, string)
                         bus.emit(OnAddReaction(topicId, string))
                     }
                 }

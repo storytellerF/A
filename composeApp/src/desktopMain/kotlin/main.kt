@@ -3,7 +3,6 @@ import androidx.compose.ui.window.application
 import com.kdroid.composenotification.builder.AppConfig
 import com.kdroid.composenotification.builder.NotificationInitializer
 import com.storyteller_f.a.app.App
-import com.storyteller_f.a.app.utils.restoreFromStorage
 import com.storyteller_f.shared.loadIfNeed
 import java.awt.*
 import kotlin.math.ceil
@@ -43,7 +42,6 @@ fun main() {
         )
     )
     loadIfNeed()
-    restoreFromStorage()
     application {
         Window(
             onCloseRequest = ::exitApplication,

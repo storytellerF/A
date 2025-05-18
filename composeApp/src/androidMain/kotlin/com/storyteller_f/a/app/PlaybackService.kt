@@ -8,7 +8,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.storyteller_f.a.app.compontents.CustomVideoSize
-import com.storyteller_f.a.app.compontents.playerSession
+import com.storyteller_f.a.app.compontents.currentPlayerSession
 import io.github.aakira.napier.Napier
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -22,12 +22,12 @@ object MediaProvider {
         init: (MediaController, MediaPlaySession.VideoOrAudio) -> Unit
     ) {
         val c = controller ?: return
-        val session = playerSession.value
+        val session = currentPlayerSession.value
         if (session?.id == currentSession.id) {
             return
         }
         init(c, currentSession)
-        playerSession.value = currentSession
+        currentPlayerSession.value = currentSession
     }
 
     @Synchronized
@@ -35,38 +35,38 @@ object MediaProvider {
         Napier.d {
             "MediaProvider release $currentSession"
         }
-        val session = playerSession.value ?: return
+        val session = currentPlayerSession.value ?: return
         val u = session.uuids.lastOrNull() ?: return
         if (u == currentSession.uuid) {
             val new = session.uuids.subList(0, session.uuids.size - 1)
             if (new.isEmpty()) {
                 controller?.stop()
-                playerSession.value = null
+                currentPlayerSession.value = null
             } else {
-                playerSession.value = session.copy(uuids = new)
+                currentPlayerSession.value = session.copy(uuids = new)
             }
         }
     }
 
     @Synchronized
     fun switch(currentSession: LocalMediaPlaySession) {
-        val session = playerSession.value ?: return
+        val session = currentPlayerSession.value ?: return
         val u = session.uuids.lastOrNull() ?: return
         if (session.id == currentSession.id && currentSession.uuid != u) {
             Napier.d {
                 "Video ${currentSession.uuid} switch to ${currentSession.uuid}"
             }
             val new = session.uuids + currentSession.uuid
-            playerSession.value = session.copy(uuids = new)
+            currentPlayerSession.value = session.copy(uuids = new)
         }
     }
 
     @Synchronized
     fun update(currentSession: LocalMediaPlaySession, size: CustomVideoSize) {
-        val session = playerSession.value ?: return
+        val session = currentPlayerSession.value ?: return
         val u = session.uuids.lastOrNull() ?: return
         if (session.id == currentSession.id && currentSession.uuid == u) {
-            playerSession.value = session.copy(videoSize = size)
+            currentPlayerSession.value = session.copy(videoSize = size)
         }
     }
 }

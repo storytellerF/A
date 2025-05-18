@@ -53,7 +53,7 @@ fun createCommunityRoomsViewModel(communityId: PrimaryKey) =
 
 @Composable
 fun createJoinedRoomsViewModel() = viewModel { client, databaseSource ->
-    RoomsViewModel(client = client, databaseSource, JoinStatusSearch.JOINED, "")
+    RoomsViewModel(client, databaseSource, JoinStatusSearch.JOINED, "")
 }
 
 @Composable
@@ -75,7 +75,7 @@ fun createRoomSearchViewModel(
     finalOption: JoinStatusSearch,
     current: String
 ) = viewModel(keys = listOf("my-rooms", finalOption.name, current)) { client, databaseSource ->
-    RoomsViewModel(client = client, databaseSource, finalOption, current)
+    RoomsViewModel(client, databaseSource, finalOption, current)
 }
 
 @Composable

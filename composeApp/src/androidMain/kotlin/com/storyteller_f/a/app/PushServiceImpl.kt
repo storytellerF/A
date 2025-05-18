@@ -7,8 +7,7 @@ import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.storyteller_f.a.client_lib.addDevice
-import com.storyteller_f.a.client_lib.defaultClientConfigure
-import com.storyteller_f.a.client_lib.getClient
+import com.storyteller_f.a.client_lib.createUserSessionManager
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,19 +24,15 @@ class PushServiceImpl : PushService(), CoroutineScope {
     private val job = SupervisorJob()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO + job
-    val client = getClient {
-        defaultClientConfigure(httpUrl = AppConfig.SERVER_URL)
-    }
+    val userSession = createUserSessionManager(buildWebSocketUrl(AppConfig.WS_SERVER_URL), this, { model, cookie ->
+        buildHttpClient(AppConfig.SERVER_URL, cookie, model)
+    }, { _, _ -> })
 
     override fun onMessage(message: PushMessage, instance: String) {
         Napier.i(tag = "push") {
             "receive message $message"
         }
-        //发系统通知
-
-        //发通知
         val context = this
-        //检查channel 是否存在，如果不存在创建一个
         val channel = "Regular"
         val notificationManager = NotificationManagerCompat.from(context)
         val notificationChannel = notificationManager.getNotificationChannel(channel)
@@ -67,9 +62,8 @@ class PushServiceImpl : PushService(), CoroutineScope {
             "receive endpoint $endpoint"
         }
         launch {
-            client.addDevice(endpoint.url)
+            userSession.first.addDevice(endpoint.url)
         }
-
     }
 
     override fun onRegistrationFailed(reason: FailedReason, instance: String) {

@@ -4,18 +4,17 @@ import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.russhwolf.settings.serialization.removeValue
-import com.storyteller_f.a.client_lib.DefaultLoginUserSession
-import com.storyteller_f.a.client_lib.LoginUser
-import com.storyteller_f.a.client_lib.LoginUserSession
+import com.storyteller_f.a.client_lib.RawUserPass
+import com.storyteller_f.a.client_lib.RawUserPassInfo
+import com.storyteller_f.a.client_lib.UserPass
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.builtins.serializer
 
 interface LoginUserSessionManager {
     fun savedSession(): SavedSession
 
-    suspend fun addSession(session: LoginUser): LoginUserSession
+    suspend fun addSession(session: RawUserPassInfo): UserPass
 
-    fun buildSession(alias: String): LoginUserSession?
+    fun buildSession(alias: String): UserPass?
 
     fun removeSession(session: String)
 }
@@ -23,8 +22,8 @@ interface LoginUserSessionManager {
 class DefaultLoginUserSessionManager : LoginUserSessionManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun savedSession(): SavedSession {
-        val loginUser = defaultSettings.decodeValueOrNull<LoginUser>("login_user")
-        return if (loginUser != null) {
+        val rawUserPass = defaultSettings.decodeValueOrNull<RawUserPassInfo>("login_user")
+        return if (rawUserPass != null) {
             val loginHistory = defaultSettings.decodeValueOrNull<LoginHistory>("login_history")
             SavedSession(listOf("default"), loginHistory?.last, loginHistory?.current)
         } else {
@@ -33,22 +32,22 @@ class DefaultLoginUserSessionManager : LoginUserSessionManager {
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override suspend fun addSession(session: LoginUser): LoginUserSession {
-        val loginUser = LoginUser(session.privateKey, session.publicKey, session.address)
-        defaultSettings.encodeValue("login_user", loginUser)
+    override suspend fun addSession(session: RawUserPassInfo): UserPass {
+        val rawUserPass = RawUserPassInfo(session.privateKey, session.publicKey, session.address)
+        defaultSettings.encodeValue("login_user", rawUserPass)
         defaultSettings.encodeValue("login_history", LoginHistory("default", "default"))
-        return DefaultLoginUserSession(session)
+        return RawUserPass(session)
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override fun buildSession(alias: String): LoginUserSession? {
-        val loginUser = defaultSettings.decodeValueOrNull<LoginUser>("login_user") ?: return null
-        return DefaultLoginUserSession(loginUser)
+    override fun buildSession(alias: String): UserPass? {
+        val rawUserPass = defaultSettings.decodeValueOrNull<RawUserPassInfo>("login_user") ?: return null
+        return RawUserPass(rawUserPass)
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun removeSession(session: String) {
-        defaultSettings.removeValue(LoginUser.serializer(), "login_user")
+        defaultSettings.removeValue(RawUserPassInfo.serializer(), "login_user")
     }
 }
 

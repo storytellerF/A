@@ -23,6 +23,7 @@ import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.DialogContainer
+import com.storyteller_f.a.app.pages.room.isLoginin
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.clearStorage
 import com.storyteller_f.a.app.utils.createConnectivity
@@ -33,7 +34,6 @@ import com.storyteller_f.shared.model.UserInfo
 import dev.jordond.connectivity.Connectivity
 import dev.jordond.connectivity.compose.rememberConnectivityState
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -45,14 +45,14 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
         CustomAlertDialogController()
     }
     val appNav = LocalAppNav.current
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     LaunchedEffect(isMe, userInfo) {
         if (isMe) {
-            refreshMyInfo(userInfo, client)
+            refreshMyInfo(userInfo, sessionManager)
         }
     }
     val scope = rememberCoroutineScope()
-    val isSignIn by SignInViewModel.isAlreadySignUp.collectAsState()
+    val isSignIn = isLoginin()
     DialogContainer {
         if (!isSignIn && isMe) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth()) {
@@ -90,7 +90,7 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
         controller.close()
     }) {
         scope.launch {
-            signOut(client)
+            signOut(sessionManager)
         }
     }
 }
@@ -145,36 +145,38 @@ private fun UserDialogMenuList(
     }
 }
 
-suspend fun signOut(client: HttpClient) {
+suspend fun signOut(sessionManager: SessionManager) {
     globalDialogState.use {
-        client.signOut()
-        SignInViewModel.signOut()
+        sessionManager.signOut().getOrThrow()
+        sessionManager.sessionModel.clear()
         clearStorage()
         unregisterPushService()
     }
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-private fun refreshMyInfo(my: UserInfo?, client: HttpClient) {
+private fun refreshMyInfo(my: UserInfo?, sessionManager: SessionManager) {
     GlobalScope.launch {
         try {
+            val sessionModel = sessionManager.sessionModel
             if (my == null) {
-                val value = SignInViewModel.state.value
-                if (value is ClientSession.SignInSuccess) {
-                    val data = client.getData().getOrThrow()
+                val value = sessionModel.state.value
+                if (value is ClientSessionState.Success) {
+                    val data = sessionManager.getData().getOrThrow()
                     val address = value.session.address().getOrThrow()
                     val signature = value.session.signature(finalData(data)).getOrThrow()
-                    val userInfo = client.signIn(address, signature).getOrThrow()
-                    SignInViewModel.updateUser(userInfo)
+                    val userInfo = sessionManager.signIn(address, signature).getOrThrow()
+                    sessionModel.updateUser(userInfo)
+                    sessionModel.updateSignature(data, signature)
                 }
             } else {
                 val aid = my.aid
                 val userInfo = if (aid.isNullOrBlank()) {
-                    client.getUserInfo(my.id)
+                    sessionManager.getUserInfo(my.id)
                 } else {
-                    client.getUserInfoByAid(aid)
+                    sessionManager.getUserInfoByAid(aid)
                 }.getOrThrow()
-                SignInViewModel.updateUser(userInfo)
+                sessionModel.updateUser(userInfo)
             }
         } catch (e: Exception) {
             Napier.e(e) {

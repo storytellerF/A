@@ -24,17 +24,17 @@ import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.room.CommonInputButton
 import com.storyteller_f.a.app.pages.room.InputGroupInternal
 import com.storyteller_f.a.app.pages.room.RoomInputGroup
+import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.client_lib.LoadingState
-import com.storyteller_f.a.client_lib.SignInViewModel
+import com.storyteller_f.a.client_lib.SessionManager
 import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkContent
-import io.ktor.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -177,10 +177,10 @@ private fun TopicInputGroup(
     val sendState = remember {
         mutableStateOf<LoadingState>(LoadingState.Done)
     }
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     val isSending = sendState.value is LoadingState.Loading
     val appNav = LocalAppNav.current
-    val my by SignInViewModel.user.collectAsState()
+    val my = getCurrentUserInfo()
     InputGroupInternal(
         input,
         MaterialTheme.colorScheme.secondaryContainer,
@@ -196,7 +196,7 @@ private fun TopicInputGroup(
             if (!isSending) {
                 sendTopic(scope, sendState, topic, input, {
                     input = it
-                }, focusManager, toasterState, client, scrollTo)
+                }, focusManager, toasterState, sessionManager, scrollTo)
             }
         }
     }
@@ -210,7 +210,7 @@ private fun sendTopic(
     updateInput: (String) -> Unit,
     focusManager: FocusManager,
     toasterState: ToasterState,
-    client: HttpClient,
+    sessionManager: SessionManager,
     scrollTo: () -> Unit
 ) {
     if (!checkContent(input)) {
@@ -220,7 +220,7 @@ private fun sendTopic(
     scope.launch {
         sendState.value = LoadingState.Loading
         try {
-            val info = client.createNewTopic(ObjectType.TOPIC, topic.id, input).getOrThrow()
+            val info = sessionManager.createNewTopic(ObjectType.TOPIC, topic.id, input).getOrThrow()
             bus.emit(OnTopicCreated(info))
             updateInput("")
             focusManager.clearFocus()

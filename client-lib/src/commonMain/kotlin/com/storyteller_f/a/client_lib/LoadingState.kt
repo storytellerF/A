@@ -65,7 +65,6 @@ class FixedLoadingHandler<T>(val load: () -> Unit = {}) : LoadingHandler<T> {
     override fun refresh() {
         load()
     }
-
 }
 
 class SimpleLoadingHandler<T>(val scope: CoroutineScope, val loader: suspend () -> Result<T>) :

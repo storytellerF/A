@@ -2,8 +2,8 @@
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.io.File
 
 fun runGradle(envFilePath: String, port: Int): Process? {
@@ -90,7 +90,9 @@ suspend fun CoroutineScope.startServer(envFileBasePath: String, port: Int): Proc
             }
         }
     }
-    task.await()
+    withTimeout(10000) {
+        task.await()
+    }
     return serverProcess
 }
 

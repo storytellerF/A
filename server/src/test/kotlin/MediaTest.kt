@@ -13,10 +13,10 @@ import kotlin.test.assertEquals
 class MediaTest {
     @Test
     fun `test upload media`() {
-        test { client, _ ->
-            val firstTuple = attachSession(client) {
+        test {
+            val firstTuple = attachSession {
                 val response =
-                    client.upload(
+                    upload(
                         ObjectTuple(it.uid, ObjectType.USER),
                         5,
                         "hello.txt",
@@ -27,12 +27,12 @@ class MediaTest {
                         }
                     }.getOrThrow()
                 assertEquals("${it.uid}/hello.txt", response.data.first().name)
-                assertListSize(1, client.getMediaList(it.uid, ObjectType.USER, null, 10))
+                assertListSize(1, getMediaList(it.uid, ObjectType.USER, null, 10))
             }
-            attachSession(client) {
-                val response = client.copy(firstTuple.uid ob ObjectType.USER, "hello.txt").getOrThrow()
+            attachSession {
+                val response = copy(firstTuple.uid ob ObjectType.USER, "hello.txt").getOrThrow()
                 assertEquals("${it.uid}/hello.txt", response.data.first().name)
-                assertListSize(1, client.getMediaList(it.uid, ObjectType.USER, null, 10))
+                assertListSize(1, getMediaList(it.uid, ObjectType.USER, null, 10))
             }
         }
     }

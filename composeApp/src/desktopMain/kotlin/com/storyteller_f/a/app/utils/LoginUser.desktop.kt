@@ -4,5 +4,4 @@ actual fun buildLoginUserSessionFactory(): LoginUserSessionManager {
     return DefaultLoginUserSessionManager()
 }
 
-actual fun unregisterPushService() {
-}
+actual fun unregisterPushService() = Unit

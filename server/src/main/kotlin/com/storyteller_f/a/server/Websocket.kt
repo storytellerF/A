@@ -53,7 +53,6 @@ class WebsocketDispatcher(val session: DefaultWebSocketServerSession) : Notifica
             session.sendSerialized<RoomFrame>(frame)
         }
     }
-
 }
 
 class ExternalDispatcher(val client: HttpClient, val endpointUrl: String) : NotificationDispatcher {
@@ -81,16 +80,17 @@ suspend fun sendTopicToRoomMembers(backend: Backend) {
     }.use { client ->
         sharedFlow.collect { frame ->
             DatabaseFactory.getJoinedUserList(backend, frame.topicInfo.rootId).mapResult { list ->
-                val dispatchers = list.mapNotNull {
+                val memberJoins = list.filter {
+                    it.uid != frame.topicInfo.author
+                }
+                val dispatchers = memberJoins.mapNotNull {
                     userWebSocketSessionMap[it.uid]
                 }.flatMap {
                     it.map {
                         WebsocketDispatcher(it)
                     }
                 }
-                DatabaseFactory.getUserDevices(backend, list.filter {
-                    it.uid != frame.topicInfo.author
-                }.map {
+                DatabaseFactory.getUserDevices(backend, memberJoins.map {
                     it.uid
                 }).map {
                     it.map {
@@ -259,24 +259,27 @@ private suspend fun addTopicIntoRoom(
 
             checkRoomIsPrivate(backend, roomId).mapResultIfNotNull { isPrivate ->
                 if (isPrivate) {
-                    if (content is TopicContent.Encrypted)
+                    if (content is TopicContent.Encrypted) {
                         isKeyVerified(
                             backend,
                             roomId,
                             content.encryptedKey
                         ).mapResult {
-                            if (it)
+                            if (it) {
                                 DatabaseFactory.saveEncryptedTopic(
                                     backend,
                                     topic,
                                     content
                                 )
-                            else Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
+                            } else {
+                                Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
+                            }
                         }
-                    else
+                    } else {
                         Result.failure(
                             ForbiddenException("Private room only accept encrypted content.")
                         )
+                    }
                 } else {
                     when (content) {
                         is TopicContent.Plain -> DatabaseFactory.savePlainTopic(

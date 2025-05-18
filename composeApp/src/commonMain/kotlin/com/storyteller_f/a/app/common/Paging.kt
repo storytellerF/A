@@ -2,11 +2,11 @@ package com.storyteller_f.a.app.common
 
 import androidx.lifecycle.ViewModel
 import app.cash.paging.*
+import com.storyteller_f.a.client_lib.SessionManager
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
-import io.ktor.client.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
@@ -111,11 +111,11 @@ class SectionPagingSource<DATUM : Any>(
 }
 
 class RegularPagingSource<DATUM : Any>(
-    val client: HttpClient,
-    val service: suspend HttpClient.(PrimaryKey?, Int) -> Result<ServerResponse<DATUM>>
+    val sessionManager: SessionManager,
+    val service: suspend SessionManager.(PrimaryKey?, Int) -> Result<ServerResponse<DATUM>>
 ) : PagingSource<PrimaryKey, DATUM>() {
     override suspend fun load(params: LoadParams<PrimaryKey>): PagingSourceLoadResult<PrimaryKey, DATUM> {
-        return client.service(params.key, params.loadSize).map {
+        return sessionManager.service(params.key, params.loadSize).map {
             APagingData(
                 it.data,
                 Pagination(

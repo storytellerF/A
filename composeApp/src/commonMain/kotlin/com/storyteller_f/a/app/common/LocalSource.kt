@@ -9,7 +9,6 @@ import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.Identifiable
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
 
@@ -185,11 +184,11 @@ inline fun <reified T : Identifiable> singleSourceMediator(
 )
 
 inline fun <reified T : Identifiable> sectionMediator(
-    client: HttpClient,
+    sessionManager: SessionManager,
     collectionName: String,
     databaseSource: DatabaseSource,
     crossinline extraUpdate: (T) -> Unit = {},
-    regularPagingSources: (HttpClient) -> List<RegularPagingSource<T>>
+    regularPagingSources: (SessionManager) -> List<RegularPagingSource<T>>
 ) = CustomRemoteMediator(
     collectionName,
     databaseSource,
@@ -216,7 +215,7 @@ inline fun <reified T : Identifiable> sectionMediator(
         mainCollection.save(info.id, info)
         extraUpdate(info)
     },
-    SectionPagingSource(regularPagingSources(client))
+    SectionPagingSource(regularPagingSources(sessionManager))
 )
 
 inline fun <reified T : Identifiable> sectionPagingSource(

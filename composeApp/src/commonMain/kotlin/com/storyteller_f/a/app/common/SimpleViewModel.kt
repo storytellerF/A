@@ -2,17 +2,15 @@ package com.storyteller_f.a.app.common
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.LocalDatabase
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.client_lib.DatabaseSource
 import com.storyteller_f.a.client_lib.LoadingHandler
+import com.storyteller_f.a.client_lib.SessionManager
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
-import kotlinx.coroutines.launch
 
-abstract class SimpleViewModel<T : Any>(val client: HttpClient) : ViewModel() {
+abstract class SimpleViewModel<T : Any> : ViewModel() {
     abstract val handler: LoadingHandler<T>
 
     fun update(t: T) {
@@ -23,9 +21,9 @@ abstract class SimpleViewModel<T : Any>(val client: HttpClient) : ViewModel() {
 @Composable
 inline fun <reified VM : ViewModel> viewModel(
     keys: List<Comparable<*>?>? = null,
-    crossinline factory: (HttpClient, DatabaseSource) -> VM
+    crossinline factory: (SessionManager, DatabaseSource) -> VM
 ): VM {
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     val databaseSource = LocalDatabase.current
     Napier.i {
         "viewModel ${VM::class.simpleName}$keys composable"
@@ -34,6 +32,6 @@ inline fun <reified VM : ViewModel> viewModel(
         Napier.i {
             "viewModel ${VM::class.simpleName}$keys build"
         }
-        factory(client, databaseSource)
+        factory(sessionManager, databaseSource)
     })
 }

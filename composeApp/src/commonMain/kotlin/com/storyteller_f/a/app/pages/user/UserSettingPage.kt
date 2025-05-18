@@ -14,7 +14,7 @@ import coil3.compose.LocalPlatformContext
 import com.attafitamim.krop.core.crop.*
 import com.attafitamim.krop.core.images.ImageBitmapSrc
 import com.attafitamim.krop.ui.ImageCropperDialog
-import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.SettingOptionResettableView
@@ -23,13 +23,15 @@ import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.compontents.imageRequest
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnUserUpdated
+import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.topic.MediaPicker
 import com.storyteller_f.a.app.pages.topic.uploadPath
 import com.storyteller_f.a.app.utils.ImageFormat
 import com.storyteller_f.a.app.utils.androidAllowHardware
 import com.storyteller_f.a.app.utils.coilImageToImageBitmap
 import com.storyteller_f.a.app.utils.saveImageBitmap
-import com.storyteller_f.a.client_lib.SignInViewModel
+import com.storyteller_f.a.client_lib.SessionManager
+import com.storyteller_f.a.client_lib.UserSessionManager
 import com.storyteller_f.a.client_lib.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
@@ -39,7 +41,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.mapResult
-import io.ktor.client.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
@@ -57,7 +59,7 @@ fun UserSettingPage() {
         mutableStateOf<SettingOption?>(null)
     }
     val sheetState = rememberModalBottomSheetState()
-    val my by SignInViewModel.user.collectAsState()
+    val my = getCurrentUserInfo()
     val showDialog = { option: SettingOption ->
         currentOption = option
     }
@@ -67,19 +69,19 @@ fun UserSettingPage() {
     my?.let { m ->
         Scaffold { padding ->
             UserSettingInternal(padding, showDialog, m)
-            val client = LocalClient.current
+            val sessionManager = LocalSessionManager.current
             val scope = rememberCoroutineScope()
             ObjectSettingDialog(closeDialog, currentOption, sheetState, {
                 scope.launch {
                     globalDialogState.use {
-                        val newInfo = client.updateUserInfo(UpdateUserBody(avatar = it.name)).getOrThrow()
-                        SignInViewModel.updateUser(newInfo)
+                        val newInfo = sessionManager.updateUserInfo(UpdateUserBody(avatar = it.name)).getOrThrow()
+                        sessionManager.sessionModel.updateUser(newInfo)
                         closeDialog()
                     }
                 }
             }) {
                 scope.launch {
-                    updateUser(currentOption, client, it, closeDialog)
+                    updateUser(currentOption, sessionManager, it, closeDialog)
                 }
             }
         }
@@ -95,15 +97,15 @@ fun ObjectSettingDialog(
     onInputMedia: (MediaInfo) -> Unit,
     onInputString: (String) -> Unit
 ) {
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     val context = LocalPlatformContext.current
     val scope = rememberCoroutineScope()
-    val imageCropper = rememberImageCropper()
 
     val ratio = when (currentOption) {
         is SettingOption.Poster -> AspectRatio(3, 4)
         else -> AspectRatio(1, 1)
     }
+    val imageCropper = rememberImageCropper()
     val cropState = imageCropper.cropState
     if (cropState != null) {
         ImageCropperDialog(
@@ -115,30 +117,25 @@ fun ObjectSettingDialog(
         )
     }
 
-    val my by SignInViewModel.user.collectAsState()
+    val my = getCurrentUserInfo()
     val mediaTarget = ObjectTuple(my?.id ?: 0, ObjectType.USER)
     MediaPicker(
         currentOption is SettingOption.Icon || currentOption is SettingOption.Poster,
         sheetState,
         mediaTarget,
+        listOf("files"),
         { mediaList ->
-            val info = mediaList.first()
-            val dimension = info.dimension
-            if (dimension == null || !info.contentType.startsWith("image/")) {
-                globalDialogState.showMessage("invalid image: ${info.contentType} $dimension")
-            } else {
-                scope.launch {
-                    cropImageIfNeed(context, client, info, imageCropper, dimension, ratio, mediaTarget).onSuccess {
-                        if (it != null) {
-                            onInputMedia(it)
-                        }
-                    }.onFailure {
-                        globalDialogState.showErrorState(it)
-                    }
-                }
-            }
-        },
-        support = listOf("files")
+            processSelectedMedia(
+                mediaList,
+                scope,
+                context,
+                sessionManager,
+                imageCropper,
+                ratio,
+                mediaTarget,
+                onInputMedia
+            )
+        }
     ) {
         closeDialog()
     }
@@ -150,9 +147,44 @@ fun ObjectSettingDialog(
     }
 }
 
+private fun processSelectedMedia(
+    mediaList: List<MediaInfo>,
+    scope: CoroutineScope,
+    context: PlatformContext,
+    sessionManager: UserSessionManager,
+    imageCropper: ImageCropper,
+    ratio: AspectRatio,
+    mediaTarget: ObjectTuple,
+    onInputMedia: (MediaInfo) -> Unit
+) {
+    val info = mediaList.first()
+    val dimension = info.dimension
+    if (dimension == null || !info.contentType.startsWith("image/")) {
+        globalDialogState.showMessage("invalid image: ${info.contentType} $dimension")
+    } else {
+        scope.launch {
+            cropImageIfNeed(
+                context,
+                sessionManager,
+                info,
+                imageCropper,
+                dimension,
+                ratio,
+                mediaTarget
+            ).onSuccess {
+                if (it != null) {
+                    onInputMedia(it)
+                }
+            }.onFailure {
+                globalDialogState.showErrorState(it)
+            }
+        }
+    }
+}
+
 private suspend fun cropImageIfNeed(
     context: PlatformContext,
-    client: HttpClient,
+    sessionManager: SessionManager,
     info: MediaInfo,
     imageCropper: ImageCropper,
     dimension: Dimension,
@@ -162,20 +194,20 @@ private suspend fun cropImageIfNeed(
     return if (checkMediaDimensionRatioMatch(dimension, Dimension(aspectRatio.x, aspectRatio.y))) {
         Result.success(info)
     } else {
-        cropImage(context, client, info, imageCropper, mediaTarget)
+        cropImage(context, sessionManager, info, imageCropper, mediaTarget)
     }
 }
 
 private suspend fun cropImage(
     context: PlatformContext,
-    client: HttpClient,
+    sessionManager: SessionManager,
     info: MediaInfo,
     imageCropper: ImageCropper,
     mediaTarget: ObjectTuple
 ): Result<MediaInfo?> {
     val image = globalDialogState.use {
         ImageLoader(context)
-            .execute(imageRequest(context, client, info).androidAllowHardware(false).build())
+            .execute(imageRequest(context, sessionManager.client, info).androidAllowHardware(false).build())
             .image?.coilImageToImageBitmap()
     }
     return image.mapResult {
@@ -202,7 +234,7 @@ private suspend fun cropImage(
                                 else -> ImageFormat.PNG
                             }
                         )
-                        uploadPath(data, client, mediaTarget).getOrThrow()?.first()
+                        uploadPath(data, sessionManager, mediaTarget).getOrThrow()?.first()
                     }
                 }
             }
@@ -217,7 +249,7 @@ private fun UserSettingInternal(
     m: UserInfo,
 ) {
     val toasterState = LocalToaster.current
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
     Column(modifier = Modifier.padding(values).padding(horizontal = 20.dp)) {
         SettingOptionResettableView("Icon", m.avatar != null, {
@@ -225,7 +257,7 @@ private fun UserSettingInternal(
                 scope.launch {
                     globalDialogState.use {
                         val body = UpdateUserBody(avatar = "")
-                        val newInfo = client.updateUserInfo(body).getOrThrow()
+                        val newInfo = sessionManager.updateUserInfo(body).getOrThrow()
                         bus.emit(OnUserUpdated(newInfo))
                     }
                 }
@@ -259,7 +291,7 @@ private fun UserSettingInternal(
 
 private suspend fun updateUser(
     showInputDialog: SettingOption?,
-    client: HttpClient,
+    sessionManager: SessionManager,
     string: String,
     closeDialog: () -> Unit
 ) {
@@ -271,8 +303,8 @@ private suspend fun updateUser(
         else -> null
     } ?: return
     globalDialogState.use {
-        val newInfo = client.updateUserInfo(body).getOrThrow()
-        SignInViewModel.updateUser(newInfo)
+        val newInfo = sessionManager.updateUserInfo(body).getOrThrow()
+        sessionManager.sessionModel.updateUser(newInfo)
         bus.emit(OnUserUpdated(newInfo))
         closeDialog()
     }

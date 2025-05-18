@@ -11,7 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.SettingOptionResettableView
@@ -21,11 +21,11 @@ import com.storyteller_f.a.app.model.OnRoomUpdated
 import com.storyteller_f.a.app.model.createRoomViewModel
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.pages.user.SettingOption
+import com.storyteller_f.a.client_lib.SessionManager
 import com.storyteller_f.a.client_lib.updateRoomInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.PrimaryKey
-import io.ktor.client.*
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
@@ -47,19 +47,19 @@ fun RoomSettingPage(roomId: PrimaryKey) {
                 currentOption = option
             }, it1)
         }
-        val client = LocalClient.current
+        val sessionManager = LocalSessionManager.current
         val scope = rememberCoroutineScope()
         ObjectSettingDialog(closeDialog, currentOption, sheetState, {
             scope.launch {
                 globalDialogState.use {
                     val body = UpdateRoomBody(icon = it.name)
-                    val newInfo = client.updateRoomInfo(roomId, body).getOrThrow()
+                    val newInfo = sessionManager.updateRoomInfo(roomId, body).getOrThrow()
                     bus.emit(OnRoomUpdated(newInfo))
                 }
             }
         }, {
             scope.launch {
-                updateRoom(currentOption, client, it, closeDialog, roomId)
+                updateRoom(currentOption, sessionManager, it, closeDialog, roomId)
             }
         })
     }
@@ -72,7 +72,7 @@ private fun RoomSettingInternal(
     roomInfo: RoomInfo,
 ) {
     val toasterState = LocalToaster.current
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
     Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
         SettingOptionResettableView("Icon", roomInfo.icon != null, {
@@ -80,7 +80,7 @@ private fun RoomSettingInternal(
                 scope.launch {
                     globalDialogState.use {
                         val body = UpdateRoomBody(icon = "")
-                        val newInfo = client.updateRoomInfo(roomInfo.id, body).getOrThrow()
+                        val newInfo = sessionManager.updateRoomInfo(roomInfo.id, body).getOrThrow()
                         bus.emit(OnRoomUpdated(newInfo))
                     }
                 }
@@ -106,7 +106,7 @@ private fun RoomSettingInternal(
 
 private suspend fun updateRoom(
     showInputDialog: SettingOption?,
-    client: HttpClient,
+    sessionManager: SessionManager,
     string: String,
     closeDialog: () -> Unit,
     roomId: PrimaryKey
@@ -121,7 +121,7 @@ private suspend fun updateRoom(
         }
     } ?: return
     globalDialogState.use {
-        val newInfo = client.updateRoomInfo(roomId, body).getOrThrow()
+        val newInfo = sessionManager.updateRoomInfo(roomId, body).getOrThrow()
         bus.emit(OnRoomUpdated(newInfo))
         closeDialog()
     }

@@ -2,6 +2,7 @@ package com.storyteller_f.a.app
 
 import android.app.NotificationManager
 import android.content.ComponentName
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.view.ViewTreeObserver
@@ -10,7 +11,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionToken
@@ -19,19 +19,11 @@ import com.kdroid.composenotification.builder.AndroidChannelConfig
 import com.kdroid.composenotification.builder.NotificationInitializer.notificationInitializer
 import com.storyteller_f.a.app.compontents.bindActivity
 import com.storyteller_f.a.app.compontents.unbindActivity
-import com.storyteller_f.a.client_lib.SignInViewModel
-import com.storyteller_f.a.client_lib.addDevice
-import com.storyteller_f.a.client_lib.defaultClientConfigure
-import com.storyteller_f.a.client_lib.getClient
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import org.unifiedpush.android.connector.UnifiedPush
 import java.util.concurrent.Future
-import kotlin.time.Duration.Companion.hours
 
 class MainActivity : ComponentActivity() {
     private var controllerFuture: Future<MediaController>? = null
@@ -40,7 +32,7 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         val sessionToken =
             SessionToken(this, ComponentName(this, PlaybackService::class.java))
-        val l2 = object : MediaController.Listener {
+        val listener = object : MediaController.Listener {
             override fun onAvailableSessionCommandsChanged(controller: MediaController, commands: SessionCommands) {
                 super.onAvailableSessionCommandsChanged(controller, commands)
                 Napier.d {
@@ -56,41 +48,11 @@ class MainActivity : ComponentActivity() {
             }
         }
         if (!isRunningOnRobolectric) {
-            val future = MediaController.Builder(this, sessionToken).setListener(l2).buildAsync()
+            val future = MediaController.Builder(this, sessionToken).setListener(listener).buildAsync()
             controllerFuture = future
             future.addListener({
                 MediaProvider.controller = future.get()
             }, MoreExecutors.directExecutor())
-
-            val context = this
-            lifecycleScope.launch {
-                SignInViewModel.isAlreadySignUp.collectLatest {
-                    while (it) {
-                        try {
-                            val distributor = UnifiedPush.getAckDistributor(context)
-                                ?: UnifiedPush.getDistributors(context).firstOrNull()?.let { instance ->
-                                    UnifiedPush.saveDistributor(context, instance)
-                                    instance
-                                }
-                            if (distributor != null) {
-                                UnifiedPush.register(context, distributor, "A")
-                                Napier.i(tag = "distributor") {
-                                    "distributor $distributor"
-                                }
-                            } else {
-                                Napier.i(tag = "distributor") {
-                                    "distributor not found"
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Napier.e(throwable = e, tag = "distributor") {
-                                "register error $e"
-                            }
-                        }
-                        delay(1.hours)
-                    }
-                }
-            }
         }
     }
 
@@ -113,14 +75,8 @@ class MainActivity : ComponentActivity() {
                 object : ViewTreeObserver.OnPreDrawListener {
                     override fun onPreDraw(): Boolean {
                         // Check whether the initial data is ready.
-                        return if (SignInViewModel.appStartLoginRetried.value) {
-                            // The content is ready. Start drawing.
-                            content.viewTreeObserver.removeOnPreDrawListener(this)
-                            true
-                        } else {
-                            // The content isn't ready. Suspend.
-                            false
-                        }
+                        content.viewTreeObserver.removeOnPreDrawListener(this)
+                        return true
                     }
                 }
             )
@@ -159,3 +115,27 @@ val isRunningOnRobolectric: Boolean
     } catch (_: Exception) {
         false
     }
+
+fun registerDevice(context: Context) {
+    try {
+        val distributor = UnifiedPush.getAckDistributor(context)
+            ?: UnifiedPush.getDistributors(context).firstOrNull()?.let { instance ->
+                UnifiedPush.saveDistributor(context, instance)
+                instance
+            }
+        if (distributor != null) {
+            UnifiedPush.register(context, distributor, "A")
+            Napier.i(tag = "distributor") {
+                "distributor $distributor"
+            }
+        } else {
+            Napier.i(tag = "distributor") {
+                "distributor not found"
+            }
+        }
+    } catch (e: Exception) {
+        Napier.e(throwable = e, tag = "distributor") {
+            "register error $e"
+        }
+    }
+}

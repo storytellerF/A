@@ -3,7 +3,9 @@ package com.storyteller_f.a.app
 import a.composeapp.generated.resources.Res
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.*
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +54,7 @@ import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.app.utils.customDataStoreManager
 import com.storyteller_f.a.app.utils.platform
+import com.storyteller_f.a.app.utils.restoreFromStorage
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.MediaInfo
@@ -67,9 +70,12 @@ import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
-import io.ktor.client.plugins.websocket.*
-import io.ktor.http.*
+import io.ktor.client.plugins.cookies.CookiesStorage
+import io.ktor.http.appendPathSegments
+import io.ktor.http.buildUrl
+import io.ktor.http.takeFrom
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -103,7 +109,7 @@ val LocalClient = compositionLocalOf {
 }
 
 val LocalWsClient = compositionLocalOf {
-    ClientWebSocket.EMPTY
+    WebSocketClient.EMPTY
 }
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -113,6 +119,14 @@ val LocalToaster = compositionLocalOf {
 
 val LocalDatabase = compositionLocalOf {
     DatabaseSource.EMPTY
+}
+
+val LocalSessionManager = compositionLocalOf<UserSessionManager> {
+    throw Exception("No user session")
+}
+
+val LocalMainSessionManager = compositionLocalOf<UserSessionManager> {
+    throw Exception("No main user session")
 }
 
 @Serializable
@@ -207,20 +221,19 @@ fun App() {
 
 @Composable
 fun AppInternal(httpUrl: String, wsServerUrl: String) {
-    CommonEntry(httpUrl) {
+    CommonEntry(httpUrl, wsServerUrl) {
         StaticObj
-        val s by playerSession
+        val playerSession by currentPlayerSession
         val isPip = rememberIsInPipMode()
 
-        MainAppPage(isPip, s, wsServerUrl)
+        MainAppPage(isPip, playerSession)
     }
 }
 
 @Composable
 private fun MainAppPage(
     isPip: Boolean,
-    localSession: MediaPlaySession.VideoOrAudio?,
-    wsServerUrl: String
+    localSession: MediaPlaySession.VideoOrAudio?
 ) {
     val navigator = rememberNavController()
 
@@ -230,18 +243,16 @@ private fun MainAppPage(
         val appNav = remember<AppNav> {
             newAppNav(navigator)
         }
+        ObserveMessage({
+            appNav.toRoute<RoomScreen>()?.roomId
+        }, {
+            appNav.toRoute<TopicScreen>()?.topicId
+        }) {
+            appNav.gotoTopic(it.id)
+        }
         CompositionLocalProvider(LocalAppNav provides appNav) {
-            val ws = rememberWsClient(wsServerUrl, {
-                appNav.toRoute<RoomScreen>()?.roomId
-            }, {
-                appNav.toRoute<TopicScreen>()?.topicId
-            }) {
-                appNav.gotoTopic(it.id)
-            }
-            CompositionLocalProvider(LocalWsClient provides ws) {
-                NavHost(navigator, startDestination = HomeScreen) {
-                    buildRootNav(navigator)
-                }
+            NavHost(navigator, startDestination = HomeScreen) {
+                buildRootNav(navigator)
             }
         }
     }
@@ -250,6 +261,7 @@ private fun MainAppPage(
 @Composable
 fun CommonEntry(
     httpUrl: String,
+    wsServerUrl: String,
     content: @Composable () -> Unit
 ) {
     AppTheme(dynamicColor = true) {
@@ -264,40 +276,77 @@ fun CommonEntry(
                 processEvent(event, database)
             }
         }
-        CompositionLocalProvider(LocalDatabase provides database) {
-            val client = remember {
-                if (httpUrl.isEmpty()) {
-                    HttpClient()
-                } else {
-                    getClient {
-                        defaultClientConfigure(httpUrl = httpUrl)
+        val scope = rememberCoroutineScope()
+        val mainUserSession = createSessionManager(wsServerUrl, scope, httpUrl)
+        GlobalDialog(globalDialogState)
+        val toasterState = rememberToasterState()
+        Toaster(toasterState, alignment = Alignment.Center)
+        CompositionLocalProvider(
+            LocalClient provides mainUserSession.client,
+            LocalWsClient provides mainUserSession.webSocketClient,
+            LocalSessionManager provides mainUserSession,
+            LocalMainSessionManager provides mainUserSession,
+            LocalToaster provides toasterState,
+            LocalDatabase provides database
+        ) {
+            ProvideIconParameters(
+                iconFont = MaterialSymbolsOutlined.rememberIconFont(),
+                size = 20.dp,
+                tintProvider = LocalContentColor,
+                weight = FontWeight.Normal
+            ) {
+                val dataStoreManager = customDataStoreManager()
+                ProvideDataStoreManager(dataStoreManager) {
+                    setPreferences {
+                        "gpt_model" defaultValue ""
                     }
-                }
-            }
-            CompositionLocalProvider(LocalClient provides client) {
-                GlobalDialog(globalDialogState)
-                val toasterState = rememberToasterState()
-                Toaster(toasterState, alignment = Alignment.Center)
-                CompositionLocalProvider(LocalToaster provides toasterState) {
-                    ProvideIconParameters(
-                        iconFont = MaterialSymbolsOutlined.rememberIconFont(),
-                        size = 20.dp,
-                        tintProvider = LocalContentColor,
-                        weight = FontWeight.Normal
-                    ) {
-                        val dataStoreManager = customDataStoreManager()
-                        ProvideDataStoreManager(dataStoreManager) {
-                            setPreferences {
-                                "gpt_model" defaultValue ""
-                            }
-                            content()
-                        }
-                    }
+                    content()
                 }
             }
         }
     }
 }
+
+@Composable
+private fun createSessionManager(
+    wsServerUrl: String,
+    scope: CoroutineScope,
+    httpUrl: String
+): UserSessionManager {
+    val mainUserSession = remember {
+        createUserSessionManager(buildWebSocketUrl(wsServerUrl), scope, { model, cookieManager ->
+            buildHttpClient(httpUrl, cookieManager, model)
+        }) { roomFrame, session ->
+            if (roomFrame is RoomFrame.NewTopicInfo) {
+                val info = processEncryptedTopic(listOf(roomFrame.topicInfo), session).first()
+                bus.emit(OnTopicCreated(info))
+                Napier.v(tag = "pagination") {
+                    "save document $info"
+                }
+            }
+        }.apply {
+            restoreFromStorage(this.first)
+        }
+    }
+    return mainUserSession.first
+}
+
+fun buildHttpClient(
+    httpUrl: String,
+    cookieManager: CookiesStorage,
+    model: UserSessionModel
+): HttpClient = if (httpUrl.isEmpty()) {
+    HttpClient { }
+} else {
+    getClient {
+        defaultClientConfigure(cookieManager, manager = model, httpUrl = httpUrl)
+    }
+}
+
+fun buildWebSocketUrl(wsServerUrl: String): String = buildUrl {
+    takeFrom(wsServerUrl)
+    appendPathSegments("link")
+}.toString()
 
 private fun processEvent(event: Any, database: DatabaseSource) {
     when (event) {
@@ -317,6 +366,7 @@ private fun processEvent(event: Any, database: DatabaseSource) {
                 it.save(event.info.id, event.info)
             }
         }
+
         is OnTopicChanged -> processTopicChanged(event, database)
 
         is OnTopicCreated -> processTopicCreated(event, database)
@@ -417,17 +467,17 @@ private fun processOnAddReaction(
 
 @Composable
 fun TestContainer(block: @Composable () -> Unit) {
-    CommonEntry("") {
+    CommonEntry("", "", {
         val appNav = remember {
             AppNav.EMPTY
         }
         CompositionLocalProvider(LocalAppNav provides appNav) {
-            val ws = ClientWebSocket.EMPTY
+            val ws = WebSocketClient.EMPTY
             CompositionLocalProvider(LocalWsClient provides ws) {
                 block()
             }
         }
-    }
+    })
 }
 
 private fun buildWsListener(
@@ -436,7 +486,7 @@ private fun buildWsListener(
     roomScreenId: () -> PrimaryKey?,
     topicScreenId: () -> PrimaryKey?,
     onClickTopic: (TopicInfo) -> Unit,
-) = object : ClientWsListener {
+) = object : WebSocketClientListener {
     override suspend fun onReceived(frame: RoomFrame) {
         if (frame is RoomFrame.NewTopicInfo) {
             val topicInfo = frame.topicInfo
@@ -463,31 +513,13 @@ private fun buildWsListener(
 }
 
 @Composable
-private fun rememberWsClient(
-    wsServerUrl: String,
+private fun ObserveMessage(
     roomScreenId: () -> PrimaryKey?,
     topicScreenId: () -> PrimaryKey?,
     onClickTopic: (TopicInfo) -> Unit = {},
-): ClientWebSocket {
-    val client = LocalClient.current
-    val clientWebSocketImpl = remember {
-        ClientWebSocketImpl(client, { userInfo, sig ->
-            webSocketSession(buildUrl {
-                takeFrom(wsServerUrl)
-                appendPathSegments("link")
-            }.toString()) {
-                addRequestHeaders(userInfo, sig)
-            }
-        }) {
-            if (it is RoomFrame.NewTopicInfo) {
-                val info = processEncryptedTopic(listOf(it.topicInfo)).first()
-                bus.emit(OnTopicCreated(info))
-                Napier.v(tag = "pagination") {
-                    "save document $info"
-                }
-            }
-        }
-    }
+) {
+    val mainUserSession = LocalMainSessionManager.current
+    val clientWebSocketImpl = mainUserSession.webSocketClient
     val messageToasterState = rememberToasterState()
     Toaster(messageToasterState, alignment = Alignment.TopCenter)
     val notificationProvider = getNotificationProvider()
@@ -501,7 +533,6 @@ private fun rememberWsClient(
             clientWebSocketImpl.removeListener(listener)
         }
     }
-    return clientWebSocketImpl
 }
 
 @OptIn(ExperimentalResourceApi::class)
