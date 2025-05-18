@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
@@ -17,7 +18,6 @@ sealed class LoadingState {
 interface LoadingHandler<T> {
     val state: MutableStateFlow<LoadingState?>
     val data: StateFlow<T?>
-    val refresh: () -> Unit
 
     suspend fun request(
         service: suspend () -> Result<T>,
@@ -40,11 +40,42 @@ interface LoadingHandler<T> {
     fun error(error: Throwable)
 
     fun update(t: T)
+
+    fun refresh()
 }
 
-class SimpleLoadingHandler<T>(override val refresh: () -> Unit) : LoadingHandler<T> {
+class FixedLoadingHandler<T>(val load: () -> Unit = {}) : LoadingHandler<T> {
+    override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
+    override val data = MutableStateFlow<T?>(null)
+
+    override fun done(t: T) {
+        data.value = t
+        state.markDown()
+    }
+
+    override fun error(error: Throwable) {
+        state.markError(error)
+        data.value = null
+    }
+
+    override fun update(t: T) {
+        data.value = t
+    }
+
+    override fun refresh() {
+        load()
+    }
+
+}
+
+class SimpleLoadingHandler<T>(val scope: CoroutineScope, val loader: suspend () -> Result<T>) :
+    LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
     override val data: MutableStateFlow<T?> = MutableStateFlow(null)
+
+    init {
+        refresh()
+    }
 
     override fun done(t: T) {
         data.value = t
@@ -59,28 +90,39 @@ class SimpleLoadingHandler<T>(override val refresh: () -> Unit) : LoadingHandler
     override fun update(t: T) {
         done(t)
     }
+
+    override fun refresh() {
+        scope.launch {
+            request {
+                loader()
+            }
+        }
+    }
 }
 
 class CachedLoadingHandler<T : Any>(
-    databaseSource: DatabaseSource,
-    name: String,
-    scope: CoroutineScope,
+    val databaseSource: DatabaseSource,
+    val name: String,
+    val scope: CoroutineScope,
     expression: Expression,
-    override val refresh: () -> Unit,
+    val loader: suspend () -> Result<T>,
     private val serializer: KSerializer<T>,
     val saveDocument: DatabaseCollection.(String, T) -> Unit,
 ) : LoadingHandler<T> {
-    private val collection = databaseSource.getCollection(name)
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
-    override val data = collection.observe(
+    override val data = databaseSource.getCollection(name).observe(
         serializer,
         expression
     ).stateIn(scope, SharingStarted.Lazily, null)
 
+    init {
+        refresh()
+    }
+
     override fun done(t: T) {
         try {
             val data = Json.encodeToString(serializer, t)
-            collection.saveDocument(data, t)
+            databaseSource.getCollection(name).saveDocument(data, t)
             state.markDown()
         } catch (e: Exception) {
             error(e)
@@ -93,6 +135,14 @@ class CachedLoadingHandler<T : Any>(
 
     override fun update(t: T) {
         done(t)
+    }
+
+    override fun refresh() {
+        scope.launch {
+            request {
+                loader()
+            }
+        }
     }
 }
 

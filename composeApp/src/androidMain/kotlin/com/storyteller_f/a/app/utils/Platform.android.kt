@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.Clipboard
 import androidx.lifecycle.Lifecycle
 import com.storyteller_f.a.app.compontents.mainAppRef
 import com.storyteller_f.a.app.initFromContext
+import dev.jordond.connectivity.Connectivity
 
 actual val platform: Platform
     get() {
@@ -23,4 +24,10 @@ actual fun initEnvironment(context: Any) {
 
 actual suspend fun Clipboard.setText(string: String) {
     this.setClipEntry(ClipEntry(ClipData.newPlainText(string, "text")))
+}
+
+actual fun createConnectivity(): Connectivity {
+    return Connectivity {
+        autoStart = true
+    }
 }

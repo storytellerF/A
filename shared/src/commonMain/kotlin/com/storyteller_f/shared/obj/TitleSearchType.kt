@@ -4,3 +4,9 @@ enum class TitleSearchType {
     CREATOR,
     RECEIVER
 }
+
+enum class TopicPinSearch {
+    PINNED,
+    UNPINNED,
+    UNSPECIFIED
+}

@@ -25,7 +25,9 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import org.intellij.markdown.ast.ASTNode
 import org.jetbrains.compose.resources.stringResource
@@ -37,11 +39,11 @@ fun TopicContentField(
 ) {
     when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
-            TopicContentFieldInternal(topicInfo, content.list, content.plain, isEmbed)
+            TopicContentFieldInternal(topicInfo, content.list.toImmutableList(), content.plain, isEmbed)
         }
 
         is TopicContent.Extracted -> {
-            TopicContentFieldInternal(topicInfo, content.list, content.plain, isEmbed)
+            TopicContentFieldInternal(topicInfo, content.list.toImmutableList(), content.plain, isEmbed)
         }
 
         is TopicContent.Encrypted, is TopicContent.DecryptFailed, is TopicContent.Invalid -> {
@@ -69,7 +71,7 @@ fun TopicContentField(
 @Composable
 private fun TopicContentFieldInternal(
     topicInfo: TopicInfo,
-    rawMediaList: List<MediaInfo>,
+    rawMediaList: ImmutableList<MediaInfo>,
     plain: String,
     isEmbed: Boolean
 ) {

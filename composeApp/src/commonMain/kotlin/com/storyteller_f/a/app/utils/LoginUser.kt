@@ -55,3 +55,5 @@ class DefaultLoginUserSessionManager : LoginUserSessionManager {
 data class SavedSession(val list: List<String>, val last: String? = null, val current: String? = null)
 
 expect fun buildLoginUserSessionFactory(): LoginUserSessionManager
+
+expect fun unregisterPushService()

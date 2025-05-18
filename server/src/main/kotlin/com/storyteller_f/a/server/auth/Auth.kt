@@ -211,8 +211,9 @@ private suspend fun ApplicationCall.checkApiRequest(
     session: UserSession.Pending
 ): CustomPrincipal? {
     val sig = credential.sig
+    @Suppress("SimplifyBooleanWithConstants", "KotlinConstantConditions")
     return when {
-        ServerConfig.BUILD_TYPE != "prod" && credential is IdCredential && sig == credential.id.toString() -> {
+        !ServerConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
             if (DatabaseFactory.getRawUserById(backend, id).getOrNull() != null) {
                 saveSuccessSession(session, id)

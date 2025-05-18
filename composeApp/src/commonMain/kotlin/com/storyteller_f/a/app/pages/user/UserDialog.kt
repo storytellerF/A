@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
@@ -27,15 +25,13 @@ import com.storyteller_f.a.app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compontents.DialogContainer
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.clearStorage
-import com.storyteller_f.a.client_lib.ClientSession
-import com.storyteller_f.a.client_lib.SignInViewModel
-import com.storyteller_f.a.client_lib.getData
-import com.storyteller_f.a.client_lib.getUserInfo
-import com.storyteller_f.a.client_lib.getUserInfoByAid
-import com.storyteller_f.a.client_lib.signIn
-import com.storyteller_f.a.client_lib.signOut
+import com.storyteller_f.a.app.utils.createConnectivity
+import com.storyteller_f.a.app.utils.unregisterPushService
+import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.UserInfo
+import dev.jordond.connectivity.Connectivity
+import dev.jordond.connectivity.compose.rememberConnectivityState
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -125,6 +121,20 @@ private fun UserDialogMenuList(
             )
         }
     }
+    val connectivity = remember {
+        createConnectivity()
+    }
+    val scope = rememberCoroutineScope()
+    val connectivityState = rememberConnectivityState(connectivity, scope)
+    when (val s = connectivityState.status) {
+        is Connectivity.Status.Connected -> {
+            ButtonNav(if (s.metered) Icons.Default.SignalCellularAlt else Icons.Default.Wifi, "Connected")
+        }
+
+        else -> {
+            ButtonNav(MaterialSymbolsOutlined.SignalDisconnected, "Disconnected")
+        }
+    }
     val title = stringResource(Res.string.sign_out_prompt)
     ButtonNav(MaterialSymbolsOutlined.SettingsAccountBox, stringResource(Res.string.settings)) {
         dismiss()
@@ -140,6 +150,7 @@ suspend fun signOut(client: HttpClient) {
         client.signOut()
         SignInViewModel.signOut()
         clearStorage()
+        unregisterPushService()
     }
 }
 

@@ -189,8 +189,8 @@ fun<T> debounceState(v: T): T? {
 @Composable
 fun <T> StateView(
     handler: LoadingHandler<T>,
-    extraRefresh: () -> Unit = {},
     modifier: Modifier = Modifier,
+    extraRefresh: () -> Unit = {},
     content: @Composable (T & Any) -> Unit
 ) {
     val state by handler.state.collectAsState()

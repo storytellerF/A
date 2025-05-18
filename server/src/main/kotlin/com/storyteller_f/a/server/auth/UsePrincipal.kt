@@ -3,10 +3,10 @@ package com.storyteller_f.a.server.auth
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.CustomBadRequestException
 import com.storyteller_f.ForbiddenException
-import com.storyteller_f.UnauthorizedException
 import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.common.FileResponse
 import com.storyteller_f.a.server.common.PathResponse
+import com.storyteller_f.shared.obj.UnauthorizedException
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -97,7 +97,7 @@ suspend fun RoutingContext.respondError(e: Throwable, reader: DatabaseReader): B
         else -> {
             call.respond(
                 HttpStatusCode.InternalServerError,
-                if (ServerConfig.BUILD_TYPE == "prod") "" else (e.message ?: e.toString())
+                if (ServerConfig.IS_PROD) "" else (e.message ?: e.toString())
             )
             return false
         }

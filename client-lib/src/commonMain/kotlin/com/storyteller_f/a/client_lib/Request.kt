@@ -585,3 +585,10 @@ suspend fun HttpClient.addReadLog(info: UpdateUserRead): Result<HttpResponse> {
         }
     }
 }
+
+suspend fun HttpClient.addDevice(endpointUrl: String) = serviceCatching {
+    post("users/devices") {
+        contentType(ContentType.Application.Json)
+        setBody(NewDevice(endpointUrl))
+    }
+}

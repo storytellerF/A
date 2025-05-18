@@ -169,3 +169,13 @@ suspend fun addReadLog(backend: Backend, uid: PrimaryKey, tuple: UpdateUserRead)
         }
     }
 }
+
+suspend fun addDevice(backend: Backend, uid: PrimaryKey, device: String): Result<Unit> {
+    return DatabaseFactory.addDevice(uid, device, backend).recover {
+        if (it.isDup()) {
+            Result.success(Unit)
+        } else {
+            Result.failure(it)
+        }
+    }
+}

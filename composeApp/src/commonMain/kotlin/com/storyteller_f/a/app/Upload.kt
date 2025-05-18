@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.model.createUploadViewModel
+import com.storyteller_f.a.client_lib.LoadingHandler
 import com.storyteller_f.a.client_lib.LoadingState
 import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.SimpleLoadingHandler
@@ -78,12 +79,12 @@ fun UploadInternal(my: UserInfo?, session: UploadSession) {
 }
 
 @Composable
-fun UploadItem(p: Pair<SimpleLoadingHandler<MediaInfo>, ClientFile>) {
+fun UploadItem(p: Pair<LoadingHandler<MediaInfo>, ClientFile>) {
     val (handler, file) = p
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
     UploadItem(file, data, state) {
-        handler.refresh()
+        handler
     }
 }
 

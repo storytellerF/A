@@ -5,6 +5,7 @@ import com.storyteller_f.*
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.UnauthorizedException
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult

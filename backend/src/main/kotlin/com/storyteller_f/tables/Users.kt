@@ -3,7 +3,9 @@ package com.storyteller_f.tables
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.UpdateUserBody
+import com.storyteller_f.shared.type.AlgoType
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PassType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
@@ -20,6 +22,8 @@ object Users : BaseTable() {
     val icon = userIcon()
     val nickname = userName()
     val acgAmount = long("acg_amount").default(0)
+    val passType = enumerationByName<PassType>("pass_type", 20).default(PassType.RAW)
+    val algoType = enumerationByName<AlgoType>("algo_type", 20).default(AlgoType.P256)
 }
 
 class User(
@@ -31,6 +35,8 @@ class User(
     id: PrimaryKey,
     createdTime: LocalDateTime,
     val acgAmount: Long,
+    val passType: PassType,
+    val algoType: AlgoType,
 ) : BaseEntity(id, createdTime) {
     companion object {
         fun wrapRow(row: ResultRow): User {
@@ -43,7 +49,9 @@ class User(
                     row[nickname],
                     row[id],
                     row[createdTime],
-                    row[acgAmount]
+                    row[acgAmount],
+                    row[passType],
+                    row[algoType]
                 )
             }
         }
@@ -186,7 +194,7 @@ suspend fun DatabaseFactory.createUser(
     return query(backend, {
         this to null
     }) {
-        val user = User(null, pk, ad, null, name, newId, now(), 0)
+        val user = User(null, pk, ad, null, name, newId, now(), 0, PassType.RAW, AlgoType.P256)
         check(Users.insert {
             it[id] = user.id
             it[publicKey] = user.publicKey

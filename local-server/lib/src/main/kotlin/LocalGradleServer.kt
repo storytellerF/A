@@ -3,6 +3,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import java.io.File
 
 fun runGradle(envFilePath: String, port: Int): Process? {
@@ -69,7 +70,7 @@ suspend fun CoroutineScope.startServer(envFileBasePath: String, port: Int): Proc
     forceStop(port)
     val serverProcess = runGradle(envFileBasePath, port) ?: return null
     val task = CompletableDeferred<String>()
-    async {
+    launch {
         serverProcess.inputStream.bufferedReader().use {
             while (serverProcess.isRunning()) {
                 val line = it.readLine() ?: break
@@ -79,7 +80,7 @@ suspend fun CoroutineScope.startServer(envFileBasePath: String, port: Int): Proc
             }
         }
     }
-    async {
+    launch {
         serverProcess.errorStream.bufferedReader().use {
             while (serverProcess.isRunning()) {
                 val line = it.readLine() ?: break

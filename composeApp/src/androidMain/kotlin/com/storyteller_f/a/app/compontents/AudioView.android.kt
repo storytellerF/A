@@ -63,7 +63,7 @@ private fun BoxScope.AudioPlayer(
     AndroidPlayerContainer(currentSession, player) { pipModifier, state ->
         val coverMediaInfo = obj.coverMediaInfo
         Row(
-            modifier = pipModifier.padding(10.dp),
+            modifier = pipModifier.padding(10.dp).fillMaxHeight(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -74,12 +74,13 @@ private fun BoxScope.AudioPlayer(
                 modifier = Modifier
                     .aspectRatio(1f)
                     .clip(CircleShape)
-                    .fillMaxHeight(),
+                    .weight(1f)
+                    .widthIn(max = 100.dp),
                 fallback = rememberVectorPainter(Icons.Default.Audiotrack)
             )
             Box(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(2f)
                     .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {

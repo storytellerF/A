@@ -30,6 +30,7 @@ object DatabaseFactory {
 
     private val tables = arrayOf(
         Aids,
+        AssetTransactions,
         Communities,
         EncryptedTopics,
         EncryptedTopicKeys,
@@ -42,6 +43,7 @@ object DatabaseFactory {
         Topics,
         Users,
         UserLogs,
+        UserDevices,
         UserTopicReads,
         TaskRecords
     )
@@ -71,7 +73,7 @@ object DatabaseFactory {
     }
 
     private fun Transaction.handleDatabaseException(e: Throwable, point: Exception): Nothing {
-        if (e is UnauthorizedException) {
+        if (e is UnauthorizedException || e.isDup()) {
             throw e
         }
         val dialectName = connection.metadata {

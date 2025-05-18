@@ -132,20 +132,7 @@ fun addCommunityJoinRaw(
     }
 }
 
-suspend fun DatabaseFactory.createMemberJoin(backend: Backend, join: MemberJoin) = dbQuery(
-    backend
-) {
-    check(MemberJoins.insert { statement ->
-        statement[uid] = join.uid
-        statement[objectId] = join.objectId
-        statement[objectType] = join.objectType
-        statement[joinedTime] = join.joinedTime
-    }.insertedCount > 0) {
-        "join failed"
-    }
-}
-
-suspend fun DatabaseFactory.userListJoinedRoom(backend: Backend, roomId: PrimaryKey) =
+suspend fun DatabaseFactory.getJoinedUserList(backend: Backend, roomId: PrimaryKey) =
     mapQuery(backend, MemberJoin::wrapRow) {
         MemberJoins.selectAll().where {
             MemberJoins.objectId eq roomId

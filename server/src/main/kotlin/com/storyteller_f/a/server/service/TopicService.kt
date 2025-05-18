@@ -12,6 +12,7 @@ import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.TopicPinSearch
 import com.storyteller_f.shared.obj.TopicPinSearch.PINNED
 import com.storyteller_f.shared.obj.TopicPinSearch.UNPINNED
+import com.storyteller_f.shared.obj.UnauthorizedException
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
@@ -257,7 +258,7 @@ suspend fun getTopic(
                 IdFetch(topicId),
                 uid
             ).mapResultIfNotNull { info ->
-                processTopicsContent(backend, isPrivate, listOf(info), uid).mapIfNotNull {
+                processTopicsContent(backend, listOf(info), uid, isPrivate).mapIfNotNull {
                     it.first()
                 }
             }.mapIfNotNull { value ->
@@ -284,7 +285,7 @@ suspend fun getTopicByAid(
             uid
         ).mapResultIfNotNull { (hasRead, hasJoined, isPrivate) ->
             if (hasRead) {
-                processTopicsContent(backend, isPrivate, listOf(info), uid).mapIfNotNull {
+                processTopicsContent(backend, listOf(info), uid, isPrivate).mapIfNotNull {
                     it.first()
                 }
             } else {
@@ -322,7 +323,7 @@ suspend fun getTopLevelTopicsInObject(
                     else -> baseQuery
                 }
             }.mapResult { (data, count) ->
-                processTopicsContent(backend, isPrivate, data, uid).mapIfNotNull {
+                processTopicsContent(backend, data, uid, isPrivate).mapIfNotNull {
                     PaginationResult(it, count)
                 }
             }
@@ -330,7 +331,7 @@ suspend fun getTopLevelTopicsInObject(
     }
 }
 
-private suspend fun processTopicExtension(
+suspend fun processTopicExtension(
     backend: Backend,
     processedTopics: List<TopicInfo>,
     uid: PrimaryKey?,
@@ -351,7 +352,7 @@ private suspend fun processTopicExtension(
         if (subTopics.isEmpty()) {
             Result.success(emptyList())
         } else {
-            processTopicsContent(backend, isPrivate, subTopics, uid, false)
+            processTopicsContent(backend, subTopics, uid, isPrivate, false)
         }.mapIfNotNull { processedSubTopics ->
             processedSubTopics.groupBy {
                 it.parentId
@@ -376,11 +377,11 @@ private suspend fun processTopicExtension(
     }
 }
 
-private suspend fun processTopicsContent(
+suspend fun processTopicsContent(
     backend: Backend,
-    isPrivate: Boolean,
     data: List<TopicInfo>,
     uid: PrimaryKey?,
+    isPrivate: Boolean,
     addLatestSubTopic: Boolean = true
 ): Result<List<TopicInfo>?> = when {
     !isPrivate -> backend.topicSearchService.getDocuments(data.map {
@@ -712,8 +713,8 @@ suspend fun getTopicByIds(
         val publicList = infos.filter {
             !private.contains(it.id)
         }
-        processTopicsContent(backend, true, privateList, uid).mapResultIfNotNull { privateContents ->
-            processTopicsContent(backend, false, publicList, uid).mapIfNotNull { publicContents ->
+        processTopicsContent(backend, privateList, uid, true).mapResultIfNotNull { privateContents ->
+            processTopicsContent(backend, publicList, uid, false).mapIfNotNull { publicContents ->
                 publicContents + privateContents
             }
         }

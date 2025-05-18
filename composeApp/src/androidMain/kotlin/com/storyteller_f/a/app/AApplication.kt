@@ -6,11 +6,13 @@ import android.os.StrictMode
 import com.storyteller_f.a.app.utils.restoreFromStorage
 import com.storyteller_f.shared.contextRef
 import com.storyteller_f.shared.loadIfNeed
+import io.github.aakira.napier.Napier
 import org.schabi.newpipe.DownloaderImpl
 import org.schabi.newpipe.ReCaptchaActivity
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.ContentCountry
 import org.schabi.newpipe.extractor.localization.Localization
+import org.unifiedpush.android.connector.UnifiedPush
 import java.lang.ref.WeakReference
 
 class AApplication : Application() {

@@ -4,19 +4,15 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
-import io.ktor.client.HttpClient
+import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.*
+import java.net.SocketTimeoutException
 
 interface ClientWsListener {
-    fun onReceived(frame: RoomFrame)
+    suspend fun onReceived(frame: RoomFrame)
 }
 
 interface ClientWebSocket {
@@ -57,7 +53,7 @@ class ClientWebSocketImpl(
     val buildConnection: suspend HttpClient.(UserInfo, String) -> DefaultClientWebSocketSession,
     val onMessage: suspend (RoomFrame) -> Unit
 ) : ClientWebSocket {
-    override val connectionHandler = SimpleLoadingHandler<DefaultClientWebSocketSession> { }
+    override val connectionHandler = FixedLoadingHandler<DefaultClientWebSocketSession>()
     override val localState = MutableStateFlow<LoadingState?>(null)
     override val remoteState = MutableSharedFlow<RoomFrame>()
     private val listeners = mutableListOf<ClientWsListener>()
@@ -121,8 +117,8 @@ class ClientWebSocketImpl(
 
     private fun startListenerWebSocket(session: DefaultClientWebSocketSession) {
         GlobalScope.launch {
-            runCatching {
-                while (true) {
+            while (true) {
+                try {
                     when (val frame = session.receiveDeserialized<RoomFrame>()) {
                         is RoomFrame.Error -> {
                             remoteState.emit(frame)
@@ -146,18 +142,23 @@ class ClientWebSocketImpl(
                             onMessage(frame)
                         }
                     }
-                }
-            }.onFailure {
-                if (it is ClosedReceiveChannelException) {
+                } catch (_: ClosedReceiveChannelException) {
                     Napier.i(tag = "ClientWebSocket") {
-                        "Server closed"
+                        "web socket closed"
                     }
-                } else {
-                    Napier.e(it, tag = "ClientWebSocket") {
-                        "Exception in startListenerWebSocket"
+                    break
+                } catch (_: SocketTimeoutException) {
+                    Napier.i(tag = "ClientWebSocket") {
+                        "web socket timeout"
+                    }
+                    break
+                } catch (e: Exception) {
+                    Napier.e(e, tag = "ClientWebSocket") {
+                        "startListenerWebSocket failed"
                     }
                 }
             }
+
         }
     }
 

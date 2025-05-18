@@ -5,7 +5,8 @@ import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.buildBackendFromEnv
 import com.storyteller_f.readEnv
-import com.storyteller_f.shared.model.TaskRecordType
+import com.storyteller_f.shared.type.AssetType
+import com.storyteller_f.shared.type.TaskRecordType
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
@@ -25,47 +26,48 @@ fun main() {
     DatabaseFactory.init(backend)
     runBlocking {
         async {
-            runTask(backend)
+            while (true) {
+                Napier.i(tag = "task") {
+                    "execute ${now()}"
+                }
+                doAcgTask(backend)
+            }
         }
     }
 }
 
-private suspend fun runTask(backend: Backend) {
-    while (true) {
-        Napier.i(tag = "task") {
-            "execute ${now()}"
-        }
-        getAcgTaskListFromTopics(backend).mapResultIfNotNull { (acgList, userAcgMap, list) ->
-            DatabaseFactory.dbQuery(backend) {
-                acgList.forEach { (id, acg) ->
-                    userAcgMap[id]?.let { oldAcgAmount ->
-                        Users.update({
-                            Users.id eq id
-                        }) {
-                            it[Users.acgAmount] = oldAcgAmount + acg
-                        }
+private suspend fun doAcgTask(backend: Backend) {
+    getAcgTaskListFromTopics(backend).mapResultIfNotNull { (acgList, userAcgMap, list) ->
+        DatabaseFactory.dbQuery(backend) {
+            acgList.forEach { (id, acg) ->
+                userAcgMap[id]?.let { oldAcgAmount ->
+                    Users.update({
+                        Users.id eq id
+                    }) {
+                        it[Users.acgAmount] = oldAcgAmount + acg
                     }
+                    addAssetTransaction(AssetTransaction(AssetType.ACG, oldAcgAmount, oldAcgAmount + acg))
                 }
+            }
 
-                addTaskRecord(
-                    TaskRecord(
-                        SnowflakeFactory.nextId(),
-                        now(),
-                        TaskRecordType.TOPIC_ACG,
-                        list.last().id
-                    )
+            addTaskRecord(
+                TaskRecord(
+                    SnowflakeFactory.nextId(),
+                    now(),
+                    TaskRecordType.TOPIC_ACG,
+                    list.last().id
                 )
-            }
-        }.onSuccess {
-            delay(1000)
-            Napier.i(tag = "task") {
-                "task success $it"
-            }
-        }.onFailure {
-            delay(1000)
-            Napier.i(tag = "task", throwable = it) {
-                "task failed"
-            }
+            )
+        }
+    }.onSuccess {
+        delay(1000)
+        Napier.i(tag = "task") {
+            "task success $it"
+        }
+    }.onFailure {
+        delay(1000)
+        Napier.i(tag = "task", throwable = it) {
+            "task failed"
         }
     }
 }

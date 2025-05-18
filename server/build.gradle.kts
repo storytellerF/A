@@ -23,6 +23,7 @@ dependencies {
     implementation(projects.shared)
     implementation(projects.backend)
     implementation(libs.bundles.ktor.server)
+    implementation(libs.bundles.ktor.server.client)
     implementation(libs.pdfbox)
 
     implementation(libs.geoip2)

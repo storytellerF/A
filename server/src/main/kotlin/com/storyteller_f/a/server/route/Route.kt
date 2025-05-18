@@ -168,6 +168,9 @@ class RouteUsers {
 
     @Resource("read")
     class Read(val parent: RouteUsers)
+
+    @Resource("devices")
+    class Device(val parent: RouteUsers)
 }
 
 @Resource("/accounts")
