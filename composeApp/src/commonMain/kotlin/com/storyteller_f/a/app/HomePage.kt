@@ -38,7 +38,6 @@ import com.storyteller_f.a.app.pages.room.MyRoomsPage
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.world.WorldPage
-import com.storyteller_f.a.client_lib.SignInViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -222,7 +221,8 @@ private fun HomePager(
 
 @Composable
 private fun UserHost(content: @Composable () -> Unit) {
-    val user by SignInViewModel.isAlreadySignUp.collectAsState(false)
+    val session = LocalMainSessionManager.current
+    val user by session.isAlreadySignUp.collectAsState()
     if (user) {
         content()
     } else {

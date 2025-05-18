@@ -11,20 +11,20 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.*
 import java.net.SocketTimeoutException
 
-interface ClientWsListener {
+interface WebSocketClientListener {
     suspend fun onReceived(frame: RoomFrame)
 }
 
-interface ClientWebSocket {
+interface WebSocketClient {
     val connectionHandler: LoadingHandler<DefaultClientWebSocketSession>
     val localState: StateFlow<LoadingState?>
     val remoteState: SharedFlow<RoomFrame>
     fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job?
-    fun addListener(listener: ClientWsListener)
-    fun removeListener(listener: ClientWsListener)
+    fun addListener(listener: WebSocketClientListener)
+    fun removeListener(listener: WebSocketClientListener)
 
     companion object {
-        val EMPTY = object : ClientWebSocket {
+        val EMPTY = object : WebSocketClient {
             override val connectionHandler: LoadingHandler<DefaultClientWebSocketSession>
                 get() = TODO("Not yet implemented")
             override val localState: StateFlow<LoadingState?>
@@ -36,11 +36,11 @@ interface ClientWebSocket {
                 TODO("Not yet implemented")
             }
 
-            override fun addListener(listener: ClientWsListener) {
+            override fun addListener(listener: WebSocketClientListener) {
                 TODO("Not yet implemented")
             }
 
-            override fun removeListener(listener: ClientWsListener) {
+            override fun removeListener(listener: WebSocketClientListener) {
                 TODO("Not yet implemented")
             }
         }
@@ -48,29 +48,27 @@ interface ClientWebSocket {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-class ClientWebSocketImpl(
-    val client: HttpClient,
-    val buildConnection: suspend HttpClient.(UserInfo, String) -> DefaultClientWebSocketSession,
+class WebSocketClientImpl(
+    val sessionModel: SessionModel,
+    val buildConnection: suspend (UserInfo, String) -> DefaultClientWebSocketSession,
     val onMessage: suspend (RoomFrame) -> Unit
-) : ClientWebSocket {
+) : WebSocketClient {
     override val connectionHandler = FixedLoadingHandler<DefaultClientWebSocketSession>()
     override val localState = MutableStateFlow<LoadingState?>(null)
     override val remoteState = MutableSharedFlow<RoomFrame>()
-    private val listeners = mutableListOf<ClientWsListener>()
+    private val listeners = mutableListOf<WebSocketClientListener>()
 
-    init {
-        GlobalScope.launch {
-            combine(SignInViewModel.state, SignInViewModel.user) { t1, t2 ->
-                t1 to t2
-            }.distinctUntilChanged().collect { (t1, t2) ->
-                when {
-                    t1 !is ClientSession.SignInSuccess -> connectionHandler.data.value?.cancel()
-                    t2 == null -> SignInViewModel.retryLogin(client)
-                    else -> while (true) {
-                        connectWebSocketIfNeed(t2)
-                        delay(5000)
-                    }
+    suspend fun start() {
+        combine(sessionModel.state, sessionModel.userHandler.data) { t1, t2 ->
+            t1 to t2
+        }.distinctUntilChanged().collect { (state, userInfo) ->
+            if (state is ClientSessionState.Success && userInfo != null) {
+                while (true) {
+                    connectWebSocketIfNeed(userInfo)
+                    delay(5000)
                 }
+            } else {
+                connectionHandler.data.value?.cancel()
             }
         }
     }
@@ -78,7 +76,7 @@ class ClientWebSocketImpl(
     override fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job? {
         val old = connectionHandler.data.value
         return if (old != null && old.isActive) {
-            GlobalScope.launch {
+            old.launch {
                 localState.value = LoadingState.Loading
                 try {
                     old.block()
@@ -92,8 +90,8 @@ class ClientWebSocketImpl(
         }
     }
 
-    private suspend fun connectWebSocketIfNeed(t2: UserInfo) {
-        val (_, sig) = SignInViewModel.session ?: return
+    private suspend fun connectWebSocketIfNeed(userInfo: UserInfo) {
+        val (_, sig) = sessionModel.session ?: return
         if (sig == null) return
         when (connectionHandler.state.value) {
             is LoadingState.Loading -> return
@@ -106,7 +104,7 @@ class ClientWebSocketImpl(
             null -> {}
         }
         try {
-            val session = client.buildConnection(t2, sig)
+            val session = buildConnection(userInfo, sig)
 
             startListenerWebSocket(session)
             connectionHandler.done(session)
@@ -116,7 +114,7 @@ class ClientWebSocketImpl(
     }
 
     private fun startListenerWebSocket(session: DefaultClientWebSocketSession) {
-        GlobalScope.launch {
+        session.launch {
             while (true) {
                 try {
                     when (val frame = session.receiveDeserialized<RoomFrame>()) {
@@ -127,7 +125,7 @@ class ClientWebSocketImpl(
 
                         is RoomFrame.NewTopicInfo -> {
                             val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
-                                val topicInfo = processEncryptedTopic(listOf(frame.topicInfo)).first()
+                                val topicInfo = processEncryptedTopic(listOf(frame.topicInfo), sessionModel).first()
                                 RoomFrame.NewTopicInfo(topicInfo)
                             } else {
                                 frame
@@ -152,21 +150,22 @@ class ClientWebSocketImpl(
                         "web socket timeout"
                     }
                     break
+                } catch (_: CancellationException) {
+                    break
                 } catch (e: Exception) {
                     Napier.e(e, tag = "ClientWebSocket") {
                         "startListenerWebSocket failed"
                     }
                 }
             }
-
         }
     }
 
-    override fun addListener(listener: ClientWsListener) {
+    override fun addListener(listener: WebSocketClientListener) {
         listeners.add(listener)
     }
 
-    override fun removeListener(listener: ClientWsListener) {
+    override fun removeListener(listener: WebSocketClientListener) {
         listeners.remove(listener)
     }
 }

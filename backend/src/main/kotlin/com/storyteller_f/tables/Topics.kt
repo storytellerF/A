@@ -152,7 +152,7 @@ private fun getTopicBuilder(uid: PrimaryKey?): Pair<Query, (ResultRow) -> TopicI
     val t2 = Topics.alias("t2")
     val t3 = Topics.alias("t3")
     val commentCountColumn = t2[Topics.id].countDistinct()
-    val selfCommentColumn = t3[Topics.author].max()
+    val selfCommentColumn = t3[Topics.author].count()
     val selfReadTopic = UserTopicReads.topicId.max()
     val reactionCountColumn = Reactions.id.countDistinct()
     val aidsValue = Aids.value.max()
@@ -203,7 +203,16 @@ suspend fun getTopicsByPredicate(
     val (query, resultRowTransform) = getTopicBuilder(uid)
     return DatabaseFactory.mapQuery(backend, resultRowTransform) {
         query.andWhere(predicate).let(addPagingQuery)
-            .groupBy(*if (addPinOrder) arrayOf(Topics.pinned, Topics.id) else arrayOf(Topics.id))
+            .orderBy(
+                *(if (addPinOrder) {
+                    arrayOf(
+                        Topics.pinned to SortOrder.DESC,
+                        Topics.id to SortOrder.DESC
+                    )
+                } else {
+                    arrayOf(Topics.id to SortOrder.DESC)
+                })
+            ).groupBy(Topics.id)
     }
 }
 

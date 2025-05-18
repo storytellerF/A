@@ -23,7 +23,6 @@ import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level

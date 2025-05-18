@@ -28,7 +28,7 @@ import com.storyteller_f.a.app.service.buildTranslatePrompt
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.getCurrentLanguage
 import com.storyteller_f.a.app.utils.setText
-import com.storyteller_f.a.client_lib.SignInViewModel
+import com.storyteller_f.a.client_lib.SessionManager
 import com.storyteller_f.a.client_lib.getTopicSnapshot
 import com.storyteller_f.a.client_lib.pinTopic
 import com.storyteller_f.a.client_lib.unpinTopic
@@ -40,7 +40,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.formatTime
 import com.strabled.composepreferences.getPreference
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -126,10 +125,10 @@ private fun TopicMenuList(
     dismissDialog: () -> Unit,
 ) {
     val clipboardManager = LocalClipboard.current
-    val alreadyLoginIn by SignInViewModel.isAlreadySignUp.collectAsState(false)
+    val userSessionManager = LocalSessionManager.current
+    val alreadyLoginIn by userSessionManager.isAlreadySignUp.collectAsState()
     val appNav = LocalAppNav.current
     val scope = rememberCoroutineScope()
-    val client = LocalClient.current
     ButtonNav(Icons.Default.ContentCopy, stringResource(Res.string.copy)) {
         scope.launch {
             if (content is TopicContent.Plain) {
@@ -143,7 +142,7 @@ private fun TopicMenuList(
         ButtonNav(Icons.Default.PictureAsPdf, stringResource(Res.string.snapshot)) {
             scope.launch {
                 globalDialogState.use {
-                    client.getTopicSnapshot(topicInfo.id)
+                    userSessionManager.getTopicSnapshot(topicInfo.id)
                     toasterState.show(getString(Res.string.success), duration = 1.seconds)
                 }
             }
@@ -164,7 +163,7 @@ private fun TopicMenuList(
         if (topicInfo.isPin) "Unpin" else "Pin"
     ) {
         scope.launch {
-            pinOrUnpinTopic(topicInfo, client).onSuccess {
+            pinOrUnpinTopic(topicInfo, userSessionManager).onSuccess {
                 dismissDialog()
             }
         }
@@ -173,13 +172,13 @@ private fun TopicMenuList(
 
 suspend fun pinOrUnpinTopic(
     topicInfo: TopicInfo,
-    client: HttpClient
+    sessionManager: SessionManager
 ): Result<TopicInfo> {
     return globalDialogState.use {
         if (topicInfo.isPin) {
-            client.unpinTopic(topicInfo.id)
+            sessionManager.unpinTopic(topicInfo.id)
         } else {
-            client.pinTopic(topicInfo.id)
+            sessionManager.pinTopic(topicInfo.id)
         }.getOrThrow()
     }
 }
@@ -187,7 +186,7 @@ suspend fun pinOrUnpinTopic(
 @Composable
 fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest: () -> Unit) {
     val scope = rememberCoroutineScope()
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest
@@ -204,7 +203,7 @@ fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest:
             text = { Text(title) },
             onClick = {
                 scope.launch {
-                    pinOrUnpinTopic(topicInfo, client).onSuccess {
+                    pinOrUnpinTopic(topicInfo, sessionManager).onSuccess {
                         onDismissRequest()
                         bus.emit(OnTopicChanged(it))
                     }

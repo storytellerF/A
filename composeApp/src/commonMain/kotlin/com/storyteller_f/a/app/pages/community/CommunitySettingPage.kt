@@ -9,7 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.CommunityIcon
@@ -21,11 +21,11 @@ import com.storyteller_f.a.app.model.OnCommunityUpdated
 import com.storyteller_f.a.app.model.createCommunityViewModel
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.pages.user.SettingOption
+import com.storyteller_f.a.client_lib.UserSessionManager
 import com.storyteller_f.a.client_lib.updateCommunityInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.PrimaryKey
-import io.ktor.client.*
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
@@ -47,7 +47,7 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
                 currentOption = opt
             }, it1)
         }
-        val client = LocalClient.current
+        val sessionManager = LocalSessionManager.current
         val scope = rememberCoroutineScope()
         ObjectSettingDialog(closeDialog, currentOption, sheetState, { media ->
             scope.launch {
@@ -57,14 +57,14 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
                     } else {
                         UpdateCommunityBody(icon = media.name)
                     }
-                    val newInfo = client.updateCommunityInfo(communityId, body).getOrThrow()
+                    val newInfo = sessionManager.updateCommunityInfo(communityId, body).getOrThrow()
                     bus.emit(OnCommunityUpdated(newInfo))
                     closeDialog()
                 }
             }
         }, { input ->
             scope.launch {
-                updateCommunity(currentOption, client, input, closeDialog, communityId)
+                updateCommunity(currentOption, sessionManager, input, closeDialog, communityId)
             }
         })
     }
@@ -77,7 +77,7 @@ private fun CommunitySettingInternal(
     communityInfo: CommunityInfo,
 ) {
     val toasterState = LocalToaster.current
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
     Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
         SettingOptionResettableView("Icon", communityInfo.icon != null, {
@@ -85,7 +85,7 @@ private fun CommunitySettingInternal(
                 scope.launch {
                     globalDialogState.use {
                         val body = UpdateCommunityBody(icon = "")
-                        val newInfo = client.updateCommunityInfo(communityInfo.id, body).getOrThrow()
+                        val newInfo = sessionManager.updateCommunityInfo(communityInfo.id, body).getOrThrow()
                         bus.emit(OnCommunityUpdated(newInfo))
                     }
                 }
@@ -100,7 +100,7 @@ private fun CommunitySettingInternal(
                 scope.launch {
                     globalDialogState.use {
                         val body = UpdateCommunityBody(poster = "")
-                        val newInfo = client.updateCommunityInfo(communityInfo.id, body).getOrThrow()
+                        val newInfo = sessionManager.updateCommunityInfo(communityInfo.id, body).getOrThrow()
                         bus.emit(OnCommunityUpdated(newInfo))
                     }
                 }
@@ -128,7 +128,7 @@ private fun CommunitySettingInternal(
 
 private suspend fun updateCommunity(
     showInputDialog: SettingOption?,
-    client: HttpClient,
+    client: UserSessionManager,
     string: String,
     closeDialog: () -> Unit,
     communityId: PrimaryKey

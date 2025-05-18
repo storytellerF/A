@@ -1,6 +1,5 @@
 package com.storyteller_f.a.client_lib
 
-import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.UserInfo
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.auth.*
@@ -9,14 +8,27 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.auth.*
 
-class ClientCustomAuthProvider : AuthProvider {
+class ClientCustomAuthProvider(val config: CustomAuthConfig) : AuthProvider {
+
+    class CustomAuthConfig {
+        lateinit var addRequestHeaders: suspend (String, HttpRequestBuilder) -> Unit
+        lateinit var updateDataIfNeed: (String) -> Unit
+        lateinit var refreshSignature: suspend (HttpResponse) -> Boolean
+
+        fun addRequestHeaders(block: suspend (String, HttpRequestBuilder) -> Unit) {
+            addRequestHeaders = block
+        }
+        fun updateDataIfNeed(block: (String) -> Unit) {
+            updateDataIfNeed = block
+        }
+        fun refreshSignature(block: suspend (HttpResponse) -> Boolean) {
+            refreshSignature = block
+        }
+    }
 
     override suspend fun addRequestHeaders(request: HttpRequestBuilder, authHeader: HttpAuthHeader?) {
-        Napier.v("addRequestHeaders ${authHeader != null} ${request.url}", tag = "ClientAuth")
         if (authHeader is HttpAuthHeader.Single) {
-            if (authHeader.blob == SignInViewModel.session?.first) {
-                request.addRequestHeaders()
-            }
+            config.addRequestHeaders(authHeader.blob, request)
         }
     }
 
@@ -34,55 +46,33 @@ class ClientCustomAuthProvider : AuthProvider {
     }
 
     override fun isApplicable(auth: HttpAuthHeader): Boolean {
-        val localData = SignInViewModel.session?.first
-        Napier.v("isApplicable $auth $localData", tag = "ClientAuth")
         if (auth.authScheme == "Custom" && auth is HttpAuthHeader.Single) {
-            val data = auth.blob
-            if (data != localData) {
-                SignInViewModel.updateSession(data, null)
-            }
+            config.updateDataIfNeed(auth.blob)
             return true
         }
         return false
     }
 
     override suspend fun refreshToken(response: HttpResponse): Boolean {
-        val state = SignInViewModel.state.value as? ClientSession.SignInSuccess
-        val data = SignInViewModel.session?.first
-        Napier.v("refreshToken $data ${state != null}", tag = "ClientAuth")
-        return if (state == null || data == null) {
-            false
-        } else {
-            runCatching {
-                SignInViewModel.updateSession(data, state.session.signature(finalData(data)).getOrThrow())
-            }.fold({
-                Napier.v(tag = "ClientAuth") {
-                    "refreshToken success"
-                }
-                true
-            }, {
-                Napier.e("refreshToken failed", it, tag = "ClientAuth")
-                false
-            })
-        }
+        return config.refreshSignature(response)
     }
 }
 
-suspend fun HttpRequestBuilder.addRequestHeaders() {
-    val state = SignInViewModel.state.value as? ClientSession.SignInSuccess
-    val session = SignInViewModel.session
-    val userInfo = SignInViewModel.user.value
+suspend fun HttpRequestBuilder.addRequestHeaders(sessionManager: SessionModel) {
+    val passSession = sessionManager.passSession
+    val session = sessionManager.session
+    val userInfo = sessionManager.userHandler.data.value
     Napier.i(tag = "ClientAuth") {
-        "addRequestHeaders $state $session"
+        "addRequestHeaders $session"
     }
-    if (state != null && session != null) {
+    if (session != null && passSession != null) {
         val (localData, localSignature) = session
         if (localData.isNotBlank() && !localSignature.isNullOrBlank()) {
             Napier.i {
                 "addRequestHeaders headers $localData $localSignature"
             }
             if (userInfo == null) {
-                val address = state.session.address().getOrThrow()
+                val address = passSession.address().getOrThrow()
                 headers[HttpHeaders.Authorization] = """Custom ad="$address", sig="$localSignature""""
             } else {
                 addRequestHeaders(userInfo, localSignature)
@@ -102,9 +92,6 @@ fun HttpRequestBuilder.addRequestHeaders(userInfo: UserInfo, sig: String) {
     }
 }
 
-class CustomAuthConfig
-
-fun AuthConfig.custom(block: CustomAuthConfig.() -> Unit) {
-    CustomAuthConfig().apply(block)
-    providers.add(ClientCustomAuthProvider())
+fun AuthConfig.custom(block: ClientCustomAuthProvider.CustomAuthConfig.() -> Unit) {
+    providers.add(ClientCustomAuthProvider(ClientCustomAuthProvider.CustomAuthConfig().apply(block)))
 }

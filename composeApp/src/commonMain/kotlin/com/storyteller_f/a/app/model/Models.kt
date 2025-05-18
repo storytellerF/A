@@ -17,7 +17,6 @@ import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
-import io.ktor.client.*
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.channels.Channel
@@ -48,22 +47,20 @@ data class OnRoomUpdated(val info: RoomInfo)
 data class OnAddReaction(val topicId: PrimaryKey, val emoji: String)
 data class OnRemoveReaction(val topicId: PrimaryKey, val emoji: String)
 
-abstract class CommunityViewModel(
-    client: HttpClient
-) :
-    SimpleViewModel<CommunityInfo>(client) {
+abstract class CommunityViewModel :
+    SimpleViewModel<CommunityInfo>() {
     val dialog = DialogSaveState()
 }
 
-class IdCommunityViewModel(client: HttpClient, databaseSource: DatabaseSource, communityId: PrimaryKey) :
-    CommunityViewModel(client) {
+class IdCommunityViewModel(sessionManager: SessionManager, databaseSource: DatabaseSource, communityId: PrimaryKey) :
+    CommunityViewModel() {
     override val handler: LoadingHandler<CommunityInfo> =
         CachedLoadingHandler(
             databaseSource,
             "communities",
             viewModelScope,
             Expression.IdEq("id", communityId),
-            { client.getCommunityInfo(communityId) },
+            { sessionManager.getCommunityInfo(communityId) },
             serializer<CommunityInfo>()
         ) { data, t ->
             save(communityId.toString(), data)
@@ -71,15 +68,15 @@ class IdCommunityViewModel(client: HttpClient, databaseSource: DatabaseSource, c
         }
 }
 
-class AidCommunityViewModel(client: HttpClient, databaseSource: DatabaseSource, aid: String) :
-    CommunityViewModel(client) {
+class AidCommunityViewModel(sessionManager: SessionManager, databaseSource: DatabaseSource, aid: String) :
+    CommunityViewModel() {
     private val serializer = serializer<CommunityInfo>()
     override val handler: LoadingHandler<CommunityInfo> = CachedLoadingHandler(
         databaseSource,
         "communities",
         viewModelScope,
         Expression.StrEq("aid", aid),
-        { client.getCommunityInfoByAid(aid) },
+        { sessionManager.getCommunityInfoByAid(aid) },
         serializer
     ) { data, t ->
         save(aid, data)
@@ -89,7 +86,7 @@ class AidCommunityViewModel(client: HttpClient, databaseSource: DatabaseSource, 
 
 @OptIn(ExperimentalPagingApi::class)
 class CommunitiesViewModel(
-    client: HttpClient,
+    sessionManager: SessionManager,
     private val databaseSource: DatabaseSource,
     private val joinStatusSearch: JoinStatusSearch,
     private val word: String,
@@ -99,13 +96,27 @@ class CommunitiesViewModel(
 
     override val flow = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = sectionMediator(client, collectionName, databaseSource) { client ->
+        remoteMediator = sectionMediator(sessionManager, collectionName, databaseSource) { userSessionViewModel ->
             listOf(
-                RegularPagingSource(client) { key, size ->
-                    client.searchCommunity(size, joinStatusSearch, word, target, key, PosterSearch.HAS_POSTER)
+                RegularPagingSource(userSessionViewModel) { key, size ->
+                    userSessionViewModel.searchCommunity(
+                        size,
+                        joinStatusSearch,
+                        word,
+                        target,
+                        key,
+                        PosterSearch.HAS_POSTER
+                    )
                 },
-                RegularPagingSource(client) { key, size ->
-                    client.searchCommunity(size, joinStatusSearch, word, target, key, PosterSearch.NO_POSTER)
+                RegularPagingSource(userSessionViewModel) { key, size ->
+                    userSessionViewModel.searchCommunity(
+                        size,
+                        joinStatusSearch,
+                        word,
+                        target,
+                        key,
+                        PosterSearch.NO_POSTER
+                    )
                 }
             )
         },
@@ -116,7 +127,7 @@ class CommunitiesViewModel(
 
 @OptIn(ExperimentalPagingApi::class)
 class RoomsViewModel(
-    client: HttpClient,
+    sessionManager: SessionManager,
     databaseSource: DatabaseSource,
     private val joinStatusSearch: JoinStatusSearch,
     private val word: String,
@@ -129,7 +140,7 @@ class RoomsViewModel(
         remoteMediator = singleSourceMediator(
             databaseSource,
             collectionName,
-            RegularPagingSource(client) { key, size ->
+            RegularPagingSource(sessionManager) { key, size ->
                 searchRooms(size, key, joinStatusSearch, word, community)
             }
         ),
@@ -140,7 +151,7 @@ class RoomsViewModel(
 
 @OptIn(ExperimentalPagingApi::class)
 class TopicsViewModel(
-    client: HttpClient,
+    val sessionManager: SessionManager,
     private val databaseSource: DatabaseSource,
     id: PrimaryKey,
     val type: ObjectType? = null,
@@ -151,7 +162,7 @@ class TopicsViewModel(
     override val flow: Flow<PagingData<TopicInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = sectionMediator<TopicInfo>(
-            client,
+            sessionManager,
             collectionName,
             databaseSource,
             {
@@ -162,15 +173,15 @@ class TopicsViewModel(
             }
         ) {
             if (id == DEFAULT_PRIMARY_KEY) {
-                listOf(RegularPagingSource(client) { loadKey, size ->
+                listOf(RegularPagingSource(sessionManager) { loadKey, size ->
                     getRecommendTopics(loadKey, size)
                 })
             } else {
                 listOf(
-                    RegularPagingSource(client) { loadKey, size ->
+                    RegularPagingSource(sessionManager) { loadKey, size ->
                         getTopicList(type, id, loadKey, size, TopicPinSearch.PINNED)
                     },
-                    RegularPagingSource(client) { loadKey, size ->
+                    RegularPagingSource(sessionManager) { loadKey, size ->
                         getTopicList(type, id, loadKey, size, TopicPinSearch.UNPINNED)
                     }
                 )
@@ -178,7 +189,7 @@ class TopicsViewModel(
         },
     ) {
         sectionPagingSource(databaseSource, collectionName, listOf(Order.Asc("pinned"), Order.Desc("id"))) {
-            processEncryptedTopic(this).map {
+            processEncryptedTopic(this, sessionManager.sessionModel).map {
                 extractHeadlineIfPlain(it)
             }
         }
@@ -194,15 +205,13 @@ private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
     }
 }
 
-abstract class RoomViewModel(client: HttpClient) :
-    SimpleViewModel<RoomInfo>(client) {
+abstract class RoomViewModel :
+    SimpleViewModel<RoomInfo>() {
     val dialog = DialogSaveState()
-
 }
 
-class IdRoomViewModel(client: HttpClient, databaseSource: DatabaseSource, communityId: PrimaryKey) : RoomViewModel(
-    client
-) {
+class IdRoomViewModel(sessionManager: SessionManager, databaseSource: DatabaseSource, communityId: PrimaryKey) :
+    RoomViewModel() {
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
             databaseSource,
@@ -210,7 +219,7 @@ class IdRoomViewModel(client: HttpClient, databaseSource: DatabaseSource, commun
             viewModelScope,
             Expression.IdEq("id", communityId),
             {
-                client.getRoomInfo(communityId)
+                sessionManager.getRoomInfo(communityId)
             },
             serializer<RoomInfo>()
         ) { data, t ->
@@ -219,7 +228,7 @@ class IdRoomViewModel(client: HttpClient, databaseSource: DatabaseSource, commun
         }
 }
 
-class AidRoomViewModel(client: HttpClient, databaseSource: DatabaseSource, aid: String) : RoomViewModel(client) {
+class AidRoomViewModel(sessionManager: SessionManager, databaseSource: DatabaseSource, aid: String) : RoomViewModel() {
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
             databaseSource,
@@ -227,7 +236,7 @@ class AidRoomViewModel(client: HttpClient, databaseSource: DatabaseSource, aid: 
             viewModelScope,
             Expression.StrEq("aid", aid),
             {
-                client.getRoomInfoByAid(aid)
+                sessionManager.getRoomInfoByAid(aid)
             },
             serializer<RoomInfo>()
         ) { data, t ->
@@ -238,7 +247,7 @@ class AidRoomViewModel(client: HttpClient, databaseSource: DatabaseSource, aid: 
 
 @OptIn(ExperimentalPagingApi::class)
 class TopicSearchViewModel(
-    client: HttpClient,
+    sessionManager: SessionManager,
     databaseSource: DatabaseSource,
     word: List<String>,
     parentId: PrimaryKey?,
@@ -252,8 +261,8 @@ class TopicSearchViewModel(
         remoteMediator = singleSourceMediator(
             databaseSource,
             collectionName,
-            RegularPagingSource(client) { key, size ->
-                client.searchTopics(size, word, parentId, parentType, key)
+            RegularPagingSource(sessionManager) { key, size ->
+                sessionManager.searchTopics(size, word, parentId, parentType, key)
             }
         ),
     ) {
@@ -262,7 +271,7 @@ class TopicSearchViewModel(
 }
 
 class MediaListViewModel(
-    client: HttpClient,
+    sessionManager: SessionManager,
     databaseSource: DatabaseSource,
     private val objectId: PrimaryKey,
     private val objectType: ObjectType
@@ -276,8 +285,8 @@ class MediaListViewModel(
         remoteMediator = singleSourceMediator(
             databaseSource,
             collectionName,
-            RegularPagingSource(client) { key, size ->
-                client.getMediaList(objectId, objectType, key, size)
+            RegularPagingSource(sessionManager) { key, size ->
+                sessionManager.getMediaList(objectId, objectType, key, size)
             }
         ),
     ) {
@@ -285,10 +294,14 @@ class MediaListViewModel(
     }.flow.cachedIn(viewModelScope)
 }
 
-class AllMediaListViewModel(client: HttpClient, private val objectId: PrimaryKey, private val objectType: ObjectType) :
-    SimpleViewModel<ServerResponse<MediaInfo>>(client) {
+class AllMediaListViewModel(
+    sessionManager: SessionManager,
+    private val objectId: PrimaryKey,
+    private val objectType: ObjectType
+) :
+    SimpleViewModel<ServerResponse<MediaInfo>>() {
     override val handler: LoadingHandler<ServerResponse<MediaInfo>> = SimpleLoadingHandler(viewModelScope) {
-        client.getAllMediaList(objectId, objectType)
+        sessionManager.getAllMediaList(objectId, objectType)
     }
 
     init {
@@ -307,14 +320,11 @@ class AllMediaListViewModel(client: HttpClient, private val objectId: PrimaryKey
     }
 }
 
-abstract class UserViewModel(
-    client: HttpClient
-) :
-    SimpleViewModel<UserInfo>(client)
+abstract class UserViewModel :
+    SimpleViewModel<UserInfo>()
 
-class IdUserViewModel(client: HttpClient, databaseSource: DatabaseSource, id: PrimaryKey) : UserViewModel(
-    client
-) {
+class IdUserViewModel(sessionManager: SessionManager, databaseSource: DatabaseSource, id: PrimaryKey) :
+    UserViewModel() {
     override val handler: LoadingHandler<UserInfo> =
         CachedLoadingHandler(
             databaseSource,
@@ -322,7 +332,7 @@ class IdUserViewModel(client: HttpClient, databaseSource: DatabaseSource, id: Pr
             viewModelScope,
             Expression.IdEq("id", id),
             {
-                client.getUserInfo(id)
+                sessionManager.getUserInfo(id)
             },
             serializer<UserInfo>()
         ) { data, t ->
@@ -331,7 +341,7 @@ class IdUserViewModel(client: HttpClient, databaseSource: DatabaseSource, id: Pr
         }
 }
 
-class AidUserViewModel(client: HttpClient, databaseSource: DatabaseSource, aid: String) : UserViewModel(client) {
+class AidUserViewModel(sessionManager: SessionManager, databaseSource: DatabaseSource, aid: String) : UserViewModel() {
     override val handler: LoadingHandler<UserInfo> =
         CachedLoadingHandler(
             databaseSource,
@@ -339,7 +349,7 @@ class AidUserViewModel(client: HttpClient, databaseSource: DatabaseSource, aid: 
             viewModelScope,
             Expression.StrEq("aid", aid),
             {
-                client.getUserInfoByAid(aid)
+                sessionManager.getUserInfoByAid(aid)
             },
             serializer<UserInfo>()
         ) { data, t ->
@@ -350,7 +360,7 @@ class AidUserViewModel(client: HttpClient, databaseSource: DatabaseSource, aid: 
 
 @OptIn(ExperimentalPagingApi::class)
 class MemberViewModel(
-    client: HttpClient,
+    sessionManager: SessionManager,
     databaseSource: DatabaseSource,
     objectId: PrimaryKey,
     word: String,
@@ -365,7 +375,7 @@ class MemberViewModel(
             databaseSource,
             collectionName,
             RegularPagingSource(
-                client
+                sessionManager
             ) { key, size ->
                 when (objectType) {
                     ObjectType.COMMUNITY -> searchCommunityMembers(objectId, key, size, word)
@@ -379,21 +389,18 @@ class MemberViewModel(
     }.flow.cachedIn(viewModelScope)
 }
 
-class ReactionsViewModel(client: HttpClient, private val objectId: PrimaryKey) :
-    SimpleViewModel<ServerResponse<ReactionInfo>>(
-        client
-    ) {
+class ReactionsViewModel(sessionManager: SessionManager, private val objectId: PrimaryKey) :
+    SimpleViewModel<ServerResponse<ReactionInfo>>() {
     override val handler: LoadingHandler<ServerResponse<ReactionInfo>> = SimpleLoadingHandler(viewModelScope) {
-        client.getReactions(objectId)
+        sessionManager.getReactions(objectId)
     }
 }
 
-abstract class TopicViewModel(client: HttpClient) :
-    SimpleViewModel<TopicInfo>(client)
+abstract class TopicViewModel :
+    SimpleViewModel<TopicInfo>()
 
-class IdTopicViewModel(client: HttpClient, databaseSource: DatabaseSource, topicId: PrimaryKey) : TopicViewModel(
-    client
-) {
+class IdTopicViewModel(sessionManager: SessionManager, databaseSource: DatabaseSource, topicId: PrimaryKey) :
+    TopicViewModel() {
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
             databaseSource,
@@ -401,7 +408,7 @@ class IdTopicViewModel(client: HttpClient, databaseSource: DatabaseSource, topic
             viewModelScope,
             Expression.IdEq("id", topicId),
             {
-                client.getTopicInfo(topicId)
+                sessionManager.getTopicInfo(topicId)
             },
             serializer<TopicInfo>()
         ) { data, t ->
@@ -410,7 +417,8 @@ class IdTopicViewModel(client: HttpClient, databaseSource: DatabaseSource, topic
         }
 }
 
-class AidTopicViewModel(client: HttpClient, databaseSource: DatabaseSource, aid: String) : TopicViewModel(client) {
+class AidTopicViewModel(sessionManager: SessionManager, databaseSource: DatabaseSource, aid: String) :
+    TopicViewModel() {
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
             databaseSource,
@@ -418,7 +426,7 @@ class AidTopicViewModel(client: HttpClient, databaseSource: DatabaseSource, aid:
             viewModelScope,
             Expression.StrEq("aid", aid),
             {
-                client.getTopicInfoByAid(aid)
+                sessionManager.getTopicInfoByAid(aid)
             },
             serializer<TopicInfo>()
         ) { data, t ->
@@ -427,16 +435,17 @@ class AidTopicViewModel(client: HttpClient, databaseSource: DatabaseSource, aid:
         }
 }
 
-class RoomKeysViewModel(client: HttpClient, private val id: PrimaryKey, val private: Boolean) :
-    SimpleViewModel<List<Pair<PrimaryKey, String>>>(client) {
+class RoomKeysViewModel(sessionManager: SessionManager, private val id: PrimaryKey, val private: Boolean) :
+    SimpleViewModel<List<Pair<PrimaryKey, String>>>() {
     override val handler: LoadingHandler<List<Pair<PrimaryKey, String>>> = SimpleLoadingHandler(viewModelScope) {
         runCatching {
-            if (!this@RoomKeysViewModel.private) return@runCatching emptyList()
+            if (!private) return@runCatching emptyList()
             val result = mutableListOf<Pair<PrimaryKey, String>>()
             var last: PrimaryKey? = null
             while (true) {
                 val list =
-                    this@RoomKeysViewModel.client.requestRoomKeys(this@RoomKeysViewModel.id, last, 100).getOrThrow()
+                    sessionManager.requestRoomKeys(this@RoomKeysViewModel.id, last, 100)
+                        .getOrThrow()
                 result.addAll(list.data)
                 val nextKey = list.pagination?.nextPageToken?.toPrimaryKeyOrNull() ?: break
                 last = nextKey
@@ -444,12 +453,11 @@ class RoomKeysViewModel(client: HttpClient, private val id: PrimaryKey, val priv
             result
         }
     }
-
 }
 
 @OptIn(ExperimentalPagingApi::class)
 class TitlesViewModel(
-    client: HttpClient,
+    sessionManager: SessionManager,
     databaseSource: DatabaseSource,
     uid: PrimaryKey,
     searchType: TitleSearchType,
@@ -460,37 +468,44 @@ class TitlesViewModel(
 ) : PagingViewModel<PrimaryKey, TitleInfo>() {
     override val flow: Flow<PagingData<TitleInfo>> = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = singleSourceMediator(databaseSource, collectionName, RegularPagingSource(client) { key, size ->
-            client.userTitles(uid, key, size, searchType, status, type, scopeId)
-        }),
+        remoteMediator = singleSourceMediator(
+            databaseSource,
+            collectionName,
+            RegularPagingSource(
+                sessionManager
+            ) { key, size ->
+                sessionManager.userTitles(uid, key, size, searchType, status, type, scopeId)
+            }
+        ),
     ) {
         singleSourceDatabaseSource(collectionName, databaseSource)
     }.flow.cachedIn(viewModelScope)
 }
 
-class UploadViewModel(client: HttpClient, private val uploader: UploadSession, myUid: PrimaryKey) : ViewModel() {
+class UploadViewModel(sessionManager: SessionManager, private val uploader: UploadSession, myUid: PrimaryKey) :
+    ViewModel() {
     private val queue = Channel<Int> {
     }
     val handlers = uploader.list.mapIndexed { i, e ->
-        FixedLoadingHandler<MediaInfo>({
+        FixedLoadingHandler<MediaInfo> {
             retry(i)
-        }) to e
+        } to e
     }
 
     init {
         viewModelScope.launch {
             for (e in queue) {
-                val (handler, clientFile) = handlers[e]
+                val (handler, userSessionViewModelFile) = handlers[e]
                 handler.request {
                     runCatching {
                         upload(
-                            client,
+                            sessionManager,
                             myUid ob ObjectType.USER,
-                            clientFile.size,
-                            clientFile.name,
-                            clientFile.contentType
+                            userSessionViewModelFile.size,
+                            userSessionViewModelFile.name,
+                            userSessionViewModelFile.contentType
                         ) {
-                            clientFile.source()?.buffered() ?: throw Exception("upload failed")
+                            userSessionViewModelFile.source()?.buffered() ?: throw Exception("upload failed")
                         }.first()
                     }
                 }

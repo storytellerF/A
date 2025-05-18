@@ -5,8 +5,8 @@ import android.security.keystore.KeyProtection
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
-import com.storyteller_f.a.client_lib.LoginUser
-import com.storyteller_f.a.client_lib.LoginUserSession
+import com.storyteller_f.a.client_lib.RawUserPassInfo
+import com.storyteller_f.a.client_lib.UserPass
 import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.contextRef
@@ -40,7 +40,7 @@ actual fun buildLoginUserSessionFactory(): LoginUserSessionManager {
     return DefaultLoginUserSessionManager()
 }
 
-class AndroidKeyStoreLoginUserSession(private val alias: String) : LoginUserSession {
+class AndroidKeyStoreUserPassSession(private val alias: String) : UserPass {
     @OptIn(ExperimentalStdlibApi::class)
     override suspend fun signature(data: String): Result<String> {
         return runCatching {
@@ -141,15 +141,15 @@ class AndroidKeyStoreLoginUserSessionManager : LoginUserSessionManager {
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override suspend fun addSession(session: LoginUser): LoginUserSession {
+    override suspend fun addSession(session: RawUserPassInfo): UserPass {
         val current = "default"
         importEcdsaPrivateKey(current, session.privateKey)
         defaultSettings.encodeValue(LoginHistory.serializer(), "login_history", LoginHistory(current, current))
-        return AndroidKeyStoreLoginUserSession(current)
+        return AndroidKeyStoreUserPassSession(current)
     }
 
-    override fun buildSession(alias: String): LoginUserSession {
-        return AndroidKeyStoreLoginUserSession(alias)
+    override fun buildSession(alias: String): UserPass {
+        return AndroidKeyStoreUserPassSession(alias)
     }
 
     private suspend fun importEcdsaPrivateKey(alias: String, pemPrivateKey: String) {

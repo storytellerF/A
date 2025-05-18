@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.bottomAppending
@@ -35,6 +35,7 @@ import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnMediaUploaded
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.a.app.utils.Recorder
+import com.storyteller_f.a.client_lib.SessionManager
 import com.storyteller_f.a.client_lib.upload
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -43,7 +44,6 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.*
 import io.github.vinceglb.filekit.dialogs.openFilePicker
-import io.ktor.client.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import kotlinx.coroutines.launch
@@ -58,8 +58,8 @@ fun MediaPicker(
     showSheet: Boolean,
     sheetState: SheetState,
     mediaTarget: ObjectTuple,
-    clickItem: (List<MediaInfo>) -> Unit,
     support: List<String> = listOf("files", "audio recorder"),
+    onClickItem: (List<MediaInfo>) -> Unit,
     hideSheet: () -> Unit
 ) {
     BaseSheet(showSheet, sheetState, hideSheet) {
@@ -86,9 +86,9 @@ fun MediaPicker(
         }
         HorizontalPager(pagerState, modifier = Modifier.height(300.dp)) {
             if (tabs[it].second == "files") {
-                MediaListView(mediaTarget, clickItem)
+                MediaListView(mediaTarget, onClickItem)
             } else {
-                AudioRecorder(mediaTarget, clickItem)
+                AudioRecorder(mediaTarget, onClickItem)
             }
         }
     }
@@ -101,9 +101,8 @@ fun AudioRecorder(
 ) {
     val isRecording by Recorder.isRecording
     val isGranted by isPermissionGranted(Permission.Audio)
-    val client = LocalClient.current
     Box(modifier = Modifier.fillMaxSize()) {
-        RecorderButton(isGranted, isRecording, uploadSuccess, mediaTarget, client)
+        RecorderButton(isGranted, isRecording, uploadSuccess, mediaTarget)
         if (!isGranted) {
             Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer)) {
                 Button({
@@ -122,8 +121,8 @@ private fun BoxScope.RecorderButton(
     isRecording: Boolean,
     uploadSuccess: (List<MediaInfo>) -> Unit,
     mediaTarget: ObjectTuple,
-    client: HttpClient
 ) {
+    val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
     Box(
         modifier = Modifier.size(150.dp)
@@ -138,7 +137,7 @@ private fun BoxScope.RecorderButton(
                             Napier.i {
                                 "save to $path"
                             }
-                            uploadPath(path, client, mediaTarget).mapIfNotNull {
+                            uploadPath(path, sessionManager, mediaTarget).mapIfNotNull {
                                 uploadSuccess(it)
                             }
                         } else {
@@ -164,14 +163,14 @@ private fun MediaListView(
     mediaTarget: ObjectTuple,
     clickItem: (List<MediaInfo>) -> Unit,
 ) {
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     val list = createMediaListViewModel(mediaTarget)
     val scope = rememberCoroutineScope()
     Column(modifier = Modifier.padding(top = 10.dp)) {
         Row {
             IconButton({
                 scope.launch {
-                    selectFileAndUpload(mediaTarget, client) {
+                    selectFileAndUpload(mediaTarget, sessionManager) {
                         clickItem(it)
                     }
                 }
@@ -242,14 +241,14 @@ private fun FileIcon(it: MediaInfo) {
 
 private suspend fun selectFileAndUpload(
     mediaTarget: ObjectTuple,
-    client: HttpClient,
+    sessionManager: SessionManager,
     uploadSuccess: (List<MediaInfo>) -> Unit
 ) {
     globalDialogState.use {
         val f = FileKit.openFilePicker()
         if (f != null) {
             upload(
-                client,
+                sessionManager,
                 mediaTarget,
                 f.size(),
                 f.name,
@@ -267,13 +266,13 @@ private suspend fun selectFileAndUpload(
 
 suspend fun uploadPath(
     path: Path,
-    client: HttpClient,
+    sessionManager: SessionManager,
     mediaTarget: ObjectTuple,
 ): Result<List<MediaInfo>?> {
     val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
     return globalDialogState.use {
         upload(
-            client,
+            sessionManager,
             mediaTarget,
             meta.size,
             path.name,
@@ -285,7 +284,7 @@ suspend fun uploadPath(
 }
 
 suspend fun upload(
-    client: HttpClient,
+    sessionManager: SessionManager,
     mediaTarget: ObjectTuple,
     size: Long,
     name: String,
@@ -293,7 +292,7 @@ suspend fun upload(
     readStream: () -> Input
 ): List<MediaInfo> {
     if (size <= 100 * 1024 * 1024) {
-        val response = client.upload(mediaTarget, size, name, contentType, readStream).getOrThrow()
+        val response = sessionManager.upload(mediaTarget, size, name, contentType, readStream).getOrThrow()
 
         bus.emit(OnMediaUploaded(response.data))
         return response.data

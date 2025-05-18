@@ -14,24 +14,24 @@ import kotlin.test.assertNull
 
 class UserTest {
     @Test
-    fun `test get user`() = test { client, _ ->
-        attachSession(client) {
+    fun `test get user`() = test {
+        attachSession {
             val uid = it.uid
             assertNotNull(uid)
-            val aid = client.getUserInfo(uid).getOrThrow().aid
+            val aid = getUserInfo(uid).getOrThrow().aid
             assertNull(aid)
-            val updateRow = client.updateUserInfo(
+            val updateRow = updateUserInfo(
                 UpdateUserBody(aid = "newaid")
             ).getOrThrow()
             assertEquals(updateRow.aid, "newaid")
-            assertEquals(uid, client.getUserInfoByAid("newaid").getOrThrow().id)
-            client.updateUserInfo(UpdateUserBody(nickname = "test")).getOrThrow()
-            assertEquals("test", client.getUserInfo(uid).getOrThrow().nickname)
+            assertEquals(uid, getUserInfoByAid("newaid").getOrThrow().id)
+            updateUserInfo(UpdateUserBody(nickname = "test")).getOrThrow()
+            assertEquals("test", getUserInfo(uid).getOrThrow().nickname)
             // 更新头像
             val stream = ClassLoader.getSystemClassLoader().getResourceAsStream("avatar1.png")!!
             val bytes = stream.readBytes()
             val info =
-                client.upload(
+                upload(
                     ObjectTuple(it.uid, ObjectType.USER),
                     bytes.size.toLong(),
                     "avatar1.png",
@@ -44,16 +44,16 @@ class UserTest {
                     .getOrThrow().data.first()
             assertEquals(
                 "avatar1.png",
-                client.updateUserInfo(UpdateUserBody(avatar = info.name)).getOrThrow().avatar!!.noPrefixName
+                updateUserInfo(UpdateUserBody(avatar = info.name)).getOrThrow().avatar!!.noPrefixName
             )
         }
     }
 
     @Test
-    fun `test login`() = test { client, _ ->
-        val session = attachSession(client) {
+    fun `test login`() = test {
+        val session = attachSession {
         }
-        loginSession(client, session) {
+        loginSession(session) {
             assertEquals(session.uid, it.uid)
         }
     }

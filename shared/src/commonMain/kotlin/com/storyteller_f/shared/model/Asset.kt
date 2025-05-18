@@ -13,4 +13,3 @@ data class AssetTransactionInfo(
     val before: Int,
     val after: Int
 )
-

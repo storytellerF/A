@@ -1,5 +1,6 @@
 package com.storyteller_f.a.client_lib
 
+import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.utils.checkContent
@@ -27,22 +28,22 @@ class ServerErrorException(val status: HttpStatusCode, val text: String, cause: 
     cause
 )
 
-val globalCookiesStorage = AcceptAllCookiesStorage()
-
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
 @OptIn(ExperimentalUuidApi::class)
 fun HttpClientConfig<*>.defaultClientConfigure(
-    cookiesStorage: CookiesStorage = globalCookiesStorage,
+    cookiesStorage: CookiesStorage,
+    manager: SessionModel,
     httpUrl: String? = null
 ) {
     expectSuccess = true
     install(Auth) {
         custom {
+            configClientAuth(manager)
         }
     }
     defaultRequest {
-        header("a-ts", SignInViewModel.currentData.toString())
+        header("a-ts", manager.generateData())
         if (httpUrl != null) {
             url(httpUrl)
         }
@@ -84,11 +85,46 @@ fun HttpClientConfig<*>.defaultClientConfigure(
     }
 }
 
+private fun ClientCustomAuthProvider.CustomAuthConfig.configClientAuth(manager: SessionModel) {
+    addRequestHeaders { data, request ->
+        Napier.v("addRequestHeaders $data ${request.url}", tag = "ClientAuth")
+        if (data == manager.session?.first) {
+            request.addRequestHeaders(manager)
+        }
+    }
+    updateDataIfNeed { data ->
+        val localData = manager.session?.first
+        Napier.v("updateDataIfNeed $data $localData", tag = "ClientAuth")
+        if (data != localData) {
+            manager.updateSignature(data, null)
+        }
+    }
+    refreshSignature {
+        val session = manager.passSession
+        val data = manager.session?.first
+        Napier.v("refreshSignature $data", tag = "ClientAuth")
+        if (session == null || data == null) {
+            false
+        } else {
+            runCatching {
+                manager.updateSignature(data, session.signature(finalData(data)).getOrThrow())
+            }.fold({
+                Napier.v(tag = "ClientAuth") {
+                    "refreshSignature success"
+                }
+                true
+            }, {
+                Napier.e("refreshSignature failed", it, tag = "ClientAuth")
+                false
+            })
+        }
+    }
+}
+
 @OptIn(ExperimentalStdlibApi::class)
-suspend fun processEncryptedTopic(info: List<TopicInfo>): List<TopicInfo> {
-    val value = SignInViewModel.state.value
-    val uid = SignInViewModel.user.value?.id
-    val key = if (value is ClientSession.SignInSuccess) value.session else null
+suspend fun processEncryptedTopic(info: List<TopicInfo>, manager: SessionModel): List<TopicInfo> {
+    val uid = manager.uid
+    val key = manager.passSession
     return info.map { topicInfo ->
         val content = topicInfo.content
         if (content !is TopicContent.Encrypted || uid == null || key == null) {

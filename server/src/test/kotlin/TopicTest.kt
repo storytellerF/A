@@ -20,19 +20,19 @@ class TopicTest {
 
     @Test
     fun `test topic search`() {
-        test { client, _ ->
-            attachSession(client) {
-                val newId = client.createCommunity(NewCommunity("aid", "name")).getOrThrow().id
-                val lastTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello world").getOrThrow()
-                client.createNewTopic(ObjectType.COMMUNITY, newId, "sysroot").getOrThrow()
-                val firstTopic = client.createNewTopic(ObjectType.COMMUNITY, newId, "best world").getOrThrow()
+        test {
+            attachSession {
+                val newId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
+                val lastTopic = createNewTopic(ObjectType.COMMUNITY, newId, "hello world").getOrThrow()
+                createNewTopic(ObjectType.COMMUNITY, newId, "sysroot").getOrThrow()
+                val firstTopic = createNewTopic(ObjectType.COMMUNITY, newId, "best world").getOrThrow()
                 withContext(Dispatchers.IO) { delay(1000) }
 
-                val topics = client.searchTopics(1, listOf("world")).getOrThrow()
+                val topics = searchTopics(1, listOf("world")).getOrThrow()
                 assertEquals(2, topics.pagination?.total)
                 assertEquals(1, topics.data.size)
                 assertEquals(firstTopic.id, topics.data.first().id)
-                val topics2 = client.searchTopics(1, listOf("world"), nextTopicId = topics.data.first().id).getOrThrow()
+                val topics2 = searchTopics(1, listOf("world"), nextTopicId = topics.data.first().id).getOrThrow()
                 assertEquals(lastTopic.id, topics2.data.first().id)
             }
         }
@@ -40,53 +40,53 @@ class TopicTest {
 
     @Test
     fun `test topic snapshot`() {
-        test { client, _ ->
-            attachSession(client) {
-                val newId = client.createCommunity(NewCommunity("name", "aid")).getOrThrow().id
-                val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, newId, "hello").getOrThrow()
-                client.getTopicSnapshot(topicInfo.id)
+        test {
+            attachSession {
+                val newId = createCommunity(NewCommunity("name", "aid")).getOrThrow().id
+                val topicInfo = createNewTopic(ObjectType.COMMUNITY, newId, "hello").getOrThrow()
+                getTopicSnapshot(topicInfo.id)
             }
         }
     }
 
     @Test
     fun `test reaction`() {
-        test { client, _ ->
+        test {
             val emoji = "\uD83D\uDE00"
-            val session = attachSession(client) {
-                val c = client.createCommunity(NewCommunity("name", "aid")).getOrThrow()
-                val topicInfo = client.createNewTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
+            val session = attachSession {
+                val c = createCommunity(NewCommunity("name", "aid")).getOrThrow()
+                val topicInfo = createNewTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
                 repeat(4) {
-                    val reactionInfo = client.addReaction(topicInfo.id, emoji).getOrThrow()
+                    val reactionInfo = addReaction(topicInfo.id, emoji).getOrThrow()
                     assertEquals(emoji, reactionInfo.emoji)
                     assertTrue(reactionInfo.hasReacted)
                 }
                 // 测试幂等
-                client.addReaction(topicInfo.id, emoji).getOrThrow()
+                addReaction(topicInfo.id, emoji).getOrThrow()
                 topicInfo
             }
             val topicId = session.custom.id
-            attachSession(client) {
+            attachSession {
                 assertFails {
-                    client.addReaction(topicId, emoji).getOrThrow()
+                    addReaction(topicId, emoji).getOrThrow()
                 }
-                client.joinCommunity(session.custom.rootId)
-                val reactions = client.getReactions(topicId).getOrThrow()
+                joinCommunity(session.custom.rootId)
+                val reactions = getReactions(topicId).getOrThrow()
                 assertEquals(1, reactions.data.size)
                 assertFalse(reactions.data.first().hasReacted)
             }
-            loginSession(client, session) {
-                assertTrue(client.deleteReaction(emoji, topicId).getOrThrow())
-                assertListSize(0, client.getReactions(topicId))
+            loginSession(session) {
+                assertTrue(deleteReaction(emoji, topicId).getOrThrow())
+                assertListSize(0, getReactions(topicId))
             }
         }
     }
 
     @Test
     fun `test create user topic`() {
-        test { client, _ ->
-            attachSession(client) {
-                val media = client.upload(
+        test {
+            attachSession {
+                val media = upload(
                     ObjectTuple(it.uid, ObjectType.USER),
                     5,
                     "hello.txt",
@@ -98,7 +98,7 @@ class TopicTest {
                 }
                     .getOrThrow().data.first()
                 val info =
-                    client.createNewTopic(
+                    createNewTopic(
                         ObjectType.USER,
                         it.uid,
                         "![hello.txt](${media.noPrefixName})"
@@ -106,34 +106,34 @@ class TopicTest {
                 val plain = info.content as TopicContent.Plain
                 assertEquals(media.name, plain.list.first().name)
                 // 查询单个topic
-                assertListSize(1, client.getUserTopics(it.uid, null, 10))
-                client.createNewTopic(
+                assertListSize(1, getUserTopics(it.uid, null, 10))
+                createNewTopic(
                     ObjectType.USER,
                     it.uid,
                     "test"
                 ).getOrThrow()
                 // 查询多个topic
-                assertListSize(2, client.getUserTopics(it.uid, null, 10))
+                assertListSize(2, getUserTopics(it.uid, null, 10))
             }
         }
     }
 
     @Test
     fun `test create topic in room`() {
-        val receivedFrame = mutableListOf<RoomFrame>()
-        test({
-            receivedFrame.add(it)
-        }) { client, wsClient ->
-            val (communityId, publicRoomId) = attachSession(client) {
-                val communityId = client.createCommunity(NewCommunity("test1", "test1")).getOrThrow().id
+        test {
+            val (communityId, publicRoomId) = attachSession {
+                val communityId = createCommunity(NewCommunity("test1", "test1")).getOrThrow().id
                 val publicRoomId =
-                    client.createRoom(NewRoom("room1", "room1", communityId = communityId)).getOrThrow().id
+                    createRoom(NewRoom("room1", "room1", communityId = communityId)).getOrThrow().id
                 communityId to publicRoomId
             }.custom
-            attachSession(client) {
-                client.joinCommunity(communityId).getOrThrow()
-                val roomInfo = client.joinRoom(publicRoomId).getOrThrow()
-                wsClient.useWebSocket {
+            val receivedFrame = mutableListOf<RoomFrame>()
+            attachSession({ roomFrame, model ->
+                receivedFrame.add(roomFrame)
+            }) {
+                joinCommunity(communityId).getOrThrow()
+                val roomInfo = joinRoom(publicRoomId).getOrThrow()
+                webSocketClient.useWebSocket {
                     sendMessage(ObjectTuple(roomInfo.id, ObjectType.ROOM), roomInfo.isPrivate, "test", emptyList())
                 }?.join()
                 while (true) {
@@ -142,9 +142,9 @@ class TopicTest {
                     }
                     delay(100)
                 }
-                assertListSize(1, client.getRoomTopics(publicRoomId, null, 10))
+                assertListSize(1, getRoomTopics(publicRoomId, null, 10))
                 assertFails {
-                    client.createNewTopic(
+                    createNewTopic(
                         ObjectType.ROOM,
                         publicRoomId,
                         "forbid use api add topic to room"
@@ -157,39 +157,39 @@ class TopicTest {
 
     @Test
     fun `test create topic in private room`() {
-        val receivedFrame = mutableListOf<RoomFrame>()
-        test({
-            receivedFrame.add(it)
-        }) { client, wsClient ->
-            val user1 = attachSession(client) {
-                val privateRoomId = client.createRoom(NewRoom("room2", "room2")).getOrThrow().id
-                privateRoomId
+        test {
+            val user1 = attachSession {
+                createRoom(NewRoom("room2", "room2")).getOrThrow().id
             }
             val privateRoomId = user1.custom
-            val user2 = attachSession(client) {
+            val user2 = attachSession {
             }
-            loginSession(client, user1) {
-                client.createTitle(NewTitle("join", TitleType.JOIN, user2.uid, privateRoomId, ObjectType.ROOM, ""))
+            loginSession(user1) {
+                createTitle(NewTitle("join", TitleType.JOIN, user2.uid, privateRoomId, ObjectType.ROOM, ""))
             }
-            loginSession(client, user2) {
-                val roomInfo2 = client.getRoomInfo(privateRoomId).getOrThrow()
-                val keys = client.requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
-                wsClient.useWebSocket {
+            val receivedFrame = mutableListOf<RoomFrame>()
+            loginSession(user2, { roomFrame, model ->
+                receivedFrame.add(roomFrame)
+            }) {
+                joinRoom(privateRoomId).getOrThrow()
+                val roomInfo2 = getRoomInfo(privateRoomId).getOrThrow()
+                val keys = requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
+                webSocketClient.useWebSocket {
                     sendMessage(ObjectTuple(roomInfo2.id, ObjectType.ROOM), roomInfo2.isPrivate, "hello", keys)
                 }?.join()
                 while (true) {
-                    if (receivedFrame.size == 2) {
+                    if (receivedFrame.size == 1) {
                         break
                     }
                     delay(100)
                 }
-                assertResponse(1, client.getRoomTopics(privateRoomId, null, 10)) {
+                assertResponse(1, getRoomTopics(privateRoomId, null, 10)) {
                     val privateRoomTopicList = it.data
                     assertEquals(1, privateRoomTopicList.size)
                     val id = privateRoomTopicList.first().id
-                    client.getTopicInfo(id).getOrThrow()
+                    getTopicInfo(id).getOrThrow()
                     assertFails {
-                        client.createNewTopic(ObjectType.TOPIC, id, "forbid use api add topic to room").getOrThrow()
+                        createNewTopic(ObjectType.TOPIC, id, "forbid use api add topic to room").getOrThrow()
                     }
                 }
             }
@@ -200,37 +200,39 @@ class TopicTest {
 
     @Test
     fun `test create in user`() {
-        test { client, _ ->
-            attachSession(client) {
-                client.createNewTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+        test {
+            attachSession {
+                createNewTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
             }
         }
     }
 
     @Test
     fun `test recommend`() {
-        test { client, _ ->
-            val custom = attachSession(client) {
-                client.createCommunity(NewCommunity("c1", "c1")).getOrThrow().id
+        test {
+            val custom = attachSession {
+                createCommunity(NewCommunity("c1", "c1")).getOrThrow().id
             }.custom
-            val custom2 = attachSession(client) {
-                val id = client.createCommunity(NewCommunity("c2", "c2")).getOrThrow().id
-                client.createNewTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
+            val custom2 = attachSession {
+                val id = createCommunity(NewCommunity("c2", "c2")).getOrThrow().id
+                createNewTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
                 id
             }.custom
 
-            attachSession(client) {
-                client.joinCommunity(custom).getOrThrow()
+            attachSession {
+                joinCommunity(custom).getOrThrow()
                 repeat(4) {
-                    client.createNewTopic(ObjectType.COMMUNITY, custom, "hello $it").getOrThrow()
+                    createNewTopic(ObjectType.COMMUNITY, custom, "hello $it").getOrThrow()
                 }
             }
-            assertEquals(5, client.getRecommendTopics(null, 10).getOrThrow().data.size)
-            attachSession(client) {
-                client.joinCommunity(custom2).getOrThrow()
-                client.createNewTopic(ObjectType.COMMUNITY, custom2, "only").getOrThrow()
+            noneSession {
+                assertEquals(5, getRecommendTopics(null, 10).getOrThrow().data.size)
+            }
+            attachSession {
+                joinCommunity(custom2).getOrThrow()
+                createNewTopic(ObjectType.COMMUNITY, custom2, "only").getOrThrow()
                 withContext(Dispatchers.IO) { delay(1000) }
-                assertListSize(1, client.getRecommendTopics(null, 10))
+                assertListSize(1, getRecommendTopics(null, 10))
             }
         }
     }
@@ -238,13 +240,13 @@ class TopicTest {
     @Test
     fun `test room last read`() {
         val receivedFrame = mutableListOf<RoomFrame>()
-        test({
-            receivedFrame.add(it)
-        }) { client, socket ->
-            attachSession(client) {
-                val roomInfo = client.createRoom(NewRoom("r1", "r1")).getOrThrow()
-                val keys = client.requestRoomKeys(roomInfo.id, null, 10).getOrThrow().data
-                socket.useWebSocket {
+        test {
+            attachSession({ roomFrame, model ->
+                receivedFrame.add(roomFrame)
+            }) {
+                val roomInfo = createRoom(NewRoom("r1", "r1")).getOrThrow()
+                val keys = requestRoomKeys(roomInfo.id, null, 10).getOrThrow().data
+                webSocketClient.useWebSocket {
                     sendMessage(roomInfo.tuple(), true, "hello", keys)
                 }?.join()
                 while (true) {
@@ -254,13 +256,13 @@ class TopicTest {
                     delay(100)
                 }
                 val topicId = (receivedFrame.first() as RoomFrame.NewTopicInfo).topicInfo.id
-                client.addReadLog(
+                addReadLog(
                     UpdateUserRead(
                         roomInfo.tuple(),
                         topicId
                     )
                 ).getOrThrow()
-                assertEquals(topicId, client.getRoomInfo(roomInfo.id).getOrThrow().lastRead)
+                assertEquals(topicId, getRoomInfo(roomInfo.id).getOrThrow().lastRead)
                 receivedFrame.clear()
             }
         }
@@ -268,20 +270,20 @@ class TopicTest {
 
     @Test
     fun `test community last read`() {
-        test { client, socket ->
-            attachSession(client) {
-                val communityInfo = client.createCommunity(NewCommunity("r1", "r1")).getOrThrow()
-                val topic = client.createNewTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
-                client.addReadLog(
+        test {
+            attachSession {
+                val communityInfo = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
+                val topic = createNewTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
+                addReadLog(
                     UpdateUserRead(
                         communityInfo.tuple(),
                         topic.id
                     )
                 ).getOrThrow()
-                assertEquals(topic.id, client.getCommunityInfo(communityInfo.id).getOrThrow().lastRead)
-                val subTopic = client.createNewTopic(ObjectType.TOPIC, topic.id, "world").getOrThrow()
-                client.addReadLog(UpdateUserRead(topic.tuple(), subTopic.id)).getOrThrow()
-                assertEquals(subTopic.id, client.getTopicInfo(topic.id).getOrThrow().lastRead)
+                assertEquals(topic.id, getCommunityInfo(communityInfo.id).getOrThrow().lastRead)
+                val subTopic = createNewTopic(ObjectType.TOPIC, topic.id, "world").getOrThrow()
+                addReadLog(UpdateUserRead(topic.tuple(), subTopic.id)).getOrThrow()
+                assertEquals(subTopic.id, getTopicInfo(topic.id).getOrThrow().lastRead)
             }
         }
     }

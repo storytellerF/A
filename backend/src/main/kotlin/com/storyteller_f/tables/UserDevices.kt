@@ -47,7 +47,10 @@ suspend fun DatabaseFactory.removeDevice(uid: PrimaryKey, endpointUrl: String, b
         }
     }
 
-suspend fun DatabaseFactory.getUserDevices(backend: Backend, uid: List<PrimaryKey>) = mapQuery(backend, UserDevice::wrapRow) {
+suspend fun DatabaseFactory.getUserDevices(backend: Backend, uid: List<PrimaryKey>) = mapQuery(
+    backend,
+    UserDevice::wrapRow
+) {
     UserDevices.selectAll().where {
         UserDevices.uid inList uid
     }

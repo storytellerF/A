@@ -111,6 +111,41 @@ private fun buildRoomSearchQuery(
     val query = Rooms
         .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
         .select(Rooms.fields + Aids.value)
+    buildRoomSearchWhereQuery(joinStatusSearch, query)
+    val uid = joinStatusSearch.getUid()
+    if (getCount) {
+        query.adjustSelect {
+            selectAll()
+        }
+    } else if (uid != null) {
+        query.adjustColumnSet {
+            join(UserTopicReads, JoinType.LEFT, Rooms.id, UserTopicReads.objectId) {
+                UserTopicReads.uid eq uid
+            }
+        }
+        if (joinStatusSearch !is JoinSearch.NotJoined) {
+            query.adjustSelect {
+                select(Rooms.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
+            }
+        }
+    }
+    if (!word.isNullOrBlank()) {
+        query.andWhere {
+            Rooms.name like "%$word%"
+        }
+    }
+    if (community != null) {
+        query.andWhere {
+            Rooms.communityId eq community
+        }
+    }
+    return query
+}
+
+private fun buildRoomSearchWhereQuery(
+    joinStatusSearch: JoinSearch,
+    query: Query
+) {
     when (joinStatusSearch) {
         is JoinSearch.Joined -> query.adjustColumnSet {
             join(MemberJoins, JoinType.INNER, Rooms.id, MemberJoins.objectId) {
@@ -141,31 +176,6 @@ private fun buildRoomSearchQuery(
             }
         }
     }
-    val uid = joinStatusSearch.getUid()
-    if (getCount) {
-        query.adjustSelect {
-            selectAll()
-        }
-    } else if (uid != null) {
-        query.adjustColumnSet {
-            join(UserTopicReads, JoinType.LEFT, Rooms.id, UserTopicReads.objectId) {
-                UserTopicReads.uid eq uid
-            }
-        }.adjustSelect {
-            select(Rooms.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
-        }
-    }
-    if (!word.isNullOrBlank()) {
-        query.andWhere {
-            Rooms.name like "%$word%"
-        }
-    }
-    if (community != null) {
-        query.andWhere {
-            Rooms.communityId eq community
-        }
-    }
-    return query
 }
 
 suspend fun DatabaseFactory.getRoomCommunityId(backend: Backend, parentId: PrimaryKey): Result<PrimaryKey?> =

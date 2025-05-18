@@ -25,13 +25,13 @@ import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
-import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.TopicContentField
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnTopicCreated
 import com.storyteller_f.a.app.model.createAllMediaListViewModel
-import com.storyteller_f.a.client_lib.SignInViewModel
+import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.client_lib.createNewTopic
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -53,7 +53,7 @@ fun TopicComposePage(
     privateRoomId: PrimaryKey?,
     backPrePage: () -> Unit
 ) {
-    val user by SignInViewModel.user.collectAsState()
+    val user = getCurrentUserInfo()
     user?.let {
         TopicComposeScaffold(
             objectType,
@@ -118,7 +118,7 @@ private fun TopicComposeScaffold(
         }
     }
     val sheetState = rememberModalBottomSheetState()
-    MediaPicker(showSheet, sheetState, mediaTarget, { info ->
+    MediaPicker(showSheet, sheetState, mediaTarget, onClickItem = { info ->
         insertContent(info.first(), {
             input = it
         }, input)
@@ -263,13 +263,13 @@ private fun TopicComposeSubmitButton(
     backPrePage: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     IconButton({
         val finalInput = input.trim()
         if (finalInput.isNotEmpty()) {
             scope.launch {
                 globalDialogState.use {
-                    val info = client.createNewTopic(objectType, objectId, finalInput).getOrThrow()
+                    val info = sessionManager.createNewTopic(objectType, objectId, finalInput).getOrThrow()
                     bus.emit(OnTopicCreated(info))
                     backPrePage()
                 }

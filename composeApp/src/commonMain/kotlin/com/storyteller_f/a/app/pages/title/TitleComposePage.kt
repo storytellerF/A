@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.TopicContentField
 import com.storyteller_f.a.app.globalDialogState
@@ -31,10 +31,11 @@ import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.room.RoomRefCell
+import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.UserRefCell
-import com.storyteller_f.a.client_lib.SignInViewModel
+import com.storyteller_f.a.client_lib.SessionManager
 import com.storyteller_f.a.client_lib.createTitle
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.JoinStatusSearch
@@ -44,12 +45,11 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleType
-import io.ktor.client.*
 import kotlinx.coroutines.launch
 
 @Composable
 fun TitleComposePage() {
-    val user by SignInViewModel.user.collectAsState()
+    val user = getCurrentUserInfo()
     user?.let {
         TitleComposeInternal()
     }
@@ -74,7 +74,7 @@ fun TitleComposeInternal() {
         mutableStateOf<PrimaryKey?>(null)
     }
     val appNav = LocalAppNav.current
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     val content by remember {
         mutableStateOf("")
     }
@@ -82,7 +82,7 @@ fun TitleComposeInternal() {
     CommonComposePage({
         scope.launch {
             if (globalDialogState.use {
-                    createTitle(titleType, receiver, titleScope, client, name, content)
+                    createTitle(titleType, receiver, titleScope, sessionManager, name, content)
                 }.isSuccess) {
                 appNav.back()
             }
@@ -307,7 +307,7 @@ private suspend fun createTitle(
     titleType: TitleType?,
     receiver: PrimaryKey?,
     titleScope: ObjectTuple?,
-    client: HttpClient,
+    sessionManager: SessionManager,
     name: String,
     content: String,
 ) {
@@ -321,7 +321,9 @@ private suspend fun createTitle(
         "titleScope is empty"
     }
     val title =
-        client.createTitle(NewTitle(name, titleType, receiver, titleScope.objectId, titleScope.objectType, content))
+        sessionManager.createTitle(
+            NewTitle(name, titleType, receiver, titleScope.objectId, titleScope.objectType, content)
+        )
             .getOrThrow()
     bus.emit(OnTitleCreated(title))
 }

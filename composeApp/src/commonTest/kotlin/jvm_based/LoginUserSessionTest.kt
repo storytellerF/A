@@ -1,7 +1,7 @@
 package jvm_based
 
 import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
-import com.storyteller_f.a.client_lib.LoginUser
+import com.storyteller_f.a.client_lib.RawUserPassInfo
 import com.storyteller_f.shared.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -17,7 +17,7 @@ class LoginUserSessionTest : UsingContextTest() {
         val privateKey = generateECDSAPemPrivateKey().getOrThrow()
         val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
         val ad = calcAddress(publicKey).getOrThrow()
-        val addSession = sessionFactory.addSession(LoginUser(privateKey, publicKey, ad))
+        val addSession = sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
         assertEquals(1, sessionFactory.savedSession().list.size)
         val signature = addSession.signature("test").getOrThrow()
         assertTrue(addSession.verify(signature, "test").getOrThrow())

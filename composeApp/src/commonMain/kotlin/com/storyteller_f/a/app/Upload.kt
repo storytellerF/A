@@ -7,20 +7,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.model.createUploadViewModel
+import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.client_lib.LoadingHandler
 import com.storyteller_f.a.client_lib.LoadingState
-import com.storyteller_f.a.client_lib.SignInViewModel
-import com.storyteller_f.a.client_lib.SimpleLoadingHandler
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import io.ktor.http.*
@@ -51,11 +46,12 @@ class Uploader(val session: MutableState<UploadSession?>)
 @Composable
 fun Upload(uploader: Uploader) {
     val httpUrl = AppConfig.SERVER_URL
-    CommonEntry(httpUrl) {
-        val my by SignInViewModel.user.collectAsState()
+    val wsServerUrl = AppConfig.WS_SERVER_URL
+    CommonEntry(httpUrl, wsServerUrl, {
+        val my = getCurrentUserInfo()
         val session by uploader.session
         session?.let { UploadInternal(my, it) }
-    }
+    })
 }
 
 @Composable

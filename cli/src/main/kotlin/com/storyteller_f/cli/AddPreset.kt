@@ -9,6 +9,7 @@ import com.storyteller_f.media.uploadFiles
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.*
+import com.storyteller_f.shared.type.AlgoType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PassType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -384,7 +385,8 @@ class AddPreset : Subcommand("add", "add entry") {
                 it.id,
                 now(),
                 0,
-                PassType.RAW
+                PassType.RAW,
+                AlgoType.P256
             )
         }
     }

@@ -25,10 +25,10 @@ import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.room.RoomList
+import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.world.TopicList
-import com.storyteller_f.a.client_lib.SignInViewModel
 import com.storyteller_f.a.client_lib.exitCommunity
 import com.storyteller_f.a.client_lib.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
@@ -276,7 +276,7 @@ private fun CommunityMenus(
     communityInfo: CommunityInfo
 ) {
     val nav = LocalAppNav.current
-    val client = LocalClient.current
+    val sessionViewModel = LocalSessionManager.current
     Column {
         ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
             dismiss()
@@ -290,7 +290,7 @@ private fun CommunityMenus(
                 ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_community)) {
                     scope.launch {
                         globalDialogState.use {
-                            val info = client.exitCommunity(communityId).getOrThrow()
+                            val info = sessionViewModel.exitCommunity(communityId).getOrThrow()
                             bus.emit(OnCommunityExited(info))
                         }
                     }
@@ -299,7 +299,7 @@ private fun CommunityMenus(
                 ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_community)) {
                     scope.launch {
                         globalDialogState.use {
-                            val info = client.joinCommunity(communityId).getOrThrow()
+                            val info = sessionViewModel.joinCommunity(communityId).getOrThrow()
                             bus.emit(OnCommunityJoined(info))
                         }
                     }
@@ -309,7 +309,7 @@ private fun CommunityMenus(
                 dismiss()
                 nav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, true, null)
             }
-            val my by SignInViewModel.user.collectAsState()
+            val my = getCurrentUserInfo()
             if (my?.id == communityInfo.owner) {
                 ButtonNav(Icons.Default.Title, "Add Title") {
                     dismiss()

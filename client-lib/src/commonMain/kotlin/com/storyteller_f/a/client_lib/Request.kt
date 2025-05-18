@@ -12,7 +12,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.websocket.*
@@ -22,10 +21,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.util.internal.*
 import io.ktor.utils.io.core.*
-
-fun isAlreadyLogin(): Boolean {
-    return SignInViewModel.currentIsAlreadySignUp
-}
 
 inline fun <R> serviceCatching(block: () -> R): Result<R> {
     val point = Exception()
@@ -41,49 +36,65 @@ inline fun <R> serviceCatching(block: () -> R): Result<R> {
     }
 }
 
-suspend fun HttpClient.getRoomInfo(id: PrimaryKey) = serviceCatching {
-    get("rooms/$id") {
-        url {
-            if (isAlreadyLogin()) parameters.append("fillJoinInfo", "true")
-        }
-    }.body<RoomInfo>()
+private fun URLBuilder.appendPagingQueryParams(size: Int, nextId: PrimaryKey?) {
+    parameters.append("size", size.toString())
+    if (nextId != null) {
+        parameters.append("nextPageToken", nextId.toString())
+    }
 }
 
-suspend fun HttpClient.getRoomInfoByAid(aid: String) = serviceCatching {
-    get("rooms/aid") {
+private fun HttpRequestBuilder.appendObjectTuple(objectTuple: ObjectTuple) {
+    url {
+        parameters.append("objectId", objectTuple.objectId.toString())
+        parameters.append("objectType", objectTuple.objectType.name)
+    }
+}
+
+suspend fun SessionManager.getRoomInfo(id: PrimaryKey) = with(client) {
+    serviceCatching {
+        get("rooms/$id") {
+            url {
+                if (isAlreadyLogin) parameters.append("fillJoinInfo", "true")
+            }
+        }.body<RoomInfo>()
+    }
+}
+
+suspend fun SessionManager.getRoomInfoByAid(aid: String) = serviceCatching {
+    client.get("rooms/aid") {
         url {
-            if (isAlreadyLogin()) parameters.append("fillJoinInfo", "true")
+            if (isAlreadyLogin) parameters.append("fillJoinInfo", "true")
             parameters.append("aid", aid)
         }
     }.body<RoomInfo>()
 }
 
-suspend fun HttpClient.requestRoomKeys(id: PrimaryKey, nextId: PrimaryKey?, size: Int) =
+suspend fun SessionManager.requestRoomKeys(id: PrimaryKey, nextId: PrimaryKey?, size: Int) =
     serviceCatching {
-        get("rooms/$id/pub-keys") {
+        client.get("rooms/$id/pub-keys") {
             url {
                 appendPagingQueryParams(size, nextId)
             }
         }.body<ServerResponse<Pair<PrimaryKey, String>>>()
     }
 
-suspend fun HttpClient.joinRoom(id: PrimaryKey) = serviceCatching {
-    post("rooms/$id/join").body<RoomInfo>()
+suspend fun SessionManager.joinRoom(id: PrimaryKey) = serviceCatching {
+    client.post("rooms/$id/join").body<RoomInfo>()
 }
 
-suspend fun HttpClient.joinCommunity(id: PrimaryKey) = serviceCatching {
-    post("communities/$id/join").body<CommunityInfo>()
+suspend fun SessionManager.joinCommunity(id: PrimaryKey) = serviceCatching {
+    client.post("communities/$id/join").body<CommunityInfo>()
 }
 
-suspend fun HttpClient.getRoomTopics(
+suspend fun SessionManager.getRoomTopics(
     roomId: PrimaryKey,
     nextTopicId: PrimaryKey?,
     size: Int,
     pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
-    get("rooms/$roomId/topics") {
+    client.get("rooms/$roomId/topics") {
         url {
-            if (isAlreadyLogin()) {
+            if (isAlreadyLogin) {
                 parameters.append("fillHasCommented", "true")
             }
             parameters.append("pinType", pinType.name)
@@ -92,15 +103,15 @@ suspend fun HttpClient.getRoomTopics(
     }.body<ServerResponse<TopicInfo>>()
 }
 
-suspend fun HttpClient.getCommunityTopics(
+suspend fun SessionManager.getCommunityTopics(
     communityId: PrimaryKey,
     nextCommunityId: PrimaryKey?,
     size: Int,
     pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
-    get("communities/$communityId/topics") {
+    client.get("communities/$communityId/topics") {
         url {
-            if (isAlreadyLogin()) {
+            if (isAlreadyLogin) {
                 parameters.append("fillHasCommented", "true")
             }
             parameters.append("pinType", pinType.name)
@@ -109,15 +120,15 @@ suspend fun HttpClient.getCommunityTopics(
     }.body<ServerResponse<TopicInfo>>()
 }
 
-suspend fun HttpClient.getUserTopics(
+suspend fun SessionManager.getUserTopics(
     userId: PrimaryKey,
     nextTopicId: PrimaryKey?,
     size: Int,
     pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
-    get("users/$userId/topics") {
+    client.get("users/$userId/topics") {
         url {
-            if (isAlreadyLogin()) {
+            if (isAlreadyLogin) {
                 parameters.append("fillHasCommented", "true")
             }
             parameters.append("pinType", pinType.name)
@@ -126,19 +137,19 @@ suspend fun HttpClient.getUserTopics(
     }.body<ServerResponse<TopicInfo>>()
 }
 
-suspend fun HttpClient.getCommunityInfo(id: PrimaryKey) =
+suspend fun SessionManager.getCommunityInfo(id: PrimaryKey) =
     serviceCatching {
-        get("communities/$id") {
+        client.get("communities/$id") {
             url {
-                if (isAlreadyLogin()) {
+                if (isAlreadyLogin) {
                     parameters.append("fillJoinInfo", "true")
                 }
             }
         }.body<CommunityInfo>()
     }
 
-suspend fun HttpClient.getCommunityInfoByAid(aid: String, fillJoinInfo: Boolean = false) = serviceCatching {
-    get("communities/aid") {
+suspend fun SessionManager.getCommunityInfoByAid(aid: String, fillJoinInfo: Boolean = false) = serviceCatching {
+    client.get("communities/aid") {
         url {
             if (fillJoinInfo) {
                 parameters.append("fillJoinInfo", "true")
@@ -148,7 +159,7 @@ suspend fun HttpClient.getCommunityInfoByAid(aid: String, fillJoinInfo: Boolean 
     }.body<CommunityInfo>()
 }
 
-suspend fun HttpClient.searchCommunity(
+suspend fun SessionManager.searchCommunity(
     size: Int,
     joinStatusSearch: JoinStatusSearch,
     word: String? = null,
@@ -156,7 +167,7 @@ suspend fun HttpClient.searchCommunity(
     nextCommunityId: PrimaryKey? = null,
     hasPosterSearch: PosterSearch? = null,
 ) = serviceCatching {
-    get("communities/search") {
+    client.get("communities/search") {
         url {
             word?.let { value -> parameters.append("word", value) }
             target?.let { value -> parameters.append("target", value.toString()) }
@@ -167,13 +178,13 @@ suspend fun HttpClient.searchCommunity(
     }.body<ServerResponse<CommunityInfo>>()
 }
 
-suspend fun HttpClient.searchCommunityMembers(
+suspend fun SessionManager.searchCommunityMembers(
     communityId: PrimaryKey,
     nextCommunityId: PrimaryKey?,
     size: Int,
     word: String?
 ) = serviceCatching {
-    get("communities/$communityId/members") {
+    client.get("communities/$communityId/members") {
         url {
             word?.let { value -> parameters.append("word", value) }
             appendPagingQueryParams(size, nextCommunityId)
@@ -181,12 +192,12 @@ suspend fun HttpClient.searchCommunityMembers(
     }.body<ServerResponse<UserInfo>>()
 }
 
-suspend fun HttpClient.searchAllMembers(
+suspend fun SessionManager.searchAllMembers(
     nextUserId: PrimaryKey?,
     size: Int,
     word: String?
 ) = serviceCatching {
-    get("users/search") {
+    client.get("users/search") {
         url {
             word?.let { value -> parameters.append("word", value) }
             appendPagingQueryParams(size, nextUserId)
@@ -194,13 +205,13 @@ suspend fun HttpClient.searchAllMembers(
     }.body<ServerResponse<UserInfo>>()
 }
 
-suspend fun HttpClient.searchRoomMembers(
+suspend fun SessionManager.searchRoomMembers(
     roomId: PrimaryKey,
     nextCommunityId: PrimaryKey?,
     size: Int,
     word: String?
 ) = serviceCatching {
-    get("rooms/$roomId/members") {
+    client.get("rooms/$roomId/members") {
         url {
             word?.let { value -> parameters.append("word", value) }
             appendPagingQueryParams(size, nextCommunityId)
@@ -208,20 +219,13 @@ suspend fun HttpClient.searchRoomMembers(
     }.body<ServerResponse<UserInfo>>()
 }
 
-private fun URLBuilder.appendPagingQueryParams(size: Int, nextId: PrimaryKey?) {
-    parameters.append("size", size.toString())
-    if (nextId != null) {
-        parameters.append("nextPageToken", nextId.toString())
-    }
-}
-
-suspend fun HttpClient.getRecommendTopics(nextTopicId: PrimaryKey?, size: Int) =
+suspend fun SessionManager.getRecommendTopics(nextTopicId: PrimaryKey?, size: Int) =
     serviceCatching {
-        get(
+        client.get(
             "topics/recommend"
         ) {
             url {
-                if (isAlreadyLogin()) {
+                if (isAlreadyLogin) {
                     parameters.append("fillHasCommented", "true")
                 }
                 appendPagingQueryParams(size, nextTopicId)
@@ -229,35 +233,35 @@ suspend fun HttpClient.getRecommendTopics(nextTopicId: PrimaryKey?, size: Int) =
         }.body<ServerResponse<TopicInfo>>()
     }
 
-suspend fun HttpClient.getUserInfo(id: PrimaryKey) = serviceCatching {
-    get("users/$id").body<UserInfo>()
+suspend fun SessionManager.getUserInfo(id: PrimaryKey) = serviceCatching {
+    client.get("users/$id").body<UserInfo>()
 }
 
-suspend fun HttpClient.updateUserInfo(newInfo: UpdateUserBody) = serviceCatching {
-    post("users/update") {
+suspend fun SessionManager.updateUserInfo(newInfo: UpdateUserBody) = serviceCatching {
+    client.post("users/update") {
         contentType(ContentType.Application.Json)
         setBody(newInfo)
     }.body<UserInfo>()
 }
 
-suspend fun HttpClient.getUserInfoByAid(aid: String) = serviceCatching {
-    get("users/aid") {
+suspend fun SessionManager.getUserInfoByAid(aid: String) = serviceCatching {
+    client.get("users/aid") {
         url {
             parameters.append("aid", aid)
         }
     }.body<UserInfo>()
 }
 
-suspend fun HttpClient.getTopicTopics(
+suspend fun SessionManager.getTopicTopics(
     topicId: PrimaryKey,
     nextTopicId: PrimaryKey?,
     size: Int,
     pinType: TopicPinSearch
 ) =
     serviceCatching {
-        get("topics/$topicId/topics") {
+        client.get("topics/$topicId/topics") {
             url {
-                if (isAlreadyLogin()) {
+                if (isAlreadyLogin) {
                     parameters.append("fillHasCommented", "true")
                 }
                 parameters.append("pinType", pinType.name)
@@ -266,26 +270,26 @@ suspend fun HttpClient.getTopicTopics(
         }.body<ServerResponse<TopicInfo>>()
     }
 
-suspend fun HttpClient.getTopicInfo(id: PrimaryKey) = serviceCatching {
-    get("topics/$id").body<TopicInfo>()
+suspend fun SessionManager.getTopicInfo(id: PrimaryKey) = serviceCatching {
+    client.get("topics/$id").body<TopicInfo>()
 }
 
-suspend fun HttpClient.getTopicInfoByAid(aid: String) = serviceCatching {
-    get("topics/aid") {
+suspend fun SessionManager.getTopicInfoByAid(aid: String) = serviceCatching {
+    client.get("topics/aid") {
         url {
             parameters.append("aid", aid)
         }
     }.body<TopicInfo>()
 }
 
-suspend fun HttpClient.searchRooms(
+suspend fun SessionManager.searchRooms(
     size: Int,
     nextRoomId: PrimaryKey?,
     joinStatusSearch: JoinStatusSearch,
     word: String?,
     communityId: PrimaryKey?
 ) = serviceCatching {
-    get("rooms/search") {
+    client.get("rooms/search") {
         url {
             if (!(word.isNullOrBlank())) {
                 parameters.append("word", word)
@@ -299,53 +303,53 @@ suspend fun HttpClient.searchRooms(
     }.body<ServerResponse<RoomInfo>>()
 }
 
-suspend fun HttpClient.createNewTopic(
+suspend fun SessionManager.createNewTopic(
     objectType: ObjectType,
     objectId: PrimaryKey,
     input: String
 ) = serviceCatching {
-    post("topics") {
+    client.post("topics") {
         contentType(ContentType.Application.Json)
         setBody(NewTopic(objectType, objectId, input))
     }.body<TopicInfo>()
 }
 
-suspend fun HttpClient.signUp(
+suspend fun SessionManager.signUp(
     publicKey: String,
     signature: String,
 ) = serviceCatching {
-    post("accounts/sign_up") {
+    client.post("accounts/sign_up") {
         contentType(ContentType.Application.Json)
         setBody(SignUpPack(publicKey, signature))
     }.body<UserInfo>()
 }
 
-suspend fun HttpClient.signIn(
+suspend fun SessionManager.signIn(
     address: String,
     signature: String
 ) = serviceCatching {
-    post("accounts/sign_in") {
+    client.post("accounts/sign_in") {
         contentType(ContentType.Application.Json)
         setBody(SignInPack(address, signature))
     }.body<UserInfo>()
 }
 
-suspend fun HttpClient.getData() = serviceCatching {
-    get("accounts/get_data").bodyAsText()
+suspend fun SessionManager.getData() = serviceCatching {
+    client.get("accounts/get_data").bodyAsText()
 }
 
-suspend fun HttpClient.getTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
-    get("topics/$topicId/snapshot").body<MediaInfo>()
+suspend fun SessionManager.getTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
+    client.get("topics/$topicId/snapshot").body<MediaInfo>()
 }
 
-suspend fun HttpClient.searchTopics(
+suspend fun SessionManager.searchTopics(
     size: Int,
     word: List<String>,
     parentId: PrimaryKey? = null,
     parentType: ObjectType? = null,
     nextTopicId: PrimaryKey? = null
 ) = serviceCatching {
-    get("topics/search") {
+    client.get("topics/search") {
         url {
             parentId?.let {
                 parameters.append("parentId", it.toString())
@@ -353,7 +357,7 @@ suspend fun HttpClient.searchTopics(
             parentType?.let {
                 parameters.append("parentType", it.name)
             }
-            if (isAlreadyLogin()) {
+            if (isAlreadyLogin) {
                 parameters.append("fillHasCommented", "true")
             }
             parameters.appendAll("word", word)
@@ -362,48 +366,48 @@ suspend fun HttpClient.searchTopics(
     }.body<ServerResponse<TopicInfo>>()
 }
 
-suspend fun HttpClient.exitRoom(roomId: PrimaryKey) = serviceCatching {
-    post("rooms/$roomId/exit").body<RoomInfo>()
+suspend fun SessionManager.exitRoom(roomId: PrimaryKey) = serviceCatching {
+    client.post("rooms/$roomId/exit").body<RoomInfo>()
 }
 
-suspend fun HttpClient.exitCommunity(communityId: PrimaryKey) = serviceCatching {
-    post(
+suspend fun SessionManager.exitCommunity(communityId: PrimaryKey) = serviceCatching {
+    client.post(
         "communities/$communityId/exit"
     ).body<CommunityInfo>()
 }
 
-suspend fun HttpClient.addReaction(topicId: PrimaryKey, emoji: String) = serviceCatching {
-    post("topics/$topicId/reactions") {
+suspend fun SessionManager.addReaction(topicId: PrimaryKey, emoji: String) = serviceCatching {
+    client.post("topics/$topicId/reactions") {
         contentType(ContentType.Application.Json)
         setBody(NewReaction(emoji))
     }.body<ReactionInfo>()
 }
 
-suspend fun HttpClient.deleteReaction(emoji: String, objectId: PrimaryKey) = serviceCatching {
-    post("reactions/delete") {
+suspend fun SessionManager.deleteReaction(emoji: String, objectId: PrimaryKey) = serviceCatching {
+    client.post("reactions/delete") {
         contentType(ContentType.Application.Json)
         setBody(DeleteReaction(emoji, objectId))
     }.body<Boolean>()
 }
 
-suspend fun HttpClient.getReactions(topicId: PrimaryKey) =
+suspend fun SessionManager.getReactions(topicId: PrimaryKey) =
     serviceCatching {
-        get("topics/$topicId/reactions") {
+        client.get("topics/$topicId/reactions") {
             url {
-                if (isAlreadyLogin()) {
+                if (isAlreadyLogin) {
                     parameters.append("fillHasReacted", "true")
                 }
             }
         }.body<ServerResponse<ReactionInfo>>()
     }
 
-suspend fun HttpClient.signOut() = serviceCatching {
-    post("accounts/sign_out")
+suspend fun SessionManager.signOut() = serviceCatching {
+    client.post("accounts/sign_out")
 }
 
-suspend fun HttpClient.getMediaList(objectId: PrimaryKey, objectType: ObjectType, nextId: PrimaryKey?, size: Int) =
+suspend fun SessionManager.getMediaList(objectId: PrimaryKey, objectType: ObjectType, nextId: PrimaryKey?, size: Int) =
     serviceCatching {
-        get("amedia") {
+        client.get("amedia") {
             url {
                 parameters.append("objectId", objectId.toString())
                 parameters.append("objectType", objectType.name)
@@ -413,9 +417,9 @@ suspend fun HttpClient.getMediaList(objectId: PrimaryKey, objectType: ObjectType
         }.body<ServerResponse<MediaInfo>>()
     }
 
-suspend fun HttpClient.getAllMediaList(objectId: PrimaryKey, objectType: ObjectType) =
+suspend fun SessionManager.getAllMediaList(objectId: PrimaryKey, objectType: ObjectType) =
     serviceCatching {
-        get("amedia/all") {
+        client.get("amedia/all") {
             url {
                 parameters.append("objectId", objectId.toString())
                 parameters.append("objectType", objectType.name)
@@ -423,14 +427,14 @@ suspend fun HttpClient.getAllMediaList(objectId: PrimaryKey, objectType: ObjectT
         }.body<ServerResponse<MediaInfo>>()
     }
 
-suspend fun HttpClient.upload(
+suspend fun SessionManager.upload(
     objectTuple: ObjectTuple,
     size: Long,
     name: String,
     contentType: ContentType,
     block: () -> Input
 ) = serviceCatching {
-    post("amedia/upload") {
+    client.post("amedia/upload") {
         appendObjectTuple(objectTuple)
         setBody(
             MultiPartFormDataContent(
@@ -450,9 +454,9 @@ suspend fun HttpClient.upload(
     }.body<ServerResponse<MediaInfo>>()
 }
 
-suspend fun HttpClient.copy(objectTuple: ObjectTuple, noPrefixName: String) =
+suspend fun SessionManager.copy(objectTuple: ObjectTuple, noPrefixName: String) =
     serviceCatching {
-        post("amedia/copy") {
+        client.post("amedia/copy") {
             appendObjectTuple(objectTuple)
 
             contentType(ContentType.Application.Json)
@@ -485,7 +489,7 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
     sendSerialized(message)
 }
 
-suspend fun HttpClient.userTitles(
+suspend fun SessionManager.userTitles(
     uid: PrimaryKey,
     nextId: PrimaryKey?,
     size: Int,
@@ -494,7 +498,7 @@ suspend fun HttpClient.userTitles(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null
 ) = serviceCatching {
-    get("users/$uid/titles") {
+    client.get("users/$uid/titles") {
         url {
             parameters.append("searchType", searchType.name)
             if (status != null) {
@@ -511,52 +515,52 @@ suspend fun HttpClient.userTitles(
     }.body<ServerResponse<TitleInfo>>()
 }
 
-suspend fun HttpClient.createTitle(newTitle: NewTitle) = serviceCatching {
-    post("titles") {
+suspend fun SessionManager.createTitle(newTitle: NewTitle) = serviceCatching {
+    client.post("titles") {
         contentType(ContentType.Application.Json)
         setBody(newTitle)
     }.body<TitleInfo>()
 }
 
-suspend fun HttpClient.createCommunity(newCommunity: NewCommunity) = serviceCatching {
-    post("communities") {
+suspend fun SessionManager.createCommunity(newCommunity: NewCommunity) = serviceCatching {
+    client.post("communities") {
         contentType(ContentType.Application.Json)
         setBody(newCommunity)
     }.body<CommunityInfo>()
 }
 
-suspend fun HttpClient.createRoom(newRoom: NewRoom) = serviceCatching {
-    post("rooms") {
+suspend fun SessionManager.createRoom(newRoom: NewRoom) = serviceCatching {
+    client.post("rooms") {
         contentType(ContentType.Application.Json)
         setBody(newRoom)
     }.body<RoomInfo>()
 }
 
-suspend fun HttpClient.pinTopic(topicId: PrimaryKey) = serviceCatching {
-    post("topics/$topicId/pin") {
+suspend fun SessionManager.pinTopic(topicId: PrimaryKey) = serviceCatching {
+    client.post("topics/$topicId/pin") {
     }.body<TopicInfo>()
 }
 
-suspend fun HttpClient.unpinTopic(topicId: PrimaryKey) = serviceCatching {
-    post("topics/$topicId/unpin") {
+suspend fun SessionManager.unpinTopic(topicId: PrimaryKey) = serviceCatching {
+    client.post("topics/$topicId/unpin") {
     }.body<TopicInfo>()
 }
 
-suspend fun HttpClient.updateCommunityInfo(id: PrimaryKey, newInfo: UpdateCommunityBody) = serviceCatching {
-    post("communities/$id") {
+suspend fun SessionManager.updateCommunityInfo(id: PrimaryKey, newInfo: UpdateCommunityBody) = serviceCatching {
+    client.post("communities/$id") {
         contentType(ContentType.Application.Json)
         setBody(newInfo)
     }.body<CommunityInfo>()
 }
 
-suspend fun HttpClient.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBody) = serviceCatching {
-    post("rooms/$id") {
+suspend fun SessionManager.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBody) = serviceCatching {
+    client.post("rooms/$id") {
         contentType(ContentType.Application.Json)
         setBody(newInfo)
     }.body<RoomInfo>()
 }
 
-suspend fun HttpClient.getTopicList(
+suspend fun SessionManager.getTopicList(
     type: ObjectType?,
     id: PrimaryKey,
     loadKey: PrimaryKey?,
@@ -570,24 +574,17 @@ suspend fun HttpClient.getTopicList(
     else -> Result.failure(IllegalArgumentException("unrecognized $type"))
 }
 
-private fun HttpRequestBuilder.appendObjectTuple(objectTuple: ObjectTuple) {
-    url {
-        parameters.append("objectId", objectTuple.objectId.toString())
-        parameters.append("objectType", objectTuple.objectType.name)
-    }
-}
-
-suspend fun HttpClient.addReadLog(info: UpdateUserRead): Result<HttpResponse> {
+suspend fun SessionManager.addReadLog(info: UpdateUserRead): Result<HttpResponse> {
     return runCatching {
-        post("users/read") {
+        client.post("users/read") {
             contentType(ContentType.Application.Json)
             setBody(info)
         }
     }
 }
 
-suspend fun HttpClient.addDevice(endpointUrl: String) = serviceCatching {
-    post("users/devices") {
+suspend fun SessionManager.addDevice(endpointUrl: String) = serviceCatching {
+    client.post("users/devices") {
         contentType(ContentType.Application.Json)
         setBody(NewDevice(endpointUrl))
     }

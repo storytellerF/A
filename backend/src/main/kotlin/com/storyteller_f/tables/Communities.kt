@@ -3,13 +3,7 @@ package com.storyteller_f.tables
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.obj.JoinSearch
-import com.storyteller_f.shared.obj.JoinStatusSearch
-import com.storyteller_f.shared.obj.PosterSearch
-import com.storyteller_f.shared.obj.UnauthorizedException
-import com.storyteller_f.shared.obj.UpdateCommunityBody
-import com.storyteller_f.shared.obj.getUid
-import com.storyteller_f.shared.obj.toJoinSearch
+import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
@@ -116,7 +110,7 @@ suspend fun DatabaseFactory.getCommunity(
                 UserTopicReads.uid eq id
             }
         }.adjustSelect {
-            select(Communities.fields + Aids.value + UserTopicReads.topicId)
+            select(Communities.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
         }
     }
     query.where(buildCommunityWhereClause(objectFetch))
@@ -150,18 +144,20 @@ fun getSearchCommunityQuery(
     val query = Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
         .select(Communities.fields + Aids.value)
     when (joinStatusSearch) {
-        is JoinSearch.Joined -> { query.adjustColumnSet {
-            join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-                MemberJoins.uid eq joinStatusSearch.uid
+        is JoinSearch.Joined -> {
+            query.adjustColumnSet {
+                join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+                    MemberJoins.uid eq joinStatusSearch.uid
+                }
             }
         }
-        }
 
-        is JoinSearch.NotJoined -> { query.where {
-            Communities.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
-                MemberJoins.uid eq joinStatusSearch.uid
-            })
-        }
+        is JoinSearch.NotJoined -> {
+            query.where {
+                Communities.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
+                    MemberJoins.uid eq joinStatusSearch.uid
+                })
+            }
         }
 
         else -> {
@@ -177,8 +173,11 @@ fun getSearchCommunityQuery(
             join(UserTopicReads, JoinType.LEFT, Communities.id, UserTopicReads.objectId) {
                 UserTopicReads.uid eq uid
             }
-        }.adjustSelect {
-            select(Communities.fields + Aids.value + UserTopicReads.topicId)
+        }
+        if (joinStatusSearch !is JoinSearch.NotJoined) {
+            query.adjustSelect {
+                select(Communities.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
+            }
         }
     }
     if (!word.isNullOrBlank()) {

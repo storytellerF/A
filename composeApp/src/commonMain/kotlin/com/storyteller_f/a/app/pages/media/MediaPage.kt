@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -18,7 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.panpf.zoomimage.CoilZoomAsyncImage
-import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.MediaPlaySession
 import com.storyteller_f.a.app.common.CenterBox
@@ -88,7 +87,7 @@ fun ImageSheet(
     sheetState: SheetState,
     hideSheet: () -> Unit,
 ) {
-    val client = LocalClient.current
+    val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
     BaseSheet(
@@ -100,7 +99,7 @@ fun ImageSheet(
             ButtonNav(MaterialSymbolsOutlined.FileCopy, "copy") {
                 scope.launch {
                     globalDialogState.use {
-                        client.copy(session.objectTuple, session.mediaInfo.noPrefixName).getOrThrow()
+                        sessionManager.copy(session.objectTuple, session.mediaInfo.noPrefixName).getOrThrow()
                         toaster.showShortToast("done")
                     }
                 }

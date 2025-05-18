@@ -47,7 +47,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkContent
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -117,13 +116,13 @@ private fun RoomPageInternal(
                 }
             }
             val firstVisibleItemIndex by remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }
-            val client = LocalClient.current
+            val sessionManager = LocalSessionManager.current
             LaunchedEffect(firstVisibleItemIndex, roomInfo) {
                 delay(1000)
                 try {
                     val info = items[firstVisibleItemIndex]
                     if (info != null) {
-                        client.addReadLog(UpdateUserRead(roomInfo.tuple(), info.id)).getOrThrow()
+                        sessionManager.addReadLog(UpdateUserRead(roomInfo.tuple(), info.id)).getOrThrow()
                     }
                 } catch (e: Exception) {
                     Napier.e(e) {
@@ -204,7 +203,7 @@ fun RoomInputGroup(
     var input by remember {
         mutableStateOf("")
     }
-    val myInfo by SignInViewModel.user.collectAsState()
+    val myInfo = getCurrentUserInfo()
     val controller = remember {
         CustomAlertDialogController()
     }
@@ -239,6 +238,20 @@ fun RoomInputGroup(
 }
 
 @Composable
+fun getCurrentUserInfo(): UserInfo? {
+    val userSessionManager = LocalSessionManager.current
+    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    return myInfo
+}
+
+@Composable
+fun isLoginin(): Boolean {
+    val userSessionManager = LocalSessionManager.current
+    val myInfo by userSessionManager.isAlreadySignUp.collectAsState(false)
+    return myInfo
+}
+
+@Composable
 private fun RoomInputGroupInternal(
     roomId: PrimaryKey,
     roomInfo: RoomInfo,
@@ -247,7 +260,7 @@ private fun RoomInputGroupInternal(
     scrollToNew: () -> Unit,
     updateInput: (String) -> Unit
 ) {
-    val myInfo by SignInViewModel.user.collectAsState()
+    val myInfo = getCurrentUserInfo()
     val wsClient = LocalWsClient.current
     val mediaTarget = if (roomInfo.isPrivate) {
         ObjectTuple(roomInfo.id, ObjectType.ROOM)
@@ -309,8 +322,8 @@ private fun buildInputBoxContentListener(
     input: String,
     userInfo: UserInfo?,
     updateInput: (String) -> Unit
-): ClientWsListener {
-    return object : ClientWsListener {
+): WebSocketClientListener {
+    return object : WebSocketClientListener {
         override suspend fun onReceived(frame: RoomFrame) {
             if (frame is RoomFrame.NewTopicInfo) {
                 val topicInfo = frame.topicInfo
@@ -331,7 +344,7 @@ private fun sendRoomTopic(
     toasterState: ToasterState,
     alertDialogState: CustomAlertDialogController,
     keysViewModel: RoomKeysViewModel,
-    wsClient: ClientWebSocket,
+    wsClient: WebSocketClient,
     parentTarget: ObjectTuple
 ) {
     val handler = keysViewModel.handler
@@ -476,7 +489,8 @@ private fun InputGroupSuffix(
     mediaTarget: ObjectTuple,
     gotoCompose: () -> Unit
 ) {
-    val alreadyLoginIn by SignInViewModel.isAlreadySignUp.collectAsState(false)
+    val userSessionManager = LocalSessionManager.current
+    val alreadyLoginIn by userSessionManager.isAlreadySignUp.collectAsState(false)
     var showSheet by remember {
         mutableStateOf(false)
     }
@@ -506,7 +520,7 @@ private fun InputGroupSuffix(
         })
     }
     val sheetState = rememberModalBottomSheetState()
-    MediaPicker(showSheet, sheetState, mediaTarget, { info ->
+    MediaPicker(showSheet, sheetState, mediaTarget, onClickItem = { info ->
         insertContent(info.first(), updateInput, input)
     }) {
         showSheet = false
@@ -550,8 +564,8 @@ private fun RoomDialogButtons(
     appNav: AppNav,
     roomInfo: RoomInfo,
 ) {
-    val me by SignInViewModel.user.collectAsState()
-    val client = LocalClient.current
+    val me = getCurrentUserInfo()
+    val sessionManager = LocalSessionManager.current
     Column {
         ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
             dismiss()
@@ -564,7 +578,7 @@ private fun RoomDialogButtons(
             if (roomInfo.isJoined) {
                 ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
                     scope.launch {
-                        exitRoom(roomInfo, client) {
+                        exitRoom(roomInfo, sessionManager) {
                             toasterState.show(
                                 getString(Res.string.success),
                                 type = ToastType.Success,
@@ -576,7 +590,7 @@ private fun RoomDialogButtons(
             } else {
                 ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_room)) {
                     scope.launch {
-                        joinRoom(roomInfo, client) {
+                        joinRoom(roomInfo, sessionManager) {
                             toasterState.show(
                                 getString(Res.string.success),
                                 type = ToastType.Success,
@@ -597,23 +611,23 @@ private fun RoomDialogButtons(
     }
 }
 
-private suspend fun joinRoom(roomInfo: RoomInfo, client: HttpClient, onSuccess: suspend () -> Unit) {
+private suspend fun joinRoom(roomInfo: RoomInfo, sessionManager: SessionManager, onSuccess: suspend () -> Unit) {
     globalDialogState.use {
         val communityId = roomInfo.communityId
         if (communityId != null) {
-            if (!client.getCommunityInfo(communityId).getOrThrow().isJoined) {
+            if (!sessionManager.getCommunityInfo(communityId).getOrThrow().isJoined) {
                 throw Exception("you should join community first.")
             }
         }
-        val info = client.joinRoom(roomInfo.id).getOrThrow()
+        val info = sessionManager.joinRoom(roomInfo.id).getOrThrow()
         bus.emit(OnRoomJoined(info))
         onSuccess()
     }
 }
 
-private suspend fun exitRoom(roomInfo: RoomInfo, client: HttpClient, onSuccess: suspend () -> Unit) {
+private suspend fun exitRoom(roomInfo: RoomInfo, sessionManager: SessionManager, onSuccess: suspend () -> Unit) {
     globalDialogState.use {
-        val info = client.exitRoom(roomInfo.id).getOrThrow()
+        val info = sessionManager.exitRoom(roomInfo.id).getOrThrow()
         bus.emit(OnRoomExited(info))
         onSuccess()
     }
