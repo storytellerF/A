@@ -98,8 +98,14 @@ kotlin {
             implementation(libs.compose.webview)
             implementation(libs.androidx.core.splashscreen)
             implementation(libs.androidx.datastore.preferences.core)
+            implementation(libs.connectivity.device)
+            implementation(libs.connectivity.compose.device)
             if (isLlamaEnable)
                 implementation(":android-llama-cpp")
+
+            implementation(libs.connector.get().toString()) {
+                exclude(group = "com.google.protobuf", module = "protobuf-java")
+            }
         }
         androidUnitTest.dependencies {
             implementation(libs.androidx.ui.test.junit4.android)
@@ -164,6 +170,9 @@ kotlin {
             implementation(libs.human.readable)
             implementation(libs.kfswatch)
             implementation(libs.tasks.genai)
+
+            implementation(libs.connectivity.compose)
+            implementation(libs.connectivity.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -181,6 +190,8 @@ kotlin {
             implementation(libs.jlayer)
             implementation(libs.llama)
             implementation(libs.androidx.datastore.preferences.core)
+            implementation(libs.connectivity.http)
+            implementation(libs.connectivity.compose.http)
         }
         desktopTest.dependencies {
             implementation(compose.desktop.currentOs)

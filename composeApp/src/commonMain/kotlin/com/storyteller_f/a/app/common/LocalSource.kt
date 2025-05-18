@@ -14,16 +14,14 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
 
 class CustomQueryPagingSource<Key : Any, RowType : Any>(
-    collectionName: String,
-    databaseSource: DatabaseSource,
+    val collectionName: String,
+    val databaseSource: DatabaseSource,
     private val serializer: KSerializer<RowType>,
     private val key: (RowType?) -> Key?,
     private val queryProvider: (Key?) -> Expression?,
     private val orders: List<Order>,
     private val extraProcessor: suspend List<RowType>.() -> List<RowType> = { this }
 ) : PagingSource<Key, RowType>() {
-
-    private val collection = databaseSource.getCollection(collectionName)
 
     init {
         registerInvalidatedCallback {
@@ -48,6 +46,7 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
             "source load $key"
         }
         return try {
+            val collection = databaseSource.getCollection(collectionName)
             val observerToken = collection.observeList(queryProvider(key), params.loadSize, orders, serializer) {
                 invalidate()
             }
@@ -146,7 +145,7 @@ class CustomRemoteMediator<Key : Any, Datum : Any>(
             val data = loadResult.data
             val nextKey = loadResult.nextKey
             if (loadType == LoadType.REFRESH) {
-                databaseSource.deleteCollection(collectionName)
+                databaseSource.clearCollection(collectionName)
             }
             data.forEach {
                 update(

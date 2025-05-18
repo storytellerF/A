@@ -8,10 +8,12 @@ import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.IdentityPagingGenerator
 import com.storyteller_f.a.server.common.pagination
+import com.storyteller_f.a.server.service.addDevice
 import com.storyteller_f.a.server.service.addReadLog
 import com.storyteller_f.a.server.service.getTopLevelTopicsInObject
 import com.storyteller_f.a.server.service.getUserTitles
 import com.storyteller_f.a.server.service.updateUser
+import com.storyteller_f.shared.obj.NewDevice
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.ObjectType
@@ -32,6 +34,12 @@ fun Route.bindProtectedSafeUserRoute(reader: DatabaseReader, backend: Backend) {
         usePrincipal(reader) { uid ->
             val tuple = call.receive<UpdateUserRead>()
             addReadLog(backend, uid, tuple)
+        }
+    }
+    post<RouteUsers.Device> {
+        usePrincipal(reader) { uid ->
+            val newDevice = call.receive<NewDevice>()
+            addDevice(backend, uid, newDevice.endpointUrl)
         }
     }
 }

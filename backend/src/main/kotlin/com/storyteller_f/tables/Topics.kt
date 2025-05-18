@@ -39,8 +39,8 @@ class Topic(
     val parentType: ObjectType,
     val rootId: PrimaryKey,
     val rootType: ObjectType,
-    val isPin: Boolean,
-    val lastModifiedTime: LocalDateTime?,
+    val isPin: Boolean = false,
+    val lastModifiedTime: LocalDateTime? = null,
     val aid: String? = null,
 ) : BaseEntity(id, createdTime) {
     companion object {
@@ -87,6 +87,7 @@ fun Topic.toTopicInfo(
     reactionCount: Long = 0,
     aidValue: String? = null,
     lastRead: PrimaryKey? = null,
+    isPrivate: Boolean = false,
 ): TopicInfo {
     return TopicInfo(
         id = id,
@@ -101,7 +102,7 @@ fun Topic.toTopicInfo(
         commentCount = commentCount,
         reactionCount = reactionCount,
         hasComment = hasComment,
-        isPrivate = false,
+        isPrivate = isPrivate,
         isPin = isPin,
         lastModifiedTime = lastModifiedTime,
         extension = null,
@@ -290,7 +291,7 @@ suspend fun DatabaseFactory.saveEncryptedTopic(
         this[EncryptedTopicKeys.encryptedAes] =
             ExposedBlob(content.encryptedKey[it]!!.hexToByteArray())
     }
-    topic.toTopicInfo(hasComment = false)
+    topic.toTopicInfo(hasComment = false, isPrivate = true)
         .copy(content = TopicContent.Encrypted(content.encrypted, content.encryptedKey), isPrivate = true)
 }
 

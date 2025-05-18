@@ -87,9 +87,7 @@ object SignInViewModel {
         it is ClientSession.SignInSuccess
     }.stateIn(GlobalScope, SharingStarted.Eagerly, false)
     val appStartLoginRetried = MutableStateFlow(false)
-    val retryLoginState = MutableStateFlow<LoadingState?>(null)
-    val retryLoginHandler = SimpleLoadingHandler<UserInfo?> {
-    }
+    val retryLoginHandler = FixedLoadingHandler<UserInfo?>()
     val user get() = retryLoginHandler.data
 
     suspend fun retryLogin(client: HttpClient) {

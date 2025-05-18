@@ -89,11 +89,11 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
                     showDialog = it
                 }
             }
-            StateView(room.handler) {
+            StateView(room.handler, content = {
                 RoomPageInternal(Modifier.weight(1f), roomId, it) {
                     showDialog = true
                 }
-            }
+            })
         }
     }
 }
@@ -311,7 +311,7 @@ private fun buildInputBoxContentListener(
     updateInput: (String) -> Unit
 ): ClientWsListener {
     return object : ClientWsListener {
-        override fun onReceived(frame: RoomFrame) {
+        override suspend fun onReceived(frame: RoomFrame) {
             if (frame is RoomFrame.NewTopicInfo) {
                 val topicInfo = frame.topicInfo
                 val content = topicInfo.content

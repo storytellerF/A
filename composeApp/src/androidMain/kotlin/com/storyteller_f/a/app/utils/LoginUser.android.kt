@@ -9,9 +9,11 @@ import com.storyteller_f.a.client_lib.LoginUser
 import com.storyteller_f.a.client_lib.LoginUserSession
 import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.calcAddress
+import com.storyteller_f.shared.contextRef
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
+import org.unifiedpush.android.connector.UnifiedPush
 import java.security.KeyFactory
 import java.security.KeyStore
 import java.security.PrivateKey
@@ -193,4 +195,9 @@ class AndroidKeyStoreLoginUserSessionManager : LoginUserSessionManager {
         keyStore.load(null)
         keyStore.deleteEntry(session)
     }
+}
+
+actual fun unregisterPushService() {
+    val context = contextRef.get() ?: return
+    UnifiedPush.unregister(context, "A")
 }

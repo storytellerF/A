@@ -3,7 +3,6 @@ package com.storyteller_f.a.client_lib
 import io.github.aakira.napier.Napier
 import kotbase.*
 import kotbase.QueryBuilder.select
-import kotbase.ValueIndexConfiguration
 import kotbase.ktx.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
@@ -29,9 +28,15 @@ class KotbaseObserverToken<T>(
 }
 
 
-class KotbaseDatabaseCollection(private val collection: kotbase.Collection) : DatabaseCollection {
+class KotbaseDatabaseCollection(val collection: kotbase.Collection) : DatabaseCollection {
     override fun saveDocument(id: String, string: String) {
-        collection.save(MutableDocument(id, string))
+        try {
+            collection.save(MutableDocument(id, string))
+        } catch (e: Exception) {
+            Napier.e(throwable = e, tag = "DatabaseSource") {
+                "save data failed to ${collection.name}"
+            }
+        }
     }
 
     override fun <T : Any> observe(serializer: KSerializer<T>, expression: Expression): Flow<T?> {
@@ -116,8 +121,10 @@ class KotbaseDatabaseCollection(private val collection: kotbase.Collection) : Da
                     results == null -> task.completeExceptionally(queryChange.error ?: Exception("it.error is null"))
                     else -> {
                         runCatching {
-                            results.toObjects { jsonData: String ->
-                                json.decodeFromString(serializer, jsonData)
+                            results.use {
+                                it.toObjects { jsonData: String ->
+                                    json.decodeFromString(serializer, jsonData)
+                                }
                             }
                         }.onSuccess {
                             task.complete(it)
@@ -156,7 +163,7 @@ class KotbaseDatabaseSource(private val database: Database) : DatabaseSource {
         if (name.startsWith("communities_")) {
             collection.createIndex(
                 "poster_index",
-                ValueIndexConfiguration("poster")
+                ValueIndexConfiguration("hasPoster")
             )
         } else if (name.startsWith("topics_") && name != "topics_keys") {
             collection.createIndex(
@@ -175,7 +182,14 @@ class KotbaseDatabaseSource(private val database: Database) : DatabaseSource {
         }
     }
 
-    override fun deleteCollection(collectionName: String) {
-        database.deleteCollection(name = collectionName)
+    override fun clearCollection(collectionName: String) {
+        val collection = database.defaultScope.getCollection(collectionName) ?: return
+        select(Meta.id).from(collection).execute().use {
+            it.toObjects { map: Map<String, Any?> ->
+                collection.getDocument(map["id"].toString())?.let {
+                    collection.delete(it)
+                }
+            }
+        }
     }
 }

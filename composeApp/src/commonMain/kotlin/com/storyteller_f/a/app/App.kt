@@ -44,6 +44,7 @@ import com.storyteller_f.a.app.pages.room.RoomSettingPage
 import com.storyteller_f.a.app.pages.title.TitleComposePage
 import com.storyteller_f.a.app.pages.topic.TopicComposePage
 import com.storyteller_f.a.app.pages.topic.TopicPage
+import com.storyteller_f.a.app.pages.user.LoginPage
 import com.storyteller_f.a.app.pages.user.MemberPage
 import com.storyteller_f.a.app.pages.user.UserPage
 import com.storyteller_f.a.app.pages.user.UserSettingPage
@@ -68,11 +69,14 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
@@ -231,7 +235,9 @@ private fun MainAppPage(
                 appNav.toRoute<RoomScreen>()?.roomId
             }, {
                 appNav.toRoute<TopicScreen>()?.topicId
-            })
+            }) {
+                appNav.gotoTopic(it.id)
+            }
             CompositionLocalProvider(LocalWsClient provides ws) {
                 NavHost(navigator, startDestination = HomeScreen) {
                     buildRootNav(navigator)
@@ -387,7 +393,7 @@ private fun processRemoveReaction(
                 !info.hasReacted -> info
                 else -> info.copy(count = info.count - 1, hasReacted = false)
             }
-        }
+        }.toImmutableList()
         old.copy(extension = extension.copy(reactions = new), reactionCount = old.reactionCount + 1)
     }
 }
@@ -404,7 +410,7 @@ private fun processOnAddReaction(
                 info.hasReacted -> info
                 else -> info.copy(count = info.count + 1, hasReacted = true)
             }
-        }
+        }.toImmutableList()
         old.copy(extension = extension.copy(reactions = new), reactionCount = old.reactionCount + 1)
     }
 }
@@ -429,12 +435,16 @@ private fun buildWsListener(
     hasPermission: Boolean,
     roomScreenId: () -> PrimaryKey?,
     topicScreenId: () -> PrimaryKey?,
+    onClickTopic: (TopicInfo) -> Unit,
 ) = object : ClientWsListener {
-    override fun onReceived(frame: RoomFrame) {
+    override suspend fun onReceived(frame: RoomFrame) {
         if (frame is RoomFrame.NewTopicInfo) {
             val topicInfo = frame.topicInfo
             val message = topicInfo.content
             if (message is TopicContent.Plain) {
+                Napier.i(tag = "WebSocket") {
+                    "ws listener ${platform.isActive} $hasPermission"
+                }
                 if (platform.isActive) {
                     val roomId = roomScreenId()
                     val topicId = topicScreenId()
@@ -445,7 +455,7 @@ private fun buildWsListener(
                         messageToasterState.show("$nickname: ${message.plain}")
                     }
                 } else if (hasPermission) {
-                    sendTopicNotification(message)
+                    sendTopicNotification(message, topicInfo, onClickTopic)
                 }
             }
         }
@@ -457,9 +467,10 @@ private fun rememberWsClient(
     wsServerUrl: String,
     roomScreenId: () -> PrimaryKey?,
     topicScreenId: () -> PrimaryKey?,
+    onClickTopic: (TopicInfo) -> Unit = {},
 ): ClientWebSocket {
     val client = LocalClient.current
-    val remember = remember {
+    val clientWebSocketImpl = remember {
         ClientWebSocketImpl(client, { userInfo, sig ->
             webSocketSession(buildUrl {
                 takeFrom(wsServerUrl)
@@ -482,15 +493,15 @@ private fun rememberWsClient(
     val notificationProvider = getNotificationProvider()
     val hasPermission by notificationProvider.hasPermissionState
     val listener = remember(hasPermission) {
-        buildWsListener(messageToasterState, hasPermission, roomScreenId, topicScreenId)
+        buildWsListener(messageToasterState, hasPermission, roomScreenId, topicScreenId, onClickTopic)
     }
-    remember.addListener(listener)
+    clientWebSocketImpl.addListener(listener)
     DisposableEffect(null) {
         onDispose {
-            remember.removeListener(listener)
+            clientWebSocketImpl.removeListener(listener)
         }
     }
-    return remember
+    return clientWebSocketImpl
 }
 
 @OptIn(ExperimentalResourceApi::class)
@@ -830,29 +841,36 @@ interface AppNav {
 }
 
 @OptIn(ExperimentalNotificationsApi::class)
-private fun sendTopicNotification(message: TopicContent.Plain) {
-    Notification(
-        title = "New topic",
-        message = message.plain,
-        onActivated = {
-            Napier.d(
-                message = "Notification 1 activated",
-                tag = "NotificationLog"
-            )
-        },
-        onDismissed = { reason ->
-            Napier.d(
-                message = "Notification 1 dismissed: $reason",
-                tag = "NotificationLog"
-            )
-        },
-        onFailed = {
-            Napier.d(
-                tag = "NotificationLog",
-                message = "Notification 1 failed"
-            )
+private suspend fun sendTopicNotification(
+    message: TopicContent.Plain,
+    topicInfo: TopicInfo,
+    onClickTopic: (TopicInfo) -> Unit
+) {
+    withContext(Dispatchers.Main) {
+        Notification(
+            title = "New topic",
+            message = message.plain,
+            onActivated = {
+                Napier.d(
+                    message = "Notification 1 activated",
+                    tag = "NotificationLog"
+                )
+                onClickTopic(topicInfo)
+            },
+            onDismissed = { reason ->
+                Napier.d(
+                    message = "Notification 1 dismissed: $reason",
+                    tag = "NotificationLog"
+                )
+            },
+            onFailed = {
+                Napier.d(
+                    tag = "NotificationLog",
+                    message = "Notification 1 failed"
+                )
+            }
+        ) {
         }
-    ) {
     }
 }
 

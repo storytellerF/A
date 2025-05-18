@@ -7,6 +7,7 @@ import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
+import com.storyteller_f.a.server.service.processTopicExtension
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -14,10 +15,18 @@ import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
+import io.github.aakira.napier.Napier
+import io.ktor.client.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.websocket.*
 import io.ktor.util.logging.*
@@ -25,53 +34,104 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 
 val messageResponseFlow = MutableSharedFlow<RoomFrame.NewTopicInfo>()
 val sharedFlow = messageResponseFlow.asSharedFlow()
+val userWebSocketSessionMap = mutableMapOf<PrimaryKey, List<DefaultWebSocketServerSession>>()
+
+@Serializable
+data class Notification(val title: String, val message: String)
+
+interface NotificationDispatcher {
+    suspend fun dispatch(frame: RoomFrame.NewTopicInfo): Result<Unit>
+}
+
+class WebsocketDispatcher(val session: DefaultWebSocketServerSession) : NotificationDispatcher {
+    override suspend fun dispatch(frame: RoomFrame.NewTopicInfo): Result<Unit> {
+        return runCatching {
+            session.sendSerialized<RoomFrame>(frame)
+        }
+    }
+
+}
+
+class ExternalDispatcher(val client: HttpClient, val endpointUrl: String) : NotificationDispatcher {
+    override suspend fun dispatch(frame: RoomFrame.NewTopicInfo): Result<Unit> {
+        return runCatching {
+            val content = when (val content = frame.topicInfo.content) {
+                is TopicContent.Plain -> content.plain
+                else -> ""
+            }
+            client.post(endpointUrl) {
+                contentType(ContentType.Application.Json)
+                setBody(Notification("new topic", content))
+            }
+        }
+    }
+}
+
+suspend fun sendTopicToRoomMembers(backend: Backend) {
+    HttpClient {
+        expectSuccess = true
+        install(Logging)
+        install(ContentNegotiation) {
+            json()
+        }
+    }.use { client ->
+        sharedFlow.collect { frame ->
+            DatabaseFactory.getJoinedUserList(backend, frame.topicInfo.rootId).mapResult { list ->
+                val dispatchers = list.mapNotNull {
+                    userWebSocketSessionMap[it.uid]
+                }.flatMap {
+                    it.map {
+                        WebsocketDispatcher(it)
+                    }
+                }
+                DatabaseFactory.getUserDevices(backend, list.filter {
+                    it.uid != frame.topicInfo.author
+                }.map {
+                    it.uid
+                }).map {
+                    it.map {
+                        ExternalDispatcher(client, it.endpointUrl)
+                    } + dispatchers
+                }
+            }.onSuccess {
+                it.forEach { dispatcher ->
+                    dispatcher.dispatch(frame).onFailure { throwable ->
+                        Napier.e(throwable = throwable) {
+                            "send topic to room members failed: ${throwable.message}"
+                        }
+                    }
+                }
+            }.onFailure {
+                Napier.e(throwable = it) {
+                    "send topic to room members failed: ${it.message}"
+                }
+            }
+        }
+    }
+}
 
 suspend fun DefaultWebSocketServerSession.webSocketContent(
     reader: DatabaseReader,
     backend: Backend
 ) {
-    val job = launch {
-        sharedFlow.collect { frame ->
-            usePrincipalOrNull { uid ->
-                sendToMember(backend, frame, uid)
-            }
+    usePrincipalOrNull { uid ->
+        if (uid == null) {
+            return@usePrincipalOrNull
         }
-    }
-
-    while (true) {
-        try {
-            val frame = receiveDeserialized<RoomFrame>()
-            usePrincipalOrNull { uid ->
-                if (uid != null) {
-                    processUserMessage(backend, frame, uid)
-                }
+        userWebSocketSessionMap[uid] = userWebSocketSessionMap.getOrDefault(uid, emptyList()) + this
+        while (true) {
+            try {
+                val frame = receiveDeserialized<RoomFrame>()
+                processUserMessage(backend, frame, uid)
+            } catch (e: Exception) {
+                printWsError(e, reader)
+                userWebSocketSessionMap[uid] = userWebSocketSessionMap.getOrDefault(uid, emptyList()) - this
+                return
             }
-        } catch (e: Exception) {
-            printWsError(e, reader)
-            job.cancel()
-            return
-        }
-    }
-}
-
-private suspend fun DefaultWebSocketServerSession.sendToMember(
-    backend: Backend,
-    frame: RoomFrame.NewTopicInfo,
-    uid: PrimaryKey?
-) {
-    val info = frame.topicInfo
-    if (uid != null) {
-        call.application.log.info("distribution ${info.id}")
-        isMemberJoined(backend, info.rootId, uid).onSuccess { value ->
-            if (value && uid != info.author) {
-                sendSerialized(frame as RoomFrame)
-            }
-        }.onFailure { exception ->
-            call.application.log.error("distribution ws to $uid", exception)
         }
     }
 }
@@ -80,18 +140,13 @@ private fun DefaultWebSocketServerSession.printWsError(
     e: Exception,
     reader: DatabaseReader
 ) {
+    val log = call.application.log
     when (e) {
-        is ClosedReceiveChannelException -> {
-            call.application.log.info("ws closed ${call.remoteIp(reader).first()}")
-        }
+        is ClosedReceiveChannelException -> log.info("ws closed ${call.remoteIp(reader).first()}")
 
-        is CancellationException -> {
-            call.application.log.info("ws cancel")
-        }
+        is CancellationException -> log.info("ws cancel")
 
-        else -> {
-            call.application.log.error("ws receive", e)
-        }
+        else -> log.error("ws receive", e)
     }
 }
 
@@ -204,23 +259,24 @@ private suspend fun addTopicIntoRoom(
 
             checkRoomIsPrivate(backend, roomId).mapResultIfNotNull { isPrivate ->
                 if (isPrivate) {
-                    when {
-                        content !is TopicContent.Encrypted -> Result.failure(
-                            ForbiddenException("Private room only accept encrypted content.")
-                        )
-
+                    if (content is TopicContent.Encrypted)
                         isKeyVerified(
                             backend,
                             roomId,
                             content.encryptedKey
-                        ).getOrNull() == true -> DatabaseFactory.saveEncryptedTopic(
-                            backend,
-                            topic,
-                            content
+                        ).mapResult {
+                            if (it)
+                                DatabaseFactory.saveEncryptedTopic(
+                                    backend,
+                                    topic,
+                                    content
+                                )
+                            else Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
+                        }
+                    else
+                        Result.failure(
+                            ForbiddenException("Private room only accept encrypted content.")
                         )
-
-                        else -> Result.failure(ForbiddenException("Private room only accept encrypted content."))
-                    }
                 } else {
                     when (content) {
                         is TopicContent.Plain -> DatabaseFactory.savePlainTopic(
@@ -231,6 +287,10 @@ private suspend fun addTopicIntoRoom(
 
                         else -> Result.failure(ForbiddenException("Public room only accept unencrypted content."))
                     }
+                }
+            }.mapResultIfNotNull { topicInfo ->
+                processTopicExtension(backend, listOf(topicInfo), uid, topicInfo.isPrivate, false).mapIfNotNull {
+                    it.first()
                 }
             }
         } else {
@@ -244,7 +304,7 @@ private suspend fun isKeyVerified(
     roomId: PrimaryKey,
     encryptedAes: Map<PrimaryKey, String>
 ): Result<Boolean> {
-    return DatabaseFactory.userListJoinedRoom(backend, roomId).map { value ->
+    return DatabaseFactory.getJoinedUserList(backend, roomId).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()

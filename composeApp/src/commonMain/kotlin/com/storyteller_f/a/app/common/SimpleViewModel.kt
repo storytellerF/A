@@ -15,16 +15,6 @@ import kotlinx.coroutines.launch
 abstract class SimpleViewModel<T : Any>(val client: HttpClient) : ViewModel() {
     abstract val handler: LoadingHandler<T>
 
-    abstract suspend fun loadInternal(): Result<T>
-
-    protected fun load() {
-        viewModelScope.launch {
-            handler.request {
-                loadInternal()
-            }
-        }
-    }
-
     fun update(t: T) {
         handler.update(t)
     }

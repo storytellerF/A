@@ -1,12 +1,12 @@
 [versions]
 aboutlibrariesComposeM3 = "11.2.3"
 aboutlibrariesCore = "11.2.3"
-agp = "8.9.2"
+agp = "8.9.3"
 android-compileSdk = "35"
 android-minSdk = "24"
 android-targetSdk = "35"
 androidx-activityCompose = "1.10.1"
-androidx-lifecycleProcess = "2.8.7"
+androidx-lifecycleProcess = "2.9.0"
 bcprovJdk18on = "1.80"
 buildconfig = "0.17.1"
 coil = "3.1.0"
@@ -17,10 +17,12 @@ composeNativeNotification = "0.2.0"
 composePdf = "1.2.0"
 composePreferences = "1.1.1"
 composeWebview = "0.33.6"
+connector = "3.0.9"
+connectivity = "1.2.0"
 coreSplashscreen = "1.0.1"
 couchbaseLite = "3.1.9-1.1.1"
 cryptographyCore = "0.4.0"
-datastorePreferencesCore = "1.1.5"
+datastorePreferencesCore = "1.1.6"
 desugar_jdk_libs = "2.1.5"
 detektVersion = "1.23.8"
 easylauncher = "6.4.0"
@@ -43,6 +45,7 @@ kim = "0.24"
 kotlin = "2.1.20"
 kotlin_buildconfig = "5.6.2"
 kotlinxCli = "0.3.6"
+kotlinxCollectionsImmutable = "0.3.8"
 kotlinxCoroutinesSwing = "1.10.2"
 kotlinxDatetime = "0.6.2"
 kotlinxSerializationJson = "1.8.1"
@@ -50,7 +53,7 @@ kover = "0.9.1"
 krop-ui = "0.1.6"
 ktor = "3.1.2"
 leakcanaryAndroid = "2.14"
-lifecycleViewmodelCompose = "2.8.7"
+lifecycleViewmodelCompose = "2.9.0"
 llama = "4.1.0"
 logback = "1.5.18"
 luceneCore = "10.2.0"
@@ -80,11 +83,10 @@ richeditorCompose = "1.0.0-rc12"
 robolectric = "4.14.1"
 screenshot = "0.0.1-alpha09"
 simplemagic = "1.17"
-slf4jSimple = "2.0.16"
 sqliteJdbc = "3.49.1.0"
 tikaCore = "3.1.0"
-uiTestJunit4Android = "1.8.0"
-uiTooling = "1.8.0"
+uiTestJunit4Android = "1.8.1"
+uiTooling = "1.8.1"
 uriKmp = "0.0.19"
 vaviImageAvif = "0.0.7"
 vlcj = "4.8.3"
@@ -102,6 +104,7 @@ aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastorePreferencesCore" }
+androidx-lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "androidx-lifecycleProcess" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3Exoplayer" }
@@ -123,6 +126,13 @@ compose-native-notification = { module = "io.github.kdroidfilter:compose-native-
 compose-pdf = { module = "dev.zt64:compose-pdf", version.ref = "composePdf" }
 compose-preferences = { group = "io.github.strabled", name = "ComposePreferences", version.ref = "composePreferences" }
 compose-webview = { module = "io.github.kevinnzou:compose-webview", version.ref = "composeWebview" }
+connector = { module = "org.unifiedpush.android:connector", version.ref = "connector" }
+connectivity-core = { module = "dev.jordond.connectivity:connectivity-core", version.ref = "connectivity" }
+connectivity-compose = { module = "dev.jordond.connectivity:connectivity-compose", version.ref = "connectivity" }
+connectivity-compose-device = { module = "dev.jordond.connectivity:connectivity-compose-device", version.ref = "connectivity" }
+connectivity-compose-http = { module = "dev.jordond.connectivity:connectivity-compose-http", version.ref = "connectivity" }
+connectivity-device = { module = "dev.jordond.connectivity:connectivity-device", version.ref = "connectivity" }
+connectivity-http = { module = "dev.jordond.connectivity:connectivity-http", version.ref = "connectivity" }
 cryptography-provider-openssl3-prebuilt = { module = "dev.whyoleg.cryptography:cryptography-provider-openssl3-prebuilt", version.ref = "cryptographyCore" }
 cryptography-provider-webcrypto = { module = "dev.whyoleg.cryptography:cryptography-provider-webcrypto", version.ref = "cryptographyCore" }
 fonticons-core = { module = "dev.tclement.fonticons:core", version.ref = "font-icon-core" }
@@ -139,6 +149,7 @@ github-newpipeextractor = { module = "com.github.teamnewpipe.NewPipeExtractor:Ne
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 kfswatch = { module = "io.github.irgaly.kfswatch:kfswatch", version.ref = "kfswatch" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxCollectionsImmutable" }
 kotlinx-coroutines-slf4j = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-slf4j", version.ref = "kotlinxCoroutinesSwing" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesSwing" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
@@ -279,6 +290,13 @@ ktor-client = [
     "ktor-client-websockets",
     "ktor-serialization-kotlinx-json",
     "ktor-client-call-id"
+]
+ktor-server-client = [
+    "ktor-client-content-negotiation",
+    "ktor-client-core",
+    "ktor-client-logging",
+    "ktor-serialization-kotlinx-json",
+    "ktor-client-okhttp"
 ]
 ktor-server = [
     "ktor-serialization-kotlinx-json",

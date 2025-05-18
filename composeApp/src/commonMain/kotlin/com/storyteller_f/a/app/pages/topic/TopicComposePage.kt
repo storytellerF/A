@@ -40,6 +40,8 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -162,7 +164,7 @@ private fun TopicComposeInternal(
     HorizontalPager(pagerState, key = tabs::get) { index ->
         when {
             index == 0 && !enableExperimental -> RichEditTopicPage(input, state, updateInput)
-            index == 1 -> PreviewTopicPage(input, list?.data)
+            index == 1 -> PreviewTopicPage(input, list?.data?.toImmutableList())
             else -> EditTopicPage(input) {
                 Napier.i {
                     "markdown update1 $it"
@@ -279,11 +281,11 @@ private fun TopicComposeSubmitButton(
 }
 
 @Composable
-fun PreviewTopicPage(input: String, res: List<MediaInfo>?) {
+fun PreviewTopicPage(input: String, res: ImmutableList<MediaInfo>?) {
     LazyColumn(modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)) {
         item {
             TopicContentField(
-                TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, res.orEmpty())),
+                TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, res.orEmpty().toImmutableList())),
             )
         }
     }

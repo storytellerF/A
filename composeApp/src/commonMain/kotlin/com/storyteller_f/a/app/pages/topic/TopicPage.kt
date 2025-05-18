@@ -98,9 +98,9 @@ private fun ColumnScope.TopicPageContent(
     val topicsViewModel = createTopicsInTopicViewModel(topicId)
     val topics = topicsViewModel.flow.collectAsLazyPagingItems()
     val lazyListState = rememberLazyListState()
-    StateView(viewModel.handler, {
+    StateView(viewModel.handler, modifier = Modifier.Companion.weight(1f), {
         topics.refresh()
-    }, modifier = Modifier.Companion.weight(1f)) {
+    }, {
         Column {
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
@@ -134,7 +134,7 @@ private fun ColumnScope.TopicPageContent(
                 }
             }
         }
-    }
+    })
 }
 
 @Composable

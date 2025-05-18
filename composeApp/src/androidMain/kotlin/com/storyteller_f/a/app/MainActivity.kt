@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionToken
@@ -19,10 +20,18 @@ import com.kdroid.composenotification.builder.NotificationInitializer.notificati
 import com.storyteller_f.a.app.compontents.bindActivity
 import com.storyteller_f.a.app.compontents.unbindActivity
 import com.storyteller_f.a.client_lib.SignInViewModel
+import com.storyteller_f.a.client_lib.addDevice
+import com.storyteller_f.a.client_lib.defaultClientConfigure
+import com.storyteller_f.a.client_lib.getClient
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import org.unifiedpush.android.connector.UnifiedPush
 import java.util.concurrent.Future
+import kotlin.time.Duration.Companion.hours
 
 class MainActivity : ComponentActivity() {
     private var controllerFuture: Future<MediaController>? = null
@@ -52,6 +61,36 @@ class MainActivity : ComponentActivity() {
             future.addListener({
                 MediaProvider.controller = future.get()
             }, MoreExecutors.directExecutor())
+
+            val context = this
+            lifecycleScope.launch {
+                SignInViewModel.isAlreadySignUp.collectLatest {
+                    while (it) {
+                        try {
+                            val distributor = UnifiedPush.getAckDistributor(context)
+                                ?: UnifiedPush.getDistributors(context).firstOrNull()?.let { instance ->
+                                    UnifiedPush.saveDistributor(context, instance)
+                                    instance
+                                }
+                            if (distributor != null) {
+                                UnifiedPush.register(context, distributor, "A")
+                                Napier.i(tag = "distributor") {
+                                    "distributor $distributor"
+                                }
+                            } else {
+                                Napier.i(tag = "distributor") {
+                                    "distributor not found"
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Napier.e(throwable = e, tag = "distributor") {
+                                "register error $e"
+                            }
+                        }
+                        delay(1.hours)
+                    }
+                }
+            }
         }
     }
 
@@ -117,6 +156,6 @@ val isRunningOnRobolectric: Boolean
     get() = try {
         Class.forName("org.robolectric.Robolectric")
         true
-    } catch (_: ClassNotFoundException) {
+    } catch (_: Exception) {
         false
     }

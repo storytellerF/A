@@ -1,8 +1,8 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.TaskRecordType
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder

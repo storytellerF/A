@@ -10,6 +10,7 @@ import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PassType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.now
@@ -201,6 +202,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 this[Users.publicKey] = it.publicKey
                 this[Users.address] = it.address
                 this[Users.createdTime] = it.createdTime
+                this[Users.passType] = it.passType
             }
             Aids.batchInsert(users) {
                 this[Aids.value] = it.aid!!
@@ -381,7 +383,8 @@ class AddPreset : Subcommand("add", "add entry") {
                 it.presetUser.name.takeIf { s -> s.isNotBlank() } ?: backend.nameService.parse(it.id),
                 it.id,
                 now(),
-                0
+                0,
+                PassType.RAW
             )
         }
     }
