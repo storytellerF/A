@@ -4,11 +4,14 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.*
+import com.storyteller_f.shared.type.JoinSearch
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PosterSearch
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.type.UnauthorizedException
+import com.storyteller_f.shared.type.toJoinSearch
+import com.storyteller_f.shared.utils.*
 import com.storyteller_f.types.PagingFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
@@ -18,7 +21,6 @@ object Communities : BaseTable() {
     val icon = communityIcon()
     val poster = communityPoster().index()
     val owner = customPrimaryKey("owner").index()
-    val memberCount = long("member_count")
 }
 
 class Community(
@@ -27,7 +29,6 @@ class Community(
     val aid: String,
     val name: String,
     val owner: PrimaryKey,
-    val memberCount: Long,
     val icon: String? = null,
     val poster: String? = null
 ) :
@@ -41,7 +42,6 @@ class Community(
                     row[Aids.value],
                     row[name],
                     row[owner],
-                    row[memberCount],
                     row[icon],
                     row[poster]
                 )
@@ -51,6 +51,7 @@ class Community(
 }
 
 fun Community.toCommunityIfo(
+    memberCount: Long,
     joinTime: LocalDateTime?,
     lastRead: PrimaryKey?
 ) = CommunityInfo(
@@ -65,21 +66,25 @@ fun Community.toCommunityIfo(
 )
 
 suspend fun DatabaseFactory.checkCommunityExists(backend: Backend, parentId: PrimaryKey) =
-    first(backend, {
-        it[Communities.id]
-    }) {
-        Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-            .select(Communities.fields + Aids.value)
-            .where {
-                Communities.id eq parentId
-            }
+    dbSearch(backend) {
+        search {
+            Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                .select(Communities.fields + Aids.value)
+                .where {
+                    Communities.id eq parentId
+                }
+        }
+        map {
+            it[Communities.id]
+        }
     }
 
 fun mapCommunityInfo(it: ResultRow): CommunityRawResult {
     val community = Community.wrapRow(it)
     val joinedTime = it.getOrNull(MemberJoins.joinedTime)
     val lastRead = it.getOrNull(UserTopicReads.topicId)
-    return CommunityRawResult(community.toCommunityIfo(joinedTime, lastRead), community.icon, community.poster)
+    val communityInfo = community.toCommunityIfo(0, joinedTime, lastRead)
+    return CommunityRawResult(communityInfo, community.icon, community.poster)
 }
 
 data class CommunityRawResult(val communityInfo: CommunityInfo, val icon: String?, val poster: String?)
@@ -88,32 +93,23 @@ suspend fun DatabaseFactory.getCommunity(
     backend: Backend,
     objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
-    id: PrimaryKey? = null
-): Result<CommunityRawResult?> = first(backend, ::mapCommunityInfo) {
-    val query = when {
-        fillJoinInfo != true -> {
+    uid: PrimaryKey? = null
+): Result<CommunityRawResult?> {
+    if (uid == null && fillJoinInfo == true) {
+        return Result.failure(UnauthorizedException())
+    }
+    return dbSearch(backend) {
+        search {
             Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
                 .select(Communities.fields + Aids.value)
+                .where(buildCommunityWhereClause(objectFetch))
         }
-
-        id != null -> Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-            .join(MemberJoins, JoinType.LEFT, Communities.id, MemberJoins.objectId) {
-                MemberJoins.uid eq id
-            }
-            .select(Communities.fields + MemberJoins.joinedTime + Aids.value)
-
-        else -> throw UnauthorizedException()
-    }
-    if (id != null) {
-        query.adjustColumnSet {
-            join(UserTopicReads, JoinType.LEFT, Communities.id, UserTopicReads.objectId) {
-                UserTopicReads.uid eq id
-            }
-        }.adjustSelect {
-            select(Communities.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
+        first(Community::wrapRow)
+    }.mapResultIfNotNull { community ->
+        processCommunitiesInfo(uid, listOf(community), backend).map {
+            it.first()
         }
     }
-    query.where(buildCommunityWhereClause(objectFetch))
 }
 
 private fun buildCommunityWhereClause(
@@ -126,68 +122,17 @@ private fun buildCommunityWhereClause(
 }
 
 suspend fun DatabaseFactory.getJoinedCommunityIds(backend: Backend, uid: PrimaryKey) =
-    mapQuery(backend, {
-        it[Communities.id]
-    }) {
-        Communities
-            .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-                MemberJoins.uid eq uid
-            }.select(Communities.id)
-    }
-
-fun getSearchCommunityQuery(
-    getCount: Boolean,
-    joinStatusSearch: JoinSearch,
-    word: String?,
-    hasPosterSearch: PosterSearch?
-): Query {
-    val query = Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-        .select(Communities.fields + Aids.value)
-    when (joinStatusSearch) {
-        is JoinSearch.Joined -> {
-            query.adjustColumnSet {
-                join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-                    MemberJoins.uid eq joinStatusSearch.uid
-                }
-            }
+    dbSearch(backend) {
+        search {
+            Communities
+                .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+                    MemberJoins.uid eq uid
+                }.select(Communities.id)
         }
-
-        is JoinSearch.NotJoined -> {
-            query.where {
-                Communities.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
-                    MemberJoins.uid eq joinStatusSearch.uid
-                })
-            }
-        }
-
-        else -> {
+        map {
+            it[Communities.id]
         }
     }
-    val uid = joinStatusSearch.getUid()
-    if (getCount) {
-        query.adjustSelect {
-            selectAll()
-        }
-    } else if (uid != null) {
-        query.adjustColumnSet {
-            join(UserTopicReads, JoinType.LEFT, Communities.id, UserTopicReads.objectId) {
-                UserTopicReads.uid eq uid
-            }
-        }
-        if (joinStatusSearch !is JoinSearch.NotJoined) {
-            query.adjustSelect {
-                select(Communities.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
-            }
-        }
-    }
-    if (!word.isNullOrBlank()) {
-        query.andWhere {
-            Communities.name like "$word%"
-        }
-    }
-    query.bindPosterSearch(hasPosterSearch)
-    return query
-}
 
 fun Query.bindPosterSearch(
     hasPosterSearch: PosterSearch?
@@ -213,20 +158,103 @@ suspend fun DatabaseFactory.getPaginationCommunityList(
     word: String?,
     hasPosterSearch: PosterSearch?,
     pagingFetch: PagingFetch
-): Result<Pair<List<CommunityRawResult>, Long>> {
+): Result<Pair<List<CommunityRawResult>, Long>?> {
     val joinSearch = joinStatus.toJoinSearch(uid)
-    return mapQuery(backend, ::mapCommunityInfo) {
-        getSearchCommunityQuery(false, joinSearch, word, hasPosterSearch).bindPaginationQuery(
-            Communities,
-            pagingFetch
-        )
-    }.mapResult { list ->
-        count(backend) {
-            getSearchCommunityQuery(true, joinSearch, word, hasPosterSearch)
-        }.map { value ->
-            list to value
+
+    return dbSearch(backend) {
+        search {
+            Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                .select(Communities.fields + Aids.value)
+                .buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
+                .bindPaginationQuery(Communities, pagingFetch)
+        }
+        map(Community::wrapRow)
+    }.mapResultIfNotNull {
+        processCommunitiesInfo(uid, it, backend).mapResult { list ->
+            count(backend) {
+                Communities.select(Communities.id)
+                    .buildCommunitySearchQuery(joinStatus.toJoinSearch(uid), word, hasPosterSearch)
+            }.map { count ->
+                list to count
+            }
         }
     }
+}
+
+private suspend fun DatabaseFactory.processCommunitiesInfo(
+    uid: PrimaryKey?,
+    communities: List<Community>,
+    backend: Backend
+): Result<List<CommunityRawResult>> = if (uid == null) {
+    Result.success(Triple(emptyMap(), emptyMap(), emptyMap()))
+} else {
+    getContainerInfo(backend, communities.map { it.id }, uid)
+}.map { (joinedTimeMap, lastReadMap, memberCountMap) ->
+    communities.map {
+        val communityInfo =
+            it.toCommunityIfo(
+                memberCountMap[it.id] ?: 0,
+                joinedTimeMap[it.id]?.joinedTime,
+                lastReadMap[it.id]?.topicId
+            )
+        CommunityRawResult(communityInfo, it.icon, it.poster)
+    }
+}
+
+suspend fun DatabaseFactory.getContainerInfo(
+    backend: Backend,
+    parentIds: List<PrimaryKey>,
+    uid: PrimaryKey
+): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>> = merge({
+    getUserJoinedTime(backend, parentIds, uid).map {
+        it.associateBy { memberJoin ->
+            memberJoin.objectId
+        }
+    }
+}, {
+    getReadLogs(backend, parentIds, uid).map {
+        it.associateBy { userTopicRead ->
+            userTopicRead.objectId
+        }
+    }
+}, {
+    getMemberCount(backend, parentIds).map {
+        it.associateByPair()
+    }
+})
+
+private fun Query.buildCommunitySearchQuery(
+    joinSearch: JoinSearch,
+    word: String?,
+    hasPosterSearch: PosterSearch?
+): Query {
+    when (joinSearch) {
+        is JoinSearch.Joined -> {
+            adjustColumnSet {
+                this.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+                    MemberJoins.uid eq joinSearch.uid
+                }
+            }
+        }
+
+        is JoinSearch.NotJoined -> {
+            where {
+                Communities.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
+                    MemberJoins.uid eq joinSearch.uid
+                })
+            }
+        }
+
+        else -> {
+        }
+    }
+    if (!word.isNullOrBlank()) {
+        andWhere {
+            Communities.name like "$word%"
+        }
+    }
+    bindPosterSearch(hasPosterSearch)
+    return this
 }
 
 suspend fun DatabaseFactory.createCommunity(backend: Backend, community: Community) = dbQuery(
@@ -237,7 +265,6 @@ suspend fun DatabaseFactory.createCommunity(backend: Backend, community: Communi
         it[name] = community.name
         it[owner] = community.owner
         it[createdTime] = community.createdTime
-        it[memberCount] = community.memberCount
     }.insertedCount > 0) {
         "insert community failed"
     }
@@ -248,7 +275,7 @@ suspend fun DatabaseFactory.createCommunity(backend: Backend, community: Communi
     }.insertedCount > 0) {
         "insert aid failed"
     }
-    addCommunityJoinRaw(community.owner, community.id, community.createdTime, community.memberCount)
+    addCommunityJoinRaw(community.owner, community.id, community.createdTime)
     createCommunityRoomsRaw(community.id, community.owner, community.aid)
 }
 
@@ -263,7 +290,7 @@ suspend fun createCommunityRoomsRaw(
             "${communityAid}_lobby" to "Lobby",
             "${communityAid}_support" to "Support"
         ).map { pair ->
-            Room(SnowflakeFactory.nextId(), now(), pair.first, pair.second, ownerUid, 1, communityId = id)
+            Room(SnowflakeFactory.nextId(), now(), pair.first, pair.second, ownerUid, communityId = id)
         }
     )
 }
@@ -272,41 +299,43 @@ suspend fun DatabaseFactory.getCommunityJoinedTimeByIds(
     backend: Backend,
     uid: PrimaryKey,
     communityIds: List<PrimaryKey>
-) = mapQuery(backend, {
-    it[Communities.id] to it[MemberJoins.joinedTime]
-}) {
-    Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-        MemberJoins.uid eq uid
-    }.select(Communities.id, MemberJoins.joinedTime)
-        .where {
-            Communities.id.inList(communityIds)
-        }
+) = dbSearch(backend) {
+    search {
+        Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+            MemberJoins.uid eq uid
+        }.select(Communities.id, MemberJoins.joinedTime)
+            .where {
+                Communities.id.inList(communityIds)
+            }
+    }
+    map {
+        it[Communities.id] to it[MemberJoins.joinedTime]
+    }
 }
 
 suspend fun DatabaseFactory.getCommunityByIds(
     backend: Backend,
     idList: List<PrimaryKey>
-): Result<List<CommunityRawResult>> {
-    return mapQuery(backend, {
-        CommunityRawResult(toCommunityIfo(null, null), icon, poster)
-    }, Community::wrapRow) {
-        Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
-            Communities.id inList idList
-        }
+) = dbSearch(backend) {
+    search {
+        Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+            .selectAll().where {
+                Communities.id inList idList
+            }
     }
+    map(::mapCommunityInfo)
 }
 
 suspend fun DatabaseFactory.getCommunityByAids(
     backend: Backend,
     idList: List<String>
-): Result<List<CommunityRawResult>> {
-    return mapQuery(backend, {
-        CommunityRawResult(toCommunityIfo(null, null), icon, poster)
-    }, Community::wrapRow) {
+) = dbSearch(backend) {
+    search {
         Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
             Aids.value inList idList
         }
     }
+    map(::mapCommunityInfo)
 }
 
 suspend fun processCommunityList(

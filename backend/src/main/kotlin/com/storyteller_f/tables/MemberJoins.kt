@@ -1,9 +1,6 @@
 package com.storyteller_f.tables
 
-import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.customPrimaryKey
-import com.storyteller_f.objectType
+import com.storyteller_f.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
@@ -18,6 +15,7 @@ object MemberJoins : Table() {
 
     init {
         index("member-joins-main", true, objectId, uid)
+        index("member-joins-uid", true, uid, objectId)
     }
 }
 
@@ -57,16 +55,14 @@ suspend fun DatabaseFactory.addRoomJoin(
     room: PrimaryKey,
     id: PrimaryKey,
     time: LocalDateTime,
-    oldMemberCount: Long
 ) = dbQuery(backend) {
-    addRoomJoinRaw(room, id, time, oldMemberCount)
+    addRoomJoinRaw(room, id, time)
 }
 
 fun addRoomJoinRaw(
     room: PrimaryKey,
     userId: PrimaryKey,
     time: LocalDateTime,
-    oldMemberCount: Long
 ) {
     check(MemberJoins.insert {
         it[joinedTime] = time
@@ -75,13 +71,6 @@ fun addRoomJoinRaw(
         it[this.uid] = userId
     }.insertedCount > 0) {
         "join room failed"
-    }
-    check(Rooms.update({
-        Rooms.id eq room and (Rooms.memberCount eq oldMemberCount)
-    }) {
-        it[memberCount] = oldMemberCount + 1
-    } > 0) {
-        "modify room member count failed"
     }
 }
 
@@ -104,16 +93,14 @@ suspend fun DatabaseFactory.addCommunityJoin(
     id: PrimaryKey,
     community: PrimaryKey,
     time: LocalDateTime,
-    oldMemberCount: Long
 ) = dbQuery(backend) {
-    addCommunityJoinRaw(id, community, time, oldMemberCount)
+    addCommunityJoinRaw(id, community, time)
 }
 
 fun addCommunityJoinRaw(
     id: PrimaryKey,
     community: PrimaryKey,
     time: LocalDateTime,
-    oldMemberCount: Long
 ) {
     check(MemberJoins.insert {
         it[joinedTime] = time
@@ -123,18 +110,36 @@ fun addCommunityJoinRaw(
     }.insertedCount > 0) {
         "join community failed"
     }
-    check(Communities.update({
-        Communities.id eq community and (Communities.memberCount eq oldMemberCount)
-    }) {
-        it[memberCount] = oldMemberCount + 1
-    } > 0) {
-        "modify community member count failed"
-    }
 }
 
 suspend fun DatabaseFactory.getJoinedUserList(backend: Backend, roomId: PrimaryKey) =
-    mapQuery(backend, MemberJoin::wrapRow) {
-        MemberJoins.selectAll().where {
-            MemberJoins.objectId eq roomId
+    dbSearch(backend) {
+        search {
+            MemberJoins.selectAll().where {
+                MemberJoins.objectId eq roomId
+            }
         }
+        map(MemberJoin::wrapRow)
     }
+
+suspend fun DatabaseFactory.getUserJoinedTime(backend: Backend, parentIds: List<PrimaryKey>, uid: PrimaryKey) =
+    dbSearch(backend) {
+        search {
+            MemberJoins.select(MemberJoins.fields).where {
+                (MemberJoins.uid eq uid) and (MemberJoins.objectId inList parentIds)
+            }
+        }
+        map(MemberJoin::wrapRow)
+    }
+
+suspend fun DatabaseFactory.getMemberCount(backend: Backend, parentIds: List<PrimaryKey>) = dbSearch(backend) {
+    val column = MemberJoins.uid.countDistinct()
+    search {
+        MemberJoins.select(MemberJoins.objectId, column).where {
+            MemberJoins.objectId inList parentIds
+        }.groupBy(MemberJoins.objectId)
+    }
+    map {
+        it[MemberJoins.objectId] to it[column]
+    }
+}

@@ -5,7 +5,11 @@ import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.SingleReactionInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.associateByPair
+import com.storyteller_f.shared.utils.groupByPair
 import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.shared.utils.merge
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -17,6 +21,7 @@ object Reactions : BaseTable() {
 
     init {
         index("reactions-main", true, objectId, emoji, uid)
+        index("reactions-uid", true, uid, objectId, emoji)
     }
 }
 
@@ -24,6 +29,7 @@ class Reaction(
     val uid: PrimaryKey,
     val objectId: PrimaryKey,
     val objectType: ObjectType,
+    val emoji: String,
     id: PrimaryKey,
     createdTime: LocalDateTime
 ) : BaseEntity(id, createdTime) {
@@ -34,6 +40,7 @@ class Reaction(
                     resultRow[uid],
                     resultRow[objectId],
                     resultRow[objectType],
+                    resultRow[emoji],
                     resultRow[id],
                     resultRow[createdTime]
                 )
@@ -45,45 +52,41 @@ class Reaction(
 suspend fun commonReactions(
     backend: Backend,
     uid: PrimaryKey?,
-    objectId: PrimaryKey
+    objectId: List<PrimaryKey>
 ): Result<List<ReactionInfo>> {
-    val (countExpression, resultRowTransform: (ResultRow) -> Triple<String, Long, Boolean>, query) = getReactionBuilder(
-        uid
-    )
-    return DatabaseFactory.mapQuery(backend, {
-        ReactionInfo(first, objectId, ObjectType.TOPIC, second, third)
-    }, resultRowTransform) {
-        query.andWhere {
-            Reactions.objectId eq objectId
-        }.groupBy(Reactions.emoji).orderBy(countExpression, SortOrder.DESC)
+    return DatabaseFactory.dbSearch(backend) {
+        val countExpression = Reactions.uid.countDistinct()
+        search {
+            Reactions.select(Reactions.fields + countExpression).where {
+                Reactions.objectId inList objectId
+            }.groupBy(Reactions.objectId, Reactions.emoji).orderBy(countExpression, SortOrder.DESC)
+        }
+        map {
+            Reaction.wrapRow(it) to it[countExpression]
+        }
+    }.mapResult { list ->
+        (if (uid == null) {
+            Result.success(emptyMap())
+        } else {
+            DatabaseFactory.hasReactedInReaction(backend, list.map {
+                it.first.objectId
+            }.distinct(), uid).map {
+                it.groupByPair().mapValues { v ->
+                    v.value.toSet()
+                }
+            }
+        }).map { reactedMap ->
+            list.map {
+                ReactionInfo(
+                    it.first.emoji,
+                    it.first.objectId,
+                    it.first.objectType,
+                    it.second,
+                    reactedMap[it.first.objectId]?.contains(it.first.emoji) == true
+                )
+            }
+        }
     }
-}
-
-private fun getReactionBuilder(
-    uid: PrimaryKey?
-): Triple<Count, (ResultRow) -> Triple<String, Long, Boolean>, Query> {
-    val r2 = Reactions.alias("r2")
-    val countExpression = Reactions.uid.countDistinct()
-    val baseSelection = listOf(
-        Reactions.emoji,
-        countExpression,
-    )
-    val hasCommentExpression = r2[Reactions.uid].max()
-    val resultRowTransform: (ResultRow) -> Triple<String, Long, Boolean> = {
-        Triple(
-            it[Reactions.emoji],
-            it[countExpression],
-            it.getOrNull(hasCommentExpression) != null
-        )
-    }
-    val query = if (uid != null) {
-        Reactions.join(r2, JoinType.LEFT, Reactions.objectId, r2[Reactions.objectId]) {
-            r2[Reactions.emoji] eq Reactions.emoji and (r2[Reactions.uid] eq uid)
-        }.select(baseSelection + hasCommentExpression)
-    } else {
-        Reactions.select(baseSelection)
-    }
-    return Triple(countExpression, resultRowTransform, query)
 }
 
 suspend fun getReaction(
@@ -92,16 +95,39 @@ suspend fun getReaction(
     objectId: PrimaryKey,
     emojiText: String
 ): Result<ReactionInfo?> {
-    val (_, resultRowTransform: (ResultRow) -> Triple<String, Long, Boolean>, query) = getReactionBuilder(
-        uid
-    )
-    return DatabaseFactory.first(backend, {
-        ReactionInfo(emojiText, objectId, ObjectType.TOPIC, second, third)
-    }, resultRowTransform) {
-        query.andWhere {
-            Reactions.objectId eq objectId and (Reactions.emoji eq emojiText)
-        }.groupBy(Reactions.emoji)
+    return DatabaseFactory.dbSearch(backend) {
+        search {
+            Reactions.selectAll().where {
+                Reactions.objectId eq objectId and (Reactions.emoji eq emojiText)
+            }
+        }
+        first {
+            Reaction.wrapRow(it)
+        }
+    }.mapResultIfNotNull {
+        processReactionInfo(backend, objectId, emojiText, uid)
     }
+}
+
+private suspend fun processReactionInfo(
+    backend: Backend,
+    objectId: PrimaryKey,
+    emojiText: String,
+    uid: PrimaryKey
+): Result<ReactionInfo> = merge({
+    DatabaseFactory.getReactionCountInReaction(backend, listOf(objectId), emojiText).map {
+        it.associateByPair()
+    }
+}, {
+    DatabaseFactory.hasReacted(backend, (objectId), uid, emojiText)
+}).map { (reactionCountMap, hasReacted) ->
+    ReactionInfo(
+        emojiText,
+        objectId,
+        ObjectType.TOPIC,
+        reactionCountMap[objectId] ?: 0,
+        hasReacted,
+    )
 }
 
 suspend fun getSingleReaction(
@@ -110,13 +136,22 @@ suspend fun getSingleReaction(
     emoji: String,
     objectId: PrimaryKey
 ): Result<SingleReactionInfo?> {
-    return DatabaseFactory.first(backend, {
-        SingleReactionInfo(id, emoji, objectId, objectType, createdTime, uid)
-    }, {
-        Reaction.wrapRow(it)
-    }) {
-        Reactions.selectAll().where {
-            (Reactions.objectId eq objectId) and (Reactions.emoji eq emoji) and (Reactions.uid eq uid)
+    return DatabaseFactory.dbSearch(backend) {
+        search {
+            Reactions.selectAll().where {
+                (Reactions.objectId eq objectId) and (Reactions.emoji eq emoji) and (Reactions.uid eq uid)
+            }
+        }
+        first {
+            val reaction = Reaction.wrapRow(it)
+            SingleReactionInfo(
+                reaction.id,
+                emoji,
+                reaction.objectId,
+                reaction.objectType,
+                reaction.createdTime,
+                uid
+            )
         }
     }
 }
@@ -167,3 +202,52 @@ suspend fun DatabaseFactory.insertReaction(
         "insert reaction failed"
     }
 }
+
+suspend fun DatabaseFactory.getReactionCount(backend: Backend, objectId: List<PrimaryKey>) =
+    dbSearch(backend) {
+        val column = Reactions.id.countDistinct()
+        search {
+            Reactions.select(column).where {
+                (Reactions.objectId inList objectId)
+            }.groupBy(Reactions.objectId)
+        }
+        map {
+            it[Reactions.objectId] to it[column]
+        }
+    }
+
+suspend fun DatabaseFactory.getReactionCountInReaction(backend: Backend, objectId: List<PrimaryKey>, emoji: String) =
+    dbSearch(backend) {
+        val column = Reactions.emoji.countDistinct()
+        search {
+            Reactions.select(column).where {
+                (Reactions.objectId inList objectId) and (Reactions.emoji eq emoji)
+            }.groupBy(Reactions.objectId)
+        }
+        map {
+            it[Reactions.objectId] to it[column]
+        }
+    }
+
+suspend fun DatabaseFactory.hasReacted(backend: Backend, objectId: PrimaryKey, uid: PrimaryKey, emoji: String) =
+    isNotEmpty(backend) {
+        Reactions.selectAll().where {
+            (Reactions.uid eq uid) and (Reactions.objectId eq objectId) and (Reactions.emoji eq emoji)
+        }
+    }
+
+suspend fun DatabaseFactory.hasReactedInReaction(
+    backend: Backend,
+    objectId: List<PrimaryKey>,
+    uid: PrimaryKey,
+) =
+    dbSearch(backend) {
+        search {
+            Reactions.select(Reactions.objectId, Reactions.emoji).where {
+                (Reactions.uid eq uid) and (Reactions.objectId inList objectId)
+            }.groupBy(Reactions.objectId, Reactions.emoji)
+        }
+        map {
+            it[Reactions.objectId] to it[Reactions.emoji]
+        }
+    }

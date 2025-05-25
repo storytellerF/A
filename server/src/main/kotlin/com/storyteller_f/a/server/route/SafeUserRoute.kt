@@ -8,17 +8,13 @@ import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.IdentityPagingGenerator
 import com.storyteller_f.a.server.common.pagination
-import com.storyteller_f.a.server.service.addDevice
-import com.storyteller_f.a.server.service.addReadLog
-import com.storyteller_f.a.server.service.getTopLevelTopicsInObject
-import com.storyteller_f.a.server.service.getUserTitles
-import com.storyteller_f.a.server.service.updateUser
+import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.obj.NewDevice
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.tables.ObjectFetch
-import com.storyteller_f.tables.getUser
+import com.storyteller_f.tables.getUserAndRelatedMedia
 import com.storyteller_f.tables.searchMembers
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
@@ -47,14 +43,15 @@ fun Route.bindProtectedSafeUserRoute(reader: DatabaseReader, backend: Backend) {
 fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteUsers.Aid> { value ->
         omitPrincipal(reader) {
-            value.aid?.let { DatabaseFactory.getUser(backend, ObjectFetch.AidFetch(it)) } ?: Result.success(
-                null
-            )
+            value.aid?.let { DatabaseFactory.getUserAndRelatedMedia(backend, ObjectFetch.AidFetch(it)) }
+                ?: Result.success(
+                    null
+                )
         }
     }
     get<RouteUsers.Id> {
         omitPrincipal(reader) {
-            DatabaseFactory.getUser(backend, ObjectFetch.IdFetch(it.id))
+            DatabaseFactory.getUserAndRelatedMedia(backend, ObjectFetch.IdFetch(it.id))
         }
     }
 

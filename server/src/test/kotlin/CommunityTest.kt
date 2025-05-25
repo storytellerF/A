@@ -1,5 +1,5 @@
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
@@ -78,7 +78,7 @@ class CommunityTest {
             }
             attachSession {
                 communities.forEach {
-                    joinCommunity(it)
+                    joinCommunity(it).getOrThrow()
                 }
                 var lastCommunityId: PrimaryKey? = null
                 var sum = 0L

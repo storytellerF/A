@@ -70,19 +70,13 @@ import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
-import io.ktor.client.plugins.cookies.CookiesStorage
-import io.ktor.http.appendPathSegments
-import io.ktor.http.buildUrl
-import io.ktor.http.takeFrom
+import io.ktor.client.plugins.cookies.*
+import io.ktor.http.*
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
@@ -276,8 +270,7 @@ fun CommonEntry(
                 processEvent(event, database)
             }
         }
-        val scope = rememberCoroutineScope()
-        val mainUserSession = createSessionManager(wsServerUrl, scope, httpUrl)
+        val mainUserSession = createSessionManager(wsServerUrl, httpUrl)
         GlobalDialog(globalDialogState)
         val toasterState = rememberToasterState()
         Toaster(toasterState, alignment = Alignment.Center)
@@ -310,11 +303,11 @@ fun CommonEntry(
 @Composable
 private fun createSessionManager(
     wsServerUrl: String,
-    scope: CoroutineScope,
     httpUrl: String
 ): UserSessionManager {
+    val scope = rememberCoroutineScope()
     val mainUserSession = remember {
-        createUserSessionManager(buildWebSocketUrl(wsServerUrl), scope, { model, cookieManager ->
+        createUserSessionManager(buildWebSocketUrl(wsServerUrl), { model, cookieManager ->
             buildHttpClient(httpUrl, cookieManager, model)
         }) { roomFrame, session ->
             if (roomFrame is RoomFrame.NewTopicInfo) {
@@ -325,10 +318,18 @@ private fun createSessionManager(
                 }
             }
         }.apply {
-            restoreFromStorage(this.first)
+            restoreFromStorage()
         }
     }
-    return mainUserSession.first
+    DisposableEffect(mainUserSession) {
+        val job = scope.launch {
+            mainUserSession.start()
+        }
+        onDispose {
+            job.cancel()
+        }
+    }
+    return mainUserSession
 }
 
 fun buildHttpClient(

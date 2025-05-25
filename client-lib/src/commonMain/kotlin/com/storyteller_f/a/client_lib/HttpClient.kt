@@ -100,7 +100,7 @@ private fun ClientCustomAuthProvider.CustomAuthConfig.configClientAuth(manager: 
         }
     }
     refreshSignature {
-        val session = manager.passSession
+        val session = manager.currentUserPass
         val data = manager.session?.first
         Napier.v("refreshSignature $data", tag = "ClientAuth")
         if (session == null || data == null) {
@@ -124,7 +124,7 @@ private fun ClientCustomAuthProvider.CustomAuthConfig.configClientAuth(manager: 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun processEncryptedTopic(info: List<TopicInfo>, manager: SessionModel): List<TopicInfo> {
     val uid = manager.uid
-    val key = manager.passSession
+    val key = manager.currentUserPass
     return info.map { topicInfo ->
         val content = topicInfo.content
         if (content !is TopicContent.Encrypted || uid == null || key == null) {

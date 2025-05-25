@@ -7,7 +7,7 @@ import com.storyteller_f.a.server.route.RouteCommunities
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserLogType
-import com.storyteller_f.shared.obj.JoinStatusSearch
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.ob
@@ -52,7 +52,7 @@ suspend fun doUserJoinCommunity(
         Result.success(community)
     } else {
         val time = now()
-        DatabaseFactory.addCommunityJoin(backend, uid, communityId, time, community.memberCount).mapResult {
+        DatabaseFactory.addCommunityJoin(backend, uid, communityId, time).mapResult {
             addUserLog(backend, uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
             Result.success(community.copy(joinedTime = time))
         }.recoverCatching {
@@ -97,7 +97,7 @@ suspend fun searchCommunities(
     search.word,
     search.hasPoster,
     pagingFetch
-).mapResult { (list, count) ->
+).mapResultIfNotNull { (list, count) ->
     processCommunityList(backend, list).mapResultIfNotNull { value ->
         when {
             search.target == null -> Result.success(PaginationResult(value, count))
@@ -153,12 +153,11 @@ suspend fun createCommunity(
         newCommunity.aid,
         newCommunity.name,
         uid,
-        0,
         newCommunity.icon,
         null
     )
     return DatabaseFactory.createCommunity(backend, community).mapResult {
-        val communityInfo = community.toCommunityIfo(community.createdTime, null)
+        val communityInfo = community.toCommunityIfo(0, community.createdTime, null)
         addUserLog(backend, uid, UserLogType.CREATE, communityInfo.tuple())
         processCommunityList(
             backend,

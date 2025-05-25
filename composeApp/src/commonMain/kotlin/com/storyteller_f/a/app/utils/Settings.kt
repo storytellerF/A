@@ -15,13 +15,13 @@ expect fun customDataStoreManager(): DataStoreManager
 @Serializable
 data class LoginHistory(val last: String? = null, val current: String? = null)
 
-fun restoreFromStorage(sessionManager: UserSessionManager) {
+fun UserSessionManager.restoreFromStorage() {
     val sessionFactory = buildLoginUserSessionFactory()
     val (list, _, current) = sessionFactory.savedSession()
     if (current != null && list.contains(current)) {
         val session = sessionFactory.buildSession(current)
         if (session != null) {
-            sessionManager.sessionModel.updateState(ClientSessionState.Success(session))
+            sessionModel.updateState(ClientSessionState.Success(session))
         }
     }
 }

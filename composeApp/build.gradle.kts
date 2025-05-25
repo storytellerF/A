@@ -197,14 +197,8 @@ kotlin {
             implementation(compose.desktop.currentOs)
         }
     }
-    targets.configureEach {
-        compilations.configureEach {
-            compileTaskProvider.configure {
-                compilerOptions {
-                    freeCompilerArgs.add("-Xexpect-actual-classes")
-                }
-            }
-        }
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
     }
 }
 

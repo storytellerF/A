@@ -14,16 +14,13 @@ import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 interface SessionModel {
     val uid: PrimaryKey?
     val session: Pair<String, String?>?
-    val passSession: UserPass?
+    val currentUserPass: UserPass?
     val state: StateFlow<ClientSessionState>
     val userHandler: FixedLoadingHandler<UserInfo?>
     fun updateSignature(data: String, signature: String?)
@@ -33,7 +30,7 @@ interface SessionModel {
     fun updateUser(new: UserInfo)
 
     fun isAlreadyLogin(): Boolean {
-        return passSession != null
+        return currentUserPass != null
     }
 }
 
@@ -42,7 +39,7 @@ interface SessionManager {
     val webSocketClient: WebSocketClient
     val sessionModel: SessionModel
 
-    val isAlreadyLogin: Boolean get() = sessionModel.isAlreadyLogin()
+    val currentIsAlreadySignUp: Boolean get() = sessionModel.isAlreadyLogin()
     val isAlreadySignUp: StateFlow<Boolean>
 
     suspend fun login()
@@ -50,15 +47,14 @@ interface SessionManager {
 
 class UserSessionManager(
     override val client: HttpClient,
-    override val webSocketClient: WebSocketClient,
+    override val webSocketClient: WebSocketClientImpl,
     override val sessionModel: SessionModel,
-    override val isAlreadySignUp: StateFlow<Boolean>,
 ) :
     SessionManager {
-
+    override val isAlreadySignUp = MutableStateFlow<Boolean>(false)
     override suspend fun login() {
         val userHandler = sessionModel.userHandler
-        val userPass = sessionModel.passSession ?: return
+        val userPass = sessionModel.currentUserPass ?: return
         userHandler.request {
             getData().mapResult { data ->
                 userPass.address().mapResult { address ->
@@ -73,7 +69,17 @@ class UserSessionManager(
         }
     }
 
-    suspend fun start() {
+    fun CoroutineScope.start(): List<Job> {
+        return listOf(launch {
+            listenerUserInfo()
+        }, launch {
+            listenerState()
+        }, launch {
+            listenerWebsocket()
+        })
+    }
+
+    suspend fun listenerUserInfo() {
         val model = sessionModel
         combine(model.state, model.userHandler.data) { t1, t2 ->
             t1 to t2
@@ -83,14 +89,25 @@ class UserSessionManager(
             }
         }
     }
+
+    suspend fun listenerState() {
+        sessionModel.state.map {
+            it is ClientSessionState.Success
+        }.collect {
+            isAlreadySignUp.value = it
+        }
+    }
+
+    suspend fun listenerWebsocket() {
+        webSocketClient.start()
+    }
 }
 
 fun createUserSessionManager(
     webSocketUrl: String,
-    scope: CoroutineScope,
     createClient: (UserSessionModel, CookiesStorage) -> HttpClient,
     onReceiveFrame: suspend (RoomFrame, UserSessionModel) -> Unit
-): Pair<UserSessionManager, List<Job>> {
+): UserSessionManager {
     val cookieManager = AcceptAllCookiesStorage()
     val model = UserSessionModel()
     val client = createClient(model, cookieManager)
@@ -104,17 +121,7 @@ fun createUserSessionManager(
     ) {
         onReceiveFrame(it, model)
     }
-
-//    @OptIn(DelicateCoroutinesApi::class)
-//    val isAlreadySignUp = model.state.map {
-//        it is ClientSessionState.Success
-//    }.stateIn(scope, SharingStarted.Eagerly, false)
-    val manager = UserSessionManager(client, webSocketClient, model, MutableStateFlow(false))
-    return manager to listOf(scope.launch {
-        manager.start()
-    }, scope.launch {
-        webSocketClient.start()
-    })
+    return UserSessionManager(client, webSocketClient, model)
 }
 
 class UserSessionModel : SessionModel {
@@ -127,8 +134,7 @@ class UserSessionModel : SessionModel {
 
     // currentData 是本地使用的，但是还是需要依据server 的为准
     override var session: Pair<String, String?>? = null
-
-    override val passSession: UserPass?
+    override val currentUserPass: UserPass?
         get() = (state.value as? ClientSessionState.Success)?.session
     override val userHandler = FixedLoadingHandler<UserInfo?>()
     val user get() = userHandler.data
