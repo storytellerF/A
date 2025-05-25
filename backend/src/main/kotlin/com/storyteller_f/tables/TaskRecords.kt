@@ -46,9 +46,12 @@ fun addTaskRecord(taskRecord: TaskRecord) {
 }
 
 suspend fun DatabaseFactory.getLatestTaskRecord(backend: Backend, type: TaskRecordType): Result<TaskRecord?> {
-    return first(backend, TaskRecord::wrapRow) {
-        TaskRecords.selectAll().where {
-            TaskRecords.type eq type
-        }.orderBy(TaskRecords.id, SortOrder.DESC)
+    return dbSearch(backend,) {
+        search {
+            TaskRecords.selectAll().where {
+                TaskRecords.type eq type
+            }.orderBy(TaskRecords.id, SortOrder.DESC)
+        }
+        first(TaskRecord::wrapRow)
     }
 }

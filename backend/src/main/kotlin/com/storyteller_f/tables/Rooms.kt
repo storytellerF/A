@@ -3,10 +3,15 @@ package com.storyteller_f.tables
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.*
+import com.storyteller_f.shared.type.JoinSearch
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UnauthorizedException
+import com.storyteller_f.shared.type.toJoinSearch
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PagingFetch
 import kotlinx.datetime.LocalDateTime
@@ -17,7 +22,6 @@ object Rooms : BaseTable() {
     val icon = roomIcon()
     val creator = customPrimaryKey("creator").index()
     val communityId = customPrimaryKey("community_id").index().nullable()
-    val memberCount = long("member_count")
 }
 
 class Room(
@@ -26,7 +30,6 @@ class Room(
     val aid: String,
     val name: String,
     val creator: PrimaryKey,
-    val memberCount: Long,
     val icon: String? = null,
     val communityId: PrimaryKey? = null,
 ) : BaseEntity(id, createdTime) {
@@ -39,7 +42,6 @@ class Room(
                     row[Aids.value],
                     row[name],
                     row[creator],
-                    row[memberCount],
                     row[icon],
                     row[communityId]
                 )
@@ -52,11 +54,14 @@ class Room(
     }
 }
 
-suspend fun checkRoomIsPrivate(backend: Backend, roomId: PrimaryKey): Result<Boolean?> {
-    return DatabaseFactory.first(backend, {
-        it[Rooms.communityId] == null
-    }) {
-        Room.findRoomById(roomId)
+suspend fun DatabaseFactory.checkRoomIsPrivate(backend: Backend, roomId: PrimaryKey): Result<Boolean?> {
+    return dbSearch(backend) {
+        search {
+            Room.findRoomById(roomId)
+        }
+        first {
+            it[Rooms.communityId] == null
+        }
     }
 }
 
@@ -64,10 +69,10 @@ fun mapRoomInfo(it: ResultRow): Pair<RoomInfo, String?> {
     val joinedTime = it.getOrNull(MemberJoins.joinedTime)
     val topicId = it.getOrNull(UserTopicReads.topicId)
     val room = Room.wrapRow(it)
-    return room.toRoomInfo(joinedTime, topicId) to room.icon
+    return room.toRoomInfo(0, joinedTime, topicId) to room.icon
 }
 
-fun Room.toRoomInfo(joinedTime: LocalDateTime?, topicId: Long?) = RoomInfo(
+fun Room.toRoomInfo(memberCount: Long, joinedTime: LocalDateTime?, topicId: Long?) = RoomInfo(
     id,
     createdTime,
     name,
@@ -88,72 +93,49 @@ suspend fun getRoomPaginationList(
     pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<RoomInfo, String?>>, Long>> {
     val joinSearch = joinStatusSearch.toJoinSearch(uid)
-    return DatabaseFactory.mapQuery(backend, ::mapRoomInfo) {
-        buildRoomSearchQuery(false, joinSearch, word, community).bindPaginationQuery(
-            Rooms,
-            pagingFetch
-        )
-    }.mapResult { list ->
-        DatabaseFactory.count(backend) {
-            buildRoomSearchQuery(true, joinSearch, word, community)
-        }.map { value ->
-            list to value
+    return DatabaseFactory.dbSearch(backend) {
+        search {
+            Rooms
+                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                .select(Rooms.fields + Aids.value)
+                .buildRoomSearchWhereQuery(joinSearch, community, word)
+                .bindPaginationQuery(Rooms, pagingFetch)
+        }
+        map(Room::wrapRow)
+    }.mapResult {
+        processRoomInfo(uid, backend, it).mapResult { list ->
+            DatabaseFactory.count(backend) {
+                Rooms.select(Rooms.id).buildRoomSearchWhereQuery(joinSearch, community, word)
+            }.map { count ->
+                list to count
+            }
         }
     }
 }
 
-private fun buildRoomSearchQuery(
-    getCount: Boolean,
+private fun Query.buildRoomSearchWhereQuery(
     joinStatusSearch: JoinSearch,
+    community: PrimaryKey?,
     word: String?,
-    community: PrimaryKey?
 ): Query {
-    val query = Rooms
-        .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-        .select(Rooms.fields + Aids.value)
-    buildRoomSearchWhereQuery(joinStatusSearch, query)
-    val uid = joinStatusSearch.getUid()
-    if (getCount) {
-        query.adjustSelect {
-            selectAll()
-        }
-    } else if (uid != null) {
-        query.adjustColumnSet {
-            join(UserTopicReads, JoinType.LEFT, Rooms.id, UserTopicReads.objectId) {
-                UserTopicReads.uid eq uid
-            }
-        }
-        if (joinStatusSearch !is JoinSearch.NotJoined) {
-            query.adjustSelect {
-                select(Rooms.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
-            }
-        }
-    }
-    if (!word.isNullOrBlank()) {
-        query.andWhere {
-            Rooms.name like "%$word%"
-        }
-    }
     if (community != null) {
-        query.andWhere {
+        andWhere {
             Rooms.communityId eq community
         }
     }
-    return query
-}
-
-private fun buildRoomSearchWhereQuery(
-    joinStatusSearch: JoinSearch,
-    query: Query
-) {
+    if (!word.isNullOrBlank()) {
+        andWhere {
+            Rooms.name like "%$word%"
+        }
+    }
     when (joinStatusSearch) {
-        is JoinSearch.Joined -> query.adjustColumnSet {
-            join(MemberJoins, JoinType.INNER, Rooms.id, MemberJoins.objectId) {
+        is JoinSearch.Joined -> adjustColumnSet {
+            this.join(MemberJoins, JoinType.INNER, Rooms.id, MemberJoins.objectId) {
                 MemberJoins.uid eq joinStatusSearch.uid
             }
         }
 
-        is JoinSearch.NotJoined -> query.where {
+        is JoinSearch.NotJoined -> where {
             Rooms.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
                 MemberJoins.uid eq joinStatusSearch.uid
             }) and Rooms.communityId.isNotNull()
@@ -162,27 +144,31 @@ private fun buildRoomSearchWhereQuery(
         is JoinSearch.Unspecified -> {
             val uid = joinStatusSearch.uid
             if (uid != null) {
-                query.adjustColumnSet {
-                    join(MemberJoins, JoinType.LEFT, Rooms.id, MemberJoins.objectId) {
+                adjustColumnSet {
+                    this.join(MemberJoins, JoinType.LEFT, Rooms.id, MemberJoins.objectId) {
                         (MemberJoins.uid eq uid)
                     }
                 }.andWhere {
                     (MemberJoins.uid.isNull() and Rooms.communityId.isNotNull()).or(MemberJoins.uid.isNotNull())
                 }
             } else {
-                query.andWhere {
+                andWhere {
                     Rooms.communityId.isNotNull()
                 }
             }
         }
     }
+    return this
 }
 
 suspend fun DatabaseFactory.getRoomCommunityId(backend: Backend, parentId: PrimaryKey): Result<PrimaryKey?> =
-    first(backend, {
-        it[Rooms.communityId]
-    }) {
-        Room.findRoomById(parentId)
+    dbSearch(backend) {
+        search {
+            Room.findRoomById(parentId)
+        }
+        first {
+            it[Rooms.communityId]
+        }
     }
 
 suspend fun DatabaseFactory.commonPaginationRoomPubKeyList(
@@ -190,10 +176,13 @@ suspend fun DatabaseFactory.commonPaginationRoomPubKeyList(
     roomId: PrimaryKey,
     pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<Long, String>>, Long>> {
-    return mapQuery(backend, {
-        it[Users.id] to it[Users.publicKey]
-    }) {
-        buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, pagingFetch)
+    return dbSearch(backend) {
+        search {
+            buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, pagingFetch)
+        }
+        map {
+            it[Users.id] to it[Users.publicKey]
+        }
     }.mapResult { data ->
         count(backend) {
             buildRoomPubKeyQuery(roomId, true)
@@ -220,41 +209,50 @@ fun buildRoomPubKeyQuery(roomId: PrimaryKey, getCount: Boolean): Query {
     }
 }
 
-suspend fun DatabaseFactory.getRoomSource(
+suspend fun DatabaseFactory.getRoom(
     backend: Backend,
     objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
     uid: PrimaryKey? = null,
-) = first(backend, ::mapRoomInfo) {
-    val baseOp = Op.build {
-        when (objectFetch) {
-            is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
-            is ObjectFetch.IdFetch -> Rooms.id eq objectFetch.id
+): Result<Pair<RoomInfo, String?>?> {
+    if (uid == null && fillJoinInfo == true) return Result.failure(UnauthorizedException())
+    return dbSearch(backend) {
+        search {
+            Rooms
+                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                .select(Rooms.fields + Aids.value)
+                .where {
+                    when (objectFetch) {
+                        is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
+                        is ObjectFetch.IdFetch -> Rooms.id eq objectFetch.id
+                    }
+                }
+        }
+        first(Room::wrapRow)
+    }.mapResultIfNotNull { room ->
+        processRoomInfo(uid, backend, listOf(room)).map {
+            it.first()
         }
     }
+}
 
-    when {
-        fillJoinInfo != true -> Rooms
-            .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-            .select(Rooms.fields + Aids.value)
-            .where {
-                baseOp and (Rooms.communityId.isNotNull())
-            }
-
-        uid != null -> Rooms
-            .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-            .join(MemberJoins, JoinType.LEFT, Rooms.id, MemberJoins.objectId) {
-                MemberJoins.uid eq uid
-            }
-            .join(UserTopicReads, JoinType.LEFT, Rooms.id, UserTopicReads.objectId) {
-                UserTopicReads.uid eq uid
-            }
-            .select(Rooms.fields + MemberJoins.joinedTime + Aids.value + UserTopicReads.topicId)
-            .where {
-                baseOp
-            }
-
-        else -> throw UnauthorizedException()
+private suspend fun processRoomInfo(
+    uid: PrimaryKey?,
+    backend: Backend,
+    rooms: List<Room>
+): Result<List<Pair<RoomInfo, String?>>> = (if (uid == null) {
+    Result.success(Triple(emptyMap(), emptyMap(), emptyMap()))
+} else {
+    DatabaseFactory.getContainerInfo(backend, rooms.map {
+        it.id
+    }, uid)
+}).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
+    rooms.map { room ->
+        room.toRoomInfo(
+            memberCountMap[room.id] ?: 0,
+            joinedTimeMap[room.id]?.joinedTime,
+            lastReadMap[room.id]?.topicId
+        ) to room.icon
     }
 }
 
@@ -298,7 +296,6 @@ suspend fun DatabaseFactory.createRoom(backend: Backend, room: Room) = dbQuery(b
         statement[icon] = room.icon
         statement[creator] = room.creator
         statement[communityId] = room.communityId
-        statement[memberCount] = room.memberCount
     }.insertedCount > 0) {
         "create room failed"
     }
@@ -309,19 +306,24 @@ suspend fun DatabaseFactory.createRoom(backend: Backend, room: Room) = dbQuery(b
     }.insertedCount > 0) {
         "create aid failed"
     }
-    addRoomJoinRaw(room.id, room.creator, room.createdTime, room.memberCount)
+    addRoomJoinRaw(room.id, room.creator, room.createdTime)
 }
 
 suspend fun DatabaseFactory.getRoomByIds(
     backend: Backend,
     ids: List<PrimaryKey>
 ): Result<List<Pair<RoomInfo, String?>>> {
-    return mapQuery(backend, ::mapRoomInfo) {
-        Rooms
-            .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-            .select(Rooms.fields + Aids.value).where {
-                Rooms.id inList ids
-            }
+    return dbSearch(backend) {
+        search {
+            Rooms
+                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                .select(Rooms.fields + Aids.value).where {
+                    Rooms.id inList ids
+                }
+        }
+        map {
+            mapRoomInfo(it)
+        }
     }
 }
 
@@ -329,12 +331,17 @@ suspend fun DatabaseFactory.getRoomByAids(
     backend: Backend,
     aids: List<String>
 ): Result<List<Room>> {
-    return mapQuery(backend, Room::wrapRow) {
-        Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-            .select(Rooms.fields + Aids.value)
-            .where {
-                Aids.value inList aids
-            }
+    return dbSearch(backend) {
+        search {
+            Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                .select(Rooms.fields + Aids.value)
+                .where {
+                    Aids.value inList aids
+                }
+        }
+        map {
+            Room.wrapRow(it)
+        }
     }
 }
 
@@ -373,7 +380,6 @@ fun batchCreateCommunityRooms(rooms: List<Room>) {
         this[Rooms.communityId] = it.communityId
         this[Rooms.creator] = it.creator
         this[Rooms.createdTime] = it.createdTime
-        this[Rooms.memberCount] = it.memberCount
     }.size == rooms.size) {
         "insert room failed"
     }

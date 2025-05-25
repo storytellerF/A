@@ -10,7 +10,7 @@ import com.storyteller_f.a.server.common.IdentityPagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.obj.NewRoom
-import com.storyteller_f.shared.obj.UnauthorizedException
+import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey

@@ -16,12 +16,7 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PagingFetch
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
 
 object Medias : BaseTable() {
     val name = varchar("name", 200)
@@ -130,10 +125,13 @@ suspend fun DatabaseFactory.getPagingMedias(
     uid: PrimaryKey,
     pagingFetch: PagingFetch
 ): Result<PaginationResult<MediaInfo>> {
-    return mapQuery(backend, Media::wrapRow) {
-        Medias.selectAll().where {
-            Medias.owner eq uid
-        }.bindPaginationQuery(Medias, pagingFetch)
+    return dbSearch(backend) {
+        search {
+            Medias.selectAll().where {
+                Medias.owner eq uid
+            }.bindPaginationQuery(Medias, pagingFetch)
+        }
+        map(Media::wrapRow)
     }.mapResult { list ->
         count(backend) {
             Medias.selectAll().where {
@@ -168,10 +166,13 @@ suspend fun DatabaseFactory.getPagingMedias(
 }
 
 suspend fun DatabaseFactory.getRawMedia(backend: Backend, owner: PrimaryKey, name: String): Result<Media?> {
-    return first(backend, Media::wrapRow) {
-        Medias.selectAll().where {
-            Medias.owner eq owner and (Medias.name eq name)
+    return dbSearch(backend) {
+        search {
+            Medias.selectAll().where {
+                Medias.owner eq owner and (Medias.name eq name)
+            }
         }
+        first(Media::wrapRow)
     }
 }
 
@@ -179,10 +180,13 @@ suspend fun DatabaseFactory.getMediaInfoList(
     backend: Backend,
     owner: PrimaryKey,
 ): Result<List<MediaInfo?>?> {
-    return mapQuery(backend, Media::wrapRow) {
-        Medias.selectAll().where {
-            Medias.owner eq owner
-        }.orderBy(Medias.id, SortOrder.DESC)
+    return dbSearch(backend) {
+        search {
+            Medias.selectAll().where {
+                Medias.owner eq owner
+            }.orderBy(Medias.id, SortOrder.DESC)
+        }
+        map(Media::wrapRow)
     }.mapResultIfNotNull { medias ->
         backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, medias.map {
             it.fullName
@@ -200,10 +204,13 @@ suspend fun DatabaseFactory.getMediaInfoList(backend: Backend, names: List<Strin
             null
         })
     }
-    return mapQuery(backend, Media::wrapRow) {
-        Medias.selectAll().where {
-            Medias.fullName inList names.filterNotNull()
-        }.orderBy(Medias.id, SortOrder.DESC)
+    return dbSearch(backend) {
+        search {
+            Medias.selectAll().where {
+                Medias.fullName inList names.filterNotNull()
+            }.orderBy(Medias.id, SortOrder.DESC)
+        }
+        map(Media::wrapRow)
     }.mapResult { medias ->
         val mediaMap = medias.associateBy { it.fullName }
         backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, names.map {

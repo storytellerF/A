@@ -9,10 +9,10 @@ import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTopic
-import com.storyteller_f.shared.obj.TopicPinSearch
-import com.storyteller_f.shared.obj.TopicPinSearch.PINNED
-import com.storyteller_f.shared.obj.TopicPinSearch.UNPINNED
-import com.storyteller_f.shared.obj.UnauthorizedException
+import com.storyteller_f.shared.type.TopicPinSearch
+import com.storyteller_f.shared.type.TopicPinSearch.PINNED
+import com.storyteller_f.shared.type.TopicPinSearch.UNPINNED
+import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
@@ -100,10 +100,10 @@ suspend fun createTopicSnapshot(
     uid: PrimaryKey,
     topicId: PrimaryKey
 ): Result<MediaInfo?> {
-    return DatabaseFactory.getRawUserById(backend, uid).mapResultIfNotNull { (first) ->
+    return DatabaseFactory.getRawUser(backend, uid).mapResultIfNotNull { (first) ->
         checkRootReadPermission(backend, ObjectType.TOPIC, topicId, uid).mapResultIfNotNull { (hasRead) ->
             if (hasRead) {
-                DatabaseFactory.getSimpleTopic(backend, topicId).mapResultIfNotNull { value ->
+                DatabaseFactory.getDirectTopic(backend, topicId).mapResultIfNotNull { value ->
                     createTopicSnapshot(backend, value, first, uid)
                 }
             } else {
@@ -122,7 +122,7 @@ private suspend fun createTopicSnapshot(
     val topicId = topicInfo.id
     return backend.topicSearchService.getDocuments(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultIfNotNull { documents ->
-            DatabaseFactory.getRawUserById(backend, topicInfo.author).mapResultIfNotNull { (first) ->
+            DatabaseFactory.getRawUser(backend, topicInfo.author).mapResultIfNotNull { (first) ->
                 val name = "$uid/$topicId.pdf"
                 val pdfFile = File("/tmp/$name")
                 val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
@@ -344,7 +344,7 @@ suspend fun processTopicExtension(
     if (addLatestSubTopic) {
         val subTopics = processedTopics.flatMap { t ->
             getTopicsByPredicate(backend, uid, fillHasCommented = false, addPinOrder = true, addPagingQuery = {
-                it.bindPaginationQuery(Topics, PagingFetch(null, null, 2))
+                bindPaginationQuery(Topics, PagingFetch(null, null, 2))
             }) {
                 Topics.parentId eq t.id
             }.getOrThrow()
@@ -360,19 +360,24 @@ suspend fun processTopicExtension(
         }
     } else {
         Result.success(emptyMap())
-    }.mapIfNotNull { processedSubTopicMap ->
-        val reactionMap = processedTopics.associate {
-            it.id to reactionList(backend, it.id, uid, uid != null).getOrNull()?.data
-        }
-        processedTopics.map {
-            val authorInfo = userMap[it.author] ?: throw CustomBadRequestException("author is null")
-            it.copy(
-                extension = TopicInfo.Extension(
-                    authorInfo,
-                    subTopics = processedSubTopicMap[it.id],
-                    reactions = reactionMap[it.id],
+    }.mapResultIfNotNull { processedSubTopicMap ->
+        commonReactions(backend, uid, processedTopics.map {
+            it.id
+        }).map {
+            it.groupBy {
+                it.objectId
+            }
+        }.map { reactionMap ->
+            processedTopics.map {
+                val authorInfo = userMap[it.author] ?: throw CustomBadRequestException("author is null")
+                it.copy(
+                    extension = TopicInfo.Extension(
+                        authorInfo,
+                        subTopics = processedSubTopicMap[it.id],
+                        reactions = reactionMap[it.id],
+                    )
                 )
-            )
+            }
         }
     }
 }
@@ -454,7 +459,7 @@ suspend fun checkRootReadPermission(
             }
         }
 
-        ObjectType.USER -> DatabaseFactory.getRawUserById(backend, parentId).mapIfNotNull {
+        ObjectType.USER -> DatabaseFactory.checkUserExists(backend, parentId).mapIfNotNull {
             RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         }
 
@@ -494,8 +499,8 @@ suspend fun checkRootWritePermission(
 
         ObjectType.USER -> {
             if (uid == parentId) {
-                DatabaseFactory.getRawUserById(backend, parentId).mapIfNotNull { (userInfo) ->
-                    RootWritePermission(parentType, parentId, userInfo.id == uid)
+                DatabaseFactory.checkUserExists(backend, parentId).mapIfNotNull {
+                    RootWritePermission(parentType, parentId, parentId == uid)
                 }
             } else {
                 Result.failure(ForbiddenException("Permission denied"))
@@ -521,7 +526,7 @@ suspend fun checkRootAdminPermission(
         }
 
         ObjectType.ROOM -> {
-            DatabaseFactory.getRoomSource(backend, IdFetch(parentId), true, uid).mapIfNotNull {
+            DatabaseFactory.getRoom(backend, IdFetch(parentId), true, uid).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, it.first.creator == uid)
             }
         }
@@ -533,8 +538,8 @@ suspend fun checkRootAdminPermission(
         }
 
         ObjectType.USER -> {
-            DatabaseFactory.getRawUserById(backend, parentId).mapIfNotNull { (first) ->
-                RootAdminPermission(parentType, parentId, first.id == uid)
+            DatabaseFactory.checkUserExists(backend, parentId).mapIfNotNull {
+                RootAdminPermission(parentType, parentId, parentId == uid)
             }
         }
 

@@ -133,7 +133,6 @@ class AddPreset : Subcommand("add", "add entry") {
                 this[Rooms.communityId] = it.communityId
                 this[Rooms.creator] = it.creator
                 this[Rooms.createdTime] = it.createdTime
-                this[Rooms.memberCount] = it.memberCount
             }
             Aids.batchInsert(roomList) {
                 this[Aids.value] = it.aid
@@ -226,7 +225,6 @@ class AddPreset : Subcommand("add", "add entry") {
                 this[Communities.name] = it.name
                 this[Communities.icon] = it.icon
                 this[Communities.owner] = it.owner
-                this[Communities.memberCount] = it.memberCount
             }
             Aids.batchInsert(l2) {
                 this[Aids.value] = it.aid
@@ -331,7 +329,6 @@ class AddPreset : Subcommand("add", "add entry") {
                 it.first.id,
                 it.first.name,
                 userMap[it.first.admin ?: "System"]!!.id,
-                0,
                 it.second
             )
         }
@@ -433,16 +430,15 @@ class AddPreset : Subcommand("add", "add entry") {
         }.distinct()).getOrThrow().associate {
             it.communityInfo.aid to it.communityInfo
         }
-        return data.map { (first, second, third) ->
+        return data.map { (presetRoom, pic, id) ->
             Room(
-                third,
+                id,
                 now(),
-                first.id,
-                first.name,
-                userMap[first.admin]!!.id,
-                first.users.size.toLong(),
-                second,
-                communityMap[first.community]?.id
+                presetRoom.id,
+                presetRoom.name,
+                userMap[presetRoom.admin]!!.id,
+                pic,
+                communityMap[presetRoom.community]?.id
             )
         } to data.map {
             it.first.users.map { s ->

@@ -257,7 +257,7 @@ private suspend fun addTopicIntoRoom(
                 null
             )
 
-            checkRoomIsPrivate(backend, roomId).mapResultIfNotNull { isPrivate ->
+            DatabaseFactory.checkRoomIsPrivate(backend, roomId).mapResultIfNotNull { isPrivate ->
                 if (isPrivate) {
                     if (content is TopicContent.Encrypted) {
                         isKeyVerified(

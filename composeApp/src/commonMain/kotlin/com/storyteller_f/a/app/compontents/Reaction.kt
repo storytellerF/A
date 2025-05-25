@@ -54,7 +54,7 @@ fun InteractionRow(
         topicInfo,
         startAddComment
     ) {
-        if (userSessionViewModel.isAlreadyLogin) {
+        if (userSessionViewModel.currentIsAlreadySignUp) {
             startAddReaction()
         } else {
             appNav.gotoLogin()

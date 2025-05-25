@@ -14,7 +14,6 @@ import com.storyteller_f.shared.utils.md5
 import io.github.aakira.napier.Napier
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.testcontainers.containers.MinIOContainer
@@ -165,20 +164,21 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
     block: suspend SessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
     return coroutineScope {
-        val (sessionManager, jobList) = createUserSessionManager("link", this, { model, client ->
+        val sessionManager = createUserSessionManager("link", { model, client ->
             createClient {
                 defaultClientConfigure(client, model)
             }
         }, onReceive)
-        val sessionModel = sessionManager.sessionModel
-        val priKey = generateECDSAPemPrivateKey().getOrThrow()
-        val (rawUserPassInfo, userInfo) = signUpOrInFromPrivateKey(priKey, sessionManager, true)
-        sessionModel.updateState(ClientSessionState.Success(RawUserPass(rawUserPassInfo)))
-        val custom = sessionManager.block(SessionTuple(priKey, userInfo.id))
-        sessionManager.signOut().getOrThrow()
-        sessionModel.clear()
-        jobList.forEach(Job::cancel)
-        SessionOuterTuple(priKey, userInfo.id, custom)
+        sessionManager.start {
+            val sessionModel = sessionModel
+            val priKey = generateECDSAPemPrivateKey().getOrThrow()
+            val (rawUserPassInfo, userInfo) = signUpOrInFromPrivateKey(priKey, this, true)
+            sessionModel.updateState(ClientSessionState.Success(RawUserPass(rawUserPassInfo)))
+            val custom = block(SessionTuple(priKey, userInfo.id))
+            signOut().getOrThrow()
+            sessionModel.clear()
+            SessionOuterTuple(priKey, userInfo.id, custom)
+        }
     }
 }
 
@@ -188,21 +188,22 @@ suspend fun <R1, R2> ApplicationTestBuilder.loginSession(
     block: suspend SessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
     return coroutineScope {
-        val (sessionManager, jobList) = createUserSessionManager("link", this, { model, client ->
+        val sessionManager = createUserSessionManager("link", { model, client ->
             createClient {
                 defaultClientConfigure(client, model)
             }
         }, onReceive)
-        val (privateKey) = session
-        val sessionModel = sessionManager.sessionModel
-        val (rawUserPass, userInfo) = signUpOrInFromPrivateKey(privateKey, sessionManager, false)
-        assertEquals(session.uid, userInfo.id)
-        sessionModel.updateState(ClientSessionState.Success(RawUserPass(rawUserPass)))
-        val custom = sessionManager.block(SessionTuple(session.privateKey, session.uid))
-        sessionManager.signOut().getOrThrow()
-        sessionModel.clear()
-        jobList.forEach(Job::cancel)
-        SessionOuterTuple(privateKey, userInfo.id, custom)
+        sessionManager.start {
+            val (privateKey) = session
+            val sessionModel = sessionModel
+            val (rawUserPass, userInfo) = signUpOrInFromPrivateKey(privateKey, this, false)
+            assertEquals(session.uid, userInfo.id)
+            sessionModel.updateState(ClientSessionState.Success(RawUserPass(rawUserPass)))
+            val custom = block(SessionTuple(session.privateKey, session.uid))
+            signOut().getOrThrow()
+            sessionModel.clear()
+            SessionOuterTuple(privateKey, userInfo.id, custom)
+        }
     }
 }
 
@@ -210,14 +211,14 @@ suspend fun <R2> ApplicationTestBuilder.noneSession(
     block: suspend SessionManager.() -> R2
 ): R2 {
     return coroutineScope {
-        val (sessionManager, jobList) = createUserSessionManager("link", this, { model, client ->
+        val sessionManager = createUserSessionManager("link", { model, client ->
             createClient {
                 defaultClientConfigure(client, model)
             }
         }) { _, _ -> }
-        val block1 = sessionManager.block()
-        jobList.forEach(Job::cancel)
-        block1
+        sessionManager.start {
+            block()
+        }
     }
 }
 

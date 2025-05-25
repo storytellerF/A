@@ -65,7 +65,7 @@ inline fun AuthenticationConfig.custom(
     register(provider)
 }
 
-typealias CustomValidator = suspend (UserSession, ApplicationCall, CustomCredential?) -> Any?
+typealias CustomValidator = suspend (UserSession, ApplicationCall, CustomCredential?) -> Result<CustomPrincipal?>
 typealias CustomChallenge = suspend (UserSession, ApplicationCall) -> Unit
 
 class CustomAuthProvider(private val config: Config) : AuthenticationProvider(config) {
@@ -89,7 +89,7 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
         val call = context.call
         val (session) = call.getSession(config.databaseReader)
         val credential = call.customCredential()
-        val principal = config.validateFunction(session, call, credential)
+        val principal = config.validateFunction(session, call, credential).getOrNull()
         if (principal != null) {
             context.principal(name, principal)
         } else {
@@ -190,7 +190,10 @@ private suspend fun RoutingContext.signUp(
                         DatabaseFactory.createUser(backend, ad, name, newId, pack.pk).mapResult { value ->
                             addUserLog(backend, newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
                             saveSuccessSessionOnFirst(newId, reader)
-                            processUserList(backend, listOf<Pair<UserInfo, String?>>(value)).mapIfNotNull { userList ->
+                            processUserList(
+                                backend,
+                                listOf<Pair<UserInfo, String?>>(value to null)
+                            ).mapIfNotNull { userList ->
                                 userList.first()
                             }
                         }
@@ -209,17 +212,15 @@ private suspend fun ApplicationCall.checkApiRequest(
     backend: Backend,
     credential: CustomCredential,
     session: UserSession.Pending
-): CustomPrincipal? {
+): Result<CustomPrincipal?> {
     val sig = credential.sig
     @Suppress("SimplifyBooleanWithConstants", "KotlinConstantConditions")
     return when {
         !ServerConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            if (DatabaseFactory.getRawUserById(backend, id).getOrNull() != null) {
+            DatabaseFactory.checkUserExists(backend, id).mapIfNotNull {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
-            } else {
-                null
             }
         }
 
@@ -229,17 +230,15 @@ private suspend fun ApplicationCall.checkApiRequest(
                     pubKey,
                     sig,
                     finalData(session.data)
-                ).map {
-                    id
+                ).mapIfNotNull {
+                    saveSuccessSession(session, id)
+                    CustomPrincipal(id)
                 }
-            }.getOrNull()?.let {
-                saveSuccessSession(session, it)
-                CustomPrincipal(it)
             }
         }
 
         else -> {
-            null
+            Result.success(null)
         }
     }
 }
@@ -270,15 +269,15 @@ private fun ApplicationCall.saveSuccessSession(
     sessions.set<UserSession>(UserSession.Success(session.data, session.remote, id))
 }
 
-private suspend fun checkDevWsLink(backend: Backend, call: ApplicationCall): CustomPrincipal? {
+private suspend fun checkDevWsLink(backend: Backend, call: ApplicationCall): Result<CustomPrincipal?> {
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        DatabaseFactory.checkUserExists(backend, id).getOrNull()?.let {
-            CustomPrincipal(it)
+        DatabaseFactory.checkUserExists(backend, id).map {
+            CustomPrincipal(id)
         }
     } else {
-        null
+        Result.success(null)
     }
 }
 
@@ -345,11 +344,11 @@ fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
             databaseReader = reader
             validate { session, call, credential ->
                 when (session) {
-                    is UserSession.Success -> CustomPrincipal(session.id)
+                    is UserSession.Success -> Result.success(CustomPrincipal(session.id))
                     is UserSession.Pending -> {
                         when {
                             credential != null -> call.checkApiRequest(backend, credential, session)
-                            backend.config.buildType == "prod" -> null
+                            backend.config.buildType == "prod" -> Result.success(null)
                             else -> checkDevWsLink(backend, call)
                         }
                     }

@@ -1,16 +1,11 @@
 package com.storyteller_f.tables
 
-import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
-import com.storyteller_f.customPrimaryKey
-import com.storyteller_f.objectType
+import com.storyteller_f.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.jetbrains.exposed.sql.upsert
 
 object UserTopicReads : Table() {
     val uid = customPrimaryKey("uid")
@@ -20,6 +15,10 @@ object UserTopicReads : Table() {
     val topicId = customPrimaryKey("topic_id")
     override val primaryKey: Table.PrimaryKey?
         get() = PrimaryKey(uid, objectId)
+
+    init {
+        index("user-topic-reads-main", true, uid, objectId)
+    }
 }
 
 class UserTopicRead(
@@ -30,7 +29,7 @@ class UserTopicRead(
     val topicId: PrimaryKey
 ) {
     companion object {
-        fun wrapRow(resultRow: ResultRow) {
+        fun wrapRow(resultRow: ResultRow): UserTopicRead {
             return with(UserTopicReads) {
                 UserTopicRead(
                     resultRow[uid],
@@ -56,4 +55,15 @@ suspend fun DatabaseFactory.addReadLog(backend: Backend, userTopicRead: UserTopi
             "log failed"
         }
     }
+}
+
+suspend fun DatabaseFactory.getReadLogs(backend: Backend, parentIds: List<PrimaryKey>, uid: PrimaryKey) = dbSearch(
+    backend
+) {
+    search {
+        UserTopicReads.selectAll().where {
+            UserTopicReads.uid eq uid and (UserTopicReads.objectId inList parentIds)
+        }
+    }
+    map(UserTopicRead::wrapRow)
 }

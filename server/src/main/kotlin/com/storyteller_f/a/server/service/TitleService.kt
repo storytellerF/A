@@ -7,15 +7,12 @@ import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
-import com.storyteller_f.shared.obj.TitleSearchType
+import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
-import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
-import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PagingFetch
@@ -93,41 +90,29 @@ private suspend fun getRelatedObject(
     communityIdList: List<PrimaryKey>,
     roomIdList: List<PrimaryKey>
 ): Result<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>> {
-    val userList = if (uidList.isNotEmpty()) {
-        val result = DatabaseFactory.getUsersByIds(backend, uidList)
-        val throwable = result.exceptionOrNull()
-        if (throwable != null) {
-            return Result.failure(throwable)
+    return merge({
+        if (uidList.isNotEmpty()) {
+            DatabaseFactory.getUsersByIds(backend, uidList)
+        } else {
+            Result.success(emptyList())
         }
-        result.getOrThrow()
-    } else {
-        emptyList()
-    }
-    val communityList = if (communityIdList.isNotEmpty()) {
-        val result = DatabaseFactory.getCommunityByIds(backend, communityIdList).mapResult {
-            processCommunityList(backend, it)
+    }, {
+        if (roomIdList.isNotEmpty()) {
+            DatabaseFactory.getRoomByIds(backend, roomIdList).mapResult {
+                processRoomList(it, backend)
+            }
+        } else {
+            Result.success(emptyList())
         }
-        val throwable = result.exceptionOrNull()
-        if (throwable != null) {
-            return Result.failure(throwable)
+    }, {
+        if (communityIdList.isNotEmpty()) {
+            DatabaseFactory.getCommunityByIds(backend, communityIdList).mapResult {
+                processCommunityList(backend, it)
+            }
+        } else {
+            Result.success(emptyList())
         }
-        result.getOrThrow()
-    } else {
-        emptyList()
-    }
-    val roomList = if (roomIdList.isNotEmpty()) {
-        val result = DatabaseFactory.getRoomByIds(backend, roomIdList).mapResult {
-            processRoomList(it, backend)
-        }
-        val throwable = result.exceptionOrNull()
-        if (throwable != null) {
-            return Result.failure(throwable)
-        }
-        result.getOrThrow()
-    } else {
-        emptyList()
-    }
-    return Result.success(Triple(userList, roomList, communityList))
+    })
 }
 
 private fun processTitleList(

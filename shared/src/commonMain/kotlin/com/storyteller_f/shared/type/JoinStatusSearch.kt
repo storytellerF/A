@@ -1,8 +1,7 @@
-package com.storyteller_f.shared.obj
+package com.storyteller_f.shared.type
 
-import com.storyteller_f.shared.obj.JoinStatusSearch.JOINED
-import com.storyteller_f.shared.obj.JoinStatusSearch.NOT_JOINED
-import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.JoinStatusSearch.JOINED
+import com.storyteller_f.shared.type.JoinStatusSearch.NOT_JOINED
 
 enum class JoinStatusSearch {
     JOINED, NOT_JOINED, UNSPECIFIED
@@ -34,10 +33,3 @@ fun JoinStatusSearch?.toJoinSearch(uid: PrimaryKey?): JoinSearch {
     }
 }
 
-fun JoinSearch.getUid(): Long? {
-    return when (this) {
-        is JoinSearch.Joined -> uid
-        is JoinSearch.NotJoined -> uid
-        is JoinSearch.Unspecified -> uid
-    }
-}

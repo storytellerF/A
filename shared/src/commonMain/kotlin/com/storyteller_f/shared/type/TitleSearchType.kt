@@ -1,4 +1,4 @@
-package com.storyteller_f.shared.obj
+package com.storyteller_f.shared.type
 
 enum class TitleSearchType {
     CREATOR,

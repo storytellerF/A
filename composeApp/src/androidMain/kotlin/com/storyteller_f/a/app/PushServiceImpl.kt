@@ -8,6 +8,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.storyteller_f.a.client_lib.addDevice
 import com.storyteller_f.a.client_lib.createUserSessionManager
+import com.storyteller_f.a.client_lib.start
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,9 +25,14 @@ class PushServiceImpl : PushService(), CoroutineScope {
     private val job = SupervisorJob()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO + job
-    val userSession = createUserSessionManager(buildWebSocketUrl(AppConfig.WS_SERVER_URL), this, { model, cookie ->
+    val userSession = createUserSessionManager(buildWebSocketUrl(AppConfig.WS_SERVER_URL), { model, cookie ->
         buildHttpClient(AppConfig.SERVER_URL, cookie, model)
     }, { _, _ -> })
+
+    override fun onCreate() {
+        super.onCreate()
+        userSession.start()
+    }
 
     override fun onMessage(message: PushMessage, instance: String) {
         Napier.i(tag = "push") {
@@ -62,7 +68,7 @@ class PushServiceImpl : PushService(), CoroutineScope {
             "receive endpoint $endpoint"
         }
         launch {
-            userSession.first.addDevice(endpoint.url)
+            userSession.addDevice(endpoint.url)
         }
     }
 

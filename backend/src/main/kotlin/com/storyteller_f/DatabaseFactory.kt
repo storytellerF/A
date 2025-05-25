@@ -1,7 +1,7 @@
 package com.storyteller_f
 
 import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
-import com.storyteller_f.shared.obj.UnauthorizedException
+import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +11,33 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.util.PSQLException
 import java.net.ConnectException
+
+class DatabaseSearchConfig<R> {
+    lateinit var searchFunc: () -> Query
+    lateinit var transformFunc: Query.() -> R
+
+    fun search(block: () -> Query) {
+        searchFunc = block
+    }
+
+    fun transform(block: Query.() -> R) {
+        transformFunc = block
+    }
+}
+
+fun <R> DatabaseSearchConfig<R?>.first(block: (ResultRow) -> R) {
+    transformFunc = {
+        firstOrNull()?.let(block)
+    }
+}
+
+fun <T> DatabaseSearchConfig<List<T>>.map(block: (ResultRow) -> T) {
+    transformFunc = {
+        map {
+            block(it)
+        }
+    }
+}
 
 object DatabaseFactory {
 
@@ -95,7 +122,7 @@ object DatabaseFactory {
                 "$dialectName query failed $isRetry"
             }
         }
-        throw Exception(if (isConnectFailed) "database connect failed" else "database query failed", e)
+        throw Exception(if (isConnectFailed) "database connect failed" else "database query failed", n)
     }
 
     suspend fun <T> dbQuery(backend: Backend, block: suspend Transaction.() -> T): Result<T> {
@@ -111,94 +138,26 @@ object DatabaseFactory {
         }
     }
 
-    /**
-     * 带有transform
-     */
-    suspend fun <T, R> query(
+    suspend fun <R> dbSearch(
         backend: Backend,
-        transform: T.() -> R,
-        block: Transaction.() -> T
-    ): Result<R> =
-        dbQuery(backend) { transform(block()) }
-
-    private suspend fun <T, R> dbSearch(
-        backend: Backend,
-        transform: SizedIterable<T>.() -> R,
-        block: () -> SizedIterable<T>
+        query: DatabaseSearchConfig<R>.() -> Unit,
     ): Result<R> {
         val point = Exception()
         return runCatching {
             newSuspendedTransaction(Dispatchers.IO + MDCContext(), backend.database) {
                 debug = onExplainResult != null
                 try {
-                    explainQuery(point, block)
-                    transform(block())
+                    explainQuery(point) {
+                        DatabaseSearchConfig<R>().apply<DatabaseSearchConfig<R>>(query).searchFunc()
+                    }
+                    DatabaseSearchConfig<R>().apply<DatabaseSearchConfig<R>>(query).let {
+                        it.transformFunc(it.searchFunc())
+                    }
                 } catch (e: Throwable) {
                     handleDatabaseException(e, point)
                 }
             }
         }
-    }
-
-    /**
-     * 带有transform
-     */
-    suspend fun <T, R> mapQuery(
-        backend: Backend,
-        transform: (T) -> R,
-        block: () -> SizedIterable<T>
-    ): Result<List<R>> =
-        dbSearch(backend, {
-            map(transform)
-        }) {
-            block()
-        }
-
-    /**
-     * 带有transform
-     */
-    suspend fun <T, R, R1> mapQuery(
-        backend: Backend,
-        transform: R1.() -> R,
-        resultRowTransform: (T) -> R1,
-        block: () -> SizedIterable<T>
-    ): Result<List<R>> =
-        dbSearch(backend, {
-            map(resultRowTransform).map(transform)
-        }) {
-            block()
-        }
-
-    /**
-     * 查询第一个符合条件的数据
-     *
-     * @param transform 转换数据
-     * @param resultRowTransform 主要用于将ResultRow 转换成普通数据
-     */
-    suspend fun <T, R, R1> first(
-        backend: Backend,
-        transform: R1.() -> T,
-        resultRowTransform: (R) -> R1,
-        block: () -> SizedIterable<R>
-    ): Result<T?> = dbSearch(backend, {
-        limit(1).firstOrNull()?.let(resultRowTransform)?.let { transform(it) }
-    }) {
-        block()
-    }
-
-    /**
-     * 查询第一个符合条件的数据
-     *
-     * @param resultRowTransform 主要用于将ResultRow 转换成普通数据
-     */
-    suspend fun <R, R1> first(
-        backend: Backend,
-        resultRowTransform: (R) -> R1,
-        block: () -> SizedIterable<R>
-    ): Result<R1?> = dbSearch(backend, {
-        limit(1).firstOrNull()?.let(resultRowTransform)
-    }) {
-        block()
     }
 
     /**

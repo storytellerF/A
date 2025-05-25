@@ -7,7 +7,7 @@ import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.NewRoom
-import com.storyteller_f.shared.obj.TitleSearchType
+import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
@@ -84,7 +84,6 @@ private suspend fun directJoinRoom(
         roomInfo.id,
         uid,
         time,
-        roomInfo.memberCount
     ).mapResult {
         addUserLog(backend, uid, UserLogType.JOIN, roomInfo.tuple())
         Result.success(roomInfo.copy(joinedTime = time))
@@ -115,7 +114,7 @@ suspend fun getRoom(
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<RoomInfo?> {
-    return DatabaseFactory.getRoomSource(backend, objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
+    return DatabaseFactory.getRoom(backend, objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
         processRoomList(listOf(it), backend).mapIfNotNull(List<RoomInfo>::first)
     }
 }
@@ -152,11 +151,11 @@ suspend fun createRoom(
     }.mapResultIfNotNull {
         if (it) {
             val roomId = SnowflakeFactory.nextId()
-            val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, 0, newRoom.icon, communityId)
+            val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid,  newRoom.icon, communityId)
             DatabaseFactory.createRoom(backend, room)
                 .mapResult {
                     processRoomList(
-                        listOf(room.toRoomInfo(room.createdTime, null) to room.icon),
+                        listOf(room.toRoomInfo(0, room.createdTime, null) to room.icon),
                         backend
                     ).mapIfNotNull(List<RoomInfo>::first)
                 }
@@ -206,7 +205,7 @@ suspend fun updateRoom(
             } else {
                 DatabaseFactory.updateRoom(backend, id, newRoom).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        DatabaseFactory.getRoomSource(backend, ObjectFetch.IdFetch(id), true, uid)
+                        DatabaseFactory.getRoom(backend, ObjectFetch.IdFetch(id), true, uid)
                             .mapResultIfNotNull {
                                 processRoomList(listOf(it), backend).mapIfNotNull(List<RoomInfo>::first)
                             }

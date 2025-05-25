@@ -76,6 +76,7 @@ kotlin {
             api(libs.kotlinx.datetime)
             implementation(libs.markdown)
             api(libs.napier)
+            api(libs.kotlinx.collections.immutable)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

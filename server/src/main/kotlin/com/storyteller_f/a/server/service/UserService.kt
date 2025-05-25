@@ -54,7 +54,7 @@ suspend fun updateUser(
     return DatabaseFactory.updateUser(backend, uid, newUser).mapResult {
         if (it) {
             addUserLog(backend, uid, UserLogType.UPDATE, uid ob ObjectType.USER)
-            DatabaseFactory.getUser(backend, ObjectFetch.IdFetch(uid))
+            DatabaseFactory.getUserAndRelatedMedia(backend, ObjectFetch.IdFetch(uid))
         } else {
             Result.success(null)
         }

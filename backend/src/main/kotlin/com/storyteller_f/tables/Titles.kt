@@ -4,7 +4,7 @@ import com.storyteller_f.*
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.obj.TitleSearchType
+import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleStatus
@@ -110,10 +110,13 @@ suspend fun DatabaseFactory.userTitles(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null
 ): Result<PaginationResult<TitleInfo>> {
-    return mapQuery(backend, {
-        toTitleInfo()
-    }, Title::wrapRow) {
-        buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(Titles, pagingFetch)
+    return dbSearch(backend) {
+        search {
+            buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(Titles, pagingFetch)
+        }
+        transform {
+            map(Title::wrapRow).map { it.toTitleInfo() }
+        }
     }.mapResult { list ->
         count(backend) {
             buildTitleSearchQuery(searchType, uid, type, scopeId)

@@ -6,11 +6,15 @@ import com.storyteller_f.shared.eciesEncrypt
 import com.storyteller_f.shared.encryptData
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.ObjectType.*
+import com.storyteller_f.shared.type.PosterSearch
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
+import com.storyteller_f.shared.type.TopicPinSearch
 import io.github.aakira.napier.Napier
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -32,7 +36,7 @@ inline fun <R> serviceCatching(block: () -> R): Result<R> {
         Napier.e(point) {
             "serviceCatching"
         }
-        Result.failure(e)
+        Result.failure(point)
     }
 }
 
@@ -54,7 +58,7 @@ suspend fun SessionManager.getRoomInfo(id: PrimaryKey) = with(client) {
     serviceCatching {
         get("rooms/$id") {
             url {
-                if (isAlreadyLogin) parameters.append("fillJoinInfo", "true")
+                if (currentIsAlreadySignUp) parameters.append("fillJoinInfo", "true")
             }
         }.body<RoomInfo>()
     }
@@ -63,7 +67,7 @@ suspend fun SessionManager.getRoomInfo(id: PrimaryKey) = with(client) {
 suspend fun SessionManager.getRoomInfoByAid(aid: String) = serviceCatching {
     client.get("rooms/aid") {
         url {
-            if (isAlreadyLogin) parameters.append("fillJoinInfo", "true")
+            if (currentIsAlreadySignUp) parameters.append("fillJoinInfo", "true")
             parameters.append("aid", aid)
         }
     }.body<RoomInfo>()
@@ -94,7 +98,7 @@ suspend fun SessionManager.getRoomTopics(
 ) = serviceCatching {
     client.get("rooms/$roomId/topics") {
         url {
-            if (isAlreadyLogin) {
+            if (currentIsAlreadySignUp) {
                 parameters.append("fillHasCommented", "true")
             }
             parameters.append("pinType", pinType.name)
@@ -111,7 +115,7 @@ suspend fun SessionManager.getCommunityTopics(
 ) = serviceCatching {
     client.get("communities/$communityId/topics") {
         url {
-            if (isAlreadyLogin) {
+            if (currentIsAlreadySignUp) {
                 parameters.append("fillHasCommented", "true")
             }
             parameters.append("pinType", pinType.name)
@@ -128,7 +132,7 @@ suspend fun SessionManager.getUserTopics(
 ) = serviceCatching {
     client.get("users/$userId/topics") {
         url {
-            if (isAlreadyLogin) {
+            if (currentIsAlreadySignUp) {
                 parameters.append("fillHasCommented", "true")
             }
             parameters.append("pinType", pinType.name)
@@ -141,7 +145,7 @@ suspend fun SessionManager.getCommunityInfo(id: PrimaryKey) =
     serviceCatching {
         client.get("communities/$id") {
             url {
-                if (isAlreadyLogin) {
+                if (currentIsAlreadySignUp) {
                     parameters.append("fillJoinInfo", "true")
                 }
             }
@@ -225,7 +229,7 @@ suspend fun SessionManager.getRecommendTopics(nextTopicId: PrimaryKey?, size: In
             "topics/recommend"
         ) {
             url {
-                if (isAlreadyLogin) {
+                if (currentIsAlreadySignUp) {
                     parameters.append("fillHasCommented", "true")
                 }
                 appendPagingQueryParams(size, nextTopicId)
@@ -261,7 +265,7 @@ suspend fun SessionManager.getTopicTopics(
     serviceCatching {
         client.get("topics/$topicId/topics") {
             url {
-                if (isAlreadyLogin) {
+                if (currentIsAlreadySignUp) {
                     parameters.append("fillHasCommented", "true")
                 }
                 parameters.append("pinType", pinType.name)
@@ -357,7 +361,7 @@ suspend fun SessionManager.searchTopics(
             parentType?.let {
                 parameters.append("parentType", it.name)
             }
-            if (isAlreadyLogin) {
+            if (currentIsAlreadySignUp) {
                 parameters.append("fillHasCommented", "true")
             }
             parameters.appendAll("word", word)
@@ -394,7 +398,7 @@ suspend fun SessionManager.getReactions(topicId: PrimaryKey) =
     serviceCatching {
         client.get("topics/$topicId/reactions") {
             url {
-                if (isAlreadyLogin) {
+                if (currentIsAlreadySignUp) {
                     parameters.append("fillHasReacted", "true")
                 }
             }
