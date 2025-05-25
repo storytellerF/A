@@ -5,10 +5,10 @@ import com.storyteller_f.a.app.UploadSession
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.*
+import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.TitleSearchType
 
 @Composable
 fun createSearchCommunitiesViewModel(

@@ -38,10 +38,10 @@ import com.storyteller_f.a.app.pages.user.UserRefCell
 import com.storyteller_f.a.client_lib.SessionManager
 import com.storyteller_f.a.client_lib.createTitle
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleType

@@ -1,0 +1,110 @@
+volumes:
+  bw-data:
+
+networks:
+  bw-universe:
+    name: bw-universe
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.20.30.0/24
+  bw-services:
+    name: bw-services
+  bw-docker:
+    name: bw-docker
+
+services:
+  bunkerweb:
+    image: bunkerity/bunkerweb:${BUNKER_VERSION}
+    depends_on:
+      - bw-db
+    ports:
+      - ${BUNKER_PORT}:8080
+      - ${BUNKER_PORT_SECRET}:8443
+    labels:
+      - "bunkerweb.INSTANCE=yes"
+    environment:
+      - SERVER_NAME=www.acommunity.link ui.acommunity.link
+      - MULTISITE=yes
+      - DATABASE_URI=${BUNKER_DB_URI}
+      - API_WHITELIST_IP=127.0.0.0/8 10.20.30.0/24
+      - USE_REVERSE_PROXY=yes
+      - REVERSE_PROXY_URL=/
+      - AUTO_LETS_ENCRYPT=yes
+      - EMAIL_LETS_ENCRYPT=34095089+storytellerF@users.noreply.github.com
+      - LETS_ENCRYPT_CLEAR_OLD_CERTS=yes
+      - DISABLE_DEFAULT_SERVER=yes
+      - USE_LIMIT_REQ=no
+      - SERVE_FILES=no
+      - REVERSE_PROXY_WS=yes
+      - USE_BAD_BEHAVIOR=yes
+      - BAD_BEHAVIOR_STATUS_CODES=400 403 404 405 429 444
+      - USE_MODSECURITY_CRS=no
+      - ui.acommunity.link_USE_UI=yes
+      - ui.acommunity.link_REVERSE_PROXY_HOST=http://bw-ui:7000
+      - ui.acommunity.link_INTERCEPTED_ERROR_CODES=400 404 405 413 429 500 501 502 503 504
+      - ui.acommunity.link_MAX_CLIENT_SIZE=50m
+      - www.acommunity.link_REVERSE_PROXY_HOST=http://server:8811
+      - www.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
+      - www.acommunity.link_INTERCEPTED_ERROR_CODES=
+    networks:
+      - bw-universe
+      - bw-services
+    profiles:
+      - bunker
+
+  bw-scheduler:
+    image: bunkerity/bunkerweb-scheduler:${BUNKER_VERSION}
+    depends_on:
+      - bunkerweb
+      - bw-docker
+      - bw-db
+    environment:
+      - DATABASE_URI=${BUNKER_DB_URI}
+      - DOCKER_HOST=tcp://bw-docker:2375
+    networks:
+      - bw-universe
+      - bw-docker
+    profiles:
+      - bunker
+
+  bw-docker:
+    image: tecnativa/docker-socket-proxy:nightly
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1
+      - LOG_LEVEL=warning
+    networks:
+      - bw-docker
+    profiles:
+      - bunker
+  bw-ui:
+    image: bunkerity/bunkerweb-ui:1.5.12
+    depends_on:
+      - bw-docker
+      - bw-db
+    environment:
+      - DATABASE_URI=${BUNKER_DB_URI}
+      - DOCKER_HOST=tcp://bw-docker:2375
+      - ADMIN_USERNAME=${BUNKER_ADMIN}
+      - ADMIN_PASSWORD=${BUNKER_PASS}
+    networks:
+      - bw-universe
+      - bw-docker
+    profiles:
+      - bunker-ui
+
+  bw-db:
+    image: postgres
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    environment:
+      - POSTGRES_DB=${BUNKER_DB}
+      - POSTGRES_USER=${BUNKER_DB_USER}
+      - POSTGRES_PASSWORD=${BUNKER_DB_PASS}
+    volumes:
+      - bw-data:/var/lib/postgresql/data
+    networks:
+      - bw-docker
+

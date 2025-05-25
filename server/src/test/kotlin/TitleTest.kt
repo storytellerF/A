@@ -3,8 +3,8 @@ import com.storyteller_f.a.client_lib.createTitle
 import com.storyteller_f.a.client_lib.userTitles
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.NewTitle
-import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.TitleType
 import kotlin.test.Test
 
