@@ -14,6 +14,13 @@ networks:
     name: bw-docker
 
 services:
+  server:
+    networks:
+      - bw-services
+  db:
+    networks:
+      - bw-services
+
   bunkerweb:
     image: bunkerity/bunkerweb:${BUNKER_VERSION}
     depends_on:
