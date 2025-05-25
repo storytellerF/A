@@ -158,12 +158,12 @@ suspend fun DatabaseFactory.isUserCommented(
     topicId: List<PrimaryKey>
 ) = dbSearch(backend) {
     search {
-        Topics.select(Topics.id).where {
+        Topics.select(Topics.parentId).where {
             Topics.parentId inList topicId and (Topics.author eq uid)
         }
     }
     map {
-        it[Topics.id]
+        it[Topics.parentId]
     }
 }
 

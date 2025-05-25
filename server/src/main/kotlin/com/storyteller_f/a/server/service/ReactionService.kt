@@ -34,7 +34,7 @@ suspend fun addReaction(
                 } else {
                     val now = now()
                     val reactionInfo =
-                        ReactionInfo(emojiText, topicId, ObjectType.TOPIC, (oldReaction?.count ?: 0) + 1, true)
+                        ReactionInfo(emojiText, topicId, (oldReaction?.count ?: 0) + 1, true)
                     DatabaseFactory.insertReaction(backend, newId, userId, reactionInfo, now).map { i ->
                         reactionInfo
                     }.recoverError { throwable ->

@@ -245,7 +245,7 @@ fun HighlightCodeBlock(
     val highlightsBuilder = remember(isDarkTheme) {
         Highlights.Builder().theme(SyntaxThemes.atom(darkMode = isDarkTheme))
     }
-    MarkdownHighlightedCodeFence(modal.content, modal.node, highlightsBuilder)
+    MarkdownHighlightedCodeFence(modal.content, modal.node, highlights = highlightsBuilder)
 }
 
 @Composable

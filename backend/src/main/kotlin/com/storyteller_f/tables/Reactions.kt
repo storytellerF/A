@@ -21,7 +21,7 @@ object Reactions : BaseTable() {
 
     init {
         index("reactions-main", true, objectId, emoji, uid)
-        index("reactions-uid", true, uid, objectId, emoji)
+        index("reactions-g", true, objectId, objectType, emoji, id)
     }
 }
 
@@ -55,21 +55,21 @@ suspend fun commonReactions(
     objectId: List<PrimaryKey>
 ): Result<List<ReactionInfo>> {
     return DatabaseFactory.dbSearch(backend) {
-        val countExpression = Reactions.uid.countDistinct()
+        val countExpression = Reactions.id.countDistinct()
         search {
-            Reactions.select(Reactions.fields + countExpression).where {
+            Reactions.select(Reactions.objectId, Reactions.emoji, countExpression).where {
                 Reactions.objectId inList objectId
-            }.groupBy(Reactions.objectId, Reactions.emoji).orderBy(countExpression, SortOrder.DESC)
+            }.groupBy(Reactions.objectId, Reactions.emoji, Reactions.id).orderBy(countExpression, SortOrder.DESC)
         }
         map {
-            Reaction.wrapRow(it) to it[countExpression]
+            Pair(it[Reactions.objectId], it[Reactions.emoji]) to it[countExpression]
         }
     }.mapResult { list ->
         (if (uid == null) {
             Result.success(emptyMap())
         } else {
             DatabaseFactory.hasReactedInReaction(backend, list.map {
-                it.first.objectId
+                it.first.first
             }.distinct(), uid).map {
                 it.groupByPair().mapValues { v ->
                     v.value.toSet()
@@ -78,11 +78,10 @@ suspend fun commonReactions(
         }).map { reactedMap ->
             list.map {
                 ReactionInfo(
-                    it.first.emoji,
-                    it.first.objectId,
-                    it.first.objectType,
+                    it.first.second,
+                    it.first.first,
                     it.second,
-                    reactedMap[it.first.objectId]?.contains(it.first.emoji) == true
+                    reactedMap[it.first.first]?.contains(it.first.second) == true
                 )
             }
         }
@@ -124,7 +123,6 @@ private suspend fun processReactionInfo(
     ReactionInfo(
         emojiText,
         objectId,
-        ObjectType.TOPIC,
         reactionCountMap[objectId] ?: 0,
         hasReacted,
     )
@@ -195,7 +193,7 @@ suspend fun DatabaseFactory.insertReaction(
         statement[id] = newId
         statement[uid] = userId
         statement[objectId] = reactionInfo.objectId
-        statement[objectType] = reactionInfo.objectType
+        statement[objectType] = ObjectType.TOPIC
         statement[emoji] = reactionInfo.emoji
         statement[createdTime] = now
     }.insertedCount > 0) {
@@ -220,7 +218,7 @@ suspend fun DatabaseFactory.getReactionCountInReaction(backend: Backend, objectI
     dbSearch(backend) {
         val column = Reactions.emoji.countDistinct()
         search {
-            Reactions.select(column).where {
+            Reactions.select(Reactions.objectId, column).where {
                 (Reactions.objectId inList objectId) and (Reactions.emoji eq emoji)
             }.groupBy(Reactions.objectId)
         }
@@ -232,7 +230,7 @@ suspend fun DatabaseFactory.getReactionCountInReaction(backend: Backend, objectI
 suspend fun DatabaseFactory.hasReacted(backend: Backend, objectId: PrimaryKey, uid: PrimaryKey, emoji: String) =
     isNotEmpty(backend) {
         Reactions.selectAll().where {
-            (Reactions.uid eq uid) and (Reactions.objectId eq objectId) and (Reactions.emoji eq emoji)
+            (Reactions.objectId eq objectId) and (Reactions.emoji eq emoji) and (Reactions.uid eq uid)
         }
     }
 
@@ -244,7 +242,7 @@ suspend fun DatabaseFactory.hasReactedInReaction(
     dbSearch(backend) {
         search {
             Reactions.select(Reactions.objectId, Reactions.emoji).where {
-                (Reactions.uid eq uid) and (Reactions.objectId inList objectId)
+                (Reactions.objectId inList objectId) and (Reactions.uid eq uid)
             }.groupBy(Reactions.objectId, Reactions.emoji)
         }
         map {
