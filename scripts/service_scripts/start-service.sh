@@ -34,20 +34,20 @@ if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_COMMAND" 
   if [ "$HOST_TYPE" = "local" ]; then
     echo "build on local"
     # 在本地启动
-    ./scripts/build_scripts/build-server-image.sh
+    ./scripts/build_scripts/build-server-image.sh "$FLAVOR" "prod"
     "./scripts/service_scripts/start-$FLAVOR-compose.sh" false 'up -d --build'
   else
     echo "build on remote"
     # 在远程主机上启动
     # load image
     # docker load -i "/tmp/A/$FLAVOR.image.tar"
-    ./scripts/build_scripts/build-server-image.sh
+    ./scripts/build_scripts/build-server-image.sh "$FLAVOR" "prod"
     # 使用预构建镜像构建服务
     "./scripts/service_scripts/start-$FLAVOR-compose.sh" true 'up -d --build'
   fi
 else
   # 在本地构建，然后发送docker image 到远程主机上启动
   echo "build for remote"
-  ./scripts/build_scripts/build-server-image.sh
+  ./scripts/build_scripts/build-server-image.sh "$FLAVOR" "prod"
   ./scripts/service_scripts/push-image-to-remote.sh "$REMOTE_URI" "$REMOTE_CERT_FILE" "$REMOTE_COMMAND $FLAVOR"
 fi
