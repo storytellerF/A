@@ -9,7 +9,6 @@ import kotlinx.serialization.Serializable
 data class ReactionInfo(
     val emoji: String,
     val objectId: PrimaryKey,
-    val objectType: ObjectType,
     val count: Long,
     val hasReacted: Boolean
 )

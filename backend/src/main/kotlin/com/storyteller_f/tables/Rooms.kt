@@ -2,13 +2,8 @@ package com.storyteller_f.tables
 
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.obj.*
-import com.storyteller_f.shared.type.JoinSearch
-import com.storyteller_f.shared.type.JoinStatusSearch
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.UnauthorizedException
-import com.storyteller_f.shared.type.toJoinSearch
+import com.storyteller_f.shared.obj.UpdateRoomBody
+import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -240,13 +235,9 @@ private suspend fun processRoomInfo(
     uid: PrimaryKey?,
     backend: Backend,
     rooms: List<Room>
-): Result<List<Pair<RoomInfo, String?>>> = (if (uid == null) {
-    Result.success(Triple(emptyMap(), emptyMap(), emptyMap()))
-} else {
-    DatabaseFactory.getContainerInfo(backend, rooms.map {
-        it.id
-    }, uid)
-}).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
+): Result<List<Pair<RoomInfo, String?>>> = DatabaseFactory.getContainerInfo(backend, rooms.map {
+    it.id
+}, uid).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
     rooms.map { room ->
         room.toRoomInfo(
             memberCountMap[room.id] ?: 0,

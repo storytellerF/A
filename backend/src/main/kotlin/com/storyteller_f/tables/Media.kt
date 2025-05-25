@@ -15,7 +15,6 @@ import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PagingFetch
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -272,7 +271,7 @@ suspend fun DatabaseFactory.copyMedia(
                 } else {
                     null
                 }
-            }.toImmutableList(), null)
+            }, null)
         }.getOrThrow()
     }
 }

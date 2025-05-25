@@ -1,7 +1,5 @@
 package com.storyteller_f.media
 
-import com.ashampoo.kim.common.convertToPhotoMetadata
-import com.ashampoo.kim.jvm.KimJvm
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.shared.model.Dimension
@@ -128,9 +126,6 @@ suspend fun getDimension(
         if (d != null) {
             return d
         }
-    } else if (contentType != "image/avif") {
-        val d = getAvifDimension(file)
-        if (d != null) return d
     }
     return ImageIO.getImageReadersByMIMEType(contentType).asSequence().firstNotNullOfOrNull { reader ->
         try {
@@ -151,25 +146,6 @@ suspend fun getDimension(
             reader.dispose()
         }
     }
-}
-
-private fun getAvifDimension(file: Path): Dimension? {
-    try {
-        val metadata = KimJvm.readMetadata(file)?.convertToPhotoMetadata()
-        if (metadata != null) {
-            val width = metadata.widthPx
-            val height = metadata.heightPx
-            if (width != null && height != null) {
-                return Dimension(width, height)
-            }
-        }
-    } catch (e: Exception) {
-        Napier.e(e) {
-            "read $file failed"
-        }
-        throw e
-    }
-    return null
 }
 
 private suspend fun getSvgDimension(file: Path): Dimension? {

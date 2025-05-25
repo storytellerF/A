@@ -3,14 +3,8 @@ package com.storyteller_f.tables
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.obj.*
-import com.storyteller_f.shared.type.JoinSearch
-import com.storyteller_f.shared.type.JoinStatusSearch
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PosterSearch
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.UnauthorizedException
-import com.storyteller_f.shared.type.toJoinSearch
+import com.storyteller_f.shared.obj.UpdateCommunityBody
+import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.types.PagingFetch
 import kotlinx.datetime.LocalDateTime
@@ -102,22 +96,18 @@ suspend fun DatabaseFactory.getCommunity(
         search {
             Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
                 .select(Communities.fields + Aids.value)
-                .where(buildCommunityWhereClause(objectFetch))
+                .where {
+                    when (objectFetch) {
+                        is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
+                        is ObjectFetch.IdFetch -> Communities.id eq objectFetch.id
+                    }
+                }
         }
         first(Community::wrapRow)
     }.mapResultIfNotNull { community ->
         processCommunitiesInfo(uid, listOf(community), backend).map {
             it.first()
         }
-    }
-}
-
-private fun buildCommunityWhereClause(
-    objectFetch: ObjectFetch
-): SqlExpressionBuilder.() -> Op<Boolean> = {
-    when (objectFetch) {
-        is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
-        is ObjectFetch.IdFetch -> Communities.id eq objectFetch.id
     }
 }
 
@@ -185,11 +175,7 @@ private suspend fun DatabaseFactory.processCommunitiesInfo(
     uid: PrimaryKey?,
     communities: List<Community>,
     backend: Backend
-): Result<List<CommunityRawResult>> = if (uid == null) {
-    Result.success(Triple(emptyMap(), emptyMap(), emptyMap()))
-} else {
-    getContainerInfo(backend, communities.map { it.id }, uid)
-}.map { (joinedTimeMap, lastReadMap, memberCountMap) ->
+): Result<List<CommunityRawResult>> = getContainerInfo(backend, communities.map { it.id }, uid).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
     communities.map {
         val communityInfo =
             it.toCommunityIfo(
@@ -204,19 +190,23 @@ private suspend fun DatabaseFactory.processCommunitiesInfo(
 suspend fun DatabaseFactory.getContainerInfo(
     backend: Backend,
     parentIds: List<PrimaryKey>,
-    uid: PrimaryKey
+    uid: PrimaryKey?
 ): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>> = merge({
-    getUserJoinedTime(backend, parentIds, uid).map {
-        it.associateBy { memberJoin ->
-            memberJoin.objectId
+    if (uid != null)
+        getUserJoinedTime(backend, parentIds, uid).map {
+            it.associateBy { memberJoin ->
+                memberJoin.objectId
+            }
         }
-    }
+    else Result.success(emptyMap())
 }, {
-    getReadLogs(backend, parentIds, uid).map {
-        it.associateBy { userTopicRead ->
-            userTopicRead.objectId
+    if (uid != null)
+        getReadLogs(backend, parentIds, uid).map {
+            it.associateBy { userTopicRead ->
+                userTopicRead.objectId
+            }
         }
-    }
+    else Result.success(emptyMap())
 }, {
     getMemberCount(backend, parentIds).map {
         it.associateByPair()

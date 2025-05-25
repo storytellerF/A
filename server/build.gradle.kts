@@ -33,7 +33,6 @@ dependencies {
     implementation(libs.tika.core)
     implementation(libs.pdfbox.layout)
     implementation(libs.h2)
-    implementation(libs.kim)
 
     @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")
     testImplementation(libs.mysql.connector.java)

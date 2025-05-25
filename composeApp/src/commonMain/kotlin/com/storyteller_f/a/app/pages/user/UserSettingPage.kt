@@ -214,7 +214,7 @@ private suspend fun cropImage(
         if (it == null) {
             Result.failure(Exception("download failed"))
         } else {
-            when (val result = imageCropper.cropSrc(ImageBitmapSrc(it))) {
+            when (val result = imageCropper.crop(ImageBitmapSrc(it))) {
                 CropResult.Cancelled -> {
                     Result.success(null)
                 }
