@@ -7,10 +7,10 @@ import com.storyteller_f.a.server.route.RouteCommunities
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserLogType
-import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.ob
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull

@@ -1,7 +1,7 @@
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.NewTopic
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull

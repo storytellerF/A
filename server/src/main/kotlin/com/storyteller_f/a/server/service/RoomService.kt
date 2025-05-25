@@ -7,11 +7,11 @@ import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.NewRoom
-import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
@@ -151,7 +151,7 @@ suspend fun createRoom(
     }.mapResultIfNotNull {
         if (it) {
             val roomId = SnowflakeFactory.nextId()
-            val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid,  newRoom.icon, communityId)
+            val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
             DatabaseFactory.createRoom(backend, room)
                 .mapResult {
                     processRoomList(

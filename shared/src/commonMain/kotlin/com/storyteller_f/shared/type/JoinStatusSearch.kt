@@ -32,4 +32,3 @@ fun JoinStatusSearch?.toJoinSearch(uid: PrimaryKey?): JoinSearch {
         else -> return JoinSearch.Unspecified(uid)
     }
 }
-

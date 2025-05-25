@@ -26,7 +26,6 @@ elastic
 deploy/*_data
 deploy/docker-images
 deploy/amedia
-scripts/download-image.sh
 deploy/preset.zip
 node_modules
 bin

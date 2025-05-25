@@ -4,9 +4,9 @@ import com.storyteller_f.*
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.mapResult

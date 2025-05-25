@@ -37,9 +37,9 @@ import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.title.TitleList
 import com.storyteller_f.a.app.pages.world.TopicList
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.TitleSearchType
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 

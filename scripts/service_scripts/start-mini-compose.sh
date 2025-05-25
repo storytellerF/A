@@ -11,15 +11,17 @@ cd deploy
 
 if [ "$USE_PREBUILD" = "true" ]; then
      docker compose --env-file ../mini.env \
-          -f docker-compose.yml \
-          -f docker-compose.d.yml \
-          -f docker-compose.prebuild.yml \
-          -f docker-compose.mini.yml \
+          -f docker-compose/docker-compose.yml \
+          -f docker-compose/docker-compose.d.yml \
+          -f docker-compose/docker-compose.prebuild.yml \
+          -f docker-compose/docker-compose.mini.yml \
+          -f docker-compose/docker-compose.pg.yml \
           $CUSTOM_COMMAND
 else
      docker compose --env-file ../mini.env \
-          -f docker-compose.yml \
-          -f docker-compose.d.yml \
-          -f docker-compose.mini.yml \
+          -f docker-compose/docker-compose.yml \
+          -f docker-compose/docker-compose.d.yml \
+          -f docker-compose/docker-compose.mini.yml \
+          -f docker-compose/docker-compose.pg.yml \
           $CUSTOM_COMMAND
 fi

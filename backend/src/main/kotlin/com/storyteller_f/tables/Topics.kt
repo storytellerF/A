@@ -5,10 +5,10 @@ import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.Topic.Companion.wrapRow
 import com.storyteller_f.types.PaginationResult
