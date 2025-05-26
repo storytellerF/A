@@ -28,6 +28,8 @@ RUN --mount=type=cache,target=/root/.gradle \
 
 RUN mkdir -p ./cli/build/decompressed && tar -xf ./cli/build/distributions/cli.tar -C ./cli/build/decompressed
 
+RUN mkdir -p ./build/envs
+
 FROM eclipse-temurin:21-alpine
 
 RUN apk add libavif-dev
@@ -38,6 +40,7 @@ WORKDIR /app
 COPY --from=builder /app/server/build/libs/*-all.jar ./lib/ktor-server.jar
 COPY --from=builder /app/cli/build/decompressed/cli .
 COPY --from=builder /app/deploy ./deploy
+# 使用koyeb 需要把args 变成env 后文件导入
 COPY --from=builder /app/build/envs/*.env .
 COPY scripts/tool_scripts/flush-database-singleton.sh ./scripts/tool_scripts/flush-database-singleton.sh
 
