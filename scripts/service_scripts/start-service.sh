@@ -49,5 +49,5 @@ else
   # 在本地构建，然后发送docker image 到远程主机上启动
   echo "build for remote"
   ./scripts/build_scripts/build-server-image.sh "$FLAVOR" "prod"
-  ./scripts/service_scripts/push-image-to-remote.sh "$REMOTE_URI" "$REMOTE_CERT_FILE" "$REMOTE_COMMAND $FLAVOR"
+  ./scripts/push_scripts/push-image-to-remote.sh "$REMOTE_URI" "$REMOTE_CERT_FILE" "$REMOTE_COMMAND $FLAVOR"
 fi
