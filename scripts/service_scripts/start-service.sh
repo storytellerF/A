@@ -18,20 +18,6 @@ REMOTE_URI=$3
 REMOTE_CERT_FILE=$4
 REMOTE_COMMAND=$5
 
-# 读取env文件到环境变量
-while IFS= read -r line; do
-  # 去除行尾的 \r，确保兼容 Windows 换行符
-  line="${line%%$'\r'}"
-  # Ignore empty lines and comments
-  [[ -z "$line" || "$line" =~ ^# ]] && continue
-  # 读取键值对
-  IFS='=' read -r key value <<<"$line"
-  # 忽略值为空或者注释的行
-  [[ -z "$value" || "$value" =~ ^# ]] && continue
-  # 导出环境变量
-  export "$key"="$value"
-done <"$FLAVOR.env"
-
 if [[ -n $REMOTE_URI && -n $REMOTE_CERT_FILE && -n $REMOTE_COMMAND ]]; then
   if [ "$HOST_TYPE" = "local" ]; then
       echo "HOST_TYPE must not be local"

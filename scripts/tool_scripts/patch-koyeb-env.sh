@@ -55,4 +55,7 @@ sed -i.bak '/#\^1/,/#!1/c\
 #patched
 ' "$dockerfile_output"
 
+#sed -i '' 's/#if//g' file.txt   # macOS
+sed -i 's/#if //g' "$dockerfile_output"      # Linux
+
 echo "Dockerfile 已生成: $dockerfile_output"

@@ -49,7 +49,7 @@ for profile in "${COMPOSE_FILE_LIST[@]}"; do
 done
 
 IFS=' ' read -r -a custom_cmd_parts <<< "$CUSTOM_COMMAND"
-CMD=("docker" "compose" "--env-file" "./mini.env" "${COMPOSE_FILES[@]}" "${custom_cmd_parts[@]}")
+CMD=("docker" "compose" "--env-file" "./${FLAVOR}.env" "${COMPOSE_FILES[@]}" "${custom_cmd_parts[@]}")
 
 echo "Executing: ${CMD[@]}"
 "${CMD[@]}"
