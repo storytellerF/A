@@ -2,8 +2,8 @@
 
 set -e
 ./gradlew build
-./scripts/tool_scripts/create-avd.bat
-./scripts/tool_scripts/start-wait-avd.bat
+./scripts/android_scripts/create-avd.bat
+./scripts/android_scripts/start-wait-avd.bat
 ./gradlew test-server:run &
 echo "Waiting for port 8888 to become available..."
 counter=0

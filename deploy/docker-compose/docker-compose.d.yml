@@ -1,8 +1,0 @@
-services:
-  server:
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - ./lucene_data:/app/deploy/lucene_data
-      - ./amedia_data:/app/deploy/amedia_data

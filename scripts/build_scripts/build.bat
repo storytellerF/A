@@ -2,8 +2,8 @@
 setlocal enabledelayedexpansion
 set AVD_NAME=ATest
 cmd /c .\gradlew.bat build || exit /b
-cmd /c .\scripts\tool_scripts\create-avd.bat || exit /b
-cmd /c .\scripts\tool_scripts\start-wait-avd.bat || exit /b
+cmd /c .\scripts\android_scripts\create-avd.bat || exit /b
+cmd /c .\scripts\android_scripts\start-wait-avd.bat || exit /b
 start cmd /c .\gradlew.bat test-server:run
 
 echo Waiting for port 8888 to become available...

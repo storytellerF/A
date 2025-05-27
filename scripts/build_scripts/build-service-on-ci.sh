@@ -50,7 +50,7 @@ echo "prepare build `date`"
 # 构建远端
 #echo "build docker image `date`"
 #HOST_TYPE=local ./scripts/build_scripts/build-server-image.sh
-HOST_TYPE=local ./scripts/build_scripts/build-all-in-flavor.sh "$FLAVOR" true
+HOST_TYPE=local ./scripts/build_scripts/build-server-on-condition.sh "$FLAVOR" prod local
 echo "push to remote `date`"
 # 远端没有生成的env 文件，需要使用原始env 文件
 ./scripts/push_scripts/push-jar-to-remote.sh ubuntu@acommunity.link "./start-jar-service-in-ubuntu.sh $FLAVOR"

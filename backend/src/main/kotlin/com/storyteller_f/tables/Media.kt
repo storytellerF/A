@@ -94,7 +94,7 @@ suspend fun DatabaseFactory.uploadFiles(backend: Backend, uploadPacks: List<Uplo
             this[Medias.width] = e.dimension?.width ?: 0
             this[Medias.height] = e.dimension?.height ?: 0
             this[Medias.owner] = e.owner
-            this[Medias.contentType] = e.contentType
+            this[Medias.contentType] = e.detectedContentType
             this[Medias.size] = e.size
             this[Medias.fullName] = e.name
         }
@@ -106,7 +106,7 @@ suspend fun DatabaseFactory.uploadFiles(backend: Backend, uploadPacks: List<Uplo
                     data[i].first,
                     e.first,
                     uploadPacks[i].name,
-                    uploadPacks[i].contentType,
+                    uploadPacks[i].detectedContentType,
                     uploadPacks[i].size,
                     uploadPacks[i].noPrefixName,
                     uploadPacks[i].owner,

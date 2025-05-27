@@ -1,0 +1,17 @@
+services:
+  server:
+    build:
+      context: ../../
+      args:
+        BUILD_TYPE: ${BUILD_TYPE}
+        FLAVOR: ${FLAVOR}
+        HOST_TYPE: docker
+        BUILD_ON: ${BUILD_ON}
+    env_file:
+      - ../../${FLAVOR}.env
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    profiles:
+      - server
+    volumes:
+      - ../preset_data:/app/deploy/preset_data

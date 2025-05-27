@@ -18,7 +18,6 @@ import javax.imageio.ImageIO
 import javax.imageio.stream.ImageInputStreamImpl
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamConstants
-import kotlin.collections.map
 import kotlin.io.path.inputStream
 
 data class UploadPack(
@@ -27,7 +26,7 @@ data class UploadPack(
     val noPrefixName: String,
     val owner: PrimaryKey,
     val size: Long,
-    val contentType: String = "",
+    val detectedContentType: String = "",
     val overrideContentType: String? = null,
     val dimension: Dimension? = null
 )
@@ -61,24 +60,26 @@ suspend fun uploadFiles(
         } else {
             null
         }
-        it.copy(contentType = detectedType, overrideContentType = overrideType, dimension = dimension)
+        it.copy(detectedContentType = detectedType, overrideContentType = overrideType, dimension = dimension)
     }
 
     return DatabaseFactory.uploadFiles(backend, packs)
 }
 
-private fun checkContentType(
+private suspend fun checkContentType(
     file: Path,
     tika: Tika,
     contentType: String?
 ): Pair<String?, String> {
-    val s = "audio/mp4"
-    val mimeType = tika.detect(file)
-    return when {
-        contentType != s -> null
-        mimeType == s -> s
-        else -> null
-    } to mimeType
+    return withContext(Dispatchers.IO) {
+        val s = "audio/mp4"
+        val mimeType = tika.detect(file)
+        when {
+            contentType != s -> null
+            mimeType == s -> s
+            else -> null
+        } to mimeType
+    }
 }
 
 // 在windows 中安装的libavif 名称不符合条件，需要手动改名
@@ -178,7 +179,7 @@ class PathImageInputStream(val it: InputStream) : ImageInputStreamImpl() {
     }
 
     override fun read(b: ByteArray?, off: Int, len: Int): Int {
-        b ?: return -1
+        b ?: return 0
         return it.read(b, off, len)
     }
 }
