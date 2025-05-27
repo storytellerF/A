@@ -32,7 +32,7 @@ fun main(args: Array<String>) {
             it == "auto"
         }) {
         println("auto mode")
-        val path = File(if (isNested) ".." else ".", "scripts/tool_scripts/forward-android-devices.$ext").canonicalPath
+        val path = File(if (isNested) ".." else ".", "scripts/android_scripts/forward-android-devices.$ext").canonicalPath
         val process = ProcessBuilder(path, "9000").start()
         check(process.waitFor() == 0)
         println(process.inputReader().readText())
@@ -53,7 +53,7 @@ fun main(args: Array<String>) {
             }
         }
     } else {
-        val path = File(if (isNested) ".." else ".", "scripts/tool_scripts/forward-android-devices.$ext").canonicalPath
+        val path = File(if (isNested) ".." else ".", "scripts/android_scripts/forward-android-devices.$ext").canonicalPath
         val process = ProcessBuilder(path, "8888").start()
         check(process.waitFor() == 0)
         println(process.inputReader().readText())
@@ -146,7 +146,7 @@ private suspend fun RoutingCall.handleStartRoute(
         }
         if (name.startsWith("Android", true)) {
             val path =
-                File(if (isNested) ".." else ".", "scripts/tool_scripts/forward-special-device.$ext").canonicalPath
+                File(if (isNested) ".." else ".", "scripts/android_scripts/forward-special-device.$ext").canonicalPath
             withContext(Dispatchers.IO) {
                 val start = ProcessBuilder(path, id, port.toString()).start()
                 val serverResult = start.waitFor()

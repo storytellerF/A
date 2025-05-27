@@ -18,17 +18,24 @@ import io.ktor.server.plugins.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.partialcontent.*
 import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.io.File
 import java.net.InetAddress
 import java.security.SecureRandom
+import kotlin.concurrent.thread
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.jvm.optionals.getOrNull
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
@@ -39,7 +46,7 @@ fun main(args: Array<String>) {
     SnowflakeFactory.setMachine(0)
 
     val map = readEnv()
-    processPresetData(map)
+    processPresetDataIfNeed(map)
     val serverPort = map["SERVER_PORT"].takeIf { it.isNotEmpty() }?.toInt() ?: 80
     val extraArgs = arrayOf("-port=$serverPort")
 
@@ -78,7 +85,9 @@ fun Application.module() {
     if (backend.config.buildType == "prod") {
         setupRateLimit(reader)
     }
+    install(PartialContent)
     install(Resources)
+    configureMonitor()
     configureAuth(reader, backend)
 }
 
@@ -175,44 +184,67 @@ fun ApplicationCall.remoteIp(
     }
 }
 
-private fun processPresetData(env: MergedEnv) {
-    val preSetEnable = env["PRESET_ENABLE"].toBoolean()
-    if (preSetEnable) {
-        val preSetScript = env["PRESET_SCRIPT"]
-        val workingDir = env["PRESET_WORKING_DIR"]
-        if (preSetScript.isNotBlank() && workingDir.isNotBlank()) {
-            val scriptArray = preSetScript.trim('\'').split(" ").map {
-                if (it.startsWith("~")) {
-                    val home = System.getProperty("user.home")
-                    home + it.substring(1)
-                } else {
-                    it
-                }
-            }
-            val file = File(workingDir.trim('\''))
-            println("exec pre set: ${scriptArray.joinToString(" ")}. working dir: ${file.canonicalPath}")
-
-            val start = ProcessBuilder(scriptArray).directory(file).start()
-            try {
-                val code = start.waitFor()
-                val input = start.inputStream.bufferedReader().readText()
-                if (code != 0) {
-                    val error = start.errorStream.bufferedReader().readText()
-                    println("preset failed. code: $code")
-                    println("input: $input")
-                    println("error: $error")
-                } else {
-                    val error = start.errorStream.bufferedReader().readText()
-                    println("flush success.")
-                    println("input: $input")
-                    println("error: $error")
-                }
-            } finally {
-                start.destroy()
-            }
+private fun processPresetDataIfNeed(env: MergedEnv) {
+    if (!env["PRESET_ENABLE"].toBoolean()) return
+    val preSetScript = env["PRESET_SCRIPT"]
+    val workingDir = env["PRESET_WORKING_DIR"]
+    if (preSetScript.isBlank() || workingDir.isBlank()) {
+        println("preset config failure")
+        exitProcess(1)
+    }
+    val scriptArray = preSetScript.trim('\'').split(" ").map {
+        if (it.startsWith("~")) {
+            val home = System.getProperty("user.home")
+            home + it.substring(1)
         } else {
-            println("preset config failure")
-            exitProcess(1)
+            it
+        }
+    }
+    val file = File(workingDir.trim('\''))
+    println("exec preset scripts: ${scriptArray.joinToString(" ")}. working dir: ${file.canonicalPath}")
+    runBlocking {
+        suspendCancellableCoroutine {
+            thread {
+                val process = ProcessBuilder(scriptArray).directory(file).start()
+                val reader = process.inputStream.bufferedReader()
+                val errorReader = process.errorStream.bufferedReader()
+                try {
+                    launch {
+                        while (process.isAlive) {
+                            val line = reader.readLine() ?: break
+                            Napier.i(tag = "preset") {
+                                line
+                            }
+                        }
+                    }
+                    launch {
+                        while (process.isAlive) {
+                            val line = errorReader.readLine() ?: break
+                            Napier.e(tag = "preset") {
+                                line
+                            }
+                        }
+                    }
+                    Napier.i(tag = "preset") {
+                        "preset started"
+                    }
+                    val code = process.waitFor()
+                    Napier.i(tag = "preset") {
+                        "preset finished. code: $code"
+                    }
+                    it.resume(code)
+                } catch (e: Exception) {
+                    Napier.e(tag = "preset", throwable = e) {
+                        "preset failed"
+                    }
+                    it.resumeWithException(e)
+                    exitProcess(1)
+                } finally {
+                    reader.close()
+                    errorReader.close()
+                    process.destroy()
+                }
+            }
         }
     }
 }

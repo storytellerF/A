@@ -447,6 +447,7 @@ suspend fun SessionManager.upload(
                     appendInput("file", Headers.build {
                         append(HttpHeaders.ContentType, contentType)
                         append(HttpHeaders.ContentDisposition, "filename=\"$name\"")
+                        append(HttpHeaders.ContentLength, size)
                     }, size, block)
                 },
                 boundary = "WebAppBoundary"

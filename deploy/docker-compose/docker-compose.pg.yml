@@ -1,8 +1,8 @@
 volumes:
-  db-data:
+  pg-data:
 
 services:
-  db:
+  pg:
     image: postgres
     # set shared memory limit when using docker-compose
     shm_size: 128mb
@@ -18,17 +18,24 @@ services:
       interval: 1s
       start_period: 5s
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - pg-data:/var/lib/postgresql/data
     profiles:
-      - db
+      - pg
 
   adminer:
     image: adminer
     ports:
       - ${DATABASE_FRONT_PORT}:8080
     depends_on:
-      db:
+      pg:
         condition: service_healthy
-
     profiles:
-      - db
+      - pg
+  exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    environment:
+      DATA_SOURCE_URI: "localhost:5432/postgres?sslmode=disable"
+      DATA_SOURCE_USER: ${DATABASE_USER}
+      DATA_SOURCE_PASS: ${DATABASE_PASS}
+    profiles:
+      - pg

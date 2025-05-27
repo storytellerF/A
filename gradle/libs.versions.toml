@@ -62,6 +62,7 @@ markdown = "0.7.3"
 material3WindowSizeClassMultiplatform = "0.5.0"
 media3Exoplayer = "1.7.1"
 memoryfilesystem = "2.8.1"
+micrometerRegistryPrometheus = "1.10.2"
 minio = "8.5.17"
 mysqlConnectorJava = "8.0.33"
 newpipeextractorVersion = "v0.24.5"
@@ -155,6 +156,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
 llama = { module = "de.kherud:llama", version.ref = "llama" }
 memoryfilesystem = { module = "com.github.marschall:memoryfilesystem", version.ref = "memoryfilesystem" }
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometerRegistryPrometheus" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnectorJava" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
 tasks-genai = { module = "com.google.mediapipe:tasks-genai", version.ref = "tasksGenai" }
@@ -210,6 +212,8 @@ ktor-server-resources = { module = "io.ktor:ktor-server-resources", version.ref 
 ktor-server-sessions = { module = "io.ktor:ktor-server-sessions", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
+ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
+ktor-server-partial-content = { module = "io.ktor:ktor-server-partial-content", version.ref = "ktor" }
 lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "androidx-lifecycleProcess" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", version.ref = "luceneCore" }
@@ -310,6 +314,8 @@ ktor-server = [
     "ktor-server-resources",
     "ktor-server-sessions",
     "ktor-server-websockets",
+    "ktor-server-partial-content",
+    "ktor-server-metrics-micrometer"
 ]
 filekit = [
     "filekit-coil",

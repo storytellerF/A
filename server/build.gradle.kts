@@ -33,6 +33,7 @@ dependencies {
     implementation(libs.tika.core)
     implementation(libs.pdfbox.layout)
     implementation(libs.h2)
+    implementation(libs.micrometer.registry.prometheus)
 
     @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")
     testImplementation(libs.mysql.connector.java)

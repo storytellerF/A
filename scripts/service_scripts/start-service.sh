@@ -7,16 +7,18 @@ if [ -z "$HOST_TYPE" ]; then
 fi
 
 FLAVOR=$1
+BUILD_ON=$2
 
-if [ -z "$FLAVOR" ]; then
-  echo "FLAVOR must be set"
+if [ -z "$FLAVOR" ] || [ -z "$BUILD_ON" ]; then
+  echo "FLAVOR and BUILD_ON must be set"
   exit 1
 fi
 
-REMOTE_URI=$2
-REMOTE_CERT_FILE=$3
-REMOTE_COMMAND=$4
+REMOTE_URI=$3
+REMOTE_CERT_FILE=$4
+REMOTE_COMMAND=$5
 
+# 读取env文件到环境变量
 while IFS= read -r line; do
   # 去除行尾的 \r，确保兼容 Windows 换行符
   line="${line%%$'\r'}"
@@ -30,24 +32,30 @@ while IFS= read -r line; do
   export "$key"="$value"
 done <"$FLAVOR.env"
 
-if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_COMMAND" ]; then
+if [[ -n $REMOTE_URI && -n $REMOTE_CERT_FILE && -n $REMOTE_COMMAND ]]; then
   if [ "$HOST_TYPE" = "local" ]; then
+      echo "HOST_TYPE must not be local"
+      exit 1
+  fi
+   # 在本地构建，然后发送docker image 到远程主机上启动
+    echo "build for remote"
+    ./scripts/build_scripts/build-server-on-condition.sh "$FLAVOR" prod local
+    ./scripts/build_scripts/build-server-image.sh "$FLAVOR" prod local
+    ./scripts/push_scripts/push-image-to-remote.sh "$REMOTE_URI" "$REMOTE_CERT_FILE" "$REMOTE_COMMAND $FLAVOR"
+elif [ "$HOST_TYPE" = "local" ]; then
     echo "build on local"
-    # 在本地启动
-    ./scripts/build_scripts/build-server-image.sh "$FLAVOR" "prod"
-    "./scripts/service_scripts/start-$FLAVOR-compose.sh" false 'up -d --build'
-  else
+    # 在本地构建，本地启动
+    ./scripts/build_scripts/build-server-on-condition.sh "$FLAVOR" prod local
+    ./scripts/build_scripts/build-server-image.sh "$FLAVOR" prod local
+    "./scripts/service_scripts/compose-service.sh" "$FLAVOR" false 'up -d --build'
+else
     echo "build on remote"
     # 在远程主机上启动
-    # load image
-    # docker load -i "/tmp/A/$FLAVOR.image.tar"
-    ./scripts/build_scripts/build-server-image.sh "$FLAVOR" "prod"
+    if [ -z "$LOAD_IMAGE" ]; then
+        docker load -i "/tmp/A/$FLAVOR.image.tar"
+    else
+        ./scripts/build_scripts/build-server-image.sh "$FLAVOR" prod
+    fi
     # 使用预构建镜像构建服务
-    "./scripts/service_scripts/start-$FLAVOR-compose.sh" true 'up -d --build'
-  fi
-else
-  # 在本地构建，然后发送docker image 到远程主机上启动
-  echo "build for remote"
-  ./scripts/build_scripts/build-server-image.sh "$FLAVOR" "prod"
-  ./scripts/push_scripts/push-image-to-remote.sh "$REMOTE_URI" "$REMOTE_CERT_FILE" "$REMOTE_COMMAND $FLAVOR"
+    "./scripts/service_scripts/compose-service.sh" "$FLAVOR" true 'up -d --build'
 fi

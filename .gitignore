@@ -30,3 +30,4 @@ deploy/preset.zip
 node_modules
 bin
 remote.pem
+*.bak

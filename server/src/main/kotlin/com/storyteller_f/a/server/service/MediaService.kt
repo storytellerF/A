@@ -21,14 +21,13 @@ import com.storyteller_f.tables.getPagingMedias
 import com.storyteller_f.tables.getRawMedia
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PagingFetch
+import io.ktor.http.HttpHeaders
 import io.ktor.http.content.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
+import io.ktor.util.cio.*
 import io.ktor.utils.io.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.io.readByteArray
 import org.apache.tika.Tika
 import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
@@ -98,37 +97,7 @@ suspend fun RoutingContext.uploadMedia(
         multipartData.forEachPart { part ->
             when (part) {
                 is PartData.FileItem -> {
-                    val fileName = part.originalFileName as String
-                    val (newSavedName, newSavedFileName) = newFileName(fileName)
-                    val file = File(root, newSavedFileName)
-                    // ktor 自带检查，保险起见再次检查
-                    if (file.canonicalPath == file.absolutePath) {
-                        val fileBytes = part.provider().readRemaining().readByteArray()
-                        try {
-                            withContext(Dispatchers.IO) {
-                                file.writeBytes(fileBytes)
-                                val info = uploadFiles(
-                                    tika,
-                                    backend,
-                                    listOf(
-                                        UploadPack(
-                                            file,
-                                            "${it.objectId}/$newSavedName",
-                                            newSavedName,
-                                            it.objectId,
-                                            fileBytes.size.toLong(),
-                                            "",
-                                            part.contentType.toString(),
-                                            null
-                                        )
-                                    )
-                                ).getOrThrow()
-                                result.addAll(info.filterNotNull())
-                            }
-                        } finally {
-                            file.delete()
-                        }
-                    }
+                    processFilePart(part, root, tika, backend, it, result)
                 }
 
                 else -> {}
@@ -137,6 +106,72 @@ suspend fun RoutingContext.uploadMedia(
         }
         Result.success(ServerResponse(result))
     }
+}
+
+private suspend fun processFilePart(
+    part: PartData.FileItem,
+    root: File,
+    tika: Tika,
+    backend: Backend,
+    permission: RootWritePermission,
+    result: MutableList<MediaInfo>
+) {
+    val fileName = part.originalFileName as String
+    val (newSavedName, newSavedFileName) = newFileName(fileName)
+    val file = File(root, newSavedFileName)
+    val length = part.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+    if (length == null) {
+        throw BadRequestException("content length not exists")
+    }
+    // ktor 自带检查，保险起见再次检查
+    if (file.canonicalPath != file.absolutePath) throw BadRequestException("invalid path")
+    part.provider().copyWithLimitAndClose(file.writeChannel(), length)
+    try {
+        val info = uploadFiles(
+            tika,
+            backend,
+            listOf(
+                UploadPack(
+                    file,
+                    "${permission.objectId}/$newSavedName",
+                    newSavedName,
+                    permission.objectId,
+                    length,
+                    "",
+                    part.contentType.toString(),
+                    null
+                )
+            )
+        ).getOrThrow()
+        result.addAll(info.filterNotNull())
+    } finally {
+        file.delete()
+    }
+}
+
+@OptIn(InternalAPI::class)
+suspend fun ByteReadChannel.copyWithLimitAndClose(channel: ByteWriteChannel, limit: Long): Long {
+    var result = 0L
+    try {
+        while (!isClosedForRead) {
+            result += readBuffer.transferTo(channel.writeBuffer)
+            if (result > limit) {
+                throw BadRequestException("exceed content length")
+            }
+            channel.flush()
+            awaitContent()
+        }
+
+        closedCause?.let { throw it }
+    } catch (cause: Throwable) {
+        cancel(cause)
+        channel.close(cause)
+        throw cause
+    } finally {
+        channel.flushAndClose()
+    }
+
+    return result
 }
 
 @OptIn(ExperimentalUuidApi::class)

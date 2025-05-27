@@ -51,13 +51,8 @@ replace_string_2+="EOF\nRUN mkdir -p build/envs \&\& cp ./\${FLAVOR}.env ./build
 # 使用 sed 替换 dockerfile 模板中的 #1 和 #2
 sed -e "s|#1|$replace_string_1|" -e "s|#2|$replace_string_2|" -e "s|#3|$replace_string_3|" "$dockerfile_template" > "$dockerfile_output"
 
-ed -s "./$dockerfile_output" <<EOF
-/#^1/+,/#!1/-d
-/#^1/a
+sed -i.bak '/#\^1/,/#!1/c\
 #patched
-.
-wq
-EOF
-
+' "$dockerfile_output"
 
 echo "Dockerfile 已生成: $dockerfile_output"

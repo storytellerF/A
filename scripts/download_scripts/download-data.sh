@@ -2,9 +2,9 @@
 set -e
 # 检查参数个数
 if [ "$#" -eq 2 ]; then
-    echo "try use args"
-    export PRESET_ENCRYPTED_URI=$1
-    export PRESET_ENCRYPTED_PASSWORD=$2
+    echo "export parameter as env"
+    export PRESET_ENCRYPTED_URI="$1"
+    export PRESET_ENCRYPTED_PASSWORD="$2"
 fi
 
 if [ -z "$PRESET_ENCRYPTED_URI" ] || [ -z "$PRESET_ENCRYPTED_PASSWORD" ]; then
