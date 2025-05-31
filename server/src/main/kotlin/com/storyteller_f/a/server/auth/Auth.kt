@@ -4,7 +4,6 @@ import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.CustomBadRequestException
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.*
 import com.storyteller_f.a.server.remoteIp
@@ -128,17 +127,17 @@ suspend fun ApplicationCall.respondUnauthorizedResponse(reader: DatabaseReader) 
 private suspend fun RoutingContext.signIn(
     backend: Backend,
     reader: DatabaseReader,
-    pack: SignInPack
+    pack: SignInPack,
+    data: String
 ): Result<UserInfo?> {
-    val data = call.getData(reader)
     val f = finalData(data)
-    return DatabaseFactory.getUserByAddress(backend, pack.ad).filterNull {
+    return backend.getUserByAddress(pack.ad).filterNull {
         BadRequestException("user not found")
     }.mapResult { (info, icon, publicKey) ->
         verify(publicKey, pack.sig, f).mapResult { isVerified ->
             if (isVerified) {
-                addUserLog(backend, info.id, UserLogType.SIGN_IN, info.id ob ObjectType.USER)
-                processUserList(backend, listOf(info to icon)).mapIfNotNull {
+                backend.addUserLog(info.id, UserLogType.SIGN_IN, info.id ob ObjectType.USER)
+                backend.processUserList(listOf(info to icon)).mapIfNotNull {
                     it.first()
                 }.mapIfNotNull { value ->
                     val id = value.id
@@ -152,12 +151,11 @@ private suspend fun RoutingContext.signIn(
     }
 }
 
-suspend fun addUserLog(backend: Backend, uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple) {
+suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple) {
     val logId = SnowflakeFactory.nextId()
     val log = UserLog(logId, now(), uid, type, objectTuple.objectId, objectTuple.objectType)
-    DatabaseFactory.addUserLog(
-        log,
-        backend
+    addUserLog(
+        log
     ).onFailure {
         Napier.i(tag = "user log", throwable = it) {
             "add failed"
@@ -182,16 +180,15 @@ private suspend fun RoutingContext.signUp(
     val f = finalData(data)
     return verify(pack.pk, pack.sig, f).mapResult {
         if (it) {
-            DatabaseFactory.isUserNotExists(backend, pack.pk).mapResult { userNotExists ->
+            backend.isUserNotExists(pack.pk).mapResult { userNotExists ->
                 if (userNotExists) {
                     calcAddress(pack.pk).mapResult { ad ->
                         val newId = SnowflakeFactory.nextId()
                         val name = backend.nameService.parse(newId)
-                        DatabaseFactory.createUser(backend, ad, name, newId, pack.pk).mapResult { value ->
-                            addUserLog(backend, newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
+                        backend.createUser(ad, name, newId, pack.pk).mapResult { value ->
+                            backend.addUserLog(newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
                             saveSuccessSessionOnFirst(newId, reader)
-                            processUserList(
-                                backend,
+                            backend.processUserList(
                                 listOf<Pair<UserInfo, String?>>(value to null)
                             ).mapIfNotNull { userList ->
                                 userList.first()
@@ -218,14 +215,14 @@ private suspend fun ApplicationCall.checkApiRequest(
     return when {
         !ServerConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            DatabaseFactory.checkUserExists(backend, id).mapIfNotNull {
+            backend.checkUserExists(id).mapIfNotNull {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             }
         }
 
         sig.isNotBlank() && session.data.isNotBlank() -> {
-            getUserAuthData(backend, credential).mapResultIfNotNull { (pubKey, id) ->
+            backend.getUserAuthData(credential).mapResultIfNotNull { (pubKey, id) ->
                 verify(
                     pubKey,
                     sig,
@@ -243,20 +240,19 @@ private suspend fun ApplicationCall.checkApiRequest(
     }
 }
 
-private suspend fun getUserAuthData(
-    backend: Backend,
+private suspend fun Backend.getUserAuthData(
     credential: CustomCredential
 ): Result<Pair<String, Long>?> {
     return when (credential) {
-        is AidCredential -> DatabaseFactory.getUserAuthDataByAid(backend) {
+        is AidCredential -> getUserAuthDataByAid {
             Aids.value eq credential.aid
         }
 
-        is IdCredential -> DatabaseFactory.getUserAuthDataBy(backend) {
+        is IdCredential -> getUserAuthDataBy {
             Users.id eq credential.id
         }
 
-        is AddressCredential -> DatabaseFactory.getUserAuthDataBy(backend) {
+        is AddressCredential -> getUserAuthDataBy {
             Users.address eq credential.ad
         }
     }
@@ -269,11 +265,11 @@ private fun ApplicationCall.saveSuccessSession(
     sessions.set<UserSession>(UserSession.Success(session.data, session.remote, id))
 }
 
-private suspend fun checkDevWsLink(backend: Backend, call: ApplicationCall): Result<CustomPrincipal?> {
+private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<CustomPrincipal?> {
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        DatabaseFactory.checkUserExists(backend, id).map {
+        checkUserExists(id).map {
             CustomPrincipal(id)
         }
     } else {
@@ -349,7 +345,7 @@ fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
                         when {
                             credential != null -> call.checkApiRequest(backend, credential, session)
                             backend.config.buildType == "prod" -> Result.success(null)
-                            else -> checkDevWsLink(backend, call)
+                            else -> backend.checkDevWsLink(call)
                         }
                     }
                 }
@@ -380,14 +376,14 @@ fun Route.bindUnprotectedAccountRoute(
 
     post<RouteAccounts.SignIn> {
         omitPrincipal(databaseReader) {
-            signIn(backend, databaseReader, call.receive<SignInPack>())
+            signIn(backend, databaseReader, call.receive<SignInPack>(), call.getData(databaseReader))
         }
     }
 }
 
 fun Route.bindProtectedAccountRoute(reader: DatabaseReader) {
     post<RouteAccounts.SignOut> {
-        usePrincipal(reader) { _ ->
+        usePrincipal(reader) { uid ->
             call.sessions.clear(UserSession::class)
             Result.success(Unit)
         }

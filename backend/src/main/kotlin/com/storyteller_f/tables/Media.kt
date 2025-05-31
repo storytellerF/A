@@ -2,6 +2,7 @@ package com.storyteller_f.tables
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
+import com.storyteller_f.count
 import com.storyteller_f.media.CopyPack
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
@@ -81,11 +82,11 @@ fun Media.toMediaInfo(it: Pair<String, LocalDateTime>): MediaInfo {
     )
 }
 
-suspend fun DatabaseFactory.uploadFiles(backend: Backend, uploadPacks: List<UploadPack>): Result<List<MediaInfo?>> {
+suspend fun Backend.uploadFiles(uploadPacks: List<UploadPack>): Result<List<MediaInfo?>> {
     val data = uploadPacks.mapIndexed { i, e ->
         SnowflakeFactory.nextId() to e
     }
-    return dbQuery(backend) {
+    return databaseSession.dbQuery {
         Medias.batchInsert(data) { (i, e) ->
             this[Medias.id] = i
             this[Medias.createdTime] = now()
@@ -98,7 +99,7 @@ suspend fun DatabaseFactory.uploadFiles(backend: Backend, uploadPacks: List<Uplo
             this[Medias.size] = e.size
             this[Medias.fullName] = e.newFullName
         }
-        backend.mediaService.upload(AMEDIA_DEFAULT_BUCKET, uploadPacks).getOrThrow()
+        mediaService.upload(AMEDIA_DEFAULT_BUCKET, uploadPacks).getOrThrow()
     }.map { urls ->
         urls.mapIndexed { i, e ->
             if (e != null) {
@@ -120,12 +121,11 @@ suspend fun DatabaseFactory.uploadFiles(backend: Backend, uploadPacks: List<Uplo
     }
 }
 
-suspend fun DatabaseFactory.getPagingMedias(
-    backend: Backend,
+suspend fun Backend.getPagingMedias(
     uid: PrimaryKey,
     pagingFetch: PagingFetch
 ): Result<PaginationResult<MediaInfo>> {
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Medias.selectAll().where {
                 Medias.owner eq uid
@@ -133,15 +133,18 @@ suspend fun DatabaseFactory.getPagingMedias(
         }
         map(Media::wrapRow)
     }.mapResult { list ->
-        count(backend) {
-            Medias.selectAll().where {
-                Medias.owner eq uid
+        databaseSession.dbSearch {
+            search {
+                Medias.selectAll().where {
+                    Medias.owner eq uid
+                }
             }
+            count()
         }.mapResult { count ->
             val names = list.map {
                 "${it.owner}/${it.name}"
             }
-            backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, names).map { mediaUrls ->
+            mediaService.get(AMEDIA_DEFAULT_BUCKET, names).map { mediaUrls ->
                 val data = mediaUrls.mapIndexedNotNull { i, e ->
                     if (e != null) {
                         val dimension = if (list[i].contentType.startsWith("image")) {
@@ -165,8 +168,8 @@ suspend fun DatabaseFactory.getPagingMedias(
     }
 }
 
-suspend fun DatabaseFactory.getRawMedia(backend: Backend, owner: PrimaryKey, name: String): Result<Media?> {
-    return dbSearch(backend) {
+suspend fun Backend.getRawMedia(owner: PrimaryKey, name: String): Result<Media?> {
+    return databaseSession.dbSearch {
         search {
             Medias.selectAll().where {
                 Medias.owner eq owner and (Medias.name eq name)
@@ -176,8 +179,8 @@ suspend fun DatabaseFactory.getRawMedia(backend: Backend, owner: PrimaryKey, nam
     }
 }
 
-suspend fun DatabaseFactory.getRawMediaById(backend: Backend, id: PrimaryKey): Result<Media?> {
-    return dbSearch(backend) {
+suspend fun Backend.getRawMediaById(id: PrimaryKey): Result<Media?> {
+    return databaseSession.dbSearch {
         search {
             Medias.selectAll().where {
                 Medias.id eq id
@@ -187,11 +190,10 @@ suspend fun DatabaseFactory.getRawMediaById(backend: Backend, id: PrimaryKey): R
     }
 }
 
-suspend fun DatabaseFactory.getMediaInfoList(
-    backend: Backend,
+suspend fun Backend.getMediaInfoList(
     owner: PrimaryKey,
 ): Result<List<MediaInfo?>?> {
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Medias.selectAll().where {
                 Medias.owner eq owner
@@ -199,7 +201,7 @@ suspend fun DatabaseFactory.getMediaInfoList(
         }
         map(Media::wrapRow)
     }.mapResultIfNotNull { medias ->
-        backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, medias.map {
+        mediaService.get(AMEDIA_DEFAULT_BUCKET, medias.map {
             it.newFullName
         }).mapIfNotNull {
             medias.mapIndexed { i, e ->
@@ -209,13 +211,13 @@ suspend fun DatabaseFactory.getMediaInfoList(
     }
 }
 
-suspend fun DatabaseFactory.getMediaInfoList(backend: Backend, names: List<String?>): Result<List<MediaInfo?>?> {
+suspend fun Backend.getMediaInfoList(names: List<String?>): Result<List<MediaInfo?>?> {
     if (names.filterNotNull().isEmpty()) {
         return Result.success(List(names.size) {
             null
         })
     }
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Medias.selectAll().where {
                 Medias.fullName inList names.filterNotNull()
@@ -224,7 +226,7 @@ suspend fun DatabaseFactory.getMediaInfoList(backend: Backend, names: List<Strin
         map(Media::wrapRow)
     }.mapResult { medias ->
         val mediaMap = medias.associateBy { it.newFullName }
-        backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, names.map {
+        mediaService.get(AMEDIA_DEFAULT_BUCKET, names.map {
             mediaMap[it]?.newFullName
         }).map {
             names.mapIndexed { i, e ->
@@ -238,14 +240,13 @@ suspend fun DatabaseFactory.getMediaInfoList(backend: Backend, names: List<Strin
     }
 }
 
-suspend fun DatabaseFactory.copyMedia(
-    backend: Backend,
+suspend fun Backend.copyMedia(
     media: Media,
     newOwner: PrimaryKey,
     newName: String
 ): Result<ServerResponse<MediaInfo?>> {
     val id = SnowflakeFactory.nextId()
-    return dbQuery(backend) {
+    return databaseSession.dbQuery {
         check(Medias.insert {
             it[Medias.id] = id
             it[Medias.createdTime] = now()
@@ -260,7 +261,7 @@ suspend fun DatabaseFactory.copyMedia(
         }.insertedCount > 0) {
             "insert media failed"
         }
-        backend.mediaService.copy(
+        mediaService.copy(
             AMEDIA_DEFAULT_BUCKET,
             listOf(CopyPack("${media.owner}/${media.name}", newName))
         ).map { list ->

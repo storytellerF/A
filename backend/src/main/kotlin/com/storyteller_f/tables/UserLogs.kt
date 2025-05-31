@@ -46,8 +46,8 @@ class UserLog(
     }
 }
 
-suspend fun DatabaseFactory.addUserLog(log: UserLog, backend: Backend): Result<Unit> {
-    return dbQuery(backend) {
+suspend fun Backend.addUserLog(log: UserLog): Result<Unit> {
+    return databaseSession.dbQuery {
         check(UserLogs.insert {
             it[id] = log.id
             it[uid] = log.uid

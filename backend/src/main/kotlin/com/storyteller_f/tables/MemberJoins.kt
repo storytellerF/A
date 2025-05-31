@@ -39,23 +39,25 @@ class MemberJoin(
     }
 }
 
-suspend fun isMemberJoined(backend: Backend, objectId: PrimaryKey, uid: PrimaryKey?) =
+suspend fun Backend.isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?) =
     if (uid == null) {
         Result.success(false)
     } else {
-        DatabaseFactory.isNotEmpty(backend) {
-            MemberJoins.selectAll().where {
-                (MemberJoins.objectId eq objectId) and (MemberJoins.uid eq uid)
+        databaseSession.dbSearch {
+            this.search {
+                MemberJoins.selectAll().where {
+                    (MemberJoins.objectId eq objectId) and (MemberJoins.uid eq uid)
+                }
             }
+            isNotEmpty()
         }
     }
 
-suspend fun DatabaseFactory.addRoomJoin(
-    backend: Backend,
+suspend fun Backend.addRoomJoin(
     room: PrimaryKey,
     id: PrimaryKey,
     time: LocalDateTime,
-) = dbQuery(backend) {
+) = databaseSession.dbQuery {
     addRoomJoinRaw(room, id, time)
 }
 
@@ -74,12 +76,11 @@ fun addRoomJoinRaw(
     }
 }
 
-suspend fun DatabaseFactory.exit(
-    backend: Backend,
+suspend fun Backend.exit(
     containerId: PrimaryKey,
     id: PrimaryKey
 ): Result<Int> {
-    return dbQuery(backend) {
+    return databaseSession.dbQuery {
         MemberJoins.deleteWhere {
             with(it) {
                 objectId eq containerId and (uid eq id)
@@ -88,12 +89,11 @@ suspend fun DatabaseFactory.exit(
     }
 }
 
-suspend fun DatabaseFactory.addCommunityJoin(
-    backend: Backend,
+suspend fun Backend.addCommunityJoin(
     id: PrimaryKey,
     community: PrimaryKey,
     time: LocalDateTime,
-) = dbQuery(backend) {
+) = databaseSession.dbQuery {
     addCommunityJoinRaw(id, community, time)
 }
 
@@ -112,8 +112,8 @@ fun addCommunityJoinRaw(
     }
 }
 
-suspend fun DatabaseFactory.getJoinedUserList(backend: Backend, roomId: PrimaryKey) =
-    dbSearch(backend) {
+suspend fun Backend.getJoinedUserList(roomId: PrimaryKey) =
+    databaseSession.dbSearch {
         search {
             MemberJoins.selectAll().where {
                 MemberJoins.objectId eq roomId
@@ -122,8 +122,8 @@ suspend fun DatabaseFactory.getJoinedUserList(backend: Backend, roomId: PrimaryK
         map(MemberJoin::wrapRow)
     }
 
-suspend fun DatabaseFactory.getUserJoinedTime(backend: Backend, parentIds: List<PrimaryKey>, uid: PrimaryKey) =
-    dbSearch(backend) {
+suspend fun Backend.getUserJoinedTime(parentIds: List<PrimaryKey>, uid: PrimaryKey) =
+    databaseSession.dbSearch {
         search {
             MemberJoins.select(MemberJoins.fields).where {
                 (MemberJoins.uid eq uid) and (MemberJoins.objectId inList parentIds)
@@ -132,7 +132,7 @@ suspend fun DatabaseFactory.getUserJoinedTime(backend: Backend, parentIds: List<
         map(MemberJoin::wrapRow)
     }
 
-suspend fun DatabaseFactory.getMemberCount(backend: Backend, parentIds: List<PrimaryKey>) = dbSearch(backend) {
+suspend fun Backend.getMemberCount(parentIds: List<PrimaryKey>) = databaseSession.dbSearch {
     val column = MemberJoins.uid.countDistinct()
     search {
         MemberJoins.select(MemberJoins.objectId, column).where {

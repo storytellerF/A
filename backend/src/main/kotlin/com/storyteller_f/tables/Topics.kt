@@ -1,6 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
+import com.storyteller_f.count
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -10,7 +11,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.utils.*
-import com.storyteller_f.tables.Topic.Companion.wrapRow
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PagingFetch
 import kotlinx.datetime.LocalDateTime
@@ -108,15 +108,14 @@ fun Topic.toTopicInfo(
     )
 }
 
-suspend fun DatabaseFactory.getTopicRoot(
-    backend: Backend,
+suspend fun Backend.getTopicRoot(
     parentId: PrimaryKey
-): Result<ObjectTuple?> = dbSearch(backend) {
+): Result<ObjectTuple?> = databaseSession.dbSearch {
     search {
         Topic.findById(parentId)
     }
     first {
-        val topic = wrapRow(it)
+        val topic = Topic.wrapRow(it)
         ObjectTuple(
             topic.rootId,
             topic.rootType,
@@ -127,20 +126,19 @@ suspend fun DatabaseFactory.getTopicRoot(
 /**
  * 用于生成snapshot
  */
-suspend fun DatabaseFactory.getDirectTopic(
-    backend: Backend,
+suspend fun Backend.getDirectTopic(
     topicId: PrimaryKey
-): Result<TopicInfo?> = dbSearch(backend) {
+): Result<TopicInfo?> = databaseSession.dbSearch {
     search {
         Topic.findById(topicId)
     }
     first {
-        wrapRow(it).toTopicInfo()
+        Topic.wrapRow(it).toTopicInfo()
     }
 }
 
-suspend fun DatabaseFactory.getTopicCommentCount(topicId: List<PrimaryKey>, backend: Backend) =
-    dbSearch(backend) {
+suspend fun Backend.getTopicCommentCount(topicId: List<PrimaryKey>) =
+    databaseSession.dbSearch {
         val countColumn = Topics.id.countDistinct()
         search {
             Topics.select(countColumn, Topics.id).where {
@@ -152,11 +150,10 @@ suspend fun DatabaseFactory.getTopicCommentCount(topicId: List<PrimaryKey>, back
         }
     }
 
-suspend fun DatabaseFactory.isUserCommented(
-    backend: Backend,
+suspend fun Backend.isUserCommented(
     uid: PrimaryKey,
     topicId: List<PrimaryKey>
-) = dbSearch(backend) {
+) = databaseSession.dbSearch {
     search {
         Topics.select(Topics.parentId).where {
             Topics.parentId inList topicId and (Topics.author eq uid)
@@ -167,12 +164,11 @@ suspend fun DatabaseFactory.isUserCommented(
     }
 }
 
-suspend fun DatabaseFactory.getTopicInfo(
-    backend: Backend,
+suspend fun Backend.getTopicInfo(
     fetch: ObjectFetch,
     uid: PrimaryKey?
 ): Result<TopicInfo?> {
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId).select(Topics.fields + Aids.value).where {
                 when (fetch) {
@@ -183,16 +179,15 @@ suspend fun DatabaseFactory.getTopicInfo(
         }
         first(Topic::wrapRow)
     }.mapResultIfNotNull { topic ->
-        processTopicInfo(uid, listOf(topic), backend).map {
+        this.processTopicInfo(uid, listOf(topic)).map {
             it.first()
         }
     }
 }
 
-private suspend fun processTopicInfo(
+private suspend fun Backend.processTopicInfo(
     uid: PrimaryKey?,
-    topics: List<Topic>,
-    backend: Backend
+    topics: List<Topic>
 ): Result<List<TopicInfo>> = (if (uid == null) {
     Result.success(Merged4(emptySet(), emptyMap(), emptyMap(), emptyMap()))
 } else {
@@ -200,19 +195,19 @@ private suspend fun processTopicInfo(
         it.id
     }
     merge({
-        DatabaseFactory.isUserCommented(backend, uid, topicIds).map {
+        isUserCommented(uid, topicIds).map {
             it.toSet()
         }
     }, {
-        DatabaseFactory.getTopicCommentCount(topicIds, backend).map {
+        getTopicCommentCount(topicIds).map {
             it.associateByPair()
         }
     }, {
-        DatabaseFactory.getReactionCount(backend, topicIds).map {
+        getReactionCount(topicIds).map {
             it.associateByPair()
         }
     }, {
-        DatabaseFactory.getReadLogs(backend, topicIds, uid).map {
+        getReadLogs(topicIds, uid).map {
             it.associateBy { userTopicRead ->
                 userTopicRead.objectId
             }
@@ -233,8 +228,7 @@ private suspend fun processTopicInfo(
 /**
  * 根据指定条件获取未填充content 的topic 列表
  */
-suspend fun getTopicsByPredicate(
-    backend: Backend,
+suspend fun Backend.getTopicsByPredicate(
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
     addPinOrder: Boolean = false,
@@ -242,8 +236,8 @@ suspend fun getTopicsByPredicate(
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<List<TopicInfo>> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return DatabaseFactory.dbSearch(backend) {
-        search {
+    return databaseSession.dbSearch {
+        this.search {
             Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
                 .select(Topics.fields + Aids.value)
                 .where(predicate)
@@ -261,24 +255,26 @@ suspend fun getTopicsByPredicate(
         }
         map(Topic::wrapRow)
     }.mapResult {
-        processTopicInfo(uid, it, backend)
+        processTopicInfo(uid, it)
     }
 }
 
-suspend fun getTopicsPagingByPredicate(
-    backend: Backend,
+suspend fun Backend.getTopicsPagingByPredicate(
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
     pagingFetch: PagingFetch,
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<PaginationResult<TopicInfo>> {
-    return getTopicsByPredicate(backend, uid, fillHasCommented, addPagingQuery = {
+    return getTopicsByPredicate(uid, fillHasCommented, addPagingQuery = {
         bindPaginationQuery(Topics, pagingFetch)
     }, predicate = predicate).mapResult { data ->
-        DatabaseFactory.count(backend) {
-            Topics
-                .selectAll()
-                .where(predicate)
+        databaseSession.dbSearch {
+            search {
+                Topics
+                    .selectAll()
+                    .where(predicate)
+            }
+            count()
         }.map { count ->
             PaginationResult(data, count)
         }
@@ -287,11 +283,10 @@ suspend fun getTopicsPagingByPredicate(
 
 // 加密内容不能处理media，需要客户端处理
 @OptIn(ExperimentalStdlibApi::class)
-suspend fun DatabaseFactory.getEncryptedTopicContents(
-    backend: Backend,
+suspend fun Backend.getEncryptedTopicContents(
     data: List<TopicInfo>,
     uid: PrimaryKey
-) = dbQuery(backend) {
+) = databaseSession.dbQuery {
     val topicId = data.map {
         it.id
     }
@@ -316,28 +311,26 @@ suspend fun DatabaseFactory.getEncryptedTopicContents(
     }
 }
 
-suspend fun DatabaseFactory.savePlainTopic(
-    backend: Backend,
+suspend fun Backend.savePlainTopic(
     topic: Topic,
     content: TopicContent.Plain
-) = dbQuery(backend) {
+) = databaseSession.dbQuery {
     Topic.new(topic)
-    insertMediaRefs(backend, topic.id, ObjectType.TOPIC, extractMarkdownMediaLink(content.plain).map {
+    insertMediaRefs(topic.id, ObjectType.TOPIC, extractMarkdownMediaLink(content.plain).map {
         topic.author to it
     }).getOrThrow()
 
-    backend.topicSearchService.saveDocument(
+    topicSearchService.saveDocument(
         listOf(TopicDocument.fromTopic(topic, content))
     ).getOrThrow()
     topic.toTopicInfo().copy(content = content)
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-suspend fun DatabaseFactory.saveEncryptedTopic(
-    backend: Backend,
+suspend fun Backend.saveEncryptedTopic(
     topic: Topic,
     content: TopicContent.Encrypted,
-) = dbQuery(backend) {
+) = databaseSession.dbQuery {
     Topic.new(topic)
     EncryptedTopics.insert {
         it[this.content] = ExposedBlob(content.encrypted.hexToByteArray())
@@ -353,12 +346,11 @@ suspend fun DatabaseFactory.saveEncryptedTopic(
         .copy(content = TopicContent.Encrypted(content.encrypted, content.encryptedKey), isPrivate = true)
 }
 
-suspend fun DatabaseFactory.updateTopicStatus(
-    backend: Backend,
+suspend fun Backend.updateTopicStatus(
     topicId: PrimaryKey,
     newValue: Boolean
 ): Result<Boolean> {
-    return dbQuery(backend) {
+    return databaseSession.dbQuery {
         Topics.update({
             Topics.id eq topicId
         }) {
@@ -367,8 +359,8 @@ suspend fun DatabaseFactory.updateTopicStatus(
     }
 }
 
-suspend fun DatabaseFactory.getRawTopics(backend: Backend, firstId: PrimaryKey): Result<List<Topic>> {
-    return dbSearch(backend) {
+suspend fun Backend.getRawTopics(firstId: PrimaryKey): Result<List<Topic>> {
+    return databaseSession.dbSearch {
         search {
             val query = Topics.selectAll()
             if (firstId != DEFAULT_PRIMARY_KEY) {

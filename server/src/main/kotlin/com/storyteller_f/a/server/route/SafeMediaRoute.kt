@@ -19,14 +19,14 @@ fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) 
     get<RouteMedia> {
         usePrincipal(reader) { uid ->
             pagination(IdentityPagingGenerator) { pagingFetch ->
-                getMediaList(backend, uid, it, pagingFetch)
+                backend.getMediaList(uid, it, pagingFetch)
             }
         }
     }
 
     get<RouteMedia.All> {
         usePrincipal(reader) { uid ->
-            getAllMediaList(backend, uid, it.parent)
+            backend.getAllMediaList(uid, it.parent)
         }
     }
 
@@ -42,7 +42,7 @@ fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) 
 
     post<RouteMedia.Id.ExtractAlbum> {
         usePrincipal(reader) { uid ->
-            extractAlbum(it.parent.id, backend, root, tika, uid)
+            backend.extractAlbum(it.parent.id, root, tika, uid)
         }
     }
 
@@ -55,7 +55,7 @@ fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) 
     post<RouteMedia.Copy> {
         usePrincipal(reader) { uid ->
             val newMedia = call.receive<NewMedia>()
-            copyMedia(backend, newMedia.noPrefixName, uid, ObjectTuple(it.parent.objectId, it.parent.objectType))
+            backend.copyMedia(newMedia.noPrefixName, uid, ObjectTuple(it.parent.objectId, it.parent.objectType))
         }
     }
 }

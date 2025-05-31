@@ -22,7 +22,7 @@ fun Route.bindSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteTopics.Search> {
         usePrincipalOrNull(reader) { uid ->
             pagination(IdentityPagingGenerator) { f ->
-                searchPublicTopics(backend, it, f, uid)
+                backend.searchPublicTopics(it, f, uid)
             }
         }
     }
@@ -30,8 +30,7 @@ fun Route.bindSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteTopics.Recommend> {
         usePrincipalOrNull(reader) { uid ->
             pagination(IdentityPagingGenerator) { f ->
-                recommendTopics(
-                    backend,
+                backend.recommendTopics(
                     uid,
                     it.parent.fillHasCommented,
                     f
@@ -42,13 +41,13 @@ fun Route.bindSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
 
     get<RouteTopics.Id> {
         usePrincipalOrNull(reader) { uid ->
-            getTopic(backend, it.id, uid, it.parent.fillHasCommented)
+            backend.getTopic(it.id, uid, it.parent.fillHasCommented)
         }
     }
 
     get<RouteTopics.Aid> {
         usePrincipalOrNull(reader) { uid ->
-            it.aid?.let { aid -> getTopicByAid(backend, aid, uid, it.parent.fillHasCommented) } ?: Result.success(
+            it.aid?.let { aid -> backend.getTopicByAid(aid, uid, it.parent.fillHasCommented) } ?: Result.success(
                 null
             )
         }
@@ -57,8 +56,7 @@ fun Route.bindSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteTopics.Id.Topics> {
         usePrincipalOrNull(reader) { uid ->
             pagination(IdentityPagingGenerator) { f ->
-                getTopLevelTopicsInObject(
-                    backend,
+                backend.getTopLevelTopicsInObject(
                     it.parent.id,
                     ObjectType.TOPIC,
                     uid,
@@ -71,7 +69,7 @@ fun Route.bindSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
     }
     get<RouteTopics.Id.Reactions> {
         usePrincipalOrNull(reader) { uid ->
-            reactionList(backend, it.parent.id, uid, it.fillHasReacted)
+            backend.reactionList(it.parent.id, uid, it.fillHasReacted)
         }
     }
 }
@@ -79,14 +77,14 @@ fun Route.bindSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
 fun Route.bindProtectedSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteTopics.Id.Snapshot> {
         usePrincipal(reader) { uid ->
-            createTopicSnapshot(backend, uid, it.parent.id)
+            backend.createTopicSnapshot(uid, it.parent.id)
         }
     }
 
     post<RouteTopics> {
         usePrincipal(reader) { uid ->
             val topic = call.receive<NewTopic>()
-            createPublicTopic(backend, uid, topic)
+            backend.createPublicTopic(uid, topic)
         }
     }
 
@@ -94,7 +92,7 @@ fun Route.bindProtectedSafeTopicRoute(reader: DatabaseReader, backend: Backend) 
         usePrincipal(reader) { uid ->
             val emoji = call.receive<NewReaction>().emoji
             if (isEmoji(emoji)) {
-                addReaction(backend, uid, it.parent.id, emoji)
+                backend.addReaction(uid, it.parent.id, emoji)
             } else {
                 Result.failure(BadRequestException("invalid emoji"))
             }
@@ -106,7 +104,7 @@ fun Route.bindProtectedSafeTopicRoute(reader: DatabaseReader, backend: Backend) 
             val deleteReaction = call.receive<DeleteReaction>()
             val emoji = deleteReaction.emoji
             if (isEmoji(emoji)) {
-                deleteReaction(backend, uid, emoji, deleteReaction.objectId)
+                backend.deleteReaction(uid, emoji, deleteReaction.objectId)
             } else {
                 Result.failure(BadRequestException("invalid emoji"))
             }
@@ -115,13 +113,13 @@ fun Route.bindProtectedSafeTopicRoute(reader: DatabaseReader, backend: Backend) 
 
     post<RouteTopics.Id.Pin> {
         usePrincipal(reader) { uid ->
-            updateTopicPin(backend, uid, it.parent.id, true)
+            backend.updateTopicPin(uid, it.parent.id, true)
         }
     }
 
     post<RouteTopics.Id.Unpin> {
         usePrincipal(reader) { uid ->
-            updateTopicPin(backend, uid, it.parent.id, false)
+            backend.updateTopicPin(uid, it.parent.id, false)
         }
     }
 }

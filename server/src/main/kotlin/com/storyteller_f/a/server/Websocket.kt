@@ -3,7 +3,6 @@ package com.storyteller_f.a.server
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
@@ -70,7 +69,7 @@ class ExternalDispatcher(val client: HttpClient, val endpointUrl: String) : Noti
     }
 }
 
-suspend fun sendTopicToRoomMembers(backend: Backend) {
+suspend fun Backend.sendTopicToRoomMembers() {
     HttpClient {
         expectSuccess = true
         install(Logging)
@@ -79,7 +78,7 @@ suspend fun sendTopicToRoomMembers(backend: Backend) {
         }
     }.use { client ->
         sharedFlow.collect { frame ->
-            DatabaseFactory.getJoinedUserList(backend, frame.topicInfo.rootId).mapResult { list ->
+            getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
                 val memberJoins = list.filter {
                     it.uid != frame.topicInfo.author
                 }
@@ -90,7 +89,7 @@ suspend fun sendTopicToRoomMembers(backend: Backend) {
                         WebsocketDispatcher(it)
                     }
                 }
-                DatabaseFactory.getUserDevices(backend, memberJoins.map {
+                getUserDevices(memberJoins.map {
                     it.uid
                 }).map {
                     it.map {
@@ -179,11 +178,11 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
                     return
                 }
             }
-            addTopicAtRoom(backend, newTopic, uid).onSuccess {
+            backend.addTopicAtRoom(newTopic, uid).onSuccess {
                 if (it == null) {
                     sendSerialized(RoomFrame.Error("not found") as RoomFrame)
                 } else {
-                    addUserLog(backend, uid, UserLogType.CREATE, it.tuple())
+                    backend.addUserLog(uid, UserLogType.CREATE, it.tuple())
                     val raw = RoomFrame.NewTopicInfo(it)
                     sendSerialized(raw as RoomFrame)
                     messageResponseFlow.emit(raw)
@@ -199,17 +198,15 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
     }
 }
 
-private suspend fun addTopicAtRoom(
-    backend: Backend,
+private suspend fun Backend.addTopicAtRoom(
     newTopic: NewRoomTopic,
     uid: PrimaryKey
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            DatabaseFactory.getTopicRoot(backend, newTopic.parentId).mapResultIfNotNull { (id, type) ->
+            getTopicRoot(newTopic.parentId).mapResultIfNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
                     addTopicIntoRoom(
-                        backend,
                         id,
                         uid,
                         newTopic
@@ -222,7 +219,6 @@ private suspend fun addTopicAtRoom(
 
         ObjectType.ROOM -> {
             addTopicIntoRoom(
-                backend,
                 newTopic.parentId,
                 uid,
                 newTopic
@@ -235,13 +231,12 @@ private suspend fun addTopicAtRoom(
     }
 }
 
-private suspend fun addTopicIntoRoom(
-    backend: Backend,
+private suspend fun Backend.addTopicIntoRoom(
     roomId: PrimaryKey,
     uid: PrimaryKey,
     newTopic: NewRoomTopic
 ): Result<TopicInfo?> {
-    return isMemberJoined(backend, roomId, uid).mapResult { bool ->
+    return this.isMemberJoined(roomId, uid).mapResult { bool ->
         if (bool) {
             val content = newTopic.content
             val newId = SnowflakeFactory.nextId()
@@ -257,17 +252,15 @@ private suspend fun addTopicIntoRoom(
                 null
             )
 
-            DatabaseFactory.checkRoomIsPrivate(backend, roomId).mapResultIfNotNull { isPrivate ->
+            checkRoomIsPrivate(roomId).mapResultIfNotNull { isPrivate ->
                 if (isPrivate) {
                     if (content is TopicContent.Encrypted) {
                         isKeyVerified(
-                            backend,
                             roomId,
                             content.encryptedKey
                         ).mapResult {
                             if (it) {
-                                DatabaseFactory.saveEncryptedTopic(
-                                    backend,
+                                saveEncryptedTopic(
                                     topic,
                                     content
                                 )
@@ -282,8 +275,7 @@ private suspend fun addTopicIntoRoom(
                     }
                 } else {
                     when (content) {
-                        is TopicContent.Plain -> DatabaseFactory.savePlainTopic(
-                            backend,
+                        is TopicContent.Plain -> savePlainTopic(
                             topic,
                             content = content
                         )
@@ -292,7 +284,7 @@ private suspend fun addTopicIntoRoom(
                     }
                 }
             }.mapResultIfNotNull { topicInfo ->
-                processTopicExtension(backend, listOf(topicInfo), uid, topicInfo.isPrivate, false).mapIfNotNull {
+                processTopicExtension(listOf(topicInfo), uid, topicInfo.isPrivate, false).mapIfNotNull {
                     it.first()
                 }
             }
@@ -302,12 +294,11 @@ private suspend fun addTopicIntoRoom(
     }
 }
 
-private suspend fun isKeyVerified(
-    backend: Backend,
+private suspend fun Backend.isKeyVerified(
     roomId: PrimaryKey,
     encryptedAes: Map<PrimaryKey, String>
 ): Result<Boolean> {
-    return DatabaseFactory.getJoinedUserList(backend, roomId).map { value ->
+    return getJoinedUserList(roomId).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()

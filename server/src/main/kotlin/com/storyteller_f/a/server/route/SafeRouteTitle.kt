@@ -36,7 +36,7 @@ fun Route.bindProtectedTitleRoute(reader: DatabaseReader, backend: Backend) {
             val supportType = titleMap[title.scopeType]
             if (supportType != null) {
                 if (supportType.contains(title.type)) {
-                    createTitle(backend, title, uid)
+                    backend.createTitle(title, uid)
                 } else {
                     Result.failure(ForbiddenException("unsupported title type ${title.type} in ${title.scopeType}"))
                 }

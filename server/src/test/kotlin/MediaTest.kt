@@ -3,7 +3,7 @@ import com.storyteller_f.a.client_lib.copy
 import com.storyteller_f.a.client_lib.getMediaList
 import com.storyteller_f.a.client_lib.upload
 import com.storyteller_f.a.server.service.getExtensionFromMimeType
-import com.storyteller_f.a.server.service.readAlbumFromAudioStream
+import com.storyteller_f.a.server.service.readFlacAlbumFromAudioStream
 import com.storyteller_f.media.getImageDimension
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
@@ -72,7 +72,7 @@ class MediaTest {
     @Test
     fun `extract audio album`() {
         ClassLoader.getSystemClassLoader().getResourceAsStream("I_Don’t_Wanna_Live_Forever.flac")!!.use {
-            it.readAlbumFromAudioStream { image, mimeType ->
+            it.readFlacAlbumFromAudioStream { image, mimeType ->
                 val name = "build/test/cover.${getExtensionFromMimeType(mimeType)}"
                 FileOutputStream(name).use { output ->
                     output.write(image)

@@ -1,7 +1,6 @@
 package com.storyteller_f.media
 
 import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -47,12 +46,11 @@ interface MediaService {
     suspend fun getInputStream(bucketName: String, name: String): Result<InputStream>
 }
 
-suspend fun uploadFilesAfterDetectContentTypeAndDimension(
+suspend fun Backend.uploadFilesAfterDetectContentTypeAndDimension(
     tika: Tika,
-    backend: Backend,
     files: List<UploadPack>
 ): Result<List<MediaInfo?>> {
-    return DatabaseFactory.uploadFiles(backend, files.map {
+    return uploadFiles(files.map {
         val detectedType = tika.detect(it.path)
         val dimension = if (detectedType.startsWith("image")) {
             getImageDimension(it.path.absolutePath, detectedType) {

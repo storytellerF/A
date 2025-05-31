@@ -1,6 +1,7 @@
 package com.storyteller_f
 
 import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
+import com.storyteller_f.DatabaseFactory.onExplainResult
 import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
@@ -39,9 +40,108 @@ fun <T> DatabaseSearchConfig<List<T>>.map(block: (ResultRow) -> T) {
     }
 }
 
+fun DatabaseSearchConfig<Long>.count() {
+    transformFunc = {
+        count()
+    }
+}
+
+fun DatabaseSearchConfig<Boolean>.isEmpty() {
+    transformFunc = {
+        count() == 0L
+    }
+}
+
+fun DatabaseSearchConfig<Boolean>.isNotEmpty() {
+    transformFunc = {
+        count() != 0L
+    }
+}
+
+class DatabaseSession(val database: Database) {
+    private fun Transaction.handleDatabaseException(e: Throwable, point: Exception): Nothing {
+        if (e is UnauthorizedException || e.isDup()) {
+            throw e
+        }
+        val dialectName = connection.metadata {
+            databaseDialectName
+        }
+        val isConnectFailed = e is PSQLException && e.cause is ConnectException
+        val isRetry = point.cause != null
+        val n = if (isRetry) {
+            Exception("retry failed", point)
+        } else {
+            point.initCause(e)
+            point
+        }
+        throw Exception(
+            if (isConnectFailed) {
+                "$dialectName connect failed $isRetry"
+            } else {
+                "$dialectName query failed $isRetry"
+            },
+            n
+        )
+    }
+
+    suspend fun <T> dbQuery(block: suspend Transaction.() -> T): Result<T> {
+        val point = Exception("database failed")
+        return runCatching {
+            newSuspendedTransaction(Dispatchers.IO + MDCContext(), database) {
+                maxAttempts = 1
+                try {
+                    block()
+                } catch (e: Throwable) {
+                    handleDatabaseException(e, point)
+                }
+            }
+        }
+    }
+
+    suspend fun <R> dbSearch(
+        query: DatabaseSearchConfig<R>.() -> Unit,
+    ): Result<R> {
+        val point = Exception("database failed")
+        return runCatching {
+            newSuspendedTransaction(Dispatchers.IO + MDCContext(), database) {
+                maxAttempts = 1
+                debug = onExplainResult != null
+                try {
+                    explainQuery(point) {
+                        DatabaseSearchConfig<R>().apply<DatabaseSearchConfig<R>>(query).searchFunc()
+                    }
+                    DatabaseSearchConfig<R>().apply<DatabaseSearchConfig<R>>(query).let {
+                        it.transformFunc(it.searchFunc())
+                    }
+                } catch (e: Throwable) {
+                    handleDatabaseException(e, point)
+                }
+            }
+        }
+    }
+
+    private fun <T> Transaction.explainQuery(point: Exception, block: () -> SizedIterable<T>) {
+        onExplainResult?.let {
+            val result = explain {
+                block()
+            }.toList().joinToString("\n")
+            assert(statements.isNotEmpty())
+            val input = statements.toString().split("\n").firstOrNull { statement ->
+                statement.isNotEmpty() && !statement.contains("INFORMATION_SCHEMA")
+            }
+            if (input != null) {
+                val s = "explain"
+                val end = input.indexOf(s, ignoreCase = true) + s.length
+                val pureStatements = input.substring(end).trim()
+                it(db.dialect.name, pureStatements, result, point.stackTraceToString())
+            }
+        }
+    }
+}
+
 object DatabaseFactory {
 
-    private var onExplainResult: ((String, String, String, String) -> Unit)? = null
+    internal var onExplainResult: ((String, String, String, String) -> Unit)? = null
 
     fun enableExplain(value: ((String, String, String, String) -> Unit)?) {
         onExplainResult = value
@@ -96,108 +196,6 @@ object DatabaseFactory {
                 "drop tables"
             }
             SchemaUtils.drop(*tables)
-        }
-    }
-
-    private fun Transaction.handleDatabaseException(e: Throwable, point: Exception): Nothing {
-        if (e is UnauthorizedException || e.isDup()) {
-            throw e
-        }
-        val dialectName = connection.metadata {
-            databaseDialectName
-        }
-        val isConnectFailed = e is PSQLException && e.cause is ConnectException
-        val isRetry = point.cause != null
-        val n = if (isRetry) {
-            Exception("retry failed", point)
-        } else {
-            point.initCause(e)
-            point
-        }
-        throw Exception(
-            if (isConnectFailed) {
-                "$dialectName connect failed $isRetry"
-            } else {
-                "$dialectName query failed $isRetry"
-            },
-            n
-        )
-    }
-
-    suspend fun <T> dbQuery(backend: Backend, block: suspend Transaction.() -> T): Result<T> {
-        val point = Exception("database failed")
-        return runCatching {
-            newSuspendedTransaction(Dispatchers.IO + MDCContext(), backend.database) {
-                maxAttempts = 1
-                try {
-                    block()
-                } catch (e: Throwable) {
-                    handleDatabaseException(e, point)
-                }
-            }
-        }
-    }
-
-    suspend fun <R> dbSearch(
-        backend: Backend,
-        query: DatabaseSearchConfig<R>.() -> Unit,
-    ): Result<R> {
-        val point = Exception("database failed")
-        return runCatching {
-            newSuspendedTransaction(Dispatchers.IO + MDCContext(), backend.database) {
-                maxAttempts = 1
-                debug = onExplainResult != null
-                try {
-                    explainQuery(point) {
-                        DatabaseSearchConfig<R>().apply<DatabaseSearchConfig<R>>(query).searchFunc()
-                    }
-                    DatabaseSearchConfig<R>().apply<DatabaseSearchConfig<R>>(query).let {
-                        it.transformFunc(it.searchFunc())
-                    }
-                } catch (e: Throwable) {
-                    handleDatabaseException(e, point)
-                }
-            }
-        }
-    }
-
-    /**
-     * 检查数据是不是空
-     */
-    suspend fun <T> isEmpty(backend: Backend, block: () -> SizedIterable<T>): Result<Boolean> =
-        isNotEmpty(backend, block).map {
-            !it
-        }
-
-    suspend fun <T> isNotEmpty(
-        backend: Backend,
-        block: () -> SizedIterable<T>
-    ): Result<Boolean> = dbQuery(backend, {
-        block().count()
-    }).map {
-        it > 0
-    }
-
-    suspend fun count(backend: Backend, block: () -> Query): Result<Long> =
-        dbQuery(backend) {
-            block().count()
-        }
-
-    private fun <T> Transaction.explainQuery(point: Exception, block: () -> SizedIterable<T>) {
-        onExplainResult?.let {
-            val result = explain {
-                block()
-            }.toList().joinToString("\n")
-            assert(statements.isNotEmpty())
-            val input = statements.toString().split("\n").firstOrNull { statement ->
-                statement.isNotEmpty() && !statement.contains("INFORMATION_SCHEMA")
-            }
-            if (input != null) {
-                val s = "explain"
-                val end = input.indexOf(s, ignoreCase = true) + s.length
-                val pureStatements = input.substring(end).trim()
-                it(db.dialect.name, pureStatements, result, point.stackTraceToString())
-            }
         }
     }
 }

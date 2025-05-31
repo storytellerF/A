@@ -1,6 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
+import com.storyteller_f.count
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.AlgoType
@@ -56,7 +57,7 @@ class User(
             }
         }
 
-        fun find(function: SqlExpressionBuilder.() -> Op<Boolean>): SizedIterable<ResultRow> {
+        fun find(function: SqlExpressionBuilder.() -> Op<Boolean>): Query {
             return Users.selectAll().where(function)
         }
     }
@@ -66,8 +67,8 @@ fun mapUserInfo(it: ResultRow): Pair<UserInfo, String?> {
     return User.wrapRow(it).toUserInfo() to it[Users.icon]
 }
 
-suspend fun DatabaseFactory.getUserAid(backend: Backend, id: PrimaryKey): Result<String?> =
-    dbSearch(backend) {
+suspend fun Backend.getUserAid(id: PrimaryKey): Result<String?> =
+    databaseSession.dbSearch {
         search {
             Aids.selectAll().where {
                 Aids.objectId eq id
@@ -87,11 +88,10 @@ sealed interface ObjectFetch {
     data class IdFetch(val id: PrimaryKey) : ObjectFetch
 }
 
-suspend fun DatabaseFactory.getUserAndRelatedMedia(
-    backend: Backend,
+suspend fun Backend.getUserAndRelatedMedia(
     fetch: ObjectFetch
 ): Result<UserInfo?> {
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
                 when (fetch) {
@@ -102,14 +102,13 @@ suspend fun DatabaseFactory.getUserAndRelatedMedia(
         }
         first(::mapUserInfo)
     }.mapResultIfNotNull {
-        processUserList(backend, listOf(it)).mapIfNotNull(List<UserInfo>::first)
+        this.processUserList(listOf(it)).mapIfNotNull(List<UserInfo>::first)
     }
 }
 
-suspend fun DatabaseFactory.getRawUser(
-    backend: Backend,
+suspend fun Backend.getRawUser(
     it: PrimaryKey
-): Result<Pair<UserInfo, String?>?> = dbSearch(backend) {
+): Result<Pair<UserInfo, String?>?> = databaseSession.dbSearch {
     search {
         Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
             Users.id eq it
@@ -118,13 +117,12 @@ suspend fun DatabaseFactory.getRawUser(
     first(::mapUserInfo)
 }
 
-suspend fun DatabaseFactory.commonPaginationMemberList(
-    backend: Backend,
+suspend fun Backend.commonPaginationMemberList(
     objectId: PrimaryKey?,
     word: String?,
     pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<UserInfo, String?>>, Long>> {
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(
                 Users,
@@ -133,8 +131,11 @@ suspend fun DatabaseFactory.commonPaginationMemberList(
         }
         map(::mapUserInfo)
     }.mapResult { pairs ->
-        count(backend) {
-            buildSearchMembersQuery(objectId, true, word)
+        databaseSession.dbSearch {
+            search {
+                buildSearchMembersQuery(objectId, true, word)
+            }
+            count()
         }.map { value ->
             pairs to value
         }
@@ -165,23 +166,21 @@ private fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, wo
     return query
 }
 
-suspend fun DatabaseFactory.searchMembers(
-    backend: Backend,
+suspend fun Backend.searchMembers(
     objectId: PrimaryKey?,
     word: String?,
     pagingFetch: PagingFetch
 ): Result<PaginationResult<UserInfo>?> {
-    return commonPaginationMemberList(backend, objectId, word, pagingFetch).mapResult { (pairs, count) ->
-        processUserList(backend, pairs).mapIfNotNull {
+    return commonPaginationMemberList(objectId, word, pagingFetch).mapResult { (pairs, count) ->
+        this.processUserList(pairs).mapIfNotNull {
             PaginationResult(it, count)
         }
     }
 }
 
-suspend fun DatabaseFactory.getUserByAddress(
-    backend: Backend,
+suspend fun Backend.getUserByAddress(
     ad: String
-): Result<Triple<UserInfo, String?, String>?> = dbSearch(backend) {
+): Result<Triple<UserInfo, String?, String>?> = databaseSession.dbSearch {
     search {
         Users
             .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -196,14 +195,13 @@ suspend fun DatabaseFactory.getUserByAddress(
     }
 }
 
-suspend fun DatabaseFactory.createUser(
-    backend: Backend,
+suspend fun Backend.createUser(
     ad: String,
     name: String,
     newId: PrimaryKey,
     pk: String
 ): Result<UserInfo> {
-    return dbQuery(backend) {
+    return databaseSession.dbQuery {
         val user = User(null, pk, ad, null, name, newId, now(), 0, PassType.RAW, AlgoType.P256)
         check(Users.insert {
             it[id] = user.id
@@ -218,20 +216,21 @@ suspend fun DatabaseFactory.createUser(
     }
 }
 
-suspend fun DatabaseFactory.isUserNotExists(backend: Backend, pk: String): Result<Boolean> =
-    isEmpty(
-        backend
-    ) {
-        User.find {
-            Users.publicKey eq pk
+suspend fun Backend.isUserNotExists(pk: String): Result<Boolean> {
+    return databaseSession.dbSearch {
+        search {
+            User.find {
+                Users.publicKey eq pk
+            }
         }
+        isEmpty()
     }
+}
 
-suspend fun DatabaseFactory.updateUser(
-    backend: Backend,
+suspend fun Backend.updateUserInfo(
     id: PrimaryKey,
     newUser: UpdateUserBody
-) = dbQuery(backend) {
+) = databaseSession.dbQuery {
     listOf({
         val avatar = newUser.avatar
         val name = newUser.nickname
@@ -265,18 +264,21 @@ suspend fun DatabaseFactory.updateUser(
     }
 }
 
-suspend fun DatabaseFactory.checkUserExists(backend: Backend, id: Long) =
-    isNotEmpty(backend) {
-        User.find {
-            Users.id eq id
+suspend fun Backend.checkUserExists(id: Long): Result<Boolean> {
+    return databaseSession.dbSearch {
+        search {
+            User.find {
+                Users.id eq id
+            }
         }
+        isNotEmpty()
     }
+}
 
-suspend fun DatabaseFactory.getUserAuthDataByAid(
-    backend: Backend,
+suspend fun Backend.getUserAuthDataByAid(
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ) =
-    dbSearch(backend) {
+    databaseSession.dbSearch {
         search {
             Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
                 .select(listOf(Users.publicKey, Users.id))
@@ -287,11 +289,10 @@ suspend fun DatabaseFactory.getUserAuthDataByAid(
         }
     }
 
-suspend fun DatabaseFactory.getUserAuthDataBy(
-    backend: Backend,
+suspend fun Backend.getUserAuthDataBy(
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ) =
-    dbSearch(backend) {
+    databaseSession.dbSearch {
         search {
             Users.select(listOf(Users.publicKey, Users.id)).where(predicate)
         }
@@ -300,10 +301,9 @@ suspend fun DatabaseFactory.getUserAuthDataBy(
         }
     }
 
-suspend fun DatabaseFactory.getUsersByIds(
-    backend: Backend,
+suspend fun Backend.getUsersByIds(
     ids: List<PrimaryKey>
-) = dbSearch(backend) {
+) = databaseSession.dbSearch {
     search {
         Users
             .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -314,11 +314,11 @@ suspend fun DatabaseFactory.getUsersByIds(
     }
     map(::mapUserInfo)
 }.mapResult {
-    processUserList(backend, it)
+    this.processUserList(it)
 }
 
-suspend fun DatabaseFactory.getRawUsersByAids(backend: Backend, ids: List<String>) =
-    dbSearch(backend) {
+suspend fun Backend.getRawUsersByAids(ids: List<String>) =
+    databaseSession.dbSearch {
         search {
             Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
                 .select(Users.fields + Aids.value)
@@ -329,8 +329,8 @@ suspend fun DatabaseFactory.getRawUsersByAids(backend: Backend, ids: List<String
         map(::mapUserInfo)
     }
 
-suspend fun DatabaseFactory.getUserAcgByIds(backend: Backend, ids: List<PrimaryKey>) =
-    dbSearch(backend) {
+suspend fun Backend.getUserAcgByIds(ids: List<PrimaryKey>) =
+    databaseSession.dbSearch {
         search {
             Users.select(Users.fields)
                 .where {
@@ -342,10 +342,9 @@ suspend fun DatabaseFactory.getUserAcgByIds(backend: Backend, ids: List<PrimaryK
         }
     }
 
-suspend fun processUserList(
-    backend: Backend,
+suspend fun Backend.processUserList(
     pairs: List<Pair<UserInfo, String?>>
-) = DatabaseFactory.getMediaInfoList(backend, pairs.map {
+) = getMediaInfoList(pairs.map {
     it.second
 }).mapIfNotNull { value ->
     pairs.mapIndexed { index, pair ->

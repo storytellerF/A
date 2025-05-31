@@ -2,7 +2,6 @@ package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.shared.model.*
@@ -17,28 +16,25 @@ import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PagingFetch
 
-suspend fun getUserTitles(
-    backend: Backend,
+suspend fun Backend.getUserTitles(
     uid: PrimaryKey,
     searchType: TitleSearchType,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
     fetch: PagingFetch
-) = DatabaseFactory.userTitles(
-    backend,
+) = userTitles(
     fetch,
     uid,
     searchType,
     type,
     scopeId
 ).mapResultIfNotNull { (list, count) ->
-    processTitleList(backend, list, uid).mapIfNotNull {
+    processTitleList(list, uid).mapIfNotNull {
         PaginationResult(it, count)
     }
 }
 
-private suspend fun processTitleList(
-    backend: Backend,
+private suspend fun Backend.processTitleList(
     list: List<TitleInfo>,
     uid: PrimaryKey?
 ): Result<List<TitleInfo>?> {
@@ -73,41 +69,39 @@ private suspend fun processTitleList(
         }
     }.distinct()
     return getRelatedObject(
-        backend,
         uidList,
         communityIdList,
         roomIdList
     ).mapResult { (userList, roomList, communityList) ->
-        getTopicByIds(backend, topicIdList, uid, false).mapIfNotNull { topicList ->
+        getTopicByIds(topicIdList, uid, false).mapIfNotNull { topicList ->
             processTitleList(userList.orEmpty(), communityList.orEmpty(), roomList.orEmpty(), list, topicList)
         }
     }
 }
 
-private suspend fun getRelatedObject(
-    backend: Backend,
+private suspend fun Backend.getRelatedObject(
     uidList: List<PrimaryKey>,
     communityIdList: List<PrimaryKey>,
     roomIdList: List<PrimaryKey>
 ): Result<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>> {
     return merge({
         if (uidList.isNotEmpty()) {
-            DatabaseFactory.getUsersByIds(backend, uidList)
+            getUsersByIds(uidList)
         } else {
             Result.success(emptyList())
         }
     }, {
         if (roomIdList.isNotEmpty()) {
-            DatabaseFactory.getRoomByIds(backend, roomIdList).mapResult {
-                processRoomList(it, backend)
+            getRoomByIds(roomIdList).mapResult {
+                this.processRoomList(it)
             }
         } else {
             Result.success(emptyList())
         }
     }, {
         if (communityIdList.isNotEmpty()) {
-            DatabaseFactory.getCommunityByIds(backend, communityIdList).mapResult {
-                processCommunityList(backend, it)
+            getCommunityByIds(communityIdList).mapResult {
+                processCommunityList(it)
             }
         } else {
             Result.success(emptyList())
@@ -152,13 +146,11 @@ private fun processTitleList(
     }
 }
 
-suspend fun createTitle(
-    backend: Backend,
+suspend fun Backend.createTitle(
     newTitle: NewTitle,
     uid: PrimaryKey
 ) =
     checkRootAdminPermission(
-        backend,
         newTitle.scopeType,
         newTitle.scopeId,
         uid
@@ -176,14 +168,13 @@ suspend fun createTitle(
                 false,
                 null
             )
-            DatabaseFactory.createTitle(
-                backend,
+            createTitle(
                 title,
                 topic,
                 newTitle.description
             ).mapResult { created ->
-                addUserLog(backend, uid, UserLogType.CREATE, created.tuple())
-                processTitleList(backend, listOf(created), uid).mapIfNotNull {
+                this.addUserLog(uid, UserLogType.CREATE, created.tuple())
+                this.processTitleList(listOf(created), uid).mapIfNotNull {
                     it.first()
                 }
             }
