@@ -14,7 +14,8 @@ import com.storyteller_f.a.app.compontents.DialogSaveState
 import com.storyteller_f.a.app.pages.topic.upload
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.*
+import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import kotlinx.collections.immutable.persistentListOf
@@ -501,9 +502,11 @@ class UploadViewModel(sessionManager: SessionManager, private val uploader: Uplo
                         upload(
                             sessionManager,
                             myUid ob ObjectType.USER,
-                            userSessionViewModelFile.size,
-                            userSessionViewModelFile.name,
-                            userSessionViewModelFile.contentType
+                            UploadData(
+                                userSessionViewModelFile.size,
+                                userSessionViewModelFile.name,
+                                userSessionViewModelFile.contentType
+                            )
                         ) {
                             userSessionViewModelFile.source()?.buffered() ?: throw Exception("upload failed")
                         }.first()

@@ -141,13 +141,11 @@ private suspend fun createTopicSnapshot(
                             listOf(
                                 UploadPack(
                                     pdfFile,
-                                    name,
                                     "$topicId.pdf",
                                     uid,
                                     pdfFile.length(),
                                     ContentType.Application.Pdf.contentType,
                                     null,
-                                    null
                                 )
                             )
                         ).map {

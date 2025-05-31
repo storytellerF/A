@@ -1,11 +1,6 @@
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.obj.NewCommunity
-import com.storyteller_f.shared.obj.NewRoom
-import com.storyteller_f.shared.obj.NewTitle
-import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.RoomFrame
-import com.storyteller_f.shared.obj.UpdateUserRead
+import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.TitleType
 import io.ktor.http.*
@@ -88,9 +83,11 @@ class TopicTest {
             attachSession {
                 val media = upload(
                     ObjectTuple(it.uid, ObjectType.USER),
-                    5,
-                    "hello.txt",
-                    ContentType.defaultForFileExtension("txt")
+                    UploadData(
+                        5,
+                        "hello.txt",
+                        ContentType.defaultForFileExtension("txt")
+                    )
                 ) {
                     Buffer().apply {
                         writeString("hello")
@@ -101,10 +98,10 @@ class TopicTest {
                     createNewTopic(
                         ObjectType.USER,
                         it.uid,
-                        "![hello.txt](${media.noPrefixName})"
+                        "![hello.txt](${media.name})"
                     ).getOrThrow()
                 val plain = info.content as TopicContent.Plain
-                assertEquals(media.name, plain.list.first().name)
+                assertEquals(media.newFullName, plain.list.first().newFullName)
                 // 查询单个topic
                 assertListSize(1, getUserTopics(it.uid, null, 10))
                 createNewTopic(

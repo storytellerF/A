@@ -5,10 +5,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.common.IdentityPagingGenerator
 import com.storyteller_f.a.server.common.pagination
-import com.storyteller_f.a.server.service.copyMedia
-import com.storyteller_f.a.server.service.getAllMediaList
-import com.storyteller_f.a.server.service.getMediaList
-import com.storyteller_f.a.server.service.uploadMedia
+import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.obj.NewMedia
 import com.storyteller_f.shared.obj.ObjectTuple
 import io.ktor.server.request.*
@@ -41,6 +38,12 @@ fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) 
 
     val tika by lazy {
         Tika()
+    }
+
+    post<RouteMedia.Id.ExtractAlbum> {
+        usePrincipal(reader) { uid ->
+            extractAlbum(it.parent.id, backend, root, tika, uid)
+        }
     }
 
     post<RouteMedia.Upload> {

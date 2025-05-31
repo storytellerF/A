@@ -15,16 +15,18 @@ data class Dimension(val width: Int, val height: Int)
 data class MediaInfo(
     override val id: PrimaryKey,
     val url: String,
-    val name: String,
+    val fullName: String,
     val contentType: String,
     val size: Long,
-    val noPrefixName: String,
+    val name: String,
     val owner: PrimaryKey,
     val lastModified: LocalDateTime,
     val dimension: Dimension?,
 ) : Identifiable {
     override val objectType: ObjectType
         get() = ObjectType.MEDIA
+
+    val newFullName = "$owner/$name"
 }
 
 fun checkMediaDimensionRatioMatch(dimension: Dimension, aspectRatio: Dimension): Boolean {

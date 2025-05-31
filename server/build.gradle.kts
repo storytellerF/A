@@ -46,6 +46,7 @@ dependencies {
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.testcontainers.mysql)
     testImplementation(libs.sql.formatter)
+    testImplementation("org.bytedeco:javacv-platform:1.5.11")
 }
 
 

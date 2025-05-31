@@ -65,6 +65,12 @@ class RouteMedia(val objectId: PrimaryKey, val objectType: ObjectType) {
 
     @Resource("all")
     class All(val parent: RouteMedia)
+
+    @Resource("{id}")
+    class Id(val parent: RouteMedia, val id: PrimaryKey) {
+        @Resource("extract-album")
+        class ExtractAlbum(val parent: Id)
+    }
 }
 
 @Resource("/rooms")

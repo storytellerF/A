@@ -1,3 +1,4 @@
+import com.storyteller_f.a.client_lib.UploadData
 import com.storyteller_f.a.client_lib.getUserInfo
 import com.storyteller_f.a.client_lib.getUserInfoByAid
 import com.storyteller_f.a.client_lib.updateUserInfo
@@ -33,9 +34,11 @@ class UserTest {
             val info =
                 upload(
                     ObjectTuple(it.uid, ObjectType.USER),
-                    bytes.size.toLong(),
-                    "avatar1.png",
-                    ContentType.parse("image/png")
+                    UploadData(
+                        bytes.size.toLong(),
+                        "avatar1.png",
+                        ContentType.parse("image/png")
+                    )
                 ) {
                     Buffer().apply {
                         write(bytes)
@@ -44,7 +47,7 @@ class UserTest {
                     .getOrThrow().data.first()
             assertEquals(
                 "avatar1.png",
-                updateUserInfo(UpdateUserBody(avatar = info.name)).getOrThrow().avatar!!.noPrefixName
+                updateUserInfo(UpdateUserBody(avatar = info.newFullName)).getOrThrow().avatar!!.name
             )
         }
     }

@@ -9,6 +9,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toKotlinInstant
 import kotlinx.datetime.toLocalDateTime
 import org.apache.hc.core5.net.URIBuilder
+import java.io.InputStream
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -35,11 +36,11 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
         return withContext(Dispatchers.IO) {
             val bucketPath = base.resolve(bucketName)
             uploadPacks.map { uploadPack ->
-                val target = bucketPath.resolve(uploadPack.name).createParentDirectories()
+                val target = bucketPath.resolve(uploadPack.newFullName).createParentDirectories()
                 Files.copy(uploadPack.path.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
             }
             get(bucketName, uploadPacks.map {
-                it.name
+                it.newFullName
             })
         }
     }
@@ -107,6 +108,20 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
                 it.new
             }
             get(bucketName, newNames)
+        }
+    }
+
+    override suspend fun getInputStream(
+        bucketName: String,
+        name: String
+    ): Result<InputStream> {
+        return withContext(Dispatchers.IO) {
+            val mediaPath = base.resolve("$bucketName/$name")
+            if (mediaPath.exists()) {
+                Result.success(mediaPath.inputStream())
+            } else {
+                Result.failure(Exception("file $name not exists"))
+            }
         }
     }
 

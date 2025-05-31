@@ -36,6 +36,7 @@ import com.storyteller_f.a.app.model.OnMediaUploaded
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.a.app.utils.Recorder
 import com.storyteller_f.a.client_lib.SessionManager
+import com.storyteller_f.a.client_lib.UploadData
 import com.storyteller_f.a.client_lib.upload
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -193,7 +194,7 @@ private fun MediaListView(
                             FileIcon(item)
                             Spacer(modifier = Modifier.width(20.dp))
                             Column {
-                                Text(item.noPrefixName, style = MaterialTheme.typography.labelMedium)
+                                Text(item.name, style = MaterialTheme.typography.labelMedium)
                                 Spacer(modifier = Modifier.height(10.dp))
                                 Row {
                                     Text(item.lastModified.formatTime(), style = MaterialTheme.typography.labelSmall)
@@ -226,7 +227,7 @@ private fun FileIcon(it: MediaInfo) {
     if (contentType.startsWith("image")) {
         AsyncImage(
             it.url,
-            it.noPrefixName,
+            it.name,
             modifier = modifier.clip(RoundedCornerShape(5.dp)),
             contentScale = ContentScale.Crop
         )
@@ -250,9 +251,11 @@ private suspend fun selectFileAndUpload(
             upload(
                 sessionManager,
                 mediaTarget,
-                f.size(),
-                f.name,
-                ContentType.defaultForFileExtension(f.extension)
+                UploadData(
+                    f.size(),
+                    f.name,
+                    ContentType.defaultForFileExtension(f.extension)
+                )
             ) {
                 f.source().buffered()
             }
@@ -274,9 +277,7 @@ suspend fun uploadPath(
         upload(
             sessionManager,
             mediaTarget,
-            meta.size,
-            path.name,
-            ContentType.defaultForFilePath(path.toString())
+            UploadData(meta.size, path.name, ContentType.defaultForFileExtension(path.toString())),
         ) {
             SystemFileSystem.source(path).buffered()
         }
@@ -286,13 +287,11 @@ suspend fun uploadPath(
 suspend fun upload(
     sessionManager: SessionManager,
     mediaTarget: ObjectTuple,
-    size: Long,
-    name: String,
-    contentType: ContentType,
+    uploadData: UploadData,
     readStream: () -> Input
 ): List<MediaInfo> {
-    if (size <= 100 * 1024 * 1024) {
-        val response = sessionManager.upload(mediaTarget, size, name, contentType, readStream).getOrThrow()
+    if (uploadData.size <= 100 * 1024 * 1024) {
+        val response = sessionManager.upload(mediaTarget, uploadData, readStream).getOrThrow()
 
         bus.emit(OnMediaUploaded(response.data))
         return response.data
@@ -309,7 +308,7 @@ fun insertContent(
     if (it.contentType.startsWith("image/")) {
         updateInput(
             """$input
-![${it.noPrefixName}](${it.noPrefixName} "${it.noPrefixName}")
+![${it.name}](${it.name} "${it.name}")
 """
         )
     } else {
@@ -318,7 +317,7 @@ fun insertContent(
 ```object
 {
     "contentType": "${it.contentType}",
-    "name": "${it.noPrefixName}"
+    "name": "${it.name}"
 }
 ```"""
         )

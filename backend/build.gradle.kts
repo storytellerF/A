@@ -19,7 +19,7 @@ dependencies {
 
     implementation(libs.pgjdbc.ng)
     implementation(libs.postgresql)
-        implementation(projects.shared)
+    implementation(projects.shared)
     implementation(libs.minio)
     implementation(libs.elasticsearch.java)
     implementation(libs.jackson.module.kotlin)

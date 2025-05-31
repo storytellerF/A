@@ -24,13 +24,15 @@ import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.io.File
+import java.io.OutputStreamWriter
 import java.net.InetAddress
 import java.security.SecureRandom
 import kotlin.concurrent.thread
@@ -43,6 +45,9 @@ import kotlin.time.Duration.Companion.seconds
 fun main(args: Array<String>) {
     loadAvif()
     Napier.base(kmpLogger)
+    Napier.i {
+        "encoding ${OutputStreamWriter(System.out).encoding}"
+    }
     SnowflakeFactory.setMachine(0)
 
     val map = readEnv()
@@ -205,46 +210,54 @@ private fun processPresetDataIfNeed(env: MergedEnv) {
     runBlocking {
         suspendCancellableCoroutine {
             thread {
-                val process = ProcessBuilder(scriptArray).directory(file).start()
-                val reader = process.inputStream.bufferedReader()
-                val errorReader = process.errorStream.bufferedReader()
-                try {
-                    launch {
-                        while (process.isAlive) {
-                            val line = reader.readLine() ?: break
-                            Napier.i(tag = "preset") {
-                                line
-                            }
-                        }
-                    }
-                    launch {
-                        while (process.isAlive) {
-                            val line = errorReader.readLine() ?: break
-                            Napier.e(tag = "preset") {
-                                line
-                            }
-                        }
-                    }
-                    Napier.i(tag = "preset") {
-                        "preset started"
-                    }
-                    val code = process.waitFor()
-                    Napier.i(tag = "preset") {
-                        "preset finished. code: $code"
-                    }
-                    it.resume(code)
-                } catch (e: Exception) {
-                    Napier.e(tag = "preset", throwable = e) {
-                        "preset failed"
-                    }
-                    it.resumeWithException(e)
-                    exitProcess(1)
-                } finally {
-                    reader.close()
-                    errorReader.close()
-                    process.destroy()
+                processPresetData(scriptArray, file, it)
+            }
+        }
+    }
+}
+
+private fun CoroutineScope.processPresetData(
+    scriptArray: List<String>,
+    file: File,
+    continuation: CancellableContinuation<Int>
+) {
+    val process = ProcessBuilder(scriptArray).directory(file).start()
+    val reader = process.inputStream.bufferedReader()
+    val errorReader = process.errorStream.bufferedReader()
+    try {
+        launch {
+            while (process.isAlive) {
+                val line = reader.readLine() ?: break
+                Napier.i(tag = "preset") {
+                    line
                 }
             }
         }
+        launch {
+            while (process.isAlive) {
+                val line = errorReader.readLine() ?: break
+                Napier.e(tag = "preset") {
+                    line
+                }
+            }
+        }
+        Napier.i(tag = "preset") {
+            "preset started"
+        }
+        val code = process.waitFor()
+        Napier.i(tag = "preset") {
+            "preset finished. code: $code"
+        }
+        continuation.resume(code)
+    } catch (e: Exception) {
+        Napier.e(tag = "preset", throwable = e) {
+            "preset failed"
+        }
+        continuation.resumeWithException(e)
+        exitProcess(1)
+    } finally {
+        reader.close()
+        errorReader.close()
+        process.destroy()
     }
 }

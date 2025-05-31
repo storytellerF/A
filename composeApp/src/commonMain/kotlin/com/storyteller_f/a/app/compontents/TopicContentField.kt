@@ -82,7 +82,7 @@ private fun TopicContentFieldInternal(
     } else {
         rawMediaList to ObjectTuple(topicInfo.author, ObjectType.USER)
     }
-    val mediaMap = mediaList.associateBy { it.noPrefixName }.toImmutableMap()
+    val mediaMap = mediaList.associateBy { it.name }.toImmutableMap()
     Markdown(
         plain,
         modifier = Modifier.fillMaxWidth().testTag("content"),

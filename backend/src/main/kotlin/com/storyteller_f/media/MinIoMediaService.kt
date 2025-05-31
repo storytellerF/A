@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.toKotlinLocalDateTime
+import java.io.InputStream
 import java.util.concurrent.TimeUnit
 import kotlin.Result
 import kotlin.collections.filterNotNull
@@ -71,6 +72,15 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
+    override suspend fun getInputStream(
+        bucketName: String,
+        name: String
+    ): Result<InputStream> {
+        return useMinIoClient(connection) {
+            getObject(GetObjectArgs.builder().bucket(bucketName).`object`(name).build())
+        }
+    }
+
     override suspend fun get(bucketName: String, names: List<String?>): Result<List<Pair<String, LocalDateTime>?>> {
         return useMinIoClient(connection) {
             names.map {
@@ -110,21 +120,8 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
                 uploadObject(
                     UploadObjectArgs.builder()
                         .bucket(bucketName)
-                        .`object`(it.name)
+                        .`object`(it.newFullName)
                         .filename(it.path.absolutePath)
-                        .apply<UploadObjectArgs.Builder> {
-                            if (it.overrideContentType != null) {
-                                contentType(it.overrideContentType)
-                            }
-                            if (it.dimension != null) {
-                                userMetadata(
-                                    mapOf(
-                                        "width" to it.dimension.width.toString(),
-                                        "height" to it.dimension.height.toString()
-                                    )
-                                )
-                            }
-                        }
                         .build()
                 ).`object`()
             }

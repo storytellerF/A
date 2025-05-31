@@ -431,11 +431,11 @@ suspend fun SessionManager.getAllMediaList(objectId: PrimaryKey, objectType: Obj
         }.body<ServerResponse<MediaInfo>>()
     }
 
+data class UploadData(val size: Long, val name: String, val contentType: ContentType)
+
 suspend fun SessionManager.upload(
     objectTuple: ObjectTuple,
-    size: Long,
-    name: String,
-    contentType: ContentType,
+    data: UploadData,
     block: () -> Input
 ) = serviceCatching {
     client.post("amedia/upload") {
@@ -445,10 +445,10 @@ suspend fun SessionManager.upload(
                 formData {
                     append("description", "amedia")
                     appendInput("file", Headers.build {
-                        append(HttpHeaders.ContentType, contentType)
-                        append(HttpHeaders.ContentDisposition, "filename=\"$name\"")
-                        append(HttpHeaders.ContentLength, size)
-                    }, size, block)
+                        append(HttpHeaders.ContentType, data.contentType)
+                        append(HttpHeaders.ContentDisposition, "filename=\"${data.name}\"")
+                        append(HttpHeaders.ContentLength, data.size)
+                    }, data.size, block)
                 },
                 boundary = "WebAppBoundary"
             )
