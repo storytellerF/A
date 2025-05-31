@@ -15,10 +15,8 @@ import java.io.File
 import java.io.InputStream
 import java.nio.file.Path
 import javax.imageio.ImageIO
-import javax.imageio.stream.ImageInputStreamImpl
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamConstants
-import kotlin.io.path.inputStream
 
 data class UploadPack(
     val path: File,
@@ -56,7 +54,9 @@ suspend fun uploadFiles(
     val packs = files.map {
         val (overrideType, detectedType) = checkContentType(it.path.toPath(), tika, it.overrideContentType)
         val dimension = if (detectedType.startsWith("image")) {
-            getDimension(it.path.toPath(), detectedType)
+            getImageDimension(it.path.absolutePath, detectedType) {
+                it.path.inputStream()
+            }
         } else {
             null
         }
@@ -92,9 +92,9 @@ fun loadAvif() {
     }
 }
 
-suspend fun getSvgSize(file: Path): Pair<String?, Pair<String?, String?>> {
+suspend fun extractSvgDimensionInfo(inputStreamProducer: suspend () -> InputStream): Pair<String?, Pair<String?, String?>> {
     return withContext(Dispatchers.IO) {
-        file.inputStream().use {
+        inputStreamProducer().use {
             val factory = XMLInputFactory.newInstance()
             val reader = factory.createXMLStreamReader(it)
             try {
@@ -118,20 +118,18 @@ suspend fun getSvgSize(file: Path): Pair<String?, Pair<String?, String?>> {
     } ?: (null to (null to null))
 }
 
-suspend fun getDimension(
-    file: Path,
-    contentType: String
+suspend fun getImageDimension(
+    filePath: String,
+    contentType: String,
+    inputStreamProducer: suspend () -> InputStream,
 ): Dimension? {
     if (contentType == "image/svg+xml") {
-        val d = getSvgDimension(file)
-        if (d != null) {
-            return d
-        }
+        return getSvgDimension(inputStreamProducer)
     }
     return ImageIO.getImageReadersByMIMEType(contentType).asSequence().firstNotNullOfOrNull { reader ->
         try {
-            file.inputStream().use {
-                reader.input = PathImageInputStream(it)
+            inputStreamProducer().use {
+                reader.input = ImageIO.createImageInputStream(it)
                 reader.read(reader.minIndex)
                 Dimension(
                     reader.getWidth(reader.minIndex),
@@ -140,7 +138,7 @@ suspend fun getDimension(
             }
         } catch (e: Throwable) {
             Napier.e(throwable = e) {
-                "get image dimension failed $file"
+                "get image dimension failed $filePath"
             }
             null
         } finally {
@@ -149,8 +147,8 @@ suspend fun getDimension(
     }
 }
 
-private suspend fun getSvgDimension(file: Path): Dimension? {
-    val (viewBox, pair) = getSvgSize(file)
+private suspend fun getSvgDimension(inputStreamProducer: suspend () -> InputStream): Dimension? {
+    val (viewBox, pair) = extractSvgDimensionInfo(inputStreamProducer)
     if (viewBox != null) {
         val viewBoxSizeList = viewBox.split(" ").map {
             it.trim().toFloatOrNull()
@@ -171,15 +169,4 @@ private suspend fun getSvgDimension(file: Path): Dimension? {
         return Dimension(width, height)
     }
     return null
-}
-
-class PathImageInputStream(val it: InputStream) : ImageInputStreamImpl() {
-    override fun read(): Int {
-        return it.read()
-    }
-
-    override fun read(b: ByteArray?, off: Int, len: Int): Int {
-        b ?: return 0
-        return it.read(b, off, len)
-    }
 }
