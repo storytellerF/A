@@ -2,6 +2,7 @@ package com.storyteller_f.tables
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
+import com.storyteller_f.count
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.*
@@ -59,8 +60,8 @@ fun Community.toCommunityIfo(
     lastRead = lastRead
 )
 
-suspend fun DatabaseFactory.checkCommunityExists(backend: Backend, parentId: PrimaryKey) =
-    dbSearch(backend) {
+suspend fun Backend.checkCommunityExists(parentId: PrimaryKey) =
+    databaseSession.dbSearch {
         search {
             Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
                 .select(Communities.fields + Aids.value)
@@ -83,8 +84,7 @@ fun mapCommunityInfo(it: ResultRow): CommunityRawResult {
 
 data class CommunityRawResult(val communityInfo: CommunityInfo, val icon: String?, val poster: String?)
 
-suspend fun DatabaseFactory.getCommunity(
-    backend: Backend,
+suspend fun Backend.getCommunity(
     objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
     uid: PrimaryKey? = null
@@ -92,7 +92,7 @@ suspend fun DatabaseFactory.getCommunity(
     if (uid == null && fillJoinInfo == true) {
         return Result.failure(UnauthorizedException())
     }
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
                 .select(Communities.fields + Aids.value)
@@ -105,14 +105,14 @@ suspend fun DatabaseFactory.getCommunity(
         }
         first(Community::wrapRow)
     }.mapResultIfNotNull { community ->
-        processCommunitiesInfo(uid, listOf(community), backend).map {
+        processCommunitiesInfo(uid, listOf(community)).map {
             it.first()
         }
     }
 }
 
-suspend fun DatabaseFactory.getJoinedCommunityIds(backend: Backend, uid: PrimaryKey) =
-    dbSearch(backend) {
+suspend fun Backend.getJoinedCommunityIds(uid: PrimaryKey) =
+    databaseSession.dbSearch {
         search {
             Communities
                 .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
@@ -141,8 +141,7 @@ fun Query.bindPosterSearch(
     return this
 }
 
-suspend fun DatabaseFactory.getPaginationCommunityList(
-    backend: Backend,
+suspend fun Backend.getPaginationCommunityList(
     uid: PrimaryKey?,
     joinStatus: JoinStatusSearch?,
     word: String?,
@@ -151,7 +150,7 @@ suspend fun DatabaseFactory.getPaginationCommunityList(
 ): Result<Pair<List<CommunityRawResult>, Long>?> {
     val joinSearch = joinStatus.toJoinSearch(uid)
 
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
                 .select(Communities.fields + Aids.value)
@@ -160,10 +159,13 @@ suspend fun DatabaseFactory.getPaginationCommunityList(
         }
         map(Community::wrapRow)
     }.mapResultIfNotNull {
-        processCommunitiesInfo(uid, it, backend).mapResult { list ->
-            count(backend) {
-                Communities.select(Communities.id)
-                    .buildCommunitySearchQuery(joinStatus.toJoinSearch(uid), word, hasPosterSearch)
+        this.processCommunitiesInfo(uid, it).mapResult { list ->
+            databaseSession.dbSearch {
+                search {
+                    Communities.select(Communities.id)
+                        .buildCommunitySearchQuery(joinStatus.toJoinSearch(uid), word, hasPosterSearch)
+                }
+                count()
             }.map { count ->
                 list to count
             }
@@ -171,12 +173,10 @@ suspend fun DatabaseFactory.getPaginationCommunityList(
     }
 }
 
-private suspend fun DatabaseFactory.processCommunitiesInfo(
+private suspend fun Backend.processCommunitiesInfo(
     uid: PrimaryKey?,
-    communities: List<Community>,
-    backend: Backend
+    communities: List<Community>
 ): Result<List<CommunityRawResult>> = getContainerInfo(
-    backend,
     communities.map { it.id },
     uid
 ).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
@@ -191,13 +191,12 @@ private suspend fun DatabaseFactory.processCommunitiesInfo(
     }
 }
 
-suspend fun DatabaseFactory.getContainerInfo(
-    backend: Backend,
+suspend fun Backend.getContainerInfo(
     parentIds: List<PrimaryKey>,
     uid: PrimaryKey?
 ): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>> = merge({
     if (uid != null) {
-        getUserJoinedTime(backend, parentIds, uid).map {
+        getUserJoinedTime(parentIds, uid).map {
             it.associateBy { memberJoin ->
                 memberJoin.objectId
             }
@@ -207,7 +206,7 @@ suspend fun DatabaseFactory.getContainerInfo(
     }
 }, {
     if (uid != null) {
-        getReadLogs(backend, parentIds, uid).map {
+        getReadLogs(parentIds, uid).map {
             it.associateBy { userTopicRead ->
                 userTopicRead.objectId
             }
@@ -216,7 +215,7 @@ suspend fun DatabaseFactory.getContainerInfo(
         Result.success(emptyMap())
     }
 }, {
-    getMemberCount(backend, parentIds).map {
+    getMemberCount(parentIds).map {
         it.associateByPair()
     }
 })
@@ -255,9 +254,7 @@ private fun Query.buildCommunitySearchQuery(
     return this
 }
 
-suspend fun DatabaseFactory.createCommunity(backend: Backend, community: Community) = dbQuery(
-    backend
-) {
+suspend fun Backend.createCommunity(community: Community) = databaseSession.dbQuery {
     check(Communities.insert {
         it[id] = community.id
         it[name] = community.name
@@ -293,11 +290,10 @@ suspend fun createCommunityRoomsRaw(
     )
 }
 
-suspend fun DatabaseFactory.getCommunityJoinedTimeByIds(
-    backend: Backend,
+suspend fun Backend.getCommunityJoinedTimeByIds(
     uid: PrimaryKey,
     communityIds: List<PrimaryKey>
-) = dbSearch(backend) {
+) = databaseSession.dbSearch {
     search {
         Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
             MemberJoins.uid eq uid
@@ -311,10 +307,9 @@ suspend fun DatabaseFactory.getCommunityJoinedTimeByIds(
     }
 }
 
-suspend fun DatabaseFactory.getCommunityByIds(
-    backend: Backend,
+suspend fun Backend.getCommunityByIds(
     idList: List<PrimaryKey>
-) = dbSearch(backend) {
+) = databaseSession.dbSearch {
     search {
         Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
             .selectAll().where {
@@ -324,10 +319,9 @@ suspend fun DatabaseFactory.getCommunityByIds(
     map(::mapCommunityInfo)
 }
 
-suspend fun DatabaseFactory.getCommunityByAids(
-    backend: Backend,
+suspend fun Backend.getCommunityByAids(
     idList: List<String>
-) = dbSearch(backend) {
+) = databaseSession.dbSearch {
     search {
         Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
             Aids.value inList idList
@@ -336,11 +330,10 @@ suspend fun DatabaseFactory.getCommunityByAids(
     map(::mapCommunityInfo)
 }
 
-suspend fun processCommunityList(
-    backend: Backend,
+suspend fun Backend.processCommunityList(
     list: List<CommunityRawResult>
 ): Result<List<CommunityInfo>?> {
-    return DatabaseFactory.getMediaInfoList(backend, list.flatMap { (_, icon, poster) ->
+    return getMediaInfoList(list.flatMap { (_, icon, poster) ->
         listOf(icon, poster)
     }).mapIfNotNull { icons ->
         list.mapIndexed { i, communityPair ->
@@ -351,11 +344,10 @@ suspend fun processCommunityList(
     }
 }
 
-suspend fun DatabaseFactory.updateCommunity(
-    backend: Backend,
+suspend fun Backend.updateCommunity(
     id: PrimaryKey,
     body: UpdateCommunityBody
-) = dbQuery(backend) {
+) = databaseSession.dbQuery {
     listOf {
         val newIcon = body.icon
         val newName = body.name

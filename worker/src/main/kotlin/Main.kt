@@ -30,15 +30,15 @@ fun main() {
                 Napier.i(tag = "task") {
                     "execute ${now()}"
                 }
-                doAcgTask(backend)
+                backend.doAcgTask()
             }
         }
     }
 }
 
-private suspend fun doAcgTask(backend: Backend) {
-    getAcgTaskListFromTopics(backend).mapResultIfNotNull { (acgList, userAcgMap, list) ->
-        DatabaseFactory.dbQuery(backend) {
+private suspend fun Backend.doAcgTask() {
+    getAcgTaskListFromTopics().mapResultIfNotNull { (acgList, userAcgMap, list) ->
+        databaseSession.dbQuery {
             acgList.forEach { (id, acg) ->
                 userAcgMap[id]?.let { oldAcgAmount ->
                     Users.update({
@@ -72,11 +72,9 @@ private suspend fun doAcgTask(backend: Backend) {
     }
 }
 
-private suspend fun getAcgTaskListFromTopics(
-    backend: Backend,
-) =
-    DatabaseFactory.getLatestTaskRecord(backend, TaskRecordType.TOPIC_ACG).mapResult {
-        DatabaseFactory.getRawTopics(backend, it?.processedId ?: 0)
+private suspend fun Backend.getAcgTaskListFromTopics() =
+    getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult {
+        getRawTopics(it?.processedId ?: 0)
     }.mapResult { list ->
         if (list.isNotEmpty()) {
             val acgList = list.groupBy {
@@ -87,7 +85,7 @@ private suspend fun getAcgTaskListFromTopics(
             val uids = acgList.map {
                 it.first
             }
-            DatabaseFactory.getUserAcgByIds(backend, uids).map { list ->
+            getUserAcgByIds(uids).map { list ->
                 list.associate {
                     it.first to it.second
                 }

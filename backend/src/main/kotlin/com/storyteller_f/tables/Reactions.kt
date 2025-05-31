@@ -49,12 +49,11 @@ class Reaction(
     }
 }
 
-suspend fun commonReactions(
-    backend: Backend,
+suspend fun Backend.commonReactions(
     uid: PrimaryKey?,
     objectId: List<PrimaryKey>
 ): Result<List<ReactionInfo>> {
-    return DatabaseFactory.dbSearch(backend) {
+    return databaseSession.dbSearch {
         val countExpression = Reactions.id.countDistinct()
         search {
             Reactions.select(Reactions.objectId, Reactions.emoji, countExpression).where {
@@ -68,7 +67,7 @@ suspend fun commonReactions(
         (if (uid == null) {
             Result.success(emptyMap())
         } else {
-            DatabaseFactory.hasReactedInReaction(backend, list.map {
+            hasReactedInReaction(list.map {
                 it.first.first
             }.distinct(), uid).map {
                 it.groupByPair().mapValues { v ->
@@ -88,13 +87,12 @@ suspend fun commonReactions(
     }
 }
 
-suspend fun getReaction(
-    backend: Backend,
+suspend fun Backend.getReaction(
     uid: PrimaryKey,
     objectId: PrimaryKey,
     emojiText: String
 ): Result<ReactionInfo?> {
-    return DatabaseFactory.dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Reactions.selectAll().where {
                 Reactions.objectId eq objectId and (Reactions.emoji eq emojiText)
@@ -104,21 +102,20 @@ suspend fun getReaction(
             Reaction.wrapRow(it)
         }
     }.mapResultIfNotNull {
-        processReactionInfo(backend, objectId, emojiText, uid)
+        this.processReactionInfo(objectId, emojiText, uid)
     }
 }
 
-private suspend fun processReactionInfo(
-    backend: Backend,
+private suspend fun Backend.processReactionInfo(
     objectId: PrimaryKey,
     emojiText: String,
     uid: PrimaryKey
 ): Result<ReactionInfo> = merge({
-    DatabaseFactory.getReactionCountInReaction(backend, listOf(objectId), emojiText).map {
+    getReactionCountInReaction(listOf(objectId), emojiText).map {
         it.associateByPair()
     }
 }, {
-    DatabaseFactory.hasReacted(backend, (objectId), uid, emojiText)
+    hasReacted(objectId, uid, emojiText)
 }).map { (reactionCountMap, hasReacted) ->
     ReactionInfo(
         emojiText,
@@ -128,13 +125,12 @@ private suspend fun processReactionInfo(
     )
 }
 
-suspend fun getSingleReaction(
-    backend: Backend,
+suspend fun Backend.getSingleReaction(
     uid: PrimaryKey,
     emoji: String,
     objectId: PrimaryKey
 ): Result<SingleReactionInfo?> {
-    return DatabaseFactory.dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Reactions.selectAll().where {
                 (Reactions.objectId eq objectId) and (Reactions.emoji eq emoji) and (Reactions.uid eq uid)
@@ -154,27 +150,25 @@ suspend fun getSingleReaction(
     }
 }
 
-suspend fun deleteReaction(
-    backend: Backend,
+suspend fun Backend.deleteReaction(
     uid: PrimaryKey,
     emoji: String,
     objectId: PrimaryKey
-): Result<Boolean> = getSingleReaction(backend, uid, emoji, objectId).mapResult {
+): Result<Boolean> = getSingleReaction(uid, emoji, objectId).mapResult {
     if (it == null) {
         Result.success(true)
     } else {
-        DatabaseFactory.deleteReaction(backend, it.id)
+        deleteReaction(it.id)
     }
 }
 
-suspend fun DatabaseFactory.deleteReaction(
-    backend: Backend,
+suspend fun Backend.deleteReaction(
     reactionId: PrimaryKey
 ): Result<Boolean> {
-    return dbQuery(backend) {
+    return databaseSession.dbQuery {
         Reactions.deleteWhere { builder ->
             with(builder) {
-                id eq reactionId
+                this@deleteWhere.id eq reactionId
             }
         }
     }.map { value ->
@@ -182,13 +176,12 @@ suspend fun DatabaseFactory.deleteReaction(
     }
 }
 
-suspend fun DatabaseFactory.insertReaction(
-    backend: Backend,
+suspend fun Backend.insertReaction(
     newId: PrimaryKey,
     userId: PrimaryKey,
     reactionInfo: ReactionInfo,
     now: LocalDateTime
-) = dbQuery(backend) {
+) = databaseSession.dbQuery {
     check(Reactions.insert { statement ->
         statement[id] = newId
         statement[uid] = userId
@@ -201,8 +194,8 @@ suspend fun DatabaseFactory.insertReaction(
     }
 }
 
-suspend fun DatabaseFactory.getReactionCount(backend: Backend, objectId: List<PrimaryKey>) =
-    dbSearch(backend) {
+suspend fun Backend.getReactionCount(objectId: List<PrimaryKey>) =
+    databaseSession.dbSearch {
         val column = Reactions.id.countDistinct()
         search {
             Reactions.select(column).where {
@@ -214,8 +207,8 @@ suspend fun DatabaseFactory.getReactionCount(backend: Backend, objectId: List<Pr
         }
     }
 
-suspend fun DatabaseFactory.getReactionCountInReaction(backend: Backend, objectId: List<PrimaryKey>, emoji: String) =
-    dbSearch(backend) {
+suspend fun Backend.getReactionCountInReaction(objectId: List<PrimaryKey>, emoji: String) =
+    databaseSession.dbSearch {
         val column = Reactions.emoji.countDistinct()
         search {
             Reactions.select(Reactions.objectId, column).where {
@@ -227,19 +220,22 @@ suspend fun DatabaseFactory.getReactionCountInReaction(backend: Backend, objectI
         }
     }
 
-suspend fun DatabaseFactory.hasReacted(backend: Backend, objectId: PrimaryKey, uid: PrimaryKey, emoji: String) =
-    isNotEmpty(backend) {
-        Reactions.selectAll().where {
-            (Reactions.objectId eq objectId) and (Reactions.emoji eq emoji) and (Reactions.uid eq uid)
+suspend fun Backend.hasReacted(objectId: PrimaryKey, uid: PrimaryKey, emoji: String): Result<Boolean> {
+    return databaseSession.dbSearch {
+        search {
+            Reactions.selectAll().where {
+                (Reactions.objectId eq objectId) and (Reactions.emoji eq emoji) and (Reactions.uid eq uid)
+            }
         }
+        isNotEmpty()
     }
+}
 
-suspend fun DatabaseFactory.hasReactedInReaction(
-    backend: Backend,
+suspend fun Backend.hasReactedInReaction(
     objectId: List<PrimaryKey>,
     uid: PrimaryKey,
 ) =
-    dbSearch(backend) {
+    databaseSession.dbSearch {
         search {
             Reactions.select(Reactions.objectId, Reactions.emoji).where {
                 (Reactions.objectId inList objectId) and (Reactions.uid eq uid)

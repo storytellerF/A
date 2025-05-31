@@ -45,8 +45,8 @@ fun addTaskRecord(taskRecord: TaskRecord) {
     }
 }
 
-suspend fun DatabaseFactory.getLatestTaskRecord(backend: Backend, type: TaskRecordType): Result<TaskRecord?> {
-    return dbSearch(backend,) {
+suspend fun Backend.getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?> {
+    return databaseSession.dbSearch {
         search {
             TaskRecords.selectAll().where {
                 TaskRecords.type eq type

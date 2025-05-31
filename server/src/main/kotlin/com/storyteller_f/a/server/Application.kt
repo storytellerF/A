@@ -64,7 +64,7 @@ fun Application.module() {
     val backend = buildBackend()
     DatabaseFactory.init(backend)
     launch {
-        sendTopicToRoomMembers(backend)
+        backend.sendTopicToRoomMembers()
     }
 
     install(ContentNegotiation) {

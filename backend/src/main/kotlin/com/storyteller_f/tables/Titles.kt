@@ -1,6 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
+import com.storyteller_f.count
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -68,13 +69,12 @@ class Title(
     }
 }
 
-suspend fun DatabaseFactory.createTitle(
-    backend: Backend,
+suspend fun Backend.createTitle(
     title: Title,
     topic: Topic,
     description: String
 ): Result<TitleInfo> {
-    return dbQuery(backend) {
+    return databaseSession.dbQuery {
         check(Titles.insert {
             it[id] = title.id
             it[createdTime] = title.createdTime
@@ -90,7 +90,7 @@ suspend fun DatabaseFactory.createTitle(
             "insert title failed"
         }
         Topic.new(topic)
-        backend.topicSearchService.saveDocument(
+        topicSearchService.saveDocument(
             listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(description)))
         )
             .getOrThrow()
@@ -102,15 +102,14 @@ fun Title.toTitleInfo(): TitleInfo {
     return TitleInfo(id, createdTime, type, creator, receiver, scopeId, scopeType, name, descriptionTopicId, null)
 }
 
-suspend fun DatabaseFactory.userTitles(
-    backend: Backend,
+suspend fun Backend.userTitles(
     pagingFetch: PagingFetch,
     uid: PrimaryKey,
     searchType: TitleSearchType,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null
 ): Result<PaginationResult<TitleInfo>> {
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(Titles, pagingFetch)
         }
@@ -118,8 +117,11 @@ suspend fun DatabaseFactory.userTitles(
             map(Title::wrapRow).map { it.toTitleInfo() }
         }
     }.mapResult { list ->
-        count(backend) {
-            buildTitleSearchQuery(searchType, uid, type, scopeId)
+        databaseSession.dbSearch {
+            search {
+                buildTitleSearchQuery(searchType, uid, type, scopeId)
+            }
+            count()
         }.map { count ->
             PaginationResult(list, count)
         }

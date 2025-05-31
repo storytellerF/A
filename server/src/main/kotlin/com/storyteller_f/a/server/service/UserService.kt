@@ -18,14 +18,13 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import io.ktor.server.plugins.*
 
-suspend fun updateUser(
-    backend: Backend,
+suspend fun Backend.updateUser(
     uid: PrimaryKey,
     old: UpdateUserBody
 ): Result<UserInfo?> {
     val newUser = old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar?.trim())
     val firstError = listOf(suspend {
-        checkAidModifyTimes(backend, newUser, uid)
+        checkAidModifyTimes(newUser, uid)
     }, suspend {
         checkAid(newUser.aid, true)
     }, suspend {
@@ -37,7 +36,7 @@ suspend fun updateUser(
             else -> Result.success(Unit)
         }
     }, suspend {
-        checkIcon(backend, newUser.avatar).mapResult {
+        checkIcon(newUser.avatar).mapResult {
             when (it) {
                 MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("avatar not valid"))
                 MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
@@ -51,25 +50,24 @@ suspend fun updateUser(
         it().exceptionOrNull()
     }
     if (firstError != null) return Result.failure(firstError)
-    return DatabaseFactory.updateUser(backend, uid, newUser).mapResult {
+    return updateUserInfo(uid, newUser).mapResult {
         if (it) {
-            addUserLog(backend, uid, UserLogType.UPDATE, uid ob ObjectType.USER)
-            DatabaseFactory.getUserAndRelatedMedia(backend, ObjectFetch.IdFetch(uid))
+            this.addUserLog(uid, UserLogType.UPDATE, uid ob ObjectType.USER)
+            getUserAndRelatedMedia(ObjectFetch.IdFetch(uid))
         } else {
             Result.success(null)
         }
     }
 }
 
-private suspend fun checkAidModifyTimes(
-    backend: Backend,
+private suspend fun Backend.checkAidModifyTimes(
     newUser: UpdateUserBody,
     id: PrimaryKey
 ) = if (newUser.aid.isNullOrBlank()) {
     Result.success(Unit)
 } else {
     // check aid is null
-    DatabaseFactory.getUserAid(backend, id).mapResult {
+    getUserAid(id).mapResult {
         if (it != null) {
             Result.failure(BadRequestException("aid is not null."))
         } else {
@@ -121,13 +119,12 @@ enum class StringCheckResult {
     RANGE_MISMATCH
 }
 
-suspend fun checkIcon(
-    backend: Backend,
+suspend fun Backend.checkIcon(
     iconName: String?,
     aspectRatio: Dimension? = null
 ): Result<MediaCheckResult?> {
     return if (!iconName.isNullOrBlank()) {
-        DatabaseFactory.getMediaInfoList(backend, listOf(iconName)).mapIfNotNull {
+        getMediaInfoList(listOf(iconName)).mapIfNotNull {
             val mediaInfo = it.firstOrNull()
             val dimension = mediaInfo?.dimension
             when {
@@ -146,16 +143,14 @@ suspend fun checkIcon(
     }
 }
 
-suspend fun addReadLog(backend: Backend, uid: PrimaryKey, tuple: UpdateUserRead): Result<Unit?> {
-    return checkRootReadPermission(
-        backend,
+suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<Unit?> {
+    return this.checkRootReadPermission(
         tuple.objectTuple.objectType,
         tuple.objectTuple.objectId,
         uid
     ).mapResultIfNotNull {
         if (it.hasRead) {
-            DatabaseFactory.addReadLog(
-                backend,
+            addReadLog(
                 UserTopicRead(
                     uid,
                     now(),
@@ -170,8 +165,8 @@ suspend fun addReadLog(backend: Backend, uid: PrimaryKey, tuple: UpdateUserRead)
     }
 }
 
-suspend fun addDevice(backend: Backend, uid: PrimaryKey, device: String): Result<Unit> {
-    return DatabaseFactory.addDevice(uid, device, backend).recover {
+suspend fun Backend.addDevice(uid: PrimaryKey, device: String): Result<Unit> {
+    return addDevice(uid, device).recover {
         if (it.isDup()) {
             Result.success(Unit)
         } else {

@@ -1,6 +1,7 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
+import com.storyteller_f.count
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.*
@@ -49,8 +50,8 @@ class Room(
     }
 }
 
-suspend fun DatabaseFactory.checkRoomIsPrivate(backend: Backend, roomId: PrimaryKey): Result<Boolean?> {
-    return dbSearch(backend) {
+suspend fun Backend.checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
+    return databaseSession.dbSearch {
         search {
             Room.findRoomById(roomId)
         }
@@ -79,8 +80,7 @@ fun Room.toRoomInfo(memberCount: Long, joinedTime: LocalDateTime?, topicId: Long
     lastRead = topicId
 )
 
-suspend fun getRoomPaginationList(
-    backend: Backend,
+suspend fun Backend.getRoomPaginationList(
     uid: PrimaryKey?,
     joinStatusSearch: JoinStatusSearch?,
     word: String?,
@@ -88,8 +88,8 @@ suspend fun getRoomPaginationList(
     pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<RoomInfo, String?>>, Long>> {
     val joinSearch = joinStatusSearch.toJoinSearch(uid)
-    return DatabaseFactory.dbSearch(backend) {
-        search {
+    return databaseSession.dbSearch {
+        this.search {
             Rooms
                 .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
                 .select(Rooms.fields + Aids.value)
@@ -98,9 +98,12 @@ suspend fun getRoomPaginationList(
         }
         map(Room::wrapRow)
     }.mapResult {
-        processRoomInfo(uid, backend, it).mapResult { list ->
-            DatabaseFactory.count(backend) {
-                Rooms.select(Rooms.id).buildRoomSearchWhereQuery(joinSearch, community, word)
+        this.processRoomInfo(uid, it).mapResult { list ->
+            databaseSession.dbSearch {
+                this.search {
+                    Rooms.select(Rooms.id).buildRoomSearchWhereQuery(joinSearch, community, word)
+                }
+                count()
             }.map { count ->
                 list to count
             }
@@ -156,8 +159,8 @@ private fun Query.buildRoomSearchWhereQuery(
     return this
 }
 
-suspend fun DatabaseFactory.getRoomCommunityId(backend: Backend, parentId: PrimaryKey): Result<PrimaryKey?> =
-    dbSearch(backend) {
+suspend fun Backend.getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?> =
+    databaseSession.dbSearch {
         search {
             Room.findRoomById(parentId)
         }
@@ -166,12 +169,11 @@ suspend fun DatabaseFactory.getRoomCommunityId(backend: Backend, parentId: Prima
         }
     }
 
-suspend fun DatabaseFactory.commonPaginationRoomPubKeyList(
-    backend: Backend,
+suspend fun Backend.commonPaginationRoomPubKeyList(
     roomId: PrimaryKey,
     pagingFetch: PagingFetch
 ): Result<Pair<List<Pair<Long, String>>, Long>> {
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, pagingFetch)
         }
@@ -179,8 +181,11 @@ suspend fun DatabaseFactory.commonPaginationRoomPubKeyList(
             it[Users.id] to it[Users.publicKey]
         }
     }.mapResult { data ->
-        count(backend) {
-            buildRoomPubKeyQuery(roomId, true)
+        databaseSession.dbSearch {
+            search {
+                buildRoomPubKeyQuery(roomId, true)
+            }
+            count()
         }.map { value ->
             data to value
         }
@@ -204,14 +209,13 @@ fun buildRoomPubKeyQuery(roomId: PrimaryKey, getCount: Boolean): Query {
     }
 }
 
-suspend fun DatabaseFactory.getRoom(
-    backend: Backend,
+suspend fun Backend.getRoom(
     objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
     uid: PrimaryKey? = null,
 ): Result<Pair<RoomInfo, String?>?> {
     if (uid == null && fillJoinInfo == true) return Result.failure(UnauthorizedException())
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Rooms
                 .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
@@ -225,17 +229,16 @@ suspend fun DatabaseFactory.getRoom(
         }
         first(Room::wrapRow)
     }.mapResultIfNotNull { room ->
-        processRoomInfo(uid, backend, listOf(room)).map {
+        this.processRoomInfo(uid, listOf(room)).map {
             it.first()
         }
     }
 }
 
-private suspend fun processRoomInfo(
+private suspend fun Backend.processRoomInfo(
     uid: PrimaryKey?,
-    backend: Backend,
     rooms: List<Room>
-): Result<List<Pair<RoomInfo, String?>>> = DatabaseFactory.getContainerInfo(backend, rooms.map {
+): Result<List<Pair<RoomInfo, String?>>> = getContainerInfo(rooms.map {
     it.id
 }, uid).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
     rooms.map { room ->
@@ -247,8 +250,7 @@ private suspend fun processRoomInfo(
     }
 }
 
-suspend fun searchRooms(
-    backend: Backend,
+suspend fun Backend.searchRooms(
     uid: PrimaryKey?,
     joinStatusSearch: JoinStatusSearch?,
     word: String?,
@@ -256,21 +258,20 @@ suspend fun searchRooms(
     pagingFetch: PagingFetch
 ): Result<PaginationResult<RoomInfo>?> {
     return getRoomPaginationList(
-        backend,
         uid,
         joinStatusSearch,
         word,
         community,
         pagingFetch
     ).mapResult { (list, count) ->
-        processRoomList(list, backend).mapIfNotNull { value ->
+        this.processRoomList(list).mapIfNotNull { value ->
             PaginationResult(value, count)
         }
     }
 }
 
-suspend fun processRoomList(list: List<Pair<RoomInfo, String?>>, backend: Backend): Result<List<RoomInfo>?> {
-    return DatabaseFactory.getMediaInfoList(backend, list.map {
+suspend fun Backend.processRoomList(list: List<Pair<RoomInfo, String?>>): Result<List<RoomInfo>?> {
+    return getMediaInfoList(list.map {
         it.second
     }).mapIfNotNull { icons ->
         list.mapIndexed { i, roomPair ->
@@ -279,7 +280,7 @@ suspend fun processRoomList(list: List<Pair<RoomInfo, String?>>, backend: Backen
     }
 }
 
-suspend fun DatabaseFactory.createRoom(backend: Backend, room: Room) = dbQuery(backend) {
+suspend fun Backend.createRoom(room: Room) = databaseSession.dbQuery {
     check(Rooms.insert { statement ->
         statement[id] = room.id
         statement[createdTime] = room.createdTime
@@ -300,11 +301,10 @@ suspend fun DatabaseFactory.createRoom(backend: Backend, room: Room) = dbQuery(b
     addRoomJoinRaw(room.id, room.creator, room.createdTime)
 }
 
-suspend fun DatabaseFactory.getRoomByIds(
-    backend: Backend,
+suspend fun Backend.getRoomByIds(
     ids: List<PrimaryKey>
 ): Result<List<Pair<RoomInfo, String?>>> {
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Rooms
                 .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
@@ -318,11 +318,10 @@ suspend fun DatabaseFactory.getRoomByIds(
     }
 }
 
-suspend fun DatabaseFactory.getRoomByAids(
-    backend: Backend,
+suspend fun Backend.getRoomByAids(
     aids: List<String>
 ): Result<List<Room>> {
-    return dbSearch(backend) {
+    return databaseSession.dbSearch {
         search {
             Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
                 .select(Rooms.fields + Aids.value)
@@ -337,11 +336,10 @@ suspend fun DatabaseFactory.getRoomByAids(
 }
 
 @Suppress("MoveLambdaOutsideParentheses")
-suspend fun DatabaseFactory.updateRoom(
-    backend: Backend,
+suspend fun Backend.updateRoom(
     id: PrimaryKey,
     body: UpdateRoomBody
-) = dbQuery(backend) {
+) = databaseSession.dbQuery {
     listOf({
         val newIcon = body.icon
         val newName = body.name

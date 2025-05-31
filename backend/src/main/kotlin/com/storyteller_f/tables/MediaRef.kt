@@ -29,13 +29,12 @@ class MediaRef(val objectId: PrimaryKey, val objectType: ObjectType, val author:
     }
 }
 
-suspend fun DatabaseFactory.insertMediaRefs(
-    backend: Backend,
+suspend fun Backend.insertMediaRefs(
     objectId1: PrimaryKey,
     objectType1: ObjectType,
     mediaName: List<Pair<PrimaryKey, String>>
 ): Result<List<ResultRow>> {
-    return dbQuery(backend) {
+    return databaseSession.dbQuery {
         MediaRefs.batchInsert(mediaName) {
             this[MediaRefs.objectId] = objectId1
             this[MediaRefs.objectType] = objectType1

@@ -43,8 +43,8 @@ class UserTopicRead(
     }
 }
 
-suspend fun DatabaseFactory.addReadLog(backend: Backend, userTopicRead: UserTopicRead): Result<Unit> {
-    return dbQuery(backend) {
+suspend fun Backend.addReadLog(userTopicRead: UserTopicRead): Result<Unit> {
+    return databaseSession.dbQuery {
         check(UserTopicReads.upsert {
             it[uid] = userTopicRead.uid
             it[updatedAt] = userTopicRead.updatedAt
@@ -57,9 +57,7 @@ suspend fun DatabaseFactory.addReadLog(backend: Backend, userTopicRead: UserTopi
     }
 }
 
-suspend fun DatabaseFactory.getReadLogs(backend: Backend, parentIds: List<PrimaryKey>, uid: PrimaryKey) = dbSearch(
-    backend
-) {
+suspend fun Backend.getReadLogs(parentIds: List<PrimaryKey>, uid: PrimaryKey) = databaseSession.dbSearch {
     search {
         UserTopicReads.selectAll().where {
             UserTopicReads.uid eq uid and (UserTopicReads.objectId inList parentIds)

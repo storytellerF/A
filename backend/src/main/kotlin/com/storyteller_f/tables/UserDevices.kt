@@ -1,7 +1,6 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.customPrimaryKey
 import com.storyteller_f.map
 import com.storyteller_f.shared.type.PrimaryKey
@@ -26,8 +25,8 @@ class UserDevice(val uid: PrimaryKey, val endpointUrl: String) {
     }
 }
 
-suspend fun DatabaseFactory.addDevice(uid: PrimaryKey, endpointUrl: String, backend: Backend) =
-    dbQuery(backend) {
+suspend fun Backend.addDevice(uid: PrimaryKey, endpointUrl: String) =
+    databaseSession.dbQuery {
         check(UserDevices.insert {
             it[UserDevices.uid] = uid
             it[UserDevices.endpointUrl] = endpointUrl
@@ -36,16 +35,14 @@ suspend fun DatabaseFactory.addDevice(uid: PrimaryKey, endpointUrl: String, back
         }
     }
 
-suspend fun DatabaseFactory.removeDevice(uid: PrimaryKey, endpointUrl: String, backend: Backend) =
-    dbQuery(backend) {
+suspend fun Backend.removeDevice(uid: PrimaryKey, endpointUrl: String) =
+    databaseSession.dbQuery {
         UserDevices.deleteWhere {
             (UserDevices.uid eq uid) and (UserDevices.endpointUrl eq endpointUrl)
         }
     }
 
-suspend fun DatabaseFactory.getUserDevices(backend: Backend, uid: List<PrimaryKey>) = dbSearch(
-    backend,
-) {
+suspend fun Backend.getUserDevices(uid: List<PrimaryKey>) = databaseSession.dbSearch {
     search {
         UserDevices.selectAll().where {
             UserDevices.uid inList uid

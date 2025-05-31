@@ -2,7 +2,6 @@ package com.storyteller_f.a.server.route
 
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.server.auth.omitPrincipal
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
@@ -22,7 +21,7 @@ fun Route.bindSafeCommunityRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteCommunities.Search> {
         usePrincipalOrNull(reader) { uid ->
             pagination(IdentityPagingGenerator) { f ->
-                searchCommunities(backend, uid, it, f)
+                backend.searchCommunities(uid, it, f)
             }
         }
     }
@@ -30,20 +29,20 @@ fun Route.bindSafeCommunityRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteCommunities.Id.Members> {
         omitPrincipal(reader) {
             pagination(IdentityPagingGenerator) { f ->
-                DatabaseFactory.searchMembers(backend, it.parent.id, it.word, f)
+                backend.searchMembers(it.parent.id, it.word, f)
             }
         }
     }
     get<RouteCommunities.Id> {
         usePrincipalOrNull(reader) { uid ->
-            getCommunity(backend, ObjectFetch.IdFetch(it.id), uid, it.parent.fillJoinInfo)
+            backend.getCommunity(ObjectFetch.IdFetch(it.id), uid, it.parent.fillJoinInfo)
         }
     }
 
     get<RouteCommunities.Aid> {
         usePrincipalOrNull(reader) { uid ->
             it.aid?.let { aid ->
-                getCommunity(backend, ObjectFetch.AidFetch(aid), uid, it.parent.fillJoinInfo)
+                backend.getCommunity(ObjectFetch.AidFetch(aid), uid, it.parent.fillJoinInfo)
             }
         }
     }
@@ -51,8 +50,7 @@ fun Route.bindSafeCommunityRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteCommunities.Id.Topics> {
         usePrincipalOrNull(reader) { uid ->
             pagination(IdentityPagingGenerator) { f ->
-                getTopLevelTopicsInObject(
-                    backend,
+                backend.getTopLevelTopicsInObject(
                     it.parent.id,
                     ObjectType.COMMUNITY,
                     uid,
@@ -68,25 +66,25 @@ fun Route.bindSafeCommunityRoute(reader: DatabaseReader, backend: Backend) {
 fun Route.bindProtectedSafeCommunityRoute(reader: DatabaseReader, backend: Backend) {
     post<RouteCommunities.Id.Join> {
         usePrincipal(reader) { uid ->
-            doUserJoinCommunity(backend, uid, it.parent.id)
+            backend.doUserJoinCommunity(uid, it.parent.id)
         }
     }
 
     post<RouteCommunities.Id.Exit> {
         usePrincipal(reader) { uid ->
-            exitCommunity(backend, it.parent.id, uid)
+            backend.exitCommunity(it.parent.id, uid)
         }
     }
     post<RouteCommunities> {
         val newCommunity = call.receive<NewCommunity>()
         usePrincipal(reader) { uid ->
-            createCommunity(backend, newCommunity, uid)
+            backend.createCommunity(newCommunity, uid)
         }
     }
 
     post<RouteCommunities.Id> {
         usePrincipal(reader) { uid ->
-            updateCommunity(backend, it.id, call.receive<UpdateCommunityBody>(), uid)
+            backend.updateCommunity(it.id, call.receive<UpdateCommunityBody>(), uid)
         }
     }
 }

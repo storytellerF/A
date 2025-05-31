@@ -26,7 +26,8 @@ class Backend(
     val topicSearchService: TopicSearchService,
     val mediaService: MediaService,
     val nameService: NameService,
-    val database: Database
+    val database: Database,
+    val databaseSession: DatabaseSession
 )
 
 class Config(
@@ -92,13 +93,15 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val topicDocumentService = topicDocumentService(env)
     val mediaService = mediaService(env)
 
+    val database = DatabaseFactory.connect(databaseConnection)
     return Backend(
         config,
         env["SNAPSHOT_KEYSTORE_PATH"] to env["SNAPSHOT_KEY_PASS"],
         topicDocumentService,
         mediaService,
         NameService(),
-        DatabaseFactory.connect(databaseConnection)
+        database,
+        DatabaseSession(database)
     )
 }
 
