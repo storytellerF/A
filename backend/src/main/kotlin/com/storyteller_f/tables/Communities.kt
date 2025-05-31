@@ -175,7 +175,11 @@ private suspend fun DatabaseFactory.processCommunitiesInfo(
     uid: PrimaryKey?,
     communities: List<Community>,
     backend: Backend
-): Result<List<CommunityRawResult>> = getContainerInfo(backend, communities.map { it.id }, uid).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
+): Result<List<CommunityRawResult>> = getContainerInfo(
+    backend,
+    communities.map { it.id },
+    uid
+).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
     communities.map {
         val communityInfo =
             it.toCommunityIfo(
@@ -192,21 +196,25 @@ suspend fun DatabaseFactory.getContainerInfo(
     parentIds: List<PrimaryKey>,
     uid: PrimaryKey?
 ): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>> = merge({
-    if (uid != null)
+    if (uid != null) {
         getUserJoinedTime(backend, parentIds, uid).map {
             it.associateBy { memberJoin ->
                 memberJoin.objectId
             }
         }
-    else Result.success(emptyMap())
+    } else {
+        Result.success(emptyMap())
+    }
 }, {
-    if (uid != null)
+    if (uid != null) {
         getReadLogs(backend, parentIds, uid).map {
             it.associateBy { userTopicRead ->
                 userTopicRead.objectId
             }
         }
-    else Result.success(emptyMap())
+    } else {
+        Result.success(emptyMap())
+    }
 }, {
     getMemberCount(backend, parentIds).map {
         it.associateByPair()

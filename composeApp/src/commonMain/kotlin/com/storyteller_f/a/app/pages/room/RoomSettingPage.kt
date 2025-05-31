@@ -52,7 +52,7 @@ fun RoomSettingPage(roomId: PrimaryKey) {
         ObjectSettingDialog(closeDialog, currentOption, sheetState, {
             scope.launch {
                 globalDialogState.use {
-                    val body = UpdateRoomBody(icon = it.name)
+                    val body = UpdateRoomBody(icon = it.newFullName)
                     val newInfo = sessionManager.updateRoomInfo(roomId, body).getOrThrow()
                     bus.emit(OnRoomUpdated(newInfo))
                 }
@@ -85,7 +85,7 @@ private fun RoomSettingInternal(
                     }
                 }
             } else {
-                showDialog(SettingOption.Icon(roomInfo.icon?.name))
+                showDialog(SettingOption.Icon(roomInfo.icon?.newFullName))
             }
         }, {
             RoomIcon(roomInfo, showDialog = false, setClickEvent = false) {}

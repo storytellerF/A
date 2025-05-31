@@ -22,7 +22,6 @@ fun Application.configureMonitor() {
             ProcessorMetrics()
         )
         registry = appMicrometerRegistry
-
     }
     routing {
         get("/metrics") {

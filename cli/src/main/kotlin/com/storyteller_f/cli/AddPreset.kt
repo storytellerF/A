@@ -5,7 +5,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
-import com.storyteller_f.media.uploadFiles
+import com.storyteller_f.media.uploadFilesAfterDetectContentTypeAndDimension
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.*
@@ -296,13 +296,12 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/community-icon.${path.extension}"
-                uploadFiles(
+                uploadFilesAfterDetectContentTypeAndDimension(
                     tika,
                     backend,
                     listOf(
                         UploadPack(
                             path,
-                            "$id/${"community-icon.${path.extension}"}",
                             "community-icon.${path.extension}",
                             id,
                             path.length(),
@@ -357,13 +356,12 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/avatar.${path.extension}"
-                uploadFiles(
+                uploadFilesAfterDetectContentTypeAndDimension(
                     tika,
                     backend,
                     listOf(
                         UploadPack(
                             path,
-                            "$id/${"avatar.${path.extension}"}",
                             "avatar.${path.extension}",
                             id,
                             path.length()
@@ -402,13 +400,12 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/room-icon.${path.extension}"
-                uploadFiles(
+                uploadFilesAfterDetectContentTypeAndDimension(
                     tika,
                     backend,
                     listOf(
                         UploadPack(
                             path,
-                            "$id/${"room-icon.${path.extension}"}",
                             "room-icon.${path.extension}",
                             id,
                             path.length(),
@@ -594,9 +591,9 @@ class AddPreset : Subcommand("add", "add entry") {
         val mediaNames = mediaLink.map {
             userMap[presetTopic.author]!!.id to it
         }
-        uploadFiles(tika, backend, mediaNames.map { (author, pic) ->
+        uploadFilesAfterDetectContentTypeAndDimension(tika, backend, mediaNames.map { (author, pic) ->
             val path = File(parentDir, "medias/topics/$pic")
-            UploadPack(path, "$author/$pic", pic, author, path.length())
+            UploadPack(path, pic, author, path.length())
         }).getOrThrow()
         DatabaseFactory.insertMediaRefs(backend, topicId, ObjectType.TOPIC, mediaNames)
     }
@@ -645,9 +642,9 @@ class AddPreset : Subcommand("add", "add entry") {
             val room = roomMap[topic.topic.room]
             if (room != null) {
                 val content = getTopicContent(topic.topic, parentDir)
-                uploadFiles(tika, backend, extractMarkdownMediaLink(content).map {
+                uploadFilesAfterDetectContentTypeAndDimension(tika, backend, extractMarkdownMediaLink(content).map {
                     val path = File(parentDir, "medias/topics/$it")
-                    UploadPack(path, "${room.id}/$it", it, room.id, path.length())
+                    UploadPack(path, it, room.id, path.length())
                 }).getOrThrow()
             }
         }

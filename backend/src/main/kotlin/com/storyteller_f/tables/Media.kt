@@ -32,6 +32,7 @@ object Medias : BaseTable() {
         index("medias-main", true, owner, name)
         index("medias-size", false, owner, size)
         index("medias-type", false, owner, contentType, size)
+        index("medias-full-name", false, fullName)
     }
 }
 
@@ -39,7 +40,6 @@ class Media(
     id: PrimaryKey,
     createdTime: LocalDateTime,
     val name: String,
-    val fullName: String,
     val duration: Long,
     val width: Int,
     val height: Int,
@@ -47,6 +47,7 @@ class Media(
     val contentType: String,
     val size: Long,
 ) : BaseEntity(id, createdTime) {
+    val newFullName: String = "$owner/$name"
     companion object {
         fun wrapRow(resultRow: ResultRow): Media {
             return with(Medias) {
@@ -54,7 +55,6 @@ class Media(
                     resultRow[id],
                     resultRow[createdTime],
                     resultRow[name],
-                    resultRow[fullName],
                     resultRow[duration],
                     resultRow[width],
                     resultRow[height],
@@ -71,7 +71,7 @@ fun Media.toMediaInfo(it: Pair<String, LocalDateTime>): MediaInfo {
     return MediaInfo(
         id,
         it.first,
-        fullName,
+        newFullName,
         contentType,
         size,
         name,
@@ -89,14 +89,14 @@ suspend fun DatabaseFactory.uploadFiles(backend: Backend, uploadPacks: List<Uplo
         Medias.batchInsert(data) { (i, e) ->
             this[Medias.id] = i
             this[Medias.createdTime] = now()
-            this[Medias.name] = e.noPrefixName
+            this[Medias.name] = e.name
             this[Medias.duration] = 0
             this[Medias.width] = e.dimension?.width ?: 0
             this[Medias.height] = e.dimension?.height ?: 0
             this[Medias.owner] = e.owner
-            this[Medias.contentType] = e.detectedContentType
+            this[Medias.contentType] = e.contentType
             this[Medias.size] = e.size
-            this[Medias.fullName] = e.name
+            this[Medias.fullName] = e.newFullName
         }
         backend.mediaService.upload(AMEDIA_DEFAULT_BUCKET, uploadPacks).getOrThrow()
     }.map { urls ->
@@ -105,10 +105,10 @@ suspend fun DatabaseFactory.uploadFiles(backend: Backend, uploadPacks: List<Uplo
                 MediaInfo(
                     data[i].first,
                     e.first,
-                    uploadPacks[i].name,
-                    uploadPacks[i].detectedContentType,
+                    uploadPacks[i].newFullName,
+                    uploadPacks[i].contentType,
                     uploadPacks[i].size,
-                    uploadPacks[i].noPrefixName,
+                    uploadPacks[i].name,
                     uploadPacks[i].owner,
                     e.second,
                     uploadPacks[i].dimension
@@ -176,6 +176,17 @@ suspend fun DatabaseFactory.getRawMedia(backend: Backend, owner: PrimaryKey, nam
     }
 }
 
+suspend fun DatabaseFactory.getRawMediaById(backend: Backend, id: PrimaryKey): Result<Media?> {
+    return dbSearch(backend) {
+        search {
+            Medias.selectAll().where {
+                Medias.id eq id
+            }
+        }
+        first(Media::wrapRow)
+    }
+}
+
 suspend fun DatabaseFactory.getMediaInfoList(
     backend: Backend,
     owner: PrimaryKey,
@@ -189,7 +200,7 @@ suspend fun DatabaseFactory.getMediaInfoList(
         map(Media::wrapRow)
     }.mapResultIfNotNull { medias ->
         backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, medias.map {
-            it.fullName
+            it.newFullName
         }).mapIfNotNull {
             medias.mapIndexed { i, e ->
                 it[i]?.let { it1 -> e.toMediaInfo(it1) }
@@ -212,9 +223,9 @@ suspend fun DatabaseFactory.getMediaInfoList(backend: Backend, names: List<Strin
         }
         map(Media::wrapRow)
     }.mapResult { medias ->
-        val mediaMap = medias.associateBy { it.fullName }
+        val mediaMap = medias.associateBy { it.newFullName }
         backend.mediaService.get(AMEDIA_DEFAULT_BUCKET, names.map {
-            mediaMap[it]?.fullName
+            mediaMap[it]?.newFullName
         }).map {
             names.mapIndexed { i, e ->
                 if (e != null) {
@@ -245,7 +256,7 @@ suspend fun DatabaseFactory.copyMedia(
             it[Medias.owner] = newOwner
             it[Medias.contentType] = media.contentType
             it[Medias.size] = media.size
-            it[Medias.fullName] = media.fullName
+            it[Medias.fullName] = media.newFullName
         }.insertedCount > 0) {
             "insert media failed"
         }

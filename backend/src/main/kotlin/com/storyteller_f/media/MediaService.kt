@@ -13,7 +13,6 @@ import kotlinx.datetime.LocalDateTime
 import org.apache.tika.Tika
 import java.io.File
 import java.io.InputStream
-import java.nio.file.Path
 import javax.imageio.ImageIO
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamConstants
@@ -21,13 +20,13 @@ import javax.xml.stream.XMLStreamConstants
 data class UploadPack(
     val path: File,
     val name: String,
-    val noPrefixName: String,
     val owner: PrimaryKey,
     val size: Long,
-    val detectedContentType: String = "",
-    val overrideContentType: String? = null,
+    val contentType: String = "",
     val dimension: Dimension? = null
-)
+) {
+    val newFullName = "$owner/$name"
+}
 
 data class CopyPack(val origin: String, val new: String)
 
@@ -44,15 +43,17 @@ interface MediaService {
     suspend fun list(bucketName: String, prefix: String): Result<List<Pair<String, LocalDateTime>>>
 
     suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<Pair<String, LocalDateTime>?>>
+
+    suspend fun getInputStream(bucketName: String, name: String): Result<InputStream>
 }
 
-suspend fun uploadFiles(
+suspend fun uploadFilesAfterDetectContentTypeAndDimension(
     tika: Tika,
     backend: Backend,
     files: List<UploadPack>
 ): Result<List<MediaInfo?>> {
-    val packs = files.map {
-        val (overrideType, detectedType) = checkContentType(it.path.toPath(), tika, it.overrideContentType)
+    return DatabaseFactory.uploadFiles(backend, files.map {
+        val detectedType = tika.detect(it.path)
         val dimension = if (detectedType.startsWith("image")) {
             getImageDimension(it.path.absolutePath, detectedType) {
                 it.path.inputStream()
@@ -60,26 +61,8 @@ suspend fun uploadFiles(
         } else {
             null
         }
-        it.copy(detectedContentType = detectedType, overrideContentType = overrideType, dimension = dimension)
-    }
-
-    return DatabaseFactory.uploadFiles(backend, packs)
-}
-
-private suspend fun checkContentType(
-    file: Path,
-    tika: Tika,
-    contentType: String?
-): Pair<String?, String> {
-    return withContext(Dispatchers.IO) {
-        val s = "audio/mp4"
-        val mimeType = tika.detect(file)
-        when {
-            contentType != s -> null
-            mimeType == s -> s
-            else -> null
-        } to mimeType
-    }
+        it.copy(contentType = detectedType, dimension = dimension)
+    })
 }
 
 // 在windows 中安装的libavif 名称不符合条件，需要手动改名
@@ -92,7 +75,7 @@ fun loadAvif() {
     }
 }
 
-suspend fun extractSvgDimensionInfo(inputStreamProducer: suspend () -> InputStream): Pair<String?, Pair<String?, String?>> {
+suspend fun extractSvgDimensionInfo(inputStreamProducer: suspend () -> InputStream): Dimension? {
     return withContext(Dispatchers.IO) {
         inputStreamProducer().use {
             val factory = XMLInputFactory.newInstance()
@@ -101,10 +84,10 @@ suspend fun extractSvgDimensionInfo(inputStreamProducer: suspend () -> InputStre
                 if (reader.hasNext()) {
                     val event = reader.next()
                     if (event == XMLStreamConstants.START_ELEMENT && "svg".equals(reader.localName, true)) {
-                        val viewBox = reader.getAttributeValue(null, "viewBox")
-                        val height = reader.getAttributeValue(null, "height")
-                        val width = reader.getAttributeValue(null, "width")
-                        viewBox to (width to height)
+                        val viewBox: String? = reader.getAttributeValue(null, "viewBox")
+                        val height: String? = reader.getAttributeValue(null, "height")
+                        val width: String? = reader.getAttributeValue(null, "width")
+                        getSvgDimension(viewBox, width to height)
                     } else {
                         null
                     }
@@ -115,7 +98,7 @@ suspend fun extractSvgDimensionInfo(inputStreamProducer: suspend () -> InputStre
                 reader.close()
             }
         }
-    } ?: (null to (null to null))
+    }
 }
 
 suspend fun getImageDimension(
@@ -124,7 +107,7 @@ suspend fun getImageDimension(
     inputStreamProducer: suspend () -> InputStream,
 ): Dimension? {
     if (contentType == "image/svg+xml") {
-        return getSvgDimension(inputStreamProducer)
+        return extractSvgDimensionInfo(inputStreamProducer)
     }
     return ImageIO.getImageReadersByMIMEType(contentType).asSequence().firstNotNullOfOrNull { reader ->
         try {
@@ -147,8 +130,7 @@ suspend fun getImageDimension(
     }
 }
 
-private suspend fun getSvgDimension(inputStreamProducer: suspend () -> InputStream): Dimension? {
-    val (viewBox, pair) = extractSvgDimensionInfo(inputStreamProducer)
+private fun getSvgDimension(viewBox: String?, pair: Pair<String?, String?>): Dimension? {
     if (viewBox != null) {
         val viewBoxSizeList = viewBox.split(" ").map {
             it.trim().toFloatOrNull()

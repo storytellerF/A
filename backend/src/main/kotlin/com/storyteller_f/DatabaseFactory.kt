@@ -107,28 +107,28 @@ object DatabaseFactory {
             databaseDialectName
         }
         val isConnectFailed = e is PSQLException && e.cause is ConnectException
-
-        val n = if (point.cause == null) {
+        val isRetry = point.cause != null
+        val n = if (isRetry) {
+            Exception("retry failed", point)
+        } else {
             point.initCause(e)
             point
-        } else {
-            Exception("retry failed", e)
         }
-        Napier.e(n, "database failed") {
-            val isRetry = point.cause != null
+        throw Exception(
             if (isConnectFailed) {
                 "$dialectName connect failed $isRetry"
             } else {
                 "$dialectName query failed $isRetry"
-            }
-        }
-        throw Exception(if (isConnectFailed) "database connect failed" else "database query failed", n)
+            },
+            n
+        )
     }
 
     suspend fun <T> dbQuery(backend: Backend, block: suspend Transaction.() -> T): Result<T> {
-        val point = Exception()
+        val point = Exception("database failed")
         return runCatching {
             newSuspendedTransaction(Dispatchers.IO + MDCContext(), backend.database) {
+                maxAttempts = 1
                 try {
                     block()
                 } catch (e: Throwable) {
@@ -142,9 +142,10 @@ object DatabaseFactory {
         backend: Backend,
         query: DatabaseSearchConfig<R>.() -> Unit,
     ): Result<R> {
-        val point = Exception()
+        val point = Exception("database failed")
         return runCatching {
             newSuspendedTransaction(Dispatchers.IO + MDCContext(), backend.database) {
+                maxAttempts = 1
                 debug = onExplainResult != null
                 try {
                     explainQuery(point) {

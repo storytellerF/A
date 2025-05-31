@@ -74,7 +74,9 @@ fun UserSettingPage() {
             ObjectSettingDialog(closeDialog, currentOption, sheetState, {
                 scope.launch {
                     globalDialogState.use {
-                        val newInfo = sessionManager.updateUserInfo(UpdateUserBody(avatar = it.name)).getOrThrow()
+                        val newInfo = sessionManager.updateUserInfo(
+                            UpdateUserBody(avatar = it.newFullName)
+                        ).getOrThrow()
                         sessionManager.sessionModel.updateUser(newInfo)
                         closeDialog()
                     }
@@ -227,7 +229,7 @@ private suspend fun cropImage(
                     globalDialogState.use {
                         val data = saveImageBitmap(
                             result.bitmap,
-                            info.noPrefixName.substringBeforeLast("."),
+                            info.name.substringBeforeLast("."),
                             when (info.contentType) {
                                 "image/webp" -> ImageFormat.WEBP
                                 "image/jpeg", "image/jpg" -> ImageFormat.JPEG
@@ -262,7 +264,7 @@ private fun UserSettingInternal(
                     }
                 }
             } else {
-                showDialog(SettingOption.Icon(m.avatar?.name))
+                showDialog(SettingOption.Icon(m.avatar?.newFullName))
             }
         }, {
             UserIcon(m, setClickEvent = false)
