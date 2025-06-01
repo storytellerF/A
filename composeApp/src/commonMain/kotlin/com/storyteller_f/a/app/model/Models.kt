@@ -393,7 +393,7 @@ class MemberViewModel(
 class ReactionsViewModel(sessionManager: SessionManager, private val objectId: PrimaryKey) :
     SimpleViewModel<ServerResponse<ReactionInfo>>() {
     override val handler: LoadingHandler<ServerResponse<ReactionInfo>> = SimpleLoadingHandler(viewModelScope) {
-        sessionManager.getReactions(objectId)
+        sessionManager.getReactions(objectId, 20)
     }
 }
 

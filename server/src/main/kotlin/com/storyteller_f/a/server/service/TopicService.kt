@@ -461,13 +461,13 @@ suspend fun Backend.checkRootWritePermission(
     return when (parentType) {
         ObjectType.TOPIC -> {
             getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
-                this.checkRootWritePermission(rootType, rootId, uid)
+                checkRootWritePermission(rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
             getRoomCommunityId(parentId).mapResult {
-                this.isMemberJoined(parentId, uid).map { hasJoined ->
+                isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
             }
@@ -475,7 +475,7 @@ suspend fun Backend.checkRootWritePermission(
 
         ObjectType.COMMUNITY -> {
             checkCommunityExists(parentId).mapResultIfNotNull {
-                this.isMemberJoined(parentId, uid).map { hasJoined ->
+                isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
             }

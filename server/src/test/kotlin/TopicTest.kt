@@ -66,13 +66,13 @@ class TopicTest {
                     addReaction(topicId, emoji).getOrThrow()
                 }
                 joinCommunity(session.custom.rootId)
-                val reactions = getReactions(topicId).getOrThrow()
+                val reactions = getReactions(topicId, 10).getOrThrow()
                 assertEquals(1, reactions.data.size)
                 assertFalse(reactions.data.first().hasReacted)
             }
             loginSession(session) {
                 assertTrue(deleteReaction(emoji, topicId).getOrThrow())
-                assertListSize(0, getReactions(topicId))
+                assertListSize(0, getReactions(topicId, 10))
             }
         }
     }

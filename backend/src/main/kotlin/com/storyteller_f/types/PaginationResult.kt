@@ -1,5 +1,6 @@
 package com.storyteller_f.types
 
+import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.PrimaryKey
 
 data class PaginationResult<T>(val list: List<T>, val total: Long)
@@ -19,8 +20,6 @@ interface GenericFetch<T> : Fetch {
 
 data class PrimaryKeyFetch(override val cursor: Cursor<PrimaryKey>?, override val size: Int) :
     GenericFetch<PrimaryKey>
-
-data class ReactionCursorKey(val count: Long, val reactionId: PrimaryKey)
 
 data class ReactionFetch(override val cursor: Cursor<ReactionCursorKey>?, override val size: Int) :
     GenericFetch<ReactionCursorKey>

@@ -1,5 +1,6 @@
 import com.storyteller_f.a.client_lib.UploadData
 import com.storyteller_f.a.client_lib.copy
+import com.storyteller_f.a.client_lib.extractAlbum
 import com.storyteller_f.a.client_lib.getMediaList
 import com.storyteller_f.a.client_lib.upload
 import com.storyteller_f.a.server.service.getExtensionFromMimeType
@@ -25,7 +26,6 @@ import kotlin.io.path.Path
 import kotlin.math.log10
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 
 class MediaTest {
@@ -99,26 +99,27 @@ class MediaTest {
     }
 
     @Test
-    fun `test audio album`() = test {
+    fun `test audio album`() = test(
+        mapOf("FILE_SYSTEM_MEDIA_PATH" to "build/test/amedia")
+    ) {
         attachSession {
             val name = "I_Don’t_Wanna_Live_Forever.flac"
             val inputStream =
                 ClassLoader.getSystemClassLoader().getResourceAsStream(name)!!
             val bytes = inputStream.readBytes()
-            assertFails {
-                upload(
-                    ObjectTuple(it.uid, ObjectType.USER),
-                    UploadData(
-                        bytes.size.toLong(),
-                        name,
-                        ContentType.defaultForFileExtension("flac")
-                    )
-                ) {
-                    Buffer().apply {
-                        write(bytes)
-                    }
-                }.getOrThrow()
-            }
+            val response = upload(
+                ObjectTuple(it.uid, ObjectType.USER),
+                UploadData(
+                    bytes.size.toLong(),
+                    name,
+                    ContentType.defaultForFileExtension("flac")
+                )
+            ) {
+                Buffer().apply {
+                    write(bytes)
+                }
+            }.getOrThrow()
+            extractAlbum(response.data.first().id).getOrThrow()
         }
     }
 }

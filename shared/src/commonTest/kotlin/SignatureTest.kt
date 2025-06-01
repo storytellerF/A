@@ -24,7 +24,7 @@ class SignatureTest {
 
     @Test
     fun `test address`() {
-        loadIfNeed()
+        loadCryptoLibIfNeed()
         runTest {
             val keyPair = generateECDSAPemPrivateKey().getOrThrow()
             val key = getDerPublicKeyFromPrivateKey(keyPair).getOrThrow()

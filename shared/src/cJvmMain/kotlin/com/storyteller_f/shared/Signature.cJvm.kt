@@ -197,7 +197,7 @@ object CryptoJvm {
     }
 }
 
-actual fun loadIfNeed() {
+actual fun loadCryptoLibIfNeed() {
     if (getPlatform().name.startsWith("android", true)) {
         removeProvider("BC")
         addProvider(BouncyCastleProvider())

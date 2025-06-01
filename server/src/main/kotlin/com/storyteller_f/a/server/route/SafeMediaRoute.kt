@@ -55,7 +55,10 @@ fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) 
     post<RouteMedia.Copy> {
         usePrincipal(reader) { uid ->
             val newMedia = call.receive<NewMedia>()
-            backend.copyMedia(newMedia.noPrefixName, uid, ObjectTuple(it.parent.objectId, it.parent.objectType))
+            val objectId = it.parent.objectId
+            val objectType = it.parent.objectType
+            if (objectType == null || objectId == null) error("invalid query")
+            backend.copyMedia(newMedia.noPrefixName, uid, ObjectTuple(objectId, objectType))
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.storyteller_f
 
-import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
 import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.utils.onNotNull
@@ -11,13 +10,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.slf4j.MDCContext
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.util.PSQLException
+import org.postgresql.util.PSQLState
 import java.io.PrintWriter
 import java.net.ConnectException
 import java.net.Socket
+import java.sql.SQLIntegrityConstraintViolationException
 import kotlin.concurrent.thread
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -71,34 +73,39 @@ class DatabaseSession(val database: Database, val buildType: String) {
     val json = Json {
     }
 
-    private fun handleDatabaseException(e: Throwable): Throwable {
+    private fun handleDatabaseException(e: Throwable, anchor: Throwable): Throwable {
         if (e is UnauthorizedException || e.isDup()) {
             return e
         }
         val dialectName = database.dialect.name
         val isConnectFailed = e is PSQLException && e.cause is ConnectException
+        anchor.initCause(e)
         return Exception(
             if (isConnectFailed) {
                 "$dialectName connect failed"
             } else {
                 "$dialectName query failed"
             },
-            e
+            anchor
         )
     }
 
     suspend fun <T> dbQuery(block: suspend Transaction.() -> T): Result<T> {
+        val anchor = Exception("dbQuery")
         return runCatching {
             newSuspendedTransaction(Dispatchers.IO + MDCContext(), database) {
                 maxAttempts = 1
                 block()
             }
-        }.transformThrowable(::handleDatabaseException)
+        }.transformThrowable {
+            handleDatabaseException(it, anchor)
+        }
     }
 
     suspend fun <R> dbSearch(
         query: DatabaseSearchConfig<R>.() -> Unit,
     ): Result<R> {
+        val anchor = Exception()
         if (buildType == "test") {
             explainQuery(query)
         }
@@ -110,7 +117,9 @@ class DatabaseSession(val database: Database, val buildType: String) {
                     it.transformFunc(it.searchFunc())
                 }
             }
-        }.transformThrowable(::handleDatabaseException)
+        }.transformThrowable {
+            handleDatabaseException(it, anchor)
+        }
     }
 
     private suspend fun <R> explainQuery(query: DatabaseSearchConfig<R>.() -> Unit) {
@@ -140,7 +149,7 @@ class DatabaseSession(val database: Database, val buildType: String) {
                 }
             }
         }.onFailure {
-            throw handleDatabaseException(it)
+            throw handleDatabaseException(it, anchor)
         }
     }
 
@@ -231,7 +240,12 @@ const val ROOM_NAME_LENGTH = 10
 const val MEDIA_NAME_LENGTH = 120
 
 fun Throwable.isDup(): Boolean {
-    return this is PGSQLIntegrityConstraintViolationException
+    if (this is SQLIntegrityConstraintViolationException) return true
+    if (this is ExposedSQLException) {
+        val throwable = this.cause
+        return (throwable is PSQLException && throwable.sqlState == PSQLState.UNIQUE_VIOLATION.state)
+    }
+    return false
 }
 
 fun Table.userIcon() = varchar("icon", ICON_LENGTH).nullable()

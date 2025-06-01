@@ -20,6 +20,6 @@ data class ReactionRecordInfo(
     val emoji: String,
     val objectId: PrimaryKey,
     val objectType: ObjectType,
-    val createdTime: LocalDateTime?,
+    val createdTime: LocalDateTime,
     val uid: PrimaryKey
 )

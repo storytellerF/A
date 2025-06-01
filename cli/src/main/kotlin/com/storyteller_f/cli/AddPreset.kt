@@ -82,7 +82,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             exitProcess(1)
         }
-        loadIfNeed()
+        loadCryptoLibIfNeed()
         val connected = backend
         DatabaseFactory.connect(connected.config.databaseConnection)
         DatabaseFactory.init(connected)
@@ -294,7 +294,7 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/community-icon.${path.extension}"
-                this.uploadFilesAfterDetectContentTypeAndDimension(
+                uploadFilesAfterDetectContentTypeAndDimension(
                     tika,
                     listOf(
                         UploadPack(
@@ -352,7 +352,7 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/avatar.${path.extension}"
-                this.uploadFilesAfterDetectContentTypeAndDimension(
+                uploadFilesAfterDetectContentTypeAndDimension(
                     tika,
                     listOf(
                         UploadPack(
@@ -394,7 +394,7 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 val path = File(parentDir, icon)
                 val p = "$id/room-icon.${path.extension}"
-                this.uploadFilesAfterDetectContentTypeAndDimension(
+                uploadFilesAfterDetectContentTypeAndDimension(
                     tika,
                     listOf(
                         UploadPack(
@@ -579,7 +579,7 @@ class AddPreset : Subcommand("add", "add entry") {
         val mediaNames = mediaLink.map {
             userMap[presetTopic.author]!!.id to it
         }
-        this.uploadFilesAfterDetectContentTypeAndDimension(tika, mediaNames.map { (author, pic) ->
+        uploadFilesAfterDetectContentTypeAndDimension(tika, mediaNames.map { (author, pic) ->
             val path = File(parentDir, "medias/topics/$pic")
             UploadPack(path, pic, author, path.length())
         }).getOrThrow()
@@ -629,7 +629,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val room = roomMap[topic.topic.room]
             if (room != null) {
                 val content = this@AddPreset.getTopicContent(topic.topic, parentDir)
-                this.uploadFilesAfterDetectContentTypeAndDimension(tika, extractMarkdownMediaLink(content).map {
+                uploadFilesAfterDetectContentTypeAndDimension(tika, extractMarkdownMediaLink(content).map {
                     val path = File(parentDir, "medias/topics/$it")
                     UploadPack(path, it, room.id, path.length())
                 }).getOrThrow()

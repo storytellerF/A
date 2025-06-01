@@ -89,7 +89,7 @@ suspend fun RoutingContext.respondError(e: Throwable, reader: DatabaseReader): B
             return true
         }
 
-        is BadRequestException, is CustomBadRequestException -> {
+        is BadRequestException, is CustomBadRequestException, is IllegalArgumentException, is IllegalStateException -> {
             call.respond(HttpStatusCode.BadRequest, e.localizedMessage)
             return true
         }

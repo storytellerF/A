@@ -56,7 +56,7 @@ class RouteCommunities(val fillJoinInfo: Boolean? = null) {
 }
 
 @Resource("/amedia")
-class RouteMedia(val objectId: PrimaryKey, val objectType: ObjectType) {
+class RouteMedia(val objectId: PrimaryKey? = null, val objectType: ObjectType? = null) {
     @Resource("upload")
     class Upload(@Suppress("unused") val parent: RouteMedia)
 
@@ -67,7 +67,7 @@ class RouteMedia(val objectId: PrimaryKey, val objectType: ObjectType) {
     class All(val parent: RouteMedia)
 
     @Resource("{id}")
-    class Id(val parent: RouteMedia, val id: PrimaryKey) {
+    class Id(@Suppress("unused") val parent: RouteMedia = RouteMedia(), val id: PrimaryKey) {
         @Resource("extract-album")
         class ExtractAlbum(val parent: Id)
     }
@@ -122,7 +122,7 @@ class RouteTopics(val fillHasCommented: Boolean? = null, val aid: String? = null
     class Recommend(val parent: RouteTopics)
 
     @Resource("{id}")
-    class Id(@Suppress("unused") val parent: RouteTopics, val id: PrimaryKey) {
+    class Id(@Suppress("unused") val parent: RouteTopics = RouteTopics(), val id: PrimaryKey) {
         @Resource("snapshot")
         class Snapshot(val parent: Id)
 

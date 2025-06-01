@@ -82,7 +82,7 @@ suspend fun decryptMessage(derPrivateKeyStr: String, encrypted: ByteArray, encry
 
 expect suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result<String>
 expect suspend fun calcAddress(derPublicKeyStr: String): Result<String>
-expect fun loadIfNeed()
+expect fun loadCryptoLibIfNeed()
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun eciesEncrypt(derPublicKeyStr: String, data: ByteArray): Result<ByteArray> {
