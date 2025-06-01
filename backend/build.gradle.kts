@@ -93,13 +93,10 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
 
 tasks.processResources.dependsOn(mergeServiceFiles)
 
-val buildType = project.findProperty("server.buildType") as String
 val flavor = project.findProperty("buildkonfig.flavor").toString()
 
 buildConfig {
     className = "BackendConfig"
-    buildConfigField<String>("BUILD_TYPE", buildType)
-    buildConfigField<Boolean>("IS_PROD", buildType == "prod")
     buildConfigField<String>("FLAVOR", flavor)
 }
 

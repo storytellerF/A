@@ -437,11 +437,11 @@ class AidTopicViewModel(sessionManager: SessionManager, databaseSource: Database
 }
 
 class RoomKeysViewModel(sessionManager: SessionManager, private val id: PrimaryKey, val private: Boolean) :
-    SimpleViewModel<List<Pair<PrimaryKey, String>>>() {
-    override val handler: LoadingHandler<List<Pair<PrimaryKey, String>>> = SimpleLoadingHandler(viewModelScope) {
+    SimpleViewModel<List<UserPubKeyInfo>>() {
+    override val handler: LoadingHandler<List<UserPubKeyInfo>> = SimpleLoadingHandler(viewModelScope) {
         runCatching {
             if (!private) return@runCatching emptyList()
-            val result = mutableListOf<Pair<PrimaryKey, String>>()
+            val result = mutableListOf<UserPubKeyInfo>()
             var last: PrimaryKey? = null
             while (true) {
                 val list =

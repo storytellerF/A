@@ -15,8 +15,9 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.ElasticConnection
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.types.Cursor
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PrimaryKeyFetch
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
@@ -116,23 +117,31 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     override suspend fun searchDocument(
         word: List<String>?,
         documentSearch: DocumentSearch,
-        pagingFetch: PagingFetch?
+        primaryKeyFetch: PrimaryKeyFetch?
     ): Result<PaginationResult<TopicDocument>> {
         val boolQuery =
             createTopicSearchQuery(
                 word,
                 documentSearch,
-                pagingFetch
+                primaryKeyFetch
             )
 
         // 构建排序条件：按 ID 升序排序
         val request = SearchRequest.of { s ->
             s.index(TOPIC_INDEX_NAME) // 指定索引名称
                 .query(boolQuery)
-                .size(pagingFetch?.size ?: 10)
+                .size(primaryKeyFetch?.size ?: 10)
                 .sort { sort ->
                     sort.field { f ->
-                        f.field("id").order(if (pagingFetch?.pre == null) SortOrder.Desc else SortOrder.Asc)
+                        val sortOrder = when {
+                            primaryKeyFetch == null -> null
+                            primaryKeyFetch.cursor is Cursor.PreCursor<*> && primaryKeyFetch.cursor.value != null -> {
+                                SortOrder.Asc
+                            }
+
+                            else -> null
+                        } ?: SortOrder.Desc
+                        f.field("id").order(sortOrder)
                     }
                 }.trackScores(true)
         }
@@ -152,7 +161,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     private fun createTopicSearchQuery(
         word: List<String>?,
         documentSearch: DocumentSearch,
-        pagingFetch: PagingFetch?,
+        primaryKeyFetch: PrimaryKeyFetch?,
     ): Query {
         val queryList = buildList {
             word?.let {
@@ -164,19 +173,27 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 }
             }
 
-            pagingFetch?.next?.let { n ->
-                add(RangeQuery.of { r ->
-                    r.untyped {
-                        it.field("id").lt(JsonData.of(n))
+            when {
+                primaryKeyFetch == null -> {}
+                primaryKeyFetch.cursor is Cursor.PreCursor<*> -> {
+                    if (primaryKeyFetch.cursor.value is PrimaryKey) {
+                        add(RangeQuery.of { r ->
+                            r.untyped {
+                                it.field("id").gt(JsonData.of(primaryKeyFetch.cursor.value))
+                            }
+                        }._toQuery() to true)
                     }
-                }._toQuery() to true)
-            }
-            pagingFetch?.pre?.let { p ->
-                add(RangeQuery.of { r ->
-                    r.untyped {
-                        it.field("id").gt(JsonData.of(p))
+                }
+
+                primaryKeyFetch.cursor is Cursor.NextCursor<*> -> {
+                    if (primaryKeyFetch.cursor.value is PrimaryKey) {
+                        add(RangeQuery.of { r ->
+                            r.untyped {
+                                it.field("id").lt(JsonData.of(primaryKeyFetch.cursor.value))
+                            }
+                        }._toQuery() to true)
                     }
-                }._toQuery() to true)
+                }
             }
 
             createTopicSearchQuery(documentSearch)

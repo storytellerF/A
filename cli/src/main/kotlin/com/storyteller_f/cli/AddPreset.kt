@@ -20,6 +20,7 @@ import com.storyteller_f.tables.MemberJoins.joinedTime
 import com.storyteller_f.tables.MemberJoins.objectId
 import com.storyteller_f.tables.MemberJoins.objectType
 import com.storyteller_f.tables.MemberJoins.uid
+import com.storyteller_f.tables.getCommunityRawResults
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ArgType
 import kotlinx.cli.ExperimentalCli
@@ -155,14 +156,14 @@ class AddPreset : Subcommand("add", "add entry") {
             "topics count ${presetValue.topicData?.size}"
         }
         val data = presetValue.topicData!!
-        val userMap = getRawUsersByAids(data.map {
+        val userMap = getUserRawResultByAids(data.map {
             it.author
         }.distinct()).getOrThrow().associate {
-            it.first.aid!! to it.first
+            it.user.aid!! to it.user
         }
-        val roomMap = getRoomByAids(data.mapNotNull {
+        val roomMap = getRoomByAids(ObjectListFetch.AidListFetch(data.mapNotNull {
             it.room
-        }).getOrThrow().associateBy { it.aid }
+        })).getOrThrow().associateBy { it.aid }
         databaseSession.dbQuery {
             data.groupBy {
                 when {
@@ -307,10 +308,10 @@ class AddPreset : Subcommand("add", "add entry") {
                 Triple(it, p, id)
             }
         }
-        val userMap = getRawUsersByAids(data.flatMap {
+        val userMap = getUserRawResultByAids(data.flatMap {
             it.first.users.orEmpty() + (it.first.admin ?: "System")
         }.distinct()).getOrThrow().associate {
-            it.first.aid to it.first
+            it.user.aid to it.user
         }
         val l1 = data.map {
             it.third to it.first.users?.map { s ->
@@ -408,15 +409,15 @@ class AddPreset : Subcommand("add", "add entry") {
             }
         }
 
-        val userMap = getRawUsersByAids(l.flatMap {
+        val userMap = getUserRawResultByAids(l.flatMap {
             it.users + it.admin
         }.distinct()).getOrThrow().associate {
-            it.first.aid to it.first
+            it.user.aid to it.user
         }
 
-        val communityMap = getCommunityByAids(l.mapNotNull {
+        val communityMap = getCommunityRawResults(ObjectListFetch.AidListFetch(l.mapNotNull {
             it.community
-        }.distinct()).getOrThrow().associate {
+        }.distinct())).getOrThrow().associate {
             it.communityInfo.aid to it.communityInfo
         }
         return data.map { (presetRoom, pic, id) ->
@@ -459,9 +460,9 @@ class AddPreset : Subcommand("add", "add entry") {
     }
 
     private suspend fun Backend.getCommunityMap(list: List<PresetTopic>): Map<String, PrimaryKey> {
-        return getCommunityByAids(list.mapNotNull {
+        return getCommunityRawResults(ObjectListFetch.AidListFetch(list.mapNotNull {
             it.community
-        }).getOrThrow().associate {
+        })).getOrThrow().associate {
             it.communityInfo.aid to it.communityInfo.id
         }
     }

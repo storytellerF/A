@@ -57,7 +57,7 @@ suspend fun Backend.addReadLog(userTopicRead: UserTopicRead): Result<Unit> {
     }
 }
 
-suspend fun Backend.getReadLogs(parentIds: List<PrimaryKey>, uid: PrimaryKey) = databaseSession.dbSearch {
+suspend fun Backend.getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey) = databaseSession.dbSearch {
     search {
         UserTopicReads.selectAll().where {
             UserTopicReads.uid eq uid and (UserTopicReads.objectId inList parentIds)

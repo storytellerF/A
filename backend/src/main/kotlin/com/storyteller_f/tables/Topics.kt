@@ -1,7 +1,6 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.count
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -12,7 +11,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PrimaryKeyFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
@@ -108,7 +107,7 @@ fun Topic.toTopicInfo(
     )
 }
 
-suspend fun Backend.getTopicRoot(
+suspend fun Backend.getTopicRootTuple(
     parentId: PrimaryKey
 ): Result<ObjectTuple?> = databaseSession.dbSearch {
     search {
@@ -123,44 +122,35 @@ suspend fun Backend.getTopicRoot(
     }
 }
 
-/**
- * 用于生成snapshot
- */
-suspend fun Backend.getDirectTopic(
-    topicId: PrimaryKey
-): Result<TopicInfo?> = databaseSession.dbSearch {
-    search {
-        Topic.findById(topicId)
-    }
-    first {
-        Topic.wrapRow(it).toTopicInfo()
-    }
-}
-
-suspend fun Backend.getTopicCommentCount(topicId: List<PrimaryKey>) =
-    databaseSession.dbSearch {
+suspend fun Backend.getTopicCommentCount(topicIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>> {
+    if (topicIdList.isEmpty()) return Result.success(emptyList())
+    return databaseSession.dbSearch {
         val countColumn = Topics.id.countDistinct()
         search {
             Topics.select(countColumn, Topics.id).where {
-                Topics.parentId inList topicId
+                Topics.parentId inList topicIdList
             }.groupBy(Topics.id)
         }
         map {
             it[Topics.id] to it[countColumn]
         }
     }
+}
 
 suspend fun Backend.isUserCommented(
     uid: PrimaryKey,
     topicId: List<PrimaryKey>
-) = databaseSession.dbSearch {
-    search {
-        Topics.select(Topics.parentId).where {
-            Topics.parentId inList topicId and (Topics.author eq uid)
+): Result<List<Long>> {
+    if (topicId.isEmpty()) return Result.success(emptyList())
+    return databaseSession.dbSearch {
+        search {
+            Topics.select(Topics.parentId).where {
+                Topics.parentId inList topicId and (Topics.author eq uid)
+            }
         }
-    }
-    map {
-        it[Topics.parentId]
+        map {
+            it[Topics.parentId]
+        }
     }
 }
 
@@ -179,24 +169,26 @@ suspend fun Backend.getTopicInfo(
         }
         first(Topic::wrapRow)
     }.mapResultIfNotNull { topic ->
-        this.processTopicInfo(uid, listOf(topic)).map {
+        processTopicToTopicInfo(uid, listOf(topic)).map {
             it.first()
         }
     }
 }
 
-private suspend fun Backend.processTopicInfo(
+private suspend fun Backend.processTopicToTopicInfo(
     uid: PrimaryKey?,
     topics: List<Topic>
-): Result<List<TopicInfo>> = (if (uid == null) {
-    Result.success(Merged4(emptySet(), emptyMap(), emptyMap(), emptyMap()))
-} else {
+): Result<List<TopicInfo>> {
     val topicIds = topics.map {
         it.id
     }
-    merge({
-        isUserCommented(uid, topicIds).map {
-            it.toSet()
+    return merge({
+        if (uid != null) {
+            isUserCommented(uid, topicIds).map {
+                it.toSet()
+            }
+        } else {
+            Result.success(emptySet())
         }
     }, {
         getTopicCommentCount(topicIds).map {
@@ -207,28 +199,32 @@ private suspend fun Backend.processTopicInfo(
             it.associateByPair()
         }
     }, {
-        getReadLogs(topicIds, uid).map {
-            it.associateBy { userTopicRead ->
-                userTopicRead.objectId
+        if (uid != null) {
+            getTopicReadList(topicIds, uid).map {
+                it.associateBy { userTopicRead ->
+                    userTopicRead.objectId
+                }
             }
+        } else {
+            Result.success(emptyMap())
         }
-    })
-}).map { (commented, commentCountMap, reactionCountMap, lastReadMap) ->
-    topics.map { topic ->
-        val id = topic.id
-        topic.toTopicInfo(
-            commentCountMap[id] ?: 0,
-            commented.contains(id),
-            reactionCountMap[id] ?: 0,
-            lastRead = lastReadMap[id]?.topicId
-        )
+    }).map { (commented, commentCountMap, reactionCountMap, lastReadMap) ->
+        topics.map { topic ->
+            val id = topic.id
+            topic.toTopicInfo(
+                commentCountMap[id] ?: 0,
+                commented.contains(id),
+                reactionCountMap[id] ?: 0,
+                lastRead = lastReadMap[id]?.topicId
+            )
+        }
     }
 }
 
 /**
  * 根据指定条件获取未填充content 的topic 列表
  */
-suspend fun Backend.getTopicsByPredicate(
+suspend fun Backend.getTopicInfoListByPredicate(
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
     addPinOrder: Boolean = false,
@@ -237,7 +233,7 @@ suspend fun Backend.getTopicsByPredicate(
 ): Result<List<TopicInfo>> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
     return databaseSession.dbSearch {
-        this.search {
+        search {
             Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
                 .select(Topics.fields + Aids.value)
                 .where(predicate)
@@ -255,18 +251,18 @@ suspend fun Backend.getTopicsByPredicate(
         }
         map(Topic::wrapRow)
     }.mapResult {
-        processTopicInfo(uid, it)
+        processTopicToTopicInfo(uid, it)
     }
 }
 
-suspend fun Backend.getTopicsPagingByPredicate(
+suspend fun Backend.getTopicPaginationResultByPredicate(
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
-    pagingFetch: PagingFetch,
+    primaryKeyFetch: PrimaryKeyFetch,
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<PaginationResult<TopicInfo>> {
-    return getTopicsByPredicate(uid, fillHasCommented, addPagingQuery = {
-        bindPaginationQuery(Topics, pagingFetch)
+    return getTopicInfoListByPredicate(uid, fillHasCommented, addPagingQuery = {
+        bindPaginationQuery(Topics, primaryKeyFetch)
     }, predicate = predicate).mapResult { data ->
         databaseSession.dbSearch {
             search {
@@ -359,7 +355,7 @@ suspend fun Backend.updateTopicStatus(
     }
 }
 
-suspend fun Backend.getRawTopics(firstId: PrimaryKey): Result<List<Topic>> {
+suspend fun Backend.getTopicList(firstId: PrimaryKey): Result<List<Topic>> {
     return databaseSession.dbSearch {
         search {
             val query = Topics.selectAll()

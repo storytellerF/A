@@ -6,8 +6,11 @@ import com.storyteller_f.*
 import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
+import com.storyteller_f.a.server.route.configureRoute
 import com.storyteller_f.media.loadAvif
 import com.storyteller_f.shared.kmpLogger
+import com.storyteller_f.tables.ReactionRecord
+import com.storyteller_f.tables.statsReactionRecord
 import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
@@ -22,13 +25,11 @@ import io.ktor.server.plugins.partialcontent.*
 import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
+import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.io.File
@@ -58,15 +59,51 @@ fun main(args: Array<String>) {
     EngineMain.main(args + extraArgs)
 }
 
-@Suppress("unused")
+val reactionChannel = Channel<ReactionRecord>(Channel.UNLIMITED) {
+}
+
 fun Application.module() {
     val reader = buildDatabaseReader()
     val backend = buildBackend()
     DatabaseFactory.init(backend)
-    launch {
+    val serverJob = launch {
         backend.sendTopicToRoomMembers()
+        Napier.i {
+            "server topic task finished"
+        }
     }
+    val reactionJob = launch {
+        try {
+            for (record in reactionChannel) {
+                Napier.i {
+                    "server reaction task $record"
+                }
+                backend.statsReactionRecord(record)
+            }
+        } catch (e: CancellationException) {
+            Napier.i {
+                "server reaction task canceled"
+            }
+        }
 
+        Napier.i {
+            "server reaction task finished"
+        }
+    }
+    monitor.subscribe(ApplicationStopping) {
+        monitor.unsubscribe(ApplicationStopping) {}
+        serverJob.cancel()
+        reactionJob.cancel()
+    }
+    configurePlugin(reader, backend)
+    configureAuth(reader, backend)
+    configureRoute(reader, backend)
+}
+
+private fun Application.configurePlugin(
+    reader: DatabaseReader,
+    backend: Backend
+) {
     install(ContentNegotiation) {
         json()
     }
@@ -93,7 +130,6 @@ fun Application.module() {
     install(PartialContent)
     install(Resources)
     configureMonitor()
-    configureAuth(reader, backend)
 }
 
 private fun WebSockets.WebSocketOptions.setupWebSockets() {

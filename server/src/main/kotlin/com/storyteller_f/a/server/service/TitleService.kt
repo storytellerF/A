@@ -13,16 +13,19 @@ import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
+import com.storyteller_f.tables.ObjectListFetch.IdListFetch
+import com.storyteller_f.tables.getCommunityRawResults
+import com.storyteller_f.tables.getRoomRawResultList
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PrimaryKeyFetch
 
 suspend fun Backend.getUserTitles(
     uid: PrimaryKey,
     searchType: TitleSearchType,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
-    fetch: PagingFetch
-) = userTitles(
+    fetch: PrimaryKeyFetch
+) = getTitlePaginationResult(
     fetch,
     uid,
     searchType,
@@ -86,22 +89,22 @@ private suspend fun Backend.getRelatedObject(
 ): Result<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>> {
     return merge({
         if (uidList.isNotEmpty()) {
-            getUsersByIds(uidList)
+            getUsersInfoByIds(uidList)
         } else {
             Result.success(emptyList())
         }
     }, {
         if (roomIdList.isNotEmpty()) {
-            getRoomByIds(roomIdList).mapResult {
-                this.processRoomList(it)
+            getRoomRawResultList(IdListFetch(roomIdList)).mapResult {
+                this.processRoomRawResultToRoomInfo(it)
             }
         } else {
             Result.success(emptyList())
         }
     }, {
         if (communityIdList.isNotEmpty()) {
-            getCommunityByIds(communityIdList).mapResult {
-                processCommunityList(it)
+            getCommunityRawResults(IdListFetch(communityIdList)).mapResult {
+                processCommunityRawResultToCommunityInfo(it)
             }
         } else {
             Result.success(emptyList())

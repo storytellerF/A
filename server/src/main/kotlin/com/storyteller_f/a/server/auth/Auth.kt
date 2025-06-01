@@ -8,7 +8,6 @@ import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.*
 import com.storyteller_f.a.server.remoteIp
 import com.storyteller_f.a.server.route.RouteAccounts
-import com.storyteller_f.a.server.route.commonRoute
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -131,13 +130,14 @@ private suspend fun RoutingContext.signIn(
     data: String
 ): Result<UserInfo?> {
     val f = finalData(data)
-    return backend.getUserByAddress(pack.ad).filterNull {
+    return backend.getUserRawResultAndPublicKeyByAddress(pack.ad).filterNull {
         BadRequestException("user not found")
-    }.mapResult { (info, icon, publicKey) ->
+    }.mapResult { (userRawResult, publicKey) ->
         verify(publicKey, pack.sig, f).mapResult { isVerified ->
             if (isVerified) {
-                backend.addUserLog(info.id, UserLogType.SIGN_IN, info.id ob ObjectType.USER)
-                backend.processUserList(listOf(info to icon)).mapIfNotNull {
+                val id = userRawResult.user.id
+                backend.addUserLog(id, UserLogType.SIGN_IN, id ob ObjectType.USER)
+                backend.processUserRawResultToUserInfo(listOf(userRawResult)).mapIfNotNull {
                     it.first()
                 }.mapIfNotNull { value ->
                     val id = value.id
@@ -188,8 +188,8 @@ private suspend fun RoutingContext.signUp(
                         backend.createUser(ad, name, newId, pack.pk).mapResult { value ->
                             backend.addUserLog(newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
                             saveSuccessSessionOnFirst(newId, reader)
-                            backend.processUserList(
-                                listOf<Pair<UserInfo, String?>>(value to null)
+                            backend.processUserRawResultToUserInfo(
+                                listOf(UserRawResult(value, null))
                             ).mapIfNotNull { userList ->
                                 userList.first()
                             }
@@ -355,7 +355,6 @@ fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
             }
         }
     }
-    commonRoute(reader, backend)
 }
 
 fun Route.bindUnprotectedAccountRoute(

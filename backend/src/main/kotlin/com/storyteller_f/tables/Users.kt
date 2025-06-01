@@ -1,7 +1,6 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.count
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.AlgoType
@@ -13,7 +12,7 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PrimaryKeyFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -63,8 +62,8 @@ class User(
     }
 }
 
-fun mapUserInfo(it: ResultRow): Pair<UserInfo, String?> {
-    return User.wrapRow(it).toUserInfo() to it[Users.icon]
+fun mapUserInfo(it: ResultRow): UserRawResult {
+    return UserRawResult(User.wrapRow(it).toUserInfo(), it[Users.icon])
 }
 
 suspend fun Backend.getUserAid(id: PrimaryKey): Result<String?> =
@@ -88,31 +87,35 @@ sealed interface ObjectFetch {
     data class IdFetch(val id: PrimaryKey) : ObjectFetch
 }
 
-suspend fun Backend.getUserAndRelatedMedia(
-    fetch: ObjectFetch
-): Result<UserInfo?> {
-    return databaseSession.dbSearch {
-        search {
-            Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
-                when (fetch) {
-                    is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
-                    is ObjectFetch.IdFetch -> Users.id eq fetch.id
-                }
-            }
+sealed interface ObjectListFetch {
+    data class AidListFetch(val aidList: List<String>) : ObjectListFetch
+    data class IdListFetch(val idList: List<PrimaryKey>) : ObjectListFetch
+}
+
+data class UserRawResult(val user: UserInfo, val avatar: String?)
+
+fun Query.bindUserFetchQuery(fetch: ObjectFetch): Query {
+    return where {
+        when (fetch) {
+            is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
+            is ObjectFetch.IdFetch -> Users.id eq fetch.id
         }
-        first(::mapUserInfo)
-    }.mapResultIfNotNull {
-        this.processUserList(listOf(it)).mapIfNotNull(List<UserInfo>::first)
     }
 }
 
-suspend fun Backend.getRawUser(
-    it: PrimaryKey
-): Result<Pair<UserInfo, String?>?> = databaseSession.dbSearch {
+suspend fun Backend.getUserInfoAndRelatedMedia(
+    fetch: ObjectFetch
+): Result<UserInfo?> {
+    return getUserRawResult(fetch).mapResultIfNotNull {
+        processUserRawResultToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
+    }
+}
+
+suspend fun Backend.getUserRawResult(
+    objectFetch: ObjectFetch
+): Result<UserRawResult?> = databaseSession.dbSearch {
     search {
-        Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
-            Users.id eq it
-        }
+        Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().bindUserFetchQuery(objectFetch)
     }
     first(::mapUserInfo)
 }
@@ -120,13 +123,13 @@ suspend fun Backend.getRawUser(
 suspend fun Backend.commonPaginationMemberList(
     objectId: PrimaryKey?,
     word: String?,
-    pagingFetch: PagingFetch
-): Result<Pair<List<Pair<UserInfo, String?>>, Long>> {
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<Pair<List<UserRawResult>, Long>> {
     return databaseSession.dbSearch {
         search {
             buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(
                 Users,
-                pagingFetch
+                primaryKeyFetch
             )
         }
         map(::mapUserInfo)
@@ -169,18 +172,18 @@ private fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, wo
 suspend fun Backend.searchMembers(
     objectId: PrimaryKey?,
     word: String?,
-    pagingFetch: PagingFetch
+    primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<UserInfo>?> {
-    return commonPaginationMemberList(objectId, word, pagingFetch).mapResult { (pairs, count) ->
-        this.processUserList(pairs).mapIfNotNull {
+    return commonPaginationMemberList(objectId, word, primaryKeyFetch).mapResult { (pairs, count) ->
+        processUserRawResultToUserInfo(pairs).mapIfNotNull {
             PaginationResult(it, count)
         }
     }
 }
 
-suspend fun Backend.getUserByAddress(
+suspend fun Backend.getUserRawResultAndPublicKeyByAddress(
     ad: String
-): Result<Triple<UserInfo, String?, String>?> = databaseSession.dbSearch {
+) = databaseSession.dbSearch {
     search {
         Users
             .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -191,7 +194,7 @@ suspend fun Backend.getUserByAddress(
     }
     first {
         val value = User.wrapRow(it)
-        Triple(value.toUserInfo(), value.icon, value.publicKey)
+        Pair(UserRawResult(value.toUserInfo(), value.icon), value.publicKey)
     }
 }
 
@@ -301,7 +304,7 @@ suspend fun Backend.getUserAuthDataBy(
         }
     }
 
-suspend fun Backend.getUsersByIds(
+suspend fun Backend.getUsersInfoByIds(
     ids: List<PrimaryKey>
 ) = databaseSession.dbSearch {
     search {
@@ -314,10 +317,10 @@ suspend fun Backend.getUsersByIds(
     }
     map(::mapUserInfo)
 }.mapResult {
-    this.processUserList(it)
+    processUserRawResultToUserInfo(it)
 }
 
-suspend fun Backend.getRawUsersByAids(ids: List<String>) =
+suspend fun Backend.getUserRawResultByAids(ids: List<String>) =
     databaseSession.dbSearch {
         search {
             Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -342,12 +345,12 @@ suspend fun Backend.getUserAcgByIds(ids: List<PrimaryKey>) =
         }
     }
 
-suspend fun Backend.processUserList(
-    pairs: List<Pair<UserInfo, String?>>
+suspend fun Backend.processUserRawResultToUserInfo(
+    pairs: List<UserRawResult>
 ) = getMediaInfoList(pairs.map {
-    it.second
+    it.avatar
 }).mapIfNotNull { value ->
     pairs.mapIndexed { index, pair ->
-        pair.first.copy(avatar = value[index])
+        pair.user.copy(avatar = value[index])
     }
 }

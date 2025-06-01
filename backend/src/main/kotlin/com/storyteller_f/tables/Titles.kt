@@ -12,7 +12,7 @@ import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PrimaryKeyFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -102,8 +102,8 @@ fun Title.toTitleInfo(): TitleInfo {
     return TitleInfo(id, createdTime, type, creator, receiver, scopeId, scopeType, name, descriptionTopicId, null)
 }
 
-suspend fun Backend.userTitles(
-    pagingFetch: PagingFetch,
+suspend fun Backend.getTitlePaginationResult(
+    primaryKeyFetch: PrimaryKeyFetch,
     uid: PrimaryKey,
     searchType: TitleSearchType,
     type: TitleType? = null,
@@ -111,7 +111,7 @@ suspend fun Backend.userTitles(
 ): Result<PaginationResult<TitleInfo>> {
     return databaseSession.dbSearch {
         search {
-            buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(Titles, pagingFetch)
+            buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(Titles, primaryKeyFetch)
         }
         transform {
             map(Title::wrapRow).map { it.toTitleInfo() }

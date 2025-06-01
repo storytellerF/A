@@ -10,11 +10,12 @@ data class ReactionInfo(
     val emoji: String,
     val objectId: PrimaryKey,
     val count: Long,
-    val hasReacted: Boolean
+    val hasReacted: Boolean,
+    val lastReactionId: PrimaryKey
 )
 
 @Serializable
-data class SingleReactionInfo(
+data class ReactionRecordInfo(
     val id: PrimaryKey,
     val emoji: String,
     val objectId: PrimaryKey,

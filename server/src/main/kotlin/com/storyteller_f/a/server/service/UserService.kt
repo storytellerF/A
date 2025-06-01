@@ -53,7 +53,7 @@ suspend fun Backend.updateUser(
     return updateUserInfo(uid, newUser).mapResult {
         if (it) {
             this.addUserLog(uid, UserLogType.UPDATE, uid ob ObjectType.USER)
-            getUserAndRelatedMedia(ObjectFetch.IdFetch(uid))
+            getUserInfoAndRelatedMedia(ObjectFetch.IdFetch(uid))
         } else {
             Result.success(null)
         }

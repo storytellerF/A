@@ -16,7 +16,7 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PrimaryKeyFetch
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.plugins.*
@@ -35,7 +35,7 @@ import kotlin.uuid.Uuid
 suspend fun Backend.getMediaList(
     uid: PrimaryKey,
     routeMedia: RouteMedia,
-    pagingFetch: PagingFetch
+    primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<MediaInfo>?> {
     if (routeMedia.objectType == ObjectType.TOPIC) {
         return Result.failure(BadRequestException("can't get topic media"))
@@ -46,7 +46,7 @@ suspend fun Backend.getMediaList(
         uid
     ).mapResultIfNotNull { (_, _, hasWrite) ->
         if (hasWrite) {
-            getPagingMedias(uid, pagingFetch)
+            getMediaPaginationResult(uid, primaryKeyFetch)
         } else {
             Result.failure(ForbiddenException("no permission"))
         }
@@ -77,7 +77,7 @@ suspend fun Backend.getAllMediaList(
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, tika: Tika, uid: PrimaryKey) =
-    getRawMediaById(mediaId).mapResultIfNotNull { media ->
+    getMediaById(mediaId).mapResultIfNotNull { media ->
         if (media.owner != uid) {
             throw ForbiddenException("no permission")
         }
@@ -251,7 +251,7 @@ suspend fun Backend.copyMedia(
                     "$uid/${newCopiedFileName(name)}"
                 }
             }.mapResult {
-                getRawMedia(objectTuple.objectId, name).mapResultIfNotNull { media ->
+                getMedia(objectTuple.objectId, name).mapResultIfNotNull { media ->
                     copyMedia(media, uid, it)
                 }
             }

@@ -16,22 +16,20 @@ import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PrimaryKeyFetch
 
 suspend fun Backend.getRoomPubKeys(
     roomId: PrimaryKey,
     userId: PrimaryKey,
-    pagingFetch: PagingFetch
-): Result<PaginationResult<Pair<PrimaryKey, String>>?> {
-    return this.isMemberJoined(roomId, userId).mapResult {
-        if (it) {
-            commonPaginationRoomPubKeyList(roomId, pagingFetch)
-                .map { (data, count) ->
-                    PaginationResult(data, count)
-                }
-        } else {
-            Result.failure(ForbiddenException("Permission denied"))
-        }
+    primaryKeyFetch: PrimaryKeyFetch
+) = isMemberJoined(roomId, userId).mapResult {
+    if (it) {
+        getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
+            .map { (data, count) ->
+                PaginationResult(data, count)
+            }
+    } else {
+        Result.failure(ForbiddenException("Permission denied"))
     }
 }
 
@@ -45,8 +43,8 @@ suspend fun Backend.joinRoom(
         val communityId = roomInfo.communityId
         if (communityId == null) {
             // 检查是否存在title
-            userTitles(
-                PagingFetch(null, null, 1),
+            getTitlePaginationResult(
+                PrimaryKeyFetch(null, 1),
                 uid,
                 TitleSearchType.RECEIVER,
                 TitleType.JOIN,
@@ -82,7 +80,7 @@ private suspend fun Backend.directJoinRoom(
     ).mapResult {
         this.addUserLog(uid, UserLogType.JOIN, roomInfo.tuple())
         Result.success(roomInfo.copy(joinedTime = time))
-    }.recoverError { exception ->
+    }.recoverResult { exception ->
         if (exception.isDup()) {
             getRoom(ObjectFetch.IdFetch(roomInfo.id), uid, true)
         } else {
@@ -108,8 +106,8 @@ suspend fun Backend.getRoom(
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<RoomInfo?> {
-    return getRoom(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
-        this.processRoomList(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
+    return getRoomRawResult(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
+        this.processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
     }
 }
 
@@ -147,8 +145,8 @@ suspend fun Backend.createRoom(
             val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
             createRoom(room)
                 .mapResult {
-                    this.processRoomList(
-                        listOf(room.toRoomInfo(0, room.createdTime, null) to room.icon)
+                    processRoomRawResultToRoomInfo(
+                        listOf(RoomRawResult(room.toRoomInfo(0, room.createdTime, null), room.icon))
                     ).mapIfNotNull(List<RoomInfo>::first)
                 }
         } else {
@@ -196,9 +194,9 @@ suspend fun Backend.updateRoom(
             } else {
                 updateRoom(id, newRoom).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        getRoom(ObjectFetch.IdFetch(id), true, uid)
+                        getRoomRawResult(ObjectFetch.IdFetch(id), true, uid)
                             .mapResultIfNotNull {
-                                this.processRoomList(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
+                                this.processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
                             }
                     } else {
                         Result.success(null)

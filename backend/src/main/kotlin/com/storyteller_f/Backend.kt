@@ -9,8 +9,11 @@ import com.storyteller_f.media.FileSystemMediaService
 import com.storyteller_f.media.MediaService
 import com.storyteller_f.media.MinIoMediaService
 import com.storyteller_f.naming.NameService
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.types.Cursor
+import com.storyteller_f.types.PrimaryKeyFetch
 import io.github.aakira.napier.Napier
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.SortOrder
@@ -28,7 +31,9 @@ class Backend(
     val nameService: NameService,
     val database: Database,
     val databaseSession: DatabaseSession
-)
+) {
+    val json = Json {}
+}
 
 class Config(
     val databaseConnection: DatabaseConnection,
@@ -101,7 +106,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         mediaService,
         NameService(),
         database,
-        DatabaseSession(database)
+        DatabaseSession(database, buildType)
     )
 }
 
@@ -171,21 +176,31 @@ private fun databaseConnection(env: MergedEnv): DatabaseConnection {
 
 fun Query.bindPaginationQuery(
     table: BaseTable,
-    pagingFetch: PagingFetch
+    primaryKeyFetch: PrimaryKeyFetch
 ): Query {
-    val n = pagingFetch.next
-    val p = pagingFetch.pre
-    val s = pagingFetch.size
-    if (n != null) {
-        andWhere {
-            table.id less n
+    val cursor = primaryKeyFetch.cursor
+    val order = when (cursor) {
+        is Cursor.NextCursor<*> -> if (cursor.value is PrimaryKey) {
+            andWhere {
+                table.id less cursor.value
+            }
+            SortOrder.DESC
+        } else {
+            null
         }
-    } else if (p != null) {
-        andWhere {
-            table.id greater p
+
+        is Cursor.PreCursor<*> -> if (cursor.value is PrimaryKey) {
+            andWhere {
+                table.id greater cursor.value
+            }
+            SortOrder.ASC
+        } else {
+            null
         }
+
+        null -> null
     }
-    return orderBy(table.id, SortOrder.DESC).limit(s)
+    return orderBy(table.id, order ?: SortOrder.DESC).limit(primaryKeyFetch.size)
 }
 
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)

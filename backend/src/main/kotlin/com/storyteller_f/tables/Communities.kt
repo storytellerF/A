@@ -7,7 +7,8 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.*
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PaginationResult
+import com.storyteller_f.types.PrimaryKeyFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -84,7 +85,7 @@ fun mapCommunityInfo(it: ResultRow): CommunityRawResult {
 
 data class CommunityRawResult(val communityInfo: CommunityInfo, val icon: String?, val poster: String?)
 
-suspend fun Backend.getCommunity(
+suspend fun Backend.getCommunityRawResult(
     objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
     uid: PrimaryKey? = null
@@ -105,7 +106,7 @@ suspend fun Backend.getCommunity(
         }
         first(Community::wrapRow)
     }.mapResultIfNotNull { community ->
-        processCommunitiesInfo(uid, listOf(community)).map {
+        processCommunityToCommunityRawResult(uid, listOf(community)).map {
             it.first()
         }
     }
@@ -141,13 +142,13 @@ fun Query.bindPosterSearch(
     return this
 }
 
-suspend fun Backend.getPaginationCommunityList(
+suspend fun Backend.getCommunityPaginationResult(
     uid: PrimaryKey?,
     joinStatus: JoinStatusSearch?,
     word: String?,
     hasPosterSearch: PosterSearch?,
-    pagingFetch: PagingFetch
-): Result<Pair<List<CommunityRawResult>, Long>?> {
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<CommunityRawResult>?> {
     val joinSearch = joinStatus.toJoinSearch(uid)
 
     return databaseSession.dbSearch {
@@ -155,11 +156,11 @@ suspend fun Backend.getPaginationCommunityList(
             Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
                 .select(Communities.fields + Aids.value)
                 .buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
-                .bindPaginationQuery(Communities, pagingFetch)
+                .bindPaginationQuery(Communities, primaryKeyFetch)
         }
         map(Community::wrapRow)
     }.mapResultIfNotNull {
-        this.processCommunitiesInfo(uid, it).mapResult { list ->
+        processCommunityToCommunityRawResult(uid, it).mapResult { list ->
             databaseSession.dbSearch {
                 search {
                     Communities.select(Communities.id)
@@ -167,13 +168,13 @@ suspend fun Backend.getPaginationCommunityList(
                 }
                 count()
             }.map { count ->
-                list to count
+                PaginationResult(list, count)
             }
         }
     }
 }
 
-private suspend fun Backend.processCommunitiesInfo(
+private suspend fun Backend.processCommunityToCommunityRawResult(
     uid: PrimaryKey?,
     communities: List<Community>
 ): Result<List<CommunityRawResult>> = getContainerInfo(
@@ -206,7 +207,7 @@ suspend fun Backend.getContainerInfo(
     }
 }, {
     if (uid != null) {
-        getReadLogs(parentIds, uid).map {
+        getTopicReadList(parentIds, uid).map {
             it.associateBy { userTopicRead ->
                 userTopicRead.objectId
             }
@@ -307,30 +308,22 @@ suspend fun Backend.getCommunityJoinedTimeByIds(
     }
 }
 
-suspend fun Backend.getCommunityByIds(
-    idList: List<PrimaryKey>
+suspend fun Backend.getCommunityRawResults(
+    objectListFetch: ObjectListFetch
 ) = databaseSession.dbSearch {
     search {
         Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
             .selectAll().where {
-                Communities.id inList idList
+                when (objectListFetch) {
+                    is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                    is ObjectListFetch.IdListFetch -> Communities.id inList objectListFetch.idList
+                }
             }
     }
     map(::mapCommunityInfo)
 }
 
-suspend fun Backend.getCommunityByAids(
-    idList: List<String>
-) = databaseSession.dbSearch {
-    search {
-        Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId).selectAll().where {
-            Aids.value inList idList
-        }
-    }
-    map(::mapCommunityInfo)
-}
-
-suspend fun Backend.processCommunityList(
+suspend fun Backend.processCommunityRawResultToCommunityInfo(
     list: List<CommunityRawResult>
 ): Result<List<CommunityInfo>?> {
     return getMediaInfoList(list.flatMap { (_, icon, poster) ->
