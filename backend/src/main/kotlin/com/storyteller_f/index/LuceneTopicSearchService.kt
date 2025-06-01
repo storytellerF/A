@@ -4,8 +4,9 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
+import com.storyteller_f.types.Cursor
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PrimaryKeyFetch
 import io.github.aakira.napier.Napier
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.*
@@ -98,23 +99,19 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
     override suspend fun searchDocument(
         word: List<String>?,
         documentSearch: DocumentSearch,
-        pagingFetch: PagingFetch?
+        primaryKeyFetch: PrimaryKeyFetch?
     ): Result<PaginationResult<TopicDocument>> {
         return useLucene {
             try {
                 DirectoryReader.open(it).use { reader ->
                     val searcher = IndexSearcher(reader)
-                    val combinedQuery = buildQuery(
-                        pagingFetch?.pre,
-                        pagingFetch?.next,
-                        word,
-                        documentSearch
-                    )
-                    val sortById = Sort(SortField("id2", SortField.Type.LONG, pagingFetch?.pre == null))
+                    val combinedQuery = buildQuery(primaryKeyFetch, word, documentSearch)
+                    val reverse = primaryKeyFetch?.cursor is Cursor.PreCursor<*> && primaryKeyFetch.cursor.value != null
+                    val sortById = Sort(SortField("id2", SortField.Type.LONG, reverse))
                     Napier.i {
                         "lucene search query $combinedQuery $sortById"
                     }
-                    val docs = searcher.search(combinedQuery, pagingFetch?.size ?: 0, sortById)
+                    val docs = searcher.search(combinedQuery, primaryKeyFetch?.size ?: 0, sortById)
                     val scoreDocs = docs.scoreDocs
                     PaginationResult(scoreDocs.mapNotNull { doc ->
                         searcher.storedFields().document(doc.doc)?.let { document ->
@@ -133,26 +130,41 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
         }
     }
 
+    private fun BooleanQuery.Builder.addPagingQuery(fetch: PrimaryKeyFetch?) {
+        when {
+            fetch == null -> {}
+            fetch.cursor is Cursor.PreCursor<*> -> {
+                if (fetch.cursor.value is PrimaryKey) {
+                    val preTopicId = fetch.cursor.value + 1
+                    add(
+                        LongPoint.newRangeQuery("id1", preTopicId, Long.MAX_VALUE),
+                        BooleanClause.Occur.MUST
+                    )
+                }
+            }
+
+            fetch.cursor is Cursor.NextCursor<*> -> {
+                if (fetch.cursor.value is PrimaryKey) {
+                    val nextTopicId = fetch.cursor.value - 1
+                    add(
+                        LongPoint.newRangeQuery("id1", Long.MIN_VALUE, nextTopicId),
+                        BooleanClause.Occur.MUST
+                    )
+                }
+            }
+
+            else -> {}
+        }
+    }
+
     private fun buildQuery(
-        preTopicId: PrimaryKey?,
-        nextTopicId: PrimaryKey?,
+        fetch: PrimaryKeyFetch?,
         word: List<String>?,
         documentSearch: DocumentSearch
     ): Query? {
         val analyzer = StandardAnalyzer()
-        val combinedQuery = BooleanQuery
-            .Builder()
-        if (nextTopicId != null) {
-            combinedQuery.add(
-                LongPoint.newRangeQuery("id1", Long.MIN_VALUE, nextTopicId.minus(1)),
-                BooleanClause.Occur.MUST
-            )
-        } else if (preTopicId != null) {
-            combinedQuery.add(
-                LongPoint.newRangeQuery("id1", Long.MIN_VALUE, preTopicId.minus(1)),
-                BooleanClause.Occur.MUST
-            )
-        }
+        val combinedQuery = BooleanQuery.Builder()
+        combinedQuery.addPagingQuery(fetch)
         word?.let {
             val filtered = it.map { string ->
                 string.trim()

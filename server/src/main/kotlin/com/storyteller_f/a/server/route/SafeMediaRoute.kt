@@ -3,7 +3,7 @@ package com.storyteller_f.a.server.route
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
-import com.storyteller_f.a.server.common.IdentityPagingGenerator
+import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.obj.NewMedia
@@ -18,7 +18,7 @@ import java.io.File
 fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteMedia> {
         usePrincipal(reader) { uid ->
-            pagination(IdentityPagingGenerator) { pagingFetch ->
+            pagination(IdentifiablePagingGenerator) { pagingFetch ->
                 backend.getMediaList(uid, it, pagingFetch)
             }
         }

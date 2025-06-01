@@ -1,9 +1,12 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.*
+import com.storyteller_f.Backend
+import com.storyteller_f.CustomBadRequestException
+import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.route.RouteTopics
+import com.storyteller_f.bindPaginationQuery
 import com.storyteller_f.index.DocumentSearch
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
@@ -17,10 +20,10 @@ import com.storyteller_f.shared.type.TopicPinSearch.UNPINNED
 import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
-import com.storyteller_f.tables.ObjectFetch.*
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
-import io.ktor.http.ContentType
+import com.storyteller_f.types.PrimaryKeyFetch
+import com.storyteller_f.types.ReactionFetch
+import io.ktor.http.*
 import io.ktor.server.plugins.*
 import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -96,10 +99,10 @@ suspend fun Backend.createTopicSnapshot(
     uid: PrimaryKey,
     topicId: PrimaryKey
 ): Result<MediaInfo?> {
-    return getRawUser(uid).mapResultIfNotNull { (first) ->
+    return getUserRawResult(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { (first) ->
         checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull { (hasRead) ->
             if (hasRead) {
-                getDirectTopic(topicId).mapResultIfNotNull { value ->
+                getTopicInfo(ObjectFetch.IdFetch(topicId), null).mapResultIfNotNull { value ->
                     createTopicSnapshot(value, first, uid)
                 }
             } else {
@@ -117,7 +120,7 @@ private suspend fun Backend.createTopicSnapshot(
     val topicId = topicInfo.id
     return topicSearchService.getDocuments(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultIfNotNull { documents ->
-            getRawUser(topicInfo.author).mapResultIfNotNull { (first) ->
+            getUserRawResult(ObjectFetch.IdFetch(topicInfo.author)).mapResultIfNotNull { (first) ->
                 val name = "$uid/$topicId.pdf"
                 val pdfFile = File("/tmp/$name")
                 val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
@@ -244,7 +247,7 @@ suspend fun Backend.getTopic(
     ).mapResultIfNotNull { (hasRead, hasJoined, isPrivate) ->
         if (hasRead) {
             getTopicInfo(
-                IdFetch(topicId),
+                ObjectFetch.IdFetch(topicId),
                 uid
             ).mapResultIfNotNull { info ->
                 processTopicsContent(listOf(info), uid, isPrivate).mapIfNotNull {
@@ -265,7 +268,7 @@ suspend fun Backend.getTopicByAid(
     fillHasCommented: Boolean?
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return getTopicInfo(AidFetch(aid), uid).mapResultIfNotNull { info ->
+    return getTopicInfo(ObjectFetch.AidFetch(aid), uid).mapResultIfNotNull { info ->
         checkRootReadPermission(
             ObjectType.TOPIC,
             info.id,
@@ -289,7 +292,7 @@ suspend fun Backend.getTopLevelTopicsInObject(
     parentType: ObjectType,
     uid: PrimaryKey? = null,
     fillHasCommented: Boolean?,
-    pagingFetch: PagingFetch,
+    primaryKeyFetch: PrimaryKeyFetch,
     pinType: TopicPinSearch? = null,
 ): Result<PaginationResult<TopicInfo>?> {
     return checkRootReadPermission(
@@ -300,7 +303,7 @@ suspend fun Backend.getTopLevelTopicsInObject(
         if (isPrivate && !hasRead) {
             Result.failure(ForbiddenException("Permission Denied"))
         } else {
-            this.getTopicsPagingByPredicate(uid, fillHasCommented, pagingFetch) { ->
+            this.getTopicPaginationResultByPredicate(uid, fillHasCommented, primaryKeyFetch) { ->
                 val baseQuery = Topics.parentId eq parentId
                 when (pinType) {
                     PINNED -> baseQuery and (Topics.pinned eq true)
@@ -321,14 +324,14 @@ suspend fun Backend.processTopicExtension(
     uid: PrimaryKey?,
     isPrivate: Boolean,
     addLatestSubTopic: Boolean,
-) = getUsersByIds(processedTopics.map {
+) = getUsersInfoByIds(processedTopics.map {
     it.author
 }.distinct()).mapResultIfNotNull { users ->
     val userMap = users.associateBy { it.id }
     if (addLatestSubTopic) {
         val subTopics = processedTopics.flatMap { t ->
-            this.getTopicsByPredicate(uid, fillHasCommented = false, addPinOrder = true, addPagingQuery = {
-                bindPaginationQuery(Topics, PagingFetch(null, null, 2))
+            getTopicInfoListByPredicate(uid, fillHasCommented = false, addPinOrder = true, addPagingQuery = {
+                bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
             }) {
                 Topics.parentId eq t.id
             }.getOrThrow()
@@ -345,12 +348,12 @@ suspend fun Backend.processTopicExtension(
     } else {
         Result.success(emptyMap())
     }.mapResultIfNotNull { processedSubTopicMap ->
-        commonReactions(uid, processedTopics.map {
+        getReactionInfoPaginationResult(processedTopics.map {
             it.id
-        }).map {
-            it.groupBy {
-                it.objectId
-            }
+        }, uid, ReactionFetch(null, 20)).map {
+            it.list
+        }.map {
+            it.groupBy(ReactionInfo::objectId)
         }.map { reactionMap ->
             processedTopics.map {
                 val authorInfo = userMap[it.author] ?: throw CustomBadRequestException("author is null")
@@ -416,7 +419,7 @@ suspend fun Backend.checkRootReadPermission(
 ): Result<RootReadPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            getTopicRoot(parentId).mapResultIfNotNull { (rootId, rootType) ->
+            getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
                 this.checkRootReadPermission(rootType, rootId, uid)
             }
         }
@@ -457,7 +460,7 @@ suspend fun Backend.checkRootWritePermission(
 ): Result<RootWritePermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            getTopicRoot(parentId).mapResultIfNotNull { (rootId, rootType) ->
+            getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
                 this.checkRootWritePermission(rootType, rootId, uid)
             }
         }
@@ -500,19 +503,19 @@ suspend fun Backend.checkRootAdminPermission(
 ): Result<RootAdminPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            getTopicRoot(parentId).mapResultIfNotNull { (rootId, rootType) ->
+            getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
                 this.checkRootAdminPermission(rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            getRoom(IdFetch(parentId), true, uid).mapIfNotNull {
-                RootAdminPermission(parentType, parentId, it.first.creator == uid)
+            getRoomRawResult(ObjectFetch.IdFetch(parentId), true, uid).mapIfNotNull {
+                RootAdminPermission(parentType, parentId, it.roomInfo.creator == uid)
             }
         }
 
         ObjectType.COMMUNITY -> {
-            getCommunity(IdFetch(parentId)).mapIfNotNull {
+            getCommunityRawResult(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, it.communityInfo.owner == uid)
             }
         }
@@ -530,7 +533,7 @@ suspend fun Backend.checkRootAdminPermission(
 
 suspend fun Backend.searchPublicTopics(
     search: RouteTopics.Search,
-    pagingFetch: PagingFetch,
+    primaryKeyFetch: PrimaryKeyFetch,
     uid: PrimaryKey?
 ): Result<PaginationResult<TopicInfo>?> {
     if (search.word != null && search.word.sumOf {
@@ -552,7 +555,7 @@ suspend fun Backend.searchPublicTopics(
         topicSearchService.searchDocument(
             search.word,
             documentSearch = documentSearch,
-            pagingFetch
+            primaryKeyFetch
         ).mapResult { (list, total) ->
             processTopicsDocument(uid, search.parent.fillHasCommented, list).mapIfNotNull {
                 PaginationResult(it, total)
@@ -614,19 +617,19 @@ fun documentMediaList(documentList: List<TopicDocument?>): List<Pair<PrimaryKey,
 suspend fun Backend.recommendTopics(
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
-    pagingFetch: PagingFetch
+    primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<TopicInfo>?> {
     return if (uid != null) {
         getJoinedCommunityIds(uid).mapResult {
             topicSearchService.searchDocument(
                 documentSearch = DocumentSearch.Recommend(uid, it),
-                pagingFetch = pagingFetch
+                primaryKeyFetch = primaryKeyFetch
             )
         }
     } else {
         topicSearchService.searchDocument(
             documentSearch = DocumentSearch.RecommendNotLogin,
-            pagingFetch = pagingFetch
+            primaryKeyFetch = primaryKeyFetch
         )
     }.mapResult { (list, total) ->
         processTopicsDocument(uid, fillHasCommented, list).mapIfNotNull {
@@ -646,7 +649,7 @@ private suspend fun Backend.processTopicsDocument(
     if (ids.isEmpty()) {
         return Result.success(emptyList())
     }
-    return this.getTopicsByPredicate(uid, fillHasCommented) {
+    return this.getTopicInfoListByPredicate(uid, fillHasCommented) {
         Topics.id inList ids
     }.mapResult { infos ->
         this.processTopicMedia(infos.sortedByDescending {
@@ -683,7 +686,7 @@ suspend fun Backend.getTopicByIds(
             }
         }
     }
-    return this.getTopicsByPredicate(uid, fillHasCommented) {
+    return this.getTopicInfoListByPredicate(uid, fillHasCommented) {
         Topics.id inList ids
     }.mapResult { infos ->
         val privateList = infos.filter {
@@ -709,7 +712,7 @@ suspend fun Backend.updateTopicPin(
     this.checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
         if (it.hasAdmin) {
             getTopicInfo(
-                IdFetch(topicId),
+                ObjectFetch.IdFetch(topicId),
                 uid
             ).mapResultIfNotNull { info ->
                 if (info.isPin == newValue) {

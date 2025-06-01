@@ -36,3 +36,6 @@ data class UserLogInfo(
     val objectType: ObjectType,
     val createdTime: LocalDate
 )
+
+@Serializable
+data class UserPubKeyInfo(val id: PrimaryKey, val pubKey: String)

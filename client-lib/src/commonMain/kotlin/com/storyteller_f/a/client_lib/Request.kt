@@ -23,16 +23,15 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.util.internal.*
 import io.ktor.utils.io.core.*
 
 inline fun <R> serviceCatching(block: () -> R): Result<R> {
-    val point = Exception()
     return try {
         val value = block()
         Result.success(value)
     } catch (e: Throwable) {
-        point.initCauseBridge(e)
+        if (e is ServerErrorException && e.status == HttpStatusCode.Unauthorized) return Result.failure(e)
+        val point = Exception(e)
         Napier.e(point) {
             "serviceCatching"
         }
@@ -79,7 +78,7 @@ suspend fun SessionManager.requestRoomKeys(id: PrimaryKey, nextId: PrimaryKey?, 
             url {
                 appendPagingQueryParams(size, nextId)
             }
-        }.body<ServerResponse<Pair<PrimaryKey, String>>>()
+        }.body<ServerResponse<UserPubKeyInfo>>()
     }
 
 suspend fun SessionManager.joinRoom(id: PrimaryKey) = serviceCatching {
@@ -474,12 +473,12 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
     parentTarget: ObjectTuple,
     isPrivate: Boolean,
     input: String,
-    keyData: List<Pair<PrimaryKey, String>>,
+    keyData: List<UserPubKeyInfo>,
 ) {
     val content = if (isPrivate) {
         val (encrypted, aes) = encryptData(input).getOrThrow()
         TopicContent.Encrypted(encrypted.toHexString(), keyData.associate {
-            it.first to eciesEncrypt(it.second, aes).getOrThrow().toHexString()
+            it.id to eciesEncrypt(it.pubKey, aes).getOrThrow().toHexString()
         })
     } else {
         TopicContent.Plain(input)

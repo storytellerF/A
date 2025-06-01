@@ -44,7 +44,7 @@ suspend fun Backend.isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?) =
         Result.success(false)
     } else {
         databaseSession.dbSearch {
-            this.search {
+            search {
                 MemberJoins.selectAll().where {
                     (MemberJoins.objectId eq objectId) and (MemberJoins.uid eq uid)
                 }

@@ -1,12 +1,13 @@
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.a.client_lib.json
 import com.storyteller_f.a.server.module
 import com.storyteller_f.readResourceEnv
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadIfNeed
+import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
@@ -14,13 +15,21 @@ import com.storyteller_f.shared.utils.md5
 import io.github.aakira.napier.Napier
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 import java.io.File
+import java.net.ServerSocket
+import java.net.SocketTimeoutException
+import kotlin.concurrent.thread
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlin.test.assertEquals
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -39,6 +48,9 @@ fun test(block: suspend ApplicationTestBuilder.() -> Unit) {
     if (freeMemory >= 100) {
 //        startTestContainerTest(receivedFrame, true, block)
         startTestContainerTest(false, block)
+    }
+    Napier.i {
+        "test done"
     }
 }
 
@@ -117,20 +129,6 @@ private fun doTest(
     env: Map<String, String>,
     block: suspend (ApplicationTestBuilder) -> Unit
 ) {
-    DatabaseFactory.enableExplain { dialect, statements, result, point ->
-        val file = File(
-            "./build/test/$dialect/${extractTableNames(statements).joinToString("/")}/${md5(statements)}.explain"
-        )
-        file.parentFile?.let {
-            if (!it.exists()) {
-                it.mkdirs()
-            }
-        }
-        val newText = "${SqlFormatter.format(statements)}\n\n$result\n\n$point"
-        if (!file.exists() || file.readText() != newText) {
-            file.writeText(newText)
-        }
-    }
     testApplication {
         environment {
             config = MapApplicationConfig().apply {
@@ -142,10 +140,64 @@ private fun doTest(
         application {
             module()
         }
-        block(this)
-    }
+        coroutineScope {
+            val task = CompletableDeferred<Unit>()
+            val job = launch {
+                suspendCoroutine {
+                    thread {
+                        ServerSocket(8888).apply {
+                            soTimeout = 1000 // 5秒超时
+                        }.use { serverSocket ->
+                            task.complete(Unit)
+                            while (isActive) {
+                                try {
+                                    serverSocket.accept().use { socket ->
+                                        socket.getInputStream().bufferedReader().use {
+                                            val explainResult = json.decodeFromString<ExplainResult>(it.readText())
+                                            println("Client says: $explainResult")
+                                            saveDatabaseExplainResult(explainResult)
+                                        }
+                                    }
+                                } catch (_: SocketTimeoutException) {
 
-    DatabaseFactory.enableExplain(null)
+                                } catch (e: Exception) {
+                                    Napier.e(throwable = e) {
+                                        "server socket error"
+                                    }
+                                }
+                            }
+                            Napier.i {
+                                "server socket closed"
+                            }
+                            it.resume(Unit)
+                        }
+                    }
+                }
+                Napier.i {
+                    "server socket job finished"
+                }
+            }
+            task.await()
+            block(this@testApplication)
+            job.cancel()
+        }
+    }
+}
+
+fun saveDatabaseExplainResult(explainResult: ExplainResult) {
+    val (dialect, statements, result, stackTraceStrig) = explainResult
+    val file = File(
+        "./build/test/$dialect/${extractTableNames(statements).joinToString("/")}/${md5(statements)}.explain"
+    )
+    file.parentFile?.let {
+        if (!it.exists()) {
+            it.mkdirs()
+        }
+    }
+    val newText = "${SqlFormatter.format(statements)}\n\n$result\n\n${stackTraceStrig}"
+    if (!file.exists() || file.readText() != newText) {
+        file.writeText(newText)
+    }
 }
 
 data class SessionTuple(

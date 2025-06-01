@@ -19,7 +19,7 @@ import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PrimaryKeyFetch
 import io.ktor.server.plugins.*
 
 suspend fun Backend.getCommunity(
@@ -27,12 +27,12 @@ suspend fun Backend.getCommunity(
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
-    return getCommunity(
+    return getCommunityRawResult(
         objectFetch,
         fillJoinInfo,
         id
     ).mapResultIfNotNull {
-        processCommunityList(listOf(it)).mapIfNotNull(List<CommunityInfo>::first)
+        processCommunityRawResultToCommunityInfo(listOf(it)).mapIfNotNull(List<CommunityInfo>::first)
     }
 }
 
@@ -83,15 +83,15 @@ suspend fun Backend.exitCommunity(
 suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
     search: RouteCommunities.Search,
-    pagingFetch: PagingFetch
-) = getPaginationCommunityList(
+    primaryKeyFetch: PrimaryKeyFetch
+) = getCommunityPaginationResult(
     search.target ?: uid,
     if (search.target != null) JoinStatusSearch.JOINED else search.joinStatus,
     search.word,
     search.hasPoster,
-    pagingFetch
+    primaryKeyFetch
 ).mapResultIfNotNull { (list, count) ->
-    processCommunityList(list).mapResultIfNotNull { value ->
+    processCommunityRawResultToCommunityInfo(list).mapResultIfNotNull { value ->
         when {
             search.target == null -> Result.success(PaginationResult(value, count))
             uid != null -> this.processUserJoinedTimeReplace(value, uid, count)
@@ -150,7 +150,7 @@ suspend fun Backend.createCommunity(
     return createCommunity(community).mapResult {
         val communityInfo = community.toCommunityIfo(0, community.createdTime, null)
         this.addUserLog(uid, UserLogType.CREATE, communityInfo.tuple())
-        processCommunityList(
+        processCommunityRawResultToCommunityInfo(
             listOf(CommunityRawResult(communityInfo, newCommunity.icon, null))
         ).mapIfNotNull {
             it.first()
@@ -169,12 +169,14 @@ suspend fun Backend.updateCommunity(
             this.checkBeforeUpdateCommunity(newCommunity).mapResult {
                 updateCommunity(id, newCommunity).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        getCommunity(
+                        getCommunityRawResult(
                             ObjectFetch.IdFetch(id),
                             true,
                             uid
                         ).mapResultIfNotNull { rawResult ->
-                            processCommunityList(listOf(rawResult)).mapIfNotNull(List<CommunityInfo>::first)
+                            processCommunityRawResultToCommunityInfo(
+                                listOf(rawResult)
+                            ).mapIfNotNull(List<CommunityInfo>::first)
                         }
                     } else {
                         Result.success(null)

@@ -204,7 +204,7 @@ private suspend fun Backend.addTopicAtRoom(
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            getTopicRoot(newTopic.parentId).mapResultIfNotNull { (id, type) ->
+            getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
                     addTopicIntoRoom(
                         id,

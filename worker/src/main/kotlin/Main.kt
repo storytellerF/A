@@ -74,7 +74,7 @@ private suspend fun Backend.doAcgTask() {
 
 private suspend fun Backend.getAcgTaskListFromTopics() =
     getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult {
-        getRawTopics(it?.processedId ?: 0)
+        getTopicList(it?.processedId ?: 0)
     }.mapResult { list ->
         if (list.isNotEmpty()) {
             val acgList = list.groupBy {

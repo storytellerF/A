@@ -197,7 +197,7 @@ class RouteAccounts {
 @Resource("/titles")
 class RouteTitles
 
-fun Application.commonRoute(reader: DatabaseReader, backend: Backend) {
+fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
     routing {
         authenticate {
             bindProtectedSafeRoomRoute(reader, backend)

@@ -5,7 +5,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.omitPrincipal
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
-import com.storyteller_f.a.server.common.IdentityPagingGenerator
+import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.obj.NewDevice
@@ -13,7 +13,7 @@ import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.tables.ObjectFetch
-import com.storyteller_f.tables.getUserAndRelatedMedia
+import com.storyteller_f.tables.getUserInfoAndRelatedMedia
 import com.storyteller_f.tables.searchMembers
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
@@ -42,7 +42,7 @@ fun Route.bindProtectedSafeUserRoute(reader: DatabaseReader, backend: Backend) {
 fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteUsers.Aid> { value ->
         omitPrincipal(reader) {
-            value.aid?.let { backend.getUserAndRelatedMedia(ObjectFetch.AidFetch(it)) }
+            value.aid?.let { backend.getUserInfoAndRelatedMedia(ObjectFetch.AidFetch(it)) }
                 ?: Result.success(
                     null
                 )
@@ -50,13 +50,13 @@ fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
     }
     get<RouteUsers.Id> {
         omitPrincipal(reader) {
-            backend.getUserAndRelatedMedia(ObjectFetch.IdFetch(it.id))
+            backend.getUserInfoAndRelatedMedia(ObjectFetch.IdFetch(it.id))
         }
     }
 
     get<RouteUsers.Id.Topics> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { f ->
+            pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
                     it.parent.id,
                     ObjectType.USER,
@@ -71,7 +71,7 @@ fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
 
     get<RouteUsers.Id.Titles> { r ->
         omitPrincipal(reader) {
-            pagination(IdentityPagingGenerator) { f ->
+            pagination(IdentifiablePagingGenerator) { f ->
                 backend.getUserTitles(r.parent.id, r.searchType, r.type, r.scopeId, f)
             }
         }
@@ -79,7 +79,7 @@ fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
 
     get<RouteUsers.Search> {
         omitPrincipal(reader) {
-            pagination(IdentityPagingGenerator) { f ->
+            pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchMembers(null, it.word, f)
             }
         }

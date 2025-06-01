@@ -5,7 +5,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.omitPrincipal
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
-import com.storyteller_f.a.server.common.IdentityPagingGenerator
+import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.obj.NewCommunity
@@ -20,7 +20,7 @@ import io.ktor.server.routing.Route
 fun Route.bindSafeCommunityRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteCommunities.Search> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { f ->
+            pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchCommunities(uid, it, f)
             }
         }
@@ -28,7 +28,7 @@ fun Route.bindSafeCommunityRoute(reader: DatabaseReader, backend: Backend) {
 
     get<RouteCommunities.Id.Members> {
         omitPrincipal(reader) {
-            pagination(IdentityPagingGenerator) { f ->
+            pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchMembers(it.parent.id, it.word, f)
             }
         }
@@ -49,7 +49,7 @@ fun Route.bindSafeCommunityRoute(reader: DatabaseReader, backend: Backend) {
 
     get<RouteCommunities.Id.Topics> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { f ->
+            pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
                     it.parent.id,
                     ObjectType.COMMUNITY,

@@ -55,12 +55,25 @@ suspend fun <T> Result<T?>.filterNull(block: suspend () -> Throwable): Result<T>
     }
 }
 
-suspend fun <T> Result<T>.recoverError(block: suspend (Throwable) -> Result<T>): Result<T> {
+suspend fun <T> Result<T>.recoverResult(block: suspend (Throwable) -> Result<T>): Result<T> {
     return if (isSuccess) {
         this
     } else {
         block(exceptionOrNull()!!)
     }
+}
+
+suspend fun <T> Result<T>.transformThrowable(block: suspend (Throwable) -> Throwable): Result<T> {
+    return if (isSuccess) {
+        this
+    } else {
+        Result.failure(block(exceptionOrNull()!!))
+    }
+}
+
+inline fun <T> Result<T?>.onNotNull(action: (value: T) -> Unit): Result<T?> {
+    if (isSuccess) getOrThrow()?.let(action)
+    return this
 }
 
 data class Merged4<M1, M2, M3, M4>(val first: M1, val second: M2, val third: M3, val fourth: M4)

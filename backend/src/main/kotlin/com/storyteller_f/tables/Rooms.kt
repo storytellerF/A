@@ -1,15 +1,15 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.count
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PrimaryKeyFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -61,11 +61,11 @@ suspend fun Backend.checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
     }
 }
 
-fun mapRoomInfo(it: ResultRow): Pair<RoomInfo, String?> {
+fun mapRoomInfo(it: ResultRow): RoomRawResult {
     val joinedTime = it.getOrNull(MemberJoins.joinedTime)
     val topicId = it.getOrNull(UserTopicReads.topicId)
     val room = Room.wrapRow(it)
-    return room.toRoomInfo(0, joinedTime, topicId) to room.icon
+    return RoomRawResult(room.toRoomInfo(0, joinedTime, topicId), room.icon)
 }
 
 fun Room.toRoomInfo(memberCount: Long, joinedTime: LocalDateTime?, topicId: Long?) = RoomInfo(
@@ -80,32 +80,32 @@ fun Room.toRoomInfo(memberCount: Long, joinedTime: LocalDateTime?, topicId: Long
     lastRead = topicId
 )
 
-suspend fun Backend.getRoomPaginationList(
+suspend fun Backend.getRoomPaginationResult(
     uid: PrimaryKey?,
     joinStatusSearch: JoinStatusSearch?,
     word: String?,
     community: PrimaryKey?,
-    pagingFetch: PagingFetch
-): Result<Pair<List<Pair<RoomInfo, String?>>, Long>> {
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<RoomRawResult>> {
     val joinSearch = joinStatusSearch.toJoinSearch(uid)
     return databaseSession.dbSearch {
-        this.search {
+        search {
             Rooms
                 .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
                 .select(Rooms.fields + Aids.value)
                 .buildRoomSearchWhereQuery(joinSearch, community, word)
-                .bindPaginationQuery(Rooms, pagingFetch)
+                .bindPaginationQuery(Rooms, primaryKeyFetch)
         }
         map(Room::wrapRow)
     }.mapResult {
-        this.processRoomInfo(uid, it).mapResult { list ->
+        processRoomListToRoomRawResult(uid, it).mapResult { list ->
             databaseSession.dbSearch {
-                this.search {
+                search {
                     Rooms.select(Rooms.id).buildRoomSearchWhereQuery(joinSearch, community, word)
                 }
                 count()
             }.map { count ->
-                list to count
+                PaginationResult(list, count)
             }
         }
     }
@@ -169,16 +169,16 @@ suspend fun Backend.getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?
         }
     }
 
-suspend fun Backend.commonPaginationRoomPubKeyList(
+suspend fun Backend.getRoomPubKeyPaginationResult(
     roomId: PrimaryKey,
-    pagingFetch: PagingFetch
-): Result<Pair<List<Pair<Long, String>>, Long>> {
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<UserPubKeyInfo>> {
     return databaseSession.dbSearch {
         search {
-            buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, pagingFetch)
+            buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, primaryKeyFetch)
         }
         map {
-            it[Users.id] to it[Users.publicKey]
+            UserPubKeyInfo(it[Users.id], it[Users.publicKey])
         }
     }.mapResult { data ->
         databaseSession.dbSearch {
@@ -187,7 +187,7 @@ suspend fun Backend.commonPaginationRoomPubKeyList(
             }
             count()
         }.map { value ->
-            data to value
+            PaginationResult(data, value)
         }
     }
 }
@@ -209,11 +209,11 @@ fun buildRoomPubKeyQuery(roomId: PrimaryKey, getCount: Boolean): Query {
     }
 }
 
-suspend fun Backend.getRoom(
+suspend fun Backend.getRoomRawResult(
     objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
     uid: PrimaryKey? = null,
-): Result<Pair<RoomInfo, String?>?> {
+): Result<RoomRawResult?> {
     if (uid == null && fillJoinInfo == true) return Result.failure(UnauthorizedException())
     return databaseSession.dbSearch {
         search {
@@ -229,53 +229,56 @@ suspend fun Backend.getRoom(
         }
         first(Room::wrapRow)
     }.mapResultIfNotNull { room ->
-        this.processRoomInfo(uid, listOf(room)).map {
+        processRoomListToRoomRawResult(uid, listOf(room)).map {
             it.first()
         }
     }
 }
 
-private suspend fun Backend.processRoomInfo(
+private suspend fun Backend.processRoomListToRoomRawResult(
     uid: PrimaryKey?,
     rooms: List<Room>
-): Result<List<Pair<RoomInfo, String?>>> = getContainerInfo(rooms.map {
+): Result<List<RoomRawResult>> = getContainerInfo(rooms.map {
     it.id
 }, uid).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
     rooms.map { room ->
-        room.toRoomInfo(
-            memberCountMap[room.id] ?: 0,
-            joinedTimeMap[room.id]?.joinedTime,
-            lastReadMap[room.id]?.topicId
-        ) to room.icon
+        RoomRawResult(
+            room.toRoomInfo(
+                memberCountMap[room.id] ?: 0,
+                joinedTimeMap[room.id]?.joinedTime,
+                lastReadMap[room.id]?.topicId
+            ),
+            room.icon
+        )
     }
 }
 
-suspend fun Backend.searchRooms(
+suspend fun Backend.searchRoomPaginationResult(
     uid: PrimaryKey?,
     joinStatusSearch: JoinStatusSearch?,
     word: String?,
     community: PrimaryKey?,
-    pagingFetch: PagingFetch
+    primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<RoomInfo>?> {
-    return getRoomPaginationList(
+    return getRoomPaginationResult(
         uid,
         joinStatusSearch,
         word,
         community,
-        pagingFetch
+        primaryKeyFetch
     ).mapResult { (list, count) ->
-        this.processRoomList(list).mapIfNotNull { value ->
+        processRoomRawResultToRoomInfo(list).mapIfNotNull { value ->
             PaginationResult(value, count)
         }
     }
 }
 
-suspend fun Backend.processRoomList(list: List<Pair<RoomInfo, String?>>): Result<List<RoomInfo>?> {
+suspend fun Backend.processRoomRawResultToRoomInfo(list: List<RoomRawResult>): Result<List<RoomInfo>?> {
     return getMediaInfoList(list.map {
-        it.second
+        it.icon
     }).mapIfNotNull { icons ->
         list.mapIndexed { i, roomPair ->
-            roomPair.first.copy(icon = icons[i])
+            roomPair.roomInfo.copy(icon = icons[i])
         }
     }
 }
@@ -301,15 +304,20 @@ suspend fun Backend.createRoom(room: Room) = databaseSession.dbQuery {
     addRoomJoinRaw(room.id, room.creator, room.createdTime)
 }
 
-suspend fun Backend.getRoomByIds(
-    ids: List<PrimaryKey>
-): Result<List<Pair<RoomInfo, String?>>> {
+data class RoomRawResult(val roomInfo: RoomInfo, val icon: String?)
+
+suspend fun Backend.getRoomRawResultList(
+    objectListFetch: ObjectListFetch,
+): Result<List<RoomRawResult>> {
     return databaseSession.dbSearch {
         search {
             Rooms
                 .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
                 .select(Rooms.fields + Aids.value).where {
-                    Rooms.id inList ids
+                    when (objectListFetch) {
+                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                        is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
+                    }
                 }
         }
         map {
@@ -319,14 +327,17 @@ suspend fun Backend.getRoomByIds(
 }
 
 suspend fun Backend.getRoomByAids(
-    aids: List<String>
+    objectListFetch: ObjectListFetch,
 ): Result<List<Room>> {
     return databaseSession.dbSearch {
         search {
             Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
                 .select(Rooms.fields + Aids.value)
                 .where {
-                    Aids.value inList aids
+                    when (objectListFetch) {
+                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                        is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
+                    }
                 }
         }
         map {

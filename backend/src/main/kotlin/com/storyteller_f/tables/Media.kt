@@ -15,7 +15,7 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PagingFetch
+import com.storyteller_f.types.PrimaryKeyFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -121,15 +121,15 @@ suspend fun Backend.uploadFiles(uploadPacks: List<UploadPack>): Result<List<Medi
     }
 }
 
-suspend fun Backend.getPagingMedias(
+suspend fun Backend.getMediaPaginationResult(
     uid: PrimaryKey,
-    pagingFetch: PagingFetch
+    primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<MediaInfo>> {
     return databaseSession.dbSearch {
         search {
             Medias.selectAll().where {
                 Medias.owner eq uid
-            }.bindPaginationQuery(Medias, pagingFetch)
+            }.bindPaginationQuery(Medias, primaryKeyFetch)
         }
         map(Media::wrapRow)
     }.mapResult { list ->
@@ -168,7 +168,7 @@ suspend fun Backend.getPagingMedias(
     }
 }
 
-suspend fun Backend.getRawMedia(owner: PrimaryKey, name: String): Result<Media?> {
+suspend fun Backend.getMedia(owner: PrimaryKey, name: String): Result<Media?> {
     return databaseSession.dbSearch {
         search {
             Medias.selectAll().where {
@@ -179,7 +179,7 @@ suspend fun Backend.getRawMedia(owner: PrimaryKey, name: String): Result<Media?>
     }
 }
 
-suspend fun Backend.getRawMediaById(id: PrimaryKey): Result<Media?> {
+suspend fun Backend.getMediaById(id: PrimaryKey): Result<Media?> {
     return databaseSession.dbSearch {
         search {
             Medias.selectAll().where {

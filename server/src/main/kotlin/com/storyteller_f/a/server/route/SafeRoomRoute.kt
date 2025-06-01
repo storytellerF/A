@@ -4,19 +4,19 @@ import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
-import com.storyteller_f.a.server.common.CustomPagingGenerator
-import com.storyteller_f.a.server.common.IdentityPagingGenerator
+import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
+import com.storyteller_f.a.server.common.PrimaryKeyPagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
+import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.tables.ObjectFetch
 import com.storyteller_f.tables.searchMembers
-import com.storyteller_f.tables.searchRooms
+import com.storyteller_f.tables.searchRoomPaginationResult
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
@@ -24,15 +24,15 @@ import io.ktor.server.routing.Route
 fun Route.bindSafeRoomRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteRooms.Search> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { f ->
-                backend.searchRooms(uid, it.joinStatus, it.word, it.community, f)
+            pagination(IdentifiablePagingGenerator) { f ->
+                backend.searchRoomPaginationResult(uid, it.joinStatus, it.word, it.community, f)
             }
         }
     }
 
     get<RouteRooms.Id.Members> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { f ->
+            pagination(IdentifiablePagingGenerator) { f ->
                 backend.checkRootReadPermission(ObjectType.ROOM, it.parent.id, uid).mapResultIfNotNull { permission ->
                     if (permission.hasRead) {
                         backend.searchMembers(it.parent.id, it.word, f)
@@ -60,7 +60,7 @@ fun Route.bindSafeRoomRoute(reader: DatabaseReader, backend: Backend) {
 
     get<RouteRooms.Id.Topics> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(IdentityPagingGenerator) { f ->
+            pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
                     it.parent.id,
                     ObjectType.ROOM,
@@ -82,9 +82,7 @@ fun Route.bindProtectedSafeRoomRoute(reader: DatabaseReader, backend: Backend) {
     }
     get<RouteRooms.Id.PubKeys> {
         usePrincipal(reader) { uid ->
-            pagination(object : CustomPagingGenerator<Pair<PrimaryKey, String>>({
-                it.first.toString()
-            }) {}) { f ->
+            pagination(object : PrimaryKeyPagingGenerator<UserPubKeyInfo>(UserPubKeyInfo::id) {}) { f ->
                 backend.getRoomPubKeys(it.parent.id, uid, f)
             }
         }
