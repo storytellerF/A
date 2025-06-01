@@ -17,7 +17,6 @@ import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
-import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
@@ -40,9 +39,12 @@ suspend fun Backend.getMediaList(
     if (routeMedia.objectType == ObjectType.TOPIC) {
         return Result.failure(BadRequestException("can't get topic media"))
     }
+    val parentType = routeMedia.objectType
+    val parentId = routeMedia.objectId
+    if (parentId == null || parentType == null) error("invalid query")
     return checkRootWritePermission(
-        routeMedia.objectType,
-        routeMedia.objectId,
+        parentType,
+        parentId,
         uid
     ).mapResultIfNotNull { (_, _, hasWrite) ->
         if (hasWrite) {
@@ -60,9 +62,12 @@ suspend fun Backend.getAllMediaList(
     if (routeMedia.objectType == ObjectType.TOPIC) {
         return Result.failure(BadRequestException("can't get topic media"))
     }
+    val parentType = routeMedia.objectType
+    val parentId = routeMedia.objectId
+    if (parentId == null || parentType == null) error("invalid query")
     return checkRootWritePermission(
-        routeMedia.objectType,
-        routeMedia.objectId,
+        parentType,
+        parentId,
         uid
     ).mapResultIfNotNull { (_, _, hasWrite) ->
         if (hasWrite) {
@@ -92,17 +97,23 @@ suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, tika: Tika, ui
                         }
                         when (media.contentType) {
                             "audio/mp3" -> it.readMp3AlbumFromAudioStream(saveAlbum)
-                            "audio/flac" -> it.readFlacAlbumFromAudioStream(saveAlbum)
+                            "audio/flac", "audio/x-flac" -> it.readFlacAlbumFromAudioStream(saveAlbum)
                             else -> throw BadRequestException("unsupported audio type: ${media.contentType}")
-                        }
+                        } to media.contentType
                     }
                 }
-            }.mapResultIfNotNull { file ->
-                val name = newCoverFileName(media.name)
-                this.uploadFilesAfterDetectContentTypeAndDimension(
-                    tika,
-                    listOf(UploadPack(file, name, media.owner, media.size))
-                )
+            }.mapResultIfNotNull { (file, contentType) ->
+                if (file != null) {
+                    val name = newCoverFileName(media.name, contentType)
+                    uploadFilesAfterDetectContentTypeAndDimension(
+                        tika,
+                        listOf(UploadPack(file, name, media.owner, media.size))
+                    ).map {
+                        ServerResponse(it)
+                    }
+                } else {
+                    Result.success(null)
+                }
             }
         } else {
             Result.failure(BadRequestException("not an audio file"))
@@ -119,11 +130,13 @@ suspend fun RoutingContext.uploadMedia(
 ) = if (it.parent.objectType == ObjectType.TOPIC) {
     Result.failure(BadRequestException("can't upload to topic"))
 } else {
-    backend.checkRootWritePermission(it.parent.objectType, it.parent.objectId, id).mapResultIfNotNull {
-        val multipartData = call.receiveMultipart()
+    val parentType = it.parent.objectType
+    val parentId = it.parent.objectId
+    if (parentId == null || parentType == null) error("invalid query")
+    backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
         val result = mutableListOf<MediaInfo>()
 
-        multipartData.forEachPart { part ->
+        call.receiveMultipart().forEachPart { part ->
             when (part) {
                 is PartData.FileItem -> {
                     backend.processFilePart(part, root, tika, it, result)
@@ -144,18 +157,15 @@ private suspend fun Backend.processFilePart(
     permission: RootWritePermission,
     result: MutableList<MediaInfo>
 ) {
+//    val length = part.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+//    if (length == null) error("content length not exists")
+//    if (length > 1024 * 1024 * 10) error("file too large")
     val fileName = part.originalFileName as String
     val newSavedName = newFileName(fileName)
     val file = File(root, "$newSavedName.tmp")
-    val length = part.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-    if (length == null) {
-        throw BadRequestException("content length not exists")
-    }
-    // ktor 自带检查，保险起见再次检查
-    if (file.canonicalPath != file.absolutePath) throw BadRequestException("invalid path")
-    part.provider().copyWithLimitAndClose(file.writeChannel(), length)
+    val length = part.provider().copyAndClose(file.writeChannel())
     try {
-        val info = this.uploadFilesAfterDetectContentTypeAndDimension(
+        val mediaInfos = uploadFilesAfterDetectContentTypeAndDimension(
             tika,
             listOf(
                 UploadPack(
@@ -163,12 +173,10 @@ private suspend fun Backend.processFilePart(
                     newSavedName,
                     permission.objectId,
                     length,
-                    "",
-                    null
                 )
             )
         ).getOrThrow()
-        result.addAll(info.filterNotNull())
+        result.addAll(mediaInfos.filterNotNull())
     } finally {
         file.delete()
     }
@@ -225,8 +233,8 @@ private fun newCopiedFileName(fileName: String): String {
 }
 
 @OptIn(ExperimentalUuidApi::class)
-private fun newCoverFileName(fileName: String): String {
-    val extension = fileName.substringAfterLast(".").take(10)
+private fun newCoverFileName(fileName: String, contentType: String): String {
+    val extension = getExtensionFromMimeType(contentType)
     val originName = fileName.substringBeforeLast(".") + "_cover"
     // length 32
     val uuid = Uuid.random().toHexString()
@@ -396,7 +404,7 @@ fun getExtensionFromMimeType(mimeType: String): String {
         "audio/mpeg" -> "mp3"
         "audio/ogg" -> "ogg"
         "audio/wav" -> "wav"
-        "audio/flac" -> "flac"
+        "audio/flac", "audio/x-flac" -> "flac"
         else -> error("Unsupported mime type: $mimeType")
     }
 }

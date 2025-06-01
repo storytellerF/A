@@ -14,7 +14,7 @@ class SignatureTest {
         val jsonFilePath = "../../AData/data/0_pre_set_user.json"
         val jsonFile = File(jsonFilePath)
         if (!jsonFile.exists()) return
-        loadIfNeed()
+        loadCryptoLibIfNeed()
 
         val presetValue = Json {
             ignoreUnknownKeys = true
@@ -35,7 +35,7 @@ class SignatureTest {
         val jsonFilePath = "../../AData/data/preset_user.json"
         val jsonFile = File(jsonFilePath)
         if (!jsonFile.exists()) return
-        loadIfNeed()
+        loadCryptoLibIfNeed()
 
         val presetValue = Json {
             ignoreUnknownKeys = true

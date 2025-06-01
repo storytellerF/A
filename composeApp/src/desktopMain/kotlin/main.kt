@@ -3,7 +3,7 @@ import androidx.compose.ui.window.application
 import com.kdroid.composenotification.builder.AppConfig
 import com.kdroid.composenotification.builder.NotificationInitializer
 import com.storyteller_f.a.app.App
-import com.storyteller_f.shared.loadIfNeed
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import java.awt.*
 import kotlin.math.ceil
 import kotlin.system.exitProcess
@@ -41,7 +41,7 @@ fun main() {
             appName = "My awesome app",
         )
     )
-    loadIfNeed()
+    loadCryptoLibIfNeed()
     application {
         Window(
             onCloseRequest = ::exitApplication,

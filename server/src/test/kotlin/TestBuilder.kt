@@ -6,7 +6,7 @@ import com.storyteller_f.a.server.module
 import com.storyteller_f.readResourceEnv
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.kmpLogger
-import com.storyteller_f.shared.loadIfNeed
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ServerResponse
@@ -34,16 +34,16 @@ import kotlin.test.assertEquals
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-fun test(block: suspend ApplicationTestBuilder.() -> Unit) {
+fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend ApplicationTestBuilder.() -> Unit) {
     Napier.base(kmpLogger)
     val freeMemory = Runtime.getRuntime().freeMemory() / (1024 * 1024)
     Napier.i {
         "free ${freeMemory}MiB"
     }
     SnowflakeFactory.setMachine(0)
-    loadIfNeed()
+    loadCryptoLibIfNeed()
 
-    startInMemoryTest(block)
+    startInMemoryTest(overrideEnv, block)
 
     if (freeMemory >= 100) {
 //        startTestContainerTest(receivedFrame, true, block)
@@ -56,12 +56,13 @@ fun test(block: suspend ApplicationTestBuilder.() -> Unit) {
 
 @OptIn(ExperimentalUuidApi::class)
 private fun startInMemoryTest(
+    overrideEnv: Map<String, String>,
     block: suspend (ApplicationTestBuilder) -> Unit
 ) {
     val env = readResourceEnv(".env")!! + Pair(
         "DATABASE_URI",
         "jdbc:h2:mem:${Uuid.random().toHexString()};DB_CLOSE_DELAY=-1;"
-    )
+    ) + overrideEnv
     doTest(env, block)
 }
 
@@ -154,12 +155,10 @@ private fun doTest(
                                     serverSocket.accept().use { socket ->
                                         socket.getInputStream().bufferedReader().use {
                                             val explainResult = json.decodeFromString<ExplainResult>(it.readText())
-                                            println("Client says: $explainResult")
                                             saveDatabaseExplainResult(explainResult)
                                         }
                                     }
                                 } catch (_: SocketTimeoutException) {
-
                                 } catch (e: Exception) {
                                     Napier.e(throwable = e) {
                                         "server socket error"
@@ -194,7 +193,7 @@ fun saveDatabaseExplainResult(explainResult: ExplainResult) {
             it.mkdirs()
         }
     }
-    val newText = "${SqlFormatter.format(statements)}\n\n$result\n\n${stackTraceStrig}"
+    val newText = "${SqlFormatter.format(statements)}\n\n$result\n\n$stackTraceStrig"
     if (!file.exists() || file.readText() != newText) {
         file.writeText(newText)
     }

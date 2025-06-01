@@ -49,8 +49,6 @@ fun InteractionRow(
     val appNav = LocalAppNav.current
     InteractionRowInternal(
         reactions.orEmpty(),
-        topicInfo.commentCount,
-        topicInfo.hasComment,
         topicInfo,
         startAddComment
     ) {
@@ -66,12 +64,12 @@ fun InteractionRow(
 @Composable
 fun InteractionRowInternal(
     data: List<ReactionInfo>,
-    commentCount: Long,
-    hasComment: Boolean,
     topicInfo: TopicInfo,
     startAddComment: () -> Unit,
     startAddReaction: () -> Unit
 ) {
+    val hasComment = topicInfo.hasComment
+    val commentCount = topicInfo.commentCount
     var showBottomSheet by remember { mutableStateOf(false) }
     EmojiRow(
         data,

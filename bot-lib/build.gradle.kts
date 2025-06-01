@@ -43,8 +43,6 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(libs.bcprov.jdk18on)
-            implementation(libs.bcpkix.jdk18on)
         }
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
@@ -55,8 +53,6 @@ kotlin {
             implementation(libs.kotlin.test)
         }
         jvmMain.dependencies {
-            implementation(libs.bcprov.jdk18on)
-            implementation(libs.bcpkix.jdk18on)
         }
     }
 }

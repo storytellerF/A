@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.os.StrictMode
 import com.storyteller_f.shared.contextRef
-import com.storyteller_f.shared.loadIfNeed
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import org.schabi.newpipe.DownloaderImpl
 import org.schabi.newpipe.ReCaptchaActivity
 import org.schabi.newpipe.extractor.NewPipe
@@ -21,7 +21,7 @@ class AApplication : Application() {
                 .build()
         )
         contextRef = WeakReference(this)
-        loadIfNeed()
+        loadCryptoLibIfNeed()
         setCookiesToDownloader(DownloaderImpl)
         NewPipe.init(DownloaderImpl, Localization.DEFAULT, ContentCountry.DEFAULT)
     }

@@ -21,7 +21,6 @@ dependencies {
     implementation(libs.logback)
 
     implementation(libs.cryptography.provider.jdk)
-    implementation(libs.bcpkix.jdk18on)
     implementation(projects.shared)
     implementation(projects.backend)
     implementation(libs.bundles.ktor.server)

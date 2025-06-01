@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 class LoginUserSessionTest : UsingContextTest() {
     @Test
     fun testSession() = runTest {
-        loadIfNeed()
+        loadCryptoLibIfNeed()
         val sessionFactory = buildLoginUserSessionFactory()
         assertEquals(0, sessionFactory.savedSession().list.size)
         val privateKey = generateECDSAPemPrivateKey().getOrThrow()

@@ -46,6 +46,13 @@ private fun URLBuilder.appendPagingQueryParams(size: Int, nextId: PrimaryKey?) {
     }
 }
 
+private fun URLBuilder.appendPagingQueryParams(size: Int, nextCursor: String?) {
+    parameters.append("size", size.toString())
+    if (nextCursor != null) {
+        parameters.append("nextPageToken", nextCursor)
+    }
+}
+
 private fun HttpRequestBuilder.appendObjectTuple(objectTuple: ObjectTuple) {
     url {
         parameters.append("objectId", objectTuple.objectId.toString())
@@ -393,13 +400,14 @@ suspend fun SessionManager.deleteReaction(emoji: String, objectId: PrimaryKey) =
     }.body<Boolean>()
 }
 
-suspend fun SessionManager.getReactions(topicId: PrimaryKey) =
+suspend fun SessionManager.getReactions(topicId: PrimaryKey, size: Int, nextCursor: String? = null) =
     serviceCatching {
         client.get("topics/$topicId/reactions") {
             url {
                 if (currentIsAlreadySignUp) {
                     parameters.append("fillHasReacted", "true")
                 }
+                appendPagingQueryParams(size, nextCursor)
             }
         }.body<ServerResponse<ReactionInfo>>()
     }
@@ -592,4 +600,9 @@ suspend fun SessionManager.addDevice(endpointUrl: String) = serviceCatching {
         contentType(ContentType.Application.Json)
         setBody(NewDevice(endpointUrl))
     }
+}
+
+suspend fun SessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatching {
+    client.post("amedia/$mediaId/extract-album") {
+    }.body<ServerResponse<MediaInfo>>()
 }

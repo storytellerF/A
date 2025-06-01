@@ -3,6 +3,7 @@ package com.storyteller_f.tables
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
+import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.groupByPair
@@ -10,10 +11,10 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.types.Cursor
 import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.ReactionCursorKey
 import com.storyteller_f.types.ReactionFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 object ReactionRecords : BaseTable() {
     val uid = customPrimaryKey("uid")
@@ -59,7 +60,8 @@ object Reactions : Table() {
     override val primaryKey: PrimaryKey = PrimaryKey(emoji)
 
     init {
-        index("reaction-stats-main", true, objectId, count, lastReactionId)
+        index("reaction-stats-main", false, objectId, count, lastReactionId)
+        index("reaction-stats-unique", true, objectId, emoji)
     }
 }
 
@@ -90,15 +92,24 @@ suspend fun Backend.statsReactionRecord(reactionRecord: ReactionRecord): Result<
         listOf(reactionRecord.objectId),
         reactionRecord.emoji
     ).mapResult { reactionCountList ->
-        databaseSession.dbQuery {
-            check(Reactions.upsert(Reactions.objectId, Reactions.emoji) {
-                it[objectId] = reactionRecord.objectId
-                it[emoji] = reactionRecord.emoji
-                it[count] = reactionCountList.first().second
-                it[objectType] = reactionRecord.objectType
-                it[lastReactionId] = reactionRecord.id
-            }.insertedCount > 0) {
-                "insert reaction failed"
+        if (reactionCountList.isEmpty()) {
+            databaseSession.dbQuery {
+                Reactions.deleteWhere {
+                    Reactions.objectId eq reactionRecord.objectId and (Reactions.emoji eq reactionRecord.emoji)
+                }
+                Unit
+            }
+        } else {
+            databaseSession.dbQuery {
+                check(Reactions.upsert(Reactions.objectId, Reactions.emoji) {
+                    it[objectId] = reactionRecord.objectId
+                    it[emoji] = reactionRecord.emoji
+                    it[count] = reactionCountList.first().second
+                    it[objectType] = reactionRecord.objectType
+                    it[lastReactionId] = reactionRecord.id
+                }.insertedCount > 0) {
+                    "insert reaction failed"
+                }
             }
         }
     }
@@ -202,8 +213,8 @@ suspend fun Backend.getReactionRecordInfo(
         search {
             ReactionRecords.selectAll().where {
                 (ReactionRecords.objectId eq objectId) and
-                        (ReactionRecords.emoji eq emoji) and
-                        (ReactionRecords.uid eq uid)
+                    (ReactionRecords.emoji eq emoji) and
+                    (ReactionRecords.uid eq uid)
             }
         }
         first {
@@ -224,11 +235,25 @@ suspend fun Backend.deleteReaction(
     uid: PrimaryKey,
     emoji: String,
     objectId: PrimaryKey
-): Result<Boolean> = getReactionRecordInfo(uid, emoji, objectId).mapResult {
-    if (it == null) {
+) = getReactionRecordInfo(uid, emoji, objectId).mapResult { recordInfo ->
+    if (recordInfo == null) {
         Result.success(true)
     } else {
-        deleteReaction(it.id)
+        deleteReaction(recordInfo.id).map {
+            if (it) {
+                statsReactionRecord(
+                    ReactionRecord(
+                        recordInfo.id,
+                        recordInfo.objectId,
+                        recordInfo.objectType,
+                        recordInfo.emoji,
+                        recordInfo.id,
+                        recordInfo.createdTime
+                    )
+                )
+            }
+            it
+        }
     }
 }
 
@@ -293,8 +318,8 @@ suspend fun Backend.hasReactedForEmoji(objectId: PrimaryKey, uid: PrimaryKey, em
         search {
             ReactionRecords.selectAll().where {
                 (ReactionRecords.objectId eq objectId) and
-                        (ReactionRecords.emoji eq emoji) and
-                        (ReactionRecords.uid eq uid)
+                    (ReactionRecords.emoji eq emoji) and
+                    (ReactionRecords.uid eq uid)
             }
         }
         isNotEmpty()
