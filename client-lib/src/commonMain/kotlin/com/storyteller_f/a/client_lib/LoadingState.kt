@@ -112,6 +112,7 @@ class CachedLoadingHandler<T : Any>(
     val saveDocument: DatabaseCollection.(String, T) -> Unit,
 ) : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
+
     @OptIn(FlowPreview::class)
     override val data = databaseSource.getCollection(name, scopeName).observe(
         serializer,

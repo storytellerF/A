@@ -15,7 +15,7 @@ class KotbaseTest : UsingContextTest() {
     fun testSectionLoadParams() {
         val params = SectionLoadParams<PrimaryKey>(0, 1)
 
-        val collection =  KotbaseDatabaseSource(createKotbase()).getCollection("topics_keys")
+        val collection =  KotbaseDatabaseSource(createKotbase()).getCollection("topics_keys", "")
         collection.save("1", Json.encodeToString(params))
         val params1 = collection.getDocument("1", serializer<SectionLoadParams<PrimaryKey>>())
         assertEquals(params, params1)

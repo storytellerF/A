@@ -258,14 +258,20 @@ inline fun <reified T : Identifiable> singleSourceDatabaseSource(
     databaseSource: DatabaseSource
 ) =
     CustomQueryPagingSource(
-        collectionName, scopeName, databaseSource, serializer<T>(), { info ->
+        collectionName,
+        scopeName,
+        databaseSource,
+        serializer<T>(),
+        { info ->
             info?.id
-        }, {
+        },
+        {
             val param = it
             if (param != null) {
                 Expression.Less("id", param)
             } else {
                 null
             }
-        }, listOf(Order.Desc("id"))
+        },
+        listOf(Order.Desc("id"))
     )
