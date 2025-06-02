@@ -1,7 +1,10 @@
 package com.storyteller_f.a.server.common
 
+import com.storyteller_f.Backend
 import com.storyteller_f.shared.model.Identifiable
+import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.obj.Pagination
+import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapCatchingNotNull
@@ -10,6 +13,7 @@ import com.storyteller_f.types.Cursor
 import com.storyteller_f.types.Fetch
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
+import com.storyteller_f.types.ReactionFetch
 import io.ktor.server.routing.*
 import io.ktor.util.converters.*
 import kotlin.reflect.KClass
@@ -87,4 +91,43 @@ fun <R : Any> getPageToken(pageTokenType: KClass<R>, pageToken: String): R? = if
     pageToken.toULongOrNull() as? R
 } else {
     DefaultConversionService.fromValue(pageToken, pageTokenType) as? R
+}
+
+class ReactionPaginationGenerator(val backend: Backend) : PagingGenerator<ReactionInfo, ReactionFetch> {
+    override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): ReactionFetch {
+        return ReactionFetch(
+            when {
+                !nextPageToken.isNullOrBlank() -> Cursor.NextCursor(
+                    backend.json.decodeFromString<ReactionCursorKey>(
+                        nextPageToken
+                    )
+                )
+
+                !prePageToken.isNullOrBlank() -> Cursor.PreCursor(
+                    backend.json.decodeFromString<ReactionCursorKey>(
+                        prePageToken
+                    )
+                )
+
+                else -> null
+            },
+            size
+        )
+    }
+
+    override fun generate(list: List<ReactionInfo>, size: Int): Pair<String?, String?> {
+        val next = if (size <= list.size) {
+            val last = list.last()
+            backend.json.encodeToString(ReactionCursorKey(last.count, last.lastReactionId))
+        } else {
+            null
+        }
+        val pre = if (list.isNotEmpty()) {
+            val first = list.first()
+            backend.json.encodeToString(ReactionCursorKey(first.count, first.lastReactionId))
+        } else {
+            null
+        }
+        return pre to next
+    }
 }

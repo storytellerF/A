@@ -1,4 +1,4 @@
-package com.storyteller_f.a.client_lib
+package com.storyteller_f.storage
 
 import io.github.aakira.napier.Napier
 import kotbase.*
@@ -14,8 +14,9 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
+import kotbase.Collection as KotbaseCollection
 
-actual fun createPlatformDatabaseSource(): DatabaseSource {
+actual fun createKotbaseDatabaseSource(): DatabaseSource {
     return KotbaseDatabaseSource(createKotbase())
 }
 
@@ -23,15 +24,19 @@ class KotbaseObserverToken<T>(
     private val listenerToken: ListenerToken,
     override val task: CompletableDeferred<List<T>>
 ) :
-    ObserverToken<T> {
+    DatabaseObserverToken<T> {
     override fun remove() {
         listenerToken.remove()
     }
 }
 
 
-class KotbaseDatabaseCollection(val collection: kotbase.Collection, val source: KotbaseDatabaseSource) :
+class KotbaseDatabaseCollection(val collection: KotbaseCollection, val source: KotbaseDatabaseSource) :
     DatabaseCollection {
+    val json = Json {
+        ignoreUnknownKeys = true
+    }
+
     override fun saveDocument(id: String, string: String) {
         try {
             collection.save(MutableDocument(id, string))
@@ -42,7 +47,7 @@ class KotbaseDatabaseCollection(val collection: kotbase.Collection, val source: 
         }
     }
 
-    override fun <T : Any> observe(serializer: KSerializer<T>, expression: Expression): Flow<T?> {
+    override fun <T : Any> observe(serializer: KSerializer<T>, expression: DatabaseExpression): Flow<T?> {
         return select(all()).from(collection).where(getExpressionBuilder(expression)).limit(1).queryChangeFlow().map {
             if (it.error != null) {
                 Napier.e(throwable = it.error) {
@@ -56,7 +61,7 @@ class KotbaseDatabaseCollection(val collection: kotbase.Collection, val source: 
         }
     }
 
-    override fun <T> getDocument(expression: Expression, serializer: KSerializer<T>): T? {
+    override fun <T> getDocument(expression: DatabaseExpression, serializer: KSerializer<T>): T? {
         return kotbase.ktx.select(all()).from(collection)
             .where(getExpressionBuilder(expression)).execute().toObjects { jsonStr: String ->
                 Json.decodeFromString(serializer, jsonStr)
@@ -69,23 +74,23 @@ class KotbaseDatabaseCollection(val collection: kotbase.Collection, val source: 
         }
     }
 
-    override fun exists(expression: Expression): Boolean {
+    override fun exists(expression: DatabaseExpression): Boolean {
         return kotbase.ktx.select(all()).from(collection)
             .where(getExpressionBuilder(expression)).execute().next() != null
     }
 
-    private fun getExpressionBuilder(expression: Expression): WhereBuilder.() -> kotbase.Expression =
+    private fun getExpressionBuilder(expression: DatabaseExpression): WhereBuilder.() -> Expression =
         {
             when (expression) {
-                is Expression.IdEq -> {
+                is DatabaseExpression.IdEq -> {
                     (expression.field) equalTo (expression.value)
                 }
 
-                is Expression.StrEq -> {
+                is DatabaseExpression.StrEq -> {
                     (expression.field) equalTo (expression.value)
                 }
 
-                is Expression.Less -> expression.field lessThan expression.value
+                is DatabaseExpression.Less -> expression.field lessThan expression.value
             }
         }
 
@@ -96,12 +101,12 @@ class KotbaseDatabaseCollection(val collection: kotbase.Collection, val source: 
     }
 
     override fun <T> observeList(
-        expression: Expression?,
+        expression: DatabaseExpression?,
         size: Int,
-        orders: List<Order>,
+        orders: List<DatabaseOrder>,
         serializer: KSerializer<T>,
         invalidate: () -> Unit
-    ): ObserverToken<T> {
+    ): DatabaseObserverToken<T> {
         val task = CompletableDeferred<List<T>>()
         val selectQuery = select(all()).from(collection)
         val listenerToken = if (expression != null) {
@@ -111,8 +116,8 @@ class KotbaseDatabaseCollection(val collection: kotbase.Collection, val source: 
         }.orderBy {
             orders.forEach {
                 when (it) {
-                    is Order.Asc -> it.field.ascending()
-                    is Order.Desc -> it.field.descending()
+                    is DatabaseOrder.Asc -> it.field.ascending()
+                    is DatabaseOrder.Desc -> it.field.descending()
                 }
             }
         }

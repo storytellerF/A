@@ -1,19 +1,17 @@
 package jvm_based
 
-import android.content.ComponentName
 import android.content.ContentProvider
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import com.storyteller_f.a.app.AApplication
 import com.storyteller_f.a.app.MainActivity
-import kotbase.CouchbaseLite
+import com.storyteller_f.storage.loadKotbaseIfNeed
 import org.junit.Assume
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -36,7 +34,7 @@ actual abstract class UsingContextTest {
 //                MainActivity::class.simpleName!!,
 //            )
 //        )
-        CouchbaseLite.init(app, true)
+        loadKotbaseIfNeed(app)
         setupAndroidContextProvider()
     }
 

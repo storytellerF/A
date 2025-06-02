@@ -8,7 +8,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.auth.*
 
-class ClientCustomAuthProvider(val config: CustomAuthConfig) : AuthProvider {
+class CustomClientAuthProvider(val config: CustomAuthConfig) : AuthProvider {
 
     class CustomAuthConfig {
         lateinit var addRequestHeaders: suspend (String, HttpRequestBuilder) -> Unit
@@ -92,6 +92,6 @@ fun HttpRequestBuilder.addRequestHeaders(userInfo: UserInfo, sig: String) {
     }
 }
 
-fun AuthConfig.custom(block: ClientCustomAuthProvider.CustomAuthConfig.() -> Unit) {
-    providers.add(ClientCustomAuthProvider(ClientCustomAuthProvider.CustomAuthConfig().apply(block)))
+fun AuthConfig.custom(block: CustomClientAuthProvider.CustomAuthConfig.() -> Unit) {
+    providers.add(CustomClientAuthProvider(CustomClientAuthProvider.CustomAuthConfig().apply(block)))
 }

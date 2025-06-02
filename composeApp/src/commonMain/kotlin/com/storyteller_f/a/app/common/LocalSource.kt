@@ -8,9 +8,67 @@ import app.cash.paging.*
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.Identifiable
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.storage.*
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
+
+class CachedLoadingHandler<T : Any>(
+    val databaseSource: DatabaseSource,
+    val name: String,
+    val scope: CoroutineScope,
+    expression: DatabaseExpression,
+    val loader: suspend () -> Result<T>,
+    private val serializer: KSerializer<T>,
+    private val scopeName: String?,
+    val saveDocument: DatabaseCollection.(String, T) -> Unit,
+) : LoadingHandler<T> {
+    override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
+
+    @OptIn(FlowPreview::class)
+    override val data = databaseSource.getCollection(name, scopeName).observe(
+        serializer,
+        expression
+    ).debounce(500).stateIn(scope, SharingStarted.Lazily, null)
+
+    init {
+        refresh()
+    }
+
+    override fun done(t: T) {
+        try {
+            val data = Json.encodeToString(serializer, t)
+            databaseSource.getCollection(name, scopeName).saveDocument(data, t)
+            state.markDown()
+        } catch (e: Exception) {
+            error(e)
+        }
+    }
+
+    override fun error(error: Throwable) {
+        state.markError(error)
+    }
+
+    override fun update(t: T) {
+        done(t)
+    }
+
+    override fun refresh() {
+        scope.launch {
+            request {
+                loader()
+            }
+        }
+    }
+}
 
 class CustomQueryPagingSource<Key : Any, RowType : Any>(
     val collectionName: String,
@@ -18,8 +76,8 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
     val databaseSource: DatabaseSource,
     private val serializer: KSerializer<RowType>,
     private val key: (RowType?) -> Key?,
-    private val queryProvider: (Key?) -> Expression?,
-    private val orders: List<Order>,
+    private val queryProvider: (Key?) -> DatabaseExpression?,
+    private val orders: List<DatabaseOrder>,
     private val extraProcessor: suspend List<RowType>.() -> List<RowType> = { this }
 ) : PagingSource<Key, RowType>() {
 
@@ -33,7 +91,7 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
         return null
     }
 
-    private val registeredToken = mutableMapOf<Key?, ObserverToken<RowType>>()
+    private val registeredToken = mutableMapOf<Key?, DatabaseObserverToken<RowType>>()
 
     override suspend fun load(
         params: PagingSourceLoadParams<Key>
@@ -228,7 +286,7 @@ inline fun <reified T : Identifiable> sectionPagingSource(
     databaseSource: DatabaseSource,
     collectionName: String,
     scopeName: String?,
-    orders: List<Order>,
+    orders: List<DatabaseOrder>,
     noinline extra: suspend List<T>.() -> List<T> = { this }
 ) = CustomQueryPagingSource(
     collectionName,
@@ -243,7 +301,7 @@ inline fun <reified T : Identifiable> sectionPagingSource(
     {
         val param = it?.param
         if (param != null) {
-            Expression.Less("id", param)
+            DatabaseExpression.Less("id", param)
         } else {
             null
         }
@@ -268,10 +326,10 @@ inline fun <reified T : Identifiable> singleSourceDatabaseSource(
         {
             val param = it
             if (param != null) {
-                Expression.Less("id", param)
+                DatabaseExpression.Less("id", param)
             } else {
                 null
             }
         },
-        listOf(Order.Desc("id"))
+        listOf(DatabaseOrder.Desc("id"))
     )

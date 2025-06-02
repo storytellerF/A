@@ -5,19 +5,15 @@ import com.storyteller_f.Backend
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
-import com.storyteller_f.a.server.common.PagingGenerator
+import com.storyteller_f.a.server.common.ReactionPaginationGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
-import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.obj.DeleteReaction
 import com.storyteller_f.shared.obj.NewReaction
 import com.storyteller_f.shared.obj.NewTopic
-import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.safeFirstEmoji
 import com.storyteller_f.tables.deleteReaction
-import com.storyteller_f.types.Cursor
-import com.storyteller_f.types.ReactionFetch
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
@@ -74,44 +70,7 @@ fun Route.bindSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
     }
     get<RouteTopics.Id.Reactions> {
         usePrincipalOrNull(reader) { uid ->
-            pagination(object : PagingGenerator<ReactionInfo, ReactionFetch> {
-                override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): ReactionFetch {
-                    return ReactionFetch(
-                        when {
-                            !nextPageToken.isNullOrBlank() -> Cursor.NextCursor(
-                                backend.json.decodeFromString<ReactionCursorKey>(
-                                    nextPageToken
-                                )
-                            )
-
-                            !prePageToken.isNullOrBlank() -> Cursor.PreCursor(
-                                backend.json.decodeFromString<ReactionCursorKey>(
-                                    prePageToken
-                                )
-                            )
-
-                            else -> null
-                        },
-                        size
-                    )
-                }
-
-                override fun generate(list: List<ReactionInfo>, size: Int): Pair<String?, String?> {
-                    val next = if (size <= list.size) {
-                        val last = list.last()
-                        backend.json.encodeToString(ReactionCursorKey(last.count, last.lastReactionId))
-                    } else {
-                        null
-                    }
-                    val pre = if (list.isNotEmpty()) {
-                        val first = list.first()
-                        backend.json.encodeToString(ReactionCursorKey(first.count, first.lastReactionId))
-                    } else {
-                        null
-                    }
-                    return pre to next
-                }
-            }) { fetch ->
+            pagination(ReactionPaginationGenerator(backend)) { fetch ->
                 backend.reactionList(it.parent.id, uid, it.fillHasReacted, fetch)
             }
         }

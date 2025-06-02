@@ -18,6 +18,10 @@ import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
+import com.storyteller_f.storage.DatabaseExpression
+import com.storyteller_f.storage.DatabaseOrder
+import com.storyteller_f.storage.DatabaseSource
+import com.storyteller_f.storage.save
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.FlowPreview
@@ -67,7 +71,7 @@ class IdCommunityViewModel(
             databaseSource,
             "communities",
             viewModelScope,
-            Expression.IdEq("id", communityId),
+            DatabaseExpression.IdEq("id", communityId),
             { sessionManager.getCommunityInfo(communityId) },
             serializer<CommunityInfo>(),
             scopeName
@@ -89,7 +93,7 @@ class AidCommunityViewModel(
         databaseSource,
         "communities",
         viewModelScope,
-        Expression.StrEq("aid", aid),
+        DatabaseExpression.StrEq("aid", aid),
         { sessionManager.getCommunityInfoByAid(aid) },
         serializer,
         scopeName
@@ -146,7 +150,7 @@ class CommunitiesViewModel(
             databaseSource,
             collectionName,
             scopeName,
-            listOf(Order.Desc("id"), Order.Desc("hasPoster"))
+            listOf(DatabaseOrder.Desc("id"), DatabaseOrder.Desc("hasPoster"))
         )
     }.flow.cachedIn(viewModelScope)
 }
@@ -219,7 +223,12 @@ class TopicsViewModel(
             }
         },
     ) {
-        sectionPagingSource(databaseSource, collectionName, scopeName, listOf(Order.Asc("pinned"), Order.Desc("id"))) {
+        sectionPagingSource(
+            databaseSource,
+            collectionName,
+            scopeName,
+            listOf(DatabaseOrder.Asc("pinned"), DatabaseOrder.Desc("id"))
+        ) {
             processEncryptedTopic(this, sessionManager.sessionModel).map {
                 extractHeadlineIfPlain(it)
             }
@@ -253,7 +262,7 @@ class IdRoomViewModel(
             databaseSource,
             "rooms",
             viewModelScope,
-            Expression.IdEq("id", communityId),
+            DatabaseExpression.IdEq("id", communityId),
             {
                 sessionManager.getRoomInfo(communityId)
             },
@@ -276,7 +285,7 @@ class AidRoomViewModel(
             databaseSource,
             "rooms",
             viewModelScope,
-            Expression.StrEq("aid", aid),
+            DatabaseExpression.StrEq("aid", aid),
             {
                 sessionManager.getRoomInfoByAid(aid)
             },
@@ -382,7 +391,7 @@ class IdUserViewModel(
             databaseSource,
             "users",
             viewModelScope,
-            Expression.IdEq("id", id),
+            DatabaseExpression.IdEq("id", id),
             {
                 sessionManager.getUserInfo(id)
             },
@@ -405,7 +414,7 @@ class AidUserViewModel(
             databaseSource,
             "users",
             viewModelScope,
-            Expression.StrEq("aid", aid),
+            DatabaseExpression.StrEq("aid", aid),
             {
                 sessionManager.getUserInfoByAid(aid)
             },
@@ -472,7 +481,7 @@ class IdTopicViewModel(
             databaseSource,
             "topics",
             viewModelScope,
-            Expression.IdEq("id", topicId),
+            DatabaseExpression.IdEq("id", topicId),
             {
                 sessionManager.getTopicInfo(topicId)
             },
@@ -496,7 +505,7 @@ class AidTopicViewModel(
             databaseSource,
             "topics",
             viewModelScope,
-            Expression.StrEq("aid", aid),
+            DatabaseExpression.StrEq("aid", aid),
             {
                 sessionManager.getTopicInfoByAid(aid)
             },
