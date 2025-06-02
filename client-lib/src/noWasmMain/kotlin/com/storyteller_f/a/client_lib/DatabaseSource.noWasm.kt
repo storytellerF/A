@@ -164,31 +164,31 @@ fun createKotbase(): Database {
 class KotbaseDatabaseSource(private val database: Database) : DatabaseSource {
     val clearing = mutableSetOf<String>()
     val mutex = Mutex()
-    override fun getCollection(name: String): DatabaseCollection {
+    override fun getCollection(name: String, scope: String?): DatabaseCollection {
         val collection = database.defaultScope.getCollection(name) ?: database.createCollection(
-            name
+            name, scope
         )
         if (name.startsWith("communities_")) {
             if (!collection.indexes.contains("poster_index"))
                 collection.createIndex(
                     "poster_index",
-                    ValueIndexConfiguration("hasPoster")
+                    ValueIndexConfiguration("hasPoster", "id")
                 )
         } else if (name.startsWith("topics_") && name != "topics_keys") {
             if (!collection.indexes.contains("pinned_index"))
                 collection.createIndex(
                     "pinned_index",
-                    ValueIndexConfiguration("pinned")
+                    ValueIndexConfiguration("pinned", "id")
                 )
         }
         return KotbaseDatabaseCollection(collection, this)
     }
 
-    override fun getCollectionByPrefix(prefix: String): List<DatabaseCollection> {
+    override fun getCollectionByPrefix(prefix: String, scope: String?): List<DatabaseCollection> {
         return database.defaultScope.collections.filter {
             it.name.startsWith(prefix)
         }.map {
-            getCollection(it.name)
+            getCollection(it.name, scope)
         }
     }
 
