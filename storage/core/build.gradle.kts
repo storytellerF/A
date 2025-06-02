@@ -19,7 +19,7 @@ kotlin {
                 commonWebpackConfig {
                     devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                         static = (static ?: mutableListOf()).apply {
-                            // Serve sources to debug inside the browser
+                            // Serve sources to debug inside browser
                             add(project.projectDir.path)
                         }
                     }
@@ -51,8 +51,25 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
+        val noWasmMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(libs.couchbase.lite)
+                implementation(libs.couchbase.lite.ktx)
+            }
+        }
+        val generalJvmMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+
+            }
+        }
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
+        }
+        androidMain {
+            dependsOn(noWasmMain)
+            dependsOn(generalJvmMain)
         }
         commonMain.dependencies {
             implementation(projects.shared)
@@ -62,9 +79,16 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.ktor.client.okhttp)
         }
+        jvmMain {
+            dependsOn(noWasmMain)
+            dependsOn(generalJvmMain)
+        }
         if (buildIosTarget) {
             iosMain.dependencies {
                 implementation(libs.ktor.client.darwin)
+            }
+            iosMain {
+                dependsOn(noWasmMain)
             }
         }
     }

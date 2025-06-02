@@ -1,4 +1,4 @@
-package com.storyteller_f.a.client_lib
+package com.storyteller_f.storage
 
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.CompletableDeferred
@@ -6,37 +6,31 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
-val json = Json {
-    ignoreUnknownKeys = true
-}
-
-expect fun createPlatformDatabaseSource(): DatabaseSource
-
-interface ObserverToken<T> {
+interface DatabaseObserverToken<T> {
     val task: CompletableDeferred<List<T>>
 
     fun remove()
 }
 
-sealed interface Order {
-    data class Asc(val field: String) : Order
-    data class Desc(val field: String) : Order
+sealed interface DatabaseOrder {
+    data class Asc(val field: String) : DatabaseOrder
+    data class Desc(val field: String) : DatabaseOrder
 }
 
 interface DatabaseCollection {
     fun saveDocument(id: String, string: String)
-    fun <T : Any> observe(serializer: KSerializer<T>, expression: Expression): Flow<T?>
-    fun <T> getDocument(expression: Expression, serializer: KSerializer<T>): T?
+    fun <T : Any> observe(serializer: KSerializer<T>, expression: DatabaseExpression): Flow<T?>
+    fun <T> getDocument(expression: DatabaseExpression, serializer: KSerializer<T>): T?
     fun <T> getDocument(key: String, serializer: KSerializer<T>): T?
-    fun exists(expression: Expression): Boolean
+    fun exists(expression: DatabaseExpression): Boolean
     fun deleteDocument(key: String)
     fun <T> observeList(
-        expression: Expression?,
+        expression: DatabaseExpression?,
         size: Int,
-        orders: List<Order>,
+        orders: List<DatabaseOrder>,
         serializer: KSerializer<T>,
         invalidate: () -> Unit
-    ): ObserverToken<T>
+    ): DatabaseObserverToken<T>
 
     fun <T> getDocument(id: PrimaryKey, serializer: KSerializer<T>): T? {
         return getDocument(id.toString(), serializer)
@@ -53,10 +47,10 @@ interface DatabaseCollection {
     }
 }
 
-sealed interface Expression {
-    data class IdEq(val field: String, val value: PrimaryKey) : Expression
-    data class StrEq(val field: String, val value: String) : Expression
-    data class Less(val field: String, val value: PrimaryKey) : Expression
+sealed interface DatabaseExpression {
+    data class IdEq(val field: String, val value: PrimaryKey) : DatabaseExpression
+    data class StrEq(val field: String, val value: String) : DatabaseExpression
+    data class Less(val field: String, val value: PrimaryKey) : DatabaseExpression
 }
 
 interface DatabaseSource {

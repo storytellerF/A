@@ -1,15 +1,9 @@
 package com.storyteller_f.a.client_lib
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.Json
 
 sealed class LoadingState {
     data object Loading : LoadingState()
@@ -86,55 +80,6 @@ class SimpleLoadingHandler<T>(val scope: CoroutineScope, val loader: suspend () 
     override fun error(error: Throwable) {
         data.value = null
         state.value = LoadingState.Error(error)
-    }
-
-    override fun update(t: T) {
-        done(t)
-    }
-
-    override fun refresh() {
-        scope.launch {
-            request {
-                loader()
-            }
-        }
-    }
-}
-
-class CachedLoadingHandler<T : Any>(
-    val databaseSource: DatabaseSource,
-    val name: String,
-    val scope: CoroutineScope,
-    expression: Expression,
-    val loader: suspend () -> Result<T>,
-    private val serializer: KSerializer<T>,
-    private val scopeName: String?,
-    val saveDocument: DatabaseCollection.(String, T) -> Unit,
-) : LoadingHandler<T> {
-    override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
-
-    @OptIn(FlowPreview::class)
-    override val data = databaseSource.getCollection(name, scopeName).observe(
-        serializer,
-        expression
-    ).debounce(500).stateIn(scope, SharingStarted.Lazily, null)
-
-    init {
-        refresh()
-    }
-
-    override fun done(t: T) {
-        try {
-            val data = Json.encodeToString(serializer, t)
-            databaseSource.getCollection(name, scopeName).saveDocument(data, t)
-            state.markDown()
-        } catch (e: Exception) {
-            error(e)
-        }
-    }
-
-    override fun error(error: Throwable) {
-        state.markError(error)
     }
 
     override fun update(t: T) {

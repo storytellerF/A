@@ -106,6 +106,7 @@ kotlin {
             implementation(libs.connector.get().toString()) {
                 exclude(group = "com.google.protobuf", module = "protobuf-java")
             }
+            implementation("com.squareup.okhttp3:okhttp:4.12.0")
         }
         androidUnitTest.dependencies {
             implementation(libs.androidx.ui.test.junit4.android)
@@ -153,14 +154,12 @@ kotlin {
             implementation(libs.krop.ui)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.serialization)
-            implementation(libs.couchbase.lite)
-            implementation(libs.couchbase.lite.ktx)
-            implementation(libs.couchbase.lite.paging)
             implementation(libs.sunny.chung.composable.table)
             implementation(libs.compose.native.notification)
             implementation(libs.compose.preferences)
             implementation(libs.haze)
             implementation(libs.haze.materials)
+            implementation(projects.storage.kotbase)
 
             implementation(libs.kim)
             implementation(libs.uri.kmp)

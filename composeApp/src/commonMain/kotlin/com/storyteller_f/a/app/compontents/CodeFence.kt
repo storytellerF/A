@@ -44,10 +44,10 @@ import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalClient
+import com.storyteller_f.a.app.LocalJson
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.a.app.utils.setText
-import com.storyteller_f.a.client_lib.json
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.utils.MarkdownObject
@@ -97,6 +97,7 @@ fun ObjectBlock(
     modal: MarkdownComponentModel,
     mediaList1: Map<String, MediaInfo>
 ) {
+    val json = LocalJson.current
     val obj = remember(modal.node, modal.content) {
         val c = readCodeFence(modal.node, modal.content)
         json.decodeFromString<MarkdownObject>(c)

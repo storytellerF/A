@@ -85,7 +85,7 @@ fun HttpClientConfig<*>.defaultClientConfigure(
     }
 }
 
-private fun ClientCustomAuthProvider.CustomAuthConfig.configClientAuth(manager: SessionModel) {
+private fun CustomClientAuthProvider.CustomAuthConfig.configClientAuth(manager: SessionModel) {
     addRequestHeaders { data, request ->
         Napier.v("addRequestHeaders $data ${request.url}", tag = "ClientAuth")
         if (data == manager.session?.first) {

@@ -1,7 +1,6 @@
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.a.client_lib.json
 import com.storyteller_f.a.server.module
 import com.storyteller_f.readResourceEnv
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
@@ -20,6 +19,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.containers.PostgreSQLContainer
@@ -130,6 +130,9 @@ private fun doTest(
     env: Map<String, String>,
     block: suspend (ApplicationTestBuilder) -> Unit
 ) {
+    val json = Json {
+        ignoreUnknownKeys = true
+    }
     testApplication {
         environment {
             config = MapApplicationConfig().apply {
@@ -144,7 +147,7 @@ private fun doTest(
         coroutineScope {
             val task = CompletableDeferred<Unit>()
             val job = launch {
-                suspendCoroutine {
+                suspendCoroutine { continuation ->
                     thread {
                         ServerSocket(8888).apply {
                             soTimeout = 1000 // 5秒超时
@@ -168,7 +171,7 @@ private fun doTest(
                             Napier.i {
                                 "server socket closed"
                             }
-                            it.resume(Unit)
+                            continuation.resume(Unit)
                         }
                     }
                 }

@@ -65,6 +65,10 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.storage.DatabaseExpression
+import com.storyteller_f.storage.DatabaseSource
+import com.storyteller_f.storage.createKotbaseDatabaseSource
+import com.storyteller_f.storage.save
 import com.strabled.composepreferences.ProvideDataStoreManager
 import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.ProvideIconParameters
@@ -79,6 +83,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.reflect.KClass
@@ -106,6 +111,10 @@ val LocalWsClient = compositionLocalOf {
     WebSocketClient.EMPTY
 }
 
+val LocalJson = compositionLocalOf<Json> {
+    error("no default json")
+}
+
 @OptIn(DelicateCoroutinesApi::class)
 val LocalToaster = compositionLocalOf {
     ToasterState(GlobalScope)
@@ -116,11 +125,11 @@ val LocalDatabase = compositionLocalOf {
 }
 
 val LocalSessionManager = compositionLocalOf<UserSessionManager> {
-    throw Exception("No user session")
+    error("No user session")
 }
 
 val LocalMainSessionManager = compositionLocalOf<UserSessionManager> {
-    throw Exception("No main user session")
+    error("No main user session")
 }
 
 @Serializable
@@ -263,7 +272,7 @@ fun CommonEntry(
             getAsyncImageLoader(it)
         }
         val database = remember {
-            createPlatformDatabaseSource()
+            createKotbaseDatabaseSource()
         }
         val mainUserSession = createSessionManager(wsServerUrl, httpUrl)
         val address by mainUserSession.sessionModel.state.map {
@@ -277,13 +286,19 @@ fun CommonEntry(
         GlobalDialog(globalDialogState)
         val toasterState = rememberToasterState()
         Toaster(toasterState, alignment = Alignment.Center)
+        val json = remember {
+            Json {
+                ignoreUnknownKeys = true
+            }
+        }
         CompositionLocalProvider(
             LocalClient provides mainUserSession.client,
             LocalWsClient provides mainUserSession.webSocketClient,
             LocalSessionManager provides mainUserSession,
             LocalMainSessionManager provides mainUserSession,
             LocalToaster provides toasterState,
-            LocalDatabase provides database
+            LocalDatabase provides database,
+            LocalJson provides json,
         ) {
             ProvideIconParameters(
                 iconFont = MaterialSymbolsOutlined.rememberIconFont(),
@@ -365,7 +380,7 @@ private fun processEvent(event: Any, database: DatabaseSource, address: String?)
         is OnCommunityUpdated -> {
             database.getCollection("communities", address).save(event.info.id, event.info)
             database.getCollectionByPrefix("communities_", address).filter {
-                it.exists(Expression.IdEq("id", event.info.id))
+                it.exists(DatabaseExpression.IdEq("id", event.info.id))
             }.forEach {
                 it.save(event.info.id, event.info)
             }
@@ -382,7 +397,7 @@ private fun processEvent(event: Any, database: DatabaseSource, address: String?)
         is OnRoomUpdated -> {
             database.getCollection("rooms", address).save(event.info.id, event.info)
             database.getCollectionByPrefix("rooms_", address).filter {
-                it.exists(Expression.IdEq("id", event.info.id))
+                it.exists(DatabaseExpression.IdEq("id", event.info.id))
             }.forEach {
                 it.save(event.info.id, event.info)
             }
@@ -391,7 +406,7 @@ private fun processEvent(event: Any, database: DatabaseSource, address: String?)
         is OnUserUpdated -> {
             database.getCollection("users", address).save(event.info.id, event.info)
             database.getCollectionByPrefix("users_", address).filter {
-                it.exists(Expression.IdEq("id", event.info.id))
+                it.exists(DatabaseExpression.IdEq("id", event.info.id))
             }.forEach {
                 it.save(event.info.id, event.info)
             }
@@ -431,7 +446,7 @@ private fun processTopicChanged(
     }
     // 尝试更新到推荐
     with(database.getCollection("topics_0", address)) {
-        if (exists(Expression.IdEq("id", topicInfo.id))) {
+        if (exists(DatabaseExpression.IdEq("id", topicInfo.id))) {
             save(topicInfo.id, topicInfo)
         }
     }
@@ -561,6 +576,7 @@ private fun NavGraphBuilder.buildRootNav(
         }
     }
     composable<MediaScreen> {
+        val json = LocalJson.current
         val route = it.toRoute<MediaScreen>()
         val pack = json.decodeFromString<MediaPlaySession>(route.json)
         MediaPage(pack)
@@ -630,6 +646,9 @@ private fun NavGraphBuilder.buildComposeScreen(navigator: NavHostController) {
 }
 
 private fun newAppNav(navigator: NavHostController) = object : AppNav {
+    val json = Json {
+        ignoreUnknownKeys = true
+    }
     override val currentDestination: NavBackStackEntry?
         get() = navigator.currentBackStackEntry
     override val currentDestinationFlow: Flow<NavBackStackEntry>

@@ -33,11 +33,11 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
+import com.storyteller_f.a.app.LocalJson
 import com.storyteller_f.a.app.LocalMediaPlaySession
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.MediaPlaySession
 import com.storyteller_f.a.app.MediaPlayerActivity
-import com.storyteller_f.a.client_lib.json
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import kotlinx.coroutines.launch
@@ -98,7 +98,7 @@ private fun VideoPlayer(
 }
 
 @OptIn(ExperimentalUuidApi::class)
-@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 private fun BoxScope.VideoPlayerInternal(
     currentSession: LocalMediaPlaySession,
@@ -240,6 +240,7 @@ fun VideoOrAudioOpRow(
         }, enabled = isActive) {
             Icon(Icons.Default.PictureInPicture, "pip")
         }
+        val json = LocalJson.current
         IconButton({
             if (localMediaPlaySession.uuid == playingSession?.uuids?.lastOrNull()) {
                 context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
