@@ -20,6 +20,9 @@ services:
   db:
     networks:
       - bw-services
+  minio:
+    networks:
+      - bw-services
 
   bunkerweb:
     image: bunkerity/bunkerweb:${BUNKER_VERSION}

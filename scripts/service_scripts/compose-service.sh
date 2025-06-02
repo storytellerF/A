@@ -14,26 +14,11 @@ if [ -z "$CUSTOM_COMMAND" ]; then
     CUSTOM_COMMAND="up -d --build"
 fi
 
-COMPOSE_FILE_LIST=()
-case "$FLAVOR" in
-  mini)
-    export COMPOSE_PROFILES="pg,server"
-    COMPOSE_FILE_LIST=("pg" "server" "p")
-    ;;
-  dev)
-    export COMPOSE_PROFILES="pg,elastic,minio"
-    COMPOSE_FILE_LIST=("pg" "elastic" "minio" "pem" "certs_bind")
-    ;;
-  dev.win)
-    export COMPOSE_PROFILES="pg,elastic,minio"
-    COMPOSE_FILE_LIST=("pg" "elastic" "minio" "pem")
-    ;;
-  *)
-    echo "未知环境：$FLAVOR"
-    exit 1
-    ;;
-esac
+IFS=',' read -ra COMPOSE_FILE_LIST <<< "$(grep '^COMPOSE_FILE_LIST=' "$FLAVOR.env" | cut -d '=' -f2-)"
+echo "${COMPOSE_FILE_LIST[@]}"
 
+COMPOSE_PROFILES=$(grep '^COMPOSE_PROFILES=' "$FLAVOR.env" | cut -d '=' -f2-)
+echo "$COMPOSE_PROFILES"
 
 # 公共 compose 文件
 COMPOSE_FILES=("-f" "./deploy/docker-compose/docker-compose.yml")

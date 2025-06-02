@@ -15,7 +15,5 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_PASS}
     healthcheck:
       test: [ "CMD-SHELL", "curl -I http://localhost:9000/minio/health/live" ]
-    networks:
-      - bw-services
     profiles:
       - media
