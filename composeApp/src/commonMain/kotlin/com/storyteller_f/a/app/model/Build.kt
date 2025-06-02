@@ -10,7 +10,8 @@ import com.storyteller_f.shared.type.*
 
 @Composable
 fun createSearchCommunitiesViewModel(
-    finalOption: JoinStatusSearch, query: String
+    finalOption: JoinStatusSearch,
+    query: String
 ) = viewModel(
     keys = listOf("search-community", finalOption.name, query)
 ) { client, databaseSource, address ->
@@ -25,7 +26,8 @@ fun createJoinedCommunitiesViewModel() =
 
 @Composable
 fun createTargetUserJoinedCommunitiesViewModel(
-    target: PrimaryKey, word: String = ""
+    target: PrimaryKey,
+    word: String = ""
 ) = viewModel(keys = listOf("communities", target, word)) { client, databaseSource, address ->
     CommunitiesViewModel(client, databaseSource, JoinStatusSearch.JOINED, word, target, scopeName = address)
 }
@@ -62,21 +64,24 @@ fun createRoomViewModel(roomId: PrimaryKey) =
 
 @Composable
 fun createRoomSearchInCommunityViewModel(
-    scope: SearchScope.CommunityRoom, current: String
+    scope: SearchScope.CommunityRoom,
+    current: String
 ) = viewModel(keys = listOf("rooms", scope.communityId, current)) { client, databaseSource, address ->
     RoomsViewModel(client, databaseSource, JoinStatusSearch.UNSPECIFIED, current, scope.communityId, address)
 }
 
 @Composable
 fun createRoomSearchViewModel(
-    finalOption: JoinStatusSearch, current: String
+    finalOption: JoinStatusSearch,
+    current: String
 ) = viewModel(keys = listOf("my-rooms", finalOption.name, current)) { client, databaseSource, address ->
     RoomsViewModel(client, databaseSource, finalOption, current, scopeName = address)
 }
 
 @Composable
 fun createRoomKeysViewModel(
-    roomId: PrimaryKey, roomInfo: RoomInfo
+    roomId: PrimaryKey,
+    roomInfo: RoomInfo
 ) = viewModel(keys = listOf("room-keys", roomId)) { client, databaseSource, address ->
     RoomKeysViewModel(client, roomId, roomInfo.isPrivate)
 }
@@ -117,14 +122,16 @@ fun createTopicSearchViewModel(current: String) =
 
 @Composable
 fun createTopicSearchInTopicViewModel(
-    scope: SearchScope.TopicTopic, current: String
+    scope: SearchScope.TopicTopic,
+    current: String
 ) = viewModel(keys = listOf("topic", scope.topicId, current)) { client, databaseSource, address ->
     TopicSearchViewModel(client, databaseSource, current.split(" "), scope.topicId, ObjectType.TOPIC, address)
 }
 
 @Composable
 fun createTopicSearchInUserViewModel(
-    scope: SearchScope.UserTopic, current: String
+    scope: SearchScope.UserTopic,
+    current: String
 ) = viewModel(keys = listOf("topic", scope.userId, current)) { client, databaseSource, address ->
     TopicSearchViewModel(client, databaseSource, current.split(" "), scope.userId, ObjectType.USER, address)
 }
@@ -137,7 +144,8 @@ fun createMemberSearchViewModel(current: String) =
 
 @Composable
 fun createTopicSearchInCommunityViewModel(
-    scope: SearchScope.CommunityTopic, current: String
+    scope: SearchScope.CommunityTopic,
+    current: String
 ) = viewModel(keys = listOf("topic", scope.communityId, current)) { client, databaseSource, address ->
     TopicSearchViewModel(client, databaseSource, current.split(" "), scope.communityId, ObjectType.COMMUNITY, address)
 }
@@ -162,21 +170,24 @@ fun createTopicViewModel(topicAid: String) =
 
 @Composable
 fun createTopicSearchInRoomViewModel(
-    scope: SearchScope.RoomTopic, current: String
+    scope: SearchScope.RoomTopic,
+    current: String
 ) = viewModel(keys = listOf("topic", scope.roomId, current)) { client, databaseSource, address ->
     TopicSearchViewModel(client, databaseSource, current.split(" "), scope.roomId, ObjectType.ROOM, address)
 }
 
 @Composable
 fun createSearchMemberInRoomViewModel(
-    scope: SearchScope.RoomMember, current: String
+    scope: SearchScope.RoomMember,
+    current: String
 ) = viewModel(keys = listOf("members", scope.roomId, current)) { client, databaseSource, address ->
     MemberViewModel(client, databaseSource, scope.roomId, current, ObjectType.ROOM, address)
 }
 
 @Composable
 fun createMemberSearchInCommunityViewModel(
-    scope: SearchScope.CommunityMember, current: String
+    scope: SearchScope.CommunityMember,
+    current: String
 ) = viewModel(keys = listOf("members", scope.communityId, current)) { client, databaseSource, address ->
     MemberViewModel(client, databaseSource, scope.communityId, current, ObjectType.COMMUNITY, address)
 }
@@ -197,7 +208,8 @@ fun createAllMediaListViewModel(
 
 @Composable
 fun createMemberViewModel(
-    objectId: PrimaryKey, objectType: ObjectType
+    objectId: PrimaryKey,
+    objectType: ObjectType
 ) = viewModel(keys = listOf("members", objectId)) { client, databaseSource, address ->
     MemberViewModel(client, databaseSource, objectId, "", objectType, address)
 }

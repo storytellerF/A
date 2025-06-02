@@ -23,7 +23,6 @@ import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnAddReaction
 import com.storyteller_f.a.app.model.OnRemoveReaction
-import com.storyteller_f.a.app.model.createTopicViewModel
 import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.a.app.pages.topic.SheetContainer
 import com.storyteller_f.a.app.pages.world.Pill
