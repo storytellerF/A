@@ -31,7 +31,7 @@ services:
         condition: service_healthy
     profiles:
       - pg
-  exporter:
+  pg-exporter:
     image: quay.io/prometheuscommunity/postgres-exporter
     environment:
       DATA_SOURCE_URI: "localhost:5432/postgres?sslmode=disable"

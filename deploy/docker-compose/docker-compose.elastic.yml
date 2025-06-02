@@ -65,12 +65,14 @@ services:
         echo "Setting kibana_system password";
         until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://es01:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
         echo "All done!";
+        exit 0;
       '
     healthcheck:
       test: [ "CMD-SHELL", "[ -f config/certs/es01/es01.crt ]" ]
       interval: 1s
       timeout: 5s
       retries: 120
+    restart: "no"
     networks:
       - elastic
     profiles:
@@ -105,10 +107,6 @@ services:
       - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.verification_mode=certificate
       - xpack.license.self_generated.type=${ELASTIC_LICENSE}
-    deploy:
-      resources:
-        limits:
-          memory: 1G
     ulimits:
       memlock:
         soft: -1
@@ -122,6 +120,10 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     networks:
       - elastic
     profiles:
@@ -148,10 +150,6 @@ services:
       - XPACK_SECURITY_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
       - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
       - XPACK_REPORTING_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
-    deploy:
-      resources:
-        limits:
-          memory: 1G
     healthcheck:
       test:
         [
@@ -162,6 +160,10 @@ services:
       timeout: 10s
       retries: 120
       start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     networks:
       - elastic
     profiles:
@@ -178,7 +180,7 @@ services:
     volumes:
       - certs:/usr/share/metricbeat/certs
       - metricbeatdata01:/usr/share/metricbeat/data
-      - "./metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro"
+      - "../metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
       - "/proc:/hostfs/proc:ro"
@@ -205,8 +207,8 @@ services:
     volumes:
       - certs:/usr/share/filebeat/certs
       - filebeatdata01:/usr/share/filebeat/data
-      - "./filebeat_ingest_data/:/usr/share/filebeat/ingest_data/"
-      - "./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
+      - "../filebeat_ingest_data/:/usr/share/filebeat/ingest_data/"
+      - "../filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
       - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     environment:
@@ -235,8 +237,8 @@ services:
     volumes:
       - certs:/usr/share/logstash/certs
       - logstashdata01:/usr/share/logstash/data
-      - "./logstash_ingest_data/:/usr/share/logstash/ingest_data/"
-      - "./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro"
+      - "../logstash_ingest_data/:/usr/share/logstash/ingest_data/"
+      - "../logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro"
     environment:
       - xpack.monitoring.enabled=false
       - ELASTIC_USER=${ELASTIC_NAME}
