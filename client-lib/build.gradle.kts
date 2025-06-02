@@ -58,7 +58,7 @@ kotlin {
                 implementation(libs.couchbase.lite.ktx)
             }
         }
-        val cJvmMain by creating {
+        val generalJvmMain by creating {
             dependsOn(commonMain.get())
             dependencies {
 
@@ -69,7 +69,7 @@ kotlin {
         }
         androidMain {
             dependsOn(noWasmMain)
-            dependsOn(cJvmMain)
+            dependsOn(generalJvmMain)
         }
         commonMain.dependencies {
             implementation(projects.shared)
@@ -81,7 +81,7 @@ kotlin {
         }
         jvmMain {
             dependsOn(noWasmMain)
-            dependsOn(cJvmMain)
+            dependsOn(generalJvmMain)
         }
         if (buildIosTarget) {
             iosMain.dependencies {

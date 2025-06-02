@@ -1,4 +1,3 @@
-import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -53,22 +52,22 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val cJvmMain by creating {
+        val generalJvmMain by creating {
             dependencies {
                 implementation(libs.bcprov.jdk18on)
                 implementation(libs.bcpkix.jdk18on)
             }
             dependsOn(commonMain.get())
         }
-        val noPjvmMain by creating {
+        val noSpecialJvmMain by creating {
             dependsOn(commonMain.get())
         }
         androidMain.dependencies {
             implementation(libs.cryptography.provider.jdk)
         }
         androidMain {
-            dependsOn(cJvmMain)
-            dependsOn(noPjvmMain)
+            dependsOn(generalJvmMain)
+            dependsOn(noSpecialJvmMain)
         }
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
@@ -87,14 +86,14 @@ kotlin {
             implementation(libs.logback)
         }
         jvmMain {
-            dependsOn(cJvmMain)
+            dependsOn(generalJvmMain)
         }
         if (buildIosTarget) {
             iosMain.dependencies {
                 implementation(libs.cryptography.provider.openssl3.prebuilt)
             }
             iosMain {
-                dependsOn(noPjvmMain)
+                dependsOn(noSpecialJvmMain)
             }
         }
         if (buildWasmTarget) {
@@ -106,7 +105,7 @@ kotlin {
                 implementation(npm("@noble/curves", "1.0.0"))
             }
             wasmJsMain {
-                dependsOn(noPjvmMain)
+                dependsOn(noSpecialJvmMain)
             }
         }
     }
