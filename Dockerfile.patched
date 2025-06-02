@@ -196,6 +196,6 @@ COPY --from=builder /app/cli/build/decompressed/cli .
 COPY --from=builder /app/deploy ./deploy
 # 使用koyeb 需要把args 变成env 后文件导入
 COPY --from=builder /app/build/envs/*.env .
-COPY scripts/tool_scripts/flush-database-singleton.sh ./scripts/tool_scripts/flush-database-singleton.sh
+COPY scripts/tool_scripts/flush-database.sh ./scripts/tool_scripts/flush-database.sh
 
 ENTRYPOINT ["java","-jar","./lib/ktor-server.jar"]

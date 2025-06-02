@@ -32,7 +32,7 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
         return null
     }
 
-    private val map = mutableMapOf<Key?, ObserverToken<RowType>>()
+    private val registeredToken = mutableMapOf<Key?, ObserverToken<RowType>>()
 
     override suspend fun load(
         params: PagingSourceLoadParams<Key>
@@ -50,7 +50,7 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
                 invalidate()
             }
             val task = observerToken.task
-            map[key] = observerToken
+            registeredToken[key] = observerToken
             val data = task.await().extraProcessor()
             PagingSourceLoadResultPage(
                 data = data,
@@ -66,10 +66,10 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
     }
 
     private fun removeAllToken() {
-        map.values.forEach {
+        registeredToken.values.forEach {
             it.remove()
         }
-        map.clear()
+        registeredToken.clear()
     }
 }
 

@@ -7,6 +7,8 @@ import kotbase.ktx.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
@@ -28,7 +30,8 @@ class KotbaseObserverToken<T>(
 }
 
 
-class KotbaseDatabaseCollection(val collection: kotbase.Collection) : DatabaseCollection {
+class KotbaseDatabaseCollection(val collection: kotbase.Collection, val source: KotbaseDatabaseSource) :
+    DatabaseCollection {
     override fun saveDocument(id: String, string: String) {
         try {
             collection.save(MutableDocument(id, string))
@@ -117,8 +120,12 @@ class KotbaseDatabaseCollection(val collection: kotbase.Collection) : DatabaseCo
             .addChangeListener { queryChange ->
                 val results = queryChange.results
                 when {
-                    task.isCompleted -> invalidate()
                     results == null -> task.completeExceptionally(queryChange.error ?: Exception("it.error is null"))
+                    task.isCompleted -> {
+                        if (!(source.clearing.contains(collection.name)))
+                            invalidate()
+                    }
+
                     else -> {
                         runCatching {
                             results.use {
@@ -150,46 +157,53 @@ fun createKotbase(): Database {
         DatabaseConfigurationFactory.newConfig(p.toString())
     ).apply {
         Database.log.console.domains = LogDomain.ALL_DOMAINS
-        Database.log.console.level = LogLevel.WARNING
+        Database.log.console.level = LogLevel.VERBOSE
     }
 }
 
 class KotbaseDatabaseSource(private val database: Database) : DatabaseSource {
-
+    val clearing = mutableSetOf<String>()
+    val mutex = Mutex()
     override fun getCollection(name: String): DatabaseCollection {
         val collection = database.defaultScope.getCollection(name) ?: database.createCollection(
             name
         )
         if (name.startsWith("communities_")) {
-            collection.createIndex(
-                "poster_index",
-                ValueIndexConfiguration("hasPoster")
-            )
+            if (!collection.indexes.contains("poster_index"))
+                collection.createIndex(
+                    "poster_index",
+                    ValueIndexConfiguration("hasPoster")
+                )
         } else if (name.startsWith("topics_") && name != "topics_keys") {
-            collection.createIndex(
-                "pinned_index",
-                ValueIndexConfiguration("pinned")
-            )
+            if (!collection.indexes.contains("pinned_index"))
+                collection.createIndex(
+                    "pinned_index",
+                    ValueIndexConfiguration("pinned")
+                )
         }
-        return KotbaseDatabaseCollection(collection)
+        return KotbaseDatabaseCollection(collection, this)
     }
 
     override fun getCollectionByPrefix(prefix: String): List<DatabaseCollection> {
         return database.defaultScope.collections.filter {
             it.name.startsWith(prefix)
         }.map {
-            KotbaseDatabaseCollection(it)
+            getCollection(it.name)
         }
     }
 
-    override fun clearCollection(collectionName: String) {
+    override suspend fun clearCollection(collectionName: String) {
         val collection = database.defaultScope.getCollection(collectionName) ?: return
-        select(Meta.id).from(collection).execute().use {
-            it.toObjects { map: Map<String, Any?> ->
-                collection.getDocument(map["id"].toString())?.let {
-                    collection.delete(it)
+        mutex.withLock {
+            clearing.add(collectionName)
+            select(Meta.id).from(collection).execute().use {
+                it.toObjects { map: Map<String, Any?> ->
+                    collection.getDocument(map["id"].toString())?.let {
+                        collection.delete(it)
+                    }
                 }
             }
+            clearing.remove(collectionName)
         }
     }
 }
