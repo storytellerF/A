@@ -42,10 +42,7 @@ fun InteractionRow(
     startAddComment: () -> Unit
 ) {
     val userSessionViewModel = LocalSessionManager.current
-    val topicViewModel = createTopicViewModel(topicInfo.id)
-    val reactions by topicViewModel.handler.data.map {
-        it?.extension?.reactions
-    }.collectAsState(null)
+    val reactions = topicInfo.extension?.reactions
     val appNav = LocalAppNav.current
     InteractionRowInternal(
         reactions.orEmpty(),

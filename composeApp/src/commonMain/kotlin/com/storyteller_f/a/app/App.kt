@@ -455,14 +455,14 @@ private fun processOnAddReaction(
 ) {
     database.getCollection("topic").update(event.topicId, serializer<TopicInfo>()) { old ->
         val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
-        val new = extension.reactions.orEmpty().map { info ->
+        val newReactionInfo = extension.reactions.orEmpty().map { info ->
             when {
                 info.emoji != event.emoji -> info
                 info.hasReacted -> info
                 else -> info.copy(count = info.count + 1, hasReacted = true)
             }
         }.toImmutableList()
-        old.copy(extension = extension.copy(reactions = new), reactionCount = old.reactionCount + 1)
+        old.copy(extension = extension.copy(reactions = newReactionInfo), reactionCount = old.reactionCount + 1)
     }
 }
 

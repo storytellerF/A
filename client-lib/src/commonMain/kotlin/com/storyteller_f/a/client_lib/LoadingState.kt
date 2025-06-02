@@ -1,9 +1,11 @@
 package com.storyteller_f.a.client_lib
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
@@ -109,10 +111,11 @@ class CachedLoadingHandler<T : Any>(
     val saveDocument: DatabaseCollection.(String, T) -> Unit,
 ) : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
+    @OptIn(FlowPreview::class)
     override val data = databaseSource.getCollection(name).observe(
         serializer,
         expression
-    ).stateIn(scope, SharingStarted.Lazily, null)
+    ).debounce(500).stateIn(scope, SharingStarted.Lazily, null)
 
     init {
         refresh()
