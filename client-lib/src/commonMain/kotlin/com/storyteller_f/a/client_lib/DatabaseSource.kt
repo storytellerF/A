@@ -60,17 +60,17 @@ sealed interface Expression {
 }
 
 interface DatabaseSource {
-    fun getCollection(name: String): DatabaseCollection
-    fun getCollectionByPrefix(prefix: String): List<DatabaseCollection>
+    fun getCollection(name: String, scope: String?): DatabaseCollection
+    fun getCollectionByPrefix(prefix: String, scope: String?): List<DatabaseCollection>
     suspend fun clearCollection(collectionName: String)
 
     companion object {
         val EMPTY = object : DatabaseSource {
-            override fun getCollection(name: String): DatabaseCollection {
+            override fun getCollection(name: String, scope: String?): DatabaseCollection {
                 TODO("Not yet implemented")
             }
 
-            override fun getCollectionByPrefix(prefix: String): List<DatabaseCollection> {
+            override fun getCollectionByPrefix(prefix: String, scope: String?): List<DatabaseCollection> {
                 TODO("Not yet implemented")
             }
 

@@ -2,6 +2,7 @@ package com.storyteller_f.a.app.common
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.storyteller_f.a.app.LocalDatabase
@@ -24,7 +25,7 @@ abstract class SimpleViewModel<T : Any> : ViewModel() {
 @Composable
 inline fun <reified VM : ViewModel> viewModel(
     keys: List<Comparable<*>?>? = null,
-    crossinline factory: (SessionManager, DatabaseSource) -> VM
+    crossinline factory: (SessionManager, DatabaseSource, String?) -> VM
 ): VM {
     val sessionManager = LocalSessionManager.current
     val databaseSource = LocalDatabase.current
@@ -32,13 +33,13 @@ inline fun <reified VM : ViewModel> viewModel(
         "viewModel ${VM::class.simpleName}$keys composable"
     }
     val main = LocalSessionManager.current
-    val prefix = main.sessionModel.state.map {
+    val address by main.sessionModel.state.map {
         (it as? ClientSessionState.Success)?.session?.address()?.getOrNull()
-    }.collectAsState("none")
-    return viewModel(key = "$prefix:${keys?.joinToString()}", initializer = {
+    }.collectAsState(null)
+    return viewModel(key = "$address:${keys?.joinToString()}", initializer = {
         Napier.i {
             "viewModel ${VM::class.simpleName}$keys build"
         }
-        factory(sessionManager, databaseSource)
+        factory(sessionManager, databaseSource, address)
     })
 }

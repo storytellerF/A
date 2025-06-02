@@ -14,6 +14,7 @@ import kotlinx.serialization.serializer
 
 class CustomQueryPagingSource<Key : Any, RowType : Any>(
     val collectionName: String,
+    val scopeName: String?,
     val databaseSource: DatabaseSource,
     private val serializer: KSerializer<RowType>,
     private val key: (RowType?) -> Key?,
@@ -45,7 +46,7 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
             "source load $key"
         }
         return try {
-            val collection = databaseSource.getCollection(collectionName)
+            val collection = databaseSource.getCollection(collectionName, scopeName)
             val observerToken = collection.observeList(queryProvider(key), params.loadSize, orders, serializer) {
                 invalidate()
             }
@@ -77,6 +78,7 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
 @OptIn(ExperimentalPagingApi::class)
 class CustomRemoteMediator<Key : Any, Datum : Any>(
     private val collectionName: String,
+    private val scopeName: String?,
     private val databaseSource: DatabaseSource,
     private val preKey: DatabaseCollection.(Datum?) -> Key?,
     private val nextKey: DatabaseCollection.(Datum?) -> Key?,
@@ -109,7 +111,7 @@ class CustomRemoteMediator<Key : Any, Datum : Any>(
 
             LoadType.APPEND -> {
                 val lastItem = state.lastItemOrNull()
-                val loadKey = databaseSource.getCollection("${collectionName}_next_key").nextKey(lastItem)
+                val loadKey = databaseSource.getCollection("${collectionName}_next_key", scopeName).nextKey(lastItem)
                     ?: return MediatorResult.Success(endOfPaginationReached = true)
                 PagingSourceLoadParamsAppend(
                     loadKey,
@@ -150,8 +152,8 @@ class CustomRemoteMediator<Key : Any, Datum : Any>(
                 update(
                     it,
                     nextKey,
-                    databaseSource.getCollection(collectionName),
-                    databaseSource.getCollection("${collectionName}_key")
+                    databaseSource.getCollection(collectionName, scopeName),
+                    databaseSource.getCollection("${collectionName}_key", scopeName)
                 )
             }
             Napier.v(tag = "pagination") {
@@ -167,9 +169,11 @@ class CustomRemoteMediator<Key : Any, Datum : Any>(
 inline fun <reified T : Identifiable> singleSourceMediator(
     databaseSource: DatabaseSource,
     collectionName: String,
+    scopeName: String?,
     pagingSource: RegularPagingSource<T>,
 ) = CustomRemoteMediator(
     collectionName,
+    scopeName,
     databaseSource,
     {
         it?.id
@@ -186,11 +190,13 @@ inline fun <reified T : Identifiable> singleSourceMediator(
 inline fun <reified T : Identifiable> sectionMediator(
     sessionManager: SessionManager,
     collectionName: String,
+    scopeName: String?,
     databaseSource: DatabaseSource,
     crossinline extraUpdate: (T) -> Unit = {},
     regularPagingSources: (SessionManager) -> List<RegularPagingSource<T>>
 ) = CustomRemoteMediator(
     collectionName,
+    scopeName,
     databaseSource,
     {
         if (it != null) {
@@ -221,10 +227,12 @@ inline fun <reified T : Identifiable> sectionMediator(
 inline fun <reified T : Identifiable> sectionPagingSource(
     databaseSource: DatabaseSource,
     collectionName: String,
+    scopeName: String?,
     orders: List<Order>,
     noinline extra: suspend List<T>.() -> List<T> = { this }
 ) = CustomQueryPagingSource(
     collectionName,
+    scopeName,
     databaseSource,
     serializer<T>(),
     { info ->
@@ -246,22 +254,18 @@ inline fun <reified T : Identifiable> sectionPagingSource(
 
 inline fun <reified T : Identifiable> singleSourceDatabaseSource(
     collectionName: String,
+    scopeName: String?,
     databaseSource: DatabaseSource
 ) =
     CustomQueryPagingSource(
-        collectionName = collectionName,
-        databaseSource,
-        serializer<T>(),
-        key = { info ->
+        collectionName, scopeName, databaseSource, serializer<T>(), { info ->
             info?.id
-        },
-        queryProvider = {
+        }, {
             val param = it
             if (param != null) {
                 Expression.Less("id", param)
             } else {
                 null
             }
-        },
-        orders = listOf(Order.Desc("id")),
+        }, listOf(Order.Desc("id"))
     )

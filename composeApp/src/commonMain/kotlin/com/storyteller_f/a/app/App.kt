@@ -265,12 +265,15 @@ fun CommonEntry(
         val database = remember {
             createPlatformDatabaseSource()
         }
-        LaunchedEffect(database) {
+        val mainUserSession = createSessionManager(wsServerUrl, httpUrl)
+        val address by mainUserSession.sessionModel.state.map {
+            (it as? ClientSessionState.Success)?.session?.address()?.getOrNull()
+        }.collectAsState(null)
+        LaunchedEffect(database, address) {
             bus.collect { event ->
-                processEvent(event, database)
+                processEvent(event, database, address)
             }
         }
-        val mainUserSession = createSessionManager(wsServerUrl, httpUrl)
         GlobalDialog(globalDialogState)
         val toasterState = rememberToasterState()
         Toaster(toasterState, alignment = Alignment.Center)
@@ -349,36 +352,36 @@ fun buildWebSocketUrl(wsServerUrl: String): String = buildUrl {
     appendPathSegments("link")
 }.toString()
 
-private fun processEvent(event: Any, database: DatabaseSource) {
+private fun processEvent(event: Any, database: DatabaseSource, address: String?) {
     when (event) {
-        is OnAddReaction -> processOnAddReaction(database, event)
+        is OnAddReaction -> processOnAddReaction(database, event, address)
 
-        is OnRemoveReaction -> processRemoveReaction(database, event)
+        is OnRemoveReaction -> processRemoveReaction(database, event, address)
 
-        is OnCommunityJoined -> database.getCollection("communities").save(event.info.id, event.info)
+        is OnCommunityJoined -> database.getCollection("communities", address).save(event.info.id, event.info)
 
-        is OnCommunityExited -> database.getCollection("communities").save(event.info.id, event.info)
+        is OnCommunityExited -> database.getCollection("communities", address).save(event.info.id, event.info)
 
         is OnCommunityUpdated -> {
-            database.getCollection("communities").save(event.info.id, event.info)
-            database.getCollectionByPrefix("communities_").filter {
+            database.getCollection("communities", address).save(event.info.id, event.info)
+            database.getCollectionByPrefix("communities_", address).filter {
                 it.exists(Expression.IdEq("id", event.info.id))
             }.forEach {
                 it.save(event.info.id, event.info)
             }
         }
 
-        is OnTopicChanged -> processTopicChanged(event, database)
+        is OnTopicChanged -> processTopicChanged(event, database, address)
 
-        is OnTopicCreated -> processTopicCreated(event, database)
+        is OnTopicCreated -> processTopicCreated(event, database, address)
 
-        is OnRoomJoined -> database.getCollection("rooms").save(event.info.id, event.info)
+        is OnRoomJoined -> database.getCollection("rooms", address).save(event.info.id, event.info)
 
-        is OnRoomExited -> database.getCollection("rooms").save(event.info.id, event.info)
+        is OnRoomExited -> database.getCollection("rooms", address).save(event.info.id, event.info)
 
         is OnRoomUpdated -> {
-            database.getCollection("rooms").save(event.info.id, event.info)
-            database.getCollectionByPrefix("rooms_").filter {
+            database.getCollection("rooms", address).save(event.info.id, event.info)
+            database.getCollectionByPrefix("rooms_", address).filter {
                 it.exists(Expression.IdEq("id", event.info.id))
             }.forEach {
                 it.save(event.info.id, event.info)
@@ -386,8 +389,8 @@ private fun processEvent(event: Any, database: DatabaseSource) {
         }
 
         is OnUserUpdated -> {
-            database.getCollection("users").save(event.info.id, event.info)
-            database.getCollectionByPrefix("users_").filter {
+            database.getCollection("users", address).save(event.info.id, event.info)
+            database.getCollectionByPrefix("users_", address).filter {
                 it.exists(Expression.IdEq("id", event.info.id))
             }.forEach {
                 it.save(event.info.id, event.info)
@@ -396,7 +399,7 @@ private fun processEvent(event: Any, database: DatabaseSource) {
 
         is OnMediaUploaded -> {
             event.mediaInfos.forEach {
-                database.getCollection("medias_${it.owner}").save(it.id, it)
+                database.getCollection("medias_${it.owner}", address).save(it.id, it)
             }
         }
     }
@@ -404,11 +407,12 @@ private fun processEvent(event: Any, database: DatabaseSource) {
 
 private fun processTopicCreated(
     event: OnTopicCreated,
-    database: DatabaseSource
+    database: DatabaseSource,
+    address: String?
 ) {
     val topicInfo = event.topicInfo
-    database.getCollection("topics_${topicInfo.parentId}").save(topicInfo.id, topicInfo)
-    with(database.getCollection("topics")) {
+    database.getCollection("topics_${topicInfo.parentId}", address).save(topicInfo.id, topicInfo)
+    with(database.getCollection("topics", address)) {
         save(topicInfo.id, topicInfo)
         topicInfo.aid?.let { save(it, topicInfo) }
     }
@@ -416,16 +420,17 @@ private fun processTopicCreated(
 
 private fun processTopicChanged(
     event: OnTopicChanged,
-    database: DatabaseSource
+    database: DatabaseSource,
+    address: String?,
 ) {
     val topicInfo = event.topicInfo
-    database.getCollection("topics_${topicInfo.parentId}").save(topicInfo.id, topicInfo)
-    with(database.getCollection("topics")) {
+    database.getCollection("topics_${topicInfo.parentId}", address).save(topicInfo.id, topicInfo)
+    with(database.getCollection("topics", address)) {
         save(topicInfo.id, topicInfo)
         topicInfo.aid?.let { save(it, topicInfo) }
     }
     // 尝试更新到推荐
-    with(database.getCollection("topics_0")) {
+    with(database.getCollection("topics_0", address)) {
         if (exists(Expression.IdEq("id", topicInfo.id))) {
             save(topicInfo.id, topicInfo)
         }
@@ -434,9 +439,10 @@ private fun processTopicChanged(
 
 private fun processRemoveReaction(
     database: DatabaseSource,
-    event: OnRemoveReaction
+    event: OnRemoveReaction,
+    address: String?,
 ) {
-    database.getCollection("topic").update(event.topicId, serializer<TopicInfo>()) { old ->
+    database.getCollection("topic", address).update(event.topicId, serializer<TopicInfo>()) { old ->
         val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
         val new = extension.reactions.orEmpty().map { info ->
             when {
@@ -451,9 +457,10 @@ private fun processRemoveReaction(
 
 private fun processOnAddReaction(
     database: DatabaseSource,
-    event: OnAddReaction
+    event: OnAddReaction,
+    address: String?,
 ) {
-    database.getCollection("topic").update(event.topicId, serializer<TopicInfo>()) { old ->
+    database.getCollection("topic", address).update(event.topicId, serializer<TopicInfo>()) { old ->
         val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
         val newReactionInfo = extension.reactions.orEmpty().map { info ->
             when {

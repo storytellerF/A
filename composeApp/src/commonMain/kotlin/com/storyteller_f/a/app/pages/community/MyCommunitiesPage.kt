@@ -149,10 +149,9 @@ fun CommunityGrid(communityInfo: CommunityInfo?, padding: Dp, onClick: ((Communi
             Box(modifier = Modifier.hazeSource(hazeState)) {
                 CommunityPoster(communityInfo)
             }
-            val radius = 8.dp
-            val shape = RoundedCornerShape(radius)
+            val shape = RoundedCornerShape(10.dp)
             Row(
-                modifier = Modifier.align(Alignment.BottomStart).padding(10.dp)
+                modifier = Modifier.align(Alignment.BottomStart).padding(4.dp)
                     .clip(shape)
                     .hazeEffect(hazeState, HazeMaterials.ultraThin()),
                 verticalAlignment = Alignment.CenterVertically,

@@ -108,11 +108,12 @@ class CachedLoadingHandler<T : Any>(
     expression: Expression,
     val loader: suspend () -> Result<T>,
     private val serializer: KSerializer<T>,
+    private val scopeName: String?,
     val saveDocument: DatabaseCollection.(String, T) -> Unit,
 ) : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
     @OptIn(FlowPreview::class)
-    override val data = databaseSource.getCollection(name).observe(
+    override val data = databaseSource.getCollection(name, scopeName).observe(
         serializer,
         expression
     ).debounce(500).stateIn(scope, SharingStarted.Lazily, null)
@@ -124,7 +125,7 @@ class CachedLoadingHandler<T : Any>(
     override fun done(t: T) {
         try {
             val data = Json.encodeToString(serializer, t)
-            databaseSource.getCollection(name).saveDocument(data, t)
+            databaseSource.getCollection(name, scopeName).saveDocument(data, t)
             state.markDown()
         } catch (e: Exception) {
             error(e)
