@@ -74,11 +74,15 @@ kotlin {
         }
     }
 
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate()
 
     sourceSets {
         val desktopMain by getting
         val desktopTest by getting
-
+        val headlessTest by creating {
+            dependsOn(commonTest.get())
+        }
         androidMain.dependencies {
             implementation(compose.preview)
 
@@ -106,12 +110,15 @@ kotlin {
             implementation(libs.connector.get().toString()) {
                 exclude(group = "com.google.protobuf", module = "protobuf-java")
             }
-            implementation("com.squareup.okhttp3:okhttp:4.12.0")
+            implementation(libs.okhttp)
         }
         androidUnitTest.dependencies {
             implementation(libs.androidx.ui.test.junit4.android)
             implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
+        }
+        androidUnitTest {
+            dependsOn(headlessTest)
         }
         androidInstrumentedTest.dependencies {
             implementation(libs.leakcanary.android)
@@ -195,6 +202,7 @@ kotlin {
         desktopTest.dependencies {
             implementation(compose.desktop.currentOs)
         }
+        desktopTest.dependsOn(headlessTest)
     }
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
@@ -438,19 +446,3 @@ tasks.withType(KotlinCompile::class.java).configureEach {
     dependsOn("exportLibraryDefinitions")
 }
 tasks.getByName("copyNonXmlValueResourcesForCommonMain").dependsOn("exportLibraryDefinitions")
-
-tasks.withType<Test> {
-    when (name) {
-        "testDebugUnitTest" -> {
-            exclude("**/device_based/*")
-        }
-
-        "testReleaseUnitTest" -> {
-            exclude("**/device_based/*", "**/jvm_based/*")
-        }
-
-        "desktopTest" -> {
-            exclude("**/device_based/*")
-        }
-    }
-}

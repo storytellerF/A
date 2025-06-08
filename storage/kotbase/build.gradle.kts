@@ -58,6 +58,9 @@ kotlin {
                 implementation(libs.couchbase.lite.ktx)
             }
         }
+        val noWasmTest by creating {
+            dependsOn(commonTest.get())
+        }
         val generalJvmMain by creating {
             dependsOn(commonMain.get())
             dependencies {
@@ -71,11 +74,17 @@ kotlin {
             dependsOn(noWasmMain)
             dependsOn(generalJvmMain)
         }
+        androidUnitTest {
+            dependsOn(noWasmTest)
+        }
         commonMain.dependencies {
             implementation(projects.shared)
             implementation(libs.bundles.ktor.client)
             implementation(libs.kotlinx.datetime)
             api(projects.storage.core)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
         jvmMain.dependencies {
             implementation(libs.ktor.client.okhttp)
@@ -83,6 +92,9 @@ kotlin {
         jvmMain {
             dependsOn(noWasmMain)
             dependsOn(generalJvmMain)
+        }
+        jvmTest {
+            dependsOn(noWasmTest)
         }
         if (buildIosTarget) {
             iosMain.dependencies {

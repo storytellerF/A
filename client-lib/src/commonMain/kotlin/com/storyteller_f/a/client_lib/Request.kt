@@ -39,13 +39,6 @@ inline fun <R> serviceCatching(block: () -> R): Result<R> {
     }
 }
 
-private fun URLBuilder.appendPagingQueryParams(size: Int, nextId: PrimaryKey?) {
-    parameters.append("size", size.toString())
-    if (nextId != null) {
-        parameters.append("nextPageToken", nextId.toString())
-    }
-}
-
 private fun URLBuilder.appendPagingQueryParams(size: Int, nextCursor: String?) {
     parameters.append("size", size.toString())
     if (nextCursor != null) {
@@ -79,7 +72,7 @@ suspend fun SessionManager.getRoomInfoByAid(aid: String) = serviceCatching {
     }.body<RoomInfo>()
 }
 
-suspend fun SessionManager.requestRoomKeys(id: PrimaryKey, nextId: PrimaryKey?, size: Int) =
+suspend fun SessionManager.requestRoomKeys(id: PrimaryKey, nextId: String?, size: Int) =
     serviceCatching {
         client.get("rooms/$id/pub-keys") {
             url {
@@ -98,7 +91,7 @@ suspend fun SessionManager.joinCommunity(id: PrimaryKey) = serviceCatching {
 
 suspend fun SessionManager.getRoomTopics(
     roomId: PrimaryKey,
-    nextTopicId: PrimaryKey?,
+    nextTopicId: String?,
     size: Int,
     pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
@@ -115,7 +108,7 @@ suspend fun SessionManager.getRoomTopics(
 
 suspend fun SessionManager.getCommunityTopics(
     communityId: PrimaryKey,
-    nextCommunityId: PrimaryKey?,
+    nextCommunityId: String?,
     size: Int,
     pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
@@ -132,7 +125,7 @@ suspend fun SessionManager.getCommunityTopics(
 
 suspend fun SessionManager.getUserTopics(
     userId: PrimaryKey,
-    nextTopicId: PrimaryKey?,
+    nextTopicId: String?,
     size: Int,
     pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
@@ -174,7 +167,7 @@ suspend fun SessionManager.searchCommunity(
     joinStatusSearch: JoinStatusSearch,
     word: String? = null,
     target: PrimaryKey? = null,
-    nextCommunityId: PrimaryKey? = null,
+    nextCommunityId: String? = null,
     hasPosterSearch: PosterSearch? = null,
 ) = serviceCatching {
     client.get("communities/search") {
@@ -190,7 +183,7 @@ suspend fun SessionManager.searchCommunity(
 
 suspend fun SessionManager.searchCommunityMembers(
     communityId: PrimaryKey,
-    nextCommunityId: PrimaryKey?,
+    nextCommunityId: String?,
     size: Int,
     word: String?
 ) = serviceCatching {
@@ -203,7 +196,7 @@ suspend fun SessionManager.searchCommunityMembers(
 }
 
 suspend fun SessionManager.searchAllMembers(
-    nextUserId: PrimaryKey?,
+    nextUserId: String?,
     size: Int,
     word: String?
 ) = serviceCatching {
@@ -217,7 +210,7 @@ suspend fun SessionManager.searchAllMembers(
 
 suspend fun SessionManager.searchRoomMembers(
     roomId: PrimaryKey,
-    nextCommunityId: PrimaryKey?,
+    nextCommunityId: String?,
     size: Int,
     word: String?
 ) = serviceCatching {
@@ -229,7 +222,7 @@ suspend fun SessionManager.searchRoomMembers(
     }.body<ServerResponse<UserInfo>>()
 }
 
-suspend fun SessionManager.getRecommendTopics(nextTopicId: PrimaryKey?, size: Int) =
+suspend fun SessionManager.getRecommendTopics(nextTopicId: String?, size: Int) =
     serviceCatching {
         client.get(
             "topics/recommend"
@@ -264,7 +257,7 @@ suspend fun SessionManager.getUserInfoByAid(aid: String) = serviceCatching {
 
 suspend fun SessionManager.getTopicTopics(
     topicId: PrimaryKey,
-    nextTopicId: PrimaryKey?,
+    nextTopicId: String?,
     size: Int,
     pinType: TopicPinSearch
 ) =
@@ -294,7 +287,7 @@ suspend fun SessionManager.getTopicInfoByAid(aid: String) = serviceCatching {
 
 suspend fun SessionManager.searchRooms(
     size: Int,
-    nextRoomId: PrimaryKey?,
+    nextRoomId: String?,
     joinStatusSearch: JoinStatusSearch,
     word: String?,
     communityId: PrimaryKey?
@@ -357,7 +350,7 @@ suspend fun SessionManager.searchTopics(
     word: List<String>,
     parentId: PrimaryKey? = null,
     parentType: ObjectType? = null,
-    nextTopicId: PrimaryKey? = null
+    nextTopicId: String? = null
 ) = serviceCatching {
     client.get("topics/search") {
         url {
@@ -416,7 +409,7 @@ suspend fun SessionManager.signOut() = serviceCatching {
     client.post("accounts/sign_out")
 }
 
-suspend fun SessionManager.getMediaList(objectId: PrimaryKey, objectType: ObjectType, nextId: PrimaryKey?, size: Int) =
+suspend fun SessionManager.getMediaList(objectId: PrimaryKey, objectType: ObjectType, nextId: String?, size: Int) =
     serviceCatching {
         client.get("amedia") {
             url {
@@ -503,7 +496,7 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
 
 suspend fun SessionManager.userTitles(
     uid: PrimaryKey,
-    nextId: PrimaryKey?,
+    nextId: String?,
     size: Int,
     searchType: TitleSearchType,
     status: TitleStatus? = null,
@@ -575,7 +568,7 @@ suspend fun SessionManager.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBod
 suspend fun SessionManager.getTopicList(
     type: ObjectType?,
     id: PrimaryKey,
-    loadKey: PrimaryKey?,
+    loadKey: String?,
     size: Int,
     pinSearch: TopicPinSearch
 ) = when (type) {

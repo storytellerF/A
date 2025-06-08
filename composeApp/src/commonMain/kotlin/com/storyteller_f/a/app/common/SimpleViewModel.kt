@@ -25,21 +25,20 @@ abstract class SimpleViewModel<T : Any> : ViewModel() {
 @Composable
 inline fun <reified VM : ViewModel> viewModel(
     keys: List<Comparable<*>?>? = null,
-    crossinline factory: (SessionManager, DatabaseSource, String?) -> VM
+    crossinline factory: (SessionManager, DatabaseSource) -> VM
 ): VM {
     val sessionManager = LocalSessionManager.current
     val databaseSource = LocalDatabase.current
     Napier.i {
         "viewModel ${VM::class.simpleName}$keys composable"
     }
-    val main = LocalSessionManager.current
-    val address by main.sessionModel.state.map {
+    val address by sessionManager.sessionModel.state.map {
         (it as? ClientSessionState.Success)?.session?.address()?.getOrNull()
     }.collectAsState(null)
     return viewModel(key = "$address:${keys?.joinToString()}", initializer = {
         Napier.i {
             "viewModel ${VM::class.simpleName}$keys build"
         }
-        factory(sessionManager, databaseSource, address)
+        factory(sessionManager, databaseSource)
     })
 }

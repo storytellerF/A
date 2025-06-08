@@ -121,18 +121,14 @@ fun buildReactionInfoQuery(objectId: List<PrimaryKey>, reactionFetch: ReactionFe
     }
     val cursor = reactionFetch.cursor
     when (cursor) {
-        is Cursor.NextCursor<*> -> if (cursor.value is ReactionCursorKey) {
-            query.andWhere {
-                val value = cursor.value
-                Reactions.count greaterEq value.count and (Reactions.lastReactionId less value.reactionId)
-            }
+        is Cursor.NextCursor<ReactionCursorKey> -> query.andWhere {
+            val value = cursor.value
+            Reactions.count greaterEq value.count and (Reactions.lastReactionId less value.reactionId)
         }
 
-        is Cursor.PreCursor<*> -> if (cursor.value is ReactionCursorKey) {
-            query.andWhere {
-                val value = cursor.value
-                Reactions.count lessEq value.count and (Reactions.lastReactionId greater value.reactionId)
-            }
+        is Cursor.PreCursor<ReactionCursorKey> -> query.andWhere {
+            val value = cursor.value
+            Reactions.count lessEq value.count and (Reactions.lastReactionId greater value.reactionId)
         }
 
         null -> {}

@@ -115,13 +115,13 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     }
 
     override suspend fun searchDocument(
-        word: List<String>?,
+        words: List<String>?,
         documentSearch: DocumentSearch,
         primaryKeyFetch: PrimaryKeyFetch?
     ): Result<PaginationResult<TopicDocument>> {
         val boolQuery =
             createTopicSearchQuery(
-                word,
+                words,
                 documentSearch,
                 primaryKeyFetch
             )
@@ -135,10 +135,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                     sort.field { f ->
                         val sortOrder = when {
                             primaryKeyFetch == null -> null
-                            primaryKeyFetch.cursor is Cursor.PreCursor<*> && primaryKeyFetch.cursor.value != null -> {
-                                SortOrder.Asc
-                            }
-
+                            primaryKeyFetch.cursor is Cursor.PreCursor<PrimaryKey> -> SortOrder.Asc
                             else -> null
                         } ?: SortOrder.Desc
                         f.field("id").order(sortOrder)
@@ -159,40 +156,36 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     }
 
     private fun createTopicSearchQuery(
-        word: List<String>?,
+        words: List<String>?,
         documentSearch: DocumentSearch,
         primaryKeyFetch: PrimaryKeyFetch?,
     ): Query {
         val queryList = buildList {
-            word?.let {
-                it.filter { w -> w.isNotBlank() }.takeIf { list -> list.isNotEmpty() }?.let {
+            words?.let {
+                it.filter { w -> w.isNotBlank() }.takeIf { list -> list.isNotEmpty() }?.let { filteredWordList ->
                     add(MatchQuery.of { m ->
                         m.field("content")
-                            .query(it.joinToString(" ")) // 多关键字匹配，忽略大小写
+                            .query(filteredWordList.joinToString(" ")) // 多关键字匹配，忽略大小写
                     }._toQuery() to true)
                 }
             }
 
             when {
                 primaryKeyFetch == null -> {}
-                primaryKeyFetch.cursor is Cursor.PreCursor<*> -> {
-                    if (primaryKeyFetch.cursor.value is PrimaryKey) {
-                        add(RangeQuery.of { r ->
-                            r.untyped {
-                                it.field("id").gt(JsonData.of(primaryKeyFetch.cursor.value))
-                            }
-                        }._toQuery() to true)
-                    }
+                primaryKeyFetch.cursor is Cursor.PreCursor<PrimaryKey> -> {
+                    add(RangeQuery.of { r ->
+                        r.untyped {
+                            it.field("id").gt(JsonData.of(primaryKeyFetch.cursor.value))
+                        }
+                    }._toQuery() to true)
                 }
 
-                primaryKeyFetch.cursor is Cursor.NextCursor<*> -> {
-                    if (primaryKeyFetch.cursor.value is PrimaryKey) {
-                        add(RangeQuery.of { r ->
-                            r.untyped {
-                                it.field("id").lt(JsonData.of(primaryKeyFetch.cursor.value))
-                            }
-                        }._toQuery() to true)
-                    }
+                primaryKeyFetch.cursor is Cursor.NextCursor<PrimaryKey> -> {
+                    add(RangeQuery.of { r ->
+                        r.untyped {
+                            it.field("id").lt(JsonData.of(primaryKeyFetch.cursor.value))
+                        }
+                    }._toQuery() to true)
                 }
             }
 

@@ -2,6 +2,6 @@ package com.storyteller_f.storage
 
 import kotbase.CouchbaseLite
 
-actual fun loadKotbaseIfNeed() {
+fun loadKotbaseIfNeed() {
     CouchbaseLite.init()
 }

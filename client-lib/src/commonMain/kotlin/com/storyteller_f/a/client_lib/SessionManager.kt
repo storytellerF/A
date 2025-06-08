@@ -38,9 +38,9 @@ interface SessionManager {
     val client: HttpClient
     val webSocketClient: WebSocketClient
     val sessionModel: SessionModel
+    val isAlreadySignUp: StateFlow<Boolean>
 
     val currentIsAlreadySignUp: Boolean get() = sessionModel.isAlreadyLogin()
-    val isAlreadySignUp: StateFlow<Boolean>
 
     suspend fun login()
 }
@@ -51,7 +51,7 @@ class UserSessionManager(
     override val sessionModel: SessionModel,
 ) :
     SessionManager {
-    override val isAlreadySignUp = MutableStateFlow<Boolean>(false)
+    override val isAlreadySignUp = MutableStateFlow(false)
     override suspend fun login() {
         val userHandler = sessionModel.userHandler
         val userPass = sessionModel.currentUserPass ?: return

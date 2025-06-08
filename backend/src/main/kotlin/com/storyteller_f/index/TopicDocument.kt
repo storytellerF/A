@@ -46,7 +46,7 @@ interface TopicSearchService {
     suspend fun clean(): Result<Unit>
 
     suspend fun searchDocument(
-        word: List<String>? = null,
+        words: List<String>? = null,
         documentSearch: DocumentSearch = DocumentSearch.All,
         primaryKeyFetch: PrimaryKeyFetch? = null
     ): Result<PaginationResult<TopicDocument>>

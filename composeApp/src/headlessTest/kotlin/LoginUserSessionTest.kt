@@ -1,5 +1,3 @@
-package jvm_based
-
 import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.client_lib.RawUserPassInfo
 import com.storyteller_f.shared.*

@@ -1,5 +1,3 @@
-package jvm_based
-
 import androidx.compose.ui.test.ExperimentalTestApi
 import com.storyteller_f.a.app.buildHttpClient
 import com.storyteller_f.a.app.buildWebSocketUrl
@@ -16,7 +14,7 @@ class TopicContentTest : UsingContextTest() {
     @OptIn(ExperimentalTestApi::class)
     @Test
     @Ignore
-    fun testApp() = jvmBasedTest {
+    fun testApp() = remoteServerTest {
         coroutineScope {
             val webSocketUrl = buildWebSocketUrl(it.replace("http", "ws"))
             val manager = createUserSessionManager(webSocketUrl, { model, cookie ->

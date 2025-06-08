@@ -97,7 +97,7 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
     }
 
     override suspend fun searchDocument(
-        word: List<String>?,
+        words: List<String>?,
         documentSearch: DocumentSearch,
         primaryKeyFetch: PrimaryKeyFetch?
     ): Result<PaginationResult<TopicDocument>> {
@@ -105,10 +105,10 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
             try {
                 DirectoryReader.open(it).use { reader ->
                     val searcher = IndexSearcher(reader)
-                    val combinedQuery = buildQuery(primaryKeyFetch, word, documentSearch)
+                    val combinedQuery = buildQuery(primaryKeyFetch, words, documentSearch)
                     val reverse = when {
                         primaryKeyFetch == null -> true
-                        primaryKeyFetch.cursor is Cursor.NextCursor<*> -> true
+                        primaryKeyFetch.cursor is Cursor.NextCursor<PrimaryKey> -> true
                         else -> true
                     }
                     val sortById = Sort(SortField("id2", SortField.Type.LONG, reverse))
@@ -137,24 +137,20 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
     private fun BooleanQuery.Builder.addPagingQuery(fetch: PrimaryKeyFetch?) {
         when {
             fetch == null -> {}
-            fetch.cursor is Cursor.PreCursor<*> -> {
-                if (fetch.cursor.value is PrimaryKey) {
-                    val preTopicId = fetch.cursor.value + 1
-                    add(
-                        LongPoint.newRangeQuery("id1", preTopicId, Long.MAX_VALUE),
-                        BooleanClause.Occur.MUST
-                    )
-                }
+            fetch.cursor is Cursor.PreCursor<PrimaryKey> -> {
+                val preTopicId = fetch.cursor.value + 1
+                add(
+                    LongPoint.newRangeQuery("id1", preTopicId, Long.MAX_VALUE),
+                    BooleanClause.Occur.MUST
+                )
             }
 
-            fetch.cursor is Cursor.NextCursor<*> -> {
-                if (fetch.cursor.value is PrimaryKey) {
-                    val nextTopicId = fetch.cursor.value - 1
-                    add(
-                        LongPoint.newRangeQuery("id1", Long.MIN_VALUE, nextTopicId),
-                        BooleanClause.Occur.MUST
-                    )
-                }
+            fetch.cursor is Cursor.NextCursor<PrimaryKey> -> {
+                val nextTopicId = fetch.cursor.value - 1
+                add(
+                    LongPoint.newRangeQuery("id1", Long.MIN_VALUE, nextTopicId),
+                    BooleanClause.Occur.MUST
+                )
             }
 
             else -> {}
