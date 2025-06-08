@@ -7,13 +7,13 @@ import dev.jordond.connectivity.Connectivity
 import java.awt.datatransfer.StringSelection
 
 actual val platform: Platform
-    get() = Platform(false)
+    get() = Platform(false, debug = true)
 
 actual fun initEnvironment(context: Any) = Unit
 
 @OptIn(ExperimentalComposeUiApi::class)
 actual suspend fun Clipboard.setText(string: String) {
-    this.awtClipboard?.setContents(StringSelection(string), null)
+    awtClipboard?.setContents(StringSelection(string), null)
 }
 
 actual fun createConnectivity(): Connectivity {
