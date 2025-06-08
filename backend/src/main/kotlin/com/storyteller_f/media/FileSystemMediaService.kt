@@ -125,7 +125,7 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
         }
     }
 
-    fun getResponse(it: List<String>): Path? {
+    fun getPathResponse(it: List<String>): Path? {
         return runCatching {
             val path = base.resolve(it.joinToString("/"))
             val file = path.toRealPath()

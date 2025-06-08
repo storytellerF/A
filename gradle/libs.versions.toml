@@ -215,6 +215,7 @@ ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref 
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
 ktor-server-partial-content = { module = "io.ktor:ktor-server-partial-content", version.ref = "ktor" }
+ktor-server-auto-head-response = { module = "io.ktor:ktor-server-auto-head-response", version.ref = "ktor" }
 lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "androidx-lifecycleProcess" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", version.ref = "luceneCore" }
@@ -285,7 +286,7 @@ coil = [
     "coil-compose",
     "coil-compose-core",
     "coil-network-ktor",
-    "coil-svg"
+    "coil-svg",
 ]
 ktor-client = [
     "ktor-client-auth",
@@ -294,14 +295,14 @@ ktor-client = [
     "ktor-client-logging",
     "ktor-client-websockets",
     "ktor-serialization-kotlinx-json",
-    "ktor-client-call-id"
+    "ktor-client-call-id",
 ]
 ktor-server-client = [
     "ktor-client-content-negotiation",
     "ktor-client-core",
     "ktor-client-logging",
     "ktor-serialization-kotlinx-json",
-    "ktor-client-okhttp"
+    "ktor-client-okhttp",
 ]
 ktor-server = [
     "ktor-serialization-kotlinx-json",
@@ -316,7 +317,8 @@ ktor-server = [
     "ktor-server-sessions",
     "ktor-server-websockets",
     "ktor-server-partial-content",
-    "ktor-server-metrics-micrometer"
+    "ktor-server-metrics-micrometer",
+    "ktor-server-auto-head-response",
 ]
 filekit = [
     "filekit-coil",

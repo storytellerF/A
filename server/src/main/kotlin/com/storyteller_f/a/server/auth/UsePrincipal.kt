@@ -15,6 +15,7 @@ import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import kotlin.io.path.name
 
 suspend inline fun <reified R : Any> RoutingContext.usePrincipal(
     reader: DatabaseReader,
@@ -57,8 +58,22 @@ suspend inline fun <reified R : Any> RoutingContext.callRespond(
         result.onSuccess {
             when (it) {
                 null -> call.respond(HttpStatusCode.NotFound)
-                is FileResponse -> call.respondFile(it.file)
-                is PathResponse -> call.respondPath(it.file)
+                is FileResponse -> {
+                    call.response.header(
+                        HttpHeaders.ContentDisposition,
+                        ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, it.file.name)
+                            .toString()
+                    )
+                    call.respondFile(it.file)
+                }
+                is PathResponse -> {
+                    call.response.header(
+                        HttpHeaders.ContentDisposition,
+                        ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, it.file.name)
+                            .toString()
+                    )
+                    call.respondPath(it.file)
+                }
                 is Unit -> call.respond(HttpStatusCode.OK)
                 else -> call.respond(it)
             }

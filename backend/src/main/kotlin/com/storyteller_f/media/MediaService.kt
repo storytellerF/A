@@ -128,9 +128,15 @@ suspend fun getImageDimension(
     }
 }
 
-private fun getSvgDimension(viewBox: String?, pair: Pair<String?, String?>): Dimension? {
+fun getSvgDimension(viewBox: String?, pair: Pair<String?, String?>): Dimension? {
+    // 获取 width 和 height 属性
+    val width = pair.first?.removeSuffix("px")?.toIntOrNull()
+    val height = pair.second?.removeSuffix("px")?.toIntOrNull()
+    if (width != null && height != null) {
+        return Dimension(width, height)
+    }
     if (viewBox != null) {
-        val viewBoxSizeList = viewBox.split(" ").map {
+        val viewBoxSizeList = viewBox.split(Regex("\\s+")).map {
             it.trim().toFloatOrNull()
         }
         if (viewBoxSizeList.size == 4) {
@@ -140,13 +146,6 @@ private fun getSvgDimension(viewBox: String?, pair: Pair<String?, String?>): Dim
                 return Dimension(width.toInt(), height.toInt())
             }
         }
-    }
-
-    // 获取 width 和 height 属性
-    val width = pair.first?.removeSuffix("px")?.toIntOrNull()
-    val height = pair.second?.removeSuffix("px")?.toIntOrNull()
-    if (width != null && height != null) {
-        return Dimension(width, height)
     }
     return null
 }

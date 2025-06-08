@@ -2,7 +2,7 @@ package com.storyteller_f.a.server.route
 
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.Backend
-import com.storyteller_f.a.server.auth.bindProtectedAccountRoute
+import com.storyteller_f.a.server.auth.bindSafeAccountRoute
 import com.storyteller_f.a.server.auth.bindUnprotectedAccountRoute
 import com.storyteller_f.a.server.webSocketContent
 import com.storyteller_f.shared.type.JoinStatusSearch
@@ -15,8 +15,6 @@ import com.storyteller_f.shared.type.TopicPinSearch
 import io.ktor.resources.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.plugins.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 
@@ -202,11 +200,11 @@ fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
             webSocket("/link") {
                 webSocketContent(reader, backend)
             }
-            bindProtectedAccountRoute(reader)
             bindProtectedSafeMediaRoute(reader, backend)
             bindProtectedTitleRoute(reader, backend)
         }
         authenticate(optional = true) {
+            bindSafeAccountRoute(reader)
             bindSafeRoomRoute(reader, backend)
             bindSafeTopicRoute(reader, backend)
             bindSafeCommunityRoute(reader, backend)
