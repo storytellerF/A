@@ -7,6 +7,13 @@ import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.service.processTopicExtension
+import com.storyteller_f.query.checkRoomIsPrivate
+import com.storyteller_f.query.getJoinedUserList
+import com.storyteller_f.query.getTopicRootTuple
+import com.storyteller_f.query.getUserDevices
+import com.storyteller_f.query.isMemberJoined
+import com.storyteller_f.query.saveEncryptedTopic
+import com.storyteller_f.query.savePlainTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -78,7 +85,7 @@ suspend fun Backend.sendTopicToRoomMembers() {
         }
     }.use { client ->
         sharedFlow.collect { frame ->
-            getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
+            this.databaseSession.getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
                 val memberJoins = list.filter {
                     it.uid != frame.topicInfo.author
                 }
@@ -89,7 +96,7 @@ suspend fun Backend.sendTopicToRoomMembers() {
                         WebsocketDispatcher(it)
                     }
                 }
-                getUserDevices(memberJoins.map {
+                this.databaseSession.getUserDevices(memberJoins.map {
                     it.uid
                 }).map {
                     it.map {
@@ -204,7 +211,7 @@ private suspend fun Backend.addTopicAtRoom(
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
+            this.databaseSession.getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
                     addTopicIntoRoom(
                         id,
@@ -236,7 +243,7 @@ private suspend fun Backend.addTopicIntoRoom(
     uid: PrimaryKey,
     newTopic: NewRoomTopic
 ): Result<TopicInfo?> {
-    return this.isMemberJoined(roomId, uid).mapResult { bool ->
+    return this.databaseSession.isMemberJoined(roomId, uid).mapResult { bool ->
         if (bool) {
             val content = newTopic.content
             val newId = SnowflakeFactory.nextId()
@@ -252,7 +259,7 @@ private suspend fun Backend.addTopicIntoRoom(
                 null
             )
 
-            checkRoomIsPrivate(roomId).mapResultIfNotNull { isPrivate ->
+            this.databaseSession.checkRoomIsPrivate(roomId).mapResultIfNotNull { isPrivate ->
                 if (isPrivate) {
                     if (content is TopicContent.Encrypted) {
                         isKeyVerified(
@@ -260,7 +267,7 @@ private suspend fun Backend.addTopicIntoRoom(
                             content.encryptedKey
                         ).mapResult {
                             if (it) {
-                                saveEncryptedTopic(
+                                this.databaseSession.saveEncryptedTopic(
                                     topic,
                                     content
                                 )
@@ -298,7 +305,7 @@ private suspend fun Backend.isKeyVerified(
     roomId: PrimaryKey,
     encryptedAes: Map<PrimaryKey, String>
 ): Result<Boolean> {
-    return getJoinedUserList(roomId).map { value ->
+    return this.databaseSession.getJoinedUserList(roomId).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()

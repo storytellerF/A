@@ -7,17 +7,14 @@ import com.storyteller_f.shared.type.AlgoType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PassType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
-import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import org.jetbrains.exposed.sql.*
 
-suspend fun Backend.getUserAid(id: PrimaryKey): Result<String?> =
-    exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.getUserAid(id: PrimaryKey): Result<String?> =
+    dbSearch {
         search {
             Aids.selectAll().where {
                 Aids.objectId eq id
@@ -28,29 +25,21 @@ suspend fun Backend.getUserAid(id: PrimaryKey): Result<String?> =
         }
     }
 
-suspend fun Backend.getUserInfoAndRelatedMedia(
-    fetch: ObjectFetch
-): Result<UserInfo?> {
-    return getUserRawResult(fetch).mapResultIfNotNull {
-        processUserRawResultToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
-    }
-}
-
-suspend fun Backend.getUserRawResult(
+suspend fun ExposedDatabaseSession.getUserRawResult(
     objectFetch: ObjectFetch
-): Result<UserRawResult?> = exposedDatabaseSession.dbSearch {
+): Result<UserRawResult?> = dbSearch {
     search {
         Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().bindUserFetchQuery(objectFetch)
     }
     first(::mapUserInfo)
 }
 
-suspend fun Backend.commonPaginationMemberList(
+suspend fun ExposedDatabaseSession.commonPaginationMemberList(
     objectId: PrimaryKey?,
     word: String?,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<Pair<List<UserRawResult>, Long>> {
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(
                 Users,
@@ -59,7 +48,7 @@ suspend fun Backend.commonPaginationMemberList(
         }
         map(::mapUserInfo)
     }.mapResult { pairs ->
-        exposedDatabaseSession.dbSearch {
+        dbSearch {
             search {
                 buildSearchMembersQuery(objectId, true, word)
             }
@@ -94,21 +83,9 @@ private fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, wo
     return query
 }
 
-suspend fun Backend.searchMembers(
-    objectId: PrimaryKey?,
-    word: String?,
-    primaryKeyFetch: PrimaryKeyFetch
-): Result<PaginationResult<UserInfo>?> {
-    return commonPaginationMemberList(objectId, word, primaryKeyFetch).mapResult { (pairs, count) ->
-        processUserRawResultToUserInfo(pairs).mapIfNotNull {
-            PaginationResult(it, count)
-        }
-    }
-}
-
-suspend fun Backend.getUserRawResultAndPublicKeyByAddress(
+suspend fun ExposedDatabaseSession.getUserRawResultAndPublicKeyByAddress(
     ad: String
-) = exposedDatabaseSession.dbSearch {
+) = dbSearch {
     search {
         Users
             .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -123,13 +100,13 @@ suspend fun Backend.getUserRawResultAndPublicKeyByAddress(
     }
 }
 
-suspend fun Backend.createUser(
+suspend fun ExposedDatabaseSession.createUser(
     ad: String,
     name: String,
     newId: PrimaryKey,
     pk: String
 ): Result<UserInfo> {
-    return exposedDatabaseSession.dbQuery {
+    return dbQuery {
         val user = User(null, pk, ad, null, name, newId, now(), 0, PassType.RAW, AlgoType.P256)
         check(Users.insert {
             it[id] = user.id
@@ -144,8 +121,8 @@ suspend fun Backend.createUser(
     }
 }
 
-suspend fun Backend.isUserNotExists(pk: String): Result<Boolean> {
-    return exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.isUserNotExists(pk: String): Result<Boolean> {
+    return dbSearch {
         search {
             User.find {
                 Users.publicKey eq pk
@@ -155,10 +132,10 @@ suspend fun Backend.isUserNotExists(pk: String): Result<Boolean> {
     }
 }
 
-suspend fun Backend.updateUserInfo(
+suspend fun ExposedDatabaseSession.updateUserInfo(
     id: PrimaryKey,
     newUser: UpdateUserBody
-) = exposedDatabaseSession.dbQuery {
+) = dbQuery {
     listOf({
         val avatar = newUser.avatar
         val name = newUser.nickname
@@ -192,8 +169,8 @@ suspend fun Backend.updateUserInfo(
     }
 }
 
-suspend fun Backend.checkUserExists(id: Long): Result<Boolean> {
-    return exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.checkUserExists(id: Long): Result<Boolean> {
+    return dbSearch {
         search {
             User.find {
                 Users.id eq id
@@ -203,10 +180,10 @@ suspend fun Backend.checkUserExists(id: Long): Result<Boolean> {
     }
 }
 
-suspend fun Backend.getUserAuthDataByAid(
+suspend fun ExposedDatabaseSession.getUserAuthDataByAid(
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ) =
-    exposedDatabaseSession.dbSearch {
+    dbSearch {
         search {
             Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
                 .select(listOf(Users.publicKey, Users.id))
@@ -217,10 +194,10 @@ suspend fun Backend.getUserAuthDataByAid(
         }
     }
 
-suspend fun Backend.getUserAuthDataBy(
+suspend fun ExposedDatabaseSession.getUserAuthDataBy(
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ) =
-    exposedDatabaseSession.dbSearch {
+    dbSearch {
         search {
             Users.select(listOf(Users.publicKey, Users.id)).where(predicate)
         }
@@ -229,24 +206,21 @@ suspend fun Backend.getUserAuthDataBy(
         }
     }
 
-suspend fun Backend.getUsersInfoByIds(
-    ids: List<PrimaryKey>
-) = exposedDatabaseSession.dbSearch {
-    search {
-        Users
-            .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-            .select(Users.fields + Aids.value)
-            .where {
-                Users.id inList ids
-            }
+suspend fun ExposedDatabaseSession.getUserRawResultByIds(ids: List<PrimaryKey>): Result<List<UserRawResult>> =
+    dbSearch {
+        search {
+            Users
+                .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+                .select(Users.fields + Aids.value)
+                .where {
+                    Users.id inList ids
+                }
+        }
+        map(::mapUserInfo)
     }
-    map(::mapUserInfo)
-}.mapResult {
-    processUserRawResultToUserInfo(it)
-}
 
-suspend fun Backend.getUserRawResultByAids(ids: List<String>) =
-    exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.getUserRawResultByAids(ids: List<String>) =
+    dbSearch {
         search {
             Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
                 .select(Users.fields + Aids.value)
@@ -257,8 +231,8 @@ suspend fun Backend.getUserRawResultByAids(ids: List<String>) =
         map(::mapUserInfo)
     }
 
-suspend fun Backend.getUserAcgByIds(ids: List<PrimaryKey>) =
-    exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.getUserAcgByIds(ids: List<PrimaryKey>) =
+    dbSearch {
         search {
             Users.select(Users.fields)
                 .where {
@@ -269,13 +243,3 @@ suspend fun Backend.getUserAcgByIds(ids: List<PrimaryKey>) =
             it[Users.id] to it[Users.acgAmount]
         }
     }
-
-suspend fun Backend.processUserRawResultToUserInfo(
-    pairs: List<UserRawResult>
-) = getMediaInfoList(pairs.map {
-    it.avatar
-}).mapIfNotNull { value ->
-    pairs.mapIndexed { index, pair ->
-        pair.user.copy(avatar = value[index])
-    }
-}

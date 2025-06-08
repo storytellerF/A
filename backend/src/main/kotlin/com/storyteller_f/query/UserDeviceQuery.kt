@@ -1,6 +1,6 @@
 package com.storyteller_f.query
 
-import com.storyteller_f.Backend
+import com.storyteller_f.ExposedDatabaseSession
 import com.storyteller_f.map
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.UserDevice
@@ -11,8 +11,8 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 
-suspend fun Backend.addDevice(uid: PrimaryKey, endpointUrl: String) =
-    exposedDatabaseSession.dbQuery {
+suspend fun ExposedDatabaseSession.addDevice(uid: PrimaryKey, endpointUrl: String) =
+    dbQuery {
         check(UserDevices.insert {
             it[UserDevices.uid] = uid
             it[UserDevices.endpointUrl] = endpointUrl
@@ -21,14 +21,17 @@ suspend fun Backend.addDevice(uid: PrimaryKey, endpointUrl: String) =
         }
     }
 
-suspend fun Backend.removeDevice(uid: PrimaryKey, endpointUrl: String) =
-    exposedDatabaseSession.dbQuery {
+suspend fun ExposedDatabaseSession.removeDevice(
+    uid: PrimaryKey,
+    endpointUrl: String
+) =
+    dbQuery {
         UserDevices.deleteWhere {
             (UserDevices.uid eq uid) and (UserDevices.endpointUrl eq endpointUrl)
         }
     }
 
-suspend fun Backend.getUserDevices(uid: List<PrimaryKey>) = exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.getUserDevices(uid: List<PrimaryKey>) = dbSearch {
     search {
         UserDevices.selectAll().where {
             UserDevices.uid inList uid

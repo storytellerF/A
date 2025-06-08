@@ -1,21 +1,18 @@
 package com.storyteller_f.query
 
-import com.storyteller_f.Backend
+import com.storyteller_f.ExposedDatabaseSession
 import com.storyteller_f.ObjectFetch
 import com.storyteller_f.bindPaginationQuery
 import com.storyteller_f.count
 import com.storyteller_f.first
-import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.map
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.utils.associateByPair
-import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.merge
@@ -24,13 +21,8 @@ import com.storyteller_f.tables.EncryptedTopic
 import com.storyteller_f.tables.EncryptedTopicKey
 import com.storyteller_f.tables.EncryptedTopicKeys
 import com.storyteller_f.tables.EncryptedTopics
-import com.storyteller_f.tables.EncryptedTopics.topicId
 import com.storyteller_f.tables.Topic
-import com.storyteller_f.tables.Topic.Companion.wrapRow
 import com.storyteller_f.tables.Topics
-import com.storyteller_f.tables.Topics.pinned
-import com.storyteller_f.tables.getReactionCount
-import com.storyteller_f.tables.insertMediaRefs
 import com.storyteller_f.tables.toTopicInfo
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
@@ -47,13 +39,12 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 import org.jetbrains.exposed.sql.update
-import kotlin.collections.get
 import kotlin.text.hexToByteArray
 import kotlin.text.orEmpty
 
-suspend fun Backend.getTopicRootTuple(
+suspend fun ExposedDatabaseSession.getTopicRootTuple(
     parentId: PrimaryKey
-): Result<ObjectTuple?> = exposedDatabaseSession.dbSearch {
+): Result<ObjectTuple?> = dbSearch {
     search {
         Topic.findById(parentId)
     }
@@ -66,9 +57,11 @@ suspend fun Backend.getTopicRootTuple(
     }
 }
 
-suspend fun Backend.getTopicCommentCount(topicIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>> {
+suspend fun ExposedDatabaseSession.getTopicCommentCount(
+    topicIdList: List<PrimaryKey>
+): Result<List<Pair<Long, Long>>> {
     if (topicIdList.isEmpty()) return Result.success(emptyList())
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         val countColumn = Topics.id.countDistinct()
         search {
             Topics.select(countColumn, Topics.id).where {
@@ -81,13 +74,13 @@ suspend fun Backend.getTopicCommentCount(topicIdList: List<PrimaryKey>): Result<
     }
 }
 
-suspend fun Backend.isUserCommented(
+suspend fun ExposedDatabaseSession.isUserCommented(
     uid: PrimaryKey,
     topicId: List<PrimaryKey>
 ): Result<List<Long>> {
     if (topicId.isEmpty()) return Result.success(emptyList())
-    return exposedDatabaseSession.dbSearch {
-        search {
+    return dbSearch {
+        this.search {
             Topics.select(Topics.parentId).where {
                 Topics.parentId inList topicId and (Topics.author eq uid)
             }
@@ -98,11 +91,11 @@ suspend fun Backend.isUserCommented(
     }
 }
 
-suspend fun Backend.getTopicInfo(
+suspend fun ExposedDatabaseSession.getTopicInfo(
     fetch: ObjectFetch,
     uid: PrimaryKey?
 ): Result<TopicInfo?> {
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId).select(Topics.fields + Aids.value).where {
                 when (fetch) {
@@ -119,7 +112,7 @@ suspend fun Backend.getTopicInfo(
     }
 }
 
-private suspend fun Backend.processTopicToTopicInfo(
+private suspend fun ExposedDatabaseSession.processTopicToTopicInfo(
     uid: PrimaryKey?,
     topics: List<Topic>
 ): Result<List<TopicInfo>> {
@@ -168,7 +161,7 @@ private suspend fun Backend.processTopicToTopicInfo(
 /**
  * 根据指定条件获取未填充content 的topic 列表
  */
-suspend fun Backend.getTopicInfoListByPredicate(
+suspend fun ExposedDatabaseSession.getTopicInfoListByPredicate(
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
     addPinOrder: Boolean = false,
@@ -176,7 +169,7 @@ suspend fun Backend.getTopicInfoListByPredicate(
     predicate: SqlExpressionBuilder.() -> Op<Boolean>
 ): Result<List<TopicInfo>> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
                 .select(Topics.fields + Aids.value)
@@ -199,7 +192,7 @@ suspend fun Backend.getTopicInfoListByPredicate(
     }
 }
 
-suspend fun Backend.getTopicPaginationResultByPredicate(
+suspend fun ExposedDatabaseSession.getTopicPaginationResultByPredicate(
     uid: PrimaryKey?,
     fillHasCommented: Boolean?,
     primaryKeyFetch: PrimaryKeyFetch,
@@ -208,7 +201,7 @@ suspend fun Backend.getTopicPaginationResultByPredicate(
     return getTopicInfoListByPredicate(uid, fillHasCommented, addPagingQuery = {
         bindPaginationQuery(Topics, primaryKeyFetch)
     }, predicate = predicate).mapResult { data ->
-        exposedDatabaseSession.dbSearch {
+        dbSearch {
             search {
                 Topics
                     .selectAll()
@@ -223,10 +216,10 @@ suspend fun Backend.getTopicPaginationResultByPredicate(
 
 // 加密内容不能处理media，需要客户端处理
 @OptIn(ExperimentalStdlibApi::class)
-suspend fun Backend.getEncryptedTopicContents(
+suspend fun ExposedDatabaseSession.getEncryptedTopicContents(
     data: List<TopicInfo>,
     uid: PrimaryKey
-) = exposedDatabaseSession.dbQuery {
+) = dbQuery {
     val topicId = data.map {
         it.id
     }
@@ -251,26 +244,11 @@ suspend fun Backend.getEncryptedTopicContents(
     }
 }
 
-suspend fun Backend.savePlainTopic(
-    topic: Topic,
-    content: TopicContent.Plain
-) = exposedDatabaseSession.dbQuery {
-    Topic.new(topic)
-    insertMediaRefs(topic.id, ObjectType.TOPIC, extractMarkdownMediaLink(content.plain).map {
-        topic.author to it
-    }).getOrThrow()
-
-    topicSearchService.saveDocument(
-        listOf(TopicDocument.fromTopic(topic, content))
-    ).getOrThrow()
-    topic.toTopicInfo().copy(content = content)
-}
-
 @OptIn(ExperimentalStdlibApi::class)
-suspend fun Backend.saveEncryptedTopic(
+suspend fun ExposedDatabaseSession.saveEncryptedTopic(
     topic: Topic,
     content: TopicContent.Encrypted,
-) = exposedDatabaseSession.dbQuery {
+) = dbQuery {
     Topic.new(topic)
     EncryptedTopics.insert {
         it[this.content] = ExposedBlob(content.encrypted.hexToByteArray())
@@ -286,11 +264,11 @@ suspend fun Backend.saveEncryptedTopic(
         .copy(content = TopicContent.Encrypted(content.encrypted, content.encryptedKey), isPrivate = true)
 }
 
-suspend fun Backend.updateTopicStatus(
+suspend fun ExposedDatabaseSession.updateTopicStatus(
     topicId: PrimaryKey,
     newValue: Boolean
 ): Result<Boolean> {
-    return exposedDatabaseSession.dbQuery {
+    return dbQuery {
         Topics.update({
             Topics.id eq topicId
         }) {
@@ -299,8 +277,8 @@ suspend fun Backend.updateTopicStatus(
     }
 }
 
-suspend fun Backend.getTopicList(firstId: PrimaryKey): Result<List<Topic>> {
-    return exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.getTopicList(firstId: PrimaryKey): Result<List<Topic>> {
+    return dbSearch {
         search {
             val query = Topics.selectAll()
             if (firstId != DEFAULT_PRIMARY_KEY) {

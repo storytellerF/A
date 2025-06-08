@@ -2,7 +2,6 @@ package com.storyteller_f.query
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
-import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.*
@@ -11,8 +10,8 @@ import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import org.jetbrains.exposed.sql.*
 
-suspend fun Backend.checkCommunityExists(parentId: PrimaryKey) =
-    exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.checkCommunityExists(parentId: PrimaryKey) =
+    dbSearch {
         search {
             Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
                 .select(Communities.fields + Aids.value)
@@ -25,7 +24,7 @@ suspend fun Backend.checkCommunityExists(parentId: PrimaryKey) =
         }
     }
 
-suspend fun Backend.getCommunityRawResult(
+suspend fun ExposedDatabaseSession.getCommunityRawResult(
     objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
     uid: PrimaryKey? = null
@@ -33,7 +32,7 @@ suspend fun Backend.getCommunityRawResult(
     if (uid == null && fillJoinInfo == true) {
         return Result.failure(UnauthorizedException())
     }
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
                 .select(Communities.fields + Aids.value)
@@ -52,8 +51,8 @@ suspend fun Backend.getCommunityRawResult(
     }
 }
 
-suspend fun Backend.getJoinedCommunityIds(uid: PrimaryKey) =
-    exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.getJoinedCommunityIds(uid: PrimaryKey) =
+    dbSearch {
         search {
             Communities
                 .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
@@ -82,7 +81,7 @@ fun Query.bindPosterSearch(
     return this
 }
 
-suspend fun Backend.getCommunityPaginationResult(
+suspend fun ExposedDatabaseSession.getCommunityPaginationResult(
     uid: PrimaryKey?,
     joinStatus: JoinStatusSearch?,
     word: String?,
@@ -91,7 +90,7 @@ suspend fun Backend.getCommunityPaginationResult(
 ): Result<PaginationResult<CommunityRawResult>?> {
     val joinSearch = joinStatus.toJoinSearch(uid)
 
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
                 .select(Communities.fields + Aids.value)
@@ -101,7 +100,7 @@ suspend fun Backend.getCommunityPaginationResult(
         map(Community::wrapRow)
     }.mapResultIfNotNull {
         processCommunityToCommunityRawResult(uid, it).mapResult { list ->
-            exposedDatabaseSession.dbSearch {
+            dbSearch {
                 search {
                     Communities.select(Communities.id)
                         .buildCommunitySearchQuery(joinStatus.toJoinSearch(uid), word, hasPosterSearch)
@@ -114,7 +113,7 @@ suspend fun Backend.getCommunityPaginationResult(
     }
 }
 
-private suspend fun Backend.processCommunityToCommunityRawResult(
+private suspend fun ExposedDatabaseSession.processCommunityToCommunityRawResult(
     uid: PrimaryKey?,
     communities: List<Community>
 ): Result<List<CommunityRawResult>> = getContainerInfo(
@@ -132,7 +131,7 @@ private suspend fun Backend.processCommunityToCommunityRawResult(
     }
 }
 
-suspend fun Backend.getContainerInfo(
+suspend fun ExposedDatabaseSession.getContainerInfo(
     parentIds: List<PrimaryKey>,
     uid: PrimaryKey?
 ): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>> = merge({
@@ -195,7 +194,7 @@ private fun Query.buildCommunitySearchQuery(
     return this
 }
 
-suspend fun Backend.createCommunity(community: Community) = exposedDatabaseSession.dbQuery {
+suspend fun ExposedDatabaseSession.createCommunity(community: Community) = dbQuery {
     check(Communities.insert {
         it[id] = community.id
         it[name] = community.name
@@ -231,10 +230,10 @@ suspend fun createCommunityRoomsRaw(
     )
 }
 
-suspend fun Backend.getCommunityJoinedTimeByIds(
+suspend fun ExposedDatabaseSession.getCommunityJoinedTimeByIds(
     uid: PrimaryKey,
     communityIds: List<PrimaryKey>
-) = exposedDatabaseSession.dbSearch {
+) = dbSearch {
     search {
         Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
             MemberJoins.uid eq uid
@@ -248,9 +247,9 @@ suspend fun Backend.getCommunityJoinedTimeByIds(
     }
 }
 
-suspend fun Backend.getCommunityRawResults(
+suspend fun ExposedDatabaseSession.getCommunityRawResults(
     objectListFetch: ObjectListFetch
-) = exposedDatabaseSession.dbSearch {
+) = dbSearch {
     search {
         Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
             .selectAll().where {
@@ -263,24 +262,10 @@ suspend fun Backend.getCommunityRawResults(
     map(::mapCommunityInfo)
 }
 
-suspend fun Backend.processCommunityRawResultToCommunityInfo(
-    list: List<CommunityRawResult>
-): Result<List<CommunityInfo>?> {
-    return getMediaInfoList(list.flatMap { (_, icon, poster) ->
-        listOf(icon, poster)
-    }).mapIfNotNull { icons ->
-        list.mapIndexed { i, communityPair ->
-            val first = icons[i * 2]
-            val second = icons[i * 2 + 1]
-            communityPair.communityInfo.copy(icon = first, poster = second, hasPoster = second != null)
-        }
-    }
-}
-
-suspend fun Backend.updateCommunity(
+suspend fun ExposedDatabaseSession.updateCommunity(
     id: PrimaryKey,
     body: UpdateCommunityBody
-) = exposedDatabaseSession.dbQuery {
+) = dbQuery {
     listOf {
         val newIcon = body.icon
         val newName = body.name

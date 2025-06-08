@@ -4,6 +4,10 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.isDup
+import com.storyteller_f.query.getReactionInfo
+import com.storyteller_f.query.getReactionInfoPaginationResult
+import com.storyteller_f.query.insertReaction
+import com.storyteller_f.query.statsReactionRecord
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -24,14 +28,14 @@ suspend fun Backend.addReaction(
 ) = checkRootWritePermission(ObjectType.TOPIC, topicId, userId).mapResultIfNotNull {
     if (it.hasWrite) {
         val newId = SnowflakeFactory.nextId()
-        getReactionInfo(userId, topicId, emojiText).mapResult { oldReaction ->
+        this.databaseSession.getReactionInfo(userId, topicId, emojiText).mapResult { oldReaction ->
             if (oldReaction != null && oldReaction.hasReacted) {
                 Result.success(oldReaction)
             } else {
                 val reactionRecord =
                     ReactionRecord(userId, topicId, ObjectType.TOPIC, emojiText, newId, now())
-                insertReaction(reactionRecord).map {
-                    statsReactionRecord(reactionRecord).onFailure { throwable ->
+                this.databaseSession.insertReaction(reactionRecord).map {
+                    this.databaseSession.statsReactionRecord(reactionRecord).onFailure { throwable ->
                         Napier.e(throwable = throwable) {
                             "addReaction"
                         }
@@ -72,5 +76,5 @@ suspend fun Backend.reactionList(
     reactionFetch: ReactionFetch,
 ): Result<PaginationResult<ReactionInfo>> {
     if (fillHasReacted == true && uid == null) return Result.failure(UnauthorizedException())
-    return getReactionInfoPaginationResult(listOf(objectId), uid, reactionFetch)
+    return this.databaseSession.getReactionInfoPaginationResult(listOf(objectId), uid, reactionFetch)
 }

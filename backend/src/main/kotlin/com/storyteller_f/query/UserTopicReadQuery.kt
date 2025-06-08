@@ -1,6 +1,6 @@
 package com.storyteller_f.query
 
-import com.storyteller_f.Backend
+import com.storyteller_f.ExposedDatabaseSession
 import com.storyteller_f.map
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.tables.UserTopicRead
@@ -9,8 +9,8 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.upsert
 
-suspend fun Backend.addReadLog(userTopicRead: UserTopicRead): Result<Unit> {
-    return exposedDatabaseSession.dbQuery {
+suspend fun ExposedDatabaseSession.addReadLog(userTopicRead: UserTopicRead): Result<Unit> {
+    return dbQuery {
         check(UserTopicReads.upsert {
             it[uid] = userTopicRead.uid
             it[updatedAt] = userTopicRead.updatedAt
@@ -23,7 +23,10 @@ suspend fun Backend.addReadLog(userTopicRead: UserTopicRead): Result<Unit> {
     }
 }
 
-suspend fun Backend.getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey) = exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.getTopicReadList(
+    parentIds: List<PrimaryKey>,
+    uid: PrimaryKey
+) = dbSearch {
     search {
         UserTopicReads.selectAll().where {
             UserTopicReads.uid eq uid and (UserTopicReads.objectId inList parentIds)

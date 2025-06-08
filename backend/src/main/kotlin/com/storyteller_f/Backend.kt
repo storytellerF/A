@@ -1,16 +1,27 @@
 package com.storyteller_f
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
+import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.backend.BackendConfig
 import com.storyteller_f.index.ElasticTopicSearchService
 import com.storyteller_f.index.LuceneTopicSearchService
+import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.index.TopicSearchService
-import com.storyteller_f.media.FileSystemMediaService
-import com.storyteller_f.media.MediaService
-import com.storyteller_f.media.MinIoMediaService
+import com.storyteller_f.media.*
 import com.storyteller_f.naming.NameService
+import com.storyteller_f.query.*
+import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.extractMarkdownMediaLink
+import com.storyteller_f.shared.utils.mapIfNotNull
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.tables.*
 import com.storyteller_f.types.Cursor
+import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.json.Json
@@ -30,7 +41,7 @@ class Backend(
     val mediaService: MediaService,
     val nameService: NameService,
     val database: Database,
-    val exposedDatabaseSession: ExposedDatabaseSession
+    val databaseSession: ExposedDatabaseSession
 ) {
     val json = Json {}
 }
@@ -210,4 +221,246 @@ sealed interface ObjectFetch {
 sealed interface ObjectListFetch {
     data class AidListFetch(val aidList: List<String>) : ObjectListFetch
     data class IdListFetch(val idList: List<PrimaryKey>) : ObjectListFetch
+}
+
+suspend fun Backend.uploadFiles(uploadPacks: List<UploadPack>): Result<List<MediaInfo?>> {
+    val data = uploadPacks.mapIndexed { i, e ->
+        SnowflakeFactory.nextId() to e
+    }
+    return databaseSession.dbQuery {
+        insertMedia(data)
+        mediaService.upload(AMEDIA_DEFAULT_BUCKET, uploadPacks).getOrThrow()
+    }.map { urls ->
+        urls.mapIndexed { i, e ->
+            if (e != null) {
+                val uploadPack = uploadPacks[i]
+                MediaInfo(
+                    data[i].first,
+                    e.first,
+                    uploadPack.newFullName,
+                    uploadPack.contentType,
+                    uploadPack.size,
+                    uploadPack.name,
+                    uploadPack.owner,
+                    e.second,
+                    uploadPack.dimension
+                )
+            } else {
+                null
+            }
+        }
+    }
+}
+
+suspend fun Backend.insertTitleAndTopicDescription(
+    title: Title,
+    topic: Topic,
+    description: String
+): Result<TitleInfo> {
+    return databaseSession.dbQuery {
+        insertTitle(title, topic)
+        topicSearchService.saveDocument(
+            listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(description)))
+        ).getOrThrow()
+        title.toTitleInfo()
+    }
+}
+
+suspend fun Backend.getUserInfoAndRelatedMedia(
+    fetch: ObjectFetch
+): Result<UserInfo?> {
+    return databaseSession.getUserRawResult(fetch).mapResultIfNotNull {
+        processUserRawResultToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
+    }
+}
+
+suspend fun Backend.getUsersInfoByIds(
+    ids: List<PrimaryKey>
+): Result<List<UserInfo>?> {
+    return this.databaseSession.getUserRawResultByIds(ids).mapResult {
+        processUserRawResultToUserInfo(it)
+    }
+}
+
+suspend fun Backend.savePlainTopic(
+    topic: Topic,
+    content: TopicContent.Plain
+) = databaseSession.dbQuery {
+    Topic.new(topic)
+    databaseSession.insertMediaRefs(topic.id, ObjectType.TOPIC, extractMarkdownMediaLink(content.plain).map {
+        topic.author to it
+    }).getOrThrow()
+
+    topicSearchService.saveDocument(
+        listOf(TopicDocument.fromTopic(topic, content))
+    ).getOrThrow()
+    topic.toTopicInfo().copy(content = content)
+}
+
+suspend fun Backend.copyMedia(
+    media: Media,
+    newOwner: PrimaryKey,
+    newName: String
+): Result<ServerResponse<MediaInfo?>> {
+    val id = SnowflakeFactory.nextId()
+    return databaseSession.dbQuery {
+        insertCopiedMedia(id, media, newOwner)
+        mediaService.copy(
+            AMEDIA_DEFAULT_BUCKET,
+            listOf(CopyPack("${media.owner}/${media.name}", newName))
+        ).map { list ->
+            ServerResponse(list.map {
+                if (it != null) {
+                    val dimension =
+                        if (media.width != 0 && media.height != 0) Dimension(media.width, media.height) else null
+                    MediaInfo(
+                        id,
+                        it.first,
+                        newName,
+                        media.contentType,
+                        media.size,
+                        media.name,
+                        newOwner,
+                        it.second,
+                        dimension
+                    )
+                } else {
+                    null
+                }
+            }, null)
+        }.getOrThrow()
+    }
+}
+
+suspend fun Backend.getMediaPaginationResult(
+    uid: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<MediaInfo>> =
+    databaseSession.getMediaPaginationList(uid, primaryKeyFetch).mapResult { (list, count) ->
+        val names = list.map {
+            "${it.owner}/${it.name}"
+        }
+        mediaService.get(AMEDIA_DEFAULT_BUCKET, names).map { mediaUrls ->
+            val data = mediaUrls.mapIndexedNotNull { i, e ->
+                if (e != null) {
+                    val media = list[i]
+                    val dimension = if (media.contentType.startsWith("image")) {
+                        Dimension(media.width, media.height)
+                    } else {
+                        null
+                    }
+                    MediaInfo(
+                        media.id,
+                        e.first,
+                        names[i],
+                        media.contentType,
+                        media.size,
+                        media.name,
+                        media.owner,
+                        e.second,
+                        dimension
+                    )
+                } else {
+                    null
+                }
+            }
+            PaginationResult(data, count)
+        }
+    }
+
+suspend fun Backend.processCommunityRawResultToCommunityInfo(
+    list: List<CommunityRawResult>
+): Result<List<CommunityInfo>?> {
+    return getMediaInfoList(list.flatMap { (_, icon, poster) ->
+        listOf(icon, poster)
+    }).mapIfNotNull { icons ->
+        list.mapIndexed { i, communityPair ->
+            val first = icons[i * 2]
+            val second = icons[i * 2 + 1]
+            communityPair.communityInfo.copy(icon = first, poster = second, hasPoster = second != null)
+        }
+    }
+}
+
+suspend fun Backend.searchMembers(
+    objectId: PrimaryKey?,
+    word: String?,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<UserInfo>?> {
+    return databaseSession.commonPaginationMemberList(objectId, word, primaryKeyFetch).mapResult { (pairs, count) ->
+        processUserRawResultToUserInfo(pairs).mapIfNotNull {
+            PaginationResult(it, count)
+        }
+    }
+}
+
+suspend fun Backend.getMediaInfoList(
+    owner: PrimaryKey,
+): Result<List<MediaInfo?>?> {
+    return this.databaseSession.getMediaListByOwner(owner).mapResultIfNotNull { medias ->
+        mediaService.get(AMEDIA_DEFAULT_BUCKET, medias.map {
+            it.newFullName
+        }).mapIfNotNull {
+            medias.mapIndexed { i, e ->
+                it[i]?.let { it1 -> e.toMediaInfo(it1) }
+            }
+        }
+    }
+}
+
+suspend fun Backend.searchRoomPaginationResult(
+    uid: PrimaryKey?,
+    joinStatusSearch: JoinStatusSearch?,
+    word: String?,
+    community: PrimaryKey?,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<RoomInfo>?> {
+    return databaseSession.getRoomPaginationResult(
+        uid,
+        joinStatusSearch,
+        word,
+        community,
+        primaryKeyFetch
+    ).mapResult { (list, count) ->
+        processRoomRawResultToRoomInfo(list).mapIfNotNull { value ->
+            PaginationResult(value, count)
+        }
+    }
+}
+
+suspend fun Backend.getMediaInfoList(names: List<String?>): Result<List<MediaInfo?>?> {
+    return this.databaseSession.getMediaByNames(names).mapResult { medias ->
+        val mediaMap = medias.filterNotNull().associateBy { it.newFullName }
+        mediaService.get(AMEDIA_DEFAULT_BUCKET, names.map {
+            mediaMap[it]?.newFullName
+        }).map {
+            names.mapIndexed { i, e ->
+                if (e != null) {
+                    it[i]?.let { it1 -> mediaMap[e]?.toMediaInfo(it1) }
+                } else {
+                    null
+                }
+            }
+        }
+    }
+}
+
+suspend fun Backend.processUserRawResultToUserInfo(
+    rawResults: List<UserRawResult>
+) = getMediaInfoList(rawResults.map {
+    it.avatar
+}).mapIfNotNull { value ->
+    rawResults.mapIndexed { index, pair ->
+        pair.user.copy(avatar = value[index])
+    }
+}
+
+suspend fun Backend.processRoomRawResultToRoomInfo(list: List<RoomRawResult>): Result<List<RoomInfo>?> {
+    return getMediaInfoList(list.map {
+        it.icon
+    }).mapIfNotNull { icons ->
+        list.mapIndexed { i, roomPair ->
+            roomPair.roomInfo.copy(icon = icons[i])
+        }
+    }
 }

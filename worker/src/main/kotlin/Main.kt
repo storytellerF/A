@@ -1,21 +1,21 @@
 package com.storyteller_f.worker
 
-import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.buildBackendFromEnv
+import com.storyteller_f.query.addAcgForUser
+import com.storyteller_f.query.getLatestTaskRecord
+import com.storyteller_f.query.getTopicList
+import com.storyteller_f.query.getUserAcgByIds
 import com.storyteller_f.readEnv
-import com.storyteller_f.shared.type.AssetType
 import com.storyteller_f.shared.type.TaskRecordType
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.sql.update
 
 fun main() {
     val env = readEnv()
@@ -38,27 +38,7 @@ fun main() {
 
 private suspend fun Backend.doAcgTask() {
     getAcgTaskListFromTopics().mapResultIfNotNull { (acgList, userAcgMap, list) ->
-        exposedDatabaseSession.dbQuery {
-            acgList.forEach { (id, acg) ->
-                userAcgMap[id]?.let { oldAcgAmount ->
-                    Users.update({
-                        Users.id eq id
-                    }) {
-                        it[Users.acgAmount] = oldAcgAmount + acg
-                    }
-                    addAssetTransaction(AssetTransaction(AssetType.ACG, oldAcgAmount, oldAcgAmount + acg))
-                }
-            }
-
-            addTaskRecord(
-                TaskRecord(
-                    SnowflakeFactory.nextId(),
-                    now(),
-                    TaskRecordType.TOPIC_ACG,
-                    list.last().id
-                )
-            )
-        }
+        this.databaseSession.addAcgForUser(acgList, userAcgMap, list)
     }.onSuccess {
         delay(1000)
         Napier.i(tag = "task") {
@@ -73,8 +53,8 @@ private suspend fun Backend.doAcgTask() {
 }
 
 private suspend fun Backend.getAcgTaskListFromTopics() =
-    getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult {
-        getTopicList(it?.processedId ?: 0)
+    this.databaseSession.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult {
+        this.databaseSession.getTopicList(it?.processedId ?: 0)
     }.mapResult { list ->
         if (list.isNotEmpty()) {
             val acgList = list.groupBy {
@@ -85,7 +65,7 @@ private suspend fun Backend.getAcgTaskListFromTopics() =
             val uids = acgList.map {
                 it.first
             }
-            getUserAcgByIds(uids).map { list ->
+            this.databaseSession.getUserAcgByIds(uids).map { list ->
                 list.associate {
                     it.first to it.second
                 }

@@ -8,6 +8,7 @@ import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.*
 import com.storyteller_f.a.server.remoteIp
 import com.storyteller_f.a.server.route.RouteAccounts
+import com.storyteller_f.query.*
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -17,7 +18,10 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.*
-import com.storyteller_f.tables.*
+import com.storyteller_f.tables.Aids
+import com.storyteller_f.tables.UserLog
+import com.storyteller_f.tables.UserRawResult
+import com.storyteller_f.tables.Users
 import io.github.aakira.napier.Napier
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
@@ -130,7 +134,7 @@ private suspend fun RoutingContext.signIn(
     data: String
 ): Result<UserInfo?> {
     val f = finalData(data)
-    return backend.getUserRawResultAndPublicKeyByAddress(pack.ad).filterNull {
+    return backend.databaseSession.getUserRawResultAndPublicKeyByAddress(pack.ad).filterNull {
         BadRequestException("user not found")
     }.mapResult { (userRawResult, publicKey) ->
         verify(publicKey, pack.sig, f).mapResult { isVerified ->
@@ -154,9 +158,7 @@ private suspend fun RoutingContext.signIn(
 suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple) {
     val logId = SnowflakeFactory.nextId()
     val log = UserLog(logId, now(), uid, type, objectTuple.objectId, objectTuple.objectType)
-    addUserLog(
-        log
-    ).onFailure {
+    this.databaseSession.insertUserLog(log).onFailure {
         Napier.i(tag = "user log", throwable = it) {
             "add failed"
         }
@@ -180,12 +182,12 @@ private suspend fun RoutingContext.signUp(
     val f = finalData(data)
     return verify(pack.pk, pack.sig, f).mapResult {
         if (it) {
-            backend.isUserNotExists(pack.pk).mapResult { userNotExists ->
+            backend.databaseSession.isUserNotExists(pack.pk).mapResult { userNotExists ->
                 if (userNotExists) {
                     calcAddress(pack.pk).mapResult { ad ->
                         val newId = SnowflakeFactory.nextId()
                         val name = backend.nameService.parse(newId)
-                        backend.createUser(ad, name, newId, pack.pk).mapResult { value ->
+                        backend.databaseSession.createUser(ad, name, newId, pack.pk).mapResult { value ->
                             backend.addUserLog(newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
                             saveSuccessSessionOnFirst(newId, reader)
                             backend.processUserRawResultToUserInfo(
@@ -215,7 +217,7 @@ private suspend fun ApplicationCall.checkApiRequest(
     return when {
         !ServerConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            backend.checkUserExists(id).mapIfNotNull {
+            backend.databaseSession.checkUserExists(id).mapIfNotNull {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             }
@@ -244,15 +246,15 @@ private suspend fun Backend.getUserAuthData(
     credential: CustomCredential
 ): Result<Pair<String, Long>?> {
     return when (credential) {
-        is AidCredential -> getUserAuthDataByAid {
+        is AidCredential -> this.databaseSession.getUserAuthDataByAid {
             Aids.value eq credential.aid
         }
 
-        is IdCredential -> getUserAuthDataBy {
+        is IdCredential -> this.databaseSession.getUserAuthDataBy {
             Users.id eq credential.id
         }
 
-        is AddressCredential -> getUserAuthDataBy {
+        is AddressCredential -> this.databaseSession.getUserAuthDataBy {
             Users.address eq credential.ad
         }
     }
@@ -269,7 +271,7 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        checkUserExists(id).map {
+        this.databaseSession.checkUserExists(id).map {
             CustomPrincipal(id)
         }
     } else {
