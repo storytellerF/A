@@ -394,9 +394,9 @@ fun Route.bindUnprotectedAccountRoute(
     }
 }
 
-fun Route.bindProtectedAccountRoute(reader: DatabaseReader) {
+fun Route.bindSafeAccountRoute(reader: DatabaseReader) {
     post<RouteAccounts.SignOut> {
-        usePrincipal(reader) { uid ->
+        usePrincipalOrNull(reader) { uid ->
             call.sessions.clear(UserSession::class)
             Result.success(Unit)
         }

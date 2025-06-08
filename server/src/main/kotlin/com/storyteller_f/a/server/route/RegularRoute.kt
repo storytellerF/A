@@ -23,7 +23,7 @@ fun Routing.bindUnauthenticatedRoute(reader: DatabaseReader, backend: Backend) {
             checkParameter<List<String>, PathResponse>("path") { paths ->
                 val service = backend.mediaService
                 if (service is FileSystemMediaService) {
-                    val path = service.getResponse(paths)
+                    val path = service.getPathResponse(paths)
                     if (path?.exists() == true) {
                         val value = PathResponse(path)
                         Result.success(value)
