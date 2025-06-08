@@ -226,14 +226,14 @@ val signStorePassword: String? = getenv("storyteller_f_sign_store_password")
 val signKeyPassword: String? = getenv("storyteller_f_sign_key_password")
 val generatedJksFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
 android {
-    namespace = "com.storyteller_f.a"
+    namespace = "com.storyteller_f.a.app"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
 
     defaultConfig {
-        applicationId = "com.storyteller_f.a.$flavorId"
+        applicationId = "com.storyteller_f.a.app.android.$flavorId"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -290,6 +290,9 @@ android {
     buildFeatures {
         compose = true
     }
+    buildFeatures {
+        buildConfig = true
+    }
     dependencies {
         coreLibraryDesugaring(libs.desugar.jdk.libs)
         debugImplementation(compose.uiTooling)
@@ -327,7 +330,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.storyteller_f.a"
+            packageName = "com.storyteller_f.a.app.desktop"
             packageVersion = "1.0.0"
         }
         buildTypes.release.proguard {

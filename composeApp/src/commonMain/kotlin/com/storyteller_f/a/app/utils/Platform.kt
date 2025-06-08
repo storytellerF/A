@@ -3,7 +3,7 @@ package com.storyteller_f.a.app.utils
 import androidx.compose.ui.platform.Clipboard
 import dev.jordond.connectivity.Connectivity
 
-class Platform(val hasNativeBack: Boolean, val isActive: Boolean = true)
+class Platform(val hasNativeBack: Boolean, val isActive: Boolean = true, val debug: Boolean)
 
 expect val platform: Platform
 

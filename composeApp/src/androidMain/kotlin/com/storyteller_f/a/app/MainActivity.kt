@@ -19,6 +19,7 @@ import com.kdroid.composenotification.builder.AndroidChannelConfig
 import com.kdroid.composenotification.builder.NotificationInitializer.notificationInitializer
 import com.storyteller_f.a.app.compontents.bindActivity
 import com.storyteller_f.a.app.compontents.unbindActivity
+import com.storyteller_f.a.app.utils.initEnvironment
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
@@ -61,7 +62,7 @@ class MainActivity : ComponentActivity() {
         setupForSplash()
         FileKit.init(this)
         commonForActivity()
-        initFromContext()
+        initEnvironment(this)
         setContent {
             App()
         }

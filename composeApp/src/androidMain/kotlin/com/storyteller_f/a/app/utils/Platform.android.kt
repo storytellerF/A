@@ -5,15 +5,17 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.lifecycle.Lifecycle
+import com.storyteller_f.a.app.BuildConfig
 import com.storyteller_f.a.app.compontents.mainAppRef
 import com.storyteller_f.a.app.initFromContext
 import dev.jordond.connectivity.Connectivity
 
 actual val platform: Platform
     get() {
-        val currentState = mainAppRef?.get()?.lifecycle?.currentState
+        val activity = mainAppRef?.get()
+        val currentState = activity?.lifecycle?.currentState
         val isActive = currentState?.isAtLeast(Lifecycle.State.RESUMED) == true
-        return Platform(true, isActive)
+        return Platform(true, isActive, BuildConfig.DEBUG)
     }
 
 actual fun initEnvironment(context: Any) {
