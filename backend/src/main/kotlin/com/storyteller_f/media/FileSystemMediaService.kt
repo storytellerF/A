@@ -80,7 +80,7 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
             val p = base.resolve("$bucketName/$prefix")
             val children = buildList<String?> {
                 p.visitFileTree(1) {
-                    onVisitFile { file, _ ->
+                    onVisitFile { file ->
                         add("$prefix${file.name}")
                         FileVisitResult.CONTINUE
                     }

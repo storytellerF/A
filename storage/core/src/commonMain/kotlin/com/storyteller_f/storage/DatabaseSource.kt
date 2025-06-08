@@ -3,10 +3,9 @@ package com.storyteller_f.storage
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.Json
+import kotlin.reflect.KClass
 
-interface DatabaseObserverToken<T> {
+interface DatabaseObservable<T> {
     val task: CompletableDeferred<List<T>>
 
     fun remove()
@@ -17,34 +16,19 @@ sealed interface DatabaseOrder {
     data class Desc(val field: String) : DatabaseOrder
 }
 
-interface DatabaseCollection {
-    fun saveDocument(id: String, string: String)
-    fun <T : Any> observe(serializer: KSerializer<T>, expression: DatabaseExpression): Flow<T?>
-    fun <T> getDocument(expression: DatabaseExpression, serializer: KSerializer<T>): T?
-    fun <T> getDocument(key: String, serializer: KSerializer<T>): T?
+interface DatabaseCollection<T> {
+    fun saveDocument(id: String, t: T)
+    fun getDocument(expression: DatabaseExpression): T?
+    fun getDocument(id: String): T?
     fun exists(expression: DatabaseExpression): Boolean
-    fun deleteDocument(key: String)
-    fun <T> observeList(
-        expression: DatabaseExpression?,
-        size: Int,
+    fun deleteDocument(id: String)
+    fun observeDatum(expression: DatabaseExpression): Flow<T?>
+    fun observeData(
         orders: List<DatabaseOrder>,
-        serializer: KSerializer<T>,
+        size: Int,
+        expression: DatabaseExpression? = null,
         invalidate: () -> Unit
-    ): DatabaseObserverToken<T>
-
-    fun <T> getDocument(id: PrimaryKey, serializer: KSerializer<T>): T? {
-        return getDocument(id.toString(), serializer)
-    }
-
-    fun deleteDocument(id: PrimaryKey) {
-        deleteDocument(id.toString())
-    }
-
-    fun <T> update(id: PrimaryKey, serializer: KSerializer<T>, block: (T) -> T) {
-        val document = getDocument(id, serializer) ?: return
-        val value = block(document)
-        saveDocument(id.toString(), Json.encodeToString(serializer, value))
-    }
+    ): DatabaseObservable<T>
 }
 
 sealed interface DatabaseExpression {
@@ -54,17 +38,20 @@ sealed interface DatabaseExpression {
 }
 
 interface DatabaseSource {
-    fun getCollection(name: String, scope: String?): DatabaseCollection
-    fun getCollectionByPrefix(prefix: String, scope: String?): List<DatabaseCollection>
+    fun <T : Any> getCollection(name: String, clazz: KClass<T>): DatabaseCollection<T>
+    fun <T : Any> getCollectionByPrefix(prefix: String, clazz: KClass<T>): List<DatabaseCollection<T>>
     suspend fun clearCollection(collectionName: String)
 
     companion object {
         val EMPTY = object : DatabaseSource {
-            override fun getCollection(name: String, scope: String?): DatabaseCollection {
+            override fun <T : Any> getCollection(name: String, clazz: KClass<T>): DatabaseCollection<T> {
                 TODO("Not yet implemented")
             }
 
-            override fun getCollectionByPrefix(prefix: String, scope: String?): List<DatabaseCollection> {
+            override fun <T : Any> getCollectionByPrefix(
+                prefix: String,
+                clazz: KClass<T>
+            ): List<DatabaseCollection<T>> {
                 TODO("Not yet implemented")
             }
 
@@ -75,18 +62,28 @@ interface DatabaseSource {
     }
 }
 
-fun DatabaseCollection.save(key: String, data: String) {
+inline fun <reified T : Any> DatabaseCollection<T>.save(key: PrimaryKey, data: T) {
+    save(key.toString(), data)
+}
+
+inline fun <reified T : Any> DatabaseCollection<T>.save(key: String, data: T) {
     saveDocument(key, data)
 }
 
-fun DatabaseCollection.save(key: PrimaryKey, data: String) {
-    saveDocument(key.toString(), data)
+fun <T> DatabaseCollection<T>.getDocument(id: PrimaryKey): T? {
+    return getDocument(id.toString())
 }
 
-inline fun <reified T : Any> DatabaseCollection.save(key: PrimaryKey, data: T) {
-    saveDocument(key.toString(), Json.encodeToString(data))
+fun <T> DatabaseCollection<T>.deleteDocument(id: PrimaryKey) {
+    deleteDocument(id.toString())
 }
 
-inline fun <reified T : Any> DatabaseCollection.save(key: String, data: T) {
-    saveDocument(key, Json.encodeToString(data))
+fun <T> DatabaseCollection<T>.update(id: PrimaryKey, block: (T) -> T) {
+    val document = getDocument(id) ?: return
+    val value = block(document)
+    saveDocument(id.toString(), value)
+}
+
+fun <T : Any> DatabaseSource.getKeyCollection(collectionName: String, keyClazz: KClass<T>): DatabaseCollection<T> {
+    return getCollection("${collectionName}_key", keyClazz)
 }

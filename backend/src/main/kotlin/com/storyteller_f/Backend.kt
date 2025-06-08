@@ -180,22 +180,18 @@ fun Query.bindPaginationQuery(
 ): Query {
     val cursor = primaryKeyFetch.cursor
     val order = when (cursor) {
-        is Cursor.NextCursor<*> -> if (cursor.value is PrimaryKey) {
+        is Cursor.NextCursor<PrimaryKey> -> {
             andWhere {
                 table.id less cursor.value
             }
             SortOrder.DESC
-        } else {
-            null
         }
 
-        is Cursor.PreCursor<*> -> if (cursor.value is PrimaryKey) {
+        is Cursor.PreCursor<PrimaryKey> -> {
             andWhere {
                 table.id greater cursor.value
             }
             SortOrder.ASC
-        } else {
-            null
         }
 
         null -> null

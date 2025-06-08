@@ -1,6 +1,5 @@
-package jvm_based
-
 import android.content.ContentProvider
+import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import com.storyteller_f.a.app.AApplication
@@ -12,6 +11,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -69,5 +69,9 @@ actual abstract class UsingContextTest {
         scenario.onActivity {
             block()
         }
+    }
+
+    actual fun executeIfNeed() {
+        Shadows.shadowOf(Looper.getMainLooper()).idle()
     }
 }
