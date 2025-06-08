@@ -1,18 +1,11 @@
 package com.storyteller_f.tables
 
 import com.storyteller_f.*
-import com.storyteller_f.count
-import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TitleInfo
-import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.types.PaginationResult
-import com.storyteller_f.types.PrimaryKeyFetch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -69,86 +62,6 @@ class Title(
     }
 }
 
-suspend fun Backend.createTitle(
-    title: Title,
-    topic: Topic,
-    description: String
-): Result<TitleInfo> {
-    return databaseSession.dbQuery {
-        check(Titles.insert {
-            it[id] = title.id
-            it[createdTime] = title.createdTime
-            it[name] = title.name
-            it[creator] = title.creator
-            it[receiver] = title.receiver
-            it[type] = title.type
-            it[scopeId] = title.scopeId
-            it[scopeType] = title.scopeType
-            it[status] = title.status
-            it[descriptionTopicId] = title.descriptionTopicId
-        }.insertedCount > 0) {
-            "insert title failed"
-        }
-        Topic.new(topic)
-        topicSearchService.saveDocument(
-            listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(description)))
-        )
-            .getOrThrow()
-        title.toTitleInfo()
-    }
-}
-
 fun Title.toTitleInfo(): TitleInfo {
     return TitleInfo(id, createdTime, type, creator, receiver, scopeId, scopeType, name, descriptionTopicId, null)
-}
-
-suspend fun Backend.getTitlePaginationResult(
-    primaryKeyFetch: PrimaryKeyFetch,
-    uid: PrimaryKey,
-    searchType: TitleSearchType,
-    type: TitleType? = null,
-    scopeId: PrimaryKey? = null
-): Result<PaginationResult<TitleInfo>> {
-    return databaseSession.dbSearch {
-        search {
-            buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(Titles, primaryKeyFetch)
-        }
-        transform {
-            map(Title::wrapRow).map { it.toTitleInfo() }
-        }
-    }.mapResult { list ->
-        databaseSession.dbSearch {
-            search {
-                buildTitleSearchQuery(searchType, uid, type, scopeId)
-            }
-            count()
-        }.map { count ->
-            PaginationResult(list, count)
-        }
-    }
-}
-
-private fun buildTitleSearchQuery(
-    searchType: TitleSearchType,
-    uid: PrimaryKey,
-    type: TitleType?,
-    scopeId: PrimaryKey?
-): Query {
-    val rows = Titles.selectAll().where {
-        when (searchType) {
-            TitleSearchType.CREATOR -> Titles.creator eq uid
-            else -> Titles.receiver eq uid
-        }
-    }
-    if (type != null) {
-        rows.andWhere {
-            Titles.type eq type
-        }
-    }
-    if (scopeId != null) {
-        rows.andWhere {
-            Titles.scopeId eq scopeId
-        }
-    }
-    return rows
 }

@@ -5,9 +5,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TaskRecordType
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
 
 object TaskRecords : BaseTable() {
     val type = enumerationByName<TaskRecordType>("type", 10)
@@ -31,27 +28,5 @@ class TaskRecord(id: PrimaryKey, createdTime: LocalDateTime, val type: TaskRecor
                 )
             }
         }
-    }
-}
-
-fun addTaskRecord(taskRecord: TaskRecord) {
-    check(TaskRecords.insert {
-        it[id] = taskRecord.id
-        it[createdTime] = taskRecord.createdTime
-        it[type] = taskRecord.type
-        it[processedId] = taskRecord.processedId
-    }.insertedCount > 0) {
-        "Insert task record failed"
-    }
-}
-
-suspend fun Backend.getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?> {
-    return databaseSession.dbSearch {
-        search {
-            TaskRecords.selectAll().where {
-                TaskRecords.type eq type
-            }.orderBy(TaskRecords.id, SortOrder.DESC)
-        }
-        first(TaskRecord::wrapRow)
     }
 }

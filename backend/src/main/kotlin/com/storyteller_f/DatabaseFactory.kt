@@ -24,26 +24,26 @@ import kotlin.concurrent.thread
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class DatabaseSearchConfig<R> {
-    lateinit var searchFunc: () -> Query
-    lateinit var transformFunc: Query.() -> R
+class DatabaseSearchConfig<R, Q> {
+    lateinit var searchFunc: () -> Q
+    lateinit var transformFunc: Q.() -> R
 
-    fun search(block: () -> Query) {
+    fun search(block: () -> Q) {
         searchFunc = block
     }
 
-    fun transform(block: Query.() -> R) {
+    fun transform(block: Q.() -> R) {
         transformFunc = block
     }
 }
 
-fun <R> DatabaseSearchConfig<R?>.first(block: (ResultRow) -> R) {
+fun <R> DatabaseSearchConfig<R?, Query>.first(block: (ResultRow) -> R) {
     transformFunc = {
         firstOrNull()?.let(block)
     }
 }
 
-fun <T> DatabaseSearchConfig<List<T>>.map(block: (ResultRow) -> T) {
+fun <T> DatabaseSearchConfig<List<T>, Query>.map(block: (ResultRow) -> T) {
     transformFunc = {
         map {
             block(it)
@@ -51,25 +51,25 @@ fun <T> DatabaseSearchConfig<List<T>>.map(block: (ResultRow) -> T) {
     }
 }
 
-fun DatabaseSearchConfig<Long>.count() {
+fun DatabaseSearchConfig<Long, Query>.count() {
     transformFunc = {
         count()
     }
 }
 
-fun DatabaseSearchConfig<Boolean>.isEmpty() {
+fun DatabaseSearchConfig<Boolean, Query>.isEmpty() {
     transformFunc = {
         count() == 0L
     }
 }
 
-fun DatabaseSearchConfig<Boolean>.isNotEmpty() {
+fun DatabaseSearchConfig<Boolean, Query>.isNotEmpty() {
     transformFunc = {
         count() != 0L
     }
 }
 
-class DatabaseSession(val database: Database, val buildType: String) {
+class ExposedDatabaseSession(val database: Database, val buildType: String) {
     val json = Json {
     }
 
@@ -78,7 +78,7 @@ class DatabaseSession(val database: Database, val buildType: String) {
             return e
         }
         val dialectName = database.dialect.name
-        val isConnectFailed = e is PSQLException && e.cause is ConnectException
+        val isConnectFailed = isConnectFailed(e)
         anchor.initCause(e)
         return Exception(
             if (isConnectFailed) {
@@ -103,7 +103,7 @@ class DatabaseSession(val database: Database, val buildType: String) {
     }
 
     suspend fun <R> dbSearch(
-        query: DatabaseSearchConfig<R>.() -> Unit,
+        query: DatabaseSearchConfig<R, Query>.() -> Unit,
     ): Result<R> {
         val anchor = Exception()
         if (buildType == "test") {
@@ -112,7 +112,7 @@ class DatabaseSession(val database: Database, val buildType: String) {
         return runCatching {
             newSuspendedTransaction(Dispatchers.IO + MDCContext(), database) {
                 maxAttempts = 1
-                val databaseSearchConfig = DatabaseSearchConfig<R>()
+                val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
                 databaseSearchConfig.apply(query).let {
                     it.transformFunc(it.searchFunc())
                 }
@@ -122,12 +122,12 @@ class DatabaseSession(val database: Database, val buildType: String) {
         }
     }
 
-    private suspend fun <R> explainQuery(query: DatabaseSearchConfig<R>.() -> Unit) {
+    private suspend fun <R> explainQuery(query: DatabaseSearchConfig<R, Query>.() -> Unit) {
         val anchor = Exception()
         runCatching {
             newSuspendedTransaction(Dispatchers.IO + MDCContext(), database) {
                 explainQuery {
-                    val databaseSearchConfig = DatabaseSearchConfig<R>()
+                    val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
                     databaseSearchConfig.apply(query).searchFunc()
                 }
             }
@@ -247,6 +247,8 @@ fun Throwable.isDup(): Boolean {
     }
     return false
 }
+
+private fun isConnectFailed(e: Throwable): Boolean = e is PSQLException && e.cause is ConnectException
 
 fun Table.userIcon() = varchar("icon", ICON_LENGTH).nullable()
 fun Table.userPublicKey() = varchar("public_key", PUBLIC_KEY_LENGTH).uniqueIndex()
