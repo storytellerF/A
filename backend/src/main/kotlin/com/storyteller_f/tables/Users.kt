@@ -55,14 +55,14 @@ class User(
 }
 
 fun mapUserInfo(it: ResultRow): UserRawResult {
-    return UserRawResult(User.wrapRow(it).toUserInfo(), it[Users.icon])
+    return UserRawResult(User.wrapRow(it), it[Users.icon])
 }
 
 fun User.toUserInfo(): UserInfo {
     return UserInfo(id, address, 0, aid, nickname, null)
 }
 
-data class UserRawResult(val user: UserInfo, val avatar: String?)
+data class UserRawResult(val user: User, val avatar: String?)
 
 fun Query.bindUserFetchQuery(fetch: ObjectFetch): Query {
     return where {

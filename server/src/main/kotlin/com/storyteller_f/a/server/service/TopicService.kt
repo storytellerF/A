@@ -1,35 +1,13 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.Backend
-import com.storyteller_f.CustomBadRequestException
-import com.storyteller_f.ForbiddenException
-import com.storyteller_f.ObjectFetch
+import com.storyteller_f.*
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.route.RouteTopics
-import com.storyteller_f.bindPaginationQuery
 import com.storyteller_f.index.DocumentSearch
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
-import com.storyteller_f.query.checkCommunityExists
-import com.storyteller_f.query.checkUserExists
-import com.storyteller_f.query.getCommunityRawResult
-import com.storyteller_f.query.getEncryptedTopicContents
-import com.storyteller_f.query.getJoinedCommunityIds
-import com.storyteller_f.query.getMediaInfoList
-import com.storyteller_f.query.getReactionInfoPaginationResult
-import com.storyteller_f.query.getRoomCommunityId
-import com.storyteller_f.query.getRoomRawResult
-import com.storyteller_f.query.getTopicInfo
-import com.storyteller_f.query.getTopicInfoListByPredicate
-import com.storyteller_f.query.getTopicPaginationResultByPredicate
-import com.storyteller_f.query.getTopicRootTuple
-import com.storyteller_f.query.getUserRawResult
-import com.storyteller_f.query.getUsersInfoByIds
-import com.storyteller_f.query.isMemberJoined
-import com.storyteller_f.query.savePlainTopic
-import com.storyteller_f.query.updateTopicStatus
-import com.storyteller_f.query.uploadFiles
+import com.storyteller_f.query.*
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
@@ -39,7 +17,9 @@ import com.storyteller_f.shared.type.TopicPinSearch.PINNED
 import com.storyteller_f.shared.type.TopicPinSearch.UNPINNED
 import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.utils.*
-import com.storyteller_f.tables.*
+import com.storyteller_f.tables.Topic
+import com.storyteller_f.tables.Topics
+import com.storyteller_f.tables.toUserInfo
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import com.storyteller_f.types.ReactionFetch
@@ -120,11 +100,11 @@ suspend fun Backend.createTopicSnapshot(
     uid: PrimaryKey,
     topicId: PrimaryKey
 ): Result<MediaInfo?> {
-    return this.databaseSession.getUserRawResult(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { (first) ->
+    return databaseSession.getUserRawResult(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { (first) ->
         checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull { (hasRead) ->
             if (hasRead) {
-                this.databaseSession.getTopicInfo(ObjectFetch.IdFetch(topicId), null).mapResultIfNotNull { value ->
-                    createTopicSnapshot(value, first, uid)
+                databaseSession.getTopicInfo(ObjectFetch.IdFetch(topicId), null).mapResultIfNotNull { value ->
+                    createTopicSnapshot(value, first.toUserInfo(), uid)
                 }
             } else {
                 Result.failure(ForbiddenException("Permission denied"))
@@ -141,13 +121,13 @@ private suspend fun Backend.createTopicSnapshot(
     val topicId = topicInfo.id
     return topicSearchService.getDocuments(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultIfNotNull { documents ->
-            this.databaseSession.getUserRawResult(ObjectFetch.IdFetch(topicInfo.author)).mapResultIfNotNull { (first) ->
+            databaseSession.getUserRawResult(ObjectFetch.IdFetch(topicInfo.author)).mapResultIfNotNull { (first) ->
                 val name = "$uid/$topicId.pdf"
                 val pdfFile = File("/tmp/$name")
                 val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
                 try {
                     generateSignedSnapshot(
-                        first,
+                        first.toUserInfo(),
                         creatorInfo,
                         topicInfo,
                         pdfFile,
@@ -345,9 +325,9 @@ suspend fun Backend.processTopicExtension(
     uid: PrimaryKey?,
     isPrivate: Boolean,
     addLatestSubTopic: Boolean,
-) = getUsersInfoByIds(processedTopics.map {
+) = getUsersInfoByIds(ObjectListFetch.IdListFetch(processedTopics.map {
     it.author
-}.distinct()).mapResultIfNotNull { users ->
+}.distinct())).mapResultIfNotNull { users ->
     val userMap = users.associateBy { it.id }
     if (addLatestSubTopic) {
         val subTopics = processedTopics.flatMap { t ->

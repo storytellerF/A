@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.kdroid.composenotification.builder.getNotificationProvider
+import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.CustomAlertDialog
@@ -86,11 +87,12 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
             }
         }
     }
+    val settings = LocalSettings.current
     CustomAlertDialog(controller, {
         controller.close()
     }) {
         scope.launch {
-            signOut(sessionManager)
+            signOut(sessionManager, settings)
         }
     }
 }
@@ -145,11 +147,11 @@ private fun UserDialogMenuList(
     }
 }
 
-suspend fun signOut(sessionManager: SessionManager) {
+suspend fun signOut(sessionManager: SessionManager, settings: Settings) {
     globalDialogState.use {
         sessionManager.signOut().getOrThrow()
         sessionManager.sessionModel.clear()
-        clearStorage()
+        clearStorage(settings)
         unregisterPushService()
     }
 }

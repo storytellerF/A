@@ -1,7 +1,9 @@
 package com.storyteller_f.a.app.utils
 
-actual fun buildLoginUserSessionFactory(): LoginUserSessionManager {
-    return DefaultLoginUserSessionManager()
+import com.russhwolf.settings.Settings
+
+actual fun buildLoginUserSessionFactory(settings: Settings): LoginUserSessionManager {
+    return DefaultLoginUserSessionManager(settings)
 }
 
 actual fun unregisterPushService() = Unit

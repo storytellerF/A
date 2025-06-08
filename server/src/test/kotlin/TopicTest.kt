@@ -27,7 +27,11 @@ class TopicTest {
                 assertEquals(2, topics.pagination?.total)
                 assertEquals(1, topics.data.size)
                 assertEquals(firstTopic.id, topics.data.first().id)
-                val topics2 = searchTopics(1, listOf("world"), nextTopicId = topics.data.first().id).getOrThrow()
+                val topics2 = searchTopics(
+                    1,
+                    listOf("world"),
+                    nextTopicId = topics.data.first().id.toString()
+                ).getOrThrow()
                 assertEquals(lastTopic.id, topics2.data.first().id)
             }
         }

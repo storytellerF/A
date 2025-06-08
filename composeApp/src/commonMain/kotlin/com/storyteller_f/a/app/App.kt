@@ -33,6 +33,7 @@ import com.kdroid.composenotification.builder.getNotificationProvider
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.rememberLibraries
+import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.PreferencePage
@@ -52,7 +53,8 @@ import com.storyteller_f.a.app.pages.user.UserPage
 import com.storyteller_f.a.app.pages.user.UserSettingPage
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.ui.theme.AppTheme
-import com.storyteller_f.a.app.utils.customDataStoreManager
+import com.storyteller_f.a.app.utils.createCustomDataStoreManager
+import com.storyteller_f.a.app.utils.createSettings
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.app.utils.restoreFromStorage
 import com.storyteller_f.a.client_lib.*
@@ -123,6 +125,10 @@ val LocalSessionManager = compositionLocalOf<UserSessionManager> {
 
 val LocalMainSessionManager = compositionLocalOf<UserSessionManager> {
     error("No main user session")
+}
+
+val LocalSettings = compositionLocalOf<Settings> {
+    error("No default settings")
 }
 
 @Serializable
@@ -265,47 +271,52 @@ fun CommonEntry(
             getAsyncImageLoader(it)
         }
 
-        val mainUserSession = createSessionManager(wsServerUrl, httpUrl)
-        val address by mainUserSession.sessionModel.state.map {
-            (it as? ClientSessionState.Success)?.session?.address()?.getOrNull()
-        }.collectAsState(null)
-        val database = remember(address) {
-            createKotbaseDatabaseSource(address)
+        val settings = remember {
+            createSettings()
         }
-        LaunchedEffect(database, address) {
-            bus.collect { event ->
-                processEvent(event, database)
+        CompositionLocalProvider(LocalSettings provides settings) {
+            val mainUserSession = createSessionManager(wsServerUrl, httpUrl)
+            val address by mainUserSession.sessionModel.state.map {
+                (it as? ClientSessionState.Success)?.session?.address()?.getOrNull()
+            }.collectAsState(null)
+            val database = remember(address) {
+                createKotbaseDatabaseSource(address)
             }
-        }
-        GlobalDialog(globalDialogState)
-        val toasterState = rememberToasterState()
-        Toaster(toasterState, alignment = Alignment.Center)
-        val json = remember {
-            Json {
-                ignoreUnknownKeys = true
+            LaunchedEffect(database, address) {
+                bus.collect { event ->
+                    processEvent(event, database)
+                }
             }
-        }
-        CompositionLocalProvider(
-            LocalClient provides mainUserSession.client,
-            LocalWsClient provides mainUserSession.webSocketClient,
-            LocalSessionManager provides mainUserSession,
-            LocalMainSessionManager provides mainUserSession,
-            LocalToaster provides toasterState,
-            LocalDatabase provides database,
-            LocalJson provides json,
-        ) {
-            ProvideIconParameters(
-                iconFont = MaterialSymbolsOutlined.rememberIconFont(),
-                size = 20.dp,
-                tintProvider = LocalContentColor,
-                weight = FontWeight.Normal
+            GlobalDialog(globalDialogState)
+            val toasterState = rememberToasterState()
+            Toaster(toasterState, alignment = Alignment.Center)
+            val json = remember {
+                Json {
+                    ignoreUnknownKeys = true
+                }
+            }
+            CompositionLocalProvider(
+                LocalClient provides mainUserSession.client,
+                LocalWsClient provides mainUserSession.webSocketClient,
+                LocalSessionManager provides mainUserSession,
+                LocalMainSessionManager provides mainUserSession,
+                LocalToaster provides toasterState,
+                LocalDatabase provides database,
+                LocalJson provides json,
             ) {
-                val dataStoreManager = customDataStoreManager()
-                ProvideDataStoreManager(dataStoreManager) {
-                    setPreferences {
-                        "gpt_model" defaultValue ""
+                ProvideIconParameters(
+                    iconFont = MaterialSymbolsOutlined.rememberIconFont(),
+                    size = 20.dp,
+                    tintProvider = LocalContentColor,
+                    weight = FontWeight.Normal
+                ) {
+                    val dataStoreManager = createCustomDataStoreManager()
+                    ProvideDataStoreManager(dataStoreManager) {
+                        setPreferences {
+                            "gpt_model" defaultValue ""
+                        }
+                        content()
                     }
-                    content()
                 }
             }
         }
@@ -317,6 +328,7 @@ private fun createSessionManager(
     wsServerUrl: String,
     httpUrl: String
 ): UserSessionManager {
+    val settings = LocalSettings.current
     val scope = rememberCoroutineScope()
     val mainUserSession = remember {
         createUserSessionManager(buildWebSocketUrl(wsServerUrl), { model, cookieManager ->
@@ -330,7 +342,7 @@ private fun createSessionManager(
                 }
             }
         }.apply {
-            restoreFromStorage()
+            restoreFromStorage(settings)
         }
     }
     DisposableEffect(mainUserSession) {

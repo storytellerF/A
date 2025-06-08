@@ -3,9 +3,7 @@ package com.storyteller_f.a.server.service
 import com.storyteller_f.*
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.query.addReadLog
-import com.storyteller_f.query.getMediaInfoList
 import com.storyteller_f.query.getUserAid
-import com.storyteller_f.query.getUserInfoAndRelatedMedia
 import com.storyteller_f.query.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserInfo

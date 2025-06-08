@@ -9,9 +9,9 @@ import com.storyteller_f.shared.contextRef
 import com.strabled.composepreferences.utilis.DataStoreManager
 import okio.Path.Companion.toOkioPath
 
-actual val defaultSettings: Settings by lazy {
+actual fun createSettings(name: String): Settings {
     val context = contextRef.get()!!
-    SharedPreferencesSettings(context.getSharedPreferences("default", Context.MODE_PRIVATE))
+    return SharedPreferencesSettings(context.getSharedPreferences(name, Context.MODE_PRIVATE))
 }
 
 private val store by lazy {
@@ -26,6 +26,6 @@ private val store by lazy {
 }
 
 @Composable
-actual fun customDataStoreManager(): DataStoreManager {
+actual fun createCustomDataStoreManager(): DataStoreManager {
     return store
 }

@@ -4,7 +4,7 @@ import com.storyteller_f.Backend
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.tables.uploadFiles
+import com.storyteller_f.uploadFiles
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

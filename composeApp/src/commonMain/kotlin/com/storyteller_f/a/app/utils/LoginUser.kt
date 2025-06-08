@@ -1,6 +1,7 @@
 package com.storyteller_f.a.app.utils
 
 import com.russhwolf.settings.ExperimentalSettingsApi
+import com.russhwolf.settings.Settings
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.russhwolf.settings.serialization.removeValue
@@ -19,7 +20,7 @@ interface LoginUserSessionManager {
     fun removeSession(session: String)
 }
 
-class DefaultLoginUserSessionManager : LoginUserSessionManager {
+class DefaultLoginUserSessionManager(val defaultSettings: Settings) : LoginUserSessionManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun savedSession(): SavedSession {
         val rawUserPass = defaultSettings.decodeValueOrNull<RawUserPassInfo>("login_user")
@@ -53,6 +54,6 @@ class DefaultLoginUserSessionManager : LoginUserSessionManager {
 
 data class SavedSession(val list: List<String>, val last: String? = null, val current: String? = null)
 
-expect fun buildLoginUserSessionFactory(): LoginUserSessionManager
+expect fun buildLoginUserSessionFactory(settings: Settings): LoginUserSessionManager
 
 expect fun unregisterPushService()

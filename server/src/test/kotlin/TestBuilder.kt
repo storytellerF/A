@@ -214,7 +214,7 @@ data class SessionOuterTuple<T>(
 )
 
 suspend fun <R> ApplicationTestBuilder.attachSession(
-    onReceive: suspend (RoomFrame, SessionModel) -> Unit = { _ -> },
+    onReceive: suspend (RoomFrame, SessionModel) -> Unit = { _, _ -> },
     block: suspend SessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
     return coroutineScope {
@@ -238,7 +238,7 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
 
 suspend fun <R1, R2> ApplicationTestBuilder.loginSession(
     session: SessionOuterTuple<R1>,
-    onReceive: suspend (RoomFrame, SessionModel) -> Unit = { _ -> },
+    onReceive: suspend (RoomFrame, SessionModel) -> Unit = { _, _ -> },
     block: suspend SessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
     return coroutineScope {
@@ -269,7 +269,7 @@ suspend fun <R2> ApplicationTestBuilder.noneSession(
             createClient {
                 defaultClientConfigure(client, model)
             }
-        }) { _ -> }
+        }) { _, _ -> }
         sessionManager.start {
             block()
         }

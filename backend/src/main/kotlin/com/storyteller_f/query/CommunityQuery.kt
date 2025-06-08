@@ -6,6 +6,10 @@ import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
+import com.storyteller_f.tables.Community
+import com.storyteller_f.tables.CommunityRawResult
+import com.storyteller_f.tables.MemberJoins
+import com.storyteller_f.tables.UserTopicReads
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import org.jetbrains.exposed.sql.*
@@ -121,13 +125,14 @@ private suspend fun ExposedDatabaseSession.processCommunityToCommunityRawResult(
     uid
 ).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
     communities.map {
-        val communityInfo =
-            it.toCommunityIfo(
-                memberCountMap[it.id] ?: 0,
-                joinedTimeMap[it.id]?.joinedTime,
-                lastReadMap[it.id]?.topicId
-            )
-        CommunityRawResult(communityInfo, it.icon, it.poster)
+        CommunityRawResult(
+            it,
+            it.icon,
+            it.poster,
+            joinedTimeMap[it.id]?.joinedTime,
+            lastReadMap[it.id]?.topicId,
+            memberCountMap[it.id] ?: 0
+        )
     }
 }
 
@@ -259,7 +264,20 @@ suspend fun ExposedDatabaseSession.getCommunityRawResults(
                 }
             }
     }
-    map(::mapCommunityInfo)
+    map {
+        val community = Community.wrapRow(it)
+        val joinedTime = it.getOrNull(MemberJoins.joinedTime)
+        val lastRead = it.getOrNull(UserTopicReads.topicId)
+        val communityInfo = community
+        CommunityRawResult(
+            communityInfo,
+            community.icon,
+            community.poster,
+            joinedTime,
+            lastRead,
+            0
+        )
+    }
 }
 
 suspend fun ExposedDatabaseSession.updateCommunity(

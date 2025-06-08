@@ -3,8 +3,6 @@ import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlin.test.*
@@ -80,13 +78,13 @@ class CommunityTest {
                 communities.forEach {
                     joinCommunity(it).getOrThrow()
                 }
-                var lastCommunityId: PrimaryKey? = null
+                var lastCommunityId: String? = null
                 var sum = 0L
                 while (true) {
                     val res = searchCommunity(3, JoinStatusSearch.JOINED, "", nextCommunityId = lastCommunityId)
                         .getOrThrow()
                     val pagination = res.pagination!!
-                    lastCommunityId = pagination.nextPageToken?.toPrimaryKeyOrNull()
+                    lastCommunityId = pagination.nextPageToken
                     sum += res.data.size
                     if (lastCommunityId == null) {
                         assertEquals(pagination.total, sum)
@@ -117,7 +115,7 @@ class CommunityTest {
 
     private suspend fun SessionManager.testSearchCommunityCount(
         expectedCount: Int,
-        nextCommunityId: PrimaryKey?,
+        nextCommunityId: String?,
         size: Int,
         joinStatusSearch: JoinStatusSearch,
         word: String?

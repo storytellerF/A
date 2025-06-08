@@ -13,7 +13,7 @@ data class UserInfo(
     val acg: Long,
     val aid: String?,
     val nickname: String,
-    val avatar: MediaInfo?
+    val avatar: MediaInfo?,
 ) : Identifiable {
     override val objectType: ObjectType
         get() = ObjectType.USER

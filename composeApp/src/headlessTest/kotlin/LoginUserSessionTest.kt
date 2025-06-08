@@ -1,4 +1,5 @@
 import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
+import com.storyteller_f.a.app.utils.createSettings
 import com.storyteller_f.a.client_lib.RawUserPassInfo
 import com.storyteller_f.shared.*
 import kotlinx.coroutines.test.runTest
@@ -10,7 +11,9 @@ class LoginUserSessionTest : UsingContextTest() {
     @Test
     fun testSession() = runTest {
         loadCryptoLibIfNeed()
-        val sessionFactory = buildLoginUserSessionFactory()
+        val settings = createSettings("settings-test")
+        settings.clear()
+        val sessionFactory = buildLoginUserSessionFactory(settings)
         assertEquals(0, sessionFactory.savedSession().list.size)
         val privateKey = generateECDSAPemPrivateKey().getOrThrow()
         val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()

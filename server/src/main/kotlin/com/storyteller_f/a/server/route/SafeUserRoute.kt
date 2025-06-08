@@ -9,10 +9,10 @@ import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
+import com.storyteller_f.getUserInfoAndRelatedMedia
 import com.storyteller_f.isDup
 import com.storyteller_f.query.addDevice
-import com.storyteller_f.query.getUserInfoAndRelatedMedia
-import com.storyteller_f.query.searchMembers
+import com.storyteller_f.searchMembers
 import com.storyteller_f.shared.obj.NewDevice
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.UpdateUserRead

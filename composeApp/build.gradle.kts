@@ -446,3 +446,19 @@ tasks.withType(KotlinCompile::class.java).configureEach {
     dependsOn("exportLibraryDefinitions")
 }
 tasks.getByName("copyNonXmlValueResourcesForCommonMain").dependsOn("exportLibraryDefinitions")
+
+tasks.withType<Test> {
+    when (name) {
+        "testDebugUnitTest" -> {
+            exclude("**/device_based/*")
+        }
+
+        "testReleaseUnitTest" -> {
+            exclude("**/device_based/*")
+        }
+
+        "desktopTest" -> {
+            exclude("**/device_based/*")
+        }
+    }
+}
