@@ -1,4 +1,3 @@
-import com.storyteller_f.a.app.AppConfig
 import com.storyteller_f.storage.loadKotbaseIfNeed
 import org.junit.Assume
 import org.junit.Before
@@ -9,8 +8,8 @@ actual abstract class UsingContextTest {
     fun setup() {
         Assume.assumeTrue(System.getProperty("os.name").orEmpty().contains("win", true))
         val e = runCatching {
-            System.load(File(AppConfig.PROJECT_PATH, "src\\androidUnitTest\\jniLibs\\LiteCore.dll").absolutePath)
-            System.load(File(AppConfig.PROJECT_PATH, "src\\androidUnitTest\\jniLibs\\LiteCoreJNI.dll").absolutePath)
+            System.load(File("src/androidUnitTest/jniLibs/LiteCore.dll").absolutePath)
+            System.load(File("src/androidUnitTest/jniLibs/LiteCoreJNI.dll").absolutePath)
         }.exceptionOrNull()
         e?.printStackTrace()
         Assume.assumeNoException(e)
