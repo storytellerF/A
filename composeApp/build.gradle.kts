@@ -351,7 +351,6 @@ buildkonfig {
     val serverUrl = properties["SERVER_URL"] as? String
     val wsServerUrl = properties["WS_SERVER_URL"] as? String
     defaultConfigs {
-        buildConfigField(STRING, "PROJECT_PATH", layout.projectDirectory.asFile.absolutePath, const = true)
         buildConfigField(STRING, "SERVER_URL", serverUrl ?: "", const = true)
         buildConfigField(STRING, "WS_SERVER_URL", wsServerUrl ?: "", const = true)
         buildConfigField(STRING, "BUILD_TYPE", buildType, const = true)
