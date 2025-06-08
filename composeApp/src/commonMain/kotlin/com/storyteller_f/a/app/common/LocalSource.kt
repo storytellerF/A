@@ -254,7 +254,6 @@ inline fun <reified T : Identifiable> primaryKeyPagingSource(
         info?.id?.toString()
     }
 
-
 inline fun <reified T : Identifiable> sectionRemoteMediator(
     sessionManager: SessionManager,
     collectionName: String,

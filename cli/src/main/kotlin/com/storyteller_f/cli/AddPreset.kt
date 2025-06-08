@@ -126,7 +126,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "rooms count ${presetValue.roomData?.size}"
         }
         val (roomList, membersList) = getRoomsData(l, parentDir, tika)
-        databaseSession.dbQuery {
+        exposedDatabaseSession.dbQuery {
             Rooms.batchInsert(roomList) {
                 this[Rooms.id] = it.id
                 this[Rooms.icon] = it.icon
@@ -164,7 +164,7 @@ class AddPreset : Subcommand("add", "add entry") {
         val roomMap = getRoomByAids(ObjectListFetch.AidListFetch(data.mapNotNull {
             it.room
         })).getOrThrow().associateBy { it.aid }
-        databaseSession.dbQuery {
+        exposedDatabaseSession.dbQuery {
             data.groupBy {
                 when {
                     it.community != null -> ObjectType.COMMUNITY
@@ -194,7 +194,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "users count ${presetValue.userData?.size}"
         }
         val users = getUserData(userList, parentDir, tika)
-        databaseSession.dbQuery {
+        exposedDatabaseSession.dbQuery {
             Users.batchInsert(users) {
                 this[Users.id] = it.id
                 this[Users.icon] = it.icon
@@ -218,7 +218,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "communities count ${presetValue.communityData?.size}"
         }
         val (memberList, l2, l3) = getCommunityData(communityData, parentDir, tika)
-        databaseSession.dbQuery {
+        exposedDatabaseSession.dbQuery {
             Communities.batchInsert(l2) {
                 this[Communities.id] = it.id
                 this[Communities.createdTime] = it.createdTime

@@ -2,7 +2,6 @@ package com.storyteller_f.tables
 
 import com.storyteller_f.BaseTable
 import com.storyteller_f.shared.type.AssetType
-import org.jetbrains.exposed.sql.insert
 
 object AssetTransactions : BaseTable() {
     val type = enumerationByName<AssetType>("type", 20)
@@ -23,12 +22,3 @@ class AssetTransaction(val type: AssetType, val before: Long, val after: Long) {
         }
     }
 }
-
-fun addAssetTransaction(assetTransaction: AssetTransaction) =
-    check(AssetTransactions.insert {
-        it[type] = assetTransaction.type
-        it[before] = assetTransaction.before
-        it[after] = assetTransaction.after
-    }.insertedCount > 0) {
-        "Insert asset transaction failed"
-    }

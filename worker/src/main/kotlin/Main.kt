@@ -38,7 +38,7 @@ fun main() {
 
 private suspend fun Backend.doAcgTask() {
     getAcgTaskListFromTopics().mapResultIfNotNull { (acgList, userAcgMap, list) ->
-        databaseSession.dbQuery {
+        exposedDatabaseSession.dbQuery {
             acgList.forEach { (id, acg) ->
                 userAcgMap[id]?.let { oldAcgAmount ->
                     Users.update({

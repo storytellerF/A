@@ -30,7 +30,7 @@ class Backend(
     val mediaService: MediaService,
     val nameService: NameService,
     val database: Database,
-    val databaseSession: DatabaseSession
+    val exposedDatabaseSession: ExposedDatabaseSession
 ) {
     val json = Json {}
 }
@@ -106,7 +106,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         mediaService,
         NameService(),
         database,
-        DatabaseSession(database, buildType)
+        ExposedDatabaseSession(database, buildType)
     )
 }
 
@@ -201,3 +201,13 @@ fun Query.bindPaginationQuery(
 
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)
 class CustomBadRequestException(message: String) : Exception(message)
+
+sealed interface ObjectFetch {
+    data class AidFetch(val aid: String) : ObjectFetch
+    data class IdFetch(val id: PrimaryKey) : ObjectFetch
+}
+
+sealed interface ObjectListFetch {
+    data class AidListFetch(val aidList: List<String>) : ObjectListFetch
+    data class IdListFetch(val idList: List<PrimaryKey>) : ObjectListFetch
+}

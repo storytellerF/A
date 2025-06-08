@@ -7,7 +7,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
 
 fun Table.userLogType(name: String) = enumerationByName<UserLogType>(name, 10)
 
@@ -42,21 +41,6 @@ class UserLog(
                     resultRow[objectType]
                 )
             }
-        }
-    }
-}
-
-suspend fun Backend.addUserLog(log: UserLog): Result<Unit> {
-    return databaseSession.dbQuery {
-        check(UserLogs.insert {
-            it[id] = log.id
-            it[uid] = log.uid
-            it[type] = log.type
-            it[objectId] = log.objectId
-            it[objectType] = log.objectType
-            it[createdTime] = log.createdTime
-        }.insertedCount > 0) {
-            "Insert user log failed"
         }
     }
 }
