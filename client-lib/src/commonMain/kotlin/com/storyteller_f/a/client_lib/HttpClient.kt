@@ -24,7 +24,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class ServerErrorException(val status: HttpStatusCode, val text: String, cause: Exception) : Exception(
-    "$status $text",
+    "$status, $text",
     cause
 )
 
