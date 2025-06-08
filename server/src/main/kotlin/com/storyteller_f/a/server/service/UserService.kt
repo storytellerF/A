@@ -2,6 +2,11 @@ package com.storyteller_f.a.server.service
 
 import com.storyteller_f.*
 import com.storyteller_f.a.server.auth.addUserLog
+import com.storyteller_f.query.addReadLog
+import com.storyteller_f.query.getMediaInfoList
+import com.storyteller_f.query.getUserAid
+import com.storyteller_f.query.getUserInfoAndRelatedMedia
+import com.storyteller_f.query.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -50,7 +55,7 @@ suspend fun Backend.updateUser(
         it().exceptionOrNull()
     }
     if (firstError != null) return Result.failure(firstError)
-    return updateUserInfo(uid, newUser).mapResult {
+    return this.databaseSession.updateUserInfo(uid, newUser).mapResult {
         if (it) {
             this.addUserLog(uid, UserLogType.UPDATE, uid ob ObjectType.USER)
             getUserInfoAndRelatedMedia(ObjectFetch.IdFetch(uid))
@@ -67,7 +72,7 @@ private suspend fun Backend.checkAidModifyTimes(
     Result.success(Unit)
 } else {
     // check aid is null
-    getUserAid(id).mapResult {
+    this.databaseSession.getUserAid(id).mapResult {
         if (it != null) {
             Result.failure(BadRequestException("aid is not null."))
         } else {
@@ -150,7 +155,7 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
         uid
     ).mapResultIfNotNull {
         if (it.hasRead) {
-            addReadLog(
+            this.databaseSession.addReadLog(
                 UserTopicRead(
                     uid,
                     now(),
@@ -161,16 +166,6 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
             )
         } else {
             Result.failure(ForbiddenException("Permission denied"))
-        }
-    }
-}
-
-suspend fun Backend.addDevice(uid: PrimaryKey, device: String): Result<Unit> {
-    return addDevice(uid, device).recover {
-        if (it.isDup()) {
-            Result.success(Unit)
-        } else {
-            Result.failure(it)
         }
     }
 }

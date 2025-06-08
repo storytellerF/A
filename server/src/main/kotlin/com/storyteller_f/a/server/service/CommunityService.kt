@@ -4,6 +4,14 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.route.RouteCommunities
+import com.storyteller_f.query.addCommunityJoin
+import com.storyteller_f.query.createCommunity
+import com.storyteller_f.query.exit
+import com.storyteller_f.query.getCommunityJoinedTimeByIds
+import com.storyteller_f.query.getCommunityPaginationResult
+import com.storyteller_f.query.getCommunityRawResult
+import com.storyteller_f.query.processCommunityRawResultToCommunityInfo
+import com.storyteller_f.query.updateCommunity
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserLogType
@@ -27,7 +35,7 @@ suspend fun Backend.getCommunity(
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
-    return getCommunityRawResult(
+    return this.databaseSession.getCommunityRawResult(
         objectFetch,
         fillJoinInfo,
         id
@@ -48,8 +56,8 @@ suspend fun Backend.doUserJoinCommunity(
         Result.success(community)
     } else {
         val time = now()
-        addCommunityJoin(uid, communityId, time).mapResult {
-            this.addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
+        this.databaseSession.addCommunityJoin(uid, communityId, time).mapResult {
+            addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
             Result.success(community.copy(joinedTime = time))
         }.recoverCatching {
             if (it.isDup()) {
@@ -69,9 +77,9 @@ suspend fun Backend.exitCommunity(
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            exit(communityId, id).mapResult { i ->
+            this.databaseSession.exit(communityId, id).mapResult { i ->
                 if (i > 0) {
-                    this.addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
+                    addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
                     Result.success(info.copy(joinedTime = null))
                 } else {
                     Result.failure(BadRequestException("exit failed"))
@@ -84,7 +92,7 @@ suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
     search: RouteCommunities.Search,
     primaryKeyFetch: PrimaryKeyFetch
-) = getCommunityPaginationResult(
+) = this.databaseSession.getCommunityPaginationResult(
     search.target ?: uid,
     if (search.target != null) JoinStatusSearch.JOINED else search.joinStatus,
     search.word,
@@ -94,7 +102,7 @@ suspend fun Backend.searchCommunities(
     processCommunityRawResultToCommunityInfo(list).mapResultIfNotNull { value ->
         when {
             search.target == null -> Result.success(PaginationResult(value, count))
-            uid != null -> this.processUserJoinedTimeReplace(value, uid, count)
+            uid != null -> processUserJoinedTimeReplace(value, uid, count)
             else -> Result.success(PaginationResult(value.map {
                 it.copy(joinedTime = null, extension = CommunityInfo.Extension(it.joinedTime))
             }, count))
@@ -110,7 +118,7 @@ private suspend fun Backend.processUserJoinedTimeReplace(
     val communityIds = value.map {
         it.id
     }
-    return getCommunityJoinedTimeByIds(uid, communityIds).map { joinedTimeList ->
+    return this.databaseSession.getCommunityJoinedTimeByIds(uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         PaginationResult(value.map {
             it.copy(joinedTime = map[it.id], extension = CommunityInfo.Extension(it.joinedTime))
@@ -147,9 +155,9 @@ suspend fun Backend.createCommunity(
         newCommunity.icon,
         null
     )
-    return createCommunity(community).mapResult {
+    return this.databaseSession.createCommunity(community).mapResult {
         val communityInfo = community.toCommunityIfo(0, community.createdTime, null)
-        this.addUserLog(uid, UserLogType.CREATE, communityInfo.tuple())
+        addUserLog(uid, UserLogType.CREATE, communityInfo.tuple())
         processCommunityRawResultToCommunityInfo(
             listOf(CommunityRawResult(communityInfo, newCommunity.icon, null))
         ).mapIfNotNull {
@@ -164,12 +172,12 @@ suspend fun Backend.updateCommunity(
     uid: PrimaryKey
 ): Result<CommunityInfo?> {
     val newCommunity = old.copy(name = old.name?.trim(), icon = old.icon?.trim(), poster = old.poster?.trim())
-    return this.checkRootAdminPermission(ObjectType.COMMUNITY, id, uid).mapResultIfNotNull { permission ->
+    return checkRootAdminPermission(ObjectType.COMMUNITY, id, uid).mapResultIfNotNull { permission ->
         if (permission.hasAdmin) {
-            this.checkBeforeUpdateCommunity(newCommunity).mapResult {
-                updateCommunity(id, newCommunity).mapResult { updateSuccess ->
+            checkBeforeUpdateCommunity(newCommunity).mapResult {
+                this.databaseSession.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        getCommunityRawResult(
+                        this.databaseSession.getCommunityRawResult(
                             ObjectFetch.IdFetch(id),
                             true,
                             uid

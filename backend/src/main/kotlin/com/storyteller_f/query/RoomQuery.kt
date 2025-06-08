@@ -1,11 +1,9 @@
 package com.storyteller_f.query
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.*
-import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.tables.*
@@ -13,8 +11,8 @@ import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import org.jetbrains.exposed.sql.*
 
-suspend fun Backend.checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
-    return exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
+    return dbSearch {
         search {
             Room.findRoomById(roomId)
         }
@@ -24,7 +22,7 @@ suspend fun Backend.checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
     }
 }
 
-suspend fun Backend.getRoomPaginationResult(
+suspend fun ExposedDatabaseSession.getRoomPaginationResult(
     uid: PrimaryKey?,
     joinStatusSearch: JoinStatusSearch?,
     word: String?,
@@ -32,7 +30,7 @@ suspend fun Backend.getRoomPaginationResult(
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<RoomRawResult>> {
     val joinSearch = joinStatusSearch.toJoinSearch(uid)
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             Rooms
                 .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
@@ -43,7 +41,7 @@ suspend fun Backend.getRoomPaginationResult(
         map(Room::wrapRow)
     }.mapResult {
         processRoomListToRoomRawResult(uid, it).mapResult { list ->
-            exposedDatabaseSession.dbSearch {
+            dbSearch {
                 search {
                     Rooms.select(Rooms.id).buildRoomSearchWhereQuery(joinSearch, community, word)
                 }
@@ -103,8 +101,8 @@ private fun Query.buildRoomSearchWhereQuery(
     return this
 }
 
-suspend fun Backend.getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?> =
-    exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?> =
+    dbSearch {
         search {
             Room.findRoomById(parentId)
         }
@@ -113,11 +111,11 @@ suspend fun Backend.getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?
         }
     }
 
-suspend fun Backend.getRoomPubKeyPaginationResult(
+suspend fun ExposedDatabaseSession.getRoomPubKeyPaginationResult(
     roomId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<UserPubKeyInfo>> {
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, primaryKeyFetch)
         }
@@ -125,7 +123,7 @@ suspend fun Backend.getRoomPubKeyPaginationResult(
             UserPubKeyInfo(it[Users.id], it[Users.publicKey])
         }
     }.mapResult { data ->
-        exposedDatabaseSession.dbSearch {
+        dbSearch {
             search {
                 buildRoomPubKeyQuery(roomId, true)
             }
@@ -153,13 +151,13 @@ fun buildRoomPubKeyQuery(roomId: PrimaryKey, getCount: Boolean): Query {
     }
 }
 
-suspend fun Backend.getRoomRawResult(
+suspend fun ExposedDatabaseSession.getRoomRawResult(
     objectFetch: ObjectFetch,
     fillJoinInfo: Boolean? = null,
     uid: PrimaryKey? = null,
 ): Result<RoomRawResult?> {
     if (uid == null && fillJoinInfo == true) return Result.failure(UnauthorizedException())
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             Rooms
                 .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
@@ -179,7 +177,7 @@ suspend fun Backend.getRoomRawResult(
     }
 }
 
-private suspend fun Backend.processRoomListToRoomRawResult(
+private suspend fun ExposedDatabaseSession.processRoomListToRoomRawResult(
     uid: PrimaryKey?,
     rooms: List<Room>
 ): Result<List<RoomRawResult>> = getContainerInfo(rooms.map {
@@ -197,37 +195,7 @@ private suspend fun Backend.processRoomListToRoomRawResult(
     }
 }
 
-suspend fun Backend.searchRoomPaginationResult(
-    uid: PrimaryKey?,
-    joinStatusSearch: JoinStatusSearch?,
-    word: String?,
-    community: PrimaryKey?,
-    primaryKeyFetch: PrimaryKeyFetch
-): Result<PaginationResult<RoomInfo>?> {
-    return getRoomPaginationResult(
-        uid,
-        joinStatusSearch,
-        word,
-        community,
-        primaryKeyFetch
-    ).mapResult { (list, count) ->
-        processRoomRawResultToRoomInfo(list).mapIfNotNull { value ->
-            PaginationResult(value, count)
-        }
-    }
-}
-
-suspend fun Backend.processRoomRawResultToRoomInfo(list: List<RoomRawResult>): Result<List<RoomInfo>?> {
-    return getMediaInfoList(list.map {
-        it.icon
-    }).mapIfNotNull { icons ->
-        list.mapIndexed { i, roomPair ->
-            roomPair.roomInfo.copy(icon = icons[i])
-        }
-    }
-}
-
-suspend fun Backend.createRoom(room: Room) = exposedDatabaseSession.dbQuery {
+suspend fun ExposedDatabaseSession.createRoom(room: Room) = dbQuery {
     check(Rooms.insert { statement ->
         statement[id] = room.id
         statement[createdTime] = room.createdTime
@@ -248,10 +216,10 @@ suspend fun Backend.createRoom(room: Room) = exposedDatabaseSession.dbQuery {
     addRoomJoinRaw(room.id, room.creator, room.createdTime)
 }
 
-suspend fun Backend.getRoomRawResultList(
+suspend fun ExposedDatabaseSession.getRoomRawResultList(
     objectListFetch: ObjectListFetch,
 ): Result<List<RoomRawResult>> {
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             Rooms
                 .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
@@ -268,10 +236,10 @@ suspend fun Backend.getRoomRawResultList(
     }
 }
 
-suspend fun Backend.getRoomByAids(
+suspend fun ExposedDatabaseSession.getRoomByAids(
     objectListFetch: ObjectListFetch,
 ): Result<List<Room>> {
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
                 .select(Rooms.fields + Aids.value)
@@ -289,10 +257,10 @@ suspend fun Backend.getRoomByAids(
 }
 
 @Suppress("MoveLambdaOutsideParentheses")
-suspend fun Backend.updateRoom(
+suspend fun ExposedDatabaseSession.updateRoom(
     id: PrimaryKey,
     body: UpdateRoomBody
-) = exposedDatabaseSession.dbQuery {
+) = dbQuery {
     listOf({
         val newIcon = body.icon
         val newName = body.name

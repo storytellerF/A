@@ -3,6 +3,15 @@ package com.storyteller_f.a.server.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
 import com.storyteller_f.a.server.auth.addUserLog
+import com.storyteller_f.query.addRoomJoin
+import com.storyteller_f.query.createRoom
+import com.storyteller_f.query.exit
+import com.storyteller_f.query.getRoomPubKeyPaginationResult
+import com.storyteller_f.query.getRoomRawResult
+import com.storyteller_f.query.getTitlePaginationResult
+import com.storyteller_f.query.isMemberJoined
+import com.storyteller_f.query.processRoomRawResultToRoomInfo
+import com.storyteller_f.query.updateRoom
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -22,9 +31,9 @@ suspend fun Backend.getRoomPubKeys(
     roomId: PrimaryKey,
     userId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
-) = isMemberJoined(roomId, userId).mapResult {
+) = this.databaseSession.isMemberJoined(roomId, userId).mapResult {
     if (it) {
-        getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
+        this.databaseSession.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
             .map { (data, count) ->
                 PaginationResult(data, count)
             }
@@ -43,7 +52,7 @@ suspend fun Backend.joinRoom(
         val communityId = roomInfo.communityId
         if (communityId == null) {
             // 检查是否存在title
-            getTitlePaginationResult(
+            this.databaseSession.getTitlePaginationResult(
                 PrimaryKeyFetch(null, 1),
                 uid,
                 TitleSearchType.RECEIVER,
@@ -57,7 +66,7 @@ suspend fun Backend.joinRoom(
                 }
             }
         } else {
-            this.isMemberJoined(communityId, uid).mapResult { hasJoined ->
+            this.databaseSession.isMemberJoined(communityId, uid).mapResult { hasJoined ->
                 if (hasJoined) {
                     directJoinRoom(uid, roomInfo)
                 } else {
@@ -73,12 +82,12 @@ private suspend fun Backend.directJoinRoom(
     roomInfo: RoomInfo
 ): Result<RoomInfo?> {
     val time = now()
-    return addRoomJoin(
+    return this.databaseSession.addRoomJoin(
         roomInfo.id,
         uid,
         time,
     ).mapResult {
-        this.addUserLog(uid, UserLogType.JOIN, roomInfo.tuple())
+        addUserLog(uid, UserLogType.JOIN, roomInfo.tuple())
         Result.success(roomInfo.copy(joinedTime = time))
     }.recoverResult { exception ->
         if (exception.isDup()) {
@@ -94,8 +103,8 @@ suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            exit(roomId, uid).map {
-                this.addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
+            this.databaseSession.exit(roomId, uid).map {
+                addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
                 info.copy(joinedTime = null)
             }
         }
@@ -106,8 +115,8 @@ suspend fun Backend.getRoom(
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<RoomInfo?> {
-    return getRoomRawResult(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
-        this.processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
+    return this.databaseSession.getRoomRawResult(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
+        processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
     }
 }
 
@@ -143,7 +152,7 @@ suspend fun Backend.createRoom(
         if (it) {
             val roomId = SnowflakeFactory.nextId()
             val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
-            createRoom(room)
+            this.databaseSession.createRoom(room)
                 .mapResult {
                     processRoomRawResultToRoomInfo(
                         listOf(RoomRawResult(room.toRoomInfo(0, room.createdTime, null), room.icon))
@@ -192,11 +201,11 @@ suspend fun Backend.updateRoom(
             if (firstError != null) {
                 Result.failure(firstError)
             } else {
-                updateRoom(id, newRoom).mapResult { updateSuccess ->
+                this.databaseSession.updateRoom(id, newRoom).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        getRoomRawResult(ObjectFetch.IdFetch(id), true, uid)
+                        this.databaseSession.getRoomRawResult(ObjectFetch.IdFetch(id), true, uid)
                             .mapResultIfNotNull {
-                                this.processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
+                                processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
                             }
                     } else {
                         Result.success(null)

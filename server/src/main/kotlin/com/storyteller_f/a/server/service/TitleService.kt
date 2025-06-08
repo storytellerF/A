@@ -3,7 +3,15 @@ package com.storyteller_f.a.server.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
+import com.storyteller_f.ObjectListFetch
 import com.storyteller_f.a.server.auth.addUserLog
+import com.storyteller_f.query.getCommunityRawResults
+import com.storyteller_f.query.getRoomRawResultList
+import com.storyteller_f.query.getTitlePaginationResult
+import com.storyteller_f.query.getUsersInfoByIds
+import com.storyteller_f.query.insertTitleAndTopicDescription
+import com.storyteller_f.query.processCommunityRawResultToCommunityInfo
+import com.storyteller_f.query.processRoomRawResultToRoomInfo
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.type.ObjectType
@@ -13,9 +21,6 @@ import com.storyteller_f.shared.type.TitleStatus
 import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
-import com.storyteller_f.tables.ObjectListFetch.IdListFetch
-import com.storyteller_f.tables.getCommunityRawResults
-import com.storyteller_f.tables.getRoomRawResultList
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 
@@ -25,7 +30,7 @@ suspend fun Backend.getUserTitles(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
     fetch: PrimaryKeyFetch
-) = getTitlePaginationResult(
+) = this.databaseSession.getTitlePaginationResult(
     fetch,
     uid,
     searchType,
@@ -95,7 +100,7 @@ private suspend fun Backend.getRelatedObject(
         }
     }, {
         if (roomIdList.isNotEmpty()) {
-            getRoomRawResultList(IdListFetch(roomIdList)).mapResult {
+            this.databaseSession.getRoomRawResultList(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
                 this.processRoomRawResultToRoomInfo(it)
             }
         } else {
@@ -103,7 +108,7 @@ private suspend fun Backend.getRelatedObject(
         }
     }, {
         if (communityIdList.isNotEmpty()) {
-            getCommunityRawResults(IdListFetch(communityIdList)).mapResult {
+            this.databaseSession.getCommunityRawResults(ObjectListFetch.IdListFetch(communityIdList)).mapResult {
                 processCommunityRawResultToCommunityInfo(it)
             }
         } else {
@@ -171,13 +176,13 @@ suspend fun Backend.createTitle(
                 false,
                 null
             )
-            createTitle(
+            insertTitleAndTopicDescription(
                 title,
                 topic,
                 newTitle.description
             ).mapResult { created ->
-                this.addUserLog(uid, UserLogType.CREATE, created.tuple())
-                this.processTitleList(listOf(created), uid).mapIfNotNull {
+                addUserLog(uid, UserLogType.CREATE, created.tuple())
+                processTitleList(listOf(created), uid).mapIfNotNull {
                     it.first()
                 }
             }

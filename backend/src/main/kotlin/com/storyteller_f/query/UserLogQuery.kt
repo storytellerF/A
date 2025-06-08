@@ -1,12 +1,12 @@
 package com.storyteller_f.query
 
-import com.storyteller_f.Backend
+import com.storyteller_f.ExposedDatabaseSession
 import com.storyteller_f.tables.UserLog
 import com.storyteller_f.tables.UserLogs
 import org.jetbrains.exposed.sql.insert
 
-suspend fun Backend.addUserLog(log: UserLog): Result<Unit> {
-    return exposedDatabaseSession.dbQuery {
+suspend fun ExposedDatabaseSession.insertUserLog(log: UserLog): Result<Unit> {
+    return dbQuery {
         check(UserLogs.insert {
             it[id] = log.id
             it[uid] = log.uid

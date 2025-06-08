@@ -1,6 +1,6 @@
 package com.storyteller_f.query
 
-import com.storyteller_f.Backend
+import com.storyteller_f.ExposedDatabaseSession
 import com.storyteller_f.count
 import com.storyteller_f.first
 import com.storyteller_f.isNotEmpty
@@ -13,18 +13,9 @@ import com.storyteller_f.shared.utils.groupByPair
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.tables.Reaction
-import com.storyteller_f.tables.Reaction.Companion.wrapRow
 import com.storyteller_f.tables.ReactionRecord
 import com.storyteller_f.tables.ReactionRecords
-import com.storyteller_f.tables.ReactionRecords.emoji
-import com.storyteller_f.tables.ReactionRecords.objectId
-import com.storyteller_f.tables.ReactionRecords.objectType
-import com.storyteller_f.tables.ReactionRecords.uid
 import com.storyteller_f.tables.Reactions
-import com.storyteller_f.tables.Reactions.emoji
-import com.storyteller_f.tables.Reactions.lastReactionId
-import com.storyteller_f.tables.Reactions.objectId
-import com.storyteller_f.tables.Reactions.objectType
 import com.storyteller_f.types.Cursor
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.ReactionFetch
@@ -39,20 +30,22 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.upsert
 
-suspend fun Backend.statsReactionRecord(reactionRecord: ReactionRecord): Result<Unit> {
+suspend fun ExposedDatabaseSession.statsReactionRecord(
+    reactionRecord: ReactionRecord
+): Result<Unit> {
     return getReactionCountForEmoji(
         listOf(reactionRecord.objectId),
         reactionRecord.emoji
     ).mapResult { reactionCountList ->
         if (reactionCountList.isEmpty()) {
-            exposedDatabaseSession.dbQuery {
+            dbQuery {
                 Reactions.deleteWhere {
                     Reactions.objectId eq reactionRecord.objectId and (Reactions.emoji eq reactionRecord.emoji)
                 }
                 Unit
             }
         } else {
-            exposedDatabaseSession.dbQuery {
+            dbQuery {
                 check(Reactions.upsert(Reactions.objectId, Reactions.emoji) {
                     it[objectId] = reactionRecord.objectId
                     it[emoji] = reactionRecord.emoji
@@ -88,19 +81,19 @@ fun buildReactionInfoQuery(objectId: List<PrimaryKey>, reactionFetch: ReactionFe
     return query
 }
 
-suspend fun Backend.getReactionInfoPaginationResult(
+suspend fun ExposedDatabaseSession.getReactionInfoPaginationResult(
     objectId: List<PrimaryKey>,
     uid: PrimaryKey?,
     reactionFetch: ReactionFetch
 ) =
-    exposedDatabaseSession.dbSearch {
+    dbSearch {
         search {
             buildReactionInfoQuery(objectId, reactionFetch).limit(reactionFetch.size)
                 .orderBy(Reactions.count to SortOrder.DESC, Reactions.lastReactionId to SortOrder.ASC)
         }
         map(Reaction::wrapRow)
     }.mapResult { list ->
-        exposedDatabaseSession.dbSearch {
+        dbSearch {
             search {
                 buildReactionInfoQuery(objectId, reactionFetch)
             }
@@ -131,12 +124,12 @@ suspend fun Backend.getReactionInfoPaginationResult(
         }
     }
 
-suspend fun Backend.getReactionInfo(
+suspend fun ExposedDatabaseSession.getReactionInfo(
     uid: PrimaryKey,
     objectId: PrimaryKey,
     emojiText: String
 ): Result<ReactionInfo?> {
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             Reactions.selectAll().where {
                 Reactions.objectId eq objectId and (Reactions.emoji eq emojiText)
@@ -152,12 +145,12 @@ suspend fun Backend.getReactionInfo(
     }
 }
 
-suspend fun Backend.getReactionRecordInfo(
+suspend fun ExposedDatabaseSession.getReactionRecordInfo(
     uid: PrimaryKey,
     emoji: String,
     objectId: PrimaryKey
 ): Result<ReactionRecordInfo?> {
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             ReactionRecords.selectAll().where {
                 (ReactionRecords.objectId eq objectId) and
@@ -179,7 +172,7 @@ suspend fun Backend.getReactionRecordInfo(
     }
 }
 
-suspend fun Backend.deleteReaction(
+suspend fun ExposedDatabaseSession.deleteReaction(
     uid: PrimaryKey,
     emoji: String,
     objectId: PrimaryKey
@@ -205,13 +198,13 @@ suspend fun Backend.deleteReaction(
     }
 }
 
-suspend fun Backend.deleteReaction(
+suspend fun ExposedDatabaseSession.deleteReaction(
     reactionId: PrimaryKey
 ): Result<Boolean> {
-    return exposedDatabaseSession.dbQuery {
+    return dbQuery {
         ReactionRecords.deleteWhere { builder ->
             with(builder) {
-                this@deleteWhere.id eq reactionId
+                id eq reactionId
             }
         }
     }.map { value ->
@@ -219,9 +212,9 @@ suspend fun Backend.deleteReaction(
     }
 }
 
-suspend fun Backend.insertReaction(
+suspend fun ExposedDatabaseSession.insertReaction(
     reactionRecord: ReactionRecord
-) = exposedDatabaseSession.dbQuery {
+) = dbQuery {
     check(ReactionRecords.insert { statement ->
         statement[id] = reactionRecord.id
         statement[uid] = reactionRecord.uid
@@ -234,9 +227,9 @@ suspend fun Backend.insertReaction(
     }
 }
 
-suspend fun Backend.getReactionCount(objectIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>> {
+suspend fun ExposedDatabaseSession.getReactionCount(objectIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>> {
     if (objectIdList.isEmpty()) return Result.success(emptyList())
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             Reactions.selectAll().where {
                 Reactions.objectId inList objectIdList
@@ -248,8 +241,11 @@ suspend fun Backend.getReactionCount(objectIdList: List<PrimaryKey>): Result<Lis
     }
 }
 
-suspend fun Backend.getReactionCountForEmoji(objectId: List<PrimaryKey>, emoji: String) =
-    exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.getReactionCountForEmoji(
+    objectId: List<PrimaryKey>,
+    emoji: String
+) =
+    dbSearch {
         val column = ReactionRecords.emoji.countDistinct()
         search {
             ReactionRecords.select(ReactionRecords.objectId, column).where {
@@ -261,8 +257,12 @@ suspend fun Backend.getReactionCountForEmoji(objectId: List<PrimaryKey>, emoji: 
         }
     }
 
-suspend fun Backend.hasReactedForEmoji(objectId: PrimaryKey, uid: PrimaryKey, emoji: String): Result<Boolean> {
-    return exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.hasReactedForEmoji(
+    objectId: PrimaryKey,
+    uid: PrimaryKey,
+    emoji: String
+): Result<Boolean> {
+    return dbSearch {
         search {
             ReactionRecords.selectAll().where {
                 (ReactionRecords.objectId eq objectId) and
@@ -274,12 +274,12 @@ suspend fun Backend.hasReactedForEmoji(objectId: PrimaryKey, uid: PrimaryKey, em
     }
 }
 
-suspend fun Backend.hasReactedEmoji(
+suspend fun ExposedDatabaseSession.hasReactedEmoji(
     objectIdList: List<PrimaryKey>,
     uid: PrimaryKey,
 ): Result<List<Pair<Long, String>>> {
     if (objectIdList.isEmpty()) return Result.success(emptyList())
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             ReactionRecords.select(ReactionRecords.objectId, ReactionRecords.emoji).where {
                 (ReactionRecords.objectId inList objectIdList) and (ReactionRecords.uid eq uid)

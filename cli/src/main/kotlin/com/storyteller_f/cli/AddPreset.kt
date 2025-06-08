@@ -3,9 +3,15 @@ package com.storyteller_f.cli
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.ObjectListFetch
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.media.uploadFilesAfterDetectContentTypeAndDimension
+import com.storyteller_f.query.createCommunityRoomsRaw
+import com.storyteller_f.query.getCommunityRawResults
+import com.storyteller_f.query.getRoomByAids
+import com.storyteller_f.query.getUserRawResultByAids
+import com.storyteller_f.query.insertMediaRefs
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.*
@@ -20,7 +26,6 @@ import com.storyteller_f.tables.MemberJoins.joinedTime
 import com.storyteller_f.tables.MemberJoins.objectId
 import com.storyteller_f.tables.MemberJoins.objectType
 import com.storyteller_f.tables.MemberJoins.uid
-import com.storyteller_f.tables.getCommunityRawResults
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ArgType
 import kotlinx.cli.ExperimentalCli
@@ -126,7 +131,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "rooms count ${presetValue.roomData?.size}"
         }
         val (roomList, membersList) = getRoomsData(l, parentDir, tika)
-        exposedDatabaseSession.dbQuery {
+        databaseSession.dbQuery {
             Rooms.batchInsert(roomList) {
                 this[Rooms.id] = it.id
                 this[Rooms.icon] = it.icon
@@ -156,15 +161,15 @@ class AddPreset : Subcommand("add", "add entry") {
             "topics count ${presetValue.topicData?.size}"
         }
         val data = presetValue.topicData!!
-        val userMap = getUserRawResultByAids(data.map {
+        val userMap = this.databaseSession.getUserRawResultByAids(data.map {
             it.author
         }.distinct()).getOrThrow().associate {
             it.user.aid!! to it.user
         }
-        val roomMap = getRoomByAids(ObjectListFetch.AidListFetch(data.mapNotNull {
+        val roomMap = this.databaseSession.getRoomByAids(ObjectListFetch.AidListFetch(data.mapNotNull {
             it.room
         })).getOrThrow().associateBy { it.aid }
-        exposedDatabaseSession.dbQuery {
+        databaseSession.dbQuery {
             data.groupBy {
                 when {
                     it.community != null -> ObjectType.COMMUNITY
@@ -194,7 +199,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "users count ${presetValue.userData?.size}"
         }
         val users = getUserData(userList, parentDir, tika)
-        exposedDatabaseSession.dbQuery {
+        databaseSession.dbQuery {
             Users.batchInsert(users) {
                 this[Users.id] = it.id
                 this[Users.icon] = it.icon
@@ -218,7 +223,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "communities count ${presetValue.communityData?.size}"
         }
         val (memberList, l2, l3) = getCommunityData(communityData, parentDir, tika)
-        exposedDatabaseSession.dbQuery {
+        databaseSession.dbQuery {
             Communities.batchInsert(l2) {
                 this[Communities.id] = it.id
                 this[Communities.createdTime] = it.createdTime
@@ -308,7 +313,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 Triple(it, p, id)
             }
         }
-        val userMap = getUserRawResultByAids(data.flatMap {
+        val userMap = this.databaseSession.getUserRawResultByAids(data.flatMap {
             it.first.users.orEmpty() + (it.first.admin ?: "System")
         }.distinct()).getOrThrow().associate {
             it.user.aid to it.user
@@ -409,13 +414,13 @@ class AddPreset : Subcommand("add", "add entry") {
             }
         }
 
-        val userMap = getUserRawResultByAids(l.flatMap {
+        val userMap = this.databaseSession.getUserRawResultByAids(l.flatMap {
             it.users + it.admin
         }.distinct()).getOrThrow().associate {
             it.user.aid to it.user
         }
 
-        val communityMap = getCommunityRawResults(ObjectListFetch.AidListFetch(l.mapNotNull {
+        val communityMap = this.databaseSession.getCommunityRawResults(ObjectListFetch.AidListFetch(l.mapNotNull {
             it.community
         }.distinct())).getOrThrow().associate {
             it.communityInfo.aid to it.communityInfo
@@ -460,7 +465,7 @@ class AddPreset : Subcommand("add", "add entry") {
     }
 
     private suspend fun Backend.getCommunityMap(list: List<PresetTopic>): Map<String, PrimaryKey> {
-        return getCommunityRawResults(ObjectListFetch.AidListFetch(list.mapNotNull {
+        return this.databaseSession.getCommunityRawResults(ObjectListFetch.AidListFetch(list.mapNotNull {
             it.community
         })).getOrThrow().associate {
             it.communityInfo.aid to it.communityInfo.id
@@ -583,7 +588,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val path = File(parentDir, "medias/topics/$pic")
             UploadPack(path, pic, author, path.length())
         }).getOrThrow()
-        insertMediaRefs(topicId, ObjectType.TOPIC, mediaNames)
+        this.databaseSession.insertMediaRefs(topicId, ObjectType.TOPIC, mediaNames)
     }
 
     private suspend fun Backend.insertEncryptedTopicToRoom(

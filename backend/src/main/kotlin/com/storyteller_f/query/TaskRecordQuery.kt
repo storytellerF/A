@@ -1,6 +1,6 @@
 package com.storyteller_f.query
 
-import com.storyteller_f.Backend
+import com.storyteller_f.ExposedDatabaseSession
 import com.storyteller_f.first
 import com.storyteller_f.shared.type.TaskRecordType
 import com.storyteller_f.tables.TaskRecord
@@ -20,8 +20,8 @@ fun addTaskRecord(taskRecord: TaskRecord) {
     }
 }
 
-suspend fun Backend.getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?> {
-    return exposedDatabaseSession.dbSearch {
+suspend fun ExposedDatabaseSession.getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?> {
+    return dbSearch {
         search {
             TaskRecords.selectAll().where {
                 TaskRecords.type eq type

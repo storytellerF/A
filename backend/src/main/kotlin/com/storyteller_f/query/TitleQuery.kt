@@ -1,11 +1,9 @@
 package com.storyteller_f.query
 
-import com.storyteller_f.Backend
+import com.storyteller_f.ExposedDatabaseSession
 import com.storyteller_f.bindPaginationQuery
 import com.storyteller_f.count
-import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.shared.model.TitleInfo
-import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.TitleType
@@ -21,43 +19,32 @@ import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 
-suspend fun Backend.createTitle(
-    title: Title,
-    topic: Topic,
-    description: String
-): Result<TitleInfo> {
-    return exposedDatabaseSession.dbQuery {
-        check(Titles.insert {
-            it[id] = title.id
-            it[createdTime] = title.createdTime
-            it[name] = title.name
-            it[creator] = title.creator
-            it[receiver] = title.receiver
-            it[type] = title.type
-            it[scopeId] = title.scopeId
-            it[scopeType] = title.scopeType
-            it[status] = title.status
-            it[descriptionTopicId] = title.descriptionTopicId
-        }.insertedCount > 0) {
-            "insert title failed"
-        }
-        Topic.new(topic)
-        topicSearchService.saveDocument(
-            listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(description)))
-        )
-            .getOrThrow()
-        title.toTitleInfo()
+fun insertTitle(title: Title, topic: Topic) {
+    check(Titles.insert {
+        it[id] = title.id
+        it[createdTime] = title.createdTime
+        it[name] = title.name
+        it[creator] = title.creator
+        it[receiver] = title.receiver
+        it[type] = title.type
+        it[scopeId] = title.scopeId
+        it[scopeType] = title.scopeType
+        it[status] = title.status
+        it[descriptionTopicId] = title.descriptionTopicId
+    }.insertedCount > 0) {
+        "insert title failed"
     }
+    Topic.new(topic)
 }
 
-suspend fun Backend.getTitlePaginationResult(
+suspend fun ExposedDatabaseSession.getTitlePaginationResult(
     primaryKeyFetch: PrimaryKeyFetch,
     uid: PrimaryKey,
     searchType: TitleSearchType,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null
 ): Result<PaginationResult<TitleInfo>> {
-    return exposedDatabaseSession.dbSearch {
+    return dbSearch {
         search {
             buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(Titles, primaryKeyFetch)
         }
@@ -65,7 +52,7 @@ suspend fun Backend.getTitlePaginationResult(
             map(Title::wrapRow).map { it.toTitleInfo() }
         }
     }.mapResult { list ->
-        exposedDatabaseSession.dbSearch {
+        dbSearch {
             search {
                 buildTitleSearchQuery(searchType, uid, type, scopeId)
             }

@@ -5,6 +5,7 @@ import com.storyteller_f.ForbiddenException
 import com.storyteller_f.a.server.route.RouteMedia
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.media.uploadFilesAfterDetectContentTypeAndDimension
+import com.storyteller_f.query.*
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -14,7 +15,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import io.ktor.http.content.*
@@ -82,7 +82,7 @@ suspend fun Backend.getAllMediaList(
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, tika: Tika, uid: PrimaryKey) =
-    getMediaById(mediaId).mapResultIfNotNull { media ->
+    this.databaseSession.getMediaById(mediaId).mapResultIfNotNull { media ->
         if (media.owner != uid) {
             throw ForbiddenException("no permission")
         }
@@ -259,7 +259,7 @@ suspend fun Backend.copyMedia(
                     "$uid/${newCopiedFileName(name)}"
                 }
             }.mapResult {
-                getMedia(objectTuple.objectId, name).mapResultIfNotNull { media ->
+                this.databaseSession.getMedia(objectTuple.objectId, name).mapResultIfNotNull { media ->
                     copyMedia(media, uid, it)
                 }
             }
