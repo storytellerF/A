@@ -3,6 +3,7 @@ package com.storyteller_f.a.app.utils
 import android.security.keystore.KeyProperties
 import android.security.keystore.KeyProtection
 import com.russhwolf.settings.ExperimentalSettingsApi
+import com.russhwolf.settings.Settings
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.storyteller_f.a.client_lib.RawUserPassInfo
@@ -24,7 +25,7 @@ import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-actual fun buildLoginUserSessionFactory(): LoginUserSessionManager {
+actual fun buildLoginUserSessionFactory(settings: Settings): LoginUserSessionManager {
     if (runCatching {
             Cipher.getInstance("ECIES", "AndroidKeyStore")
         }.isSuccess && runCatching {
@@ -33,11 +34,11 @@ actual fun buildLoginUserSessionFactory(): LoginUserSessionManager {
         try {
             val keyStore = KeyStore.getInstance("AndroidKeyStore")
             keyStore.load(null)
-            return AndroidKeyStoreLoginUserSessionManager()
+            return AndroidKeyStoreLoginUserSessionManager(settings)
         } catch (_: Exception) {
         }
     }
-    return DefaultLoginUserSessionManager()
+    return DefaultLoginUserSessionManager(settings)
 }
 
 class AndroidKeyStoreUserPassSession(private val alias: String) : UserPass {
@@ -129,7 +130,7 @@ class AndroidKeyStoreUserPassSession(private val alias: String) : UserPass {
 }
 
 @Suppress("SameParameterValue")
-class AndroidKeyStoreLoginUserSessionManager : LoginUserSessionManager {
+class AndroidKeyStoreLoginUserSessionManager(val defaultSettings: Settings) : LoginUserSessionManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun savedSession(): SavedSession {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")

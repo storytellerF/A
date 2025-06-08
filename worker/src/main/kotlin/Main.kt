@@ -2,6 +2,7 @@ package com.storyteller_f.worker
 
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
+import com.storyteller_f.ObjectListFetch
 import com.storyteller_f.buildBackendFromEnv
 import com.storyteller_f.query.addAcgForUser
 import com.storyteller_f.query.getLatestTaskRecord
@@ -65,7 +66,7 @@ private suspend fun Backend.getAcgTaskListFromTopics() =
             val uids = acgList.map {
                 it.first
             }
-            this.databaseSession.getUserAcgByIds(uids).map { list ->
+            this.databaseSession.getUserAcgByIds(ObjectListFetch.IdListFetch(uids)).map { list ->
                 list.associate {
                     it.first to it.second
                 }

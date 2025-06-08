@@ -3,15 +3,7 @@ package com.storyteller_f.a.server.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.query.addRoomJoin
-import com.storyteller_f.query.createRoom
-import com.storyteller_f.query.exit
-import com.storyteller_f.query.getRoomPubKeyPaginationResult
-import com.storyteller_f.query.getRoomRawResult
-import com.storyteller_f.query.getTitlePaginationResult
-import com.storyteller_f.query.isMemberJoined
-import com.storyteller_f.query.processRoomRawResultToRoomInfo
-import com.storyteller_f.query.updateRoom
+import com.storyteller_f.query.*
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -23,7 +15,8 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TitleSearchType
 import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.*
-import com.storyteller_f.tables.*
+import com.storyteller_f.tables.Room
+import com.storyteller_f.tables.RoomRawResult
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 
@@ -45,7 +38,7 @@ suspend fun Backend.getRoomPubKeys(
 suspend fun Backend.joinRoom(
     roomId: PrimaryKey,
     uid: PrimaryKey
-) = getRoom(ObjectFetch.IdFetch(roomId), uid, true).mapResultIfNotNull { roomInfo ->
+) = getRoomInfo(ObjectFetch.IdFetch(roomId), uid, true).mapResultIfNotNull { roomInfo ->
     if (roomInfo.joinedTime != null) {
         Result.success(roomInfo)
     } else {
@@ -91,7 +84,7 @@ private suspend fun Backend.directJoinRoom(
         Result.success(roomInfo.copy(joinedTime = time))
     }.recoverResult { exception ->
         if (exception.isDup()) {
-            getRoom(ObjectFetch.IdFetch(roomInfo.id), uid, true)
+            getRoomInfo(ObjectFetch.IdFetch(roomInfo.id), uid, true)
         } else {
             Result.failure(exception)
         }
@@ -99,7 +92,7 @@ private suspend fun Backend.directJoinRoom(
 }
 
 suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
-    getRoom(ObjectFetch.IdFetch(roomId), uid, true).mapResultIfNotNull { info ->
+    getRoomInfo(ObjectFetch.IdFetch(roomId), uid, true).mapResultIfNotNull { info ->
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
@@ -110,7 +103,7 @@ suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
         }
     }
 
-suspend fun Backend.getRoom(
+suspend fun Backend.getRoomInfo(
     objectFetch: ObjectFetch,
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?
@@ -152,10 +145,12 @@ suspend fun Backend.createRoom(
         if (it) {
             val roomId = SnowflakeFactory.nextId()
             val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
-            this.databaseSession.createRoom(room)
+            databaseSession.createRoom(room)
                 .mapResult {
                     processRoomRawResultToRoomInfo(
-                        listOf(RoomRawResult(room.toRoomInfo(0, room.createdTime, null), room.icon))
+                        listOf(
+                            RoomRawResult(room, room.icon, room.createdTime, null, 0)
+                        )
                     ).mapIfNotNull(List<RoomInfo>::first)
                 }
         } else {

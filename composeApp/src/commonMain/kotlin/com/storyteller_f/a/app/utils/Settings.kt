@@ -7,16 +7,16 @@ import com.storyteller_f.a.client_lib.UserSessionManager
 import com.strabled.composepreferences.utilis.DataStoreManager
 import kotlinx.serialization.Serializable
 
-expect val defaultSettings: Settings
+expect fun createSettings(name: String = "a-default"): Settings
 
 @Composable
-expect fun customDataStoreManager(): DataStoreManager
+expect fun createCustomDataStoreManager(): DataStoreManager
 
 @Serializable
 data class LoginHistory(val last: String? = null, val current: String? = null)
 
-fun UserSessionManager.restoreFromStorage() {
-    val sessionFactory = buildLoginUserSessionFactory()
+fun UserSessionManager.restoreFromStorage(settings: Settings) {
+    val sessionFactory = buildLoginUserSessionFactory(settings)
     val (list, _, current) = sessionFactory.savedSession()
     if (current != null && list.contains(current)) {
         val session = sessionFactory.buildSession(current)
@@ -26,7 +26,7 @@ fun UserSessionManager.restoreFromStorage() {
     }
 }
 
-fun clearStorage() {
-    val sessionFactory = buildLoginUserSessionFactory()
+fun clearStorage(settings: Settings) {
+    val sessionFactory = buildLoginUserSessionFactory(settings)
     sessionFactory.removeSession("default")
 }

@@ -5,13 +5,13 @@ import com.storyteller_f.Backend
 import com.storyteller_f.ForbiddenException
 import com.storyteller_f.ObjectListFetch
 import com.storyteller_f.a.server.auth.addUserLog
+import com.storyteller_f.getUsersInfoByIds
+import com.storyteller_f.insertTitleAndTopicDescription
+import com.storyteller_f.processCommunityRawResultToCommunityInfo
+import com.storyteller_f.processRoomRawResultToRoomInfo
 import com.storyteller_f.query.getCommunityRawResults
 import com.storyteller_f.query.getRoomRawResultList
 import com.storyteller_f.query.getTitlePaginationResult
-import com.storyteller_f.query.getUsersInfoByIds
-import com.storyteller_f.query.insertTitleAndTopicDescription
-import com.storyteller_f.query.processCommunityRawResultToCommunityInfo
-import com.storyteller_f.query.processRoomRawResultToRoomInfo
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.type.ObjectType
@@ -94,21 +94,21 @@ private suspend fun Backend.getRelatedObject(
 ): Result<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>> {
     return merge({
         if (uidList.isNotEmpty()) {
-            getUsersInfoByIds(uidList)
+            getUsersInfoByIds(ObjectListFetch.IdListFetch(uidList))
         } else {
             Result.success(emptyList())
         }
     }, {
         if (roomIdList.isNotEmpty()) {
-            this.databaseSession.getRoomRawResultList(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
-                this.processRoomRawResultToRoomInfo(it)
+            databaseSession.getRoomRawResultList(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
+                processRoomRawResultToRoomInfo(it)
             }
         } else {
             Result.success(emptyList())
         }
     }, {
         if (communityIdList.isNotEmpty()) {
-            this.databaseSession.getCommunityRawResults(ObjectListFetch.IdListFetch(communityIdList)).mapResult {
+            databaseSession.getCommunityRawResults(ObjectListFetch.IdListFetch(communityIdList)).mapResult {
                 processCommunityRawResultToCommunityInfo(it)
             }
         } else {

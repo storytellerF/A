@@ -7,6 +7,10 @@ import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.tables.*
+import com.storyteller_f.tables.MemberJoins
+import com.storyteller_f.tables.Room
+import com.storyteller_f.tables.RoomRawResult
+import com.storyteller_f.tables.UserTopicReads
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import org.jetbrains.exposed.sql.*
@@ -185,12 +189,11 @@ private suspend fun ExposedDatabaseSession.processRoomListToRoomRawResult(
 }, uid).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
     rooms.map { room ->
         RoomRawResult(
-            room.toRoomInfo(
-                memberCountMap[room.id] ?: 0,
-                joinedTimeMap[room.id]?.joinedTime,
-                lastReadMap[room.id]?.topicId
-            ),
-            room.icon
+            room,
+            room.icon,
+            joinedTimeMap[room.id]?.joinedTime,
+            lastReadMap[room.id]?.topicId,
+            memberCountMap[room.id] ?: 0,
         )
     }
 }
@@ -231,12 +234,15 @@ suspend fun ExposedDatabaseSession.getRoomRawResultList(
                 }
         }
         map {
-            mapRoomInfo(it)
+            val joinedTime = it.getOrNull(MemberJoins.joinedTime)
+            val topicId = it.getOrNull(UserTopicReads.topicId)
+            val room = Room.wrapRow(it)
+            RoomRawResult(room, room.icon, joinedTime, topicId, 0)
         }
     }
 }
 
-suspend fun ExposedDatabaseSession.getRoomByAids(
+suspend fun ExposedDatabaseSession.getRoomList(
     objectListFetch: ObjectListFetch,
 ): Result<List<Room>> {
     return dbSearch {

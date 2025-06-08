@@ -4,14 +4,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.*
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.route.RouteCommunities
-import com.storyteller_f.query.addCommunityJoin
-import com.storyteller_f.query.createCommunity
-import com.storyteller_f.query.exit
-import com.storyteller_f.query.getCommunityJoinedTimeByIds
-import com.storyteller_f.query.getCommunityPaginationResult
-import com.storyteller_f.query.getCommunityRawResult
-import com.storyteller_f.query.processCommunityRawResultToCommunityInfo
-import com.storyteller_f.query.updateCommunity
+import com.storyteller_f.query.*
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserLogType
@@ -25,7 +18,9 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.tables.*
+import com.storyteller_f.tables.Community
+import com.storyteller_f.tables.CommunityRawResult
+import com.storyteller_f.tables.toCommunityIfo
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import io.ktor.server.plugins.*
@@ -156,10 +151,19 @@ suspend fun Backend.createCommunity(
         null
     )
     return this.databaseSession.createCommunity(community).mapResult {
-        val communityInfo = community.toCommunityIfo(0, community.createdTime, null)
-        addUserLog(uid, UserLogType.CREATE, communityInfo.tuple())
+        val communityInfo = community
+        addUserLog(uid, UserLogType.CREATE, communityInfo.toCommunityIfo().tuple())
         processCommunityRawResultToCommunityInfo(
-            listOf(CommunityRawResult(communityInfo, newCommunity.icon, null))
+            listOf(
+                CommunityRawResult(
+                    communityInfo,
+                    newCommunity.icon,
+                    null,
+                    community.createdTime,
+                    null,
+                    0
+                )
+            )
         ).mapIfNotNull {
             it.first()
         }

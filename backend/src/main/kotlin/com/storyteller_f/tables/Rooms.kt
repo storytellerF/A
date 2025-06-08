@@ -44,16 +44,15 @@ class Room(
     }
 }
 
-data class RoomRawResult(val roomInfo: RoomInfo, val icon: String?)
+data class RoomRawResult(
+    val roomInfo: Room,
+    val icon: String?,
+    val joinedTime: LocalDateTime?,
+    val topicId: Long?,
+    val memberCount: Long
+)
 
-fun mapRoomInfo(it: ResultRow): RoomRawResult {
-    val joinedTime = it.getOrNull(MemberJoins.joinedTime)
-    val topicId = it.getOrNull(UserTopicReads.topicId)
-    val room = Room.wrapRow(it)
-    return RoomRawResult(room.toRoomInfo(0, joinedTime, topicId), room.icon)
-}
-
-fun Room.toRoomInfo(memberCount: Long, joinedTime: LocalDateTime?, topicId: Long?) = RoomInfo(
+fun Room.toRoomInfo(memberCount: Long = 0, joinedTime: LocalDateTime? = null, topicId: Long? = null) = RoomInfo(
     id,
     createdTime,
     name,

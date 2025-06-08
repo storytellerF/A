@@ -9,8 +9,8 @@ import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.PrimaryKeyPagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
-import com.storyteller_f.query.searchMembers
-import com.storyteller_f.query.searchRoomPaginationResult
+import com.storyteller_f.searchMembers
+import com.storyteller_f.searchRoomPaginationResult
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.obj.UpdateRoomBody
@@ -47,14 +47,14 @@ fun Route.bindSafeRoomRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteRooms.Aid> {
         usePrincipalOrNull(reader) { uid ->
             it.aid?.let { aid ->
-                backend.getRoom(ObjectFetch.AidFetch(aid), uid, it.parent.fillJoinInfo)
+                backend.getRoomInfo(ObjectFetch.AidFetch(aid), uid, it.parent.fillJoinInfo)
             } ?: Result.success(null)
         }
     }
 
     get<RouteRooms.Id> {
         usePrincipalOrNull(reader) { uid ->
-            backend.getRoom(ObjectFetch.IdFetch(it.id), uid, it.parent.fillJoinInfo)
+            backend.getRoomInfo(ObjectFetch.IdFetch(it.id), uid, it.parent.fillJoinInfo)
         }
     }
 

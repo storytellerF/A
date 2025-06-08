@@ -10,10 +10,10 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import okio.Path.Companion.toOkioPath
-import java.util.prefs.Preferences
 
-actual val defaultSettings: Settings
-    get() = PreferencesSettings(Preferences.userRoot())
+actual fun createSettings(name: String): Settings {
+    return PreferencesSettings.Factory().create(name)
+}
 
 private val store by lazy {
     DataStoreManager(
@@ -27,6 +27,6 @@ private val store by lazy {
 }
 
 @Composable
-actual fun customDataStoreManager(): DataStoreManager {
+actual fun createCustomDataStoreManager(): DataStoreManager {
     return store
 }

@@ -13,7 +13,7 @@ import com.storyteller_f.query.getTopicRootTuple
 import com.storyteller_f.query.getUserDevices
 import com.storyteller_f.query.isMemberJoined
 import com.storyteller_f.query.saveEncryptedTopic
-import com.storyteller_f.query.savePlainTopic
+import com.storyteller_f.savePlainTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserLogType

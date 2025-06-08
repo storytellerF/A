@@ -8,20 +8,16 @@ import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.*
 import com.storyteller_f.a.server.remoteIp
 import com.storyteller_f.a.server.route.RouteAccounts
+import com.storyteller_f.processUserRawResultToUserInfo
 import com.storyteller_f.query.*
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.toPrimaryKey
+import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.*
-import com.storyteller_f.tables.Aids
-import com.storyteller_f.tables.UserLog
-import com.storyteller_f.tables.UserRawResult
-import com.storyteller_f.tables.Users
+import com.storyteller_f.tables.*
 import io.github.aakira.napier.Napier
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
@@ -191,7 +187,23 @@ private suspend fun RoutingContext.signUp(
                             backend.addUserLog(newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
                             saveSuccessSessionOnFirst(newId, reader)
                             backend.processUserRawResultToUserInfo(
-                                listOf(UserRawResult(value, null))
+                                listOf(
+                                    UserRawResult(
+                                        User(
+                                            value.aid,
+                                            "",
+                                            value.address,
+                                            null,
+                                            value.nickname,
+                                            value.id,
+                                            now(),
+                                            0,
+                                            PassType.RAW,
+                                            AlgoType.P256
+                                        ),
+                                        null
+                                    )
+                                )
                             ).mapIfNotNull { userList ->
                                 userList.first()
                             }

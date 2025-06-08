@@ -4,16 +4,13 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.Backend
 import com.storyteller_f.DatabaseFactory
 import com.storyteller_f.ObjectListFetch
+import com.storyteller_f.ObjectListFetch.AidListFetch
 import com.storyteller_f.index.TopicDocument
 import com.storyteller_f.media.UploadPack
 import com.storyteller_f.media.uploadFilesAfterDetectContentTypeAndDimension
-import com.storyteller_f.query.createCommunityRoomsRaw
-import com.storyteller_f.query.getCommunityRawResults
-import com.storyteller_f.query.getRoomByAids
-import com.storyteller_f.query.getUserRawResultByAids
-import com.storyteller_f.query.insertMediaRefs
+import com.storyteller_f.query.*
+import com.storyteller_f.query.getUserRawResultList
 import com.storyteller_f.shared.*
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.AlgoType
 import com.storyteller_f.shared.type.ObjectType
@@ -161,12 +158,12 @@ class AddPreset : Subcommand("add", "add entry") {
             "topics count ${presetValue.topicData?.size}"
         }
         val data = presetValue.topicData!!
-        val userMap = this.databaseSession.getUserRawResultByAids(data.map {
+        val userMap = databaseSession.getUserRawResultList(AidListFetch(data.map {
             it.author
-        }.distinct()).getOrThrow().associate {
+        }.distinct())).getOrThrow().associate {
             it.user.aid!! to it.user
         }
-        val roomMap = this.databaseSession.getRoomByAids(ObjectListFetch.AidListFetch(data.mapNotNull {
+        val roomMap = databaseSession.getRoomList(AidListFetch(data.mapNotNull {
             it.room
         })).getOrThrow().associateBy { it.aid }
         databaseSession.dbQuery {
@@ -178,13 +175,13 @@ class AddPreset : Subcommand("add", "add entry") {
                 }
             }.forEach { (objectType, list) ->
                 if (objectType == ObjectType.ROOM) {
-                    this@addTopics.addTopicsIntoRoom(list, userMap, parentDir, tika, roomMap)
+                    addTopicsIntoRoom(list, userMap, parentDir, tika, roomMap)
                 } else {
-                    this@addTopics.addTopics(
+                    addTopics(
                         list,
                         userMap,
                         objectType,
-                        this@addTopics.getRootIdFunc(objectType, list, userMap),
+                        getRootIdFunc(objectType, list, userMap),
                         parentDir,
                         tika
                     )
@@ -252,7 +249,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun Backend.addTopics(
         list: List<PresetTopic>,
-        userMap: Map<String, UserInfo>,
+        userMap: Map<String, User>,
         objectType: ObjectType,
         rootId: (PresetTopic) -> PrimaryKey,
         parentDir: File,
@@ -313,9 +310,9 @@ class AddPreset : Subcommand("add", "add entry") {
                 Triple(it, p, id)
             }
         }
-        val userMap = this.databaseSession.getUserRawResultByAids(data.flatMap {
+        val userMap = databaseSession.getUserRawResultList(AidListFetch(data.flatMap {
             it.first.users.orEmpty() + (it.first.admin ?: "System")
-        }.distinct()).getOrThrow().associate {
+        }.distinct())).getOrThrow().associate {
             it.user.aid to it.user
         }
         val l1 = data.map {
@@ -414,9 +411,9 @@ class AddPreset : Subcommand("add", "add entry") {
             }
         }
 
-        val userMap = this.databaseSession.getUserRawResultByAids(l.flatMap {
+        val userMap = databaseSession.getUserRawResultList(AidListFetch(l.flatMap {
             it.users + it.admin
-        }.distinct()).getOrThrow().associate {
+        }.distinct())).getOrThrow().associate {
             it.user.aid to it.user
         }
 
@@ -445,7 +442,7 @@ class AddPreset : Subcommand("add", "add entry") {
     private suspend fun Backend.getRootIdFunc(
         objectType: ObjectType,
         list: List<PresetTopic>,
-        userMap: Map<String, UserInfo>
+        userMap: Map<String, User>
     ): (PresetTopic) -> PrimaryKey {
         return if (objectType == ObjectType.USER) {
             val userIdMap = userMap.mapValues {
@@ -465,7 +462,7 @@ class AddPreset : Subcommand("add", "add entry") {
     }
 
     private suspend fun Backend.getCommunityMap(list: List<PresetTopic>): Map<String, PrimaryKey> {
-        return this.databaseSession.getCommunityRawResults(ObjectListFetch.AidListFetch(list.mapNotNull {
+        return databaseSession.getCommunityRawResults(ObjectListFetch.AidListFetch(list.mapNotNull {
             it.community
         })).getOrThrow().associate {
             it.communityInfo.aid to it.communityInfo.id
@@ -474,7 +471,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun Backend.addTopicsIntoRoom(
         u: List<PresetTopic>,
-        userList: Map<String, UserInfo>,
+        userList: Map<String, User>,
         parentDir: File,
         tika: Tika,
         roomMap: Map<String, Room>
@@ -507,7 +504,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun insertRoomTopic(
         u: List<PresetTopic>,
-        userList: Map<String, UserInfo>,
+        userList: Map<String, User>,
         roomMap: Map<String, Room>
     ): List<InsertTopicTuple> {
         val topLevelTopic = u.mapIndexed { index, addTopic ->
@@ -545,7 +542,7 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File,
         tuples: List<InsertTopicTuple>,
         roomMap: Map<String, Room>,
-        userMap: Map<String, UserInfo>,
+        userMap: Map<String, User>,
         tika: Tika,
         topicsPublic: List<Pair<PresetTopic, Int>>
     ) {
@@ -574,7 +571,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun Backend.uploadMedias(
         parentDir: File,
-        userMap: Map<String, UserInfo>,
+        userMap: Map<String, User>,
         tika: Tika,
         topicId: PrimaryKey,
         presetTopic: PresetTopic
@@ -644,7 +641,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun insertTopicsIntoCommunityOrUser(
         u: List<PresetTopic>,
-        userList: Map<String, UserInfo>,
+        userList: Map<String, User>,
         rootType: ObjectType,
         rootId: (PresetTopic) -> PrimaryKey
     ): List<InsertTopicTuple> {

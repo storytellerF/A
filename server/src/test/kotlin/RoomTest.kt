@@ -77,7 +77,7 @@ class RoomTest {
     private suspend fun SessionManager.testSearchRoom(
         expected: Int,
         size: Int,
-        nextRoomId: PrimaryKey?,
+        nextRoomId: String?,
         joinStatusSearch: JoinStatusSearch,
         word: String?,
         communityId: PrimaryKey?,

@@ -10,6 +10,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
+import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import org.jetbrains.exposed.sql.*
 
@@ -34,11 +35,11 @@ suspend fun ExposedDatabaseSession.getUserRawResult(
     first(::mapUserInfo)
 }
 
-suspend fun ExposedDatabaseSession.commonPaginationMemberList(
+suspend fun ExposedDatabaseSession.getMemberPaginationResult(
     objectId: PrimaryKey?,
     word: String?,
     primaryKeyFetch: PrimaryKeyFetch
-): Result<Pair<List<UserRawResult>, Long>> {
+): Result<PaginationResult<UserRawResult>> {
     return dbSearch {
         search {
             buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(
@@ -54,7 +55,7 @@ suspend fun ExposedDatabaseSession.commonPaginationMemberList(
             }
             count()
         }.map { value ->
-            pairs to value
+            PaginationResult(pairs, value)
         }
     }
 }
@@ -96,7 +97,7 @@ suspend fun ExposedDatabaseSession.getUserRawResultAndPublicKeyByAddress(
     }
     first {
         val value = User.wrapRow(it)
-        Pair(UserRawResult(value.toUserInfo(), value.icon), value.publicKey)
+        Pair(UserRawResult(value, value.icon), value.publicKey)
     }
 }
 
@@ -206,37 +207,31 @@ suspend fun ExposedDatabaseSession.getUserAuthDataBy(
         }
     }
 
-suspend fun ExposedDatabaseSession.getUserRawResultByIds(ids: List<PrimaryKey>): Result<List<UserRawResult>> =
+suspend fun ExposedDatabaseSession.getUserRawResultList(objectListFetch: ObjectListFetch): Result<List<UserRawResult>> =
     dbSearch {
         search {
             Users
                 .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
                 .select(Users.fields + Aids.value)
                 .where {
-                    Users.id inList ids
+                    when (objectListFetch) {
+                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                        is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
+                    }
                 }
         }
         map(::mapUserInfo)
     }
 
-suspend fun ExposedDatabaseSession.getUserRawResultByAids(ids: List<String>) =
-    dbSearch {
-        search {
-            Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-                .select(Users.fields + Aids.value)
-                .where {
-                    Aids.value inList ids
-                }
-        }
-        map(::mapUserInfo)
-    }
-
-suspend fun ExposedDatabaseSession.getUserAcgByIds(ids: List<PrimaryKey>) =
+suspend fun ExposedDatabaseSession.getUserAcgByIds(objectListFetch: ObjectListFetch) =
     dbSearch {
         search {
             Users.select(Users.fields)
                 .where {
-                    Users.id inList ids
+                    when (objectListFetch) {
+                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                        is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
+                    }
                 }
         }
         map {

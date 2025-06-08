@@ -275,9 +275,9 @@ suspend fun Backend.getUserInfoAndRelatedMedia(
 }
 
 suspend fun Backend.getUsersInfoByIds(
-    ids: List<PrimaryKey>
+    listFetch: ObjectListFetch.IdListFetch
 ): Result<List<UserInfo>?> {
-    return this.databaseSession.getUserRawResultByIds(ids).mapResult {
+    return databaseSession.getUserRawResultList(listFetch).mapResult {
         processUserRawResultToUserInfo(it)
     }
 }
@@ -377,7 +377,14 @@ suspend fun Backend.processCommunityRawResultToCommunityInfo(
         list.mapIndexed { i, communityPair ->
             val first = icons[i * 2]
             val second = icons[i * 2 + 1]
-            communityPair.communityInfo.copy(icon = first, poster = second, hasPoster = second != null)
+            communityPair.communityInfo.toCommunityIfo().copy(
+                memberCount = communityPair.memberCount,
+                icon = first,
+                poster = second,
+                hasPoster = second != null,
+                joinedTime = communityPair.joinedTime,
+                lastRead = communityPair.lastRead
+            )
         }
     }
 }
@@ -387,7 +394,7 @@ suspend fun Backend.searchMembers(
     word: String?,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<UserInfo>?> {
-    return databaseSession.commonPaginationMemberList(objectId, word, primaryKeyFetch).mapResult { (pairs, count) ->
+    return databaseSession.getMemberPaginationResult(objectId, word, primaryKeyFetch).mapResult { (pairs, count) ->
         processUserRawResultToUserInfo(pairs).mapIfNotNull {
             PaginationResult(it, count)
         }
@@ -451,7 +458,7 @@ suspend fun Backend.processUserRawResultToUserInfo(
     it.avatar
 }).mapIfNotNull { value ->
     rawResults.mapIndexed { index, pair ->
-        pair.user.copy(avatar = value[index])
+        pair.user.toUserInfo().copy(avatar = value[index])
     }
 }
 
@@ -459,8 +466,14 @@ suspend fun Backend.processRoomRawResultToRoomInfo(list: List<RoomRawResult>): R
     return getMediaInfoList(list.map {
         it.icon
     }).mapIfNotNull { icons ->
-        list.mapIndexed { i, roomPair ->
-            roomPair.roomInfo.copy(icon = icons[i])
+        list.mapIndexed { i, roomRawResult ->
+            roomRawResult.roomInfo.toRoomInfo()
+                .copy(
+                    icon = icons[i],
+                    joinedTime = roomRawResult.joinedTime,
+                    lastRead = roomRawResult.topicId,
+                    memberCount = roomRawResult.memberCount
+                )
         }
     }
 }

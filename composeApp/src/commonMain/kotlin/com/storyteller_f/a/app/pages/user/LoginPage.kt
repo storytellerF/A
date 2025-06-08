@@ -18,16 +18,16 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.storyteller_f.a.app.AppNav
-import com.storyteller_f.a.app.LocalAppNav
-import com.storyteller_f.a.app.LocalSessionManager
+import com.russhwolf.settings.Settings
+import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.compontents.MeasureTextLineCount
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.app.utils.platform
-import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.shared.*
+import com.storyteller_f.a.client_lib.ClientSessionState
+import com.storyteller_f.a.client_lib.SessionManager
+import com.storyteller_f.a.client_lib.signUpOrInFromPrivateKey
+import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
@@ -148,10 +148,11 @@ fun SelectFile(isSignUp: Boolean) {
     val scope = rememberCoroutineScope()
     val appNav = LocalAppNav.current
     val sessionManager = LocalSessionManager.current
+    val settings = LocalSettings.current
     if (isSignUp) {
         Button({
             scope.launch {
-                startSignFromFile(appNav, sessionManager, true)
+                startSignFromFile(appNav, sessionManager, true, settings)
             }
         }) {
             Text("Select File")
@@ -159,7 +160,7 @@ fun SelectFile(isSignUp: Boolean) {
     } else {
         OutlinedButton({
             scope.launch {
-                startSignFromFile(appNav, sessionManager, false)
+                startSignFromFile(appNav, sessionManager, false, settings)
             }
         }) {
             Text("Select File")
@@ -175,6 +176,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     val scope = rememberCoroutineScope()
     val appNav = LocalAppNav.current
     val sessionManager = LocalSessionManager.current
+    val settings = LocalSettings.current
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
             MeasureTextLineCount(privateKey, LocalTextStyle.current, 32.dp) { lineCount, _ ->
@@ -192,7 +194,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                     keyboardActions = KeyboardActions(onGo = {
                         scope.launch {
-                            startSign(appNav, sessionManager, privateKey, isSignUp)
+                            startSign(appNav, sessionManager, privateKey, isSignUp, settings)
                         }
                     })
                 )
@@ -200,7 +202,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Button({
                     scope.launch {
-                        startSign(appNav, sessionManager, privateKey, isSignUp)
+                        startSign(appNav, sessionManager, privateKey, isSignUp, settings)
                     }
                 }) {
                     Text(
@@ -230,11 +232,18 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
 private suspend fun startSignFromFile(
     appNav: AppNav,
     sessionManager: SessionManager,
-    isSignUp: Boolean
+    isSignUp: Boolean,
+    settings: Settings,
 ) {
     val f = FileKit.openFilePicker()
     if (f != null) {
-        startSign(appNav, sessionManager, String(f.readBytes()).replace("\r\n", "\n"), isSignUp)
+        startSign(
+            appNav,
+            sessionManager,
+            String(f.readBytes()).replace("\r\n", "\n"),
+            isSignUp,
+            settings
+        )
     }
 }
 
@@ -242,10 +251,11 @@ private suspend fun startSign(
     appNav: AppNav,
     sessionManager: SessionManager,
     privateKey: String,
-    isSignUp: Boolean
+    isSignUp: Boolean,
+    settings: Settings,
 ) {
     if (privateKey.isNotBlank()) {
-        if (signUpOrSignIn(privateKey, sessionManager, isSignUp).isSuccess) {
+        if (signUpOrSignIn(privateKey, sessionManager, isSignUp, settings).isSuccess) {
             appNav.gotoHome()
         }
     }
@@ -255,6 +265,7 @@ suspend fun signUpOrSignIn(
     privateKey: String,
     sessionManager: SessionManager,
     isSignUp: Boolean,
+    settings: Settings,
 ): Result<Unit?> {
     return globalDialogState.use {
         val (rawUserPassInfo) = signUpOrInFromPrivateKey(
@@ -262,7 +273,7 @@ suspend fun signUpOrSignIn(
             sessionManager,
             isSignUp
         )
-        val userSession = buildLoginUserSessionFactory().addSession(rawUserPassInfo)
+        val userSession = buildLoginUserSessionFactory(settings).addSession(rawUserPassInfo)
         sessionManager.sessionModel.updateState(ClientSessionState.Success(userSession))
     }
 }

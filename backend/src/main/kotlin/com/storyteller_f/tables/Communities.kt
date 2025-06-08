@@ -3,7 +3,6 @@ package com.storyteller_f.tables
 import com.storyteller_f.*
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.*
-import com.storyteller_f.shared.utils.*
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -42,9 +41,9 @@ class Community(
 }
 
 fun Community.toCommunityIfo(
-    memberCount: Long,
-    joinTime: LocalDateTime?,
-    lastRead: PrimaryKey?
+    memberCount: Long = 0,
+    joinTime: LocalDateTime? = null,
+    lastRead: PrimaryKey? = null
 ) = CommunityInfo(
     id,
     aid,
@@ -56,12 +55,11 @@ fun Community.toCommunityIfo(
     lastRead = lastRead
 )
 
-fun mapCommunityInfo(it: ResultRow): CommunityRawResult {
-    val community = Community.wrapRow(it)
-    val joinedTime = it.getOrNull(MemberJoins.joinedTime)
-    val lastRead = it.getOrNull(UserTopicReads.topicId)
-    val communityInfo = community.toCommunityIfo(0, joinedTime, lastRead)
-    return CommunityRawResult(communityInfo, community.icon, community.poster)
-}
-
-data class CommunityRawResult(val communityInfo: CommunityInfo, val icon: String?, val poster: String?)
+data class CommunityRawResult(
+    val communityInfo: Community,
+    val icon: String?,
+    val poster: String?,
+    val joinedTime: LocalDateTime?,
+    val lastRead: Long?,
+    val memberCount: Long
+)
