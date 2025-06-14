@@ -10,7 +10,7 @@
             android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"
             android:roundIcon="@mipmap/ic_launcher_round"
-            android:name=".app.AApplication"
+            android:name="AApplication"
             android:supportsRtl="true"
             android:enableOnBackInvokedCallback="true"
             android:networkSecurityConfig="@xml/network_security_config"
@@ -24,14 +24,14 @@
                 android:supportsPictureInPicture="true"
                 android:theme="@style/Splash"
                 android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
-                android:name=".app.MainActivity">
+                android:name="MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".app.UploadActivity"
+        <activity android:name="UploadActivity"
                   android:windowSoftInputMode="adjustResize"
                   android:exported="true"
                   android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode">
@@ -43,17 +43,17 @@
                 <data android:mimeType="video/*"/>
             </intent-filter>
         </activity>
-        <activity android:name=".app.MediaPlayerActivity" android:windowSoftInputMode="adjustResize"
+        <activity android:name="MediaPlayerActivity" android:windowSoftInputMode="adjustResize"
                   android:exported="true"
                   android:supportsPictureInPicture="true"
                   android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"/>
-        <service android:name=".app.PlaybackService" android:exported="true"
+        <service android:name="PlaybackService" android:exported="true"
                  android:foregroundServiceType="mediaPlayback">
             <intent-filter>
                 <action android:name="androidx.media3.session.MediaSessionService"/>
             </intent-filter>
         </service>
-        <service android:name=".app.PushServiceImpl"
+        <service android:name="PushServiceImpl"
                  android:exported="false">
             <intent-filter>
                 <action android:name="org.unifiedpush.android.connector.PUSH_EVENT"/>

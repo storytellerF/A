@@ -1,7 +1,7 @@
 package com.storyteller_f.query
 
 import com.storyteller_f.*
-import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.ObjectFetch
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.AlgoType
 import com.storyteller_f.shared.type.ObjectType
@@ -10,6 +10,9 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.tables.*
+import com.storyteller_f.tables.Aids
+import com.storyteller_f.tables.AlternateAccounts.hostId
+import com.storyteller_f.tables.Users
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import org.jetbrains.exposed.sql.*
@@ -30,7 +33,12 @@ suspend fun ExposedDatabaseSession.getUserRawResult(
     objectFetch: ObjectFetch
 ): Result<UserRawResult?> = dbSearch {
     search {
-        Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().bindUserFetchQuery(objectFetch)
+        Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
+            when (objectFetch) {
+                is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
+                is ObjectFetch.IdFetch -> Users.id eq objectFetch.id
+            }
+        }
     }
     first(::mapUserInfo)
 }
@@ -106,20 +114,18 @@ suspend fun ExposedDatabaseSession.createUser(
     name: String,
     newId: PrimaryKey,
     pk: String
-): Result<UserInfo> {
-    return dbQuery {
-        val user = User(null, pk, ad, null, name, newId, now(), 0, PassType.RAW, AlgoType.P256)
-        check(Users.insert {
-            it[id] = user.id
-            it[publicKey] = user.publicKey
-            it[address] = user.address
-            it[nickname] = user.nickname
-            it[createdTime] = user.createdTime
-        }.insertedCount > 0) {
-            "insert user failed"
-        }
-        user.toUserInfo()
+) = dbQuery {
+    val user = User(null, pk, ad, null, name, newId, now(), 0, PassType.RAW, AlgoType.P256)
+    check(Users.insert {
+        it[id] = user.id
+        it[publicKey] = user.publicKey
+        it[address] = user.address
+        it[nickname] = user.nickname
+        it[createdTime] = user.createdTime
+    }.insertedCount > 0) {
+        "insert user failed"
     }
+    user
 }
 
 suspend fun ExposedDatabaseSession.isUserNotExists(pk: String): Result<Boolean> {
@@ -238,3 +244,14 @@ suspend fun ExposedDatabaseSession.getUserAcgByIds(objectListFetch: ObjectListFe
             it[Users.id] to it[Users.acgAmount]
         }
     }
+
+suspend fun ExposedDatabaseSession.getUserAlternatUserRawResultList(uid: PrimaryKey): Result<List<UserRawResult>> {
+    return dbSearch {
+        search {
+            Users.join(AlternateAccounts, JoinType.INNER, Users.id, hostId) {
+                hostId eq uid
+            }.select(Users.fields)
+        }
+        map(::mapUserInfo)
+    }
+}

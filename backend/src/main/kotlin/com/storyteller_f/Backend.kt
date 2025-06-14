@@ -25,10 +25,7 @@ import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.*
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Paths
@@ -207,7 +204,7 @@ fun Query.bindPaginationQuery(
 
         null -> null
     }
-    return orderBy(table.id, order ?: SortOrder.DESC).limit(primaryKeyFetch.size)
+    return orderBy(table.id to (order ?: SortOrder.DESC)).limit(primaryKeyFetch.size)
 }
 
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)
@@ -475,5 +472,11 @@ suspend fun Backend.processRoomRawResultToRoomInfo(list: List<RoomRawResult>): R
                     memberCount = roomRawResult.memberCount
                 )
         }
+    }
+}
+
+suspend fun Backend.getUserAlternateUserInfoList(uid: PrimaryKey): Result<List<UserInfo>?> {
+    return databaseSession.getUserAlternatUserRawResultList(uid).mapResult {
+        processUserRawResultToUserInfo(it)
     }
 }

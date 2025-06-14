@@ -1,46 +1,20 @@
 package com.storyteller_f.query
 
-import com.storyteller_f.ExposedDatabaseSession
-import com.storyteller_f.ObjectFetch
-import com.storyteller_f.bindPaginationQuery
-import com.storyteller_f.count
-import com.storyteller_f.first
-import com.storyteller_f.map
+import com.storyteller_f.*
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.merge
-import com.storyteller_f.tables.Aids
-import com.storyteller_f.tables.EncryptedTopic
-import com.storyteller_f.tables.EncryptedTopicKey
-import com.storyteller_f.tables.EncryptedTopicKeys
-import com.storyteller_f.tables.EncryptedTopics
-import com.storyteller_f.tables.Topic
-import com.storyteller_f.tables.Topics
-import com.storyteller_f.tables.toTopicInfo
+import com.storyteller_f.tables.*
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.countDistinct
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
-import org.jetbrains.exposed.sql.update
-import kotlin.text.hexToByteArray
-import kotlin.text.orEmpty
 
 suspend fun ExposedDatabaseSession.getTopicRootTuple(
     parentId: PrimaryKey
@@ -163,49 +137,31 @@ private suspend fun ExposedDatabaseSession.processTopicToTopicInfo(
  */
 suspend fun ExposedDatabaseSession.getTopicInfoListByPredicate(
     uid: PrimaryKey?,
-    fillHasCommented: Boolean?,
-    addPinOrder: Boolean = false,
-    addPagingQuery: Query.() -> Query = { this },
-    predicate: SqlExpressionBuilder.() -> Op<Boolean>
-): Result<List<TopicInfo>> {
-    if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return dbSearch {
-        search {
-            Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-                .select(Topics.fields + Aids.value)
-                .where(predicate)
-                .let(addPagingQuery)
-                .orderBy(
-                    *(if (addPinOrder) {
-                        arrayOf(
-                            Topics.pinned to SortOrder.DESC,
-                            Topics.id to SortOrder.DESC
-                        )
-                    } else {
-                        arrayOf(Topics.id to SortOrder.DESC)
-                    })
-                )
-        }
-        map(Topic::wrapRow)
-    }.mapResult {
-        processTopicToTopicInfo(uid, it)
+    queryBuilder: Query.() -> Query
+) = dbSearch {
+    search {
+        Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+            .select(Topics.fields + Aids.value)
+            .queryBuilder()
     }
+    map(Topic::wrapRow)
+}.mapResult {
+    processTopicToTopicInfo(uid, it)
 }
 
 suspend fun ExposedDatabaseSession.getTopicPaginationResultByPredicate(
     uid: PrimaryKey?,
-    fillHasCommented: Boolean?,
     primaryKeyFetch: PrimaryKeyFetch,
-    predicate: SqlExpressionBuilder.() -> Op<Boolean>
+    extraQuery: Query.() -> Query
 ): Result<PaginationResult<TopicInfo>> {
-    return getTopicInfoListByPredicate(uid, fillHasCommented, addPagingQuery = {
-        bindPaginationQuery(Topics, primaryKeyFetch)
-    }, predicate = predicate).mapResult { data ->
+    return getTopicInfoListByPredicate(uid, {
+        extraQuery().bindPaginationQuery(Topics, primaryKeyFetch)
+    }).mapResult { data ->
         dbSearch {
             search {
                 Topics
                     .selectAll()
-                    .where(predicate)
+                    .extraQuery()
             }
             count()
         }.map { count ->

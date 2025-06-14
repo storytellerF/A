@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.map
 import app.cash.paging.PagingData
 import app.cash.paging.cachedIn
 import com.storyteller_f.a.app.UploadSession
@@ -28,6 +29,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.io.buffered
 
@@ -71,8 +73,8 @@ class IdCommunityViewModel(
             DatabaseExpression.IdEq("id", communityId),
             { sessionManager.getCommunityInfo(communityId) },
         ) { t ->
-            save(communityId.toString(), t)
-            save(t.aid, t)
+            save(communityId, t)
+            saveDocument(t.aid, t)
         }
 }
 
@@ -88,7 +90,7 @@ class AidCommunityViewModel(
         DatabaseExpression.StrEq("aid", aid),
         { sessionManager.getCommunityInfoByAid(aid) }
     ) { t ->
-        save(aid, t)
+        saveDocument(aid, t)
         save(t.id, t)
     }
 }
@@ -109,10 +111,10 @@ class CommunitiesViewModel(
             sessionManager,
             collectionName,
             databaseSource
-        ) { userSessionViewModel ->
+        ) { sessionManager ->
             listOf(
-                RegularPagingSource(userSessionViewModel) { key, size ->
-                    userSessionViewModel.searchCommunity(
+                RegularPagingSource(sessionManager) { key, size ->
+                    sessionManager.searchCommunity(
                         size,
                         joinStatusSearch,
                         word,
@@ -121,8 +123,8 @@ class CommunitiesViewModel(
                         PosterSearch.HAS_POSTER
                     )
                 },
-                RegularPagingSource(userSessionViewModel) { key, size ->
-                    userSessionViewModel.searchCommunity(
+                RegularPagingSource(sessionManager) { key, size ->
+                    sessionManager.searchCommunity(
                         size,
                         joinStatusSearch,
                         word,
@@ -134,11 +136,22 @@ class CommunitiesViewModel(
             )
         },
     ) {
-        sectionPagingSource(
-            databaseSource,
-            collectionName,
-            listOf(DatabaseOrder.Desc("id"), DatabaseOrder.Desc("hasPoster"))
-        )
+        CustomDatabasePagingSource(
+            databaseSource.getCollection(
+                collectionName,
+                CommunityInfo::class
+            ),
+            listOf(DatabaseOrder.Desc("hasPoster"), DatabaseOrder.Desc("id")),
+            {
+                if (it != null) {
+                    arrayOf(DatabaseExpression.StrLess("id", it))
+                } else {
+                    emptyArray()
+                }
+            },
+        ) { info ->
+            info?.id?.toString()
+        }
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -186,7 +199,7 @@ class TopicsViewModel(
             {
                 with(databaseSource.getCollection("topics", TopicInfo::class)) {
                     save(it.id, it)
-                    it.aid?.let { aid -> save(aid, it) }
+                    it.aid?.let { aid -> saveDocument(aid, it) }
                 }
             }
         ) {
@@ -206,16 +219,29 @@ class TopicsViewModel(
             }
         },
     ) {
-        sectionPagingSource(
-            databaseSource,
-            collectionName,
-            listOf(DatabaseOrder.Asc("pinned"), DatabaseOrder.Desc("id"))
-        ) {
-            processEncryptedTopic(this, sessionManager.sessionModel).map {
-                extractHeadlineIfPlain(it)
-            }
+        CustomDatabasePagingSource(
+            databaseSource.getCollection(
+                collectionName,
+                TopicInfo::class
+            ),
+            listOf(DatabaseOrder.Asc("pinned"), DatabaseOrder.Desc("id")),
+            {
+                if (it != null) {
+                    arrayOf(DatabaseExpression.Less("id", it.toPrimaryKey()))
+                } else {
+                    emptyArray()
+                }
+            },
+        ) { info ->
+            info?.id?.toString()
         }
-    }.flow.debounce(500).cachedIn(viewModelScope)
+    }.flow.map {
+        it.map {
+            processEncryptedTopic(listOf(it), sessionManager.sessionModel).map {
+                extractHeadlineIfPlain(it)
+            }.first()
+        }
+    }.debounce(500).cachedIn(viewModelScope)
 }
 
 private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
@@ -248,7 +274,7 @@ class IdRoomViewModel(
             }
         ) { t ->
             save(communityId, t)
-            save(t.aid, t)
+            saveDocument(t.aid, t)
         }
 }
 
@@ -266,7 +292,7 @@ class AidRoomViewModel(
                 sessionManager.getRoomInfoByAid(aid)
             }
         ) { t ->
-            save(aid, t)
+            saveDocument(aid, t)
             save(t.id, t)
         }
 }
@@ -365,7 +391,7 @@ class IdUserViewModel(
             }
         ) { t ->
             save(id, t)
-            t.aid?.let { save(it, t) }
+            t.aid?.let { saveDocument(it, t) }
         }
 }
 
@@ -383,7 +409,7 @@ class AidUserViewModel(
                 sessionManager.getUserInfoByAid(aid)
             }
         ) { t ->
-            save(aid, t)
+            saveDocument(aid, t)
             save(t.id, t)
         }
 }
@@ -419,11 +445,34 @@ class MemberViewModel(
     }.flow.cachedIn(viewModelScope)
 }
 
-class ReactionsViewModel(sessionManager: SessionManager, private val objectId: PrimaryKey) :
-    SimpleViewModel<ServerResponse<ReactionInfo>>() {
-    override val handler: LoadingHandler<ServerResponse<ReactionInfo>> = SimpleLoadingHandler(viewModelScope) {
-        sessionManager.getReactions(objectId, 20)
-    }
+class ReactionsViewModel(
+    sessionManager: SessionManager,
+    private val objectId: PrimaryKey,
+    databaseSource: DatabaseSource
+) :
+    PagingViewModel<String, ReactionInfo>() {
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow = Pager(
+        PagingConfig(pageSize = 20),
+        remoteMediator = commonRemoteMediator(
+            databaseSource,
+            "reactions_$objectId",
+            RegularPagingSource(sessionManager) { key, size ->
+                sessionManager.getReactions(objectId, size, key)
+            }
+        ) { info ->
+            saveDocument("${info.objectId}-${info.count}", info)
+        }
+    ) {
+        commonPagingSource(
+            "reactions_$objectId",
+            databaseSource,
+        ) { info ->
+            info?.let {
+                "${info.objectId}-${info.count}"
+            }
+        }
+    }.flow.cachedIn(viewModelScope)
 }
 
 abstract class TopicViewModel :
@@ -445,7 +494,7 @@ class IdTopicViewModel(
             }
         ) { t ->
             save(topicId, t)
-            t.aid?.let { save(it, t) }
+            t.aid?.let { saveDocument(it, t) }
         }
 }
 
@@ -464,7 +513,7 @@ class AidTopicViewModel(
                 sessionManager.getTopicInfoByAid(aid)
             }
         ) { t ->
-            save(aid, t)
+            saveDocument(aid, t)
             save(t.id, t)
         }
 }

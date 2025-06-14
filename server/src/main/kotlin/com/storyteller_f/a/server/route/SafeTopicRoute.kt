@@ -33,7 +33,6 @@ fun Route.bindSafeTopicRoute(reader: DatabaseReader, backend: Backend) {
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.recommendTopics(
                     uid,
-                    it.parent.fillHasCommented,
                     f
                 )
             }

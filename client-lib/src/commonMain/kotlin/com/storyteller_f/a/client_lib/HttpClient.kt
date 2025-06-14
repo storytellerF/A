@@ -131,27 +131,26 @@ suspend fun processEncryptedTopic(info: List<TopicInfo>, manager: SessionModel):
             topicInfo
         } else {
             val s = content.encryptedKey[uid]
-            topicInfo.copy(
-                content = if (s != null) {
-                    key.decrypt(
-                        content.encrypted.hexToByteArray(),
-                        s.hexToByteArray()
-                    ).fold(onSuccess = {
-                        if (checkContent(it)) {
-                            TopicContent.Plain(it)
-                        } else {
-                            TopicContent.Invalid
-                        }
-                    }, onFailure = {
-                        Napier.e(it) {
-                            "decrypt ${topicInfo.id} failed"
-                        }
-                        TopicContent.DecryptFailed(it.message.toString())
-                    })
-                } else {
-                    TopicContent.DecryptFailed("auth failed")
-                }
-            )
+            val topicContent = if (s != null) {
+                key.decrypt(
+                    content.encrypted.hexToByteArray(),
+                    s.hexToByteArray()
+                ).fold(onSuccess = {
+                    if (checkContent(it)) {
+                        TopicContent.Plain(it)
+                    } else {
+                        TopicContent.Invalid
+                    }
+                }, onFailure = {
+                    Napier.e(it) {
+                        "decrypt ${topicInfo.id} failed"
+                    }
+                    TopicContent.DecryptFailed(it.message.toString())
+                })
+            } else {
+                TopicContent.DecryptFailed("auth failed")
+            }
+            topicInfo.copy(content = topicContent)
         }
     }
 }

@@ -234,7 +234,7 @@ fun createWorldViewModel() = viewModel(keys = listOf("world")) { client, databas
 @Composable
 fun createReactionsViewModel(objectId: PrimaryKey) =
     viewModel(keys = listOf("reactions", objectId)) { client, databaseSource ->
-        ReactionsViewModel(client, objectId)
+        ReactionsViewModel(client, objectId, databaseSource)
     }
 
 @Composable

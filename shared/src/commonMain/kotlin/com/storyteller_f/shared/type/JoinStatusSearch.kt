@@ -11,6 +11,11 @@ enum class PosterSearch {
     HAS_POSTER, NO_POSTER, UNSPECIFIED
 }
 
+sealed interface TopicSearch {
+    data class FillComment(val id: PrimaryKey)  : TopicSearch
+    object Unspecified : TopicSearch
+}
+
 sealed interface JoinSearch {
     data class Joined(val uid: PrimaryKey) : JoinSearch
     data class NotJoined(val uid: PrimaryKey) : JoinSearch
