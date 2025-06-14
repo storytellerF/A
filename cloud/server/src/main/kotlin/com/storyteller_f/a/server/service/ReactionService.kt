@@ -28,14 +28,14 @@ suspend fun Backend.addReaction(
 ) = checkRootWritePermission(ObjectType.TOPIC, topicId, userId).mapResultIfNotNull {
     if (it.hasWrite) {
         val newId = SnowflakeFactory.nextId()
-        this.databaseSession.getReactionInfo(userId, topicId, emojiText).mapResult { oldReaction ->
+        databaseSession.getReactionInfo(userId, topicId, emojiText).mapResult { oldReaction ->
             if (oldReaction != null && oldReaction.hasReacted) {
                 Result.success(oldReaction)
             } else {
                 val reactionRecord =
                     ReactionRecord(userId, topicId, ObjectType.TOPIC, emojiText, newId, now())
-                this.databaseSession.insertReaction(reactionRecord).map {
-                    this.databaseSession.statsReactionRecord(reactionRecord).onFailure { throwable ->
+                databaseSession.insertReaction(reactionRecord).map {
+                    databaseSession.statsReactionRecord(reactionRecord).onFailure { throwable ->
                         Napier.e(throwable = throwable) {
                             "addReaction"
                         }
@@ -76,5 +76,5 @@ suspend fun Backend.reactionList(
     reactionFetch: ReactionFetch,
 ): Result<PaginationResult<ReactionInfo>> {
     if (fillHasReacted == true && uid == null) return Result.failure(UnauthorizedException())
-    return this.databaseSession.getReactionInfoPaginationResult(listOf(objectId), uid, reactionFetch)
+    return databaseSession.getReactionInfoPaginationResult(listOf(objectId), uid, reactionFetch)
 }

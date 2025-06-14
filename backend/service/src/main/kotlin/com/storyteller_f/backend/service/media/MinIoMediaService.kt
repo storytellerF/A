@@ -8,7 +8,6 @@ import io.minio.errors.ErrorResponseException
 import io.minio.http.Method
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.toKotlinLocalDateTime
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
@@ -33,7 +32,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override suspend fun list(bucketName: String, prefix: String): Result<List<Pair<String, LocalDateTime>>> {
+    override suspend fun list(bucketName: String, prefix: String): Result<List<MediaRecord>> {
         return useMinIoClient(connection) {
             val names = listObjects(
                 ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build()
@@ -49,7 +48,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
     override suspend fun copy(
         bucketName: String,
         copyPacks: List<CopyPack>
-    ): Result<List<Pair<String, LocalDateTime>?>> {
+    ): Result<List<MediaRecord>> {
         return useMinIoClient(connection) {
             copyPacks.map {
                 copyObject(
@@ -81,27 +80,23 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override suspend fun get(bucketName: String, names: List<String?>): Result<List<Pair<String, LocalDateTime>?>> {
+    override suspend fun get(bucketName: String, names: List<String>): Result<List<MediaRecord>> {
         return useMinIoClient(connection) {
-            names.map {
-                if (it == null) {
-                    null
-                } else {
-                    try {
-                        val statObject =
-                            statObject(StatObjectArgs.builder().bucket(bucketName).`object`(it).build())
-                        val url = getMinioObjectUrl(bucketName, it)
-                        if (url != null) {
-                            url to statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime()
-                        } else {
-                            null
-                        }
-                    } catch (e: ErrorResponseException) {
-                        if (e.errorResponse().code() == "NoSuchKey") {
-                            null
-                        } else {
-                            throw e
-                        }
+            names.mapNotNull {
+                try {
+                    val statObject =
+                        statObject(StatObjectArgs.builder().bucket(bucketName).`object`(it).build())
+                    val url = getMinioObjectUrl(bucketName, it)
+                    if (url != null) {
+                        MediaRecord(url, statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime(), it)
+                    } else {
+                        null
+                    }
+                } catch (e: ErrorResponseException) {
+                    if (e.errorResponse().code() == "NoSuchKey") {
+                        null
+                    } else {
+                        throw e
                     }
                 }
             }
@@ -111,7 +106,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
     override suspend fun upload(
         bucketName: String,
         uploadPacks: List<UploadPack>
-    ): Result<List<Pair<String, LocalDateTime>?>> {
+    ): Result<List<MediaRecord>> {
         return useMinIoClient(connection) {
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())

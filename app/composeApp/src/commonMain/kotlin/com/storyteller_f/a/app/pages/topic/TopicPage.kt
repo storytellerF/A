@@ -186,9 +186,9 @@ private fun TopicInputGroup(
             input = it
         },
         {
-            appNav.gotoTopicCompose(ObjectType.TOPIC, topic.id, false, topic.rootId.takeIf { topic.isPrivate })
+            appNav.gotoTopicCompose(ObjectType.TOPIC, topic.id, false, topic.rootId.takeIf { topic.isEncrypted })
         },
-        if (topic.isPrivate) ObjectTuple(topic.rootId, topic.rootType) else ObjectTuple(my?.id ?: 0, ObjectType.USER)
+        if (topic.isEncrypted) ObjectTuple(topic.rootId, topic.rootType) else ObjectTuple(my?.id ?: 0, ObjectType.USER)
     ) {
         CommonInputButton(LoadingState.Done, input, isSending) {
             if (!isSending) {

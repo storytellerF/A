@@ -149,7 +149,7 @@ private fun TopicMenuList(
                 ObjectType.TOPIC,
                 topicInfo.id,
                 true,
-                topicInfo.rootId.takeIf { topicInfo.rootType == ObjectType.ROOM && topicInfo.isPrivate }
+                topicInfo.rootId.takeIf { topicInfo.rootType == ObjectType.ROOM && topicInfo.isEncrypted }
             )
         }
     }

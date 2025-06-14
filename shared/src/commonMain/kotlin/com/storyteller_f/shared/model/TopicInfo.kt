@@ -22,7 +22,7 @@ data class TopicInfo(
     val commentCount: Long,
     val reactionCount: Long,
     val hasComment: Boolean,
-    val isPrivate: Boolean,
+    val isEncrypted: Boolean,
     val isPin: Boolean,
     val lastModifiedTime: LocalDateTime?,
     val extension: Extension?,
@@ -46,7 +46,7 @@ data class TopicInfo(
             commentCount = 0,
             reactionCount = 0,
             hasComment = false,
-            isPrivate = false,
+            isEncrypted = false,
             isPin = false,
             lastModifiedTime = now(),
             extension = Extension(UserInfo.EMPTY)
@@ -73,11 +73,18 @@ sealed interface TopicContent {
 
     @Serializable
     @SerialName("plain")
-    data class Plain(val plain: String, val list: List<MediaInfo> = emptyList()) : TopicContent
+    data class Plain(val plain: String, val list: List<MediaInfo> = emptyList()) : TopicContent {
+        val bytes: ByteArray
+            get() = plain.encodeToByteArray()
+    }
 
     @Serializable
     @SerialName("encrypted")
-    data class Encrypted(val encrypted: String, val encryptedKey: Map<PrimaryKey, String>) : TopicContent
+    data class Encrypted(val encrypted: String, val encryptedKey: Map<PrimaryKey, String>) : TopicContent {
+        @OptIn(ExperimentalStdlibApi::class)
+        val bytes: ByteArray
+            get() = encrypted.hexToByteArray()
+    }
 
     @Serializable
     @SerialName("decrypted-failed")

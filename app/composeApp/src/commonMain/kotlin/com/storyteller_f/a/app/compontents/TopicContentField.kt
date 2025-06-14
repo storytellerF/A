@@ -75,7 +75,7 @@ private fun TopicContentFieldInternal(
     plain: String,
     isEmbed: Boolean
 ) {
-    val (mediaList, objectTuple) = if (topicInfo.isPrivate) {
+    val (mediaList, objectTuple) = if (topicInfo.isEncrypted) {
         val list = createAllMediaListViewModel(topicInfo.rootId ob topicInfo.rootType)
         val media by list.handler.data.collectAsState()
         media?.data.orEmpty() to ObjectTuple(topicInfo.rootId, topicInfo.rootType)

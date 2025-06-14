@@ -39,7 +39,7 @@ fun main() {
 
 private suspend fun Backend.doAcgTask() {
     getAcgTaskListFromTopics().mapResultIfNotNull { (acgList, userAcgMap, list) ->
-        this.databaseSession.addAcgForUser(acgList, userAcgMap, list)
+        databaseSession.addAcgForUser(acgList, userAcgMap, list)
     }.onSuccess {
         delay(1000)
         Napier.i(tag = "task") {
@@ -54,8 +54,8 @@ private suspend fun Backend.doAcgTask() {
 }
 
 private suspend fun Backend.getAcgTaskListFromTopics() =
-    this.databaseSession.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult {
-        this.databaseSession.getTopicList(it?.processedId ?: 0)
+    databaseSession.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult {
+        databaseSession.getTopicList(it?.processedId ?: 0)
     }.mapResult { list ->
         if (list.isNotEmpty()) {
             val acgList = list.groupBy {
@@ -66,7 +66,7 @@ private suspend fun Backend.getAcgTaskListFromTopics() =
             val uids = acgList.map {
                 it.first
             }
-            this.databaseSession.getUserAcgByIds(ObjectListFetch.IdListFetch(uids)).map { list ->
+            databaseSession.getUserAcgByIds(ObjectListFetch.IdListFetch(uids)).map { list ->
                 list.associate {
                     it.first to it.second
                 }

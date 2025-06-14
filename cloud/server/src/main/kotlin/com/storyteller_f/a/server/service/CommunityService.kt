@@ -41,7 +41,7 @@ suspend fun Backend.getCommunity(
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
-    return this.databaseSession.getCommunityRawResult(
+    return databaseSession.getCommunityRawResult(
         objectFetch,
         fillJoinInfo,
         id
@@ -62,7 +62,7 @@ suspend fun Backend.doUserJoinCommunity(
         Result.success(community)
     } else {
         val time = now()
-        this.databaseSession.addCommunityJoin(uid, communityId, time).mapResult {
+        databaseSession.addCommunityJoin(uid, communityId, time).mapResult {
             addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
             Result.success(community.copy(joinedTime = time))
         }.recoverCatching {
@@ -83,7 +83,7 @@ suspend fun Backend.exitCommunity(
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            this.databaseSession.exit(communityId, id).mapResult { i ->
+            databaseSession.exit(communityId, id).mapResult { i ->
                 if (i > 0) {
                     addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
                     Result.success(info.copy(joinedTime = null))
@@ -98,7 +98,7 @@ suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
     search: RouteCommunities.Search,
     primaryKeyFetch: PrimaryKeyFetch
-) = this.databaseSession.getCommunityPaginationResult(
+) = databaseSession.getCommunityPaginationResult(
     search.target ?: uid,
     if (search.target != null) JoinStatusSearch.JOINED else search.joinStatus,
     search.word,
@@ -124,7 +124,7 @@ private suspend fun Backend.processUserJoinedTimeReplace(
     val communityIds = value.map {
         it.id
     }
-    return this.databaseSession.getCommunityJoinedTimeByIds(uid, communityIds).map { joinedTimeList ->
+    return databaseSession.getCommunityJoinedTimeByIds(uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         PaginationResult(value.map {
             it.copy(joinedTime = map[it.id], extension = CommunityInfo.Extension(it.joinedTime))
@@ -161,7 +161,7 @@ suspend fun Backend.createCommunity(
         newCommunity.icon,
         null
     )
-    return this.databaseSession.createCommunity(community).mapResult {
+    return databaseSession.createCommunity(community).mapResult {
         val communityInfo = community
         addUserLog(uid, UserLogType.CREATE, communityInfo.toCommunityIfo().tuple())
         processCommunityRawResultToCommunityInfo(
@@ -190,9 +190,9 @@ suspend fun Backend.updateCommunity(
     return checkRootAdminPermission(ObjectType.COMMUNITY, id, uid).mapResultIfNotNull { permission ->
         if (permission.hasAdmin) {
             checkBeforeUpdateCommunity(newCommunity).mapResult {
-                this.databaseSession.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
+                databaseSession.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        this.databaseSession.getCommunityRawResult(
+                        databaseSession.getCommunityRawResult(
                             ObjectFetch.IdFetch(id),
                             true,
                             uid

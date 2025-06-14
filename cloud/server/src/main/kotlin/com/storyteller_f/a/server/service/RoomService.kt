@@ -37,9 +37,9 @@ suspend fun Backend.getRoomPubKeys(
     roomId: PrimaryKey,
     userId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
-) = this.databaseSession.isMemberJoined(roomId, userId).mapResult {
+) = databaseSession.isMemberJoined(roomId, userId).mapResult {
     if (it) {
-        this.databaseSession.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
+        databaseSession.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
             .map { (data, count) ->
                 PaginationResult(data, count)
             }
@@ -58,7 +58,7 @@ suspend fun Backend.joinRoom(
         val communityId = roomInfo.communityId
         if (communityId == null) {
             // 检查是否存在title
-            this.databaseSession.getTitlePaginationResult(
+            databaseSession.getTitlePaginationResult(
                 PrimaryKeyFetch(null, 1),
                 uid,
                 TitleSearchType.RECEIVER,
@@ -72,7 +72,7 @@ suspend fun Backend.joinRoom(
                 }
             }
         } else {
-            this.databaseSession.isMemberJoined(communityId, uid).mapResult { hasJoined ->
+            databaseSession.isMemberJoined(communityId, uid).mapResult { hasJoined ->
                 if (hasJoined) {
                     directJoinRoom(uid, roomInfo)
                 } else {
@@ -88,7 +88,7 @@ private suspend fun Backend.directJoinRoom(
     roomInfo: RoomInfo
 ): Result<RoomInfo?> {
     val time = now()
-    return this.databaseSession.addRoomJoin(
+    return databaseSession.addRoomJoin(
         roomInfo.id,
         uid,
         time,
@@ -109,7 +109,7 @@ suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            this.databaseSession.exit(roomId, uid).map {
+            databaseSession.exit(roomId, uid).map {
                 addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
                 info.copy(joinedTime = null)
             }
@@ -121,7 +121,7 @@ suspend fun Backend.getRoomInfo(
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<RoomInfo?> {
-    return this.databaseSession.getRoomRawResult(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
+    return databaseSession.getRoomRawResult(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
         processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
     }
 }
@@ -209,9 +209,9 @@ suspend fun Backend.updateRoom(
             if (firstError != null) {
                 Result.failure(firstError)
             } else {
-                this.databaseSession.updateRoom(id, newRoom).mapResult { updateSuccess ->
+                databaseSession.updateRoom(id, newRoom).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        this.databaseSession.getRoomRawResult(ObjectFetch.IdFetch(id), true, uid)
+                        databaseSession.getRoomRawResult(ObjectFetch.IdFetch(id), true, uid)
                             .mapResultIfNotNull {
                                 processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
                             }

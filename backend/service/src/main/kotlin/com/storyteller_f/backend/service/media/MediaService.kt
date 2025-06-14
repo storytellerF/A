@@ -29,19 +29,21 @@ data class UploadPack(
 
 data class CopyPack(val origin: String, val new: String)
 
+data class MediaRecord(val url: String, val lastModified: LocalDateTime, val fullName: String)
+
 interface MediaService {
-    suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<Pair<String, LocalDateTime>?>>
+    suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<MediaRecord>>
 
     /**
      * @param names 完整的name
      */
-    suspend fun get(bucketName: String, names: List<String?>): Result<List<Pair<String, LocalDateTime>?>>
+    suspend fun get(bucketName: String, names: List<String>): Result<List<MediaRecord>>
 
     suspend fun clean(bucketName: String): Result<Unit>
 
-    suspend fun list(bucketName: String, prefix: String): Result<List<Pair<String, LocalDateTime>>>
+    suspend fun list(bucketName: String, prefix: String): Result<List<MediaRecord>>
 
-    suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<Pair<String, LocalDateTime>?>>
+    suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<MediaRecord>>
 
     suspend fun getInputStream(bucketName: String, name: String): Result<InputStream>
 }

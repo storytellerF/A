@@ -7,36 +7,10 @@ import com.storyteller_f.backend.service.index.ElasticTopicSearchService
 import com.storyteller_f.backend.service.index.LuceneTopicSearchService
 import com.storyteller_f.backend.service.index.TopicDocument
 import com.storyteller_f.backend.service.index.TopicSearchService
-import com.storyteller_f.backend.service.media.CopyPack
-import com.storyteller_f.backend.service.media.FileSystemMediaService
-import com.storyteller_f.backend.service.media.MediaService
-import com.storyteller_f.backend.service.media.MinIoMediaService
-import com.storyteller_f.backend.service.media.UploadPack
+import com.storyteller_f.backend.service.media.*
 import com.storyteller_f.backend.service.naming.NameService
-import com.storyteller_f.backend.service.query.getMediaByNames
-import com.storyteller_f.backend.service.query.getMediaListByOwner
-import com.storyteller_f.backend.service.query.getMediaPaginationList
-import com.storyteller_f.backend.service.query.getMemberPaginationResult
-import com.storyteller_f.backend.service.query.getRoomPaginationResult
-import com.storyteller_f.backend.service.query.getUserAlternatUserRawResultList
-import com.storyteller_f.backend.service.query.getUserRawResult
-import com.storyteller_f.backend.service.query.getUserRawResultList
-import com.storyteller_f.backend.service.query.insertCopiedMedia
-import com.storyteller_f.backend.service.query.insertMedia
-import com.storyteller_f.backend.service.query.insertMediaRefs
-import com.storyteller_f.backend.service.query.insertTitle
-import com.storyteller_f.backend.service.tables.CommunityRawResult
-import com.storyteller_f.backend.service.tables.Media
-import com.storyteller_f.backend.service.tables.RoomRawResult
-import com.storyteller_f.backend.service.tables.Title
-import com.storyteller_f.backend.service.tables.Topic
-import com.storyteller_f.backend.service.tables.UserRawResult
-import com.storyteller_f.backend.service.tables.toCommunityIfo
-import com.storyteller_f.backend.service.tables.toMediaInfo
-import com.storyteller_f.backend.service.tables.toRoomInfo
-import com.storyteller_f.backend.service.tables.toTitleInfo
-import com.storyteller_f.backend.service.tables.toTopicInfo
-import com.storyteller_f.backend.service.tables.toUserInfo
+import com.storyteller_f.backend.service.query.*
+import com.storyteller_f.backend.service.tables.*
 import com.storyteller_f.backend.service.types.Cursor
 import com.storyteller_f.backend.service.types.PaginationResult
 import com.storyteller_f.backend.service.types.PrimaryKeyFetch
@@ -51,13 +25,14 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.Query
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.andWhere
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Paths
 import java.util.*
-import kotlin.collections.get
-import kotlin.collections.map
 
 class Backend(
     val config: Config,
@@ -228,24 +203,20 @@ suspend fun Backend.uploadFiles(uploadPacks: List<UploadPack>): Result<List<Medi
     return databaseSession.dbQuery {
         insertMedia(data)
         mediaService.upload(AMEDIA_DEFAULT_BUCKET, uploadPacks).getOrThrow()
-    }.map { urls ->
-        urls.mapIndexed { i, e ->
-            if (e != null) {
-                val uploadPack = uploadPacks[i]
-                MediaInfo(
-                    data[i].first,
-                    e.first,
-                    uploadPack.newFullName,
-                    uploadPack.contentType,
-                    uploadPack.size,
-                    uploadPack.name,
-                    uploadPack.owner,
-                    e.second,
-                    uploadPack.dimension
-                )
-            } else {
-                null
-            }
+    }.map { mediaRecords ->
+        mediaRecords.mapIndexed { i, e ->
+            val uploadPack = uploadPacks[i]
+            MediaInfo(
+                data[i].first,
+                e.url,
+                uploadPack.newFullName,
+                uploadPack.contentType,
+                uploadPack.size,
+                uploadPack.name,
+                uploadPack.owner,
+                e.lastModified,
+                uploadPack.dimension
+            )
         }
     }
 }
@@ -264,7 +235,7 @@ suspend fun Backend.insertTitleAndTopicDescription(
     }
 }
 
-suspend fun Backend.getUserInfoAndRelatedMedia(
+suspend fun Backend.getUserInfo(
     fetch: ObjectFetch
 ): Result<UserInfo?> {
     return databaseSession.getUserRawResult(fetch).mapResultIfNotNull {
@@ -272,8 +243,8 @@ suspend fun Backend.getUserInfoAndRelatedMedia(
     }
 }
 
-suspend fun Backend.getUsersInfoByIds(
-    listFetch: ObjectListFetch.IdListFetch
+suspend fun Backend.getUserInfoList(
+    listFetch: ObjectListFetch
 ): Result<List<UserInfo>?> {
     return databaseSession.getUserRawResultList(listFetch).mapResult {
         processUserRawResultToUserInfo(it)
@@ -284,22 +255,18 @@ suspend fun Backend.savePlainTopic(
     topic: Topic,
     content: TopicContent.Plain
 ) = databaseSession.dbQuery {
-    Topic.Companion.new(topic)
+    Topic.new(topic)
     databaseSession.insertMediaRefs(topic.id, ObjectType.TOPIC, extractMarkdownMediaLink(content.plain).map {
         topic.author to it
     }).getOrThrow()
-
-    topicSearchService.saveDocument(
-        listOf(TopicDocument.Companion.fromTopic(topic, content))
-    ).getOrThrow()
-    topic.toTopicInfo().copy(content = content)
+    topic.toTopicInfo(content = content).copy(content = content)
 }
 
 suspend fun Backend.copyMedia(
     media: Media,
     newOwner: PrimaryKey,
     newName: String
-): Result<ServerResponse<MediaInfo?>> {
+): Result<ServerResponse<MediaInfo>> {
     val id = SnowflakeFactory.nextId()
     return databaseSession.dbQuery {
         insertCopiedMedia(id, media, newOwner)
@@ -308,23 +275,19 @@ suspend fun Backend.copyMedia(
             listOf(CopyPack("${media.owner}/${media.name}", newName))
         ).map { list ->
             ServerResponse(list.map {
-                if (it != null) {
-                    val dimension =
-                        if (media.width != 0 && media.height != 0) Dimension(media.width, media.height) else null
-                    MediaInfo(
-                        id,
-                        it.first,
-                        newName,
-                        media.contentType,
-                        media.size,
-                        media.name,
-                        newOwner,
-                        it.second,
-                        dimension
-                    )
-                } else {
-                    null
-                }
+                val dimension =
+                    if (media.width != 0 && media.height != 0) Dimension(media.width, media.height) else null
+                MediaInfo(
+                    id,
+                    it.url,
+                    newName,
+                    media.contentType,
+                    media.size,
+                    media.name,
+                    newOwner,
+                    it.lastModified,
+                    dimension
+                )
             }, null)
         }.getOrThrow()
     }
@@ -333,56 +296,31 @@ suspend fun Backend.copyMedia(
 suspend fun Backend.getMediaPaginationResult(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
-): Result<PaginationResult<MediaInfo>> =
+): Result<PaginationResult<MediaInfo?>> =
     databaseSession.getMediaPaginationList(uid, primaryKeyFetch).mapResult { (list, count) ->
-        val names = list.map {
-            "${it.owner}/${it.name}"
-        }
-        mediaService.get(AMEDIA_DEFAULT_BUCKET, names).map { mediaUrls ->
-            val data = mediaUrls.mapIndexedNotNull { i, e ->
-                if (e != null) {
-                    val media = list[i]
-                    val dimension = if (media.contentType.startsWith("image")) {
-                        Dimension(media.width, media.height)
-                    } else {
-                        null
-                    }
-                    MediaInfo(
-                        media.id,
-                        e.first,
-                        names[i],
-                        media.contentType,
-                        media.size,
-                        media.name,
-                        media.owner,
-                        e.second,
-                        dimension
-                    )
-                } else {
-                    null
-                }
-            }
-            PaginationResult(data, count)
+        processMediaToMediaInfo(list).map {
+            PaginationResult(it, count)
         }
     }
 
 suspend fun Backend.processCommunityRawResultToCommunityInfo(
     list: List<CommunityRawResult>
 ): Result<List<CommunityInfo>?> {
-    return getMediaInfoList(list.flatMap { (_, icon, poster) ->
+    return databaseSession.getMediaByIds(list.flatMap { (_, icon, poster) ->
         listOf(icon, poster)
-    }).mapIfNotNull { icons ->
-        list.mapIndexed { i, communityPair ->
-            val first = icons[i * 2]
-            val second = icons[i * 2 + 1]
-            communityPair.communityInfo.toCommunityIfo().copy(
-                memberCount = communityPair.memberCount,
-                icon = first,
-                poster = second,
-                hasPoster = second != null,
-                joinedTime = communityPair.joinedTime,
-                lastRead = communityPair.lastRead
-            )
+    }.filterNotNull()).mapResultIfNotNull { icons ->
+        processMediaToMediaInfo(icons).map {
+            val map = it.filterNotNull().associateBy { it.id }
+            list.mapIndexed { i, rawResult ->
+                rawResult.community.toCommunityIfo().copy(
+                    memberCount = rawResult.memberCount,
+                    icon = rawResult.icon?.let { map[it] },
+                    poster = rawResult.poster?.let { map[it] },
+                    hasPoster = rawResult.poster != null,
+                    joinedTime = rawResult.joinedTime,
+                    lastRead = rawResult.lastRead
+                )
+            }
         }
     }
 }
@@ -402,14 +340,8 @@ suspend fun Backend.searchMembers(
 suspend fun Backend.getMediaInfoList(
     owner: PrimaryKey,
 ): Result<List<MediaInfo?>?> {
-    return this.databaseSession.getMediaListByOwner(owner).mapResultIfNotNull { medias ->
-        mediaService.get(AMEDIA_DEFAULT_BUCKET, medias.map {
-            it.newFullName
-        }).mapIfNotNull {
-            medias.mapIndexed { i, e ->
-                it[i]?.let { it1 -> e.toMediaInfo(it1) }
-            }
-        }
+    return databaseSession.getMediaListByOwner(owner).mapResultIfNotNull { medias ->
+        processMediaToMediaInfo(medias)
     }
 }
 
@@ -433,18 +365,22 @@ suspend fun Backend.searchRoomPaginationResult(
     }
 }
 
-suspend fun Backend.getMediaInfoList(names: List<String?>): Result<List<MediaInfo?>?> {
-    return this.databaseSession.getMediaByNames(names).mapResult { medias ->
-        val mediaMap = medias.filterNotNull().associateBy { it.newFullName }
-        mediaService.get(AMEDIA_DEFAULT_BUCKET, names.map {
-            mediaMap[it]?.newFullName
-        }).map {
-            names.mapIndexed { i, e ->
-                if (e != null) {
-                    it[i]?.let { it1 -> mediaMap[e]?.toMediaInfo(it1) }
-                } else {
-                    null
-                }
+suspend fun Backend.getMediaInfoList(names: List<String>): Result<List<MediaInfo?>?> {
+    return databaseSession.getMediaByNames(names).mapResult { medias ->
+        processMediaToMediaInfo(medias)
+    }
+}
+
+private suspend fun Backend.processMediaToMediaInfo(
+    medias: List<Media>,
+): Result<List<MediaInfo?>> {
+    return mediaService.get(AMEDIA_DEFAULT_BUCKET, medias.map {
+        it.fullName
+    }).map {
+        val mediaRecordMap = it.associateBy { it.fullName }
+        medias.map { media ->
+            mediaRecordMap[media.fullName]?.let {
+                media.toMediaInfo(it.url, it.lastModified)
             }
         }
     }
@@ -452,26 +388,32 @@ suspend fun Backend.getMediaInfoList(names: List<String?>): Result<List<MediaInf
 
 suspend fun Backend.processUserRawResultToUserInfo(
     rawResults: List<UserRawResult>
-) = getMediaInfoList(rawResults.map {
-    it.avatar
-}).mapIfNotNull { value ->
-    rawResults.mapIndexed { index, pair ->
-        pair.user.toUserInfo().copy(avatar = value[index])
+) = databaseSession.getMediaByIds(rawResults.mapNotNull {
+    it.user.icon
+}).mapResultIfNotNull { medias ->
+    processMediaToMediaInfo(medias).map {
+        val mediaInfoMap = it.filterNotNull().associateBy { it.id }
+        rawResults.map { pair ->
+            pair.user.toUserInfo().copy(avatar = pair.user.icon?.let { mediaInfoMap[it] })
+        }
     }
 }
 
 suspend fun Backend.processRoomRawResultToRoomInfo(list: List<RoomRawResult>): Result<List<RoomInfo>?> {
-    return getMediaInfoList(list.map {
-        it.icon
-    }).mapIfNotNull { icons ->
-        list.mapIndexed { i, roomRawResult ->
-            roomRawResult.roomInfo.toRoomInfo()
-                .copy(
-                    icon = icons[i],
-                    joinedTime = roomRawResult.joinedTime,
-                    lastRead = roomRawResult.topicId,
-                    memberCount = roomRawResult.memberCount
-                )
+    return databaseSession.getMediaByIds(list.mapNotNull {
+        it.room.icon
+    }).mapResultIfNotNull { medias ->
+        processMediaToMediaInfo(medias).map {
+            val mediaInfoMap = it.filterNotNull().associateBy { it.id }
+            list.map { roomRawResult ->
+                roomRawResult.room.toRoomInfo()
+                    .copy(
+                        icon = roomRawResult.room.icon?.let { mediaInfoMap[it] },
+                        joinedTime = roomRawResult.joinedTime,
+                        lastRead = roomRawResult.topicId,
+                        memberCount = roomRawResult.memberCount
+                    )
+            }
         }
     }
 }
