@@ -12,7 +12,7 @@ enum class PosterSearch {
 }
 
 sealed interface TopicSearch {
-    data class FillComment(val id: PrimaryKey)  : TopicSearch
+    data class FillComment(val id: PrimaryKey) : TopicSearch
     object Unspecified : TopicSearch
 }
 

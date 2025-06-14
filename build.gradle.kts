@@ -77,7 +77,7 @@ subprojects {
     }
 }
 val composeModules = listOf("composeApp", "shared")
-val jvmLibModules = listOf("server", "backend", "client-lib")
+val jvmLibModules = listOf("cloud:server", "backend:service")
 dependencies {
     (composeModules + jvmLibModules.forEach {
         kover(project(":$it"))

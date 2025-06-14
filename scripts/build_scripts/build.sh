@@ -4,7 +4,7 @@ set -e
 ./gradlew build
 ./scripts/android_scripts/create-avd.bat
 ./scripts/android_scripts/start-wait-avd.bat
-./gradlew test-server:run &
+./gradlew app:devCli:run &
 echo "Waiting for port 8888 to become available..."
 counter=0
 max_retries=60  # 最多尝试 60 次（5 分钟）
@@ -24,8 +24,8 @@ while true; do
         exit 1
     fi
 done
-./gradlew :composeApp:connectedAndroidTest
-./gradlew :composeApp:desktopTest
+./gradlew app:composeApp:connectedAndroidTest
+./gradlew app:composeApp:desktopTest
 #./gradlew :composeApp:wasmJsTest
 #./gradlew :composeApp:iosSimulatorArm64Test
 kill -9 $(lsof -t -i :8888>)

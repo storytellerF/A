@@ -1,0 +1,362 @@
+package com.storyteller_f.a.app.common
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.paging.CombinedLoadStates
+import app.cash.paging.LoadState
+import app.cash.paging.LoadStateError
+import app.cash.paging.LoadStateLoading
+import app.cash.paging.LoadStateNotLoading
+import app.cash.paging.compose.LazyPagingItems
+import app.cash.paging.compose.itemKey
+import com.storyteller_f.a.app.Res
+import com.storyteller_f.a.app.compontents.ExceptionView
+import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.no_content_yet
+import com.storyteller_f.a.app.refresh
+import com.storyteller_f.a.client_lib.LoadingHandler
+import com.storyteller_f.a.client_lib.LoadingState
+import com.storyteller_f.shared.model.Identifiable
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
+
+const val REFRESH_AFTER = 300L
+
+private fun LoadState?.toLoadingState() =
+    when (this) {
+        null -> null
+
+        is LoadStateLoading -> LoadingState.Loading
+
+        is LoadStateError -> LoadingState.Error(error)
+
+        is LoadStateNotLoading -> LoadingState.Done
+    }
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun <T : Any> StateView(
+    pagingItems: LazyPagingItems<T>,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    var refreshing by remember { mutableStateOf(false) }
+    val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
+        refreshing = true
+        pagingItems.refresh()
+    })
+    val refreshLoadState = pagingItems.loadState.refresh
+    LaunchedEffect(key1 = refreshing, key2 = refreshLoadState) {
+        // 增加延时，确保pagingItems真正进入刷新状态
+        delay(REFRESH_AFTER)
+        if (refreshing) {
+            // 刷新结束或者当前没有内容时停止刷新，如果没有内容会使用列表刷新控件
+            if (refreshLoadState !is LoadStateLoading || pagingItems.itemCount == 0) refreshing = false
+        }
+    }
+    Box(modifier = modifier.pullRefresh(refreshState)) {
+        when (val state = pagingItems.loadState.toLoadingState(pagingItems.itemCount)) {
+            null -> CenterBox {
+                CircularProgressIndicator()
+            }
+
+            is LoadingState.Loading -> if (pagingItems.itemCount == 0) {
+                CenterBox {
+                    CircularProgressIndicator()
+                }
+            } else {
+                content()
+            }
+
+            is LoadingState.Error -> CenterBox {
+                ExceptionCell(state.e) {
+                    pagingItems.refresh()
+                }
+            }
+
+            is LoadingState.Done -> if (pagingItems.itemCount == 0) {
+                CenterBox {
+                    Text(text = stringResource(Res.string.no_content_yet))
+                }
+            } else {
+                content()
+            }
+        }
+        PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
+    }
+}
+
+@Composable
+private fun CombinedLoadStates.toLoadingState(itemCount: Int): LoadingState? {
+    val state by produceState<LoadingState?>(null, this, itemCount) {
+        delay(100)
+        val mediatorRefreshState = mediator?.refresh
+        val sourceRefreshState = source.refresh
+        value = when {
+            mediatorRefreshState !is LoadStateError -> refresh.toLoadingState()
+            itemCount == 0 -> LoadingState.Error(mediatorRefreshState.error)
+            sourceRefreshState is LoadStateNotLoading -> LoadingState.Done
+            else -> refresh.toLoadingState()
+        }
+    }
+    return state
+}
+
+fun <T : Any> LazyListScope.topPrepend(lazyPagingItems: LazyPagingItems<T>) {
+    if (lazyPagingItems.loadState.prepend == LoadStateLoading) {
+        item {
+            Text(
+                text = "Waiting for items to load from the backend",
+                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+            )
+        }
+    }
+    val loadState = lazyPagingItems.loadState.mediator?.refresh
+    if (loadState is LoadStateError && lazyPagingItems.itemCount > 0) {
+        item {
+            ExceptionCell(loadState.error) {
+                lazyPagingItems.refresh()
+            }
+        }
+    }
+}
+
+fun <T : Any> LazyGridScope.topPrepend(pagingItems: LazyPagingItems<T>, count: Int) {
+    if (pagingItems.loadState.prepend == LoadStateLoading) {
+        item(span = {
+            GridItemSpan(count)
+        }) {
+            Text(
+                text = "Waiting for items to load from the backend",
+                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+            )
+        }
+    }
+}
+
+fun <T : Any> LazyListScope.bottomAppending(lazyPagingItems: LazyPagingItems<T>) {
+    if (lazyPagingItems.loadState.append == LoadStateLoading) {
+        item {
+            CircularProgressIndicator(
+                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+            )
+        }
+    }
+}
+
+fun <T : Any> LazyGridScope.bottomAppending(pagingItems: LazyPagingItems<T>, count: Int) {
+    if (pagingItems.loadState.append == LoadStateLoading) {
+        item(span = {
+            GridItemSpan(count)
+        }) {
+            CircularProgressIndicator(
+                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+            )
+        }
+    }
+}
+
+@Composable
+fun<T> debounceState(v: T): T? {
+    val value by produceState<T?>(null, v) {
+        delay(100)
+        value = v
+    }
+    return value
+}
+
+@OptIn(ExperimentalMaterialApi::class, FlowPreview::class)
+@Composable
+fun <T> StateView(
+    handler: LoadingHandler<T>,
+    modifier: Modifier = Modifier,
+    extraRefresh: () -> Unit = {},
+    content: @Composable (T & Any) -> Unit
+) {
+    val state by handler.state.collectAsState()
+    val data by handler.data.collectAsState()
+    var refreshing by remember { mutableStateOf(false) }
+    val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
+        refreshing = true
+        handler.refresh()
+        extraRefresh()
+    })
+    LaunchedEffect(key1 = refreshing, key2 = state) {
+        delay(REFRESH_AFTER)
+        if (refreshing && state !is LoadingState.Loading) refreshing = false
+    }
+    Box(modifier = modifier.pullRefresh(refreshState)) {
+        when (val s = debounceState(state)) {
+            null -> CenterBox {
+                CircularProgressIndicator()
+            }
+
+            is LoadingState.Loading -> CenterBox {
+                CircularProgressIndicator()
+            }
+
+            is LoadingState.Error -> CenterBox {
+                ExceptionCell(s.e) {
+                    handler.refresh()
+                    extraRefresh()
+                }
+            }
+
+            is LoadingState.Done -> data?.let {
+                content(it)
+            }
+        }
+        PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
+    }
+}
+
+@Composable
+fun ExceptionCell(
+    throwable: Throwable,
+    extraRefresh: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        ExceptionView(throwable)
+        Button({
+            extraRefresh()
+        }, modifier = Modifier) {
+            Text(stringResource(Res.string.refresh))
+        }
+    }
+}
+
+@Composable
+fun CenterBox(content: @Composable () -> Unit) {
+    val scrollState = rememberScrollState()
+    Box(modifier = Modifier.fillMaxSize().verticalScroll(scrollState), contentAlignment = Alignment.Center) {
+        content()
+    }
+}
+
+fun <T : Identifiable> LazyListScope.nestedStateView(
+    items: LazyPagingItems<T>,
+    content: @Composable (T?, Int) -> Unit
+) {
+    if (items.loadState.refresh is LoadStateNotLoading && items.itemCount == 0) {
+        item {
+            Text(
+                stringResource(Res.string.no_content_yet),
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+    when (val refreshState = items.loadState.refresh.toLoadingState()) {
+        is LoadingState.Loading -> {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
+
+        is LoadingState.Error -> {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 100.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ExceptionView(refreshState.e)
+                    Button({
+                        items.refresh()
+                    }, modifier = Modifier) {
+                        Text("Refresh")
+                    }
+                }
+            }
+        }
+
+        else -> {}
+    }
+    nestedStateList(items, content)
+    when (items.loadState.refresh.toLoadingState()) {
+        is LoadingState.Loading, is LoadingState.Error -> {}
+
+        else -> {
+            if (items.loadState.append is LoadStateLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun <T : Identifiable> LazyListScope.nestedStateList(
+    items: LazyPagingItems<T>,
+    content: @Composable (T?, Int) -> Unit
+) {
+    items(
+        items.itemCount,
+        key = items.itemKey {
+            it.id.toString()
+        }
+    ) {
+        content(items[it], it)
+    }
+}
+
+@Composable
+fun <T : Any> RefCellStateView(
+    handler: LoadingHandler<T>,
+    modifier: Modifier = Modifier,
+    content: @Composable (T) -> Unit
+) {
+    val data by handler.data.collectAsState()
+    val state by handler.state.collectAsState()
+    Box(modifier = modifier) {
+        when (val localState = state) {
+            null, is LoadingState.Loading -> Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+
+            is LoadingState.Error -> Box(
+                modifier = Modifier.fillMaxSize().clickable {
+                    globalDialogState.showErrorState(localState.e)
+                }.padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                ExceptionView(localState.e)
+            }
+
+            else -> {
+                data?.let {
+                    content(it)
+                }
+            }
+        }
+    }
+}

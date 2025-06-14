@@ -1,0 +1,770 @@
+package com.storyteller_f.a.server.service
+
+import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.server.auth.addUserLog
+import com.storyteller_f.a.server.route.RouteTopics
+import com.storyteller_f.backend.service.Backend
+import com.storyteller_f.backend.service.CustomBadRequestException
+import com.storyteller_f.backend.service.ForbiddenException
+import com.storyteller_f.backend.service.ObjectFetch
+import com.storyteller_f.backend.service.ObjectListFetch
+import com.storyteller_f.backend.service.bindPaginationQuery
+import com.storyteller_f.backend.service.getMediaInfoList
+import com.storyteller_f.backend.service.getUsersInfoByIds
+import com.storyteller_f.backend.service.index.DocumentSearch
+import com.storyteller_f.backend.service.index.TopicDocument
+import com.storyteller_f.backend.service.media.UploadPack
+import com.storyteller_f.backend.service.query.checkCommunityExists
+import com.storyteller_f.backend.service.query.checkUserExists
+import com.storyteller_f.backend.service.query.getCommunityRawResult
+import com.storyteller_f.backend.service.query.getEncryptedTopicContents
+import com.storyteller_f.backend.service.query.getJoinedCommunityIds
+import com.storyteller_f.backend.service.query.getReactionInfoPaginationResult
+import com.storyteller_f.backend.service.query.getRoomCommunityId
+import com.storyteller_f.backend.service.query.getRoomRawResult
+import com.storyteller_f.backend.service.query.getTopicInfo
+import com.storyteller_f.backend.service.query.getTopicInfoListByPredicate
+import com.storyteller_f.backend.service.query.getTopicPaginationResultByPredicate
+import com.storyteller_f.backend.service.query.getTopicRootTuple
+import com.storyteller_f.backend.service.query.getUserRawResult
+import com.storyteller_f.backend.service.query.isMemberJoined
+import com.storyteller_f.backend.service.query.updateTopicStatus
+import com.storyteller_f.backend.service.savePlainTopic
+import com.storyteller_f.backend.service.tables.Topic
+import com.storyteller_f.backend.service.tables.Topics
+import com.storyteller_f.backend.service.tables.toUserInfo
+import com.storyteller_f.backend.service.types.PaginationResult
+import com.storyteller_f.backend.service.types.PrimaryKeyFetch
+import com.storyteller_f.backend.service.types.ReactionFetch
+import com.storyteller_f.backend.service.uploadFiles
+import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.obj.NewTopic
+import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.TopicPinSearch
+import com.storyteller_f.shared.type.TopicPinSearch.PINNED
+import com.storyteller_f.shared.type.TopicPinSearch.UNPINNED
+import com.storyteller_f.shared.type.UnauthorizedException
+import com.storyteller_f.shared.utils.*
+import io.ktor.http.*
+import io.ktor.server.plugins.*
+import org.apache.pdfbox.examples.signature.CreateSignature
+import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.pdmodel.font.FontMappers
+import org.apache.pdfbox.pdmodel.font.PDType0Font
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.andWhere
+import rst.pdfbox.layout.elements.Document
+import rst.pdfbox.layout.elements.Paragraph
+import java.awt.GraphicsEnvironment
+import java.io.File
+import java.io.FileInputStream
+import java.security.KeyStore
+
+suspend fun Backend.createPublicTopic(
+    uid: PrimaryKey,
+    newTopic: NewTopic
+): Result<TopicInfo?> {
+    if (newTopic.parentType == ObjectType.ROOM) {
+        return Result.failure(ForbiddenException("can't use api to add topic in room"))
+    }
+
+    val content = newTopic.content.trim()
+
+    if (content.isEmpty()) {
+        return Result.failure(CustomBadRequestException("content is empty"))
+    } else if (!checkContent(content)) {
+        return Result.failure(CustomBadRequestException("invalid"))
+    }
+
+    return checkRootWritePermission(
+        newTopic.parentType,
+        newTopic.parentId,
+        uid
+    ).mapResultIfNotNull { (rootType, rootId, hasWrite) ->
+        when {
+            rootType == ObjectType.ROOM -> {
+                Result.failure(ForbiddenException("can't use api to add topic in room"))
+            }
+
+            hasWrite -> {
+                val newId = SnowflakeFactory.nextId()
+                val topic = Topic(
+                    id = newId,
+                    createdTime = now(),
+                    author = uid,
+                    parentId = newTopic.parentId,
+                    parentType = newTopic.parentType,
+                    rootId = rootId,
+                    rootType = rootType,
+                    false,
+                    lastModifiedTime = null,
+                )
+                val plain = TopicContent.Plain(content)
+
+                savePlainTopic(topic, plain).mapResult { topicInfo ->
+                    addUserLog(uid, UserLogType.CREATE, topicInfo.tuple())
+                    processTopicMedia(
+                        listOf(topicInfo),
+                        listOf(TopicDocument.fromTopic(topic, plain))
+                    ).mapIfNotNull {
+                        it.firstOrNull()
+                    }
+                }
+            }
+
+            else -> {
+                Result.failure(ForbiddenException("Permission denied."))
+            }
+        }
+    }
+}
+
+suspend fun Backend.createTopicSnapshot(
+    uid: PrimaryKey,
+    topicId: PrimaryKey
+): Result<MediaInfo?> {
+    return databaseSession.getUserRawResult(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { (first) ->
+        checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull { (hasRead) ->
+            if (hasRead) {
+                databaseSession.getTopicInfo(ObjectFetch.IdFetch(topicId), null).mapResultIfNotNull { value ->
+                    createTopicSnapshot(value, first.toUserInfo(), uid)
+                }
+            } else {
+                Result.failure(ForbiddenException("Permission denied"))
+            }
+        }
+    }
+}
+
+private suspend fun Backend.createTopicSnapshot(
+    topicInfo: TopicInfo,
+    creatorInfo: UserInfo,
+    uid: PrimaryKey
+): Result<MediaInfo?> {
+    val topicId = topicInfo.id
+    return topicSearchService.getDocuments(listOf(topicId)).map { value -> value.firstOrNull() }
+        .mapResultIfNotNull { documents ->
+            databaseSession.getUserRawResult(ObjectFetch.IdFetch(topicInfo.author)).mapResultIfNotNull { (first) ->
+                val name = "$uid/$topicId.pdf"
+                val pdfFile = File("/tmp/$name")
+                val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
+                try {
+                    generateSignedSnapshot(
+                        first.toUserInfo(),
+                        creatorInfo,
+                        topicInfo,
+                        pdfFile,
+                        signedFile,
+                        documents.content,
+                        snapshotVerify
+                    ).mapResultIfNotNull {
+                        uploadFiles(
+                            listOf(
+                                UploadPack(
+                                    pdfFile,
+                                    "$topicId.pdf",
+                                    uid,
+                                    pdfFile.length(),
+                                    ContentType.Application.Pdf.contentType,
+                                    null,
+                                )
+                            )
+                        ).map {
+                            pdfFile.delete()
+                            it.firstOrNull()
+                        }
+                    }
+                } finally {
+                    pdfFile.delete()
+                    signedFile.delete()
+                }
+            }
+        }
+}
+
+fun generateSignedSnapshot(
+    authorInfo: UserInfo,
+    creatorInfo: UserInfo,
+    topicInfo: TopicInfo,
+    saveToFile: File,
+    signedFile: File,
+    content: String,
+    snapshot: Pair<String, String>
+): Result<Unit?> {
+    val parent = saveToFile.parentFile
+    return if (parent != null) {
+        if (!parent.exists() && !parent.mkdirs()) {
+            Result.failure(Exception("failed"))
+        } else {
+            generateSnapshot(authorInfo, creatorInfo, topicInfo, saveToFile, content)
+            runCatching {
+                val keyStorePath = snapshot.first
+                val password = snapshot.second
+                if (keyStorePath.isNotEmpty() && password.isNotEmpty()) {
+                    val store = KeyStore.getInstance("PKCS12").apply {
+                        load(FileInputStream(keyStorePath), password.toCharArray())
+                    }
+                    CreateSignature(store, password.toCharArray())
+                        .signDetached(saveToFile, signedFile, "https://freetsa.org/tsr")
+                }
+            }
+        }
+    } else {
+        Result.success(null)
+    }
+}
+
+private fun generateSnapshot(
+    authorInfo: UserInfo,
+    creatorInfo: UserInfo,
+    topicInfo: TopicInfo,
+    saveToFile: File,
+    content: String,
+) {
+    Document().apply {
+        val font = loadSystemFont(pdDocument, content)
+        add(Paragraph().apply {
+            addText(
+                "pub by ${if (authorInfo.aid == null) authorInfo.address else authorInfo.aid}",
+                14f,
+                font
+            )
+        })
+        add(Paragraph().apply {
+            addText("pub at ${topicInfo.createdTime}", 14f, font)
+        })
+        add(Paragraph().apply {
+            addText("capture by ${if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid}", 14f, font)
+        })
+        add(Paragraph().apply {
+            addText("capture at ${now()}", 14f, font)
+        })
+        add(Paragraph().apply {
+            addText(content, 14f, font)
+        })
+        save(saveToFile)
+    }
+}
+
+private fun loadSystemFont(
+    document: PDDocument,
+    content: String
+): PDType0Font? {
+    val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
+    val font = graphicsEnvironment.allFonts.firstOrNull {
+        it.canDisplayUpTo(content) == -1
+    }
+    // 使用 PDFBox 加载字体
+    return PDType0Font.load(document, FontMappers.instance().getTrueTypeFont(font?.name, null).font, true)
+}
+
+suspend fun Backend.getTopic(
+    topicId: PrimaryKey,
+    uid: PrimaryKey?,
+    fillHasCommented: Boolean?
+): Result<TopicInfo?> {
+    if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
+    return checkRootReadPermission(
+        ObjectType.TOPIC,
+        topicId,
+        uid
+    ).mapResultIfNotNull { (hasRead, hasJoined, isPrivate) ->
+        if (hasRead) {
+            this.databaseSession.getTopicInfo(
+                ObjectFetch.IdFetch(topicId),
+                uid
+            ).mapResultIfNotNull { info ->
+                processTopicsContent(listOf(info), uid, isPrivate).mapIfNotNull {
+                    it.first()
+                }
+            }.mapIfNotNull { value ->
+                value.copy(hasJoined = hasJoined)
+            }
+        } else {
+            Result.failure(ForbiddenException("Permission Denied"))
+        }
+    }
+}
+
+suspend fun Backend.getTopicByAid(
+    aid: String,
+    uid: PrimaryKey?,
+    fillHasCommented: Boolean?
+): Result<TopicInfo?> {
+    if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
+    return this.databaseSession.getTopicInfo(ObjectFetch.AidFetch(aid), uid).mapResultIfNotNull { info ->
+        checkRootReadPermission(
+            ObjectType.TOPIC,
+            info.id,
+            uid
+        ).mapResultIfNotNull { (hasRead, hasJoined, isPrivate) ->
+            if (hasRead) {
+                processTopicsContent(listOf(info), uid, isPrivate).mapIfNotNull {
+                    it.first()
+                }
+            } else {
+                Result.failure(ForbiddenException("Permission Denied"))
+            }.mapIfNotNull { value ->
+                value.copy(hasJoined = hasJoined)
+            }
+        }
+    }
+}
+
+suspend fun Backend.getTopLevelTopicsInObject(
+    parentId: PrimaryKey,
+    parentType: ObjectType,
+    uid: PrimaryKey? = null,
+    fillHasCommented: Boolean?,
+    primaryKeyFetch: PrimaryKeyFetch,
+    pinType: TopicPinSearch? = null,
+): Result<PaginationResult<TopicInfo>?> {
+    if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
+    return checkRootReadPermission(
+        parentType,
+        parentId,
+        uid
+    ).mapResultIfNotNull { (hasRead, _, isPrivate) ->
+        if (isPrivate && !hasRead) {
+            Result.failure(ForbiddenException("Permission Denied"))
+        } else {
+            databaseSession.getTopicPaginationResultByPredicate(uid, primaryKeyFetch) { ->
+                where {
+                    Topics.parentId eq parentId
+                }
+                when (pinType) {
+                    PINNED -> andWhere {
+                        Topics.pinned eq true
+                    }
+
+                    UNPINNED -> andWhere {
+                        Topics.pinned eq false
+                    }
+
+                    else -> {
+                        orderBy(Topics.pinned to SortOrder.DESC)
+                    }
+                }
+            }.mapResult { (data, count) ->
+                processTopicsContent(data, uid, isPrivate).mapIfNotNull {
+                    PaginationResult(it, count)
+                }
+            }
+        }
+    }
+}
+
+suspend fun Backend.processTopicExtension(
+    processedTopics: List<TopicInfo>,
+    uid: PrimaryKey?,
+    isPrivate: Boolean,
+    addLatestSubTopic: Boolean,
+) = getUsersInfoByIds(ObjectListFetch.IdListFetch(processedTopics.map {
+    it.author
+}.distinct())).mapResultIfNotNull { users ->
+    val userMap = users.associateBy { it.id }
+    if (addLatestSubTopic) {
+        val subTopics = processedTopics.flatMap { t ->
+            databaseSession.getTopicInfoListByPredicate(uid) {
+                where {
+                    Topics.parentId eq t.id
+                }.orderBy(Topics.pinned to SortOrder.DESC).bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
+            }.getOrThrow()
+        }
+        if (subTopics.isEmpty()) {
+            Result.success(emptyList())
+        } else {
+            processTopicsContent(subTopics, uid, isPrivate, false)
+        }.mapIfNotNull { processedSubTopics ->
+            processedSubTopics.groupBy {
+                it.parentId
+            }
+        }
+    } else {
+        Result.success(emptyMap())
+    }.mapResultIfNotNull { processedSubTopicMap ->
+        this.databaseSession.getReactionInfoPaginationResult(processedTopics.map {
+            it.id
+        }, uid, ReactionFetch(null, 20)).map {
+            it.list
+        }.map {
+            it.groupBy(ReactionInfo::objectId)
+        }.map { reactionMap ->
+            processedTopics.map {
+                val authorInfo = userMap[it.author] ?: throw CustomBadRequestException("author is null")
+                it.copy(
+                    extension = TopicInfo.Extension(
+                        authorInfo,
+                        subTopics = processedSubTopicMap[it.id],
+                        reactions = reactionMap[it.id],
+                    )
+                )
+            }
+        }
+    }
+}
+
+suspend fun Backend.processTopicsContent(
+    data: List<TopicInfo>,
+    uid: PrimaryKey?,
+    isPrivate: Boolean,
+    addLatestSubTopic: Boolean = true
+): Result<List<TopicInfo>?> = when {
+    !isPrivate -> topicSearchService.getDocuments(data.map {
+        it.id
+    }).mapResult { documents ->
+        processTopicMedia(data, documents)
+    }.map { topicContents ->
+        topicContents
+    }
+
+    uid == null -> Result.failure(ForbiddenException())
+
+    else -> this.databaseSession.getEncryptedTopicContents(data, uid).map { topicContents ->
+        data.mapIndexed { index, l ->
+            l.copy(content = topicContents[index], isPrivate = true)
+        }
+    }
+}.mapResultIfNotNull {
+    processTopicExtension(it, uid, isPrivate, addLatestSubTopic)
+}
+
+data class RootReadPermission(
+    val hasRead: Boolean,
+    val hasJoined: Boolean,
+    val isPrivate: Boolean
+)
+
+data class RootWritePermission(
+    val objectType: ObjectType,
+    val objectId: PrimaryKey,
+    val hasWrite: Boolean
+)
+
+data class RootAdminPermission(
+    val objectType: ObjectType,
+    val objectId: PrimaryKey,
+    val hasAdmin: Boolean
+)
+
+suspend fun Backend.checkRootReadPermission(
+    parentType: ObjectType,
+    parentId: PrimaryKey,
+    uid: PrimaryKey?,
+): Result<RootReadPermission?> {
+    return when (parentType) {
+        ObjectType.TOPIC -> {
+            this.databaseSession.getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
+                checkRootReadPermission(rootType, rootId, uid)
+            }
+        }
+
+        ObjectType.ROOM -> {
+            this.databaseSession.getRoomCommunityId(parentId).mapResult { communityId ->
+                if (communityId == null && uid == null) {
+                    Result.failure(UnauthorizedException())
+                } else {
+                    this.databaseSession.isMemberJoined(parentId, uid).map { hasJoined ->
+                        RootReadPermission(hasJoined || communityId != null, hasJoined, communityId == null)
+                    }
+                }
+            }
+        }
+
+        ObjectType.COMMUNITY -> {
+            this.databaseSession.checkCommunityExists(parentId).mapResultIfNotNull {
+                this.databaseSession.isMemberJoined(parentId, uid).map { hasJoined ->
+                    RootReadPermission(true, hasJoined, false)
+                }
+            }
+        }
+
+        ObjectType.USER -> this.databaseSession.checkUserExists(parentId).mapIfNotNull {
+            RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
+        }
+
+        ObjectType.TITLE -> Result.success(RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false))
+        ObjectType.MEDIA -> TODO()
+    }
+}
+
+suspend fun Backend.checkRootWritePermission(
+    parentType: ObjectType,
+    parentId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootWritePermission?> {
+    return when (parentType) {
+        ObjectType.TOPIC -> {
+            this.databaseSession.getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
+                checkRootWritePermission(rootType, rootId, uid)
+            }
+        }
+
+        ObjectType.ROOM -> {
+            this.databaseSession.getRoomCommunityId(parentId).mapResult {
+                this.databaseSession.isMemberJoined(parentId, uid).map { hasJoined ->
+                    RootWritePermission(parentType, parentId, hasJoined)
+                }
+            }
+        }
+
+        ObjectType.COMMUNITY -> {
+            this.databaseSession.checkCommunityExists(parentId).mapResultIfNotNull {
+                this.databaseSession.isMemberJoined(parentId, uid).map { hasJoined ->
+                    RootWritePermission(parentType, parentId, hasJoined)
+                }
+            }
+        }
+
+        ObjectType.USER -> {
+            if (uid == parentId) {
+                this.databaseSession.checkUserExists(parentId).mapIfNotNull {
+                    RootWritePermission(parentType, parentId, parentId == uid)
+                }
+            } else {
+                Result.failure(ForbiddenException("Permission denied"))
+            }
+        }
+
+        ObjectType.TITLE -> Result.success(RootWritePermission(parentType, parentId, false))
+        ObjectType.MEDIA -> TODO()
+    }
+}
+
+suspend fun Backend.checkRootAdminPermission(
+    parentType: ObjectType,
+    parentId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootAdminPermission?> {
+    return when (parentType) {
+        ObjectType.TOPIC -> {
+            this.databaseSession.getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
+                checkRootAdminPermission(rootType, rootId, uid)
+            }
+        }
+
+        ObjectType.ROOM -> {
+            this.databaseSession.getRoomRawResult(ObjectFetch.IdFetch(parentId), true, uid).mapIfNotNull {
+                RootAdminPermission(parentType, parentId, it.roomInfo.creator == uid)
+            }
+        }
+
+        ObjectType.COMMUNITY -> {
+            this.databaseSession.getCommunityRawResult(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
+                RootAdminPermission(parentType, parentId, it.communityInfo.owner == uid)
+            }
+        }
+
+        ObjectType.USER -> {
+            this.databaseSession.checkUserExists(parentId).mapIfNotNull {
+                RootAdminPermission(parentType, parentId, parentId == uid)
+            }
+        }
+
+        ObjectType.TITLE -> Result.success(RootAdminPermission(parentType, parentId, false))
+        ObjectType.MEDIA -> TODO()
+    }
+}
+
+suspend fun Backend.searchPublicTopics(
+    search: RouteTopics.Search,
+    primaryKeyFetch: PrimaryKeyFetch,
+    uid: PrimaryKey?
+): Result<PaginationResult<TopicInfo>?> {
+    if (search.word != null && search.word.sumOf {
+            it.length
+        } > 20) {
+        return Result.failure(CustomBadRequestException("word too long"))
+    }
+    return if (search.parentId != null && search.parentType != null) {
+        checkRootReadPermission(search.parentType, search.parentId, uid).mapResultIfNotNull {
+            if (it.isPrivate) {
+                Result.failure(BadRequestException("can't search in private chat"))
+            } else {
+                Result.success(DocumentSearch.Topics(search.parentId))
+            }
+        }
+    } else {
+        Result.success(DocumentSearch.CommunityRoot)
+    }.mapResultIfNotNull { documentSearch ->
+        topicSearchService.searchDocument(
+            search.word,
+            documentSearch = documentSearch,
+            primaryKeyFetch
+        ).mapResult { (list, total) ->
+            processTopicsDocument(uid, list).mapIfNotNull {
+                PaginationResult(it, total)
+            }
+        }
+    }
+}
+
+suspend fun Backend.processTopicMedia(
+    infos: List<TopicInfo>,
+    documentList: List<TopicDocument?>
+): Result<List<TopicInfo>?> {
+    val documentMap = documentList.filterNotNull().associateBy { it.id }
+    // id + mediaLink，此处的mediaLink 应该包含前缀，内部会自动添加前缀
+    val mediaList = documentMediaList(documentList).filter {
+        val temp = File(it.second)
+        temp.canonicalPath == temp.absolutePath
+    }
+    // 所有用到的media
+    val mediaNameList = mediaList.map {
+        it.second
+    }.distinct()
+    // 根据topicId 保存的mediaName 的map
+    val mediaMap = mediaList.groupBy {
+        it.first
+    }
+    return getMediaInfoList(mediaNameList).mapIfNotNull { mediaUrls ->
+        val mediaInfoMap = mediaUrls.filterNotNull().mapIndexed { index, url ->
+            mediaNameList[index] to url
+        }.associate {
+            it.first to it.second
+        }
+        infos.map { info ->
+            documentMap[info.id]?.let { document ->
+                val m = mediaMap[document.id]?.mapNotNull {
+                    val mediaName = it.second
+                    mediaInfoMap[mediaName]
+                }.orEmpty()
+                info.copy(content = TopicContent.Plain(document.content, m))
+            } ?: info
+        }
+    }
+}
+
+fun documentMediaList(documentList: List<TopicDocument?>): List<Pair<PrimaryKey, String>> {
+    return documentList.flatMap { document ->
+        if (document != null) {
+            val mediaLinks = extractMarkdownMediaLink(document.content)
+            mediaLinks.map {
+                val prefix = document.author
+                document.id to "$prefix/$it"
+            }
+        } else {
+            emptyList()
+        }
+    }.distinct()
+}
+
+suspend fun Backend.recommendTopics(
+    uid: PrimaryKey?,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<TopicInfo>?> {
+    return if (uid != null) {
+        this.databaseSession.getJoinedCommunityIds(uid).mapResult {
+            topicSearchService.searchDocument(
+                documentSearch = DocumentSearch.Recommend(uid, it),
+                primaryKeyFetch = primaryKeyFetch
+            )
+        }
+    } else {
+        topicSearchService.searchDocument(
+            documentSearch = DocumentSearch.RecommendNotLogin,
+            primaryKeyFetch = primaryKeyFetch
+        )
+    }.mapResult { (list, total) ->
+        processTopicsDocument(uid, list).mapIfNotNull {
+            PaginationResult(it, total)
+        }
+    }
+}
+
+private suspend fun Backend.processTopicsDocument(
+    uid: PrimaryKey?,
+    list: List<TopicDocument>,
+): Result<List<TopicInfo>?> {
+    val ids = list.map {
+        it.id
+    }
+    if (ids.isEmpty()) {
+        return Result.success(emptyList())
+    }
+    return databaseSession.getTopicInfoListByPredicate(uid) {
+        where {
+            Topics.id inList ids
+        }
+    }.mapResult { infos ->
+        processTopicMedia(infos.sortedByDescending {
+            it.id
+        }, list).mapResultIfNotNull {
+            processTopicExtension(it, uid, isPrivate = false, addLatestSubTopic = true)
+        }
+    }
+}
+
+suspend fun Backend.getTopicByIds(
+    ids: List<PrimaryKey>,
+    uid: PrimaryKey?
+): Result<List<TopicInfo>?> {
+    if (ids.isEmpty()) {
+        return Result.success(emptyList())
+    }
+    val map = ids.map {
+        checkRootReadPermission(ObjectType.TOPIC, it, uid) to it
+    }
+    val private = mutableSetOf<PrimaryKey>()
+    map.forEach { (r, id) ->
+        val exceptionOrNull = r.exceptionOrNull()
+        if (exceptionOrNull != null) {
+            return Result.failure(exceptionOrNull)
+        } else {
+            val permission = r.getOrThrow()
+            when {
+                permission == null -> return Result.failure(Exception("root not exists"))
+                !permission.hasRead -> return Result.failure(ForbiddenException("Permission Denied"))
+                permission.isPrivate -> private.add(id)
+                else -> {}
+            }
+        }
+    }
+    return databaseSession.getTopicInfoListByPredicate(uid) {
+        where {
+            Topics.id inList ids
+        }
+    }.mapResult { infos ->
+        val privateList = infos.filter {
+            private.contains(it.id)
+        }
+
+        val publicList = infos.filter {
+            !private.contains(it.id)
+        }
+        processTopicsContent(privateList, uid, true).mapResultIfNotNull { privateContents ->
+            processTopicsContent(publicList, uid, false).mapIfNotNull { publicContents ->
+                publicContents + privateContents
+            }
+        }
+    }
+}
+
+suspend fun Backend.updateTopicPin(
+    uid: PrimaryKey,
+    topicId: PrimaryKey,
+    newValue: Boolean
+) =
+    checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
+        if (it.hasAdmin) {
+            this.databaseSession.getTopicInfo(
+                ObjectFetch.IdFetch(topicId),
+                uid
+            ).mapResultIfNotNull { info ->
+                if (info.isPin == newValue) {
+                    Result.success(info)
+                } else {
+                    this.databaseSession.updateTopicStatus(topicId, newValue).map { isSuccess ->
+                        if (isSuccess) {
+                            info.copy(isPin = newValue)
+                        } else {
+                            info
+                        }
+                    }
+                }
+            }
+        } else {
+            Result.failure(CustomBadRequestException("Permission Denied"))
+        }
+    }
