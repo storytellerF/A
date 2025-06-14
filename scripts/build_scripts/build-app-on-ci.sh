@@ -44,25 +44,25 @@ case "$TARGET" in
     android)
         echo "Running Android-specific command..."
         # 在这里添加 Android 相关命令
-        ./gradlew composeApp:assembleRelease
+        ./gradlew app:composeApp:assembleRelease
         mkdir -p "build/outputs/apk/release"
         mv composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/$FLAVOR.apk"
         ;;
     desktop-msi)
         echo "Running DesktopMsi-specific command..."
-        ./gradlew composeApp:packageReleaseMsi
+        ./gradlew app:composeApp:packageReleaseMsi
         mkdir -p "build/outputs/pkg/release"
         mv composeApp/build/compose/binaries/main-release/msi/*.msi "build/outputs/pkg/release/$FLAVOR.msi"
         ;;
     desktop-deb)
         echo "Running DesktopDeb-specific command..."
-        ./gradlew composeApp:packageReleaseDeb
+        ./gradlew app:composeApp:packageReleaseDeb
         mkdir -p "build/outputs/pkg/release"
         mv composeApp/build/compose/binaries/main-release/deb/*.deb "build/outputs/pkg/release/$FLAVOR.deb"
         ;;
     desktop-dmg)
         echo "Running DesktopDmg-specific command..."
-        ./gradlew composeApp:packageReleaseDmg
+        ./gradlew app:composeApp:packageReleaseDmg
         mkdir -p "build/outputs/pkg/release"
         mv composeApp/build/compose/binaries/main-release/dmg/*.dmg "build/outputs/pkg/release/$FLAVOR.dmg"
         ;;

@@ -1,0 +1,47 @@
+package com.storyteller_f.backend.service.tables
+
+import com.storyteller_f.backend.service.customPrimaryKey
+import com.storyteller_f.shared.type.PrimaryKey
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.Table
+
+object EncryptedTopics : Table() {
+    val topicId = customPrimaryKey("topic_id").index()
+    val content = blob("content")
+
+    override val primaryKey = PrimaryKey(topicId)
+}
+
+class EncryptedTopic(val topicId: PrimaryKey, val content: ByteArray) {
+    companion object {
+        fun wrapRow(row: ResultRow): EncryptedTopic {
+            return with(EncryptedTopics) {
+                EncryptedTopic(row[topicId], row[content].bytes)
+            }
+        }
+    }
+}
+
+object EncryptedTopicKeys : Table() {
+    val topicId = customPrimaryKey("topic_id").index()
+    val uid = customPrimaryKey("uid")
+    val encryptedAes = blob("encrypted_aes")
+
+    init {
+        index("encrypted-topics-main", true, topicId, uid)
+    }
+}
+
+class EncryptedTopicKey(val topicId: PrimaryKey, val uid: PrimaryKey, val encryptedAes: ByteArray) {
+    companion object {
+        fun wrapRow(row: ResultRow): EncryptedTopicKey {
+            return with(EncryptedTopicKeys) {
+                EncryptedTopicKey(
+                    row[topicId],
+                    row[uid],
+                    row[encryptedAes].bytes
+                )
+            }
+        }
+    }
+}

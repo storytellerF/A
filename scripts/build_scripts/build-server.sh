@@ -1,4 +1,4 @@
 #!/bin/sh
 set -e
-./gradlew server:buildFatJar --no-daemon
-cp ./server/build/libs/*-all.jar ./deploy/build
+./gradlew server:main:buildFatJar --no-daemon
+cp ./server/main/build/libs/*-all.jar ./deploy/build
