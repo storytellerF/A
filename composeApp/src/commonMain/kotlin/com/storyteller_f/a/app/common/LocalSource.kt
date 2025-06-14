@@ -17,6 +17,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
+import kotlin.reflect.KClass
 
 class CachedLoadingHandler<T : Any>(
     private val collection: DatabaseCollection<T>,
@@ -62,13 +67,12 @@ class CachedLoadingHandler<T : Any>(
     }
 }
 
-class CustomQueryPagingSource<Key : Any, RowType : Any>(
+class CustomDatabasePagingSource<RowType : Any>(
     private val collection: DatabaseCollection<RowType>,
     private val orders: List<DatabaseOrder>,
-    private val buildExpression: (Key?) -> DatabaseExpression?,
-    private val extraProcessor: suspend List<RowType>.() -> List<RowType> = { this },
-    private val buildNextKey: (RowType?) -> Key?
-) : PagingSource<Key, RowType>() {
+    private val buildExpressions: (String?) -> Array<DatabaseExpression>,
+    private val buildKey: (RowType?) -> String?
+) : PagingSource<String, RowType>() {
 
     init {
         registerInvalidatedCallback {
@@ -76,32 +80,40 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
         }
     }
 
-    override fun getRefreshKey(state: PagingState<Key, RowType>): Key? {
+    override fun getRefreshKey(state: PagingState<String, RowType>): String? {
         return null
     }
 
-    private val registeredToken = mutableMapOf<Key?, DatabaseObservable<RowType>>()
+    private val registeredToken = mutableMapOf<String?, DatabaseObservable<RowType>>()
 
     override suspend fun load(
-        params: PagingSourceLoadParams<Key>
-    ): PagingSourceLoadResult<Key, RowType> {
-        val key = params.key
-        if (key == null) {
-            removeAllToken()
+        params: PagingSourceLoadParams<String>
+    ): PagingSourceLoadResult<String, RowType> {
+        val key = when (params) {
+            is LoadParams.Append<*> -> {
+                params.key
+            }
+
+            is LoadParams.Prepend<*> -> return PagingSourceLoadResultPage(emptyList(), null, null)
+            is LoadParams.Refresh<*> -> {
+                removeAllToken()
+                null
+            }
         }
         Napier.v(tag = "pagination") {
-            "source load $key"
+            "source load ${params.key} $key"
         }
         return try {
-            val observerToken = collection.observeData(orders, params.loadSize, buildExpression(key)) {
+            val expressions = buildExpressions(key)
+            val observable = collection.observeData(orders, params.loadSize, *expressions) {
                 invalidate()
             }
-            registeredToken[key] = observerToken
-            val data = observerToken.task.await().extraProcessor()
+            registeredToken[params.key] = observable
+            val data = observable.task.await()
             PagingSourceLoadResultPage(
                 data = data,
-                prevKey = null,
-                nextKey = buildNextKey(data.lastOrNull()),
+                prevKey = buildKey(data.firstOrNull()),
+                nextKey = buildKey(data.lastOrNull()),
             )
         } catch (e: Exception) {
             Napier.e(e, tag = "pagination") {
@@ -119,49 +131,52 @@ class CustomQueryPagingSource<Key : Any, RowType : Any>(
     }
 }
 
+@Serializable
+data class RemoteKeys(val collectionName: String, val nextKey: String?)
+
 @Suppress("unused")
 @OptIn(ExperimentalPagingApi::class)
-class CustomRemoteMediator<Key : Any, Datum : Any>(
-    private val datumCollection: DatabaseCollection<Datum>,
-    private val keyCollection: DatabaseCollection<Key>,
+class CustomRemoteMediator<Datum : Any>(
     private val databaseSource: DatabaseSource,
     private val collectionName: String,
-    private val networkService: PagingSource<Key, Datum>,
-    private val buildPreKey: DatabaseCollection<Key>.(Datum?) -> Key?,
-    private val buildNextKey: DatabaseCollection<Key>.(Datum?) -> Key?,
-    private val update: (Datum, Key?) -> Unit
+    private val networkService: PagingSource<String, Datum>,
+    private val update: (Datum) -> Unit
 ) :
-    RemoteMediator<Key, Datum>() {
+    RemoteMediator<String, Datum>() {
 
     override suspend fun load(
         loadType: LoadType,
-        state: PagingState<Key, Datum>
+        state: PagingState<String, Datum>
     ): MediatorResult {
         Napier.v(tag = "pagination") {
             "mediator load $loadType"
         }
         val params = when (loadType) {
-            LoadType.REFRESH -> PagingSourceLoadParamsRefresh<Key>(
+            LoadType.REFRESH -> PagingSourceLoadParamsRefresh<String>(
                 null,
                 state.config.pageSize,
                 state.config.enablePlaceholders
             )
 
             LoadType.PREPEND -> {
-                return MediatorResult.Success(endOfPaginationReached = true)
-//                val lastItem = state.firstItemOrNull()
-//                val loadKey = databaseSource.getCollection("${collectionName}_pre_key").preKey(lastItem)
-//                    ?: return MediatorResult.Success(endOfPaginationReached = true)
-//                PagingSourceLoadParamsPrepend(loadKey, state.config.pageSize, state.config.enablePlaceholders)
+                val remoteKey =
+                    databaseSource.getCollection("pre_remote_keys", RemoteKeys::class)
+                        .getDocument(collectionName)?.nextKey
+                PagingSourceLoadParamsAppend(
+                    remoteKey
+                        ?: return MediatorResult.Success(endOfPaginationReached = true),
+                    state.config.pageSize,
+                    state.config.enablePlaceholders
+                )
             }
 
             LoadType.APPEND -> {
-                val lastItem = state.lastItemOrNull()
-                val loadKey =
-                    keyCollection.buildNextKey(lastItem)
-                        ?: return MediatorResult.Success(endOfPaginationReached = true)
+                val remoteKey =
+                    databaseSource.getCollection("next_remote_keys", RemoteKeys::class)
+                        .getDocument(collectionName)?.nextKey
                 PagingSourceLoadParamsAppend(
-                    loadKey,
+                    remoteKey
+                        ?: return MediatorResult.Success(endOfPaginationReached = true),
                     state.config.pageSize,
                     state.config.enablePlaceholders
                 )
@@ -178,31 +193,36 @@ class CustomRemoteMediator<Key : Any, Datum : Any>(
     }
 
     private suspend fun mediatorResult(
-        params: androidx.paging.PagingSource.LoadParams<Key>,
+        params: androidx.paging.PagingSource.LoadParams<String>,
         loadType: LoadType,
     ) = when (val loadResult = networkService.load(params)) {
-        is PagingSourceLoadResultError<Key, Datum> -> {
+        is PagingSourceLoadResultError<String, Datum> -> {
             MediatorResult.Error(loadResult.throwable)
         }
 
-        is PagingSourceLoadResultInvalid<Key, Datum> -> {
+        is PagingSourceLoadResultInvalid<String, Datum> -> {
             MediatorResult.Error(Exception("invalid"))
         }
 
-        is PagingSourceLoadResultPage<Key, Datum> -> {
+        is PagingSourceLoadResultPage<String, Datum> -> {
             val data = loadResult.data
             val nextKey = loadResult.nextKey
+            val preKey = loadResult.prevKey
             if (loadType == LoadType.REFRESH) {
+                databaseSource.getCollection("next_remote_keys", RemoteKeys::class).deleteDocument(collectionName)
+                databaseSource.getCollection("pre_remote_keys", RemoteKeys::class).deleteDocument(collectionName)
                 databaseSource.clearCollection(collectionName)
             }
+
+            databaseSource.getCollection("next_remote_keys", RemoteKeys::class)
+                .saveDocument(collectionName, RemoteKeys(collectionName, nextKey))
+            databaseSource.getCollection("pre_remote_keys", RemoteKeys::class)
+                .saveDocument(collectionName, RemoteKeys(collectionName, preKey))
             data.forEach {
-                update(
-                    it,
-                    nextKey,
-                )
+                update(it)
             }
             Napier.v(tag = "pagination") {
-                "mediator success $loadType $params"
+                "mediator success type: $loadType key: ${params.key}"
             }
             MediatorResult.Success(
                 endOfPaginationReached = nextKey == null
@@ -211,26 +231,59 @@ class CustomRemoteMediator<Key : Any, Datum : Any>(
     }
 }
 
+class IntermediatePagingSource<Key : Any, T : Any>(
+    val sectionPagingSource: PagingSource<Key, T>,
+    val clazz: KClass<Key>
+) : PagingSource<String, T>() {
+    val json = Json { }
+    override fun getRefreshKey(state: PagingState<String, T>): String? {
+        return null
+    }
+
+    @OptIn(InternalSerializationApi::class)
+    override suspend fun load(params: LoadParams<String>): LoadResult<String, T> {
+        val serializer = clazz.serializer()
+        val loadParams: LoadParams<Key> = when (params) {
+            is LoadParams.Append<*> -> {
+                val key = params.key.let {
+                    json.decodeFromString(serializer, it)
+                }
+                LoadParams.Append(key, params.loadSize, params.placeholdersEnabled)
+            }
+
+            is LoadParams.Prepend<*> -> {
+                val key = params.key.let {
+                    json.decodeFromString(serializer, it)
+                }
+                LoadParams.Prepend(key, params.loadSize, params.placeholdersEnabled)
+            }
+
+            is LoadParams.Refresh<*> -> LoadParams.Refresh(null, params.loadSize, params.placeholdersEnabled)
+        }
+        val load = sectionPagingSource.load(loadParams)
+        return when (load) {
+            is LoadResult.Error<Key, T> -> LoadResult.Error(load.throwable)
+            is LoadResult.Invalid<Key, T> -> LoadResult.Invalid()
+            is LoadResult.Page<Key, T> -> {
+                val preKey = load.prevKey?.let { json.encodeToString(serializer, it) }
+                val nextKey = load.nextKey?.let { json.encodeToString(serializer, it) }
+                LoadResult.Page(load.data, preKey, nextKey)
+            }
+        }
+    }
+}
+
 inline fun <reified T : Identifiable> primaryKeyRemoteMediator(
     databaseSource: DatabaseSource,
     collectionName: String,
     pagingSource: RegularPagingSource<T>,
-): CustomRemoteMediator<String, T> {
+): CustomRemoteMediator<T> {
     val datumCollection = databaseSource.getCollection(collectionName, T::class)
-    val keyCollection = databaseSource.getKeyCollection(collectionName, String::class)
     return CustomRemoteMediator(
-        datumCollection,
-        keyCollection,
         databaseSource,
         collectionName,
         pagingSource,
-        {
-            it?.id?.toString()
-        },
-        {
-            it?.id?.toString()
-        }
-    ) { info, c ->
+    ) { info ->
         datumCollection.save(info.id, info)
     }
 }
@@ -239,15 +292,15 @@ inline fun <reified T : Identifiable> primaryKeyPagingSource(
     collectionName: String,
     databaseSource: DatabaseSource
 ) =
-    CustomQueryPagingSource(
+    CustomDatabasePagingSource(
         databaseSource.getCollection(collectionName, T::class),
         listOf(DatabaseOrder.Desc("id")),
         {
             val param = it
             if (param != null) {
-                DatabaseExpression.Less("id", param.toPrimaryKey())
+                arrayOf(DatabaseExpression.Less("id", param.toPrimaryKey()))
             } else {
-                null
+                emptyArray()
             }
         }
     ) { info ->
@@ -260,59 +313,49 @@ inline fun <reified T : Identifiable> sectionRemoteMediator(
     databaseSource: DatabaseSource,
     crossinline extraUpdate: (T) -> Unit = {},
     regularPagingSources: (SessionManager) -> List<RegularPagingSource<T>>
-): CustomRemoteMediator<SectionLoadParams, T> {
+): CustomRemoteMediator<T> {
     val datumCollection = databaseSource.getCollection(collectionName, T::class)
-    val keyCollection = databaseSource.getKeyCollection(collectionName, SectionLoadParams::class)
     return CustomRemoteMediator(
-        datumCollection,
-        keyCollection,
         databaseSource,
         collectionName,
-        SectionPagingSource(regularPagingSources(sessionManager)),
-        {
-            if (it != null) {
-                getDocument(it.id.toString())
-            } else {
-                SectionLoadParams(1, null)
-            }
-        },
-        {
-            if (it != null) {
-                getDocument(it.id.toString())
-            } else {
-                SectionLoadParams(1, null)
-            }
-        }
-    ) { info, key ->
-        if (key == null) {
-            keyCollection.deleteDocument(info.id)
-        } else {
-            keyCollection.save(info.id, key)
-        }
+        IntermediatePagingSource(SectionPagingSource(regularPagingSources(sessionManager)), SectionLoadParams::class),
+    ) { info ->
         datumCollection.save(info.id, info)
         extraUpdate(info)
     }
 }
 
-inline fun <reified T : Identifiable> sectionPagingSource(
+inline fun <reified T : Any> commonRemoteMediator(
     databaseSource: DatabaseSource,
     collectionName: String,
-    orders: List<DatabaseOrder>,
-    noinline extraProcessor: suspend List<T>.() -> List<T> = { this }
-) = CustomQueryPagingSource(
-    databaseSource.getCollection(collectionName, T::class),
-    orders,
-    {
-        val param = it?.param
-        if (param != null) {
-            DatabaseExpression.Less("id", param.toPrimaryKey())
-        } else {
-            null
-        }
-    },
-    extraProcessor
-) { info ->
-    info?.id?.let {
-        SectionLoadParams(0, it.toString())
+    pagingSource: RegularPagingSource<T>,
+    crossinline update: DatabaseCollection<T>.(T) -> Unit
+): CustomRemoteMediator<T> {
+    val datumCollection = databaseSource.getCollection(collectionName, T::class)
+    return CustomRemoteMediator(
+        databaseSource,
+        collectionName,
+        pagingSource,
+    ) { info ->
+        datumCollection.update(info)
     }
 }
+
+inline fun <reified T : Any> commonPagingSource(
+    collectionName: String,
+    databaseSource: DatabaseSource,
+    noinline buildKey: (T?) -> String?
+) =
+    CustomDatabasePagingSource(
+        databaseSource.getCollection(collectionName, T::class),
+        listOf(DatabaseOrder.Desc("id")),
+        {
+            val param = it
+            if (param != null) {
+                arrayOf(DatabaseExpression.StrLess("id", param))
+            } else {
+                emptyArray()
+            }
+        },
+        buildKey
+    )

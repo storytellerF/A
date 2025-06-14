@@ -81,7 +81,7 @@ private suspend fun Backend.processTitleList(
         communityIdList,
         roomIdList
     ).mapResult { (userList, roomList, communityList) ->
-        getTopicByIds(topicIdList, uid, false).mapIfNotNull { topicList ->
+        getTopicByIds(topicIdList, uid).mapIfNotNull { topicList ->
             processTitleList(userList.orEmpty(), communityList.orEmpty(), roomList.orEmpty(), list, topicList)
         }
     }

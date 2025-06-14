@@ -6,13 +6,10 @@ import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.*
 import com.storyteller_f.tables.*
-import com.storyteller_f.tables.Community
-import com.storyteller_f.tables.CommunityRawResult
-import com.storyteller_f.tables.MemberJoins
-import com.storyteller_f.tables.UserTopicReads
 import com.storyteller_f.types.PaginationResult
 import com.storyteller_f.types.PrimaryKeyFetch
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
 
 suspend fun ExposedDatabaseSession.checkCommunityExists(parentId: PrimaryKey) =
     dbSearch {
@@ -71,7 +68,7 @@ suspend fun ExposedDatabaseSession.getJoinedCommunityIds(uid: PrimaryKey) =
 fun Query.bindPosterSearch(
     hasPosterSearch: PosterSearch?
 ): Query {
-    when (hasPosterSearch) {
+    return when (hasPosterSearch) {
         PosterSearch.HAS_POSTER -> andWhere {
             Communities.poster.isNotNull()
         }
@@ -80,9 +77,10 @@ fun Query.bindPosterSearch(
             Communities.poster.isNull()
         }
 
-        else -> {}
+        else -> {
+            orderBy(Communities.poster.isNull(), SortOrder.ASC)
+        }
     }
-    return this
 }
 
 suspend fun ExposedDatabaseSession.getCommunityPaginationResult(
@@ -195,8 +193,7 @@ private fun Query.buildCommunitySearchQuery(
             Communities.name like "$word%"
         }
     }
-    bindPosterSearch(hasPosterSearch)
-    return this
+    return bindPosterSearch(hasPosterSearch)
 }
 
 suspend fun ExposedDatabaseSession.createCommunity(community: Community) = dbQuery {

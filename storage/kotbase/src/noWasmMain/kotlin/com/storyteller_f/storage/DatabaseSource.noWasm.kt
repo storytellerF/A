@@ -55,7 +55,9 @@ class KotbaseDatabaseCollection<T>(
     }
 
     override fun observeDatum(expression: DatabaseExpression): Flow<T?> {
-        return select(all()).from(collection).where(buildExpression(expression)).limit(1).queryChangeFlow().map {
+        return select(all()).from(collection).where {
+            buildExpression(expression)
+        }.limit(1).queryChangeFlow().map {
             if (it.error != null) {
                 Napier.e(throwable = it.error) {
                     "get data failed from ${collection.name}"
@@ -70,7 +72,9 @@ class KotbaseDatabaseCollection<T>(
 
     override fun getDocument(expression: DatabaseExpression): T? {
         return kotbase.ktx.select(all()).from(collection)
-            .where(buildExpression(expression)).execute().toObjects { jsonStr: String ->
+            .where {
+                buildExpression(expression)
+            }.execute().toObjects { jsonStr: String ->
                 Json.decodeFromString(serializer, jsonStr)
             }.firstOrNull()
     }
@@ -83,15 +87,17 @@ class KotbaseDatabaseCollection<T>(
 
     override fun exists(expression: DatabaseExpression): Boolean {
         return kotbase.ktx.select(all()).from(collection)
-            .where(buildExpression(expression)).execute().next() != null
+            .where {
+                buildExpression(expression)
+            }
+            .execute().next() != null
     }
 
-    private fun buildExpression(expression: DatabaseExpression): Expression = with(WhereBuilder()) {
-        when (expression) {
-            is DatabaseExpression.IdEq -> (expression.field) equalTo (expression.value)
-            is DatabaseExpression.StrEq -> (expression.field) equalTo (expression.value)
-            is DatabaseExpression.Less -> expression.field lessThan expression.value
-        }
+    private fun WhereBuilder.buildExpression(expression: DatabaseExpression): Expression = when (expression) {
+        is DatabaseExpression.IdEq -> (expression.field) equalTo expression.value
+        is DatabaseExpression.StrEq -> (expression.field) equalTo expression.value
+        is DatabaseExpression.Less -> expression.field lessThan expression.value
+        is DatabaseExpression.StrLess -> expression.field lessThan expression.value
     }
 
     override fun deleteDocument(id: String) {
@@ -103,13 +109,18 @@ class KotbaseDatabaseCollection<T>(
     override fun observeData(
         orders: List<DatabaseOrder>,
         size: Int,
-        expression: DatabaseExpression?,
+        vararg expressions: DatabaseExpression,
         invalidate: () -> Unit
     ): DatabaseObservable<T> {
         val task = CompletableDeferred<List<T>>()
         val selectQuery = select(all()).from(collection)
-        val listenerToken = if (expression != null) {
-            selectQuery.where(buildExpression(expression))
+        val listenerToken = if (expressions.isNotEmpty()) {
+            selectQuery.where {
+                expressions.toList().subList(1, expressions.size)
+                    .fold(buildExpression(expressions.first())) { acc, expression ->
+                        acc and buildExpression(expression)
+                    }
+            }
         } else {
             selectQuery
         }.orderBy {

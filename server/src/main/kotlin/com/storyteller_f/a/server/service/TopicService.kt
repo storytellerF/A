@@ -29,7 +29,8 @@ import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
 import org.apache.pdfbox.pdmodel.font.PDType0Font
-import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.andWhere
 import rst.pdfbox.layout.elements.Document
 import rst.pdfbox.layout.elements.Paragraph
 import java.awt.GraphicsEnvironment
@@ -296,6 +297,7 @@ suspend fun Backend.getTopLevelTopicsInObject(
     primaryKeyFetch: PrimaryKeyFetch,
     pinType: TopicPinSearch? = null,
 ): Result<PaginationResult<TopicInfo>?> {
+    if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
     return checkRootReadPermission(
         parentType,
         parentId,
@@ -304,12 +306,22 @@ suspend fun Backend.getTopLevelTopicsInObject(
         if (isPrivate && !hasRead) {
             Result.failure(ForbiddenException("Permission Denied"))
         } else {
-            this.databaseSession.getTopicPaginationResultByPredicate(uid, fillHasCommented, primaryKeyFetch) { ->
-                val baseQuery = Topics.parentId eq parentId
+            databaseSession.getTopicPaginationResultByPredicate(uid, primaryKeyFetch) { ->
+                where {
+                    Topics.parentId eq parentId
+                }
                 when (pinType) {
-                    PINNED -> baseQuery and (Topics.pinned eq true)
-                    UNPINNED -> baseQuery and (Topics.pinned eq false)
-                    else -> baseQuery
+                    PINNED -> andWhere {
+                        Topics.pinned eq true
+                    }
+
+                    UNPINNED -> andWhere {
+                        Topics.pinned eq false
+                    }
+
+                    else -> {
+                        orderBy(Topics.pinned to SortOrder.DESC)
+                    }
                 }
             }.mapResult { (data, count) ->
                 processTopicsContent(data, uid, isPrivate).mapIfNotNull {
@@ -331,15 +343,10 @@ suspend fun Backend.processTopicExtension(
     val userMap = users.associateBy { it.id }
     if (addLatestSubTopic) {
         val subTopics = processedTopics.flatMap { t ->
-            this.databaseSession.getTopicInfoListByPredicate(
-                uid,
-                fillHasCommented = false,
-                addPinOrder = true,
-                addPagingQuery = {
-                    bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
-                }
-            ) {
-                Topics.parentId eq t.id
+            databaseSession.getTopicInfoListByPredicate(uid) {
+                where {
+                    Topics.parentId eq t.id
+                }.orderBy(Topics.pinned to SortOrder.DESC).bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
             }.getOrThrow()
         }
         if (subTopics.isEmpty()) {
@@ -563,7 +570,7 @@ suspend fun Backend.searchPublicTopics(
             documentSearch = documentSearch,
             primaryKeyFetch
         ).mapResult { (list, total) ->
-            processTopicsDocument(uid, search.parent.fillHasCommented, list).mapIfNotNull {
+            processTopicsDocument(uid, list).mapIfNotNull {
                 PaginationResult(it, total)
             }
         }
@@ -622,7 +629,6 @@ fun documentMediaList(documentList: List<TopicDocument?>): List<Pair<PrimaryKey,
 
 suspend fun Backend.recommendTopics(
     uid: PrimaryKey?,
-    fillHasCommented: Boolean?,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<TopicInfo>?> {
     return if (uid != null) {
@@ -638,7 +644,7 @@ suspend fun Backend.recommendTopics(
             primaryKeyFetch = primaryKeyFetch
         )
     }.mapResult { (list, total) ->
-        processTopicsDocument(uid, fillHasCommented, list).mapIfNotNull {
+        processTopicsDocument(uid, list).mapIfNotNull {
             PaginationResult(it, total)
         }
     }
@@ -646,7 +652,6 @@ suspend fun Backend.recommendTopics(
 
 private suspend fun Backend.processTopicsDocument(
     uid: PrimaryKey?,
-    fillHasCommented: Boolean?,
     list: List<TopicDocument>,
 ): Result<List<TopicInfo>?> {
     val ids = list.map {
@@ -655,8 +660,10 @@ private suspend fun Backend.processTopicsDocument(
     if (ids.isEmpty()) {
         return Result.success(emptyList())
     }
-    return this.databaseSession.getTopicInfoListByPredicate(uid, fillHasCommented) {
-        Topics.id inList ids
+    return databaseSession.getTopicInfoListByPredicate(uid) {
+        where {
+            Topics.id inList ids
+        }
     }.mapResult { infos ->
         processTopicMedia(infos.sortedByDescending {
             it.id
@@ -668,8 +675,7 @@ private suspend fun Backend.processTopicsDocument(
 
 suspend fun Backend.getTopicByIds(
     ids: List<PrimaryKey>,
-    uid: PrimaryKey?,
-    fillHasCommented: Boolean?
+    uid: PrimaryKey?
 ): Result<List<TopicInfo>?> {
     if (ids.isEmpty()) {
         return Result.success(emptyList())
@@ -692,8 +698,10 @@ suspend fun Backend.getTopicByIds(
             }
         }
     }
-    return this.databaseSession.getTopicInfoListByPredicate(uid, fillHasCommented) {
-        Topics.id inList ids
+    return databaseSession.getTopicInfoListByPredicate(uid) {
+        where {
+            Topics.id inList ids
+        }
     }.mapResult { infos ->
         val privateList = infos.filter {
             private.contains(it.id)

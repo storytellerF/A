@@ -60,7 +60,7 @@ fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
     density: Density,
     inlineContentMap: MutableMap<String, String>
 ) {
-    val annotate = annotatorSettings.annotator?.annotate
+    val annotate = annotatorSettings.annotator.annotate
     var skipIfNext: Any? = null
     children.forEach { child ->
         if (skipIfNext == null || skipIfNext != child.type) {

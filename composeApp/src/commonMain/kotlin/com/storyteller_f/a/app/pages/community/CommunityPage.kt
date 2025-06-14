@@ -43,10 +43,11 @@ fun CommunityPage(
     communityId: PrimaryKey,
     showDialog: Boolean
 ) {
+    val model = createCommunityViewModel(communityId)
     val size = calculateWindowSizeClass()
     when (size.widthSizeClass) {
-        WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(communityId, showDialog)
-        else -> CommunityNonCompatPageInternal(communityId, showDialog)
+        WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(communityId, showDialog, model)
+        else -> CommunityNonCompatPageInternal(communityId, showDialog, model)
     }
 }
 
@@ -70,8 +71,8 @@ private fun buildSearchScope(
 private fun CommunityNonCompatPageInternal(
     communityId: PrimaryKey,
     needShowDialog: Boolean,
+    model: CommunityViewModel,
 ) {
-    val model = createCommunityViewModel(communityId)
     val community by model.handler.data.collectAsState()
     val dialogShown by model.dialog.shownDialog.collectAsState()
     val navs = communityNavRoutes()
@@ -122,8 +123,8 @@ private fun CommunityNonCompatPageInternal(
 private fun CommunityCompatPageInternal(
     communityId: PrimaryKey,
     needShowDialog: Boolean,
+    model: CommunityViewModel,
 ) {
-    val model = createCommunityViewModel(communityId)
     val community by model.handler.data.collectAsState()
     val dialogShown by model.dialog.shownDialog.collectAsState()
     val pagerState = rememberPagerState {

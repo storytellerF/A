@@ -26,7 +26,7 @@ interface DatabaseCollection<T> {
     fun observeData(
         orders: List<DatabaseOrder>,
         size: Int,
-        expression: DatabaseExpression? = null,
+        vararg expressions: DatabaseExpression,
         invalidate: () -> Unit
     ): DatabaseObservable<T>
 }
@@ -35,6 +35,7 @@ sealed interface DatabaseExpression {
     data class IdEq(val field: String, val value: PrimaryKey) : DatabaseExpression
     data class StrEq(val field: String, val value: String) : DatabaseExpression
     data class Less(val field: String, val value: PrimaryKey) : DatabaseExpression
+    data class StrLess(val field: String, val value: String) : DatabaseExpression
 }
 
 interface DatabaseSource {
@@ -63,11 +64,7 @@ interface DatabaseSource {
 }
 
 inline fun <reified T : Any> DatabaseCollection<T>.save(key: PrimaryKey, data: T) {
-    save(key.toString(), data)
-}
-
-inline fun <reified T : Any> DatabaseCollection<T>.save(key: String, data: T) {
-    saveDocument(key, data)
+    saveDocument(key.toString(), data)
 }
 
 fun <T> DatabaseCollection<T>.getDocument(id: PrimaryKey): T? {

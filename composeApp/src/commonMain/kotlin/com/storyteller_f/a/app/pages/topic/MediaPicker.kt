@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
@@ -34,12 +35,14 @@ import com.storyteller_f.a.app.compontents.requestPermission
 import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnMediaUploaded
 import com.storyteller_f.a.app.model.createMediaListViewModel
+import com.storyteller_f.a.app.model.createReactionsViewModel
 import com.storyteller_f.a.app.utils.Recorder
 import com.storyteller_f.a.client_lib.SessionManager
 import com.storyteller_f.a.client_lib.UploadData
 import com.storyteller_f.a.client_lib.upload
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.formatTime
 import com.storyteller_f.shared.utils.mapIfNotNull
 import io.github.aakira.napier.Napier
@@ -321,5 +324,27 @@ fun insertContent(
 }
 ```"""
         )
+    }
+}
+
+@Composable
+fun ReactionListPage(topicId: PrimaryKey) {
+    val viewModel = createReactionsViewModel(topicId)
+    val pagingItems = viewModel.flow.collectAsLazyPagingItems()
+    StateView(pagingItems) {
+        LazyColumn {
+            items(pagingItems.itemCount, pagingItems.itemKey {
+                it.emoji
+            }) {
+                val info = pagingItems[it]
+                if (info != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(info.emoji, fontSize = 25.sp)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(info.count.toString())
+                    }
+                }
+            }
+        }
     }
 }

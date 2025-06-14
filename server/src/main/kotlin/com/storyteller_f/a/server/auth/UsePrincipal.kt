@@ -61,7 +61,10 @@ suspend inline fun <reified R : Any> RoutingContext.callRespond(
                 is FileResponse -> {
                     call.response.header(
                         HttpHeaders.ContentDisposition,
-                        ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, it.file.name)
+                        ContentDisposition.Attachment.withParameter(
+                            ContentDisposition.Parameters.FileName,
+                            it.file.name
+                        )
                             .toString()
                     )
                     call.respondFile(it.file)
@@ -69,7 +72,10 @@ suspend inline fun <reified R : Any> RoutingContext.callRespond(
                 is PathResponse -> {
                     call.response.header(
                         HttpHeaders.ContentDisposition,
-                        ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, it.file.name)
+                        ContentDisposition.Attachment.withParameter(
+                            ContentDisposition.Parameters.FileName,
+                            it.file.name
+                        )
                             .toString()
                     )
                     call.respondPath(it.file)

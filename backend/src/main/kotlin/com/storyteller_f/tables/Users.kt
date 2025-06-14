@@ -5,6 +5,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.AlgoType
 import com.storyteller_f.shared.type.PassType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.tables.AlternateAccounts.hostId
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -64,11 +65,25 @@ fun User.toUserInfo(): UserInfo {
 
 data class UserRawResult(val user: User, val avatar: String?)
 
-fun Query.bindUserFetchQuery(fetch: ObjectFetch): Query {
-    return where {
-        when (fetch) {
-            is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
-            is ObjectFetch.IdFetch -> Users.id eq fetch.id
+object AlternateAccounts : Table() {
+    val uid = customPrimaryKey("uid")
+    val hostId = customPrimaryKey("host_id")
+    override val primaryKey: PrimaryKey = PrimaryKey(uid)
+
+    init {
+        index("alternate-accounts-main", false, hostId, uid)
+    }
+}
+
+class AlternateAccount(val uid: PrimaryKey, val hostId: PrimaryKey) {
+    companion object {
+        fun wrapRow(row: ResultRow): AlternateAccount {
+            return with(AlternateAccounts) {
+                AlternateAccount(
+                    row[uid],
+                    row[hostId]
+                )
+            }
         }
     }
 }

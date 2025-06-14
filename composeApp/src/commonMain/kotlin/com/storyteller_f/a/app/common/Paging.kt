@@ -114,12 +114,13 @@ class RegularPagingSource<DATUM : Any>(
 ) : PagingSource<String, DATUM>() {
     override suspend fun load(params: LoadParams<String>): PagingSourceLoadResult<String, DATUM> {
         return sessionManager.service(params.key, params.loadSize).map {
+            val pagination = it.pagination
             APagingData(
                 it.data,
                 Pagination(
-                    it.pagination?.nextPageToken,
-                    it.pagination?.prePageToken,
-                    0
+                    pagination?.nextPageToken,
+                    pagination?.prePageToken,
+                    pagination?.total ?: 0
                 )
             )
         }.fold(onSuccess = { (data, pagination) ->

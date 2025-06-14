@@ -436,7 +436,7 @@ private fun processTopicCreated(
     database.getCollection("topics_${topicInfo.parentId}", TopicInfo::class).save(topicInfo.id, topicInfo)
     with(database.getCollection("topics", TopicInfo::class)) {
         save(topicInfo.id, topicInfo)
-        topicInfo.aid?.let { save(it, topicInfo) }
+        topicInfo.aid?.let { saveDocument(it, topicInfo) }
     }
 }
 
@@ -448,7 +448,7 @@ private fun processTopicChanged(
     database.getCollection("topics_${topicInfo.parentId}", TopicInfo::class).save(topicInfo.id, topicInfo)
     with(database.getCollection("topics", TopicInfo::class)) {
         save(topicInfo.id, topicInfo)
-        topicInfo.aid?.let { save(it, topicInfo) }
+        topicInfo.aid?.let { saveDocument(it, topicInfo) }
     }
     // 尝试更新到推荐
     with(database.getCollection("topics_0", TopicInfo::class)) {
