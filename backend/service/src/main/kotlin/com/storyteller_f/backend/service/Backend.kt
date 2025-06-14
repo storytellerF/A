@@ -89,17 +89,15 @@ class MergedEnv(val list: List<Map<String, String>?>) {
     }
 }
 
-fun readEnv(map: Map<String, String> = emptyMap()): MergedEnv {
-    return MergedEnv(
-        listOf(
-            map,
-            System.getenv(),
-            readFileEnv("../${BackendConfig.FLAVOR}.env"),
-            readFileEnv(".env"),
-            readResourceEnv(".env"),
-        )
+fun readEnv(envMap: Map<String, String> = emptyMap()) = MergedEnv(
+    listOf(
+        envMap,
+        System.getenv(),
+        readFileEnv("../../${BackendConfig.FLAVOR}.env"),
+        readFileEnv(".env"),
+        readResourceEnv(".env"),
     )
-}
+)
 
 fun readResourceEnv(resName: String) = ClassLoader.getSystemClassLoader().getResourceAsStream(resName)?.use {
     Properties().apply {
@@ -208,31 +206,6 @@ private fun databaseConnection(env: MergedEnv): DatabaseConnection {
     val user = env["DATABASE_USER"]
     val pass = env["DATABASE_PASS"]
     return DatabaseConnection(uri, driver, user, pass)
-}
-
-fun Query.bindPaginationQuery(
-    table: BaseTable,
-    primaryKeyFetch: PrimaryKeyFetch
-): Query {
-    val cursor = primaryKeyFetch.cursor
-    val order = when (cursor) {
-        is Cursor.NextCursor<PrimaryKey> -> {
-            andWhere {
-                table.id less cursor.value
-            }
-            SortOrder.DESC
-        }
-
-        is Cursor.PreCursor<PrimaryKey> -> {
-            andWhere {
-                table.id greater cursor.value
-            }
-            SortOrder.ASC
-        }
-
-        null -> null
-    }
-    return orderBy(table.id to (order ?: SortOrder.DESC)).limit(primaryKeyFetch.size)
 }
 
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)
@@ -507,4 +480,29 @@ suspend fun Backend.getUserAlternateUserInfoList(uid: PrimaryKey): Result<List<U
     return databaseSession.getUserAlternatUserRawResultList(uid).mapResult {
         processUserRawResultToUserInfo(it)
     }
+}
+
+fun Query.bindPaginationQuery(
+    table: BaseTable,
+    primaryKeyFetch: PrimaryKeyFetch
+): Query {
+    val cursor = primaryKeyFetch.cursor
+    val order = when (cursor) {
+        is Cursor.NextCursor<PrimaryKey> -> {
+            andWhere {
+                table.id less cursor.value
+            }
+            SortOrder.DESC
+        }
+
+        is Cursor.PreCursor<PrimaryKey> -> {
+            andWhere {
+                table.id greater cursor.value
+            }
+            SortOrder.ASC
+        }
+
+        null -> null
+    }
+    return orderBy(table.id to (order ?: SortOrder.DESC)).limit(primaryKeyFetch.size)
 }

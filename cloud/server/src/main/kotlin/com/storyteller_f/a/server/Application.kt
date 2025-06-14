@@ -6,12 +6,8 @@ import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
 import com.storyteller_f.a.server.route.configureRoute
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.DatabaseFactory
-import com.storyteller_f.backend.service.MergedEnv
-import com.storyteller_f.backend.service.buildBackendFromEnv
+import com.storyteller_f.backend.service.*
 import com.storyteller_f.backend.service.media.loadAvif
-import com.storyteller_f.backend.service.readEnv
 import com.storyteller_f.shared.kmpLogger
 import io.github.aakira.napier.Napier
 import io.ktor.http.*
@@ -29,7 +25,10 @@ import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.io.File
@@ -52,7 +51,7 @@ fun main(args: Array<String>) {
     SnowflakeFactory.setMachine(0)
 
     val map = readEnv()
-    processPresetDataIfNeed(map)
+    processInitTaskIfNeed(map)
     val serverPort = map["SERVER_PORT"].takeIf { it.isNotEmpty() }?.toInt() ?: 80
     val extraArgs = arrayOf("-port=$serverPort")
 
@@ -203,15 +202,15 @@ fun ApplicationCall.remoteIp(
     }
 }
 
-private fun processPresetDataIfNeed(env: MergedEnv) {
-    if (!env["PRESET_ENABLE"].toBoolean()) return
-    val preSetScript = env["PRESET_SCRIPT"]
-    val workingDir = env["PRESET_WORKING_DIR"]
-    if (preSetScript.isBlank() || workingDir.isBlank()) {
-        println("preset config failure")
+private fun processInitTaskIfNeed(env: MergedEnv) {
+    if (!env["INIT_ENABLE"].toBoolean()) return
+    val initScriptContent = env["INIT_SCRIPT"]
+    val workingDir = env["INIT_WORKING_DIR"]
+    if (initScriptContent.isBlank() || workingDir.isBlank()) {
+        println("init failure")
         exitProcess(1)
     }
-    val scriptArray = preSetScript.trim('\'').split(" ").map {
+    val scriptArray = initScriptContent.trim('\'').split(" ").map {
         if (it.startsWith("~")) {
             val home = System.getProperty("user.home")
             home + it.substring(1)
@@ -220,17 +219,19 @@ private fun processPresetDataIfNeed(env: MergedEnv) {
         }
     }
     val file = File(workingDir.trim('\''))
-    println("exec preset scripts: ${scriptArray.joinToString(" ")}. working dir: ${file.canonicalPath}")
+    Napier.i(tag = "init") {
+        "scripts: ${scriptArray.joinToString(" ")}. working dir: ${file.canonicalPath}"
+    }
     runBlocking {
         suspendCancellableCoroutine {
             thread {
-                processPresetData(scriptArray, file, it)
+                executeScriptInThread(scriptArray, file, it)
             }
         }
     }
 }
 
-private fun CoroutineScope.processPresetData(
+private fun executeScriptInThread(
     scriptArray: List<String>,
     file: File,
     continuation: CancellableContinuation<Int>
@@ -238,37 +239,46 @@ private fun CoroutineScope.processPresetData(
     val process = ProcessBuilder(scriptArray).directory(file).start()
     val reader = process.inputStream.bufferedReader()
     val errorReader = process.errorStream.bufferedReader()
+    thread {
+        while (process.isAlive) {
+            val line = reader.readLine() ?: break
+            Napier.i(tag = "init") {
+                line
+            }
+        }
+    }
+    thread {
+        while (process.isAlive) {
+            val line = errorReader.readLine() ?: break
+            Napier.e(tag = "init") {
+                line
+            }
+        }
+    }
+    Napier.i(tag = "init") {
+        "started"
+    }
     try {
-        launch {
-            while (process.isAlive) {
-                val line = reader.readLine() ?: break
-                Napier.i(tag = "preset") {
-                    line
-                }
-            }
-        }
-        launch {
-            while (process.isAlive) {
-                val line = errorReader.readLine() ?: break
-                Napier.e(tag = "preset") {
-                    line
-                }
-            }
-        }
-        Napier.i(tag = "preset") {
-            "preset started"
-        }
         val code = process.waitFor()
-        Napier.i(tag = "preset") {
-            "preset finished. code: $code"
+        reader.readLine()?.let {
+            Napier.i(tag = "init") {
+                it
+            }
+        }
+        errorReader.readLine()?.let {
+            Napier.i(tag = "init") {
+                it
+            }
+        }
+        Napier.i(tag = "init") {
+            "finished. code: $code"
         }
         continuation.resume(code)
     } catch (e: Exception) {
-        Napier.e(tag = "preset", throwable = e) {
-            "preset failed"
+        Napier.e(tag = "init", throwable = e) {
+            "failed"
         }
         continuation.resumeWithException(e)
-        exitProcess(1)
     } finally {
         reader.close()
         errorReader.close()

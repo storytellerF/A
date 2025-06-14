@@ -1,6 +1,10 @@
 package com.storyteller_f.backend.service.query
 
 import com.storyteller_f.backend.service.ExposedDatabaseSession
+import com.storyteller_f.backend.service.count
+import com.storyteller_f.backend.service.first
+import com.storyteller_f.backend.service.isNotEmpty
+import com.storyteller_f.backend.service.map
 import com.storyteller_f.backend.service.tables.Reaction
 import com.storyteller_f.backend.service.tables.ReactionRecord
 import com.storyteller_f.backend.service.tables.ReactionRecords
@@ -34,11 +38,11 @@ suspend fun ExposedDatabaseSession.statsReactionRecord(
     } else {
         dbQuery {
             check(Reactions.upsert(Reactions.objectId, Reactions.emoji) {
-                it[objectId] = reactionRecord.objectId
-                it[emoji] = reactionRecord.emoji
-                it[count] = reactionCountList.size
-                it[objectType] = reactionRecord.objectType
-                it[lastReactionId] = reactionRecord.id
+                it[Reactions.objectId] = reactionRecord.objectId
+                it[Reactions.emoji] = reactionRecord.emoji
+                it[Reactions.count] = reactionCountList.size.toLong()
+                it[Reactions.objectType] = reactionRecord.objectType
+                it[Reactions.lastReactionId] = reactionRecord.id
             }.insertedCount > 0) {
                 "insert reaction failed"
             }
@@ -230,18 +234,17 @@ suspend fun ExposedDatabaseSession.getReactionCount(objectIdList: List<PrimaryKe
 suspend fun ExposedDatabaseSession.getReactionCountForEmoji(
     objectId: List<PrimaryKey>,
     emoji: String
-) =
-    dbSearch {
-        val column = ReactionRecords.emoji.countDistinct()
-        search {
-            ReactionRecords.select(ReactionRecords.objectId, column).where {
-                (ReactionRecords.objectId inList objectId) and (ReactionRecords.emoji eq emoji)
-            }.groupBy(ReactionRecords.objectId)
-        }
-        map {
-            it[ReactionRecords.objectId] to it[column]
-        }
+) = dbSearch {
+    val column = ReactionRecords.emoji.countDistinct()
+    search {
+        ReactionRecords.select(ReactionRecords.objectId, column).where {
+            (ReactionRecords.objectId inList objectId) and (ReactionRecords.emoji eq emoji)
+        }.groupBy(ReactionRecords.objectId)
     }
+    map {
+        it[ReactionRecords.objectId] to it[column]
+    }
+}
 
 suspend fun ExposedDatabaseSession.hasReactedForEmoji(
     objectId: PrimaryKey,

@@ -39,24 +39,24 @@ dependencyResolutionManagement {
     }
 }
 
-include(":app")
+include(":shared")
+
 include(":app:composeApp")
 include(":app:cliApp")
 include(":app:devCli")
 include(":app:devServer")
-include(":cloud")
+
 include(":cloud:server")
 include(":cloud:cli")
 include(":cloud:worker")
-include(":shared")
-include(":backend")
+
 include(":backend:service")
-include(":client")
+
 include(":client:lib")
 include(":client:bot-lib")
 include(":client:storage")
-include(":client:storage:core")
-include(":client:storage:kotbase")
+include(":client:kotbase")
+
 include(":bot:builtin-bot")
 if (isLlamaEnable)
 include(":android-llama-cpp")
