@@ -81,7 +81,7 @@ kotlin {
             implementation(projects.shared)
             implementation(libs.bundles.ktor.client)
             implementation(libs.kotlinx.datetime)
-            api(projects.client.storage.core)
+            api(projects.client.storage)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

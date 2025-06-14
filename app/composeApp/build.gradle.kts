@@ -166,7 +166,7 @@ kotlin {
             implementation(libs.compose.preferences)
             implementation(libs.haze)
             implementation(libs.haze.materials)
-            implementation(projects.client.storage.kotbase)
+            implementation(projects.client.kotbase)
 
             implementation(libs.kim)
             implementation(libs.uri.kmp)
