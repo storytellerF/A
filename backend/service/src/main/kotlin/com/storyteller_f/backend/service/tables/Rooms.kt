@@ -3,7 +3,6 @@ package com.storyteller_f.backend.service.tables
 import com.storyteller_f.backend.service.BaseEntity
 import com.storyteller_f.backend.service.BaseTable
 import com.storyteller_f.backend.service.customPrimaryKey
-import com.storyteller_f.backend.service.roomIcon
 import com.storyteller_f.backend.service.roomName
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -13,7 +12,7 @@ import org.jetbrains.exposed.sql.selectAll
 
 object Rooms : BaseTable() {
     val name = roomName()
-    val icon = roomIcon()
+    val icon = customPrimaryKey("icon")
     val creator = customPrimaryKey("creator").index()
     val communityId = customPrimaryKey("community_id").index().nullable()
 }
@@ -24,7 +23,7 @@ class Room(
     val aid: String,
     val name: String,
     val creator: PrimaryKey,
-    val icon: String? = null,
+    val icon: PrimaryKey? = null,
     val communityId: PrimaryKey? = null,
 ) : BaseEntity(id, createdTime) {
     companion object {
@@ -49,8 +48,7 @@ class Room(
 }
 
 data class RoomRawResult(
-    val roomInfo: Room,
-    val icon: String?,
+    val room: Room,
     val joinedTime: LocalDateTime?,
     val topicId: Long?,
     val memberCount: Long

@@ -17,7 +17,7 @@ import org.jetbrains.exposed.sql.*
 object Users : BaseTable() {
     val publicKey = userPublicKey()
     val address = userAddress()
-    val icon = userIcon()
+    val icon = customPrimaryKey("icon")
     val nickname = userName()
     val acgAmount = long("acg_amount").default(0)
     val passType = enumerationByName<PassType>("pass_type", 20).default(PassType.RAW)
@@ -28,7 +28,7 @@ class User(
     val aid: String?,
     val publicKey: String,
     val address: String,
-    val icon: String?,
+    val icon: PrimaryKey?,
     val nickname: String,
     id: PrimaryKey,
     createdTime: LocalDateTime,
@@ -61,14 +61,14 @@ class User(
 }
 
 fun mapUserInfo(it: ResultRow): UserRawResult {
-    return UserRawResult(User.wrapRow(it), it[Users.icon])
+    return UserRawResult(User.wrapRow(it))
 }
 
 fun User.toUserInfo(): UserInfo {
     return UserInfo(id, address, 0, aid, nickname, null)
 }
 
-data class UserRawResult(val user: User, val avatar: String?)
+data class UserRawResult(val user: User)
 
 object AlternateAccounts : Table() {
     val uid = customPrimaryKey("uid")

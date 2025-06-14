@@ -5,7 +5,7 @@ import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.ForbiddenException
 import com.storyteller_f.backend.service.ObjectListFetch
-import com.storyteller_f.backend.service.getUsersInfoByIds
+import com.storyteller_f.backend.service.getUserInfoList
 import com.storyteller_f.backend.service.insertTitleAndTopicDescription
 import com.storyteller_f.backend.service.processCommunityRawResultToCommunityInfo
 import com.storyteller_f.backend.service.processRoomRawResultToRoomInfo
@@ -31,7 +31,7 @@ suspend fun Backend.getUserTitles(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
     fetch: PrimaryKeyFetch
-) = this.databaseSession.getTitlePaginationResult(
+) = databaseSession.getTitlePaginationResult(
     fetch,
     uid,
     searchType,
@@ -95,7 +95,7 @@ private suspend fun Backend.getRelatedObject(
 ): Result<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>> {
     return merge({
         if (uidList.isNotEmpty()) {
-            getUsersInfoByIds(ObjectListFetch.IdListFetch(uidList))
+            getUserInfoList(ObjectListFetch.IdListFetch(uidList))
         } else {
             Result.success(emptyList())
         }

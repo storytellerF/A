@@ -115,7 +115,7 @@ val LocalToaster = compositionLocalOf {
 }
 
 val LocalDatabase = compositionLocalOf {
-    DatabaseSource.EMPTY
+    StorageSource.EMPTY
 }
 
 val LocalSessionManager = compositionLocalOf<UserSessionManager> {
@@ -372,7 +372,7 @@ fun buildWebSocketUrl(wsServerUrl: String): String = buildUrl {
     appendPathSegments("link")
 }.toString()
 
-private fun processEvent(event: Any, database: DatabaseSource) {
+private fun processEvent(event: Any, database: StorageSource) {
     when (event) {
         is OnAddReaction -> processOnAddReaction(database, event)
 
@@ -387,7 +387,7 @@ private fun processEvent(event: Any, database: DatabaseSource) {
         is OnCommunityUpdated -> {
             database.getCollection("communities", CommunityInfo::class).save(event.info.id, event.info)
             database.getCollectionByPrefix("communities_", CommunityInfo::class).filter {
-                it.exists(DatabaseExpression.IdEq("id", event.info.id))
+                it.exists(StorageExpression.IdEq("id", event.info.id))
             }.forEach {
                 it.save(event.info.id, event.info)
             }
@@ -404,7 +404,7 @@ private fun processEvent(event: Any, database: DatabaseSource) {
         is OnRoomUpdated -> {
             database.getCollection("rooms", RoomInfo::class).save(event.info.id, event.info)
             database.getCollectionByPrefix("rooms_", RoomInfo::class).filter {
-                it.exists(DatabaseExpression.IdEq("id", event.info.id))
+                it.exists(StorageExpression.IdEq("id", event.info.id))
             }.forEach {
                 it.save(event.info.id, event.info)
             }
@@ -413,7 +413,7 @@ private fun processEvent(event: Any, database: DatabaseSource) {
         is OnUserUpdated -> {
             database.getCollection("users", UserInfo::class).save(event.info.id, event.info)
             database.getCollectionByPrefix("users_", UserInfo::class).filter {
-                it.exists(DatabaseExpression.IdEq("id", event.info.id))
+                it.exists(StorageExpression.IdEq("id", event.info.id))
             }.forEach {
                 it.save(event.info.id, event.info)
             }
@@ -429,7 +429,7 @@ private fun processEvent(event: Any, database: DatabaseSource) {
 
 private fun processTopicCreated(
     event: OnTopicCreated,
-    database: DatabaseSource
+    database: StorageSource
 ) {
     val topicInfo = event.topicInfo
     database.getCollection("topics_${topicInfo.parentId}", TopicInfo::class).save(topicInfo.id, topicInfo)
@@ -441,7 +441,7 @@ private fun processTopicCreated(
 
 private fun processTopicChanged(
     event: OnTopicChanged,
-    database: DatabaseSource,
+    database: StorageSource,
 ) {
     val topicInfo = event.topicInfo
     database.getCollection("topics_${topicInfo.parentId}", TopicInfo::class).save(topicInfo.id, topicInfo)
@@ -451,14 +451,14 @@ private fun processTopicChanged(
     }
     // 尝试更新到推荐
     with(database.getCollection("topics_0", TopicInfo::class)) {
-        if (exists(DatabaseExpression.IdEq("id", topicInfo.id))) {
+        if (exists(StorageExpression.IdEq("id", topicInfo.id))) {
             save(topicInfo.id, topicInfo)
         }
     }
 }
 
 private fun processRemoveReaction(
-    database: DatabaseSource,
+    database: StorageSource,
     event: OnRemoveReaction,
 ) {
     database.getCollection("topic", TopicInfo::class).update(event.topicId) { old ->
@@ -475,7 +475,7 @@ private fun processRemoveReaction(
 }
 
 private fun processOnAddReaction(
-    database: DatabaseSource,
+    database: StorageSource,
     event: OnAddReaction,
 ) {
     database.getCollection("topic", TopicInfo::class).update(event.topicId) { old ->

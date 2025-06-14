@@ -1,10 +1,6 @@
 package com.storyteller_f.backend.service.query
 
-import com.storyteller_f.backend.service.ExposedDatabaseSession
-import com.storyteller_f.backend.service.bindPaginationQuery
-import com.storyteller_f.backend.service.count
-import com.storyteller_f.backend.service.first
-import com.storyteller_f.backend.service.map
+import com.storyteller_f.backend.service.*
 import com.storyteller_f.backend.service.media.UploadPack
 import com.storyteller_f.backend.service.tables.Media
 import com.storyteller_f.backend.service.tables.Medias
@@ -12,12 +8,7 @@ import com.storyteller_f.backend.service.types.PrimaryKeyFetch
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import kotlin.map
+import org.jetbrains.exposed.sql.*
 
 fun insertMedia(data: List<Pair<PrimaryKey, UploadPack>>) {
     Medias.batchInsert(data) { (i, e) ->
@@ -65,18 +56,18 @@ suspend fun ExposedDatabaseSession.getMedia(owner: PrimaryKey, name: String): Re
                 Medias.owner eq owner and (Medias.name eq name)
             }
         }
-        first(Media.Companion::wrapRow)
+        first(Media::wrapRow)
     }
 }
 
-suspend fun ExposedDatabaseSession.getMediaById(id: PrimaryKey): Result<Media?> {
+suspend fun ExposedDatabaseSession.getMediaByIds(ids: List<PrimaryKey>): Result<List<Media>> {
     return dbSearch {
         search {
             Medias.selectAll().where {
-                Medias.id eq id
+                Medias.id inList ids
             }
         }
-        first(Media.Companion::wrapRow)
+        map(Media::wrapRow)
     }
 }
 
@@ -86,14 +77,12 @@ suspend fun ExposedDatabaseSession.getMediaListByOwner(owner: PrimaryKey): Resul
             Medias.owner eq owner
         }.orderBy(Medias.id, SortOrder.DESC)
     }
-    map(Media.Companion::wrapRow)
+    map(Media::wrapRow)
 }
 
-suspend fun ExposedDatabaseSession.getMediaByNames(names: List<String?>): Result<List<Media?>> {
+suspend fun ExposedDatabaseSession.getMediaByNames(names: List<String?>): Result<List<Media>> {
     if (names.filterNotNull().isEmpty()) {
-        return Result.success(List(names.size) {
-            null
-        })
+        return Result.success(emptyList())
     }
     return dbSearch {
         search {
@@ -120,7 +109,7 @@ fun insertCopiedMedia(
         it[Medias.owner] = newOwner
         it[Medias.contentType] = media.contentType
         it[Medias.size] = media.size
-        it[Medias.fullName] = media.newFullName
+        it[Medias.fullName] = media.fullName
     }.insertedCount > 0) {
         "insert media failed"
     }

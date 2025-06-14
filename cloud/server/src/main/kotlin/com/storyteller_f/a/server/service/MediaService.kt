@@ -86,7 +86,7 @@ suspend fun Backend.getAllMediaList(
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, tika: Tika, uid: PrimaryKey) =
-    this.databaseSession.getMediaById(mediaId).mapResultIfNotNull { media ->
+    databaseSession.getMediaById(mediaId).mapResultIfNotNull { media ->
         if (media.owner != uid) {
             throw ForbiddenException("no permission")
         }
@@ -263,7 +263,7 @@ suspend fun Backend.copyMedia(
                     "$uid/${newCopiedFileName(name)}"
                 }
             }.mapResult {
-                this.databaseSession.getMedia(objectTuple.objectId, name).mapResultIfNotNull { media ->
+                databaseSession.getMedia(objectTuple.objectId, name).mapResultIfNotNull { media ->
                     copyMedia(media, uid, it)
                 }
             }

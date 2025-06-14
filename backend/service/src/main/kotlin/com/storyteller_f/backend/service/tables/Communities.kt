@@ -2,9 +2,7 @@ package com.storyteller_f.backend.service.tables
 
 import com.storyteller_f.backend.service.BaseEntity
 import com.storyteller_f.backend.service.BaseTable
-import com.storyteller_f.backend.service.communityIcon
 import com.storyteller_f.backend.service.communityName
-import com.storyteller_f.backend.service.communityPoster
 import com.storyteller_f.backend.service.customPrimaryKey
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.*
@@ -13,8 +11,8 @@ import org.jetbrains.exposed.sql.*
 
 object Communities : BaseTable() {
     val name = communityName()
-    val icon = communityIcon()
-    val poster = communityPoster().index()
+    val icon = customPrimaryKey("icon")
+    val poster = customPrimaryKey("poster").index()
     val owner = customPrimaryKey("owner").index()
 }
 
@@ -24,8 +22,8 @@ class Community(
     val aid: String,
     val name: String,
     val owner: PrimaryKey,
-    val icon: String? = null,
-    val poster: String? = null
+    val icon: PrimaryKey? = null,
+    val poster: PrimaryKey? = null
 ) :
     BaseEntity(id, createdTime) {
     companion object {
@@ -61,9 +59,9 @@ fun Community.toCommunityIfo(
 )
 
 data class CommunityRawResult(
-    val communityInfo: Community,
-    val icon: String?,
-    val poster: String?,
+    val community: Community,
+    val icon: PrimaryKey?,
+    val poster: PrimaryKey?,
     val joinedTime: LocalDateTime?,
     val lastRead: Long?,
     val memberCount: Long

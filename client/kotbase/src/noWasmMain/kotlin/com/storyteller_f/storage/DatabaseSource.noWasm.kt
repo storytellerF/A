@@ -19,27 +19,27 @@ import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 import kotbase.Collection as KotbaseCollection
 
-actual fun createKotbaseDatabaseSource(scope: String?): DatabaseSource {
-    return KotbaseDatabaseSource(createKotbase(), scope)
+actual fun createKotbaseDatabaseSource(scope: String?): StorageSource {
+    return KotbaseStorageSource(createKotbase(), scope)
 }
 
 class KotbaseObservable<T>(
     private val listenerToken: ListenerToken,
     override val task: CompletableDeferred<List<T>>
 ) :
-    DatabaseObservable<T> {
+    StorageObservable<T> {
     override fun remove() {
         listenerToken.remove()
     }
 }
 
 
-class KotbaseDatabaseCollection<T>(
+class KotbaseStorageCollection<T>(
     val collection: KotbaseCollection,
-    val source: KotbaseDatabaseSource,
+    val source: KotbaseStorageSource,
     val serializer: KSerializer<T>
 ) :
-    DatabaseCollection<T> {
+    StorageCollection<T> {
     val json = Json {
         ignoreUnknownKeys = true
     }
@@ -54,7 +54,7 @@ class KotbaseDatabaseCollection<T>(
         }
     }
 
-    override fun observeDatum(expression: DatabaseExpression): Flow<T?> {
+    override fun observeDatum(expression: StorageExpression): Flow<T?> {
         return select(all()).from(collection).where {
             buildExpression(expression)
         }.limit(1).queryChangeFlow().map {
@@ -70,7 +70,7 @@ class KotbaseDatabaseCollection<T>(
         }
     }
 
-    override fun getDocument(expression: DatabaseExpression): T? {
+    override fun getDocument(expression: StorageExpression): T? {
         return kotbase.ktx.select(all()).from(collection)
             .where {
                 buildExpression(expression)
@@ -85,7 +85,7 @@ class KotbaseDatabaseCollection<T>(
         }
     }
 
-    override fun exists(expression: DatabaseExpression): Boolean {
+    override fun exists(expression: StorageExpression): Boolean {
         return kotbase.ktx.select(all()).from(collection)
             .where {
                 buildExpression(expression)
@@ -93,11 +93,11 @@ class KotbaseDatabaseCollection<T>(
             .execute().next() != null
     }
 
-    private fun WhereBuilder.buildExpression(expression: DatabaseExpression): Expression = when (expression) {
-        is DatabaseExpression.IdEq -> (expression.field) equalTo expression.value
-        is DatabaseExpression.StrEq -> (expression.field) equalTo expression.value
-        is DatabaseExpression.Less -> expression.field lessThan expression.value
-        is DatabaseExpression.StrLess -> expression.field lessThan expression.value
+    private fun WhereBuilder.buildExpression(expression: StorageExpression): Expression = when (expression) {
+        is StorageExpression.IdEq -> (expression.field) equalTo expression.value
+        is StorageExpression.StrEq -> (expression.field) equalTo expression.value
+        is StorageExpression.Less -> expression.field lessThan expression.value
+        is StorageExpression.StrLess -> expression.field lessThan expression.value
     }
 
     override fun deleteDocument(id: String) {
@@ -107,11 +107,11 @@ class KotbaseDatabaseCollection<T>(
     }
 
     override fun observeData(
-        orders: List<DatabaseOrder>,
+        orders: List<StorageOrder>,
         size: Int,
-        vararg expressions: DatabaseExpression,
+        vararg expressions: StorageExpression,
         invalidate: () -> Unit
-    ): DatabaseObservable<T> {
+    ): StorageObservable<T> {
         val task = CompletableDeferred<List<T>>()
         val selectQuery = select(all()).from(collection)
         val listenerToken = if (expressions.isNotEmpty()) {
@@ -126,8 +126,8 @@ class KotbaseDatabaseCollection<T>(
         }.orderBy {
             orders.forEach {
                 when (it) {
-                    is DatabaseOrder.Asc -> it.field.ascending()
-                    is DatabaseOrder.Desc -> it.field.descending()
+                    is StorageOrder.Asc -> it.field.ascending()
+                    is StorageOrder.Desc -> it.field.descending()
                 }
             }
         }.limit(size)
@@ -175,12 +175,12 @@ fun createKotbase(): Database {
     }
 }
 
-class KotbaseDatabaseSource(private val database: Database, val scope: String?) : DatabaseSource {
+class KotbaseStorageSource(private val database: Database, val scope: String?) : StorageSource {
     val clearing = mutableSetOf<String>()
     val mutex = Mutex()
 
     @OptIn(InternalSerializationApi::class)
-    override fun <T : Any> getCollection(name: String, clazz: KClass<T>): DatabaseCollection<T> {
+    override fun <T : Any> getCollection(name: String, clazz: KClass<T>): StorageCollection<T> {
         val kotbaseScope = getKotbaseScope()
         val collection = kotbaseScope.getCollection(name) ?: database.createCollection(
             name, scope
@@ -198,10 +198,10 @@ class KotbaseDatabaseSource(private val database: Database, val scope: String?) 
                     ValueIndexConfiguration("pinned", "id")
                 )
         }
-        return KotbaseDatabaseCollection(collection, this, clazz.serializer())
+        return KotbaseStorageCollection(collection, this, clazz.serializer())
     }
 
-    override fun <T : Any> getCollectionByPrefix(prefix: String, clazz: KClass<T>): List<DatabaseCollection<T>> {
+    override fun <T : Any> getCollectionByPrefix(prefix: String, clazz: KClass<T>): List<StorageCollection<T>> {
         return getKotbaseScope().collections.filter {
             it.name.startsWith(prefix) && it.scope.name == scope
         }.map {

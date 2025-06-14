@@ -4,7 +4,6 @@ import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toKotlinInstant
 import kotlinx.datetime.toLocalDateTime
@@ -32,7 +31,7 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
     override suspend fun upload(
         bucketName: String,
         uploadPacks: List<UploadPack>
-    ): Result<List<Pair<String, LocalDateTime>?>> {
+    ): Result<List<MediaRecord>> {
         return withContext(Dispatchers.IO) {
             val bucketPath = base.resolve(bucketName)
             uploadPacks.map { uploadPack ->
@@ -45,21 +44,18 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
         }
     }
 
-    override suspend fun get(bucketName: String, names: List<String?>): Result<List<Pair<String, LocalDateTime>?>> {
+    override suspend fun get(bucketName: String, names: List<String>): Result<List<MediaRecord>> {
         return withContext(Dispatchers.IO) {
-            Result.success(names.map {
-                when (it) {
-                    null -> null
-                    else -> {
-                        val mediaPath = base.resolve("$bucketName/$it")
-                        if (mediaPath.exists()) {
-                            URIBuilder(url).setPath("amedia/${AMEDIA_DEFAULT_BUCKET}/$it").build()
-                                .toString() to mediaPath.getLastModifiedTime().toInstant().toKotlinInstant()
-                                .toLocalDateTime(TimeZone.UTC)
-                        } else {
-                            null
-                        }
-                    }
+            Result.success(names.mapNotNull {
+                val mediaPath = base.resolve("$bucketName/$it")
+                if (mediaPath.exists()) {
+                    MediaRecord(
+                        URIBuilder(url).setPath("amedia/${AMEDIA_DEFAULT_BUCKET}/$it").build()
+                            .toString(), mediaPath.getLastModifiedTime().toInstant().toKotlinInstant()
+                            .toLocalDateTime(TimeZone.UTC), it
+                    )
+                } else {
+                    null
                 }
             })
         }
@@ -75,7 +71,7 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
         }
     }
 
-    override suspend fun list(bucketName: String, prefix: String): Result<List<Pair<String, LocalDateTime>>> {
+    override suspend fun list(bucketName: String, prefix: String): Result<List<MediaRecord>> {
         return withContext(Dispatchers.IO) {
             val p = base.resolve("$bucketName/$prefix")
             val children = buildList<String?> {
@@ -95,7 +91,7 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
     override suspend fun copy(
         bucketName: String,
         copyPacks: List<CopyPack>
-    ): Result<List<Pair<String, LocalDateTime>?>> {
+    ): Result<List<MediaRecord>> {
         return withContext(Dispatchers.IO) {
             val bucketPath = base.resolve(bucketName)
             val newNames = copyPacks.map {

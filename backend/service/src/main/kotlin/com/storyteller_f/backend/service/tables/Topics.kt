@@ -12,6 +12,7 @@ import com.storyteller_f.shared.utils.*
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 
 object Topics : BaseTable() {
     val author = customPrimaryKey("author").index()
@@ -21,6 +22,8 @@ object Topics : BaseTable() {
     val rootType = objectType("root_type")
     val pinned = bool("pinned").default(false)
     val lastModifiedTime = datetime("last_modified_time").nullable()
+    val content = blob("content")
+    val isEncrypted = bool("is_encrypted")
 }
 
 class Topic(
@@ -31,6 +34,8 @@ class Topic(
     val parentType: ObjectType,
     val rootId: PrimaryKey,
     val rootType: ObjectType,
+    val content: ByteArray,
+    val isEncrypted: Boolean,
     val isPin: Boolean = false,
     val lastModifiedTime: LocalDateTime? = null,
     val aid: String? = null,
@@ -46,6 +51,8 @@ class Topic(
                     row[parentType],
                     row[rootId],
                     row[rootType],
+                    row[content].bytes,
+                    row[isEncrypted],
                     row[pinned],
                     row[lastModifiedTime],
                     row.getOrNull(Aids.value),
@@ -66,6 +73,7 @@ class Topic(
                 it[parentId] = info.parentId
                 it[rootId] = info.rootId
                 it[rootType] = info.rootType
+                it[content] = ExposedBlob(info.content)
             }.insertedCount > 0) {
                 "insert topic failed"
             }
@@ -79,11 +87,11 @@ fun Topic.toTopicInfo(
     reactionCount: Long = 0,
     aidValue: String? = null,
     lastRead: PrimaryKey? = null,
-    isPrivate: Boolean = false,
+    content: TopicContent,
 ): TopicInfo {
     return TopicInfo(
         id = id,
-        content = TopicContent.Nil,
+        content = content,
         author = author,
         rootId = rootId,
         rootType = rootType,
@@ -94,7 +102,7 @@ fun Topic.toTopicInfo(
         commentCount = commentCount,
         reactionCount = reactionCount,
         hasComment = hasComment,
-        isPrivate = isPrivate,
+        isEncrypted = isEncrypted,
         isPin = isPin,
         lastModifiedTime = lastModifiedTime,
         extension = null,

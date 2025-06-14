@@ -9,7 +9,7 @@ import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.ObjectFetch
-import com.storyteller_f.backend.service.getUserInfoAndRelatedMedia
+import com.storyteller_f.backend.service.getUserInfo
 import com.storyteller_f.backend.service.isDup
 import com.storyteller_f.backend.service.query.addDevice
 import com.storyteller_f.backend.service.searchMembers
@@ -50,7 +50,7 @@ fun Route.bindProtectedSafeUserRoute(reader: DatabaseReader, backend: Backend) {
 fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
     get<RouteUsers.Aid> { value ->
         omitPrincipal(reader) {
-            value.aid?.let { backend.getUserInfoAndRelatedMedia(ObjectFetch.AidFetch(it)) }
+            value.aid?.let { backend.getUserInfo(ObjectFetch.AidFetch(it)) }
                 ?: Result.success(
                     null
                 )
@@ -58,7 +58,7 @@ fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
     }
     get<RouteUsers.Id> {
         omitPrincipal(reader) {
-            backend.getUserInfoAndRelatedMedia(ObjectFetch.IdFetch(it.id))
+            backend.getUserInfo(ObjectFetch.IdFetch(it.id))
         }
     }
 

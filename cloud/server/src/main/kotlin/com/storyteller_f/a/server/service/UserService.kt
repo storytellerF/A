@@ -8,7 +8,7 @@ import com.storyteller_f.backend.service.ForbiddenException
 import com.storyteller_f.backend.service.ObjectFetch
 import com.storyteller_f.backend.service.USER_NICKNAME
 import com.storyteller_f.backend.service.getMediaInfoList
-import com.storyteller_f.backend.service.getUserInfoAndRelatedMedia
+import com.storyteller_f.backend.service.getUserInfo
 import com.storyteller_f.backend.service.query.addReadLog
 import com.storyteller_f.backend.service.query.getUserAid
 import com.storyteller_f.backend.service.query.updateUserInfo
@@ -60,10 +60,10 @@ suspend fun Backend.updateUser(
         it().exceptionOrNull()
     }
     if (firstError != null) return Result.failure(firstError)
-    return this.databaseSession.updateUserInfo(uid, newUser).mapResult {
+    return databaseSession.updateUserInfo(uid, newUser).mapResult {
         if (it) {
             this.addUserLog(uid, UserLogType.UPDATE, uid ob ObjectType.USER)
-            getUserInfoAndRelatedMedia(ObjectFetch.IdFetch(uid))
+            getUserInfo(ObjectFetch.IdFetch(uid))
         } else {
             Result.success(null)
         }
@@ -77,7 +77,7 @@ private suspend fun Backend.checkAidModifyTimes(
     Result.success(Unit)
 } else {
     // check aid is null
-    this.databaseSession.getUserAid(id).mapResult {
+    databaseSession.getUserAid(id).mapResult {
         if (it != null) {
             Result.failure(BadRequestException("aid is not null."))
         } else {
@@ -160,7 +160,7 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
         uid
     ).mapResultIfNotNull {
         if (it.hasRead) {
-            this.databaseSession.addReadLog(
+            databaseSession.addReadLog(
                 UserTopicRead(
                     uid,
                     now(),

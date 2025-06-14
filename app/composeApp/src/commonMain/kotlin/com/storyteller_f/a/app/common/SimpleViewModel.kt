@@ -10,7 +10,7 @@ import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.client_lib.ClientSessionState
 import com.storyteller_f.a.client_lib.LoadingHandler
 import com.storyteller_f.a.client_lib.SessionManager
-import com.storyteller_f.storage.DatabaseSource
+import com.storyteller_f.storage.StorageSource
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.map
 
@@ -25,7 +25,7 @@ abstract class SimpleViewModel<T : Any> : ViewModel() {
 @Composable
 inline fun <reified VM : ViewModel> viewModel(
     keys: List<Comparable<*>?>? = null,
-    crossinline factory: (SessionManager, DatabaseSource) -> VM
+    crossinline factory: (SessionManager, StorageSource) -> VM
 ): VM {
     val sessionManager = LocalSessionManager.current
     val databaseSource = LocalDatabase.current

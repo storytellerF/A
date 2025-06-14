@@ -165,7 +165,7 @@ private suspend fun RoutingContext.signIn(
 suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple) {
     val logId = SnowflakeFactory.nextId()
     val log = UserLog(logId, now(), uid, type, objectTuple.objectId, objectTuple.objectType)
-    this.databaseSession.insertUserLog(log).onFailure {
+    databaseSession.insertUserLog(log).onFailure {
         Napier.i(tag = "user log", throwable = it) {
             "add failed"
         }
@@ -249,15 +249,15 @@ private suspend fun Backend.getUserAuthData(
     credential: CustomCredential
 ): Result<Pair<String, Long>?> {
     return when (credential) {
-        is AidCredential -> this.databaseSession.getUserAuthDataByAid {
+        is AidCredential -> databaseSession.getUserAuthDataByAid {
             Aids.value eq credential.aid
         }
 
-        is IdCredential -> this.databaseSession.getUserAuthDataBy {
+        is IdCredential -> databaseSession.getUserAuthDataBy {
             Users.id eq credential.id
         }
 
-        is AddressCredential -> this.databaseSession.getUserAuthDataBy {
+        is AddressCredential -> databaseSession.getUserAuthDataBy {
             Users.address eq credential.ad
         }
     }
@@ -274,7 +274,7 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        this.databaseSession.checkUserExists(id).map {
+        databaseSession.checkUserExists(id).map {
             CustomPrincipal(id)
         }
     } else {

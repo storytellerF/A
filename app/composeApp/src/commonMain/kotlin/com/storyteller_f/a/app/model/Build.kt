@@ -15,13 +15,13 @@ fun createSearchCommunitiesViewModel(
 ) = viewModel(
     keys = listOf("search-community", finalOption.name, query)
 ) { client, databaseSource ->
-    CommunitiesViewModel(client, databaseSource = databaseSource, finalOption, query)
+    CommunitiesViewModel(client, storageSource = databaseSource, finalOption, query)
 }
 
 @Composable
 fun createJoinedCommunitiesViewModel() =
     viewModel(keys = listOf("joined-communities")) { client, databaseSource ->
-        CommunitiesViewModel(client, databaseSource = databaseSource, JoinStatusSearch.JOINED, "")
+        CommunitiesViewModel(client, storageSource = databaseSource, JoinStatusSearch.JOINED, "")
     }
 
 @Composable

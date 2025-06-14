@@ -3,8 +3,7 @@ package com.storyteller_f.backend.service
 import com.storyteller_f.backend.service.tables.Aids
 import com.storyteller_f.backend.service.tables.AssetTransactions
 import com.storyteller_f.backend.service.tables.Communities
-import com.storyteller_f.backend.service.tables.EncryptedTopicKeys
-import com.storyteller_f.backend.service.tables.EncryptedTopics
+import com.storyteller_f.backend.service.tables.EncryptedKeys
 import com.storyteller_f.backend.service.tables.MediaRefs
 import com.storyteller_f.backend.service.tables.Medias
 import com.storyteller_f.backend.service.tables.MemberJoins
@@ -203,8 +202,7 @@ object DatabaseFactory {
         Aids,
         AssetTransactions,
         Communities,
-        EncryptedTopics,
-        EncryptedTopicKeys,
+        EncryptedKeys,
         MediaRefs,
         Medias,
         MemberJoins,
@@ -250,7 +248,6 @@ const val ADDRESS_LENGTH = 100
 const val USER_NICKNAME = 20
 const val COMMUNITY_NAME_LENGTH = 10
 const val AID_LENGTH = 20
-const val ICON_LENGTH = 1000
 const val ROOM_NAME_LENGTH = 10
 
 // 最长60，如果超过60 会进行裁切然后在后面添加uuid，保存时预留一部分空间
@@ -267,19 +264,14 @@ fun Throwable.isDup(): Boolean {
 
 private fun isConnectFailed(e: Throwable): Boolean = e is PSQLException && e.cause is ConnectException
 
-fun Table.userIcon() = varchar("icon", ICON_LENGTH).nullable()
 fun Table.userPublicKey() = varchar("public_key", PUBLIC_KEY_LENGTH).uniqueIndex()
 fun Table.userAddress() = varchar("pub_address", ADDRESS_LENGTH).uniqueIndex()
 fun Table.userName() = varchar("nickname", USER_NICKNAME).index()
 
-fun Table.roomIcon() = varchar("icon", ICON_LENGTH).nullable()
 fun Table.roomName() = varchar("name", ROOM_NAME_LENGTH).index()
 
 fun <T : Table> T.emoji() = varchar("emoji", 20)
 
 fun Table.communityName() = varchar("name", COMMUNITY_NAME_LENGTH).index()
-fun Table.communityIcon() = varchar("icon", ICON_LENGTH).nullable()
-
-fun Table.communityPoster() = varchar("poster", ICON_LENGTH).nullable()
 
 fun Table.titleName() = varchar("name", 20)

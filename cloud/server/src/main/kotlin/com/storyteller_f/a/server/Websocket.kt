@@ -7,12 +7,8 @@ import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.service.processTopicExtension
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.ForbiddenException
-import com.storyteller_f.backend.service.query.checkRoomIsPrivate
-import com.storyteller_f.backend.service.query.getJoinedUserList
-import com.storyteller_f.backend.service.query.getTopicRootTuple
-import com.storyteller_f.backend.service.query.getUserDevices
-import com.storyteller_f.backend.service.query.isMemberJoined
-import com.storyteller_f.backend.service.query.saveEncryptedTopic
+import com.storyteller_f.backend.service.index.TopicDocument
+import com.storyteller_f.backend.service.query.*
 import com.storyteller_f.backend.service.savePlainTopic
 import com.storyteller_f.backend.service.tables.Topic
 import com.storyteller_f.shared.model.TopicContent
@@ -34,6 +30,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.*
 import io.ktor.server.websocket.*
 import io.ktor.util.logging.*
 import kotlinx.coroutines.CancellationException
@@ -85,7 +82,7 @@ suspend fun Backend.sendTopicToRoomMembers() {
         }
     }.use { client ->
         sharedFlow.collect { frame ->
-            this.databaseSession.getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
+            databaseSession.getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
                 val memberJoins = list.filter {
                     it.uid != frame.topicInfo.author
                 }
@@ -96,7 +93,7 @@ suspend fun Backend.sendTopicToRoomMembers() {
                         WebsocketDispatcher(it)
                     }
                 }
-                this.databaseSession.getUserDevices(memberJoins.map {
+                databaseSession.getUserDevices(memberJoins.map {
                     it.uid
                 }).map {
                     it.map {
@@ -211,7 +208,7 @@ private suspend fun Backend.addTopicAtRoom(
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            this.databaseSession.getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
+            databaseSession.getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
                     addTopicIntoRoom(
                         id,
@@ -243,55 +240,42 @@ private suspend fun Backend.addTopicIntoRoom(
     uid: PrimaryKey,
     newTopic: NewRoomTopic
 ): Result<TopicInfo?> {
-    return this.databaseSession.isMemberJoined(roomId, uid).mapResult { bool ->
+    val bytes = when (val c = newTopic.content) {
+        is TopicContent.Plain -> c.bytes
+        is TopicContent.Encrypted -> c.bytes
+        else -> throw BadRequestException("unsupported type")
+    }
+    return databaseSession.isMemberJoined(roomId, uid).mapResult { bool ->
         if (bool) {
             val content = newTopic.content
             val newId = SnowflakeFactory.nextId()
-            val topic = Topic(
-                newId,
-                now(),
-                uid,
-                roomId,
-                ObjectType.ROOM,
-                newTopic.parentId,
-                newTopic.parentType,
-                false,
-                null
-            )
-
-            this.databaseSession.checkRoomIsPrivate(roomId).mapResultIfNotNull { isPrivate ->
-                if (isPrivate) {
-                    if (content is TopicContent.Encrypted) {
-                        isKeyVerified(
-                            roomId,
-                            content.encryptedKey
-                        ).mapResult {
-                            if (it) {
-                                this.databaseSession.saveEncryptedTopic(
-                                    topic,
-                                    content
-                                )
-                            } else {
-                                Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
-                            }
-                        }
-                    } else {
-                        Result.failure(
-                            ForbiddenException("Private room only accept encrypted content.")
-                        )
+            databaseSession.checkRoomIsPrivate(roomId).mapResultIfNotNull { isPrivate ->
+                val topic = Topic(
+                    newId,
+                    now(),
+                    uid,
+                    roomId,
+                    ObjectType.ROOM,
+                    newTopic.parentId,
+                    newTopic.parentType,
+                    bytes,
+                    isPrivate,
+                    false,
+                    null
+                )
+                when {
+                    isPrivate -> saveEncryptedTopic(content, roomId, topic)
+                    content is TopicContent.Plain -> savePlainTopic(topic, content = content).map {
+                        topicSearchService.saveDocument(
+                            listOf(TopicDocument.Companion.fromTopic(topic, content))
+                        ).getOrThrow()
+                        it
                     }
-                } else {
-                    when (content) {
-                        is TopicContent.Plain -> savePlainTopic(
-                            topic,
-                            content = content
-                        )
 
-                        else -> Result.failure(ForbiddenException("Public room only accept unencrypted content."))
-                    }
+                    else -> Result.failure(ForbiddenException("Public room only accept unencrypted content."))
                 }
             }.mapResultIfNotNull { topicInfo ->
-                processTopicExtension(listOf(topicInfo), uid, topicInfo.isPrivate, false).mapIfNotNull {
+                processTopicExtension(listOf(topicInfo), uid, false).mapIfNotNull {
                     it.first()
                 }
             }
@@ -301,11 +285,29 @@ private suspend fun Backend.addTopicIntoRoom(
     }
 }
 
+private suspend fun Backend.saveEncryptedTopic(
+    content: TopicContent,
+    roomId: PrimaryKey,
+    topic: Topic
+): Result<TopicInfo?> = if (content is TopicContent.Encrypted) {
+    isKeyVerified(roomId, content.encryptedKey).mapResult {
+        if (it) {
+            databaseSession.saveEncryptedTopic(topic, content)
+        } else {
+            Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
+        }
+    }
+} else {
+    Result.failure(
+        ForbiddenException("Private room only accept encrypted content.")
+    )
+}
+
 private suspend fun Backend.isKeyVerified(
     roomId: PrimaryKey,
     encryptedAes: Map<PrimaryKey, String>
 ): Result<Boolean> {
-    return this.databaseSession.getJoinedUserList(roomId).map { value ->
+    return databaseSession.getJoinedUserList(roomId).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()

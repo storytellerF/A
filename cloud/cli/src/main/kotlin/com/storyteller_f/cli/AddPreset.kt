@@ -15,7 +15,7 @@ import com.storyteller_f.backend.service.query.insertMediaRefs
 import com.storyteller_f.backend.service.tables.Aids
 import com.storyteller_f.backend.service.tables.Communities
 import com.storyteller_f.backend.service.tables.Community
-import com.storyteller_f.backend.service.tables.EncryptedTopicKeys
+import com.storyteller_f.backend.service.tables.EncryptedKeys
 import com.storyteller_f.backend.service.tables.EncryptedTopics
 import com.storyteller_f.backend.service.tables.MemberJoins
 import com.storyteller_f.backend.service.tables.MemberJoins.joinedTime
@@ -429,10 +429,10 @@ class AddPreset : Subcommand("add", "add entry") {
             it.user.aid to it.user
         }
 
-        val communityMap = this.databaseSession.getCommunityRawResults(AidListFetch(l.mapNotNull {
+        val communityMap = databaseSession.getCommunityRawResults(AidListFetch(l.mapNotNull {
             it.community
         }.distinct())).getOrThrow().associate {
-            it.communityInfo.aid to it.communityInfo
+            it.community.aid to it.community
         }
         return data.map { (presetRoom, pic, id) ->
             Room(
@@ -477,7 +477,7 @@ class AddPreset : Subcommand("add", "add entry") {
         return databaseSession.getCommunityRawResults(AidListFetch(list.mapNotNull {
             it.community
         })).getOrThrow().associate {
-            it.communityInfo.aid to it.communityInfo.id
+            it.community.aid to it.community.id
         }
     }
 
@@ -597,7 +597,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val path = File(parentDir, "medias/topics/$pic")
             UploadPack(path, pic, author, path.length())
         }).getOrThrow()
-        this.databaseSession.insertMediaRefs(topicId, ObjectType.TOPIC, mediaNames)
+        databaseSession.insertMediaRefs(topicId, ObjectType.TOPIC, mediaNames)
     }
 
     private suspend fun Backend.insertEncryptedTopicToRoom(
@@ -634,10 +634,10 @@ class AddPreset : Subcommand("add", "add entry") {
             this[EncryptedTopics.topicId] = t.id
             this[EncryptedTopics.content] = ExposedBlob(bytes)
         }
-        EncryptedTopicKeys.batchInsert(encryptedKeys) { (index, t4, id) ->
-            this[EncryptedTopicKeys.topicId] = index
-            this[EncryptedTopicKeys.encryptedAes] = ExposedBlob(t4)
-            this[EncryptedTopicKeys.uid] = id
+        EncryptedKeys.batchInsert(encryptedKeys) { (index, t4, id) ->
+            this[EncryptedKeys.topicId] = index
+            this[EncryptedKeys.encryptedAes] = ExposedBlob(t4)
+            this[EncryptedKeys.uid] = id
         }
         topicsPrivate.forEach { topic ->
             val room = roomMap[topic.topic.room]

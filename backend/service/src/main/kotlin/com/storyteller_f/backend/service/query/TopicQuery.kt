@@ -1,19 +1,7 @@
 package com.storyteller_f.backend.service.query
 
-import com.storyteller_f.backend.service.ExposedDatabaseSession
-import com.storyteller_f.backend.service.ObjectFetch
-import com.storyteller_f.backend.service.bindPaginationQuery
-import com.storyteller_f.backend.service.count
-import com.storyteller_f.backend.service.first
-import com.storyteller_f.backend.service.map
-import com.storyteller_f.backend.service.tables.Aids
-import com.storyteller_f.backend.service.tables.EncryptedTopic
-import com.storyteller_f.backend.service.tables.EncryptedTopicKey
-import com.storyteller_f.backend.service.tables.EncryptedTopicKeys
-import com.storyteller_f.backend.service.tables.EncryptedTopics
-import com.storyteller_f.backend.service.tables.Topic
-import com.storyteller_f.backend.service.tables.Topics
-import com.storyteller_f.backend.service.tables.toTopicInfo
+import com.storyteller_f.backend.service.*
+import com.storyteller_f.backend.service.tables.*
 import com.storyteller_f.backend.service.types.PaginationResult
 import com.storyteller_f.backend.service.types.PrimaryKeyFetch
 import com.storyteller_f.shared.model.TopicContent
@@ -27,8 +15,6 @@ import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.merge
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
-import kotlin.collections.plus
-import kotlin.map
 
 suspend fun ExposedDatabaseSession.getTopicRootTuple(
     parentId: PrimaryKey
@@ -133,14 +119,38 @@ private suspend fun ExposedDatabaseSession.processTopicToTopicInfo(
         } else {
             Result.success(emptyMap())
         }
-    }).map { (commented, commentCountMap, reactionCountMap, lastReadMap) ->
+    }, {
+        val encryptedTopic = topics.filter {
+            it.isEncrypted
+        }
+        (if (encryptedTopic.isEmpty()) {
+            Result.success(emptyList())
+        } else if (uid != null) {
+            getEncryptedTopicContents(encryptedTopic, uid).map {
+                it.mapIndexed { i, e ->
+                    topics[i].id to e
+                }
+            }
+        } else {
+            Result.failure(ForbiddenException("Permission denied"))
+        }).map {
+            it + topics.filter { topic ->
+                !topic.isEncrypted
+            }.map { topic ->
+                topic.id to TopicContent.Plain(topic.content.decodeToString())
+            }
+        }.map {
+            it.associate { it }
+        }
+    }).map { (commented, commentCountMap, reactionCountMap, lastReadMap, contentMap) ->
         topics.map { topic ->
             val id = topic.id
             topic.toTopicInfo(
                 commentCountMap[id] ?: 0,
                 commented.contains(id),
                 reactionCountMap[id] ?: 0,
-                lastRead = lastReadMap[id]?.topicId
+                lastRead = lastReadMap[id]?.topicId,
+                content = contentMap[id]!!
             )
         }
     }
@@ -187,30 +197,30 @@ suspend fun ExposedDatabaseSession.getTopicPaginationResultByPredicate(
 // 加密内容不能处理media，需要客户端处理
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun ExposedDatabaseSession.getEncryptedTopicContents(
-    data: List<TopicInfo>,
+    data: List<Topic>,
     uid: PrimaryKey
-) = dbQuery {
+): Result<List<TopicContent.Encrypted>> {
     val topicId = data.map {
         it.id
     }
-    val aesMap = EncryptedTopicKeys.selectAll().where {
-        EncryptedTopicKeys.topicId inList topicId and (EncryptedTopicKeys.uid eq uid)
+    return dbSearch {
+        search {
+            EncryptedKeys.selectAll().where {
+                EncryptedKeys.topicId inList topicId and (EncryptedKeys.uid eq uid)
+            }
+        }
+        map {
+            EncryptedKey.wrapRow(it)
+        }
     }.map {
-        EncryptedTopicKey.Companion.wrapRow(it)
-    }.associate {
-        it.topicId to mapOf((it.uid to it.encryptedAes.toHexString()))
-    }
-    val contentMap = EncryptedTopics.selectAll().where {
-        EncryptedTopics.topicId inList topicId
-    }.map {
-        EncryptedTopic.Companion.wrapRow(it)
-    }.associate {
-        it.topicId to it.content.toHexString()
-    }
-    topicId.map {
-        val map = aesMap[it] ?: emptyMap()
-        val content = contentMap[it].orEmpty()
-        TopicContent.Encrypted(content, map)
+        val aesMap = it.associate {
+            it.topicId to mapOf(it.uid to it.encryptedAes.toHexString())
+        }
+        data.map {
+            val map = aesMap[it.id] ?: emptyMap()
+            val content = it.content.toHexString()
+            TopicContent.Encrypted(content, map)
+        }
     }
 }
 
@@ -219,19 +229,14 @@ suspend fun ExposedDatabaseSession.saveEncryptedTopic(
     topic: Topic,
     content: TopicContent.Encrypted,
 ) = dbQuery {
-    Topic.Companion.new(topic)
-    EncryptedTopics.insert {
-        it[this.content] = ExposedBlob(content.encrypted.hexToByteArray())
-        it[topicId] = topic.id
-    }
-    EncryptedTopicKeys.batchInsert(content.encryptedKey.keys) {
-        this[EncryptedTopicKeys.topicId] = topic.id
-        this[EncryptedTopicKeys.uid] = it
-        this[EncryptedTopicKeys.encryptedAes] =
+    Topic.new(topic)
+    EncryptedKeys.batchInsert(content.encryptedKey.keys) {
+        this[EncryptedKeys.topicId] = topic.id
+        this[EncryptedKeys.uid] = it
+        this[EncryptedKeys.encryptedAes] =
             ExposedBlob(content.encryptedKey[it]!!.hexToByteArray())
     }
-    topic.toTopicInfo(hasComment = false, isPrivate = true)
-        .copy(content = TopicContent.Encrypted(content.encrypted, content.encryptedKey), isPrivate = true)
+    topic.toTopicInfo(content = content)
 }
 
 suspend fun ExposedDatabaseSession.updateTopicStatus(

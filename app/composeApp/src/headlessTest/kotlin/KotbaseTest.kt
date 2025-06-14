@@ -1,6 +1,6 @@
 import com.storyteller_f.a.app.common.SectionLoadParams
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.storage.DatabaseOrder
+import com.storyteller_f.storage.StorageOrder
 import com.storyteller_f.storage.createKotbaseDatabaseSource
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -24,7 +24,7 @@ class KotbaseTest : UsingContextTest() {
         collection.saveDocument("2", CommunityInfo.EMPTY.copy(hasPoster = false, id = 2))
         collection.saveDocument("3", CommunityInfo.EMPTY.copy(hasPoster = true, id = 3))
         collection.saveDocument("4", CommunityInfo.EMPTY.copy(hasPoster = false, id = 4))
-        val task = collection.observeData(listOf(DatabaseOrder.Desc("hasPoster"), DatabaseOrder.Desc("id")), 10) {
+        val task = collection.observeData(listOf(StorageOrder.Desc("hasPoster"), StorageOrder.Desc("id")), 10) {
 
         }.task
         while (!task.isCompleted) {

@@ -38,7 +38,7 @@ class Media(
     val contentType: String,
     val size: Long,
 ) : BaseEntity(id, createdTime) {
-    val newFullName: String = "$owner/$name"
+    val fullName: String = "$owner/$name"
     companion object {
         fun wrapRow(resultRow: ResultRow): Media {
             return with(Medias) {
@@ -58,16 +58,16 @@ class Media(
     }
 }
 
-fun Media.toMediaInfo(it: Pair<String, LocalDateTime>): MediaInfo {
+fun Media.toMediaInfo(url: String, lastModified: LocalDateTime): MediaInfo {
     return MediaInfo(
         id,
-        it.first,
-        newFullName,
+        url,
+        fullName,
         contentType,
         size,
         name,
         owner,
-        it.second,
+        lastModified,
         if (width != 0 && height != 0) Dimension(width, height) else null
     )
 }
