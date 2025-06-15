@@ -15,6 +15,7 @@ import com.storyteller_f.backend.service.naming.NameService
 import com.storyteller_f.backend.service.query.batchCreateCommunityRooms
 import com.storyteller_f.backend.service.tables.*
 import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.obj.PresetValue
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType

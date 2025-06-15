@@ -46,10 +46,17 @@ data class PresetRoom(
 )
 
 @Serializable
+data class PresetFile(
+    val owner: String,
+    val path: List<String>,
+)
+
+@Serializable
 data class PresetValue(
     val type: String,
     val communityData: List<PresetCommunity>? = null,
     val userData: List<PresetUser>? = null,
     val topicData: List<PresetTopic>? = null,
-    val roomData: List<PresetRoom>? = null
+    val roomData: List<PresetRoom>? = null,
+    val fileData: List<PresetFile>? = null,
 )
