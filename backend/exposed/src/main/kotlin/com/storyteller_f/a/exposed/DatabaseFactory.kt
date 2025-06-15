@@ -1,6 +1,8 @@
 package com.storyteller_f.backend.service
 
 import com.storyteller_f.a.backend.core.DatabaseConnection
+import com.storyteller_f.a.exposed.isConnectFailed
+import com.storyteller_f.a.exposed.isDup
 import com.storyteller_f.backend.service.tables.Aids
 import com.storyteller_f.backend.service.tables.AssetTransactions
 import com.storyteller_f.backend.service.tables.Communities

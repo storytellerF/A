@@ -1,6 +1,6 @@
 package com.storyteller_f.backend.service.tables
 
-import com.storyteller_f.backend.service.BaseTable
+import com.storyteller_f.a.exposed.BaseTable
 import com.storyteller_f.shared.type.AssetType
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.insert

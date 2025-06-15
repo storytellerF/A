@@ -1,11 +1,11 @@
 package com.storyteller_f.backend.service.tables
 
-import com.storyteller_f.backend.service.BaseEntity
-import com.storyteller_f.backend.service.BaseTable
-import com.storyteller_f.backend.service.customPrimaryKey
-import com.storyteller_f.backend.service.userAddress
-import com.storyteller_f.backend.service.userName
-import com.storyteller_f.backend.service.userPublicKey
+import com.storyteller_f.a.exposed.BaseEntity
+import com.storyteller_f.a.exposed.BaseTable
+import com.storyteller_f.a.exposed.customPrimaryKey
+import com.storyteller_f.a.exposed.userAddress
+import com.storyteller_f.a.exposed.userName
+import com.storyteller_f.a.exposed.userPublicKey
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.AlgoType
 import com.storyteller_f.shared.type.PassType
