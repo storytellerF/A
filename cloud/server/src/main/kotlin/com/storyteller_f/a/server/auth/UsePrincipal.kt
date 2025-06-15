@@ -1,11 +1,11 @@
 package com.storyteller_f.a.server.auth
 
 import com.maxmind.geoip2.DatabaseReader
+import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.common.FileResponse
 import com.storyteller_f.a.server.common.PathResponse
-import com.storyteller_f.backend.service.CustomBadRequestException
-import com.storyteller_f.backend.service.ForbiddenException
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UnauthorizedException
 import io.ktor.http.*

@@ -1,10 +1,10 @@
 package com.storyteller_f.a.server.route
 
 import com.maxmind.geoip2.DatabaseReader
+import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.service.createTitle
 import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.ForbiddenException
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.TitleType

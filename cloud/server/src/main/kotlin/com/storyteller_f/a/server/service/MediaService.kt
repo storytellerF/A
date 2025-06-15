@@ -1,17 +1,15 @@
 package com.storyteller_f.a.server.service
 
+import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.UploadPack
+import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.server.route.RouteMedia
 import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.ForbiddenException
 import com.storyteller_f.backend.service.copyMedia
 import com.storyteller_f.backend.service.getMediaInfoList
 import com.storyteller_f.backend.service.getMediaPaginationResult
-import com.storyteller_f.backend.service.media.UploadPack
 import com.storyteller_f.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
-import com.storyteller_f.backend.service.query.getMedia
-import com.storyteller_f.backend.service.query.getMediaById
-import com.storyteller_f.backend.service.types.PaginationResult
-import com.storyteller_f.backend.service.types.PrimaryKeyFetch
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -86,12 +84,13 @@ suspend fun Backend.getAllMediaList(
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, tika: Tika, uid: PrimaryKey) =
-    databaseSession.getMediaById(mediaId).mapResultIfNotNull { media ->
+    exposedDatabase.userDatabase.getMediaByIds(listOf(mediaId)).mapResultIfNotNull {
+        val media = it.first()
         if (media.owner != uid) {
             throw ForbiddenException("no permission")
         }
         if (media.contentType.startsWith("audio")) {
-            mediaService.getInputStream(AMEDIA_DEFAULT_BUCKET, media.newFullName).map { input ->
+            mediaService.getInputStream(AMEDIA_DEFAULT_BUCKET, media.fullName).map { input ->
                 withContext(Dispatchers.IO) {
                     input.use {
                         val saveAlbum = { image: ByteArray, mimeType: String ->
@@ -249,27 +248,25 @@ suspend fun Backend.copyMedia(
     name: String,
     uid: PrimaryKey,
     objectTuple: ObjectTuple
-): Result<ServerResponse<MediaInfo?>?> {
-    return checkRootReadPermission(
-        objectTuple.objectType,
-        objectTuple.objectId,
-        uid
-    ).mapResultIfNotNull { permission ->
-        if (permission.hasRead) {
-            mediaService.get(AMEDIA_DEFAULT_BUCKET, listOf("$uid/$name")).map {
-                if (it.firstOrNull() == null) {
-                    "$uid/$name"
-                } else {
-                    "$uid/${newCopiedFileName(name)}"
-                }
-            }.mapResult {
-                databaseSession.getMedia(objectTuple.objectId, name).mapResultIfNotNull { media ->
-                    copyMedia(media, uid, it)
-                }
+) = checkRootReadPermission(
+    objectTuple.objectType,
+    objectTuple.objectId,
+    uid
+).mapResultIfNotNull { permission ->
+    if (permission.hasRead) {
+        mediaService.get(AMEDIA_DEFAULT_BUCKET, listOf("$uid/$name")).map {
+            if (it.firstOrNull() == null) {
+                "$uid/$name"
+            } else {
+                "$uid/${newCopiedFileName(name)}"
             }
-        } else {
-            Result.failure(ForbiddenException("Permission denied"))
+        }.mapResult {
+            exposedDatabase.userDatabase.getMedia(objectTuple.objectId, name).mapResultIfNotNull { media ->
+                copyMedia(media, uid, it)
+            }
         }
+    } else {
+        Result.failure(ForbiddenException("Permission denied"))
     }
 }
 

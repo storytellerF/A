@@ -1,26 +1,16 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.route.RouteCommunities
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.COMMUNITY_NAME_LENGTH
-import com.storyteller_f.backend.service.CustomBadRequestException
-import com.storyteller_f.backend.service.ObjectFetch
-import com.storyteller_f.backend.service.isDup
-import com.storyteller_f.backend.service.processCommunityRawResultToCommunityInfo
-import com.storyteller_f.backend.service.query.addCommunityJoin
-import com.storyteller_f.backend.service.query.createCommunity
-import com.storyteller_f.backend.service.query.exit
-import com.storyteller_f.backend.service.query.getCommunityJoinedTimeByIds
-import com.storyteller_f.backend.service.query.getCommunityPaginationResult
-import com.storyteller_f.backend.service.query.getCommunityRawResult
-import com.storyteller_f.backend.service.query.updateCommunity
+import com.storyteller_f.backend.service.*
 import com.storyteller_f.backend.service.tables.Community
 import com.storyteller_f.backend.service.tables.CommunityRawResult
 import com.storyteller_f.backend.service.tables.toCommunityIfo
-import com.storyteller_f.backend.service.types.PaginationResult
-import com.storyteller_f.backend.service.types.PrimaryKeyFetch
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserLogType
@@ -41,7 +31,7 @@ suspend fun Backend.getCommunity(
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
-    return databaseSession.getCommunityRawResult(
+    return exposedDatabase.communityDatabase.getCommunityRawResult(
         objectFetch,
         fillJoinInfo,
         id
@@ -62,7 +52,7 @@ suspend fun Backend.doUserJoinCommunity(
         Result.success(community)
     } else {
         val time = now()
-        databaseSession.addCommunityJoin(uid, communityId, time).mapResult {
+        exposedDatabase.userDatabase.addCommunityJoin(uid, communityId, time).mapResult {
             addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
             Result.success(community.copy(joinedTime = time))
         }.recoverCatching {
@@ -83,7 +73,7 @@ suspend fun Backend.exitCommunity(
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            databaseSession.exit(communityId, id).mapResult { i ->
+            exposedDatabase.userDatabase.exit(communityId, id).mapResult { i ->
                 if (i > 0) {
                     addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
                     Result.success(info.copy(joinedTime = null))
@@ -98,7 +88,7 @@ suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
     search: RouteCommunities.Search,
     primaryKeyFetch: PrimaryKeyFetch
-) = databaseSession.getCommunityPaginationResult(
+) = exposedDatabase.communityDatabase.getCommunityPaginationResult(
     search.target ?: uid,
     if (search.target != null) JoinStatusSearch.JOINED else search.joinStatus,
     search.word,
@@ -124,7 +114,7 @@ private suspend fun Backend.processUserJoinedTimeReplace(
     val communityIds = value.map {
         it.id
     }
-    return databaseSession.getCommunityJoinedTimeByIds(uid, communityIds).map { joinedTimeList ->
+    return exposedDatabase.communityDatabase.getCommunityJoinedTimeByIds(uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         PaginationResult(value.map {
             it.copy(joinedTime = map[it.id], extension = CommunityInfo.Extension(it.joinedTime))
@@ -161,7 +151,11 @@ suspend fun Backend.createCommunity(
         newCommunity.icon,
         null
     )
-    return databaseSession.createCommunity(community).mapResult {
+    return exposedDatabase.communityDatabase.createCommunity(community).mapResult {
+        databaseSession.dbQuery {
+            createCommunityRoomsRaw(community.id, community.owner, community.aid)
+        }
+
         val communityInfo = community
         addUserLog(uid, UserLogType.CREATE, communityInfo.toCommunityIfo().tuple())
         processCommunityRawResultToCommunityInfo(
@@ -186,13 +180,13 @@ suspend fun Backend.updateCommunity(
     old: UpdateCommunityBody,
     uid: PrimaryKey
 ): Result<CommunityInfo?> {
-    val newCommunity = old.copy(name = old.name?.trim(), icon = old.icon?.trim(), poster = old.poster?.trim())
+    val newCommunity = old.copy(name = old.name?.trim(), icon = old.icon, poster = old.poster)
     return checkRootAdminPermission(ObjectType.COMMUNITY, id, uid).mapResultIfNotNull { permission ->
         if (permission.hasAdmin) {
             checkBeforeUpdateCommunity(newCommunity).mapResult {
-                databaseSession.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
+                exposedDatabase.communityDatabase.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        databaseSession.getCommunityRawResult(
+                        exposedDatabase.communityDatabase.getCommunityRawResult(
                             ObjectFetch.IdFetch(id),
                             true,
                             uid

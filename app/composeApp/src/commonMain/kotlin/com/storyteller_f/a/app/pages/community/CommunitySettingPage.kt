@@ -53,9 +53,9 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
             scope.launch {
                 globalDialogState.use {
                     val body = if (currentOption is SettingOption.Poster) {
-                        UpdateCommunityBody(poster = media.newFullName)
+                        UpdateCommunityBody(poster = media.id)
                     } else {
-                        UpdateCommunityBody(icon = media.newFullName)
+                        UpdateCommunityBody(icon = media.id)
                     }
                     val newInfo = sessionManager.updateCommunityInfo(communityId, body).getOrThrow()
                     bus.emit(OnCommunityUpdated(newInfo))
@@ -84,7 +84,7 @@ private fun CommunitySettingInternal(
             if (it) {
                 scope.launch {
                     globalDialogState.use {
-                        val body = UpdateCommunityBody(icon = "")
+                        val body = UpdateCommunityBody(icon = 0)
                         val newInfo = sessionManager.updateCommunityInfo(communityInfo.id, body).getOrThrow()
                         bus.emit(OnCommunityUpdated(newInfo))
                     }
@@ -99,7 +99,7 @@ private fun CommunitySettingInternal(
             if (it) {
                 scope.launch {
                     globalDialogState.use {
-                        val body = UpdateCommunityBody(poster = "")
+                        val body = UpdateCommunityBody(poster = 0)
                         val newInfo = sessionManager.updateCommunityInfo(communityInfo.id, body).getOrThrow()
                         bus.emit(OnCommunityUpdated(newInfo))
                     }

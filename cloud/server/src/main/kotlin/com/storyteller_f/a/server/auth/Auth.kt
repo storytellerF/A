@@ -2,21 +2,15 @@ package com.storyteller_f.a.server.auth
 
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.*
 import com.storyteller_f.a.server.remoteIp
 import com.storyteller_f.a.server.route.RouteAccounts
 import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.CustomBadRequestException
 import com.storyteller_f.backend.service.processUserRawResultToUserInfo
-import com.storyteller_f.backend.service.query.checkUserExists
-import com.storyteller_f.backend.service.query.createUser
-import com.storyteller_f.backend.service.query.getUserAuthDataBy
-import com.storyteller_f.backend.service.query.getUserAuthDataByAid
-import com.storyteller_f.backend.service.query.getUserRawResultAndPublicKeyByAddress
-import com.storyteller_f.backend.service.query.insertUserLog
-import com.storyteller_f.backend.service.query.isUserNotExists
 import com.storyteller_f.backend.service.tables.Aids
+import com.storyteller_f.backend.service.tables.User
 import com.storyteller_f.backend.service.tables.UserLog
 import com.storyteller_f.backend.service.tables.Users
 import com.storyteller_f.backend.service.tables.toUserInfo
@@ -25,7 +19,9 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
+import com.storyteller_f.shared.type.AlgoType
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PassType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.*
@@ -141,7 +137,7 @@ private suspend fun RoutingContext.signIn(
     data: String
 ): Result<UserInfo?> {
     val f = finalData(data)
-    return backend.databaseSession.getUserRawResultAndPublicKeyByAddress(pack.ad).filterNull {
+    return backend.exposedDatabase.userDatabase.getUserRawResultAndPublicKeyByAddress(pack.ad).filterNull {
         BadRequestException("user not found")
     }.mapResult { (userRawResult, publicKey) ->
         verify(publicKey, pack.sig, f).mapResult { isVerified ->
@@ -165,7 +161,7 @@ private suspend fun RoutingContext.signIn(
 suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple) {
     val logId = SnowflakeFactory.nextId()
     val log = UserLog(logId, now(), uid, type, objectTuple.objectId, objectTuple.objectType)
-    databaseSession.insertUserLog(log).onFailure {
+    exposedDatabase.userDatabase.insertUserLog(log).onFailure {
         Napier.i(tag = "user log", throwable = it) {
             "add failed"
         }
@@ -189,12 +185,24 @@ private suspend fun RoutingContext.signUp(
     val f = finalData(data)
     return verify(pack.pk, pack.sig, f).mapResult {
         if (it) {
-            backend.databaseSession.isUserNotExists(pack.pk).mapResult { userNotExists ->
+            backend.exposedDatabase.userDatabase.isUserNotExists(pack.pk).mapResult { userNotExists ->
                 if (userNotExists) {
                     calcAddress(pack.pk).mapResult { ad ->
                         val newId = SnowflakeFactory.nextId()
                         val name = backend.nameService.parse(newId)
-                        backend.databaseSession.createUser(ad, name, newId, pack.pk).map { user ->
+                        val user = User(
+                            null,
+                            pack.pk,
+                            ad,
+                            null,
+                            name,
+                            newId,
+                            now(),
+                            0,
+                            PassType.RAW,
+                            AlgoType.P256
+                        )
+                        backend.exposedDatabase.userDatabase.createUser(user).map {
                             backend.addUserLog(newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
                             saveSuccessSessionOnFirst(newId, reader)
                             user.toUserInfo()
@@ -220,7 +228,7 @@ private suspend fun ApplicationCall.checkApiRequest(
     return when {
         !ServerConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            backend.databaseSession.checkUserExists(id).mapIfNotNull {
+            backend.exposedDatabase.userDatabase.checkUserExists(id).mapIfNotNull {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             }
@@ -249,15 +257,15 @@ private suspend fun Backend.getUserAuthData(
     credential: CustomCredential
 ): Result<Pair<String, Long>?> {
     return when (credential) {
-        is AidCredential -> databaseSession.getUserAuthDataByAid {
+        is AidCredential -> exposedDatabase.userDatabase.getUserAuthDataByAid {
             Aids.value eq credential.aid
         }
 
-        is IdCredential -> databaseSession.getUserAuthDataBy {
+        is IdCredential -> exposedDatabase.userDatabase.getUserAuthDataBy {
             Users.id eq credential.id
         }
 
-        is AddressCredential -> databaseSession.getUserAuthDataBy {
+        is AddressCredential -> exposedDatabase.userDatabase.getUserAuthDataBy {
             Users.address eq credential.ad
         }
     }
@@ -274,7 +282,7 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        databaseSession.checkUserExists(id).map {
+        exposedDatabase.userDatabase.checkUserExists(id).map {
             CustomPrincipal(id)
         }
     } else {

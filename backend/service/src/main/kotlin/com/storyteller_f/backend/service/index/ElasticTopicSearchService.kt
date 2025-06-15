@@ -12,10 +12,10 @@ import co.elastic.clients.json.JsonData
 import co.elastic.clients.json.jackson.JacksonJsonpMapper
 import co.elastic.clients.transport.TransportUtils
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.storyteller_f.backend.service.ElasticConnection
-import com.storyteller_f.backend.service.types.Cursor
-import com.storyteller_f.backend.service.types.PaginationResult
-import com.storyteller_f.backend.service.types.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.Cursor
+import com.storyteller_f.a.backend.core.ElasticConnection
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
@@ -175,7 +175,8 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 primaryKeyFetch.cursor is Cursor.PreCursor<PrimaryKey> -> {
                     add(RangeQuery.of { r ->
                         r.untyped {
-                            it.field("id").gt(JsonData.of(primaryKeyFetch.cursor.value))
+                            val cursor = primaryKeyFetch.cursor as Cursor.PreCursor<PrimaryKey>
+                            it.field("id").gt(JsonData.of(cursor.value))
                         }
                     }._toQuery() to true)
                 }
@@ -183,7 +184,8 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
                 primaryKeyFetch.cursor is Cursor.NextCursor<PrimaryKey> -> {
                     add(RangeQuery.of { r ->
                         r.untyped {
-                            it.field("id").lt(JsonData.of(primaryKeyFetch.cursor.value))
+                            val cursor = primaryKeyFetch.cursor as Cursor.NextCursor<PrimaryKey>
+                            it.field("id").lt(JsonData.of(cursor.value))
                         }
                     }._toQuery() to true)
                 }

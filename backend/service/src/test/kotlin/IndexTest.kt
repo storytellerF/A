@@ -1,5 +1,5 @@
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
-import com.storyteller_f.backend.service.ElasticConnection
+import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.backend.service.index.ElasticTopicSearchService
 import com.storyteller_f.backend.service.index.LuceneTopicSearchService
 import com.storyteller_f.backend.service.index.TopicDocument

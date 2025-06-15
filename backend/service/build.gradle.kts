@@ -9,16 +9,9 @@ group = "com.storyteller_f.a.backend.service"
 version = "unspecified"
 
 dependencies {
-    api(libs.exposed.core)
-    api(libs.exposed.dao)
-    api(libs.exposed.crypt)
-    api(libs.exposed.jdbc)
-    api(libs.exposed.kotlin.datetime)
-    api(libs.exposed.json)
-    api(libs.exposed.money)
+    api(projects.backend.exposed)
+    api(projects.backend.core)
 
-    implementation(libs.pgjdbc.ng)
-    implementation(libs.postgresql)
     implementation(projects.shared)
     implementation(libs.minio)
     implementation(libs.elasticsearch.java)

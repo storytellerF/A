@@ -47,7 +47,7 @@ class UserTest {
                     .getOrThrow().data.first()
             assertEquals(
                 "avatar1.png",
-                updateUserInfo(UpdateUserBody(avatar = info.newFullName)).getOrThrow().avatar!!.name
+                updateUserInfo(UpdateUserBody(avatar = info.id)).getOrThrow().avatar!!.name
             )
         }
     }

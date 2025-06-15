@@ -1,19 +1,23 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.ReactionFetch
+import com.storyteller_f.a.backend.core.UploadPack
+import com.storyteller_f.a.exposed.query.PaginationResult
+import com.storyteller_f.a.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.route.RouteTopics
 import com.storyteller_f.backend.service.*
 import com.storyteller_f.backend.service.index.DocumentSearch
 import com.storyteller_f.backend.service.index.TopicDocument
-import com.storyteller_f.backend.service.media.UploadPack
-import com.storyteller_f.backend.service.query.*
 import com.storyteller_f.backend.service.tables.Topic
 import com.storyteller_f.backend.service.tables.Topics
 import com.storyteller_f.backend.service.tables.toUserInfo
-import com.storyteller_f.backend.service.types.PaginationResult
-import com.storyteller_f.backend.service.types.PrimaryKeyFetch
-import com.storyteller_f.backend.service.types.ReactionFetch
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
@@ -105,10 +109,13 @@ suspend fun Backend.createTopicSnapshot(
     uid: PrimaryKey,
     topicId: PrimaryKey
 ): Result<MediaInfo?> {
-    return databaseSession.getUserRawResult(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { (first) ->
+    return exposedDatabase.userDatabase.getUserRawResult(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { (first) ->
         checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull { (hasRead) ->
             if (hasRead) {
-                databaseSession.getTopicInfo(ObjectFetch.IdFetch(topicId), null).mapResultIfNotNull { value ->
+                exposedDatabase.topicDatabase.getTopicInfo(
+                    ObjectFetch.IdFetch(topicId),
+                    null
+                ).mapResultIfNotNull { value ->
                     createTopicSnapshot(value, first.toUserInfo(), uid)
                 }
             } else {
@@ -126,7 +133,9 @@ private suspend fun Backend.createTopicSnapshot(
     val topicId = topicInfo.id
     return topicSearchService.getDocuments(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultIfNotNull { documents ->
-            databaseSession.getUserRawResult(ObjectFetch.IdFetch(topicInfo.author)).mapResultIfNotNull { (first) ->
+            exposedDatabase.userDatabase.getUserRawResult(
+                ObjectFetch.IdFetch(topicInfo.author)
+            ).mapResultIfNotNull { (first) ->
                 val name = "$uid/$topicId.pdf"
                 val pdfFile = File("/tmp/$name")
                 val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
@@ -252,7 +261,7 @@ suspend fun Backend.getTopic(
         uid
     ).mapResultIfNotNull { (hasRead, hasJoined) ->
         if (hasRead) {
-            databaseSession.getTopicInfo(
+            exposedDatabase.topicDatabase.getTopicInfo(
                 ObjectFetch.IdFetch(topicId),
                 uid
             ).mapResultIfNotNull { info ->
@@ -274,7 +283,7 @@ suspend fun Backend.getTopicByAid(
     fillHasCommented: Boolean?
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return databaseSession.getTopicInfo(ObjectFetch.AidFetch(aid), uid).mapResultIfNotNull { info ->
+    return exposedDatabase.topicDatabase.getTopicInfo(ObjectFetch.AidFetch(aid), uid).mapResultIfNotNull { info ->
         checkRootReadPermission(
             ObjectType.TOPIC,
             info.id,
@@ -310,7 +319,7 @@ suspend fun Backend.getTopLevelTopicsInObject(
         if (isPrivate && !hasRead) {
             Result.failure(ForbiddenException("Permission Denied"))
         } else {
-            databaseSession.getTopicPaginationResultByPredicate(uid, primaryKeyFetch) { ->
+            exposedDatabase.topicDatabase.getTopicPaginationResultByPredicate(uid, primaryKeyFetch) { ->
                 where {
                     Topics.parentId eq parentId
                 }
@@ -346,7 +355,7 @@ suspend fun Backend.processTopicExtension(
     val userMap = users.associateBy { it.id }
     if (addLatestSubTopic) {
         Result.success(processedTopics.flatMap { t ->
-            databaseSession.getTopicInfoListByPredicate(uid) {
+            exposedDatabase.topicDatabase.getTopicInfoListByPredicate(uid) {
                 where {
                     Topics.parentId eq t.id
                 }.orderBy(Topics.pinned to SortOrder.DESC).bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
@@ -357,7 +366,7 @@ suspend fun Backend.processTopicExtension(
     } else {
         Result.success(emptyMap())
     }.mapResultIfNotNull { processedSubTopicMap ->
-        databaseSession.getReactionInfoPaginationResult(processedTopics.map {
+        exposedDatabase.topicDatabase.getReactionInfoPaginationResult(processedTopics.map {
             it.id
         }, uid, ReactionFetch(null, 20)).map {
             it.list
@@ -403,17 +412,17 @@ suspend fun Backend.checkRootReadPermission(
 ): Result<RootReadPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            databaseSession.getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
+            exposedDatabase.topicDatabase.getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
                 checkRootReadPermission(rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            databaseSession.getRoomCommunityId(parentId).mapResult { communityId ->
+            exposedDatabase.roomData.getRoomCommunityId(parentId).mapResult { communityId ->
                 if (communityId == null && uid == null) {
                     Result.failure(UnauthorizedException())
                 } else {
-                    databaseSession.isMemberJoined(parentId, uid).map { hasJoined ->
+                    exposedDatabase.userDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                         RootReadPermission(hasJoined || communityId != null, hasJoined, communityId == null)
                     }
                 }
@@ -421,14 +430,14 @@ suspend fun Backend.checkRootReadPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            databaseSession.checkCommunityExists(parentId).mapResultIfNotNull {
-                databaseSession.isMemberJoined(parentId, uid).map { hasJoined ->
+            exposedDatabase.communityDatabase.checkCommunityExists(parentId).mapResultIfNotNull {
+                exposedDatabase.userDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                     RootReadPermission(true, hasJoined, false)
                 }
             }
         }
 
-        ObjectType.USER -> databaseSession.checkUserExists(parentId).mapIfNotNull {
+        ObjectType.USER -> exposedDatabase.userDatabase.checkUserExists(parentId).mapIfNotNull {
             RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         }
 
@@ -444,22 +453,22 @@ suspend fun Backend.checkRootWritePermission(
 ): Result<RootWritePermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            databaseSession.getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
+            exposedDatabase.topicDatabase.getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
                 checkRootWritePermission(rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            databaseSession.getRoomCommunityId(parentId).mapResult {
-                databaseSession.isMemberJoined(parentId, uid).map { hasJoined ->
+            exposedDatabase.roomData.getRoomCommunityId(parentId).mapResult {
+                exposedDatabase.userDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
             }
         }
 
         ObjectType.COMMUNITY -> {
-            databaseSession.checkCommunityExists(parentId).mapResultIfNotNull {
-                databaseSession.isMemberJoined(parentId, uid).map { hasJoined ->
+            exposedDatabase.communityDatabase.checkCommunityExists(parentId).mapResultIfNotNull {
+                exposedDatabase.userDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
             }
@@ -467,7 +476,7 @@ suspend fun Backend.checkRootWritePermission(
 
         ObjectType.USER -> {
             if (uid == parentId) {
-                databaseSession.checkUserExists(parentId).mapIfNotNull {
+                exposedDatabase.userDatabase.checkUserExists(parentId).mapIfNotNull {
                     RootWritePermission(parentType, parentId, parentId == uid)
                 }
             } else {
@@ -487,25 +496,25 @@ suspend fun Backend.checkRootAdminPermission(
 ): Result<RootAdminPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            databaseSession.getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
+            exposedDatabase.topicDatabase.getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
                 checkRootAdminPermission(rootType, rootId, uid)
             }
         }
 
         ObjectType.ROOM -> {
-            databaseSession.getRoomRawResult(ObjectFetch.IdFetch(parentId), true, uid).mapIfNotNull {
+            exposedDatabase.roomData.getRoomRawResult(ObjectFetch.IdFetch(parentId), true, uid).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, it.room.creator == uid)
             }
         }
 
         ObjectType.COMMUNITY -> {
-            databaseSession.getCommunityRawResult(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
+            exposedDatabase.communityDatabase.getCommunityRawResult(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, it.community.owner == uid)
             }
         }
 
         ObjectType.USER -> {
-            databaseSession.checkUserExists(parentId).mapIfNotNull {
+            exposedDatabase.userDatabase.checkUserExists(parentId).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, parentId == uid)
             }
         }
@@ -603,7 +612,7 @@ suspend fun Backend.recommendTopics(
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<TopicInfo>?> {
     return if (uid != null) {
-        databaseSession.getJoinedCommunityIds(uid).mapResult {
+        exposedDatabase.communityDatabase.getJoinedCommunityIds(uid).mapResult {
             topicSearchService.searchDocument(
                 documentSearch = DocumentSearch.Recommend(uid, it),
                 primaryKeyFetch = primaryKeyFetch
@@ -631,7 +640,7 @@ private suspend fun Backend.processTopicsDocument(
     if (ids.isEmpty()) {
         return Result.success(emptyList())
     }
-    return databaseSession.getTopicInfoListByPredicate(uid) {
+    return exposedDatabase.topicDatabase.getTopicInfoListByPredicate(uid) {
         where {
             Topics.id inList ids
         }
@@ -669,7 +678,7 @@ suspend fun Backend.getTopicByIds(
             }
         }
     }
-    return databaseSession.getTopicInfoListByPredicate(uid) {
+    return exposedDatabase.topicDatabase.getTopicInfoListByPredicate(uid) {
         where {
             Topics.id inList ids
         }
@@ -696,14 +705,14 @@ suspend fun Backend.updateTopicPin(
 ) =
     checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
         if (it.hasAdmin) {
-            databaseSession.getTopicInfo(
+            exposedDatabase.topicDatabase.getTopicInfo(
                 ObjectFetch.IdFetch(topicId),
                 uid
             ).mapResultIfNotNull { info ->
                 if (info.isPin == newValue) {
                     Result.success(info)
                 } else {
-                    databaseSession.updateTopicStatus(topicId, newValue).map { isSuccess ->
+                    exposedDatabase.topicDatabase.updateTopicStatus(topicId, newValue).map { isSuccess ->
                         if (isSuccess) {
                             info.copy(isPin = newValue)
                         } else {

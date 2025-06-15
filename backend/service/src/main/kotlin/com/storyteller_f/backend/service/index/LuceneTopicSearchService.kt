@@ -1,8 +1,8 @@
 package com.storyteller_f.backend.service.index
 
-import com.storyteller_f.backend.service.types.Cursor
-import com.storyteller_f.backend.service.types.PaginationResult
-import com.storyteller_f.backend.service.types.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.Cursor
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
@@ -138,7 +138,8 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
         when {
             fetch == null -> {}
             fetch.cursor is Cursor.PreCursor<PrimaryKey> -> {
-                val preTopicId = fetch.cursor.value + 1
+                val cursor = fetch.cursor as Cursor.PreCursor<PrimaryKey>
+                val preTopicId = cursor.value + 1
                 add(
                     LongPoint.newRangeQuery("id1", preTopicId, Long.MAX_VALUE),
                     BooleanClause.Occur.MUST
@@ -146,7 +147,8 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
             }
 
             fetch.cursor is Cursor.NextCursor<PrimaryKey> -> {
-                val nextTopicId = fetch.cursor.value - 1
+                val cursor = fetch.cursor as Cursor.NextCursor<PrimaryKey>
+                val nextTopicId = cursor.value - 1
                 add(
                     LongPoint.newRangeQuery("id1", Long.MIN_VALUE, nextTopicId),
                     BooleanClause.Occur.MUST

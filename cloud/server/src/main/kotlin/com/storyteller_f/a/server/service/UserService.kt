@@ -1,17 +1,13 @@
 package com.storyteller_f.a.server.service
 
+import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.backend.service.AID_LENGTH
 import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.CustomBadRequestException
-import com.storyteller_f.backend.service.ForbiddenException
-import com.storyteller_f.backend.service.ObjectFetch
 import com.storyteller_f.backend.service.USER_NICKNAME
-import com.storyteller_f.backend.service.getMediaInfoList
 import com.storyteller_f.backend.service.getUserInfo
-import com.storyteller_f.backend.service.query.addReadLog
-import com.storyteller_f.backend.service.query.getUserAid
-import com.storyteller_f.backend.service.query.updateUserInfo
 import com.storyteller_f.backend.service.tables.UserTopicRead
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserInfo
@@ -32,7 +28,7 @@ suspend fun Backend.updateUser(
     uid: PrimaryKey,
     old: UpdateUserBody
 ): Result<UserInfo?> {
-    val newUser = old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar?.trim())
+    val newUser = old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar)
     val firstError = listOf(suspend {
         checkAidModifyTimes(newUser, uid)
     }, suspend {
@@ -60,7 +56,7 @@ suspend fun Backend.updateUser(
         it().exceptionOrNull()
     }
     if (firstError != null) return Result.failure(firstError)
-    return databaseSession.updateUserInfo(uid, newUser).mapResult {
+    return exposedDatabase.userDatabase.updateUserInfo(uid, newUser).mapResult {
         if (it) {
             this.addUserLog(uid, UserLogType.UPDATE, uid ob ObjectType.USER)
             getUserInfo(ObjectFetch.IdFetch(uid))
@@ -77,7 +73,7 @@ private suspend fun Backend.checkAidModifyTimes(
     Result.success(Unit)
 } else {
     // check aid is null
-    databaseSession.getUserAid(id).mapResult {
+    exposedDatabase.userDatabase.getUserAid(id).mapResult {
         if (it != null) {
             Result.failure(BadRequestException("aid is not null."))
         } else {
@@ -130,11 +126,11 @@ enum class StringCheckResult {
 }
 
 suspend fun Backend.checkIcon(
-    iconName: String?,
+    iconName: PrimaryKey?,
     aspectRatio: Dimension? = null
 ): Result<MediaCheckResult?> {
-    return if (!iconName.isNullOrBlank()) {
-        getMediaInfoList(listOf(iconName)).mapIfNotNull {
+    return if (iconName != null) {
+        exposedDatabase.userDatabase.getMediaByIds(listOf(iconName)).mapIfNotNull {
             val mediaInfo = it.firstOrNull()
             val dimension = mediaInfo?.dimension
             when {
@@ -160,7 +156,7 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
         uid
     ).mapResultIfNotNull {
         if (it.hasRead) {
-            databaseSession.addReadLog(
+            exposedDatabase.userDatabase.addReadLog(
                 UserTopicRead(
                     uid,
                     now(),

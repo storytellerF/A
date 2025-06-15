@@ -52,6 +52,7 @@ include(":cloud:worker")
 
 include(":backend:service")
 include(":backend:exposed")
+include(":backend:core")
 
 include(":client:lib")
 include(":client:bot-lib")

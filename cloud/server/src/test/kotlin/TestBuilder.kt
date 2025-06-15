@@ -43,7 +43,7 @@ fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend Applicati
     SnowflakeFactory.setMachine(0)
     loadCryptoLibIfNeed()
 
-    startInMemoryTest(overrideEnv, block)
+    startMemoryTest(overrideEnv, block)
 
     if (freeMemory >= 100) {
 //        startTestContainerTest(receivedFrame, true, block)
@@ -55,7 +55,7 @@ fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend Applicati
 }
 
 @OptIn(ExperimentalUuidApi::class)
-private fun startInMemoryTest(
+private fun startMemoryTest(
     overrideEnv: Map<String, String>,
     block: suspend (ApplicationTestBuilder) -> Unit
 ) {

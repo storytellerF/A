@@ -75,7 +75,7 @@ fun UserSettingPage() {
                 scope.launch {
                     globalDialogState.use {
                         val newInfo = sessionManager.updateUserInfo(
-                            UpdateUserBody(avatar = it.newFullName)
+                            UpdateUserBody(avatar = it.id)
                         ).getOrThrow()
                         sessionManager.sessionModel.updateUser(newInfo)
                         closeDialog()
@@ -258,7 +258,7 @@ private fun UserSettingInternal(
             if (it) {
                 scope.launch {
                     globalDialogState.use {
-                        val body = UpdateUserBody(avatar = "")
+                        val body = UpdateUserBody(avatar = 0)
                         val newInfo = sessionManager.updateUserInfo(body).getOrThrow()
                         bus.emit(OnUserUpdated(newInfo))
                     }

@@ -1,6 +1,8 @@
 package com.storyteller_f.backend.service.media
 
-import com.storyteller_f.backend.service.MinIoConnection
+import com.storyteller_f.a.backend.core.CopyPack
+import com.storyteller_f.a.backend.core.MinIoConnection
+import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
 import io.minio.*
@@ -12,9 +14,7 @@ import kotlinx.datetime.toKotlinLocalDateTime
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
 import kotlin.Result
-import kotlin.collections.filterNotNull
 import kotlin.getOrThrow
-import kotlin.map
 
 class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
     override suspend fun clean(bucketName: String): Result<Unit> {
@@ -39,9 +39,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
             ).map {
                 it.get().objectName()
             }
-            get(bucketName, names).map {
-                it.filterNotNull()
-            }.getOrThrow()
+            get(bucketName, names).getOrThrow()
         }
     }
 
