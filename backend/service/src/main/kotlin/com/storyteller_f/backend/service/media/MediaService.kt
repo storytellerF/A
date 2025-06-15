@@ -10,7 +10,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDateTime
-import org.apache.tika.Tika
 import java.io.InputStream
 import javax.imageio.ImageIO
 import javax.xml.stream.XMLInputFactory
@@ -36,7 +35,6 @@ interface MediaService {
 }
 
 suspend fun Backend.uploadFilesAfterDetectContentTypeAndDimension(
-    tika: Tika,
     files: List<UploadPack>
 ): Result<List<MediaInfo?>> {
     return uploadFiles(files.map {
