@@ -33,7 +33,7 @@ elif [ "$HOST_TYPE" = "local" ]; then
     # 在本地构建，本地启动
     ./scripts/build_scripts/build-server-on-condition.sh "$FLAVOR" prod local
     ./scripts/build_scripts/build-server-image.sh "$FLAVOR" prod local
-    "./scripts/service_scripts/compose-service.sh" "$FLAVOR" false 'up -d --build'
+    ./scripts/service_scripts/compose-service.sh "$FLAVOR" false 'up -d --build'
 else
     echo "build on remote"
     # 在远程主机上启动
@@ -43,5 +43,5 @@ else
         ./scripts/build_scripts/build-server-image.sh "$FLAVOR" prod
     fi
     # 使用预构建镜像构建服务
-    "./scripts/service_scripts/compose-service.sh" "$FLAVOR" true 'up -d --build'
+    ./scripts/service_scripts/compose-service.sh "$FLAVOR" true 'up -d --build'
 fi
