@@ -4,6 +4,8 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.exposed.COMMUNITY_NAME_LENGTH
+import com.storyteller_f.a.exposed.isDup
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.route.RouteCommunities

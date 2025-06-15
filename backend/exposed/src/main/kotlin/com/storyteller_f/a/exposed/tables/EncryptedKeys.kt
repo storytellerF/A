@@ -1,6 +1,6 @@
 package com.storyteller_f.backend.service.tables
 
-import com.storyteller_f.backend.service.customPrimaryKey
+import com.storyteller_f.a.exposed.customPrimaryKey
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table

@@ -1,10 +1,10 @@
 package com.storyteller_f.backend.service.tables
 
-import com.storyteller_f.backend.service.BaseEntity
-import com.storyteller_f.backend.service.BaseTable
-import com.storyteller_f.backend.service.customPrimaryKey
-import com.storyteller_f.backend.service.emoji
-import com.storyteller_f.backend.service.objectType
+import com.storyteller_f.a.exposed.BaseEntity
+import com.storyteller_f.a.exposed.BaseTable
+import com.storyteller_f.a.exposed.customPrimaryKey
+import com.storyteller_f.a.exposed.emoji
+import com.storyteller_f.a.exposed.objectType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime

@@ -10,7 +10,7 @@ import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.getUserInfo
-import com.storyteller_f.backend.service.isDup
+import com.storyteller_f.a.exposed.isDup
 import com.storyteller_f.backend.service.searchMembers
 import com.storyteller_f.shared.obj.NewDevice
 import com.storyteller_f.shared.obj.UpdateUserBody

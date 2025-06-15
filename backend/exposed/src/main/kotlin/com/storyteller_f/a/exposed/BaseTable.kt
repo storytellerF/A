@@ -1,13 +1,13 @@
-package com.storyteller_f.backend.service
+package com.storyteller_f.a.exposed
 
+import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import io.github.aakira.napier.Napier
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.postgresql.util.PSQLException
-import org.postgresql.util.PSQLState
 import java.net.ConnectException
 import java.sql.SQLIntegrityConstraintViolationException
 
@@ -34,12 +34,19 @@ fun Throwable.isDup(): Boolean {
     if (this is SQLIntegrityConstraintViolationException) return true
     if (this is ExposedSQLException) {
         val throwable = this.cause
-        return (throwable is PSQLException && throwable.sqlState == PSQLState.UNIQUE_VIOLATION.state)
+        Napier.e(throwable = this) {
+            if (throwable is PGSQLIntegrityConstraintViolationException) {
+                "dup check exception ${throwable.sqlState} ${throwable.errorCode}"
+            } else {
+                "dup check exception"
+            }
+        }
+        return (throwable is PGSQLIntegrityConstraintViolationException && throwable.sqlState == "unique")
     }
     return false
 }
 
-fun isConnectFailed(e: Throwable): Boolean = e is PSQLException && e.cause is ConnectException
+fun isConnectFailed(e: Throwable): Boolean = e is ConnectException
 
 fun Table.customPrimaryKey(name: String) = long(name)
 

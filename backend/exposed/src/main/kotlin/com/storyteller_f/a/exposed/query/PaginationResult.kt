@@ -2,7 +2,7 @@ package com.storyteller_f.a.exposed.query
 
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.backend.service.BaseTable
+import com.storyteller_f.a.exposed.BaseTable
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.SortOrder

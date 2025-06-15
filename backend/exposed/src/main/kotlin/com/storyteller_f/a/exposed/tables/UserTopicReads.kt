@@ -1,7 +1,7 @@
 package com.storyteller_f.backend.service.tables
 
-import com.storyteller_f.backend.service.customPrimaryKey
-import com.storyteller_f.backend.service.objectType
+import com.storyteller_f.a.exposed.customPrimaryKey
+import com.storyteller_f.a.exposed.objectType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime

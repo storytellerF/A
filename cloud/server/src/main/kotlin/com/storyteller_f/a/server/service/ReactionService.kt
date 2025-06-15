@@ -5,7 +5,7 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.isDup
+import com.storyteller_f.a.exposed.isDup
 import com.storyteller_f.backend.service.tables.ReactionRecord
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.type.ObjectType

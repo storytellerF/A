@@ -1,6 +1,6 @@
 package com.storyteller_f.backend.service.query
 
-import com.storyteller_f.backend.service.AID_LENGTH
+import com.storyteller_f.a.exposed.AID_LENGTH
 import com.storyteller_f.backend.service.tables.*
 import com.storyteller_f.shared.type.JoinSearch
 import com.storyteller_f.shared.type.ObjectType

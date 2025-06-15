@@ -1,9 +1,9 @@
 package com.storyteller_f.backend.service.tables
 
-import com.storyteller_f.backend.service.BaseEntity
-import com.storyteller_f.backend.service.BaseTable
-import com.storyteller_f.backend.service.communityName
-import com.storyteller_f.backend.service.customPrimaryKey
+import com.storyteller_f.a.exposed.BaseEntity
+import com.storyteller_f.a.exposed.BaseTable
+import com.storyteller_f.a.exposed.communityName
+import com.storyteller_f.a.exposed.customPrimaryKey
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.*
 import kotlinx.datetime.LocalDateTime

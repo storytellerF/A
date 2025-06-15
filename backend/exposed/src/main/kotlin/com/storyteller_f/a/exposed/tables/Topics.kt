@@ -1,9 +1,9 @@
 package com.storyteller_f.backend.service.tables
 
-import com.storyteller_f.backend.service.BaseEntity
-import com.storyteller_f.backend.service.BaseTable
-import com.storyteller_f.backend.service.customPrimaryKey
-import com.storyteller_f.backend.service.objectType
+import com.storyteller_f.a.exposed.BaseEntity
+import com.storyteller_f.a.exposed.BaseTable
+import com.storyteller_f.a.exposed.customPrimaryKey
+import com.storyteller_f.a.exposed.objectType
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
