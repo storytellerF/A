@@ -12,10 +12,6 @@ volumes:
   logstashdata01:
     driver: local
 
-networks:
-  elastic:
-    name: elastic
-
 services:
   setup:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
@@ -73,10 +69,6 @@ services:
       timeout: 5s
       retries: 120
     restart: "no"
-    networks:
-      - elastic
-    profiles:
-      - es
 
   es01:
     depends_on:
@@ -124,10 +116,6 @@ services:
       resources:
         limits:
           memory: 1G
-    networks:
-      - elastic
-    profiles:
-      - es
 
   kibana:
     depends_on:
@@ -164,10 +152,6 @@ services:
       resources:
         limits:
           memory: 1G
-    networks:
-      - elastic
-    profiles:
-      - es
 
   metricbeat01:
     depends_on:
@@ -193,10 +177,6 @@ services:
       - LOGSTASH_HOSTS=http://logstash01:9600
     command:
       - --strict.perms=false
-    networks:
-      - elastic
-    profiles:
-      - es
 
   filebeat01:
     depends_on:
@@ -219,10 +199,6 @@ services:
       - LOGSTASH_HOSTS=http://logstash01:9600
     command:
       - --strict.perms=false
-    networks:
-      - elastic
-    profiles:
-      - es
 
   logstash01:
     depends_on:
@@ -244,7 +220,3 @@ services:
       - ELASTIC_USER=${ELASTIC_NAME}
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - ELASTIC_HOSTS=https://es01:9200
-    networks:
-      - elastic
-    profiles:
-      - es

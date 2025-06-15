@@ -19,8 +19,6 @@ services:
       start_period: 5s
     volumes:
       - pg-data:/var/lib/postgresql/data
-    profiles:
-      - pg
 
   adminer:
     image: adminer
@@ -29,13 +27,13 @@ services:
     depends_on:
       pg:
         condition: service_healthy
-    profiles:
-      - pg
   pg-exporter:
     image: quay.io/prometheuscommunity/postgres-exporter
+    ports:
+      - "9187:9187"  # exporter 默认端口
     environment:
-      DATA_SOURCE_URI: "localhost:5432/postgres?sslmode=disable"
+      DATA_SOURCE_URI: "pg:5432/${DATABASE_DB}"
       DATA_SOURCE_USER: ${DATABASE_USER}
       DATA_SOURCE_PASS: ${DATABASE_PASS}
-    profiles:
+    depends_on:
       - pg
