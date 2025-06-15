@@ -59,6 +59,10 @@ include(":client:bot-lib")
 include(":client:storage")
 include(":client:kotbase")
 
+include(":http:core")
+include(":http:client")
+include(":http:server")
+
 include(":bot:builtin-bot")
 if (isLlamaEnable)
 include(":android-llama-cpp")
