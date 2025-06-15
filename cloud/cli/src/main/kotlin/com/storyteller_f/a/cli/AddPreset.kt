@@ -2,7 +2,6 @@ package com.storyteller_f.a.cli
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.ObjectListFetch
-import com.storyteller_f.a.backend.core.ObjectListFetch.AidListFetch
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.DatabaseFactory
@@ -70,9 +69,6 @@ class AddPreset : Subcommand("add", "add entry") {
         loadCryptoLibIfNeed()
         val connected = backend
         DatabaseFactory.connect(connected.config.databaseConnection)
-        Napier.i {
-            "database init done."
-        }
         val jsonFile = File(jsonFilePath)
 
         val presetValue = Json {
@@ -87,6 +83,7 @@ class AddPreset : Subcommand("add", "add entry") {
                     "user" -> connected.addUsers(presetValue, parentDir)
                     "topic" -> connected.addTopics(presetValue, parentDir)
                     "room" -> connected.addRooms(presetValue, parentDir)
+                    "file" -> connected.addFiles(presetValue, parentDir)
                     else -> {
                         println("unrecognized type $type")
                         exitProcess(2)
@@ -100,6 +97,24 @@ class AddPreset : Subcommand("add", "add entry") {
                     "exception when add"
                 }
             }
+        }
+    }
+
+    private suspend fun Backend.addFiles(presetValue: PresetValue, parentDir: File?) {
+        val files = presetValue.fileData ?: return
+        Napier.i {
+            "files count ${presetValue.fileData?.size}"
+        }
+        val userMap = exposedDatabase.userDatabase.getUserRawResultList(ObjectListFetch.AidListFetch(files.map {
+            it.owner
+        }.distinct())).getOrThrow().associate {
+            it.user.aid!! to it.user
+        }
+        files.forEach {
+            uploadFilesAfterDetectContentTypeAndDimension(it.path.map { p ->
+                val path = File(parentDir, p)
+                UploadPack(path, path.name, userMap[it.owner]!!.id, path.length())
+            }).getOrThrow()
         }
     }
 
@@ -171,7 +186,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 Triple(it, mediaInfo?.id, id)
             }
         }
-        val userMap = exposedDatabase.userDatabase.getUserRawResultList(AidListFetch(data.flatMap {
+        val userMap = exposedDatabase.userDatabase.getUserRawResultList(ObjectListFetch.AidListFetch(data.flatMap {
             it.first.users.orEmpty() + (it.first.admin ?: "System")
         }.distinct())).getOrThrow().associate {
             it.user.aid to it.user
@@ -235,7 +250,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
         ).getOrThrow()
         tuples.forEach { topicTuple ->
-            uploadMedias(parentDir, userMap, topicTuple.id, topicTuple.topic)
+            uploadTopicMedias(parentDir, userMap, topicTuple.id, topicTuple.topic)
         }
     }
 
@@ -426,11 +441,11 @@ class AddPreset : Subcommand("add", "add entry") {
             }
         ).getOrThrow()
         publicRoomList.forEachIndexed { i, topic ->
-            uploadMedias(parentDir, userMap, tuples[i].id, topic)
+            uploadTopicMedias(parentDir, userMap, tuples[i].id, topic)
         }
     }
 
-    private suspend fun Backend.uploadMedias(
+    private suspend fun Backend.uploadTopicMedias(
         parentDir: File,
         userMap: Map<String, User>,
         topicId: PrimaryKey,
