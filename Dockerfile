@@ -32,14 +32,13 @@ FROM eclipse-temurin:21-alpine
 
 RUN apk add libavif-dev
 
-RUN mkdir /app
-
 WORKDIR /app
+
 COPY --from=builder /app/cloud/server/build/libs/*-all.jar ./lib/ktor-server.jar
 COPY --from=builder /app/cloud/cli/build/decompressed/cli .
 #if COPY --from=builder /app/deploy ./deploy
 # 使用koyeb 需要把args 变成env 后文件导入
 COPY --from=builder /app/build/envs/*.env .
-COPY scripts/tool_scripts/flush-database.sh ./scripts/tool_scripts/flush-database.sh
+COPY --from=builder /app/scripts/tool_scripts/flush-database.sh ./scripts/tool_scripts/flush-database.sh
 
 ENTRYPOINT ["java","-jar","./lib/ktor-server.jar"]
