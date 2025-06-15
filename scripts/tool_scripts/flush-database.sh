@@ -9,6 +9,7 @@ if [ -z "$base" ] || [ -z "$cli_path" ]; then
 fi
 
 sh "$cli_path" clean
+sh "$cli_path" init
 
 echo "clean result is $?"
 

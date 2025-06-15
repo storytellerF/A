@@ -8,7 +8,6 @@ import com.storyteller_f.a.server.common.ReactionPaginationGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.query.deleteReaction
 import com.storyteller_f.shared.obj.DeleteReaction
 import com.storyteller_f.shared.obj.NewReaction
 import com.storyteller_f.shared.obj.NewTopic
@@ -106,7 +105,7 @@ fun Route.bindProtectedSafeTopicRoute(reader: DatabaseReader, backend: Backend) 
             val deleteReaction = call.receive<DeleteReaction>()
             val emoji = deleteReaction.emoji
             if (isEmoji(emoji)) {
-                backend.databaseSession.deleteReaction(uid, emoji, deleteReaction.objectId)
+                backend.exposedDatabase.topicDatabase.deleteReaction(uid, emoji, deleteReaction.objectId)
             } else {
                 Result.failure(BadRequestException("invalid emoji"))
             }

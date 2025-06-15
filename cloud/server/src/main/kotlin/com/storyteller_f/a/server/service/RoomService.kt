@@ -1,26 +1,15 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.COMMUNITY_NAME_LENGTH
-import com.storyteller_f.backend.service.CustomBadRequestException
-import com.storyteller_f.backend.service.ForbiddenException
-import com.storyteller_f.backend.service.ObjectFetch
-import com.storyteller_f.backend.service.isDup
-import com.storyteller_f.backend.service.processRoomRawResultToRoomInfo
-import com.storyteller_f.backend.service.query.addRoomJoin
-import com.storyteller_f.backend.service.query.createRoom
-import com.storyteller_f.backend.service.query.exit
-import com.storyteller_f.backend.service.query.getRoomPubKeyPaginationResult
-import com.storyteller_f.backend.service.query.getRoomRawResult
-import com.storyteller_f.backend.service.query.getTitlePaginationResult
-import com.storyteller_f.backend.service.query.isMemberJoined
-import com.storyteller_f.backend.service.query.updateRoom
+import com.storyteller_f.backend.service.*
 import com.storyteller_f.backend.service.tables.Room
 import com.storyteller_f.backend.service.tables.RoomRawResult
-import com.storyteller_f.backend.service.types.PaginationResult
-import com.storyteller_f.backend.service.types.PrimaryKeyFetch
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -37,9 +26,9 @@ suspend fun Backend.getRoomPubKeys(
     roomId: PrimaryKey,
     userId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
-) = databaseSession.isMemberJoined(roomId, userId).mapResult {
+) = exposedDatabase.userDatabase.isMemberJoined(roomId, userId).mapResult {
     if (it) {
-        databaseSession.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
+        exposedDatabase.roomData.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
             .map { (data, count) ->
                 PaginationResult(data, count)
             }
@@ -58,7 +47,7 @@ suspend fun Backend.joinRoom(
         val communityId = roomInfo.communityId
         if (communityId == null) {
             // 检查是否存在title
-            databaseSession.getTitlePaginationResult(
+            exposedDatabase.titleDatabase.getTitlePaginationResult(
                 PrimaryKeyFetch(null, 1),
                 uid,
                 TitleSearchType.RECEIVER,
@@ -72,7 +61,7 @@ suspend fun Backend.joinRoom(
                 }
             }
         } else {
-            databaseSession.isMemberJoined(communityId, uid).mapResult { hasJoined ->
+            exposedDatabase.userDatabase.isMemberJoined(communityId, uid).mapResult { hasJoined ->
                 if (hasJoined) {
                     directJoinRoom(uid, roomInfo)
                 } else {
@@ -88,7 +77,7 @@ private suspend fun Backend.directJoinRoom(
     roomInfo: RoomInfo
 ): Result<RoomInfo?> {
     val time = now()
-    return databaseSession.addRoomJoin(
+    return exposedDatabase.userDatabase.addRoomJoin(
         roomInfo.id,
         uid,
         time,
@@ -109,7 +98,7 @@ suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            databaseSession.exit(roomId, uid).map {
+            exposedDatabase.userDatabase.exit(roomId, uid).map {
                 addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
                 info.copy(joinedTime = null)
             }
@@ -121,7 +110,7 @@ suspend fun Backend.getRoomInfo(
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<RoomInfo?> {
-    return databaseSession.getRoomRawResult(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
+    return exposedDatabase.roomData.getRoomRawResult(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
         processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
     }
 }
@@ -158,11 +147,11 @@ suspend fun Backend.createRoom(
         if (it) {
             val roomId = SnowflakeFactory.nextId()
             val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
-            databaseSession.createRoom(room)
+            exposedDatabase.roomData.createRoom(room)
                 .mapResult {
                     processRoomRawResultToRoomInfo(
                         listOf(
-                            RoomRawResult(room, room.icon, room.createdTime, null, 0)
+                            RoomRawResult(room, room.createdTime, null, 0)
                         )
                     ).mapIfNotNull(List<RoomInfo>::first)
                 }
@@ -177,7 +166,7 @@ suspend fun Backend.updateRoom(
     old: UpdateRoomBody,
     uid: PrimaryKey
 ): Result<RoomInfo?> {
-    val newRoom = old.copy(name = old.name?.trim(), icon = old.icon?.trim())
+    val newRoom = old.copy(name = old.name?.trim(), icon = old.icon)
     return checkRootAdminPermission(ObjectType.ROOM, id, uid).mapResultIfNotNull { permission ->
         if (permission.hasAdmin) {
             val firstError = listOf(suspend {
@@ -209,9 +198,9 @@ suspend fun Backend.updateRoom(
             if (firstError != null) {
                 Result.failure(firstError)
             } else {
-                databaseSession.updateRoom(id, newRoom).mapResult { updateSuccess ->
+                exposedDatabase.roomData.updateRoom(id, newRoom).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        databaseSession.getRoomRawResult(ObjectFetch.IdFetch(id), true, uid)
+                        exposedDatabase.roomData.getRoomRawResult(ObjectFetch.IdFetch(id), true, uid)
                             .mapResultIfNotNull {
                                 processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
                             }

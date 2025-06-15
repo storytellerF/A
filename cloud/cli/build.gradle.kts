@@ -3,7 +3,7 @@ plugins {
     application
 }
 
-group = "com.storyteller_f"
+group = "com.storyteller_f.a.cli"
 version = "unspecified"
 
 dependencies {
@@ -26,7 +26,7 @@ kotlin {
 }
 
 application {
-    mainClass = "com.storyteller_f.cli.MainKt"
+    mainClass = "com.storyteller_f.a.cli.MainKt"
     applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 

@@ -1,5 +1,7 @@
 package com.storyteller_f.backend.service.media
 
+import com.storyteller_f.a.backend.core.CopyPack
+import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
@@ -51,8 +53,10 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
                 if (mediaPath.exists()) {
                     MediaRecord(
                         URIBuilder(url).setPath("amedia/${AMEDIA_DEFAULT_BUCKET}/$it").build()
-                            .toString(), mediaPath.getLastModifiedTime().toInstant().toKotlinInstant()
-                            .toLocalDateTime(TimeZone.UTC), it
+                            .toString(),
+                        mediaPath.getLastModifiedTime().toInstant().toKotlinInstant()
+                            .toLocalDateTime(TimeZone.UTC),
+                        it
                     )
                 } else {
                     null
@@ -81,10 +85,8 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
                         FileVisitResult.CONTINUE
                     }
                 }
-            }
-            get(bucketName, children).map {
-                it.filterNotNull()
-            }
+            }.filterNotNull()
+            get(bucketName, children)
         }
     }
 

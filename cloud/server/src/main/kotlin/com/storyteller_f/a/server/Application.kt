@@ -2,12 +2,24 @@ package com.storyteller_f.a.server
 
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.Config
+import com.storyteller_f.a.exposed.CommunityDatabase
+import com.storyteller_f.a.exposed.ExposedCommunityDatabase
+import com.storyteller_f.a.exposed.ExposedRoomDatabase
+import com.storyteller_f.a.exposed.ExposedTitleDatabase
+import com.storyteller_f.a.exposed.ExposedTopicDatabase
+import com.storyteller_f.a.exposed.ExposedUserDatabase
+import com.storyteller_f.a.exposed.RoomDatabase
+import com.storyteller_f.a.exposed.TitleDatabase
+import com.storyteller_f.a.exposed.TopicDatabase
+import com.storyteller_f.a.exposed.UserDatabase
 import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
 import com.storyteller_f.a.server.route.configureRoute
 import com.storyteller_f.backend.service.*
 import com.storyteller_f.backend.service.media.loadAvif
+import com.storyteller_f.backend.service.naming.NameService
 import com.storyteller_f.shared.kmpLogger
 import io.github.aakira.napier.Napier
 import io.ktor.http.*
@@ -43,8 +55,8 @@ import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
-    loadAvif()
     Napier.base(kmpLogger)
+    loadAvif()
     Napier.i {
         "encoding ${OutputStreamWriter(System.out).encoding}"
     }
@@ -61,7 +73,9 @@ fun main(args: Array<String>) {
 fun Application.module() {
     val reader = buildDatabaseReader()
     val backend = buildBackend()
-    DatabaseFactory.init(backend)
+    if (backend.config.buildType == "test") {
+        DatabaseFactory.init(backend.database)
+    }
     val serverJob = launch {
         backend.sendTopicToRoomMembers()
         Napier.i {
@@ -284,4 +298,42 @@ private fun executeScriptInThread(
         errorReader.close()
         process.destroy()
     }
+}
+
+fun buildBackendFromEnv(env: MergedEnv): Backend {
+    println("load env: ${env["COMPOSE_PROJECT_NAME"]}")
+
+    val databaseConnection = databaseConnection(env)
+
+    val buildType = env["BUILD_TYPE"]
+    val flavor = env["FLAVOR"]
+
+    val config = Config(databaseConnection, buildType, flavor)
+
+    val topicDocumentService = topicDocumentService(env)
+    val mediaService = mediaService(env)
+
+    val database = DatabaseFactory.connect(databaseConnection)
+    val databaseSession = ExposedDatabaseSession(database, buildType)
+    return Backend(
+        config,
+        env["SNAPSHOT_KEYSTORE_PATH"] to env["SNAPSHOT_KEY_PASS"],
+        topicDocumentService,
+        mediaService,
+        NameService(),
+        database,
+        databaseSession,
+        object : com.storyteller_f.a.exposed.Database {
+            override val userDatabase: UserDatabase
+                get() = ExposedUserDatabase(databaseSession)
+            override val topicDatabase: TopicDatabase
+                get() = ExposedTopicDatabase(databaseSession, userDatabase)
+            override val titleDatabase: TitleDatabase
+                get() = ExposedTitleDatabase(databaseSession)
+            override val communityDatabase: CommunityDatabase
+                get() = ExposedCommunityDatabase(databaseSession, userDatabase)
+            override val roomData: RoomDatabase
+                get() = ExposedRoomDatabase(databaseSession, userDatabase)
+        }
+    )
 }

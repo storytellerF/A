@@ -1,33 +1,20 @@
 package com.storyteller_f.backend.service.media
 
+import com.storyteller_f.a.backend.core.CopyPack
+import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.uploadFiles
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
-import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDateTime
 import org.apache.tika.Tika
-import java.io.File
 import java.io.InputStream
 import javax.imageio.ImageIO
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamConstants
-
-data class UploadPack(
-    val path: File,
-    val name: String,
-    val owner: PrimaryKey,
-    val size: Long,
-    val contentType: String = "",
-    val dimension: Dimension? = null
-) {
-    val newFullName = "$owner/$name"
-}
-
-data class CopyPack(val origin: String, val new: String)
 
 data class MediaRecord(val url: String, val lastModified: LocalDateTime, val fullName: String)
 

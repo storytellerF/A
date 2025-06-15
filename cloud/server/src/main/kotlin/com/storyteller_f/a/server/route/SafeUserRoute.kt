@@ -1,6 +1,7 @@
 package com.storyteller_f.a.server.route
 
 import com.maxmind.geoip2.DatabaseReader
+import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.server.auth.omitPrincipal
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
@@ -8,10 +9,8 @@ import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.ObjectFetch
 import com.storyteller_f.backend.service.getUserInfo
 import com.storyteller_f.backend.service.isDup
-import com.storyteller_f.backend.service.query.addDevice
 import com.storyteller_f.backend.service.searchMembers
 import com.storyteller_f.shared.obj.NewDevice
 import com.storyteller_f.shared.obj.UpdateUserBody
@@ -36,7 +35,7 @@ fun Route.bindProtectedSafeUserRoute(reader: DatabaseReader, backend: Backend) {
     post<RouteUsers.Device> {
         usePrincipal(reader) { uid ->
             val newDevice = call.receive<NewDevice>()
-            backend.databaseSession.addDevice(uid, newDevice.endpointUrl).recover {
+            backend.exposedDatabase.userDatabase.addDevice(uid, newDevice.endpointUrl).recover {
                 if (it.isDup()) {
                     Result.success(Unit)
                 } else {

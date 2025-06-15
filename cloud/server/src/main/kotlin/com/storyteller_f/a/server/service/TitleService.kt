@@ -1,21 +1,19 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.ForbiddenException
-import com.storyteller_f.backend.service.ObjectListFetch
 import com.storyteller_f.backend.service.getUserInfoList
+import com.storyteller_f.backend.service.index.TopicDocument
 import com.storyteller_f.backend.service.insertTitleAndTopicDescription
 import com.storyteller_f.backend.service.processCommunityRawResultToCommunityInfo
 import com.storyteller_f.backend.service.processRoomRawResultToRoomInfo
-import com.storyteller_f.backend.service.query.getCommunityRawResults
-import com.storyteller_f.backend.service.query.getRoomRawResultList
-import com.storyteller_f.backend.service.query.getTitlePaginationResult
 import com.storyteller_f.backend.service.tables.Title
 import com.storyteller_f.backend.service.tables.Topic
-import com.storyteller_f.backend.service.types.PaginationResult
-import com.storyteller_f.backend.service.types.PrimaryKeyFetch
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.type.ObjectType
@@ -31,7 +29,7 @@ suspend fun Backend.getUserTitles(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
     fetch: PrimaryKeyFetch
-) = databaseSession.getTitlePaginationResult(
+) = exposedDatabase.titleDatabase.getTitlePaginationResult(
     fetch,
     uid,
     searchType,
@@ -101,7 +99,7 @@ private suspend fun Backend.getRelatedObject(
         }
     }, {
         if (roomIdList.isNotEmpty()) {
-            databaseSession.getRoomRawResultList(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
+            exposedDatabase.roomData.getRoomRawResultList(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
                 processRoomRawResultToRoomInfo(it)
             }
         } else {
@@ -109,7 +107,9 @@ private suspend fun Backend.getRelatedObject(
         }
     }, {
         if (communityIdList.isNotEmpty()) {
-            databaseSession.getCommunityRawResults(ObjectListFetch.IdListFetch(communityIdList)).mapResult {
+            exposedDatabase.communityDatabase.getCommunityRawResults(
+                ObjectListFetch.IdListFetch(communityIdList)
+            ).mapResult {
                 processCommunityRawResultToCommunityInfo(it)
             }
         } else {
@@ -174,14 +174,18 @@ suspend fun Backend.createTitle(
                 ObjectType.TITLE,
                 title.id,
                 ObjectType.TITLE,
-                false,
-                null
+                newTitle.description.encodeToByteArray(),
+                isEncrypted = false,
+                isPin = false,
+                lastModifiedTime = null
             )
             insertTitleAndTopicDescription(
                 title,
-                topic,
-                newTitle.description
+                topic
             ).mapResult { created ->
+                topicSearchService.saveDocument(
+                    listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(newTitle.description)))
+                ).getOrThrow()
                 addUserLog(uid, UserLogType.CREATE, created.tuple())
                 processTitleList(listOf(created), uid).mapIfNotNull {
                     it.first()

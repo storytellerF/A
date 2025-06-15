@@ -2,13 +2,12 @@ package com.storyteller_f.a.server
 
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.service.processTopicExtension
 import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.ForbiddenException
 import com.storyteller_f.backend.service.index.TopicDocument
-import com.storyteller_f.backend.service.query.*
 import com.storyteller_f.backend.service.savePlainTopic
 import com.storyteller_f.backend.service.tables.Topic
 import com.storyteller_f.shared.model.TopicContent
@@ -82,21 +81,19 @@ suspend fun Backend.sendTopicToRoomMembers() {
         }
     }.use { client ->
         sharedFlow.collect { frame ->
-            databaseSession.getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
+            exposedDatabase.userDatabase.getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
                 val memberJoins = list.filter {
                     it.uid != frame.topicInfo.author
                 }
                 val dispatchers = memberJoins.mapNotNull {
                     userWebSocketSessionMap[it.uid]
-                }.flatMap {
-                    it.map {
-                        WebsocketDispatcher(it)
-                    }
+                }.flatten().map {
+                    WebsocketDispatcher(it)
                 }
-                databaseSession.getUserDevices(memberJoins.map {
+                exposedDatabase.userDatabase.getUserDevices(memberJoins.map {
                     it.uid
-                }).map {
-                    it.map {
+                }).map { list ->
+                    list.map {
                         ExternalDispatcher(client, it.endpointUrl)
                     } + dispatchers
                 }
@@ -208,7 +205,7 @@ private suspend fun Backend.addTopicAtRoom(
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            databaseSession.getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
+            exposedDatabase.topicDatabase.getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
                     addTopicIntoRoom(
                         id,
@@ -245,11 +242,11 @@ private suspend fun Backend.addTopicIntoRoom(
         is TopicContent.Encrypted -> c.bytes
         else -> throw BadRequestException("unsupported type")
     }
-    return databaseSession.isMemberJoined(roomId, uid).mapResult { bool ->
+    return exposedDatabase.userDatabase.isMemberJoined(roomId, uid).mapResult { bool ->
         if (bool) {
             val content = newTopic.content
             val newId = SnowflakeFactory.nextId()
-            databaseSession.checkRoomIsPrivate(roomId).mapResultIfNotNull { isPrivate ->
+            exposedDatabase.roomData.checkRoomIsPrivate(roomId).mapResultIfNotNull { isPrivate ->
                 val topic = Topic(
                     newId,
                     now(),
@@ -292,7 +289,7 @@ private suspend fun Backend.saveEncryptedTopic(
 ): Result<TopicInfo?> = if (content is TopicContent.Encrypted) {
     isKeyVerified(roomId, content.encryptedKey).mapResult {
         if (it) {
-            databaseSession.saveEncryptedTopic(topic, content)
+            exposedDatabase.topicDatabase.saveEncryptedTopic(topic, content)
         } else {
             Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
         }
@@ -307,7 +304,7 @@ private suspend fun Backend.isKeyVerified(
     roomId: PrimaryKey,
     encryptedAes: Map<PrimaryKey, String>
 ): Result<Boolean> {
-    return databaseSession.getJoinedUserList(roomId).map { value ->
+    return exposedDatabase.userDatabase.getJoinedUserList(roomId).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()

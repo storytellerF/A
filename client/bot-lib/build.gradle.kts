@@ -58,7 +58,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.storyteller_f.a.bot_lib"
+    namespace = "com.storyteller_f.a.client.bot_lib"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
