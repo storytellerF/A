@@ -22,6 +22,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.json.Json
+import org.apache.tika.Tika
 import org.jetbrains.exposed.sql.Database
 import java.io.File
 import java.io.FileInputStream
@@ -39,6 +40,9 @@ class Backend(
     val exposedDatabase: com.storyteller_f.a.exposed.Database,
 ) {
     val json = Json {}
+    val tika by lazy {
+        Tika()
+    }
 }
 
 class MergedEnv(val list: List<Map<String, String>?>) {

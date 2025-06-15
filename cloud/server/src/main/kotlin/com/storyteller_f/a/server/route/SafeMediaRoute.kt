@@ -12,7 +12,6 @@ import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.resources.post
 import io.ktor.server.routing.*
-import org.apache.tika.Tika
 import java.io.File
 
 fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) {
@@ -36,19 +35,15 @@ fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) 
         error("create atemp failed")
     }
 
-    val tika by lazy {
-        Tika()
-    }
-
     post<RouteMedia.Id.ExtractAlbum> {
         usePrincipal(reader) { uid ->
-            backend.extractAlbum(it.parent.id, root, tika, uid)
+            backend.extractAlbum(it.parent.id, root, uid)
         }
     }
 
     post<RouteMedia.Upload> {
         usePrincipal(reader) { uid ->
-            uploadMedia(backend, it, uid, root, tika)
+            uploadMedia(backend, it, uid, root)
         }
     }
 

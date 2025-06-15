@@ -27,7 +27,6 @@ import io.ktor.util.cio.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.apache.tika.Tika
 import java.io.File
 import java.io.InputStream
 import kotlin.uuid.ExperimentalUuidApi
@@ -83,7 +82,7 @@ suspend fun Backend.getAllMediaList(
 }
 
 @OptIn(ExperimentalUuidApi::class)
-suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, tika: Tika, uid: PrimaryKey) =
+suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, uid: PrimaryKey) =
     exposedDatabase.userDatabase.getMediaByIds(listOf(mediaId)).mapResultIfNotNull {
         val media = it.first()
         if (media.owner != uid) {
@@ -109,7 +108,6 @@ suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, tika: Tika, ui
                 if (file != null) {
                     val name = newCoverFileName(media.name, contentType)
                     uploadFilesAfterDetectContentTypeAndDimension(
-                        tika,
                         listOf(UploadPack(file, name, media.owner, media.size))
                     ).map {
                         ServerResponse(it)
@@ -129,7 +127,6 @@ suspend fun RoutingContext.uploadMedia(
     it: RouteMedia.Upload,
     id: PrimaryKey,
     root: File,
-    tika: Tika,
 ) = if (it.parent.objectType == ObjectType.TOPIC) {
     Result.failure(BadRequestException("can't upload to topic"))
 } else {
@@ -142,7 +139,7 @@ suspend fun RoutingContext.uploadMedia(
         call.receiveMultipart().forEachPart { part ->
             when (part) {
                 is PartData.FileItem -> {
-                    backend.processFilePart(part, root, tika, it, result)
+                    backend.processFilePart(part, root, it, result)
                 }
 
                 else -> {}
@@ -156,7 +153,6 @@ suspend fun RoutingContext.uploadMedia(
 private suspend fun Backend.processFilePart(
     part: PartData.FileItem,
     root: File,
-    tika: Tika,
     permission: RootWritePermission,
     result: MutableList<MediaInfo>
 ) {
@@ -169,7 +165,6 @@ private suspend fun Backend.processFilePart(
     val length = part.provider().copyAndClose(file.writeChannel())
     try {
         val mediaInfos = uploadFilesAfterDetectContentTypeAndDimension(
-            tika,
             listOf(
                 UploadPack(
                     file,
