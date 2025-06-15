@@ -23,7 +23,7 @@ private fun runServerInSubProcess(envFilePath: String, port: Int): Process? {
 
     val builder = ProcessBuilder(
         gradleCommand,
-        "server:main:run",
+        "cloud:server:run",
         "-Dorg.gradle.logging.level=quiet",
         "--quiet",
     )

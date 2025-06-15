@@ -109,14 +109,14 @@ suspend fun Backend.createTopicSnapshot(
     uid: PrimaryKey,
     topicId: PrimaryKey
 ): Result<MediaInfo?> {
-    return exposedDatabase.userDatabase.getUserRawResult(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { (first) ->
+    return getUserInfo(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { userInfo ->
         checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull { (hasRead) ->
             if (hasRead) {
                 exposedDatabase.topicDatabase.getTopicInfo(
                     ObjectFetch.IdFetch(topicId),
                     null
                 ).mapResultIfNotNull { value ->
-                    createTopicSnapshot(value, first.toUserInfo(), uid)
+                    createTopicSnapshot(value, userInfo, uid)
                 }
             } else {
                 Result.failure(ForbiddenException("Permission denied"))
@@ -133,15 +133,15 @@ private suspend fun Backend.createTopicSnapshot(
     val topicId = topicInfo.id
     return topicSearchService.getDocuments(listOf(topicId)).map { value -> value.firstOrNull() }
         .mapResultIfNotNull { documents ->
-            exposedDatabase.userDatabase.getUserRawResult(
+            getUserInfo(
                 ObjectFetch.IdFetch(topicInfo.author)
-            ).mapResultIfNotNull { (first) ->
+            ).mapResultIfNotNull { userInfo ->
                 val name = "$uid/$topicId.pdf"
                 val pdfFile = File("/tmp/$name")
                 val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
                 try {
                     generateSignedSnapshot(
-                        first.toUserInfo(),
+                        userInfo,
                         creatorInfo,
                         topicInfo,
                         pdfFile,

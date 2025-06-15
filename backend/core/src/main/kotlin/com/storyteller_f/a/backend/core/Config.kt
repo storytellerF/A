@@ -11,16 +11,6 @@ class Config(
     val flavor: String
 )
 
-sealed interface ObjectFetch {
-    data class AidFetch(val aid: String) : ObjectFetch
-    data class IdFetch(val id: PrimaryKey) : ObjectFetch
-}
-
-sealed interface ObjectListFetch {
-    data class AidListFetch(val aidList: List<String>) : ObjectListFetch
-    data class IdListFetch(val idList: List<PrimaryKey>) : ObjectListFetch
-}
-
 data class ElasticConnection(val url: String, val certFile: String, val name: String, val pass: String)
 data class MinIoConnection(val url: String, val user: String, val pass: String)
 data class DatabaseConnection(val uri: String, val driver: String, val user: String, val password: String)
@@ -41,13 +31,23 @@ data class UploadPack(
 
 data class CopyPack(val origin: String, val new: String)
 
-interface Fetch {
-    val size: Int
+sealed interface ObjectFetch {
+    data class AidFetch(val aid: String) : ObjectFetch
+    data class IdFetch(val id: PrimaryKey) : ObjectFetch
+}
+
+sealed interface ObjectListFetch {
+    data class AidListFetch(val aidList: List<String>) : ObjectListFetch
+    data class IdListFetch(val idList: List<PrimaryKey>) : ObjectListFetch
 }
 
 sealed interface Cursor<T> {
     data class PreCursor<T>(val value: T) : Cursor<T>
     data class NextCursor<T>(val value: T) : Cursor<T>
+}
+
+interface Fetch {
+    val size: Int
 }
 
 interface GenericFetch<T> : Fetch {
