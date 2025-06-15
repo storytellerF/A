@@ -80,13 +80,11 @@ pagingCommon = "3.3.0-alpha02-0.5.1"
 pdfbox = "3.0.5"
 pdfboxLayout = "3.0.0-rc.0"
 pgjdbcNg = "0.8.9"
-postgresql = "42.7.5"
 recordCore = "0.4.0"
 richeditorCompose = "1.0.0-rc12"
 robolectric = "4.14.1"
 screenshot = "0.0.1-alpha09"
 simplemagic = "1.17"
-sqliteJdbc = "3.49.1.0"
 tikaCore = "3.1.0"
 uiTestJunit4Android = "1.8.2"
 uiTooling = "1.8.2"
@@ -140,7 +138,6 @@ cryptography-provider-webcrypto = { module = "dev.whyoleg.cryptography:cryptogra
 fonticons-core = { module = "dev.tclement.fonticons:core", version.ref = "font-icon-core" }
 couchbase-lite = { module = "dev.kotbase:couchbase-lite", version.ref = "couchbaseLite" }
 couchbase-lite-ktx = { module = "dev.kotbase:couchbase-lite-ktx", version.ref = "couchbaseLite" }
-couchbase-lite-paging = { module = "dev.kotbase:couchbase-lite-paging", version.ref = "couchbaseLite" }
 cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptographyCore" }
 cryptography-provider-jdk = { module = "dev.whyoleg.cryptography:cryptography-provider-jdk", version.ref = "cryptographyCore" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
@@ -242,13 +239,11 @@ paging-compose-common = { module = "app.cash.paging:paging-compose-common", vers
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 pdfbox-layout = { module = "com.github.cghislai:pdfbox-layout", version.ref = "pdfboxLayout" }
 pgjdbc-ng = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng", version.ref = "pgjdbcNg" }
-postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 record-core = { module = "dev.theolm.record:record-core", version.ref = "recordCore" }
 richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditorCompose" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 simplemagic = { module = "com.j256.simplemagic:simplemagic", version.ref = "simplemagic" }
 sonner = "io.github.dokar3:sonner:0.3.8"
-sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 sunny-chung-composable-table = { module = "io.github.sunny-chung:composable-table", version.ref = "composableTableVersion" }
 testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "testContainer" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testContainer" }

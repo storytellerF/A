@@ -4,7 +4,5 @@ services:
     build: !reset null
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
-    profiles:
-      - server
     networks:
       - bw-services

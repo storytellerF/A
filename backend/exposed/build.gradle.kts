@@ -20,7 +20,6 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.slf4j)
     implementation(projects.backend.core)
-    implementation(libs.postgresql)
     implementation(projects.shared)
     testImplementation(kotlin("test"))
 }

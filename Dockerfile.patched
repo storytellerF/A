@@ -74,8 +74,8 @@ ARG BUNKER_VERSION
 ENV BUNKER_VERSION=$BUNKER_VERSION
 ARG BUNKER_PORT
 ENV BUNKER_PORT=$BUNKER_PORT
-ARG BUNKER_PORT_SECRET
-ENV BUNKER_PORT_SECRET=$BUNKER_PORT_SECRET
+ARG BUNKER_SECRET_PORT
+ENV BUNKER_SECRET_PORT=$BUNKER_SECRET_PORT
 ARG BUNKER_ADMIN
 ENV BUNKER_ADMIN=$BUNKER_ADMIN
 ARG BUNKER_PASS
@@ -111,8 +111,8 @@ ENV SNAPSHOT_KEYSTORE_PASS=$SNAPSHOT_KEYSTORE_PASS
 
 
 WORKDIR /app
-
 COPY . .
+RUN mkdir -p ./build/envs
 
 COPY <<EOF ./${FLAVOR}.env
 BUILD_TYPE=${BUILD_TYPE}
@@ -150,7 +150,7 @@ DATABASE_PASS=${DATABASE_PASS}
 DATABASE_FRONT_PORT=${DATABASE_FRONT_PORT}
 BUNKER_VERSION=${BUNKER_VERSION}
 BUNKER_PORT=${BUNKER_PORT}
-BUNKER_PORT_SECRET=${BUNKER_PORT_SECRET}
+BUNKER_SECRET_PORT=${BUNKER_SECRET_PORT}
 BUNKER_ADMIN=${BUNKER_ADMIN}
 BUNKER_PASS=${BUNKER_PASS}
 BUNKER_DB=${BUNKER_DB}
@@ -173,16 +173,14 @@ RUN mkdir -p build/envs && cp ./${FLAVOR}.env ./build/envs/.env
 RUN find scripts/ -type f \( -name "*.sh" -o -name "*.js" \) -exec sed -i 's/\r$//' {} + && \
     sed -i 's/\r$//' gradlew
 
-RUN ./scripts/download_scripts/download-data.sh
+RUN ./scripts/download_scripts/download-preset-data.sh
 
 ENV HOST_TYPE=docker
 
 RUN --mount=type=cache,target=/root/.gradle \
     ./scripts/build_scripts/build-server-on-condition.sh ${FLAVOR} ${BUILD_TYPE} ${BUILD_ON}
 
-RUN mkdir -p ./cli/build/decompressed && tar -xf ./cli/build/distributions/cli.tar -C ./cli/build/decompressed
-
-RUN mkdir -p ./build/envs
+RUN mkdir -p ./cloud/cli/build/decompressed && tar -xf ./cloud/cli/build/distributions/cli.tar -C ./cloud/cli/build/decompressed
 
 FROM eclipse-temurin:21-alpine
 
@@ -191,8 +189,8 @@ RUN apk add libavif-dev
 RUN mkdir /app
 
 WORKDIR /app
-COPY --from=builder /app/server/build/libs/*-all.jar ./lib/ktor-server.jar
-COPY --from=builder /app/cli/build/decompressed/cli .
+COPY --from=builder /app/cloud/server/build/libs/*-all.jar ./lib/ktor-server.jar
+COPY --from=builder /app/cloud/cli/build/decompressed/cli .
 COPY --from=builder /app/deploy ./deploy
 # 使用koyeb 需要把args 变成env 后文件导入
 COPY --from=builder /app/build/envs/*.env .

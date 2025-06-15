@@ -30,7 +30,7 @@ services:
       - bw-db
     ports:
       - ${BUNKER_PORT}:8080
-      - ${BUNKER_PORT_SECRET}:8443
+      - ${BUNKER_SECRET_PORT}:8443
     labels:
       - "bunkerweb.INSTANCE=yes"
     environment:
@@ -60,8 +60,6 @@ services:
     networks:
       - bw-universe
       - bw-services
-    profiles:
-      - bunker
 
   bw-scheduler:
     image: bunkerity/bunkerweb-scheduler:${BUNKER_VERSION}
@@ -75,8 +73,6 @@ services:
     networks:
       - bw-universe
       - bw-docker
-    profiles:
-      - bunker
 
   bw-docker:
     image: tecnativa/docker-socket-proxy:nightly
@@ -87,8 +83,6 @@ services:
       - LOG_LEVEL=warning
     networks:
       - bw-docker
-    profiles:
-      - bunker
   bw-ui:
     image: bunkerity/bunkerweb-ui:1.5.12
     depends_on:
@@ -117,4 +111,6 @@ services:
       - bw-data:/var/lib/postgresql/data
     networks:
       - bw-docker
+    profiles:
+      - bunker-ui
 

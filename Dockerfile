@@ -11,8 +11,8 @@ ARG BUILD_ON
 #1
 
 WORKDIR /app
-
 COPY . .
+RUN mkdir -p ./build/envs
 
 #2
 
@@ -26,9 +26,7 @@ ENV HOST_TYPE=docker
 RUN --mount=type=cache,target=/root/.gradle \
     ./scripts/build_scripts/build-server-on-condition.sh ${FLAVOR} ${BUILD_TYPE} ${BUILD_ON}
 
-RUN mkdir -p ./cli/build/decompressed && tar -xf ./cli/build/distributions/cli.tar -C ./cli/build/decompressed
-
-RUN mkdir -p ./build/envs
+RUN mkdir -p ./cloud/cli/build/decompressed && tar -xf ./cloud/cli/build/distributions/cli.tar -C ./cloud/cli/build/decompressed
 
 FROM eclipse-temurin:21-alpine
 
@@ -37,8 +35,8 @@ RUN apk add libavif-dev
 RUN mkdir /app
 
 WORKDIR /app
-COPY --from=builder /app/server/build/libs/*-all.jar ./lib/ktor-server.jar
-COPY --from=builder /app/cli/build/decompressed/cli .
+COPY --from=builder /app/cloud/server/build/libs/*-all.jar ./lib/ktor-server.jar
+COPY --from=builder /app/cloud/cli/build/decompressed/cli .
 #if COPY --from=builder /app/deploy ./deploy
 # 使用koyeb 需要把args 变成env 后文件导入
 COPY --from=builder /app/build/envs/*.env .
