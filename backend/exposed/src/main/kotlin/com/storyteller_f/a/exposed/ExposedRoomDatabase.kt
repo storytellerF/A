@@ -3,6 +3,7 @@ package com.storyteller_f.a.exposed
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.query.bindPaginationQuery
 import com.storyteller_f.backend.service.ExposedDatabaseSession
@@ -36,12 +37,11 @@ class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, va
 
     override suspend fun getRoomPaginationResult(
         uid: PrimaryKey?,
-        joinStatusSearch: JoinStatusSearch?,
         word: String?,
         community: PrimaryKey?,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
+        joinSearch: JoinSearch
     ): Result<PaginationResult<RoomRawResult>> {
-        val joinSearch = joinStatusSearch.toJoinSearch(uid)
         return exposedDatabaseSession.dbSearch {
             search {
                 Rooms

@@ -30,7 +30,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.UpdateUserBody
-import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.JoinSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PosterSearch
 import com.storyteller_f.shared.type.PrimaryKey
@@ -182,10 +182,10 @@ interface CommunityDatabase {
     suspend fun getJoinedCommunityIds(uid: PrimaryKey): Result<List<Long>>
     suspend fun getCommunityPaginationResult(
         uid: PrimaryKey?,
-        joinStatus: JoinStatusSearch?,
         word: String?,
         hasPosterSearch: PosterSearch?,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
+        joinSearch: JoinSearch
     ): Result<PaginationResult<CommunityRawResult>?>
 
     suspend fun processCommunityToCommunityRawResult(
@@ -207,10 +207,10 @@ interface RoomDatabase {
     suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?>
     suspend fun getRoomPaginationResult(
         uid: PrimaryKey?,
-        joinStatusSearch: JoinStatusSearch?,
         word: String?,
         community: PrimaryKey?,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
+        joinSearch: JoinSearch
     ): Result<PaginationResult<RoomRawResult>>
 
     suspend fun getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?>

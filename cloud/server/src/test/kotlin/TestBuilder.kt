@@ -15,10 +15,6 @@ import io.github.aakira.napier.Napier
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.MySQLContainer
@@ -28,6 +24,7 @@ import java.io.File
 import java.net.ServerSocket
 import java.net.SocketTimeoutException
 import kotlin.concurrent.thread
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.test.assertEquals
@@ -149,30 +146,7 @@ private fun doTest(
             val job = launch {
                 suspendCoroutine { continuation ->
                     thread {
-                        ServerSocket(8888).apply {
-                            soTimeout = 1000 // 5秒超时
-                        }.use { serverSocket ->
-                            task.complete(Unit)
-                            while (isActive) {
-                                try {
-                                    serverSocket.accept().use { socket ->
-                                        socket.getInputStream().bufferedReader().use {
-                                            val explainResult = json.decodeFromString<ExplainResult>(it.readText())
-                                            saveDatabaseExplainResult(explainResult)
-                                        }
-                                    }
-                                } catch (_: SocketTimeoutException) {
-                                } catch (e: Exception) {
-                                    Napier.e(throwable = e) {
-                                        "server socket error"
-                                    }
-                                }
-                            }
-                            Napier.i {
-                                "server socket closed"
-                            }
-                            continuation.resume(Unit)
-                        }
+                        receiveExplainResult(task, json, continuation)
                     }
                 }
                 Napier.i {
@@ -186,8 +160,39 @@ private fun doTest(
     }
 }
 
+private fun CoroutineScope.receiveExplainResult(
+    task: CompletableDeferred<Unit>,
+    json: Json,
+    continuation: Continuation<Unit>
+) {
+    ServerSocket(8888).apply {
+        soTimeout = 1000 // 5秒超时
+    }.use { serverSocket ->
+        task.complete(Unit)
+        while (isActive) {
+            try {
+                serverSocket.accept().use { socket ->
+                    socket.getInputStream().bufferedReader().use {
+                        val explainResult = json.decodeFromString<ExplainResult>(it.readText())
+                        saveDatabaseExplainResult(explainResult)
+                    }
+                }
+            } catch (_: SocketTimeoutException) {
+            } catch (e: Exception) {
+                Napier.e(throwable = e) {
+                    "server socket error"
+                }
+            }
+        }
+        Napier.i {
+            "server socket closed"
+        }
+        continuation.resume(Unit)
+    }
+}
+
 fun saveDatabaseExplainResult(explainResult: ExplainResult) {
-    val (dialect, statements, result, stackTraceStrig) = explainResult
+    val (dialect, statements, result, stackTraceString) = explainResult
     val file = File(
         "./build/test/$dialect/${extractTableNames(statements).joinToString("/")}/${md5(statements)}.explain"
     )
@@ -196,7 +201,7 @@ fun saveDatabaseExplainResult(explainResult: ExplainResult) {
             it.mkdirs()
         }
     }
-    val newText = "${SqlFormatter.format(statements)}\n\n$result\n\n$stackTraceStrig"
+    val newText = "${SqlFormatter.format(statements)}\n\n$result\n\n$stackTraceString"
     if (!file.exists() || file.readText() != newText) {
         file.writeText(newText)
     }

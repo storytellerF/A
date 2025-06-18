@@ -1,5 +1,6 @@
 package com.storyteller_f.a.server.service
 
+import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UploadPack
@@ -100,7 +101,7 @@ suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, uid: PrimaryKe
                         when (media.contentType) {
                             "audio/mp3" -> it.readMp3AlbumFromAudioStream(saveAlbum)
                             "audio/flac", "audio/x-flac" -> it.readFlacAlbumFromAudioStream(saveAlbum)
-                            else -> throw BadRequestException("unsupported audio type: ${media.contentType}")
+                            else -> throw CustomBadRequestException("unsupported audio type: ${media.contentType}")
                         } to media.contentType
                     }
                 }
@@ -188,7 +189,7 @@ suspend fun ByteReadChannel.copyWithLimitAndClose(channel: ByteWriteChannel, lim
         while (!isClosedForRead) {
             result += readBuffer.transferTo(channel.writeBuffer)
             if (result > limit) {
-                throw BadRequestException("exceed content length")
+                throw CustomBadRequestException("exceed content length")
             }
             channel.flush()
             awaitContent()

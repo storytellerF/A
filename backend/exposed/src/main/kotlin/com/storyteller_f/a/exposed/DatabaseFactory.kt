@@ -1,6 +1,7 @@
 package com.storyteller_f.backend.service
 
 import com.storyteller_f.a.backend.core.DatabaseConnection
+import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.exposed.isConnectFailed
 import com.storyteller_f.a.exposed.isDup
 import com.storyteller_f.backend.service.tables.Aids
@@ -21,10 +22,9 @@ import com.storyteller_f.backend.service.tables.UserLogs
 import com.storyteller_f.backend.service.tables.UserTopicReads
 import com.storyteller_f.backend.service.tables.Users
 import com.storyteller_f.shared.obj.ExplainResult
-import com.storyteller_f.shared.type.UnauthorizedException
-import com.storyteller_f.shared.utils.onNotNull
 import com.storyteller_f.shared.utils.transformThrowable
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.slf4j.MDCContext
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -138,32 +138,42 @@ class ExposedDatabaseSession(val database: Database, val buildType: String) {
 
     private suspend fun <R> explainQuery(query: DatabaseSearchConfig<R, Query>.() -> Unit) {
         val anchor = Exception()
-        runCatching {
-            newSuspendedTransaction(Dispatchers.IO + MDCContext(), database) {
+        try {
+            val explainResult = newSuspendedTransaction(Dispatchers.IO + MDCContext(), database) {
                 explainQuery {
                     val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
                     databaseSearchConfig.apply(query).searchFunc()
                 }
             }
-        }.onNotNull { result ->
-            val r = result.copy(stackTraceString = anchor.stackTraceToString())
-            suspendCancellableCoroutine { continuation ->
-                thread {
-                    runCatching {
-                        Socket("localhost", 8888).use { socket ->
-                            val os = socket.getOutputStream()
-                            val writer = PrintWriter(os, true)
-                            writer.println(json.encodeToString(r))
-                        }
-                    }.onSuccess {
-                        continuation.resume(Unit)
-                    }.onFailure {
-                        continuation.resumeWithException(it)
+            if (explainResult != null) {
+                val result = explainResult.copy(stackTraceString = anchor.stackTraceToString())
+                suspendCancellableCoroutine { continuation ->
+                    thread {
+                        sendExplainResult(result, continuation)
                     }
                 }
             }
+        } catch (e: Exception) {
+            throw handleDatabaseException(e, anchor)
+        }
+    }
+
+    private fun sendExplainResult(
+        result: ExplainResult,
+        continuation: CancellableContinuation<Unit>
+    ) {
+        runCatching {
+            Socket("localhost", 8888).use { socket ->
+                socket.getOutputStream().use {
+                    PrintWriter(it, true).use { writer ->
+                        writer.println(json.encodeToString(result))
+                    }
+                }
+            }
+        }.onSuccess {
+            continuation.resume(Unit)
         }.onFailure {
-            throw handleDatabaseException(it, anchor)
+            continuation.resumeWithException(it)
         }
     }
 

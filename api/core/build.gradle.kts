@@ -1,12 +1,14 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinBuildConfig)
+    alias(libs.plugins.serialization)
 }
 
 group = "com.storyteller_f.a.http.core"
 version = "unspecified"
 
 dependencies {
+    implementation(libs.kotlinx.serialization.json)
     implementation(projects.shared)
     testImplementation(kotlin("test"))
 }

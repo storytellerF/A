@@ -1,14 +1,15 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.api.core.Api
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.exposed.isDup
 import com.storyteller_f.a.exposed.query.PaginationResult
+import com.storyteller_f.a.exposed.toJoinSearch
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.a.server.route.RouteCommunities
 import com.storyteller_f.backend.service.*
 import com.storyteller_f.backend.service.tables.Community
 import com.storyteller_f.backend.service.tables.CommunityRawResult
@@ -88,14 +89,14 @@ suspend fun Backend.exitCommunity(
 
 suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
-    search: RouteCommunities.Search,
+    search: Api.Communities.Search.Query,
     primaryKeyFetch: PrimaryKeyFetch
 ) = exposedDatabase.communityDatabase.getCommunityPaginationResult(
     search.target ?: uid,
-    if (search.target != null) JoinStatusSearch.JOINED else search.joinStatus,
     search.word,
     search.hasPoster,
-    primaryKeyFetch
+    primaryKeyFetch,
+    (if (search.target != null) JoinStatusSearch.JOINED else search.joinStatus).toJoinSearch(uid)
 ).mapResultIfNotNull { (list, count) ->
     processCommunityRawResultToCommunityInfo(list).mapResultIfNotNull { value ->
         when {
