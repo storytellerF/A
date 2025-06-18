@@ -7,6 +7,7 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
+import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.query.bindPaginationQuery
@@ -17,7 +18,6 @@ import com.storyteller_f.backend.service.index.DocumentSearch
 import com.storyteller_f.backend.service.index.TopicDocument
 import com.storyteller_f.backend.service.tables.Topic
 import com.storyteller_f.backend.service.tables.Topics
-import com.storyteller_f.backend.service.tables.toUserInfo
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
@@ -25,7 +25,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.TopicPinSearch
 import com.storyteller_f.shared.type.TopicPinSearch.PINNED
 import com.storyteller_f.shared.type.TopicPinSearch.UNPINNED
-import com.storyteller_f.shared.type.UnauthorizedException
 import com.storyteller_f.shared.utils.*
 import io.ktor.http.*
 import io.ktor.server.plugins.*

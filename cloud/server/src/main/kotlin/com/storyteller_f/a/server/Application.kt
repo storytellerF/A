@@ -116,7 +116,7 @@ private fun Application.configurePlugin(
         setupSessions()
     }
     if (backend.config.buildType == "prod") {
-        setupRateLimit(reader)
+        setupRateLimit()
     }
     install(PartialContent)
     install(Resources)
@@ -131,12 +131,12 @@ private fun WebSockets.WebSocketOptions.setupWebSockets() {
     contentConverter = KotlinxWebsocketSerializationConverter(Json)
 }
 
-private fun Application.setupRateLimit(reader: DatabaseReader) {
+private fun Application.setupRateLimit() {
     install(RateLimit) {
         global {
             rateLimiter(limit = 10, refillPeriod = 1.seconds)
             requestKey { call ->
-                call.getRateLimitKey(reader)
+                call.getRateLimitKey()
             }
             requestWeight { applicationCall, key ->
                 when (applicationCall.request.httpMethod) {
@@ -250,7 +250,12 @@ private fun executeScriptInThread(
     file: File,
     continuation: CancellableContinuation<Int>
 ) {
-    val process = ProcessBuilder(scriptArray).directory(file).start()
+    val process = try {
+        ProcessBuilder(scriptArray).directory(file).start()
+    } catch (e: Exception) {
+        continuation.resumeWithException(e)
+        return
+    }
     val reader = process.inputStream.bufferedReader()
     val errorReader = process.errorStream.bufferedReader()
     thread {

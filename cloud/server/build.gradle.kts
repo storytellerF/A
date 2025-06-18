@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.cryptography.provider.jdk)
     implementation(libs.bcpkix.jdk18on)
     implementation(projects.shared)
+    implementation(projects.api.server)
     implementation(projects.backend.service)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.server.client)
@@ -47,6 +48,7 @@ dependencies {
     testImplementation(libs.testcontainers.mysql)
     testImplementation(libs.sql.formatter)
     testImplementation(libs.javacv.platform)
+    testImplementation(libs.postgresql)
 }
 
 

@@ -1,5 +1,7 @@
 package com.storyteller_f.a.client_lib
 
+import com.storyteller_f.a.api.client.invoke
+import com.storyteller_f.a.api.core.Api
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
 import com.storyteller_f.shared.eciesEncrypt
@@ -170,15 +172,20 @@ suspend fun SessionManager.searchCommunity(
     nextCommunityId: String? = null,
     hasPosterSearch: PosterSearch? = null,
 ) = serviceCatching {
-    client.get("communities/search") {
-        url {
-            word?.let { value -> parameters.append("word", value) }
-            target?.let { value -> parameters.append("target", value.toString()) }
-            hasPosterSearch?.let { value -> parameters.append("hasPoster", value.name) }
-            parameters.append("joinStatus", joinStatusSearch.name)
-            appendPagingQueryParams(size, nextCommunityId)
-        }
-    }.body<ServerResponse<CommunityInfo>>()
+    with(client) {
+        Api.Communities.Search.getting(
+            Api.Communities.Search.Query(joinStatusSearch, word, target, hasPosterSearch, nextCommunityId, size)
+        )
+    }
+//    client.get("communities/search") {
+//        url {
+//            word?.let { value -> parameters.append("word", value) }
+//            target?.let { value -> parameters.append("target", value.toString()) }
+//            hasPosterSearch?.let { value -> parameters.append("hasPoster", value.name) }
+//            parameters.append("joinStatus", joinStatusSearch.name)
+//            appendPagingQueryParams(size, nextCommunityId)
+//        }
+//    }.body<ServerResponse<CommunityInfo>>()
 }
 
 suspend fun SessionManager.searchCommunityMembers(

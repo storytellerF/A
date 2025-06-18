@@ -193,24 +193,24 @@ class RouteTitles
 fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
     routing {
         authenticate {
-            bindProtectedSafeRoomRoute(reader, backend)
-            bindProtectedSafeTopicRoute(reader, backend)
-            bindProtectedSafeCommunityRoute(reader, backend)
-            bindProtectedSafeUserRoute(reader, backend)
+            bindProtectedSafeRoomRoute(backend)
+            bindProtectedSafeTopicRoute(backend)
+            bindProtectedSafeCommunityRoute(backend)
+            bindProtectedSafeUserRoute(backend)
             webSocket("/link") {
                 webSocketContent(reader, backend)
             }
-            bindProtectedSafeMediaRoute(reader, backend)
-            bindProtectedTitleRoute(reader, backend)
+            bindProtectedSafeMediaRoute(backend)
+            bindProtectedTitleRoute(backend)
         }
         authenticate(optional = true) {
-            bindSafeAccountRoute(reader)
-            bindSafeRoomRoute(reader, backend)
-            bindSafeTopicRoute(reader, backend)
-            bindSafeCommunityRoute(reader, backend)
-            bindSafeUserRoute(reader, backend)
+            bindSafeAccountRoute()
+            bindSafeRoomRoute(backend)
+            bindSafeTopicRoute(backend)
+            bindSafeCommunityRoute(backend)
+            bindSafeUserRoute(backend)
         }
-        bindUnprotectedAccountRoute(reader, backend)
-        bindUnauthenticatedRoute(reader, backend)
+        bindUnprotectedAccountRoute(backend)
+        bindUnauthenticatedRoute(backend)
     }
 }

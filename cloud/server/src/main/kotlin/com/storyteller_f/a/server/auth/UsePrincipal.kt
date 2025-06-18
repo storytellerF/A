@@ -1,13 +1,13 @@
 package com.storyteller_f.a.server.auth
 
-import com.maxmind.geoip2.DatabaseReader
+import com.storyteller_f.a.api.server.handleCaughtException
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.common.FileResponse
 import com.storyteller_f.a.server.common.PathResponse
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.UnauthorizedException
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -18,82 +18,55 @@ import io.ktor.server.websocket.*
 import kotlin.io.path.name
 
 suspend inline fun <reified R : Any> RoutingContext.usePrincipal(
-    reader: DatabaseReader,
     block: (PrimaryKey) -> Result<R?>
-) {
-    usePrincipalOrNull(reader) { uid ->
-        if (uid != null) {
-            block(uid)
-        } else {
-            Result.failure(UnauthorizedException())
-        }
+) = usePrincipalOrNull { uid ->
+    if (uid != null) {
+        block(uid)
+    } else {
+        Result.failure(UnauthorizedException())
     }
 }
 
-suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(reader: DatabaseReader, block: () -> Result<R?>) {
-    callRespond<R>({
-        block()
-    }, null, reader)
-}
+suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> Result<R?>) = callRespond<R>(block)
 
 suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
-    reader: DatabaseReader,
     block: (PrimaryKey?) -> Result<R?>?
-) {
-    val uid = call.principal<CustomPrincipal>()?.uid
-    callRespond<R>(block, uid, reader)
+) = callRespond<R>({
+    block(call.principal<CustomPrincipal>()?.uid)
+})
+
+suspend inline fun <reified R : Any> RoutingContext.usePrincipal1(
+    block: (PrimaryKey) -> Result<R?>
+) = usePrincipalOrNull { uid ->
+    if (uid != null) {
+        block(uid)
+    } else {
+        Result.failure(UnauthorizedException())
+    }
 }
 
+suspend inline fun <reified R : Any> RoutingContext.omitPrincipal1(block: () -> Result<R?>) = callRespond<R>(block)
+
+inline fun <reified R : Any> RoutingContext.usePrincipalOrNull1(
+    block: (PrimaryKey?) -> Result<R?>?
+) = block(call.principal<CustomPrincipal>()?.uid)
+
 suspend inline fun <reified R : Any> RoutingContext.callRespond(
-    block: (PrimaryKey?) -> Result<R?>?,
-    uid: PrimaryKey?,
-    reader: DatabaseReader
+    block: () -> Result<R?>?
 ) {
     try {
-        val result = block(uid)
+        val result = block()
         if (result == null) {
             call.respond(HttpStatusCode.NotFound)
             return
         }
-        result.onSuccess {
-            when (it) {
-                null -> call.respond(HttpStatusCode.NotFound)
-                is FileResponse -> {
-                    call.response.header(
-                        HttpHeaders.ContentDisposition,
-                        ContentDisposition.Attachment.withParameter(
-                            ContentDisposition.Parameters.FileName,
-                            it.file.name
-                        )
-                            .toString()
-                    )
-                    call.respondFile(it.file)
-                }
-                is PathResponse -> {
-                    call.response.header(
-                        HttpHeaders.ContentDisposition,
-                        ContentDisposition.Attachment.withParameter(
-                            ContentDisposition.Parameters.FileName,
-                            it.file.name
-                        )
-                            .toString()
-                    )
-                    call.respondPath(it.file)
-                }
-                is Unit -> call.respond(HttpStatusCode.OK)
-                else -> call.respond(it)
-            }
-        }.onFailure {
-            if (!respondError(it, reader)) {
-                call.application.log.error("Occur server exception", it)
-            }
-        }
+        handleResult(result)
     } catch (e: Exception) {
-        call.application.log.error("Catch exception in api", e)
+        handleCaughtException(e)
     }
 }
 
-suspend fun RoutingContext.respondError(e: Throwable, reader: DatabaseReader): Boolean {
+suspend fun RoutingContext.respondError(e: Throwable): Boolean {
     when (e) {
         is ForbiddenException -> {
             call.respond(HttpStatusCode.Forbidden, e.message.toString())
@@ -101,7 +74,7 @@ suspend fun RoutingContext.respondError(e: Throwable, reader: DatabaseReader): B
         }
 
         is UnauthorizedException -> {
-            call.respondUnauthorizedResponse(reader)
+            call.respondUnauthorizedResponse()
             return true
         }
 
@@ -131,5 +104,43 @@ inline fun <reified R : Any> DefaultWebSocketServerSession.usePrincipalOrNull(bl
         block(null)
     } else {
         block(uid)
+    }
+}
+
+suspend inline fun <reified R> RoutingContext.handleResult(it: Result<R>) {
+    it.onSuccess {
+        when (it) {
+            null -> call.respond(HttpStatusCode.NotFound)
+            is FileResponse -> {
+                call.response.header(
+                    HttpHeaders.ContentDisposition,
+                    ContentDisposition.Attachment.withParameter(
+                        ContentDisposition.Parameters.FileName,
+                        it.file.name
+                    )
+                        .toString()
+                )
+                call.respondFile(it.file)
+            }
+
+            is PathResponse -> {
+                call.response.header(
+                    HttpHeaders.ContentDisposition,
+                    ContentDisposition.Attachment.withParameter(
+                        ContentDisposition.Parameters.FileName,
+                        it.file.name
+                    )
+                        .toString()
+                )
+                call.respondPath(it.file)
+            }
+
+            is Unit -> call.respond(HttpStatusCode.OK)
+            else -> call.respond(it)
+        }
+    }.onFailure {
+        if (!respondError(it)) {
+            call.application.log.error("Occur server exception", it)
+        }
     }
 }

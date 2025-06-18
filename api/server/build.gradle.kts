@@ -7,7 +7,9 @@ group = "com.storyteller_f.a.http.core"
 version = "unspecified"
 
 dependencies {
+    implementation(libs.ktor.server.core)
     implementation(projects.shared)
+    api(projects.api.core)
     testImplementation(kotlin("test"))
 }
 
@@ -16,4 +18,7 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(21)
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-parameters")
+    }
 }

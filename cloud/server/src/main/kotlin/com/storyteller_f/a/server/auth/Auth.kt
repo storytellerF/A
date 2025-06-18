@@ -5,7 +5,6 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.*
-import com.storyteller_f.a.server.remoteIp
 import com.storyteller_f.a.server.route.RouteAccounts
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.processUserRawResultToUserInfo
@@ -92,7 +91,7 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
 
     override suspend fun onAuthenticate(context: AuthenticationContext) {
         val call = context.call
-        val (session) = call.getSession(config.databaseReader)
+        val (session) = call.getSession()
         val credential = call.customCredential()
         val principal = config.validateFunction(session, call, credential).getOrNull()
         if (principal != null) {
@@ -125,20 +124,19 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
     }
 }
 
-suspend fun ApplicationCall.respondUnauthorizedResponse(reader: DatabaseReader) {
-    val data = getData(reader)
+suspend fun ApplicationCall.respondUnauthorizedResponse() {
+    val data = getData()
     respond(UnauthorizedResponse(HttpAuthHeader.Single("Custom", data)))
 }
 
 private suspend fun RoutingContext.signIn(
     backend: Backend,
-    reader: DatabaseReader,
     pack: SignInPack,
     data: String
 ): Result<UserInfo?> {
     val f = finalData(data)
     return backend.exposedDatabase.userDatabase.getUserRawResultAndPublicKeyByAddress(pack.ad).filterNull {
-        BadRequestException("user not found")
+        CustomBadRequestException("user not found")
     }.mapResult { (userRawResult, publicKey) ->
         verify(publicKey, pack.sig, f).mapResult { isVerified ->
             if (isVerified) {
@@ -148,7 +146,7 @@ private suspend fun RoutingContext.signIn(
                     it.first()
                 }.mapIfNotNull { value ->
                     val id = value.id
-                    saveSuccessSessionOnFirst(id, reader)
+                    saveSuccessSessionOnFirst(id)
                     value
                 }
             } else {
@@ -168,8 +166,8 @@ suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: 
     }
 }
 
-private fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey, reader: DatabaseReader) {
-    call.getSession(reader).first.let { session ->
+private fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
+    call.getSession().first.let { session ->
         if (session is UserSession.Pending) {
             call.saveSuccessSession(session, id)
         }
@@ -178,10 +176,9 @@ private fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey, reader: Dat
 
 private suspend fun RoutingContext.signUp(
     backend: Backend,
-    reader: DatabaseReader,
     pack: SignUpPack
 ): Result<UserInfo?> {
-    val data = call.getData(reader)
+    val data = call.getData()
     val f = finalData(data)
     return verify(pack.pk, pack.sig, f).mapResult {
         if (it) {
@@ -204,7 +201,7 @@ private suspend fun RoutingContext.signUp(
                         )
                         backend.exposedDatabase.userDatabase.createUser(user).map {
                             backend.addUserLog(newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
-                            saveSuccessSessionOnFirst(newId, reader)
+                            saveSuccessSessionOnFirst(newId)
                             user.toUserInfo()
                         }
                     }
@@ -290,16 +287,16 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
     }
 }
 
-private fun ApplicationCall.getData(reader: DatabaseReader): String {
-    val (_, data) = getSession(reader)
+private fun ApplicationCall.getData(): String {
+    val (_, data) = getSession()
     return data
 }
 
-private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession, String> {
-    val remote = remoteIp(reader).first().first
+private fun ApplicationCall.getSession(): Pair<UserSession, String> {
+    val remote = request.origin.remoteAddress
     return when (val session = sessions.get(UserSession::class)) {
         null -> {
-            val (data, newSession) = this.createPendingSession(remote)
+            val (data, newSession) = createPendingSession(remote)
             sessions.set<UserSession>(newSession)
             newSession to data
         }
@@ -308,7 +305,7 @@ private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession
             if (remote == session.remote) {
                 session to session.data
             } else {
-                val (data, value) = this.createPendingSession(remote)
+                val (data, value) = createPendingSession(remote)
                 sessions.set<UserSession>(value)
                 value to data
             }
@@ -318,7 +315,7 @@ private fun ApplicationCall.getSession(reader: DatabaseReader): Pair<UserSession
             if (remote == session.remote) {
                 session to session.data
             } else {
-                val (data, value) = this.createPendingSession(remote)
+                val (data, value) = createPendingSession(remote)
                 sessions.set<UserSession>(value)
                 value to data
             }
@@ -340,8 +337,8 @@ private fun ApplicationCall.createPendingSession(remote: String): Pair<String, U
     return Pair(data, value)
 }
 
-fun ApplicationCall.getRateLimitKey(databaseReader: DatabaseReader): Comparable<*> {
-    return when (val session = getSession(databaseReader).first) {
+fun ApplicationCall.getRateLimitKey(): Comparable<*> {
+    return when (val session = getSession().first) {
         is UserSession.Success -> session.id
         is UserSession.Pending -> session.remote
     }
@@ -364,38 +361,37 @@ fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
                 }
             }
             challenge { _, call ->
-                call.respondUnauthorizedResponse(reader)
+                call.respondUnauthorizedResponse()
             }
         }
     }
 }
 
 fun Route.bindUnprotectedAccountRoute(
-    databaseReader: DatabaseReader,
     backend: Backend
 ) {
     get<RouteAccounts.GetData> {
-        omitPrincipal(databaseReader) {
-            Result.success(call.getData(databaseReader))
+        omitPrincipal {
+            Result.success(call.getData())
         }
     }
 
     post<RouteAccounts.SignUp> {
-        omitPrincipal(databaseReader) {
-            signUp(backend, databaseReader, call.receive<SignUpPack>())
+        omitPrincipal {
+            signUp(backend, call.receive<SignUpPack>())
         }
     }
 
     post<RouteAccounts.SignIn> {
-        omitPrincipal(databaseReader) {
-            signIn(backend, databaseReader, call.receive<SignInPack>(), call.getData(databaseReader))
+        omitPrincipal {
+            signIn(backend, call.receive<SignInPack>(), call.getData())
         }
     }
 }
 
-fun Route.bindSafeAccountRoute(reader: DatabaseReader) {
+fun Route.bindSafeAccountRoute() {
     post<RouteAccounts.SignOut> {
-        usePrincipalOrNull(reader) { uid ->
+        usePrincipalOrNull { uid ->
             call.sessions.clear(UserSession::class)
             Result.success(Unit)
         }

@@ -1,6 +1,5 @@
 package com.storyteller_f.a.server.route
 
-import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
@@ -14,9 +13,9 @@ import io.ktor.server.resources.post
 import io.ktor.server.routing.*
 import java.io.File
 
-fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) {
+fun Route.bindProtectedSafeMediaRoute(backend: Backend) {
     get<RouteMedia> {
-        usePrincipal(reader) { uid ->
+        usePrincipal { uid ->
             pagination(IdentifiablePagingGenerator) { pagingFetch ->
                 backend.getMediaList(uid, it, pagingFetch)
             }
@@ -24,7 +23,7 @@ fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) 
     }
 
     get<RouteMedia.All> {
-        usePrincipal(reader) { uid ->
+        usePrincipal { uid ->
             backend.getAllMediaList(uid, it.parent)
         }
     }
@@ -36,19 +35,19 @@ fun Route.bindProtectedSafeMediaRoute(reader: DatabaseReader, backend: Backend) 
     }
 
     post<RouteMedia.Id.ExtractAlbum> {
-        usePrincipal(reader) { uid ->
+        usePrincipal { uid ->
             backend.extractAlbum(it.parent.id, root, uid)
         }
     }
 
     post<RouteMedia.Upload> {
-        usePrincipal(reader) { uid ->
+        usePrincipal { uid ->
             uploadMedia(backend, it, uid, root)
         }
     }
 
     post<RouteMedia.Copy> {
-        usePrincipal(reader) { uid ->
+        usePrincipal { uid ->
             val newMedia = call.receive<NewMedia>()
             val objectId = it.parent.objectId
             val objectType = it.parent.objectType

@@ -15,9 +15,8 @@ import com.storyteller_f.backend.service.naming.NameService
 import com.storyteller_f.backend.service.query.batchCreateCommunityRooms
 import com.storyteller_f.backend.service.tables.*
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.PresetValue
 import com.storyteller_f.shared.obj.ServerResponse
-import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.JoinSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
@@ -311,17 +310,17 @@ suspend fun Backend.getMediaInfoList(
 
 suspend fun Backend.searchRoomPaginationResult(
     uid: PrimaryKey?,
-    joinStatusSearch: JoinStatusSearch?,
     word: String?,
     community: PrimaryKey?,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: PrimaryKeyFetch,
+    search: JoinSearch
 ): Result<PaginationResult<RoomInfo>?> {
     return exposedDatabase.roomData.getRoomPaginationResult(
         uid,
-        joinStatusSearch,
         word,
         community,
-        primaryKeyFetch
+        primaryKeyFetch,
+        search
     ).mapResult { (list, count) ->
         processRoomRawResultToRoomInfo(list).mapIfNotNull { value ->
             PaginationResult(value, count)

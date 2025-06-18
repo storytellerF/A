@@ -58,6 +58,7 @@ kotlin {
             implementation(projects.shared)
             implementation(libs.bundles.ktor.client)
             implementation(libs.kotlinx.datetime)
+            implementation(projects.api.client)
         }
         jvmMain.dependencies {
             implementation(libs.ktor.client.okhttp)

@@ -2,6 +2,7 @@ package com.storyteller_f.a.server
 
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
@@ -240,7 +241,7 @@ private suspend fun Backend.addTopicIntoRoom(
     val bytes = when (val c = newTopic.content) {
         is TopicContent.Plain -> c.bytes
         is TopicContent.Encrypted -> c.bytes
-        else -> throw BadRequestException("unsupported type")
+        else -> throw CustomBadRequestException("unsupported type")
     }
     return exposedDatabase.userDatabase.isMemberJoined(roomId, uid).mapResult { bool ->
         if (bool) {

@@ -177,6 +177,8 @@ services:
       - LOGSTASH_HOSTS=http://logstash01:9600
     command:
       - --strict.perms=false
+    profiles:
+      - es-log
 
   filebeat01:
     depends_on:
@@ -199,6 +201,8 @@ services:
       - LOGSTASH_HOSTS=http://logstash01:9600
     command:
       - --strict.perms=false
+    profiles:
+      - es-log
 
   logstash01:
     depends_on:
@@ -220,3 +224,5 @@ services:
       - ELASTIC_USER=${ELASTIC_NAME}
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - ELASTIC_HOSTS=https://es01:9200
+    profiles:
+      - es-log

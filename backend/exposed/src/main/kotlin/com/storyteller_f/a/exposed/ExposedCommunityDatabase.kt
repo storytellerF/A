@@ -3,6 +3,7 @@ package com.storyteller_f.a.exposed
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.exposed.query.buildCommunitySearchQuery
@@ -18,12 +19,13 @@ import com.storyteller_f.backend.service.tables.MemberJoin
 import com.storyteller_f.backend.service.tables.MemberJoins
 import com.storyteller_f.backend.service.tables.UserTopicReads
 import com.storyteller_f.shared.obj.UpdateCommunityBody
+import com.storyteller_f.shared.type.JoinSearch
 import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.JoinStatusSearch.JOINED
+import com.storyteller_f.shared.type.JoinStatusSearch.NOT_JOINED
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PosterSearch
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.UnauthorizedException
-import com.storyteller_f.shared.type.toJoinSearch
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import kotlinx.datetime.LocalDateTime
@@ -94,12 +96,11 @@ class ExposedCommunityDatabase(
 
     override suspend fun getCommunityPaginationResult(
         uid: PrimaryKey?,
-        joinStatus: JoinStatusSearch?,
         word: String?,
         hasPosterSearch: PosterSearch?,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
+        joinSearch: JoinSearch
     ): Result<PaginationResult<CommunityRawResult>?> {
-        val joinSearch = joinStatus.toJoinSearch(uid)
         return exposedDatabaseSession.dbSearch {
             search {
                 Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
@@ -113,7 +114,7 @@ class ExposedCommunityDatabase(
                 exposedDatabaseSession.dbSearch {
                     search {
                         Communities.select(Communities.id)
-                            .buildCommunitySearchQuery(joinStatus.toJoinSearch(uid), word, hasPosterSearch)
+                            .buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
                     }
                     count()
                 }.map { count ->
@@ -244,5 +245,19 @@ class ExposedCommunityDatabase(
                 it()
             }
         }
+    }
+}
+
+fun JoinStatusSearch?.toJoinSearch(uid: PrimaryKey?): JoinSearch {
+    when (this) {
+        JOINED -> {
+            if (uid == null) throw UnauthorizedException()
+            return JoinSearch.Joined(uid)
+        }
+        NOT_JOINED -> {
+            if (uid == null) throw UnauthorizedException()
+            return JoinSearch.NotJoined(uid)
+        }
+        else -> return JoinSearch.Unspecified(uid)
     }
 }

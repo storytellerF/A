@@ -15,6 +15,7 @@ data class ElasticConnection(val url: String, val certFile: String, val name: St
 data class MinIoConnection(val url: String, val user: String, val pass: String)
 data class DatabaseConnection(val uri: String, val driver: String, val user: String, val password: String)
 
+class UnauthorizedException : Exception()
 class ForbiddenException(message: String = "Invalid operation") : Exception(message)
 class CustomBadRequestException(message: String) : Exception(message)
 

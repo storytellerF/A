@@ -1,6 +1,5 @@
 package com.storyteller_f.a.server.route
 
-import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.service.createTitle
@@ -29,10 +28,10 @@ val titleMap = mutableMapOf(
     )
 )
 
-fun Route.bindProtectedTitleRoute(reader: DatabaseReader, backend: Backend) {
+fun Route.bindProtectedTitleRoute(backend: Backend) {
     post<RouteTitles> {
         val title = call.receive<NewTitle>()
-        usePrincipal(reader) { uid ->
+        usePrincipal { uid ->
             val supportType = titleMap[title.scopeType]
             if (supportType != null) {
                 if (supportType.contains(title.type)) {

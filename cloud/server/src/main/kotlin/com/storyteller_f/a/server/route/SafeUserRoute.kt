@@ -1,7 +1,7 @@
 package com.storyteller_f.a.server.route
 
-import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.exposed.isDup
 import com.storyteller_f.a.server.auth.omitPrincipal
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
@@ -10,7 +10,6 @@ import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.getUserInfo
-import com.storyteller_f.a.exposed.isDup
 import com.storyteller_f.backend.service.searchMembers
 import com.storyteller_f.shared.obj.NewDevice
 import com.storyteller_f.shared.obj.UpdateUserBody
@@ -20,20 +19,20 @@ import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 
-fun Route.bindProtectedSafeUserRoute(reader: DatabaseReader, backend: Backend) {
+fun Route.bindProtectedSafeUserRoute(backend: Backend) {
     post<RouteUsers.Update> {
-        usePrincipal(reader) { uid ->
+        usePrincipal { uid ->
             backend.updateUser(uid, call.receive<UpdateUserBody>())
         }
     }
     post<RouteUsers.Read> {
-        usePrincipal(reader) { uid ->
+        usePrincipal { uid ->
             val tuple = call.receive<UpdateUserRead>()
             backend.addReadLog(uid, tuple)
         }
     }
     post<RouteUsers.Device> {
-        usePrincipal(reader) { uid ->
+        usePrincipal { uid ->
             val newDevice = call.receive<NewDevice>()
             backend.exposedDatabase.userDatabase.addDevice(uid, newDevice.endpointUrl).recover {
                 if (it.isDup()) {
@@ -46,9 +45,9 @@ fun Route.bindProtectedSafeUserRoute(reader: DatabaseReader, backend: Backend) {
     }
 }
 
-fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
+fun Route.bindSafeUserRoute(backend: Backend) {
     get<RouteUsers.Aid> { value ->
-        omitPrincipal(reader) {
+        omitPrincipal {
             value.aid?.let { backend.getUserInfo(ObjectFetch.AidFetch(it)) }
                 ?: Result.success(
                     null
@@ -56,13 +55,13 @@ fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
         }
     }
     get<RouteUsers.Id> {
-        omitPrincipal(reader) {
+        omitPrincipal {
             backend.getUserInfo(ObjectFetch.IdFetch(it.id))
         }
     }
 
     get<RouteUsers.Id.Topics> {
-        usePrincipalOrNull(reader) { uid ->
+        usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
                     it.parent.id,
@@ -77,7 +76,7 @@ fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
     }
 
     get<RouteUsers.Id.Titles> { r ->
-        omitPrincipal(reader) {
+        omitPrincipal {
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.getUserTitles(r.parent.id, r.searchType, r.type, r.scopeId, f)
             }
@@ -85,7 +84,7 @@ fun Route.bindSafeUserRoute(reader: DatabaseReader, backend: Backend) {
     }
 
     get<RouteUsers.Search> {
-        omitPrincipal(reader) {
+        omitPrincipal {
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchMembers(null, it.word, f)
             }
