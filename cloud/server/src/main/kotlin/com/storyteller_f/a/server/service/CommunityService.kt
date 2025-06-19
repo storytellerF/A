@@ -92,11 +92,14 @@ suspend fun Backend.searchCommunities(
     search: Api.Communities.Search.Query,
     primaryKeyFetch: PrimaryKeyFetch
 ) = exposedDatabase.communityDatabase.getCommunityPaginationResult(
-    search.target ?: uid,
     search.word,
     search.hasPoster,
     primaryKeyFetch,
-    (if (search.target != null) JoinStatusSearch.JOINED else search.joinStatus).toJoinSearch(uid)
+    (if (search.target != null) {
+        JoinStatusSearch.JOINED.toJoinSearch(search.target)
+    } else {
+        search.joinStatus.toJoinSearch(uid)
+    })
 ).mapResultIfNotNull { (list, count) ->
     processCommunityRawResultToCommunityInfo(list).mapResultIfNotNull { value ->
         when {

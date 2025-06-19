@@ -71,17 +71,17 @@ class MediaTest {
 
     @Test
     fun `extract audio album`() {
-        ClassLoader.getSystemClassLoader().getResourceAsStream("I_Don’t_Wanna_Live_Forever.flac")!!.use {
+        ClassLoader.getSystemClassLoader().getResourceAsStream("I_Don’t_Wanna_Live_Forever.flac")?.use {
             it.readFlacAlbumFromAudioStream { image, mimeType ->
                 val name = "build/test/cover.${getExtensionFromMimeType(mimeType)}"
                 FileOutputStream(name).use { output ->
                     output.write(image)
                 }
             }
-        }
-        ClassLoader.getSystemClassLoader().getResourceAsStream("cover.jpg")!!.use {
+        } ?: throw Exception("flac is not exists")
+        ClassLoader.getSystemClassLoader().getResourceAsStream("cover.jpg")?.use {
             Files.copy(it, Path("build/test/cover_origin.jpg"), StandardCopyOption.REPLACE_EXISTING)
-        }
+        } ?: throw Exception("cover is not exists")
         val img1 = opencv_imgcodecs.imread("build/test/cover.jpg")
         if (img1.empty()) {
             error("图像加载失败！")

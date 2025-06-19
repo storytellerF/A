@@ -3,7 +3,10 @@ package com.storyteller_f.a.server.route
 import com.storyteller_f.a.api.core.Api
 import com.storyteller_f.a.api.server.invoke
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.server.auth.*
+import com.storyteller_f.a.server.auth.handleResult
+import com.storyteller_f.a.server.auth.usePrincipal
+import com.storyteller_f.a.server.auth.usePrincipalOrNull
+import com.storyteller_f.a.server.auth.usePrincipalOrNull1
 import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
@@ -18,7 +21,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 
 fun Route.bindSafeCommunityRoute(backend: Backend) {
-    Api.Communities.Search.getting(RoutingContext::handleResult) {
+    Api.Communities.Search.get(RoutingContext::handleResult) {
         usePrincipalOrNull1 { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchCommunities(uid, it, f)
@@ -26,11 +29,14 @@ fun Route.bindSafeCommunityRoute(backend: Backend) {
         }
     }
 
-    get<RouteCommunities.Id.Members> {
-        omitPrincipal {
-            pagination(IdentifiablePagingGenerator) { f ->
-                backend.searchMembers(it.parent.id, it.word, f)
-            }
+    Api.Communities.Id.Members.get(RoutingContext::handleResult) { q, p ->
+        pagination(IdentifiablePagingGenerator) { f ->
+            backend.searchMembers(p.id, q.word, f)
+        }
+    }
+    Api.Communities.Id.get(RoutingContext::handleResult) { q, p ->
+        usePrincipalOrNull1 { uid ->
+            backend.getCommunity(ObjectFetch.IdFetch(p.id), uid, q.fillJoinInfo)
         }
     }
     get<RouteCommunities.Id> {

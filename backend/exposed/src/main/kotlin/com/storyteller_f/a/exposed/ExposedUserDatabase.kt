@@ -99,14 +99,14 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
                 )
             }
             map(::mapUserInfo)
-        }.mapResult { pairs ->
+        }.mapResult { results ->
             exposedUserDatabase.dbSearch {
                 search {
                     buildSearchMembersQuery(objectId, true, word)
                 }
                 count()
             }.map { value ->
-                PaginationResult(pairs, value)
+                PaginationResult(results, value)
             }
         }
     }

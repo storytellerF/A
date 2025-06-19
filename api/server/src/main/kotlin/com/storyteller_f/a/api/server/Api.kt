@@ -3,6 +3,9 @@
 package com.storyteller_f.a.api.server
 
 import com.storyteller_f.a.api.core.ApiGet
+import com.storyteller_f.a.api.core.ApiGetWithPath
+import com.storyteller_f.a.api.core.ApiGetWithQuery
+import com.storyteller_f.a.api.core.ApiGetWithQueryAndPath
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -14,21 +17,105 @@ import kotlinx.serialization.serializer
 
 context(route: Route)
 @OptIn(InternalSerializationApi::class)
-operator fun <Q : Any, R : Any> ApiGet<Q, R>.invoke(
+operator fun <R : Any, Q : Any, P : Any> ApiGetWithQueryAndPath<R, Q, P>.invoke(
+    handleResult: suspend RoutingContext.(Result<R?>) -> Unit,
+    block: suspend RoutingContext.(Q, P) -> Result<R?>?
+) {
+    route.get(urlString) {
+        val querySerializer = queryClass.serializer()
+        val q = querySerializer.deserialize(
+            ParametersDecoder(
+                serializersModuleOf(queryClass, querySerializer),
+                call.queryParameters,
+                querySerializer.descriptor.elementNames
+            )
+        )
+        val pathSerializer = pathClass.serializer()
+        val p = pathSerializer.deserialize(
+            ParametersDecoder(
+                serializersModuleOf(pathClass, pathSerializer),
+                call.pathParameters,
+                pathSerializer.descriptor.elementNames
+            )
+        )
+        try {
+            val result = block(q, p)
+            if (result == null) {
+                call.respond(HttpStatusCode.NotFound)
+            } else {
+                handleResult(result)
+            }
+        } catch (e: Exception) {
+            handleCaughtException(e)
+        }
+    }
+}
+
+context(route: Route)
+@OptIn(InternalSerializationApi::class)
+operator fun <R : Any, Q : Any> ApiGetWithQuery<R, Q>.invoke(
     handleResult: suspend RoutingContext.(Result<R?>) -> Unit,
     block: suspend RoutingContext.(Q) -> Result<R?>?
 ) {
-    route.get(path) {
-        val serializer = queryClass.serializer()
-        val decoder =
+    route.get(urlString) {
+        val querySerializer = queryClass.serializer()
+        val q = querySerializer.deserialize(
             ParametersDecoder(
-                serializersModuleOf(queryClass, serializer),
+                serializersModuleOf(queryClass, querySerializer),
                 call.queryParameters,
-                serializer.descriptor.elementNames
+                querySerializer.descriptor.elementNames
             )
-        val q = serializer.deserialize(decoder)
+        )
         try {
             val result = block(q)
+            if (result == null) {
+                call.respond(HttpStatusCode.NotFound)
+            } else {
+                handleResult(result)
+            }
+        } catch (e: Exception) {
+            handleCaughtException(e)
+        }
+    }
+}
+
+context(route: Route)
+@OptIn(InternalSerializationApi::class)
+operator fun <R : Any, P : Any> ApiGetWithPath<R, P>.invoke(
+    handleResult: suspend RoutingContext.(Result<R?>) -> Unit,
+    block: suspend RoutingContext.(P) -> Result<R?>?
+) {
+    route.get(urlString) {
+        val pathSerializer = pathClass.serializer()
+        val p = pathSerializer.deserialize(
+            ParametersDecoder(
+                serializersModuleOf(pathClass, pathSerializer),
+                call.pathParameters,
+                pathSerializer.descriptor.elementNames
+            )
+        )
+        try {
+            val result = block(p)
+            if (result == null) {
+                call.respond(HttpStatusCode.NotFound)
+            } else {
+                handleResult(result)
+            }
+        } catch (e: Exception) {
+            handleCaughtException(e)
+        }
+    }
+}
+
+context(route: Route)
+@OptIn(InternalSerializationApi::class)
+operator fun <R : Any> ApiGet<R>.invoke(
+    handleResult: suspend RoutingContext.(Result<R?>) -> Unit,
+    block: suspend RoutingContext.() -> Result<R?>?
+) {
+    route.get(urlString) {
+        try {
+            val result = block()
             if (result == null) {
                 call.respond(HttpStatusCode.NotFound)
             } else {
