@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.kotlinBuildConfig)
 }
 
-group = "com.storyteller_f.a"
+group = "com.storyteller_f.a.server"
 version = "1.0.0"
 application {
     mainClass.set("com.storyteller_f.a.server.ApplicationKt")
@@ -66,6 +66,7 @@ val flavor = project.findProperty("buildkonfig.flavor").toString()
 
 buildConfig {
     className = "ServerConfig"
+    packageName = "com.storyteller_f.a.server"
     buildConfigField<String>("BUILD_TYPE", buildType)
     buildConfigField<Boolean>("IS_PROD", buildType == "prod")
     buildConfigField<String>("FLAVOR", flavor)
@@ -75,10 +76,16 @@ tasks.withType<Tar> {
     filesMatching("vavi-commons-1.1.10.jar") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
     }
+    filesMatching("core.jar") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 }
 
 tasks.withType<Zip> {
     filesMatching("vavi-commons-1.1.10.jar") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
+    }
+    filesMatching("core.jar") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }

@@ -11,21 +11,11 @@ import com.storyteller_f.backend.service.ExposedDatabaseSession
 import com.storyteller_f.backend.service.count
 import com.storyteller_f.backend.service.first
 import com.storyteller_f.backend.service.map
-import com.storyteller_f.backend.service.tables.Aids
-import com.storyteller_f.backend.service.tables.Communities
-import com.storyteller_f.backend.service.tables.Community
-import com.storyteller_f.backend.service.tables.CommunityRawResult
-import com.storyteller_f.backend.service.tables.MemberJoin
-import com.storyteller_f.backend.service.tables.MemberJoins
-import com.storyteller_f.backend.service.tables.UserTopicReads
+import com.storyteller_f.backend.service.tables.*
 import com.storyteller_f.shared.obj.UpdateCommunityBody
-import com.storyteller_f.shared.type.JoinSearch
-import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.type.JoinStatusSearch.JOINED
 import com.storyteller_f.shared.type.JoinStatusSearch.NOT_JOINED
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PosterSearch
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import kotlinx.datetime.LocalDateTime
@@ -95,7 +85,6 @@ class ExposedCommunityDatabase(
     }
 
     override suspend fun getCommunityPaginationResult(
-        uid: PrimaryKey?,
         word: String?,
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,
@@ -109,15 +98,20 @@ class ExposedCommunityDatabase(
                     .bindPaginationQuery(Communities, primaryKeyFetch)
             }
             map(Community::wrapRow)
-        }.mapResultIfNotNull {
-            processCommunityToCommunityRawResult(uid, it).mapResult { list ->
-                exposedDatabaseSession.dbSearch {
-                    search {
-                        Communities.select(Communities.id)
-                            .buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
-                    }
-                    count()
-                }.map { count ->
+        }.mapResultIfNotNull { list ->
+            exposedDatabaseSession.dbSearch {
+                search {
+                    Communities.select(Communities.id)
+                        .buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
+                }
+                count()
+            }.mapResult { count ->
+                val uid = when (joinSearch) {
+                    is JoinSearch.Joined -> joinSearch.uid
+                    is JoinSearch.NotJoined -> joinSearch.uid
+                    is JoinSearch.Unspecified -> joinSearch.uid
+                }
+                processCommunityToCommunityRawResult(uid, list).map { list ->
                     PaginationResult(list, count)
                 }
             }
@@ -128,21 +122,19 @@ class ExposedCommunityDatabase(
         uid: PrimaryKey?,
         communities: List<Community>
     ): Result<List<CommunityRawResult>> {
-        return userDatabase.getContainerInfo(
-            communities.map { it.id },
-            uid
-        ).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
-            communities.map {
-                CommunityRawResult(
-                    it,
-                    it.icon,
-                    it.poster,
-                    joinedTimeMap[it.id]?.joinedTime,
-                    lastReadMap[it.id]?.topicId,
-                    memberCountMap[it.id] ?: 0
-                )
+        return userDatabase.getContainerInfo(communities.map { it.id }, uid)
+            .map { (joinedTimeMap, lastReadMap, memberCountMap) ->
+                communities.map {
+                    CommunityRawResult(
+                        it,
+                        it.icon,
+                        it.poster,
+                        joinedTimeMap[it.id]?.joinedTime,
+                        lastReadMap[it.id]?.topicId,
+                        memberCountMap[it.id] ?: 0
+                    )
+                }
             }
-        }
     }
 
     override suspend fun createCommunity(community: Community): Result<Unit> {
@@ -254,10 +246,12 @@ fun JoinStatusSearch?.toJoinSearch(uid: PrimaryKey?): JoinSearch {
             if (uid == null) throw UnauthorizedException()
             return JoinSearch.Joined(uid)
         }
+
         NOT_JOINED -> {
             if (uid == null) throw UnauthorizedException()
             return JoinSearch.NotJoined(uid)
         }
+
         else -> return JoinSearch.Unspecified(uid)
     }
 }

@@ -8,15 +8,8 @@ import com.storyteller_f.shared.eciesEncrypt
 import com.storyteller_f.shared.encryptData
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
-import com.storyteller_f.shared.type.JoinStatusSearch
-import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.type.ObjectType.*
-import com.storyteller_f.shared.type.PosterSearch
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TitleSearchType
-import com.storyteller_f.shared.type.TitleStatus
-import com.storyteller_f.shared.type.TitleType
-import com.storyteller_f.shared.type.TopicPinSearch
 import io.github.aakira.napier.Napier
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -27,13 +20,13 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
 
-inline fun <R> serviceCatching(block: () -> R): Result<R> {
+suspend fun <R> serviceCatching(block: suspend () -> R): Result<R> {
+    val point = Exception()
     return try {
         val value = block()
         Result.success(value)
     } catch (e: Throwable) {
-        if (e is ServerErrorException && e.status == HttpStatusCode.Unauthorized) return Result.failure(e)
-        val point = Exception(e)
+        point.initCause(e)
         Napier.e(point) {
             "serviceCatching"
         }
@@ -144,13 +137,9 @@ suspend fun SessionManager.getUserTopics(
 
 suspend fun SessionManager.getCommunityInfo(id: PrimaryKey) =
     serviceCatching {
-        client.get("communities/$id") {
-            url {
-                if (currentIsAlreadySignUp) {
-                    parameters.append("fillJoinInfo", "true")
-                }
-            }
-        }.body<CommunityInfo>()
+        with(client) {
+            Api.Communities.Id.get(Api.Communities.Id.Query(currentIsAlreadySignUp), Api.Communities.Id.Path(id))
+        }
     }
 
 suspend fun SessionManager.getCommunityInfoByAid(aid: String, fillJoinInfo: Boolean = false) = serviceCatching {
@@ -173,7 +162,7 @@ suspend fun SessionManager.searchCommunity(
     hasPosterSearch: PosterSearch? = null,
 ) = serviceCatching {
     with(client) {
-        Api.Communities.Search.getting(
+        Api.Communities.Search.get(
             Api.Communities.Search.Query(joinStatusSearch, word, target, hasPosterSearch, nextCommunityId, size)
         )
     }
@@ -194,12 +183,12 @@ suspend fun SessionManager.searchCommunityMembers(
     size: Int,
     word: String?
 ) = serviceCatching {
-    client.get("communities/$communityId/members") {
-        url {
-            word?.let { value -> parameters.append("word", value) }
-            appendPagingQueryParams(size, nextCommunityId)
-        }
-    }.body<ServerResponse<UserInfo>>()
+    with(client) {
+        Api.Communities.Id.Members.get(
+            Api.Communities.Id.Members.Query(word, nextCommunityId, size),
+            Api.Communities.Id.Members.Path(communityId)
+        )
+    }
 }
 
 suspend fun SessionManager.searchAllMembers(

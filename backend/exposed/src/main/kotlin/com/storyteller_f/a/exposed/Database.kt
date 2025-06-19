@@ -181,7 +181,6 @@ interface CommunityDatabase {
 
     suspend fun getJoinedCommunityIds(uid: PrimaryKey): Result<List<Long>>
     suspend fun getCommunityPaginationResult(
-        uid: PrimaryKey?,
         word: String?,
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,

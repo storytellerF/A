@@ -45,8 +45,6 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipal1(
     }
 }
 
-suspend inline fun <reified R : Any> RoutingContext.omitPrincipal1(block: () -> Result<R?>) = callRespond<R>(block)
-
 inline fun <reified R : Any> RoutingContext.usePrincipalOrNull1(
     block: (PrimaryKey?) -> Result<R?>?
 ) = block(call.principal<CustomPrincipal>()?.uid)
