@@ -19,6 +19,7 @@ import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomRefCell
 import com.storyteller_f.a.app.pages.user.UserCell
+import com.storyteller_f.a.app.service.GPTOutput
 import com.storyteller_f.a.app.service.buildGPT
 import com.storyteller_f.a.app.service.buildTranslatePrompt
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
@@ -31,7 +32,6 @@ import com.storyteller_f.a.client_lib.unpinTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.type.GPTOutput
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.formatTime
 import com.strabled.composepreferences.getPreference

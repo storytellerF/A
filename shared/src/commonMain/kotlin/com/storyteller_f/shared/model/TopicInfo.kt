@@ -94,3 +94,9 @@ sealed interface TopicContent {
     @SerialName("invalid")
     data object Invalid : TopicContent
 }
+
+enum class TopicPinSearch {
+    PINNED,
+    UNPINNED,
+    UNSPECIFIED
+}

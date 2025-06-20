@@ -33,3 +33,7 @@ data class CommunityInfo(
         val EMPTY = CommunityInfo(DEFAULT_PRIMARY_KEY, "", "", DEFAULT_PRIMARY_KEY, now(), 0, null, null, now())
     }
 }
+
+enum class PosterSearch {
+    HAS_POSTER, NO_POSTER, UNSPECIFIED
+}

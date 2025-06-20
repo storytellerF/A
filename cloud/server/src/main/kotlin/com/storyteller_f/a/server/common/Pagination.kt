@@ -1,5 +1,6 @@
 package com.storyteller_f.a.server.common
 
+import com.storyteller_f.a.api.core.PageableQuery
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.Fetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -73,6 +74,31 @@ suspend fun <T, F : Fetch> RoutingContext.pagination(
         }
         val nextPageToken = call.queryParameters["nextPageToken"]
         val prePageToken = call.queryParameters["prePageToken"]
+
+        require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) {
+            "Invalid query"
+        }
+        generator.parse(prePageToken, nextPageToken, size)
+    }.mapResult { f ->
+        block(f).mapCatchingNotNull { (list, count) ->
+            val (pre, next) = generator.generate(list, f.size)
+            ServerResponse(list, Pagination(next, pre, count))
+        }
+    }
+}
+
+suspend fun <T, F : Fetch> PageableQuery.pagination(
+    generator: PagingGenerator<T, F>,
+    block: suspend (F) -> Result<PaginationResult<T>?>
+): Result<ServerResponse<T>?> {
+    return runCatching {
+        val paginationQuery = pagination
+        val size = paginationQuery.size
+        require(size > 0) {
+            "Invalid query size"
+        }
+        val nextPageToken = paginationQuery.nextPageToken
+        val prePageToken = paginationQuery.prePageToken
 
         require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) {
             "Invalid query"

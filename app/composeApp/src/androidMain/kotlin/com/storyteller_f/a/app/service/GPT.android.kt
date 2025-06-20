@@ -2,8 +2,6 @@ package com.storyteller_f.a.app.service
 
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.storyteller_f.shared.contextRef
-import com.storyteller_f.shared.type.GPTModel
-import com.storyteller_f.shared.type.GPTOutput
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

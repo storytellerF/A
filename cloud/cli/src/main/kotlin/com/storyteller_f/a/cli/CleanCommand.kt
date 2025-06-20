@@ -1,6 +1,6 @@
 package com.storyteller_f.a.cli
 
-import com.storyteller_f.backend.service.DatabaseFactory
+import com.storyteller_f.a.exposed.DatabaseFactory
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ExperimentalCli

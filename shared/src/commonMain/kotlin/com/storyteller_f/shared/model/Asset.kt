@@ -1,6 +1,5 @@
 package com.storyteller_f.shared.model
 
-import com.storyteller_f.shared.type.AssetType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -13,3 +12,7 @@ data class AssetTransactionInfo(
     val before: Int,
     val after: Int
 )
+
+enum class AssetType {
+    ACG,
+}

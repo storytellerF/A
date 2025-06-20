@@ -1,7 +1,5 @@
 package com.storyteller_f.a.app.service
 
-import com.storyteller_f.shared.type.GPTModel
-import com.storyteller_f.shared.type.GPTOutput
 import de.kherud.llama.InferenceParameters
 import de.kherud.llama.LlamaModel
 import de.kherud.llama.ModelParameters

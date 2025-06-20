@@ -1,10 +1,12 @@
 package com.storyteller_f.a.server.route
 
+import com.storyteller_f.a.api.core.Api
+import com.storyteller_f.a.api.server.invoke
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.exposed.isDup
-import com.storyteller_f.a.server.auth.omitPrincipal
+import com.storyteller_f.a.server.auth.handleResult
 import com.storyteller_f.a.server.auth.usePrincipal
-import com.storyteller_f.a.server.auth.usePrincipalOrNull
+import com.storyteller_f.a.server.auth.usePrincipalOrNull1
 import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
@@ -18,6 +20,7 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingContext
 
 fun Route.bindProtectedSafeUserRoute(backend: Backend) {
     post<RouteUsers.Update> {
@@ -46,48 +49,37 @@ fun Route.bindProtectedSafeUserRoute(backend: Backend) {
 }
 
 fun Route.bindSafeUserRoute(backend: Backend) {
-    get<RouteUsers.Aid> { value ->
-        omitPrincipal {
-            value.aid?.let { backend.getUserInfo(ObjectFetch.AidFetch(it)) }
-                ?: Result.success(
-                    null
-                )
-        }
+    Api.Users.Aid.get.invoke(RoutingContext::handleResult) {
+        backend.getUserInfo(ObjectFetch.AidFetch(it.aid))
     }
-    get<RouteUsers.Id> {
-        omitPrincipal {
-            backend.getUserInfo(ObjectFetch.IdFetch(it.id))
-        }
+    Api.Users.Id.get.invoke(RoutingContext::handleResult) {
+        backend.getUserInfo(ObjectFetch.IdFetch(it.id))
     }
 
-    get<RouteUsers.Id.Topics> {
-        usePrincipalOrNull { uid ->
-            pagination(IdentifiablePagingGenerator) { f ->
+    Api.Users.Id.Topics.get.invoke(RoutingContext::handleResult) { q, p ->
+        usePrincipalOrNull1 { uid ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
-                    it.parent.id,
+                    p.id,
                     ObjectType.USER,
                     uid,
-                    it.fillHasCommented,
+                    q.fillHasCommented,
                     f,
-                    it.pinType
+                    q.pinType
                 )
             }
         }
     }
 
-    get<RouteUsers.Id.Titles> { r ->
-        omitPrincipal {
-            pagination(IdentifiablePagingGenerator) { f ->
-                backend.getUserTitles(r.parent.id, r.searchType, r.type, r.scopeId, f)
-            }
+    Api.Users.Id.Titles.get.invoke(RoutingContext::handleResult) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getUserTitles(p.id, q.searchType, q.type, q.scopeId, f)
         }
     }
 
-    get<RouteUsers.Search> {
-        omitPrincipal {
-            pagination(IdentifiablePagingGenerator) { f ->
-                backend.searchMembers(null, it.word, f)
-            }
+    Api.Users.Search.get.invoke(RoutingContext::handleResult) {
+        it.pagination(IdentifiablePagingGenerator) { f ->
+            backend.searchMembers(null, it.word, f)
         }
     }
 }

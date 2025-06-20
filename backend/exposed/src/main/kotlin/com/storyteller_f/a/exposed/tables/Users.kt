@@ -1,4 +1,4 @@
-package com.storyteller_f.backend.service.tables
+package com.storyteller_f.a.exposed.tables
 
 import com.storyteller_f.a.exposed.BaseEntity
 import com.storyteller_f.a.exposed.BaseTable
@@ -6,9 +6,9 @@ import com.storyteller_f.a.exposed.customPrimaryKey
 import com.storyteller_f.a.exposed.userAddress
 import com.storyteller_f.a.exposed.userName
 import com.storyteller_f.a.exposed.userPublicKey
+import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.type.AlgoType
-import com.storyteller_f.shared.type.PassType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*

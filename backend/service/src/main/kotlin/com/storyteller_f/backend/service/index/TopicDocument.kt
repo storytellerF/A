@@ -2,7 +2,7 @@ package com.storyteller_f.backend.service.index
 
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.exposed.query.PaginationResult
-import com.storyteller_f.backend.service.tables.Topic
+import com.storyteller_f.a.exposed.tables.Topic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.type.PrimaryKey
 

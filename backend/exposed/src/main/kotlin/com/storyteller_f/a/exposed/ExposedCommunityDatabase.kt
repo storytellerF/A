@@ -1,5 +1,6 @@
 package com.storyteller_f.a.exposed
 
+import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -7,11 +8,14 @@ import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.exposed.query.buildCommunitySearchQuery
-import com.storyteller_f.backend.service.ExposedDatabaseSession
-import com.storyteller_f.backend.service.count
-import com.storyteller_f.backend.service.first
-import com.storyteller_f.backend.service.map
-import com.storyteller_f.backend.service.tables.*
+import com.storyteller_f.a.exposed.tables.Aids
+import com.storyteller_f.a.exposed.tables.Communities
+import com.storyteller_f.a.exposed.tables.Community
+import com.storyteller_f.a.exposed.tables.CommunityRawResult
+import com.storyteller_f.a.exposed.tables.MemberJoin
+import com.storyteller_f.a.exposed.tables.MemberJoins
+import com.storyteller_f.a.exposed.tables.UserTopicReads
+import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.type.JoinStatusSearch.JOINED

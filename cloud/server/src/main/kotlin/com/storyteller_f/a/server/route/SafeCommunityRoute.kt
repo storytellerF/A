@@ -5,7 +5,6 @@ import com.storyteller_f.a.api.server.invoke
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.server.auth.handleResult
 import com.storyteller_f.a.server.auth.usePrincipal
-import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.auth.usePrincipalOrNull1
 import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
@@ -23,7 +22,7 @@ import io.ktor.server.routing.RoutingContext
 fun Route.bindSafeCommunityRoute(backend: Backend) {
     Api.Communities.Search.get(RoutingContext::handleResult) {
         usePrincipalOrNull1 { uid ->
-            pagination(IdentifiablePagingGenerator) { f ->
+            it.pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchCommunities(uid, it, f)
             }
         }
@@ -39,30 +38,22 @@ fun Route.bindSafeCommunityRoute(backend: Backend) {
             backend.getCommunity(ObjectFetch.IdFetch(p.id), uid, q.fillJoinInfo)
         }
     }
-    get<RouteCommunities.Id> {
-        usePrincipalOrNull { uid ->
-            backend.getCommunity(ObjectFetch.IdFetch(it.id), uid, it.parent.fillJoinInfo)
+    Api.Communities.Aid.get(RoutingContext::handleResult) {
+        usePrincipalOrNull1 { uid ->
+            backend.getCommunity(ObjectFetch.AidFetch(it.aid), uid, it.fillJoinInfo)
         }
     }
 
-    get<RouteCommunities.Aid> {
-        usePrincipalOrNull { uid ->
-            it.aid?.let { aid ->
-                backend.getCommunity(ObjectFetch.AidFetch(aid), uid, it.parent.fillJoinInfo)
-            }
-        }
-    }
-
-    get<RouteCommunities.Id.Topics> {
-        usePrincipalOrNull { uid ->
-            pagination(IdentifiablePagingGenerator) { f ->
+    Api.Communities.Id.Topics.get(RoutingContext::handleResult) { q, p ->
+        usePrincipalOrNull1 { uid ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
-                    it.parent.id,
+                    p.id,
                     ObjectType.COMMUNITY,
                     uid,
-                    it.fillHasCommented,
+                    q.fillHasCommented,
                     f,
-                    it.pinType
+                    q.pinType
                 )
             }
         }

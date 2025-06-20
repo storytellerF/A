@@ -60,3 +60,9 @@ data class PrimaryKeyFetch(override val cursor: Cursor<PrimaryKey>?, override va
 
 data class ReactionFetch(override val cursor: Cursor<ReactionCursorKey>?, override val size: Int) :
     GenericFetch<ReactionCursorKey>
+
+sealed interface JoinSearch {
+    data class Joined(val uid: PrimaryKey) : JoinSearch
+    data class NotJoined(val uid: PrimaryKey) : JoinSearch
+    data class Unspecified(val uid: PrimaryKey?) : JoinSearch
+}

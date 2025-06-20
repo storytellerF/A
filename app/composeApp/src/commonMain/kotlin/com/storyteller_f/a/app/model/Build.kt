@@ -5,6 +5,9 @@ import com.storyteller_f.a.app.UploadSession
 import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TitleSearchType
+import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.*
 

@@ -2,7 +2,6 @@ package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TitleType
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
@@ -32,4 +31,18 @@ data class TitleInfo(
         val userInfo: UserInfo? = null,
         val topicInfo: TopicInfo? = null,
     )
+}
+
+enum class TitleType {
+    REGULAR,
+    JOIN,
+}
+
+enum class TitleStatus {
+    OK,
+    EXPIRED
+}
+enum class TitleSearchType {
+    CREATOR,
+    RECEIVER
 }

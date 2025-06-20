@@ -1,8 +1,12 @@
-package com.storyteller_f.backend.service.query
+package com.storyteller_f.a.exposed.query
 
+import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.exposed.AID_LENGTH
-import com.storyteller_f.backend.service.tables.*
-import com.storyteller_f.shared.type.JoinSearch
+import com.storyteller_f.a.exposed.tables.Aids
+import com.storyteller_f.a.exposed.tables.MemberJoins
+import com.storyteller_f.a.exposed.tables.Room
+import com.storyteller_f.a.exposed.tables.Rooms
+import com.storyteller_f.a.exposed.tables.Users
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.sql.*

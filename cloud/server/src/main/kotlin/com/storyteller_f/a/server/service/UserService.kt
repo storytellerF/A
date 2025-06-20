@@ -5,10 +5,10 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.exposed.AID_LENGTH
 import com.storyteller_f.a.exposed.USER_NICKNAME
+import com.storyteller_f.a.exposed.tables.UserTopicRead
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.getUserInfo
-import com.storyteller_f.backend.service.tables.UserTopicRead
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType

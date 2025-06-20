@@ -1,10 +1,10 @@
-package com.storyteller_f.backend.service.tables
+package com.storyteller_f.a.exposed.tables
 
 import com.storyteller_f.a.exposed.BaseEntity
 import com.storyteller_f.a.exposed.BaseTable
 import com.storyteller_f.a.exposed.customPrimaryKey
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TaskRecordType
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.insert

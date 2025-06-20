@@ -5,13 +5,13 @@ import com.storyteller_f.a.server.auth.bindSafeAccountRoute
 import com.storyteller_f.a.server.auth.bindUnprotectedAccountRoute
 import com.storyteller_f.a.server.webSocketContent
 import com.storyteller_f.backend.service.Backend
+import com.storyteller_f.shared.model.PosterSearch
+import com.storyteller_f.shared.model.TitleSearchType
+import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PosterSearch
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TitleSearchType
-import com.storyteller_f.shared.type.TitleType
-import com.storyteller_f.shared.type.TopicPinSearch
 import io.ktor.resources.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*

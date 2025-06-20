@@ -1,11 +1,11 @@
 import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TitleType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails

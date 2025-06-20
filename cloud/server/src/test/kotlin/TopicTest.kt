@@ -1,8 +1,8 @@
 import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.TitleType
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

@@ -18,8 +18,8 @@ import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.pages.room.RoomIcon
 import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.TitleType
 
 @Composable
 fun TitleList(pagingItems: LazyPagingItems<TitleInfo>) {

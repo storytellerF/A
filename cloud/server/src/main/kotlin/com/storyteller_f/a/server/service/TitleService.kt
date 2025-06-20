@@ -5,6 +5,8 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.exposed.query.PaginationResult
+import com.storyteller_f.a.exposed.tables.Title
+import com.storyteller_f.a.exposed.tables.Topic
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.getUserInfoList
@@ -12,15 +14,10 @@ import com.storyteller_f.backend.service.index.TopicDocument
 import com.storyteller_f.backend.service.insertTitleAndTopicDescription
 import com.storyteller_f.backend.service.processCommunityRawResultToCommunityInfo
 import com.storyteller_f.backend.service.processRoomRawResultToRoomInfo
-import com.storyteller_f.backend.service.tables.Title
-import com.storyteller_f.backend.service.tables.Topic
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TitleSearchType
-import com.storyteller_f.shared.type.TitleStatus
-import com.storyteller_f.shared.type.TitleType
 import com.storyteller_f.shared.utils.*
 
 suspend fun Backend.getUserTitles(

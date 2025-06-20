@@ -1,4 +1,4 @@
-package com.storyteller_f.backend.service.tables
+package com.storyteller_f.a.exposed.tables
 
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.exposed.BaseEntity

@@ -1,5 +1,6 @@
 package com.storyteller_f.a.server.service
 
+import com.storyteller_f.a.api.core.Api
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -35,7 +36,7 @@ import kotlin.uuid.Uuid
 
 suspend fun Backend.getMediaList(
     uid: PrimaryKey,
-    routeMedia: RouteMedia,
+    routeMedia: Api.Medias.Query,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<MediaInfo>?> {
     if (routeMedia.objectType == ObjectType.TOPIC) {
