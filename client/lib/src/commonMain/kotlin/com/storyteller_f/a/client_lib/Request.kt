@@ -2,15 +2,20 @@ package com.storyteller_f.a.client_lib
 
 import com.storyteller_f.a.api.client.invoke
 import com.storyteller_f.a.api.core.Api
+import com.storyteller_f.a.api.core.PaginationQuery
+import com.storyteller_f.a.api.core.Path
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
 import com.storyteller_f.shared.eciesEncrypt
 import com.storyteller_f.shared.encryptData
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
-import com.storyteller_f.shared.type.*
+import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.ObjectType.*
+import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
+import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.websocket.*
@@ -20,10 +25,10 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
 
-suspend fun <R> serviceCatching(block: suspend () -> R): Result<R> {
+suspend fun <R> SessionManager.serviceCatching(block: suspend HttpClient.() -> R): Result<R> {
     val point = Exception()
     return try {
-        val value = block()
+        val value = client.block()
         Result.success(value)
     } catch (e: Throwable) {
         point.initCause(e)
@@ -103,19 +108,18 @@ suspend fun SessionManager.getRoomTopics(
 
 suspend fun SessionManager.getCommunityTopics(
     communityId: PrimaryKey,
-    nextCommunityId: String?,
+    nextTopicId: String?,
     size: Int,
     pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
-    client.get("communities/$communityId/topics") {
-        url {
-            if (currentIsAlreadySignUp) {
-                parameters.append("fillHasCommented", "true")
-            }
-            parameters.append("pinType", pinType.name)
-            appendPagingQueryParams(size, nextCommunityId)
-        }
-    }.body<ServerResponse<TopicInfo>>()
+    Api.Communities.Id.Topics.get.invoke(
+        Api.Communities.Id.Topics.Query(
+            pinType,
+            currentIsAlreadySignUp,
+            PaginationQuery(nextTopicId, size = size)
+        ),
+        Path(communityId)
+    )
 }
 
 suspend fun SessionManager.getUserTopics(
@@ -137,20 +141,11 @@ suspend fun SessionManager.getUserTopics(
 
 suspend fun SessionManager.getCommunityInfo(id: PrimaryKey) =
     serviceCatching {
-        with(client) {
-            Api.Communities.Id.get(Api.Communities.Id.Query(currentIsAlreadySignUp), Api.Communities.Id.Path(id))
-        }
+        Api.Communities.Id.get(Api.Communities.Id.Query(currentIsAlreadySignUp), Path(id))
     }
 
-suspend fun SessionManager.getCommunityInfoByAid(aid: String, fillJoinInfo: Boolean = false) = serviceCatching {
-    client.get("communities/aid") {
-        url {
-            if (fillJoinInfo) {
-                parameters.append("fillJoinInfo", "true")
-            }
-            parameters.append("aid", aid)
-        }
-    }.body<CommunityInfo>()
+suspend fun SessionManager.getCommunityInfoByAid(aid: String) = serviceCatching {
+    Api.Communities.Aid.get(Api.Communities.Aid.Query(aid, currentIsAlreadySignUp))
 }
 
 suspend fun SessionManager.searchCommunity(
@@ -166,15 +161,6 @@ suspend fun SessionManager.searchCommunity(
             Api.Communities.Search.Query(joinStatusSearch, word, target, hasPosterSearch, nextCommunityId, size)
         )
     }
-//    client.get("communities/search") {
-//        url {
-//            word?.let { value -> parameters.append("word", value) }
-//            target?.let { value -> parameters.append("target", value.toString()) }
-//            hasPosterSearch?.let { value -> parameters.append("hasPoster", value.name) }
-//            parameters.append("joinStatus", joinStatusSearch.name)
-//            appendPagingQueryParams(size, nextCommunityId)
-//        }
-//    }.body<ServerResponse<CommunityInfo>>()
 }
 
 suspend fun SessionManager.searchCommunityMembers(
@@ -186,7 +172,7 @@ suspend fun SessionManager.searchCommunityMembers(
     with(client) {
         Api.Communities.Id.Members.get(
             Api.Communities.Id.Members.Query(word, nextCommunityId, size),
-            Api.Communities.Id.Members.Path(communityId)
+            Path(communityId)
         )
     }
 }
@@ -288,18 +274,7 @@ suspend fun SessionManager.searchRooms(
     word: String?,
     communityId: PrimaryKey?
 ) = serviceCatching {
-    client.get("rooms/search") {
-        url {
-            if (!(word.isNullOrBlank())) {
-                parameters.append("word", word)
-            }
-            parameters.append("joinStatus", joinStatusSearch.name)
-            communityId?.let {
-                parameters.append("community", it.toString())
-            }
-            appendPagingQueryParams(size, nextRoomId)
-        }
-    }.body<ServerResponse<RoomInfo>>()
+    Api.Rooms.Search.get.invoke(Api.Rooms.Search.Query(joinStatusSearch, word, communityId, nextRoomId, size))
 }
 
 suspend fun SessionManager.createNewTopic(

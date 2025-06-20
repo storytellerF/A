@@ -2,7 +2,7 @@ package com.storyteller_f.a.exposed.query
 
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.ReactionFetch
-import com.storyteller_f.backend.service.tables.Reactions
+import com.storyteller_f.a.exposed.tables.Reactions
 import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.sql.Query

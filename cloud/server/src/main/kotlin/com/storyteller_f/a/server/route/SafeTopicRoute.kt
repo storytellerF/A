@@ -1,7 +1,10 @@
 package com.storyteller_f.a.server.route
 
+import com.storyteller_f.a.api.core.Api
+import com.storyteller_f.a.api.server.invoke
+import com.storyteller_f.a.server.auth.handleResult
 import com.storyteller_f.a.server.auth.usePrincipal
-import com.storyteller_f.a.server.auth.usePrincipalOrNull
+import com.storyteller_f.a.server.auth.usePrincipalOrNull1
 import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.ReactionPaginationGenerator
 import com.storyteller_f.a.server.common.pagination
@@ -16,59 +19,55 @@ import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingContext
 
 fun Route.bindSafeTopicRoute(backend: Backend) {
-    get<RouteTopics.Search> {
-        usePrincipalOrNull { uid ->
-            pagination(IdentifiablePagingGenerator) { f ->
+    Api.Topics.Search.get.invoke(RoutingContext::handleResult) {
+        usePrincipalOrNull1 { uid ->
+            it.pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchPublicTopics(it, f, uid)
             }
         }
     }
 
-    get<RouteTopics.Recommend> {
-        usePrincipalOrNull { uid ->
+    Api.Topics.Recommend.get.invoke(RoutingContext::handleResult) {
+        usePrincipalOrNull1 { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
-                backend.recommendTopics(
-                    uid,
-                    f
-                )
+                backend.recommendTopics(uid, f)
             }
         }
     }
 
-    get<RouteTopics.Id> {
-        usePrincipalOrNull { uid ->
-            backend.getTopic(it.id, uid, it.parent.fillHasCommented)
+    Api.Topics.Id.get.invoke(RoutingContext::handleResult) { q, p ->
+        usePrincipalOrNull1 { uid ->
+            backend.getTopic(p.id, uid, q.fillHasCommented)
         }
     }
 
-    get<RouteTopics.Aid> {
-        usePrincipalOrNull { uid ->
-            it.aid?.let { aid -> backend.getTopicByAid(aid, uid, it.parent.fillHasCommented) } ?: Result.success(
-                null
-            )
+    Api.Topics.Aid.get.invoke(RoutingContext::handleResult) {
+        usePrincipalOrNull1 { uid ->
+            backend.getTopicByAid(it.aid, uid, it.fillHasCommented)
         }
     }
 
-    get<RouteTopics.Id.Topics> {
-        usePrincipalOrNull { uid ->
-            pagination(IdentifiablePagingGenerator) { f ->
+    Api.Topics.Id.Topics.get.invoke(RoutingContext::handleResult) { q, p ->
+        usePrincipalOrNull1 { uid ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
-                    it.parent.id,
+                    p.id,
                     ObjectType.TOPIC,
                     uid,
-                    it.parent.parent.fillHasCommented,
+                    q.fillHasCommented,
                     f,
-                    it.pinType
+                    q.pinType
                 )
             }
         }
     }
-    get<RouteTopics.Id.Reactions> {
-        usePrincipalOrNull { uid ->
-            pagination(ReactionPaginationGenerator(backend)) { fetch ->
-                backend.reactionList(it.parent.id, uid, it.fillHasReacted, fetch)
+    Api.Topics.Id.Reactions.get.invoke(RoutingContext::handleResult) { q, p ->
+        usePrincipalOrNull1 { uid ->
+            q.pagination(ReactionPaginationGenerator(backend)) { fetch ->
+                backend.reactionList(p.id, uid, q.fillHasReacted, fetch)
             }
         }
     }

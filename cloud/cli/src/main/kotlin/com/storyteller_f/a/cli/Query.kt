@@ -1,12 +1,19 @@
 package com.storyteller_f.a.cli
 
+import com.storyteller_f.a.exposed.tables.Aids
+import com.storyteller_f.a.exposed.tables.Communities
+import com.storyteller_f.a.exposed.tables.Community
+import com.storyteller_f.a.exposed.tables.MemberJoins
+import com.storyteller_f.a.exposed.tables.MemberJoins.joinedTime
+import com.storyteller_f.a.exposed.tables.MemberJoins.objectId
+import com.storyteller_f.a.exposed.tables.MemberJoins.objectType
+import com.storyteller_f.a.exposed.tables.MemberJoins.uid
+import com.storyteller_f.a.exposed.tables.Room
+import com.storyteller_f.a.exposed.tables.Rooms
+import com.storyteller_f.a.exposed.tables.User
+import com.storyteller_f.a.exposed.tables.Users
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.createCommunityRoomsRaw
-import com.storyteller_f.backend.service.tables.*
-import com.storyteller_f.backend.service.tables.MemberJoins.joinedTime
-import com.storyteller_f.backend.service.tables.MemberJoins.objectId
-import com.storyteller_f.backend.service.tables.MemberJoins.objectType
-import com.storyteller_f.backend.service.tables.MemberJoins.uid
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now

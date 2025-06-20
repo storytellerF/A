@@ -1,4 +1,4 @@
-package com.storyteller_f.backend.service.tables
+package com.storyteller_f.a.exposed.tables
 
 import com.storyteller_f.a.exposed.BaseEntity
 import com.storyteller_f.a.exposed.BaseTable
@@ -6,10 +6,10 @@ import com.storyteller_f.a.exposed.customPrimaryKey
 import com.storyteller_f.a.exposed.objectType
 import com.storyteller_f.a.exposed.titleName
 import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TitleStatus
-import com.storyteller_f.shared.type.TitleType
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 
@@ -78,7 +78,7 @@ class Title(
             }.insertedCount > 0) {
                 "insert title failed"
             }
-            Topic.new(topic)
+            Topic.Companion.new(topic)
         }
     }
 }

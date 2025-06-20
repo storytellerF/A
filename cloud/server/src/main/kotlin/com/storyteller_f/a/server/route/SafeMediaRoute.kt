@@ -1,6 +1,10 @@
 package com.storyteller_f.a.server.route
 
+import com.storyteller_f.a.api.core.Api
+import com.storyteller_f.a.api.server.invoke
+import com.storyteller_f.a.server.auth.handleResult
 import com.storyteller_f.a.server.auth.usePrincipal
+import com.storyteller_f.a.server.auth.usePrincipal1
 import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
@@ -14,9 +18,9 @@ import io.ktor.server.routing.*
 import java.io.File
 
 fun Route.bindProtectedSafeMediaRoute(backend: Backend) {
-    get<RouteMedia> {
-        usePrincipal { uid ->
-            pagination(IdentifiablePagingGenerator) { pagingFetch ->
+    Api.Medias.get.invoke(RoutingContext::handleResult) {
+        usePrincipal1 { uid ->
+            it.pagination(IdentifiablePagingGenerator) { pagingFetch ->
                 backend.getMediaList(uid, it, pagingFetch)
             }
         }

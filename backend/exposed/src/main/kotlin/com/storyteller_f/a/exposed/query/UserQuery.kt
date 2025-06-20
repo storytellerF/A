@@ -1,8 +1,8 @@
-package com.storyteller_f.backend.service.query
+package com.storyteller_f.a.exposed.query
 
-import com.storyteller_f.backend.service.tables.Aids
-import com.storyteller_f.backend.service.tables.MemberJoins
-import com.storyteller_f.backend.service.tables.Users
+import com.storyteller_f.a.exposed.tables.Aids
+import com.storyteller_f.a.exposed.tables.MemberJoins
+import com.storyteller_f.a.exposed.tables.Users
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Query

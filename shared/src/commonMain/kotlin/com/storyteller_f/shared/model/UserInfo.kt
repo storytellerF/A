@@ -39,3 +39,11 @@ data class UserLogInfo(
 
 @Serializable
 data class UserPubKeyInfo(val id: PrimaryKey, val pubKey: String)
+
+enum class AlgoType {
+    P256
+}
+
+enum class PassType {
+    RAW, ANDROID, BIT_WARDEN
+}

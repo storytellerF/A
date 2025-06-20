@@ -35,9 +35,9 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
     block(call.principal<CustomPrincipal>()?.uid)
 })
 
-suspend inline fun <reified R : Any> RoutingContext.usePrincipal1(
-    block: (PrimaryKey) -> Result<R?>
-) = usePrincipalOrNull { uid ->
+inline fun <reified R : Any> RoutingContext.usePrincipal1(
+    block: (uid: PrimaryKey) -> Result<R?>
+) = usePrincipalOrNull1 { uid ->
     if (uid != null) {
         block(uid)
     } else {
@@ -46,7 +46,7 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipal1(
 }
 
 inline fun <reified R : Any> RoutingContext.usePrincipalOrNull1(
-    block: (PrimaryKey?) -> Result<R?>?
+    block: (uid: PrimaryKey?) -> Result<R?>?
 ) = block(call.principal<CustomPrincipal>()?.uid)
 
 suspend inline fun <reified R : Any> RoutingContext.callRespond(

@@ -1,26 +1,24 @@
-package com.storyteller_f.backend.service
+package com.storyteller_f.a.exposed
 
 import com.storyteller_f.a.backend.core.DatabaseConnection
 import com.storyteller_f.a.backend.core.UnauthorizedException
-import com.storyteller_f.a.exposed.isConnectFailed
-import com.storyteller_f.a.exposed.isDup
-import com.storyteller_f.backend.service.tables.Aids
-import com.storyteller_f.backend.service.tables.AssetTransactions
-import com.storyteller_f.backend.service.tables.Communities
-import com.storyteller_f.backend.service.tables.EncryptedKeys
-import com.storyteller_f.backend.service.tables.MediaRefs
-import com.storyteller_f.backend.service.tables.Medias
-import com.storyteller_f.backend.service.tables.MemberJoins
-import com.storyteller_f.backend.service.tables.ReactionRecords
-import com.storyteller_f.backend.service.tables.Reactions
-import com.storyteller_f.backend.service.tables.Rooms
-import com.storyteller_f.backend.service.tables.TaskRecords
-import com.storyteller_f.backend.service.tables.Titles
-import com.storyteller_f.backend.service.tables.Topics
-import com.storyteller_f.backend.service.tables.UserDevices
-import com.storyteller_f.backend.service.tables.UserLogs
-import com.storyteller_f.backend.service.tables.UserTopicReads
-import com.storyteller_f.backend.service.tables.Users
+import com.storyteller_f.a.exposed.tables.Aids
+import com.storyteller_f.a.exposed.tables.AssetTransactions
+import com.storyteller_f.a.exposed.tables.Communities
+import com.storyteller_f.a.exposed.tables.EncryptedKeys
+import com.storyteller_f.a.exposed.tables.MediaRefs
+import com.storyteller_f.a.exposed.tables.Medias
+import com.storyteller_f.a.exposed.tables.MemberJoins
+import com.storyteller_f.a.exposed.tables.ReactionRecords
+import com.storyteller_f.a.exposed.tables.Reactions
+import com.storyteller_f.a.exposed.tables.Rooms
+import com.storyteller_f.a.exposed.tables.TaskRecords
+import com.storyteller_f.a.exposed.tables.Titles
+import com.storyteller_f.a.exposed.tables.Topics
+import com.storyteller_f.a.exposed.tables.UserDevices
+import com.storyteller_f.a.exposed.tables.UserLogs
+import com.storyteller_f.a.exposed.tables.UserTopicReads
+import com.storyteller_f.a.exposed.tables.Users
 import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.utils.transformThrowable
 import io.github.aakira.napier.Napier
@@ -30,6 +28,7 @@ import kotlinx.coroutines.slf4j.MDCContext
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.PrintWriter
@@ -203,7 +202,7 @@ object DatabaseFactory {
             "connect $connection"
         }
         val (uri, driver, user, password) = connection
-        return Database.connect(uri, driver, user, password)
+        return Database.Companion.connect(uri, driver, user, password)
     }
 
     private val tables = arrayOf(

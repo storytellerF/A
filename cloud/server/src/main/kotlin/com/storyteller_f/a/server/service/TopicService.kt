@@ -1,6 +1,7 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.api.core.Api
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
@@ -11,20 +12,16 @@ import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.query.bindPaginationQuery
+import com.storyteller_f.a.exposed.tables.Topic
+import com.storyteller_f.a.exposed.tables.Topics
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.a.server.route.RouteTopics
 import com.storyteller_f.backend.service.*
 import com.storyteller_f.backend.service.index.DocumentSearch
 import com.storyteller_f.backend.service.index.TopicDocument
-import com.storyteller_f.backend.service.tables.Topic
-import com.storyteller_f.backend.service.tables.Topics
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TopicPinSearch
-import com.storyteller_f.shared.type.TopicPinSearch.PINNED
-import com.storyteller_f.shared.type.TopicPinSearch.UNPINNED
 import com.storyteller_f.shared.utils.*
 import io.ktor.http.*
 import io.ktor.server.plugins.*
@@ -323,11 +320,11 @@ suspend fun Backend.getTopLevelTopicsInObject(
                     Topics.parentId eq parentId
                 }
                 when (pinType) {
-                    PINNED -> andWhere {
+                    TopicPinSearch.PINNED -> andWhere {
                         Topics.pinned eq true
                     }
 
-                    UNPINNED -> andWhere {
+                    TopicPinSearch.UNPINNED -> andWhere {
                         Topics.pinned eq false
                     }
 
@@ -524,28 +521,31 @@ suspend fun Backend.checkRootAdminPermission(
 }
 
 suspend fun Backend.searchPublicTopics(
-    search: RouteTopics.Search,
+    search: Api.Topics.Search.Query,
     primaryKeyFetch: PrimaryKeyFetch,
     uid: PrimaryKey?
 ): Result<PaginationResult<TopicInfo>?> {
-    if (search.word != null && search.word.sumOf {
+    val word = search.word
+    if (word != null && word.sumOf {
             it.length
         } > 20) {
         return Result.failure(CustomBadRequestException("word too long"))
     }
-    return if (search.parentId != null && search.parentType != null) {
-        checkRootReadPermission(search.parentType, search.parentId, uid).mapResultIfNotNull {
+    val parentId = search.parentId
+    val parentType = search.parentType
+    return if (parentId != null && parentType != null) {
+        checkRootReadPermission(parentType, parentId, uid).mapResultIfNotNull {
             if (it.isPrivate) {
                 Result.failure(BadRequestException("can't search in private chat"))
             } else {
-                Result.success(DocumentSearch.Topics(search.parentId))
+                Result.success(DocumentSearch.Topics(parentId))
             }
         }
     } else {
         Result.success(DocumentSearch.CommunityRoot)
     }.mapResultIfNotNull { documentSearch ->
         topicSearchService.searchDocument(
-            search.word,
+            word,
             documentSearch = documentSearch,
             primaryKeyFetch
         ).mapResult { (list, total) ->

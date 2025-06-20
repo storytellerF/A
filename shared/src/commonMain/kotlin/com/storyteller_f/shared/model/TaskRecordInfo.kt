@@ -1,8 +1,11 @@
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TaskRecordType
 import kotlinx.datetime.LocalDateTime
+
+enum class TaskRecordType {
+    TOPIC_ACG
+}
 
 class TaskRecordInfo(
     val id: PrimaryKey,

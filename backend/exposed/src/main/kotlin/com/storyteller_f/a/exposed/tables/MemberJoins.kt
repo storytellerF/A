@@ -1,4 +1,4 @@
-package com.storyteller_f.backend.service.tables
+package com.storyteller_f.a.exposed.tables
 
 import com.storyteller_f.a.exposed.customPrimaryKey
 import com.storyteller_f.a.exposed.objectType

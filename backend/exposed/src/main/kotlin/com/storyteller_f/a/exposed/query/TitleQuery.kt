@@ -1,9 +1,9 @@
 package com.storyteller_f.backend.service.query
 
-import com.storyteller_f.backend.service.tables.Titles
+import com.storyteller_f.a.exposed.tables.Titles
+import com.storyteller_f.shared.model.TitleSearchType
+import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.TitleSearchType
-import com.storyteller_f.shared.type.TitleType
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.selectAll

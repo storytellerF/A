@@ -1,22 +1,18 @@
 package com.storyteller_f.a.app.service
 
-import com.storyteller_f.shared.type.GPTModel
-import com.storyteller_f.shared.type.GPTOutput
 import io.github.irgaly.kfswatch.KfsDirectoryWatcher
 import io.github.irgaly.kfswatch.KfsDirectoryWatcherEvent
 import io.github.irgaly.kfswatch.KfsEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
-import kotlin.collections.map
+
+class GPTOutput(val text: String)
+
+class GPTModel(val key: String, val value: String)
 
 interface GPT {
     fun generate(path: String, prompt: String, stopWord: String): Result<Flow<GPTOutput>>

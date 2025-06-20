@@ -6,27 +6,54 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.internal.NamedValueEncoder
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.serializersModuleOf
+import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 
 @OptIn(InternalSerializationApi::class)
-fun <T : Any> encodeQueryParams(value: T, clazz: KClass<T>, serializer: KSerializer<T>): Map<String, String> {
+fun <T : Any> encodeQueryParams(value: T, clazz: KClass<T>): Map<String, List<String>> {
+    val serializer = clazz.serializer()
     val encoder = CustomParameterEncoder(clazz, serializer)
     encoder.encodeSerializableValue(serializer, value)
     return encoder.map
 }
 
 @OptIn(InternalSerializationApi::class)
-class CustomParameterEncoder<T : Any>(clazz: KClass<T>, serializer: KSerializer<T>) : NamedValueEncoder() {
-    val map = mutableMapOf<String, String>()
-    override val serializersModule: SerializersModule = serializersModuleOf(clazz, serializer)
+class CustomParameterEncoder<T : Any>(
+    clazz: KClass<T>,
+    serializer: KSerializer<T>
+) : NamedValueEncoder() {
+
+    // 支持多个同名 key，避免 List 参数丢失
+    val map = mutableMapOf<String, MutableList<String>>()
+
+    override val serializersModule: SerializersModule =
+        serializersModuleOf(clazz, serializer)
 
     override fun encodeTaggedValue(tag: String, value: Any) {
-        map[tag] = value.toString()
+        when (value) {
+            is Iterable<*> -> value.forEach { item ->
+                if (item != null) {
+                    addToMap(tag, item.toString())
+                }
+            }
+            is Array<*> -> value.forEach { item ->
+                if (item != null) {
+                    addToMap(tag, item.toString())
+                }
+            }
+            else -> addToMap(tag, value.toString())
+        }
     }
 
     override fun encodeTaggedEnum(tag: String, enumDescriptor: SerialDescriptor, ordinal: Int) {
-        map[tag] = enumDescriptor.getElementName(ordinal)
+        addToMap(tag, enumDescriptor.getElementName(ordinal))
     }
 
-    override fun encodeTaggedNull(tag: String) = Unit
+    override fun encodeTaggedNull(tag: String) {
+        // 可选：是否要添加 null 值，通常 query 参数中跳过 null
+    }
+
+    private fun addToMap(key: String, value: String) {
+        map.getOrPut(key) { mutableListOf() }.add(value)
+    }
 }
