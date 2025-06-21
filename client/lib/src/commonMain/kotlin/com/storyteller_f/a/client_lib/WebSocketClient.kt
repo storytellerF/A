@@ -4,7 +4,6 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
