@@ -76,16 +76,31 @@ subprojects {
             tasks.withType<Detekt>().map { it.sarifReportFile })
     }
 }
-val composeModules = listOf("composeApp", "shared")
-val jvmLibModules = listOf("cloud:server", "backend:service")
+val jvmLibModules = listOf(
+    ":cloud:server",
+    ":api:client",
+    ":api:core",
+    ":api:server",
+    ":backend:core",
+    ":backend:service",
+    ":backend:exposed"
+)
+val composeModules = listOf(
+    ":shared",
+    ":app:composeApp",
+    ":client:lib",
+    ":client:kotbase",
+    ":client:storage"
+)
 dependencies {
-    (composeModules + jvmLibModules.forEach {
-        kover(project(":$it"))
-    })
+    (composeModules + jvmLibModules).forEach {
+        kover(project(it))
+    }
 }
 
 subprojects {
-    if ((jvmLibModules + composeModules).contains(name)) {
+    val n = displayName.removePrefix("project ").removeSurrounding("'")
+    if ((jvmLibModules + composeModules).contains(n)) {
         apply(plugin = "org.jetbrains.kotlinx.kover")
         kover {
             reports {
