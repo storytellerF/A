@@ -1,9 +1,10 @@
 package com.storyteller_f.a.client_lib
 
 import com.storyteller_f.a.api.client.invoke
-import com.storyteller_f.a.api.core.Api
+import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.api.core.Path
+import com.storyteller_f.a.api.core.TopicQuery
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
 import com.storyteller_f.shared.eciesEncrypt
@@ -39,54 +40,27 @@ suspend fun <R> SessionManager.serviceCatching(block: suspend HttpClient.() -> R
     }
 }
 
-private fun URLBuilder.appendPagingQueryParams(size: Int, nextCursor: String?) {
-    parameters.append("size", size.toString())
-    if (nextCursor != null) {
-        parameters.append("nextPageToken", nextCursor)
-    }
-}
-
-private fun HttpRequestBuilder.appendObjectTuple(objectTuple: ObjectTuple) {
-    url {
-        parameters.append("objectId", objectTuple.objectId.toString())
-        parameters.append("objectType", objectTuple.objectType.name)
-    }
-}
-
-suspend fun SessionManager.getRoomInfo(id: PrimaryKey) = with(client) {
-    serviceCatching {
-        get("rooms/$id") {
-            url {
-                if (currentIsAlreadySignUp) parameters.append("fillJoinInfo", "true")
-            }
-        }.body<RoomInfo>()
-    }
+suspend fun SessionManager.getRoomInfo(id: PrimaryKey) = serviceCatching {
+    CustomApi.Rooms.Id.get.invoke(CustomApi.Rooms.Id.RoomIdQuery(currentIsAlreadySignUp), Path(id))
 }
 
 suspend fun SessionManager.getRoomInfoByAid(aid: String) = serviceCatching {
-    client.get("rooms/aid") {
-        url {
-            if (currentIsAlreadySignUp) parameters.append("fillJoinInfo", "true")
-            parameters.append("aid", aid)
-        }
-    }.body<RoomInfo>()
+    CustomApi.Rooms.Aid.get.invoke(CustomApi.Rooms.Aid.RoomAidQuery(aid, currentIsAlreadySignUp))
 }
 
 suspend fun SessionManager.requestRoomKeys(id: PrimaryKey, nextId: String?, size: Int) =
     serviceCatching {
-        client.get("rooms/$id/pub-keys") {
-            url {
-                appendPagingQueryParams(size, nextId)
-            }
-        }.body<ServerResponse<UserPubKeyInfo>>()
+        CustomApi.Rooms.Id.Members.publicKeys.invoke(PaginationQuery(nextId, size = size), Path(id))
     }
 
 suspend fun SessionManager.joinRoom(id: PrimaryKey) = serviceCatching {
-    client.post("rooms/$id/join").body<RoomInfo>()
+    CustomApi.Rooms.Id.Members.join.invoke(Path(id), Unit) {
+        contentType(ContentType.Application.Json)
+    }
 }
 
 suspend fun SessionManager.joinCommunity(id: PrimaryKey) = serviceCatching {
-    client.post("communities/$id/join").body<CommunityInfo>()
+    CustomApi.Communities.Id.Members.join.invoke(Path(id), Unit) {}
 }
 
 suspend fun SessionManager.getRoomTopics(
@@ -95,15 +69,14 @@ suspend fun SessionManager.getRoomTopics(
     size: Int,
     pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
-    client.get("rooms/$roomId/topics") {
-        url {
-            if (currentIsAlreadySignUp) {
-                parameters.append("fillHasCommented", "true")
-            }
-            parameters.append("pinType", pinType.name)
-            appendPagingQueryParams(size, nextTopicId)
-        }
-    }.body<ServerResponse<TopicInfo>>()
+    CustomApi.Rooms.Id.Topics.get.invoke(
+        TopicQuery(
+            pinType,
+            currentIsAlreadySignUp,
+            PaginationQuery(nextTopicId, size = size)
+        ),
+        Path(roomId)
+    )
 }
 
 suspend fun SessionManager.getCommunityTopics(
@@ -112,8 +85,8 @@ suspend fun SessionManager.getCommunityTopics(
     size: Int,
     pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
-    Api.Communities.Id.Topics.get.invoke(
-        Api.Communities.Id.Topics.Query(
+    CustomApi.Communities.Id.Topics.get.invoke(
+        TopicQuery(
             pinType,
             currentIsAlreadySignUp,
             PaginationQuery(nextTopicId, size = size)
@@ -128,24 +101,23 @@ suspend fun SessionManager.getUserTopics(
     size: Int,
     pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
 ) = serviceCatching {
-    client.get("users/$userId/topics") {
-        url {
-            if (currentIsAlreadySignUp) {
-                parameters.append("fillHasCommented", "true")
-            }
-            parameters.append("pinType", pinType.name)
-            appendPagingQueryParams(size, nextTopicId)
-        }
-    }.body<ServerResponse<TopicInfo>>()
+    CustomApi.Users.Id.Topics.get.invoke(
+        TopicQuery(
+            pinType,
+            currentIsAlreadySignUp,
+            PaginationQuery(nextTopicId, size = size)
+        ),
+        Path(userId)
+    )
 }
 
 suspend fun SessionManager.getCommunityInfo(id: PrimaryKey) =
     serviceCatching {
-        Api.Communities.Id.get(Api.Communities.Id.Query(currentIsAlreadySignUp), Path(id))
+        CustomApi.Communities.Id.get(CustomApi.Communities.Id.CommunityIdQuery(currentIsAlreadySignUp), Path(id))
     }
 
 suspend fun SessionManager.getCommunityInfoByAid(aid: String) = serviceCatching {
-    Api.Communities.Aid.get(Api.Communities.Aid.Query(aid, currentIsAlreadySignUp))
+    CustomApi.Communities.Aid.get(CustomApi.Communities.Aid.CommunityAidQuery(aid, currentIsAlreadySignUp))
 }
 
 suspend fun SessionManager.searchCommunity(
@@ -156,11 +128,16 @@ suspend fun SessionManager.searchCommunity(
     nextCommunityId: String? = null,
     hasPosterSearch: PosterSearch? = null,
 ) = serviceCatching {
-    with(client) {
-        Api.Communities.Search.get(
-            Api.Communities.Search.Query(joinStatusSearch, word, target, hasPosterSearch, nextCommunityId, size)
+    CustomApi.Communities.Search.get(
+        CustomApi.Communities.Search.CommunitySearchQuery(
+            joinStatusSearch,
+            word,
+            target,
+            hasPosterSearch,
+            nextCommunityId,
+            size
         )
-    }
+    )
 }
 
 suspend fun SessionManager.searchCommunityMembers(
@@ -169,12 +146,10 @@ suspend fun SessionManager.searchCommunityMembers(
     size: Int,
     word: String?
 ) = serviceCatching {
-    with(client) {
-        Api.Communities.Id.Members.get(
-            Api.Communities.Id.Members.Query(word, nextCommunityId, size),
-            Path(communityId)
-        )
-    }
+    CustomApi.Communities.Id.Members.get(
+        CustomApi.Communities.Id.Members.CommunityMemberQuery(word, nextCommunityId, size),
+        Path(communityId)
+    )
 }
 
 suspend fun SessionManager.searchAllMembers(
@@ -182,12 +157,7 @@ suspend fun SessionManager.searchAllMembers(
     size: Int,
     word: String?
 ) = serviceCatching {
-    client.get("users/search") {
-        url {
-            word?.let { value -> parameters.append("word", value) }
-            appendPagingQueryParams(size, nextUserId)
-        }
-    }.body<ServerResponse<UserInfo>>()
+    CustomApi.Users.Search.get(CustomApi.Users.Search.UserSearchQuery(word, nextUserId, size))
 }
 
 suspend fun SessionManager.searchRoomMembers(
@@ -196,45 +166,32 @@ suspend fun SessionManager.searchRoomMembers(
     size: Int,
     word: String?
 ) = serviceCatching {
-    client.get("rooms/$roomId/members") {
-        url {
-            word?.let { value -> parameters.append("word", value) }
-            appendPagingQueryParams(size, nextCommunityId)
-        }
-    }.body<ServerResponse<UserInfo>>()
+    CustomApi.Rooms.Id.Members.get(CustomApi.Rooms.Id.Members.MemberQuery(word, nextCommunityId, size), Path(roomId))
 }
 
 suspend fun SessionManager.getRecommendTopics(nextTopicId: String?, size: Int) =
     serviceCatching {
-        client.get(
-            "topics/recommend"
-        ) {
-            url {
-                if (currentIsAlreadySignUp) {
-                    parameters.append("fillHasCommented", "true")
-                }
-                appendPagingQueryParams(size, nextTopicId)
-            }
-        }.body<ServerResponse<TopicInfo>>()
+        CustomApi.Topics.Recommend.get.invoke(
+            CustomApi.Topics.Recommend.RecommendQuery(
+                currentIsAlreadySignUp,
+                nextTopicId,
+                size = size
+            )
+        )
     }
 
 suspend fun SessionManager.getUserInfo(id: PrimaryKey) = serviceCatching {
-    client.get("users/$id").body<UserInfo>()
+    CustomApi.Users.Id.get.invoke(Path(id))
 }
 
 suspend fun SessionManager.updateUserInfo(newInfo: UpdateUserBody) = serviceCatching {
-    client.post("users/update") {
+    CustomApi.Users.update.invoke(newInfo) {
         contentType(ContentType.Application.Json)
-        setBody(newInfo)
-    }.body<UserInfo>()
+    }
 }
 
 suspend fun SessionManager.getUserInfoByAid(aid: String) = serviceCatching {
-    client.get("users/aid") {
-        url {
-            parameters.append("aid", aid)
-        }
-    }.body<UserInfo>()
+    CustomApi.Users.Aid.get.invoke(CustomApi.Users.Aid.UserAidQuery(aid))
 }
 
 suspend fun SessionManager.getTopicTopics(
@@ -244,27 +201,22 @@ suspend fun SessionManager.getTopicTopics(
     pinType: TopicPinSearch
 ) =
     serviceCatching {
-        client.get("topics/$topicId/topics") {
-            url {
-                if (currentIsAlreadySignUp) {
-                    parameters.append("fillHasCommented", "true")
-                }
-                parameters.append("pinType", pinType.name)
-                appendPagingQueryParams(size, nextTopicId)
-            }
-        }.body<ServerResponse<TopicInfo>>()
+        CustomApi.Topics.Id.Topics.get.invoke(
+            TopicQuery(
+                pinType,
+                currentIsAlreadySignUp,
+                PaginationQuery(nextTopicId, size = size)
+            ),
+            Path(topicId)
+        )
     }
 
 suspend fun SessionManager.getTopicInfo(id: PrimaryKey) = serviceCatching {
-    client.get("topics/$id").body<TopicInfo>()
+    CustomApi.Topics.Id.get.invoke(CustomApi.Topics.Id.TopicIdQuery(currentIsAlreadySignUp), Path(id))
 }
 
 suspend fun SessionManager.getTopicInfoByAid(aid: String) = serviceCatching {
-    client.get("topics/aid") {
-        url {
-            parameters.append("aid", aid)
-        }
-    }.body<TopicInfo>()
+    CustomApi.Topics.Aid.get.invoke(CustomApi.Topics.Aid.TopicAidQuery(aid, currentIsAlreadySignUp))
 }
 
 suspend fun SessionManager.searchRooms(
@@ -274,7 +226,15 @@ suspend fun SessionManager.searchRooms(
     word: String?,
     communityId: PrimaryKey?
 ) = serviceCatching {
-    Api.Rooms.Search.get.invoke(Api.Rooms.Search.Query(joinStatusSearch, word, communityId, nextRoomId, size))
+    CustomApi.Rooms.Search.get.invoke(
+        CustomApi.Rooms.Search.RoomSearchQuery(
+            joinStatusSearch,
+            word,
+            communityId,
+            nextRoomId,
+            size
+        )
+    )
 }
 
 suspend fun SessionManager.createNewTopic(
@@ -282,30 +242,27 @@ suspend fun SessionManager.createNewTopic(
     objectId: PrimaryKey,
     input: String
 ) = serviceCatching {
-    client.post("topics") {
+    CustomApi.Topics.add.invoke(NewTopic(objectType, objectId, input)) {
         contentType(ContentType.Application.Json)
-        setBody(NewTopic(objectType, objectId, input))
-    }.body<TopicInfo>()
+    }
 }
 
 suspend fun SessionManager.signUp(
     publicKey: String,
     signature: String,
 ) = serviceCatching {
-    client.post("accounts/sign_up") {
+    CustomApi.Accounts.signUp.invoke(SignUpPack(publicKey, signature)) {
         contentType(ContentType.Application.Json)
-        setBody(SignUpPack(publicKey, signature))
-    }.body<UserInfo>()
+    }
 }
 
 suspend fun SessionManager.signIn(
     address: String,
     signature: String
 ) = serviceCatching {
-    client.post("accounts/sign_in") {
+    CustomApi.Accounts.signIn.invoke(SignInPack(address, signature)) {
         contentType(ContentType.Application.Json)
-        setBody(SignInPack(address, signature))
-    }.body<UserInfo>()
+    }
 }
 
 suspend fun SessionManager.getData() = serviceCatching {
@@ -313,7 +270,8 @@ suspend fun SessionManager.getData() = serviceCatching {
 }
 
 suspend fun SessionManager.getTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
-    client.get("topics/$topicId/snapshot").body<MediaInfo>()
+    CustomApi.Topics.Id.createSnapshot.invoke(Path(topicId), Unit) {
+    }
 }
 
 suspend fun SessionManager.searchTopics(
@@ -323,83 +281,57 @@ suspend fun SessionManager.searchTopics(
     parentType: ObjectType? = null,
     nextTopicId: String? = null
 ) = serviceCatching {
-    client.get("topics/search") {
-        url {
-            parentId?.let {
-                parameters.append("parentId", it.toString())
-            }
-            parentType?.let {
-                parameters.append("parentType", it.name)
-            }
-            if (currentIsAlreadySignUp) {
-                parameters.append("fillHasCommented", "true")
-            }
-            parameters.appendAll("word", word)
-            appendPagingQueryParams(size, nextTopicId)
-        }
-    }.body<ServerResponse<TopicInfo>>()
+    CustomApi.Topics.Search.get.invoke(
+        CustomApi.Topics.Search.TopicSearchQuery(
+            word,
+            parentId,
+            parentType,
+            nextTopicId,
+            size
+        )
+    )
 }
 
 suspend fun SessionManager.exitRoom(roomId: PrimaryKey) = serviceCatching {
-    client.post("rooms/$roomId/exit").body<RoomInfo>()
+    CustomApi.Rooms.Id.Members.leave.invoke(Path(roomId), Unit) {}
 }
 
 suspend fun SessionManager.exitCommunity(communityId: PrimaryKey) = serviceCatching {
-    client.post(
-        "communities/$communityId/exit"
-    ).body<CommunityInfo>()
+    CustomApi.Communities.Id.Members.leave.invoke(Path(communityId), Unit) {}
 }
 
 suspend fun SessionManager.addReaction(topicId: PrimaryKey, emoji: String) = serviceCatching {
-    client.post("topics/$topicId/reactions") {
+    CustomApi.Topics.Id.Reactions.add.invoke(Path(topicId), NewReaction(emoji)) {
         contentType(ContentType.Application.Json)
-        setBody(NewReaction(emoji))
-    }.body<ReactionInfo>()
+    }
 }
 
 suspend fun SessionManager.deleteReaction(emoji: String, objectId: PrimaryKey) = serviceCatching {
-    client.post("reactions/delete") {
+    CustomApi.Topics.Id.Reactions.delete.invoke(Path(objectId), DeleteReaction(emoji)) {
         contentType(ContentType.Application.Json)
-        setBody(DeleteReaction(emoji, objectId))
-    }.body<Boolean>()
+    }
 }
 
 suspend fun SessionManager.getReactions(topicId: PrimaryKey, size: Int, nextCursor: String? = null) =
     serviceCatching {
-        client.get("topics/$topicId/reactions") {
-            url {
-                if (currentIsAlreadySignUp) {
-                    parameters.append("fillHasReacted", "true")
-                }
-                appendPagingQueryParams(size, nextCursor)
-            }
-        }.body<ServerResponse<ReactionInfo>>()
+        CustomApi.Topics.Id.Reactions.get.invoke(
+            CustomApi.Topics.Id.Reactions.ReactionQuery(currentIsAlreadySignUp, nextCursor, size = size),
+            Path(topicId),
+        )
     }
 
 suspend fun SessionManager.signOut() = serviceCatching {
-    client.post("accounts/sign_out")
+    CustomApi.Accounts.signOut.invoke(Unit) {}
 }
 
 suspend fun SessionManager.getMediaList(objectId: PrimaryKey, objectType: ObjectType, nextId: String?, size: Int) =
     serviceCatching {
-        client.get("amedia") {
-            url {
-                parameters.append("objectId", objectId.toString())
-                parameters.append("objectType", objectType.name)
-
-                appendPagingQueryParams(size, nextId)
-            }
-        }.body<ServerResponse<MediaInfo>>()
+        CustomApi.Medias.get.invoke(CustomApi.Medias.MediaQuery(objectId, objectType, nextId, size = size))
     }
 
 suspend fun SessionManager.getAllMediaList(objectId: PrimaryKey, objectType: ObjectType) =
     serviceCatching {
-        client.get("amedia/all") {
-            url {
-                parameters.append("objectId", objectId.toString())
-                parameters.append("objectType", objectType.name)
-            }
-        }.body<ServerResponse<MediaInfo>>()
+        CustomApi.Medias.list.invoke(ObjectTuple(objectId, objectType))
     }
 
 data class UploadData(val size: Long, val name: String, val contentType: ContentType)
@@ -409,8 +341,7 @@ suspend fun SessionManager.upload(
     data: UploadData,
     block: () -> Input
 ) = serviceCatching {
-    client.post("amedia/upload") {
-        appendObjectTuple(objectTuple)
+    CustomApi.Medias.upload.invoke(objectTuple, Unit) {
         setBody(
             MultiPartFormDataContent(
                 formData {
@@ -427,17 +358,13 @@ suspend fun SessionManager.upload(
         onUpload { bytesSentTotal, contentLength ->
             println("Sent $bytesSentTotal bytes from $contentLength")
         }
-    }.body<ServerResponse<MediaInfo>>()
+    }
 }
 
-suspend fun SessionManager.copy(objectTuple: ObjectTuple, noPrefixName: String) =
+suspend fun SessionManager.copy(mediaId: PrimaryKey) =
     serviceCatching {
-        client.post("amedia/copy") {
-            appendObjectTuple(objectTuple)
-
-            contentType(ContentType.Application.Json)
-            setBody(NewMedia(noPrefixName))
-        }.body<ServerResponse<MediaInfo>>()
+        CustomApi.Medias.Id.copy.invoke(Path(mediaId), Unit) {
+        }
     }
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -474,66 +401,58 @@ suspend fun SessionManager.userTitles(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null
 ) = serviceCatching {
-    client.get("users/$uid/titles") {
-        url {
-            parameters.append("searchType", searchType.name)
-            if (status != null) {
-                parameters.append("status", status.name)
-            }
-            if (type != null) {
-                parameters.append("type", type.name)
-            }
-            if (scopeId != null) {
-                parameters.append("scopeId", scopeId.toString())
-            }
-            appendPagingQueryParams(size, nextId)
-        }
-    }.body<ServerResponse<TitleInfo>>()
+    CustomApi.Users.Id.Titles.get.invoke(
+        CustomApi.Users.Id.Titles.TitleQuery(
+            searchType,
+            type,
+            scopeId,
+            status,
+            nextId,
+            size
+        ),
+        Path(uid)
+    )
 }
 
 suspend fun SessionManager.createTitle(newTitle: NewTitle) = serviceCatching {
-    client.post("titles") {
+    CustomApi.Titles.add.invoke(newTitle) {
         contentType(ContentType.Application.Json)
-        setBody(newTitle)
-    }.body<TitleInfo>()
+    }
 }
 
 suspend fun SessionManager.createCommunity(newCommunity: NewCommunity) = serviceCatching {
-    client.post("communities") {
+    CustomApi.Communities.add.invoke(newCommunity) {
         contentType(ContentType.Application.Json)
-        setBody(newCommunity)
-    }.body<CommunityInfo>()
+    }
 }
 
 suspend fun SessionManager.createRoom(newRoom: NewRoom) = serviceCatching {
-    client.post("rooms") {
+    CustomApi.Rooms.add.invoke(newRoom) {
         contentType(ContentType.Application.Json)
-        setBody(newRoom)
-    }.body<RoomInfo>()
+    }
 }
 
 suspend fun SessionManager.pinTopic(topicId: PrimaryKey) = serviceCatching {
-    client.post("topics/$topicId/pin") {
-    }.body<TopicInfo>()
+    CustomApi.Topics.Id.pin.invoke(Path(topicId), Unit) {
+        contentType(ContentType.Application.Json)
+    }
 }
 
 suspend fun SessionManager.unpinTopic(topicId: PrimaryKey) = serviceCatching {
-    client.post("topics/$topicId/unpin") {
-    }.body<TopicInfo>()
+    CustomApi.Topics.Id.unpin.invoke(Path(topicId), Unit) {
+    }
 }
 
 suspend fun SessionManager.updateCommunityInfo(id: PrimaryKey, newInfo: UpdateCommunityBody) = serviceCatching {
-    client.post("communities/$id") {
+    CustomApi.Communities.Id.update.invoke(Path(id), newInfo) {
         contentType(ContentType.Application.Json)
-        setBody(newInfo)
-    }.body<CommunityInfo>()
+    }
 }
 
 suspend fun SessionManager.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBody) = serviceCatching {
-    client.post("rooms/$id") {
+    CustomApi.Rooms.Id.update.invoke(Path(id), newInfo) {
         contentType(ContentType.Application.Json)
-        setBody(newInfo)
-    }.body<RoomInfo>()
+    }
 }
 
 suspend fun SessionManager.getTopicList(
@@ -550,23 +469,20 @@ suspend fun SessionManager.getTopicList(
     else -> Result.failure(IllegalArgumentException("unrecognized $type"))
 }
 
-suspend fun SessionManager.addReadLog(info: UpdateUserRead): Result<HttpResponse> {
-    return runCatching {
-        client.post("users/read") {
+suspend fun SessionManager.addReadLog(info: UpdateUserRead): Result<Unit> {
+    return serviceCatching {
+        CustomApi.Users.Read.add.invoke(info) {
             contentType(ContentType.Application.Json)
-            setBody(info)
         }
     }
 }
 
 suspend fun SessionManager.addDevice(endpointUrl: String) = serviceCatching {
-    client.post("users/devices") {
+    CustomApi.Users.Devices.add.invoke(NewDevice(endpointUrl)) {
         contentType(ContentType.Application.Json)
-        setBody(NewDevice(endpointUrl))
     }
 }
 
 suspend fun SessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatching {
-    client.post("amedia/$mediaId/extract-album") {
-    }.body<ServerResponse<MediaInfo>>()
+    CustomApi.Medias.Id.extractAlbum.invoke(Path(mediaId), Unit) {}
 }

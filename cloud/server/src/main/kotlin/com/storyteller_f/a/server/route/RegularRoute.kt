@@ -2,7 +2,7 @@
 
 package com.storyteller_f.a.server.route
 
-import com.storyteller_f.a.api.core.Api
+import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.server.invoke
 import com.storyteller_f.a.server.auth.handleResult
 import com.storyteller_f.a.server.auth.omitPrincipal
@@ -39,7 +39,7 @@ fun Routing.bindUnauthenticatedRoute(backend: Backend) {
         }
     }
 
-    Api.Root.get(RoutingContext::handleResult) {
+    CustomApi.Root.get(RoutingContext::handleResult) {
         Result.success("${backend.config.flavor} ${backend.config.buildType}")
     }
 }

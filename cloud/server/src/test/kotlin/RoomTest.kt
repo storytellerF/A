@@ -3,6 +3,7 @@ import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.obj.NewTitle
+import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -133,6 +134,18 @@ class RoomTest {
             loginSession(secondTuple) {
                 joinRoom(privateRoomId).getOrThrow()
                 assertListSize(2, searchRoomMembers(privateRoomId, null, 10, null))
+            }
+        }
+    }
+
+    @Test
+    fun `test update room`() {
+        test {
+            attachSession {
+                val id = createCommunity(NewCommunity("name1", "c1")).getOrThrow().id
+                val roomId = createRoom(NewRoom("name1", "r1", communityId = id)).getOrThrow().id
+                updateRoomInfo(roomId, UpdateRoomBody("new name")).getOrThrow()
+                assertEquals("new name", getRoomInfo(roomId).getOrThrow().name)
             }
         }
     }

@@ -1,13 +1,14 @@
 package com.storyteller_f.a.server.route
 
-import com.storyteller_f.a.api.core.Api
+import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.server.invoke
+import com.storyteller_f.a.api.server.receiveBody
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.exposed.toJoinSearch
 import com.storyteller_f.a.server.auth.handleResult
 import com.storyteller_f.a.server.auth.usePrincipal
-import com.storyteller_f.a.server.auth.usePrincipalOrNull1
+import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.PrimaryKeyPagingGenerator
 import com.storyteller_f.a.server.common.pagination
@@ -16,26 +17,22 @@ import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.searchMembers
 import com.storyteller_f.backend.service.searchRoomPaginationResult
 import com.storyteller_f.shared.model.UserPubKeyInfo
-import com.storyteller_f.shared.obj.NewRoom
-import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import io.ktor.server.request.*
-import io.ktor.server.resources.*
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 
 fun Route.bindSafeRoomRoute(backend: Backend) {
-    Api.Rooms.Search.get(RoutingContext::handleResult) {
-        usePrincipalOrNull1 { uid ->
+    CustomApi.Rooms.Search.get(RoutingContext::handleResult) {
+        usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchRoomPaginationResult(uid, it.word, it.community, f, it.joinStatus.toJoinSearch(uid))
             }
         }
     }
 
-    Api.Rooms.Id.Members.get.invoke(RoutingContext::handleResult) { q, p ->
-        usePrincipalOrNull1 { uid ->
+    CustomApi.Rooms.Id.Members.get.invoke(RoutingContext::handleResult) { q, p ->
+        usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.checkRootReadPermission(ObjectType.ROOM, p.id, uid).mapResultIfNotNull { permission ->
                     if (permission.hasRead) {
@@ -47,20 +44,20 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
             }
         }
     }
-    Api.Rooms.Aid.get.invoke(RoutingContext::handleResult) {
-        usePrincipalOrNull1 { uid ->
+    CustomApi.Rooms.Aid.get.invoke(RoutingContext::handleResult) {
+        usePrincipalOrNull { uid ->
             backend.getRoomInfo(ObjectFetch.AidFetch(it.aid), uid, it.fillJoinInfo)
         }
     }
 
-    Api.Rooms.Id.get.invoke(RoutingContext::handleResult) { q, p ->
-        usePrincipalOrNull1 { uid ->
+    CustomApi.Rooms.Id.get.invoke(RoutingContext::handleResult) { q, p ->
+        usePrincipalOrNull { uid ->
             backend.getRoomInfo(ObjectFetch.IdFetch(p.id), uid, q.fillJoinInfo)
         }
     }
 
-    Api.Rooms.Id.Topics.get.invoke(RoutingContext::handleResult) { q, p ->
-        usePrincipalOrNull1 { uid ->
+    CustomApi.Rooms.Id.Topics.get.invoke(RoutingContext::handleResult) { q, p ->
+        usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
                     p.id,
@@ -76,33 +73,33 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedSafeRoomRoute(backend: Backend) {
-    post<RouteRooms.Id.Join> {
+    CustomApi.Rooms.Id.Members.join.invoke(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
-            backend.joinRoom(it.parent.id, uid)
+            backend.joinRoom(p.id, uid)
         }
     }
-    get<RouteRooms.Id.PubKeys> {
+    CustomApi.Rooms.Id.Members.leave.invoke(RoutingContext::handleResult) { p, api ->
+        usePrincipal { uid ->
+            backend.exitRoom(p.id, uid)
+        }
+    }
+    CustomApi.Rooms.Id.Members.publicKeys.invoke(RoutingContext::handleResult) { q, p ->
         usePrincipal { uid ->
             pagination(object : PrimaryKeyPagingGenerator<UserPubKeyInfo>(UserPubKeyInfo::id) {}) { f ->
-                backend.getRoomPubKeys(it.parent.id, uid, f)
+                backend.getRoomPubKeys(p.id, uid, f)
             }
         }
     }
-    post<RouteRooms.Id.Exit> {
-        usePrincipal { uid ->
-            backend.exitRoom(it.parent.id, uid)
-        }
-    }
-    post<RouteRooms> {
-        val newRoom = call.receive<NewRoom>()
+    CustomApi.Rooms.add.invoke(RoutingContext::handleResult) { api ->
+        val newRoom = with(api) { receiveBody() }
         usePrincipal { uid ->
             backend.createRoom(newRoom, uid)
         }
     }
-    post<RouteRooms.Id> {
-        val newRoom = call.receive<UpdateRoomBody>()
+    CustomApi.Rooms.Id.update.invoke(RoutingContext::handleResult) { p, api ->
+        val newRoom = with(api) { receiveBody() }
         usePrincipal { uid ->
-            backend.updateRoom(it.id, newRoom, uid)
+            backend.updateRoom(p.id, newRoom, uid)
         }
     }
 }

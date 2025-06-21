@@ -83,7 +83,11 @@ fun DatabaseSearchConfig<Boolean, Query>.isNotEmpty() {
 }
 
 class ExposedDatabaseSession(val database: Database, val buildType: String) {
-    val json = Json {
+    companion object {
+        val json by lazy {
+            Json {
+            }
+        }
     }
 
     private fun handleDatabaseException(e: Throwable, anchor: Throwable): Throwable {

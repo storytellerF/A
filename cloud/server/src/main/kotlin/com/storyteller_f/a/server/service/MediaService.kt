@@ -1,12 +1,12 @@
 package com.storyteller_f.a.server.service
 
-import com.storyteller_f.a.api.core.Api
+import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.api.core.Path
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.exposed.query.PaginationResult
-import com.storyteller_f.a.server.route.RouteMedia
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.copyMedia
 import com.storyteller_f.backend.service.getMediaInfoList
@@ -19,7 +19,6 @@ import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import io.ktor.http.content.*
 import io.ktor.server.plugins.*
@@ -36,7 +35,7 @@ import kotlin.uuid.Uuid
 
 suspend fun Backend.getMediaList(
     uid: PrimaryKey,
-    routeMedia: Api.Medias.Query,
+    routeMedia: CustomApi.Medias.MediaQuery,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<MediaInfo>?> {
     if (routeMedia.objectType == ObjectType.TOPIC) {
@@ -60,14 +59,13 @@ suspend fun Backend.getMediaList(
 
 suspend fun Backend.getAllMediaList(
     uid: PrimaryKey,
-    routeMedia: RouteMedia,
+    objectTuple: ObjectTuple,
 ): Result<ServerResponse<MediaInfo>?> {
-    if (routeMedia.objectType == ObjectType.TOPIC) {
+    if (objectTuple.objectType == ObjectType.TOPIC) {
         return Result.failure(BadRequestException("can't get topic media"))
     }
-    val parentType = routeMedia.objectType
-    val parentId = routeMedia.objectId
-    if (parentId == null || parentType == null) error("invalid query")
+    val parentType = objectTuple.objectType
+    val parentId = objectTuple.objectId
     return checkRootWritePermission(
         parentType,
         parentId,
@@ -110,9 +108,9 @@ suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, uid: PrimaryKe
                 if (file != null) {
                     val name = newCoverFileName(media.name, contentType)
                     uploadFilesAfterDetectContentTypeAndDimension(
-                        listOf(UploadPack(file, name, media.owner, media.size))
+                        listOf(UploadPack(file, name, media.owner, media.ownerType, media.size))
                     ).map {
-                        ServerResponse(it)
+                        ServerResponse(it.filterNotNull())
                     }
                 } else {
                     Result.success(null)
@@ -126,15 +124,14 @@ suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, uid: PrimaryKe
 @OptIn(ExperimentalUuidApi::class)
 suspend fun RoutingContext.uploadMedia(
     backend: Backend,
-    it: RouteMedia.Upload,
     id: PrimaryKey,
     root: File,
-) = if (it.parent.objectType == ObjectType.TOPIC) {
+    objectTuple: ObjectTuple,
+) = if (objectTuple.objectType == ObjectType.TOPIC) {
     Result.failure(BadRequestException("can't upload to topic"))
 } else {
-    val parentType = it.parent.objectType
-    val parentId = it.parent.objectId
-    if (parentId == null || parentType == null) error("invalid query")
+    val parentType = objectTuple.objectType
+    val parentId = objectTuple.objectId
     backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
         val result = mutableListOf<MediaInfo>()
 
@@ -172,6 +169,7 @@ private suspend fun Backend.processFilePart(
                     file,
                     newSavedName,
                     permission.objectId,
+                    permission.objectType,
                     length,
                 )
             )
@@ -224,7 +222,7 @@ private fun newFileName(fileName: String): String {
 }
 
 @OptIn(ExperimentalUuidApi::class)
-private fun newCopiedFileName(fileName: String): String {
+fun newCopiedFileName(fileName: String): String {
     val extension = fileName.substringAfterLast(".").take(10)
     val originName = fileName.substringBeforeLast(".")
     // length 32
@@ -242,30 +240,32 @@ private fun newCoverFileName(fileName: String, contentType: String): String {
 }
 
 suspend fun Backend.copyMedia(
-    name: String,
-    uid: PrimaryKey,
-    objectTuple: ObjectTuple
-) = checkRootReadPermission(
-    objectTuple.objectType,
-    objectTuple.objectId,
-    uid
-).mapResultIfNotNull { permission ->
-    if (permission.hasRead) {
-        mediaService.get(AMEDIA_DEFAULT_BUCKET, listOf("$uid/$name")).map {
-            if (it.firstOrNull() == null) {
-                "$uid/$name"
-            } else {
-                "$uid/${newCopiedFileName(name)}"
+    p: Path,
+    uid: PrimaryKey
+): Result<ServerResponse<MediaInfo>?> =
+    exposedDatabase.userDatabase.getMediaByIds(listOf(p.id)).mapResultIfNotNull {
+        val media = it.firstOrNull()
+        if (media != null) {
+            checkRootReadPermission(media.ownerType, media.owner, uid).mapResultIfNotNull { permission ->
+                if (permission.hasRead) {
+                    // 检查重复媒体
+                    exposedDatabase.userDatabase.getMedia(uid, media.name).map {
+                        if (it == null) {
+                            "$uid/${media.name}"
+                        } else {
+                            "$uid/${newCopiedFileName(media.name)}"
+                        }
+                    }.mapResultIfNotNull {
+                        copyMedia(media, uid, it)
+                    }
+                } else {
+                    Result.failure(ForbiddenException())
+                }
             }
-        }.mapResult {
-            exposedDatabase.userDatabase.getMedia(objectTuple.objectId, name).mapResultIfNotNull { media ->
-                copyMedia(media, uid, it)
-            }
+        } else {
+            Result.success(null)
         }
-    } else {
-        Result.failure(ForbiddenException("Permission denied"))
     }
-}
 
 fun <T> InputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, String) -> T): T? {
     val signature = ByteArray(4)

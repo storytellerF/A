@@ -1,7 +1,7 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.api.core.Api
+import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
@@ -151,6 +151,7 @@ private suspend fun Backend.createTopicSnapshot(
                                     pdfFile,
                                     "$topicId.pdf",
                                     uid,
+                                    ObjectType.USER,
                                     pdfFile.length(),
                                     ContentType.Application.Pdf.contentType,
                                     null,
@@ -521,7 +522,7 @@ suspend fun Backend.checkRootAdminPermission(
 }
 
 suspend fun Backend.searchPublicTopics(
-    search: Api.Topics.Search.Query,
+    search: CustomApi.Topics.Search.TopicSearchQuery,
     primaryKeyFetch: PrimaryKeyFetch,
     uid: PrimaryKey?
 ): Result<PaginationResult<TopicInfo>?> {

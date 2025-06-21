@@ -288,4 +288,23 @@ class TopicTest {
             }
         }
     }
+
+    @Test
+    fun `test pin topic`() {
+        test {
+            attachSession {
+                val communityInfo = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
+                val topic = createNewTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
+                val pinned = pinTopic(topic.id).getOrThrow()
+                assertTrue(pinned.isPin)
+                val unpinned = unpinTopic(topic.id).getOrThrow()
+                assertFalse(unpinned.isPin)
+                val userTopic = createNewTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+                val userPinned = pinTopic(userTopic.id).getOrThrow()
+                assertTrue(userPinned.isPin)
+                val userUnpinned = unpinTopic(userTopic.id).getOrThrow()
+                assertFalse(userUnpinned.isPin)
+            }
+        }
+    }
 }

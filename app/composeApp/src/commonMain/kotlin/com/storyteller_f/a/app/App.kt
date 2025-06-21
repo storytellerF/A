@@ -237,12 +237,13 @@ private fun MainAppPage(
     localSession: MediaPlaySession.VideoOrAudio?
 ) {
     val navigator = rememberNavController()
+    val json = LocalJson.current
 
     if (isPip && localSession != null) {
         MediaPage(localSession)
     } else {
         val appNav = remember<AppNav> {
-            newAppNav(navigator)
+            newAppNav(navigator, json)
         }
         ObserveMessage({
             appNav.toRoute<RoomScreen>()?.roomId
@@ -279,7 +280,7 @@ fun CommonEntry(
                 (it as? ClientSessionState.Success)?.session?.address()?.getOrNull()
             }.collectAsState(null)
             val database = remember(address) {
-                createKotbaseDatabaseSource(address)
+                createKotbaseStorageSource(address)
             }
             LaunchedEffect(database, address) {
                 bus.collect { event ->
@@ -648,10 +649,7 @@ private fun NavGraphBuilder.buildComposeScreen(navigator: NavHostController) {
     }
 }
 
-private fun newAppNav(navigator: NavHostController) = object : AppNav {
-    val json = Json {
-        ignoreUnknownKeys = true
-    }
+private fun newAppNav(navigator: NavHostController, json: Json) = object : AppNav {
     override val currentDestination: NavBackStackEntry?
         get() = navigator.currentBackStackEntry
     override val currentDestinationFlow: Flow<NavBackStackEntry>
