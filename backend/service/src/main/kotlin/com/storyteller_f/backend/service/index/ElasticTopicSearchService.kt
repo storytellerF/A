@@ -1,6 +1,7 @@
 package com.storyteller_f.backend.service.index
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient
+import co.elastic.clients.elasticsearch._types.ElasticsearchException
 import co.elastic.clients.elasticsearch._types.FieldValue
 import co.elastic.clients.elasticsearch._types.Refresh
 import co.elastic.clients.elasticsearch._types.SortOrder
@@ -18,6 +19,7 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
@@ -117,7 +119,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     override suspend fun searchDocument(
         words: List<String>?,
         documentSearch: DocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
+        primaryKeyFetch: PrimaryKeyFetch?,
     ): Result<PaginationResult<TopicDocument>> {
         val boolQuery =
             createTopicSearchQuery(
@@ -214,7 +216,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     }
 
     private fun MutableList<Pair<Query, Boolean>>.createTopicSearchQuery(
-        documentSearch: DocumentSearch
+        documentSearch: DocumentSearch,
     ) {
         when (documentSearch) {
             is DocumentSearch.Recommend -> {
@@ -249,13 +251,13 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
 
 private suspend fun <T> useElasticClient(
     elasticConnection: ElasticConnection,
-    block: suspend ElasticsearchAsyncClient.() -> T
+    block: suspend ElasticsearchAsyncClient.() -> T,
 ): Result<T> {
     val point = Exception()
     val certFile = elasticConnection.certFile
+    Napier.i(message = "cert path ${File(certFile).canonicalPath}")
     val sslContext = if (certFile.isNotBlank()) {
         val crtStream = withContext(Dispatchers.IO) {
-            Napier.i(message = "cert path ${File(certFile).canonicalPath}")
             FileInputStream(certFile)
         }
         TransportUtils.sslContextFromHttpCaCrt(crtStream)
@@ -264,30 +266,29 @@ private suspend fun <T> useElasticClient(
     }
 
     return runCatching {
-        try {
-            ElasticsearchAsyncClient.of { b ->
-                b.host(elasticConnection.url)
-                    .usernameAndPassword(elasticConnection.name, elasticConnection.pass)
-                    .sslContext(sslContext)
-                    .transportOptions {
-                        it.addHeader("Accept", ContentType.APPLICATION_JSON.mimeType)
-                            .addHeader("Content-Type", ContentType.APPLICATION_JSON.mimeType)
-                    }.jsonMapper(JacksonJsonpMapper().apply {
-                        objectMapper().registerKotlinModule()
-                    })
-            }.use {
-                it.block()
-            }
-        } catch (e: Exception) {
-            if (e is ConnectException || e is ConnectionClosedException) {
-                throw Exception("elastic service unavailable", e)
-            } else {
-                point.initCause(e)
-                Napier.e(throwable = point) {
-                    "elastic error"
-                }
-                throw e
-            }
+        ElasticsearchAsyncClient.of { b ->
+            b.host(elasticConnection.url)
+                .usernameAndPassword(elasticConnection.name, elasticConnection.pass)
+                .sslContext(sslContext)
+                .transportOptions {
+                    it.addHeader("Accept", ContentType.APPLICATION_JSON.mimeType)
+                        .addHeader("Content-Type", ContentType.APPLICATION_JSON.mimeType)
+                }.jsonMapper(JacksonJsonpMapper().apply {
+                    objectMapper().registerKotlinModule()
+                })
+        }.use {
+            it.block()
         }
+    }.recoverResult { e ->
+        Result.failure(
+            when {
+                e is ConnectException || e is ConnectionClosedException -> Exception("elastic service unavailable", e)
+                e is ElasticsearchException && e.status() == 400 ->
+                    Exception("index not found")
+                else -> {
+                    point.initCause(e)
+                    point
+                }
+            })
     }
 }

@@ -45,14 +45,14 @@ class MediaTest {
                             writeString("hello")
                         }
                     }.getOrThrow()
-                assertEquals("${it.uid}/hello.txt", response.data.first().newFullName)
+                assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
                 val mediaList = getMediaList(it.uid, ObjectType.USER, null, 10)
                 assertListSize(1, mediaList)
                 mediaList.getOrThrow().data.first()
             }
             attachSession {
                 val response = copy(firstTuple.custom.id).getOrThrow()
-                assertEquals("${it.uid}/hello.txt", response.data.first().newFullName)
+                assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
                 assertListSize(1, getMediaList(it.uid, ObjectType.USER, null, 10))
             }
         }

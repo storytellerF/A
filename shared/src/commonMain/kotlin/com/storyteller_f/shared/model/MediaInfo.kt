@@ -27,7 +27,6 @@ data class MediaInfo(
     override val objectType: ObjectType
         get() = ObjectType.MEDIA
 
-    val newFullName = "$owner/$name"
 }
 
 fun checkMediaDimensionRatioMatch(dimension: Dimension, aspectRatio: Dimension): Boolean {

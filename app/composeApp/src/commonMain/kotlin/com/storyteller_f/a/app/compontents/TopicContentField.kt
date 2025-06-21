@@ -4,15 +4,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.*
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.annotator.annotatorSettings
-import com.mikepenz.markdown.compose.*
+import com.mikepenz.markdown.compose.LocalMarkdownTypography
+import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
@@ -35,7 +40,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun TopicContentField(
     topicInfo: TopicInfo,
-    isEmbed: Boolean = false
+    isEmbed: Boolean = false,
 ) {
     when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
@@ -52,12 +57,15 @@ fun TopicContentField(
                     is TopicContent.DecryptFailed -> {
                         Text(content.message)
                     }
+
                     is TopicContent.Encrypted -> {
                         Text(stringResource(Res.string.permission_denied))
                     }
+
                     TopicContent.Invalid -> {
                         Text("invalid")
                     }
+
                     else -> {}
                 }
             }
@@ -73,7 +81,7 @@ private fun TopicContentFieldInternal(
     topicInfo: TopicInfo,
     rawMediaList: ImmutableList<MediaInfo>,
     plain: String,
-    isEmbed: Boolean
+    isEmbed: Boolean,
 ) {
     val (mediaList, objectTuple) = if (topicInfo.isEncrypted) {
         val list = createAllMediaListViewModel(topicInfo.rootId ob topicInfo.rootType)
@@ -104,7 +112,7 @@ fun CustomMarkdownParagraph(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalMarkdownTypography.current.paragraph,
     mediaMap: ImmutableMap<String, MediaInfo>,
-    isEmbed: Boolean
+    isEmbed: Boolean,
 ) {
     val density = LocalDensity.current
     val inlineContentMap = remember {

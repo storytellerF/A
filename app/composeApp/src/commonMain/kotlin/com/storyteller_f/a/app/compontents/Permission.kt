@@ -6,6 +6,7 @@ import androidx.compose.runtime.MutableState
 sealed interface Permission {
     data object Audio : Permission
     data object Notification : Permission
+    data object Camera : Permission
 }
 
 @Composable

@@ -264,7 +264,7 @@ private fun UserSettingInternal(
                     }
                 }
             } else {
-                showDialog(SettingOption.Icon(m.avatar?.newFullName))
+                showDialog(SettingOption.Icon(m.avatar?.fullName))
             }
         }, {
             UserIcon(m, setClickEvent = false)

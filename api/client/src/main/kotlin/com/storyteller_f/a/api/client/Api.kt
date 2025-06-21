@@ -15,17 +15,20 @@ import kotlin.reflect.KClass
 context(route: HttpClient)
 @OptIn(InternalSerializationApi::class)
 suspend inline operator fun <reified R : Any> SafeApi<R>.invoke(): R {
-    return route.get(urlString) {
-
-    }.body<R>()
+    return with(route) {
+        commonSafeRequest(urlString) {
+        }.body<R>()
+    }
 }
 
 context(route: HttpClient)
 @OptIn(InternalSerializationApi::class)
 suspend inline operator fun <reified R : Any, Q : Any> SafeApiWithQuery<R, Q>.invoke(query: Q): R {
-    return route.get(urlString) {
-        appendQueryParameters<R, Q>(query)
-    }.body<R>()
+    return with(route) {
+        commonSafeRequest(urlString) {
+            appendQueryParameters<R, Q>(query)
+        }.body<R>()
+    }
 }
 
 context(route: HttpClient)
@@ -35,32 +38,37 @@ suspend inline operator fun <reified R : Any, Q : Any, P : Any> SafeApiWithQuery
     path: P
 ): R {
     val newUrlString = getUrlString<P, R>(path, pathClass, urlString)
-    return route.get(newUrlString) {
-        appendQueryParameters<R, Q>(query)
-    }.body<R>()
+    return with(route) {
+        commonSafeRequest(newUrlString) {
+            appendQueryParameters<R, Q>(query)
+        }.body<R>()
+    }
 }
 
 context(route: HttpClient)
 @OptIn(InternalSerializationApi::class)
 suspend inline operator fun <reified R : Any, P : Any> SafeApiWithPath<R, P>.invoke(path: P): R {
     val newUrlString = getUrlString<P, R>(path, pathClass, urlString)
-    return route.get(newUrlString) {
-
-    }.body<R>()
+    return with(route) {
+        commonSafeRequest(newUrlString) {
+        }.body<R>()
+    }
 }
 
 context(route: HttpClient)
 @OptIn(InternalSerializationApi::class)
 suspend inline operator fun <reified R : Any, reified B : Any> MutationApi<R, B>.invoke(
     body: B,
-    block: HttpRequestBuilder.() -> Unit
+    crossinline block: HttpRequestBuilder.() -> Unit
 ): R {
-    return route.post(urlString) {
-        if (body !is Unit) {
-            setBody(body)
-        }
-        block()
-    }.body<R>()
+    return with(route) {
+        customMutationRequest(urlString) {
+            if (body !is Unit) {
+                setBody(body)
+            }
+            block()
+        }.body<R>()
+    }
 }
 
 context(route: HttpClient)
@@ -68,15 +76,17 @@ context(route: HttpClient)
 suspend inline operator fun <reified R : Any, reified B : Any, Q : Any> MutationApiWithQuery<R, B, Q>.invoke(
     query: Q,
     body: B,
-    block: HttpRequestBuilder.() -> Unit
+    crossinline block: HttpRequestBuilder.() -> Unit
 ): R {
-    return route.post(urlString) {
-        appendQueryParameters<R, Q>(query)
-        if (body !is Unit) {
-            setBody(body)
-        }
-        block()
-    }.body<R>()
+    return with(route) {
+        customMutationRequest(urlString) {
+            appendQueryParameters<R, Q>(query)
+            if (body !is Unit) {
+                setBody(body)
+            }
+            block()
+        }.body<R>()
+    }
 }
 
 
@@ -87,16 +97,18 @@ suspend inline operator fun <reified R : Any, reified B : Any, Q : Any, P : Any>
     query: Q,
     path: P,
     body: B,
-    block: HttpRequestBuilder.() -> Unit
+    crossinline block: HttpRequestBuilder.() -> Unit
 ): R {
     val newUrlString = getUrlString<P, R>(path, pathClass, urlString)
-    return route.post(newUrlString) {
-        appendQueryParameters<R, Q>(query)
-        if (body !is Unit) {
-            setBody(body)
-        }
-        block()
-    }.body<R>()
+    return with(route) {
+        customMutationRequest(newUrlString) {
+            appendQueryParameters<R, Q>(query)
+            if (body !is Unit) {
+                setBody(body)
+            }
+            block()
+        }.body<R>()
+    }
 }
 
 context(route: HttpClient)
@@ -128,6 +140,22 @@ suspend fun <Resp, Body> AbstractMutationApi<Resp, Body>.customMutationRequest(
         MutationMethodType.PUT -> HttpMethod.Put
         MutationMethodType.PATCH -> HttpMethod.Patch
         MutationMethodType.DELETE -> HttpMethod.Delete
+    }
+    return route.request(builder.apply {
+        url(urlString)
+        block()
+    })
+}
+
+context(route: HttpClient)
+suspend fun <Resp> AbstractSafeApi<Resp>.commonSafeRequest(
+    urlString: String,
+    block: HttpRequestBuilder.() -> Unit
+): HttpResponse {
+    val builder = HttpRequestBuilder()
+    builder.method = when (methodType) {
+        SafeMethodType.GET -> HttpMethod.Get
+        SafeMethodType.OPTIONS -> HttpMethod.Options
     }
     return route.request(builder.apply {
         url(urlString)

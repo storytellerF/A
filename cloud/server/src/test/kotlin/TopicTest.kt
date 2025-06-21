@@ -105,7 +105,7 @@ class TopicTest {
                         "![hello.txt](${media.name})"
                     ).getOrThrow()
                 val plain = info.content as TopicContent.Plain
-                assertEquals(media.newFullName, plain.list.first().newFullName)
+                assertEquals(media.fullName, plain.list.first().fullName)
                 // 查询单个topic
                 assertListSize(1, getUserTopics(it.uid, null, 10))
                 createNewTopic(

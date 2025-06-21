@@ -46,6 +46,8 @@ actual fun requestPermission(permission: Permission) {
         } else {
             return
         }
+
+        Permission.Camera -> TODO()
     }
     requestQueue.add(permission)
     launcher.launch(p)

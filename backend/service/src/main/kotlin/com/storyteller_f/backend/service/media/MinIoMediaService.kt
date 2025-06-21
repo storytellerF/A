@@ -15,8 +15,11 @@ import java.io.InputStream
 import java.util.concurrent.TimeUnit
 import kotlin.Result
 import kotlin.getOrThrow
+import kotlin.time.ExperimentalTime
+
 
 class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
+    val cache = io.github.reactivecircus.cache4k.Cache.Builder<String, String>().build()
     override suspend fun clean(bucketName: String): Result<Unit> {
         return useMinIoClient(connection) {
             if (bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
@@ -45,7 +48,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
 
     override suspend fun copy(
         bucketName: String,
-        copyPacks: List<CopyPack>
+        copyPacks: List<CopyPack>,
     ): Result<List<MediaRecord>> {
         return useMinIoClient(connection) {
             copyPacks.map {
@@ -71,7 +74,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
 
     override suspend fun getInputStream(
         bucketName: String,
-        name: String
+        name: String,
     ): Result<InputStream> {
         return useMinIoClient(connection) {
             getObject(GetObjectArgs.builder().bucket(bucketName).`object`(name).build())
@@ -82,14 +85,13 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         return useMinIoClient(connection) {
             names.mapNotNull {
                 try {
+                    val url = cache.get(it) {
+                        getMinioObjectUrl(bucketName, it)
+                    }
                     val statObject =
                         statObject(StatObjectArgs.builder().bucket(bucketName).`object`(it).build())
-                    val url = getMinioObjectUrl(bucketName, it)
-                    if (url != null) {
-                        MediaRecord(url, statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime(), it)
-                    } else {
-                        null
-                    }
+                    val lastModified = statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime()
+                    MediaRecord(url, lastModified, it)
                 } catch (e: ErrorResponseException) {
                     if (e.errorResponse().code() == "NoSuchKey") {
                         null
@@ -103,7 +105,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
 
     override suspend fun upload(
         bucketName: String,
-        uploadPacks: List<UploadPack>
+        uploadPacks: List<UploadPack>,
     ): Result<List<MediaRecord>> {
         return useMinIoClient(connection) {
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
@@ -125,7 +127,7 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
 
 private suspend fun <R> useMinIoClient(
     minIoConnection: MinIoConnection,
-    block: suspend MinioClient.() -> R
+    block: suspend MinioClient.() -> R,
 ): Result<R> {
     val point = Exception()
     return runCatching {
@@ -156,14 +158,12 @@ private fun MinioClient.removeAllObject(bucketName: String) {
     }
 }
 
-private fun MinioClient.getMinioObjectUrl(bucketName: String, objName: String?): String? {
-    objName ?: return null
-    return getPresignedObjectUrl(
-        GetPresignedObjectUrlArgs.builder()
-            .method(Method.GET)
-            .bucket(bucketName)
-            .`object`(objName)
-            .expiry(7, TimeUnit.DAYS)
-            .build()
-    )
-}
+@OptIn(ExperimentalTime::class)
+private fun MinioClient.getMinioObjectUrl(bucketName: String, objName: String) = getPresignedObjectUrl(
+    GetPresignedObjectUrlArgs.builder()
+        .method(Method.GET)
+        .bucket(bucketName)
+        .`object`(objName)
+        .expiry(7, TimeUnit.DAYS)
+        .build()
+)

@@ -85,7 +85,7 @@ private fun RoomSettingInternal(
                     }
                 }
             } else {
-                showDialog(SettingOption.Icon(roomInfo.icon?.newFullName))
+                showDialog(SettingOption.Icon(roomInfo.icon?.fullName))
             }
         }, {
             RoomIcon(roomInfo, showDialog = false, setClickEvent = false) {}
