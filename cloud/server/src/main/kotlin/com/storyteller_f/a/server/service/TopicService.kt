@@ -2,14 +2,7 @@ package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.backend.core.CustomBadRequestException
-import com.storyteller_f.a.backend.core.ForbiddenException
-import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.core.ObjectListFetch
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.core.ReactionFetch
-import com.storyteller_f.a.backend.core.UnauthorizedException
-import com.storyteller_f.a.backend.core.UploadPack
+import com.storyteller_f.a.backend.core.*
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.exposed.tables.Topic
@@ -40,7 +33,7 @@ import java.security.KeyStore
 
 suspend fun Backend.createPublicTopic(
     uid: PrimaryKey,
-    newTopic: NewTopic
+    newTopic: NewTopic,
 ): Result<TopicInfo?> {
     if (newTopic.parentType == ObjectType.ROOM) {
         return Result.failure(ForbiddenException("can't use api to add topic in room"))
@@ -103,11 +96,11 @@ suspend fun Backend.createPublicTopic(
 
 suspend fun Backend.createTopicSnapshot(
     uid: PrimaryKey,
-    topicId: PrimaryKey
+    topicId: PrimaryKey,
 ): Result<MediaInfo?> {
     return getUserInfo(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { userInfo ->
-        checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull { (hasRead) ->
-            if (hasRead) {
+        checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull { (hasRead, _, isPrivate) ->
+            if (hasRead && !isPrivate) {
                 exposedDatabase.topicDatabase.getTopicInfo(
                     ObjectFetch.IdFetch(topicId),
                     null
@@ -124,81 +117,87 @@ suspend fun Backend.createTopicSnapshot(
 private suspend fun Backend.createTopicSnapshot(
     topicInfo: TopicInfo,
     creatorInfo: UserInfo,
-    uid: PrimaryKey
+    uid: PrimaryKey,
 ): Result<MediaInfo?> {
     val topicId = topicInfo.id
-    return topicSearchService.getDocuments(listOf(topicId)).map { value -> value.firstOrNull() }
-        .mapResultIfNotNull { documents ->
-            getUserInfo(
-                ObjectFetch.IdFetch(topicInfo.author)
-            ).mapResultIfNotNull { userInfo ->
-                val name = "$uid/$topicId.pdf"
-                val pdfFile = File("/tmp/$name")
-                val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
-                try {
-                    generateSignedSnapshot(
-                        userInfo,
-                        creatorInfo,
-                        topicInfo,
-                        pdfFile,
-                        signedFile,
-                        documents.content,
-                        snapshotVerify
-                    ).mapResultIfNotNull {
-                        uploadFiles(
-                            listOf(
-                                UploadPack(
-                                    pdfFile,
-                                    "$topicId.pdf",
-                                    uid,
-                                    ObjectType.USER,
-                                    pdfFile.length(),
-                                    ContentType.Application.Pdf.contentType,
-                                    null,
-                                )
-                            )
-                        ).map {
-                            pdfFile.delete()
-                            it.firstOrNull()
-                        }
-                    }
-                } finally {
-                    pdfFile.delete()
-                    signedFile.delete()
+    return getUserInfo(
+        ObjectFetch.IdFetch(topicInfo.author)
+    ).mapResultIfNotNull { userInfo ->
+        val name = "$uid/$topicId.pdf"
+        val pdfFile = File("/tmp/$name")
+        val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
+        try {
+            generateSignedSnapshot(
+                userInfo,
+                creatorInfo,
+                topicInfo,
+                snapshotVerify?.let {
+                    SnapshotVerify.KeyStoreVerify(it.first, it.second, pdfFile, signedFile)
+                } ?: SnapshotVerify.NoneVerify(pdfFile)
+            ).mapResultIfNotNull {
+                uploadFiles(
+                    listOf(
+                        UploadPack(
+                            pdfFile,
+                            "$topicId.pdf",
+                            uid,
+                            ObjectType.USER,
+                            pdfFile.length(),
+                            ContentType.Application.Pdf.contentType,
+                            null,
+                        )
+                    )
+                ).map {
+                    it.firstOrNull()
                 }
             }
+        } finally {
+            pdfFile.delete()
+            signedFile.delete()
         }
+    }
+}
+
+sealed class SnapshotVerify(open val path: File) {
+    class KeyStoreVerify(
+        val keyStorePath: String,
+        val password: String,
+        override val path: File,
+        val signedFile: File,
+    ) : SnapshotVerify(path)
+
+    class NoneVerify(override val path: File) : SnapshotVerify(path)
 }
 
 fun generateSignedSnapshot(
     authorInfo: UserInfo,
     creatorInfo: UserInfo,
     topicInfo: TopicInfo,
-    saveToFile: File,
-    signedFile: File,
-    content: String,
-    snapshot: Pair<String, String>
+    snapshotVerify: SnapshotVerify,
 ): Result<Unit?> {
+    val content = topicInfo.content
+    if (content !is TopicContent.Plain) {
+        return Result.failure(BadRequestException("unsupported"))
+    }
+    val saveToFile = snapshotVerify.path
     val parent = saveToFile.parentFile
-    return if (parent != null) {
-        if (!parent.exists() && !parent.mkdirs()) {
-            Result.failure(Exception("failed"))
-        } else {
-            generateSnapshot(authorInfo, creatorInfo, topicInfo, saveToFile, content)
-            runCatching {
-                val keyStorePath = snapshot.first
-                val password = snapshot.second
-                if (keyStorePath.isNotEmpty() && password.isNotEmpty()) {
-                    val store = KeyStore.getInstance("PKCS12").apply {
-                        load(FileInputStream(keyStorePath), password.toCharArray())
-                    }
-                    CreateSignature(store, password.toCharArray())
-                        .signDetached(saveToFile, signedFile, "https://freetsa.org/tsr")
+    if (parent == null) return Result.success(null)
+    if (!parent.exists() && !parent.mkdirs()) return Result.failure(Exception("failed"))
+    return runCatching {
+        generateSnapshot(authorInfo, creatorInfo, topicInfo, saveToFile, content.plain)
+    }.map {
+        when (snapshotVerify) {
+            is SnapshotVerify.KeyStoreVerify -> {
+                val password = snapshotVerify.password
+                val store = KeyStore.getInstance("PKCS12").apply {
+                    load(FileInputStream(snapshotVerify.keyStorePath), password.toCharArray())
                 }
+                CreateSignature(store, password.toCharArray())
+                    .signDetached(saveToFile, snapshotVerify.signedFile, "https://freetsa.org/tsr")
             }
+
+            is SnapshotVerify.NoneVerify -> Unit
         }
-    } else {
-        Result.success(null)
     }
 }
 
@@ -236,7 +235,7 @@ private fun generateSnapshot(
 
 private fun loadSystemFont(
     document: PDDocument,
-    content: String
+    content: String,
 ): PDType0Font? {
     val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
     val font = graphicsEnvironment.allFonts.firstOrNull {
@@ -249,7 +248,7 @@ private fun loadSystemFont(
 suspend fun Backend.getTopic(
     topicId: PrimaryKey,
     uid: PrimaryKey?,
-    fillHasCommented: Boolean?
+    fillHasCommented: Boolean?,
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
     return checkRootReadPermission(
@@ -277,7 +276,7 @@ suspend fun Backend.getTopic(
 suspend fun Backend.getTopicByAid(
     aid: String,
     uid: PrimaryKey?,
-    fillHasCommented: Boolean?
+    fillHasCommented: Boolean?,
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
     return exposedDatabase.topicDatabase.getTopicInfo(ObjectFetch.AidFetch(aid), uid).mapResultIfNotNull { info ->
@@ -387,19 +386,19 @@ suspend fun Backend.processTopicExtension(
 data class RootReadPermission(
     val hasRead: Boolean,
     val hasJoined: Boolean,
-    val isPrivate: Boolean
+    val isPrivate: Boolean,
 )
 
 data class RootWritePermission(
     val objectType: ObjectType,
     val objectId: PrimaryKey,
-    val hasWrite: Boolean
+    val hasWrite: Boolean,
 )
 
 data class RootAdminPermission(
     val objectType: ObjectType,
     val objectId: PrimaryKey,
-    val hasAdmin: Boolean
+    val hasAdmin: Boolean,
 )
 
 suspend fun Backend.checkRootReadPermission(
@@ -524,7 +523,7 @@ suspend fun Backend.checkRootAdminPermission(
 suspend fun Backend.searchPublicTopics(
     search: CustomApi.Topics.Search.TopicSearchQuery,
     primaryKeyFetch: PrimaryKeyFetch,
-    uid: PrimaryKey?
+    uid: PrimaryKey?,
 ): Result<PaginationResult<TopicInfo>?> {
     val word = search.word
     if (word != null && word.sumOf {
@@ -559,7 +558,7 @@ suspend fun Backend.searchPublicTopics(
 
 suspend fun Backend.processTopicMedia(
     infos: List<TopicInfo>,
-    documentList: List<TopicDocument?>
+    documentList: List<TopicDocument?>,
 ): Result<List<TopicInfo>?> {
     val documentMap = documentList.filterNotNull().associateBy { it.id }
     // id + mediaLink，此处的mediaLink 应该包含前缀，内部会自动添加前缀
@@ -609,7 +608,7 @@ fun documentMediaList(documentList: List<TopicDocument?>): List<Pair<PrimaryKey,
 
 suspend fun Backend.recommendTopics(
     uid: PrimaryKey?,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<TopicInfo>?> {
     return if (uid != null) {
         exposedDatabase.communityDatabase.getJoinedCommunityIds(uid).mapResult {
@@ -655,7 +654,7 @@ private suspend fun Backend.processTopicsDocument(
 
 suspend fun Backend.getTopicByIds(
     ids: List<PrimaryKey>,
-    uid: PrimaryKey?
+    uid: PrimaryKey?,
 ): Result<List<TopicInfo>?> {
     if (ids.isEmpty()) {
         return Result.success(emptyList())
@@ -701,7 +700,7 @@ suspend fun Backend.getTopicByIds(
 suspend fun Backend.updateTopicPin(
     uid: PrimaryKey,
     topicId: PrimaryKey,
-    newValue: Boolean
+    newValue: Boolean,
 ) =
     checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
         if (it.hasAdmin) {

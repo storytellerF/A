@@ -43,7 +43,7 @@ import java.util.*
 
 class Backend(
     val config: Config,
-    val snapshotVerify: Pair<String, String>,
+    val snapshotVerify: Pair<String, String>?,
     val topicSearchService: TopicSearchService,
     val mediaService: MediaService,
     val nameService: NameService,
