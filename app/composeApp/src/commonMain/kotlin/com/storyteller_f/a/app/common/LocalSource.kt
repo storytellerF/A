@@ -110,10 +110,15 @@ class CustomDatabasePagingSource<RowType : Any>(
             }
             registeredToken[params.key] = observable
             val data = observable.task.await()
+            val prevKey = buildKey(data.firstOrNull())
+            val nextKey = buildKey(data.lastOrNull())
+            Napier.v(tag = "pagination") {
+                "source load success key: ${params.key} data size: ${data.size} $prevKey $nextKey"
+            }
             PagingSourceLoadResultPage(
                 data = data,
-                prevKey = buildKey(data.firstOrNull()),
-                nextKey = buildKey(data.lastOrNull()),
+                prevKey = prevKey,
+                nextKey = nextKey,
             )
         } catch (e: Exception) {
             Napier.e(e, tag = "pagination") {

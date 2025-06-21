@@ -95,7 +95,7 @@ private fun UploadItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(file.name)
             data?.let {
-                Text(it.newFullName)
+                Text(it.fullName)
             }
         }
 

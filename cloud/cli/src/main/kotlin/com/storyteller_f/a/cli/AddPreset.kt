@@ -225,10 +225,11 @@ class AddPreset : Subcommand("add", "add entry") {
             val id = SnowflakeFactory.nextId()
             val level = addTopic.level
             val parent = addTopic.parent
+            val content = getTopicContent(addTopic, parentDir).encodeToByteArray()
             if (parent == null || parent == 0 || level == null || level == 0) {
-                InsertTopicTuple(addTopic, index, 0, id, addTopic.content.encodeToByteArray(), false)
+                InsertTopicTuple(addTopic, index, 0, id, content, false)
             } else {
-                InsertTopicTuple(addTopic, index, level, id, addTopic.content.encodeToByteArray(), false)
+                InsertTopicTuple(addTopic, index, level, id, content, false)
             }
         }
         databaseSession.dbQuery {
@@ -236,11 +237,10 @@ class AddPreset : Subcommand("add", "add entry") {
         }.getOrThrow()
         topicSearchService.saveDocument(
             tuples.mapIndexed { index, topicTuple ->
-                val content = getTopicContent(topicTuple.topic, parentDir)
                 val level = topicTuple.level
                 TopicDocument(
                     topicTuple.id,
-                    content,
+                    topicTuple.content.decodeToString(),
                     getRootId(objectType, list, userMap)(topicTuple.topic),
                     objectType.name,
                     when (level) {
@@ -419,10 +419,11 @@ class AddPreset : Subcommand("add", "add entry") {
             val id = SnowflakeFactory.nextId()
             val level = addTopic.first.level
             val parent = addTopic.first.parent
+            val content = getTopicContent(addTopic.first, parentDir).encodeToByteArray()
             if (parent == null || parent == 0 || level == null || level == 0) {
-                InsertTopicTuple(addTopic.first, index, 0, id, addTopic.second, false)
+                InsertTopicTuple(addTopic.first, index, 0, id, content, false)
             } else {
-                InsertTopicTuple(addTopic.first, index, level, id, addTopic.second, false)
+                InsertTopicTuple(addTopic.first, index, level, id, content, false)
             }
         }
         databaseSession.dbQuery {
@@ -432,11 +433,10 @@ class AddPreset : Subcommand("add", "add entry") {
         }.getOrThrow()
         topicSearchService.saveDocument(
             publicRoomList.mapIndexed { index, first ->
-                val content = getTopicContent(first, parentDir)
                 val level = first.level
                 TopicDocument(
                     tuples[index].id,
-                    content,
+                    tuples[index].content.decodeToString(),
                     roomMap[first.room]!!.id,
                     ObjectType.ROOM.name,
                     when (level) {
@@ -496,14 +496,14 @@ class AddPreset : Subcommand("add", "add entry") {
             }
         }
         val tuples = encryptedContents.mapIndexed { index, tuple ->
-            val addTopic = tuple.presetTopic to tuple.encryptedContent
-            val id = SnowflakeFactory.nextId()
-            val level = addTopic.first.level
-            val parent = addTopic.first.parent
+            val id = tuple.id
+            val level = tuple.presetTopic.level
+            val parent = tuple.presetTopic.parent
+            val content = tuple.encryptedContent
             if (parent == null || parent == 0 || level == null || level == 0) {
-                InsertTopicTuple(addTopic.first, index, 0, id, addTopic.second, true)
+                InsertTopicTuple(tuple.presetTopic, index, 0, id, content, true)
             } else {
-                InsertTopicTuple(addTopic.first, index, level, id, addTopic.second, true)
+                InsertTopicTuple(tuple.presetTopic, index, level, id, content, true)
             }
         }
         databaseSession.dbQuery {

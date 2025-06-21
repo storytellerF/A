@@ -144,7 +144,7 @@ class CommunitiesViewModel(
             listOf(StorageOrder.Desc("hasPoster"), StorageOrder.Desc("id")),
             {
                 if (it != null) {
-                    arrayOf(StorageExpression.StrLess("id", it))
+                    arrayOf(StorageExpression.Less("id", it.toPrimaryKey()))
                 } else {
                     emptyArray()
                 }
@@ -490,7 +490,9 @@ class IdTopicViewModel(
             viewModelScope,
             StorageExpression.IdEq("id", topicId),
             {
-                sessionManager.getTopicInfo(topicId)
+                sessionManager.getTopicInfo(topicId).map {
+                    processEncryptedTopic(listOf(it), sessionManager.sessionModel).first()
+                }
             }
         ) { t ->
             save(topicId, t)

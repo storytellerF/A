@@ -90,7 +90,7 @@ private fun CommunitySettingInternal(
                     }
                 }
             } else {
-                showDialog(SettingOption.Icon(communityInfo.icon?.newFullName))
+                showDialog(SettingOption.Icon(communityInfo.icon?.fullName))
             }
         }, {
             CommunityIcon(communityInfo, showDialog = false, setClickEvent = false) {}
@@ -105,7 +105,7 @@ private fun CommunitySettingInternal(
                     }
                 }
             } else {
-                showDialog(SettingOption.Poster(communityInfo.poster?.newFullName))
+                showDialog(SettingOption.Poster(communityInfo.poster?.fullName))
             }
         }, {
             Box(modifier = Modifier.width(100.dp).aspectRatio(3 / 4f)) {

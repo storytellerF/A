@@ -20,7 +20,7 @@ import kotlin.io.path.name
 suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> Result<R?>) = callRespond<R>(block)
 
 inline fun <reified R : Any> RoutingContext.usePrincipal(
-    block: (uid: PrimaryKey) -> Result<R?>
+    block: (uid: PrimaryKey) -> Result<R?>,
 ) = usePrincipalOrNull { uid ->
     if (uid != null) {
         block(uid)
@@ -30,11 +30,11 @@ inline fun <reified R : Any> RoutingContext.usePrincipal(
 }
 
 inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
-    block: (uid: PrimaryKey?) -> Result<R?>?
+    block: (uid: PrimaryKey?) -> Result<R?>?,
 ) = block(call.principal<CustomPrincipal>()?.uid)
 
 suspend inline fun <reified R : Any> RoutingContext.callRespond(
-    block: () -> Result<R?>?
+    block: () -> Result<R?>?,
 ) {
     try {
         val result = block()
@@ -48,26 +48,22 @@ suspend inline fun <reified R : Any> RoutingContext.callRespond(
     }
 }
 
-suspend fun RoutingContext.respondError(e: Throwable): Boolean {
+suspend fun RoutingContext.respondError(e: Throwable) {
     when (e) {
         is ForbiddenException -> {
             call.respond(HttpStatusCode.Forbidden, e.message.toString())
-            return true
         }
 
         is UnauthorizedException -> {
             call.respondUnauthorizedResponse()
-            return true
         }
 
         is MissingRequestParameterException, is ParameterConversionException, is ContentTransformationException -> {
             call.respond(HttpStatusCode.BadRequest, e.localizedMessage)
-            return true
         }
 
         is BadRequestException, is CustomBadRequestException, is IllegalArgumentException, is IllegalStateException -> {
             call.respond(HttpStatusCode.BadRequest, e.localizedMessage)
-            return true
         }
 
         else -> {
@@ -75,7 +71,6 @@ suspend fun RoutingContext.respondError(e: Throwable): Boolean {
                 HttpStatusCode.InternalServerError,
                 if (ServerConfig.IS_PROD) "" else (e.message ?: e.toString())
             )
-            return false
         }
     }
 }
@@ -121,8 +116,7 @@ suspend inline fun <reified R> RoutingContext.handleResult(it: Result<R>) {
             else -> call.respond(it)
         }
     }.onFailure {
-        if (!respondError(it)) {
-            call.application.log.error("Occur server exception", it)
-        }
+        respondError(it)
+        call.application.log.error("Occur server exception", it)
     }
 }

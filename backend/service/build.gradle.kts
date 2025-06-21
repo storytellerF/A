@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.memoryfilesystem)
     implementation(libs.lucene.backward.codecs)
     implementation(libs.kotlinx.coroutines.slf4j)
+    implementation(libs.cache4k)
 
     testImplementation(libs.commons.logging)
     testImplementation(kotlin("test"))

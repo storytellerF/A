@@ -104,6 +104,8 @@ kotlin {
             implementation(libs.androidx.datastore.preferences.core)
             implementation(libs.connectivity.device)
             implementation(libs.connectivity.compose.device)
+            implementation("com.shepeliev:webrtc-kmp:0.125.9")
+            implementation("com.google.accompanist:accompanist-permissions:0.37.3")
             if (isLlamaEnable)
                 implementation(":android-llama-cpp")
 
@@ -347,7 +349,7 @@ buildkonfig {
     packageName = "com.storyteller_f.a.app"
     objectName = "AppConfig"
     val properties = Properties().apply {
-        val file = layout.projectDirectory.file("../${flavorStr}.env").asFile
+        val file = layout.projectDirectory.file("../../${flavorStr}.env").asFile
         if (file.exists())
             load(FileInputStream(file))
     }
