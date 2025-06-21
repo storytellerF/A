@@ -17,8 +17,10 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import kotlin.io.path.name
 
-suspend inline fun <reified R : Any> RoutingContext.usePrincipal(
-    block: (PrimaryKey) -> Result<R?>
+suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> Result<R?>) = callRespond<R>(block)
+
+inline fun <reified R : Any> RoutingContext.usePrincipal(
+    block: (uid: PrimaryKey) -> Result<R?>
 ) = usePrincipalOrNull { uid ->
     if (uid != null) {
         block(uid)
@@ -27,25 +29,7 @@ suspend inline fun <reified R : Any> RoutingContext.usePrincipal(
     }
 }
 
-suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> Result<R?>) = callRespond<R>(block)
-
-suspend inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
-    block: (PrimaryKey?) -> Result<R?>?
-) = callRespond<R>({
-    block(call.principal<CustomPrincipal>()?.uid)
-})
-
-inline fun <reified R : Any> RoutingContext.usePrincipal1(
-    block: (uid: PrimaryKey) -> Result<R?>
-) = usePrincipalOrNull1 { uid ->
-    if (uid != null) {
-        block(uid)
-    } else {
-        Result.failure(UnauthorizedException())
-    }
-}
-
-inline fun <reified R : Any> RoutingContext.usePrincipalOrNull1(
+inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
     block: (uid: PrimaryKey?) -> Result<R?>?
 ) = block(call.principal<CustomPrincipal>()?.uid)
 

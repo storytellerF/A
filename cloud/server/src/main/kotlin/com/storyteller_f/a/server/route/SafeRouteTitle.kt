@@ -1,15 +1,17 @@
 package com.storyteller_f.a.server.route
 
+import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.api.server.invoke
+import com.storyteller_f.a.api.server.receiveBody
 import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.server.auth.handleResult
 import com.storyteller_f.a.server.auth.usePrincipal
 import com.storyteller_f.a.server.service.createTitle
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.shared.model.TitleType
-import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.type.ObjectType
-import io.ktor.server.request.*
-import io.ktor.server.resources.post
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingContext
 
 val titleMap = mutableMapOf(
     ObjectType.COMMUNITY to listOf(
@@ -29,8 +31,8 @@ val titleMap = mutableMapOf(
 )
 
 fun Route.bindProtectedTitleRoute(backend: Backend) {
-    post<RouteTitles> {
-        val title = call.receive<NewTitle>()
+    CustomApi.Titles.add.invoke(RoutingContext::handleResult) {
+        val title = with(it) { receiveBody() }
         usePrincipal { uid ->
             val supportType = titleMap[title.scopeType]
             if (supportType != null) {

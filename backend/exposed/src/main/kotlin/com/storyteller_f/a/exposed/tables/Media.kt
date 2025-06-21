@@ -6,6 +6,7 @@ import com.storyteller_f.a.exposed.BaseTable
 import com.storyteller_f.a.exposed.customPrimaryKey
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
@@ -18,6 +19,7 @@ object Medias : BaseTable() {
     val width = integer("width")
     val height = integer("height")
     val owner = customPrimaryKey("owner")
+    val ownerType = enumerationByName<ObjectType>("owner_type", 10)
     val contentType = varchar("content_type", 50)
     val size = long("size")
 
@@ -37,6 +39,7 @@ class Media(
     val width: Int,
     val height: Int,
     val owner: PrimaryKey,
+    val ownerType: ObjectType,
     val contentType: String,
     val size: Long,
 ) : BaseEntity(id, createdTime) {
@@ -53,6 +56,7 @@ class Media(
                     resultRow[width],
                     resultRow[height],
                     resultRow[owner],
+                    resultRow[ownerType],
                     resultRow[contentType],
                     resultRow[size],
                 )
@@ -67,6 +71,7 @@ class Media(
                 this[Medias.width] = e.dimension?.width ?: 0
                 this[Medias.height] = e.dimension?.height ?: 0
                 this[Medias.owner] = e.owner
+                this[Medias.ownerType] = e.ownerType
                 this[Medias.contentType] = e.contentType
                 this[Medias.size] = e.size
                 this[Medias.fullName] = e.newFullName
@@ -86,6 +91,7 @@ class Media(
                 it[Medias.width] = media.width
                 it[Medias.height] = media.height
                 it[Medias.owner] = newOwner
+                it[Medias.ownerType] = media.ownerType
                 it[Medias.contentType] = media.contentType
                 it[Medias.size] = media.size
                 it[Medias.fullName] = media.fullName
@@ -105,6 +111,7 @@ fun Media.toMediaInfo(url: String, lastModified: LocalDateTime): MediaInfo {
         size,
         name,
         owner,
+        ownerType,
         lastModified,
         if (width != 0 && height != 0) Dimension(width, height) else null
     )

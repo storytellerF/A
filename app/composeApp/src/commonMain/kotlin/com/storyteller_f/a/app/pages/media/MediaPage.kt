@@ -99,7 +99,7 @@ fun ImageSheet(
             ButtonNav(MaterialSymbolsOutlined.FileCopy, "copy") {
                 scope.launch {
                     globalDialogState.use {
-                        sessionManager.copy(session.objectTuple, session.mediaInfo.name).getOrThrow()
+                        sessionManager.copy(session.mediaInfo.id).getOrThrow()
                         toaster.showShortToast("done")
                     }
                 }

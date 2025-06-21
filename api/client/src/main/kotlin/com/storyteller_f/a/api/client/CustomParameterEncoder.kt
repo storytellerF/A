@@ -30,18 +30,19 @@ class CustomParameterEncoder<T : Any>(
         serializersModuleOf(clazz, serializer)
 
     override fun encodeTaggedValue(tag: String, value: Any) {
+        val newTag = tag.substringBeforeLast(".")
         when (value) {
             is Iterable<*> -> value.forEach { item ->
                 if (item != null) {
-                    addToMap(tag, item.toString())
+                    addToMap(newTag, item.toString())
                 }
             }
             is Array<*> -> value.forEach { item ->
                 if (item != null) {
-                    addToMap(tag, item.toString())
+                    addToMap(newTag, item.toString())
                 }
             }
-            else -> addToMap(tag, value.toString())
+            else -> addToMap(newTag, value.toString())
         }
     }
 

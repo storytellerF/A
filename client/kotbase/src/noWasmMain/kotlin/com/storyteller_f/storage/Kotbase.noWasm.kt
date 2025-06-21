@@ -19,7 +19,7 @@ import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 import kotbase.Collection as KotbaseCollection
 
-actual fun createKotbaseDatabaseSource(scope: String?): StorageSource {
+actual fun createKotbaseStorageSource(scope: String?): StorageSource {
     return KotbaseStorageSource(createKotbase(), scope)
 }
 

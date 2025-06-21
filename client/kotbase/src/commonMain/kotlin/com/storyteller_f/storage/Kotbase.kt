@@ -1,3 +1,3 @@
 package com.storyteller_f.storage
 
-expect fun createKotbaseDatabaseSource(scope: String?): StorageSource
+expect fun createKotbaseStorageSource(scope: String?): StorageSource

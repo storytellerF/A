@@ -2,6 +2,7 @@ package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.obj.ReactionCursorKey
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import java.io.File
 
@@ -23,6 +24,7 @@ data class UploadPack(
     val path: File,
     val name: String,
     val owner: PrimaryKey,
+    val ownerType: ObjectType,
     val size: Long,
     val contentType: String = "",
     val dimension: Dimension? = null

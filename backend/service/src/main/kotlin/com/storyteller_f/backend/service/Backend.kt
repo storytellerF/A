@@ -51,7 +51,9 @@ class Backend(
     val databaseSession: ExposedDatabaseSession,
     val exposedDatabase: com.storyteller_f.a.exposed.Database,
 ) {
-    val json = Json {}
+    val json by lazy {
+        Json {}
+    }
     val tika by lazy {
         Tika()
     }
@@ -188,6 +190,7 @@ suspend fun Backend.uploadFiles(uploadPacks: List<UploadPack>): Result<List<Medi
                 uploadPack.size,
                 uploadPack.name,
                 uploadPack.owner,
+                uploadPack.ownerType,
                 e.lastModified,
                 uploadPack.dimension
             )
@@ -259,6 +262,7 @@ suspend fun Backend.copyMedia(
                     media.size,
                     media.name,
                     newOwner,
+                    ObjectType.USER,
                     it.lastModified,
                     dimension
                 )

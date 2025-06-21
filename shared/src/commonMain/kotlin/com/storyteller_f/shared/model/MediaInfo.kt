@@ -20,6 +20,7 @@ data class MediaInfo(
     val size: Long,
     val name: String,
     val owner: PrimaryKey,
+    val ownerType: ObjectType,
     val lastModified: LocalDateTime,
     val dimension: Dimension?,
 ) : Identifiable {

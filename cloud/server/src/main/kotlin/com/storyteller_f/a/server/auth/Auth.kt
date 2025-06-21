@@ -2,15 +2,13 @@ package com.storyteller_f.a.server.auth
 
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.api.server.invoke
+import com.storyteller_f.a.api.server.receiveBody
 import com.storyteller_f.a.backend.core.CustomBadRequestException
-import com.storyteller_f.a.exposed.tables.Aids
-import com.storyteller_f.a.exposed.tables.User
-import com.storyteller_f.a.exposed.tables.UserLog
-import com.storyteller_f.a.exposed.tables.Users
-import com.storyteller_f.a.exposed.tables.toUserInfo
+import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.*
-import com.storyteller_f.a.server.route.RouteAccounts
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.processUserRawResultToUserInfo
 import com.storyteller_f.shared.*
@@ -30,8 +28,6 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
-import io.ktor.server.resources.*
-import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
@@ -370,27 +366,20 @@ fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
 fun Route.bindUnprotectedAccountRoute(
     backend: Backend
 ) {
-    get<RouteAccounts.GetData> {
-        omitPrincipal {
-            Result.success(call.getData())
-        }
+    CustomApi.Accounts.getData.invoke(RoutingContext::handleResult) {
+        Result.success(call.getData())
+    }
+    CustomApi.Accounts.signUp.invoke(RoutingContext::handleResult) {
+        signUp(backend, with(it) { receiveBody() })
     }
 
-    post<RouteAccounts.SignUp> {
-        omitPrincipal {
-            signUp(backend, call.receive<SignUpPack>())
-        }
-    }
-
-    post<RouteAccounts.SignIn> {
-        omitPrincipal {
-            signIn(backend, call.receive<SignInPack>(), call.getData())
-        }
+    CustomApi.Accounts.signIn.invoke(RoutingContext::handleResult) {
+        signIn(backend, with(it) { receiveBody() }, call.getData())
     }
 }
 
 fun Route.bindSafeAccountRoute() {
-    post<RouteAccounts.SignOut> {
+    CustomApi.Accounts.signOut.invoke(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             call.sessions.clear(UserSession::class)
             Result.success(Unit)

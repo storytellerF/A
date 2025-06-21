@@ -7,7 +7,6 @@ import com.storyteller_f.a.server.service.getExtensionFromMimeType
 import com.storyteller_f.a.server.service.readFlacAlbumFromAudioStream
 import com.storyteller_f.backend.service.media.getImageDimension
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.http.*
 import kotlinx.coroutines.test.runTest
@@ -47,10 +46,12 @@ class MediaTest {
                         }
                     }.getOrThrow()
                 assertEquals("${it.uid}/hello.txt", response.data.first().newFullName)
-                assertListSize(1, getMediaList(it.uid, ObjectType.USER, null, 10))
+                val mediaList = getMediaList(it.uid, ObjectType.USER, null, 10)
+                assertListSize(1, mediaList)
+                mediaList.getOrThrow().data.first()
             }
             attachSession {
-                val response = copy(firstTuple.uid ob ObjectType.USER, "hello.txt").getOrThrow()
+                val response = copy(firstTuple.custom.id).getOrThrow()
                 assertEquals("${it.uid}/hello.txt", response.data.first().newFullName)
                 assertListSize(1, getMediaList(it.uid, ObjectType.USER, null, 10))
             }

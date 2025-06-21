@@ -1,7 +1,7 @@
 package com.storyteller_f.a.server.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.api.core.Api
+import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -27,6 +27,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.utils.recoverResult
 import io.ktor.server.plugins.*
 
 suspend fun Backend.getCommunity(
@@ -58,7 +59,7 @@ suspend fun Backend.doUserJoinCommunity(
         exposedDatabase.userDatabase.addCommunityJoin(uid, communityId, time).mapResult {
             addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
             Result.success(community.copy(joinedTime = time))
-        }.recoverCatching {
+        }.recoverResult {
             if (it.isDup()) {
                 getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
             } else {
@@ -89,7 +90,7 @@ suspend fun Backend.exitCommunity(
 
 suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
-    search: Api.Communities.Search.Query,
+    search: CustomApi.Communities.Search.CommunitySearchQuery,
     primaryKeyFetch: PrimaryKeyFetch
 ) = exposedDatabase.communityDatabase.getCommunityPaginationResult(
     search.word,

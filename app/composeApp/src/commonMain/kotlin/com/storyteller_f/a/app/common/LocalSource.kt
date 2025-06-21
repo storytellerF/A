@@ -235,7 +235,11 @@ class IntermediatePagingSource<Key : Any, T : Any>(
     val sectionPagingSource: PagingSource<Key, T>,
     val clazz: KClass<Key>
 ) : PagingSource<String, T>() {
-    val json = Json { }
+    companion object {
+        val json by lazy {
+            Json { }
+        }
+    }
     override fun getRefreshKey(state: PagingState<String, T>): String? {
         return null
     }

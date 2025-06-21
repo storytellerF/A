@@ -118,7 +118,7 @@ class AddPreset : Subcommand("add", "add entry") {
         files.forEach {
             uploadFilesAfterDetectContentTypeAndDimension(it.path.map { p ->
                 val path = File(parentDir, p)
-                UploadPack(path, path.name, userMap[it.owner]!!.id, path.length())
+                UploadPack(path, path.name, userMap[it.owner]!!.id, ObjectType.USER, path.length())
             }).getOrThrow()
         }
     }
@@ -184,6 +184,7 @@ class AddPreset : Subcommand("add", "add entry") {
                             path,
                             "community-icon.${path.extension}",
                             id,
+                            ObjectType.COMMUNITY,
                             path.length(),
                         )
                     )
@@ -281,6 +282,7 @@ class AddPreset : Subcommand("add", "add entry") {
                             path,
                             "avatar.${path.extension}",
                             id,
+                            ObjectType.USER,
                             path.length()
                         )
                     )
@@ -320,6 +322,7 @@ class AddPreset : Subcommand("add", "add entry") {
                             path,
                             "room-icon.${path.extension}",
                             id,
+                            ObjectType.ROOM,
                             path.length(),
                         )
                     )
@@ -463,7 +466,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         uploadFilesAfterDetectContentTypeAndDimension(mediaNames.map { (author, pic) ->
             val path = File(parentDir, "medias/topics/$pic")
-            UploadPack(path, pic, author, path.length())
+            UploadPack(path, pic, author, ObjectType.USER, path.length())
         }).getOrThrow()
         exposedDatabase.userDatabase.insertMediaRefs(topicId, ObjectType.TOPIC, mediaNames)
     }
@@ -520,7 +523,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 val content = getTopicContent(topic, parentDir)
                 uploadFilesAfterDetectContentTypeAndDimension(extractMarkdownMediaLink(content).map {
                     val path = File(parentDir, "medias/topics/$it")
-                    UploadPack(path, it, room.id, path.length())
+                    UploadPack(path, it, room.id, ObjectType.ROOM, path.length())
                 }).getOrThrow()
             }
         }
