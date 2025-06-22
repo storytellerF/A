@@ -15,13 +15,14 @@ import com.storyteller_f.a.exposed.RoomDatabase
 import com.storyteller_f.a.exposed.TitleDatabase
 import com.storyteller_f.a.exposed.TopicDatabase
 import com.storyteller_f.a.exposed.UserDatabase
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.MergedEnv
-import com.storyteller_f.backend.service.databaseConnection
-import com.storyteller_f.backend.service.mediaService
-import com.storyteller_f.backend.service.naming.NameService
-import com.storyteller_f.backend.service.readEnv
-import com.storyteller_f.backend.service.topicDocumentService
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.MergedEnv
+import com.storyteller_f.a.backend.service.databaseConnection
+import com.storyteller_f.a.backend.service.mediaService
+import com.storyteller_f.a.backend.service.naming.NameService
+import com.storyteller_f.a.backend.service.readEnv
+import com.storyteller_f.a.backend.service.topicDocumentService
+import com.storyteller_f.a.exposed.Database
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.utils.mapResult
@@ -115,7 +116,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         NameService(),
         database,
         databaseSession,
-        object : com.storyteller_f.a.exposed.Database {
+        object : Database {
             override val userDatabase: UserDatabase
                 get() = ExposedUserDatabase(databaseSession)
             override val topicDatabase: TopicDatabase

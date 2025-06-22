@@ -10,8 +10,8 @@ import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.*
 import com.storyteller_f.a.server.service.addAlternativeAccount
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.processUserRawResultToUserInfo
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.processUserRawResultToUserInfo
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType

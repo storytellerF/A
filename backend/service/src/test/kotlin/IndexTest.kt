@@ -1,6 +1,9 @@
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.storyteller_f.a.backend.core.ElasticConnection
-import com.storyteller_f.backend.service.index.*
+import com.storyteller_f.a.backend.service.index.ElasticTopicSearchService
+import com.storyteller_f.a.backend.service.index.LuceneTopicSearchService
+import com.storyteller_f.a.backend.service.index.TopicDocument
+import com.storyteller_f.a.backend.service.index.TopicSearchService
 import kotlinx.coroutines.runBlocking
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 import kotlin.test.Test
@@ -34,8 +37,7 @@ fun testIndex(block: suspend (TopicSearchService) -> Unit) {
                     "elastic",
                     "changeme"
                 )
-                val sslContext = getSslContext(connection)
-                val service = ElasticTopicSearchService(connection, sslContext)
+                val service = ElasticTopicSearchService(connection)
                 block(service)
             }
         block(LuceneTopicSearchService(MemoryFileSystemBuilder.newLinux().build().getPath("/documents"), true))

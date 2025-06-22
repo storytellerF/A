@@ -1,10 +1,11 @@
-package com.storyteller_f.backend.service.media
+package com.storyteller_f.a.backend.service.media
 
 import com.storyteller_f.a.backend.core.CopyPack
 import com.storyteller_f.a.backend.core.MinIoConnection
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
+import io.github.reactivecircus.cache4k.Cache
 import io.minio.*
 import io.minio.errors.ErrorResponseException
 import io.minio.http.Method
@@ -18,7 +19,7 @@ import kotlin.getOrThrow
 import kotlin.time.ExperimentalTime
 
 class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
-    val cache = io.github.reactivecircus.cache4k.Cache.Builder<String, String>().build()
+    val cache = Cache.Builder<String, String>().build()
     override suspend fun clean(bucketName: String): Result<Unit> {
         return useMinIoClient(connection) {
             if (bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {

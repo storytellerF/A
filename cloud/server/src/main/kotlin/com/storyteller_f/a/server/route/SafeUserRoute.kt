@@ -14,9 +14,9 @@ import com.storyteller_f.a.server.service.addReadLog
 import com.storyteller_f.a.server.service.getTopLevelTopicsInObject
 import com.storyteller_f.a.server.service.getUserTitles
 import com.storyteller_f.a.server.service.updateUser
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.getUserInfo
-import com.storyteller_f.backend.service.searchMembers
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.getUserInfo
+import com.storyteller_f.a.backend.service.searchMembers
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.recoverResult
 import io.ktor.server.routing.*

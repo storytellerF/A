@@ -1,4 +1,4 @@
-package com.storyteller_f.backend.service.naming
+package com.storyteller_f.a.backend.service.naming
 
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.PrimaryKey

@@ -8,8 +8,8 @@ import com.storyteller_f.a.server.auth.handleResult
 import com.storyteller_f.a.server.auth.omitPrincipal
 import com.storyteller_f.a.server.common.PathResponse
 import com.storyteller_f.a.server.common.checkParameter
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.media.FileSystemMediaService
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.media.FileSystemMediaService
 import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*

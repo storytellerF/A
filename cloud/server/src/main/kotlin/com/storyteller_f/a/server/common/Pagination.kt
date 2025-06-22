@@ -6,7 +6,7 @@ import com.storyteller_f.a.backend.core.Fetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.exposed.query.PaginationResult
-import com.storyteller_f.backend.service.Backend
+import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.shared.model.Identifiable
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.obj.Pagination

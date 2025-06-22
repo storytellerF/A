@@ -3,6 +3,9 @@ package com.storyteller_f.a.server
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Config
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.MergedEnv
+import com.storyteller_f.a.backend.service.databaseConnection
 import com.storyteller_f.a.exposed.CommunityDatabase
 import com.storyteller_f.a.exposed.ExposedDatabaseFactory
 import com.storyteller_f.a.exposed.ExposedCommunityDatabase
@@ -20,9 +23,12 @@ import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
 import com.storyteller_f.a.server.route.configureRoute
-import com.storyteller_f.backend.service.*
-import com.storyteller_f.backend.service.media.loadAvif
-import com.storyteller_f.backend.service.naming.NameService
+import com.storyteller_f.a.backend.service.media.loadAvif
+import com.storyteller_f.a.backend.service.mediaService
+import com.storyteller_f.a.backend.service.naming.NameService
+import com.storyteller_f.a.backend.service.readEnv
+import com.storyteller_f.a.backend.service.topicDocumentService
+import com.storyteller_f.a.exposed.Database
 import com.storyteller_f.shared.kmpLogger
 import io.github.aakira.napier.Napier
 import io.ktor.http.*
@@ -329,7 +335,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         NameService(),
         database,
         databaseSession,
-        object : com.storyteller_f.a.exposed.Database<User> {
+        object : Database<User> {
             override val userDatabase: UserDatabase<User>
                 get() = ExposedUserDatabase(databaseSession)
             override val topicDatabase: TopicDatabase

@@ -1,4 +1,4 @@
-package com.storyteller_f.backend.service
+package com.storyteller_f.a.backend.service
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.perraco.utils.SnowflakeFactory
@@ -21,14 +21,13 @@ import com.storyteller_f.a.exposed.tables.toRoomInfo
 import com.storyteller_f.a.exposed.tables.toTitleInfo
 import com.storyteller_f.a.exposed.tables.toTopicInfo
 import com.storyteller_f.a.exposed.tables.toUserInfo
-import com.storyteller_f.backend.service.index.ElasticTopicSearchService
-import com.storyteller_f.backend.service.index.LuceneTopicSearchService
-import com.storyteller_f.backend.service.index.TopicSearchService
-import com.storyteller_f.backend.service.index.getSslContext
-import com.storyteller_f.backend.service.media.FileSystemMediaService
-import com.storyteller_f.backend.service.media.MediaService
-import com.storyteller_f.backend.service.media.MinIoMediaService
-import com.storyteller_f.backend.service.naming.NameService
+import com.storyteller_f.a.backend.service.index.ElasticTopicSearchService
+import com.storyteller_f.a.backend.service.index.LuceneTopicSearchService
+import com.storyteller_f.a.backend.service.index.TopicSearchService
+import com.storyteller_f.a.backend.service.media.FileSystemMediaService
+import com.storyteller_f.a.backend.service.media.MediaService
+import com.storyteller_f.a.backend.service.media.MinIoMediaService
+import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType

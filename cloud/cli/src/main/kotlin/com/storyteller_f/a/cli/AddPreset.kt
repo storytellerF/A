@@ -5,10 +5,10 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.exposed.ExposedDatabaseFactory
 import com.storyteller_f.a.exposed.tables.*
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.getMediaInfoList
-import com.storyteller_f.backend.service.index.TopicDocument
-import com.storyteller_f.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.getMediaInfoList
+import com.storyteller_f.a.backend.service.index.TopicDocument
+import com.storyteller_f.a.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType

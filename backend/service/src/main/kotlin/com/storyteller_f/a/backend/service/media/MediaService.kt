@@ -1,9 +1,9 @@
-package com.storyteller_f.backend.service.media
+package com.storyteller_f.a.backend.service.media
 
 import com.storyteller_f.a.backend.core.CopyPack
 import com.storyteller_f.a.backend.core.UploadPack
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.uploadFiles
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.uploadFiles
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import io.github.aakira.napier.Napier

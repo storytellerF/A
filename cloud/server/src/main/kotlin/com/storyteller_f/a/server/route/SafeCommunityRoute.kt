@@ -10,8 +10,8 @@ import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.searchMembers
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.searchMembers
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 

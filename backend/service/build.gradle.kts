@@ -3,6 +3,7 @@ import com.android.build.gradle.internal.tasks.factory.dependsOn
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinBuildConfig)
+    id("me.champeau.jmh") version "0.7.3"
 }
 
 group = "com.storyteller_f.a.backend.service"
@@ -74,11 +75,11 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
             }
         }.groupBy {
             it.first
-        }.forEach {
-            val outputFile = output.resolve("META-INF/services/${it.key}")
+        }.forEach { entry ->
+            val outputFile = output.resolve("META-INF/services/${entry.key}")
             outputFile.parentFile.mkdirs()
 
-            outputFile.writeText(it.value.flatMap {
+            outputFile.writeText(entry.value.flatMap {
                 it.second
             }.joinToString("\n"))
         }
@@ -96,4 +97,10 @@ buildConfig {
 
 tasks.withType<Test> {
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
+}
+
+jmh {
+    warmupIterations = 2
+    iterations = 2
+    fork = 2
 }

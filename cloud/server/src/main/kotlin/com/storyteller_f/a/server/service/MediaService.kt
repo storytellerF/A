@@ -7,11 +7,11 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.exposed.query.PaginationResult
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.copyMedia
-import com.storyteller_f.backend.service.getMediaPaginationResult
-import com.storyteller_f.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
-import com.storyteller_f.backend.service.processMediaToMediaInfo
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.copyMedia
+import com.storyteller_f.a.backend.service.getMediaPaginationResult
+import com.storyteller_f.a.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
+import com.storyteller_f.a.backend.service.processMediaToMediaInfo
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ObjectTuple

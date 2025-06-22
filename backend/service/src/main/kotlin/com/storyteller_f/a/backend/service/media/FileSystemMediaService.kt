@@ -1,4 +1,4 @@
-package com.storyteller_f.backend.service.media
+package com.storyteller_f.a.backend.service.media
 
 import com.storyteller_f.a.backend.core.CopyPack
 import com.storyteller_f.a.backend.core.UploadPack
