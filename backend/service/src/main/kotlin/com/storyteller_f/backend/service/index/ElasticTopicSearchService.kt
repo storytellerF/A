@@ -289,6 +289,7 @@ private suspend fun <T> useElasticClient(
                     point.initCause(e)
                     point
                 }
-            })
+            }
+        )
     }
 }

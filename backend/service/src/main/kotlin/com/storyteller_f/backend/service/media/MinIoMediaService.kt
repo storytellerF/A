@@ -17,7 +17,6 @@ import kotlin.Result
 import kotlin.getOrThrow
 import kotlin.time.ExperimentalTime
 
-
 class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
     val cache = io.github.reactivecircus.cache4k.Cache.Builder<String, String>().build()
     override suspend fun clean(bucketName: String): Result<Unit> {

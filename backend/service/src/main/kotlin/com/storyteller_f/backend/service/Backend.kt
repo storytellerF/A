@@ -350,7 +350,7 @@ suspend fun Backend.getMediaInfoList(names: List<String>): Result<List<MediaInfo
     }
 }
 
-private suspend fun Backend.processMediaToMediaInfo(
+suspend fun Backend.processMediaToMediaInfo(
     medias: List<Media>,
 ): Result<List<MediaInfo>> {
     return mediaService.get(AMEDIA_DEFAULT_BUCKET, medias.map {

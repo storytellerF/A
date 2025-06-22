@@ -4,6 +4,7 @@ import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.utils.checkContent
+import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.*
@@ -34,7 +35,7 @@ expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 fun HttpClientConfig<*>.defaultClientConfigure(
     cookiesStorage: CookiesStorage,
     manager: SessionModel,
-    httpUrl: String? = null
+    httpUrl: String? = null,
 ) {
     expectSuccess = true
     install(Auth) {
@@ -122,35 +123,38 @@ private fun CustomClientAuthProvider.CustomAuthConfig.configClientAuth(manager: 
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-suspend fun processEncryptedTopic(info: List<TopicInfo>, manager: SessionModel): List<TopicInfo> {
-    val uid = manager.uid
-    val key = manager.currentUserPass
-    return info.map { topicInfo ->
+suspend fun processEncryptedTopic(topicInfos: List<TopicInfo>, manager: SessionManager): List<TopicInfo> {
+    val model = manager.sessionModel
+    val uid = model.uid
+    val key = model.currentUserPass
+    return topicInfos.map { topicInfo ->
         val content = topicInfo.content
-        if (content !is TopicContent.Encrypted || uid == null || key == null) {
+        if (content !is TopicContent.Encrypted) {
             topicInfo
+        } else if (uid == null || key == null) {
+            topicInfo.copy(content = TopicContent.Invalid)
         } else {
             val s = content.encryptedKey[uid]
-            val topicContent = if (s != null) {
-                key.decrypt(
+            if (s != null) {
+                val topicContent = key.decrypt(
                     content.encrypted.hexToByteArray(),
                     s.hexToByteArray()
                 ).fold(onSuccess = {
                     if (checkContent(it)) {
-                        TopicContent.Plain(it)
+                        val mediaInfos = extractMarkdownMediaLink(it).mapNotNull {
+                            manager.getMediaByName(it, topicInfo.rootId, topicInfo.rootType).getOrNull()
+                        }
+                        TopicContent.Plain(it, mediaInfos)
                     } else {
                         TopicContent.Invalid
                     }
                 }, onFailure = {
-                    Napier.e(it) {
-                        "decrypt ${topicInfo.id} failed"
-                    }
                     TopicContent.DecryptFailed(it.message.toString())
                 })
+                topicInfo.copy(content = topicContent)
             } else {
-                TopicContent.DecryptFailed("auth failed")
+                topicInfo.copy(content = TopicContent.DecryptFailed("auth failed"))
             }
-            topicInfo.copy(content = topicContent)
         }
     }
 }

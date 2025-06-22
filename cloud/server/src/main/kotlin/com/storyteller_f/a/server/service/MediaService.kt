@@ -9,16 +9,15 @@ import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.copyMedia
-import com.storyteller_f.backend.service.getMediaInfoList
 import com.storyteller_f.backend.service.getMediaPaginationResult
 import com.storyteller_f.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
+import com.storyteller_f.backend.service.processMediaToMediaInfo
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import io.ktor.http.content.*
 import io.ktor.server.plugins.*
@@ -57,10 +56,11 @@ suspend fun Backend.getMediaList(
     }
 }
 
-suspend fun Backend.getAllMediaList(
+suspend fun Backend.getMediaByName(
     uid: PrimaryKey,
     objectTuple: ObjectTuple,
-): Result<ServerResponse<MediaInfo>?> {
+    word: String,
+): Result<MediaInfo?> {
     if (objectTuple.objectType == ObjectType.TOPIC) {
         return Result.failure(BadRequestException("can't get topic media"))
     }
@@ -70,10 +70,12 @@ suspend fun Backend.getAllMediaList(
         parentType,
         parentId,
         uid
-    ).mapResultIfNotNull { (_, _, hasWrite) ->
+    ).mapResultIfNotNull { (_, objectId, hasWrite) ->
         if (hasWrite) {
-            getMediaInfoList(uid).mapIfNotNull {
-                ServerResponse(it.filterNotNull(), null)
+            exposedDatabase.userDatabase.getMedia(objectId, word).mapResultIfNotNull {
+                processMediaToMediaInfo(listOf(it)).map {
+                    it.first()
+                }
             }
         } else {
             Result.failure(ForbiddenException("no permission"))

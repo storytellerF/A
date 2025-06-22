@@ -9,13 +9,11 @@ import androidx.paging.map
 import app.cash.paging.PagingData
 import app.cash.paging.cachedIn
 import com.storyteller_f.a.app.UploadSession
-import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.DialogSaveState
 import com.storyteller_f.a.app.pages.topic.upload
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
@@ -23,8 +21,6 @@ import com.storyteller_f.storage.StorageExpression
 import com.storyteller_f.storage.StorageOrder
 import com.storyteller_f.storage.StorageSource
 import com.storyteller_f.storage.save
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -344,32 +340,6 @@ class MediaListViewModel(
     ) {
         primaryKeyPagingSource(collectionName, storageSource)
     }.flow.cachedIn(viewModelScope)
-}
-
-class AllMediaListViewModel(
-    sessionManager: SessionManager,
-    private val objectId: PrimaryKey,
-    private val objectType: ObjectType
-) :
-    SimpleViewModel<ServerResponse<MediaInfo>>() {
-    override val handler: LoadingHandler<ServerResponse<MediaInfo>> = SimpleLoadingHandler(viewModelScope) {
-        sessionManager.getAllMediaList(objectId, objectType)
-    }
-
-    init {
-        viewModelScope.launch {
-            bus.collect {
-                when (it) {
-                    is OnMediaUploaded -> {
-                        val old = handler.data.value ?: ServerResponse(persistentListOf())
-                        update(old.copy(data = old.data.toMutableList().apply {
-                            addAll(0, it.mediaInfos)
-                        }.toImmutableList()))
-                    }
-                }
-            }
-        }
-    }
 }
 
 abstract class UserViewModel :

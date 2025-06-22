@@ -59,7 +59,6 @@ import com.storyteller_f.a.app.utils.restoreFromStorage
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -185,7 +184,7 @@ sealed interface MediaPlaySession {
 
     @Serializable
     @SerialName("image")
-    data class Image(val mediaInfo: MediaInfo, val objectTuple: ObjectTuple) : MediaPlaySession
+    data class Image(val mediaInfo: MediaInfo) : MediaPlaySession
 
     @Serializable
     @SerialName("local-image")
@@ -711,8 +710,8 @@ private fun newAppNav(navigator: NavHostController, json: Json) = object : AppNa
         navigator.navigate(PreferenceScreen)
     }
 
-    override fun gotoMedia(info: MediaInfo, objectTuple: ObjectTuple) {
-        val route = MediaScreen(json.encodeToString<MediaPlaySession>(MediaPlaySession.Image(info, objectTuple)))
+    override fun gotoMedia(info: MediaInfo) {
+        val route = MediaScreen(json.encodeToString<MediaPlaySession>(MediaPlaySession.Image(info)))
         navigator.navigate(route)
     }
 
@@ -796,7 +795,7 @@ interface AppNav {
 
     fun gotoPreference()
 
-    fun gotoMedia(info: MediaInfo, objectTuple: ObjectTuple)
+    fun gotoMedia(info: MediaInfo)
 
     fun gotoLocalImage(url: String)
 
@@ -872,7 +871,7 @@ interface AppNav {
                 TODO("Not yet implemented")
             }
 
-            override fun gotoMedia(info: MediaInfo, objectTuple: ObjectTuple) {
+            override fun gotoMedia(info: MediaInfo) {
                 TODO("Not yet implemented")
             }
 
