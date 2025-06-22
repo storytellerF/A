@@ -13,6 +13,7 @@ import com.storyteller_f.a.exposed.tables.Room
 import com.storyteller_f.a.exposed.tables.RoomRawResult
 import com.storyteller_f.a.exposed.tables.Title
 import com.storyteller_f.a.exposed.tables.Topic
+import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.a.exposed.tables.UserRawResult
 import com.storyteller_f.a.exposed.tables.toCommunityIfo
 import com.storyteller_f.a.exposed.tables.toMediaInfo
@@ -49,7 +50,7 @@ class Backend(
     val nameService: NameService,
     val database: Database,
     val databaseSession: ExposedDatabaseSession,
-    val exposedDatabase: com.storyteller_f.a.exposed.Database,
+    val exposedDatabase: com.storyteller_f.a.exposed.Database<User>,
 ) {
     val json by lazy {
         Json {}
@@ -366,7 +367,7 @@ suspend fun Backend.processMediaToMediaInfo(
 }
 
 suspend fun Backend.processUserRawResultToUserInfo(
-    rawResults: List<UserRawResult>
+    rawResults: List<UserRawResult<User>>
 ) = exposedDatabase.userDatabase.getMediaByIds(rawResults.mapNotNull {
     it.user.icon
 }).mapResultIfNotNull { medias ->

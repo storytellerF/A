@@ -23,7 +23,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 
 fun Route.bindSafeRoomRoute(backend: Backend) {
-    CustomApi.Rooms.Search.get(RoutingContext::handleResult) {
+    CustomApi.Rooms.search(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchRoomPaginationResult(uid, it.word, it.community, f, it.joinStatus.toJoinSearch(uid))

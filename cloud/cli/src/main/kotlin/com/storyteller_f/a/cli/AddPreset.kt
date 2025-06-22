@@ -3,7 +3,7 @@ package com.storyteller_f.a.cli
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.UploadPack
-import com.storyteller_f.a.exposed.DatabaseFactory
+import com.storyteller_f.a.exposed.ExposedDatabaseFactory
 import com.storyteller_f.a.exposed.tables.Aids
 import com.storyteller_f.a.exposed.tables.Community
 import com.storyteller_f.a.exposed.tables.EncryptedKeys
@@ -73,7 +73,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         loadCryptoLibIfNeed()
         val connected = backend
-        DatabaseFactory.connect(connected.config.databaseConnection)
+        ExposedDatabaseFactory.connect(connected.config.databaseConnection)
         val jsonFile = File(jsonFilePath)
 
         val presetValue = Json {

@@ -334,10 +334,9 @@ private fun createSessionManager(
             buildHttpClient(httpUrl, cookieManager, model)
         }) { roomFrame, session ->
             if (roomFrame is RoomFrame.NewTopicInfo) {
-                val info = processEncryptedTopic(listOf(roomFrame.topicInfo), session).first()
-                bus.emit(OnTopicCreated(info))
+                bus.emit(OnTopicCreated(roomFrame.topicInfo))
                 Napier.v(tag = "pagination") {
-                    "save document $info"
+                    "save document ${roomFrame.topicInfo}"
                 }
             }
         }.apply {
@@ -511,11 +510,18 @@ private fun buildWsListener(
     hasPermission: Boolean,
     roomScreenId: () -> PrimaryKey?,
     topicScreenId: () -> PrimaryKey?,
+    sessionManager: UserSessionManager,
     onClickTopic: (TopicInfo) -> Unit,
 ) = object : WebSocketClientListener {
     override suspend fun onReceived(frame: RoomFrame) {
         if (frame is RoomFrame.NewTopicInfo) {
-            val topicInfo = frame.topicInfo
+            val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
+                val topicInfo = processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
+                RoomFrame.NewTopicInfo(topicInfo)
+            } else {
+                frame
+            }
+            val topicInfo = plainFrame.topicInfo
             val message = topicInfo.content
             if (message is TopicContent.Plain) {
                 Napier.i(tag = "WebSocket") {
@@ -544,14 +550,14 @@ private fun ObserveMessage(
     topicScreenId: () -> PrimaryKey?,
     onClickTopic: (TopicInfo) -> Unit = {},
 ) {
-    val mainUserSession = LocalMainSessionManager.current
-    val clientWebSocketImpl = mainUserSession.webSocketClient
+    val sessionManager = LocalSessionManager.current
+    val clientWebSocketImpl = sessionManager.webSocketClient
     val messageToasterState = rememberToasterState()
     Toaster(messageToasterState, alignment = Alignment.TopCenter)
     val notificationProvider = getNotificationProvider()
     val hasPermission by notificationProvider.hasPermissionState
     val listener = remember(hasPermission) {
-        buildWsListener(messageToasterState, hasPermission, roomScreenId, topicScreenId, onClickTopic)
+        buildWsListener(messageToasterState, hasPermission, roomScreenId, topicScreenId, sessionManager, onClickTopic)
     }
     clientWebSocketImpl.addListener(listener)
     DisposableEffect(null) {

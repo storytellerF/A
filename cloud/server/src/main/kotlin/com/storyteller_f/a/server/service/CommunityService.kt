@@ -90,7 +90,7 @@ suspend fun Backend.exitCommunity(
 
 suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
-    search: CustomApi.Communities.Search.CommunitySearchQuery,
+    search: CustomApi.Communities.CommunitySearchQuery,
     primaryKeyFetch: PrimaryKeyFetch
 ) = exposedDatabase.communityDatabase.getCommunityPaginationResult(
     search.word,

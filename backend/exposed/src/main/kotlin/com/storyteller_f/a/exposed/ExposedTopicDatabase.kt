@@ -16,6 +16,7 @@ import com.storyteller_f.a.exposed.tables.ReactionRecords
 import com.storyteller_f.a.exposed.tables.Reactions
 import com.storyteller_f.a.exposed.tables.Topic
 import com.storyteller_f.a.exposed.tables.Topics
+import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.a.exposed.tables.toTopicInfo
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
@@ -29,7 +30,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 
-class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, val userDatabase: UserDatabase) :
+class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, val userDatabase: UserDatabase<User>) :
     TopicDatabase {
     override suspend fun getTopicRootTuple(
         parentId: PrimaryKey

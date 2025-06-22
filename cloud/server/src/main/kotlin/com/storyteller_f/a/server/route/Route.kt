@@ -1,6 +1,7 @@
 package com.storyteller_f.a.server.route
 
 import com.maxmind.geoip2.DatabaseReader
+import com.storyteller_f.a.server.auth.bindProtectedAccountRoute
 import com.storyteller_f.a.server.auth.bindSafeAccountRoute
 import com.storyteller_f.a.server.auth.bindUnprotectedAccountRoute
 import com.storyteller_f.a.server.webSocketContent
@@ -22,9 +23,10 @@ fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
             }
             bindProtectedSafeMediaRoute(backend)
             bindProtectedTitleRoute(backend)
+            bindProtectedAccountRoute(backend)
         }
         authenticate(optional = true) {
-            bindSafeAccountRoute()
+            bindSafeAccountRoute(backend)
             bindSafeRoomRoute(backend)
             bindSafeTopicRoute(backend)
             bindSafeCommunityRoute(backend)

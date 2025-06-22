@@ -24,7 +24,7 @@ data class UserInfo(
 }
 
 enum class UserLogType {
-    SIGN_IN, SIGN_UP, CREATE, DELETE, UPDATE, JOIN, EXIT
+    SIGN_IN, SIGN_UP, CREATE, DELETE, UPDATE, JOIN, EXIT, ADD_ALTERNATIVE_ACCOUNT, REMOVE_ALTERNATIVE_ACCOUNT
 }
 
 @Serializable
@@ -47,3 +47,6 @@ enum class AlgoType {
 enum class PassType {
     RAW, ANDROID, BIT_WARDEN
 }
+
+@Serializable
+data class AlternativeAccountInfo(val hostId: PrimaryKey, val userInfo: UserInfo)

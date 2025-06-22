@@ -123,15 +123,9 @@ class WebSocketClientImpl(
                         }
 
                         is RoomFrame.NewTopicInfo -> {
-                            val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
-                                val topicInfo = processEncryptedTopic(listOf(frame.topicInfo), sessionModel).first()
-                                RoomFrame.NewTopicInfo(topicInfo)
-                            } else {
-                                frame
-                            }
                             onMessage(frame)
                             listeners.forEach {
-                                it.onReceived(plainFrame)
+                                it.onReceived(frame)
                             }
                         }
 

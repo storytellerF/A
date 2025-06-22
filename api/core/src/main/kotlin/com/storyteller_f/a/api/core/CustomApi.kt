@@ -25,36 +25,32 @@ object CustomApi {
             val get = safeApiWithQuery<TopicInfo, TopicAidQuery>("topics/aid")
         }
 
-        object Search {
-            @Serializable
-            class TopicSearchQuery(
-                val word: List<String>? = null,
-                val parentId: PrimaryKey? = null,
-                val parentType: ObjectType? = null,
-                val nextPageToken: String? = null,
-                val size: Int = 10
-            ) : PageableQuery {
+        @Serializable
+        class TopicSearchQuery(
+            val word: List<String>? = null,
+            val parentId: PrimaryKey? = null,
+            val parentType: ObjectType? = null,
+            val nextPageToken: String? = null,
+            val size: Int = 10,
+        ) : PageableQuery {
 
-                override val pagination: PaginationQuery
-                    get() = PaginationQuery(nextPageToken, size = size)
-            }
-
-            val get = safeApiWithQuery<ServerResponse<TopicInfo>, TopicSearchQuery>("topics/search")
+            override val pagination: PaginationQuery
+                get() = PaginationQuery(nextPageToken, size = size)
         }
 
-        object Recommend {
-            @Serializable
-            class RecommendQuery(
-                val fillHasCommented: Boolean? = null,
-                val nextPageToken: String? = null,
-                val size: Int = 10
-            ) : PageableQuery {
-                override val pagination: PaginationQuery
-                    get() = PaginationQuery(nextPageToken, size = size)
-            }
+        val search = safeApiWithQuery<ServerResponse<TopicInfo>, TopicSearchQuery>("topics/search")
 
-            val get = safeApiWithQuery<ServerResponse<TopicInfo>, RecommendQuery>("topics/recommend")
+        @Serializable
+        class RecommendQuery(
+            val fillHasCommented: Boolean? = null,
+            val nextPageToken: String? = null,
+            val size: Int = 10,
+        ) : PageableQuery {
+            override val pagination: PaginationQuery
+                get() = PaginationQuery(nextPageToken, size = size)
         }
+
+        val recommend = safeApiWithQuery<ServerResponse<TopicInfo>, RecommendQuery>("topics/recommend")
 
         object Id {
             @Serializable
@@ -71,7 +67,7 @@ object CustomApi {
                 class ReactionQuery(
                     val fillHasReacted: Boolean? = null,
                     val nextPageToken: String? = null,
-                    val size: Int = 10
+                    val size: Int = 10,
                 ) : PageableQuery {
                     override val pagination: PaginationQuery
                         get() = PaginationQuery(nextPageToken, size = size)
@@ -101,22 +97,20 @@ object CustomApi {
     }
 
     object Communities {
-        object Search {
-            @Serializable
-            data class CommunitySearchQuery(
-                val joinStatus: JoinStatusSearch? = null,
-                val word: String? = null,
-                val target: PrimaryKey? = null,
-                val hasPoster: PosterSearch? = null,
-                val nextPageToken: String? = null,
-                val size: Int = 10,
-            ) : PageableQuery {
-                override val pagination: PaginationQuery
-                    get() = PaginationQuery(nextPageToken, size = size)
-            }
-
-            val get = safeApiWithQuery<ServerResponse<CommunityInfo>, CommunitySearchQuery>("communities/search")
+        @Serializable
+        data class CommunitySearchQuery(
+            val joinStatus: JoinStatusSearch? = null,
+            val word: String? = null,
+            val target: PrimaryKey? = null,
+            val hasPoster: PosterSearch? = null,
+            val nextPageToken: String? = null,
+            val size: Int = 10,
+        ) : PageableQuery {
+            override val pagination: PaginationQuery
+                get() = PaginationQuery(nextPageToken, size = size)
         }
+
+        val search = safeApiWithQuery<ServerResponse<CommunityInfo>, CommunitySearchQuery>("communities/search")
 
         object Aid {
             @Serializable
@@ -136,7 +130,7 @@ object CustomApi {
                 class CommunityMemberQuery(
                     val word: String? = null,
                     val nextPageToken: String? = null,
-                    val size: Int = 10
+                    val size: Int = 10,
                 )
 
                 val get =
@@ -163,21 +157,19 @@ object CustomApi {
     }
 
     object Rooms {
-        object Search {
-            @Serializable
-            data class RoomSearchQuery(
-                val joinStatus: JoinStatusSearch? = null,
-                val word: String? = null,
-                val community: PrimaryKey? = null,
-                val nextPageToken: String? = null,
-                val size: Int = 10
-            ) : PageableQuery {
-                override val pagination: PaginationQuery
-                    get() = PaginationQuery(nextPageToken, size = size)
-            }
-
-            val get = safeApiWithQuery<ServerResponse<RoomInfo>, RoomSearchQuery>("rooms/search")
+        @Serializable
+        data class RoomSearchQuery(
+            val joinStatus: JoinStatusSearch? = null,
+            val word: String? = null,
+            val community: PrimaryKey? = null,
+            val nextPageToken: String? = null,
+            val size: Int = 10,
+        ) : PageableQuery {
+            override val pagination: PaginationQuery
+                get() = PaginationQuery(nextPageToken, size = size)
         }
+
+        val search = safeApiWithQuery<ServerResponse<RoomInfo>, RoomSearchQuery>("rooms/search")
 
         object Id {
             @Serializable
@@ -250,7 +242,7 @@ object CustomApi {
                     val scopeId: PrimaryKey? = null,
                     val status: TitleStatus? = null,
                     val nextPageToken: String? = null,
-                    val size: Int = 10
+                    val size: Int = 10,
                 ) : PageableQuery {
                     override val pagination: PaginationQuery
                         get() = PaginationQuery(nextPageToken, size = size)
@@ -260,19 +252,17 @@ object CustomApi {
             }
         }
 
-        object Search {
-            @Serializable
-            class UserSearchQuery(
-                val word: String? = null,
-                val nextPageToken: String? = null,
-                val size: Int = 10
-            ) : PageableQuery {
-                override val pagination: PaginationQuery
-                    get() = PaginationQuery(nextPageToken, size = size)
-            }
-
-            val get = safeApiWithQuery<ServerResponse<UserInfo>, UserSearchQuery>("users/search")
+        @Serializable
+        class UserSearchQuery(
+            val word: String? = null,
+            val nextPageToken: String? = null,
+            val size: Int = 10,
+        ) : PageableQuery {
+            override val pagination: PaginationQuery
+                get() = PaginationQuery(nextPageToken, size = size)
         }
+
+        val search = safeApiWithQuery<ServerResponse<UserInfo>, UserSearchQuery>("users/search")
 
         val update = mutationApi<UserInfo, UpdateUserBody>("users/update")
 
@@ -291,7 +281,7 @@ object CustomApi {
             val objectId: PrimaryKey? = null,
             val objectType: ObjectType? = null,
             val nextPageToken: String? = null,
-            val size: Int = 10
+            val size: Int = 10,
         ) : PageableQuery {
             override val pagination: PaginationQuery
                 get() = PaginationQuery(nextPageToken, size = size)
@@ -314,6 +304,7 @@ object CustomApi {
             val objectId: PrimaryKey,
             val objectType: ObjectType,
         )
+
         val getByName = safeApiWithQuery<MediaInfo, MediaSearchQuery>("medias/get-by-name")
     }
 
@@ -326,6 +317,11 @@ object CustomApi {
         val signOut = mutationApi<Unit, Unit>("/accounts/sign_out")
         val signUp = mutationApi<UserInfo, SignUpPack>("/accounts/sign_up")
         val getData = safeApi<String>("/accounts/get_data")
+        object AlternativeAccounts {
+            val get = safeApi<ServerResponse<AlternativeAccountInfo>>("/accounts/alternative_accounts")
+            val add = mutationApi<AlternativeAccountInfo, Unit>("/accounts/alternative_accounts")
+            val delete = mutationApi<Unit, Unit>("/accounts/alternative_accounts")
+        }
     }
 }
 
@@ -348,7 +344,7 @@ class TopicQuery(
     constructor(
         pinType: TopicPinSearch? = null,
         fillHasCommented: Boolean? = null,
-        paginationQuery: PaginationQuery
+        paginationQuery: PaginationQuery,
     ) : this(
         pinType,
         fillHasCommented,

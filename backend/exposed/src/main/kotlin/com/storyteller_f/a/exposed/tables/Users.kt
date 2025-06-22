@@ -12,6 +12,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 object Users : BaseTable() {
     val publicKey = userPublicKey()
@@ -59,7 +60,7 @@ class User(
     }
 }
 
-fun mapUserInfo(it: ResultRow): UserRawResult {
+fun mapUserInfo(it: ResultRow): UserRawResult<User> {
     return UserRawResult(User.wrapRow(it))
 }
 
@@ -67,11 +68,12 @@ fun User.toUserInfo(): UserInfo {
     return UserInfo(id, address, 0, aid, nickname, null)
 }
 
-data class UserRawResult(val user: User)
+data class UserRawResult<T>(val user: T)
 
 object AlternateAccounts : Table() {
     val uid = customPrimaryKey("uid")
     val hostId = customPrimaryKey("host_id")
+    val remark = text("remark").nullable()
     override val primaryKey: PrimaryKey = PrimaryKey(uid)
 
     init {
@@ -79,15 +81,18 @@ object AlternateAccounts : Table() {
     }
 }
 
-class AlternateAccount(val uid: PrimaryKey, val hostId: PrimaryKey) {
+class AlternateAccount(val uid: PrimaryKey, val hostId: PrimaryKey, val remark: String?)  {
     companion object {
         fun wrapRow(row: ResultRow): AlternateAccount {
             return with(AlternateAccounts) {
                 AlternateAccount(
                     row[uid],
-                    row[hostId]
+                    row[hostId],
+                    row[remark]
                 )
             }
         }
     }
 }
+
+data class AlternateAccountRawResult(val alternateAccount: AlternateAccount, val userRawResult: UserRawResult<User>)

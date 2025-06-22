@@ -206,9 +206,10 @@ fun RoomInputGroup(
     val controller = remember {
         CustomAlertDialogController()
     }
+    val sessionManager = LocalSessionManager.current
     val wsClient = LocalWsClient.current
     val listener = remember(input, myInfo) {
-        buildInputBoxContentListener(input, myInfo) {
+        buildInputBoxContentListener(input, myInfo, sessionManager) {
             input = ""
         }
     }
@@ -320,12 +321,19 @@ private fun RoomInputGroupInternal(
 private fun buildInputBoxContentListener(
     input: String,
     userInfo: UserInfo?,
+    sessionManager: UserSessionManager,
     updateInput: (String) -> Unit
 ): WebSocketClientListener {
     return object : WebSocketClientListener {
         override suspend fun onReceived(frame: RoomFrame) {
             if (frame is RoomFrame.NewTopicInfo) {
-                val topicInfo = frame.topicInfo
+                val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
+                    val topicInfo = processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
+                    RoomFrame.NewTopicInfo(topicInfo)
+                } else {
+                    frame
+                }
+                val topicInfo = plainFrame.topicInfo
                 val content = topicInfo.content
                 if (content is TopicContent.Plain && userInfo?.id == topicInfo.author && content.plain == input) {
                     updateInput("")

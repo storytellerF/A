@@ -18,7 +18,7 @@ import io.ktor.server.plugins.*
 import io.ktor.server.routing.*
 
 fun Route.bindSafeTopicRoute(backend: Backend) {
-    CustomApi.Topics.Search.get.invoke(RoutingContext::handleResult) {
+    CustomApi.Topics.search.invoke(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             it.pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchPublicTopics(it, f, uid)
@@ -26,7 +26,7 @@ fun Route.bindSafeTopicRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Topics.Recommend.get.invoke(RoutingContext::handleResult) {
+    CustomApi.Topics.recommend.invoke(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 if (uid == null && it.fillHasCommented == true) {

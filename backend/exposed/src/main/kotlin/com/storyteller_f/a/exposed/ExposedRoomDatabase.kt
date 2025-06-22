@@ -15,6 +15,7 @@ import com.storyteller_f.a.exposed.tables.MemberJoins
 import com.storyteller_f.a.exposed.tables.Room
 import com.storyteller_f.a.exposed.tables.RoomRawResult
 import com.storyteller_f.a.exposed.tables.Rooms
+import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.a.exposed.tables.UserTopicReads
 import com.storyteller_f.a.exposed.tables.Users
 import com.storyteller_f.shared.model.UserPubKeyInfo
@@ -26,7 +27,7 @@ import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.update
 
-class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, val userDatabase: UserDatabase) :
+class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, val userDatabase: UserDatabase<User>) :
     RoomDatabase {
     override suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
         return exposedDatabaseSession.dbSearch {

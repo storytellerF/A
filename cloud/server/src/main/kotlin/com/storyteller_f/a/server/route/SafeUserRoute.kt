@@ -75,7 +75,7 @@ fun Route.bindSafeUserRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Users.Search.get.invoke(RoutingContext::handleResult) {
+    CustomApi.Users.search.invoke(RoutingContext::handleResult) {
         it.pagination(IdentifiablePagingGenerator) { f ->
             backend.searchMembers(null, it.word, f)
         }

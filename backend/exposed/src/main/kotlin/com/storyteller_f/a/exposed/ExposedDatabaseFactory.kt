@@ -3,6 +3,7 @@ package com.storyteller_f.a.exposed
 import com.storyteller_f.a.backend.core.DatabaseConnection
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.exposed.tables.Aids
+import com.storyteller_f.a.exposed.tables.AlternateAccounts
 import com.storyteller_f.a.exposed.tables.AssetTransactions
 import com.storyteller_f.a.exposed.tables.Communities
 import com.storyteller_f.a.exposed.tables.EncryptedKeys
@@ -200,7 +201,7 @@ class ExposedDatabaseSession(val database: Database, val buildType: String) {
     }
 }
 
-object DatabaseFactory {
+object ExposedDatabaseFactory {
     fun connect(connection: DatabaseConnection): Database {
         Napier.d {
             "connect $connection"
@@ -211,6 +212,7 @@ object DatabaseFactory {
 
     private val tables = arrayOf(
         Aids,
+        AlternateAccounts,
         AssetTransactions,
         Communities,
         EncryptedKeys,

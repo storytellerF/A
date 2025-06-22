@@ -4,7 +4,7 @@ import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Config
 import com.storyteller_f.a.exposed.CommunityDatabase
-import com.storyteller_f.a.exposed.DatabaseFactory
+import com.storyteller_f.a.exposed.ExposedDatabaseFactory
 import com.storyteller_f.a.exposed.ExposedCommunityDatabase
 import com.storyteller_f.a.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.exposed.ExposedRoomDatabase
@@ -15,6 +15,7 @@ import com.storyteller_f.a.exposed.RoomDatabase
 import com.storyteller_f.a.exposed.TitleDatabase
 import com.storyteller_f.a.exposed.TopicDatabase
 import com.storyteller_f.a.exposed.UserDatabase
+import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
@@ -75,7 +76,7 @@ fun Application.module() {
     val reader = buildDatabaseReader()
     val backend = buildBackend()
     if (backend.config.buildType == "test") {
-        DatabaseFactory.init(backend.database)
+        ExposedDatabaseFactory.init(backend.database)
     }
     val serverJob = launch {
         backend.sendTopicToRoomMembers()
@@ -318,7 +319,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val topicDocumentService = topicDocumentService(env)
     val mediaService = mediaService(env)
 
-    val database = DatabaseFactory.connect(databaseConnection)
+    val database = ExposedDatabaseFactory.connect(databaseConnection)
     val databaseSession = ExposedDatabaseSession(database, buildType)
     return Backend(
         config,
@@ -328,8 +329,8 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         NameService(),
         database,
         databaseSession,
-        object : com.storyteller_f.a.exposed.Database {
-            override val userDatabase: UserDatabase
+        object : com.storyteller_f.a.exposed.Database<User> {
+            override val userDatabase: UserDatabase<User>
                 get() = ExposedUserDatabase(databaseSession)
             override val topicDatabase: TopicDatabase
                 get() = ExposedTopicDatabase(databaseSession, userDatabase)

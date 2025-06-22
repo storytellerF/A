@@ -127,8 +127,8 @@ suspend fun SessionManager.searchCommunity(
     nextCommunityId: String? = null,
     hasPosterSearch: PosterSearch? = null,
 ) = serviceCatching {
-    CustomApi.Communities.Search.get(
-        CustomApi.Communities.Search.CommunitySearchQuery(
+    CustomApi.Communities.search(
+        CustomApi.Communities.CommunitySearchQuery(
             joinStatusSearch,
             word,
             target,
@@ -156,7 +156,7 @@ suspend fun SessionManager.searchAllMembers(
     size: Int,
     word: String?
 ) = serviceCatching {
-    CustomApi.Users.Search.get(CustomApi.Users.Search.UserSearchQuery(word, nextUserId, size))
+    CustomApi.Users.search(CustomApi.Users.UserSearchQuery(word, nextUserId, size))
 }
 
 suspend fun SessionManager.searchRoomMembers(
@@ -170,8 +170,8 @@ suspend fun SessionManager.searchRoomMembers(
 
 suspend fun SessionManager.getRecommendTopics(nextTopicId: String?, size: Int) =
     serviceCatching {
-        CustomApi.Topics.Recommend.get.invoke(
-            CustomApi.Topics.Recommend.RecommendQuery(
+        CustomApi.Topics.recommend.invoke(
+            CustomApi.Topics.RecommendQuery(
                 currentIsAlreadySignUp,
                 nextTopicId,
                 size = size
@@ -225,8 +225,8 @@ suspend fun SessionManager.searchRooms(
     word: String?,
     communityId: PrimaryKey?
 ) = serviceCatching {
-    CustomApi.Rooms.Search.get.invoke(
-        CustomApi.Rooms.Search.RoomSearchQuery(
+    CustomApi.Rooms.search.invoke(
+        CustomApi.Rooms.RoomSearchQuery(
             joinStatusSearch,
             word,
             communityId,
@@ -280,8 +280,8 @@ suspend fun SessionManager.searchTopics(
     parentType: ObjectType? = null,
     nextTopicId: String? = null
 ) = serviceCatching {
-    CustomApi.Topics.Search.get.invoke(
-        CustomApi.Topics.Search.TopicSearchQuery(
+    CustomApi.Topics.search.invoke(
+        CustomApi.Topics.TopicSearchQuery(
             word,
             parentId,
             parentType,
@@ -484,4 +484,8 @@ suspend fun SessionManager.addDevice(endpointUrl: String) = serviceCatching {
 
 suspend fun SessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatching {
     CustomApi.Medias.Id.extractAlbum.invoke(Path(mediaId), Unit) {}
+}
+
+suspend fun SessionManager.addAlternativeAccount() = serviceCatching {
+    CustomApi.Accounts.AlternativeAccounts.add.invoke(Unit) {}
 }

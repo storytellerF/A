@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.*
+import com.storyteller_f.a.server.service.addAlternativeAccount
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.processUserRawResultToUserInfo
 import com.storyteller_f.shared.*
@@ -378,11 +379,20 @@ fun Route.bindUnprotectedAccountRoute(
     }
 }
 
-fun Route.bindSafeAccountRoute() {
+fun Route.bindSafeAccountRoute(backend: Backend) {
     CustomApi.Accounts.signOut.invoke(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             call.sessions.clear(UserSession::class)
             Result.success(Unit)
+        }
+    }
+
+}
+
+fun Route.bindProtectedAccountRoute(backend: Backend) {
+    CustomApi.Accounts.AlternativeAccounts.add.invoke(RoutingContext::handleResult) {
+        usePrincipal { uid ->
+            backend.addAlternativeAccount(uid)
         }
     }
 }
