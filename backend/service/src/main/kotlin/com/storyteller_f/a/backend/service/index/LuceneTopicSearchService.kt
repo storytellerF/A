@@ -1,4 +1,4 @@
-package com.storyteller_f.backend.service.index
+package com.storyteller_f.a.backend.service.index
 
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch

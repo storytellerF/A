@@ -5,7 +5,7 @@ import com.storyteller_f.a.server.auth.bindProtectedAccountRoute
 import com.storyteller_f.a.server.auth.bindSafeAccountRoute
 import com.storyteller_f.a.server.auth.bindUnprotectedAccountRoute
 import com.storyteller_f.a.server.webSocketContent
-import com.storyteller_f.backend.service.Backend
+import com.storyteller_f.a.backend.service.Backend
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.routing.*

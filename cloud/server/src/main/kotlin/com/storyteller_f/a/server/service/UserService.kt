@@ -10,8 +10,8 @@ import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.a.exposed.tables.UserTopicRead
 import com.storyteller_f.a.exposed.tables.toUserInfo
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.backend.service.Backend
-import com.storyteller_f.backend.service.getUserInfo
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.getUserInfo
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
@@ -25,7 +25,6 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.shared.utils.recoverResult
 import io.ktor.server.plugins.*
 
 suspend fun Backend.updateUser(

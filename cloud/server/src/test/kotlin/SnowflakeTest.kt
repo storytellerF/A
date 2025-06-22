@@ -1,5 +1,5 @@
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.backend.service.naming.NameService
+import com.storyteller_f.a.backend.service.naming.NameService
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.nio.file.Paths

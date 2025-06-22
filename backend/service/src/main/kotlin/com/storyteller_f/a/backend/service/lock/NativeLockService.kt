@@ -1,4 +1,4 @@
-package com.storyteller_f.backend.service.lock
+package com.storyteller_f.a.backend.service.lock
 
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex

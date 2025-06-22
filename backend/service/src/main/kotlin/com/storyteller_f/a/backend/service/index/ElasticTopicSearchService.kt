@@ -1,4 +1,4 @@
-package com.storyteller_f.backend.service.index
+package com.storyteller_f.a.backend.service.index
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient
 import co.elastic.clients.elasticsearch._types.ElasticsearchException

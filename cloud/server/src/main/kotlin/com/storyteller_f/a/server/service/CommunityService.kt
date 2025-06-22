@@ -5,6 +5,9 @@ import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.createCommunityRoomsRaw
+import com.storyteller_f.a.backend.service.processCommunityRawResultToCommunityInfo
 import com.storyteller_f.a.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.exposed.isDup
 import com.storyteller_f.a.exposed.query.PaginationResult
@@ -13,7 +16,6 @@ import com.storyteller_f.a.exposed.tables.CommunityRawResult
 import com.storyteller_f.a.exposed.tables.toCommunityIfo
 import com.storyteller_f.a.exposed.toJoinSearch
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.backend.service.*
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserLogType

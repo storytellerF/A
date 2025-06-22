@@ -5,13 +5,14 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.processRoomRawResultToRoomInfo
 import com.storyteller_f.a.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.exposed.isDup
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.tables.Room
 import com.storyteller_f.a.exposed.tables.RoomRawResult
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.backend.service.*
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleSearchType
