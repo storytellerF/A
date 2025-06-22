@@ -127,9 +127,7 @@ private fun doTest(
     env: Map<String, String>,
     block: suspend (ApplicationTestBuilder) -> Unit
 ) {
-    val json = Json {
-        ignoreUnknownKeys = true
-    }
+
     testApplication {
         environment {
             config = MapApplicationConfig().apply {
@@ -143,15 +141,8 @@ private fun doTest(
         }
         coroutineScope {
             val task = CompletableDeferred<Unit>()
-            val job = launch {
-                suspendCoroutine { continuation ->
-                    thread {
-                        receiveExplainResult(task, json, continuation)
-                    }
-                }
-                Napier.i {
-                    "server socket job finished"
-                }
+            val job = launch(Dispatchers.IO) {
+                receiveExplainResult(task)
             }
             task.await()
             block(this@testApplication)
@@ -160,17 +151,19 @@ private fun doTest(
     }
 }
 
-private fun CoroutineScope.receiveExplainResult(
+private suspend fun receiveExplainResult(
     task: CompletableDeferred<Unit>,
-    json: Json,
-    continuation: Continuation<Unit>
 ) {
+    val json = Json {
+        ignoreUnknownKeys = true
+    }
     ServerSocket(8888).apply {
         soTimeout = 1000 // 5秒超时
     }.use { serverSocket ->
         task.complete(Unit)
-        while (isActive) {
+        while (true) {
             try {
+                yield()
                 serverSocket.accept().use { socket ->
                     socket.getInputStream().bufferedReader().use {
                         val explainResult = json.decodeFromString<ExplainResult>(it.readText())
@@ -178,6 +171,8 @@ private fun CoroutineScope.receiveExplainResult(
                     }
                 }
             } catch (_: SocketTimeoutException) {
+            } catch (_: CancellationException) {
+                break
             } catch (e: Exception) {
                 Napier.e(throwable = e) {
                     "server socket error"
@@ -185,9 +180,8 @@ private fun CoroutineScope.receiveExplainResult(
             }
         }
         Napier.i {
-            "server socket closed"
+            "server socket done"
         }
-        continuation.resume(Unit)
     }
 }
 

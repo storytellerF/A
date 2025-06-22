@@ -3,6 +3,7 @@ package com.storyteller_f.backend.service.media
 import com.storyteller_f.a.backend.core.CopyPack
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
+import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,14 +33,15 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
 
     override suspend fun upload(
         bucketName: String,
-        uploadPacks: List<UploadPack>
+        uploadPacks: List<UploadPack>,
     ): Result<List<MediaRecord>> {
-        return withContext(Dispatchers.IO) {
+        return useFileSystem {
             val bucketPath = base.resolve(bucketName)
             uploadPacks.map { uploadPack ->
                 val target = bucketPath.resolve(uploadPack.newFullName).createParentDirectories()
                 Files.copy(uploadPack.path.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
             }
+        }.mapResult {
             get(bucketName, uploadPacks.map {
                 it.newFullName
             })
@@ -47,8 +49,8 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
     }
 
     override suspend fun get(bucketName: String, names: List<String>): Result<List<MediaRecord>> {
-        return withContext(Dispatchers.IO) {
-            Result.success(names.mapNotNull {
+        return useFileSystem {
+            names.mapNotNull {
                 val mediaPath = base.resolve("$bucketName/$it")
                 if (mediaPath.exists()) {
                     MediaRecord(
@@ -61,24 +63,22 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
                 } else {
                     null
                 }
-            })
+            }
         }
     }
 
     @OptIn(ExperimentalPathApi::class)
     override suspend fun clean(bucketName: String): Result<Unit> {
-        return withContext(Dispatchers.IO) {
-            runCatching {
-                val bucketPath = base.resolve(bucketName)
-                bucketPath.deleteRecursively()
-            }
+        return useFileSystem {
+            val bucketPath = base.resolve(bucketName)
+            bucketPath.deleteRecursively()
         }
     }
 
     override suspend fun list(bucketName: String, prefix: String): Result<List<MediaRecord>> {
-        return withContext(Dispatchers.IO) {
+        return useFileSystem {
             val p = base.resolve("$bucketName/$prefix")
-            val children = buildList<String?> {
+            buildList<String?> {
                 p.visitFileTree(1) {
                     onVisitFile { file, _ ->
                         add("$prefix${file.name}")
@@ -86,17 +86,18 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
                     }
                 }
             }.filterNotNull()
-            get(bucketName, children)
+        }.mapResult {
+            get(bucketName, it)
         }
     }
 
     override suspend fun copy(
         bucketName: String,
-        copyPacks: List<CopyPack>
+        copyPacks: List<CopyPack>,
     ): Result<List<MediaRecord>> {
-        return withContext(Dispatchers.IO) {
+        return useFileSystem {
             val bucketPath = base.resolve(bucketName)
-            val newNames = copyPacks.map {
+            copyPacks.map {
                 val p = bucketPath.resolve(it.origin)
                 if (!p.exists()) {
                     throw Exception("${it.origin} not exists")
@@ -105,26 +106,35 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
                 p.copyTo(targetFile, true)
                 it.new
             }
-            get(bucketName, newNames)
+        }.mapResult {
+            get(bucketName, it)
         }
     }
 
     override suspend fun getInputStream(
         bucketName: String,
-        name: String
+        name: String,
     ): Result<InputStream> {
-        return withContext(Dispatchers.IO) {
+        return useFileSystem {
             val mediaPath = base.resolve("$bucketName/$name")
             if (mediaPath.exists()) {
-                Result.success(mediaPath.inputStream())
+                mediaPath.inputStream()
             } else {
-                Result.failure(Exception("file $name not exists"))
+                throw Exception("file $name not exists")
             }
         }
     }
 
-    fun getPathResponse(it: List<String>): Path? {
-        return runCatching {
+    suspend fun <T> useFileSystem(block: suspend () -> T): Result<T> {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                block()
+            }
+        }
+    }
+
+    suspend fun getPathResponse(it: List<String>): Path? {
+        return useFileSystem {
             val path = base.resolve(it.joinToString("/"))
             val file = path.toRealPath()
             if (file.pathString != path.absolutePathString()) {
