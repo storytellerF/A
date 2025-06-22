@@ -4,7 +4,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Config
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.exposed.CommunityDatabase
-import com.storyteller_f.a.exposed.DatabaseFactory
+import com.storyteller_f.a.exposed.ExposedDatabaseFactory
 import com.storyteller_f.a.exposed.ExposedCommunityDatabase
 import com.storyteller_f.a.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.exposed.ExposedRoomDatabase
@@ -105,7 +105,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val topicDocumentService = topicDocumentService(env)
     val mediaService = mediaService(env)
 
-    val database = DatabaseFactory.connect(databaseConnection)
+    val database = ExposedDatabaseFactory.connect(databaseConnection)
     val databaseSession = ExposedDatabaseSession(database, buildType)
     return Backend(
         config,

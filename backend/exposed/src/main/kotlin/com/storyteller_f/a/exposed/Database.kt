@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.exposed.query.PaginationResult
+import com.storyteller_f.a.exposed.tables.AlternateAccountRawResult
 import com.storyteller_f.a.exposed.tables.Community
 import com.storyteller_f.a.exposed.tables.CommunityRawResult
 import com.storyteller_f.a.exposed.tables.Media
@@ -42,33 +43,33 @@ import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 
-interface Database {
-    val userDatabase: UserDatabase
+interface Database<T> {
+    val userDatabase: UserDatabase<T>
     val topicDatabase: TopicDatabase
     val titleDatabase: TitleDatabase
     val communityDatabase: CommunityDatabase
     val roomData: RoomDatabase
 }
 
-interface UserDatabase {
+interface UserDatabase<T> {
     suspend fun getUserAid(id: PrimaryKey): Result<String?>
-    suspend fun getUserRawResult(objectFetch: ObjectFetch): Result<UserRawResult?>
+    suspend fun getUserRawResult(objectFetch: ObjectFetch): Result<UserRawResult<T>?>
     suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,
         word: String?,
         primaryKeyFetch: PrimaryKeyFetch
-    ): Result<PaginationResult<UserRawResult>>
+    ): Result<PaginationResult<UserRawResult<T>>>
 
-    suspend fun getUserRawResultAndPublicKeyByAddress(ad: String): Result<Pair<UserRawResult, String>?>
+    suspend fun getUserRawResultAndPublicKeyByAddress(ad: String): Result<Pair<UserRawResult<T>, String>?>
     suspend fun createUser(user: User): Result<Unit>
     suspend fun isUserNotExists(pk: String): Result<Boolean>
     suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody): Result<Boolean>
     suspend fun checkUserExists(id: Long): Result<Boolean>
     suspend fun getUserAuthDataByAid(predicate: SqlExpressionBuilder.() -> Op<Boolean>): Result<Pair<String, Long>?>
     suspend fun getUserAuthDataBy(predicate: SqlExpressionBuilder.() -> Op<Boolean>): Result<Pair<String, Long>?>
-    suspend fun getUserRawResultList(objectListFetch: ObjectListFetch): Result<List<UserRawResult>>
+    suspend fun getUserRawResultList(objectListFetch: ObjectListFetch): Result<List<UserRawResult<T>>>
     suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch): Result<List<Pair<Long, Long>>>
-    suspend fun getUserAlternatUserRawResultList(uid: PrimaryKey): Result<List<UserRawResult>>
+    suspend fun getUserAlternatUserRawResultList(uid: PrimaryKey): Result<List<UserRawResult<T>>>
     suspend fun addReadLog(userTopicRead: UserTopicRead): Result<Unit>
     suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<UserTopicRead>>
     suspend fun insertUserLog(log: UserLog): Result<Unit>
@@ -110,6 +111,8 @@ interface UserDatabase {
     ): Result<List<ResultRow>>
 
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
+    suspend fun getAlternativeRawResultByHost(hostId: PrimaryKey): Result<List<AlternateAccountRawResult>>
+    suspend fun createAlternativeRawResult(hostId: PrimaryKey, user: User) : Result<Unit>
 }
 
 interface TopicDatabase {

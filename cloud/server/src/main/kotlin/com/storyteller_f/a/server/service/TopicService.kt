@@ -521,7 +521,7 @@ suspend fun Backend.checkRootAdminPermission(
 }
 
 suspend fun Backend.searchPublicTopics(
-    search: CustomApi.Topics.Search.TopicSearchQuery,
+    search: CustomApi.Topics.TopicSearchQuery,
     primaryKeyFetch: PrimaryKeyFetch,
     uid: PrimaryKey?,
 ): Result<PaginationResult<TopicInfo>?> {

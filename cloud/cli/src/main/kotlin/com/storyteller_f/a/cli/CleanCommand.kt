@@ -1,6 +1,6 @@
 package com.storyteller_f.a.cli
 
-import com.storyteller_f.a.exposed.DatabaseFactory
+import com.storyteller_f.a.exposed.ExposedDatabaseFactory
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ExperimentalCli
@@ -10,8 +10,8 @@ import kotlinx.coroutines.runBlocking
 @OptIn(ExperimentalCli::class)
 class CleanCommand : Subcommand("clean", "clean all data") {
     override fun execute() {
-        DatabaseFactory.connect(backend.config.databaseConnection)
-        DatabaseFactory.clean(backend.database)
+        ExposedDatabaseFactory.connect(backend.config.databaseConnection)
+        ExposedDatabaseFactory.clean(backend.database)
         Napier.i {
             "database tables delete done"
         }
@@ -28,8 +28,8 @@ class CleanCommand : Subcommand("clean", "clean all data") {
 @OptIn(ExperimentalCli::class)
 class InitTableCommand : Subcommand("init", "init table data") {
     override fun execute() {
-        DatabaseFactory.connect(backend.config.databaseConnection)
-        DatabaseFactory.init(backend.database)
+        ExposedDatabaseFactory.connect(backend.config.databaseConnection)
+        ExposedDatabaseFactory.init(backend.database)
         Napier.i {
             "init done"
         }

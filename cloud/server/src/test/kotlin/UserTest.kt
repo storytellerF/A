@@ -1,4 +1,5 @@
 import com.storyteller_f.a.client_lib.UploadData
+import com.storyteller_f.a.client_lib.addAlternativeAccount
 import com.storyteller_f.a.client_lib.getUserInfo
 import com.storyteller_f.a.client_lib.getUserInfoByAid
 import com.storyteller_f.a.client_lib.updateUserInfo
@@ -58,6 +59,14 @@ class UserTest {
         }
         loginSession(session) {
             assertEquals(session.uid, it.uid)
+        }
+    }
+    @Test
+    fun `test add alternative account`() = test {
+        attachSession {
+            val alternativeAccountInfo = addAlternativeAccount().getOrThrow()
+            alternativeAccountInfo
+            assertEquals(it.uid, alternativeAccountInfo.hostId)
         }
     }
 }

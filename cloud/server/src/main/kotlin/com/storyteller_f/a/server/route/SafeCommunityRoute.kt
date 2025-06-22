@@ -16,7 +16,7 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 
 fun Route.bindSafeCommunityRoute(backend: Backend) {
-    CustomApi.Communities.Search.get(RoutingContext::handleResult) {
+    CustomApi.Communities.search(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             it.pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchCommunities(uid, it, f)

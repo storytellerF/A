@@ -6,27 +6,7 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.exposed.query.buildSearchMembersQuery
-import com.storyteller_f.a.exposed.tables.Aids
-import com.storyteller_f.a.exposed.tables.AlternateAccounts
-import com.storyteller_f.a.exposed.tables.AssetTransaction
-import com.storyteller_f.a.exposed.tables.Media
-import com.storyteller_f.a.exposed.tables.MediaRefs
-import com.storyteller_f.a.exposed.tables.Medias
-import com.storyteller_f.a.exposed.tables.MemberJoin
-import com.storyteller_f.a.exposed.tables.MemberJoins
-import com.storyteller_f.a.exposed.tables.TaskRecord
-import com.storyteller_f.a.exposed.tables.TaskRecords
-import com.storyteller_f.a.exposed.tables.Topic
-import com.storyteller_f.a.exposed.tables.User
-import com.storyteller_f.a.exposed.tables.UserDevice
-import com.storyteller_f.a.exposed.tables.UserDevices
-import com.storyteller_f.a.exposed.tables.UserLog
-import com.storyteller_f.a.exposed.tables.UserLogs
-import com.storyteller_f.a.exposed.tables.UserRawResult
-import com.storyteller_f.a.exposed.tables.UserTopicRead
-import com.storyteller_f.a.exposed.tables.UserTopicReads
-import com.storyteller_f.a.exposed.tables.Users
-import com.storyteller_f.a.exposed.tables.mapUserInfo
+import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.UpdateUserBody
@@ -37,22 +17,10 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.countDistinct
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
-import org.jetbrains.exposed.sql.upsert
 
-class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : UserDatabase {
+class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : UserDatabase<User> {
     override suspend fun getUserAid(id: PrimaryKey) = exposedUserDatabase.dbSearch {
         search {
             Aids.selectAll().where {
@@ -65,8 +33,8 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun getUserRawResult(
-        objectFetch: ObjectFetch
-    ): Result<UserRawResult?> {
+        objectFetch: ObjectFetch,
+    ): Result<UserRawResult<User>?> {
         return exposedUserDatabase.dbSearch {
             search {
                 Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
@@ -83,8 +51,8 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     override suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,
         word: String?,
-        primaryKeyFetch: PrimaryKeyFetch
-    ): Result<PaginationResult<UserRawResult>> {
+        primaryKeyFetch: PrimaryKeyFetch,
+    ): Result<PaginationResult<UserRawResult<User>>> {
         return exposedUserDatabase.dbSearch {
             search {
                 buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(
@@ -106,8 +74,8 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun getUserRawResultAndPublicKeyByAddress(
-        ad: String
-    ): Result<Pair<UserRawResult, String>?> {
+        ad: String,
+    ): Result<Pair<UserRawResult<User>, String>?> {
         return exposedUserDatabase.dbSearch {
             search {
                 Users
@@ -125,18 +93,22 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun createUser(
-        user: User
+        user: User,
     ): Result<Unit> {
         return exposedUserDatabase.dbQuery {
-            check(Users.insert {
-                it[Users.id] = user.id
-                it[Users.publicKey] = user.publicKey
-                it[Users.address] = user.address
-                it[Users.nickname] = user.nickname
-                it[Users.createdTime] = user.createdTime
-            }.insertedCount > 0) {
-                "insert user failed"
-            }
+            createUserRaw(user)
+        }
+    }
+
+    private fun createUserRaw(user: User) {
+        check(Users.insert {
+            it[Users.id] = user.id
+            it[Users.publicKey] = user.publicKey
+            it[Users.address] = user.address
+            it[Users.nickname] = user.nickname
+            it[Users.createdTime] = user.createdTime
+        }.insertedCount > 0) {
+            "insert user failed"
         }
     }
 
@@ -153,7 +125,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
 
     override suspend fun updateUserInfo(
         id: PrimaryKey,
-        newUser: UpdateUserBody
+        newUser: UpdateUserBody,
     ): Result<Boolean> {
         return exposedUserDatabase.dbQuery {
             listOf({
@@ -202,7 +174,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun getUserAuthDataByAid(
-        predicate: SqlExpressionBuilder.() -> Op<Boolean>
+        predicate: SqlExpressionBuilder.() -> Op<Boolean>,
     ): Result<Pair<String, Long>?> {
         return exposedUserDatabase.dbSearch {
             search {
@@ -217,7 +189,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun getUserAuthDataBy(
-        predicate: SqlExpressionBuilder.() -> Op<Boolean>
+        predicate: SqlExpressionBuilder.() -> Op<Boolean>,
     ): Result<Pair<String, Long>?> {
         return exposedUserDatabase.dbSearch {
             search {
@@ -229,7 +201,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         }
     }
 
-    override suspend fun getUserRawResultList(objectListFetch: ObjectListFetch): Result<List<UserRawResult>> {
+    override suspend fun getUserRawResultList(objectListFetch: ObjectListFetch): Result<List<UserRawResult<User>>> {
         return exposedUserDatabase.dbSearch {
             search {
                 Users
@@ -263,7 +235,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         }
     }
 
-    override suspend fun getUserAlternatUserRawResultList(uid: PrimaryKey): Result<List<UserRawResult>> {
+    override suspend fun getUserAlternatUserRawResultList(uid: PrimaryKey): Result<List<UserRawResult<User>>> {
         return exposedUserDatabase.dbSearch {
             search {
                 Users.join(AlternateAccounts, JoinType.INNER, Users.id, AlternateAccounts.hostId) {
@@ -290,7 +262,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
 
     override suspend fun getTopicReadList(
         parentIds: List<PrimaryKey>,
-        uid: PrimaryKey
+        uid: PrimaryKey,
     ): Result<List<UserTopicRead>> {
         return exposedUserDatabase.dbSearch {
             search {
@@ -330,7 +302,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
 
     override suspend fun removeDevice(
         uid: PrimaryKey,
-        endpointUrl: String
+        endpointUrl: String,
     ): Result<Int> {
         return exposedUserDatabase.dbQuery {
             UserDevices.deleteWhere {
@@ -352,7 +324,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
 
     override suspend fun isMemberJoined(
         objectId: PrimaryKey,
-        uid: PrimaryKey?
+        uid: PrimaryKey?,
     ): Result<Boolean> {
         return if (uid == null) {
             Result.success(false)
@@ -380,7 +352,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
 
     override suspend fun exit(
         containerId: PrimaryKey,
-        id: PrimaryKey
+        id: PrimaryKey,
     ): Result<Int> {
         return exposedUserDatabase.dbQuery {
             MemberJoins.deleteWhere {
@@ -412,7 +384,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
 
     override suspend fun getUserJoinedTime(
         parentIds: List<PrimaryKey>,
-        uid: PrimaryKey
+        uid: PrimaryKey,
     ): Result<List<MemberJoin>> {
         return exposedUserDatabase.dbSearch {
             search {
@@ -440,7 +412,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
 
     override suspend fun getContainerInfo(
         parentIds: List<PrimaryKey>,
-        uid: PrimaryKey?
+        uid: PrimaryKey?,
     ): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>> {
         return merge({
             if (uid != null) {
@@ -473,7 +445,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         acgList: List<Pair<PrimaryKey, Int>>,
         userAcgMap: Map<Long, Long>,
         list: List<Topic>,
-        taskRecordId: PrimaryKey
+        taskRecordId: PrimaryKey,
     ): Result<Unit> {
         return exposedUserDatabase.dbQuery {
             acgList.forEach { (id, acg) ->
@@ -506,7 +478,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
 
     override suspend fun getMediaPaginationList(
         uid: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<Pair<List<Media>, Long>> {
         return exposedUserDatabase.dbSearch {
             search {
@@ -579,7 +551,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     override suspend fun insertMediaRefs(
         objectId: PrimaryKey,
         objectType: ObjectType,
-        mediaName: List<Pair<PrimaryKey, String>>
+        mediaName: List<Pair<PrimaryKey, String>>,
     ): Result<List<ResultRow>> {
         return exposedUserDatabase.dbQuery {
             MediaRefs.batchInsert(mediaName) {
@@ -601,4 +573,33 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
             first(TaskRecord::wrapRow)
         }
     }
+
+    override suspend fun getAlternativeRawResultByHost(hostId: PrimaryKey): Result<List<AlternateAccountRawResult>> {
+        return exposedUserDatabase.dbSearch {
+            search {
+                AlternateAccounts.join(Users, JoinType.INNER, AlternateAccounts.uid, Users.id)
+                    .select(Users.fields + AlternateAccounts.fields).where {
+                    AlternateAccounts.hostId eq hostId
+                }
+            }
+            map {
+                val alternateAccount = AlternateAccount.wrapRow(it)
+                val user = User.wrapRow(it)
+                AlternateAccountRawResult(alternateAccount, UserRawResult(user))
+            }
+        }
+    }
+
+    override suspend fun createAlternativeRawResult(hostId: PrimaryKey, user: User): Result<Unit> {
+        return exposedUserDatabase.dbQuery {
+            createUserRaw(user)
+            check(AlternateAccounts.insert {
+                it[this.hostId] = hostId
+                it[uid] = user.id
+            }.insertedCount > 0) {
+                "Insert alternate account failed"
+            }
+        }
+    }
+
 }

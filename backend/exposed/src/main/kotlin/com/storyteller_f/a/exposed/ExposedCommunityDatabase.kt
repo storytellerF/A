@@ -14,6 +14,7 @@ import com.storyteller_f.a.exposed.tables.Community
 import com.storyteller_f.a.exposed.tables.CommunityRawResult
 import com.storyteller_f.a.exposed.tables.MemberJoin
 import com.storyteller_f.a.exposed.tables.MemberJoins
+import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.a.exposed.tables.UserTopicReads
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
@@ -30,7 +31,7 @@ import org.jetbrains.exposed.sql.update
 
 class ExposedCommunityDatabase(
     val exposedDatabaseSession: ExposedDatabaseSession,
-    val userDatabase: UserDatabase
+    val userDatabase: UserDatabase<User>
 ) : CommunityDatabase {
     override suspend fun checkCommunityExists(parentId: PrimaryKey): Result<List<Long>> {
         return exposedDatabaseSession.dbSearch {
