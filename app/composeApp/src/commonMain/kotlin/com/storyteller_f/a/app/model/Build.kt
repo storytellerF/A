@@ -203,13 +203,6 @@ fun createMediaListViewModel(
 }
 
 @Composable
-fun createAllMediaListViewModel(
-    objectTuple: ObjectTuple
-) = viewModel(keys = listOf("all-media", objectTuple.objectId)) { client, _ ->
-    AllMediaListViewModel(client, objectTuple.objectId, objectTuple.objectType)
-}
-
-@Composable
 fun createMemberViewModel(
     objectId: PrimaryKey,
     objectType: ObjectType

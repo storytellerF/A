@@ -149,7 +149,8 @@ private fun TopicMenuList(
                 ObjectType.TOPIC,
                 topicInfo.id,
                 true,
-                topicInfo.rootId.takeIf { topicInfo.rootType == ObjectType.ROOM && topicInfo.isEncrypted }
+                topicInfo.rootId.takeIf { topicInfo.rootType == ObjectType.ROOM && topicInfo.isEncrypted },
+                null
             )
         }
     }
@@ -168,7 +169,7 @@ private fun TopicMenuList(
 
 suspend fun pinOrUnpinTopic(
     topicInfo: TopicInfo,
-    sessionManager: SessionManager
+    sessionManager: SessionManager,
 ): Result<TopicInfo> {
     return globalDialogState.use {
         if (topicInfo.isPin) {
@@ -215,7 +216,7 @@ fun TopicTranslateSheet(
     showSheet: Boolean,
     sheetState: SheetState,
     topicInfo: TopicInfo,
-    hideSheet: () -> Unit
+    hideSheet: () -> Unit,
 ) {
     BaseSheet(showSheet, sheetState, hideSheet) {
         SheetContainer {
@@ -250,7 +251,7 @@ fun TopicTranslateSheet(
 private fun BoxScope.TopicTranslateSheetInternal(
     result: Result<Flow<GPTOutput>>?,
     topicInfo: TopicInfo,
-    content: TopicContent.Plain
+    content: TopicContent.Plain,
 ) {
     when {
         result == null -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))

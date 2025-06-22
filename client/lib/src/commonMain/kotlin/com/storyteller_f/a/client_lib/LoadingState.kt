@@ -40,7 +40,7 @@ interface LoadingHandler<T> {
     fun refresh()
 }
 
-class FixedLoadingHandler<T>(val load: () -> Unit = {}) : LoadingHandler<T> {
+class FixedLoadingHandler<T>() : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
     override val data = MutableStateFlow<T?>(null)
 
@@ -59,7 +59,6 @@ class FixedLoadingHandler<T>(val load: () -> Unit = {}) : LoadingHandler<T> {
     }
 
     override fun refresh() {
-        load()
     }
 }
 

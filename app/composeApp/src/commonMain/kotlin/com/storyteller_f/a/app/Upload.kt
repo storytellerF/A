@@ -61,8 +61,9 @@ fun UploadInternal(my: UserInfo?, session: UploadSession) {
         Scaffold { paddingValues ->
             Column(modifier = Modifier.padding(top = paddingValues.calculateTopPadding())) {
                 LazyColumn(contentPadding = PaddingValues(20.dp)) {
-                    items(viewModel.handlers) {
-                        UploadItem(it)
+                    items(session.list.size) {
+                        val file = session.list[it]
+                        UploadItem(viewModel.handlers[it], file)
                     }
                 }
             }
@@ -75,8 +76,8 @@ fun UploadInternal(my: UserInfo?, session: UploadSession) {
 }
 
 @Composable
-fun UploadItem(p: Pair<LoadingHandler<MediaInfo>, ClientFile>) {
-    val (handler, file) = p
+fun UploadItem(p: LoadingHandler<MediaInfo>, file: ClientFile) {
+    val handler = p
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
     UploadItem(file, data, state) {

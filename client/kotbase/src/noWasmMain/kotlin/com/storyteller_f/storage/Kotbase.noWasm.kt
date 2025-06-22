@@ -25,7 +25,7 @@ actual fun createKotbaseStorageSource(scope: String?): StorageSource {
 
 class KotbaseObservable<T>(
     private val listenerToken: ListenerToken,
-    override val task: CompletableDeferred<List<T>>
+    override val task: CompletableDeferred<List<T>>,
 ) :
     StorageObservable<T> {
     override fun remove() {
@@ -37,7 +37,7 @@ class KotbaseObservable<T>(
 class KotbaseStorageCollection<T>(
     val collection: KotbaseCollection,
     val source: KotbaseStorageSource,
-    val serializer: KSerializer<T>
+    val serializer: KSerializer<T>,
 ) :
     StorageCollection<T> {
     val json = Json {
@@ -45,13 +45,7 @@ class KotbaseStorageCollection<T>(
     }
 
     override fun saveDocument(id: String, t: T) {
-        try {
-            collection.save(MutableDocument(id, json.encodeToString(serializer, t)))
-        } catch (e: Exception) {
-            Napier.e(throwable = e, tag = "DatabaseSource") {
-                "save data failed to ${collection.name}"
-            }
-        }
+        collection.save(MutableDocument(id, json.encodeToString(serializer, t)))
     }
 
     override fun observeDatum(expression: StorageExpression): Flow<T?> {
@@ -94,8 +88,8 @@ class KotbaseStorageCollection<T>(
     }
 
     private fun WhereBuilder.buildExpression(expression: StorageExpression): Expression = when (expression) {
-        is StorageExpression.IdEq -> (expression.field) equalTo expression.value
-        is StorageExpression.StrEq -> (expression.field) equalTo expression.value
+        is StorageExpression.IdEq -> expression.field equalTo expression.value
+        is StorageExpression.StrEq -> expression.field equalTo expression.value
         is StorageExpression.Less -> expression.field lessThan expression.value
         is StorageExpression.StrLess -> expression.field lessThan expression.value
     }
@@ -110,7 +104,7 @@ class KotbaseStorageCollection<T>(
         orders: List<StorageOrder>,
         size: Int,
         vararg expressions: StorageExpression,
-        invalidate: () -> Unit
+        invalidate: () -> Unit,
     ): StorageObservable<T> {
         val task = CompletableDeferred<List<T>>()
         val selectQuery = select(all()).from(collection)

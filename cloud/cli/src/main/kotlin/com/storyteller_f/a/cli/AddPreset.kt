@@ -4,18 +4,15 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.exposed.ExposedDatabaseFactory
-import com.storyteller_f.a.exposed.tables.Aids
-import com.storyteller_f.a.exposed.tables.Community
-import com.storyteller_f.a.exposed.tables.EncryptedKeys
-import com.storyteller_f.a.exposed.tables.Room
-import com.storyteller_f.a.exposed.tables.Topics
-import com.storyteller_f.a.exposed.tables.User
+import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.backend.service.Backend
+import com.storyteller_f.backend.service.getMediaInfoList
 import com.storyteller_f.backend.service.index.TopicDocument
 import com.storyteller_f.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
+import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetRoom
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetUser
@@ -39,7 +36,7 @@ class EncryptedTopicTuple(
     val encryptedContent: ByteArray,
     val aesKey: ByteArray,
     val id: PrimaryKey,
-    val presetTopic: PresetTopic
+    val presetTopic: PresetTopic,
 )
 
 data class UserPresetTuple(
@@ -47,7 +44,7 @@ data class UserPresetTuple(
     val pic: PrimaryKey?,
     val publicKey: String,
     val address: String,
-    val id: PrimaryKey
+    val id: PrimaryKey,
 )
 
 class InsertTopicTuple(
@@ -56,7 +53,14 @@ class InsertTopicTuple(
     val level: Int,
     val id: PrimaryKey,
     val content: ByteArray,
-    val isEncrypted: Boolean
+    val isEncrypted: Boolean,
+)
+
+class InsertCommunityTuple(
+    val community: PresetCommunity,
+    val icon: PrimaryKey?,
+    val id: PrimaryKey,
+    val font: PrimaryKey?,
 )
 
 @Suppress("LargeClass")
@@ -174,11 +178,12 @@ class AddPreset : Subcommand("add", "add entry") {
         val data = communityData.map {
             val id = SnowflakeFactory.nextId()
             val icon = it.icon
-            if (icon == null) {
-                Triple(it, null, id)
+            val font = it.font
+            val iconMedia = if (icon == null) {
+                null
             } else {
                 val path = File(parentDir, icon)
-                val mediaInfo = uploadFilesAfterDetectContentTypeAndDimension(
+                uploadFilesAfterDetectContentTypeAndDimension(
                     listOf(
                         UploadPack(
                             path,
@@ -188,30 +193,36 @@ class AddPreset : Subcommand("add", "add entry") {
                             path.length(),
                         )
                     )
-                ).getOrThrow().first()
-                Triple(it, mediaInfo?.id, id)
+                ).getOrThrow().first()?.id
             }
+            val fontMedia = if (font == null) {
+                null
+            } else {
+                backend.getMediaInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
+            }
+            InsertCommunityTuple(it, iconMedia, id, fontMedia)
         }
         val userMap = exposedDatabase.userDatabase.getUserRawResultList(ObjectListFetch.AidListFetch(data.flatMap {
-            it.first.users.orEmpty() + (it.first.admin ?: "System")
+            it.community.users.orEmpty() + (it.community.admin ?: "System")
         }.distinct())).getOrThrow().associate {
             it.user.aid to it.user
         }
         batchAddCommunities(data.map {
             Community(
-                it.third,
+                it.id,
                 now(),
-                it.first.id,
-                it.first.name,
-                userMap[it.first.admin ?: "System"]!!.id,
-                it.second
+                it.community.id,
+                it.community.name,
+                userMap[it.community.admin ?: "System"]!!.id,
+                it.icon,
+                fontId = it.font,
             )
         }, data.map {
-            it.third to it.first.users?.map { s ->
+            it.id to it.community.users?.map { s ->
                 userMap[s]!!.id
             }.orEmpty() + userMap["System"]!!.id
         }, data.map {
-            Triple(userMap[it.first.admin ?: "System"]!!.id, it.third, it.first.id)
+            Triple(userMap[it.community.admin ?: "System"]!!.id, it.id, it.community.id)
         }).getOrThrow()
     }
 
@@ -262,10 +273,10 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun Backend.getUserData(
         userList: List<PresetUser>,
-        parentDir: File?
+        parentDir: File?,
     ): List<User> {
         return userList.map {
-            val id = SnowflakeFactory.nextId()
+            val id = it.id ?: SnowflakeFactory.nextId()
             val derPublicKey =
                 getDerPublicKeyFromPrivateKey(
                     File(parentDir, it.privateKey).readText().replace("\r\n", "\n")
@@ -291,7 +302,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
         }.map {
             User(
-                it.presetUser.id,
+                it.presetUser.aid,
                 it.publicKey,
                 it.address,
                 it.pic,
@@ -307,7 +318,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun Backend.getRoomsData(
         l: List<PresetRoom>,
-        parentDir: File?
+        parentDir: File?,
     ): Pair<List<Room>, List<Pair<List<PrimaryKey>, PrimaryKey>>> {
         val data = l.map {
             val id = SnowflakeFactory.nextId()
@@ -365,7 +376,7 @@ class AddPreset : Subcommand("add", "add entry") {
     private suspend fun Backend.getRootId(
         objectType: ObjectType,
         list: List<PresetTopic>,
-        userMap: Map<String, User>
+        userMap: Map<String, User>,
     ): (PresetTopic) -> PrimaryKey {
         return if (objectType == ObjectType.USER) {
             val userIdMap = userMap.mapValues {
@@ -412,7 +423,7 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File,
         roomMap: Map<String, Room>,
         userMap: Map<String, User>,
-        publicRoomList: List<PresetTopic>
+        publicRoomList: List<PresetTopic>,
     ) {
         val tuples = publicRoomList.mapIndexed { index, topic ->
             val addTopic = topic to topic.content.encodeToByteArray()
@@ -457,7 +468,7 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File,
         userMap: Map<String, User>,
         topicId: PrimaryKey,
-        presetTopic: PresetTopic
+        presetTopic: PresetTopic,
     ) {
         val content = getTopicContent(presetTopic, parentDir)
         val mediaLink = extractMarkdownMediaLink(content)
@@ -475,7 +486,7 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File,
         roomMap: Map<String, Room>,
         privateRoomList: List<PresetTopic>,
-        userMap: Map<String, User>
+        userMap: Map<String, User>,
     ) {
         val distinct = privateRoomList.mapNotNull {
             it.room
@@ -533,7 +544,7 @@ class AddPreset : Subcommand("add", "add entry") {
         topicTuples: List<InsertTopicTuple>,
         userMap: Map<String, User>,
         rootType: ObjectType,
-        rootId: (PresetTopic) -> PrimaryKey
+        rootId: (PresetTopic) -> PrimaryKey,
     ) {
         Topics.batchInsert(topicTuples) {
             val presetTopic = it.topic

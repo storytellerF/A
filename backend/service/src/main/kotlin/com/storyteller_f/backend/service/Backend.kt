@@ -285,19 +285,20 @@ suspend fun Backend.getMediaPaginationResult(
 suspend fun Backend.processCommunityRawResultToCommunityInfo(
     list: List<CommunityRawResult>
 ): Result<List<CommunityInfo>?> {
-    return exposedDatabase.userDatabase.getMediaByIds(list.flatMap { (_, icon, poster) ->
-        listOf(icon, poster)
-    }.filterNotNull()).mapResultIfNotNull { icons ->
-        processMediaToMediaInfo(icons).map {
+    return exposedDatabase.userDatabase.getMediaByIds(list.flatMap { (community) ->
+        listOf(community.iconId, community.posterId, community.fontId)
+    }.filterNotNull()).mapResultIfNotNull { medias ->
+        processMediaToMediaInfo(medias).map {
             val map = it.associateBy { it.id }
             list.mapIndexed { i, rawResult ->
                 rawResult.community.toCommunityIfo().copy(
                     memberCount = rawResult.memberCount,
-                    icon = rawResult.icon?.let { map[it] },
-                    poster = rawResult.poster?.let { map[it] },
-                    hasPoster = rawResult.poster != null,
+                    icon = rawResult.community.iconId?.let { map[it] },
+                    poster = rawResult.community.posterId?.let { map[it] },
+                    hasPoster = rawResult.community.posterId != null,
                     joinedTime = rawResult.joinedTime,
-                    lastRead = rawResult.lastRead
+                    lastRead = rawResult.lastRead,
+                    font = rawResult.community.fontId?.let { map[it] }
                 )
             }
         }

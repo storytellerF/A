@@ -21,26 +21,22 @@ import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
-import com.storyteller_f.a.app.LocalSessionManager
-import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.bus
+import com.storyteller_f.a.app.*
+import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.TopicContentField
-import com.storyteller_f.a.app.edit
-import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.model.MarkdownMediasViewModel
 import com.storyteller_f.a.app.model.OnTopicCreated
-import com.storyteller_f.a.app.model.createAllMediaListViewModel
+import com.storyteller_f.a.app.pages.community.getCommunityFont
 import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
-import com.storyteller_f.a.app.preview
-import com.storyteller_f.a.app.raw
+import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.client_lib.createNewTopic
-import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.md5
 import io.github.aakira.napier.Napier
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -51,24 +47,28 @@ fun TopicComposePage(
     objectId: PrimaryKey,
     enableExperimental: Boolean,
     privateRoomId: PrimaryKey?,
+    communityId: PrimaryKey?,
     backPrePage: () -> Unit
 ) {
-    val user = getCurrentUserInfo()
-    user?.let {
-        TopicComposeScaffold(
-            objectType,
-            objectId,
-            if (privateRoomId != null) {
-                ObjectTuple(privateRoomId, ObjectType.ROOM)
-            } else {
-                ObjectTuple(
-                    it.id,
-                    ObjectType.USER
-                )
-            },
-            backPrePage,
-            enableExperimental
-        )
+    val typography = communityId?.let { getCommunityFont(it) }
+    AppTheme(typography = typography ?: MaterialTheme.typography) {
+        val user = getCurrentUserInfo()
+        user?.let {
+            TopicComposeScaffold(
+                objectType,
+                objectId,
+                if (privateRoomId != null) {
+                    ObjectTuple(privateRoomId, ObjectType.ROOM)
+                } else {
+                    ObjectTuple(
+                        it.id,
+                        ObjectType.USER
+                    )
+                },
+                backPrePage,
+                enableExperimental
+            )
+        }
     }
 }
 
@@ -135,8 +135,6 @@ private fun TopicComposeInternal(
     mediaTarget: ObjectTuple,
     updateInput: (String) -> Unit
 ) {
-    val mediaListViewModel = createAllMediaListViewModel(mediaTarget)
-
     val pagerState = rememberPagerState {
         3
     }
@@ -160,11 +158,10 @@ private fun TopicComposeInternal(
             }
         }
     }
-    val list by mediaListViewModel.handler.data.collectAsState()
     HorizontalPager(pagerState, key = tabs::get) { index ->
         when {
             index == 0 && !enableExperimental -> RichEditTopicPage(input, state, updateInput)
-            index == 1 -> PreviewTopicPage(input, list?.data?.toImmutableList())
+            index == 1 -> PreviewTopicPage(input, mediaTarget)
             else -> EditTopicPage(input) {
                 Napier.i {
                     "markdown update1 $it"
@@ -281,11 +278,15 @@ private fun TopicComposeSubmitButton(
 }
 
 @Composable
-fun PreviewTopicPage(input: String, res: ImmutableList<MediaInfo>?) {
+fun PreviewTopicPage(input: String, objectTuple: ObjectTuple) {
+    val markdownMediasViewModel = viewModel(listOf("content", md5(input))) { sessionManager, _ ->
+        MarkdownMediasViewModel(sessionManager, input, objectTuple)
+    }
+    val list by markdownMediasViewModel.handler.data.collectAsState()
     LazyColumn(modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)) {
         item {
             TopicContentField(
-                TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, res.orEmpty().toImmutableList())),
+                TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, list.orEmpty().toImmutableList())),
             )
         }
     }

@@ -33,6 +33,7 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.rememberLibraries
 import com.russhwolf.settings.Settings
+import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.PreferencePage
@@ -96,6 +97,10 @@ val LocalAppNav = compositionLocalOf {
     AppNav.EMPTY
 }
 
+val LocalDownloadViewModel = compositionLocalOf<DownloadViewModel> {
+    error("no download view model")
+}
+
 val LocalClient = compositionLocalOf {
     HttpClient()
 }
@@ -155,7 +160,8 @@ data class TopicComposeScreen(
     val objectType: String,
     val objectId: PrimaryKey,
     val enableExperimental: Boolean,
-    val privateRoomId: PrimaryKey?
+    val privateRoomId: PrimaryKey?,
+    val communityId: PrimaryKey?,
 )
 
 @Serializable
@@ -177,7 +183,7 @@ sealed interface MediaPlaySession {
         val contentType: String,
         val playList: List<ConstPlayItem>,
         val uuids: List<Uuid>,
-        val videoSize: CustomVideoSize?
+        val videoSize: CustomVideoSize?,
     ) : MediaPlaySession {
         val id = obj.url
     }
@@ -233,7 +239,7 @@ fun AppInternal(httpUrl: String, wsServerUrl: String) {
 @Composable
 private fun MainAppPage(
     isPip: Boolean,
-    localSession: MediaPlaySession.VideoOrAudio?
+    localSession: MediaPlaySession.VideoOrAudio?,
 ) {
     val navigator = rememberNavController()
     val json = LocalJson.current
@@ -251,7 +257,10 @@ private fun MainAppPage(
         }) {
             appNav.gotoTopic(it.id)
         }
-        CompositionLocalProvider(LocalAppNav provides appNav) {
+        val downloadViewModel = viewModel(listOf("download")) { s, s1 ->
+            DownloadViewModel(s, s1)
+        }
+        CompositionLocalProvider(LocalAppNav provides appNav, LocalDownloadViewModel provides downloadViewModel) {
             NavHost(navigator, startDestination = HomeScreen) {
                 buildRootNav(navigator)
             }
@@ -263,7 +272,7 @@ private fun MainAppPage(
 fun CommonEntry(
     httpUrl: String,
     wsServerUrl: String,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     AppTheme(dynamicColor = true) {
         setSingletonImageLoaderFactory {
@@ -325,7 +334,7 @@ fun CommonEntry(
 @Composable
 private fun createSessionManager(
     wsServerUrl: String,
-    httpUrl: String
+    httpUrl: String,
 ): UserSessionManager {
     val settings = LocalSettings.current
     val scope = rememberCoroutineScope()
@@ -357,7 +366,7 @@ private fun createSessionManager(
 fun buildHttpClient(
     httpUrl: String,
     cookieManager: CookiesStorage,
-    model: UserSessionModel
+    model: UserSessionModel,
 ): HttpClient = if (httpUrl.isEmpty()) {
     HttpClient { }
 } else {
@@ -428,7 +437,7 @@ private fun processEvent(event: Any, database: StorageSource) {
 
 private fun processTopicCreated(
     event: OnTopicCreated,
-    database: StorageSource
+    database: StorageSource,
 ) {
     val topicInfo = event.topicInfo
     database.getCollection("topics_${topicInfo.parentId}", TopicInfo::class).save(topicInfo.id, topicInfo)
@@ -569,7 +578,7 @@ private fun ObserveMessage(
 
 @OptIn(ExperimentalResourceApi::class)
 private fun NavGraphBuilder.buildRootNav(
-    navigator: NavHostController
+    navigator: NavHostController,
 ) {
     buildMainScreen()
     composable<AboutScreen> {
@@ -647,8 +656,8 @@ private fun NavGraphBuilder.buildComposeScreen(navigator: NavHostController) {
         RoomComposePage()
     }
     composable<TopicComposeScreen> {
-        val (objectType, objectId, enableExperimental, privateRoomId) = it.toRoute<TopicComposeScreen>()
-        TopicComposePage(ObjectType.valueOf(objectType), objectId, enableExperimental, privateRoomId) {
+        val (objectType, objectId, enableExperimental, privateRoomId, communityId) = it.toRoute<TopicComposeScreen>()
+        TopicComposePage(ObjectType.valueOf(objectType), objectId, enableExperimental, privateRoomId, communityId) {
             navigator.popBackStack()
         }
     }
@@ -684,14 +693,15 @@ private fun newAppNav(navigator: NavHostController, json: Json) = object : AppNa
         objectType: ObjectType,
         objectId: PrimaryKey,
         enableExperimental: Boolean,
-        privateRoomId: PrimaryKey?
+        privateRoomId: PrimaryKey?,
+        communityId: PrimaryKey?
     ) {
-        navigator.navigate(TopicComposeScreen(objectType.name, objectId, enableExperimental, privateRoomId))
+        navigator.navigate(TopicComposeScreen(objectType.name, objectId, enableExperimental, privateRoomId, communityId))
     }
 
     override fun gotoMemberPage(
         objectId: PrimaryKey,
-        objectType: ObjectType
+        objectType: ObjectType,
     ) {
         navigator.navigate(MemberScreen(objectType.name, objectId))
     }
@@ -786,7 +796,8 @@ interface AppNav {
         objectType: ObjectType,
         objectId: PrimaryKey,
         enableExperimental: Boolean,
-        privateRoomId: PrimaryKey?
+        privateRoomId: PrimaryKey?,
+        communityId: PrimaryKey?
     )
 
     fun gotoMemberPage(objectId: PrimaryKey, objectType: ObjectType)
@@ -845,14 +856,15 @@ interface AppNav {
                 objectType: ObjectType,
                 objectId: PrimaryKey,
                 enableExperimental: Boolean,
-                privateRoomId: PrimaryKey?
+                privateRoomId: PrimaryKey?,
+                communityId: PrimaryKey?,
             ) {
                 TODO("Not yet implemented")
             }
 
             override fun gotoMemberPage(
                 objectId: PrimaryKey,
-                objectType: ObjectType
+                objectType: ObjectType,
             ) {
                 TODO("Not yet implemented")
             }
@@ -908,7 +920,7 @@ interface AppNav {
 private suspend fun sendTopicNotification(
     message: TopicContent.Plain,
     topicInfo: TopicInfo,
-    onClickTopic: (TopicInfo) -> Unit
+    onClickTopic: (TopicInfo) -> Unit,
 ) {
     withContext(Dispatchers.Main) {
         Notification(

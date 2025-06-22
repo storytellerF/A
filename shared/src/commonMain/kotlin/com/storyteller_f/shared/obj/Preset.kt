@@ -1,5 +1,6 @@
 package com.storyteller_f.shared.obj
 
+import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10,15 +11,17 @@ data class PresetCommunity(
     val admin: String? = null,
     val users: List<String>? = null,
     val tag: List<String>? = null,
+    val font: String? = null,
 )
 
 @Serializable
 data class PresetUser(
     val icon: String? = null,
     val name: String,
-    val id: String,
+    val aid: String,
     val tagline: String,
     val privateKey: String,
+    val id: PrimaryKey? = null,
 )
 
 @Serializable
