@@ -14,6 +14,7 @@ object Communities : BaseTable() {
     val icon = customPrimaryKey("icon").nullable()
     val poster = customPrimaryKey("poster").index().nullable()
     val owner = customPrimaryKey("owner").index()
+    val fontId = customPrimaryKey("font_id").nullable()
 }
 
 class Community(
@@ -22,8 +23,9 @@ class Community(
     val aid: String,
     val name: String,
     val owner: PrimaryKey,
-    val icon: PrimaryKey? = null,
-    val poster: PrimaryKey? = null
+    val iconId: PrimaryKey? = null,
+    val posterId: PrimaryKey? = null,
+    val fontId: PrimaryKey? = null,
 ) :
     BaseEntity(id, createdTime) {
     companion object {
@@ -36,7 +38,8 @@ class Community(
                     row[name],
                     row[owner],
                     row[icon],
-                    row[poster]
+                    row[poster],
+                    row[fontId]
                 )
             }
         }
@@ -60,8 +63,6 @@ fun Community.toCommunityIfo(
 
 data class CommunityRawResult(
     val community: Community,
-    val icon: PrimaryKey?,
-    val poster: PrimaryKey?,
     val joinedTime: LocalDateTime?,
     val lastRead: Long?,
     val memberCount: Long

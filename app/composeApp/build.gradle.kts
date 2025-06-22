@@ -169,6 +169,7 @@ kotlin {
             implementation(libs.haze)
             implementation(libs.haze.materials)
             implementation(projects.client.kotbase)
+            implementation("de.jonasbroeckmann.kzip:kzip:1.1.0")
 
             implementation(libs.kim)
             implementation(libs.uri.kmp)

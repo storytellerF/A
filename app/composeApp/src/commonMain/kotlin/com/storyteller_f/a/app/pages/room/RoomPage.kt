@@ -283,7 +283,7 @@ private fun RoomInputGroupInternal(
         {
             appNav.gotoTopicCompose(parentTarget.objectType, parentTarget.objectId, false, roomId.takeIf {
                 roomInfo.isPrivate
-            })
+            }, null)
         },
         mediaTarget,
         {

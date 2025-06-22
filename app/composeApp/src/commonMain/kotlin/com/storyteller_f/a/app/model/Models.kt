@@ -14,20 +14,37 @@ import com.storyteller_f.a.app.compontents.DialogSaveState
 import com.storyteller_f.a.app.pages.topic.upload
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.*
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
+import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.storage.StorageExpression
 import com.storyteller_f.storage.StorageOrder
 import com.storyteller_f.storage.StorageSource
 import com.storyteller_f.storage.save
+import de.jonasbroeckmann.kzip.Zip
+import de.jonasbroeckmann.kzip.extractTo
+import de.jonasbroeckmann.kzip.open
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import io.ktor.utils.io.*
+import io.ktor.utils.io.core.*
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.files.SystemTemporaryDirectory
+import kotlinx.serialization.Serializable
 
 data class OnTopicChanged(val topicInfo: TopicInfo)
 data class OnTopicCreated(val topicInfo: TopicInfo)
@@ -59,7 +76,7 @@ abstract class CommunityViewModel :
 class IdCommunityViewModel(
     sessionManager: SessionManager,
     storageSource: StorageSource,
-    communityId: PrimaryKey
+    communityId: PrimaryKey,
 ) :
     CommunityViewModel() {
     override val handler: LoadingHandler<CommunityInfo> =
@@ -77,7 +94,7 @@ class IdCommunityViewModel(
 class AidCommunityViewModel(
     sessionManager: SessionManager,
     storageSource: StorageSource,
-    aid: String
+    aid: String,
 ) :
     CommunityViewModel() {
     override val handler: LoadingHandler<CommunityInfo> = CachedLoadingHandler(
@@ -233,7 +250,7 @@ class TopicsViewModel(
         }
     }.flow.map {
         it.map {
-            processEncryptedTopic(listOf(it), sessionManager.sessionModel).map {
+            processEncryptedTopic(listOf(it), sessionManager).map {
                 extractHeadlineIfPlain(it)
             }.first()
         }
@@ -257,7 +274,7 @@ abstract class RoomViewModel :
 class IdRoomViewModel(
     sessionManager: SessionManager,
     storageSource: StorageSource,
-    communityId: PrimaryKey
+    communityId: PrimaryKey,
 ) :
     RoomViewModel() {
     override val handler: LoadingHandler<RoomInfo> =
@@ -277,7 +294,7 @@ class IdRoomViewModel(
 class AidRoomViewModel(
     sessionManager: SessionManager,
     storageSource: StorageSource,
-    aid: String
+    aid: String,
 ) : RoomViewModel() {
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
@@ -348,7 +365,7 @@ abstract class UserViewModel :
 class IdUserViewModel(
     sessionManager: SessionManager,
     storageSource: StorageSource,
-    id: PrimaryKey
+    id: PrimaryKey,
 ) :
     UserViewModel() {
     override val handler: LoadingHandler<UserInfo> =
@@ -368,7 +385,7 @@ class IdUserViewModel(
 class AidUserViewModel(
     sessionManager: SessionManager,
     storageSource: StorageSource,
-    aid: String
+    aid: String,
 ) : UserViewModel() {
     override val handler: LoadingHandler<UserInfo> =
         CachedLoadingHandler(
@@ -418,7 +435,7 @@ class MemberViewModel(
 class ReactionsViewModel(
     sessionManager: SessionManager,
     private val objectId: PrimaryKey,
-    storageSource: StorageSource
+    storageSource: StorageSource,
 ) :
     PagingViewModel<String, ReactionInfo>() {
     @OptIn(ExperimentalPagingApi::class)
@@ -451,7 +468,7 @@ abstract class TopicViewModel :
 class IdTopicViewModel(
     sessionManager: SessionManager,
     storageSource: StorageSource,
-    topicId: PrimaryKey
+    topicId: PrimaryKey,
 ) :
     TopicViewModel() {
     override val handler: LoadingHandler<TopicInfo> =
@@ -461,7 +478,7 @@ class IdTopicViewModel(
             StorageExpression.IdEq("id", topicId),
             {
                 sessionManager.getTopicInfo(topicId).map {
-                    processEncryptedTopic(listOf(it), sessionManager.sessionModel).first()
+                    processEncryptedTopic(listOf(it), sessionManager).first()
                 }
             }
         ) { t ->
@@ -473,7 +490,7 @@ class IdTopicViewModel(
 class AidTopicViewModel(
     sessionManager: SessionManager,
     storageSource: StorageSource,
-    aid: String
+    aid: String,
 ) :
     TopicViewModel() {
     override val handler: LoadingHandler<TopicInfo> =
@@ -542,31 +559,28 @@ class UploadViewModel(sessionManager: SessionManager, private val uploader: Uplo
     ViewModel() {
     private val queue = Channel<Int> {
     }
-    val handlers = uploader.list.mapIndexed { i, e ->
-        FixedLoadingHandler<MediaInfo> {
-            retry(i)
-        } to e
+    val handlers = uploader.list.map { e ->
+        SimpleLoadingHandler(viewModelScope) {
+            upload(
+                sessionManager,
+                myUid ob ObjectType.USER,
+                UploadData(
+                    e.size,
+                    e.name,
+                    e.contentType
+                )
+            ) {
+                e.source()?.buffered() ?: throw Exception("upload failed")
+            }.map {
+                it.first()
+            }
+        }
     }
 
     init {
         viewModelScope.launch {
             for (e in queue) {
-                val (handler, userSessionViewModelFile) = handlers[e]
-                handler.request {
-                    runCatching {
-                        upload(
-                            sessionManager,
-                            myUid ob ObjectType.USER,
-                            UploadData(
-                                userSessionViewModelFile.size,
-                                userSessionViewModelFile.name,
-                                userSessionViewModelFile.contentType
-                            )
-                        ) {
-                            userSessionViewModelFile.source()?.buffered() ?: throw Exception("upload failed")
-                        }.first()
-                    }
-                }
+                handlers[e].refresh()
             }
         }
         viewModelScope.launch {
@@ -578,9 +592,139 @@ class UploadViewModel(sessionManager: SessionManager, private val uploader: Uplo
 
     fun retry(index: Int) {
         viewModelScope.launch {
-            if (index in 0 until uploader.list.size && handlers[index].first.state.value is LoadingState.Error) {
-                queue.send(index)
+            queue.send(index)
+        }
+    }
+}
+
+enum class DownloadStatus {
+    NOT_DOWNLOADED, DOWNLOADING, DOWNLOADED, FAILED
+}
+
+@Serializable
+data class DownloadInfo(
+    val mediaInfo: MediaInfo,
+    val status: DownloadStatus,
+    val message: String,
+    val path: String,
+)
+
+class DownloadViewModel(
+    private val sessionManager: SessionManager,
+    storageSource: StorageSource,
+) : ViewModel() {
+    val lock = Mutex()
+    val collection = storageSource.getCollection("downloads", DownloadInfo::class)
+    private val queue = Channel<String> {
+    }
+    val handlers = mutableMapOf<String, CachedLoadingHandler<DownloadInfo>>()
+
+    suspend fun download(key: String, mediaInfo: MediaInfo): CachedLoadingHandler<DownloadInfo> {
+        val path = Path(SystemTemporaryDirectory, "downloads", key, mediaInfo.name)
+        return lock.withLock {
+            handlers.getOrPut(key) {
+                CachedLoadingHandler(
+                    collection,
+                    viewModelScope,
+                    StorageExpression.StrEq("_id", key),
+                    {
+                        sessionManager.serviceCatching {
+                            path.parent?.let { SystemFileSystem.createDirectories(it) }
+                            downloadIfNeed(key, mediaInfo, path)
+                        }.recover({
+                            DownloadInfo(mediaInfo, DownloadStatus.FAILED, it.message.toString(), path.toString())
+                        })
+                    }
+                ) {
+                    collection.saveDocument(key, it)
+                }
             }
         }
     }
+
+    init {
+        viewModelScope.launch {
+            for (e in queue) {
+                handlers[e]?.refresh()
+            }
+        }
+    }
+
+    private suspend fun HttpClient.downloadIfNeed(
+        key: String,
+        mediaInfo: MediaInfo,
+        path: Path,
+    ): DownloadInfo {
+        val downloadInfo = getDocument(key, path, mediaInfo)
+
+        if (downloadInfo.status == DownloadStatus.DOWNLOADED || downloadInfo.status == DownloadStatus.DOWNLOADING) {
+            return downloadInfo
+        }
+
+        collection.saveDocument(key, downloadInfo.copy(status = DownloadStatus.DOWNLOADING))
+        SystemFileSystem.sink(path).use {
+            prepareGet(mediaInfo.url).execute { httpResponse ->
+                val channel: ByteReadChannel = httpResponse.body()
+                var count = 0L
+
+                while (!channel.exhausted()) {
+
+                    val chunk = channel.readRemaining()
+                    count += chunk.remaining
+
+                    chunk.transferTo(it)
+                    println("Received $count bytes from ${httpResponse.contentLength()}")
+                }
+            }
+        }
+        if (path.toString().endsWith(".zip")) {
+            Zip.open(path).use { zip ->
+                zip.extractTo(Path(path.parent!!, "${path.name}.extracted"))
+            }
+        }
+        return downloadInfo.copy(status = DownloadStatus.DOWNLOADED)
+    }
+
+    private fun getDocument(
+        key: String,
+        path: Path,
+        mediaInfo: MediaInfo,
+    ): DownloadInfo {
+        val document = collection.getDocument(key)
+        if (document != null) {
+            val isDownloaded = document.status == DownloadStatus.DOWNLOADED
+            val isFileExists = SystemFileSystem.exists(path)
+            val isMediaSizeMatch = SystemFileSystem.metadataOrNull(path)?.size == mediaInfo.size
+            if (isDownloaded && isFileExists && isMediaSizeMatch) {
+                return document
+            } else if (document.status == DownloadStatus.DOWNLOADING) {
+                return document
+            } else if (document.status == DownloadStatus.FAILED) {
+                val t = document.copy(status = DownloadStatus.NOT_DOWNLOADED)
+                collection.saveDocument(key, t)
+                return t
+            }
+            return document.copy(status = DownloadStatus.NOT_DOWNLOADED)
+        }
+        val t = DownloadInfo(mediaInfo, DownloadStatus.NOT_DOWNLOADED, "", path.toString())
+        collection.saveDocument(key, t)
+        return t
+    }
+}
+
+class MarkdownMediasViewModel(
+    val sessionManager: SessionManager,
+    private val content: String,
+    private val objectTuple: ObjectTuple,
+) :
+    SimpleViewModel<List<MediaInfo>>() {
+    override val handler: LoadingHandler<List<MediaInfo>>
+        get() = SimpleLoadingHandler(viewModelScope) {
+            runCatching {
+                extractMarkdownMediaLink(content).map {
+                    sessionManager.getMediaByName(it, objectTuple.objectId, objectTuple.objectType).getOrThrow()
+                }
+            }
+        }
+
 }

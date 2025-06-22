@@ -26,7 +26,10 @@ import androidx.navigation.compose.rememberNavController
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.UserIcon
-import com.storyteller_f.a.app.model.*
+import com.storyteller_f.a.app.model.createTargetUserJoinedCommunitiesViewModel
+import com.storyteller_f.a.app.model.createUserTitlesViewModel
+import com.storyteller_f.a.app.model.createUserTopicsViewModel
+import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
@@ -53,7 +56,7 @@ fun UserPage(uid: PrimaryKey) {
 private fun UserPageInternal(
     user: UserInfo?,
     my: UserInfo?,
-    uid: PrimaryKey
+    uid: PrimaryKey,
 ) {
     val pagerState = rememberPagerState {
         3
@@ -123,7 +126,7 @@ private fun UserCompatInternal(
     user: UserInfo?,
     my: UserInfo?,
     appNav: AppNav,
-    pagerState: PagerState
+    pagerState: PagerState,
 ) {
     Scaffold(floatingActionButton = {
         UserComposeButton(user, my, appNav)
@@ -167,11 +170,11 @@ private fun UserCompatInternal(
 private fun UserComposeButton(
     user: UserInfo?,
     my: UserInfo?,
-    appNav: AppNav
+    appNav: AppNav,
 ) {
     if (user != null && my?.id == user.id) {
         FloatingActionButton({
-            appNav.gotoTopicCompose(ObjectType.USER, user.id, false, null)
+            appNav.gotoTopicCompose(ObjectType.USER, user.id, false, null, null)
         }) {
             Icon(Icons.Default.Add, "add topic")
         }

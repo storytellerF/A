@@ -169,8 +169,6 @@ suspend fun Backend.createCommunity(
             listOf(
                 CommunityRawResult(
                     communityInfo,
-                    newCommunity.icon,
-                    null,
                     community.createdTime,
                     null,
                     0

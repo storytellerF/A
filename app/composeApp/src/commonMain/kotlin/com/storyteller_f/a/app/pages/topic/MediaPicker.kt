@@ -64,7 +64,7 @@ fun MediaPicker(
     mediaTarget: ObjectTuple,
     support: List<String> = listOf("files", "audio recorder"),
     onClickItem: (List<MediaInfo>) -> Unit,
-    hideSheet: () -> Unit
+    hideSheet: () -> Unit,
 ) {
     BaseSheet(showSheet, sheetState, hideSheet) {
         val pagerState = rememberPagerState {
@@ -101,7 +101,7 @@ fun MediaPicker(
 @Composable
 fun AudioRecorder(
     mediaTarget: ObjectTuple,
-    uploadSuccess: (List<MediaInfo>) -> Unit
+    uploadSuccess: (List<MediaInfo>) -> Unit,
 ) {
     val isRecording by Recorder.isRecording
     val isGranted by isPermissionGranted(Permission.Audio)
@@ -246,9 +246,9 @@ private fun FileIcon(it: MediaInfo) {
 private suspend fun selectFileAndUpload(
     mediaTarget: ObjectTuple,
     sessionManager: SessionManager,
-    uploadSuccess: (List<MediaInfo>) -> Unit
+    uploadSuccess: (List<MediaInfo>) -> Unit,
 ) {
-    globalDialogState.use {
+    globalDialogState.useResult {
         val f = FileKit.openFilePicker()
         if (f != null) {
             upload(
@@ -263,7 +263,7 @@ private suspend fun selectFileAndUpload(
                 f.source().buffered()
             }
         } else {
-            null
+            Result.success(null)
         }
     }.getOrNull()?.let {
         uploadSuccess(it)
@@ -276,7 +276,7 @@ suspend fun uploadPath(
     mediaTarget: ObjectTuple,
 ): Result<List<MediaInfo>?> {
     val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
-    return globalDialogState.use {
+    return globalDialogState.useResult {
         upload(
             sessionManager,
             mediaTarget,
@@ -291,22 +291,22 @@ suspend fun upload(
     sessionManager: SessionManager,
     mediaTarget: ObjectTuple,
     uploadData: UploadData,
-    readStream: () -> Input
-): List<MediaInfo> {
-    if (uploadData.size <= 100 * 1024 * 1024) {
-        val response = sessionManager.upload(mediaTarget, uploadData, readStream).getOrThrow()
+    readStream: () -> Input,
+): Result<List<MediaInfo>> {
+    if (uploadData.size > 100 * 1024 * 1024) {
+        return Result.failure(Exception("file size is too large"))
+    }
 
-        bus.emit(OnMediaUploaded(response.data))
-        return response.data
-    } else {
-        throw Exception("size is null or size too big")
+    return sessionManager.upload(mediaTarget, uploadData, readStream).map {
+        bus.emit(OnMediaUploaded(it.data))
+        it.data
     }
 }
 
 fun insertContent(
     it: MediaInfo,
     updateInput: (String) -> Unit,
-    input: String
+    input: String,
 ) {
     if (it.contentType.startsWith("image/")) {
         updateInput(

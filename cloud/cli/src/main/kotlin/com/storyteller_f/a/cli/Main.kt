@@ -14,6 +14,7 @@ import com.storyteller_f.a.exposed.RoomDatabase
 import com.storyteller_f.a.exposed.TitleDatabase
 import com.storyteller_f.a.exposed.TopicDatabase
 import com.storyteller_f.a.exposed.UserDatabase
+import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.backend.service.Backend
 import com.storyteller_f.backend.service.MergedEnv
 import com.storyteller_f.backend.service.databaseConnection
@@ -66,8 +67,8 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         NameService(),
         database,
         databaseSession,
-        object : com.storyteller_f.a.exposed.Database {
-            override val userDatabase: UserDatabase
+        object : com.storyteller_f.a.exposed.Database<User> {
+            override val userDatabase: UserDatabase<User>
                 get() = ExposedUserDatabase(databaseSession)
             override val topicDatabase: TopicDatabase
                 get() = ExposedTopicDatabase(databaseSession, userDatabase)

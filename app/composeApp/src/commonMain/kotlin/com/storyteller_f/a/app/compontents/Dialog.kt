@@ -69,6 +69,25 @@ class GlobalDialogController(val state: MutableState<DialogState> = mutableState
             return Result.failure(e)
         }
     }
+
+    suspend fun <T> useResult(
+        block: suspend () -> Result<T>
+    ): Result<T> {
+        try {
+            showLoadingState()
+            val result = block()
+            result.onSuccess {
+                showCloseState()
+            }
+            return result
+        } catch (e: Exception) {
+            Napier.e(e) {
+                "global dialog"
+            }
+            showErrorState(e)
+            return Result.failure(e)
+        }
+    }
 }
 
 @Composable

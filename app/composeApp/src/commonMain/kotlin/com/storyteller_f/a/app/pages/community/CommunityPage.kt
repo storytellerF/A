@@ -13,6 +13,7 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavOptions
@@ -21,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.*
+import com.storyteller_f.a.app.common.CachedLoadingHandler
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.room.RoomList
@@ -28,11 +30,15 @@ import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.world.TopicList
+import com.storyteller_f.a.app.ui.theme.AppTheme
+import com.storyteller_f.a.app.utils.loadFontFromLocal
+import com.storyteller_f.a.client_lib.LoadingState
 import com.storyteller_f.a.client_lib.exitCommunity
 import com.storyteller_f.a.client_lib.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -40,19 +46,58 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun CommunityPage(
     communityId: PrimaryKey,
-    showDialog: Boolean
+    showDialog: Boolean,
 ) {
-    val model = createCommunityViewModel(communityId)
     val size = calculateWindowSizeClass()
-    when (size.widthSizeClass) {
-        WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(communityId, showDialog, model)
-        else -> CommunityNonCompatPageInternal(communityId, showDialog, model)
+    val model = createCommunityViewModel(communityId)
+    val typography = getCommunityFont(communityId)
+
+    AppTheme(typography = typography) {
+        when (size.widthSizeClass) {
+            WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(communityId, showDialog, model)
+            else -> CommunityNonCompatPageInternal(communityId, showDialog, model)
+        }
     }
+
+}
+
+@Composable
+fun getCommunityFont(communityId: PrimaryKey): Typography {
+    val model = createCommunityViewModel(communityId)
+    val community by model.handler.data.collectAsState()
+    val fontFamily = community?.font?.let {
+        val downloadViewModel = LocalDownloadViewModel.current
+        val loadingHandler by produceState<CachedLoadingHandler<DownloadInfo>?>(null, it) {
+            value = downloadViewModel.download(it.id.toString(), it)
+        }
+        loadingHandler?.let { handler ->
+            val state by handler.state.collectAsState()
+            val data by handler.data.collectAsState()
+            Napier.i {
+                "CommunityPage state:$state data:$data"
+            }
+            if (state is LoadingState.Done) {
+                data?.let {
+                    loadFontFromLocal(it.path + ".extracted")
+                }
+            } else {
+                null
+            }
+        }
+    }
+    val typography = MaterialTheme.typography
+    return typography.copy(
+        bodyLarge =
+            typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
+        bodyMedium = typography.bodyMedium.copy(fontFamily = fontFamily ?: typography.bodyMedium.fontFamily),
+        bodySmall = typography.bodySmall.copy(fontFamily = fontFamily ?: typography.bodySmall.fontFamily),
+
+        )
 }
 
 private fun buildSearchScope(
     pagerState: PagerState,
-    communityId: PrimaryKey
+    communityId: PrimaryKey,
 ) = when (pagerState.currentPage) {
     0 -> SearchScope.CommunityTopic(communityId)
     else -> SearchScope.CommunityRoom(communityId)
@@ -60,7 +105,7 @@ private fun buildSearchScope(
 
 private fun buildSearchScope(
     currentRoute: String?,
-    communityId: PrimaryKey
+    communityId: PrimaryKey,
 ) = when (currentRoute) {
     "/topics" -> SearchScope.CommunityTopic(communityId)
     else -> SearchScope.CommunityRoom(communityId)
@@ -167,7 +212,7 @@ private fun CommunityFloatingButton(
     community: CommunityInfo?,
     appNav: AppNav,
     communityId: PrimaryKey,
-    onClickOk: () -> Unit
+    onClickOk: () -> Unit,
 ) {
     val alertDialogState = remember {
         CustomAlertDialogController()
@@ -176,7 +221,7 @@ private fun CommunityFloatingButton(
     val message = stringResource(Res.string.join_community_prompt)
     FloatingActionButton(onClick = {
         if (community?.isJoined == true) {
-            appNav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, false, null)
+            appNav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, false, null, communityId)
         } else {
             alertDialogState.showMessage(title, message)
         }
@@ -191,7 +236,7 @@ private fun CommunityFloatingButton(
 @Composable
 private fun CommunityBottomNav(
     navs: List<NavRoute>,
-    pagerState: PagerState
+    pagerState: PagerState,
 ) {
     val scope = rememberCoroutineScope()
     CustomBottomNav(navs[pagerState.currentPage].path, navs) { path ->
@@ -206,7 +251,7 @@ private fun CommunityBottomNav(
 @Composable
 private fun CommunityPageInternal(
     pagerState: PagerState,
-    communityId: PrimaryKey
+    communityId: PrimaryKey,
 ) {
     HorizontalPager(pagerState) {
         when (it) {
@@ -238,7 +283,7 @@ fun communityNavRoutes(): List<NavRoute> {
 fun CommunityDialog(
     communityInfo: CommunityInfo?,
     showDialog: Boolean,
-    dismiss: () -> Unit
+    dismiss: () -> Unit,
 ) {
     if (communityInfo != null && showDialog) {
         BasicAlertDialog(
@@ -265,7 +310,53 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                 Text(communityInfo.name)
             }
         }
+        communityInfo.font?.let {
+            Column {
+                val downloadViewModel = LocalDownloadViewModel.current
+                val loadingHandler by produceState<CachedLoadingHandler<DownloadInfo>?>(null, it) {
+                    value = downloadViewModel.download(it.id.toString(), it)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    loadingHandler?.let { handler ->
+                        val state by handler.state.collectAsState()
+                        val data by handler.data.collectAsState()
+                        Text(it.name, modifier = Modifier.weight(1f))
+                        DownloadStatus(state, data)
+                    }
+                }
+            }
+        }
         CommunityMenus(dismiss, communityId, communityInfo)
+    }
+}
+
+@Composable
+private fun DownloadStatus(
+    state: LoadingState?,
+    data: DownloadInfo?,
+) {
+    Napier.i {
+        "DownloadStatus state:$state data:$data"
+    }
+    when {
+        state is LoadingState.Done && data != null -> {
+
+            when (data.status) {
+                DownloadStatus.NOT_DOWNLOADED, DownloadStatus.DOWNLOADING -> CircularProgressIndicator(
+                    modifier = Modifier.size(10.dp),
+                    strokeWidth = 2.dp
+                )
+
+                DownloadStatus.DOWNLOADED -> Text("✅")
+                DownloadStatus.FAILED -> Text(data.message.take(10))
+            }
+        }
+
+        state is LoadingState.Error -> Text(state.e.localizedMessage?.take(10) ?: "!")
+        state == null || state is LoadingState.Loading -> CircularProgressIndicator(
+            modifier = Modifier.size(10.dp),
+            strokeWidth = 2.dp
+        )
     }
 }
 
@@ -273,7 +364,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
 private fun CommunityMenus(
     dismiss: () -> Unit,
     communityId: PrimaryKey,
-    communityInfo: CommunityInfo
+    communityInfo: CommunityInfo,
 ) {
     val nav = LocalAppNav.current
     val sessionViewModel = LocalSessionManager.current
@@ -307,7 +398,7 @@ private fun CommunityMenus(
             }
             ButtonNav(Icons.Default.Add, "Add") {
                 dismiss()
-                nav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, true, null)
+                nav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, true, null, communityId)
             }
             val my = getCurrentUserInfo()
             if (my?.id == communityInfo.owner) {

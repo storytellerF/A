@@ -132,8 +132,6 @@ class ExposedCommunityDatabase(
                 communities.map {
                     CommunityRawResult(
                         it,
-                        it.icon,
-                        it.poster,
                         joinedTimeMap[it.id]?.joinedTime,
                         lastReadMap[it.id]?.topicId,
                         memberCountMap[it.id] ?: 0
@@ -202,8 +200,6 @@ class ExposedCommunityDatabase(
                 val communityInfo = community
                 CommunityRawResult(
                     communityInfo,
-                    community.icon,
-                    community.poster,
                     joinedTime,
                     lastRead,
                     0

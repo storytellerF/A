@@ -20,7 +20,8 @@ data class CommunityInfo(
     val joinedTime: LocalDateTime? = null,
     val extension: Extension? = null,
     val lastRead: PrimaryKey? = null,
-    val hasPoster: Boolean = poster != null
+    val hasPoster: Boolean = poster != null,
+    val font: MediaInfo? = null,
 ) : Identifiable {
     val isJoined = joinedTime != null
     override val objectType: ObjectType

@@ -47,8 +47,9 @@ suspend fun Backend.batchAddCommunities(
         this[Communities.id] = it.id
         this[Communities.createdTime] = it.createdTime
         this[Communities.name] = it.name
-        this[Communities.icon] = it.icon
+        this[Communities.icon] = it.iconId
         this[Communities.owner] = it.owner
+        this[Communities.fontId] = it.fontId
     }
     Aids.batchInsert(l2) {
         this[Aids.value] = it.aid
