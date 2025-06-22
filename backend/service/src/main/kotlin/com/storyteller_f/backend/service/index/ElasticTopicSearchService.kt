@@ -29,17 +29,21 @@ import org.apache.hc.core5.http.ContentType
 import java.io.File
 import java.io.FileInputStream
 import java.net.ConnectException
+import javax.net.ssl.SSLContext
 
 private const val TOPIC_INDEX_NAME = "topics"
 
-class ElasticTopicSearchService(private val connection: ElasticConnection) : TopicSearchService {
+class ElasticTopicSearchService(private val connection: ElasticConnection) :
+    TopicSearchService {
+
+    val sslContext = getSslContext(connection)
 
     override suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit> {
         return when {
             topics.isEmpty() -> Result.success(Unit)
             topics.size == 1 -> {
                 val topic = topics.first()
-                useElasticClient(connection) {
+                useElasticClient(connection, sslContext) {
                     val response = index {
                         it.index(TOPIC_INDEX_NAME).id(topic.id.toString()).document(topic).refresh(Refresh.WaitFor)
                     }.await()
@@ -50,7 +54,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
             }
 
             else -> {
-                useElasticClient(connection) {
+                useElasticClient(connection, sslContext) {
                     val response = bulk {
                         it.operations(topics.map { document ->
                             BulkOperation.of { op ->
@@ -76,7 +80,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
         return when {
             idList.isEmpty() -> Result.success(emptyList())
             idList.size == 1 -> {
-                useElasticClient(connection) {
+                useElasticClient(connection, sslContext) {
                     idList.map { id ->
                         get({
                             it.index(TOPIC_INDEX_NAME).id(id.toString())
@@ -86,7 +90,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
             }
 
             else -> {
-                useElasticClient(connection) {
+                useElasticClient(connection, sslContext) {
                     mget({
                         it.index(TOPIC_INDEX_NAME).ids(idList.map { it.toString() })
                     }, TopicDocument::class.java).await().docs().map {
@@ -98,7 +102,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
     }
 
     override suspend fun clean(): Result<Unit> {
-        return useElasticClient(connection) {
+        return useElasticClient(connection, sslContext) {
             if (indices().exists {
                     it.index(TOPIC_INDEX_NAME)
                 }.await().value()) {
@@ -147,7 +151,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
         Napier.i {
             "elastic search query $request"
         }
-        return useElasticClient(connection) {
+        return useElasticClient(connection, sslContext) {
             val response = search(request, TopicDocument::class.java).await()
             val hits = response.hits()
             val total = hits.total()
@@ -251,20 +255,10 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) : Top
 
 private suspend fun <T> useElasticClient(
     elasticConnection: ElasticConnection,
+    sslContext: SSLContext?,
     block: suspend ElasticsearchAsyncClient.() -> T,
 ): Result<T> {
     val point = Exception()
-    val certFile = elasticConnection.certFile
-    Napier.i(message = "cert path ${File(certFile).canonicalPath}")
-    val sslContext = if (certFile.isNotBlank()) {
-        val crtStream = withContext(Dispatchers.IO) {
-            FileInputStream(certFile)
-        }
-        TransportUtils.sslContextFromHttpCaCrt(crtStream)
-    } else {
-        null
-    }
-
     return runCatching {
         ElasticsearchAsyncClient.of { b ->
             b.host(elasticConnection.url)
@@ -277,7 +271,9 @@ private suspend fun <T> useElasticClient(
                     objectMapper().registerKotlinModule()
                 })
         }.use {
-            it.block()
+            withContext(Dispatchers.IO) {
+                it.block()
+            }
         }
     }.recoverResult { e ->
         Result.failure(
@@ -285,11 +281,24 @@ private suspend fun <T> useElasticClient(
                 e is ConnectException || e is ConnectionClosedException -> Exception("elastic service unavailable", e)
                 e is ElasticsearchException && e.status() == 400 ->
                     Exception("index not found")
+
                 else -> {
                     point.initCause(e)
                     point
                 }
             }
         )
+    }
+}
+
+fun getSslContext(elasticConnection: ElasticConnection): SSLContext? {
+    val certFile = elasticConnection.certFile
+    Napier.i(message = "cert path ${File(certFile).canonicalPath}")
+    return if (certFile.isNotBlank()) {
+        FileInputStream(certFile).use {
+            TransportUtils.sslContextFromHttpCaCrt(it)
+        }
+    } else {
+        null
     }
 }

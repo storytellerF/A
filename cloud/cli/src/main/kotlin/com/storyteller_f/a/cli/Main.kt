@@ -27,6 +27,7 @@ import com.storyteller_f.shared.kmpLogger
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ExperimentalCli
+import kotlinx.coroutines.runBlocking
 
 lateinit var backend: Backend
 
@@ -54,7 +55,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 
     val config = Config(databaseConnection, buildType, flavor)
 
-    val topicDocumentService = topicDocumentService(env)
+    val topicDocumentService = runBlocking { topicDocumentService(env) }
     val mediaService = mediaService(env)
 
     val database = ExposedDatabaseFactory.connect(databaseConnection)

@@ -8,6 +8,8 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.*
 import org.apache.lucene.index.*
@@ -99,7 +101,7 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
     override suspend fun searchDocument(
         words: List<String>?,
         documentSearch: DocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
+        primaryKeyFetch: PrimaryKeyFetch?,
     ): Result<PaginationResult<TopicDocument>> {
         return useLucene {
             try {
@@ -162,7 +164,7 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
     private fun buildQuery(
         fetch: PrimaryKeyFetch?,
         word: List<String>?,
-        documentSearch: DocumentSearch
+        documentSearch: DocumentSearch,
     ): Query? {
         val analyzer = StandardAnalyzer()
         val combinedQuery = BooleanQuery.Builder()
@@ -213,20 +215,21 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
         }
     }
 
-    private fun <R> useLucene(block: (FSDirectory) -> R): Result<R> {
-        return runCatching {
-            if (isInMemory) {
-                NIOFSDirectory(path).use(block)
-            } else {
-                FSDirectory.open(path).use(block)
+    private suspend fun <R> useLucene(block: (FSDirectory) -> R) =
+        runCatching {
+            withContext(Dispatchers.IO) {
+                if (isInMemory) {
+                    NIOFSDirectory(path).use(block)
+                } else {
+                    FSDirectory.open(path).use(block)
+                }
             }
         }
-    }
 }
 
 private fun restoreDocument(
     id: PrimaryKey,
-    document: Document
+    document: Document,
 ): TopicDocument = TopicDocument(
     id,
     document.get("content"),

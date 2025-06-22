@@ -24,6 +24,7 @@ import com.storyteller_f.a.exposed.tables.toUserInfo
 import com.storyteller_f.backend.service.index.ElasticTopicSearchService
 import com.storyteller_f.backend.service.index.LuceneTopicSearchService
 import com.storyteller_f.backend.service.index.TopicSearchService
+import com.storyteller_f.backend.service.index.getSslContext
 import com.storyteller_f.backend.service.media.FileSystemMediaService
 import com.storyteller_f.backend.service.media.MediaService
 import com.storyteller_f.backend.service.media.MinIoMediaService
@@ -145,7 +146,8 @@ fun topicDocumentService(
             val url = env["ELASTIC_URL"]
             val name = env["ELASTIC_NAME"]
             val pass = env["ELASTIC_PASSWORD"]
-            ElasticTopicSearchService(ElasticConnection(url, certFile, name, pass))
+            val connection = ElasticConnection(url, certFile, name, pass)
+            ElasticTopicSearchService(connection)
         }
 
         "lucene" -> {
