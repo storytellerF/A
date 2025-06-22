@@ -1,3 +1,5 @@
+@file:Suppress("unused", "LongMethod")
+
 package com.storyteller_f.a.app
 
 import android.content.Context
@@ -152,7 +154,6 @@ fun hangup(peerConnections: Pair<PeerConnection, PeerConnection>?) {
     pc2.close()
 }
 
-
 suspend fun makeCall(
     peerConnections: Pair<PeerConnection, PeerConnection>,
     localStream: MediaStream,
@@ -279,8 +280,8 @@ private fun Context.navigateToAppSettings() {
         addCategory(Intent.CATEGORY_DEFAULT)
         addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_NO_HISTORY or
-                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                Intent.FLAG_ACTIVITY_NO_HISTORY or
+                Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
         )
     }
     startActivity(intent)
@@ -346,7 +347,6 @@ private fun VideoStreamTrack.removeSinkCatching(sink: VideoSink) {
     // runCatching as track may be disposed while activity was in pause
     runCatching { removeSink(sink) }
 }
-
 
 @Composable
 private fun CallButton(onClick: () -> Unit, modifier: Modifier = Modifier) {

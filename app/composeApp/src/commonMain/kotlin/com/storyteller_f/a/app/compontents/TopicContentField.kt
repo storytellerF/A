@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,14 +20,10 @@ import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.model.createAllMediaListViewModel
 import com.storyteller_f.a.app.permission_denied
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.ob
-import com.storyteller_f.shared.type.ObjectType
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toImmutableList
@@ -44,11 +38,11 @@ fun TopicContentField(
 ) {
     when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
-            TopicContentFieldInternal(topicInfo, content.list.toImmutableList(), content.plain, isEmbed)
+            TopicContentFieldInternal(content.list.toImmutableList(), content.plain, isEmbed)
         }
 
         is TopicContent.Extracted -> {
-            TopicContentFieldInternal(topicInfo, content.list.toImmutableList(), content.plain, isEmbed)
+            TopicContentFieldInternal(content.list.toImmutableList(), content.plain, isEmbed)
         }
 
         is TopicContent.Encrypted, is TopicContent.DecryptFailed, is TopicContent.Invalid -> {
@@ -78,25 +72,17 @@ fun TopicContentField(
 
 @Composable
 private fun TopicContentFieldInternal(
-    topicInfo: TopicInfo,
     rawMediaList: ImmutableList<MediaInfo>,
     plain: String,
     isEmbed: Boolean,
 ) {
-    val (mediaList, objectTuple) = if (topicInfo.isEncrypted) {
-        val list = createAllMediaListViewModel(topicInfo.rootId ob topicInfo.rootType)
-        val media by list.handler.data.collectAsState()
-        media?.data.orEmpty() to ObjectTuple(topicInfo.rootId, topicInfo.rootType)
-    } else {
-        rawMediaList to ObjectTuple(topicInfo.author, ObjectType.USER)
-    }
-    val mediaMap = mediaList.associateBy { it.name }.toImmutableMap()
+    val mediaMap = rawMediaList.associateBy { it.name }.toImmutableMap()
     Markdown(
         plain,
         modifier = Modifier.fillMaxWidth().testTag("content"),
         colors = markdownColor(),
         typography = markdownTypography(),
-        imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap, objectTuple),
+        imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap),
         components = markdownComponents(codeFence = {
             CustomCodeFence(it, mediaMap)
         }, codeBlock = { HighlightCodeBlock(it) }, paragraph = {

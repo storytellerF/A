@@ -328,9 +328,9 @@ suspend fun SessionManager.getMediaList(objectId: PrimaryKey, objectType: Object
         CustomApi.Medias.get.invoke(CustomApi.Medias.MediaQuery(objectId, objectType, nextId, size = size))
     }
 
-suspend fun SessionManager.getAllMediaList(objectId: PrimaryKey, objectType: ObjectType) =
+suspend fun SessionManager.getMediaByName(word: String, objectId: PrimaryKey, objectType: ObjectType) =
     serviceCatching {
-        CustomApi.Medias.list.invoke(ObjectTuple(objectId, objectType))
+        CustomApi.Medias.getByName.invoke(CustomApi.Medias.MediaSearchQuery(word, objectId, objectType))
     }
 
 data class UploadData(val size: Long, val name: String, val contentType: ContentType)

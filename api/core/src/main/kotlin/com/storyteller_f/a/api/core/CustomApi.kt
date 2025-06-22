@@ -307,7 +307,14 @@ object CustomApi {
         }
 
         val upload = mutationApiWithQuery<ServerResponse<MediaInfo>, Unit, ObjectTuple>("medias/upload")
-        val list = safeApiWithQuery<ServerResponse<MediaInfo>, ObjectTuple>("medias/list")
+
+        @Serializable
+        class MediaSearchQuery(
+            val name: String,
+            val objectId: PrimaryKey,
+            val objectType: ObjectType,
+        )
+        val getByName = safeApiWithQuery<MediaInfo, MediaSearchQuery>("medias/get-by-name")
     }
 
     object Titles {

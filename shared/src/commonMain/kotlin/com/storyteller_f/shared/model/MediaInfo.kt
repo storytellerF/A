@@ -26,7 +26,6 @@ data class MediaInfo(
 ) : Identifiable {
     override val objectType: ObjectType
         get() = ObjectType.MEDIA
-
 }
 
 fun checkMediaDimensionRatioMatch(dimension: Dimension, aspectRatio: Dimension): Boolean {

@@ -8,6 +8,7 @@ import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
 import com.storyteller_f.backend.service.Backend
+import com.storyteller_f.shared.obj.ob
 import io.ktor.server.routing.*
 import java.io.File
 
@@ -20,9 +21,9 @@ fun Route.bindProtectedSafeMediaRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Medias.list.invoke(RoutingContext::handleResult) {
+    CustomApi.Medias.getByName.invoke(RoutingContext::handleResult) {
         usePrincipal { uid ->
-            backend.getAllMediaList(uid, it)
+            backend.getMediaByName(uid, it.objectId ob it.objectType, it.name)
         }
     }
 

@@ -49,7 +49,6 @@ import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.a.app.utils.setText
 import com.storyteller_f.shared.model.MediaInfo
-import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.utils.MarkdownObject
 import com.storyteller_f.shared.utils.getLang
 import com.storyteller_f.shared.utils.md5
@@ -358,7 +357,7 @@ fun getSize(info: MediaInfo?): Pair<Float, Float>? {
     return s
 }
 
-class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>, val objectTuple: ObjectTuple) :
+class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>) :
     ImageTransformer {
     @Composable
     override fun transform(link: String): ImageData {
@@ -373,7 +372,7 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInf
             ImageData(
                 painter,
                 modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
-                    info?.let { it1 -> appNav.gotoMedia(info, objectTuple) }
+                    info?.let { it1 -> appNav.gotoMedia(info) }
                 }
             )
         }
