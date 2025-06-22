@@ -5,13 +5,13 @@ on:
     branches: [ "alpha" ]
     paths:
       - '.github/workflows/alpha.yml'
-      - 'composeApp/**'
+      - 'app/composeApp/**'
       - 'shared/**'
       - 'scripts/build_scripts/build-app-on-ci.sh'
       - 'scripts/tool_scripts/modify-flavor.sh'
       - 'gradle/**'
       - 'crypto-jvm/**'
-      - 'client-lib/**'
+      - 'client/**'
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
