@@ -13,22 +13,20 @@ import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.tables.Room
 import com.storyteller_f.a.exposed.tables.RoomRawResult
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.shared.model.Dimension
-import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TitleSearchType
-import com.storyteller_f.shared.model.TitleType
-import com.storyteller_f.shared.model.UserLogType
-import com.storyteller_f.shared.obj.NewRoom
-import com.storyteller_f.shared.obj.UpdateRoomBody
-import com.storyteller_f.shared.obj.ob
+import com.storyteller_f.a.server.userWebSocketSessionMap
+import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
+import io.ktor.server.websocket.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 suspend fun Backend.getRoomPubKeys(
     roomId: PrimaryKey,
     userId: PrimaryKey,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: PrimaryKeyFetch,
 ) = exposedDatabase.containerDatabase.isMemberJoined(roomId, userId).mapResult {
     if (it) {
         exposedDatabase.roomData.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
@@ -42,7 +40,7 @@ suspend fun Backend.getRoomPubKeys(
 
 suspend fun Backend.joinRoom(
     roomId: PrimaryKey,
-    uid: PrimaryKey
+    uid: PrimaryKey,
 ) = getRoomInfo(ObjectFetch.IdFetch(roomId), uid, true).mapResultIfNotNull { roomInfo ->
     if (roomInfo.joinedTime != null) {
         Result.success(roomInfo)
@@ -77,7 +75,7 @@ suspend fun Backend.joinRoom(
 
 private suspend fun Backend.directJoinRoom(
     uid: PrimaryKey,
-    roomInfo: RoomInfo
+    roomInfo: RoomInfo,
 ): Result<RoomInfo?> {
     val time = now()
     return exposedDatabase.containerDatabase.joinContainer(
@@ -112,7 +110,7 @@ suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
 suspend fun Backend.getRoomInfo(
     objectFetch: ObjectFetch,
     uid: PrimaryKey?,
-    fillJoinInfo: Boolean?
+    fillJoinInfo: Boolean?,
 ): Result<RoomInfo?> {
     return exposedDatabase.roomData.getRoomRawResult(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
         processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
@@ -130,7 +128,7 @@ private fun checkRoomName(newRoom: NewRoom): Result<Unit> {
 
 suspend fun Backend.createRoom(
     newRoom: NewRoom,
-    uid: PrimaryKey
+    uid: PrimaryKey,
 ): Result<RoomInfo?> {
     val firstError = listOf(suspend {
         checkAid(newRoom.aid)
@@ -168,7 +166,7 @@ suspend fun Backend.createRoom(
 suspend fun Backend.updateRoom(
     id: PrimaryKey,
     old: UpdateRoomBody,
-    uid: PrimaryKey
+    uid: PrimaryKey,
 ): Result<RoomInfo?> {
     val newRoom = old.copy(name = old.name?.trim(), icon = old.icon)
     return checkRootAdminPermission(ObjectType.ROOM, id, uid).mapResultIfNotNull { permission ->

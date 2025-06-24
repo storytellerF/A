@@ -382,7 +382,7 @@ fun Route.bindUnprotectedAccountRoute(
     }
 }
 
-fun Route.bindSafeAccountRoute() {
+fun Route.bindAccountRoute() {
     CustomApi.Accounts.signOut.invoke(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             call.sessions.clear(UserSession::class)

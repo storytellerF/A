@@ -427,3 +427,14 @@ suspend fun createCommunityRoomsRaw(
         }
     )
 }
+
+suspend fun Backend.isKeyVerified(
+    roomId: PrimaryKey,
+    encryptedAes: Map<PrimaryKey, String>,
+): Result<Boolean> {
+    return exposedDatabase.containerDatabase.getJoinedUserList(roomId).map { value ->
+        value.map {
+            it.uid
+        }.toSet().minus(encryptedAes.keys).isEmpty()
+    }
+}

@@ -16,10 +16,15 @@ import java.io.InputStream
 import java.util.concurrent.TimeUnit
 import kotlin.Result
 import kotlin.getOrThrow
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 
 class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
-    val cache = Cache.Builder<String, String>().build()
+    val cache = Cache.Builder<String, String>()
+        .expireAfterWrite(7.days)
+        .build()
+
     override suspend fun clean(bucketName: String): Result<Unit> {
         return useMinIoClient(connection) {
             if (bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {

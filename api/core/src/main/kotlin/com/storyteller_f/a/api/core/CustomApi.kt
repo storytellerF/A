@@ -207,6 +207,9 @@ object CustomApi {
             }
 
             val update = mutationApiWithPath<RoomInfo, UpdateRoomBody, Path>("rooms/{id}/update")
+            val startCall = mutationApiWithPath<RoomInfo, Unit, Path>("rooms/{id}/start-call")
+            val stopCall = mutationApiWithPath<RoomInfo, Unit, Path>("rooms/{id}/stop-call")
+            val delete = mutationApiWithPath<Boolean, Unit, Path>("rooms/{id}", methodType = MutationMethodType.DELETE)
         }
 
         object Aid {

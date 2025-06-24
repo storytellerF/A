@@ -12,7 +12,7 @@ import com.storyteller_f.shared.obj.ob
 import io.ktor.server.routing.*
 import java.io.File
 
-fun Route.bindProtectedSafeMediaRoute(backend: Backend) {
+fun Route.bindProtectedMediaRoute(backend: Backend) {
     CustomApi.Medias.get.invoke(RoutingContext::handleResult) {
         usePrincipal { uid ->
             it.pagination(IdentifiablePagingGenerator) { pagingFetch ->

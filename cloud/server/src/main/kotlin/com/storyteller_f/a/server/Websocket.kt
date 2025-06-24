@@ -6,14 +6,18 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.index.TopicDocument
+import com.storyteller_f.a.backend.service.isKeyVerified
 import com.storyteller_f.a.backend.service.savePlainTopic
 import com.storyteller_f.a.exposed.tables.Topic
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
+import com.storyteller_f.a.server.service.checkRootReadPermission
 import com.storyteller_f.a.server.service.processTopicExtension
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserLogType
+import com.storyteller_f.shared.obj.CustomAnswer
+import com.storyteller_f.shared.obj.CustomOffer
 import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
@@ -36,6 +40,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 
 val messageResponseFlow = MutableSharedFlow<RoomFrame.NewTopicInfo>()
@@ -116,7 +123,7 @@ suspend fun Backend.sendTopicToRoomMembers() {
 
 suspend fun DefaultWebSocketServerSession.webSocketContent(
     reader: DatabaseReader,
-    backend: Backend
+    backend: Backend,
 ) {
     usePrincipalOrNull { uid ->
         if (uid == null) {
@@ -138,7 +145,7 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(
 
 private fun DefaultWebSocketServerSession.printWsError(
     e: Exception,
-    reader: DatabaseReader
+    reader: DatabaseReader,
 ) {
     val log = call.application.log
     when (e) {
@@ -153,45 +160,57 @@ private fun DefaultWebSocketServerSession.printWsError(
 private suspend fun DefaultWebSocketServerSession.processUserMessage(
     backend: Backend,
     frame: RoomFrame,
-    uid: PrimaryKey
+    uid: PrimaryKey,
 ) {
     try {
         if (frame is RoomFrame.Message) {
-            val newTopic = frame.newTopic
-            val content = newTopic.content
-            when (content) {
-                is TopicContent.Plain -> {
-                    if (content.plain.isBlank()) {
-                        sendSerialized(RoomFrame.Error("plain is empty") as RoomFrame)
-                        return
-                    }
-                }
-
-                is TopicContent.Encrypted -> {
-                    if (content.encrypted.isBlank()) {
-                        sendSerialized(RoomFrame.Error("message is empty") as RoomFrame)
-                        return
-                    }
-                }
-
-                else -> {
-                    sendSerialized(RoomFrame.Error("not support message type") as RoomFrame)
-                    return
+            processNewMessage(backend, frame, uid)
+        } else if (frame is RoomFrame.SendOffer) {
+            val offer = frame.offer
+            val session = rtcSession[offer.roomId]
+            if (session != null) {
+                session.socketMap[offer.targetUid]?.sendSerialized(RoomFrame.CreateAnswer(uid, offer))
+                session.offerList[uid]?.let {
+                    it[offer.targetUid] = offer
                 }
             }
-            backend.addTopicAtRoom(newTopic, uid).onSuccess {
-                if (it == null) {
-                    sendSerialized(RoomFrame.Error("not found") as RoomFrame)
-                } else {
-                    backend.addUserLog(uid, UserLogType.CREATE, it.tuple())
-                    val raw = RoomFrame.NewTopicInfo(it)
-                    sendSerialized(raw as RoomFrame)
-                    messageResponseFlow.emit(raw)
+        } else if (frame is RoomFrame.SendAnswer) {
+            val answer = frame.answer
+            val session = rtcSession[answer.roomId]
+            if (session != null) {
+                session.socketMap[answer.targetUid]?.sendSerialized(RoomFrame.RespondAnswer(answer))
+                session.answerList[uid]?.let {
+                    it[answer.targetUid] = answer
                 }
-            }.onFailure {
-                val message = it.message ?: "unknown error"
-                call.application.log.error(it)
-                sendSerialized(RoomFrame.Error(message) as RoomFrame)
+            }
+        } else if (frame is RoomFrame.StartCall) {
+            val roomId = frame.roomId
+            backend.checkRootReadPermission(ObjectType.ROOM, roomId, uid).onSuccess {
+                if (it == null) {
+                    sendSerialized(RoomFrame.Error("no permission") as RoomFrame)
+                } else if (it.hasRead) {
+                    lock.withLock {
+                        val list = rtcSession.getOrPut(roomId) {
+                            RtcSession(roomId)
+                        }
+                        if (!list.uidList.contains(uid)) {
+                            list.uidList.add(uid)
+                            list.socketMap[uid] = this
+                            list.uidSet.add(uid)
+                        }
+                    }
+                } else {
+                    sendSerialized(RoomFrame.Error("no permission") as RoomFrame)
+                }
+            }
+        } else if (frame is RoomFrame.StopCall) {
+            val roomId = frame.roomId
+            lock.withLock {
+                rtcSession[roomId]?.let {
+                    it.uidList.remove(uid)
+                    it.socketMap.remove(uid)
+                    it.uidSet.remove(uid)
+                }
             }
         }
     } catch (e: Exception) {
@@ -201,17 +220,13 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
 
 private suspend fun Backend.addTopicAtRoom(
     newTopic: NewRoomTopic,
-    uid: PrimaryKey
+    uid: PrimaryKey,
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
             exposedDatabase.topicDatabase.getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
-                    addTopicIntoRoom(
-                        id,
-                        uid,
-                        newTopic
-                    )
+                    addTopicIntoRoom(id, uid, newTopic)
                 } else {
                     Result.failure(ForbiddenException())
                 }
@@ -219,11 +234,7 @@ private suspend fun Backend.addTopicAtRoom(
         }
 
         ObjectType.ROOM -> {
-            addTopicIntoRoom(
-                newTopic.parentId,
-                uid,
-                newTopic
-            )
+            addTopicIntoRoom(newTopic.parentId, uid, newTopic)
         }
 
         else -> {
@@ -235,7 +246,7 @@ private suspend fun Backend.addTopicAtRoom(
 private suspend fun Backend.addTopicIntoRoom(
     roomId: PrimaryKey,
     uid: PrimaryKey,
-    newTopic: NewRoomTopic
+    newTopic: NewRoomTopic,
 ): Result<TopicInfo?> {
     val bytes = when (val c = newTopic.content) {
         is TopicContent.Plain -> c.bytes
@@ -285,7 +296,7 @@ private suspend fun Backend.addTopicIntoRoom(
 private suspend fun Backend.saveEncryptedTopic(
     content: TopicContent,
     roomId: PrimaryKey,
-    topic: Topic
+    topic: Topic,
 ): Result<TopicInfo?> = if (content is TopicContent.Encrypted) {
     isKeyVerified(roomId, content.encryptedKey).mapResult {
         if (it) {
@@ -295,18 +306,88 @@ private suspend fun Backend.saveEncryptedTopic(
         }
     }
 } else {
-    Result.failure(
-        ForbiddenException("Private room only accept encrypted content.")
-    )
+    Result.failure(ForbiddenException("Private room only accept encrypted content."))
 }
 
-private suspend fun Backend.isKeyVerified(
-    roomId: PrimaryKey,
-    encryptedAes: Map<PrimaryKey, String>
-): Result<Boolean> {
-    return exposedDatabase.containerDatabase.getJoinedUserList(roomId).map { value ->
-        value.map {
-            it.uid
-        }.toSet().minus(encryptedAes.keys).isEmpty()
+
+data class RtcSession(
+    val roomId: PrimaryKey,
+    val uidList: MutableList<PrimaryKey> = mutableListOf(),
+    val uidSet: MutableSet<PrimaryKey> = mutableSetOf(),
+    val socketMap: MutableMap<PrimaryKey, WebSocketServerSession> = mutableMapOf(),
+    val offerList: MutableMap<PrimaryKey, MutableMap<PrimaryKey, CustomOffer>> = mutableMapOf(),
+    val answerList: MutableMap<PrimaryKey, MutableMap<PrimaryKey, CustomAnswer>> = mutableMapOf(),
+)
+
+val rtcSession = mutableMapOf<PrimaryKey, RtcSession>()
+val lock = Mutex()
+
+suspend fun Backend.listenerRoomRtc() {
+    rtcSession.forEach { (k, it) ->
+        it.uidList.reversed().forEachIndexed { i, frontUid ->
+            val socketSession = it.socketMap[frontUid]
+            if (socketSession != null) {
+                if (socketSession.isActive) {
+                    it.uidList.forEachIndexed { j, backUid ->
+                        if (i > j) {
+                            val offer = it.offerList.getOrPut(frontUid) { mutableMapOf() }[backUid]
+                            if (offer == null) {
+                                try {
+                                    socketSession.sendSerialized(RoomFrame.CreateOffer(backUid, k))
+                                } catch (e: Exception) {
+                                    println("listenerRoomRtc: $e")
+                                }
+                            }
+                        }
+                    }
+                } else {
+
+                }
+            }
+
+        }
+    }
+}
+
+suspend fun DefaultWebSocketServerSession.processNewMessage(
+    backend: Backend,
+    frame: RoomFrame.Message,
+    uid: PrimaryKey,
+) {
+    val newTopic = frame.newTopic
+    val content = newTopic.content
+    when (content) {
+        is TopicContent.Plain -> {
+            if (content.plain.isBlank()) {
+                sendSerialized(RoomFrame.Error("plain is empty") as RoomFrame)
+                return
+            }
+        }
+
+        is TopicContent.Encrypted -> {
+            if (content.encrypted.isBlank()) {
+                sendSerialized(RoomFrame.Error("message is empty") as RoomFrame)
+                return
+            }
+        }
+
+        else -> {
+            sendSerialized(RoomFrame.Error("not support message type") as RoomFrame)
+            return
+        }
+    }
+    backend.addTopicAtRoom(newTopic, uid).onSuccess {
+        if (it == null) {
+            sendSerialized(RoomFrame.Error("not found") as RoomFrame)
+        } else {
+            backend.addUserLog(uid, UserLogType.CREATE, it.tuple())
+            val raw = RoomFrame.NewTopicInfo(it)
+            sendSerialized(raw as RoomFrame)
+            messageResponseFlow.emit(raw)
+        }
+    }.onFailure {
+        val message = it.message ?: "unknown error"
+        call.application.log.error(it)
+        sendSerialized(RoomFrame.Error(message) as RoomFrame)
     }
 }
