@@ -1,6 +1,5 @@
 package com.storyteller_f.a.client_lib
 
-import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
@@ -90,7 +89,7 @@ class WebSocketClientImpl(
     }
 
     private suspend fun connectWebSocketIfNeed(userInfo: UserInfo) {
-        val (_, sig) = sessionModel.session ?: return
+        val (_, sig) = sessionModel.dataAndSignature ?: return
         if (sig == null) return
         when (connectionHandler.state.value) {
             is LoadingState.Loading -> return

@@ -19,10 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.LocalAppNav
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.TopicContentField
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnTitleCreated
 import com.storyteller_f.a.app.model.createMemberSearchViewModel
 import com.storyteller_f.a.app.model.createRoomSearchViewModel
@@ -78,9 +78,10 @@ fun TitleComposeInternal() {
         mutableStateOf("")
     }
     val scope = rememberCoroutineScope()
+    val globalDialogController = LocalGlobalDialog.current
     CommonComposePage({
         scope.launch {
-            if (globalDialogState.use {
+            if (globalDialogController.use {
                     createTitle(titleType, receiver, titleScope, sessionManager, name, content)
                 }.isSuccess) {
                 appNav.back()

@@ -54,7 +54,7 @@ class GlobalDialogController(val state: MutableState<DialogState> = mutableState
     }
 
     suspend fun <T> use(
-        block: suspend () -> T
+        block: suspend () -> T,
     ): Result<T> {
         try {
             showLoadingState()
@@ -71,15 +71,13 @@ class GlobalDialogController(val state: MutableState<DialogState> = mutableState
     }
 
     suspend fun <T> useResult(
-        block: suspend () -> Result<T>
+        block: suspend () -> Result<T>,
     ): Result<T> {
         try {
             showLoadingState()
-            val result = block()
-            result.onSuccess {
-                showCloseState()
-            }
-            return result
+            val result = block().getOrThrow()
+            showCloseState()
+            return Result.success(result)
         } catch (e: Exception) {
             Napier.e(e) {
                 "global dialog"
@@ -131,7 +129,7 @@ fun GlobalDialogInternal(message: DialogState, updateNewState: (DialogState) -> 
 private fun ColumnScope.GlobalDialogContent(
     message: DialogState,
     scrollState: ScrollState,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
 ) {
     when (message) {
         is DialogState.Error -> {
@@ -164,7 +162,7 @@ private fun LoadingDialogContent() {
 private fun TextDialogContent(
     message: DialogState.Text,
     scrollState: ScrollState,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
 ) {
     val text = message.text
     MeasureTextLineCount(text, LocalTextStyle.current, 0.dp) { _, total ->
@@ -183,7 +181,7 @@ private fun TextDialogContent(
 private fun ErrorDialogContent(
     message: DialogState.Error,
     scrollState: ScrollState,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
 ) {
     val throwable = message.throwable
     if (throwable is ServerErrorException && throwable.isHtmlContent()) {
@@ -257,11 +255,15 @@ fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
         }
 
         is IconRes.Vector -> {
-            Icon(imageVector = icon.vector, contentDescription = icon.description, modifier = Modifier.clickable(
-                onClick != null
-            ) {
-                onClick?.invoke()
-            })
+            Icon(
+                imageVector = icon.vector,
+                contentDescription = icon.description,
+                modifier = Modifier.clickable(
+                    onClick != null
+                ) {
+                    onClick?.invoke()
+                }
+            )
         }
     }
 }
@@ -304,7 +306,7 @@ fun CustomAlertDialog(controller: CustomAlertDialogController, dismiss: () -> Un
 fun CustomAlertDialogInternal(
     dismiss: () -> Unit,
     dialogState: CustomAlertDialogState,
-    onClickOk: () -> Unit
+    onClickOk: () -> Unit,
 ) {
     AlertDialog({
         dismiss()

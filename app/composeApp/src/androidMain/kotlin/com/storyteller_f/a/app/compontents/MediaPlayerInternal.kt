@@ -139,9 +139,10 @@ fun BoxScope.PlayerWaiting(
         HttpClient()
     }
     val context = LocalContext.current
+    val globalDialogController = LocalGlobalDialog.current
     IconButton({
         scope.launch {
-            startPlay(obj, client, localMediaPlaySession, context)
+            startPlay(obj, client, localMediaPlaySession, context, globalDialogController)
         }
     }, modifier = Modifier.Companion.align(Alignment.Center)) {
         Icon(Icons.Default.PlayArrow, "play")
@@ -170,10 +171,11 @@ private suspend fun startPlay(
     obj: RemoteMediaItem,
     client: HttpClient,
     localMediaPlaySession: LocalMediaPlaySession,
-    context: Context
+    context: Context,
+    globalDialogController: GlobalDialogController
 ) {
     val contentType = obj.contentType
-    globalDialogState.use {
+    globalDialogController.use {
         val playList = when (contentType) {
             M3U8_MIMETYPE -> parseM3UPlayList(obj, client)
             YOUTUBE_MIMETYPE, SOUND_CLOUD_MIME_TYPE -> getPlaylistFromNewPipe(obj, context)

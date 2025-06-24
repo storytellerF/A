@@ -18,9 +18,9 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNav
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnAddReaction
 import com.storyteller_f.a.app.model.OnRemoveReaction
 import com.storyteller_f.a.app.pages.topic.BaseSheet
@@ -31,7 +31,6 @@ import com.storyteller_f.a.client_lib.deleteReaction
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @Composable
@@ -236,18 +235,19 @@ private fun EmojiCell(
     val emoji = info.emoji
     val hasReacted = info.hasReacted
     val sessionManager = LocalSessionManager.current
+    val globalDialogController = LocalGlobalDialog.current
     Pill(info.count.toString(), emoji = emoji, selected = hasReacted) {
         emoji.let { string ->
             if (hasReacted) {
                 scope.launch {
-                    globalDialogState.use {
+                    globalDialogController.use {
                         sessionManager.deleteReaction(string, topicId)
                         bus.emit(OnRemoveReaction(topicId, string))
                     }
                 }
             } else {
                 scope.launch {
-                    globalDialogState.use {
+                    globalDialogController.use {
                         sessionManager.addReaction(topicId, string)
                         bus.emit(OnAddReaction(topicId, string))
                     }

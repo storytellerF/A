@@ -59,8 +59,8 @@ object CryptoJvm {
         return runCatching {
             val stringReader = StringReader(pemString)
             val pemParser = PEMParser(stringReader)
-            val converter: JcaPEMKeyConverter = JcaPEMKeyConverter().setProvider("BC")
-            val any: Any = pemParser.readObject()
+            val converter = JcaPEMKeyConverter().setProvider("BC")
+            val any = pemParser.readObject()
             pemParser.close()
 
             when (any) {

@@ -5,7 +5,7 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 
-interface Identifiable {
+interface PrimaryKeyIdentifiable {
     val id: PrimaryKey
 
     val objectType: ObjectType

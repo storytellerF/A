@@ -34,7 +34,7 @@ class DefaultLoginUserSessionManager(val defaultSettings: Settings) : LoginUserS
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override suspend fun addSession(session: RawUserPassInfo): UserPass {
-        val rawUserPass = RawUserPassInfo(session.privateKey, session.publicKey, session.address)
+        val rawUserPass = RawUserPassInfo(session.pemPrivateKey, session.derPublicKey, session.address)
         defaultSettings.encodeValue("login_user", rawUserPass)
         defaultSettings.encodeValue("login_history", LoginHistory("default", "default"))
         return RawUserPass(session)

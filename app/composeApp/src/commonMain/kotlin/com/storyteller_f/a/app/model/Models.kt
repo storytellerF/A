@@ -668,7 +668,6 @@ class DownloadViewModel(
                 var count = 0L
 
                 while (!channel.exhausted()) {
-
                     val chunk = channel.readRemaining()
                     count += chunk.remaining
 
@@ -726,5 +725,25 @@ class MarkdownMediasViewModel(
                 }
             }
         }
+}
 
+class AlternativeAccountsViewModel(val storageSource: StorageSource, sessionManager: SessionManager) :
+    PagingViewModel<PrimaryKey, AlternativeAccountInfo>() {
+    val collectionName = "alternatives"
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<AlternativeAccountInfo>> = Pager(
+        PagingConfig(pageSize = 20),
+        remoteMediator = primaryKeyRemoteMediator(
+            storageSource,
+            collectionName,
+            RegularPagingSource(
+                sessionManager
+            ) { key, size ->
+                sessionManager.getAlternativeAccounts(key, size)
+            }
+        ),
+    ) {
+        primaryKeyPagingSource(collectionName, storageSource)
+    }.flow.cachedIn(viewModelScope)
 }

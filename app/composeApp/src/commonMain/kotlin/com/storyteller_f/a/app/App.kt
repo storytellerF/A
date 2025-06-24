@@ -1,10 +1,14 @@
 package com.storyteller_f.a.app
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +22,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.paging.compose.itemKey
+import app.cash.paging.compose.collectAsLazyPagingItems
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
@@ -33,7 +39,7 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.rememberLibraries
 import com.russhwolf.settings.Settings
-import com.storyteller_f.a.app.common.viewModel
+import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.PreferencePage
@@ -45,12 +51,11 @@ import com.storyteller_f.a.app.pages.room.RoomComposePage
 import com.storyteller_f.a.app.pages.room.RoomPage
 import com.storyteller_f.a.app.pages.room.RoomSettingPage
 import com.storyteller_f.a.app.pages.title.TitleComposePage
+import com.storyteller_f.a.app.pages.topic.BaseSheet
+import com.storyteller_f.a.app.pages.topic.SheetContainer
 import com.storyteller_f.a.app.pages.topic.TopicComposePage
 import com.storyteller_f.a.app.pages.topic.TopicPage
-import com.storyteller_f.a.app.pages.user.LoginPage
-import com.storyteller_f.a.app.pages.user.MemberPage
-import com.storyteller_f.a.app.pages.user.UserPage
-import com.storyteller_f.a.app.pages.user.UserSettingPage
+import com.storyteller_f.a.app.pages.user.*
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.app.utils.createCustomDataStoreManager
@@ -58,11 +63,15 @@ import com.storyteller_f.a.app.utils.createSettings
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.app.utils.restoreFromStorage
 import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.shared.calcAddress
+import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
+import com.storyteller_f.shared.getPemPrivateKeyFromDer
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.storage.*
 import com.strabled.composepreferences.ProvideDataStoreManager
 import com.strabled.composepreferences.setPreferences
@@ -70,6 +79,7 @@ import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
+import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.*
@@ -91,8 +101,6 @@ object StaticObj {
     }
 }
 
-val globalDialogState = GlobalDialogController()
-
 val LocalAppNav = compositionLocalOf {
     AppNav.EMPTY
 }
@@ -109,6 +117,10 @@ val LocalWsClient = compositionLocalOf {
     WebSocketClient.EMPTY
 }
 
+val LocalGlobalDialog = compositionLocalOf<GlobalDialogController> {
+    error("no default dialog")
+}
+
 val LocalJson = compositionLocalOf<Json> {
     error("no default json")
 }
@@ -122,16 +134,16 @@ val LocalDatabase = compositionLocalOf {
     StorageSource.EMPTY
 }
 
-val LocalSessionManager = compositionLocalOf<UserSessionManager> {
+val LocalSessionManager = compositionLocalOf<CustomSessionManager> {
     error("No user session")
 }
 
-val LocalMainSessionManager = compositionLocalOf<UserSessionManager> {
+val LocalMainSessionManager = compositionLocalOf<CustomSessionManager> {
     error("No main user session")
 }
 
-val LocalSettings = compositionLocalOf<Settings> {
-    error("No default settings")
+val LocalAccountSwitcher = compositionLocalOf<AccountSwitcher> {
+    error("not found")
 }
 
 @Serializable
@@ -257,9 +269,7 @@ private fun MainAppPage(
         }) {
             appNav.gotoTopic(it.id)
         }
-        val downloadViewModel = viewModel(listOf("download")) { s, s1 ->
-            DownloadViewModel(s, s1)
-        }
+        val downloadViewModel = getDownloadViewModel()
         CompositionLocalProvider(LocalAppNav provides appNav, LocalDownloadViewModel provides downloadViewModel) {
             NavHost(navigator, startDestination = HomeScreen) {
                 buildRootNav(navigator)
@@ -279,67 +289,131 @@ fun CommonEntry(
             getAsyncImageLoader(it)
         }
 
-        val settings = remember {
-            createSettings()
+        val accountSwitcher = remember {
+            AccountSwitcher()
         }
-        CompositionLocalProvider(LocalSettings provides settings) {
-            val mainUserSession = createSessionManager(wsServerUrl, httpUrl)
-            val address by mainUserSession.sessionModel.state.map {
-                (it as? ClientSessionState.Success)?.session?.address()?.getOrNull()
-            }.collectAsState(null)
-            val database = remember(address) {
-                createKotbaseStorageSource(address)
+        val mainUserSessionManager = createSessionManager("main", wsServerUrl, httpUrl)
+        var currentUser by remember {
+            mutableStateOf<RawUserPass?>(null)
+        }
+        val currentUserSessionManager = currentUser?.let {
+            val sessionManager = createSessionManager("alternative$it", wsServerUrl, httpUrl)
+            sessionManager.sessionModel.updateState(ClientSessionState.Success(it))
+            sessionManager
+        } ?: mainUserSessionManager
+        val address by currentUserSessionManager.address.collectAsState()
+        val database = remember(address) {
+            createKotbaseStorageSource(address)
+        }
+
+        val globalDialogController = remember {
+            GlobalDialogController()
+        }
+        val toasterState = rememberToasterState()
+        val json = remember {
+            Json {
+                ignoreUnknownKeys = true
             }
-            LaunchedEffect(database, address) {
-                bus.collect { event ->
-                    processEvent(event, database)
+        }
+        CommonEntryContent(
+            database,
+            address,
+            globalDialogController,
+            toasterState,
+            currentUserSessionManager,
+            json,
+            accountSwitcher,
+            mainUserSessionManager,
+            {
+                currentUser = it
+            },
+            content
+        )
+    }
+}
+
+@Composable
+fun CommonEntryContent(
+    database: StorageSource,
+    address: String?,
+    globalDialogController: GlobalDialogController,
+    toasterState: ToasterState,
+    currentUserSessionManager: CustomSessionManager,
+    json: Json,
+    accountSwitcher: AccountSwitcher,
+    mainUserSessionManager: CustomSessionManager,
+    switch: (RawUserPass) -> Unit,
+    content: @Composable () -> Unit,
+) {
+    LaunchedEffect(database, address) {
+        bus.collect { event ->
+            processEvent(event, database)
+        }
+    }
+    GlobalDialog(globalDialogController)
+    Toaster(toasterState, alignment = Alignment.Center)
+    CompositionLocalProvider(
+        LocalClient provides currentUserSessionManager.client,
+        LocalWsClient provides currentUserSessionManager.webSocketClient,
+        LocalSessionManager provides currentUserSessionManager,
+        LocalMainSessionManager provides mainUserSessionManager,
+        LocalToaster provides toasterState,
+        LocalDatabase provides database,
+        LocalJson provides json,
+        LocalGlobalDialog provides globalDialogController,
+        LocalAccountSwitcher provides accountSwitcher,
+    ) {
+        val scope = rememberCoroutineScope()
+        ProvideIconParameters(
+            iconFont = MaterialSymbolsOutlined.rememberIconFont(),
+            size = 20.dp,
+            tintProvider = LocalContentColor,
+            weight = FontWeight.Normal
+        ) {
+            val dataStoreManager = createCustomDataStoreManager()
+            ProvideDataStoreManager(dataStoreManager) {
+                setPreferences {
+                    "gpt_model" defaultValue ""
                 }
-            }
-            GlobalDialog(globalDialogState)
-            val toasterState = rememberToasterState()
-            Toaster(toasterState, alignment = Alignment.Center)
-            val json = remember {
-                Json {
-                    ignoreUnknownKeys = true
-                }
-            }
-            CompositionLocalProvider(
-                LocalClient provides mainUserSession.client,
-                LocalWsClient provides mainUserSession.webSocketClient,
-                LocalSessionManager provides mainUserSession,
-                LocalMainSessionManager provides mainUserSession,
-                LocalToaster provides toasterState,
-                LocalDatabase provides database,
-                LocalJson provides json,
-            ) {
-                ProvideIconParameters(
-                    iconFont = MaterialSymbolsOutlined.rememberIconFont(),
-                    size = 20.dp,
-                    tintProvider = LocalContentColor,
-                    weight = FontWeight.Normal
-                ) {
-                    val dataStoreManager = createCustomDataStoreManager()
-                    ProvideDataStoreManager(dataStoreManager) {
-                        setPreferences {
-                            "gpt_model" defaultValue ""
-                        }
-                        content()
-                    }
+                content()
+                AccountSwitch(accountSwitcher) { derPrivateKeyStr ->
+                    switchUser(scope, globalDialogController, derPrivateKeyStr, switch)
                 }
             }
         }
     }
 }
 
+private fun switchUser(
+    scope: CoroutineScope,
+    globalDialogController: GlobalDialogController,
+    derPrivateKeyStr: String,
+    switch: (RawUserPass) -> Unit,
+) {
+    scope.launch {
+        globalDialogController.useResult {
+            getPemPrivateKeyFromDer(derPrivateKeyStr).mapResult { pemPrivateKey ->
+                getDerPublicKeyFromPrivateKey(pemPrivateKey).mapResult { publicKey ->
+                    calcAddress(publicKey).map { address ->
+                        RawUserPass(RawUserPassInfo(pemPrivateKey, publicKey, address))
+                    }
+                }
+            }
+        }.getOrNull()?.let {
+            switch(it)
+        }
+    }
+}
+
 @Composable
 private fun createSessionManager(
+    settingName: String,
     wsServerUrl: String,
     httpUrl: String,
-): UserSessionManager {
-    val settings = LocalSettings.current
+): CustomSessionManager {
     val scope = rememberCoroutineScope()
-    val mainUserSession = remember {
-        createUserSessionManager(buildWebSocketUrl(wsServerUrl), { model, cookieManager ->
+    val sessionManager = remember(settingName) {
+        createCustomUserSessionManager(settingName, buildWebSocketUrl(wsServerUrl), { model, cookieManager ->
             buildHttpClient(httpUrl, cookieManager, model)
         }) { roomFrame, session ->
             if (roomFrame is RoomFrame.NewTopicInfo) {
@@ -348,19 +422,17 @@ private fun createSessionManager(
                     "save document ${roomFrame.topicInfo}"
                 }
             }
-        }.apply {
-            restoreFromStorage(settings)
         }
     }
-    DisposableEffect(mainUserSession) {
+    DisposableEffect(sessionManager) {
         val job = scope.launch {
-            mainUserSession.start()
+            sessionManager.start()
         }
         onDispose {
             job.cancel()
         }
     }
-    return mainUserSession
+    return sessionManager
 }
 
 fun buildHttpClient(
@@ -694,9 +766,17 @@ private fun newAppNav(navigator: NavHostController, json: Json) = object : AppNa
         objectId: PrimaryKey,
         enableExperimental: Boolean,
         privateRoomId: PrimaryKey?,
-        communityId: PrimaryKey?
+        communityId: PrimaryKey?,
     ) {
-        navigator.navigate(TopicComposeScreen(objectType.name, objectId, enableExperimental, privateRoomId, communityId))
+        navigator.navigate(
+            TopicComposeScreen(
+                objectType.name,
+                objectId,
+                enableExperimental,
+                privateRoomId,
+                communityId
+            )
+        )
     }
 
     override fun gotoMemberPage(
@@ -797,7 +877,7 @@ interface AppNav {
         objectId: PrimaryKey,
         enableExperimental: Boolean,
         privateRoomId: PrimaryKey?,
-        communityId: PrimaryKey?
+        communityId: PrimaryKey?,
     )
 
     fun gotoMemberPage(objectId: PrimaryKey, objectType: ObjectType)
@@ -952,4 +1032,103 @@ private suspend fun sendTopicNotification(
 
 fun ToasterState.showShortToast(message: String) {
     show(message, duration = 1.seconds)
+}
+
+class AccountSwitcher(val state: MutableState<Boolean> = mutableStateOf(false)) {
+    fun switch() {
+        state.value = true
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
+    var expand by accountSwitcher.state
+    val sheetState = rememberModalBottomSheetState()
+    BaseSheet(expand, sheetState, {
+        expand = false
+    }) {
+        SheetContainer {
+            val currentUserSessionManager = LocalSessionManager.current
+            val mainSessionManager = LocalMainSessionManager.current
+            val currentAddress by currentUserSessionManager.address.collectAsState()
+            val mainAddress by currentUserSessionManager.address.collectAsState()
+            val isSwitched = currentAddress != mainAddress
+            val scope = rememberCoroutineScope()
+            val globalDialogController = LocalGlobalDialog.current
+            CompositionLocalProvider(LocalSessionManager provides mainSessionManager) {
+                val viewModel = getAlternativeAccountsViewModel()
+                val pagingItems = viewModel.flow.collectAsLazyPagingItems()
+                if (isSwitched) {
+                    ButtonNav(Icons.AutoMirrored.Filled.ArrowBack, "Back") {
+                        val rawUserPass = mainSessionManager.sessionModel.currentUserPass as? RawUserPass
+                        val pemPrivateKey = rawUserPass?.rawUSerPass?.pemPrivateKey
+                        pemPrivateKey?.let {
+                            switch(it)
+                        }
+                    }
+                } else {
+                    ButtonNav(Icons.Default.Add, "Back") {
+                        scope.launch {
+                            globalDialogController.useResult {
+                                mainSessionManager.addAlternativeAccount()
+                            }.getOrNull()?.let {
+                                pagingItems.refresh()
+                            }
+                        }
+                    }
+                }
+                StateView(pagingItems, modifier = Modifier.height(300.dp)) {
+                    LazyColumn(contentPadding = PaddingValues(10.dp)) {
+                        items(pagingItems.itemCount, key = pagingItems.itemKey { accountInfo ->
+                            accountInfo.id
+                        }) {
+                            val alternativeAccountInfo = pagingItems[it]
+                            alternativeAccountInfo?.let {
+                                UserCell(it.userInfo, false) {
+                                    switch(alternativeAccountInfo.privateKey)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+class CustomSessionManager(
+    client: HttpClient,
+    webSocketClient: WebSocketClientImpl,
+    sessionModel: SessionModel,
+    val settings: Settings,
+) : UserSessionManager(
+    client,
+    webSocketClient,
+    sessionModel
+)
+
+fun createCustomUserSessionManager(
+    settingsName: String,
+    webSocketUrl: String,
+    createClient: (UserSessionModel, CookiesStorage) -> HttpClient,
+    onReceiveFrame: suspend (RoomFrame, UserSessionModel) -> Unit,
+): CustomSessionManager {
+    val settings = createSettings(settingsName)
+    val cookieManager = AcceptAllCookiesStorage()
+    val model = UserSessionModel()
+    val client = createClient(model, cookieManager)
+    val webSocketClient = WebSocketClientImpl(
+        model,
+        { userInfo, sig ->
+            client.webSocketSession(webSocketUrl) {
+                addRequestHeaders(userInfo, sig)
+            }
+        },
+    ) {
+        onReceiveFrame(it, model)
+    }
+    val customSessionManager = CustomSessionManager(client, webSocketClient, model, settings)
+    customSessionManager.restoreFromStorage(settings)
+    return customSessionManager
 }

@@ -1,11 +1,11 @@
 package com.storyteller_f.a.server.route
 
 import com.maxmind.geoip2.DatabaseReader
+import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.server.auth.bindProtectedAccountRoute
 import com.storyteller_f.a.server.auth.bindSafeAccountRoute
 import com.storyteller_f.a.server.auth.bindUnprotectedAccountRoute
 import com.storyteller_f.a.server.webSocketContent
-import com.storyteller_f.a.backend.service.Backend
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.routing.*
@@ -26,7 +26,7 @@ fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
             bindProtectedAccountRoute(backend)
         }
         authenticate(optional = true) {
-            bindSafeAccountRoute(backend)
+            bindSafeAccountRoute()
             bindSafeRoomRoute(backend)
             bindSafeTopicRoute(backend)
             bindSafeCommunityRoute(backend)

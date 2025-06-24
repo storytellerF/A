@@ -1,36 +1,9 @@
 package com.storyteller_f.a.exposed
 
-import com.storyteller_f.a.backend.core.JoinSearch
-import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.core.ObjectListFetch
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.core.ReactionFetch
+import com.storyteller_f.a.backend.core.*
 import com.storyteller_f.a.exposed.query.PaginationResult
-import com.storyteller_f.a.exposed.tables.AlternateAccountRawResult
-import com.storyteller_f.a.exposed.tables.Community
-import com.storyteller_f.a.exposed.tables.CommunityRawResult
-import com.storyteller_f.a.exposed.tables.Media
-import com.storyteller_f.a.exposed.tables.MemberJoin
-import com.storyteller_f.a.exposed.tables.ReactionRecord
-import com.storyteller_f.a.exposed.tables.Room
-import com.storyteller_f.a.exposed.tables.RoomRawResult
-import com.storyteller_f.a.exposed.tables.TaskRecord
-import com.storyteller_f.a.exposed.tables.Topic
-import com.storyteller_f.a.exposed.tables.User
-import com.storyteller_f.a.exposed.tables.UserDevice
-import com.storyteller_f.a.exposed.tables.UserLog
-import com.storyteller_f.a.exposed.tables.UserRawResult
-import com.storyteller_f.a.exposed.tables.UserTopicRead
-import com.storyteller_f.shared.model.PosterSearch
-import com.storyteller_f.shared.model.ReactionInfo
-import com.storyteller_f.shared.model.ReactionRecordInfo
-import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.TitleInfo
-import com.storyteller_f.shared.model.TitleSearchType
-import com.storyteller_f.shared.model.TitleType
-import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserPubKeyInfo
+import com.storyteller_f.a.exposed.tables.*
+import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.UpdateRoomBody
@@ -40,7 +13,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 
 interface Database<T> {
@@ -57,19 +29,18 @@ interface UserDatabase<T> {
     suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,
         word: String?,
-        primaryKeyFetch: PrimaryKeyFetch
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<UserRawResult<T>>>
 
     suspend fun getUserRawResultAndPublicKeyByAddress(ad: String): Result<Pair<UserRawResult<T>, String>?>
     suspend fun createUser(user: User): Result<Unit>
-    suspend fun isUserNotExists(pk: String): Result<Boolean>
+    suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
     suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody): Result<Boolean>
-    suspend fun checkUserExists(id: Long): Result<Boolean>
+    suspend fun isUserExistsByUid(id: Long): Result<Boolean>
     suspend fun getUserAuthDataByAid(predicate: SqlExpressionBuilder.() -> Op<Boolean>): Result<Pair<String, Long>?>
     suspend fun getUserAuthDataBy(predicate: SqlExpressionBuilder.() -> Op<Boolean>): Result<Pair<String, Long>?>
     suspend fun getUserRawResultList(objectListFetch: ObjectListFetch): Result<List<UserRawResult<T>>>
     suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch): Result<List<Pair<Long, Long>>>
-    suspend fun getUserAlternatUserRawResultList(uid: PrimaryKey): Result<List<UserRawResult<T>>>
     suspend fun addReadLog(userTopicRead: UserTopicRead): Result<Unit>
     suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<UserTopicRead>>
     suspend fun insertUserLog(log: UserLog): Result<Unit>
@@ -85,7 +56,7 @@ interface UserDatabase<T> {
     suspend fun getMemberCount(parentIds: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
     suspend fun getContainerInfo(
         parentIds: List<PrimaryKey>,
-        uid: PrimaryKey?
+        uid: PrimaryKey?,
     ): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>>
 
     suspend fun addAcgForUser(
@@ -97,7 +68,7 @@ interface UserDatabase<T> {
 
     suspend fun getMediaPaginationList(
         uid: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<Pair<List<Media>, Long>>
 
     suspend fun getMedia(owner: PrimaryKey, name: String): Result<Media?>
@@ -107,12 +78,16 @@ interface UserDatabase<T> {
     suspend fun insertMediaRefs(
         objectId: PrimaryKey,
         objectType: ObjectType,
-        mediaName: List<Pair<PrimaryKey, String>>
-    ): Result<List<ResultRow>>
+        mediaName: List<Pair<PrimaryKey, String>>,
+    ): Result<Unit>
 
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
-    suspend fun getAlternativeRawResultByHost(hostId: PrimaryKey): Result<List<AlternateAccountRawResult>>
-    suspend fun createAlternativeRawResult(hostId: PrimaryKey, user: User) : Result<Unit>
+    suspend fun getAlternativeRawResultPaginationListByHost(
+        hostId: PrimaryKey,
+        fetch: PrimaryKeyFetch,
+    ): Result<Pair<List<AlternateAccountRawResult>, Long>>
+
+    suspend fun createAlternativeRawResult(hostId: PrimaryKey, privateKey: String, user: User): Result<Unit>
 }
 
 interface TopicDatabase {
@@ -122,7 +97,7 @@ interface TopicDatabase {
     suspend fun getTopicPaginationResultByPredicate(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
-        extraQuery: Query.() -> Query
+        extraQuery: Query.() -> Query,
     ): Result<PaginationResult<TopicInfo>>
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -130,26 +105,27 @@ interface TopicDatabase {
     suspend fun updateTopicStatus(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
     suspend fun getTopicList(firstId: PrimaryKey): Result<List<Topic>>
     suspend fun ExposedDatabaseSession.getTopicCommentCount(
-        topicIdList: List<PrimaryKey>
+        topicIdList: List<PrimaryKey>,
     ): Result<List<Pair<Long, Long>>>
+
     suspend fun ExposedDatabaseSession.isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
     suspend fun processTopicToTopicInfo(uid: PrimaryKey?, topics: List<Topic>): Result<List<TopicInfo>>
     suspend fun processByteArrayToTopicContent(
         topics: List<Topic>,
-        uid: PrimaryKey?
+        uid: PrimaryKey?,
     ): Result<Map<PrimaryKey, TopicContent>>
 
     @OptIn(ExperimentalStdlibApi::class)
     suspend fun ExposedDatabaseSession.getEncryptedTopicContents(
         data: List<Topic>,
-        uid: PrimaryKey
+        uid: PrimaryKey,
     ): Result<List<TopicContent.Encrypted>>
 
     suspend fun statsReactionRecord(reactionRecord: ReactionRecord): Result<Unit>
     suspend fun getReactionInfoPaginationResult(
         objectId: List<PrimaryKey>,
         uid: PrimaryKey?,
-        reactionFetch: ReactionFetch
+        reactionFetch: ReactionFetch,
     ): Result<PaginationResult<ReactionInfo>>
 
     suspend fun hasReactedEmoji(objectIdList: List<PrimaryKey>, uid: PrimaryKey): Result<List<Pair<Long, String>>>
@@ -169,7 +145,7 @@ interface TitleDatabase {
         uid: PrimaryKey,
         searchType: TitleSearchType,
         type: TitleType? = null,
-        scopeId: PrimaryKey? = null
+        scopeId: PrimaryKey? = null,
     ): Result<PaginationResult<TitleInfo>>
 }
 
@@ -178,7 +154,7 @@ interface CommunityDatabase {
     suspend fun getCommunityRawResult(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean? = null,
-        uid: PrimaryKey? = null
+        uid: PrimaryKey? = null,
     ): Result<CommunityRawResult?>
 
     suspend fun getJoinedCommunityIds(uid: PrimaryKey): Result<List<Long>>
@@ -186,18 +162,18 @@ interface CommunityDatabase {
         word: String?,
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,
-        joinSearch: JoinSearch
+        joinSearch: JoinSearch,
     ): Result<PaginationResult<CommunityRawResult>?>
 
     suspend fun processCommunityToCommunityRawResult(
         uid: PrimaryKey?,
-        communities: List<Community>
+        communities: List<Community>,
     ): Result<List<CommunityRawResult>>
 
     suspend fun createCommunity(community: Community): Result<Unit>
     suspend fun getCommunityJoinedTimeByIds(
         uid: PrimaryKey,
-        communityIds: List<PrimaryKey>
+        communityIds: List<PrimaryKey>,
     ): Result<List<Pair<Long, LocalDateTime>>>
 
     suspend fun getCommunityRawResults(objectListFetch: ObjectListFetch): Result<List<CommunityRawResult>>
@@ -211,24 +187,24 @@ interface RoomDatabase {
         word: String?,
         community: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
-        joinSearch: JoinSearch
+        joinSearch: JoinSearch,
     ): Result<PaginationResult<RoomRawResult>>
 
     suspend fun getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?>
     suspend fun getRoomPubKeyPaginationResult(
         roomId: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<UserPubKeyInfo>>
 
     suspend fun getRoomRawResult(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean? = null,
-        uid: PrimaryKey? = null
+        uid: PrimaryKey? = null,
     ): Result<RoomRawResult?>
 
     suspend fun ExposedDatabaseSession.processRoomListToRoomRawResult(
         uid: PrimaryKey?,
-        rooms: List<Room>
+        rooms: List<Room>,
     ): Result<List<RoomRawResult>>
 
     suspend fun createRoom(room: Room): Result<Unit>

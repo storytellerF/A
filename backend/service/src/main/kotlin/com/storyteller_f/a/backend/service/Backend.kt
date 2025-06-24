@@ -3,24 +3,6 @@ package com.storyteller_f.a.backend.service
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.*
-import com.storyteller_f.a.backend.service.service.BackendConfig
-import com.storyteller_f.a.exposed.ExposedDatabaseSession
-import com.storyteller_f.a.exposed.query.PaginationResult
-import com.storyteller_f.a.exposed.query.batchCreateCommunityRooms
-import com.storyteller_f.a.exposed.tables.CommunityRawResult
-import com.storyteller_f.a.exposed.tables.Media
-import com.storyteller_f.a.exposed.tables.Room
-import com.storyteller_f.a.exposed.tables.RoomRawResult
-import com.storyteller_f.a.exposed.tables.Title
-import com.storyteller_f.a.exposed.tables.Topic
-import com.storyteller_f.a.exposed.tables.User
-import com.storyteller_f.a.exposed.tables.UserRawResult
-import com.storyteller_f.a.exposed.tables.toCommunityIfo
-import com.storyteller_f.a.exposed.tables.toMediaInfo
-import com.storyteller_f.a.exposed.tables.toRoomInfo
-import com.storyteller_f.a.exposed.tables.toTitleInfo
-import com.storyteller_f.a.exposed.tables.toTopicInfo
-import com.storyteller_f.a.exposed.tables.toUserInfo
 import com.storyteller_f.a.backend.service.index.ElasticTopicSearchService
 import com.storyteller_f.a.backend.service.index.LuceneTopicSearchService
 import com.storyteller_f.a.backend.service.index.TopicSearchService
@@ -28,6 +10,11 @@ import com.storyteller_f.a.backend.service.media.FileSystemMediaService
 import com.storyteller_f.a.backend.service.media.MediaService
 import com.storyteller_f.a.backend.service.media.MinIoMediaService
 import com.storyteller_f.a.backend.service.naming.NameService
+import com.storyteller_f.a.backend.service.service.BackendConfig
+import com.storyteller_f.a.exposed.ExposedDatabaseSession
+import com.storyteller_f.a.exposed.query.PaginationResult
+import com.storyteller_f.a.exposed.query.batchCreateCommunityRooms
+import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
@@ -202,7 +189,7 @@ suspend fun Backend.uploadFiles(uploadPacks: List<UploadPack>): Result<List<Medi
 
 suspend fun Backend.insertTitleAndTopicDescription(
     title: Title,
-    topic: Topic
+    topic: Topic,
 ): Result<TitleInfo> {
     return databaseSession.dbQuery {
         Title.insertTitle(title, topic)
@@ -211,7 +198,7 @@ suspend fun Backend.insertTitleAndTopicDescription(
 }
 
 suspend fun Backend.getUserInfo(
-    fetch: ObjectFetch
+    fetch: ObjectFetch,
 ): Result<UserInfo?> {
     return exposedDatabase.userDatabase.getUserRawResult(fetch).mapResultIfNotNull {
         processUserRawResultToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
@@ -219,7 +206,7 @@ suspend fun Backend.getUserInfo(
 }
 
 suspend fun Backend.getUserInfoList(
-    listFetch: ObjectListFetch
+    listFetch: ObjectListFetch,
 ): Result<List<UserInfo>?> {
     return exposedDatabase.userDatabase.getUserRawResultList(listFetch).mapResult {
         processUserRawResultToUserInfo(it)
@@ -228,7 +215,7 @@ suspend fun Backend.getUserInfoList(
 
 suspend fun Backend.savePlainTopic(
     topic: Topic,
-    content: TopicContent.Plain
+    content: TopicContent.Plain,
 ) = databaseSession.dbQuery {
     Topic.new(topic)
     exposedDatabase.userDatabase.insertMediaRefs(
@@ -244,7 +231,7 @@ suspend fun Backend.savePlainTopic(
 suspend fun Backend.copyMedia(
     media: Media,
     newOwner: PrimaryKey,
-    newName: String
+    newName: String,
 ): Result<ServerResponse<MediaInfo>> {
     val id = SnowflakeFactory.nextId()
     return databaseSession.dbQuery {
@@ -275,7 +262,7 @@ suspend fun Backend.copyMedia(
 
 suspend fun Backend.getMediaPaginationResult(
     uid: PrimaryKey,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<MediaInfo>> =
     exposedDatabase.userDatabase.getMediaPaginationList(uid, primaryKeyFetch).mapResult { (list, count) ->
         processMediaToMediaInfo(list).map {
@@ -284,7 +271,7 @@ suspend fun Backend.getMediaPaginationResult(
     }
 
 suspend fun Backend.processCommunityRawResultToCommunityInfo(
-    list: List<CommunityRawResult>
+    list: List<CommunityRawResult>,
 ): Result<List<CommunityInfo>?> {
     return exposedDatabase.userDatabase.getMediaByIds(list.flatMap { (community) ->
         listOf(community.iconId, community.posterId, community.fontId)
@@ -309,7 +296,7 @@ suspend fun Backend.processCommunityRawResultToCommunityInfo(
 suspend fun Backend.searchMembers(
     objectId: PrimaryKey?,
     word: String?,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<UserInfo>?> {
     return exposedDatabase.userDatabase.getMemberPaginationResult(objectId, word, primaryKeyFetch)
         .mapResult { (pairs, count) ->
@@ -332,7 +319,7 @@ suspend fun Backend.searchRoomPaginationResult(
     word: String?,
     community: PrimaryKey?,
     primaryKeyFetch: PrimaryKeyFetch,
-    search: JoinSearch
+    search: JoinSearch,
 ): Result<PaginationResult<RoomInfo>?> {
     return exposedDatabase.roomData.getRoomPaginationResult(
         uid,
@@ -369,7 +356,7 @@ suspend fun Backend.processMediaToMediaInfo(
 }
 
 suspend fun Backend.processUserRawResultToUserInfo(
-    rawResults: List<UserRawResult<User>>
+    rawResults: List<UserRawResult<User>>,
 ) = exposedDatabase.userDatabase.getMediaByIds(rawResults.mapNotNull {
     it.user.icon
 }).mapResultIfNotNull { medias ->
@@ -400,16 +387,35 @@ suspend fun Backend.processRoomRawResultToRoomInfo(list: List<RoomRawResult>): R
     }
 }
 
-suspend fun Backend.getUserAlternateUserInfoList(uid: PrimaryKey): Result<List<UserInfo>?> {
-    return exposedDatabase.userDatabase.getUserAlternatUserRawResultList(uid).mapResult {
-        processUserRawResultToUserInfo(it)
+suspend fun Backend.getUserAlternateUserInfoList(
+    uid: PrimaryKey,
+    fetch: PrimaryKeyFetch,
+): Result<PaginationResult<AlternativeAccountInfo>?> {
+    return exposedDatabase.userDatabase.getAlternativeRawResultPaginationListByHost(
+        uid,
+        fetch
+    ).mapResult { (results, total) ->
+        processUserRawResultToUserInfo(results.map {
+            it.userRawResult
+        }).mapIfNotNull {
+            val map = it.associateBy { it.id }
+            PaginationResult(results.mapNotNull {
+                map[it.userRawResult.user.id]?.let { userInfo ->
+                    AlternativeAccountInfo(
+                        it.userRawResult.user.id,
+                        it.alternateAccount.privateKey,
+                        userInfo
+                    )
+                }
+            }, total)
+        }
     }
 }
 
 suspend fun createCommunityRoomsRaw(
     id: PrimaryKey,
     ownerUid: PrimaryKey,
-    communityAid: String
+    communityAid: String,
 ) {
     batchCreateCommunityRooms(
         listOf(

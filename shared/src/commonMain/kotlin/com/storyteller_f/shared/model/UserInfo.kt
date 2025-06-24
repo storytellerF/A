@@ -14,7 +14,7 @@ data class UserInfo(
     val aid: String?,
     val nickname: String,
     val avatar: MediaInfo?,
-) : Identifiable {
+) : PrimaryKeyIdentifiable {
     override val objectType: ObjectType
         get() = ObjectType.USER
 
@@ -49,4 +49,13 @@ enum class PassType {
 }
 
 @Serializable
-data class AlternativeAccountInfo(val hostId: PrimaryKey, val userInfo: UserInfo)
+data class AlternativeAccountInfo(
+    val hostId: PrimaryKey,
+    val privateKey: String,
+    val userInfo: UserInfo
+) : PrimaryKeyIdentifiable {
+    override val id: PrimaryKey
+        get() = userInfo.id
+    override val objectType: ObjectType
+        get() = ObjectType.USER
+}

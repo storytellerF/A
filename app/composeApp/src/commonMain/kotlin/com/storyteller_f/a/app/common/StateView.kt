@@ -28,14 +28,14 @@ import app.cash.paging.LoadStateLoading
 import app.cash.paging.LoadStateNotLoading
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.itemKey
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.compontents.ExceptionView
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.no_content_yet
 import com.storyteller_f.a.app.refresh
 import com.storyteller_f.a.client_lib.LoadingHandler
 import com.storyteller_f.a.client_lib.LoadingState
-import com.storyteller_f.shared.model.Identifiable
+import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
@@ -256,7 +256,7 @@ fun CenterBox(content: @Composable () -> Unit) {
     }
 }
 
-fun <T : Identifiable> LazyListScope.nestedStateView(
+fun <T : PrimaryKeyIdentifiable> LazyListScope.nestedStateView(
     items: LazyPagingItems<T>,
     content: @Composable (T?, Int) -> Unit
 ) {
@@ -312,7 +312,7 @@ fun <T : Identifiable> LazyListScope.nestedStateView(
     }
 }
 
-private fun <T : Identifiable> LazyListScope.nestedStateList(
+private fun <T : PrimaryKeyIdentifiable> LazyListScope.nestedStateList(
     items: LazyPagingItems<T>,
     content: @Composable (T?, Int) -> Unit
 ) {
@@ -334,6 +334,7 @@ fun <T : Any> RefCellStateView(
 ) {
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
+    val globalDialogController = LocalGlobalDialog.current
     Box(modifier = modifier) {
         when (val localState = state) {
             null, is LoadingState.Loading -> Box(
@@ -345,7 +346,7 @@ fun <T : Any> RefCellStateView(
 
             is LoadingState.Error -> Box(
                 modifier = Modifier.fillMaxSize().clickable {
-                    globalDialogState.showErrorState(localState.e)
+                    globalDialogController.showErrorState(localState.e)
                 }.padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {

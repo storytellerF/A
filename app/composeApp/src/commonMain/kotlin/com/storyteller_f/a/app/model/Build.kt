@@ -10,6 +10,7 @@ import com.storyteller_f.shared.model.TitleStatus
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.*
+import com.storyteller_f.shared.utils.md5
 
 @Composable
 fun createSearchCommunitiesViewModel(
@@ -249,3 +250,23 @@ fun createUploadViewModel(myUid: PrimaryKey, uploadSession: UploadSession) =
     viewModel(keys = listOf("upload", uploadSession.name)) { client, _ ->
         UploadViewModel(client, uploadSession, myUid)
     }
+
+@Composable
+fun getMarkdownMediasViewModel(
+    input: String,
+    objectTuple: ObjectTuple,
+): MarkdownMediasViewModel = viewModel(listOf("content", md5(input))) { sessionManager, _ ->
+    MarkdownMediasViewModel(sessionManager, input, objectTuple)
+}
+
+@Composable
+fun getDownloadViewModel(): DownloadViewModel = viewModel(listOf("download")) { sessionManager, storageSource ->
+    DownloadViewModel(sessionManager, storageSource)
+}
+
+@Composable
+fun getAlternativeAccountsViewModel(): AlternativeAccountsViewModel = viewModel(
+    listOf("alternative accounts")
+) { sessionManager, storageSource ->
+    AlternativeAccountsViewModel(storageSource, sessionManager)
+}

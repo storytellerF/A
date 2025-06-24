@@ -53,7 +53,8 @@ fun Table.customPrimaryKey(name: String) = long(name)
 fun Table.objectType(name: String) = enumerationByName<ObjectType>(name, 10)
 
 fun Table.userPublicKey() = varchar("public_key", PUBLIC_KEY_LENGTH).uniqueIndex()
-fun Table.userAddress() = varchar("pub_address", ADDRESS_LENGTH).uniqueIndex()
+fun Table.userPrivateKey() = varchar("private_key", PUBLIC_KEY_LENGTH).uniqueIndex()
+fun Table.userAddress() = varchar("address", ADDRESS_LENGTH).uniqueIndex()
 fun Table.userName() = varchar("nickname", USER_NICKNAME).index()
 
 fun Table.roomName() = varchar("name", ROOM_NAME_LENGTH).index()

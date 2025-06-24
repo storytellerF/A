@@ -40,7 +40,7 @@ interface LoadingHandler<T> {
     fun refresh()
 }
 
-class FixedLoadingHandler<T>() : LoadingHandler<T> {
+class FixedLoadingHandler<T> : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
     override val data = MutableStateFlow<T?>(null)
 
@@ -58,8 +58,7 @@ class FixedLoadingHandler<T>() : LoadingHandler<T> {
         data.value = t
     }
 
-    override fun refresh() {
-    }
+    override fun refresh() = Unit
 }
 
 class SimpleLoadingHandler<T>(val scope: CoroutineScope, val loader: suspend () -> Result<T>) :

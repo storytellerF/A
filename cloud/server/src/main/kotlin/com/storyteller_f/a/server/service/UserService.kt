@@ -4,16 +4,17 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.getUserInfo
 import com.storyteller_f.a.exposed.AID_LENGTH
 import com.storyteller_f.a.exposed.USER_NICKNAME
 import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.a.exposed.tables.UserTopicRead
 import com.storyteller_f.a.exposed.tables.toUserInfo
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.getUserInfo
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
+import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.UpdateUserBody
@@ -175,17 +176,19 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
 }
 
 suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<AlternativeAccountInfo> {
-    return generateECDSAPemPrivateKey().mapResult { privateKey ->
-        getDerPublicKeyFromPrivateKey(privateKey).mapResult { publicKey ->
-            calcAddress(publicKey).mapResult { address ->
-                val id = SnowflakeFactory.nextId()
-                val user = User(
-                    null, publicKey, address, null, nameService.parse(id), id, now(), 0, PassType.RAW,
-                    AlgoType.P256
-                )
-                exposedDatabase.userDatabase.createAlternativeRawResult(uid, user).map {
-                    addUserLog(uid, UserLogType.ADD_ALTERNATIVE_ACCOUNT, id ob ObjectType.USER)
-                    AlternativeAccountInfo(uid, user.toUserInfo())
+    return generateECDSAPemPrivateKey().mapResult { pemPrivateKey ->
+        getDerPrivateKey(pemPrivateKey).mapResult { derPrivateKey ->
+            getDerPublicKeyFromPrivateKey(pemPrivateKey).mapResult { publicKey ->
+                calcAddress(publicKey).mapResult { address ->
+                    val id = SnowflakeFactory.nextId()
+                    val user = User(
+                        null, publicKey, address, null, nameService.parse(id), id, now(), 0, PassType.RAW,
+                        AlgoType.P256
+                    )
+                    exposedDatabase.userDatabase.createAlternativeRawResult(uid, derPrivateKey, user).map {
+                        addUserLog(uid, UserLogType.ADD_ALTERNATIVE_ACCOUNT, id ob ObjectType.USER)
+                        AlternativeAccountInfo(uid, derPrivateKey, user.toUserInfo())
+                    }
                 }
             }
         }

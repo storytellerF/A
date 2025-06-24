@@ -101,7 +101,7 @@ private fun RoomPageInternal(
     modifier: Modifier,
     roomId: PrimaryKey,
     roomInfo: RoomInfo,
-    updateDialog: (Boolean) -> Unit
+    updateDialog: (Boolean) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
     val viewModel = createRoomTopicsViewModel(roomId)
@@ -157,7 +157,7 @@ private fun RoomPageInternal(
 @Composable
 private fun RoomMessageList(
     items: LazyPagingItems<TopicInfo>,
-    lazyListState: LazyListState
+    lazyListState: LazyListState,
 ) {
     StateView(items) {
         LazyColumn(
@@ -258,7 +258,7 @@ private fun RoomInputGroupInternal(
     parentTarget: ObjectTuple,
     input: String,
     scrollToNew: () -> Unit,
-    updateInput: (String) -> Unit
+    updateInput: (String) -> Unit,
 ) {
     val myInfo = getCurrentUserInfo()
     val wsClient = LocalWsClient.current
@@ -322,7 +322,7 @@ private fun buildInputBoxContentListener(
     input: String,
     userInfo: UserInfo?,
     sessionManager: UserSessionManager,
-    updateInput: (String) -> Unit
+    updateInput: (String) -> Unit,
 ): WebSocketClientListener {
     return object : WebSocketClientListener {
         override suspend fun onReceived(frame: RoomFrame) {
@@ -352,7 +352,7 @@ private fun sendRoomTopic(
     alertDialogState: CustomAlertDialogController,
     keysViewModel: RoomKeysViewModel,
     wsClient: WebSocketClient,
-    parentTarget: ObjectTuple
+    parentTarget: ObjectTuple,
 ) {
     val handler = keysViewModel.handler
     val keyState = handler.state.value
@@ -389,7 +389,7 @@ private fun sendRoomTopic(
 private fun checkRoomRouteAndAlert(
     appNav: AppNav,
     roomId: PrimaryKey,
-    startJoinRoom: () -> Unit
+    startJoinRoom: () -> Unit,
 ) {
     val current = appNav.currentDestination
     if (current != null) {
@@ -407,7 +407,7 @@ private fun checkRoomRouteAndAlert(
 @Composable
 fun RoomSendButton(
     input: String,
-    send: () -> Unit
+    send: () -> Unit,
 ) {
     val wsClient = LocalWsClient.current
     val state by wsClient.connectionHandler.state.collectAsState()
@@ -421,15 +421,16 @@ fun CommonInputButton(
     state: LoadingState?,
     input: String,
     isSending: Boolean,
-    send: () -> Unit
+    send: () -> Unit,
 ) {
+    val globalDialogController = LocalGlobalDialog.current
     val scope = rememberCoroutineScope()
     when (state) {
         is LoadingState.Done -> {
             IconButton({
                 if (input.isBlank()) {
                     scope.launch {
-                        globalDialogState.showMessage(getString(Res.string.input_is_empty))
+                        globalDialogController.showMessage(getString(Res.string.input_is_empty))
                     }
                 } else {
                     send()
@@ -441,7 +442,7 @@ fun CommonInputButton(
 
         is LoadingState.Error -> {
             IconButton({
-                globalDialogState.showErrorState(state.e)
+                globalDialogController.showErrorState(state.e)
             }) {
                 Icon(Icons.Default.Error, stringResource(Res.string.error))
             }
@@ -461,7 +462,7 @@ fun InputGroupInternal(
     gotoCompose: () -> Unit,
     mediaTarget: ObjectTuple,
     topContent: @Composable () -> Unit = {},
-    sendButton: @Composable () -> Unit
+    sendButton: @Composable () -> Unit,
 ) {
     Column(
         Modifier.background(
@@ -494,9 +495,10 @@ private fun InputGroupSuffix(
     input: String,
     updateInput: (String) -> Unit,
     mediaTarget: ObjectTuple,
-    gotoCompose: () -> Unit
+    gotoCompose: () -> Unit,
 ) {
     val userSessionManager = LocalSessionManager.current
+    val globalDialogController = LocalGlobalDialog.current
     val alreadyLoginIn by userSessionManager.isAlreadySignUp.collectAsState(false)
     var showSheet by remember {
         mutableStateOf(false)
@@ -514,7 +516,7 @@ private fun InputGroupSuffix(
                 if (alreadyLoginIn) {
                     gotoCompose()
                 } else {
-                    globalDialogState.showMessage("need sign in")
+                    globalDialogController.showMessage("need sign in")
                 }
             }
         )
@@ -522,7 +524,7 @@ private fun InputGroupSuffix(
             if (alreadyLoginIn) {
                 showSheet = true
             } else {
-                globalDialogState.showMessage("need sign in")
+                globalDialogController.showMessage("need sign in")
             }
         })
     }
@@ -573,6 +575,7 @@ private fun RoomDialogButtons(
 ) {
     val me = getCurrentUserInfo()
     val sessionManager = LocalSessionManager.current
+    val globalDialogController = LocalGlobalDialog.current
     Column {
         ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
             dismiss()
@@ -585,7 +588,7 @@ private fun RoomDialogButtons(
             if (roomInfo.isJoined) {
                 ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
                     scope.launch {
-                        exitRoom(roomInfo, sessionManager) {
+                        exitRoom(roomInfo, sessionManager, globalDialogController) {
                             toasterState.show(
                                 getString(Res.string.success),
                                 type = ToastType.Success,
@@ -597,7 +600,7 @@ private fun RoomDialogButtons(
             } else {
                 ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_room)) {
                     scope.launch {
-                        joinRoom(roomInfo, sessionManager) {
+                        joinRoom(roomInfo, sessionManager, globalDialogController) {
                             toasterState.show(
                                 getString(Res.string.success),
                                 type = ToastType.Success,
@@ -618,8 +621,13 @@ private fun RoomDialogButtons(
     }
 }
 
-private suspend fun joinRoom(roomInfo: RoomInfo, sessionManager: SessionManager, onSuccess: suspend () -> Unit) {
-    globalDialogState.use {
+private suspend fun joinRoom(
+    roomInfo: RoomInfo,
+    sessionManager: SessionManager,
+    globalDialogController: GlobalDialogController,
+    onSuccess: suspend () -> Unit,
+) {
+    globalDialogController.use {
         val communityId = roomInfo.communityId
         if (communityId != null) {
             if (!sessionManager.getCommunityInfo(communityId).getOrThrow().isJoined) {
@@ -632,8 +640,13 @@ private suspend fun joinRoom(roomInfo: RoomInfo, sessionManager: SessionManager,
     }
 }
 
-private suspend fun exitRoom(roomInfo: RoomInfo, sessionManager: SessionManager, onSuccess: suspend () -> Unit) {
-    globalDialogState.use {
+private suspend fun exitRoom(
+    roomInfo: RoomInfo,
+    sessionManager: SessionManager,
+    globalDialogController: GlobalDialogController,
+    onSuccess: suspend () -> Unit,
+) {
+    globalDialogController.use {
         val info = sessionManager.exitRoom(roomInfo.id).getOrThrow()
         bus.emit(OnRoomExited(info))
         onSuccess()

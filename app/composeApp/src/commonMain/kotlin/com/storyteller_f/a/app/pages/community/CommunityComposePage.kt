@@ -10,9 +10,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNav
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnCommunityCreated
 import com.storyteller_f.a.app.pages.title.CommonComposePage
 import com.storyteller_f.a.client_lib.createCommunity
@@ -30,9 +30,10 @@ fun CommunityComposePage() {
     val sessionManager = LocalSessionManager.current
     val appNav = LocalAppNav.current
     val scope = rememberCoroutineScope()
+    val globalDialogController = LocalGlobalDialog.current
     CommonComposePage({
         scope.launch {
-            if (globalDialogState.use {
+            if (globalDialogController.use {
                     val community = sessionManager.createCommunity(NewCommunity(name, aid)).getOrThrow()
                     bus.emit(OnCommunityCreated(community))
                 }.isSuccess) {

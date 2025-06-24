@@ -60,7 +60,7 @@ class CustomClientAuthProvider(val config: CustomAuthConfig) : AuthProvider {
 
 suspend fun HttpRequestBuilder.addRequestHeaders(sessionManager: SessionModel) {
     val passSession = sessionManager.currentUserPass
-    val session = sessionManager.session
+    val session = sessionManager.dataAndSignature
     val userInfo = sessionManager.userHandler.data.value
     Napier.i(tag = "ClientAuth") {
         "addRequestHeaders $session"

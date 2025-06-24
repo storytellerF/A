@@ -19,7 +19,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.mikepenz.markdown.model.ImageData
 import com.storyteller_f.a.app.LocalClient
-import com.storyteller_f.a.app.globalDialogState
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 
 @Composable
@@ -45,8 +45,9 @@ fun CommonImage(
 
 @Composable
 fun ImageError(throwable: Throwable) {
+    val globalDialogController = LocalGlobalDialog.current
     CustomIcon(IconRes.Font(MaterialSymbolsOutlined.Error)) {
-        globalDialogState.showErrorState(throwable)
+        globalDialogController.showErrorState(throwable)
     }
 }
 

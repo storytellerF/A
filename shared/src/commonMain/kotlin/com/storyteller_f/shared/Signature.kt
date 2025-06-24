@@ -55,6 +55,16 @@ suspend fun getDerPrivateKey(pemPrivateKeyStr: String): Result<String> {
 }
 
 @OptIn(ExperimentalStdlibApi::class)
+suspend fun getPemPrivateKeyFromDer(derPrivateKeyStr: String): Result<String> {
+    return runCatching {
+        CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256)
+            .decodeFromByteArray(EC.PrivateKey.Format.DER, derPrivateKeyStr.hexToByteArray())
+            .encodeToByteArray(EC.PrivateKey.Format.PEM)
+            .decodeToString()
+    }
+}
+
+@OptIn(ExperimentalStdlibApi::class)
 suspend fun encryptData(data: String): Result<Pair<ByteArray, ByteArray>> {
     return runCatching {
         val key = CryptographyProvider.Default.get(AES.CBC).keyGenerator(256.bits).generateKey()

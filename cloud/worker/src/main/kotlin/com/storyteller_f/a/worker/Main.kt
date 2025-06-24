@@ -3,9 +3,17 @@ package com.storyteller_f.a.worker
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Config
 import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.MergedEnv
+import com.storyteller_f.a.backend.service.databaseConnection
+import com.storyteller_f.a.backend.service.mediaService
+import com.storyteller_f.a.backend.service.naming.NameService
+import com.storyteller_f.a.backend.service.readEnv
+import com.storyteller_f.a.backend.service.topicDocumentService
 import com.storyteller_f.a.exposed.CommunityDatabase
-import com.storyteller_f.a.exposed.ExposedDatabaseFactory
+import com.storyteller_f.a.exposed.Database
 import com.storyteller_f.a.exposed.ExposedCommunityDatabase
+import com.storyteller_f.a.exposed.ExposedDatabaseFactory
 import com.storyteller_f.a.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.exposed.ExposedRoomDatabase
 import com.storyteller_f.a.exposed.ExposedTitleDatabase
@@ -15,14 +23,7 @@ import com.storyteller_f.a.exposed.RoomDatabase
 import com.storyteller_f.a.exposed.TitleDatabase
 import com.storyteller_f.a.exposed.TopicDatabase
 import com.storyteller_f.a.exposed.UserDatabase
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.MergedEnv
-import com.storyteller_f.a.backend.service.databaseConnection
-import com.storyteller_f.a.backend.service.mediaService
-import com.storyteller_f.a.backend.service.naming.NameService
-import com.storyteller_f.a.backend.service.readEnv
-import com.storyteller_f.a.backend.service.topicDocumentService
-import com.storyteller_f.a.exposed.Database
+import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.utils.mapResult
@@ -116,8 +117,8 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         NameService(),
         database,
         databaseSession,
-        object : Database {
-            override val userDatabase: UserDatabase
+        object : Database<User> {
+            override val userDatabase: UserDatabase<User>
                 get() = ExposedUserDatabase(databaseSession)
             override val topicDatabase: TopicDatabase
                 get() = ExposedTopicDatabase(databaseSession, userDatabase)
