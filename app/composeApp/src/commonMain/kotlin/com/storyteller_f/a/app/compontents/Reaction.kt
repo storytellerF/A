@@ -26,8 +26,8 @@ import com.storyteller_f.a.app.model.OnRemoveReaction
 import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.a.app.pages.topic.SheetContainer
 import com.storyteller_f.a.app.pages.world.Pill
-import com.storyteller_f.a.client_lib.addReaction
-import com.storyteller_f.a.client_lib.deleteReaction
+import com.storyteller_f.a.client.core.addReaction
+import com.storyteller_f.a.client.core.deleteReaction
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey

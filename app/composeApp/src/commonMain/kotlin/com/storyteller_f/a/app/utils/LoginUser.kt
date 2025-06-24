@@ -5,9 +5,9 @@ import com.russhwolf.settings.Settings
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.russhwolf.settings.serialization.removeValue
-import com.storyteller_f.a.client_lib.RawUserPass
-import com.storyteller_f.a.client_lib.RawUserPassInfo
-import com.storyteller_f.a.client_lib.UserPass
+import com.storyteller_f.a.client.core.RawUserPass
+import com.storyteller_f.a.client.core.RawUserPassInfo
+import com.storyteller_f.a.client.core.UserPass
 import kotlinx.serialization.ExperimentalSerializationApi
 
 interface LoginUserSessionManager {

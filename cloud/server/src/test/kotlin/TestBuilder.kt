@@ -1,7 +1,15 @@
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.service.readResourceEnv
-import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.a.client.core.ClientSessionState
+import com.storyteller_f.a.client.core.RawUserPass
+import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.SessionModel
+import com.storyteller_f.a.client.core.createUserSessionManager
+import com.storyteller_f.a.client.core.defaultClientConfigure
+import com.storyteller_f.a.client.core.signOut
+import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
+import com.storyteller_f.a.client.core.start
 import com.storyteller_f.a.server.module
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.kmpLogger

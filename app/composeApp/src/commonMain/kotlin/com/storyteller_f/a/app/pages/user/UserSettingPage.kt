@@ -24,9 +24,9 @@ import com.storyteller_f.a.app.utils.ImageFormat
 import com.storyteller_f.a.app.utils.androidAllowHardware
 import com.storyteller_f.a.app.utils.coilImageToImageBitmap
 import com.storyteller_f.a.app.utils.saveImageBitmap
-import com.storyteller_f.a.client_lib.SessionManager
-import com.storyteller_f.a.client_lib.UserSessionManager
-import com.storyteller_f.a.client_lib.updateUserInfo
+import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo

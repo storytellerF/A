@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.storyteller_f.a.app.AppConfig
-import com.storyteller_f.a.client_lib.ServerErrorException
+import com.storyteller_f.a.client.core.ServerErrorException
 import dev.tclement.fonticons.FontIcon
 import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier

@@ -29,7 +29,7 @@ import com.storyteller_f.a.app.compontents.globalLoader
 import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.a.app.showShortToast
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
-import com.storyteller_f.a.client_lib.copy
+import com.storyteller_f.a.client.core.copy
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

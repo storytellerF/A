@@ -1,6 +1,6 @@
 import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.app.utils.createSettings
-import com.storyteller_f.a.client_lib.RawUserPassInfo
+import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.shared.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Test

@@ -28,7 +28,7 @@ import com.storyteller_f.a.app.model.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.pages.community.getCommunityFont
 import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.ui.theme.AppTheme
-import com.storyteller_f.a.client_lib.createNewTopic
+import com.storyteller_f.a.client.core.createNewTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple

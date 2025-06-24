@@ -38,9 +38,9 @@ import com.storyteller_f.a.app.model.OnMediaUploaded
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.a.app.model.createReactionsViewModel
 import com.storyteller_f.a.app.utils.Recorder
-import com.storyteller_f.a.client_lib.SessionManager
-import com.storyteller_f.a.client_lib.UploadData
-import com.storyteller_f.a.client_lib.upload
+import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.UploadData
+import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.PrimaryKey

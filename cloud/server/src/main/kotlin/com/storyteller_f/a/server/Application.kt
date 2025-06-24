@@ -382,6 +382,10 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 }
 
 fun createKeystore(keystorePassword: CharArray, path: String) {
+    val file = File(path)
+    if (!file.parentFile.exists() && !file.parentFile.mkdirs()) {
+        throw Exception("can not create parent file $path")
+    }
     val alias = "snapshot"
     val validityDays = 365L
 
@@ -423,7 +427,7 @@ fun createKeystore(keystorePassword: CharArray, path: String) {
     ks.setKeyEntry(alias, keyPair.private, keystorePassword, arrayOf(cert))
 
     // 6. 保存 keystore 到文件
-    FileOutputStream(path).use { fos ->
+    FileOutputStream(file).use { fos ->
         ks.store(fos, keystorePassword)
     }
 }

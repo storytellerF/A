@@ -20,7 +20,7 @@ import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.model.OnAddReaction
-import com.storyteller_f.a.client_lib.addReaction
+import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.shared.model.TopicInfo
 import kotlinx.coroutines.launch
 import org.kodein.emoji.Emoji

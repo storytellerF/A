@@ -6,8 +6,8 @@ import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
-import com.storyteller_f.a.client_lib.RawUserPassInfo
-import com.storyteller_f.a.client_lib.UserPass
+import com.storyteller_f.a.client.core.RawUserPassInfo
+import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.contextRef

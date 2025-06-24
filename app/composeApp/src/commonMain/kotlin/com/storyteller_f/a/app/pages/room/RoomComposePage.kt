@@ -16,7 +16,7 @@ import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.model.OnRoomCreated
 import com.storyteller_f.a.app.pages.title.CommonComposePage
-import com.storyteller_f.a.client_lib.createRoom
+import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.shared.obj.NewRoom
 import kotlinx.coroutines.launch
 

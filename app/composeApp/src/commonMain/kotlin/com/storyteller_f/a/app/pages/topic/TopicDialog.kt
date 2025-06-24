@@ -25,10 +25,10 @@ import com.storyteller_f.a.app.service.buildTranslatePrompt
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.getCurrentLanguage
 import com.storyteller_f.a.app.utils.setText
-import com.storyteller_f.a.client_lib.SessionManager
-import com.storyteller_f.a.client_lib.getTopicSnapshot
-import com.storyteller_f.a.client_lib.pinTopic
-import com.storyteller_f.a.client_lib.unpinTopic
+import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.getTopicSnapshot
+import com.storyteller_f.a.client.core.pinTopic
+import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo

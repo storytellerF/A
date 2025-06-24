@@ -1,10 +1,10 @@
-import com.storyteller_f.a.client_lib.UploadData
-import com.storyteller_f.a.client_lib.addAlternativeAccount
-import com.storyteller_f.a.client_lib.getAlternativeAccounts
-import com.storyteller_f.a.client_lib.getUserInfo
-import com.storyteller_f.a.client_lib.getUserInfoByAid
-import com.storyteller_f.a.client_lib.updateUserInfo
-import com.storyteller_f.a.client_lib.upload
+import com.storyteller_f.a.client.core.UploadData
+import com.storyteller_f.a.client.core.addAlternativeAccount
+import com.storyteller_f.a.client.core.getAlternativeAccounts
+import com.storyteller_f.a.client.core.getUserInfo
+import com.storyteller_f.a.client.core.getUserInfoByAid
+import com.storyteller_f.a.client.core.updateUserInfo
+import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType

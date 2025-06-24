@@ -15,7 +15,7 @@ import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.model.OnCommunityCreated
 import com.storyteller_f.a.app.pages.title.CommonComposePage
-import com.storyteller_f.a.client_lib.createCommunity
+import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.shared.obj.NewCommunity
 import kotlinx.coroutines.launch
 

@@ -1,32 +1,25 @@
 package com.storyteller_f.a.exposed
 
-import com.storyteller_f.a.backend.core.JoinSearch
-import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.core.ObjectListFetch
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.*
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.exposed.query.buildRoomPubKeyQuery
 import com.storyteller_f.a.exposed.query.buildRoomSearchWhereQuery
-import com.storyteller_f.a.exposed.tables.Aids
-import com.storyteller_f.a.exposed.tables.MemberJoin
-import com.storyteller_f.a.exposed.tables.MemberJoins
-import com.storyteller_f.a.exposed.tables.Room
-import com.storyteller_f.a.exposed.tables.RoomRawResult
-import com.storyteller_f.a.exposed.tables.Rooms
-import com.storyteller_f.a.exposed.tables.UserTopicReads
-import com.storyteller_f.a.exposed.tables.Users
+import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
-import com.storyteller_f.shared.type.*
+import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.update
 
-class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, val containerDatabase: ContainerDatabase) :
+class ExposedRoomDatabase(
+    val exposedDatabaseSession: ExposedDatabaseSession,
+    val containerDatabase: ContainerDatabase,
+) :
     RoomDatabase {
     override suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
         return exposedDatabaseSession.dbSearch {
@@ -44,7 +37,7 @@ class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, va
         word: String?,
         community: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
-        joinSearch: JoinSearch
+        joinSearch: JoinSearch,
     ): Result<PaginationResult<RoomRawResult>> {
         return exposedDatabaseSession.dbSearch {
             search {
@@ -82,7 +75,7 @@ class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, va
 
     override suspend fun getRoomPubKeyPaginationResult(
         roomId: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<UserPubKeyInfo>> {
         return exposedDatabaseSession.dbSearch {
             search {
@@ -131,7 +124,7 @@ class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, va
 
     override suspend fun processRoomListToRoomRawResult(
         uid: PrimaryKey?,
-        rooms: List<Room>
+        rooms: List<Room>,
     ): Result<List<RoomRawResult>> = containerDatabase.getContainerInfo(rooms.map {
         it.id
     }, uid).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
@@ -213,7 +206,7 @@ class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, va
 
     override suspend fun updateRoom(
         id: PrimaryKey,
-        body: UpdateRoomBody
+        body: UpdateRoomBody,
     ): Result<Boolean> {
         return exposedDatabaseSession.dbQuery {
             listOf {

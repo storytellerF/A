@@ -6,9 +6,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.storyteller_f.a.client_lib.addDevice
-import com.storyteller_f.a.client_lib.createUserSessionManager
-import com.storyteller_f.a.client_lib.start
+import com.storyteller_f.a.client.core.addDevice
+import com.storyteller_f.a.client.core.createUserSessionManager
+import com.storyteller_f.a.client.core.start
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
