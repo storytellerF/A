@@ -16,7 +16,6 @@ if [ "$use_windows_newline" = true ]; then
 fi
 
 # 文件路径
-env_filter_file="env-filter"
 dockerfile_template=$1
 if [ -z "$dockerfile_template" ]; then
   echo "Error: dockerfile_template is not specified."
@@ -29,7 +28,6 @@ replace_string_1=""
 replace_string_2="COPY <<EOF ./\${FLAVOR}.env\n"
 replace_string_3=""
 
-# 读取 env-filter 文件中的 keys，生成 ARG 和 ENV 语句，同时生成 COPY 环境变量
 while IFS= read -r key; do
     # 跳过空行
     if [[ -n "$key" ]]; then
@@ -43,7 +41,7 @@ while IFS= read -r key; do
 
         replace_string_3+="ARG $clean_key${newline}"
     fi
-done < "$env_filter_file"
+done < "env-filter"
 
 # 完成 COPY 块的 EOF 部分
 replace_string_2+="EOF\nRUN mkdir -p build/envs \&\& cp ./\${FLAVOR}.env ./build/envs/.env"

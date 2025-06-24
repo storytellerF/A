@@ -67,7 +67,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val databaseSession = ExposedDatabaseSession(database, buildType)
     return Backend(
         config,
-        env["SNAPSHOT_KEYSTORE_PATH"] to env["SNAPSHOT_KEY_PASS"],
+        env["SNAPSHOT_KEYSTORE_PATH"] to env["SNAPSHOT_KEYSTORE_PASS"],
         topicDocumentService,
         mediaService,
         NameService(),
