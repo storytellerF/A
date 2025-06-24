@@ -37,7 +37,7 @@ fun UserRefCell(userAid: String, onClick: ((UserInfo) -> Unit)? = null) {
 @Composable
 private fun UserRefCellInternal(
     viewModel: UserViewModel,
-    onClick: ((UserInfo) -> Unit)? = null
+    onClick: ((UserInfo) -> Unit)? = null,
 ) {
     val userInfo by viewModel.handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
@@ -66,27 +66,23 @@ fun UserCell(
     iconClickable: Boolean = true,
     cellClickable: Boolean = true,
     size: Dp = 40.dp,
-    onClickCell: ((UserInfo) -> Unit)? = null
+    onClickCell: ((UserInfo) -> Unit)? = null,
 ) {
     val shape = RoundedCornerShape(8.dp)
     val appNav = LocalAppNav.current
+    val baseModifier = Modifier.fillMaxWidth()
+    val modifier = if (hideBackground) {
+        baseModifier
+    } else {
+        baseModifier.background(MaterialTheme.colorScheme.surfaceDim, shape)
+    }.clip(shape)
+        .clickable(userInfo != null && cellClickable) {
+            userInfo?.let {
+                onClickCell?.invoke(it) ?: appNav.gotoUser(it.id)
+            }
+        }
     Row(
-        modifier = if (hideBackground) {
-            Modifier
-                .fillMaxWidth().clip(shape).clickable(userInfo != null && cellClickable) {
-                    userInfo?.let {
-                        onClickCell?.invoke(it) ?: appNav.gotoUser(it.id)
-                    }
-                }
-        } else {
-            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceDim, shape)
-                .clip(shape)
-                .clickable(userInfo != null && cellClickable) {
-                    userInfo?.let {
-                        onClickCell?.invoke(it) ?: appNav.gotoUser(it.id)
-                    }
-                }
-        }.padding(8.dp),
+        modifier = modifier.padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {

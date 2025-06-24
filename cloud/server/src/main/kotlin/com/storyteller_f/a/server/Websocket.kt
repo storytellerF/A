@@ -4,13 +4,13 @@ import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.index.TopicDocument
+import com.storyteller_f.a.backend.service.savePlainTopic
 import com.storyteller_f.a.exposed.tables.Topic
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.service.processTopicExtension
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.index.TopicDocument
-import com.storyteller_f.a.backend.service.savePlainTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserLogType

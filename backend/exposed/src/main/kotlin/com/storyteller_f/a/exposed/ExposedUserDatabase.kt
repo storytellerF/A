@@ -51,13 +51,13 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     override suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,
         word: String?,
-        primaryKeyFetch: PrimaryKeyFetch,
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<UserRawResult<User>>> {
         return exposedUserDatabase.dbSearch {
             search {
                 buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(
                     Users,
-                    primaryKeyFetch
+                    fetch
                 )
             }
             map(::mapUserInfo)
@@ -112,7 +112,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         }
     }
 
-    override suspend fun isUserNotExists(pk: String): Result<Boolean> {
+    override suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean> {
         return exposedUserDatabase.dbSearch {
             search {
                 User.Companion.find {
@@ -162,7 +162,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         }
     }
 
-    override suspend fun checkUserExists(id: Long): Result<Boolean> {
+    override suspend fun isUserExistsByUid(id: Long): Result<Boolean> {
         return exposedUserDatabase.dbSearch {
             search {
                 User.Companion.find {
@@ -232,17 +232,6 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
             map {
                 it[Users.id] to it[Users.acgAmount]
             }
-        }
-    }
-
-    override suspend fun getUserAlternatUserRawResultList(uid: PrimaryKey): Result<List<UserRawResult<User>>> {
-        return exposedUserDatabase.dbSearch {
-            search {
-                Users.join(AlternateAccounts, JoinType.INNER, Users.id, AlternateAccounts.hostId) {
-                    AlternateAccounts.hostId eq uid
-                }.select(Users.fields)
-            }
-            map(::mapUserInfo)
         }
     }
 
@@ -552,7 +541,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         objectId: PrimaryKey,
         objectType: ObjectType,
         mediaName: List<Pair<PrimaryKey, String>>,
-    ): Result<List<ResultRow>> {
+    ): Result<Unit> {
         return exposedUserDatabase.dbQuery {
             MediaRefs.batchInsert(mediaName) {
                 this[MediaRefs.objectId] = objectId
@@ -560,6 +549,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
                 this[MediaRefs.mediaName] = it.second
                 this[MediaRefs.author] = it.first
             }
+            Unit
         }
     }
 
@@ -574,32 +564,49 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         }
     }
 
-    override suspend fun getAlternativeRawResultByHost(hostId: PrimaryKey): Result<List<AlternateAccountRawResult>> {
+    override suspend fun getAlternativeRawResultPaginationListByHost(
+        hostId: PrimaryKey,
+        fetch: PrimaryKeyFetch,
+    ): Result<Pair<List<AlternateAccountRawResult>, Long>> {
         return exposedUserDatabase.dbSearch {
             search {
-                AlternateAccounts.join(Users, JoinType.INNER, AlternateAccounts.uid, Users.id)
-                    .select(Users.fields + AlternateAccounts.fields).where {
-                    AlternateAccounts.hostId eq hostId
-                }
+                Users.join(AlternateAccounts, JoinType.INNER, Users.id, AlternateAccounts.uid)
+                    .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+                    .select(Users.fields + AlternateAccounts.fields + Aids.value).where {
+                        AlternateAccounts.hostId eq hostId
+                    }.bindPaginationQuery(Users, fetch)
             }
             map {
                 val alternateAccount = AlternateAccount.wrapRow(it)
                 val user = User.wrapRow(it)
                 AlternateAccountRawResult(alternateAccount, UserRawResult(user))
             }
+        }.mapResult { list ->
+            exposedUserDatabase.dbSearch {
+                search {
+                    AlternateAccounts.join(Users, JoinType.INNER, AlternateAccounts.uid, Users.id)
+                        .selectAll()
+                        .where {
+                            AlternateAccounts.hostId eq hostId
+                        }
+                }
+                count()
+            }.map { count ->
+                list to count
+            }
         }
     }
 
-    override suspend fun createAlternativeRawResult(hostId: PrimaryKey, user: User): Result<Unit> {
+    override suspend fun createAlternativeRawResult(hostId: PrimaryKey, privateKey: String, user: User): Result<Unit> {
         return exposedUserDatabase.dbQuery {
             createUserRaw(user)
             check(AlternateAccounts.insert {
                 it[this.hostId] = hostId
+                it[this.privateKey] = privateKey
                 it[uid] = user.id
             }.insertedCount > 0) {
                 "Insert alternate account failed"
             }
         }
     }
-
 }

@@ -11,9 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNav
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnRoomCreated
 import com.storyteller_f.a.app.pages.title.CommonComposePage
 import com.storyteller_f.a.client_lib.createRoom
@@ -32,9 +32,10 @@ fun RoomComposePage() {
     val sessionManager = LocalSessionManager.current
     val appNav = LocalAppNav.current
     val scope = rememberCoroutineScope()
+    val globalDialogController = LocalGlobalDialog.current
     CommonComposePage({
         scope.launch {
-            if (globalDialogState.use {
+            if (globalDialogController.use {
                     val community = sessionManager.createRoom(NewRoom(name, aid)).getOrThrow()
                     bus.emit(OnRoomCreated(community))
                 }.isSuccess) {

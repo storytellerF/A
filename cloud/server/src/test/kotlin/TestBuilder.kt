@@ -1,8 +1,8 @@
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.service.readResourceEnv
 import com.storyteller_f.a.client_lib.*
 import com.storyteller_f.a.server.module
-import com.storyteller_f.a.backend.service.readResourceEnv
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -123,7 +123,6 @@ private fun doTest(
     env: Map<String, String>,
     block: suspend (ApplicationTestBuilder) -> Unit
 ) {
-
     testApplication {
         environment {
             config = MapApplicationConfig().apply {

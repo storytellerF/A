@@ -179,6 +179,7 @@ private fun TopicInputGroup(
     val isSending = sendState.value is LoadingState.Loading
     val appNav = LocalAppNav.current
     val my = getCurrentUserInfo()
+    val globalDialogController = LocalGlobalDialog.current
     InputGroupInternal(
         input,
         MaterialTheme.colorScheme.secondaryContainer,
@@ -194,7 +195,7 @@ private fun TopicInputGroup(
             if (!isSending) {
                 sendTopic(scope, sendState, topic, input, {
                     input = it
-                }, focusManager, toasterState, sessionManager, scrollTo)
+                }, focusManager, toasterState, sessionManager, globalDialogController, scrollTo)
             }
         }
     }
@@ -209,6 +210,7 @@ private fun sendTopic(
     focusManager: FocusManager,
     toasterState: ToasterState,
     sessionManager: SessionManager,
+    globalDialogController: GlobalDialogController,
     scrollTo: () -> Unit
 ) {
     if (!checkContent(input)) {
@@ -226,7 +228,7 @@ private fun sendTopic(
             toasterState.show(getString(Res.string.success), duration = 1.seconds)
             scrollTo()
         } catch (e: Exception) {
-            globalDialogState.showErrorState(e)
+            globalDialogController.showErrorState(e)
         } finally {
             sendState.value = LoadingState.Done
         }

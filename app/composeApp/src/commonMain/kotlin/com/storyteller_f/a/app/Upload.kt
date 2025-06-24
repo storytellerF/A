@@ -92,6 +92,7 @@ private fun UploadItem(
     state: LoadingState?,
     refresh: () -> Unit
 ) {
+    val globalDialogController = LocalGlobalDialog.current
     Row(modifier = Modifier.padding(20.dp)) {
         Column(modifier = Modifier.weight(1f)) {
             Text(file.name)
@@ -104,7 +105,7 @@ private fun UploadItem(
             LoadingState.Done -> Icon(Icons.Default.Done, "done")
             is LoadingState.Error -> {
                 IconButton({
-                    globalDialogState.showErrorState(state.e)
+                    globalDialogController.showErrorState(state.e)
                 }) {
                     Icon(Icons.Default.Error, "error")
                 }

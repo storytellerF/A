@@ -6,9 +6,15 @@ import com.storyteller_f.a.backend.core.Config
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.MergedEnv
 import com.storyteller_f.a.backend.service.databaseConnection
+import com.storyteller_f.a.backend.service.media.loadAvif
+import com.storyteller_f.a.backend.service.mediaService
+import com.storyteller_f.a.backend.service.naming.NameService
+import com.storyteller_f.a.backend.service.readEnv
+import com.storyteller_f.a.backend.service.topicDocumentService
 import com.storyteller_f.a.exposed.CommunityDatabase
-import com.storyteller_f.a.exposed.ExposedDatabaseFactory
+import com.storyteller_f.a.exposed.Database
 import com.storyteller_f.a.exposed.ExposedCommunityDatabase
+import com.storyteller_f.a.exposed.ExposedDatabaseFactory
 import com.storyteller_f.a.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.exposed.ExposedRoomDatabase
 import com.storyteller_f.a.exposed.ExposedTitleDatabase
@@ -23,13 +29,8 @@ import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
 import com.storyteller_f.a.server.auth.getRateLimitKey
 import com.storyteller_f.a.server.route.configureRoute
-import com.storyteller_f.a.backend.service.media.loadAvif
-import com.storyteller_f.a.backend.service.mediaService
-import com.storyteller_f.a.backend.service.naming.NameService
-import com.storyteller_f.a.backend.service.readEnv
-import com.storyteller_f.a.backend.service.topicDocumentService
-import com.storyteller_f.a.exposed.Database
 import com.storyteller_f.shared.kmpLogger
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
@@ -64,6 +65,7 @@ import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
     Napier.base(kmpLogger)
+    loadCryptoLibIfNeed()
     loadAvif()
     Napier.i {
         "encoding ${OutputStreamWriter(System.out).encoding}"

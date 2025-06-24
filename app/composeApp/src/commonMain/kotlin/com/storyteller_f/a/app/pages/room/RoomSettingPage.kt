@@ -11,12 +11,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.bus
+import com.storyteller_f.a.app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.compontents.SettingOptionResettableView
 import com.storyteller_f.a.app.compontents.SettingOptionView
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnRoomUpdated
 import com.storyteller_f.a.app.model.createRoomViewModel
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
@@ -49,9 +50,10 @@ fun RoomSettingPage(roomId: PrimaryKey) {
         }
         val sessionManager = LocalSessionManager.current
         val scope = rememberCoroutineScope()
+        val globalDialogController = LocalGlobalDialog.current
         ObjectSettingDialog(closeDialog, currentOption, sheetState, {
             scope.launch {
-                globalDialogState.use {
+                globalDialogController.use {
                     val body = UpdateRoomBody(icon = it.id)
                     val newInfo = sessionManager.updateRoomInfo(roomId, body).getOrThrow()
                     bus.emit(OnRoomUpdated(newInfo))
@@ -59,7 +61,7 @@ fun RoomSettingPage(roomId: PrimaryKey) {
             }
         }, {
             scope.launch {
-                updateRoom(currentOption, sessionManager, it, closeDialog, roomId)
+                updateRoom(roomId, sessionManager, it, currentOption, globalDialogController, closeDialog)
             }
         })
     }
@@ -74,11 +76,12 @@ private fun RoomSettingInternal(
     val toasterState = LocalToaster.current
     val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
+    val globalDialogController = LocalGlobalDialog.current
     Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
         SettingOptionResettableView("Icon", roomInfo.icon != null, {
             if (it) {
                 scope.launch {
-                    globalDialogState.use {
+                    globalDialogController.use {
                         val body = UpdateRoomBody(icon = 0)
                         val newInfo = sessionManager.updateRoomInfo(roomInfo.id, body).getOrThrow()
                         bus.emit(OnRoomUpdated(newInfo))
@@ -105,11 +108,12 @@ private fun RoomSettingInternal(
 }
 
 private suspend fun updateRoom(
-    showInputDialog: SettingOption?,
+    roomId: PrimaryKey,
     sessionManager: SessionManager,
     string: String,
+    showInputDialog: SettingOption?,
+    globalDialogController: GlobalDialogController,
     closeDialog: () -> Unit,
-    roomId: PrimaryKey
 ) {
     val body = when (showInputDialog) {
         is SettingOption.Name -> {
@@ -120,7 +124,7 @@ private suspend fun updateRoom(
             null
         }
     } ?: return
-    globalDialogState.use {
+    globalDialogController.use {
         val newInfo = sessionManager.updateRoomInfo(roomId, body).getOrThrow()
         bus.emit(OnRoomUpdated(newInfo))
         closeDialog()

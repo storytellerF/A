@@ -16,9 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnAddReaction
 import com.storyteller_f.a.client_lib.addReaction
 import com.storyteller_f.shared.model.TopicInfo
@@ -146,9 +146,10 @@ private fun EmojiItem(
 ) {
     val scope = rememberCoroutineScope()
     val sessionManager = LocalSessionManager.current
+    val globalDialogController = LocalGlobalDialog.current
     Box(modifier = Modifier.size(emojiSize).clickable {
         scope.launch {
-            globalDialogState.use {
+            globalDialogController.use {
                 sessionManager.addReaction(topic.id, emoji.details.string)
                 bus.emit(OnAddReaction(topic.id, emoji.details.string))
                 sheetState.hide()

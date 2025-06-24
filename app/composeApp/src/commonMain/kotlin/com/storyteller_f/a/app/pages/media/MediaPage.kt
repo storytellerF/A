@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.panpf.zoomimage.CoilZoomAsyncImage
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.LocalToaster
 import com.storyteller_f.a.app.MediaPlaySession
@@ -25,7 +26,6 @@ import com.storyteller_f.a.app.compontents.AudioView
 import com.storyteller_f.a.app.compontents.ButtonNav
 import com.storyteller_f.a.app.compontents.VideoView
 import com.storyteller_f.a.app.compontents.globalLoader
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.a.app.showShortToast
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
@@ -90,6 +90,7 @@ fun ImageSheet(
     val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
+    val globalDialogController = LocalGlobalDialog.current
     BaseSheet(
         showSheet,
         sheetState,
@@ -98,7 +99,7 @@ fun ImageSheet(
         Column(modifier = Modifier.height(200.dp).padding(20.dp)) {
             ButtonNav(MaterialSymbolsOutlined.FileCopy, "copy") {
                 scope.launch {
-                    globalDialogState.use {
+                    globalDialogController.use {
                         sessionManager.copy(session.mediaInfo.id).getOrThrow()
                         toaster.showShortToast("done")
                     }

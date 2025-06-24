@@ -135,9 +135,10 @@ private fun TopicMenuList(
         }
     }
     if (alreadyLoginIn) {
+        val globalDialogController = LocalGlobalDialog.current
         ButtonNav(Icons.Default.PictureAsPdf, stringResource(Res.string.snapshot)) {
             scope.launch {
-                globalDialogState.use {
+                globalDialogController.use {
                     userSessionManager.getTopicSnapshot(topicInfo.id)
                     toasterState.show(getString(Res.string.success), duration = 1.seconds)
                 }
@@ -155,12 +156,13 @@ private fun TopicMenuList(
         }
     }
 
+    val globalDialogController = LocalGlobalDialog.current
     ButtonNav(
         if (topicInfo.isPin) MaterialSymbolsOutlined.KeepOff else MaterialSymbolsOutlined.Keep,
         if (topicInfo.isPin) "Unpin" else "Pin"
     ) {
         scope.launch {
-            pinOrUnpinTopic(topicInfo, userSessionManager).onSuccess {
+            pinOrUnpinTopic(topicInfo, userSessionManager, globalDialogController).onSuccess {
                 dismissDialog()
             }
         }
@@ -170,8 +172,9 @@ private fun TopicMenuList(
 suspend fun pinOrUnpinTopic(
     topicInfo: TopicInfo,
     sessionManager: SessionManager,
+    globalDialogController: GlobalDialogController,
 ): Result<TopicInfo> {
-    return globalDialogState.use {
+    return globalDialogController.use {
         if (topicInfo.isPin) {
             sessionManager.unpinTopic(topicInfo.id)
         } else {
@@ -184,6 +187,7 @@ suspend fun pinOrUnpinTopic(
 fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest: () -> Unit) {
     val scope = rememberCoroutineScope()
     val sessionManager = LocalSessionManager.current
+    val globalDialogController = LocalGlobalDialog.current
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest
@@ -200,7 +204,7 @@ fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest:
             text = { Text(title) },
             onClick = {
                 scope.launch {
-                    pinOrUnpinTopic(topicInfo, sessionManager).onSuccess {
+                    pinOrUnpinTopic(topicInfo, sessionManager, globalDialogController).onSuccess {
                         onDismissRequest()
                         bus.emit(OnTopicChanged(it))
                     }

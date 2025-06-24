@@ -16,10 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.kdroid.composenotification.builder.getNotificationProvider
 import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.*
-import com.storyteller_f.a.app.compontents.ButtonNav
-import com.storyteller_f.a.app.compontents.CustomAlertDialog
-import com.storyteller_f.a.app.compontents.CustomAlertDialogController
-import com.storyteller_f.a.app.compontents.DialogContainer
+import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.pages.room.isLoginIn
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.clearStorage
@@ -83,12 +80,13 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
             }
         }
     }
-    val settings = LocalSettings.current
+    val settings = sessionManager.settings
+    val globalDialogController = LocalGlobalDialog.current
     CustomAlertDialog(controller, {
         controller.close()
     }) {
         scope.launch {
-            signOut(sessionManager, settings)
+            signOut(sessionManager, settings, globalDialogController)
         }
     }
 }
@@ -98,11 +96,16 @@ private fun UserDialogMenuList(
     dismiss: () -> Unit,
     clickCreate: () -> Unit,
     appNav: AppNav,
-    controller: CustomAlertDialogController
+    controller: CustomAlertDialogController,
 ) {
     ButtonNav(Icons.Default.Add, "Create") {
         dismiss()
         clickCreate()
+    }
+    val accountSwitcher = LocalAccountSwitcher.current
+    ButtonNav(Icons.Default.SwitchAccount, "Switch Account") {
+        dismiss()
+        accountSwitcher.switch()
     }
     val notificationProvider = getNotificationProvider()
     val hasPermission by notificationProvider.hasPermissionState
@@ -143,8 +146,12 @@ private fun UserDialogMenuList(
     }
 }
 
-suspend fun signOut(sessionManager: SessionManager, settings: Settings) {
-    globalDialogState.use {
+suspend fun signOut(
+    sessionManager: SessionManager,
+    settings: Settings,
+    globalDialogController: GlobalDialogController,
+) {
+    globalDialogController.use {
         sessionManager.signOut().getOrThrow()
         sessionManager.sessionModel.clear()
         clearStorage(settings)
@@ -191,7 +198,7 @@ fun UserDialog(
     userInfo: UserInfo?,
     showDialog: Boolean,
     clickCreate: () -> Unit,
-    dismiss: () -> Unit
+    dismiss: () -> Unit,
 ) {
     if (showDialog) {
         BasicAlertDialog({

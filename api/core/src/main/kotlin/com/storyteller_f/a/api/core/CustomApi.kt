@@ -317,15 +317,26 @@ object CustomApi {
         val signOut = mutationApi<Unit, Unit>("/accounts/sign_out")
         val signUp = mutationApi<UserInfo, SignUpPack>("/accounts/sign_up")
         val getData = safeApi<String>("/accounts/get_data")
+
         object AlternativeAccounts {
-            val get = safeApi<ServerResponse<AlternativeAccountInfo>>("/accounts/alternative_accounts")
+            @Serializable
+            class AlternativeAccountQuery(
+                val nextPageToken: String? = null,
+                val size: Int = 10,
+            ) : PageableQuery {
+                override val pagination: PaginationQuery
+                    get() = PaginationQuery(nextPageToken, size = size)
+            }
+
+            val get =
+                safeApiWithQuery<ServerResponse<AlternativeAccountInfo>, AlternativeAccountQuery>(
+                    "/accounts/alternative_accounts"
+                )
             val add = mutationApi<AlternativeAccountInfo, Unit>("/accounts/alternative_accounts")
             val delete = mutationApi<Unit, Unit>("/accounts/alternative_accounts")
         }
     }
 }
-
-class AidQuery(val aid: String)
 
 @Serializable
 class Path(val id: PrimaryKey)

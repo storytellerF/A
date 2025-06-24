@@ -7,15 +7,15 @@ import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getMediaInfoList
 import com.storyteller_f.a.backend.service.getUserInfo
 import com.storyteller_f.a.backend.service.getUserInfoList
+import com.storyteller_f.a.backend.service.index.DocumentSearch
+import com.storyteller_f.a.backend.service.index.TopicDocument
+import com.storyteller_f.a.backend.service.savePlainTopic
+import com.storyteller_f.a.backend.service.uploadFiles
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.exposed.tables.Topic
 import com.storyteller_f.a.exposed.tables.Topics
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.a.backend.service.index.DocumentSearch
-import com.storyteller_f.a.backend.service.index.TopicDocument
-import com.storyteller_f.a.backend.service.savePlainTopic
-import com.storyteller_f.a.backend.service.uploadFiles
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
@@ -438,7 +438,7 @@ suspend fun Backend.checkRootReadPermission(
             }
         }
 
-        ObjectType.USER -> exposedDatabase.userDatabase.checkUserExists(parentId).mapIfNotNull {
+        ObjectType.USER -> exposedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
             RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         }
 
@@ -477,7 +477,7 @@ suspend fun Backend.checkRootWritePermission(
 
         ObjectType.USER -> {
             if (uid == parentId) {
-                exposedDatabase.userDatabase.checkUserExists(parentId).mapIfNotNull {
+                exposedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
                     RootWritePermission(parentType, parentId, parentId == uid)
                 }
             } else {
@@ -515,7 +515,7 @@ suspend fun Backend.checkRootAdminPermission(
         }
 
         ObjectType.USER -> {
-            exposedDatabase.userDatabase.checkUserExists(parentId).mapIfNotNull {
+            exposedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, parentId == uid)
             }
         }

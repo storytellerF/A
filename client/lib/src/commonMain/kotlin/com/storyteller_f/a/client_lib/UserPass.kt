@@ -22,22 +22,22 @@ sealed interface ClientSessionState {
 
 @Serializable
 data class RawUserPassInfo(
-    val privateKey: String,
-    val publicKey: String,
+    val pemPrivateKey: String,
+    val derPublicKey: String,
     val address: String,
 )
 
 class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
     override suspend fun signature(data: String): Result<String> {
-        return com.storyteller_f.shared.signature(rawUSerPass.privateKey, data)
+        return com.storyteller_f.shared.signature(rawUSerPass.pemPrivateKey, data)
     }
 
     override suspend fun verify(signature: String, data: String): Result<Boolean> {
-        return com.storyteller_f.shared.verify(rawUSerPass.publicKey, signature, data)
+        return com.storyteller_f.shared.verify(rawUSerPass.derPublicKey, signature, data)
     }
 
     override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String> {
-        return getDerPrivateKey(rawUSerPass.privateKey).mapResult { derPrivateKeyStr ->
+        return getDerPrivateKey(rawUSerPass.pemPrivateKey).mapResult { derPrivateKeyStr ->
             com.storyteller_f.shared.decryptMessage(
                 derPrivateKeyStr,
                 encrypted,
@@ -47,6 +47,6 @@ class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
     }
 
     override suspend fun address(): Result<String> {
-        return calcAddress(rawUSerPass.publicKey)
+        return calcAddress(rawUSerPass.derPublicKey)
     }
 }

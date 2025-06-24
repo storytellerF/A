@@ -89,12 +89,12 @@ fun HttpClientConfig<*>.defaultClientConfigure(
 private fun CustomClientAuthProvider.CustomAuthConfig.configClientAuth(manager: SessionModel) {
     addRequestHeaders { data, request ->
         Napier.v("addRequestHeaders $data ${request.url}", tag = "ClientAuth")
-        if (data == manager.session?.first) {
+        if (data == manager.dataAndSignature?.first) {
             request.addRequestHeaders(manager)
         }
     }
     updateDataIfNeed { data ->
-        val localData = manager.session?.first
+        val localData = manager.dataAndSignature?.first
         Napier.v("updateDataIfNeed $data $localData", tag = "ClientAuth")
         if (data != localData) {
             manager.updateSignature(data, null)
@@ -102,7 +102,7 @@ private fun CustomClientAuthProvider.CustomAuthConfig.configClientAuth(manager: 
     }
     refreshSignature {
         val session = manager.currentUserPass
-        val data = manager.session?.first
+        val data = manager.dataAndSignature?.first
         Napier.v("refreshSignature $data", tag = "ClientAuth")
         if (session == null || data == null) {
             false

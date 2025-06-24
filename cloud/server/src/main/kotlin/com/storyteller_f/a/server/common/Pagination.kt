@@ -5,9 +5,9 @@ import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.Fetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
-import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.shared.model.Identifiable
+import com.storyteller_f.a.exposed.query.PaginationResult
+import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ReactionCursorKey
@@ -61,7 +61,7 @@ abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) : Pagi
     }
 }
 
-object IdentifiablePagingGenerator : PrimaryKeyPagingGenerator<Identifiable>(Identifiable::id)
+object IdentifiablePagingGenerator : PrimaryKeyPagingGenerator<PrimaryKeyIdentifiable>(PrimaryKeyIdentifiable::id)
 
 suspend fun <T, F : Fetch> RoutingContext.pagination(
     generator: PagingGenerator<T, F>,

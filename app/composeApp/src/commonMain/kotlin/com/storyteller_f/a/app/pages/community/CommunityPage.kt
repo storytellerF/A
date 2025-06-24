@@ -58,7 +58,6 @@ fun CommunityPage(
             else -> CommunityNonCompatPageInternal(communityId, showDialog, model)
         }
     }
-
 }
 
 @Composable
@@ -88,11 +87,11 @@ fun getCommunityFont(communityId: PrimaryKey): Typography {
     val typography = MaterialTheme.typography
     return typography.copy(
         bodyLarge =
-            typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
+        typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
         bodyMedium = typography.bodyMedium.copy(fontFamily = fontFamily ?: typography.bodyMedium.fontFamily),
         bodySmall = typography.bodySmall.copy(fontFamily = fontFamily ?: typography.bodySmall.fontFamily),
 
-        )
+    )
 }
 
 private fun buildSearchScope(
@@ -340,7 +339,6 @@ private fun DownloadStatus(
     }
     when {
         state is LoadingState.Done && data != null -> {
-
             when (data.status) {
                 DownloadStatus.NOT_DOWNLOADED, DownloadStatus.DOWNLOADING -> CircularProgressIndicator(
                     modifier = Modifier.size(10.dp),
@@ -368,6 +366,7 @@ private fun CommunityMenus(
 ) {
     val nav = LocalAppNav.current
     val sessionViewModel = LocalSessionManager.current
+    val globalDialogController = LocalGlobalDialog.current
     Column {
         ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
             dismiss()
@@ -380,7 +379,7 @@ private fun CommunityMenus(
             if (communityInfo.isJoined) {
                 ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_community)) {
                     scope.launch {
-                        globalDialogState.use {
+                        globalDialogController.use {
                             val info = sessionViewModel.exitCommunity(communityId).getOrThrow()
                             bus.emit(OnCommunityExited(info))
                         }
@@ -389,7 +388,7 @@ private fun CommunityMenus(
             } else {
                 ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_community)) {
                     scope.launch {
-                        globalDialogState.use {
+                        globalDialogController.use {
                             val info = sessionViewModel.joinCommunity(communityId).getOrThrow()
                             bus.emit(OnCommunityJoined(info))
                         }

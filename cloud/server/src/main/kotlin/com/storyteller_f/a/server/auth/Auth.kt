@@ -6,12 +6,15 @@ import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.server.invoke
 import com.storyteller_f.a.api.server.receiveBody
 import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.getUserAlternateUserInfoList
+import com.storyteller_f.a.backend.service.processUserRawResultToUserInfo
 import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.a.server.ServerConfig
 import com.storyteller_f.a.server.auth.CustomCredential.*
+import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
+import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.addAlternativeAccount
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.processUserRawResultToUserInfo
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
@@ -179,7 +182,7 @@ private suspend fun RoutingContext.signUp(
     val f = finalData(data)
     return verify(pack.pk, pack.sig, f).mapResult {
         if (it) {
-            backend.exposedDatabase.userDatabase.isUserNotExists(pack.pk).mapResult { userNotExists ->
+            backend.exposedDatabase.userDatabase.isUserNotExistsByPublicKey(pack.pk).mapResult { userNotExists ->
                 if (userNotExists) {
                     calcAddress(pack.pk).mapResult { ad ->
                         val newId = SnowflakeFactory.nextId()
@@ -222,7 +225,7 @@ private suspend fun ApplicationCall.checkApiRequest(
     return when {
         !ServerConfig.IS_PROD && credential is IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            backend.exposedDatabase.userDatabase.checkUserExists(id).mapIfNotNull {
+            backend.exposedDatabase.userDatabase.isUserExistsByUid(id).mapIfNotNull {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             }
@@ -276,7 +279,7 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        exposedDatabase.userDatabase.checkUserExists(id).map {
+        exposedDatabase.userDatabase.isUserExistsByUid(id).map {
             CustomPrincipal(id)
         }
     } else {
@@ -379,20 +382,26 @@ fun Route.bindUnprotectedAccountRoute(
     }
 }
 
-fun Route.bindSafeAccountRoute(backend: Backend) {
+fun Route.bindSafeAccountRoute() {
     CustomApi.Accounts.signOut.invoke(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             call.sessions.clear(UserSession::class)
             Result.success(Unit)
         }
     }
-
 }
 
 fun Route.bindProtectedAccountRoute(backend: Backend) {
     CustomApi.Accounts.AlternativeAccounts.add.invoke(RoutingContext::handleResult) {
         usePrincipal { uid ->
             backend.addAlternativeAccount(uid)
+        }
+    }
+    CustomApi.Accounts.AlternativeAccounts.get.invoke(RoutingContext::handleResult) {
+        usePrincipal { uid ->
+            pagination(IdentifiablePagingGenerator) {
+                backend.getUserAlternateUserInfoList(uid, it)
+            }
         }
     }
 }

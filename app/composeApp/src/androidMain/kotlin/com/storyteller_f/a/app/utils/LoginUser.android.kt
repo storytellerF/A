@@ -144,7 +144,7 @@ class AndroidKeyStoreLoginUserSessionManager(val defaultSettings: Settings) : Lo
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override suspend fun addSession(session: RawUserPassInfo): UserPass {
         val current = "default"
-        importEcdsaPrivateKey(current, session.privateKey)
+        importEcdsaPrivateKey(current, session.pemPrivateKey)
         defaultSettings.encodeValue(LoginHistory.serializer(), "login_history", LoginHistory(current, current))
         return AndroidKeyStoreUserPassSession(current)
     }

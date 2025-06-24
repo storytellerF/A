@@ -23,7 +23,7 @@ data class MediaInfo(
     val ownerType: ObjectType,
     val lastModified: LocalDateTime,
     val dimension: Dimension?,
-) : Identifiable {
+) : PrimaryKeyIdentifiable {
     override val objectType: ObjectType
         get() = ObjectType.MEDIA
 }

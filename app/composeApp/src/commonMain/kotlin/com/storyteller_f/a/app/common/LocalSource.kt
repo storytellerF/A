@@ -6,7 +6,7 @@ import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import app.cash.paging.*
 import com.storyteller_f.a.client_lib.*
-import com.storyteller_f.shared.model.Identifiable
+import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.storage.*
 import io.github.aakira.napier.Napier
@@ -282,7 +282,7 @@ class IntermediatePagingSource<Key : Any, T : Any>(
     }
 }
 
-inline fun <reified T : Identifiable> primaryKeyRemoteMediator(
+inline fun <reified T : PrimaryKeyIdentifiable> primaryKeyRemoteMediator(
     storageSource: StorageSource,
     collectionName: String,
     pagingSource: RegularPagingSource<T>,
@@ -297,7 +297,7 @@ inline fun <reified T : Identifiable> primaryKeyRemoteMediator(
     }
 }
 
-inline fun <reified T : Identifiable> primaryKeyPagingSource(
+inline fun <reified T : PrimaryKeyIdentifiable> primaryKeyPagingSource(
     collectionName: String,
     storageSource: StorageSource
 ) =
@@ -316,7 +316,7 @@ inline fun <reified T : Identifiable> primaryKeyPagingSource(
         info?.id?.toString()
     }
 
-inline fun <reified T : Identifiable> sectionRemoteMediator(
+inline fun <reified T : PrimaryKeyIdentifiable> sectionRemoteMediator(
     sessionManager: SessionManager,
     collectionName: String,
     storageSource: StorageSource,

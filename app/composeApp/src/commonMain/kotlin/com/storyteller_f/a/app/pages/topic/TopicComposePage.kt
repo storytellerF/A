@@ -22,10 +22,9 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import com.storyteller_f.a.app.*
-import com.storyteller_f.a.app.common.viewModel
 import com.storyteller_f.a.app.compontents.TopicContentField
-import com.storyteller_f.a.app.model.MarkdownMediasViewModel
 import com.storyteller_f.a.app.model.OnTopicCreated
+import com.storyteller_f.a.app.model.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.pages.community.getCommunityFont
 import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.ui.theme.AppTheme
@@ -35,7 +34,6 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.md5
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
@@ -261,11 +259,12 @@ private fun TopicComposeSubmitButton(
 ) {
     val scope = rememberCoroutineScope()
     val sessionManager = LocalSessionManager.current
+    val globalDialogController = LocalGlobalDialog.current
     IconButton({
         val finalInput = input.trim()
         if (finalInput.isNotEmpty()) {
             scope.launch {
-                globalDialogState.use {
+                globalDialogController.use {
                     val info = sessionManager.createNewTopic(objectType, objectId, finalInput).getOrThrow()
                     bus.emit(OnTopicCreated(info))
                     backPrePage()
@@ -279,9 +278,7 @@ private fun TopicComposeSubmitButton(
 
 @Composable
 fun PreviewTopicPage(input: String, objectTuple: ObjectTuple) {
-    val markdownMediasViewModel = viewModel(listOf("content", md5(input))) { sessionManager, _ ->
-        MarkdownMediasViewModel(sessionManager, input, objectTuple)
-    }
+    val markdownMediasViewModel = getMarkdownMediasViewModel(input, objectTuple)
     val list by markdownMediasViewModel.handler.data.collectAsState()
     LazyColumn(modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)) {
         item {

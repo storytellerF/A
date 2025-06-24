@@ -24,15 +24,16 @@ import androidx.compose.ui.unit.sp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.bottomAppending
 import com.storyteller_f.a.app.common.topPrepend
+import com.storyteller_f.a.app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.compontents.Permission
 import com.storyteller_f.a.app.compontents.isPermissionGranted
 import com.storyteller_f.a.app.compontents.requestPermission
-import com.storyteller_f.a.app.globalDialogState
 import com.storyteller_f.a.app.model.OnMediaUploaded
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.a.app.model.createReactionsViewModel
@@ -128,6 +129,7 @@ private fun BoxScope.RecorderButton(
 ) {
     val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
+    val globalDialogController = LocalGlobalDialog.current
     Box(
         modifier = Modifier.size(150.dp)
             .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
@@ -141,11 +143,11 @@ private fun BoxScope.RecorderButton(
                             Napier.i {
                                 "save to $path"
                             }
-                            uploadPath(path, sessionManager, mediaTarget).mapIfNotNull {
+                            uploadPath(path, sessionManager, mediaTarget, globalDialogController).mapIfNotNull {
                                 uploadSuccess(it)
                             }
                         } else {
-                            globalDialogState.use {
+                            globalDialogController.use {
                                 Recorder.startRecord()
                             }
                         }
@@ -170,11 +172,12 @@ private fun MediaListView(
     val sessionManager = LocalSessionManager.current
     val list = createMediaListViewModel(mediaTarget)
     val scope = rememberCoroutineScope()
+    val globalDialogController = LocalGlobalDialog.current
     Column(modifier = Modifier.padding(top = 10.dp)) {
         Row {
             IconButton({
                 scope.launch {
-                    selectFileAndUpload(mediaTarget, sessionManager) {
+                    selectFileAndUpload(mediaTarget, sessionManager, globalDialogController) {
                         clickItem(it)
                     }
                 }
@@ -246,9 +249,10 @@ private fun FileIcon(it: MediaInfo) {
 private suspend fun selectFileAndUpload(
     mediaTarget: ObjectTuple,
     sessionManager: SessionManager,
+    globalDialogController: GlobalDialogController,
     uploadSuccess: (List<MediaInfo>) -> Unit,
 ) {
-    globalDialogState.useResult {
+    globalDialogController.useResult {
         val f = FileKit.openFilePicker()
         if (f != null) {
             upload(
@@ -274,9 +278,10 @@ suspend fun uploadPath(
     path: Path,
     sessionManager: SessionManager,
     mediaTarget: ObjectTuple,
+    globalDialogController: GlobalDialogController,
 ): Result<List<MediaInfo>?> {
     val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
-    return globalDialogState.useResult {
+    return globalDialogController.useResult {
         upload(
             sessionManager,
             mediaTarget,

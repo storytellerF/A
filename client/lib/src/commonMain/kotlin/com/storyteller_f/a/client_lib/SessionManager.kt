@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 interface SessionModel {
     val uid: PrimaryKey?
-    val session: Pair<String, String?>?
+    val dataAndSignature: Pair<String, String?>?
     val currentUserPass: UserPass?
     val state: StateFlow<ClientSessionState>
     val userHandler: FixedLoadingHandler<UserInfo?>
@@ -28,10 +28,6 @@ interface SessionModel {
     fun clear()
     fun updateState(newState: ClientSessionState)
     fun updateUser(new: UserInfo)
-
-    fun isAlreadyLogin(): Boolean {
-        return currentUserPass != null
-    }
 }
 
 interface SessionManager {
@@ -39,19 +35,22 @@ interface SessionManager {
     val webSocketClient: WebSocketClient
     val sessionModel: SessionModel
     val isAlreadySignUp: StateFlow<Boolean>
+    val address: StateFlow<String?>
 
-    val currentIsAlreadySignUp: Boolean get() = sessionModel.isAlreadyLogin()
+    val currentIsAlreadySignUp: Boolean get() = isAlreadySignUp.value
 
     suspend fun login()
 }
 
-class UserSessionManager(
+open class UserSessionManager(
     override val client: HttpClient,
     override val webSocketClient: WebSocketClientImpl,
     override val sessionModel: SessionModel,
 ) :
     SessionManager {
     override val isAlreadySignUp = MutableStateFlow(false)
+    override val address = MutableStateFlow<String?>(null)
+
     override suspend fun login() {
         val userHandler = sessionModel.userHandler
         val userPass = sessionModel.currentUserPass ?: return
@@ -91,10 +90,9 @@ class UserSessionManager(
     }
 
     suspend fun listenerState() {
-        sessionModel.state.map {
-            it is ClientSessionState.Success
-        }.collect {
-            isAlreadySignUp.value = it
+        sessionModel.state.collect {
+            address.value = (it as? ClientSessionState.Success)?.session?.address()?.getOrNull()
+            isAlreadySignUp.value = it is ClientSessionState.Success
         }
     }
 
@@ -130,14 +128,13 @@ class UserSessionModel : SessionModel {
     // 用于header 和server 协商被签名的数据
     private var currentStamp = 0L
     override val uid: PrimaryKey?
-        get() = user.value?.id
+        get() = userHandler.data.value?.id
 
     // currentData 是本地使用的，但是还是需要依据server 的为准
-    override var session: Pair<String, String?>? = null
+    override var dataAndSignature: Pair<String, String?>? = null
     override val currentUserPass: UserPass?
         get() = (state.value as? ClientSessionState.Success)?.session
     override val userHandler = FixedLoadingHandler<UserInfo?>()
-    val user get() = userHandler.data
 
     override fun generateData(): String {
         val (nowSeconds, isValid) = checkTsIsValid(currentStamp, 60 * 3)
@@ -151,7 +148,7 @@ class UserSessionModel : SessionModel {
     }
 
     override fun updateSignature(data: String, signature: String?) {
-        session = data to signature
+        dataAndSignature = data to signature
     }
 
     override fun updateUser(new: UserInfo) {
@@ -165,7 +162,7 @@ class UserSessionModel : SessionModel {
     override fun clear() {
         state.value = ClientSessionState.None
         userHandler.update(null)
-        session = null
+        dataAndSignature = null
     }
 }
 

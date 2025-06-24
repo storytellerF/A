@@ -11,7 +11,7 @@ import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
 
-fun Table.userLogType(name: String) = enumerationByName<UserLogType>(name, 10)
+fun Table.userLogType(name: String) = enumerationByName<UserLogType>(name, 30)
 
 object UserLogs : BaseTable() {
     val uid = customPrimaryKey("uid")

@@ -19,7 +19,7 @@ data class RoomInfo(
     val joinedTime: LocalDateTime? = null,
     val communityId: PrimaryKey? = null,
     val lastRead: PrimaryKey? = null,
-) : Identifiable {
+) : PrimaryKeyIdentifiable {
     val isPrivate get() = communityId == null
     val isJoined get() = joinedTime != null
     override val objectType: ObjectType

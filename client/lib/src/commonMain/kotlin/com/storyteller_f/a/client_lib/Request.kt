@@ -66,7 +66,7 @@ suspend fun SessionManager.getRoomTopics(
     roomId: PrimaryKey,
     nextTopicId: String?,
     size: Int,
-    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
+    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED,
 ) = serviceCatching {
     CustomApi.Rooms.Id.Topics.get.invoke(
         TopicQuery(
@@ -82,7 +82,7 @@ suspend fun SessionManager.getCommunityTopics(
     communityId: PrimaryKey,
     nextTopicId: String?,
     size: Int,
-    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
+    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED,
 ) = serviceCatching {
     CustomApi.Communities.Id.Topics.get.invoke(
         TopicQuery(
@@ -98,7 +98,7 @@ suspend fun SessionManager.getUserTopics(
     userId: PrimaryKey,
     nextTopicId: String?,
     size: Int,
-    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED
+    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED,
 ) = serviceCatching {
     CustomApi.Users.Id.Topics.get.invoke(
         TopicQuery(
@@ -143,7 +143,7 @@ suspend fun SessionManager.searchCommunityMembers(
     communityId: PrimaryKey,
     nextCommunityId: String?,
     size: Int,
-    word: String?
+    word: String?,
 ) = serviceCatching {
     CustomApi.Communities.Id.Members.get(
         CustomApi.Communities.Id.Members.CommunityMemberQuery(word, nextCommunityId, size),
@@ -154,7 +154,7 @@ suspend fun SessionManager.searchCommunityMembers(
 suspend fun SessionManager.searchAllMembers(
     nextUserId: String?,
     size: Int,
-    word: String?
+    word: String?,
 ) = serviceCatching {
     CustomApi.Users.search(CustomApi.Users.UserSearchQuery(word, nextUserId, size))
 }
@@ -163,7 +163,7 @@ suspend fun SessionManager.searchRoomMembers(
     roomId: PrimaryKey,
     nextCommunityId: String?,
     size: Int,
-    word: String?
+    word: String?,
 ) = serviceCatching {
     CustomApi.Rooms.Id.Members.get(CustomApi.Rooms.Id.Members.MemberQuery(word, nextCommunityId, size), Path(roomId))
 }
@@ -197,7 +197,7 @@ suspend fun SessionManager.getTopicTopics(
     topicId: PrimaryKey,
     nextTopicId: String?,
     size: Int,
-    pinType: TopicPinSearch
+    pinType: TopicPinSearch,
 ) =
     serviceCatching {
         CustomApi.Topics.Id.Topics.get.invoke(
@@ -223,7 +223,7 @@ suspend fun SessionManager.searchRooms(
     nextRoomId: String?,
     joinStatusSearch: JoinStatusSearch,
     word: String?,
-    communityId: PrimaryKey?
+    communityId: PrimaryKey?,
 ) = serviceCatching {
     CustomApi.Rooms.search.invoke(
         CustomApi.Rooms.RoomSearchQuery(
@@ -239,7 +239,7 @@ suspend fun SessionManager.searchRooms(
 suspend fun SessionManager.createNewTopic(
     objectType: ObjectType,
     objectId: PrimaryKey,
-    input: String
+    input: String,
 ) = serviceCatching {
     CustomApi.Topics.add.invoke(NewTopic(objectType, objectId, input)) {
         contentType(ContentType.Application.Json)
@@ -257,7 +257,7 @@ suspend fun SessionManager.signUp(
 
 suspend fun SessionManager.signIn(
     address: String,
-    signature: String
+    signature: String,
 ) = serviceCatching {
     CustomApi.Accounts.signIn.invoke(SignInPack(address, signature)) {
         contentType(ContentType.Application.Json)
@@ -278,7 +278,7 @@ suspend fun SessionManager.searchTopics(
     word: List<String>,
     parentId: PrimaryKey? = null,
     parentType: ObjectType? = null,
-    nextTopicId: String? = null
+    nextTopicId: String? = null,
 ) = serviceCatching {
     CustomApi.Topics.search.invoke(
         CustomApi.Topics.TopicSearchQuery(
@@ -338,7 +338,7 @@ data class UploadData(val size: Long, val name: String, val contentType: Content
 suspend fun SessionManager.upload(
     objectTuple: ObjectTuple,
     data: UploadData,
-    block: () -> Input
+    block: () -> Input,
 ) = serviceCatching {
     CustomApi.Medias.upload.invoke(objectTuple, Unit) {
         setBody(
@@ -398,7 +398,7 @@ suspend fun SessionManager.userTitles(
     searchType: TitleSearchType,
     status: TitleStatus? = null,
     type: TitleType? = null,
-    scopeId: PrimaryKey? = null
+    scopeId: PrimaryKey? = null,
 ) = serviceCatching {
     CustomApi.Users.Id.Titles.get.invoke(
         CustomApi.Users.Id.Titles.TitleQuery(
@@ -459,7 +459,7 @@ suspend fun SessionManager.getTopicList(
     id: PrimaryKey,
     loadKey: String?,
     size: Int,
-    pinSearch: TopicPinSearch
+    pinSearch: TopicPinSearch,
 ) = when (type) {
     ROOM -> getRoomTopics(id, loadKey, size, pinSearch)
     COMMUNITY -> getCommunityTopics(id, loadKey, size, pinSearch)
@@ -488,4 +488,13 @@ suspend fun SessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatching {
 
 suspend fun SessionManager.addAlternativeAccount() = serviceCatching {
     CustomApi.Accounts.AlternativeAccounts.add.invoke(Unit) {}
+}
+
+suspend fun SessionManager.getAlternativeAccounts(nextId: String?, size: Int) = serviceCatching {
+    CustomApi.Accounts.AlternativeAccounts.get.invoke(
+        CustomApi.Accounts.AlternativeAccounts.AlternativeAccountQuery(
+            nextId,
+            size
+        )
+    )
 }
