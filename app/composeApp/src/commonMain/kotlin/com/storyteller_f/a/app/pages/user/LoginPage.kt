@@ -23,8 +23,8 @@ import com.storyteller_f.a.app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.compontents.MeasureTextLineCount
 import com.storyteller_f.a.app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.app.utils.platform
-import com.storyteller_f.a.client_lib.ClientSessionState
-import com.storyteller_f.a.client_lib.signUpOrInFromPrivateKey
+import com.storyteller_f.a.client.core.ClientSessionState
+import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker

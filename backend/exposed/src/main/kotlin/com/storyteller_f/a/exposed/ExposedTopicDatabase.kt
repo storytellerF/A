@@ -7,16 +7,7 @@ import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.exposed.query.buildReactionInfoQuery
-import com.storyteller_f.a.exposed.tables.Aids
-import com.storyteller_f.a.exposed.tables.EncryptedKey
-import com.storyteller_f.a.exposed.tables.EncryptedKeys
-import com.storyteller_f.a.exposed.tables.Reaction
-import com.storyteller_f.a.exposed.tables.ReactionRecord
-import com.storyteller_f.a.exposed.tables.ReactionRecords
-import com.storyteller_f.a.exposed.tables.Reactions
-import com.storyteller_f.a.exposed.tables.Topic
-import com.storyteller_f.a.exposed.tables.Topics
-import com.storyteller_f.a.exposed.tables.toTopicInfo
+import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -29,10 +20,13 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 
-class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, val containerDatabase: ContainerDatabase) :
+class ExposedTopicDatabase(
+    val exposedDatabaseSession: ExposedDatabaseSession,
+    val containerDatabase: ContainerDatabase,
+) :
     TopicDatabase {
     override suspend fun getTopicRootTuple(
-        parentId: PrimaryKey
+        parentId: PrimaryKey,
     ): Result<ObjectTuple?> {
         return exposedDatabaseSession.dbSearch {
             search {
@@ -50,7 +44,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
 
     override suspend fun getTopicInfo(
         fetch: ObjectFetch,
-        uid: PrimaryKey?
+        uid: PrimaryKey?,
     ): Result<TopicInfo?> {
         return exposedDatabaseSession.dbSearch {
             search {
@@ -71,7 +65,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
 
     override suspend fun getTopicInfoListByPredicate(
         uid: PrimaryKey?,
-        queryBuilder: Query.() -> Query
+        queryBuilder: Query.() -> Query,
     ): Result<List<TopicInfo>> {
         return exposedDatabaseSession.dbSearch {
             search {
@@ -88,7 +82,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
     override suspend fun getTopicPaginationResultByPredicate(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
-        extraQuery: Query.() -> Query
+        extraQuery: Query.() -> Query,
     ): Result<PaginationResult<TopicInfo>> {
         return getTopicInfoListByPredicate(uid) {
             extraQuery().bindPaginationQuery(Topics, primaryKeyFetch)
@@ -125,7 +119,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
 
     override suspend fun updateTopicStatus(
         topicId: PrimaryKey,
-        newValue: Boolean
+        newValue: Boolean,
     ): Result<Boolean> {
         return exposedDatabaseSession.dbQuery {
             Topics.update({
@@ -152,7 +146,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
     }
 
     override suspend fun getTopicCommentCount(
-        topicIdList: List<PrimaryKey>
+        topicIdList: List<PrimaryKey>,
     ): Result<List<Pair<Long, Long>>> {
         if (topicIdList.isEmpty()) return Result.success(emptyList())
         return exposedDatabaseSession.dbSearch {
@@ -170,7 +164,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
 
     override suspend fun isUserCommented(
         uid: PrimaryKey,
-        topicId: List<PrimaryKey>
+        topicId: List<PrimaryKey>,
     ): Result<List<Long>> {
         if (topicId.isEmpty()) return Result.success(emptyList())
         return exposedDatabaseSession.dbSearch {
@@ -187,7 +181,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
 
     override suspend fun processTopicToTopicInfo(
         uid: PrimaryKey?,
-        topics: List<Topic>
+        topics: List<Topic>,
     ): Result<List<TopicInfo>> {
         val topicIds = topics.map {
             it.id
@@ -236,7 +230,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
 
     override suspend fun processByteArrayToTopicContent(
         topics: List<Topic>,
-        uid: PrimaryKey?
+        uid: PrimaryKey?,
     ): Result<Map<PrimaryKey, TopicContent>> {
         val encryptedTopic = topics.filter {
             it.isEncrypted
@@ -266,7 +260,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
     @OptIn(ExperimentalStdlibApi::class)
     override suspend fun getEncryptedTopicContents(
         data: List<Topic>,
-        uid: PrimaryKey
+        uid: PrimaryKey,
     ): Result<List<TopicContent.Encrypted>> {
         val topicId = data.map {
             it.id
@@ -293,7 +287,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
     }
 
     override suspend fun statsReactionRecord(
-        reactionRecord: ReactionRecord
+        reactionRecord: ReactionRecord,
     ): Result<Unit> {
         return getReactionCountForEmoji(
             listOf(reactionRecord.objectId),
@@ -325,7 +319,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
     override suspend fun getReactionInfoPaginationResult(
         objectId: List<PrimaryKey>,
         uid: PrimaryKey?,
-        reactionFetch: ReactionFetch
+        reactionFetch: ReactionFetch,
     ): Result<PaginationResult<ReactionInfo>> {
         return exposedDatabaseSession.dbSearch {
             search {
@@ -386,7 +380,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
     override suspend fun getReactionInfo(
         uid: PrimaryKey,
         objectId: PrimaryKey,
-        emojiText: String
+        emojiText: String,
     ): Result<ReactionInfo?> {
         return exposedDatabaseSession.dbSearch {
             search {
@@ -407,7 +401,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
     override suspend fun hasReactedForEmoji(
         objectId: PrimaryKey,
         uid: PrimaryKey,
-        emoji: String
+        emoji: String,
     ): Result<Boolean> {
         return exposedDatabaseSession.dbSearch {
             search {
@@ -424,7 +418,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
     override suspend fun deleteReaction(
         uid: PrimaryKey,
         emoji: String,
-        objectId: PrimaryKey
+        objectId: PrimaryKey,
     ): Result<Boolean> {
         return getReactionRecordInfo(uid, emoji, objectId).mapResult { recordInfo ->
             if (recordInfo == null) {
@@ -452,7 +446,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
     override suspend fun getReactionRecordInfo(
         uid: PrimaryKey,
         emoji: String,
-        objectId: PrimaryKey
+        objectId: PrimaryKey,
     ): Result<ReactionRecordInfo?> {
         return exposedDatabaseSession.dbSearch {
             search {
@@ -477,7 +471,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
     }
 
     override suspend fun deleteReaction(
-        reactionId: PrimaryKey
+        reactionId: PrimaryKey,
     ): Result<Boolean> {
         return exposedDatabaseSession.dbQuery {
             ReactionRecords.deleteWhere { builder ->
@@ -491,7 +485,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
     }
 
     override suspend fun insertReaction(
-        reactionRecord: ReactionRecord
+        reactionRecord: ReactionRecord,
     ): Result<Unit> {
         return exposedDatabaseSession.dbQuery {
             check(ReactionRecords.insert { statement ->
@@ -523,7 +517,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
 
     override suspend fun getReactionCountForEmoji(
         objectId: List<PrimaryKey>,
-        emoji: String
+        emoji: String,
     ): Result<List<Pair<Long, Long>>> {
         return exposedDatabaseSession.dbSearch {
             val column = ReactionRecords.emoji.countDistinct()

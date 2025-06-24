@@ -25,9 +25,9 @@ import com.storyteller_f.a.app.pages.room.RoomInputGroup
 import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
-import com.storyteller_f.a.client_lib.LoadingState
-import com.storyteller_f.a.client_lib.SessionManager
-import com.storyteller_f.a.client_lib.createNewTopic
+import com.storyteller_f.a.client.core.LoadingState
+import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.createNewTopic
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType

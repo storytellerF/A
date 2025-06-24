@@ -33,8 +33,8 @@ import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.compontents.ExceptionView
 import com.storyteller_f.a.app.no_content_yet
 import com.storyteller_f.a.app.refresh
-import com.storyteller_f.a.client_lib.LoadingHandler
-import com.storyteller_f.a.client_lib.LoadingState
+import com.storyteller_f.a.client.core.LoadingHandler
+import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay

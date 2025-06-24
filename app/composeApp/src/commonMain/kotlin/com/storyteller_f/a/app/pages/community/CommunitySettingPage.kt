@@ -15,8 +15,8 @@ import com.storyteller_f.a.app.model.OnCommunityUpdated
 import com.storyteller_f.a.app.model.createCommunityViewModel
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.pages.user.SettingOption
-import com.storyteller_f.a.client_lib.UserSessionManager
-import com.storyteller_f.a.client_lib.updateCommunityInfo
+import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.a.client.core.updateCommunityInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.PrimaryKey

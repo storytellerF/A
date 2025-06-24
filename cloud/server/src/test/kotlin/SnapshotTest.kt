@@ -1,3 +1,4 @@
+import com.storyteller_f.a.server.createKeystore
 import com.storyteller_f.a.server.service.SnapshotVerify
 import com.storyteller_f.a.server.service.generateSignedSnapshot
 import com.storyteller_f.shared.model.TopicContent
@@ -5,18 +6,8 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import org.apache.pdfbox.examples.signature.ShowSignature
 import org.apache.pdfbox.pdmodel.encryption.SecurityProvider
-import org.bouncycastle.asn1.x500.X500Name
-import org.bouncycastle.cert.X509v3CertificateBuilder
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
-import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import java.io.File
-import java.io.FileOutputStream
-import java.math.BigInteger
-import java.security.*
-import java.security.cert.X509Certificate
-import java.util.*
+import java.security.Security
 import kotlin.test.Test
 
 class SnapshotTest {

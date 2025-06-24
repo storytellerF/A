@@ -22,7 +22,13 @@ import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.clearStorage
 import com.storyteller_f.a.app.utils.createConnectivity
 import com.storyteller_f.a.app.utils.unregisterPushService
-import com.storyteller_f.a.client_lib.*
+import com.storyteller_f.a.client.core.ClientSessionState
+import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.getData
+import com.storyteller_f.a.client.core.getUserInfo
+import com.storyteller_f.a.client.core.getUserInfoByAid
+import com.storyteller_f.a.client.core.signIn
+import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.UserInfo
 import dev.jordond.connectivity.Connectivity

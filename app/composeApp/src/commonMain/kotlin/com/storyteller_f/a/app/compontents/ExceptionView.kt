@@ -6,7 +6,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichText
-import com.storyteller_f.a.client_lib.ServerErrorException
+import com.storyteller_f.a.client.core.ServerErrorException
 import io.ktor.client.network.sockets.*
 
 @Composable

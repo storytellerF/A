@@ -7,8 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.storyteller_f.a.app.LocalDatabase
 import com.storyteller_f.a.app.LocalSessionManager
-import com.storyteller_f.a.client_lib.LoadingHandler
-import com.storyteller_f.a.client_lib.SessionManager
+import com.storyteller_f.a.client.core.LoadingHandler
+import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.storage.StorageSource
 import io.github.aakira.napier.Napier
 

@@ -35,8 +35,8 @@ import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.UserRefCell
-import com.storyteller_f.a.client_lib.SessionManager
-import com.storyteller_f.a.client_lib.createTitle
+import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.obj.ObjectTuple

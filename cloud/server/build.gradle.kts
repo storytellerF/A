@@ -38,7 +38,7 @@ dependencies {
 
     @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")
     testImplementation(libs.mysql.connector.java)
-    testImplementation(projects.client.lib)
+    testImplementation(projects.client.core)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test)
     @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")

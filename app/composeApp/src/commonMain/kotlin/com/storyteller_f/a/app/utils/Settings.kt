@@ -2,8 +2,8 @@ package com.storyteller_f.a.app.utils
 
 import androidx.compose.runtime.Composable
 import com.russhwolf.settings.Settings
-import com.storyteller_f.a.client_lib.ClientSessionState
-import com.storyteller_f.a.client_lib.UserSessionManager
+import com.storyteller_f.a.client.core.ClientSessionState
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.strabled.composepreferences.utilis.DataStoreManager
 import kotlinx.serialization.Serializable
 

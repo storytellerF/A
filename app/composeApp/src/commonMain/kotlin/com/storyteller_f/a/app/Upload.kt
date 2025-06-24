@@ -2,7 +2,6 @@ package com.storyteller_f.a.app
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Error
@@ -14,8 +13,8 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.model.createUploadViewModel
 import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
-import com.storyteller_f.a.client_lib.LoadingHandler
-import com.storyteller_f.a.client_lib.LoadingState
+import com.storyteller_f.a.client.core.LoadingHandler
+import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import io.ktor.http.*

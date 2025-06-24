@@ -32,9 +32,9 @@ import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.world.TopicList
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.app.utils.loadFontFromLocal
-import com.storyteller_f.a.client_lib.LoadingState
-import com.storyteller_f.a.client_lib.exitCommunity
-import com.storyteller_f.a.client_lib.joinCommunity
+import com.storyteller_f.a.client.core.LoadingState
+import com.storyteller_f.a.client.core.exitCommunity
+import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey

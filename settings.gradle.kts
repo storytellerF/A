@@ -54,7 +54,7 @@ include(":backend:service")
 include(":backend:exposed")
 include(":backend:core")
 
-include(":client:lib")
+include(":client:core")
 include(":client:bot-lib")
 include(":client:storage")
 include(":client:kotbase")

@@ -2,7 +2,7 @@ package com.storyteller_f.a.app.common
 
 import androidx.lifecycle.ViewModel
 import app.cash.paging.*
-import com.storyteller_f.a.client_lib.SessionManager
+import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
 import kotlinx.coroutines.flow.Flow

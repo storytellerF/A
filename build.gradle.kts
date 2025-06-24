@@ -88,7 +88,7 @@ val jvmLibModules = listOf(
 val composeModules = listOf(
     ":shared",
     ":app:composeApp",
-    ":client:lib",
+    ":client:core",
     ":client:kotbase",
     ":client:storage"
 )

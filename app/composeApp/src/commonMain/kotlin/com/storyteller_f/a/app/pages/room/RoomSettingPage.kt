@@ -22,8 +22,8 @@ import com.storyteller_f.a.app.model.OnRoomUpdated
 import com.storyteller_f.a.app.model.createRoomViewModel
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.pages.user.SettingOption
-import com.storyteller_f.a.client_lib.SessionManager
-import com.storyteller_f.a.client_lib.updateRoomInfo
+import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.updateRoomInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.PrimaryKey

@@ -137,7 +137,7 @@ kotlin {
 
 
             api(projects.shared)
-            implementation(projects.client.lib)
+            implementation(projects.client.core)
 
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)

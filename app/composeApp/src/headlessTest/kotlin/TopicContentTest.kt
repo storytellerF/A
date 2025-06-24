@@ -1,8 +1,8 @@
 import androidx.compose.ui.test.ExperimentalTestApi
 import com.storyteller_f.a.app.buildHttpClient
 import com.storyteller_f.a.app.buildWebSocketUrl
-import com.storyteller_f.a.client_lib.createUserSessionManager
-import com.storyteller_f.a.client_lib.start
+import com.storyteller_f.a.client.core.createUserSessionManager
+import com.storyteller_f.a.client.core.start
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlin.test.Ignore
