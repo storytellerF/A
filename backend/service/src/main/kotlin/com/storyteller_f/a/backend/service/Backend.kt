@@ -218,7 +218,7 @@ suspend fun Backend.savePlainTopic(
     content: TopicContent.Plain,
 ) = databaseSession.dbQuery {
     Topic.new(topic)
-    exposedDatabase.userDatabase.insertMediaRefs(
+    exposedDatabase.mediaDatabase.insertMediaRefs(
         topic.id,
         ObjectType.TOPIC,
         extractMarkdownMediaLink(content.plain).map {
@@ -264,7 +264,7 @@ suspend fun Backend.getMediaPaginationResult(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<MediaInfo>> =
-    exposedDatabase.userDatabase.getMediaPaginationList(uid, primaryKeyFetch).mapResult { (list, count) ->
+    exposedDatabase.mediaDatabase.getMediaPaginationList(uid, primaryKeyFetch).mapResult { (list, count) ->
         processMediaToMediaInfo(list).map {
             PaginationResult(it, count)
         }
@@ -273,7 +273,7 @@ suspend fun Backend.getMediaPaginationResult(
 suspend fun Backend.processCommunityRawResultToCommunityInfo(
     list: List<CommunityRawResult>,
 ): Result<List<CommunityInfo>?> {
-    return exposedDatabase.userDatabase.getMediaByIds(list.flatMap { (community) ->
+    return exposedDatabase.mediaDatabase.getMediaByIds(list.flatMap { (community) ->
         listOf(community.iconId, community.posterId, community.fontId)
     }.filterNotNull()).mapResultIfNotNull { medias ->
         processMediaToMediaInfo(medias).map {
@@ -298,7 +298,7 @@ suspend fun Backend.searchMembers(
     word: String?,
     primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<UserInfo>?> {
-    return exposedDatabase.userDatabase.getMemberPaginationResult(objectId, word, primaryKeyFetch)
+    return exposedDatabase.containerDatabase.getMemberPaginationResult(objectId, word, primaryKeyFetch)
         .mapResult { (pairs, count) ->
             processUserRawResultToUserInfo(pairs).mapIfNotNull {
                 PaginationResult(it, count)
@@ -309,7 +309,7 @@ suspend fun Backend.searchMembers(
 suspend fun Backend.getMediaInfoList(
     owner: PrimaryKey,
 ): Result<List<MediaInfo?>?> {
-    return exposedDatabase.userDatabase.getMediaListByOwner(owner).mapResultIfNotNull { medias ->
+    return exposedDatabase.mediaDatabase.getMediaListByOwner(owner).mapResultIfNotNull { medias ->
         processMediaToMediaInfo(medias)
     }
 }
@@ -335,7 +335,7 @@ suspend fun Backend.searchRoomPaginationResult(
 }
 
 suspend fun Backend.getMediaInfoList(names: List<String>): Result<List<MediaInfo?>?> {
-    return exposedDatabase.userDatabase.getMediaByNames(names).mapResult { medias ->
+    return exposedDatabase.mediaDatabase.getMediaByNames(names).mapResult { medias ->
         processMediaToMediaInfo(medias)
     }
 }
@@ -357,7 +357,7 @@ suspend fun Backend.processMediaToMediaInfo(
 
 suspend fun Backend.processUserRawResultToUserInfo(
     rawResults: List<UserRawResult<User>>,
-) = exposedDatabase.userDatabase.getMediaByIds(rawResults.mapNotNull {
+) = exposedDatabase.mediaDatabase.getMediaByIds(rawResults.mapNotNull {
     it.user.icon
 }).mapResultIfNotNull { medias ->
     processMediaToMediaInfo(medias).map {
@@ -369,7 +369,7 @@ suspend fun Backend.processUserRawResultToUserInfo(
 }
 
 suspend fun Backend.processRoomRawResultToRoomInfo(list: List<RoomRawResult>): Result<List<RoomInfo>?> {
-    return exposedDatabase.userDatabase.getMediaByIds(list.mapNotNull {
+    return exposedDatabase.mediaDatabase.getMediaByIds(list.mapNotNull {
         it.room.icon
     }).mapResultIfNotNull { medias ->
         processMediaToMediaInfo(medias).map {

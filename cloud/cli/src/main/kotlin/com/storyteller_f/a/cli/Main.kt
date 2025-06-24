@@ -11,14 +11,18 @@ import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.a.backend.service.readEnv
 import com.storyteller_f.a.backend.service.topicDocumentService
 import com.storyteller_f.a.exposed.CommunityDatabase
+import com.storyteller_f.a.exposed.ContainerDatabase
 import com.storyteller_f.a.exposed.Database
 import com.storyteller_f.a.exposed.ExposedCommunityDatabase
+import com.storyteller_f.a.exposed.ExposedContainerDatabase
 import com.storyteller_f.a.exposed.ExposedDatabaseFactory
 import com.storyteller_f.a.exposed.ExposedDatabaseSession
+import com.storyteller_f.a.exposed.ExposedMediaDatabase
 import com.storyteller_f.a.exposed.ExposedRoomDatabase
 import com.storyteller_f.a.exposed.ExposedTitleDatabase
 import com.storyteller_f.a.exposed.ExposedTopicDatabase
 import com.storyteller_f.a.exposed.ExposedUserDatabase
+import com.storyteller_f.a.exposed.MediaDatabase
 import com.storyteller_f.a.exposed.RoomDatabase
 import com.storyteller_f.a.exposed.TitleDatabase
 import com.storyteller_f.a.exposed.TopicDatabase
@@ -73,13 +77,17 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
             override val userDatabase: UserDatabase<User>
                 get() = ExposedUserDatabase(databaseSession)
             override val topicDatabase: TopicDatabase
-                get() = ExposedTopicDatabase(databaseSession, userDatabase)
+                get() = ExposedTopicDatabase(databaseSession, containerDatabase)
             override val titleDatabase: TitleDatabase
                 get() = ExposedTitleDatabase(databaseSession)
             override val communityDatabase: CommunityDatabase
-                get() = ExposedCommunityDatabase(databaseSession, userDatabase)
+                get() = ExposedCommunityDatabase(databaseSession, containerDatabase)
             override val roomData: RoomDatabase
-                get() = ExposedRoomDatabase(databaseSession, userDatabase)
+                get() = ExposedRoomDatabase(databaseSession, containerDatabase)
+            override val mediaDatabase: MediaDatabase
+                get() = ExposedMediaDatabase(databaseSession)
+            override val containerDatabase: ContainerDatabase
+                get() = ExposedContainerDatabase(databaseSession)
         }
     )
 }

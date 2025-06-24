@@ -423,7 +423,7 @@ suspend fun Backend.checkRootReadPermission(
                 if (communityId == null && uid == null) {
                     Result.failure(UnauthorizedException())
                 } else {
-                    exposedDatabase.userDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
+                    exposedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                         RootReadPermission(hasJoined || communityId != null, hasJoined, communityId == null)
                     }
                 }
@@ -432,7 +432,7 @@ suspend fun Backend.checkRootReadPermission(
 
         ObjectType.COMMUNITY -> {
             exposedDatabase.communityDatabase.checkCommunityExists(parentId).mapResultIfNotNull {
-                exposedDatabase.userDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
+                exposedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                     RootReadPermission(true, hasJoined, false)
                 }
             }
@@ -461,7 +461,7 @@ suspend fun Backend.checkRootWritePermission(
 
         ObjectType.ROOM -> {
             exposedDatabase.roomData.getRoomCommunityId(parentId).mapResult {
-                exposedDatabase.userDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
+                exposedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
             }
@@ -469,7 +469,7 @@ suspend fun Backend.checkRootWritePermission(
 
         ObjectType.COMMUNITY -> {
             exposedDatabase.communityDatabase.checkCommunityExists(parentId).mapResultIfNotNull {
-                exposedDatabase.userDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
+                exposedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
             }

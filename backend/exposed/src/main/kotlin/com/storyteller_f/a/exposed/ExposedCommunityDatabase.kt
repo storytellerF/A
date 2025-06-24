@@ -14,7 +14,6 @@ import com.storyteller_f.a.exposed.tables.Community
 import com.storyteller_f.a.exposed.tables.CommunityRawResult
 import com.storyteller_f.a.exposed.tables.MemberJoin
 import com.storyteller_f.a.exposed.tables.MemberJoins
-import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.a.exposed.tables.UserTopicReads
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
@@ -31,7 +30,7 @@ import org.jetbrains.exposed.sql.update
 
 class ExposedCommunityDatabase(
     val exposedDatabaseSession: ExposedDatabaseSession,
-    val userDatabase: UserDatabase<User>
+    val containerDatabase: ContainerDatabase
 ) : CommunityDatabase {
     override suspend fun checkCommunityExists(parentId: PrimaryKey): Result<List<Long>> {
         return exposedDatabaseSession.dbSearch {
@@ -127,7 +126,7 @@ class ExposedCommunityDatabase(
         uid: PrimaryKey?,
         communities: List<Community>
     ): Result<List<CommunityRawResult>> {
-        return userDatabase.getContainerInfo(communities.map { it.id }, uid)
+        return containerDatabase.getContainerInfo(communities.map { it.id }, uid)
             .map { (joinedTimeMap, lastReadMap, memberCountMap) ->
                 communities.map {
                     CommunityRawResult(
@@ -157,7 +156,7 @@ class ExposedCommunityDatabase(
             }.insertedCount > 0) {
                 "insert aid failed"
             }
-            MemberJoin.addCommunityJoinRaw(community.owner, community.id, community.createdTime)
+            MemberJoin.addJoinRaw(community.owner, community.id, community.createdTime, ObjectType.COMMUNITY)
         }
     }
 

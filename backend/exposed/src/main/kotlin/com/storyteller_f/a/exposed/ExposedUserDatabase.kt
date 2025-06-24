@@ -5,23 +5,19 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.query.bindPaginationQuery
-import com.storyteller_f.a.exposed.query.buildSearchMembersQuery
 import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
-import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
-class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : UserDatabase<User> {
-    override suspend fun getUserAid(id: PrimaryKey) = exposedUserDatabase.dbSearch {
+class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : UserDatabase<User> {
+    override suspend fun getUserAid(id: PrimaryKey) = exposedDatabaseSession.dbSearch {
         search {
             Aids.selectAll().where {
                 Aids.objectId eq id
@@ -35,7 +31,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     override suspend fun getUserRawResult(
         objectFetch: ObjectFetch,
     ): Result<UserRawResult<User>?> {
-        return exposedUserDatabase.dbSearch {
+        return exposedDatabaseSession.dbSearch {
             search {
                 Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
                     when (objectFetch) {
@@ -48,35 +44,10 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         }
     }
 
-    override suspend fun getMemberPaginationResult(
-        objectId: PrimaryKey?,
-        word: String?,
-        fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<UserRawResult<User>>> {
-        return exposedUserDatabase.dbSearch {
-            search {
-                buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(
-                    Users,
-                    fetch
-                )
-            }
-            map(::mapUserInfo)
-        }.mapResult { results ->
-            exposedUserDatabase.dbSearch {
-                search {
-                    buildSearchMembersQuery(objectId, true, word)
-                }
-                count()
-            }.map { value ->
-                PaginationResult(results, value)
-            }
-        }
-    }
-
     override suspend fun getUserRawResultAndPublicKeyByAddress(
         ad: String,
     ): Result<Pair<UserRawResult<User>, String>?> {
-        return exposedUserDatabase.dbSearch {
+        return exposedDatabaseSession.dbSearch {
             search {
                 Users
                     .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -95,7 +66,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     override suspend fun createUser(
         user: User,
     ): Result<Unit> {
-        return exposedUserDatabase.dbQuery {
+        return exposedDatabaseSession.dbQuery {
             createUserRaw(user)
         }
     }
@@ -113,7 +84,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean> {
-        return exposedUserDatabase.dbSearch {
+        return exposedDatabaseSession.dbSearch {
             search {
                 User.Companion.find {
                     Users.publicKey eq pk
@@ -127,7 +98,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         id: PrimaryKey,
         newUser: UpdateUserBody,
     ): Result<Boolean> {
-        return exposedUserDatabase.dbQuery {
+        return exposedDatabaseSession.dbQuery {
             listOf({
                 val avatar = newUser.avatar
                 val name = newUser.nickname
@@ -163,7 +134,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun isUserExistsByUid(id: Long): Result<Boolean> {
-        return exposedUserDatabase.dbSearch {
+        return exposedDatabaseSession.dbSearch {
             search {
                 User.Companion.find {
                     Users.id eq id
@@ -176,7 +147,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     override suspend fun getUserAuthDataByAid(
         predicate: SqlExpressionBuilder.() -> Op<Boolean>,
     ): Result<Pair<String, Long>?> {
-        return exposedUserDatabase.dbSearch {
+        return exposedDatabaseSession.dbSearch {
             search {
                 Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
                     .select(listOf(Users.publicKey, Users.id))
@@ -191,7 +162,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     override suspend fun getUserAuthDataBy(
         predicate: SqlExpressionBuilder.() -> Op<Boolean>,
     ): Result<Pair<String, Long>?> {
-        return exposedUserDatabase.dbSearch {
+        return exposedDatabaseSession.dbSearch {
             search {
                 Users.select(listOf(Users.publicKey, Users.id)).where(predicate)
             }
@@ -202,7 +173,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun getUserRawResultList(objectListFetch: ObjectListFetch): Result<List<UserRawResult<User>>> {
-        return exposedUserDatabase.dbSearch {
+        return exposedDatabaseSession.dbSearch {
             search {
                 Users
                     .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -219,7 +190,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch): Result<List<Pair<Long, Long>>> {
-        return exposedUserDatabase.dbSearch {
+        return exposedDatabaseSession.dbSearch {
             search {
                 Users.select(Users.fields)
                     .where {
@@ -236,7 +207,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun addReadLog(userTopicRead: UserTopicRead): Result<Unit> {
-        return exposedUserDatabase.dbQuery {
+        return exposedDatabaseSession.dbQuery {
             check(UserTopicReads.upsert {
                 it[uid] = userTopicRead.uid
                 it[updatedAt] = userTopicRead.updatedAt
@@ -249,22 +220,8 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         }
     }
 
-    override suspend fun getTopicReadList(
-        parentIds: List<PrimaryKey>,
-        uid: PrimaryKey,
-    ): Result<List<UserTopicRead>> {
-        return exposedUserDatabase.dbSearch {
-            search {
-                UserTopicReads.selectAll().where {
-                    UserTopicReads.uid eq uid and (UserTopicReads.objectId inList parentIds)
-                }
-            }
-            map(UserTopicRead::wrapRow)
-        }
-    }
-
     override suspend fun insertUserLog(log: UserLog): Result<Unit> {
-        return exposedUserDatabase.dbQuery {
+        return exposedDatabaseSession.dbQuery {
             check(UserLogs.insert {
                 it[UserLogs.id] = log.id
                 it[UserLogs.uid] = log.uid
@@ -279,7 +236,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun addDevice(uid: PrimaryKey, endpointUrl: String): Result<Unit> {
-        return exposedUserDatabase.dbQuery {
+        return exposedDatabaseSession.dbQuery {
             check(UserDevices.insert {
                 it[UserDevices.uid] = uid
                 it[UserDevices.endpointUrl] = endpointUrl
@@ -293,7 +250,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         uid: PrimaryKey,
         endpointUrl: String,
     ): Result<Int> {
-        return exposedUserDatabase.dbQuery {
+        return exposedDatabaseSession.dbQuery {
             UserDevices.deleteWhere {
                 (UserDevices.uid eq uid) and (UserDevices.endpointUrl eq endpointUrl)
             }
@@ -301,7 +258,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     }
 
     override suspend fun getUserDevices(uid: List<PrimaryKey>): Result<List<UserDevice>> {
-        return exposedUserDatabase.dbSearch {
+        return exposedDatabaseSession.dbSearch {
             search {
                 UserDevices.selectAll().where {
                     UserDevices.uid inList uid
@@ -311,132 +268,13 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         }
     }
 
-    override suspend fun isMemberJoined(
-        objectId: PrimaryKey,
-        uid: PrimaryKey?,
-    ): Result<Boolean> {
-        return if (uid == null) {
-            Result.success(false)
-        } else {
-            exposedUserDatabase.dbSearch {
-                search {
-                    MemberJoins.selectAll().where {
-                        (MemberJoins.objectId eq objectId) and (MemberJoins.uid eq uid)
-                    }
-                }
-                isNotEmpty()
-            }
-        }
-    }
-
-    override suspend fun addRoomJoin(
-        room: PrimaryKey,
-        id: PrimaryKey,
-        time: LocalDateTime,
-    ): Result<Unit> {
-        return exposedUserDatabase.dbQuery {
-            MemberJoin.addRoomJoinRaw(room, id, time)
-        }
-    }
-
-    override suspend fun exit(
-        containerId: PrimaryKey,
-        id: PrimaryKey,
-    ): Result<Int> {
-        return exposedUserDatabase.dbQuery {
-            MemberJoins.deleteWhere {
-                objectId eq containerId and (uid eq id)
-            }
-        }
-    }
-
-    override suspend fun addCommunityJoin(
-        id: PrimaryKey,
-        community: PrimaryKey,
-        time: LocalDateTime,
-    ): Result<Unit> {
-        return exposedUserDatabase.dbQuery {
-            MemberJoin.addCommunityJoinRaw(id, community, time)
-        }
-    }
-
-    override suspend fun getJoinedUserList(roomId: PrimaryKey): Result<List<MemberJoin>> {
-        return exposedUserDatabase.dbSearch {
-            search {
-                MemberJoins.selectAll().where {
-                    MemberJoins.objectId eq roomId
-                }
-            }
-            map(MemberJoin::wrapRow)
-        }
-    }
-
-    override suspend fun getUserJoinedTime(
-        parentIds: List<PrimaryKey>,
-        uid: PrimaryKey,
-    ): Result<List<MemberJoin>> {
-        return exposedUserDatabase.dbSearch {
-            search {
-                MemberJoins.select(MemberJoins.fields).where {
-                    (MemberJoins.uid eq uid) and (MemberJoins.objectId inList parentIds)
-                }
-            }
-            map(MemberJoin::wrapRow)
-        }
-    }
-
-    override suspend fun getMemberCount(parentIds: List<PrimaryKey>): Result<List<Pair<Long, Long>>> {
-        return exposedUserDatabase.dbSearch {
-            val column = MemberJoins.uid.countDistinct()
-            search {
-                MemberJoins.select(MemberJoins.objectId, column).where {
-                    MemberJoins.objectId inList parentIds
-                }.groupBy(MemberJoins.objectId)
-            }
-            map {
-                it[MemberJoins.objectId] to it[column]
-            }
-        }
-    }
-
-    override suspend fun getContainerInfo(
-        parentIds: List<PrimaryKey>,
-        uid: PrimaryKey?,
-    ): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>> {
-        return merge({
-            if (uid != null) {
-                getUserJoinedTime(parentIds, uid).map {
-                    it.associateBy { memberJoin ->
-                        memberJoin.objectId
-                    }
-                }
-            } else {
-                Result.success(emptyMap())
-            }
-        }, {
-            if (uid != null) {
-                getTopicReadList(parentIds, uid).map {
-                    it.associateBy { userTopicRead ->
-                        userTopicRead.objectId
-                    }
-                }
-            } else {
-                Result.success(emptyMap())
-            }
-        }, {
-            getMemberCount(parentIds).map {
-                it.associateByPair()
-            }
-        })
-    }
-
     override suspend fun addAcgForUser(
         acgList: List<Pair<PrimaryKey, Int>>,
         userAcgMap: Map<Long, Long>,
         list: List<Topic>,
         taskRecordId: PrimaryKey,
     ): Result<Unit> {
-        return exposedUserDatabase.dbQuery {
+        return exposedDatabaseSession.dbQuery {
             acgList.forEach { (id, acg) ->
                 userAcgMap[id]?.let { oldAcgAmount ->
                     Users.update({
@@ -465,96 +303,8 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
         }
     }
 
-    override suspend fun getMediaPaginationList(
-        uid: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<Pair<List<Media>, Long>> {
-        return exposedUserDatabase.dbSearch {
-            search {
-                Medias.selectAll().where {
-                    Medias.owner eq uid
-                }.bindPaginationQuery(Medias, primaryKeyFetch)
-            }
-            map(Media::wrapRow)
-        }.mapResult { list ->
-            exposedUserDatabase.dbSearch {
-                search {
-                    Medias.selectAll().where {
-                        Medias.owner eq uid
-                    }
-                }
-                count()
-            }.map { count ->
-                list to count
-            }
-        }
-    }
-
-    override suspend fun getMedia(owner: PrimaryKey, name: String): Result<Media?> {
-        return exposedUserDatabase.dbSearch {
-            search {
-                Medias.selectAll().where {
-                    Medias.owner eq owner and (Medias.name eq name)
-                }
-            }
-            first(Media::wrapRow)
-        }
-    }
-
-    override suspend fun getMediaByIds(ids: List<PrimaryKey>): Result<List<Media>> {
-        return exposedUserDatabase.dbSearch {
-            search {
-                Medias.selectAll().where {
-                    Medias.id inList ids
-                }
-            }
-            map(Media::wrapRow)
-        }
-    }
-
-    override suspend fun getMediaListByOwner(owner: PrimaryKey): Result<List<Media>> {
-        return exposedUserDatabase.dbSearch {
-            search {
-                Medias.selectAll().where {
-                    Medias.owner eq owner
-                }.orderBy(Medias.id, SortOrder.DESC)
-            }
-            map(Media::wrapRow)
-        }
-    }
-
-    override suspend fun getMediaByNames(names: List<String?>): Result<List<Media>> {
-        if (names.filterNotNull().isEmpty()) {
-            return Result.success(emptyList())
-        }
-        return exposedUserDatabase.dbSearch {
-            search {
-                Medias.selectAll().where {
-                    Medias.fullName inList names.filterNotNull()
-                }.orderBy(Medias.id, SortOrder.DESC)
-            }
-            map(Media::wrapRow)
-        }
-    }
-
-    override suspend fun insertMediaRefs(
-        objectId: PrimaryKey,
-        objectType: ObjectType,
-        mediaName: List<Pair<PrimaryKey, String>>,
-    ): Result<Unit> {
-        return exposedUserDatabase.dbQuery {
-            MediaRefs.batchInsert(mediaName) {
-                this[MediaRefs.objectId] = objectId
-                this[MediaRefs.objectType] = objectType
-                this[MediaRefs.mediaName] = it.second
-                this[MediaRefs.author] = it.first
-            }
-            Unit
-        }
-    }
-
     override suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?> {
-        return exposedUserDatabase.dbSearch {
+        return exposedDatabaseSession.dbSearch {
             search {
                 TaskRecords.selectAll().where {
                     TaskRecords.type eq type
@@ -567,8 +317,8 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
     override suspend fun getAlternativeRawResultPaginationListByHost(
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ): Result<Pair<List<AlternateAccountRawResult>, Long>> {
-        return exposedUserDatabase.dbSearch {
+    ): Result<PaginationResult<AlternateAccountRawResult>> {
+        return exposedDatabaseSession.dbSearch {
             search {
                 Users.join(AlternateAccounts, JoinType.INNER, Users.id, AlternateAccounts.uid)
                     .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -582,7 +332,7 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
                 AlternateAccountRawResult(alternateAccount, UserRawResult(user))
             }
         }.mapResult { list ->
-            exposedUserDatabase.dbSearch {
+            exposedDatabaseSession.dbSearch {
                 search {
                     AlternateAccounts.join(Users, JoinType.INNER, AlternateAccounts.uid, Users.id)
                         .selectAll()
@@ -592,13 +342,13 @@ class ExposedUserDatabase(val exposedUserDatabase: ExposedDatabaseSession) : Use
                 }
                 count()
             }.map { count ->
-                list to count
+                PaginationResult(list, count)
             }
         }
     }
 
     override suspend fun createAlternativeRawResult(hostId: PrimaryKey, privateKey: String, user: User): Result<Unit> {
-        return exposedUserDatabase.dbQuery {
+        return exposedDatabaseSession.dbQuery {
             createUserRaw(user)
             check(AlternateAccounts.insert {
                 it[this.hostId] = hostId

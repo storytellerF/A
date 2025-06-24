@@ -21,17 +21,13 @@ interface Database<T> {
     val titleDatabase: TitleDatabase
     val communityDatabase: CommunityDatabase
     val roomData: RoomDatabase
+    val mediaDatabase: MediaDatabase
+    val containerDatabase: ContainerDatabase
 }
 
 interface UserDatabase<T> {
     suspend fun getUserAid(id: PrimaryKey): Result<String?>
     suspend fun getUserRawResult(objectFetch: ObjectFetch): Result<UserRawResult<T>?>
-    suspend fun getMemberPaginationResult(
-        objectId: PrimaryKey?,
-        word: String?,
-        fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<UserRawResult<T>>>
-
     suspend fun getUserRawResultAndPublicKeyByAddress(ad: String): Result<Pair<UserRawResult<T>, String>?>
     suspend fun createUser(user: User): Result<Unit>
     suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
@@ -42,51 +38,21 @@ interface UserDatabase<T> {
     suspend fun getUserRawResultList(objectListFetch: ObjectListFetch): Result<List<UserRawResult<T>>>
     suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch): Result<List<Pair<Long, Long>>>
     suspend fun addReadLog(userTopicRead: UserTopicRead): Result<Unit>
-    suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<UserTopicRead>>
     suspend fun insertUserLog(log: UserLog): Result<Unit>
     suspend fun addDevice(uid: PrimaryKey, endpointUrl: String): Result<Unit>
     suspend fun removeDevice(uid: PrimaryKey, endpointUrl: String): Result<Int>
     suspend fun getUserDevices(uid: List<PrimaryKey>): Result<List<UserDevice>>
-    suspend fun isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?): Result<Boolean>
-    suspend fun addRoomJoin(room: PrimaryKey, id: PrimaryKey, time: LocalDateTime): Result<Unit>
-    suspend fun exit(containerId: PrimaryKey, id: PrimaryKey): Result<Int>
-    suspend fun addCommunityJoin(id: PrimaryKey, community: PrimaryKey, time: LocalDateTime): Result<Unit>
-    suspend fun getJoinedUserList(roomId: PrimaryKey): Result<List<MemberJoin>>
-    suspend fun getUserJoinedTime(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<MemberJoin>>
-    suspend fun getMemberCount(parentIds: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
-    suspend fun getContainerInfo(
-        parentIds: List<PrimaryKey>,
-        uid: PrimaryKey?,
-    ): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>>
-
     suspend fun addAcgForUser(
         acgList: List<Pair<PrimaryKey, Int>>,
         userAcgMap: Map<Long, Long>,
         list: List<Topic>,
         taskRecordId: PrimaryKey,
     ): Result<Unit>
-
-    suspend fun getMediaPaginationList(
-        uid: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<Pair<List<Media>, Long>>
-
-    suspend fun getMedia(owner: PrimaryKey, name: String): Result<Media?>
-    suspend fun getMediaByIds(ids: List<PrimaryKey>): Result<List<Media>>
-    suspend fun getMediaListByOwner(owner: PrimaryKey): Result<List<Media>>
-    suspend fun getMediaByNames(names: List<String?>): Result<List<Media>>
-    suspend fun insertMediaRefs(
-        objectId: PrimaryKey,
-        objectType: ObjectType,
-        mediaName: List<Pair<PrimaryKey, String>>,
-    ): Result<Unit>
-
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
     suspend fun getAlternativeRawResultPaginationListByHost(
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ): Result<Pair<List<AlternateAccountRawResult>, Long>>
-
+    ): Result<PaginationResult<AlternateAccountRawResult>>
     suspend fun createAlternativeRawResult(hostId: PrimaryKey, privateKey: String, user: User): Result<Unit>
 }
 
@@ -104,11 +70,10 @@ interface TopicDatabase {
     suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted): Result<TopicInfo>
     suspend fun updateTopicStatus(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
     suspend fun getTopicList(firstId: PrimaryKey): Result<List<Topic>>
-    suspend fun ExposedDatabaseSession.getTopicCommentCount(
+    suspend fun getTopicCommentCount(
         topicIdList: List<PrimaryKey>,
     ): Result<List<Pair<Long, Long>>>
-
-    suspend fun ExposedDatabaseSession.isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
+    suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
     suspend fun processTopicToTopicInfo(uid: PrimaryKey?, topics: List<Topic>): Result<List<TopicInfo>>
     suspend fun processByteArrayToTopicContent(
         topics: List<Topic>,
@@ -116,18 +81,16 @@ interface TopicDatabase {
     ): Result<Map<PrimaryKey, TopicContent>>
 
     @OptIn(ExperimentalStdlibApi::class)
-    suspend fun ExposedDatabaseSession.getEncryptedTopicContents(
+    suspend fun getEncryptedTopicContents(
         data: List<Topic>,
         uid: PrimaryKey,
     ): Result<List<TopicContent.Encrypted>>
-
     suspend fun statsReactionRecord(reactionRecord: ReactionRecord): Result<Unit>
     suspend fun getReactionInfoPaginationResult(
         objectId: List<PrimaryKey>,
         uid: PrimaryKey?,
         reactionFetch: ReactionFetch,
     ): Result<PaginationResult<ReactionInfo>>
-
     suspend fun hasReactedEmoji(objectIdList: List<PrimaryKey>, uid: PrimaryKey): Result<List<Pair<Long, String>>>
     suspend fun getReactionInfo(uid: PrimaryKey, objectId: PrimaryKey, emojiText: String): Result<ReactionInfo?>
     suspend fun hasReactedForEmoji(objectId: PrimaryKey, uid: PrimaryKey, emoji: String): Result<Boolean>
@@ -156,7 +119,6 @@ interface CommunityDatabase {
         fillJoinInfo: Boolean? = null,
         uid: PrimaryKey? = null,
     ): Result<CommunityRawResult?>
-
     suspend fun getJoinedCommunityIds(uid: PrimaryKey): Result<List<Long>>
     suspend fun getCommunityPaginationResult(
         word: String?,
@@ -164,18 +126,15 @@ interface CommunityDatabase {
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
     ): Result<PaginationResult<CommunityRawResult>?>
-
     suspend fun processCommunityToCommunityRawResult(
         uid: PrimaryKey?,
         communities: List<Community>,
     ): Result<List<CommunityRawResult>>
-
     suspend fun createCommunity(community: Community): Result<Unit>
     suspend fun getCommunityJoinedTimeByIds(
         uid: PrimaryKey,
         communityIds: List<PrimaryKey>,
     ): Result<List<Pair<Long, LocalDateTime>>>
-
     suspend fun getCommunityRawResults(objectListFetch: ObjectListFetch): Result<List<CommunityRawResult>>
     suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody): Result<Boolean>
 }
@@ -189,26 +148,62 @@ interface RoomDatabase {
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
     ): Result<PaginationResult<RoomRawResult>>
-
     suspend fun getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?>
     suspend fun getRoomPubKeyPaginationResult(
         roomId: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<UserPubKeyInfo>>
-
     suspend fun getRoomRawResult(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean? = null,
         uid: PrimaryKey? = null,
     ): Result<RoomRawResult?>
-
-    suspend fun ExposedDatabaseSession.processRoomListToRoomRawResult(
+    suspend fun processRoomListToRoomRawResult(
         uid: PrimaryKey?,
         rooms: List<Room>,
     ): Result<List<RoomRawResult>>
-
     suspend fun createRoom(room: Room): Result<Unit>
     suspend fun getRoomRawResultList(objectListFetch: ObjectListFetch): Result<List<RoomRawResult>>
     suspend fun getRoomList(objectListFetch: ObjectListFetch): Result<List<Room>>
     suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): Result<Boolean>
+}
+
+interface MediaDatabase {
+    suspend fun getMedia(owner: PrimaryKey, name: String): Result<Media?>
+    suspend fun getMediaByIds(ids: List<PrimaryKey>): Result<List<Media>>
+    suspend fun getMediaListByOwner(owner: PrimaryKey): Result<List<Media>>
+    suspend fun getMediaByNames(names: List<String?>): Result<List<Media>>
+    suspend fun insertMediaRefs(
+        objectId: PrimaryKey,
+        objectType: ObjectType,
+        mediaName: List<Pair<PrimaryKey, String>>,
+    ): Result<Unit>
+    suspend fun getMediaPaginationList(
+        uid: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch,
+    ): Result<PaginationResult<Media>>
+}
+
+interface ContainerDatabase {
+    suspend fun isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?): Result<Boolean>
+    suspend fun joinContainer(
+        id: PrimaryKey,
+        uid: PrimaryKey,
+        time: LocalDateTime,
+        objectType: ObjectType,
+    ): Result<Unit>
+    suspend fun exit(containerId: PrimaryKey, id: PrimaryKey): Result<Int>
+    suspend fun getJoinedUserList(roomId: PrimaryKey): Result<List<MemberJoin>>
+    suspend fun getUserJoinedTime(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<MemberJoin>>
+    suspend fun getMemberCount(parentIds: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
+    suspend fun getContainerInfo(
+        parentIds: List<PrimaryKey>,
+        uid: PrimaryKey?,
+    ): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>>
+    suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<UserTopicRead>>
+    suspend fun getMemberPaginationResult(
+        objectId: PrimaryKey?,
+        word: String?,
+        fetch: PrimaryKeyFetch,
+    ): Result<PaginationResult<UserRawResult<User>>>
 }

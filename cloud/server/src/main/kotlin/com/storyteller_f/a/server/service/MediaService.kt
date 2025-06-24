@@ -72,7 +72,7 @@ suspend fun Backend.getMediaByName(
         uid
     ).mapResultIfNotNull { (_, objectId, hasWrite) ->
         if (hasWrite) {
-            exposedDatabase.userDatabase.getMedia(objectId, word).mapResultIfNotNull {
+            exposedDatabase.mediaDatabase.getMedia(objectId, word).mapResultIfNotNull {
                 processMediaToMediaInfo(listOf(it)).map {
                     it.first()
                 }
@@ -85,7 +85,7 @@ suspend fun Backend.getMediaByName(
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, uid: PrimaryKey) =
-    exposedDatabase.userDatabase.getMediaByIds(listOf(mediaId)).mapResultIfNotNull {
+    exposedDatabase.mediaDatabase.getMediaByIds(listOf(mediaId)).mapResultIfNotNull {
         val media = it.first()
         if (media.owner != uid) {
             throw ForbiddenException("no permission")
@@ -245,13 +245,13 @@ suspend fun Backend.copyMedia(
     p: Path,
     uid: PrimaryKey
 ): Result<ServerResponse<MediaInfo>?> =
-    exposedDatabase.userDatabase.getMediaByIds(listOf(p.id)).mapResultIfNotNull {
+    exposedDatabase.mediaDatabase.getMediaByIds(listOf(p.id)).mapResultIfNotNull {
         val media = it.firstOrNull()
         if (media != null) {
             checkRootReadPermission(media.ownerType, media.owner, uid).mapResultIfNotNull { permission ->
                 if (permission.hasRead) {
                     // 检查重复媒体
-                    exposedDatabase.userDatabase.getMedia(uid, media.name).map {
+                    exposedDatabase.mediaDatabase.getMedia(uid, media.name).map {
                         if (it == null) {
                             "$uid/${media.name}"
                         } else {

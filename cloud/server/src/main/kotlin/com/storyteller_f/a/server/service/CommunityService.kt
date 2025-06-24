@@ -58,7 +58,7 @@ suspend fun Backend.doUserJoinCommunity(
         Result.success(community)
     } else {
         val time = now()
-        exposedDatabase.userDatabase.addCommunityJoin(uid, communityId, time).mapResult {
+        exposedDatabase.containerDatabase.joinContainer(communityId, uid, time, ObjectType.COMMUNITY).mapResult {
             addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
             Result.success(community.copy(joinedTime = time))
         }.recoverResult {
@@ -79,7 +79,7 @@ suspend fun Backend.exitCommunity(
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            exposedDatabase.userDatabase.exit(communityId, id).mapResult { i ->
+            exposedDatabase.containerDatabase.exit(communityId, id).mapResult { i ->
                 if (i > 0) {
                     addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
                     Result.success(info.copy(joinedTime = null))

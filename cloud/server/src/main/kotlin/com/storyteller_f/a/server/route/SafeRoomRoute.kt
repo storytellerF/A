@@ -19,8 +19,7 @@ import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.RoutingContext
+import io.ktor.server.routing.*
 
 fun Route.bindSafeRoomRoute(backend: Backend) {
     CustomApi.Rooms.search(RoutingContext::handleResult) {
