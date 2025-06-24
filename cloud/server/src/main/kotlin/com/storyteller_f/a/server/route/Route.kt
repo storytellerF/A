@@ -3,7 +3,7 @@ package com.storyteller_f.a.server.route
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.server.auth.bindProtectedAccountRoute
-import com.storyteller_f.a.server.auth.bindSafeAccountRoute
+import com.storyteller_f.a.server.auth.bindAccountRoute
 import com.storyteller_f.a.server.auth.bindUnprotectedAccountRoute
 import com.storyteller_f.a.server.webSocketContent
 import io.ktor.server.application.*
@@ -14,23 +14,23 @@ import io.ktor.server.websocket.*
 fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
     routing {
         authenticate {
-            bindProtectedSafeRoomRoute(backend)
-            bindProtectedSafeTopicRoute(backend)
-            bindProtectedSafeCommunityRoute(backend)
-            bindProtectedSafeUserRoute(backend)
+            bindProtectedRoomRoute(backend)
+            bindProtectedTopicRoute(backend)
+            bindProtectedCommunityRoute(backend)
+            bindProtectedUserRoute(backend)
             webSocket("/link") {
                 webSocketContent(reader, backend)
             }
-            bindProtectedSafeMediaRoute(backend)
+            bindProtectedMediaRoute(backend)
             bindProtectedTitleRoute(backend)
             bindProtectedAccountRoute(backend)
         }
         authenticate(optional = true) {
-            bindSafeAccountRoute()
-            bindSafeRoomRoute(backend)
-            bindSafeTopicRoute(backend)
-            bindSafeCommunityRoute(backend)
-            bindSafeUserRoute(backend)
+            bindAccountRoute()
+            bindRoomRoute(backend)
+            bindTopicRoute(backend)
+            bindCommunityRoute(backend)
+            bindUserRoute(backend)
         }
         bindUnprotectedAccountRoute(backend)
         bindUnauthenticatedRoute(backend)

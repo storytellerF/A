@@ -160,4 +160,30 @@ class RoomTest {
             }
         }
     }
+
+    @Test
+    fun `test web rtc`() {
+        test {
+            val firstSession = attachSession {
+
+            }
+            val secondSession = attachSession {
+                val roomInfo = createRoom(NewRoom("name1", "r1")).getOrThrow()
+                createTitle(
+                    NewTitle(
+                        "test",
+                        TitleType.JOIN,
+                        firstSession.uid,
+                        roomInfo.id,
+                        ObjectType.ROOM,
+                        "hello"
+                    )
+                ).getOrThrow()
+                roomInfo
+            }
+            loginSession(firstSession) {
+                joinRoom(secondSession.custom.id).getOrThrow()
+            }
+        }
+    }
 }

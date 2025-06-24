@@ -17,7 +17,7 @@ import com.storyteller_f.shared.utils.safeFirstEmoji
 import io.ktor.server.plugins.*
 import io.ktor.server.routing.*
 
-fun Route.bindSafeTopicRoute(backend: Backend) {
+fun Route.bindTopicRoute(backend: Backend) {
     CustomApi.Topics.search.invoke(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             it.pagination(IdentifiablePagingGenerator) { f ->
@@ -73,7 +73,7 @@ fun Route.bindSafeTopicRoute(backend: Backend) {
     }
 }
 
-fun Route.bindProtectedSafeTopicRoute(backend: Backend) {
+fun Route.bindProtectedTopicRoute(backend: Backend) {
     CustomApi.Topics.Id.createSnapshot.invoke(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.createTopicSnapshot(uid, p.id)

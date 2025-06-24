@@ -21,7 +21,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.recoverResult
 import io.ktor.server.routing.*
 
-fun Route.bindProtectedSafeUserRoute(backend: Backend) {
+fun Route.bindProtectedUserRoute(backend: Backend) {
     CustomApi.Users.update.invoke(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
             backend.updateUser(uid, with(api) { receiveBody() })
@@ -46,7 +46,7 @@ fun Route.bindProtectedSafeUserRoute(backend: Backend) {
     }
 }
 
-fun Route.bindSafeUserRoute(backend: Backend) {
+fun Route.bindUserRoute(backend: Backend) {
     CustomApi.Users.Aid.get.invoke(RoutingContext::handleResult) {
         backend.getUserInfo(ObjectFetch.AidFetch(it.aid))
     }

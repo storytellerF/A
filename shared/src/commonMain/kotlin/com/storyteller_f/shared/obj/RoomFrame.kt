@@ -23,4 +23,38 @@ sealed interface RoomFrame {
     @Serializable
     @SerialName("new-topic-info")
     data class NewTopicInfo(val topicInfo: TopicInfo) : RoomFrame
+
+    @Serializable
+    @SerialName("start-call")
+    data class StartCall(val roomId: PrimaryKey) : RoomFrame
+
+    @Serializable
+    @SerialName("stop-call")
+    data class StopCall(val roomId: PrimaryKey) : RoomFrame
+
+    @Serializable
+    @SerialName("create-offer")
+    data class CreateOffer(val targetUid: PrimaryKey, val roomId: PrimaryKey) : RoomFrame
+
+    @Serializable
+    @SerialName("send-offer")
+    data class SendOffer(val offer: CustomOffer) : RoomFrame
+
+    @Serializable
+    @SerialName("create-answer")
+    data class CreateAnswer(val targetUid: PrimaryKey, val offer: CustomOffer) : RoomFrame
+
+    @Serializable
+    @SerialName("send-answer")
+    data class SendAnswer(val answer: CustomAnswer) : RoomFrame
+
+    @Serializable
+    @SerialName("respond-answer")
+    data class RespondAnswer(val answer: CustomAnswer) : RoomFrame
 }
+
+@Serializable
+data class CustomOffer(val offer: String, val roomId: PrimaryKey, val targetUid: PrimaryKey)
+
+@Serializable
+data class CustomAnswer(val answer: String, val roomId: PrimaryKey, val targetUid: PrimaryKey)

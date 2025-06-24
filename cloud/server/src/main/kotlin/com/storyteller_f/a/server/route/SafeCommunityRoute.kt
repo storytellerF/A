@@ -15,7 +15,7 @@ import com.storyteller_f.a.server.service.*
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 
-fun Route.bindSafeCommunityRoute(backend: Backend) {
+fun Route.bindCommunityRoute(backend: Backend) {
     CustomApi.Communities.search(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             it.pagination(IdentifiablePagingGenerator) { f ->
@@ -56,7 +56,7 @@ fun Route.bindSafeCommunityRoute(backend: Backend) {
     }
 }
 
-fun Route.bindProtectedSafeCommunityRoute(backend: Backend) {
+fun Route.bindProtectedCommunityRoute(backend: Backend) {
     CustomApi.Communities.Id.Members.join.invoke(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.doUserJoinCommunity(uid, p.id)

@@ -21,7 +21,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import io.ktor.server.routing.*
 
-fun Route.bindSafeRoomRoute(backend: Backend) {
+fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.search(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
@@ -71,7 +71,7 @@ fun Route.bindSafeRoomRoute(backend: Backend) {
     }
 }
 
-fun Route.bindProtectedSafeRoomRoute(backend: Backend) {
+fun Route.bindProtectedRoomRoute(backend: Backend) {
     CustomApi.Rooms.Id.Members.join.invoke(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.joinRoom(p.id, uid)
@@ -99,6 +99,11 @@ fun Route.bindProtectedSafeRoomRoute(backend: Backend) {
         val newRoom = with(api) { receiveBody() }
         usePrincipal { uid ->
             backend.updateRoom(p.id, newRoom, uid)
+        }
+    }
+    CustomApi.Rooms.Id.startCall.invoke(RoutingContext::handleResult) { p, api ->
+        usePrincipal { uid ->
+            backend.startCall(p.id, uid)
         }
     }
 }
