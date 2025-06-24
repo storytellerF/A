@@ -29,7 +29,7 @@ suspend fun Backend.getRoomPubKeys(
     roomId: PrimaryKey,
     userId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
-) = exposedDatabase.userDatabase.isMemberJoined(roomId, userId).mapResult {
+) = exposedDatabase.containerDatabase.isMemberJoined(roomId, userId).mapResult {
     if (it) {
         exposedDatabase.roomData.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
             .map { (data, count) ->
@@ -64,7 +64,7 @@ suspend fun Backend.joinRoom(
                 }
             }
         } else {
-            exposedDatabase.userDatabase.isMemberJoined(communityId, uid).mapResult { hasJoined ->
+            exposedDatabase.containerDatabase.isMemberJoined(communityId, uid).mapResult { hasJoined ->
                 if (hasJoined) {
                     directJoinRoom(uid, roomInfo)
                 } else {
@@ -80,10 +80,11 @@ private suspend fun Backend.directJoinRoom(
     roomInfo: RoomInfo
 ): Result<RoomInfo?> {
     val time = now()
-    return exposedDatabase.userDatabase.addRoomJoin(
+    return exposedDatabase.containerDatabase.joinContainer(
         roomInfo.id,
         uid,
         time,
+        ObjectType.ROOM,
     ).mapResult {
         addUserLog(uid, UserLogType.JOIN, roomInfo.tuple())
         Result.success(roomInfo.copy(joinedTime = time))
@@ -101,7 +102,7 @@ suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            exposedDatabase.userDatabase.exit(roomId, uid).map {
+            exposedDatabase.containerDatabase.exit(roomId, uid).map {
                 addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
                 info.copy(joinedTime = null)
             }

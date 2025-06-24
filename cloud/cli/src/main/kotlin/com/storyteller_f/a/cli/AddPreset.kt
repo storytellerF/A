@@ -479,7 +479,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val path = File(parentDir, "medias/topics/$pic")
             UploadPack(path, pic, author, ObjectType.USER, path.length())
         }).getOrThrow()
-        exposedDatabase.userDatabase.insertMediaRefs(topicId, ObjectType.TOPIC, mediaNames)
+        exposedDatabase.mediaDatabase.insertMediaRefs(topicId, ObjectType.TOPIC, mediaNames)
     }
 
     private suspend fun Backend.insertEncryptedTopicToRoom(

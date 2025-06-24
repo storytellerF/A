@@ -16,7 +16,6 @@ import com.storyteller_f.a.exposed.tables.ReactionRecords
 import com.storyteller_f.a.exposed.tables.Reactions
 import com.storyteller_f.a.exposed.tables.Topic
 import com.storyteller_f.a.exposed.tables.Topics
-import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.a.exposed.tables.toTopicInfo
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
@@ -30,7 +29,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 
-class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, val userDatabase: UserDatabase<User>) :
+class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, val containerDatabase: ContainerDatabase) :
     TopicDatabase {
     override suspend fun getTopicRootTuple(
         parentId: PrimaryKey
@@ -152,11 +151,11 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
         }
     }
 
-    override suspend fun ExposedDatabaseSession.getTopicCommentCount(
+    override suspend fun getTopicCommentCount(
         topicIdList: List<PrimaryKey>
     ): Result<List<Pair<Long, Long>>> {
         if (topicIdList.isEmpty()) return Result.success(emptyList())
-        return dbSearch {
+        return exposedDatabaseSession.dbSearch {
             val countColumn = Topics.id.countDistinct()
             search {
                 Topics.select(countColumn, Topics.id).where {
@@ -169,12 +168,12 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
         }
     }
 
-    override suspend fun ExposedDatabaseSession.isUserCommented(
+    override suspend fun isUserCommented(
         uid: PrimaryKey,
         topicId: List<PrimaryKey>
     ): Result<List<Long>> {
         if (topicId.isEmpty()) return Result.success(emptyList())
-        return dbSearch {
+        return exposedDatabaseSession.dbSearch {
             this.search {
                 Topics.select(Topics.parentId).where {
                     Topics.parentId inList topicId and (Topics.author eq uid)
@@ -195,14 +194,14 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
         }
         return merge({
             if (uid != null) {
-                exposedDatabaseSession.isUserCommented(uid, topicIds).map {
+                isUserCommented(uid, topicIds).map {
                     it.toSet()
                 }
             } else {
                 Result.success(emptySet())
             }
         }, {
-            exposedDatabaseSession.getTopicCommentCount(topicIds).map {
+            getTopicCommentCount(topicIds).map {
                 it.associateByPair()
             }
         }, {
@@ -211,7 +210,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
             }
         }, {
             if (uid != null) {
-                userDatabase.getTopicReadList(topicIds, uid).map {
+                containerDatabase.getTopicReadList(topicIds, uid).map {
                     it.associateBy { userTopicRead ->
                         userTopicRead.objectId
                     }
@@ -245,7 +244,7 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
         return (if (encryptedTopic.isEmpty()) {
             Result.success(emptyList())
         } else if (uid != null) {
-            exposedDatabaseSession.getEncryptedTopicContents(encryptedTopic, uid).map {
+            getEncryptedTopicContents(encryptedTopic, uid).map {
                 it.mapIndexed { i, e ->
                     topics[i].id to e
                 }
@@ -265,14 +264,14 @@ class ExposedTopicDatabase(val exposedDatabaseSession: ExposedDatabaseSession, v
 
     // 加密内容不能处理media，需要客户端处理
     @OptIn(ExperimentalStdlibApi::class)
-    override suspend fun ExposedDatabaseSession.getEncryptedTopicContents(
+    override suspend fun getEncryptedTopicContents(
         data: List<Topic>,
         uid: PrimaryKey
     ): Result<List<TopicContent.Encrypted>> {
         val topicId = data.map {
             it.id
         }
-        return dbSearch {
+        return exposedDatabaseSession.dbSearch {
             search {
                 EncryptedKeys.selectAll().where {
                     EncryptedKeys.topicId inList topicId and (EncryptedKeys.uid eq uid)

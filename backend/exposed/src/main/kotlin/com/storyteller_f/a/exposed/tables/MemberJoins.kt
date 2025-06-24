@@ -38,33 +38,19 @@ class MemberJoin(
             }
         }
 
-        fun addRoomJoinRaw(
-            room: PrimaryKey,
-            userId: PrimaryKey,
-            time: LocalDateTime,
-        ) {
-            check(MemberJoins.insert {
-                it[joinedTime] = time
-                it[objectId] = room
-                it[objectType] = ObjectType.ROOM
-                it[this.uid] = userId
-            }.insertedCount > 0) {
-                "join room failed"
-            }
-        }
-
-        fun addCommunityJoinRaw(
+        fun addJoinRaw(
+            uid: PrimaryKey,
             id: PrimaryKey,
-            community: PrimaryKey,
             time: LocalDateTime,
+            objectType: ObjectType,
         ) {
             check(MemberJoins.insert {
                 it[joinedTime] = time
-                it[uid] = id
-                it[objectId] = community
-                it[objectType] = ObjectType.COMMUNITY
+                it[this.uid] = uid
+                it[objectId] = id
+                it[this.objectType] = objectType
             }.insertedCount > 0) {
-                "join community failed"
+                "join failed"
             }
         }
     }

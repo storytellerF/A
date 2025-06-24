@@ -81,7 +81,7 @@ suspend fun Backend.sendTopicToRoomMembers() {
         }
     }.use { client ->
         sharedFlow.collect { frame ->
-            exposedDatabase.userDatabase.getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
+            exposedDatabase.containerDatabase.getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
                 val memberJoins = list.filter {
                     it.uid != frame.topicInfo.author
                 }
@@ -242,7 +242,7 @@ private suspend fun Backend.addTopicIntoRoom(
         is TopicContent.Encrypted -> c.bytes
         else -> throw CustomBadRequestException("unsupported type")
     }
-    return exposedDatabase.userDatabase.isMemberJoined(roomId, uid).mapResult { bool ->
+    return exposedDatabase.containerDatabase.isMemberJoined(roomId, uid).mapResult { bool ->
         if (bool) {
             val content = newTopic.content
             val newId = SnowflakeFactory.nextId()
@@ -304,7 +304,7 @@ private suspend fun Backend.isKeyVerified(
     roomId: PrimaryKey,
     encryptedAes: Map<PrimaryKey, String>
 ): Result<Boolean> {
-    return exposedDatabase.userDatabase.getJoinedUserList(roomId).map { value ->
+    return exposedDatabase.containerDatabase.getJoinedUserList(roomId).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()

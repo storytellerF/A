@@ -15,7 +15,6 @@ import com.storyteller_f.a.exposed.tables.MemberJoins
 import com.storyteller_f.a.exposed.tables.Room
 import com.storyteller_f.a.exposed.tables.RoomRawResult
 import com.storyteller_f.a.exposed.tables.Rooms
-import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.a.exposed.tables.UserTopicReads
 import com.storyteller_f.a.exposed.tables.Users
 import com.storyteller_f.shared.model.UserPubKeyInfo
@@ -27,7 +26,7 @@ import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.update
 
-class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, val userDatabase: UserDatabase<User>) :
+class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, val containerDatabase: ContainerDatabase) :
     RoomDatabase {
     override suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
         return exposedDatabaseSession.dbSearch {
@@ -57,7 +56,7 @@ class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, va
             }
             map(Room::wrapRow)
         }.mapResult {
-            exposedDatabaseSession.processRoomListToRoomRawResult(uid, it).mapResult { list ->
+            processRoomListToRoomRawResult(uid, it).mapResult { list ->
                 exposedDatabaseSession.dbSearch {
                     search {
                         Rooms.select(Rooms.id).buildRoomSearchWhereQuery(joinSearch, community, word)
@@ -124,16 +123,16 @@ class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, va
             }
             first(Room::wrapRow)
         }.mapResultIfNotNull { room ->
-            exposedDatabaseSession.processRoomListToRoomRawResult(uid, listOf(room)).map {
+            processRoomListToRoomRawResult(uid, listOf(room)).map {
                 it.first()
             }
         }
     }
 
-    override suspend fun ExposedDatabaseSession.processRoomListToRoomRawResult(
+    override suspend fun processRoomListToRoomRawResult(
         uid: PrimaryKey?,
         rooms: List<Room>
-    ): Result<List<RoomRawResult>> = userDatabase.getContainerInfo(rooms.map {
+    ): Result<List<RoomRawResult>> = containerDatabase.getContainerInfo(rooms.map {
         it.id
     }, uid).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
         rooms.map { room ->
@@ -165,7 +164,7 @@ class ExposedRoomDatabase(val exposedDatabaseSession: ExposedDatabaseSession, va
             }.insertedCount > 0) {
                 "create aid failed"
             }
-            MemberJoin.addRoomJoinRaw(room.id, room.creator, room.createdTime)
+            MemberJoin.addJoinRaw(room.creator, room.id, room.createdTime, ObjectType.ROOM)
         }
     }
 
