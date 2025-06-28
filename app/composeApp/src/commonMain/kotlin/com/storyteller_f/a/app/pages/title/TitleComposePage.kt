@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,7 +18,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.cash.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
@@ -31,7 +32,6 @@ import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.room.RoomRefCell
-import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.UserRefCell
@@ -48,7 +48,9 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TitleComposePage() {
-    val user = getCurrentUserInfo()
+    val userSessionManager = LocalSessionManager.current
+    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val user = myInfo
     user?.let {
         TitleComposeInternal()
     }

@@ -17,7 +17,6 @@ import com.kdroid.composenotification.builder.getNotificationProvider
 import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.compontents.*
-import com.storyteller_f.a.app.pages.room.isLoginIn
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.clearStorage
 import com.storyteller_f.a.app.utils.createConnectivity
@@ -52,7 +51,7 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
         }
     }
     val scope = rememberCoroutineScope()
-    val isSignIn = isLoginIn()
+    val isSignIn by sessionManager.isAlreadySignUp.collectAsState()
     DialogContainer {
         if (!isSignIn && isMe) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth()) {
@@ -77,10 +76,10 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
         }
         Column {
             if (isMe && isSignIn) {
-                ButtonNav(MaterialSymbolsOutlined.Star, "acg ${userInfo?.acg ?: 0}")
+                ButtonNav(MaterialSymbolsOutlined.Money, "ACG ${userInfo?.acg ?: 0}")
                 UserDialogMenuList(dismiss, clickCreate, appNav, controller)
             }
-            ButtonNav(Icons.Default.Settings, "preference") {
+            ButtonNav(Icons.Default.Settings, "Preference") {
                 dismiss()
                 appNav.gotoPreference()
             }

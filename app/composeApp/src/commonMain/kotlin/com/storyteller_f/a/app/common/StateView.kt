@@ -2,8 +2,6 @@ package com.storyteller_f.a.app.common
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
@@ -22,12 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.paging.CombinedLoadStates
-import app.cash.paging.LoadState
-import app.cash.paging.LoadStateError
-import app.cash.paging.LoadStateLoading
-import app.cash.paging.LoadStateNotLoading
-import app.cash.paging.compose.LazyPagingItems
-import app.cash.paging.compose.itemKey
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.compontents.ExceptionView
@@ -38,6 +33,7 @@ import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 const val REFRESH_AFTER = 300L
@@ -46,11 +42,11 @@ private fun LoadState?.toLoadingState() =
     when (this) {
         null -> null
 
-        is LoadStateLoading -> LoadingState.Loading
+        is LoadState.Loading -> LoadingState.Loading
 
-        is LoadStateError -> LoadingState.Error(error)
+        is LoadState.Error -> LoadingState.Error(error)
 
-        is LoadStateNotLoading -> LoadingState.Done
+        is LoadState.NotLoading -> LoadingState.Done
     }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -71,7 +67,7 @@ fun <T : Any> StateView(
         delay(REFRESH_AFTER)
         if (refreshing) {
             // 刷新结束或者当前没有内容时停止刷新，如果没有内容会使用列表刷新控件
-            if (refreshLoadState !is LoadStateLoading || pagingItems.itemCount == 0) refreshing = false
+            if (refreshLoadState !is LoadState.Loading || pagingItems.itemCount == 0) refreshing = false
         }
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
@@ -113,17 +109,15 @@ private fun CombinedLoadStates.toLoadingState(itemCount: Int): LoadingState? {
         val mediatorRefreshState = mediator?.refresh
         val sourceRefreshState = source.refresh
         value = when {
-            mediatorRefreshState !is LoadStateError -> refresh.toLoadingState()
-            itemCount == 0 -> LoadingState.Error(mediatorRefreshState.error)
-            sourceRefreshState is LoadStateNotLoading -> LoadingState.Done
-            else -> refresh.toLoadingState()
+            mediatorRefreshState is LoadState.Error && itemCount == 0 -> refresh.toLoadingState()
+            else -> sourceRefreshState.toLoadingState()
         }
     }
     return state
 }
 
 fun <T : Any> LazyListScope.topPrepend(lazyPagingItems: LazyPagingItems<T>) {
-    if (lazyPagingItems.loadState.prepend == LoadStateLoading) {
+    if (lazyPagingItems.loadState.prepend == LoadState.Loading) {
         item {
             Text(
                 text = "Waiting for items to load from the backend",
@@ -132,7 +126,7 @@ fun <T : Any> LazyListScope.topPrepend(lazyPagingItems: LazyPagingItems<T>) {
         }
     }
     val loadState = lazyPagingItems.loadState.mediator?.refresh
-    if (loadState is LoadStateError && lazyPagingItems.itemCount > 0) {
+    if (loadState is LoadState.Error) {
         item {
             ExceptionCell(loadState.error) {
                 lazyPagingItems.refresh()
@@ -142,7 +136,7 @@ fun <T : Any> LazyListScope.topPrepend(lazyPagingItems: LazyPagingItems<T>) {
 }
 
 fun <T : Any> LazyGridScope.topPrepend(pagingItems: LazyPagingItems<T>, count: Int) {
-    if (pagingItems.loadState.prepend == LoadStateLoading) {
+    if (pagingItems.loadState.prepend == LoadState.Loading) {
         item(span = {
             GridItemSpan(count)
         }) {
@@ -152,10 +146,20 @@ fun <T : Any> LazyGridScope.topPrepend(pagingItems: LazyPagingItems<T>, count: I
             )
         }
     }
+    val loadState = pagingItems.loadState.mediator?.refresh
+    if (loadState is LoadState.Error) {
+        item(span = {
+            GridItemSpan(count)
+        }) {
+            ExceptionCell(loadState.error) {
+                pagingItems.refresh()
+            }
+        }
+    }
 }
 
 fun <T : Any> LazyListScope.bottomAppending(lazyPagingItems: LazyPagingItems<T>) {
-    if (lazyPagingItems.loadState.append == LoadStateLoading) {
+    if (lazyPagingItems.loadState.append == LoadState.Loading) {
         item {
             CircularProgressIndicator(
                 modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
@@ -165,7 +169,7 @@ fun <T : Any> LazyListScope.bottomAppending(lazyPagingItems: LazyPagingItems<T>)
 }
 
 fun <T : Any> LazyGridScope.bottomAppending(pagingItems: LazyPagingItems<T>, count: Int) {
-    if (pagingItems.loadState.append == LoadStateLoading) {
+    if (pagingItems.loadState.append == LoadState.Loading) {
         item(span = {
             GridItemSpan(count)
         }) {
@@ -215,10 +219,18 @@ fun <T> StateView(
                 CircularProgressIndicator()
             }
 
-            is LoadingState.Error -> CenterBox {
-                ExceptionCell(s.e) {
-                    handler.refresh()
-                    extraRefresh()
+            is LoadingState.Error -> {
+                data.let {
+                    if (it == null) {
+                        CenterBox {
+                            ExceptionCell(s.e) {
+                                handler.refresh()
+                                extraRefresh()
+                            }
+                        }
+                    } else {
+                        content(it)
+                    }
                 }
             }
 
@@ -260,7 +272,7 @@ fun <T : PrimaryKeyIdentifiable> LazyListScope.nestedStateView(
     items: LazyPagingItems<T>,
     content: @Composable (T?, Int) -> Unit
 ) {
-    if (items.loadState.refresh is LoadStateNotLoading && items.itemCount == 0) {
+    if (items.loadState.refresh is LoadState.NotLoading && items.itemCount == 0) {
         item {
             Text(
                 stringResource(Res.string.no_content_yet),
@@ -301,7 +313,7 @@ fun <T : PrimaryKeyIdentifiable> LazyListScope.nestedStateView(
         is LoadingState.Loading, is LoadingState.Error -> {}
 
         else -> {
-            if (items.loadState.append is LoadStateLoading) {
+            if (items.loadState.append is LoadState.Loading) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
@@ -335,6 +347,7 @@ fun <T : Any> RefCellStateView(
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
     val globalDialogController = LocalGlobalDialog.current
+    val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
         when (val localState = state) {
             null, is LoadingState.Loading -> Box(
@@ -346,7 +359,9 @@ fun <T : Any> RefCellStateView(
 
             is LoadingState.Error -> Box(
                 modifier = Modifier.fillMaxSize().clickable {
-                    globalDialogController.showErrorState(localState.e)
+                    scope.launch {
+                        globalDialogController.showErrorMessage(localState.e)
+                    }
                 }.padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {

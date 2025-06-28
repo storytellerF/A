@@ -13,15 +13,12 @@ import com.storyteller_f.a.exposed.query.PaginationResult
 import com.storyteller_f.a.exposed.tables.Room
 import com.storyteller_f.a.exposed.tables.RoomRawResult
 import com.storyteller_f.a.server.auth.addUserLog
-import com.storyteller_f.a.server.userWebSocketSessionMap
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import io.ktor.server.websocket.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 suspend fun Backend.getRoomPubKeys(
     roomId: PrimaryKey,

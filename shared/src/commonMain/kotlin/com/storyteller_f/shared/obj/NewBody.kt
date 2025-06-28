@@ -15,7 +15,6 @@ data class NewDevice(val endpointUrl: String)
 @Serializable
 data class NewMedia(val noPrefixName: String)
 
-
 @Serializable
 data class NewReaction(val emoji: String)
 

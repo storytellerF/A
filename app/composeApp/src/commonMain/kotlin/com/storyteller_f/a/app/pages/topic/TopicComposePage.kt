@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -22,11 +23,11 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import com.storyteller_f.a.app.*
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.compontents.TopicContentField
 import com.storyteller_f.a.app.model.OnTopicCreated
 import com.storyteller_f.a.app.model.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.pages.community.getCommunityFont
-import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.client.core.createNewTopic
 import com.storyteller_f.shared.model.TopicContent
@@ -50,7 +51,9 @@ fun TopicComposePage(
 ) {
     val typography = communityId?.let { getCommunityFont(it) }
     AppTheme(typography = typography ?: MaterialTheme.typography) {
-        val user = getCurrentUserInfo()
+        val userSessionManager = LocalSessionManager.current
+        val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+        val user = myInfo
         user?.let {
             TopicComposeScaffold(
                 objectType,

@@ -135,7 +135,7 @@ private suspend fun RoutingContext.signIn(
     data: String
 ): Result<UserInfo?> {
     val f = finalData(data)
-    return backend.exposedDatabase.userDatabase.getUserRawResultAndPublicKeyByAddress(pack.ad).filterNull {
+    return backend.exposedDatabase.userDatabase.getUserRawResultAndPublicKeyByAddress(pack.ad).filterNotNull {
         CustomBadRequestException("user not found")
     }.mapResult { (userRawResult, publicKey) ->
         verify(publicKey, pack.sig, f).mapResult { isVerified ->

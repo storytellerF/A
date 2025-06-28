@@ -1,7 +1,9 @@
 package com.storyteller_f.a.app.common
 
 import androidx.lifecycle.ViewModel
-import app.cash.paging.*
+import androidx.paging.PagingData
+import androidx.paging.PagingSource
+import androidx.paging.PagingState
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
@@ -22,7 +24,7 @@ class SectionPagingSource<DATUM : Any>(
 ) : PagingSource<SectionLoadParams, DATUM>() {
     override suspend fun load(
         params: LoadParams<SectionLoadParams>
-    ): PagingSourceLoadResult<SectionLoadParams, DATUM> {
+    ): LoadResult<SectionLoadParams, DATUM> {
         val index = params.key?.index ?: 0
         val key = params.key?.param
         return load(index, key, params.loadSize, params.placeholdersEnabled)
@@ -34,55 +36,55 @@ class SectionPagingSource<DATUM : Any>(
         loadSize: Int,
         placeholdersEnabled: Boolean
     ): LoadResult<SectionLoadParams, DATUM> {
-        val service = services.getOrNull(index) ?: return PagingSourceLoadResultPage(
+        val service = services.getOrNull(index) ?: return LoadResult.Page(
             data = emptyList(), prevKey = null, // Only paging forward.
             nextKey = null
         )
         val pageResult = service.load(
             if (key == null) {
-                PagingSourceLoadParamsRefresh(null, loadSize, placeholdersEnabled)
+                LoadParams.Refresh(null, loadSize, placeholdersEnabled)
             } else {
-                PagingSourceLoadParamsAppend(key, loadSize, placeholdersEnabled)
+                LoadParams.Append(key, loadSize, placeholdersEnabled)
             }
         )
         return when (pageResult) {
-            is PagingSourceLoadResultError<String, DATUM> -> PagingSourceLoadResultError(pageResult.throwable)
-            is PagingSourceLoadResultInvalid<String, DATUM> -> PagingSourceLoadResultInvalid()
-            is PagingSourceLoadResultPage<String, DATUM> -> load(loadSize, pageResult, index, placeholdersEnabled)
+            is LoadResult.Error<String, DATUM> -> LoadResult.Error(pageResult.throwable)
+            is LoadResult.Invalid<String, DATUM> -> LoadResult.Invalid()
+            is LoadResult.Page<String, DATUM> -> load(loadSize, pageResult, index, placeholdersEnabled)
         }
     }
 
     private suspend fun load(
         loadSize: Int,
-        prePageResult: PagingSourceLoadResultPage<String, DATUM>,
+        prePageResult: LoadResult.Page<String, DATUM>,
         index: Int,
         placeholdersEnabled: Boolean
     ): LoadResult<SectionLoadParams, DATUM> {
         return if (loadSize - prePageResult.data.size > 0) {
             getNextParams(prePageResult.nextKey, index)?.let {
                 when (val nextPageResult = load(it.index, it.param, loadSize, placeholdersEnabled)) {
-                    is PagingSourceLoadResultError<SectionLoadParams, DATUM> ->
-                        PagingSourceLoadResultError(nextPageResult.throwable)
+                    is LoadResult.Error<SectionLoadParams, DATUM> ->
+                        LoadResult.Error(nextPageResult.throwable)
 
-                    is PagingSourceLoadResultInvalid<SectionLoadParams, DATUM> ->
-                        PagingSourceLoadResultInvalid()
+                    is LoadResult.Invalid<SectionLoadParams, DATUM> ->
+                        LoadResult.Invalid()
 
-                    is PagingSourceLoadResultPage<SectionLoadParams, DATUM> -> {
+                    is LoadResult.Page<SectionLoadParams, DATUM> -> {
                         // 合并两页
-                        PagingSourceLoadResultPage(
+                        LoadResult.Page(
                             prePageResult.data + nextPageResult.data,
                             null,
                             nextPageResult.nextKey
                         )
                     }
                 }
-            } ?: PagingSourceLoadResultPage(
+            } ?: LoadResult.Page(
                 prePageResult.data,
                 null,
                 getNextParams(prePageResult.nextKey, index)
             )
         } else {
-            PagingSourceLoadResultPage(
+            LoadResult.Page(
                 prePageResult.data,
                 null,
                 getNextParams(prePageResult.nextKey, index)
@@ -112,7 +114,7 @@ class RegularPagingSource<DATUM : Any>(
     val sessionManager: SessionManager,
     val service: suspend SessionManager.(String?, Int) -> Result<ServerResponse<DATUM>>
 ) : PagingSource<String, DATUM>() {
-    override suspend fun load(params: LoadParams<String>): PagingSourceLoadResult<String, DATUM> {
+    override suspend fun load(params: LoadParams<String>): LoadResult<String, DATUM> {
         return sessionManager.service(params.key, params.loadSize).map {
             val pagination = it.pagination
             APagingData(
@@ -124,13 +126,13 @@ class RegularPagingSource<DATUM : Any>(
                 )
             )
         }.fold(onSuccess = { (data, pagination) ->
-            PagingSourceLoadResultPage(
+            LoadResult.Page(
                 data = data,
                 prevKey = null,
                 nextKey = pagination?.nextPageToken
             )
         }, onFailure = {
-            PagingSourceLoadResultError(it)
+            LoadResult.Error(it)
         })
     }
 

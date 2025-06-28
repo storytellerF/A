@@ -7,12 +7,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import app.cash.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.AppNav
 import com.storyteller_f.a.app.LocalAppNav
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.input_search_community
@@ -25,8 +27,6 @@ import com.storyteller_f.a.app.input_search_user_received_titles
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.room.RoomList
-import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
-import com.storyteller_f.a.app.pages.room.isLoginIn
 import com.storyteller_f.a.app.pages.title.ComposeMenu
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.world.TopicList
@@ -122,7 +122,9 @@ private fun CustomSearchBarInternal(
                         MergedLeadingIcon(leadingIcon, active, appNav)
                     },
                     trailingIcon = {
-                        val userInfo = getCurrentUserInfo()
+                        val userSessionManager = LocalSessionManager.current
+                        val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+                        val userInfo = myInfo
                         UserIcon(userInfo, true, onClickCreate = clickCreate)
                     },
                     placeholder = {
@@ -311,7 +313,8 @@ private fun MyRoomSearchContent(current: String) {
             mutableStateOf(JoinStatusSearch.JOINED)
         }
 
-        val isAlreadySignUp = isLoginIn()
+        val userSessionManager = LocalSessionManager.current
+        val isAlreadySignUp by userSessionManager.isAlreadySignUp.collectAsState()
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
             val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
@@ -342,7 +345,8 @@ private fun MyCommunitySearchContent(query: String) {
         var currentOption by remember {
             mutableStateOf(JoinStatusSearch.JOINED)
         }
-        val isAlreadySignUp = isLoginIn()
+        val userSessionManager = LocalSessionManager.current
+        val isAlreadySignUp by userSessionManager.isAlreadySignUp.collectAsState()
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
             val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)

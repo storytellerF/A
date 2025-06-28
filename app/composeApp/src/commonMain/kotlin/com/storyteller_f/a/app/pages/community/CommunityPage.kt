@@ -13,6 +13,7 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -20,13 +21,13 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import app.cash.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.*
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.common.CachedLoadingHandler
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.room.RoomList
-import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.world.TopicList
@@ -399,7 +400,9 @@ private fun CommunityMenus(
                 dismiss()
                 nav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, true, null, communityId)
             }
-            val my = getCurrentUserInfo()
+            val userSessionManager = LocalSessionManager.current
+            val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+            val my = myInfo
             if (my?.id == communityInfo.owner) {
                 ButtonNav(Icons.Default.Title, "Add Title") {
                     dismiss()

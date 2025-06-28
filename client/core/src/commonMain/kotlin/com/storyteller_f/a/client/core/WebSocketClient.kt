@@ -131,6 +131,8 @@ class WebSocketClientImpl(
                         is RoomFrame.Message -> {
                             onMessage(frame)
                         }
+
+                        else -> {}
                     }
                 } catch (_: ClosedReceiveChannelException) {
                     Napier.i(tag = "ClientWebSocket") {

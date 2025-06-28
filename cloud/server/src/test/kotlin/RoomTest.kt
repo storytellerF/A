@@ -165,7 +165,6 @@ class RoomTest {
     fun `test web rtc`() {
         test {
             val firstSession = attachSession {
-
             }
             val secondSession = attachSession {
                 val roomInfo = createRoom(NewRoom("name1", "r1")).getOrThrow()

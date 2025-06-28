@@ -101,9 +101,4 @@ fun Route.bindProtectedRoomRoute(backend: Backend) {
             backend.updateRoom(p.id, newRoom, uid)
         }
     }
-    CustomApi.Rooms.Id.startCall.invoke(RoutingContext::handleResult) { p, api ->
-        usePrincipal { uid ->
-            backend.startCall(p.id, uid)
-        }
-    }
 }

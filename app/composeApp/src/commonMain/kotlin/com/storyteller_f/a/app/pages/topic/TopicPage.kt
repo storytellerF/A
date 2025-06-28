@@ -8,13 +8,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import app.cash.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.dokar.sonner.ToasterState
 import com.storyteller_f.a.app.*
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.nestedStateView
 import com.storyteller_f.a.app.compontents.*
@@ -22,7 +24,6 @@ import com.storyteller_f.a.app.model.*
 import com.storyteller_f.a.app.pages.room.CommonInputButton
 import com.storyteller_f.a.app.pages.room.InputGroupInternal
 import com.storyteller_f.a.app.pages.room.RoomInputGroup
-import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.client.core.LoadingState
@@ -178,7 +179,9 @@ private fun TopicInputGroup(
     val sessionManager = LocalSessionManager.current
     val isSending = sendState.value is LoadingState.Loading
     val appNav = LocalAppNav.current
-    val my = getCurrentUserInfo()
+    val userSessionManager = LocalSessionManager.current
+    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val my = myInfo
     val globalDialogController = LocalGlobalDialog.current
     InputGroupInternal(
         input,
