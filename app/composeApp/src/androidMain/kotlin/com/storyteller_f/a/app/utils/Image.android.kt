@@ -15,8 +15,8 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemTemporaryDirectory
 
-actual fun Image.coilImageToImageBitmap(): ImageBitmap {
-    return toBitmap().asImageBitmap()
+actual fun Image.coilImageToImageBitmap(): Result<ImageBitmap> {
+    return runCatching { toBitmap().asImageBitmap() }
 }
 
 actual fun saveImageBitmap(
@@ -24,24 +24,26 @@ actual fun saveImageBitmap(
     name: String,
     format: ImageFormat,
     quality: Int
-): Path {
-    val path = Path(SystemTemporaryDirectory, "tmpImage/$name-cropped.png")
-    path.sink().buffered().asOutputStream().use {
-        imageBitmap.asAndroidBitmap().compress(
-            when (format) {
-                ImageFormat.PNG -> Bitmap.CompressFormat.PNG
-                ImageFormat.JPEG -> Bitmap.CompressFormat.JPEG
-                ImageFormat.WEBP -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Bitmap.CompressFormat.WEBP_LOSSY
-                } else {
-                    Bitmap.CompressFormat.PNG
-                }
-            },
-            quality,
-            it
-        )
+): Result<Path> {
+    return runCatching {
+        val path = Path(SystemTemporaryDirectory, "tmpImage/$name-cropped.png")
+        path.sink().buffered().asOutputStream().use {
+            imageBitmap.asAndroidBitmap().compress(
+                when (format) {
+                    ImageFormat.PNG -> Bitmap.CompressFormat.PNG
+                    ImageFormat.JPEG -> Bitmap.CompressFormat.JPEG
+                    ImageFormat.WEBP -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        Bitmap.CompressFormat.WEBP_LOSSY
+                    } else {
+                        Bitmap.CompressFormat.PNG
+                    }
+                },
+                quality,
+                it
+            )
+        }
+        path
     }
-    return path
 }
 
 actual fun ImageRequest.Builder.androidAllowHardware(b: Boolean): ImageRequest.Builder {

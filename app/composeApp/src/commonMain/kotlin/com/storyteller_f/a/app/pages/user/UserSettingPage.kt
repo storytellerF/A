@@ -14,10 +14,12 @@ import coil3.compose.LocalPlatformContext
 import com.attafitamim.krop.core.crop.*
 import com.attafitamim.krop.core.images.ImageBitmapSrc
 import com.attafitamim.krop.ui.ImageCropperDialog
-import com.storyteller_f.a.app.*
+import com.storyteller_f.a.app.LocalGlobalDialog
+import com.storyteller_f.a.app.LocalSessionManager
+import com.storyteller_f.a.app.LocalToaster
+import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.OnUserUpdated
-import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.topic.MediaPicker
 import com.storyteller_f.a.app.pages.topic.uploadPath
 import com.storyteller_f.a.app.utils.ImageFormat
@@ -54,7 +56,9 @@ fun UserSettingPage() {
         mutableStateOf<SettingOption?>(null)
     }
     val sheetState = rememberModalBottomSheetState()
-    val my = getCurrentUserInfo()
+    val userSessionManager = LocalSessionManager.current
+    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val my = myInfo
     val showDialog = { option: SettingOption ->
         currentOption = option
     }
@@ -115,7 +119,9 @@ fun ObjectSettingDialog(
         )
     }
 
-    val my = getCurrentUserInfo()
+    val userSessionManager = LocalSessionManager.current
+    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val my = myInfo
     val mediaTarget = ObjectTuple(my?.id ?: 0, ObjectType.USER)
     val globalDialogController = LocalGlobalDialog.current
     MediaPicker(
@@ -161,89 +167,74 @@ private fun processSelectedMedia(
     val info = mediaList.first()
     val dimension = info.dimension
     if (dimension == null || !info.contentType.startsWith("image/")) {
-        globalDialogController.showMessage("invalid image: ${info.contentType} $dimension")
-    } else {
         scope.launch {
-            cropImageIfNeed(
-                context,
-                sessionManager,
-                info,
-                imageCropper,
+            globalDialogController.showMessage("invalid image: ${info.contentType} $dimension")
+        }
+    } else {
+        if (checkMediaDimensionRatioMatch(
                 dimension,
-                ratio,
-                mediaTarget,
-                globalDialogController
-            ).onSuccess {
+                Dimension(ratio.x, ratio.y)
+            )
+        ) {
+            onInputMedia(info)
+        }
+        scope.launch {
+            globalDialogController.useResult {
+                cropImage(
+                    context,
+                    sessionManager,
+                    info,
+                    imageCropper,
+                    mediaTarget
+                )
+            }.onSuccess {
                 if (it != null) {
                     onInputMedia(it)
                 }
-            }.onFailure {
-                globalDialogController.showErrorState(it)
             }
         }
     }
 }
 
-private suspend fun cropImageIfNeed(
-    context: PlatformContext,
-    sessionManager: SessionManager,
-    info: MediaInfo,
-    imageCropper: ImageCropper,
-    dimension: Dimension,
-    aspectRatio: AspectRatio,
-    mediaTarget: ObjectTuple,
-    globalDialogController: GlobalDialogController,
-): Result<MediaInfo?> {
-    return if (checkMediaDimensionRatioMatch(dimension, Dimension(aspectRatio.x, aspectRatio.y))) {
-        Result.success(info)
-    } else {
-        cropImage(context, sessionManager, info, imageCropper, mediaTarget, globalDialogController)
-    }
-}
-
-private suspend fun cropImage(
+private suspend fun GlobalDialogController.cropImage(
     context: PlatformContext,
     sessionManager: SessionManager,
     info: MediaInfo,
     imageCropper: ImageCropper,
     mediaTarget: ObjectTuple,
-    globalDialogController: GlobalDialogController,
 ): Result<MediaInfo?> {
-    val image = globalDialogController.use {
-        ImageLoader(context)
+    val image = useResult {
+        val image = ImageLoader(context)
             .execute(imageRequest(context, sessionManager.client, info).androidAllowHardware(false).build())
-            .image?.coilImageToImageBitmap()
+            .image
+        image?.coilImageToImageBitmap() ?: Result.failure(Exception("download"))
     }
     return image.mapResult {
-        if (it == null) {
-            Result.failure(Exception("download failed"))
-        } else {
-            when (val result = imageCropper.crop(ImageBitmapSrc(it))) {
-                CropResult.Cancelled -> {
-                    Result.success(null)
-                }
+        when (val result = imageCropper.crop(ImageBitmapSrc(it))) {
+            CropResult.Cancelled -> {
+                Result.success(null)
+            }
 
-                is CropError -> {
-                    Result.failure(Exception(result.name))
-                }
+            is CropError -> {
+                Result.failure(Exception(result.name))
+            }
 
-                is CropResult.Success -> {
-                    globalDialogController.use {
-                        saveImageBitmap(
-                            result.bitmap,
-                            info.name.substringBeforeLast("."),
-                            when (info.contentType) {
-                                "image/webp" -> ImageFormat.WEBP
-                                "image/jpeg", "image/jpg" -> ImageFormat.JPEG
-                                else -> ImageFormat.PNG
-                            }
-                        )
-                    }
+            is CropResult.Success -> {
+                useResult {
+                    saveImageBitmap(
+                        result.bitmap,
+                        info.name.substringBeforeLast("."),
+                        when (info.contentType) {
+                            "image/webp" -> ImageFormat.WEBP
+                            "image/jpeg", "image/jpg" -> ImageFormat.JPEG
+                            else -> ImageFormat.PNG
+                        }
+                    )
                 }
             }
         }
     }.mapIfNotNull {
-        uploadPath(it, sessionManager, mediaTarget, globalDialogController).getOrThrow()?.first()
+        uploadPath(it, sessionManager, mediaTarget).getOrThrow()?.first()
     }
 }
 

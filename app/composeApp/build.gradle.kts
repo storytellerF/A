@@ -143,8 +143,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             //network
             implementation(libs.bundles.ktor.client)
-            implementation(libs.paging.common)
-            implementation(libs.paging.compose.common)
+            implementation("androidx.paging:paging-common:3.3.6")
             //ui
             implementation(libs.bundles.coil)
             implementation(libs.multiplatform.markdown.renderer)

@@ -9,7 +9,6 @@ data class UpdateUserBody(val nickname: String? = null, val avatar: PrimaryKey? 
 @Serializable
 data class UpdateUserRead(val objectTuple: ObjectTuple, val topicId: PrimaryKey)
 
-
 @Serializable
 data class UpdateCommunityBody(val name: String? = null, val icon: PrimaryKey? = null, val poster: PrimaryKey? = null)
 

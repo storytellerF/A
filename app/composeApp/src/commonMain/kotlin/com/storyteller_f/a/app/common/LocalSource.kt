@@ -2,9 +2,9 @@ package com.storyteller_f.a.app.common
 
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
+import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
-import app.cash.paging.*
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.SessionManager
@@ -91,14 +91,14 @@ class CustomDatabasePagingSource<RowType : Any>(
     private val registeredToken = mutableMapOf<String?, StorageObservable<RowType>>()
 
     override suspend fun load(
-        params: PagingSourceLoadParams<String>
-    ): PagingSourceLoadResult<String, RowType> {
+        params: LoadParams<String>
+    ): LoadResult<String, RowType> {
         val key = when (params) {
             is LoadParams.Append<*> -> {
                 params.key
             }
 
-            is LoadParams.Prepend<*> -> return PagingSourceLoadResultPage(emptyList(), null, null)
+            is LoadParams.Prepend<*> -> return LoadResult.Page(emptyList(), null, null)
             is LoadParams.Refresh<*> -> {
                 removeAllToken()
                 null
@@ -119,7 +119,7 @@ class CustomDatabasePagingSource<RowType : Any>(
             Napier.v(tag = "pagination") {
                 "source load success key: ${params.key} data size: ${data.size} $prevKey $nextKey"
             }
-            PagingSourceLoadResultPage(
+            LoadResult.Page(
                 data = data,
                 prevKey = prevKey,
                 nextKey = nextKey,
@@ -128,7 +128,7 @@ class CustomDatabasePagingSource<RowType : Any>(
             Napier.e(e, tag = "pagination") {
                 "source load error"
             }
-            PagingSourceLoadResultError(e)
+            LoadResult.Error(e)
         }
     }
 
@@ -161,7 +161,7 @@ class CustomRemoteMediator<Datum : Any>(
             "mediator load $loadType"
         }
         val params = when (loadType) {
-            LoadType.REFRESH -> PagingSourceLoadParamsRefresh<String>(
+            LoadType.REFRESH -> PagingSource.LoadParams.Refresh<String>(
                 null,
                 state.config.pageSize,
                 state.config.enablePlaceholders
@@ -171,7 +171,7 @@ class CustomRemoteMediator<Datum : Any>(
                 val remoteKey =
                     storageSource.getCollection("pre_remote_keys", RemoteKeys::class)
                         .getDocument(collectionName)?.nextKey
-                PagingSourceLoadParamsAppend(
+                PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
                     state.config.pageSize,
@@ -183,7 +183,7 @@ class CustomRemoteMediator<Datum : Any>(
                 val remoteKey =
                     storageSource.getCollection("next_remote_keys", RemoteKeys::class)
                         .getDocument(collectionName)?.nextKey
-                PagingSourceLoadParamsAppend(
+                PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
                     state.config.pageSize,
@@ -205,15 +205,15 @@ class CustomRemoteMediator<Datum : Any>(
         params: androidx.paging.PagingSource.LoadParams<String>,
         loadType: LoadType,
     ) = when (val loadResult = networkService.load(params)) {
-        is PagingSourceLoadResultError<String, Datum> -> {
+        is PagingSource.LoadResult.Error<String, Datum> -> {
             MediatorResult.Error(loadResult.throwable)
         }
 
-        is PagingSourceLoadResultInvalid<String, Datum> -> {
+        is PagingSource.LoadResult.Invalid<String, Datum> -> {
             MediatorResult.Error(Exception("invalid"))
         }
 
-        is PagingSourceLoadResultPage<String, Datum> -> {
+        is PagingSource.LoadResult.Page<String, Datum> -> {
             val data = loadResult.data
             val nextKey = loadResult.nextKey
             val preKey = loadResult.prevKey

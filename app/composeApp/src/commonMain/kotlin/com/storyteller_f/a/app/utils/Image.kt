@@ -9,7 +9,7 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 
-expect fun Image.coilImageToImageBitmap(): ImageBitmap
+expect fun Image.coilImageToImageBitmap(): Result<ImageBitmap>
 
 expect fun ImageRequest.Builder.androidAllowHardware(b: Boolean): ImageRequest.Builder
 
@@ -24,7 +24,7 @@ expect fun saveImageBitmap(
     name: String,
     format: ImageFormat = ImageFormat.PNG,
     quality: Int = 90
-): Path
+): Result<Path>
 
 fun writeImageFile(filePath: String, data: ByteArray): Path {
     val path = Path(SystemTemporaryDirectory, "tmpImage/$filePath-cropped.png")

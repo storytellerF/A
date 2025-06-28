@@ -1,9 +1,6 @@
 package com.storyteller_f.a.app
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -22,8 +19,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import app.cash.paging.compose.collectAsLazyPagingItems
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
@@ -62,21 +59,7 @@ import com.storyteller_f.a.app.utils.createCustomDataStoreManager
 import com.storyteller_f.a.app.utils.createSettings
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.app.utils.restoreFromStorage
-import com.storyteller_f.a.client.core.ClientSessionState
-import com.storyteller_f.a.client.core.RawUserPass
-import com.storyteller_f.a.client.core.RawUserPassInfo
-import com.storyteller_f.a.client.core.SessionModel
-import com.storyteller_f.a.client.core.UserSessionManager
-import com.storyteller_f.a.client.core.UserSessionModel
-import com.storyteller_f.a.client.core.WebSocketClient
-import com.storyteller_f.a.client.core.WebSocketClientImpl
-import com.storyteller_f.a.client.core.WebSocketClientListener
-import com.storyteller_f.a.client.core.addAlternativeAccount
-import com.storyteller_f.a.client.core.addRequestHeaders
-import com.storyteller_f.a.client.core.defaultClientConfigure
-import com.storyteller_f.a.client.core.getClient
-import com.storyteller_f.a.client.core.processEncryptedTopic
-import com.storyteller_f.a.client.core.start
+import com.storyteller_f.a.client.core.*
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
 import com.storyteller_f.shared.getPemPrivateKeyFromDer
@@ -321,7 +304,7 @@ fun CommonEntry(
         }
 
         val globalDialogController = remember {
-            GlobalDialogController()
+            CustomGlobalDialogController()
         }
         val toasterState = rememberToasterState()
         val json = remember {
@@ -350,7 +333,7 @@ fun CommonEntry(
 fun CommonEntryContent(
     database: StorageSource,
     address: String?,
-    globalDialogController: GlobalDialogController,
+    globalDialogController: CustomGlobalDialogController,
     toasterState: ToasterState,
     currentUserSessionManager: CustomSessionManager,
     json: Json,
@@ -1093,7 +1076,10 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
                     }
                 }
                 StateView(pagingItems, modifier = Modifier.height(300.dp)) {
-                    LazyColumn(contentPadding = PaddingValues(10.dp)) {
+                    LazyColumn(
+                        contentPadding = PaddingValues(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         items(pagingItems.itemCount, key = pagingItems.itemKey { accountInfo ->
                             accountInfo.id
                         }) {

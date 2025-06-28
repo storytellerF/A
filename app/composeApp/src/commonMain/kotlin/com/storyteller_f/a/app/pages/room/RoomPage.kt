@@ -12,18 +12,20 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
-import app.cash.paging.compose.LazyPagingItems
-import app.cash.paging.compose.collectAsLazyPagingItems
-import app.cash.paging.compose.itemKey
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.dokar.sonner.ToastType
 import com.dokar.sonner.ToasterState
 import com.storyteller_f.a.app.*
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.bottomAppending
 import com.storyteller_f.a.app.common.topPrepend
@@ -49,6 +51,7 @@ import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
@@ -212,7 +215,9 @@ fun RoomInputGroup(
     var input by remember {
         mutableStateOf("")
     }
-    val myInfo = getCurrentUserInfo()
+    val userSessionManager = LocalSessionManager.current
+    val myInfo1 by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val myInfo = myInfo1
     val controller = remember {
         CustomAlertDialogController()
     }
@@ -248,20 +253,6 @@ fun RoomInputGroup(
 }
 
 @Composable
-fun getCurrentUserInfo(): UserInfo? {
-    val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
-    return myInfo
-}
-
-@Composable
-fun isLoginIn(): Boolean {
-    val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.isAlreadySignUp.collectAsState(false)
-    return myInfo
-}
-
-@Composable
 private fun RoomInputGroupInternal(
     roomId: PrimaryKey,
     roomInfo: RoomInfo,
@@ -270,7 +261,9 @@ private fun RoomInputGroupInternal(
     scrollToNew: () -> Unit,
     updateInput: (String) -> Unit,
 ) {
-    val myInfo = getCurrentUserInfo()
+    val userSessionManager = LocalSessionManager.current
+    val myInfo1 by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val myInfo = myInfo1
     val wsClient = LocalWsClient.current
     val mediaTarget = if (roomInfo.isPrivate) {
         ObjectTuple(roomInfo.id, ObjectType.ROOM)
@@ -297,19 +290,7 @@ private fun RoomInputGroupInternal(
         },
         mediaTarget,
         {
-            if (roomInfo.isPrivate) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    when (val ks = keysState) {
-                        LoadingState.Done -> Text("✅")
-                        is LoadingState.Error -> Text(ks.e.localizedMessage?.take(10) ?: "!")
-                        null, LoadingState.Loading -> CircularProgressIndicator(
-                            modifier = Modifier.size(10.dp),
-                            strokeWidth = 2.dp
-                        )
-                    }
-                    Text("${keysData?.size ?: 0}/${roomInfo.memberCount}")
-                }
-            }
+            RoomInputTopContent(roomInfo, keysState, keysData)
         }
     ) {
         RoomSendButton(input = input) {
@@ -324,6 +305,23 @@ private fun RoomInputGroupInternal(
                 wsClient,
                 parentTarget
             )
+        }
+    }
+}
+
+@Composable
+private fun RoomInputTopContent(roomInfo: RoomInfo, keysState: LoadingState?, keysData: List<UserPubKeyInfo>?) {
+    if (roomInfo.isPrivate) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            when (val ks = keysState) {
+                LoadingState.Done -> Text("✅")
+                is LoadingState.Error -> Text(ks.e.localizedMessage?.take(10) ?: "!")
+                null, LoadingState.Loading -> CircularProgressIndicator(
+                    modifier = Modifier.size(10.dp),
+                    strokeWidth = 2.dp
+                )
+            }
+            Text("${keysData?.size ?: 0}/${roomInfo.memberCount}")
         }
     }
 }
@@ -452,7 +450,9 @@ fun CommonInputButton(
 
         is LoadingState.Error -> {
             IconButton({
-                globalDialogController.showErrorState(state.e)
+                scope.launch {
+                    globalDialogController.showErrorState(state.e)
+                }
             }) {
                 Icon(Icons.Default.Error, stringResource(Res.string.error))
             }
@@ -513,6 +513,7 @@ private fun InputGroupSuffix(
     var showSheet by remember {
         mutableStateOf(false)
     }
+    val scope = rememberCoroutineScope()
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         if (input.isNotEmpty()) {
             Icon(Icons.Default.Clear, "clear input", modifier = Modifier.clickable {
@@ -526,7 +527,9 @@ private fun InputGroupSuffix(
                 if (alreadyLoginIn) {
                     gotoCompose()
                 } else {
-                    globalDialogController.showMessage("need sign in")
+                    scope.launch {
+                        globalDialogController.showMessage("need sign in")
+                    }
                 }
             }
         )
@@ -534,7 +537,9 @@ private fun InputGroupSuffix(
             if (alreadyLoginIn) {
                 showSheet = true
             } else {
-                globalDialogController.showMessage("need sign in")
+                scope.launch {
+                    globalDialogController.showMessage("need sign in")
+                }
             }
         })
     }
@@ -583,7 +588,9 @@ private fun RoomDialogButtons(
     appNav: AppNav,
     roomInfo: RoomInfo,
 ) {
-    val me = getCurrentUserInfo()
+    val userSessionManager = LocalSessionManager.current
+    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val me = myInfo
     val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     Column {

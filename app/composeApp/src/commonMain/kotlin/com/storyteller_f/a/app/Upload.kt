@@ -8,16 +8,17 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.CenterBox
 import com.storyteller_f.a.app.model.createUploadViewModel
-import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.UserInfo
 import io.ktor.http.*
+import kotlinx.coroutines.launch
 import kotlinx.io.Source
 
 @Stable
@@ -47,7 +48,9 @@ fun Upload(uploader: Uploader) {
     val httpUrl = AppConfig.SERVER_URL
     val wsServerUrl = AppConfig.WS_SERVER_URL
     CommonEntry(httpUrl, wsServerUrl, {
-        val my = getCurrentUserInfo()
+        val userSessionManager = LocalSessionManager.current
+        val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+        val my = myInfo
         val session by uploader.session
         session?.let { UploadInternal(my, it) }
     })
@@ -92,6 +95,7 @@ private fun UploadItem(
     refresh: () -> Unit
 ) {
     val globalDialogController = LocalGlobalDialog.current
+    val scope = rememberCoroutineScope()
     Row(modifier = Modifier.padding(20.dp)) {
         Column(modifier = Modifier.weight(1f)) {
             Text(file.name)
@@ -104,7 +108,9 @@ private fun UploadItem(
             LoadingState.Done -> Icon(Icons.Default.Done, "done")
             is LoadingState.Error -> {
                 IconButton({
-                    globalDialogController.showErrorState(state.e)
+                    scope.launch {
+                        globalDialogController.showErrorMessage(state.e)
+                    }
                 }) {
                     Icon(Icons.Default.Error, "error")
                 }

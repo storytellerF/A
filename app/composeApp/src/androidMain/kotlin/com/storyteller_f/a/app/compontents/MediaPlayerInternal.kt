@@ -175,7 +175,7 @@ private suspend fun startPlay(
     globalDialogController: GlobalDialogController
 ) {
     val contentType = obj.contentType
-    globalDialogController.use {
+    globalDialogController.useResult {
         val playList = when (contentType) {
             M3U8_MIMETYPE -> parseM3UPlayList(obj, client)
             YOUTUBE_MIMETYPE, SOUND_CLOUD_MIME_TYPE -> getPlaylistFromNewPipe(obj, context)
@@ -192,8 +192,9 @@ private suspend fun startPlay(
             MediaProvider.get(newSession) { player, s ->
                 player.playNewMedia(s.playList, contentType)
             }
+            Result.success(Unit)
         } else {
-            throw Exception("can't play")
+            Result.failure(Exception("can't play"))
         }
     }
 }

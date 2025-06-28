@@ -31,7 +31,7 @@ fun ExceptionView(throwable: Throwable, modifier: Modifier = Modifier) {
         }
 
         else -> {
-            Text((throwable.message ?: throwable::class.simpleName ?: throwable.toString()).take(100), modifier)
+            Text((throwable.message ?: throwable::class.simpleName ?: throwable.toString()), modifier)
         }
     }
 }

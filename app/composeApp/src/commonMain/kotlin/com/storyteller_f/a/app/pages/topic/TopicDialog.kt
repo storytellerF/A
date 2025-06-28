@@ -287,6 +287,8 @@ private fun BoxScope.TopicTranslateSheetInternal(
         }
 
         else ->
-            result.exceptionOrNull()?.let { ExceptionView(it, modifier = Modifier.Companion.align(Alignment.Center)) }
+            result.exceptionOrNull()?.let {
+                ExceptionView(it, modifier = Modifier.Companion.align(Alignment.Center))
+            }
     }
 }

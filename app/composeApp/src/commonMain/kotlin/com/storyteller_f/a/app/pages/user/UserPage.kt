@@ -23,15 +23,15 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import app.cash.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.*
+import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.compontents.UserIcon
 import com.storyteller_f.a.app.model.createTargetUserJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.model.createUserTitlesViewModel
 import com.storyteller_f.a.app.model.createUserTopicsViewModel
 import com.storyteller_f.a.app.model.createUserViewModel
 import com.storyteller_f.a.app.pages.community.CommunityList
-import com.storyteller_f.a.app.pages.room.getCurrentUserInfo
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.title.TitleList
@@ -47,7 +47,9 @@ import org.jetbrains.compose.resources.stringResource
 fun UserPage(uid: PrimaryKey) {
     val userViewModel = createUserViewModel(uid)
     val user by userViewModel.handler.data.collectAsState()
-    val my = getCurrentUserInfo()
+    val userSessionManager = LocalSessionManager.current
+    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val my = myInfo
     UserPageInternal(user, my, uid)
 }
 
@@ -91,7 +93,9 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
                     "/titles" -> SearchScope.UserReceivedTitle(uid)
                     else -> SearchScope.UserCommunities(uid)
                 }
-                val my = getCurrentUserInfo()
+                val userSessionManager = LocalSessionManager.current
+                val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+                val my = myInfo
                 CustomSearchBar(searchScope) {
                     if (uid != my?.id) {
                         UserIcon(user)

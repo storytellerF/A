@@ -163,58 +163,99 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
     uid: PrimaryKey,
 ) {
     try {
-        if (frame is RoomFrame.Message) {
-            processNewMessage(backend, frame, uid)
-        } else if (frame is RoomFrame.SendOffer) {
-            val offer = frame.offer
-            val session = rtcSession[offer.roomId]
-            if (session != null) {
-                session.socketMap[offer.targetUid]?.sendSerialized(RoomFrame.CreateAnswer(uid, offer))
-                session.offerList[uid]?.let {
-                    it[offer.targetUid] = offer
-                }
+        when (frame) {
+            is RoomFrame.Message -> {
+                processNewMessage(backend, frame, uid)
             }
-        } else if (frame is RoomFrame.SendAnswer) {
-            val answer = frame.answer
-            val session = rtcSession[answer.roomId]
-            if (session != null) {
-                session.socketMap[answer.targetUid]?.sendSerialized(RoomFrame.RespondAnswer(answer))
-                session.answerList[uid]?.let {
-                    it[answer.targetUid] = answer
-                }
+
+            is RoomFrame.SendOffer -> {
+                processSendOffer(frame, uid)
             }
-        } else if (frame is RoomFrame.StartCall) {
-            val roomId = frame.roomId
-            backend.checkRootReadPermission(ObjectType.ROOM, roomId, uid).onSuccess {
-                if (it == null) {
-                    sendSerialized(RoomFrame.Error("no permission") as RoomFrame)
-                } else if (it.hasRead) {
-                    lock.withLock {
-                        val list = rtcSession.getOrPut(roomId) {
-                            RtcSession(roomId)
-                        }
-                        if (!list.uidList.contains(uid)) {
-                            list.uidList.add(uid)
-                            list.socketMap[uid] = this
-                            list.uidSet.add(uid)
-                        }
-                    }
-                } else {
-                    sendSerialized(RoomFrame.Error("no permission") as RoomFrame)
-                }
+
+            is RoomFrame.SendAnswer -> {
+                processSendAnswer(frame, uid)
             }
-        } else if (frame is RoomFrame.StopCall) {
-            val roomId = frame.roomId
-            lock.withLock {
-                rtcSession[roomId]?.let {
-                    it.uidList.remove(uid)
-                    it.socketMap.remove(uid)
-                    it.uidSet.remove(uid)
-                }
+
+            is RoomFrame.StartCall -> {
+                processStartCall(frame, backend, uid)
             }
+
+            is RoomFrame.StopCall -> {
+                processStopCall(frame, uid)
+            }
+
+            else -> {}
         }
     } catch (e: Exception) {
         call.application.log.error("Catch exception in ws", e)
+    }
+}
+
+private suspend fun processStopCall(
+    frame: RoomFrame.StopCall,
+    uid: PrimaryKey,
+) {
+    val roomId = frame.roomId
+    lock.withLock {
+        rtcSession[roomId]?.let {
+            it.uidList.remove(uid)
+            it.socketMap.remove(uid)
+            it.uidSet.remove(uid)
+        }
+    }
+}
+
+private suspend fun DefaultWebSocketServerSession.processStartCall(
+    frame: RoomFrame.StartCall,
+    backend: Backend,
+    uid: PrimaryKey,
+) {
+    val roomId = frame.roomId
+    backend.checkRootReadPermission(ObjectType.ROOM, roomId, uid).onSuccess {
+        if (it == null) {
+            sendSerialized(RoomFrame.Error("no permission") as RoomFrame)
+        } else if (it.hasRead) {
+            lock.withLock {
+                val list = rtcSession.getOrPut(roomId) {
+                    RtcSession(roomId)
+                }
+                if (!list.uidList.contains(uid)) {
+                    list.uidList.add(uid)
+                    list.socketMap[uid] = this
+                    list.uidSet.add(uid)
+                }
+            }
+        } else {
+            sendSerialized(RoomFrame.Error("no permission") as RoomFrame)
+        }
+    }
+}
+
+private suspend fun processSendAnswer(
+    frame: RoomFrame.SendAnswer,
+    uid: PrimaryKey,
+) {
+    val answer = frame.answer
+    val session = rtcSession[answer.roomId]
+    if (session != null) {
+        session.socketMap[answer.targetUid]?.sendSerialized(RoomFrame.RespondAnswer(answer))
+        session.answerList[uid]?.let {
+            it[answer.targetUid] = answer
+        }
+    }
+}
+
+private suspend fun processSendOffer(
+    frame: RoomFrame.SendOffer,
+    uid: PrimaryKey,
+) {
+    val offer = frame.offer
+    val session = rtcSession[offer.roomId]
+    if (session != null) {
+        session.socketMap[offer.targetUid]?.sendSerialized(RoomFrame.CreateAnswer(uid, offer))
+        session.offerList[uid]?.let {
+            it[offer.targetUid] = offer
+        }
     }
 }
 
@@ -309,7 +350,6 @@ private suspend fun Backend.saveEncryptedTopic(
     Result.failure(ForbiddenException("Private room only accept encrypted content."))
 }
 
-
 data class RtcSession(
     val roomId: PrimaryKey,
     val uidList: MutableList<PrimaryKey> = mutableListOf(),
@@ -340,11 +380,8 @@ suspend fun Backend.listenerRoomRtc() {
                             }
                         }
                     }
-                } else {
-
                 }
             }
-
         }
     }
 }

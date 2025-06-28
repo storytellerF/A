@@ -143,7 +143,7 @@ private fun BoxScope.RecorderButton(
                             Napier.i {
                                 "save to $path"
                             }
-                            uploadPath(path, sessionManager, mediaTarget, globalDialogController).mapIfNotNull {
+                            globalDialogController.uploadPath(path, sessionManager, mediaTarget).mapIfNotNull {
                                 uploadSuccess(it)
                             }
                         } else {
@@ -274,14 +274,13 @@ private suspend fun selectFileAndUpload(
     }
 }
 
-suspend fun uploadPath(
+suspend fun GlobalDialogController.uploadPath(
     path: Path,
     sessionManager: SessionManager,
     mediaTarget: ObjectTuple,
-    globalDialogController: GlobalDialogController,
 ): Result<List<MediaInfo>?> {
     val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
-    return globalDialogController.useResult {
+    return useResult {
         upload(
             sessionManager,
             mediaTarget,

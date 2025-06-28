@@ -35,7 +35,7 @@ suspend fun <R> SessionManager.serviceCatching(block: suspend HttpClient.() -> R
         Napier.e(point) {
             "serviceCatching"
         }
-        Result.failure(point)
+        Result.failure(e)
     }
 }
 

@@ -2,8 +2,8 @@ package com.storyteller_f.a.server.route
 
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.server.auth.bindProtectedAccountRoute
 import com.storyteller_f.a.server.auth.bindAccountRoute
+import com.storyteller_f.a.server.auth.bindProtectedAccountRoute
 import com.storyteller_f.a.server.auth.bindUnprotectedAccountRoute
 import com.storyteller_f.a.server.webSocketContent
 import io.ktor.server.application.*

@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -21,6 +22,7 @@ import com.mikepenz.markdown.model.ImageData
 import com.storyteller_f.a.app.LocalClient
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
+import kotlinx.coroutines.launch
 
 @Composable
 fun CommonImage(
@@ -46,8 +48,11 @@ fun CommonImage(
 @Composable
 fun ImageError(throwable: Throwable) {
     val globalDialogController = LocalGlobalDialog.current
+    val scope = rememberCoroutineScope()
     CustomIcon(IconRes.Font(MaterialSymbolsOutlined.Error)) {
-        globalDialogController.showErrorState(throwable)
+        scope.launch {
+            globalDialogController.showErrorMessage(throwable)
+        }
     }
 }
 

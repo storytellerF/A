@@ -42,7 +42,7 @@ suspend fun <T, R> Result<T?>.mapCatchingNotNull(block: suspend (T) -> R?): Resu
     }
 }
 
-suspend fun <T> Result<T?>.filterNull(block: suspend () -> Throwable): Result<T> {
+suspend fun <T> Result<T?>.filterNotNull(block: suspend () -> Throwable): Result<T> {
     return if (isSuccess) {
         val t = getOrNull()
         if (t == null) {
