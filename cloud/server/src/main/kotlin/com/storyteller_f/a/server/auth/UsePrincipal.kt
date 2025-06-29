@@ -75,10 +75,10 @@ suspend fun RoutingContext.respondError(e: Throwable) {
     }
 }
 
-inline fun <reified R : Any> DefaultWebSocketServerSession.usePrincipalOrNull(block: (PrimaryKey?) -> R?) {
+inline fun <reified R : Any> DefaultWebSocketServerSession.usePrincipal(block: (PrimaryKey) -> R?) {
     val uid = call.principal<CustomPrincipal>()?.uid
     if (uid == null) {
-        block(null)
+        return
     } else {
         block(uid)
     }

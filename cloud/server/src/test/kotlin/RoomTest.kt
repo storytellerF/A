@@ -1,23 +1,11 @@
-import com.storyteller_f.a.client.core.SessionManager
-import com.storyteller_f.a.client.core.createCommunity
-import com.storyteller_f.a.client.core.createRoom
-import com.storyteller_f.a.client.core.createTitle
-import com.storyteller_f.a.client.core.exitRoom
-import com.storyteller_f.a.client.core.getRoomInfo
-import com.storyteller_f.a.client.core.getRoomInfoByAid
-import com.storyteller_f.a.client.core.joinCommunity
-import com.storyteller_f.a.client.core.joinRoom
-import com.storyteller_f.a.client.core.searchRoomMembers
-import com.storyteller_f.a.client.core.searchRooms
-import com.storyteller_f.a.client.core.updateRoomInfo
+import com.storyteller_f.a.client.core.*
 import com.storyteller_f.shared.model.TitleType
-import com.storyteller_f.shared.obj.NewCommunity
-import com.storyteller_f.shared.obj.NewRoom
-import com.storyteller_f.shared.obj.NewTitle
-import com.storyteller_f.shared.obj.UpdateRoomBody
+import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import io.ktor.client.plugins.websocket.*
+import kotlinx.coroutines.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -183,6 +171,93 @@ class RoomTest {
             loginSession(firstSession) {
                 joinRoom(secondSession.custom.id).getOrThrow()
             }
+        }
+    }
+
+    @Test
+    fun `test rtc`() {
+        test {
+            val firstUser = attachSession {
+
+            }
+            val secondUser = attachSession {
+                val roomInfo = createRoom(NewRoom("test rtc", "rtc")).getOrThrow()
+                createTitle(
+                    NewTitle(
+                        "test",
+                        TitleType.JOIN,
+                        firstUser.uid,
+                        roomInfo.id,
+                        ObjectType.ROOM,
+                        "hello"
+                    )
+                ).getOrThrow()
+                roomInfo
+            }
+            coroutineScope {
+                launch {
+                    val list = mutableListOf<RoomFrame>()
+                    loginSession(secondUser, { frame, model ->
+                        list.add(frame)
+                    }) {
+                        while (true) {
+                            if (webSocketClient.connectionHandler.data.value != null) {
+                                break
+                            }
+                            withContext(Dispatchers.IO) {
+                                delay(100)
+                            }
+                        }
+                        webSocketClient.useWebSocket {
+                            sendSerialized(RoomFrame.StartCall(secondUser.custom.id) as RoomFrame)
+                        }?.join()
+                        var i = 0
+                        while (i < 10) {
+                            i++
+                            if (list.firstOrNull {
+                                    it is RoomFrame.CreateAnswer || it is RoomFrame.CreateOffer
+                                } != null) {
+                                break
+                            }
+                            withContext(Dispatchers.IO) {
+                                delay(100)
+                            }
+                        }
+                    }
+                }
+                launch {
+                    val list = mutableListOf<RoomFrame>()
+                    loginSession(firstUser, { frame, model ->
+                        list.add(frame)
+                    }) {
+                        joinRoom(secondUser.custom.id).getOrThrow()
+                        while (true) {
+                            if (webSocketClient.connectionHandler.data.value != null) {
+                                break
+                            }
+                            withContext(Dispatchers.IO) {
+                                delay(100)
+                            }
+                        }
+                        webSocketClient.useWebSocket {
+                            sendSerialized(RoomFrame.StartCall(secondUser.custom.id) as RoomFrame)
+                        }?.join()
+                        var i = 0
+                        while (i < 10) {
+                            i++
+                            if (list.firstOrNull {
+                                    it is RoomFrame.CreateAnswer || it is RoomFrame.CreateOffer
+                                } != null) {
+                                break
+                            }
+                            withContext(Dispatchers.IO) {
+                                delay(100)
+                            }
+                        }
+                    }
+                }
+            }
+
         }
     }
 }

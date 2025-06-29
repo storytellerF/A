@@ -1,6 +1,7 @@
 package com.storyteller_f.a.client.core
 
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.CustomOffer
 import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.websocket.*
@@ -49,7 +50,7 @@ interface WebSocketClient {
 class WebSocketClientImpl(
     val sessionModel: SessionModel,
     val buildConnection: suspend (UserInfo, String) -> DefaultClientWebSocketSession,
-    val onMessage: suspend (RoomFrame) -> Unit
+    val onMessage: suspend (RoomFrame) -> Unit,
 ) : WebSocketClient {
     override val connectionHandler = FixedLoadingHandler<DefaultClientWebSocketSession>()
     override val localState = MutableStateFlow<LoadingState?>(null)
@@ -115,21 +116,32 @@ class WebSocketClientImpl(
         session.launch {
             while (true) {
                 try {
-                    when (val frame = session.receiveDeserialized<RoomFrame>()) {
+                    val frame = session.receiveDeserialized<RoomFrame>()
+                    Napier.i(tag = "ClientWebSocket") {
+                        "client receive $frame"
+                    }
+                    onMessage(frame)
+                    when (frame) {
                         is RoomFrame.Error -> {
                             remoteState.emit(frame)
-                            onMessage(frame)
                         }
 
                         is RoomFrame.NewTopicInfo -> {
-                            onMessage(frame)
                             listeners.forEach {
                                 it.onReceived(frame)
                             }
                         }
 
-                        is RoomFrame.Message -> {
-                            onMessage(frame)
+                        is RoomFrame.CreateOffer -> {
+                            session.sendSerialized(
+                                RoomFrame.SendOffer(
+                                    CustomOffer(
+                                        "offer",
+                                        frame.roomId,
+                                        frame.targetUid
+                                    )
+                                )
+                            )
                         }
 
                         else -> {}
