@@ -28,6 +28,7 @@ import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.bottomAppending
+import com.storyteller_f.a.app.common.debounceState
 import com.storyteller_f.a.app.common.topPrepend
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
@@ -172,6 +173,7 @@ private fun RoomMessageList(
     items: LazyPagingItems<TopicInfo>,
     lazyListState: LazyListState,
 ) {
+    val debounced = debounceState(items.loadState)
     StateView(items) {
         LazyColumn(
             state = lazyListState,
@@ -179,7 +181,7 @@ private fun RoomMessageList(
             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
             reverseLayout = true,
         ) {
-            bottomAppending(items)
+            bottomAppending(debounced)
             items(
                 count = items.itemCount,
                 key = items.itemKey { topicInfo ->
@@ -198,7 +200,9 @@ private fun RoomMessageList(
                     info != null && next?.author != info.author
                 )
             }
-            topPrepend(items)
+            topPrepend(debounced) {
+                items.refresh()
+            }
         }
     }
 }
@@ -451,7 +455,7 @@ fun CommonInputButton(
         is LoadingState.Error -> {
             IconButton({
                 scope.launch {
-                    globalDialogController.showErrorState(state.e)
+                    globalDialogController.showErrorMessage(state.e)
                 }
             }) {
                 Icon(Icons.Default.Error, stringResource(Res.string.error))

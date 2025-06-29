@@ -21,6 +21,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.bottomAppending
+import com.storyteller_f.a.app.common.debounceState
 import com.storyteller_f.a.app.common.topPrepend
 import com.storyteller_f.a.app.compontents.TopicCell
 import com.storyteller_f.a.app.model.createWorldViewModel
@@ -39,13 +40,16 @@ fun TopicList(
     showAvatar: Boolean = true,
     contentAlignAvatar: Boolean = true,
 ) {
+    val debounced = debounceState(items.loadState)
     StateView(items) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            topPrepend(items)
+            topPrepend(debounced) {
+                items.refresh()
+            }
             items(
                 count = items.itemCount,
                 key = items.itemKey {
@@ -57,7 +61,7 @@ fun TopicList(
                     HorizontalDivider()
                 }
             }
-            bottomAppending(items)
+            bottomAppending(debounced)
         }
     }
 }

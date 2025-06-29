@@ -13,6 +13,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.bottomAppending
+import com.storyteller_f.a.app.common.debounceState
 import com.storyteller_f.a.app.common.topPrepend
 import com.storyteller_f.a.app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compontents.UserIcon
@@ -23,13 +24,16 @@ import com.storyteller_f.shared.type.ObjectType
 
 @Composable
 fun TitleList(pagingItems: LazyPagingItems<TitleInfo>) {
+    val debounced = debounceState(pagingItems.loadState)
     StateView(pagingItems) {
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            topPrepend(pagingItems)
+            topPrepend(debounced) {
+                pagingItems.refresh()
+            }
             items(
                 count = pagingItems.itemCount,
                 key = pagingItems.itemKey {
@@ -41,7 +45,7 @@ fun TitleList(pagingItems: LazyPagingItems<TitleInfo>) {
                     TitleItem(it)
                 }
             }
-            bottomAppending(pagingItems)
+            bottomAppending(debounced)
         }
     }
 }

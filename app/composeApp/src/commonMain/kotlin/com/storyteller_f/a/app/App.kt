@@ -1,26 +1,12 @@
 package com.storyteller_f.a.app
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
-import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
@@ -32,27 +18,15 @@ import com.dokar.sonner.rememberToasterState
 import com.kdroid.composenotification.builder.ExperimentalNotificationsApi
 import com.kdroid.composenotification.builder.Notification
 import com.kdroid.composenotification.builder.getNotificationProvider
-import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
-import com.mikepenz.aboutlibraries.ui.compose.m3.LibraryDefaults
-import com.mikepenz.aboutlibraries.ui.compose.m3.rememberLibraries
 import com.russhwolf.settings.Settings
-import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.compontents.*
-import com.storyteller_f.a.app.model.*
-import com.storyteller_f.a.app.pages.PreferencePage
-import com.storyteller_f.a.app.pages.community.CommunityComposePage
-import com.storyteller_f.a.app.pages.community.CommunityPage
-import com.storyteller_f.a.app.pages.community.CommunitySettingPage
+import com.storyteller_f.a.app.model.DownloadViewModel
+import com.storyteller_f.a.app.model.OnTopicCreated
+import com.storyteller_f.a.app.model.getDownloadViewModel
 import com.storyteller_f.a.app.pages.media.MediaPage
-import com.storyteller_f.a.app.pages.room.RoomComposePage
-import com.storyteller_f.a.app.pages.room.RoomPage
-import com.storyteller_f.a.app.pages.room.RoomSettingPage
-import com.storyteller_f.a.app.pages.title.TitleComposePage
-import com.storyteller_f.a.app.pages.topic.BaseSheet
-import com.storyteller_f.a.app.pages.topic.SheetContainer
-import com.storyteller_f.a.app.pages.topic.TopicComposePage
-import com.storyteller_f.a.app.pages.topic.TopicPage
-import com.storyteller_f.a.app.pages.user.*
+import com.storyteller_f.a.app.pages.user.AccountSwitch
+import com.storyteller_f.a.app.pages.user.AccountSwitcher
+import com.storyteller_f.a.app.pages.user.switchUser
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.app.utils.createCustomDataStoreManager
@@ -60,34 +34,25 @@ import com.storyteller_f.a.app.utils.createSettings
 import com.storyteller_f.a.app.utils.platform
 import com.storyteller_f.a.app.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.*
-import com.storyteller_f.shared.calcAddress
-import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
-import com.storyteller_f.shared.getPemPrivateKeyFromDer
 import com.storyteller_f.shared.kmpLogger
-import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.storage.*
+import com.storyteller_f.storage.StorageSource
+import com.storyteller_f.storage.createKotbaseStorageSource
 import com.strabled.composepreferences.ProvideDataStoreManager
 import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
-import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -97,6 +62,10 @@ object StaticObj {
         Napier.base(kmpLogger)
     }
 }
+
+fun getAsyncImageLoader(context: PlatformContext) =
+    ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
+
 
 val LocalAppNav = compositionLocalOf {
     AppNav.EMPTY
@@ -143,44 +112,6 @@ val LocalAccountSwitcher = compositionLocalOf<AccountSwitcher> {
     error("not found")
 }
 
-@Serializable
-data object HomeScreen
-
-@Serializable
-data class CommunityScreen(val communityId: PrimaryKey, val showDialog: Boolean)
-
-@Serializable
-data class RoomScreen(val roomId: PrimaryKey, val showDialog: Boolean)
-
-@Serializable
-data object LoginScreen
-
-@Serializable
-data class TopicScreen(val topicId: PrimaryKey)
-
-@Serializable
-data object AboutScreen
-
-@Serializable
-data class UserScreen(val uid: PrimaryKey)
-
-@Serializable
-data class TopicComposeScreen(
-    val objectType: String,
-    val objectId: PrimaryKey,
-    val enableExperimental: Boolean,
-    val privateRoomId: PrimaryKey?,
-    val communityId: PrimaryKey?,
-)
-
-@Serializable
-data class MemberScreen(val objectType: String, val objectId: PrimaryKey)
-
-@Serializable
-data object UserSettingScreen
-
-@Serializable
-data object PreferenceScreen
 
 @Serializable
 sealed interface MediaPlaySession {
@@ -208,24 +139,6 @@ sealed interface MediaPlaySession {
 
 @OptIn(ExperimentalUuidApi::class)
 data class LocalMediaPlaySession(val id: String, val uuid: Uuid)
-
-@Serializable
-data class MediaScreen(val json: String)
-
-@Serializable
-data object TitleComposeScreen
-
-@Serializable
-data object CommunityComposeScreen
-
-@Serializable
-data object RoomComposeScreen
-
-@Serializable
-data class CommunitySettingScreen(val communityId: PrimaryKey)
-
-@Serializable
-data class RoomSettingScreen(val roomId: PrimaryKey)
 
 @Composable
 fun App() {
@@ -256,7 +169,7 @@ private fun MainAppPage(
     if (isPip && localSession != null) {
         MediaPage(localSession)
     } else {
-        val appNav = remember<AppNav> {
+        val appNav = remember {
             newAppNav(navigator, json)
         }
         ObserveMessage({
@@ -289,12 +202,12 @@ fun CommonEntry(
         val accountSwitcher = remember {
             AccountSwitcher()
         }
-        val mainUserSessionManager = createSessionManager("main", wsServerUrl, httpUrl)
+        val mainUserSessionManager = createAppSessionManager("main", wsServerUrl, httpUrl)
         var currentUser by remember {
             mutableStateOf<RawUserPass?>(null)
         }
         val currentUserSessionManager = currentUser?.let {
-            val sessionManager = createSessionManager("alternative$it", wsServerUrl, httpUrl)
+            val sessionManager = createAppSessionManager("alternative$it", wsServerUrl, httpUrl)
             sessionManager.sessionModel.updateState(ClientSessionState.Success(it))
             sessionManager
         } ?: mainUserSessionManager
@@ -314,7 +227,6 @@ fun CommonEntry(
         }
         CommonEntryContent(
             database,
-            address,
             globalDialogController,
             toasterState,
             currentUserSessionManager,
@@ -332,7 +244,6 @@ fun CommonEntry(
 @Composable
 fun CommonEntryContent(
     database: StorageSource,
-    address: String?,
     globalDialogController: CustomGlobalDialogController,
     toasterState: ToasterState,
     currentUserSessionManager: CustomSessionManager,
@@ -342,10 +253,8 @@ fun CommonEntryContent(
     switch: (RawUserPass) -> Unit,
     content: @Composable () -> Unit,
 ) {
-    LaunchedEffect(database, address) {
-        bus.collect { event ->
-            processEvent(event, database)
-        }
+    LaunchedEffect(database) {
+        processEvent(database)
     }
     GlobalDialog(globalDialogController)
     Toaster(toasterState, alignment = Alignment.Center)
@@ -381,29 +290,8 @@ fun CommonEntryContent(
     }
 }
 
-private fun switchUser(
-    scope: CoroutineScope,
-    globalDialogController: GlobalDialogController,
-    derPrivateKeyStr: String,
-    switch: (RawUserPass) -> Unit,
-) {
-    scope.launch {
-        globalDialogController.useResult {
-            getPemPrivateKeyFromDer(derPrivateKeyStr).mapResult { pemPrivateKey ->
-                getDerPublicKeyFromPrivateKey(pemPrivateKey).mapResult { publicKey ->
-                    calcAddress(publicKey).map { address ->
-                        RawUserPass(RawUserPassInfo(pemPrivateKey, publicKey, address))
-                    }
-                }
-            }
-        }.getOrNull()?.let {
-            switch(it)
-        }
-    }
-}
-
 @Composable
-private fun createSessionManager(
+private fun createAppSessionManager(
     settingName: String,
     wsServerUrl: String,
     httpUrl: String,
@@ -449,139 +337,6 @@ fun buildWebSocketUrl(wsServerUrl: String): String = buildUrl {
     appendPathSegments("link")
 }.toString()
 
-private fun processEvent(event: Any, database: StorageSource) {
-    when (event) {
-        is OnAddReaction -> processOnAddReaction(database, event)
-
-        is OnRemoveReaction -> processRemoveReaction(database, event)
-
-        is OnCommunityJoined -> database.getCollection("communities", CommunityInfo::class)
-            .save(event.info.id, event.info)
-
-        is OnCommunityExited -> database.getCollection("communities", CommunityInfo::class)
-            .save(event.info.id, event.info)
-
-        is OnCommunityUpdated -> {
-            database.getCollection("communities", CommunityInfo::class).save(event.info.id, event.info)
-            database.getCollectionByPrefix("communities_", CommunityInfo::class).filter {
-                it.exists(StorageExpression.IdEq("id", event.info.id))
-            }.forEach {
-                it.save(event.info.id, event.info)
-            }
-        }
-
-        is OnTopicChanged -> processTopicChanged(event, database)
-
-        is OnTopicCreated -> processTopicCreated(event, database)
-
-        is OnRoomJoined -> database.getCollection("rooms", RoomInfo::class).save(event.info.id, event.info)
-
-        is OnRoomExited -> database.getCollection("rooms", RoomInfo::class).save(event.info.id, event.info)
-
-        is OnRoomUpdated -> {
-            database.getCollection("rooms", RoomInfo::class).save(event.info.id, event.info)
-            database.getCollectionByPrefix("rooms_", RoomInfo::class).filter {
-                it.exists(StorageExpression.IdEq("id", event.info.id))
-            }.forEach {
-                it.save(event.info.id, event.info)
-            }
-        }
-
-        is OnUserUpdated -> {
-            database.getCollection("users", UserInfo::class).save(event.info.id, event.info)
-            database.getCollectionByPrefix("users_", UserInfo::class).filter {
-                it.exists(StorageExpression.IdEq("id", event.info.id))
-            }.forEach {
-                it.save(event.info.id, event.info)
-            }
-        }
-
-        is OnMediaUploaded -> {
-            event.mediaInfos.forEach {
-                database.getCollection("medias_${it.owner}", MediaInfo::class).save(it.id, it)
-            }
-        }
-    }
-}
-
-private fun processTopicCreated(
-    event: OnTopicCreated,
-    database: StorageSource,
-) {
-    val topicInfo = event.topicInfo
-    database.getCollection("topics_${topicInfo.parentId}", TopicInfo::class).save(topicInfo.id, topicInfo)
-    with(database.getCollection("topics", TopicInfo::class)) {
-        save(topicInfo.id, topicInfo)
-        topicInfo.aid?.let { saveDocument(it, topicInfo) }
-    }
-}
-
-private fun processTopicChanged(
-    event: OnTopicChanged,
-    database: StorageSource,
-) {
-    val topicInfo = event.topicInfo
-    database.getCollection("topics_${topicInfo.parentId}", TopicInfo::class).save(topicInfo.id, topicInfo)
-    with(database.getCollection("topics", TopicInfo::class)) {
-        save(topicInfo.id, topicInfo)
-        topicInfo.aid?.let { saveDocument(it, topicInfo) }
-    }
-    // 尝试更新到推荐
-    with(database.getCollection("topics_0", TopicInfo::class)) {
-        if (exists(StorageExpression.IdEq("id", topicInfo.id))) {
-            save(topicInfo.id, topicInfo)
-        }
-    }
-}
-
-private fun processRemoveReaction(
-    database: StorageSource,
-    event: OnRemoveReaction,
-) {
-    database.getCollection("topic", TopicInfo::class).update(event.topicId) { old ->
-        val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
-        val new = extension.reactions.orEmpty().map { info ->
-            when {
-                info.emoji != event.emoji -> info
-                !info.hasReacted -> info
-                else -> info.copy(count = info.count - 1, hasReacted = false)
-            }
-        }.toImmutableList()
-        old.copy(extension = extension.copy(reactions = new), reactionCount = old.reactionCount + 1)
-    }
-}
-
-private fun processOnAddReaction(
-    database: StorageSource,
-    event: OnAddReaction,
-) {
-    database.getCollection("topic", TopicInfo::class).update(event.topicId) { old ->
-        val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
-        val newReactionInfo = extension.reactions.orEmpty().map { info ->
-            when {
-                info.emoji != event.emoji -> info
-                info.hasReacted -> info
-                else -> info.copy(count = info.count + 1, hasReacted = true)
-            }
-        }.toImmutableList()
-        old.copy(extension = extension.copy(reactions = newReactionInfo), reactionCount = old.reactionCount + 1)
-    }
-}
-
-@Composable
-fun TestContainer(block: @Composable () -> Unit) {
-    CommonEntry("", "", {
-        val appNav = remember {
-            AppNav.EMPTY
-        }
-        CompositionLocalProvider(LocalAppNav provides appNav) {
-            val ws = WebSocketClient.EMPTY
-            CompositionLocalProvider(LocalWsClient provides ws) {
-                block()
-            }
-        }
-    })
-}
 
 private fun buildWsListener(
     messageToasterState: ToasterState,
@@ -637,361 +392,14 @@ private fun ObserveMessage(
     val listener = remember(hasPermission) {
         buildWsListener(messageToasterState, hasPermission, roomScreenId, topicScreenId, sessionManager, onClickTopic)
     }
-    clientWebSocketImpl.addListener(listener)
     DisposableEffect(null) {
+        clientWebSocketImpl.addListener(listener)
         onDispose {
             clientWebSocketImpl.removeListener(listener)
         }
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
-private fun NavGraphBuilder.buildRootNav(
-    navigator: NavHostController,
-) {
-    buildMainScreen()
-    composable<AboutScreen> {
-        val libraries by rememberLibraries {
-            Res.readBytes("files/aboutlibraries.json").decodeToString()
-        }
-        Surface {
-            LibrariesContainer(
-                libraries,
-                Modifier.fillMaxSize().statusBarsPadding(),
-                colors = LibraryDefaults.libraryColors(backgroundColor = MaterialTheme.colorScheme.background)
-            )
-        }
-    }
-    composable<MediaScreen> {
-        val json = LocalJson.current
-        val route = it.toRoute<MediaScreen>()
-        val pack = json.decodeFromString<MediaPlaySession>(route.json)
-        MediaPage(pack)
-    }
-    buildComposeScreen(navigator)
-}
-
-private fun NavGraphBuilder.buildMainScreen() {
-    composable<HomeScreen> {
-        HomePage()
-    }
-    composable<LoginScreen> {
-        LoginPage()
-    }
-    composable<CommunityScreen> {
-        val screen = it.toRoute<CommunityScreen>()
-        CommunityPage(screen.communityId, screen.showDialog)
-    }
-    composable<RoomScreen> {
-        val screen = it.toRoute<RoomScreen>()
-        RoomPage(screen.roomId, screen.showDialog)
-    }
-    composable<TopicScreen> {
-        TopicPage(it.toRoute<TopicScreen>().topicId)
-    }
-
-    composable<MemberScreen> {
-        val (objectType, objectId) = it.toRoute<MemberScreen>()
-        MemberPage(objectId, ObjectType.valueOf(objectType))
-    }
-    composable<UserScreen> {
-        val route = it.toRoute<UserScreen>()
-        UserPage(route.uid)
-    }
-    composable<UserSettingScreen> {
-        UserSettingPage()
-    }
-    composable<PreferenceScreen> {
-        PreferencePage()
-    }
-    composable<CommunitySettingScreen> {
-        val communityId = it.toRoute<CommunitySettingScreen>().communityId
-        CommunitySettingPage(communityId)
-    }
-    composable<RoomSettingScreen> {
-        val roomId = it.toRoute<RoomSettingScreen>().roomId
-        RoomSettingPage(roomId)
-    }
-}
-
-private fun NavGraphBuilder.buildComposeScreen(navigator: NavHostController) {
-    composable<TitleComposeScreen> {
-        TitleComposePage()
-    }
-    composable<CommunityComposeScreen> {
-        CommunityComposePage()
-    }
-    composable<RoomComposeScreen> {
-        RoomComposePage()
-    }
-    composable<TopicComposeScreen> {
-        val (objectType, objectId, enableExperimental, privateRoomId, communityId) = it.toRoute<TopicComposeScreen>()
-        TopicComposePage(ObjectType.valueOf(objectType), objectId, enableExperimental, privateRoomId, communityId) {
-            navigator.popBackStack()
-        }
-    }
-}
-
-private fun newAppNav(navigator: NavHostController, json: Json) = object : AppNav {
-    override val currentDestination: NavBackStackEntry?
-        get() = navigator.currentBackStackEntry
-    override val currentDestinationFlow: Flow<NavBackStackEntry>
-        get() = navigator.currentBackStackEntryFlow
-
-    override fun gotoLogin() {
-        navigator.navigate(route = LoginScreen)
-    }
-
-    override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) {
-        navigator.navigate(route = RoomScreen(roomId, showDialog))
-    }
-
-    override fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean) {
-        navigator.navigate(route = CommunityScreen(communityId, showDialog))
-    }
-
-    override fun gotoTopic(topicId: PrimaryKey) {
-        navigator.navigate(route = TopicScreen(topicId))
-    }
-
-    override fun gotoHome() {
-        navigator.popBackStack(HomeScreen, false)
-    }
-
-    override fun gotoTopicCompose(
-        objectType: ObjectType,
-        objectId: PrimaryKey,
-        enableExperimental: Boolean,
-        privateRoomId: PrimaryKey?,
-        communityId: PrimaryKey?,
-    ) {
-        navigator.navigate(
-            TopicComposeScreen(
-                objectType.name,
-                objectId,
-                enableExperimental,
-                privateRoomId,
-                communityId
-            )
-        )
-    }
-
-    override fun gotoMemberPage(
-        objectId: PrimaryKey,
-        objectType: ObjectType,
-    ) {
-        navigator.navigate(MemberScreen(objectType.name, objectId))
-    }
-
-    override fun gotoAbout() {
-        navigator.navigate(AboutScreen)
-    }
-
-    override fun gotoUser(uid: PrimaryKey) {
-        navigator.navigate(UserScreen(uid))
-    }
-
-    override fun back() {
-        navigator.popBackStack()
-    }
-
-    override fun gotoUserSetting() {
-        navigator.navigate(UserSettingScreen)
-    }
-
-    override fun gotoPreference() {
-        navigator.navigate(PreferenceScreen)
-    }
-
-    override fun gotoMedia(info: MediaInfo) {
-        val route = MediaScreen(json.encodeToString<MediaPlaySession>(MediaPlaySession.Image(info)))
-        navigator.navigate(route)
-    }
-
-    override fun gotoLocalImage(url: String) {
-        val route = MediaScreen(json.encodeToString<MediaPlaySession>(MediaPlaySession.LocalImage(url)))
-        navigator.navigate(route)
-    }
-
-    override fun gotoTitleCompose() {
-        navigator.navigate(TitleComposeScreen)
-    }
-
-    override fun gotoCommunityCompose() {
-        navigator.navigate(CommunityComposeScreen)
-    }
-
-    override fun gotoRoomCompose() {
-        navigator.navigate(RoomComposeScreen)
-    }
-
-    override fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType) {
-        if (objectType == ObjectType.COMMUNITY) {
-            navigator.navigate(CommunitySettingScreen(objectId))
-        } else {
-            navigator.navigate(RoomSettingScreen(objectId))
-        }
-    }
-}
-
-fun getAsyncImageLoader(context: PlatformContext) =
-    ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
-
-val bus = MutableSharedFlow<Any>()
-
-inline fun <reified T : Any> AppNav.toRoute(): T? {
-    if (!hasRoute(T::class)) return null
-    return currentDestination?.toRoute<T>()
-}
-
-inline fun <reified T : Any> AppNav.hasRouteFlow(crossinline block: (T) -> Boolean = { true }): Flow<Boolean> {
-    return currentDestinationFlow.map {
-        it.destination.hasRoute<T>() && block(it.toRoute<T>())
-    }
-}
-
-interface AppNav {
-    val currentDestination: NavBackStackEntry?
-
-    val currentDestinationFlow: Flow<NavBackStackEntry>
-
-    fun <T : Any> hasRoute(any: KClass<T>): Boolean {
-        return currentDestination?.destination?.hasRoute(any) == true
-    }
-
-    fun gotoLogin()
-
-    fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean)
-
-    fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean)
-
-    fun gotoTopic(topicId: PrimaryKey)
-
-    fun gotoHome()
-
-    fun gotoTopicCompose(
-        objectType: ObjectType,
-        objectId: PrimaryKey,
-        enableExperimental: Boolean,
-        privateRoomId: PrimaryKey?,
-        communityId: PrimaryKey?,
-    )
-
-    fun gotoMemberPage(objectId: PrimaryKey, objectType: ObjectType)
-
-    fun gotoAbout()
-
-    fun gotoUser(uid: PrimaryKey)
-
-    fun back()
-
-    fun gotoUserSetting()
-
-    fun gotoPreference()
-
-    fun gotoMedia(info: MediaInfo)
-
-    fun gotoLocalImage(url: String)
-
-    fun gotoTitleCompose()
-
-    fun gotoCommunityCompose()
-
-    fun gotoRoomCompose()
-
-    fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType)
-
-    companion object {
-        val EMPTY = object : AppNav {
-            override val currentDestination: NavBackStackEntry
-                get() = TODO("Not yet implemented")
-
-            override val currentDestinationFlow: Flow<NavBackStackEntry>
-                get() = TODO("Not yet implemented")
-
-            override fun gotoLogin() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoTopic(topicId: PrimaryKey) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoHome() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoTopicCompose(
-                objectType: ObjectType,
-                objectId: PrimaryKey,
-                enableExperimental: Boolean,
-                privateRoomId: PrimaryKey?,
-                communityId: PrimaryKey?,
-            ) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoMemberPage(
-                objectId: PrimaryKey,
-                objectType: ObjectType,
-            ) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoAbout() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoUser(uid: PrimaryKey) {
-                TODO("Not yet implemented")
-            }
-
-            override fun back() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoUserSetting() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoPreference() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoMedia(info: MediaInfo) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoLocalImage(url: String) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoTitleCompose() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoCommunityCompose() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoRoomCompose() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType) {
-                TODO("Not yet implemented")
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalNotificationsApi::class)
 private suspend fun sendTopicNotification(
@@ -1031,81 +439,13 @@ fun ToasterState.showShortToast(message: String) {
     show(message, duration = 1.seconds)
 }
 
-class AccountSwitcher(val state: MutableState<Boolean> = mutableStateOf(false)) {
-    fun switch() {
-        state.value = true
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
-    var expand by accountSwitcher.state
-    val sheetState = rememberModalBottomSheetState()
-    BaseSheet(expand, sheetState, {
-        expand = false
-    }) {
-        SheetContainer {
-            val currentUserSessionManager = LocalSessionManager.current
-            val mainSessionManager = LocalMainSessionManager.current
-            val currentAddress by currentUserSessionManager.address.collectAsState()
-            val mainAddress by currentUserSessionManager.address.collectAsState()
-            val isSwitched = currentAddress != mainAddress
-            val scope = rememberCoroutineScope()
-            val globalDialogController = LocalGlobalDialog.current
-            CompositionLocalProvider(LocalSessionManager provides mainSessionManager) {
-                val viewModel = getAlternativeAccountsViewModel()
-                val pagingItems = viewModel.flow.collectAsLazyPagingItems()
-                if (isSwitched) {
-                    ButtonNav(Icons.AutoMirrored.Filled.ArrowBack, "Back") {
-                        val rawUserPass = mainSessionManager.sessionModel.currentUserPass as? RawUserPass
-                        val pemPrivateKey = rawUserPass?.rawUSerPass?.pemPrivateKey
-                        pemPrivateKey?.let {
-                            switch(it)
-                        }
-                    }
-                } else {
-                    ButtonNav(Icons.Default.Add, "Back") {
-                        scope.launch {
-                            globalDialogController.useResult {
-                                mainSessionManager.addAlternativeAccount()
-                            }.getOrNull()?.let {
-                                pagingItems.refresh()
-                            }
-                        }
-                    }
-                }
-                StateView(pagingItems, modifier = Modifier.height(300.dp)) {
-                    LazyColumn(
-                        contentPadding = PaddingValues(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        items(pagingItems.itemCount, key = pagingItems.itemKey { accountInfo ->
-                            accountInfo.id
-                        }) {
-                            val alternativeAccountInfo = pagingItems[it]
-                            alternativeAccountInfo?.let {
-                                UserCell(it.userInfo, false) {
-                                    switch(alternativeAccountInfo.privateKey)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 class CustomSessionManager(
-    client: HttpClient,
-    webSocketClient: WebSocketClientImpl,
-    sessionModel: SessionModel,
+    manager: UserSessionManager,
     val settings: Settings,
 ) : UserSessionManager(
-    client,
-    webSocketClient,
-    sessionModel
+    manager.client,
+    manager.webSocketClient,
+    manager.sessionModel
 )
 
 fun createCustomUserSessionManager(
@@ -1115,20 +455,7 @@ fun createCustomUserSessionManager(
     onReceiveFrame: suspend (RoomFrame, UserSessionModel) -> Unit,
 ): CustomSessionManager {
     val settings = createSettings(settingsName)
-    val cookieManager = AcceptAllCookiesStorage()
-    val model = UserSessionModel()
-    val client = createClient(model, cookieManager)
-    val webSocketClient = WebSocketClientImpl(
-        model,
-        { userInfo, sig ->
-            client.webSocketSession(webSocketUrl) {
-                addRequestHeaders(userInfo, sig)
-            }
-        },
-    ) {
-        onReceiveFrame(it, model)
-    }
-    val customSessionManager = CustomSessionManager(client, webSocketClient, model, settings)
+    val customSessionManager = createUserSessionManager(webSocketUrl, createClient, onReceiveFrame)
     customSessionManager.restoreFromStorage(settings)
-    return customSessionManager
+    return CustomSessionManager(customSessionManager, settings)
 }

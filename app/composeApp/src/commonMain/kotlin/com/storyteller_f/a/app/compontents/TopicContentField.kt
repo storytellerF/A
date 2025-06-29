@@ -24,6 +24,7 @@ import com.storyteller_f.a.app.permission_denied
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.type.CustomImmutableList
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toImmutableList
@@ -72,7 +73,7 @@ fun TopicContentField(
 
 @Composable
 private fun TopicContentFieldInternal(
-    rawMediaList: ImmutableList<MediaInfo>,
+    rawMediaList: CustomImmutableList<MediaInfo>,
     plain: String,
     isEmbed: Boolean,
 ) {

@@ -36,6 +36,7 @@ sealed interface StorageExpression {
     data class StrEq(val field: String, val value: String) : StorageExpression
     data class Less(val field: String, val value: PrimaryKey) : StorageExpression
     data class StrLess(val field: String, val value: String) : StorageExpression
+    data class IntLess(val field: String, val value: Int) : StorageExpression
 }
 
 interface StorageSource {

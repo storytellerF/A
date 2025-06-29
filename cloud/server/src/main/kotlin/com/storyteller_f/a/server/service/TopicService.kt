@@ -23,6 +23,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import io.ktor.http.*
 import io.ktor.server.plugins.*
+import kotlinx.collections.immutable.toImmutableList
 import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
@@ -379,8 +380,8 @@ suspend fun Backend.processTopicExtension(
                 it.copy(
                     extension = TopicInfo.Extension(
                         authorInfo,
-                        subTopics = processedSubTopicMap[it.id],
-                        reactions = reactionMap[it.id],
+                        subTopics = processedSubTopicMap[it.id]?.toImmutableList(),
+                        reactions = reactionMap[it.id]?.toImmutableList(),
                     )
                 )
             }

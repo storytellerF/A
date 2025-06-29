@@ -92,6 +92,7 @@ class KotbaseStorageCollection<T>(
         is StorageExpression.StrEq -> expression.field equalTo expression.value
         is StorageExpression.Less -> expression.field lessThan expression.value
         is StorageExpression.StrLess -> expression.field lessThan expression.value
+        is StorageExpression.IntLess -> expression.field lessThan expression.value
     }
 
     override fun deleteDocument(id: String) {

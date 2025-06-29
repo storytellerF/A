@@ -6,9 +6,7 @@ import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.*
-import java.net.SocketTimeoutException
 
 interface WebSocketClientListener {
     suspend fun onReceived(frame: RoomFrame)
@@ -114,7 +112,7 @@ class WebSocketClientImpl(
 
     private fun startListenerWebSocket(session: DefaultClientWebSocketSession) {
         session.launch {
-            while (true) {
+            while (session.isActive) {
                 try {
                     val frame = session.receiveDeserialized<RoomFrame>()
                     Napier.i(tag = "ClientWebSocket") {
@@ -146,22 +144,11 @@ class WebSocketClientImpl(
 
                         else -> {}
                     }
-                } catch (_: ClosedReceiveChannelException) {
-                    Napier.i(tag = "ClientWebSocket") {
-                        "web socket closed"
-                    }
-                    break
-                } catch (_: SocketTimeoutException) {
-                    Napier.i(tag = "ClientWebSocket") {
-                        "web socket timeout"
-                    }
-                    break
-                } catch (_: CancellationException) {
-                    break
                 } catch (e: Exception) {
                     Napier.e(e, tag = "ClientWebSocket") {
-                        "startListenerWebSocket failed"
+                        "Listener WebSocket failed: ${session.isActive}"
                     }
+                    break
                 }
             }
         }

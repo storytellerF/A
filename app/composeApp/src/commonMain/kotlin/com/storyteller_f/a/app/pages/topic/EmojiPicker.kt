@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.sp
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
+import com.storyteller_f.a.app.compontents.BaseSheet
+import com.storyteller_f.a.app.compontents.SheetContainer
 import com.storyteller_f.a.app.model.OnAddReaction
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.shared.model.TopicInfo
@@ -32,7 +34,7 @@ fun EmojiPicker(
     sheetState: SheetState,
     showSheet: Boolean,
     topic: TopicInfo,
-    hideSheet: () -> Unit
+    hideSheet: () -> Unit,
 ) {
     var query by remember {
         mutableStateOf("")
@@ -44,37 +46,6 @@ fun EmojiPicker(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BaseSheet(
-    showSheet: Boolean,
-    sheetState: SheetState,
-    hideSheet: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    if (showSheet) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                hideSheet()
-            },
-            dragHandle = null,
-            sheetState = sheetState,
-            contentWindowInsets = {
-                WindowInsets(0)
-            },
-        ) {
-            content()
-        }
-    }
-}
-
-@Composable
-fun SheetContainer(block: @Composable ColumnScope.() -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().consumeWindowInsets(WindowInsets.navigationBars)) {
-        Spacer(modifier = Modifier.height(20.dp))
-        block()
-    }
-}
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -142,17 +113,18 @@ private fun EmojiItem(
     topic: TopicInfo,
     emoji: Emoji,
     sheetState: SheetState,
-    hideSheet: () -> Unit
+    hideSheet: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     Box(modifier = Modifier.size(emojiSize).clickable {
         scope.launch {
-            globalDialogController.use {
-                sessionManager.addReaction(topic.id, emoji.details.string)
-                bus.emit(OnAddReaction(topic.id, emoji.details.string))
-                sheetState.hide()
+            globalDialogController.useResult {
+                sessionManager.addReaction(topic.id, emoji.details.string).onSuccess {
+                    bus.emit(OnAddReaction(it))
+                    sheetState.hide()
+                }
             }
         }.invokeOnCompletion {
             if (!sheetState.isVisible) {

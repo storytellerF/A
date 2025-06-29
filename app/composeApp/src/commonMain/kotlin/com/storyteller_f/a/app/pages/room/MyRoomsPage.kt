@@ -19,6 +19,7 @@ import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.bottomAppending
+import com.storyteller_f.a.app.common.debounceState
 import com.storyteller_f.a.app.common.topPrepend
 import com.storyteller_f.a.app.compontents.CommonImage
 import com.storyteller_f.a.app.compontents.CommunityIcon
@@ -40,13 +41,16 @@ fun RoomList(
     items: LazyPagingItems<RoomInfo>,
     onClick: ((RoomInfo) -> Unit)? = null
 ) {
+    val debounced = debounceState(items.loadState)
     StateView(items) {
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            topPrepend(items)
+            topPrepend(debounced) {
+                items.refresh()
+            }
             items(
                 count = items.itemCount,
                 key = items.itemKey {
@@ -55,7 +59,7 @@ fun RoomList(
             ) { index ->
                 RoomCell(items[index], false, onClick)
             }
-            bottomAppending(items)
+            bottomAppending(debounced)
         }
     }
 }

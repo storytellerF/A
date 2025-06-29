@@ -1,16 +1,10 @@
 package com.storyteller_f.a.app.compontents
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Comment
 import androidx.compose.material.icons.outlined.AddReaction
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SheetState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.SubcomposeMeasureScope
@@ -23,8 +17,6 @@ import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.model.OnAddReaction
 import com.storyteller_f.a.app.model.OnRemoveReaction
-import com.storyteller_f.a.app.pages.topic.BaseSheet
-import com.storyteller_f.a.app.pages.topic.SheetContainer
 import com.storyteller_f.a.app.pages.world.Pill
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.deleteReaction
@@ -63,15 +55,15 @@ fun InteractionRowInternal(
     startAddComment: () -> Unit,
     startAddReaction: () -> Unit
 ) {
+    val appNav = LocalAppNav.current
     val hasComment = topicInfo.hasComment
     val commentCount = topicInfo.commentCount
-    var showBottomSheet by remember { mutableStateOf(false) }
     EmojiRow(
         data,
         {
             if (it < data.size) {
                 Pill(text = "+${data.size - it}") {
-                    showBottomSheet = true
+                    appNav.gotoReactionListPage(topicInfo.id)
                 }
             }
             Pill(icon = Icons.Outlined.AddReaction) {
@@ -91,10 +83,10 @@ fun InteractionRowInternal(
             }
         }
     )
-    val sheetState = rememberModalBottomSheetState()
-    EmojiSheet(showBottomSheet, sheetState, topicInfo.id, data) {
-        showBottomSheet = false
-    }
+//    val sheetState = rememberModalBottomSheetState()
+//    EmojiSheet(topicInfo,showBottomSheet, sheetState, topicInfo.id, data) {
+//        showBottomSheet = false
+//    }
 }
 
 @Composable
@@ -192,7 +184,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
                 index++
             }
 
-            rows.size == 0 -> {
+            rows.isEmpty() -> {
                 // 当前还没有完整的一行，并且需要折行
                 rows.add(currentRow)
                 // 新的一行作为第二行，并且把计算好的placeable 放进list 中，防止重复测量
@@ -241,15 +233,17 @@ private fun EmojiCell(
             if (hasReacted) {
                 scope.launch {
                     globalDialogController.use {
-                        sessionManager.deleteReaction(string, topicId)
-                        bus.emit(OnRemoveReaction(topicId, string))
+                        sessionManager.deleteReaction(string, topicId).map {
+                            bus.emit(OnRemoveReaction(it))
+                        }
                     }
                 }
             } else {
                 scope.launch {
                     globalDialogController.use {
-                        sessionManager.addReaction(topicId, string)
-                        bus.emit(OnAddReaction(topicId, string))
+                        sessionManager.addReaction(topicId, string).onSuccess {
+                            bus.emit(OnAddReaction(it))
+                        }
                     }
                 }
             }
@@ -257,27 +251,3 @@ private fun EmojiCell(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun EmojiSheet(
-    showSheet: Boolean,
-    sheetState: SheetState,
-    topicId: PrimaryKey,
-    list: List<ReactionInfo>,
-    hideSheet: () -> Unit
-) {
-    BaseSheet(showSheet, sheetState, hideSheet) {
-        val scrollState = rememberScrollState()
-        SheetContainer {
-            FlowRow(
-                modifier = Modifier.verticalScroll(scrollState).height(300.dp).padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                list.forEach {
-                    EmojiCell(topicId, it)
-                }
-            }
-        }
-    }
-}

@@ -49,7 +49,7 @@ expect val pagingMainDispatcher: CoroutineContext
  * @sample androidx.paging.compose.samples.PagingPreview
  * @param T the type of value used by [PagingData].
  */
-public class LazyPagingItems<T : Any>
+class LazyPagingItems<T : Any>
 internal constructor(
     /** the [Flow] object which contains a stream of [PagingData] elements. */
     private val flow: Flow<PagingData<T>>,
@@ -148,7 +148,7 @@ internal constructor(
     }
 
     /** A [CombinedLoadStates] object which represents the current loading state. */
-    public var loadState: CombinedLoadStates by
+    var loadState: CombinedLoadStates by
         mutableStateOf(
             pagingDataPresenter.loadStateFlow.value
                 ?: CombinedLoadStates(
@@ -183,7 +183,7 @@ private val InitialLoadStates =
  *   [CombinedLoadStates].
  */
 @Composable
-public fun <T : Any> Flow<PagingData<T>>.collectAsLazyPagingItems(
+fun <T : Any> Flow<PagingData<T>>.collectAsLazyPagingItems(
     context: CoroutineContext = EmptyCoroutineContext,
 ): LazyPagingItems<T> {
     val lazyPagingItems = remember(this) { LazyPagingItems(this) }

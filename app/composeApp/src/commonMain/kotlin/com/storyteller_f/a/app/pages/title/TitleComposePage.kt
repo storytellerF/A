@@ -23,6 +23,7 @@ import com.storyteller_f.a.app.LocalAppNav
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
+import com.storyteller_f.a.app.compontents.BaseSheet
 import com.storyteller_f.a.app.compontents.TopicContentField
 import com.storyteller_f.a.app.model.OnTitleCreated
 import com.storyteller_f.a.app.model.createMemberSearchViewModel
@@ -32,7 +33,6 @@ import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.room.RoomRefCell
-import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.UserRefCell
 import com.storyteller_f.a.client.core.SessionManager

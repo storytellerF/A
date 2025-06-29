@@ -78,6 +78,7 @@ class TopicTest {
             val session = attachSession {
                 val c = createCommunity(NewCommunity("name", "aid")).getOrThrow()
                 val topicInfo = createNewTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
+                // 测试并发
                 repeat(4) {
                     val reactionInfo = addReaction(topicInfo.id, emoji).getOrThrow()
                     assertEquals(emoji, reactionInfo.emoji)
@@ -98,7 +99,9 @@ class TopicTest {
                 assertFalse(reactions.data.first().hasReacted)
             }
             loginSession(session) {
-                assertTrue(deleteReaction(emoji, topicId).getOrThrow())
+                val reactionInfo = deleteReaction(emoji, topicId).getOrThrow()
+                assertEquals(0, reactionInfo.count)
+                assertFalse(reactionInfo.hasReacted)
                 assertListSize(0, getReactions(topicId, 10))
             }
         }
