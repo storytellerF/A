@@ -66,7 +66,6 @@ object StaticObj {
 fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
 
-
 val LocalAppNav = compositionLocalOf {
     AppNav.EMPTY
 }
@@ -111,7 +110,6 @@ val LocalMainSessionManager = compositionLocalOf<CustomSessionManager> {
 val LocalAccountSwitcher = compositionLocalOf<AccountSwitcher> {
     error("not found")
 }
-
 
 @Serializable
 sealed interface MediaPlaySession {
@@ -337,7 +335,6 @@ fun buildWebSocketUrl(wsServerUrl: String): String = buildUrl {
     appendPathSegments("link")
 }.toString()
 
-
 private fun buildWsListener(
     messageToasterState: ToasterState,
     hasPermission: Boolean,
@@ -399,7 +396,6 @@ private fun ObserveMessage(
         }
     }
 }
-
 
 @OptIn(ExperimentalNotificationsApi::class)
 private suspend fun sendTopicNotification(

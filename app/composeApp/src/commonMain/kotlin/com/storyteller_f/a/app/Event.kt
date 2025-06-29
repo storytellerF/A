@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 
 val bus = MutableSharedFlow<Any>()
 
-
 suspend fun processEvent(database: StorageSource) {
     bus.collect { event ->
         when (event) {
@@ -72,7 +71,6 @@ suspend fun processEvent(database: StorageSource) {
             }
         }
     }
-
 }
 
 private fun processTopicCreated(
@@ -112,8 +110,11 @@ private fun processRemoveReaction(
     database.getCollection("topic", TopicInfo::class).update(event.info.objectId) { old ->
         val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
         val new = extension.reactions.orEmpty().map { info ->
-            if (info.emoji != event.info.emoji) info
-            else info
+            if (info.emoji != event.info.emoji) {
+                info
+            } else {
+                info
+            }
         }.filter {
             it.count <= 0
         }.toImmutableList()

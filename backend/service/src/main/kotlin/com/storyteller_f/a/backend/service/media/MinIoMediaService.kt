@@ -7,7 +7,6 @@ import com.storyteller_f.a.backend.service.cache.SimpleCacheService
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
-import io.github.reactivecircus.cache4k.Cache
 import io.minio.*
 import io.minio.errors.ErrorResponseException
 import io.minio.http.Method

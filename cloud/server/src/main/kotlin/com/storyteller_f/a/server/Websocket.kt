@@ -11,7 +11,6 @@ import com.storyteller_f.a.backend.service.savePlainTopic
 import com.storyteller_f.a.exposed.tables.Topic
 import com.storyteller_f.a.server.auth.addUserLog
 import com.storyteller_f.a.server.auth.usePrincipal
-import com.storyteller_f.a.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.server.service.processTopicExtension
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -124,7 +123,6 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
     }
 }
 
-
 private suspend fun Backend.addTopicAtRoom(
     newTopic: NewRoomTopic,
     uid: PrimaryKey,
@@ -229,12 +227,18 @@ suspend fun DefaultWebSocketServerSession.processNewMessage(
                 sendSerialized(RoomFrame.Error("plain is empty") as RoomFrame)
                 return
             }
+            if (content.plain.length > 1000) {
+                sendSerialized(RoomFrame.Error("plain is too long") as RoomFrame)
+            }
         }
 
         is TopicContent.Encrypted -> {
             if (content.encrypted.isBlank()) {
                 sendSerialized(RoomFrame.Error("message is empty") as RoomFrame)
                 return
+            }
+            if (content.encrypted.length > 1000) {
+                sendSerialized(RoomFrame.Error("message is too long") as RoomFrame)
             }
         }
 

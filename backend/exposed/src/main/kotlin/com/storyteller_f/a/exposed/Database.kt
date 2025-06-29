@@ -103,7 +103,10 @@ interface TopicDatabase {
     suspend fun deleteReaction(reactionId: PrimaryKey): Result<Boolean>
     suspend fun insertReaction(reactionRecord: ReactionRecord): Result<Unit>
     suspend fun getReactionCount(objectIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
-    suspend fun getReactionCountForEmoji(objectId: List<PrimaryKey>, emoji: String): Result<List<Triple<Long, Long, PrimaryKey?>>>
+    suspend fun getReactionCountForEmoji(
+        objectId: List<PrimaryKey>,
+        emoji: String
+    ): Result<List<Triple<Long, Long, PrimaryKey?>>>
 }
 
 interface TitleDatabase {

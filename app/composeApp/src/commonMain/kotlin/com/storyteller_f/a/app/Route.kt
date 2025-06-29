@@ -41,7 +41,6 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.reflect.KClass
 
-
 @Serializable
 data object HomeScreen
 
@@ -81,7 +80,6 @@ data object UserSettingScreen
 @Serializable
 data object PreferenceScreen
 
-
 @Serializable
 data class MediaScreen(val json: String)
 
@@ -102,7 +100,6 @@ data class RoomSettingScreen(val roomId: PrimaryKey)
 
 @Serializable
 data class ReactionListScreen(val topicId: PrimaryKey)
-
 
 inline fun <reified T : Any> AppNav.toRoute(): T? {
     if (!hasRoute(T::class)) return null
@@ -264,7 +261,6 @@ interface AppNav {
     }
 }
 
-
 fun newAppNav(navigator: NavHostController, json: Json) = object : AppNav {
     override val currentDestination: NavBackStackEntry?
         get() = navigator.currentBackStackEntry
@@ -370,7 +366,6 @@ fun newAppNav(navigator: NavHostController, json: Json) = object : AppNav {
         navigator.navigate(ReactionListScreen(topicId))
     }
 }
-
 
 @OptIn(ExperimentalResourceApi::class)
 fun NavGraphBuilder.buildRootNav(

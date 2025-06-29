@@ -174,11 +174,11 @@ class RoomTest {
         }
     }
 
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     @Test
     fun `test rtc`() {
         test {
             val firstUser = attachSession {
-
             }
             val secondUser = attachSession {
                 val roomInfo = createRoom(NewRoom("test rtc", "rtc")).getOrThrow()
@@ -257,7 +257,6 @@ class RoomTest {
                     }
                 }
             }
-
         }
     }
 }

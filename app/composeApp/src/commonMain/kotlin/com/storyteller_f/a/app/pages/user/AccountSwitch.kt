@@ -40,7 +40,6 @@ import com.storyteller_f.shared.utils.mapResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-
 class AccountSwitcher(val state: MutableState<Boolean> = mutableStateOf(false)) {
     fun switch() {
         state.value = true
