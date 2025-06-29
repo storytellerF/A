@@ -60,7 +60,6 @@ private fun CombinedLoadStates.toLoadingState(itemCount: Int): LoadingState? {
     return state
 }
 
-
 @Composable
 fun <T> debounceState(v: T): T {
     val value by produceState(v, v) {
@@ -123,7 +122,6 @@ fun <T : Any> StateView(
     }
 }
 
-
 @OptIn(ExperimentalMaterialApi::class, FlowPreview::class)
 @Composable
 fun <T> StateView(
@@ -144,7 +142,6 @@ fun <T> StateView(
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
         when (val s = debounceState(state)) {
-
             is LoadingState.Error -> {
                 data.let {
                     if (it == null) {
@@ -244,7 +241,6 @@ fun <T : Any> RefCellStateView(
     }
 }
 
-
 fun LazyListScope.topPrepend(combinedLoadStates: CombinedLoadStates, refresh: () -> Unit) {
     if (combinedLoadStates.prepend == LoadState.Loading) {
         item {
@@ -294,7 +290,8 @@ fun LazyListScope.bottomAppending(combinedLoadStates: CombinedLoadStates) {
 }
 
 fun LazyGridScope.bottomAppending(
-    count: Int, combinedLoadStates: CombinedLoadStates,
+    count: Int,
+    combinedLoadStates: CombinedLoadStates,
 ) {
     if (combinedLoadStates.append == LoadState.Loading) {
         item(span = {

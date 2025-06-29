@@ -49,8 +49,12 @@ suspend fun Backend.createPublicTopic(
 
     if (content.isEmpty()) {
         return Result.failure(CustomBadRequestException("content is empty"))
-    } else if (!checkContent(content)) {
+    }
+    if (!checkContent(content)) {
         return Result.failure(CustomBadRequestException("invalid"))
+    }
+    if (content.length > 1000) {
+        return Result.failure(CustomBadRequestException("too long"))
     }
 
     return checkRootWritePermission(

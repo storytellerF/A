@@ -6,6 +6,7 @@ import org.intellij.markdown.ast.visitors.Visitor
 import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class MarkdownTest {
@@ -82,6 +83,7 @@ class MarkdownTest {
         assertTrue(checkContent("a"))
         assertTrue(checkContent("👌"))
         assertTrue(checkContent("\n"))
+        assertFalse(checkContent("\uf092"))
         assertEquals("👌", safeFirstUnicode("👌abc"))
     }
 

@@ -17,7 +17,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 
-
 class RtcFrame(val frame: RoomFrame, val uid: PrimaryKey)
 
 class RtcUser(val uid: PrimaryKey, val session: DefaultWebSocketServerSession)
@@ -32,7 +31,6 @@ data class RtcSession(
 
 val rtcSession = mutableMapOf<PrimaryKey, RtcSession>()
 val rtcChannel = Channel<RtcFrame> {
-
 }
 
 private fun processStopCall(
@@ -150,7 +148,6 @@ suspend fun listenerRoomRtc() {
                                     }
                                 }
                             }
-
                         }
                     }
                 }
@@ -188,7 +185,6 @@ suspend fun listenerRtcChannel(backend: Backend) {
                 }
 
                 else -> {
-
                 }
             }
         } catch (e: Throwable) {
@@ -196,6 +192,5 @@ suspend fun listenerRtcChannel(backend: Backend) {
                 "catch exception"
             }
         }
-
     }
 }

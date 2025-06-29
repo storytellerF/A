@@ -46,7 +46,6 @@ fun EmojiPicker(
     }
 }
 
-
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun EmojiPickerInternal(

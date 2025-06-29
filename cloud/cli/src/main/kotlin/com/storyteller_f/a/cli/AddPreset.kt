@@ -7,7 +7,6 @@ import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getMediaInfoList
 import com.storyteller_f.a.backend.service.index.TopicDocument
 import com.storyteller_f.a.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
-import com.storyteller_f.a.exposed.ExposedDatabaseFactory
 import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.AlgoType
@@ -654,7 +653,6 @@ suspend fun downloadWithResume(
         }
     }
 }
-
 
 fun sha256(input: String): String {
     val bytes = input.toByteArray(Charsets.UTF_8)
