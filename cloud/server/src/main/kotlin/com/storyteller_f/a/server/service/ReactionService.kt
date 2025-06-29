@@ -31,7 +31,11 @@ suspend fun Backend.addReaction(
                 val reactionRecord =
                     ReactionRecord(userId, topicId, ObjectType.TOPIC, emojiText, newId, now())
                 exposedDatabase.topicDatabase.insertReaction(reactionRecord).map {
-                    exposedDatabase.topicDatabase.statsReactionRecord(reactionRecord).onFailure { throwable ->
+                    exposedDatabase.topicDatabase.statsReactionRecord(
+                        reactionRecord.objectId,
+                        reactionRecord.emoji,
+                        reactionRecord.objectType
+                    ).onFailure { throwable ->
                         Napier.e(throwable = throwable) {
                             "addReaction"
                         }

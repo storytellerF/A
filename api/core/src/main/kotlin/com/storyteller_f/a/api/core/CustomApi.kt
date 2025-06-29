@@ -77,7 +77,7 @@ object CustomApi {
                     safeApiWithQueryAndPath<ServerResponse<ReactionInfo>, ReactionQuery, Path>("topics/{id}/reactions")
                 val add = mutationApiWithPath<ReactionInfo, NewReaction, Path>("topics/{id}/reactions")
                 val delete =
-                    mutationApiWithPath<Boolean, DeleteReaction, Path>(
+                    mutationApiWithPath<ReactionInfo, DeleteReaction, Path>(
                         "topics/{id}/reactions",
                         methodType = MutationMethodType.DELETE
                     )

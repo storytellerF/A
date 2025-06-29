@@ -2,48 +2,20 @@ package com.storyteller_f.a.app.model
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.ExperimentalPagingApi
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.PagingData
-import androidx.paging.cachedIn
-import androidx.paging.map
+import androidx.paging.*
 import com.storyteller_f.a.app.UploadSession
 import com.storyteller_f.a.app.common.*
 import com.storyteller_f.a.app.compontents.DialogSaveState
 import com.storyteller_f.a.app.pages.topic.upload
-import com.storyteller_f.a.client.core.LoadingHandler
-import com.storyteller_f.a.client.core.SessionManager
-import com.storyteller_f.a.client.core.SimpleLoadingHandler
-import com.storyteller_f.a.client.core.UploadData
-import com.storyteller_f.a.client.core.getAlternativeAccounts
-import com.storyteller_f.a.client.core.getCommunityInfo
-import com.storyteller_f.a.client.core.getCommunityInfoByAid
-import com.storyteller_f.a.client.core.getMediaByName
-import com.storyteller_f.a.client.core.getMediaList
-import com.storyteller_f.a.client.core.getReactions
-import com.storyteller_f.a.client.core.getRecommendTopics
-import com.storyteller_f.a.client.core.getRoomInfo
-import com.storyteller_f.a.client.core.getRoomInfoByAid
-import com.storyteller_f.a.client.core.getTopicInfo
-import com.storyteller_f.a.client.core.getTopicInfoByAid
-import com.storyteller_f.a.client.core.getTopicList
-import com.storyteller_f.a.client.core.getUserInfo
-import com.storyteller_f.a.client.core.getUserInfoByAid
-import com.storyteller_f.a.client.core.processEncryptedTopic
-import com.storyteller_f.a.client.core.requestRoomKeys
-import com.storyteller_f.a.client.core.searchAllMembers
-import com.storyteller_f.a.client.core.searchCommunity
-import com.storyteller_f.a.client.core.searchCommunityMembers
-import com.storyteller_f.a.client.core.searchRoomMembers
-import com.storyteller_f.a.client.core.searchRooms
-import com.storyteller_f.a.client.core.searchTopics
-import com.storyteller_f.a.client.core.serviceCatching
-import com.storyteller_f.a.client.core.userTitles
+import com.storyteller_f.a.client.core.*
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.obj.ob
-import com.storyteller_f.shared.type.*
+import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.storage.StorageExpression
@@ -62,7 +34,6 @@ import io.ktor.utils.io.core.*
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -72,6 +43,7 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 data class OnTopicChanged(val topicInfo: TopicInfo)
 data class OnTopicCreated(val topicInfo: TopicInfo)
@@ -92,8 +64,8 @@ data class OnRoomJoined(val info: RoomInfo)
 data class OnRoomExited(val info: RoomInfo)
 
 data class OnRoomUpdated(val info: RoomInfo)
-data class OnAddReaction(val topicId: PrimaryKey, val emoji: String)
-data class OnRemoveReaction(val topicId: PrimaryKey, val emoji: String)
+data class OnAddReaction(val info: ReactionInfo)
+data class OnRemoveReaction(val info: ReactionInfo)
 
 abstract class CommunityViewModel :
     SimpleViewModel<CommunityInfo>() {
@@ -176,7 +148,7 @@ class CommunitiesViewModel(
             )
         },
     ) {
-        CustomDatabasePagingSource(
+        CustomStoragePagingSource(
             storageSource.getCollection(
                 collectionName,
                 CommunityInfo::class
@@ -220,11 +192,58 @@ class RoomsViewModel(
 }
 
 @OptIn(ExperimentalPagingApi::class)
+class WorldViewModel(
+    val sessionManager: SessionManager,
+    private val storageSource: StorageSource,
+) :
+    PagingViewModel<SectionLoadParams, TopicInfo>() {
+    private val collectionName: String = "topics_0"
+
+    @OptIn(FlowPreview::class)
+    override val flow: Flow<PagingData<TopicInfo>> = Pager(
+        PagingConfig(pageSize = 20),
+        remoteMediator = sectionRemoteMediator<TopicInfo>(
+            sessionManager,
+            collectionName,
+            storageSource,
+            {
+                with(storageSource.getCollection("topics", TopicInfo::class)) {
+                    save(it.id, it)
+                    it.aid?.let { aid -> saveDocument(aid, it) }
+                }
+            }
+        ) {
+            listOf(RegularPagingSource(sessionManager) { loadKey, size ->
+                getRecommendTopics(loadKey, size)
+            })
+        },
+    ) {
+        CustomStoragePagingSource(
+            storageSource.getCollection(collectionName, TopicInfo::class),
+            listOf(StorageOrder.Desc("id")),
+            {
+                if (it != null) {
+                    arrayOf(StorageExpression.Less("id", it.toPrimaryKey()))
+                } else {
+                    emptyArray()
+                }
+            },
+        ) { info ->
+            info?.id?.toString()
+        }
+    }.flow.map {
+        it.map {
+            extractHeadlineIfPlain(it)
+        }
+    }.cachedIn(viewModelScope)
+}
+
+@OptIn(ExperimentalPagingApi::class)
 class TopicsViewModel(
     val sessionManager: SessionManager,
     private val storageSource: StorageSource,
     id: PrimaryKey,
-    val type: ObjectType? = null,
+    val type: ObjectType,
 ) :
     PagingViewModel<SectionLoadParams, TopicInfo>() {
     private val collectionName: String = "topics_$id"
@@ -243,23 +262,17 @@ class TopicsViewModel(
                 }
             }
         ) {
-            if (id == DEFAULT_PRIMARY_KEY) {
-                listOf(RegularPagingSource(sessionManager) { loadKey, size ->
-                    getRecommendTopics(loadKey, size)
-                })
-            } else {
-                listOf(
-                    RegularPagingSource(sessionManager) { loadKey, size ->
-                        getTopicList(type, id, loadKey, size, TopicPinSearch.PINNED)
-                    },
-                    RegularPagingSource(sessionManager) { loadKey, size ->
-                        getTopicList(type, id, loadKey, size, TopicPinSearch.UNPINNED)
-                    }
-                )
-            }
+            listOf(
+                RegularPagingSource(sessionManager) { loadKey, size ->
+                    getTopicList(type, id, loadKey, size, TopicPinSearch.PINNED)
+                },
+                RegularPagingSource(sessionManager) { loadKey, size ->
+                    getTopicList(type, id, loadKey, size, TopicPinSearch.UNPINNED)
+                }
+            )
         },
     ) {
-        CustomDatabasePagingSource(
+        CustomStoragePagingSource(
             storageSource.getCollection(
                 collectionName,
                 TopicInfo::class
@@ -281,7 +294,7 @@ class TopicsViewModel(
                 extractHeadlineIfPlain(it)
             }.first()
         }
-    }.debounce(500).cachedIn(viewModelScope)
+    }.cachedIn(viewModelScope)
 }
 
 private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
@@ -463,8 +476,8 @@ class ReactionsViewModel(
     sessionManager: SessionManager,
     private val objectId: PrimaryKey,
     storageSource: StorageSource,
-) :
-    PagingViewModel<String, ReactionInfo>() {
+    json: Json,
+) : PagingViewModel<String, ReactionInfo>() {
     @OptIn(ExperimentalPagingApi::class)
     override val flow = Pager(
         PagingConfig(pageSize = 20),
@@ -475,17 +488,31 @@ class ReactionsViewModel(
                 sessionManager.getReactions(objectId, size, key)
             }
         ) { info ->
-            saveDocument("${info.objectId}-${info.count}", info)
+            saveDocument(info.emoji, info)
         }
     ) {
-        commonPagingSource(
-            "reactions_$objectId",
-            storageSource,
-        ) { info ->
-            info?.let {
-                "${info.objectId}-${info.count}"
+        CustomStoragePagingSource(
+            storageSource.getCollection("reactions_$objectId", ReactionInfo::class),
+            listOf(StorageOrder.Desc("count")),
+            {
+                val param = it?.let {
+                    json.decodeFromString<ReactionCursorKey>(it)
+                }
+                if (param != null) {
+                    arrayOf(
+                        StorageExpression.Less("count", param.count),
+                        StorageExpression.Less("lastReactionId", param.reactionId)
+                    )
+                } else {
+                    emptyArray()
+                }
+            },
+            {
+                it?.let {
+                    json.encodeToString(ReactionCursorKey(it.count, it.lastReactionId))
+                }
             }
-        }
+        )
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -522,7 +549,7 @@ class AidTopicViewModel(
     TopicViewModel() {
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
-            storageSource.getCollection("topic", TopicInfo::class),
+            storageSource.getCollection("topics", TopicInfo::class),
             viewModelScope,
             StorageExpression.StrEq("aid", aid),
             {

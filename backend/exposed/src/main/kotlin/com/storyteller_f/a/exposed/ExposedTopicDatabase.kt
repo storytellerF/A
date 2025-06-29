@@ -14,6 +14,7 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import org.jetbrains.exposed.sql.*
@@ -287,27 +288,30 @@ class ExposedTopicDatabase(
     }
 
     override suspend fun statsReactionRecord(
-        reactionRecord: ReactionRecord,
+        objectId: PrimaryKey,
+        emoji: String,
+        objectType: ObjectType,
     ): Result<Unit> {
         return getReactionCountForEmoji(
-            listOf(reactionRecord.objectId),
-            reactionRecord.emoji
+            listOf(objectId),
+            emoji
         ).mapResult { reactionCountList ->
-            if (reactionCountList.isEmpty()) {
+            val triple = reactionCountList.firstOrNull()
+            if (triple == null) {
                 exposedDatabaseSession.dbQuery {
                     Reactions.deleteWhere {
-                        Reactions.objectId eq reactionRecord.objectId and (Reactions.emoji eq reactionRecord.emoji)
+                        Reactions.objectId eq objectId and (Reactions.emoji eq emoji)
                     }
                     Unit
                 }
             } else {
                 exposedDatabaseSession.dbQuery {
                     check(Reactions.upsert(Reactions.objectId, Reactions.emoji) {
-                        it[Reactions.objectId] = reactionRecord.objectId
-                        it[Reactions.emoji] = reactionRecord.emoji
-                        it[Reactions.count] = reactionCountList.size.toLong()
-                        it[Reactions.objectType] = reactionRecord.objectType
-                        it[Reactions.lastReactionId] = reactionRecord.id
+                        it[Reactions.objectId] = objectId
+                        it[Reactions.emoji] = emoji
+                        it[Reactions.count] = triple.second
+                        it[Reactions.objectType] = objectType
+                        it[Reactions.lastReactionId] = triple.third
                     }.insertedCount > 0) {
                         "insert reaction failed"
                     }
@@ -424,21 +428,7 @@ class ExposedTopicDatabase(
             if (recordInfo == null) {
                 Result.success(true)
             } else {
-                deleteReaction(recordInfo.id).map {
-                    if (it) {
-                        statsReactionRecord(
-                            ReactionRecord(
-                                recordInfo.id,
-                                recordInfo.objectId,
-                                recordInfo.objectType,
-                                recordInfo.emoji,
-                                recordInfo.id,
-                                recordInfo.createdTime
-                            )
-                        )
-                    }
-                    it
-                }
+                deleteReaction(recordInfo.id)
             }
         }
     }
@@ -518,16 +508,17 @@ class ExposedTopicDatabase(
     override suspend fun getReactionCountForEmoji(
         objectId: List<PrimaryKey>,
         emoji: String,
-    ): Result<List<Pair<Long, Long>>> {
+    ): Result<List<Triple<Long, Long, PrimaryKey>>> {
         return exposedDatabaseSession.dbSearch {
             val column = ReactionRecords.emoji.countDistinct()
+            val lastReactionId = ReactionRecords.id.max()
             search {
-                ReactionRecords.select(ReactionRecords.objectId, column).where {
+                ReactionRecords.select(ReactionRecords.objectId, column, lastReactionId).where {
                     (ReactionRecords.objectId inList objectId) and (ReactionRecords.emoji eq emoji)
                 }.groupBy(ReactionRecords.objectId)
             }
             map {
-                it[ReactionRecords.objectId] to it[column]
+                Triple(it[ReactionRecords.objectId], it[column], it[lastReactionId] ?: 0)
             }
         }
     }

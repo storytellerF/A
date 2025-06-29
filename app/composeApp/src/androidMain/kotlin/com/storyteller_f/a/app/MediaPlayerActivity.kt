@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
-import com.storyteller_f.a.app.common.CenterBox
+import com.storyteller_f.a.app.compontents.CenterBox
 import com.storyteller_f.a.app.pages.media.MediaPage
 import kotlinx.serialization.json.Json
 

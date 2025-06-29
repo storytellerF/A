@@ -1,15 +1,7 @@
 package com.storyteller_f.a.app.common
 
-import androidx.paging.ExperimentalPagingApi
-import androidx.paging.LoadType
-import androidx.paging.PagingSource
-import androidx.paging.PagingState
-import androidx.paging.RemoteMediator
-import com.storyteller_f.a.client.core.LoadingHandler
-import com.storyteller_f.a.client.core.LoadingState
-import com.storyteller_f.a.client.core.SessionManager
-import com.storyteller_f.a.client.core.markDown
-import com.storyteller_f.a.client.core.markError
+import androidx.paging.*
+import com.storyteller_f.a.client.core.*
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.storage.*
@@ -18,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
@@ -39,7 +30,7 @@ class CachedLoadingHandler<T : Any>(
     @OptIn(FlowPreview::class)
     override val data = collection.observeDatum(
         expression
-    ).debounce(500).stateIn(scope, SharingStarted.Lazily, null)
+    ).stateIn(scope, SharingStarted.Lazily, null)
 
     init {
         refresh()
@@ -71,11 +62,11 @@ class CachedLoadingHandler<T : Any>(
     }
 }
 
-class CustomDatabasePagingSource<RowType : Any>(
+class CustomStoragePagingSource<RowType : Any>(
     private val collection: StorageCollection<RowType>,
     private val orders: List<StorageOrder>,
     private val buildExpressions: (String?) -> Array<StorageExpression>,
-    private val buildKey: (RowType?) -> String?
+    private val buildKey: (RowType?) -> String?,
 ) : PagingSource<String, RowType>() {
 
     init {
@@ -91,7 +82,7 @@ class CustomDatabasePagingSource<RowType : Any>(
     private val registeredToken = mutableMapOf<String?, StorageObservable<RowType>>()
 
     override suspend fun load(
-        params: LoadParams<String>
+        params: LoadParams<String>,
     ): LoadResult<String, RowType> {
         val key = when (params) {
             is LoadParams.Append<*> -> {
@@ -149,13 +140,13 @@ class CustomRemoteMediator<Datum : Any>(
     private val storageSource: StorageSource,
     private val collectionName: String,
     private val networkService: PagingSource<String, Datum>,
-    private val update: (Datum) -> Unit
+    private val update: (Datum) -> Unit,
 ) :
     RemoteMediator<String, Datum>() {
 
     override suspend fun load(
         loadType: LoadType,
-        state: PagingState<String, Datum>
+        state: PagingState<String, Datum>,
     ): MediatorResult {
         Napier.v(tag = "pagination") {
             "mediator load $loadType"
@@ -242,13 +233,14 @@ class CustomRemoteMediator<Datum : Any>(
 
 class IntermediatePagingSource<Key : Any, T : Any>(
     val sectionPagingSource: PagingSource<Key, T>,
-    val clazz: KClass<Key>
+    val clazz: KClass<Key>,
 ) : PagingSource<String, T>() {
     companion object {
         val json by lazy {
             Json { }
         }
     }
+
     override fun getRefreshKey(state: PagingState<String, T>): String? {
         return null
     }
@@ -303,9 +295,9 @@ inline fun <reified T : PrimaryKeyIdentifiable> primaryKeyRemoteMediator(
 
 inline fun <reified T : PrimaryKeyIdentifiable> primaryKeyPagingSource(
     collectionName: String,
-    storageSource: StorageSource
+    storageSource: StorageSource,
 ) =
-    CustomDatabasePagingSource(
+    CustomStoragePagingSource(
         storageSource.getCollection(collectionName, T::class),
         listOf(StorageOrder.Desc("id")),
         {
@@ -325,7 +317,7 @@ inline fun <reified T : PrimaryKeyIdentifiable> sectionRemoteMediator(
     collectionName: String,
     storageSource: StorageSource,
     crossinline extraUpdate: (T) -> Unit = {},
-    regularPagingSources: (SessionManager) -> List<RegularPagingSource<T>>
+    regularPagingSources: (SessionManager) -> List<RegularPagingSource<T>>,
 ): CustomRemoteMediator<T> {
     val datumCollection = storageSource.getCollection(collectionName, T::class)
     return CustomRemoteMediator(
@@ -342,7 +334,7 @@ inline fun <reified T : Any> commonRemoteMediator(
     storageSource: StorageSource,
     collectionName: String,
     pagingSource: RegularPagingSource<T>,
-    crossinline update: StorageCollection<T>.(T) -> Unit
+    crossinline update: StorageCollection<T>.(T) -> Unit,
 ): CustomRemoteMediator<T> {
     val datumCollection = storageSource.getCollection(collectionName, T::class)
     return CustomRemoteMediator(
@@ -354,21 +346,20 @@ inline fun <reified T : Any> commonRemoteMediator(
     }
 }
 
-inline fun <reified T : Any> commonPagingSource(
+inline fun <reified T : Any> commonStoragePagingSource(
     collectionName: String,
     storageSource: StorageSource,
-    noinline buildKey: (T?) -> String?
-) =
-    CustomDatabasePagingSource(
-        storageSource.getCollection(collectionName, T::class),
-        listOf(StorageOrder.Desc("id")),
-        {
-            val param = it
-            if (param != null) {
-                arrayOf(StorageExpression.StrLess("id", param))
-            } else {
-                emptyArray()
-            }
-        },
-        buildKey
-    )
+    noinline buildKey: (T?) -> String?,
+) = CustomStoragePagingSource(
+    storageSource.getCollection(collectionName, T::class),
+    listOf(StorageOrder.Desc("id")),
+    {
+        val param = it
+        if (param != null) {
+            arrayOf(StorageExpression.StrLess("id", param))
+        } else {
+            emptyArray()
+        }
+    },
+    buildKey
+)

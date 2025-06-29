@@ -11,7 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.common.CenterBox
+import com.storyteller_f.a.app.compontents.CenterBox
 import com.storyteller_f.a.app.model.createUploadViewModel
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState

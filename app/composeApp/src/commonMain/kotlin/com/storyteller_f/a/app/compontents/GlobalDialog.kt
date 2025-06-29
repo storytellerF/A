@@ -1,11 +1,7 @@
 package com.storyteller_f.a.app.compontents
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.CircularProgressIndicator
@@ -41,6 +37,7 @@ data class GlobalDialogStageState(
 
 interface GlobalDialogController {
     val state: MutableState<GlobalDialogState>
+
     suspend fun <T> useResult(
         block: suspend GlobalDialogController.() -> Result<T>,
     ): Result<T>
@@ -51,9 +48,11 @@ interface GlobalDialogController {
         }
     }
 
-    suspend fun showErrorState(throwable: Throwable) {
-        useResult<Unit> {
-            Result.failure(throwable)
+    suspend fun showMessage(text: String) {
+        use {
+            CustomGlobalDialogContent {
+                Text(text)
+            }
         }
     }
 
@@ -63,14 +62,6 @@ interface GlobalDialogController {
         return useResult {
             runCatching {
                 block()
-            }
-        }
-    }
-
-    suspend fun showMessage(text: String) {
-        use {
-            CustomGlobalDialogContent {
-                Text(text)
             }
         }
     }
@@ -191,7 +182,7 @@ private fun GlobalDialogContent(
         when (message) {
             is GlobalDialogState.Error -> {
                 ExceptionView(message.throwable, modifier = Modifier.weight(1f).verticalScroll(scrollState))
-                Box(contentAlignment = Alignment.CenterEnd) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                     Button({
                         onDismissRequest()
                     }) {

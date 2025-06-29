@@ -12,7 +12,9 @@ import com.storyteller_f.a.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.server.common.ReactionPaginationGenerator
 import com.storyteller_f.a.server.common.pagination
 import com.storyteller_f.a.server.service.*
+import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.safeFirstEmoji
 import io.ktor.server.plugins.*
 import io.ktor.server.routing.*
@@ -101,7 +103,21 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
             val deleteReaction = with(api) { receiveBody() }
             val emoji = deleteReaction.emoji
             if (isEmoji(emoji)) {
-                backend.exposedDatabase.topicDatabase.deleteReaction(uid, emoji, p.id)
+                backend.exposedDatabase.topicDatabase.deleteReaction(uid, emoji, p.id).mapResult {
+                    (if (it) {
+                        backend.exposedDatabase.topicDatabase.statsReactionRecord(
+                            p.id,
+                            emoji,
+                            ObjectType.TOPIC
+                        )
+                    } else {
+                        Result.success(Unit)
+                    }).mapResult {
+                        backend.exposedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji).map {
+                            it ?: ReactionInfo(emoji, p.id, 0, false, 0)
+                        }
+                    }
+                }
             } else {
                 Result.failure(BadRequestException("invalid emoji"))
             }

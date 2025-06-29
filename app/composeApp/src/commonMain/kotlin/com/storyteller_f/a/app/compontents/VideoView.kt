@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.MediaPlaySession
-import com.storyteller_f.a.app.pages.topic.BaseSheet
 import com.storyteller_f.shared.model.MediaInfo
 import kotlinx.serialization.Serializable
 

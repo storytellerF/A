@@ -18,6 +18,7 @@ import com.dokar.sonner.ToasterState
 import com.storyteller_f.a.app.*
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.common.StateView
+import com.storyteller_f.a.app.common.debounceState
 import com.storyteller_f.a.app.common.nestedStateView
 import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.*
@@ -97,9 +98,14 @@ private fun ColumnScope.TopicPageContent(
     val topicsViewModel = createTopicsInTopicViewModel(topicId)
     val topics = topicsViewModel.flow.collectAsLazyPagingItems()
     val lazyListState = rememberLazyListState()
-    StateView(viewModel.handler, modifier = Modifier.Companion.weight(1f), {
-        topics.refresh()
-    }, {
+    val debounced = debounceState(topics.loadState)
+    val topicState by viewModel.handler.state.collectAsState()
+    LaunchedEffect(topicState) {
+        if (topicState is LoadingState.Done) {
+            topics.refresh()
+        }
+    }
+    StateView(viewModel.handler, modifier = Modifier.weight(1f), {
         Column {
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
@@ -118,12 +124,12 @@ private fun ColumnScope.TopicPageContent(
                     HorizontalDivider()
                 }
 
-                nestedStateView(topics) { subInfo, i ->
+                nestedStateView(topics, debounced, { subInfo, i ->
                     subInfo?.let { it1 -> TopicCell(it1) }
                     if (topics.itemCount - 1 != i) {
                         HorizontalDivider()
                     }
-                }
+                })
             }
             val scope = rememberCoroutineScope()
             TopicPageInputGroup(it, it.id) {
@@ -231,7 +237,7 @@ private fun sendTopic(
             toasterState.show(getString(Res.string.success), duration = 1.seconds)
             scrollTo()
         } catch (e: Exception) {
-            globalDialogController.showErrorState(e)
+            globalDialogController.showErrorMessage(e)
         } finally {
             sendState.value = LoadingState.Done
         }

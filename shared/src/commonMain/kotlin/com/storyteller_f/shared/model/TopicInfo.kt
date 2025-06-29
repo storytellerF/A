@@ -1,9 +1,11 @@
 package com.storyteller_f.shared.model
 
+import com.storyteller_f.shared.type.CustomImmutableList
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -56,8 +58,8 @@ data class TopicInfo(
     @Serializable
     data class Extension(
         val authorInfo: UserInfo,
-        val subTopics: List<TopicInfo>? = null,
-        val reactions: List<ReactionInfo>? = null
+        val subTopics: CustomImmutableList<TopicInfo>? = null,
+        val reactions: CustomImmutableList<ReactionInfo>? = null
     )
 }
 

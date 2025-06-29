@@ -85,7 +85,11 @@ interface TopicDatabase {
         data: List<Topic>,
         uid: PrimaryKey,
     ): Result<List<TopicContent.Encrypted>>
-    suspend fun statsReactionRecord(reactionRecord: ReactionRecord): Result<Unit>
+    suspend fun statsReactionRecord(
+        objectId: PrimaryKey,
+        emoji: String,
+        objectType: ObjectType
+    ): Result<Unit>
     suspend fun getReactionInfoPaginationResult(
         objectId: List<PrimaryKey>,
         uid: PrimaryKey?,
@@ -99,7 +103,7 @@ interface TopicDatabase {
     suspend fun deleteReaction(reactionId: PrimaryKey): Result<Boolean>
     suspend fun insertReaction(reactionRecord: ReactionRecord): Result<Unit>
     suspend fun getReactionCount(objectIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
-    suspend fun getReactionCountForEmoji(objectId: List<PrimaryKey>, emoji: String): Result<List<Pair<Long, Long>>>
+    suspend fun getReactionCountForEmoji(objectId: List<PrimaryKey>, emoji: String): Result<List<Triple<Long, Long, PrimaryKey?>>>
 }
 
 interface TitleDatabase {

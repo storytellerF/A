@@ -29,11 +29,9 @@ import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.bus
 import com.storyteller_f.a.app.common.StateView
 import com.storyteller_f.a.app.common.bottomAppending
+import com.storyteller_f.a.app.common.debounceState
 import com.storyteller_f.a.app.common.topPrepend
-import com.storyteller_f.a.app.compontents.GlobalDialogController
-import com.storyteller_f.a.app.compontents.Permission
-import com.storyteller_f.a.app.compontents.isPermissionGranted
-import com.storyteller_f.a.app.compontents.requestPermission
+import com.storyteller_f.a.app.compontents.*
 import com.storyteller_f.a.app.model.OnMediaUploaded
 import com.storyteller_f.a.app.model.createMediaListViewModel
 import com.storyteller_f.a.app.model.createReactionsViewModel
@@ -186,9 +184,12 @@ private fun MediaListView(
             }
         }
         val pagingItems = list.flow.collectAsLazyPagingItems()
+        val debounced = debounceState(pagingItems.loadState)
         StateView(pagingItems, modifier = Modifier.weight(1f)) {
             LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
-                topPrepend(pagingItems)
+                topPrepend(debounced) {
+                    pagingItems.refresh()
+                }
                 items(pagingItems.itemCount, key = pagingItems.itemKey {
                     it.id
                 }) {
@@ -220,7 +221,7 @@ private fun MediaListView(
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }
-                bottomAppending(pagingItems)
+                bottomAppending(debounced)
             }
         }
     }
@@ -335,17 +336,19 @@ fun insertContent(
 fun ReactionListPage(topicId: PrimaryKey) {
     val viewModel = createReactionsViewModel(topicId)
     val pagingItems = viewModel.flow.collectAsLazyPagingItems()
-    StateView(pagingItems) {
-        LazyColumn {
-            items(pagingItems.itemCount, pagingItems.itemKey {
-                it.emoji
-            }) {
-                val info = pagingItems[it]
-                if (info != null) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(info.emoji, fontSize = 25.sp)
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(info.count.toString())
+    Scaffold { paddingValues ->
+        StateView(pagingItems, modifier = Modifier.padding(paddingValues)) {
+            LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(pagingItems.itemCount, pagingItems.itemKey {
+                    it.emoji
+                }) {
+                    val info = pagingItems[it]
+                    if (info != null) {
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(info.emoji, fontSize = 25.sp)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(info.count.toString())
+                        }
                     }
                 }
             }
