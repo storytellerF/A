@@ -202,14 +202,6 @@ class ExposedDatabaseSession(val database: Database, val buildType: String) {
 }
 
 object ExposedDatabaseFactory {
-    fun connect(connection: DatabaseConnection): Database {
-        Napier.d {
-            "connect $connection"
-        }
-        val (uri, driver, user, password) = connection
-        return Database.Companion.connect(uri, driver, user, password)
-    }
-
     private val tables = arrayOf(
         Aids,
         AlternateAccounts,
@@ -230,6 +222,14 @@ object ExposedDatabaseFactory {
         UserTopicReads,
         TaskRecords
     )
+
+    fun connect(connection: DatabaseConnection): Database {
+        Napier.d {
+            "connect $connection"
+        }
+        val (uri, driver, user, password) = connection
+        return Database.Companion.connect(uri, driver, user, password)
+    }
 
     fun init(database: Database) {
         Napier.i(tag = "database") {

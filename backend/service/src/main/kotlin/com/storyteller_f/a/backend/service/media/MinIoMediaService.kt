@@ -3,7 +3,9 @@ package com.storyteller_f.a.backend.service.media
 import com.storyteller_f.a.backend.core.CopyPack
 import com.storyteller_f.a.backend.core.MinIoConnection
 import com.storyteller_f.a.backend.core.UploadPack
+import com.storyteller_f.a.backend.service.cache.SimpleCacheService
 import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
 import io.github.reactivecircus.cache4k.Cache
 import io.minio.*
@@ -20,9 +22,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 
 class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
-    val cache = Cache.Builder<String, String>()
-        .expireAfterWrite(7.days)
-        .build()
+    val cache = SimpleCacheService<String, String>(7.days)
 
     override suspend fun clean(bucketName: String): Result<Unit> {
         return useMinIoClient(connection) {
@@ -139,18 +139,16 @@ private suspend fun <R> useMinIoClient(
             .endpoint(minIoConnection.url)
             .credentials(minIoConnection.user, minIoConnection.pass)
             .build().use {
-                try {
-                    withContext(Dispatchers.IO) {
-                        it.block()
-                    }
-                } catch (e: Exception) {
-                    point.initCause(e)
-                    Napier.e(throwable = point) {
-                        "minio error"
-                    }
-                    throw e
+                withContext(Dispatchers.IO) {
+                    it.block()
                 }
             }
+    }.recoverResult { e ->
+        point.initCause(e)
+        Napier.e(throwable = point) {
+            "minio error"
+        }
+        Result.failure(point)
     }
 }
 

@@ -12,24 +12,30 @@ import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
-import com.storyteller_f.shared.obj.PresetCommunity
-import com.storyteller_f.shared.obj.PresetRoom
-import com.storyteller_f.shared.obj.PresetTopic
-import com.storyteller_f.shared.obj.PresetUser
-import com.storyteller_f.shared.obj.PresetValue
+import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.utils.io.readRemaining
 import kotlinx.cli.ArgType
 import kotlinx.cli.ExperimentalCli
 import kotlinx.cli.Subcommand
 import kotlinx.coroutines.runBlocking
+import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 import java.io.File
+import java.io.RandomAccessFile
+import java.security.MessageDigest
 import kotlin.system.exitProcess
 
 class EncryptedTopicTuple(
@@ -77,7 +83,6 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         loadCryptoLibIfNeed()
         val connected = backend
-        ExposedDatabaseFactory.connect(connected.config.databaseConnection)
         val jsonFile = File(jsonFilePath)
 
         val presetValue = Json {
@@ -119,10 +124,45 @@ class AddPreset : Subcommand("add", "add entry") {
         }.distinct())).getOrThrow().associate {
             it.user.aid!! to it.user
         }
-        files.forEach {
-            uploadFilesAfterDetectContentTypeAndDimension(it.path.map { p ->
-                val path = File(parentDir, p)
-                UploadPack(path, path.name, userMap[it.owner]!!.id, ObjectType.USER, path.length())
+        val lists = HttpClient(OkHttp).use { client ->
+            files.map {
+                it.paths.mapNotNull { p ->
+                    if (p.endsWith("download")) {
+                        val path = File(parentDir, p)
+                        val lines = path.readLines()
+                        if (lines.size >= 3) {
+                            val name = lines.first()
+                            val link = lines[1]
+                            val hash = lines[2]
+                            val realPath = File(parentDir, "download/$name")
+                            if (realPath.exists()) {
+                                if (hash.startsWith("sha256:")) {
+                                    val calculatedSha = sha256File(realPath)
+                                    val hashValue = hash.removePrefix("sha256:")
+                                    Napier.i {
+                                        "calculated $name sha $calculatedSha, real $hashValue"
+                                    }
+                                    if (calculatedSha != hashValue) {
+                                        downloadWithResume(link, realPath, client)
+                                    }
+                                }
+                            } else {
+                                downloadWithResume(link, realPath, client)
+                            }
+
+                            realPath
+                        } else {
+                            null
+                        }
+                    } else {
+                        File(parentDir, p)
+                    }
+                } to it.owner
+            }
+        }
+        lists.forEach { (it, owner) ->
+            uploadFilesAfterDetectContentTypeAndDimension(it.map { path ->
+                UploadPack(path, path.name, userMap[owner]!!.id, ObjectType.USER, path.length())
             }).getOrThrow()
         }
     }
@@ -581,4 +621,56 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         return content
     }
+}
+
+suspend fun downloadWithResume(
+    url: String,
+    file: File,
+    client: HttpClient
+) {
+    val downloadedSize = if (file.exists()) file.length() else 0L
+
+    val response: HttpResponse = client.get(url) {
+        if (downloadedSize > 0) {
+            header("Range", "bytes=$downloadedSize-")
+        }
+    }
+
+    val status = response.status.value
+    println("HTTP status: $status")
+
+    val body = response.bodyAsChannel()
+
+    file.parentFile?.mkdirs()
+
+    RandomAccessFile(file, "rw").use { raf ->
+        raf.seek(downloadedSize)
+        while (!body.isClosedForRead) {
+            val packet = body.readRemaining(DEFAULT_BUFFER_SIZE.toLong())
+            while (!packet.exhausted()) {
+                val bytes = packet.readByteArray()
+                raf.write(bytes)
+            }
+        }
+    }
+}
+
+
+fun sha256(input: String): String {
+    val bytes = input.toByteArray(Charsets.UTF_8)
+    val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
+    return digest.joinToString("") { "%02x".format(it) }
+}
+
+fun sha256File(file: File): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    file.inputStream().use { fis ->
+        val buffer = ByteArray(8192)
+        var read = fis.read(buffer)
+        while (read != -1) {
+            digest.update(buffer, 0, read)
+            read = fis.read(buffer)
+        }
+    }
+    return digest.digest().joinToString("") { "%02x".format(it) }
 }
