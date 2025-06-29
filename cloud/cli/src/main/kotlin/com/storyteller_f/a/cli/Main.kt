@@ -60,7 +60,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 
     val config = Config(databaseConnection, buildType, flavor)
 
-    val topicDocumentService = runBlocking { topicDocumentService(env) }
+    val topicDocumentService = topicDocumentService(env)
     val mediaService = mediaService(env)
 
     val database = ExposedDatabaseFactory.connect(databaseConnection)

@@ -16,6 +16,7 @@ dependencies {
     implementation(libs.cryptography.provider.jdk)
     implementation(libs.tika.core)
     implementation(libs.commons.logging)
+    implementation(libs.bundles.ktor.server.client)
 }
 
 tasks.test {

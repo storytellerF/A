@@ -51,7 +51,7 @@ data class PresetRoom(
 @Serializable
 data class PresetFile(
     val owner: String,
-    val path: List<String>,
+    val paths: List<String>,
 )
 
 @Serializable
