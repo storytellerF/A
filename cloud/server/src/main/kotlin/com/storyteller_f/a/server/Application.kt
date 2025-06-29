@@ -3,31 +3,10 @@ package com.storyteller_f.a.server
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Config
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.MergedEnv
-import com.storyteller_f.a.backend.service.databaseConnection
+import com.storyteller_f.a.backend.service.*
 import com.storyteller_f.a.backend.service.media.loadAvif
-import com.storyteller_f.a.backend.service.mediaService
 import com.storyteller_f.a.backend.service.naming.NameService
-import com.storyteller_f.a.backend.service.readEnv
-import com.storyteller_f.a.backend.service.topicDocumentService
-import com.storyteller_f.a.exposed.CommunityDatabase
-import com.storyteller_f.a.exposed.ContainerDatabase
-import com.storyteller_f.a.exposed.Database
-import com.storyteller_f.a.exposed.ExposedCommunityDatabase
-import com.storyteller_f.a.exposed.ExposedContainerDatabase
-import com.storyteller_f.a.exposed.ExposedDatabaseFactory
-import com.storyteller_f.a.exposed.ExposedDatabaseSession
-import com.storyteller_f.a.exposed.ExposedMediaDatabase
-import com.storyteller_f.a.exposed.ExposedRoomDatabase
-import com.storyteller_f.a.exposed.ExposedTitleDatabase
-import com.storyteller_f.a.exposed.ExposedTopicDatabase
-import com.storyteller_f.a.exposed.ExposedUserDatabase
-import com.storyteller_f.a.exposed.MediaDatabase
-import com.storyteller_f.a.exposed.RoomDatabase
-import com.storyteller_f.a.exposed.TitleDatabase
-import com.storyteller_f.a.exposed.TopicDatabase
-import com.storyteller_f.a.exposed.UserDatabase
+import com.storyteller_f.a.exposed.*
 import com.storyteller_f.a.exposed.tables.User
 import com.storyteller_f.a.server.auth.UserSession
 import com.storyteller_f.a.server.auth.configureAuth
@@ -44,14 +23,13 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.calllogging.*
-import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.partialcontent.*
 import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
 import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
@@ -67,13 +45,9 @@ import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.math.BigInteger
 import java.net.InetAddress
-import java.security.KeyPair
-import java.security.KeyPairGenerator
-import java.security.KeyStore
-import java.security.SecureRandom
-import java.security.Security
+import java.security.*
 import java.security.cert.X509Certificate
-import java.util.Date
+import java.util.*
 import kotlin.concurrent.thread
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -104,16 +78,7 @@ fun Application.module() {
     if (backend.config.buildType == "test") {
         ExposedDatabaseFactory.init(backend.database)
     }
-    val serverJob = launch {
-        backend.sendTopicToRoomMembers()
-        Napier.i {
-            "server topic task finished"
-        }
-    }
-    monitor.subscribe(ApplicationStopping) {
-        monitor.unsubscribe(ApplicationStopping) {}
-        serverJob.cancel()
-    }
+    startNewMessageTask(backend)
     configurePlugin(reader, backend)
     configureAuth(reader, backend)
     configureRoute(reader, backend)
@@ -121,7 +86,7 @@ fun Application.module() {
 
 private fun Application.configurePlugin(
     reader: DatabaseReader,
-    backend: Backend
+    backend: Backend,
 ) {
     install(ContentNegotiation) {
         json()
@@ -211,7 +176,7 @@ private fun buildDatabaseReader() = DatabaseReader.Builder(
 
 private fun buildLog(
     call: ApplicationCall,
-    reader: DatabaseReader
+    reader: DatabaseReader,
 ): String {
     val status = call.response.status()
     val httpMethod = call.request.httpMethod.value
@@ -223,7 +188,7 @@ private fun buildLog(
 }
 
 fun ApplicationCall.remoteIp(
-    reader: DatabaseReader
+    reader: DatabaseReader,
 ): List<Pair<String, String?>> {
     val remoteAddress = request.origin.remoteAddress
     val country = reader.tryCountry(InetAddress.getByName(remoteAddress)).getOrNull()
@@ -275,7 +240,7 @@ private fun processInitTaskIfNeed(env: MergedEnv) {
 private fun executeScriptInThread(
     scriptArray: List<String>,
     file: File,
-    continuation: CancellableContinuation<Int>
+    continuation: CancellableContinuation<Int>,
 ) {
     val process = try {
         ProcessBuilder(scriptArray).directory(file).start()
