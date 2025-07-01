@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import com.mikepenz.markdown.annotator.AnnotatorSettings
 import com.mikepenz.markdown.annotator.appendAutoLink
@@ -39,7 +40,7 @@ fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
     annotatorSettings: AnnotatorSettings,
     density: Density,
     inlineContentMap: MutableMap<String, String>,
-    maxWidth: Int
+    maxWidth: Dp,
 ) {
     val annotate = annotatorSettings.annotator.annotate
     var skipIfNext: Any? = null
@@ -74,7 +75,7 @@ private fun AnnotatedString.Builder.processCustomMarkdownElement(
     inlineContentMap: MutableMap<String, String>,
     parentType: IElementType?,
     density: Density,
-    width: Int,
+    width: Dp,
 ): Any? {
     when (child.type) {
         // Element types
@@ -200,33 +201,31 @@ private fun AnnotatedString.Builder.appendMathContent(
     child: ASTNode,
     content: String,
     density: Density,
-    inlineContentMap: MutableMap<String, String>
+    inlineContentMap: MutableMap<String, String>,
 ) {
     val tex = readInlineMath(child, content)
     val size = textUnitToPx(13.sp, density)
-    generateLatexImage(
+    val path = generateLatexImage(
         if (child.type == GFMElementTypes.INLINE_MATH) Color.LightGray.toArgb() else 0,
         Color.Black.toArgb(),
         size,
         tex
-    ).getOrNull()?.let { (r, path) ->
-        val id = "math${child.startOffset}-${child.endOffset}"
-        val url = "file:///$path"
-        inlineContentMap[id] = url
-        when {
-            !r -> append(tex)
-            child.type == GFMElementTypes.BLOCK_MATH -> {
-                val style = ParagraphStyle()
-                pushStyle(style)
-                appendInlineContent(id, url)
-                pop()
-            }
-
-            else -> {
-                appendInlineContent(id, url)
-            }
-        }
+    ).getOrNull()
+    if (path == null) {
+        append(tex)
+        return
     }
+    val id = "math${child.startOffset}-${child.endOffset}"
+    val url = "file:///$path"
+    inlineContentMap[id] = url
+    if (child.type != GFMElementTypes.BLOCK_MATH) {
+        appendInlineContent(id, url)
+        return
+    }
+    val style = ParagraphStyle()
+    pushStyle(style)
+    appendInlineContent(id, url)
+    pop()
 }
 
 internal fun ASTNode.findChildOfTypeRecursive(type: IElementType): ASTNode? {
@@ -251,7 +250,7 @@ fun CustomMarkdownText(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalMarkdownTypography.current.text,
     extendedSpans: ExtendedSpans? = LocalMarkdownExtendedSpans.current.extendedSpans?.invoke(),
-    inlineContentMap: ImmutableMap<String, InlineTextContent>
+    inlineContentMap: ImmutableMap<String, InlineTextContent>,
 ) {
     // extend the annotated string with `extended-spans` styles if provided
     val extendedStyledText = if (extendedSpans != null) {
@@ -293,7 +292,7 @@ private fun CustomMarkdownTextInternal(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalMarkdownTypography.current.text,
     onTextLayout: (TextLayoutResult) -> Unit,
-    inlineContentMap: ImmutableMap<String, InlineTextContent>
+    inlineContentMap: ImmutableMap<String, InlineTextContent>,
 ) {
     val baseColor = LocalMarkdownColors.current.text
     val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }

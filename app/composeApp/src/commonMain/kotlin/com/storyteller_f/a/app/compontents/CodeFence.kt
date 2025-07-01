@@ -66,7 +66,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.io.RawSink
-import kotlinx.io.asOutputStream
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -265,8 +264,8 @@ private fun LatexBlock(
 ) {
     val paintState = rememberGeneratedLatexImage(modal)
     if (paintState.isSuccess) {
-        val (r, path) = paintState.getOrThrow()
-        if (r) {
+        val path = paintState.getOrThrow()
+        if (path != null) {
             AsyncImage(
                 model = path.toString(),
                 contentDescription = "math",
@@ -280,7 +279,7 @@ private fun LatexBlock(
 }
 
 @Composable
-fun rememberGeneratedLatexImage(modal: MarkdownComponentModel): Result<Pair<Boolean, Path>> {
+fun rememberGeneratedLatexImage(modal: MarkdownComponentModel): Result<Path?> {
     val textStyle = LocalTextStyle.current
     val size = textUnitToPx(textStyle.fontSize)
     val backgroundColor = 0
@@ -300,18 +299,22 @@ fun generateLatexImage(
     textColor: Int,
     size: Float,
     tex: String
-): Result<Pair<Boolean, Path>> {
+): Result<Path?> {
     return runCatching {
         val key = md5(tex)
         val output = Path(SystemTemporaryDirectory, "latex/$key-$backgroundColor-$textColor-$size.png")
         Napier.i {
-            "output $output"
+            "generate latex $tex to $output"
         }
         if (SystemFileSystem.exists(output)) {
-            true to output
+            output
         } else {
             output.sink().buffered().use {
-                buildTexPainter(tex, backgroundColor, textColor, size, it.asOutputStream()) to output
+                if (saveLatexToImage(tex, backgroundColor, textColor, size, it)) {
+                    output
+                } else {
+                    null
+                }
             }
         }
     }
