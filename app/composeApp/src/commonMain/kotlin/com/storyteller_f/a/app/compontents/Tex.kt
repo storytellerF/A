@@ -4,14 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
-import java.io.OutputStream
+import kotlinx.io.Sink
 
-expect fun buildTexPainter(
+expect fun saveLatexToImage(
     tex: String,
     backgroundColor: Int,
     color: Int,
     textSize: Float,
-    outputStream: OutputStream
+    outputStream: Sink
 ): Boolean
 
 @Composable

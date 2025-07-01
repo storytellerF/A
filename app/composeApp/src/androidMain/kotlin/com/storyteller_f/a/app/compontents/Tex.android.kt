@@ -2,15 +2,16 @@ package com.storyteller_f.a.app.compontents
 
 import android.graphics.Bitmap
 import androidx.core.graphics.drawable.toBitmap
+import kotlinx.io.Sink
+import kotlinx.io.asOutputStream
 import ru.noties.jlatexmath.JLatexMathDrawable
-import java.io.OutputStream
 
-actual fun buildTexPainter(
+actual fun saveLatexToImage(
     tex: String,
     backgroundColor: Int,
     color: Int,
     textSize: Float,
-    outputStream: OutputStream
+    outputStream: Sink,
 ): Boolean {
     val drawable = JLatexMathDrawable.builder(tex)
         .textSize(textSize)
@@ -19,5 +20,5 @@ actual fun buildTexPainter(
         .align(JLatexMathDrawable.ALIGN_RIGHT)
         .build()
     val bitmap = drawable.toBitmap()
-    return bitmap.compress(Bitmap.CompressFormat.PNG, 80, outputStream)
+    return outputStream.asOutputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 80, it) }
 }

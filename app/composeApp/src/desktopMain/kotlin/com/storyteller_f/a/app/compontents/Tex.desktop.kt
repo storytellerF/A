@@ -1,18 +1,19 @@
 package com.storyteller_f.a.app.compontents
 
+import kotlinx.io.Sink
+import kotlinx.io.asOutputStream
 import org.scilab.forge.jlatexmath.TeXConstants
 import org.scilab.forge.jlatexmath.TeXFormula
 import java.awt.Color
 import java.awt.image.BufferedImage
-import java.io.OutputStream
 import javax.imageio.ImageIO
 
-actual fun buildTexPainter(
+actual fun saveLatexToImage(
     tex: String,
     backgroundColor: Int,
     color: Int,
     textSize: Float,
-    outputStream: OutputStream
+    outputStream: Sink,
 ): Boolean {
     val formula = TeXFormula(tex)
     val image = formula.createBufferedImage(
@@ -21,5 +22,5 @@ actual fun buildTexPainter(
         Color(color),
         if (backgroundColor == 0) null else Color(backgroundColor, true)
     )
-    return ImageIO.write(image as BufferedImage, "png", outputStream)
+    return outputStream.asOutputStream().use { ImageIO.write(image as BufferedImage, "png", it) }
 }

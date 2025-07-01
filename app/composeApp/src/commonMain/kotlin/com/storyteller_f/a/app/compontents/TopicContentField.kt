@@ -16,9 +16,7 @@ import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.*
 import com.ashampoo.kim.Kim
 import com.ashampoo.kim.common.convertToPhotoMetadata
 import com.mikepenz.markdown.annotator.annotatorSettings
@@ -31,6 +29,7 @@ import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.permission_denied
+import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -44,9 +43,6 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
 import org.intellij.markdown.ast.ASTNode
 import org.jetbrains.compose.resources.stringResource
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.use
 
 @Composable
 fun TopicContentField(
@@ -125,7 +121,7 @@ fun CustomMarkdownParagraph(
     val annotatorSettings = annotatorSettings()
     val transformer = LocalImageTransformer.current
     BoxWithConstraints {
-        val width = convertDpToPx(this.maxWidth)
+        val width = this.maxWidth
         val (styledText, inlineContentMap) = remember(
             style,
             content,
@@ -159,52 +155,28 @@ fun CustomMarkdownParagraph(
 private fun buildInlineTextContentMap(
     inlineContentMap: MutableMap<String, String>,
     mediaMap: ImmutableMap<String, MediaInfo>,
-    width: Int,
+    width: Dp,
     isEmbed: Boolean,
     density: Density,
-    transformer: ImageTransformer
+    transformer: ImageTransformer,
 ): ImmutableMap<String, InlineTextContent> {
-    val map = inlineContentMap.mapValues { (_, value) ->
-        val pair = if (value.startsWith("file:///")) {
-            val metadata = SystemFileSystem.source(Path(value.substring(7))).buffered().use {
-                Kim.readMetadata(it.readByteArray())?.convertToPhotoMetadata()
-            }
-            if (metadata != null) {
-                val widthPx = metadata.widthPx
-                val heightPx = metadata.heightPx
-                if (widthPx != null && heightPx != null) {
-                    widthPx to heightPx
-                } else {
-                    null
-                }
-            } else {
-                null
-            }
-        } else {
-            val info = mediaMap[value]
-            val dimension = info?.dimension
-            if (dimension != null) {
-                dimension.width to dimension.height
-            } else {
-                null
-            }
-        }
-        pair
-    }
-    return map.mapValues { (key, pair) ->
-        if (width != 0 && pair != null) {
-            val width = minOf(width, pair.first)
+    return inlineContentMap.mapValues { (key, value) ->
+        val dimension = getImageDimension(value, mediaMap)
+        if (width < 10.dp && dimension != null) {
+            val imageWidth = pxToDp(dimension.width, density.density)
+            val imageHeight = pxToDp(dimension.height, density.density)
+            val width = minOf(width, imageWidth)
             val height =
                 minOf(
-                    width * pair.second / pair.first,
-                    if (isEmbed) dpToPx(300.dp, density.density) else width * 2
+                    (width.value / imageWidth.value) * imageHeight,
+                    if (isEmbed) 300.dp else width * 2
                 )
-            val recalculatedWidth = height * pair.first / pair.second
+            val recalculatedWidth = height.value * imageWidth / imageHeight.value
             InlineTextContent(
                 Placeholder(
-                    pxToSp(recalculatedWidth, density.density),
-                    pxToSp(height, density.density),
-                    PlaceholderVerticalAlign.Bottom
+                    recalculatedWidth.value.sp,
+                    height.value.sp,
+                    PlaceholderVerticalAlign.Center
                 )
             ) {
                 val value = inlineContentMap[key]
@@ -213,7 +185,27 @@ private fun buildInlineTextContentMap(
                 }
             }
         } else {
-            InlineTextContent(Placeholder(0.sp, 0.sp, PlaceholderVerticalAlign.Bottom)) {}
+            InlineTextContent(Placeholder(0.sp, 0.sp, PlaceholderVerticalAlign.Center)) {}
         }
     }.toImmutableMap()
+}
+
+private fun getImageDimension(
+    value: String,
+    mediaMap: ImmutableMap<String, MediaInfo>,
+): Dimension? {
+    if (!value.startsWith("file:///")) {
+        return mediaMap[value]?.dimension
+    }
+
+    val metadata = SystemFileSystem.source(Path(value.substring(7))).buffered().use {
+        Kim.readMetadata(it.readByteArray())?.convertToPhotoMetadata()
+    } ?: return null
+
+    val widthPx = metadata.widthPx
+    val heightPx = metadata.heightPx
+    if (widthPx == null || heightPx == null) {
+        return null
+    }
+    return Dimension(widthPx, heightPx)
 }
