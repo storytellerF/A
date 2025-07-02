@@ -17,13 +17,11 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsChannel
-import io.ktor.utils.io.readRemaining
+import io.ktor.client.*
+import io.ktor.client.engine.okhttp.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.utils.io.*
 import kotlinx.cli.ArgType
 import kotlinx.cli.ExperimentalCli
 import kotlinx.cli.Subcommand
@@ -35,9 +33,7 @@ import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 import java.io.File
 import java.io.RandomAccessFile
 import java.security.MessageDigest
-import kotlin.collections.get
 import kotlin.system.exitProcess
-import kotlin.text.get
 
 class EncryptedTopicTuple(
     val encryptedContent: ByteArray,

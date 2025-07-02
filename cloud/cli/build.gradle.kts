@@ -11,6 +11,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
 
     implementation(projects.shared)
+    implementation(projects.backend.core)
     implementation(projects.backend.service)
     implementation(libs.kotlinx.cli)
     implementation(libs.cryptography.provider.jdk)
