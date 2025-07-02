@@ -82,16 +82,10 @@ tasks.withType<Tar> {
     filesMatching("vavi-commons-1.1.10.jar") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
     }
-    filesMatching("core.jar") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    }
 }
 
 tasks.withType<Zip> {
     filesMatching("vavi-commons-1.1.10.jar") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
-    }
-    filesMatching("core.jar") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }
