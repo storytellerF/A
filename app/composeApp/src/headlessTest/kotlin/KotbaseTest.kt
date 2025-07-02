@@ -1,4 +1,4 @@
-import com.storyteller_f.a.app.common.SectionLoadParams
+import com.storyteller_f.a.app.compose_app.common.SectionLoadParams
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.storage.StorageOrder
 import com.storyteller_f.storage.createKotbaseStorageSource

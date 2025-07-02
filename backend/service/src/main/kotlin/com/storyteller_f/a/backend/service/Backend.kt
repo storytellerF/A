@@ -3,6 +3,10 @@ package com.storyteller_f.a.backend.service
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.*
+import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
+import com.storyteller_f.a.backend.exposed.query.PaginationResult
+import com.storyteller_f.a.backend.exposed.query.batchCreateCommunityRooms
+import com.storyteller_f.a.backend.exposed.tables.*
 import com.storyteller_f.a.backend.service.index.ElasticTopicSearchService
 import com.storyteller_f.a.backend.service.index.LuceneTopicSearchService
 import com.storyteller_f.a.backend.service.index.TopicSearchService
@@ -10,11 +14,6 @@ import com.storyteller_f.a.backend.service.media.FileSystemMediaService
 import com.storyteller_f.a.backend.service.media.MediaService
 import com.storyteller_f.a.backend.service.media.MinIoMediaService
 import com.storyteller_f.a.backend.service.naming.NameService
-import com.storyteller_f.a.backend.service.service.BackendConfig
-import com.storyteller_f.a.exposed.ExposedDatabaseSession
-import com.storyteller_f.a.exposed.query.PaginationResult
-import com.storyteller_f.a.exposed.query.batchCreateCommunityRooms
-import com.storyteller_f.a.exposed.tables.*
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
@@ -31,13 +30,12 @@ import java.util.*
 
 class Backend(
     val config: Config,
-    val snapshotVerify: Pair<String, String>?,
     val topicSearchService: TopicSearchService,
     val mediaService: MediaService,
     val nameService: NameService,
     val database: Database,
     val databaseSession: ExposedDatabaseSession,
-    val exposedDatabase: com.storyteller_f.a.exposed.Database<User>,
+    val exposedDatabase: com.storyteller_f.a.backend.exposed.Database<User>,
 ) {
     val json by lazy {
         Json {}

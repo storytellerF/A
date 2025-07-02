@@ -2,9 +2,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import com.storyteller_f.a.app.compontents.InteractionRowInternal
-import com.storyteller_f.a.app.compontents.TopicContentField
-import com.storyteller_f.a.app.pages.topic.TopicDialogInternal
+import com.storyteller_f.a.app.compose_app.compontents.InteractionRowInternal
+import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicDialogInternal
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo

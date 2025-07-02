@@ -1,0 +1,446 @@
+package com.storyteller_f.a.app.compose_app.model
+
+import androidx.compose.runtime.Composable
+import com.storyteller_f.a.app.compose_app.LocalJson
+import com.storyteller_f.a.app.compose_app.UploadSession
+import com.storyteller_f.a.app.compose_app.common.viewModel
+import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
+import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TitleSearchType
+import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.md5
+
+@Composable
+fun createSearchCommunitiesViewModel(
+    finalOption: JoinStatusSearch,
+    query: String,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf("search-community", finalOption.name, query)
+) { client, databaseSource ->
+    CommunitiesViewModel(client, storageSource = databaseSource, finalOption, query)
+}
+
+@Composable
+fun createJoinedCommunitiesViewModel() =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf("joined-communities")
+    ) { client, databaseSource ->
+        CommunitiesViewModel(client, storageSource = databaseSource, JoinStatusSearch.JOINED, "")
+    }
+
+@Composable
+fun createTargetUserJoinedCommunitiesViewModel(
+    target: PrimaryKey,
+    word: String = "",
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "communities",
+        target,
+        word
+    )
+) { client, databaseSource ->
+    CommunitiesViewModel(client, databaseSource, JoinStatusSearch.JOINED, word, target)
+}
+
+@Composable
+fun createCommunityViewModel(communityId: PrimaryKey): IdCommunityViewModel {
+    return com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "community",
+            communityId
+        )
+    ) { client, databaseSource ->
+        IdCommunityViewModel(client, databaseSource, communityId)
+    }
+}
+
+@Composable
+fun createCommunityViewModel(communityAid: String) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "community",
+            communityAid
+        )
+    ) { client, databaseSource ->
+        AidCommunityViewModel(client, databaseSource, communityAid)
+    }
+
+@Composable
+fun createCommunityRoomsViewModel(communityId: PrimaryKey) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "community-rooms",
+            communityId
+        )
+    ) { client, databaseSource ->
+        RoomsViewModel(client, databaseSource, JoinStatusSearch.UNSPECIFIED, "", communityId)
+    }
+
+@Composable
+fun createJoinedRoomsViewModel() =
+    com.storyteller_f.a.app.compose_app.common.viewModel { client, databaseSource ->
+        RoomsViewModel(client, databaseSource, JoinStatusSearch.JOINED, "")
+    }
+
+@Composable
+fun createRoomViewModel(roomId: PrimaryKey) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "room",
+            roomId
+        )
+    ) { client, databaseSource ->
+        IdRoomViewModel(client, databaseSource, roomId)
+    }
+
+@Composable
+fun createRoomSearchInCommunityViewModel(
+    scope: com.storyteller_f.a.app.compose_app.pages.search.SearchScope.CommunityRoom,
+    current: String,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "rooms",
+        scope.communityId,
+        current
+    )
+) { client, databaseSource ->
+    RoomsViewModel(client, databaseSource, JoinStatusSearch.UNSPECIFIED, current, scope.communityId)
+}
+
+@Composable
+fun createRoomSearchViewModel(
+    finalOption: JoinStatusSearch,
+    current: String,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "my-rooms",
+        finalOption.name,
+        current
+    )
+) { client, databaseSource ->
+    RoomsViewModel(client, databaseSource, finalOption, current)
+}
+
+@Composable
+fun createRoomKeysViewModel(
+    roomId: PrimaryKey,
+    roomInfo: RoomInfo,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "room-keys",
+        roomId
+    )
+) { client, databaseSource ->
+    RoomKeysViewModel(client, roomId, roomInfo.isPrivate)
+}
+
+@Composable
+fun createRoomViewModel(roomAid: String) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "room",
+            roomAid
+        )
+    ) { client, databaseSource ->
+        AidRoomViewModel(client, databaseSource, roomAid)
+    }
+
+@Composable
+fun createRoomTopicsViewModel(roomId: PrimaryKey) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "room-topics",
+            roomId
+        )
+    ) { client, databaseSource ->
+        TopicsViewModel(client, databaseSource, roomId, ObjectType.ROOM)
+    }
+
+@Composable
+fun createCommunityTopicsViewModel(communityId: PrimaryKey): TopicsViewModel {
+    return com.storyteller_f.a.app.compose_app.common.viewModel<TopicsViewModel>(
+        keys = listOf("community-topics", communityId)
+    ) { client, databaseSource ->
+        TopicsViewModel(client, databaseSource, communityId, ObjectType.COMMUNITY)
+    }
+}
+
+@Composable
+fun createUserTopicsViewModel(
+    uid: PrimaryKey,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "user-topics",
+        uid
+    )
+) { client, databaseSource ->
+    TopicsViewModel(client, databaseSource, uid, ObjectType.USER)
+}
+
+@Composable
+fun createTopicSearchViewModel(current: String) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "topic",
+            current
+        )
+    ) { client, databaseSource ->
+        TopicSearchViewModel(client, databaseSource, current.split(" "), null, null)
+    }
+
+@Composable
+fun createTopicSearchInTopicViewModel(
+    scope: com.storyteller_f.a.app.compose_app.pages.search.SearchScope.TopicTopic,
+    current: String,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "topic",
+        scope.topicId,
+        current
+    )
+) { client, databaseSource ->
+    TopicSearchViewModel(client, databaseSource, current.split(" "), scope.topicId, ObjectType.TOPIC)
+}
+
+@Composable
+fun createTopicSearchInUserViewModel(
+    scope: com.storyteller_f.a.app.compose_app.pages.search.SearchScope.UserTopic,
+    current: String,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "topic",
+        scope.userId,
+        current
+    )
+) { client, databaseSource ->
+    TopicSearchViewModel(client, databaseSource, current.split(" "), scope.userId, ObjectType.USER)
+}
+
+@Composable
+fun createMemberSearchViewModel(current: String) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "members",
+            current
+        )
+    ) { client, databaseSource ->
+        MemberViewModel(client, databaseSource, 0, current, ObjectType.USER)
+    }
+
+@Composable
+fun createTopicSearchInCommunityViewModel(
+    scope: com.storyteller_f.a.app.compose_app.pages.search.SearchScope.CommunityTopic,
+    current: String,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "topic",
+        scope.communityId,
+        current
+    )
+) { client, databaseSource ->
+    TopicSearchViewModel(client, databaseSource, current.split(" "), scope.communityId, ObjectType.COMMUNITY)
+}
+
+@Composable
+fun createTopicViewModel(topicId: PrimaryKey) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "topic",
+            topicId
+        )
+    ) { client, databaseSource ->
+        IdTopicViewModel(client, databaseSource, topicId)
+    }
+
+@Composable
+fun createTopicsInTopicViewModel(topicId: PrimaryKey) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "topic-topics",
+            topicId
+        )
+    ) { client, databaseSource ->
+        TopicsViewModel(client, databaseSource, topicId, ObjectType.TOPIC)
+    }
+
+@Composable
+fun createTopicViewModel(topicAid: String) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "topic",
+            topicAid
+        )
+    ) { client, databaseSource ->
+        AidTopicViewModel(client, databaseSource, topicAid)
+    }
+
+@Composable
+fun createTopicSearchInRoomViewModel(
+    scope: com.storyteller_f.a.app.compose_app.pages.search.SearchScope.RoomTopic,
+    current: String,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "topic",
+        scope.roomId,
+        current
+    )
+) { client, databaseSource ->
+    TopicSearchViewModel(client, databaseSource, current.split(" "), scope.roomId, ObjectType.ROOM)
+}
+
+@Composable
+fun createSearchMemberInRoomViewModel(
+    scope: com.storyteller_f.a.app.compose_app.pages.search.SearchScope.RoomMember,
+    current: String,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "members",
+        scope.roomId,
+        current
+    )
+) { client, databaseSource ->
+    MemberViewModel(client, databaseSource, scope.roomId, current, ObjectType.ROOM)
+}
+
+@Composable
+fun createMemberSearchInCommunityViewModel(
+    scope: com.storyteller_f.a.app.compose_app.pages.search.SearchScope.CommunityMember,
+    current: String,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "members",
+        scope.communityId,
+        current
+    )
+) { client, databaseSource ->
+    MemberViewModel(client, databaseSource, scope.communityId, current, ObjectType.COMMUNITY)
+}
+
+@Composable
+fun createMediaListViewModel(
+    objectTuple: ObjectTuple,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "media",
+        objectTuple.objectId
+    )
+) { client, databaseSource ->
+    MediaListViewModel(client, databaseSource, objectTuple.objectId, objectTuple.objectType)
+}
+
+@Composable
+fun createMemberViewModel(
+    objectId: PrimaryKey,
+    objectType: ObjectType,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "members",
+        objectId
+    )
+) { client, databaseSource ->
+    MemberViewModel(client, databaseSource, objectId, "", objectType)
+}
+
+@Composable
+fun createUserViewModel(userAid: String) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "user",
+            userAid
+        )
+    ) { client, databaseSource ->
+        AidUserViewModel(client, databaseSource, userAid)
+    }
+
+@Composable
+fun createUserViewModel(userId: PrimaryKey) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "user",
+            userId
+        )
+    ) { client, databaseSource ->
+        IdUserViewModel(client, databaseSource, userId)
+    }
+
+@Composable
+fun createWorldViewModel() =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf("world")
+    ) { client, databaseSource ->
+        WorldViewModel(client, databaseSource)
+    }
+
+@Composable
+fun createReactionsViewModel(objectId: PrimaryKey): ReactionsViewModel {
+    val json = com.storyteller_f.a.app.compose_app.LocalJson.current
+    return com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "reactions",
+            objectId
+        )
+    ) { client, databaseSource ->
+        ReactionsViewModel(client, objectId, databaseSource, json)
+    }
+}
+
+@Composable
+fun createUserTitlesViewModel(
+    uid: PrimaryKey,
+    searchType: TitleSearchType,
+    status: TitleStatus? = null,
+    type: TitleType? = null,
+    scopeId: PrimaryKey? = null,
+) = com.storyteller_f.a.app.compose_app.common.viewModel(
+    keys = listOf(
+        "user-titles",
+        uid
+    )
+) { client, databaseSource ->
+    TitlesViewModel(client, databaseSource, uid, searchType, status, type, scopeId)
+}
+
+@Composable
+fun createUploadViewModel(myUid: PrimaryKey, uploadSession: com.storyteller_f.a.app.compose_app.UploadSession) =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        keys = listOf(
+            "upload",
+            uploadSession.name
+        )
+    ) { client, _ ->
+        UploadViewModel(client, uploadSession, myUid)
+    }
+
+@Composable
+fun getMarkdownMediasViewModel(
+    input: String,
+    objectTuple: ObjectTuple,
+): MarkdownMediasViewModel = com.storyteller_f.a.app.compose_app.common.viewModel(
+    listOf(
+        "content",
+        md5(input)
+    )
+) { sessionManager, _ ->
+    MarkdownMediasViewModel(sessionManager, input, objectTuple)
+}
+
+@Composable
+fun getDownloadViewModel(): DownloadViewModel =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        listOf("download")
+    ) { sessionManager, storageSource ->
+        DownloadViewModel(sessionManager, storageSource)
+    }
+
+@Composable
+fun getAlternativeAccountsViewModel(): AlternativeAccountsViewModel =
+    com.storyteller_f.a.app.compose_app.common.viewModel(
+        listOf("alternative accounts")
+    ) { sessionManager, storageSource ->
+        AlternativeAccountsViewModel(storageSource, sessionManager)
+    }

@@ -1,9 +1,9 @@
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.storyteller_f.a.app.compontents.CustomAlertDialogInternal
-import com.storyteller_f.a.app.compontents.CustomAlertDialogState
-import com.storyteller_f.a.app.compontents.DialogState
-import com.storyteller_f.a.app.compontents.GlobalDialogInternal
+import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogInternal
+import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogState
+import com.storyteller_f.a.app.compose_app.compontents.DialogState
+import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogInternal
 
 @Preview(showSystemUi = true)
 @Composable

@@ -2,7 +2,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.kdroid.composenotification.builder.AppConfig
 import com.kdroid.composenotification.builder.NotificationInitializer
-import com.storyteller_f.a.app.App
+import com.storyteller_f.a.app.compose_app.App
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import java.awt.*
 import kotlin.math.ceil

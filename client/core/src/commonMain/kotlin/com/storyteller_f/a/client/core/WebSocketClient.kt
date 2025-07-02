@@ -151,6 +151,8 @@ class WebSocketClientImpl(
                     break
                 }
             }
+            connectionHandler.data.value = null
+            connectionHandler.state.value = null
         }
     }
 

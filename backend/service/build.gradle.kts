@@ -6,7 +6,7 @@ plugins {
     id("me.champeau.jmh") version "0.7.3"
 }
 
-group = "com.storyteller_f.a.backend.service"
+group = "com.storyteller_f.a.backend"
 version = "unspecified"
 
 dependencies {

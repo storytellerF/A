@@ -2,8 +2,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import com.storyteller_f.a.app.pages.topic.EditTopicPage
-import com.storyteller_f.a.app.pages.topic.PreviewTopicPage
+import com.storyteller_f.a.app.compose_app.pages.topic.EditTopicPage
+import com.storyteller_f.a.app.compose_app.pages.topic.PreviewTopicPage
 
 private class ContentListProvider : PreviewParameterProvider<String> {
     override val values: Sequence<String>

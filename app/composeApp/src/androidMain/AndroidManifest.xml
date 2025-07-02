@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
 
     <application
-            android:name=".AApplication"
+            android:name=".compose_app.AApplication"
             android:allowBackup="true"
             android:enableOnBackInvokedCallback="true"
             android:icon="@mipmap/ic_launcher"
@@ -19,7 +19,7 @@
             android:theme="@style/App"
             tools:targetApi="tiramisu">
         <activity
-                android:name=".WebRtcActivity"
+                android:name=".compose_app.WebRtcActivity"
                 android:exported="false"/>
 
         <uses-native-library
@@ -33,7 +33,7 @@
                 android:required="false"/>
 
         <activity
-                android:name=".MainActivity"
+                android:name=".compose_app.MainActivity"
                 android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
                 android:exported="true"
                 android:supportsPictureInPicture="true"
@@ -46,7 +46,7 @@
             </intent-filter>
         </activity>
         <activity
-                android:name=".UploadActivity"
+                android:name=".compose_app.UploadActivity"
                 android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
                 android:exported="true"
                 android:windowSoftInputMode="adjustResize">
@@ -61,14 +61,14 @@
             </intent-filter>
         </activity>
         <activity
-                android:name=".MediaPlayerActivity"
+                android:name=".compose_app.MediaPlayerActivity"
                 android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
                 android:exported="true"
                 android:supportsPictureInPicture="true"
                 android:windowSoftInputMode="adjustResize"/>
 
         <service
-                android:name=".PlaybackService"
+                android:name=".compose_app.PlaybackService"
                 android:exported="true"
                 android:foregroundServiceType="mediaPlayback">
             <intent-filter>
@@ -76,7 +76,7 @@
             </intent-filter>
         </service>
         <service
-                android:name=".PushServiceImpl"
+                android:name=".compose_app.PushServiceImpl"
                 android:exported="false">
             <intent-filter>
                 <action android:name="org.unifiedpush.android.connector.PUSH_EVENT"/>

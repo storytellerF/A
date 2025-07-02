@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.kotlinBuildConfig)
 }
 
-group = "com.storyteller_f.a.server"
+group = "com.storyteller_f.a.cloud"
 version = "1.0.0"
 application {
     mainClass.set("com.storyteller_f.a.server.ApplicationKt")
@@ -66,7 +66,7 @@ val flavor = project.findProperty("buildkonfig.flavor").toString()
 
 buildConfig {
     className = "ServerConfig"
-    packageName = "com.storyteller_f.a.server"
+    packageName = "com.storyteller_f.a.cloud.server"
     buildConfigField<String>("BUILD_TYPE", buildType)
     buildConfigField<Boolean>("IS_PROD", buildType == "prod")
     buildConfigField<String>("FLAVOR", flavor)

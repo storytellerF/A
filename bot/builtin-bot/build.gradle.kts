@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotlinBuildConfig)
 }
 
-group = "com.storyteller_f.a"
+group = "com.storyteller_f.a.bot"
 version = "1.0.0"
 application {
     mainClass.set("com.storyteller_f.a.built_in_bot.BuiltInBotKt")

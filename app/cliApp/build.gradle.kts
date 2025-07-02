@@ -4,6 +4,10 @@ plugins {
     alias(libs.plugins.compose.compiler)
     application
 }
+
+group = "com.storyteller_f.a.app"
+version = "1.0.0"
+
 application {
     mainClass.set("com.storyteller_f.client_cli.MainKt")
 }

@@ -1,9 +1,9 @@
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.storyteller_f.a.app.InputPrivateKeyPage
-import com.storyteller_f.a.app.LoginNav
-import com.storyteller_f.a.app.SelectLoginPage
-import com.storyteller_f.a.app.TestContainer
+import com.storyteller_f.a.app.compose_app.InputPrivateKeyPage
+import com.storyteller_f.a.app.compose_app.LoginNav
+import com.storyteller_f.a.app.compose_app.SelectLoginPage
+import com.storyteller_f.a.app.compose_app.TestContainer
 
 @Preview(showSystemUi = true)
 @Composable

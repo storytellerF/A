@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.serialization)
 }
 
-group = "com.storyteller_f.a.http.core"
+group = "com.storyteller_f.a.api"
 version = "unspecified"
 
 dependencies {

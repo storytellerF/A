@@ -1,6 +1,6 @@
 package unit_test
 
-import com.storyteller_f.a.app.pages.topic.TopicRoute.Companion.parseRefUri
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute.Companion.parseRefUri
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

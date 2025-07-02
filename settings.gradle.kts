@@ -43,6 +43,7 @@ include(":shared")
 
 include(":app:composeApp")
 include(":app:cliApp")
+include(":app:dev")
 include(":app:devCli")
 include(":app:devServer")
 

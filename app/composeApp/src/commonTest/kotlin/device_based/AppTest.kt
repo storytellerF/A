@@ -3,8 +3,8 @@ package device_based
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.*
 import coil3.compose.LocalPlatformContext
-import com.storyteller_f.a.app.AppInternal
-import com.storyteller_f.a.app.utils.initEnvironment
+import com.storyteller_f.a.app.compose_app.AppInternal
+import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.shared.getPlatform
 import io.ktor.client.plugins.*

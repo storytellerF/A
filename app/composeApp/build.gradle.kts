@@ -187,7 +187,7 @@ kotlin {
 
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(compose.uiTest)
-            implementation(projects.app.devServer)
+            implementation(projects.app.dev)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -332,7 +332,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.storyteller_f.a.app.desktop"
+            packageName = "com.storyteller_f.a.app"
             packageVersion = "1.0.0"
         }
         buildTypes.release.proguard {
@@ -346,7 +346,7 @@ compose.desktop {
 }
 
 buildkonfig {
-    packageName = "com.storyteller_f.a.app"
+    packageName = "com.storyteller_f.a.app.compose_app"
     objectName = "AppConfig"
     val properties = Properties().apply {
         val file = layout.projectDirectory.file("../../${flavorStr}.env").asFile
@@ -469,6 +469,6 @@ tasks.withType<Test> {
 
 compose.resources {
     publicResClass = false
-    packageOfResClass = "com.storyteller_f.a.app"
+    packageOfResClass = "com.storyteller_f.a.app.compose_app"
     generateResClass = auto
 }

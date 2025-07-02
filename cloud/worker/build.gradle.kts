@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm") version "2.1.20"
 }
 
-group = "com.storyteller_f.a.worker"
+group = "com.storyteller_f.a.cloud"
 version = "unspecified"
 
 dependencies {

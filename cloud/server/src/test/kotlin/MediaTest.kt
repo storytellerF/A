@@ -4,8 +4,8 @@ import com.storyteller_f.a.client.core.copy
 import com.storyteller_f.a.client.core.extractAlbum
 import com.storyteller_f.a.client.core.getMediaList
 import com.storyteller_f.a.client.core.upload
-import com.storyteller_f.a.server.service.getExtensionFromMimeType
-import com.storyteller_f.a.server.service.readFlacAlbumFromAudioStream
+import com.storyteller_f.a.cloud.server.service.getExtensionFromMimeType
+import com.storyteller_f.a.cloud.server.service.readFlacAlbumFromAudioStream
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.http.*

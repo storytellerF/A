@@ -2,9 +2,9 @@
 aboutlibrariesComposeM3 = "11.2.3"
 aboutlibrariesCore = "11.2.3"
 agp = "8.10.1"
-android-compileSdk = "35"
+android-compileSdk = "36"
 android-minSdk = "24"
-android-targetSdk = "35"
+android-targetSdk = "36"
 androidx-activityCompose = "1.10.1"
 androidx-lifecycleProcess = "2.9.0"
 bcprovJdk18on = "1.80"
@@ -84,7 +84,7 @@ pgjdbcNg = "0.8.9"
 postgresql = "42.7.5"
 recordCore = "0.4.0"
 richeditorCompose = "1.0.0-rc12"
-robolectric = "4.14.1"
+robolectric = "4.15.1"
 screenshot = "0.0.1-alpha09"
 simplemagic = "1.17"
 tikaCore = "3.1.0"
@@ -236,7 +236,6 @@ multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", vers
 multiplatform-settings-serialization = { module = "com.russhwolf:multiplatform-settings-serialization", version.ref = "multiplatformSettingsNoArg" }
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
-paging-common = { module = "app.cash.paging:paging-common", version.ref = "pagingCommon" }
 paging-compose-common = { module = "app.cash.paging:paging-compose-common", version.ref = "pagingCommon" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 pdfbox-layout = { module = "com.github.cghislai:pdfbox-layout", version.ref = "pdfboxLayout" }
