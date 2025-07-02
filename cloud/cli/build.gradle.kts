@@ -27,7 +27,7 @@ kotlin {
 }
 
 application {
-    mainClass = "com.storyteller_f.a.cli.MainKt"
+    mainClass = "com.storyteller_f.a.cloud.cli.MainKt"
     applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 
