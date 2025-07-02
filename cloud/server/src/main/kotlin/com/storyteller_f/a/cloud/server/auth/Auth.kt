@@ -353,7 +353,7 @@ fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
                     is UserSession.Pending -> {
                         when {
                             credential != null -> call.checkApiRequest(backend, credential, session)
-                            backend.config.buildType == "prod" -> Result.success(null)
+                            backend.customConfig.buildType == "prod" -> Result.success(null)
                             else -> backend.checkDevWsLink(call)
                         }
                     }

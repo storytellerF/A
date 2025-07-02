@@ -14,8 +14,8 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.bundles.exposed)
     implementation(libs.kotlinx.serialization.json)
-    implementation(projects.backend.exposed)
     implementation(projects.backend.core)
+    implementation(projects.backend.exposed)
 
     implementation(projects.shared)
     implementation(libs.minio)
@@ -60,7 +60,7 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
         val output = outputDir.get().asFile
         output.mkdirs()
         configurations.runtimeClasspath.get().flatMap { file ->
-            if (file.isFile && file.name.endsWith(".jar")) {
+            if (file.isFile && file.name.endsWith(".jar") && file.name.startsWith("lucene")) {
                 zipTree(file).filter {
                     it.name.startsWith("org.apache.lucene.codecs")
                 }.map { serviceFile ->

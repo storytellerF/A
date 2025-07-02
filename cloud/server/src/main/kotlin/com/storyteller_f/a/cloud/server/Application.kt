@@ -2,7 +2,7 @@ package com.storyteller_f.a.cloud.server
 
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.backend.core.Config
+import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.CustomKeyStore
 import com.storyteller_f.a.backend.exposed.*
 import com.storyteller_f.a.backend.exposed.tables.User
@@ -76,7 +76,7 @@ fun main(args: Array<String>) {
 fun Application.module() {
     val reader = buildDatabaseReader()
     val backend = buildBackend()
-    if (backend.config.buildType == "test") {
+    if (backend.customConfig.buildType == "test") {
         ExposedDatabaseFactory.init(backend.database)
     }
     startNewMessageTask(backend)
@@ -109,7 +109,7 @@ private fun Application.configurePlugin(
     install(Sessions) {
         setupSessions()
     }
-    if (backend.config.buildType == "prod") {
+    if (backend.customConfig.buildType == "prod") {
         setupRateLimit()
     }
     install(PartialContent)
@@ -321,10 +321,10 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     } else {
         null
     }
-    val config = Config(buildType, flavor, snapshotKeyStore)
+    val customConfig = CustomConfig(buildType, flavor, snapshotKeyStore)
 
     return Backend(
-        config,
+        customConfig,
         topicDocumentService,
         mediaService,
         NameService(),
