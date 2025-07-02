@@ -20,6 +20,7 @@ kotlin {
 
 dependencies {
     implementation(libs.logback)
+    implementation(libs.napier)
 
     implementation(libs.cryptography.provider.jdk)
     implementation(projects.shared)

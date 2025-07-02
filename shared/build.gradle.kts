@@ -72,10 +72,10 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.cryptography.core)
-            api(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.markdown)
-            api(libs.napier)
-            api(libs.kotlinx.collections.immutable)
+            implementation(libs.napier)
+            implementation(libs.kotlinx.collections.immutable)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

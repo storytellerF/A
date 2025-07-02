@@ -10,23 +10,22 @@ group = "com.storyteller_f.a.backend"
 version = "unspecified"
 
 dependencies {
-    api(projects.backend.exposed)
+    implementation(libs.napier)
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.bundles.exposed)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(projects.backend.exposed)
     implementation(projects.backend.core)
 
     implementation(projects.shared)
     implementation(libs.minio)
     implementation(libs.elasticsearch.java)
     implementation(libs.jackson.module.kotlin)
-    implementation(libs.lucene.core)
-    implementation(libs.lucene.queryparser)
-    implementation(libs.lucene.analysis.common)
+    implementation(libs.bundles.lucene)
     implementation(libs.tika.core)
-    implementation(libs.kim)
     runtimeOnly(libs.vavi.image.avif)
     implementation(libs.memoryfilesystem)
-    implementation(libs.lucene.backward.codecs)
     implementation(libs.kotlinx.coroutines.slf4j)
-    implementation(libs.cache4k)
 
     testImplementation(libs.commons.logging)
     testImplementation(kotlin("test"))

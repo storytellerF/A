@@ -19,23 +19,23 @@ val bus = MutableSharedFlow<Any>()
 suspend fun processEvent(database: StorageSource) {
     bus.collect { event ->
         when (event) {
-            is com.storyteller_f.a.app.compose_app.model.OnAddReaction -> processOnAddReaction(database, event)
+            is OnAddReaction -> processOnAddReaction(database, event)
 
-            is com.storyteller_f.a.app.compose_app.model.OnRemoveReaction -> processRemoveReaction(database, event)
+            is OnRemoveReaction -> processRemoveReaction(database, event)
 
-            is com.storyteller_f.a.app.compose_app.model.OnCommunityJoined -> database.getCollection(
+            is OnCommunityJoined -> database.getCollection(
                 "communities",
                 CommunityInfo::class
             )
                 .save(event.info.id, event.info)
 
-            is com.storyteller_f.a.app.compose_app.model.OnCommunityExited -> database.getCollection(
+            is OnCommunityExited -> database.getCollection(
                 "communities",
                 CommunityInfo::class
             )
                 .save(event.info.id, event.info)
 
-            is com.storyteller_f.a.app.compose_app.model.OnCommunityUpdated -> {
+            is OnCommunityUpdated -> {
                 database.getCollection("communities", CommunityInfo::class).save(event.info.id, event.info)
                 database.getCollectionByPrefix("communities_", CommunityInfo::class).filter {
                     it.exists(StorageExpression.IdEq("id", event.info.id))
@@ -44,21 +44,21 @@ suspend fun processEvent(database: StorageSource) {
                 }
             }
 
-            is com.storyteller_f.a.app.compose_app.model.OnTopicChanged -> processTopicChanged(event, database)
+            is OnTopicChanged -> processTopicChanged(event, database)
 
-            is com.storyteller_f.a.app.compose_app.model.OnTopicCreated -> processTopicCreated(event, database)
+            is OnTopicCreated -> processTopicCreated(event, database)
 
-            is com.storyteller_f.a.app.compose_app.model.OnRoomJoined -> database.getCollection(
+            is OnRoomJoined -> database.getCollection(
                 "rooms",
                 RoomInfo::class
             ).save(event.info.id, event.info)
 
-            is com.storyteller_f.a.app.compose_app.model.OnRoomExited -> database.getCollection(
+            is OnRoomExited -> database.getCollection(
                 "rooms",
                 RoomInfo::class
             ).save(event.info.id, event.info)
 
-            is com.storyteller_f.a.app.compose_app.model.OnRoomUpdated -> {
+            is OnRoomUpdated -> {
                 database.getCollection("rooms", RoomInfo::class).save(event.info.id, event.info)
                 database.getCollectionByPrefix("rooms_", RoomInfo::class).filter {
                     it.exists(StorageExpression.IdEq("id", event.info.id))
@@ -67,7 +67,7 @@ suspend fun processEvent(database: StorageSource) {
                 }
             }
 
-            is com.storyteller_f.a.app.compose_app.model.OnUserUpdated -> {
+            is OnUserUpdated -> {
                 database.getCollection("users", UserInfo::class).save(event.info.id, event.info)
                 database.getCollectionByPrefix("users_", UserInfo::class).filter {
                     it.exists(StorageExpression.IdEq("id", event.info.id))
@@ -76,7 +76,7 @@ suspend fun processEvent(database: StorageSource) {
                 }
             }
 
-            is com.storyteller_f.a.app.compose_app.model.OnMediaUploaded -> {
+            is OnMediaUploaded -> {
                 event.mediaInfos.forEach {
                     database.getCollection("medias_${it.owner}", MediaInfo::class).save(it.id, it)
                 }
@@ -86,7 +86,7 @@ suspend fun processEvent(database: StorageSource) {
 }
 
 private fun processTopicCreated(
-    event: com.storyteller_f.a.app.compose_app.model.OnTopicCreated,
+    event: OnTopicCreated,
     database: StorageSource,
 ) {
     val topicInfo = event.topicInfo
@@ -98,7 +98,7 @@ private fun processTopicCreated(
 }
 
 private fun processTopicChanged(
-    event: com.storyteller_f.a.app.compose_app.model.OnTopicChanged,
+    event: OnTopicChanged,
     database: StorageSource,
 ) {
     val topicInfo = event.topicInfo
@@ -117,7 +117,7 @@ private fun processTopicChanged(
 
 private fun processRemoveReaction(
     database: StorageSource,
-    event: com.storyteller_f.a.app.compose_app.model.OnRemoveReaction,
+    event: OnRemoveReaction,
 ) {
     database.getCollection("topic", TopicInfo::class).update(event.info.objectId) { old ->
         val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
@@ -136,7 +136,7 @@ private fun processRemoveReaction(
 
 private fun processOnAddReaction(
     database: StorageSource,
-    event: com.storyteller_f.a.app.compose_app.model.OnAddReaction,
+    event: OnAddReaction,
 ) {
     listOf("topics", "topics_0", "topics_${event.info.objectId}").forEach {
         database.getCollection(it, TopicInfo::class).update(event.info.objectId) { old ->

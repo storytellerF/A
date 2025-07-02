@@ -134,10 +134,14 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(libs.navigation.compose)
+            implementation(libs.kotlinx.datetime)
 
-
-            api(projects.shared)
+            implementation(projects.shared)
             implementation(projects.client.core)
+            implementation(libs.napier)
+            implementation(projects.client.core)
+            implementation(projects.client.storage)
+            implementation(projects.client.kotbase)
 
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)

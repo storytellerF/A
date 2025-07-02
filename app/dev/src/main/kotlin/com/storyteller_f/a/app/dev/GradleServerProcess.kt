@@ -31,29 +31,28 @@ fun stopServer(serverProcess: Process, port: Int) {
     forceStop(port)
 }
 
-@OptIn(DelicateCoroutinesApi::class)
-suspend fun CoroutineScope.startServerInSubProcess(envFileBasePath: String, port: Int): Process? {
-    forceStop(port)
-    compileServer(envFileBasePath)
-    return startProcess(envFileBasePath, port)
-}
-
-private suspend fun CoroutineScope.startProcess(
-    envFilePath: String,
-    port: Int,
-): Process? {
+suspend fun CoroutineScope.startServerByRun(envFilePath: String, port: Int): Process? {
     val envFile = File(envFilePath, "server/src/test/resources/.env")
     if (!envFile.exists()) {
         println("${envFile.canonicalPath} not exists")
         return null
     }
     val file = File(envFilePath) // 确保这个路径正确，指向包含 gradlew.bat 的父目录
+    val gradleCommand = if (isWin()) {
+        // Windows
+        File(file, "gradlew.bat").absolutePath
+    } else {
+        // Linux/MacOS
+        "./gradlew"
+    }
 
     val builder = ProcessBuilder(
-        "java",
-        "-jar",
-        File(file, "cloud/server/build/libs/server-all.jar").absolutePath,
-    ).directory(file.canonicalFile)
+        gradleCommand,
+        "cloud:server:run",
+        "-Dorg.gradle.logging.level=quiet",
+        "--quiet",
+    )
+        .directory(file.canonicalFile)
     val pairs = envFile.readLines().filter {
         it.isNotBlank()
     }.map {
@@ -66,6 +65,11 @@ private suspend fun CoroutineScope.startProcess(
     environment.putAll(pairs)
     environment["SERVER_PORT"] = port.toString()
     val serverProcess = builder.start()
+    waitRunServerProcess(serverProcess)
+    return serverProcess
+}
+
+private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process) {
     val task = CompletableDeferred<String>()
     launch {
         serverProcess.inputStream.bufferedReader().use {
@@ -90,16 +94,17 @@ private suspend fun CoroutineScope.startProcess(
     withTimeout(10000) {
         task.await()
     }
-    return serverProcess
 }
 
-private suspend fun CoroutineScope.compileServer(envFilePath: String) {
+suspend fun CoroutineScope.startServerByJar(envFilePath: String, port: Int): Process? {
+    forceStop(port)
     val envFile = File(envFilePath, "server/src/test/resources/.env")
     if (!envFile.exists()) {
         println("${envFile.canonicalPath} not exists")
-        return
+        return null
     }
     val file = File(envFilePath) // 确保这个路径正确，指向包含 gradlew.bat 的父目录
+
     val gradleCommand = if (isWin()) {
         // Windows
         File(file, "gradlew.bat").absolutePath
@@ -107,19 +112,43 @@ private suspend fun CoroutineScope.compileServer(envFilePath: String) {
         // Linux/MacOS
         "./gradlew"
     }
-    val builder = ProcessBuilder(
+    val buildBuilder = ProcessBuilder(
         gradleCommand,
         "cloud:server:buildFatJar",
         "-Dorg.gradle.logging.level=quiet",
         "--quiet",
     ).directory(file.canonicalFile)
+    val buildProcess = buildBuilder.start()
+    waitBuildProcess(buildProcess)
+
+    val builder = ProcessBuilder(
+        "java",
+        "-jar",
+        File(file, "cloud/server/build/libs/server-all.jar").absolutePath,
+    ).directory(file.canonicalFile)
+    val pairs = envFile.readLines().filter {
+        it.isNotBlank()
+    }.map {
+        val list = it.split("=", limit = 2)
+        list[0] to list.getOrElse(1) {
+            ""
+        }
+    }
+    val environment = builder.environment()
+    environment.putAll(pairs)
+    environment["SERVER_PORT"] = port.toString()
     val serverProcess = builder.start()
+    waitJarServerProcess(serverProcess)
+    return serverProcess
+}
+
+private suspend fun CoroutineScope.waitJarServerProcess(serverProcess: Process) {
     val task = CompletableDeferred<String>()
     launch {
         serverProcess.inputStream.bufferedReader().use {
             while (serverProcess.isRunning()) {
                 val line = it.readLine() ?: break
-                if (line.contains("BUILD SUCCESSFUL")) {
+                if (line.contains("Application started")) {
                     task.complete(line)
                 }
             }
@@ -129,7 +158,7 @@ private suspend fun CoroutineScope.compileServer(envFilePath: String) {
         serverProcess.errorStream.bufferedReader().use {
             while (serverProcess.isRunning()) {
                 val line = it.readLine() ?: break
-                if (line.contains("BUILD FAILED")) {
+                if (line.contains("Execution failed for task ':server:")) {
                     task.completeExceptionally(RuntimeException(line))
                 }
             }
@@ -137,6 +166,33 @@ private suspend fun CoroutineScope.compileServer(envFilePath: String) {
     }
     withTimeout(10000) {
         task.await()
+    }
+}
+
+private suspend fun CoroutineScope.waitBuildProcess(buildProcess: Process) {
+    val buildTask = CompletableDeferred<String>()
+    launch {
+        buildProcess.inputStream.bufferedReader().use {
+            while (buildProcess.isRunning()) {
+                val line = it.readLine() ?: break
+                if (line.contains("BUILD SUCCESSFUL")) {
+                    buildTask.complete(line)
+                }
+            }
+        }
+    }
+    launch {
+        buildProcess.errorStream.bufferedReader().use {
+            while (buildProcess.isRunning()) {
+                val line = it.readLine() ?: break
+                if (line.contains("BUILD FAILED")) {
+                    buildTask.completeExceptionally(RuntimeException(line))
+                }
+            }
+        }
+    }
+    withTimeout(10000) {
+        buildTask.await()
     }
 }
 
