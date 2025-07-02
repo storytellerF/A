@@ -3,10 +3,10 @@ package com.storyteller_f.a.backend.exposed
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
+import com.storyteller_f.a.backend.exposed.query.buildTitleSearchQuery
 import com.storyteller_f.a.backend.exposed.tables.Title
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.toTitleInfo
-import com.storyteller_f.backend.service.query.buildTitleSearchQuery
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType

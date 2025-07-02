@@ -11,7 +11,7 @@ version = "unspecified"
 
 dependencies {
     api(projects.backend.exposed)
-    api(projects.backend.core)
+    implementation(projects.backend.core)
 
     implementation(projects.shared)
     implementation(libs.minio)
