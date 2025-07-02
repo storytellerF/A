@@ -141,7 +141,7 @@ private suspend fun Backend.createTopicSnapshot(
                 userInfo,
                 creatorInfo,
                 topicInfo,
-                config.snapshotKeyStore?.let {
+                customConfig.snapshotKeyStore?.let {
                     SnapshotVerify.KeyStoreVerify(it.path, it.pass, pdfFile, signedFile)
                 } ?: SnapshotVerify.NoneVerify(pdfFile)
             ).mapResultIfNotNull {

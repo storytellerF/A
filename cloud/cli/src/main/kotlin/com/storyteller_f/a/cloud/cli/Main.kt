@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.cli
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.backend.core.Config
+import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.exposed.CommunityDatabase
 import com.storyteller_f.a.backend.exposed.ContainerDatabase
 import com.storyteller_f.a.backend.exposed.Database
@@ -57,7 +57,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val buildType = env["BUILD_TYPE"]
     val flavor = env["FLAVOR"]
 
-    val config = Config(buildType, flavor, null)
+    val customConfig = CustomConfig(buildType, flavor, null)
 
     val topicDocumentService = topicDocumentService(env)
     val mediaService = mediaService(env)
@@ -65,7 +65,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val database = ExposedDatabaseFactory.connect(databaseConnection)
     val databaseSession = ExposedDatabaseSession(database, null)
     return Backend(
-        config,
+        customConfig,
         topicDocumentService,
         mediaService,
         NameService(),

@@ -29,7 +29,7 @@ import java.nio.file.Paths
 import java.util.*
 
 class Backend(
-    val config: Config,
+    val customConfig: CustomConfig,
     val topicSearchService: TopicSearchService,
     val mediaService: MediaService,
     val nameService: NameService,
