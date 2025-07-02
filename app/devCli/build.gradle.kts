@@ -6,8 +6,9 @@ plugins {
     alias(libs.plugins.kotlinBuildConfig)
 }
 
-group = "com.storyteller_f.a"
+group = "com.storyteller_f.a.app"
 version = "1.0.0"
+
 application {
     mainClass.set("com.storyteller_f.a.test_server.TestServerApplicationKt")
     applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
@@ -30,7 +31,7 @@ dependencies {
     implementation(libs.pdfbox.layout)
     implementation(libs.h2)
 
-    implementation(projects.app.devServer)
+    implementation(projects.app.dev)
 }
 
 val buildType = project.findProperty("server.buildType") as String

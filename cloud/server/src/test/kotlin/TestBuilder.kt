@@ -10,7 +10,7 @@ import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
 import com.storyteller_f.a.client.core.start
-import com.storyteller_f.a.server.module
+import com.storyteller_f.a.cloud.server.module
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -145,7 +145,7 @@ private fun doTest(
         coroutineScope {
             val task = CompletableDeferred<Unit>()
             val job = launch(Dispatchers.IO) {
-                receiveExplainResult(task)
+                receiveExplainResult(task, env["port"]!!.toInt())
             }
             task.await()
             block(this@testApplication)
@@ -156,11 +156,12 @@ private fun doTest(
 
 private suspend fun receiveExplainResult(
     task: CompletableDeferred<Unit>,
+    port: Int,
 ) {
     val json = Json {
         ignoreUnknownKeys = true
     }
-    ServerSocket(8888).apply {
+    ServerSocket(port).apply {
         soTimeout = 1000 // 5秒超时
     }.use { serverSocket ->
         task.complete(Unit)

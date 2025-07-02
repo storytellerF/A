@@ -1,0 +1,215 @@
+package com.storyteller_f.a.cloud.server.service
+
+import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
+import com.storyteller_f.a.backend.exposed.isDup
+import com.storyteller_f.a.backend.exposed.query.PaginationResult
+import com.storyteller_f.a.backend.exposed.tables.Room
+import com.storyteller_f.a.backend.exposed.tables.RoomRawResult
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.processRoomRawResultToRoomInfo
+import com.storyteller_f.a.cloud.server.auth.addUserLog
+import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.obj.*
+import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.*
+import io.ktor.server.websocket.*
+
+suspend fun Backend.getRoomPubKeys(
+    roomId: PrimaryKey,
+    userId: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch,
+) = exposedDatabase.containerDatabase.isMemberJoined(roomId, userId).mapResult {
+    if (it) {
+        exposedDatabase.roomData.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
+            .map { (data, count) ->
+                PaginationResult(data, count)
+            }
+    } else {
+        Result.failure(ForbiddenException("Permission denied"))
+    }
+}
+
+suspend fun Backend.joinRoom(
+    roomId: PrimaryKey,
+    uid: PrimaryKey,
+) = getRoomInfo(ObjectFetch.IdFetch(roomId), uid, true).mapResultIfNotNull { roomInfo ->
+    if (roomInfo.joinedTime != null) {
+        Result.success(roomInfo)
+    } else {
+        val communityId = roomInfo.communityId
+        if (communityId == null) {
+            // 检查是否存在title
+            exposedDatabase.titleDatabase.getTitlePaginationResult(
+                PrimaryKeyFetch(null, 1),
+                uid,
+                TitleSearchType.RECEIVER,
+                TitleType.JOIN,
+                roomId
+            ).mapResult {
+                if (it.list.firstOrNull() != null) {
+                    directJoinRoom(uid, roomInfo)
+                } else {
+                    Result.failure(ForbiddenException("Join failed."))
+                }
+            }
+        } else {
+            exposedDatabase.containerDatabase.isMemberJoined(communityId, uid).mapResult { hasJoined ->
+                if (hasJoined) {
+                    directJoinRoom(uid, roomInfo)
+                } else {
+                    Result.failure(ForbiddenException("you should join community first."))
+                }
+            }
+        }
+    }
+}
+
+private suspend fun Backend.directJoinRoom(
+    uid: PrimaryKey,
+    roomInfo: RoomInfo,
+): Result<RoomInfo?> {
+    val time = now()
+    return exposedDatabase.containerDatabase.joinContainer(
+        roomInfo.id,
+        uid,
+        time,
+        ObjectType.ROOM,
+    ).mapResult {
+        addUserLog(uid, UserLogType.JOIN, roomInfo.tuple())
+        Result.success(roomInfo.copy(joinedTime = time))
+    }.recoverResult { exception ->
+        if (exception.isDup()) {
+            getRoomInfo(ObjectFetch.IdFetch(roomInfo.id), uid, true)
+        } else {
+            Result.failure(exception)
+        }
+    }
+}
+
+suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
+    getRoomInfo(ObjectFetch.IdFetch(roomId), uid, true).mapResultIfNotNull { info ->
+        if (info.joinedTime == null) {
+            Result.success(info)
+        } else {
+            exposedDatabase.containerDatabase.exit(roomId, uid).map {
+                addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
+                info.copy(joinedTime = null)
+            }
+        }
+    }
+
+suspend fun Backend.getRoomInfo(
+    objectFetch: ObjectFetch,
+    uid: PrimaryKey?,
+    fillJoinInfo: Boolean?,
+): Result<RoomInfo?> {
+    return exposedDatabase.roomData.getRoomRawResult(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
+        processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
+    }
+}
+
+private fun checkRoomName(newRoom: NewRoom): Result<Unit> {
+    val nickname = newRoom.name
+    return when {
+        nickname.isEmpty() -> Result.failure(CustomBadRequestException("room name is empty"))
+        nickname.length in 1..COMMUNITY_NAME_LENGTH -> Result.success(Unit)
+        else -> Result.failure(CustomBadRequestException("room name must be between in 1 and 20"))
+    }
+}
+
+suspend fun Backend.createRoom(
+    newRoom: NewRoom,
+    uid: PrimaryKey,
+): Result<RoomInfo?> {
+    val firstError = listOf(suspend {
+        checkAid(newRoom.aid)
+    }, suspend {
+        checkRoomName(newRoom)
+    }).firstNotNullOfOrNull {
+        it().exceptionOrNull()
+    }
+    if (firstError != null) return Result.failure(firstError)
+    val communityId = newRoom.communityId
+    return if (communityId != null) {
+        checkRootAdminPermission(ObjectType.COMMUNITY, communityId, uid).mapIfNotNull {
+            it.hasAdmin
+        }
+    } else {
+        Result.success(true)
+    }.mapResultIfNotNull {
+        if (it) {
+            val roomId = SnowflakeFactory.nextId()
+            val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
+            exposedDatabase.roomData.createRoom(room)
+                .mapResult {
+                    processRoomRawResultToRoomInfo(
+                        listOf(
+                            RoomRawResult(room, room.createdTime, null, 0)
+                        )
+                    ).mapIfNotNull(List<RoomInfo>::first)
+                }
+        } else {
+            Result.failure(ForbiddenException())
+        }
+    }
+}
+
+suspend fun Backend.updateRoom(
+    id: PrimaryKey,
+    old: UpdateRoomBody,
+    uid: PrimaryKey,
+): Result<RoomInfo?> {
+    val newRoom = old.copy(name = old.name?.trim(), icon = old.icon)
+    return checkRootAdminPermission(ObjectType.ROOM, id, uid).mapResultIfNotNull { permission ->
+        if (permission.hasAdmin) {
+            val firstError = listOf(suspend {
+                when (checkNickname(newRoom.name, 1..COMMUNITY_NAME_LENGTH)) {
+                    StringCheckResult.RANGE_MISMATCH -> Result.failure(
+                        CustomBadRequestException("community name must be between in 1 and 20")
+                    )
+
+                    else -> Result.success(Unit)
+                }
+            }, suspend {
+                checkIcon(newRoom.icon, Dimension(1, 1)).mapResult { checkResult ->
+                    when (checkResult) {
+                        MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
+                        MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
+                            CustomBadRequestException("only support image")
+                        )
+
+                        MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
+                            CustomBadRequestException("dimension mismatch")
+                        )
+
+                        else -> Result.success(Unit)
+                    }
+                }
+            }).firstNotNullOfOrNull {
+                it().exceptionOrNull()
+            }
+            if (firstError != null) {
+                Result.failure(firstError)
+            } else {
+                exposedDatabase.roomData.updateRoom(id, newRoom).mapResult { updateSuccess ->
+                    if (updateSuccess) {
+                        exposedDatabase.roomData.getRoomRawResult(ObjectFetch.IdFetch(id), true, uid)
+                            .mapResultIfNotNull {
+                                processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
+                            }
+                    } else {
+                        Result.success(null)
+                    }
+                }
+            }
+        } else {
+            Result.failure(CustomBadRequestException("forbid"))
+        }
+    }
+}

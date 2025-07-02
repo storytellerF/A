@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlinBuildConfig)
 }
 
-group = "com.storyteller_f.a.http.core"
+group = "com.storyteller_f.a.api"
 version = "unspecified"
 
 dependencies {

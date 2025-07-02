@@ -16,7 +16,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.exposed.query.PaginationResult
+import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.recoverResult

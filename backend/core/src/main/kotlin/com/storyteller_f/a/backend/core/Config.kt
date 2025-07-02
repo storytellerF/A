@@ -6,10 +6,12 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import java.io.File
 
+class CustomKeyStore(val path: String, val pass: String)
+
 class Config(
-    val databaseConnection: DatabaseConnection,
     val buildType: String,
-    val flavor: String
+    val flavor: String,
+    val snapshotKeyStore: CustomKeyStore?,
 )
 
 data class ElasticConnection(val url: String, val certFile: String, val name: String, val pass: String)

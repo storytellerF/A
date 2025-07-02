@@ -2,8 +2,8 @@ import android.content.ContentProvider
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
-import com.storyteller_f.a.app.AApplication
-import com.storyteller_f.a.app.MainActivity
+import com.storyteller_f.a.app.compose_app.AApplication
+import com.storyteller_f.a.app.compose_app.MainActivity
 import com.storyteller_f.storage.loadKotbaseIfNeed
 import org.junit.Assume
 import org.junit.Before
@@ -15,9 +15,7 @@ import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(
-    manifest = Config.NONE,
-)
+@Config(manifest = Config.NONE, sdk = [35])
 actual abstract class UsingContextTest {
     @Before
     fun setup() {
@@ -28,12 +26,6 @@ actual abstract class UsingContextTest {
             AApplication()
         }
         val app = RuntimeEnvironment.getApplication()
-//        Shadows.shadowOf(app.packageManager).addActivityIfNotPresent(
-//            ComponentName(
-//                app.packageName,
-//                MainActivity::class.simpleName!!,
-//            )
-//        )
         loadKotbaseIfNeed(app)
         setupAndroidContextProvider()
     }

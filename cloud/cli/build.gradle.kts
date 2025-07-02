@@ -3,7 +3,7 @@ plugins {
     application
 }
 
-group = "com.storyteller_f.a.cli"
+group = "com.storyteller_f.a.cloud"
 version = "unspecified"
 
 dependencies {
