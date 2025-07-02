@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.bcpkix.jdk18on)
     implementation(projects.shared)
     implementation(projects.api.server)
+    implementation(projects.backend.core)
     implementation(projects.backend.service)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.server.client)

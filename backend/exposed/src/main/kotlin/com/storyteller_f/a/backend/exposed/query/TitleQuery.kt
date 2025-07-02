@@ -1,4 +1,4 @@
-package com.storyteller_f.backend.service.query
+package com.storyteller_f.a.backend.exposed.query
 
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.shared.model.TitleSearchType
