@@ -1,3 +1,4 @@
+import com.storyteller_f.a.app.dev.startServerByRun
 import com.storyteller_f.a.app.dev.startServerInSubProcess
 import com.storyteller_f.a.app.dev.stopServer
 import kotlinx.coroutines.test.runTest
@@ -10,7 +11,7 @@ expect abstract class UsingContextTest() {
 }
 
 fun remoteServerTest(block: suspend (String) -> Unit) = runTest(timeout = 1.hours) {
-    val serverProcess = startServerInSubProcess("..", 8080) ?: throw Exception("start server failed")
+    val serverProcess = startServerByRun("..", 8080) ?: throw Exception("start server failed")
     try {
         block("http://localhost:8080")
     } finally {

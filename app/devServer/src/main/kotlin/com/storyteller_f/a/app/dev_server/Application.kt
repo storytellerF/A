@@ -4,7 +4,7 @@ import com.storyteller_f.a.app.dev.forceStop
 import com.storyteller_f.a.app.dev.getConnectedDevices
 import com.storyteller_f.a.app.dev.isWin
 import com.storyteller_f.a.app.dev.startListening
-import com.storyteller_f.a.app.dev.startServerInSubProcess
+import com.storyteller_f.a.app.dev.startServerByRun
 import com.storyteller_f.a.app.dev.stopServer
 import com.storyteller_f.shared.kmpLogger
 import io.github.aakira.napier.Napier
@@ -117,7 +117,7 @@ private suspend fun RoutingCall.handleStartRoute(
         port
     }
 
-    val server = startServerInSubProcess(if (isNested) ".." else ".", port)
+    val server = startServerByRun(if (isNested) ".." else ".", port)
     if (server != null) {
         application.log.info("start $port server success")
         processLock.withLock {

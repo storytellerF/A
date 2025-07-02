@@ -55,10 +55,16 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
+            implementation(libs.napier)
+            implementation(libs.kotlinx.collections.immutable)
             implementation(projects.shared)
             implementation(libs.bundles.ktor.client)
             implementation(libs.kotlinx.datetime)
+            implementation(projects.api.core)
             implementation(projects.api.client)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
         jvmMain.dependencies {
             implementation(libs.ktor.client.okhttp)

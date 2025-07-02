@@ -54,6 +54,7 @@ kotlin {
         val noWasmMain by creating {
             dependsOn(commonMain.get())
             dependencies {
+                implementation(libs.napier)
                 implementation(libs.couchbase.lite)
                 implementation(libs.couchbase.lite.ktx)
             }
@@ -81,7 +82,7 @@ kotlin {
             implementation(projects.shared)
             implementation(libs.bundles.ktor.client)
             implementation(libs.kotlinx.datetime)
-            api(projects.client.storage)
+            implementation(projects.client.storage)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

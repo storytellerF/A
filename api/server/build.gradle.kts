@@ -9,7 +9,7 @@ version = "unspecified"
 dependencies {
     implementation(libs.ktor.server.core)
     implementation(projects.shared)
-    api(projects.api.core)
+    implementation(projects.api.core)
     testImplementation(kotlin("test"))
 }
 

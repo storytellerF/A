@@ -21,15 +21,20 @@ kotlin {
 }
 
 dependencies {
+    implementation(libs.napier)
     implementation(libs.cryptography.provider.jdk)
     implementation(libs.bcpkix.jdk18on)
     implementation(projects.shared)
+    implementation(projects.api.core)
     implementation(projects.api.server)
     implementation(projects.backend.core)
+    implementation(projects.backend.exposed)
     implementation(projects.backend.service)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.server.client)
+    implementation(libs.bundles.exposed)
     implementation(libs.pdfbox)
+    implementation(libs.kotlinx.collections.immutable)
 
     implementation(libs.geoip2)
     implementation(libs.tika.core)

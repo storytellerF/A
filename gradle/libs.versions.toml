@@ -324,3 +324,18 @@ filekit = [
     "filekit-dialogs",
     "filekit-dialogs-compose",
 ]
+exposed = [
+    "exposed-core",
+    "exposed-crypt",
+    "exposed-dao",
+    "exposed-jdbc",
+    "exposed-json",
+    "exposed-kotlin-datetime",
+    "exposed-money"
+]
+lucene = [
+    "lucene-core",
+    "lucene-analysis-common",
+    "lucene-backward-codecs",
+    "lucene-queryparser",
+]
