@@ -13,6 +13,7 @@ import io.minio.http.Method
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.toKotlinLocalDateTime
+import org.apache.hc.core5.net.URIBuilder
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
 import kotlin.Result
@@ -20,7 +21,7 @@ import kotlin.getOrThrow
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 
-class MinIoMediaService(private val connection: MinIoConnection) : MediaService {
+class MinIoMediaService(private val connection: MinIoConnection, private val minioHost: String?) : MediaService {
     val cache = SimpleCacheService<String, String>(7.days)
 
     override suspend fun clean(bucketName: String): Result<Unit> {
@@ -84,12 +85,18 @@ class MinIoMediaService(private val connection: MinIoConnection) : MediaService 
         }
     }
 
-    override suspend fun get(bucketName: String, names: List<String>): Result<List<MediaRecord>> {
+    override suspend operator fun get(bucketName: String, names: List<String>): Result<List<MediaRecord>> {
         return useMinIoClient(connection) {
             names.mapNotNull {
                 try {
                     val url = cache.get(it) {
-                        getMinioObjectUrl(bucketName, it)
+                        val minioObjectUrl = getMinioObjectUrl(bucketName, it)
+                        if (minioHost.isNullOrBlank()) {
+                            minioObjectUrl
+                        } else {
+                            val host = URIBuilder(minioHost)
+                            URIBuilder(minioObjectUrl).setScheme(host.scheme).setHost(host.host).build().toString()
+                        }
                     }
                     val statObject =
                         statObject(StatObjectArgs.builder().bucket(bucketName).`object`(it).build())

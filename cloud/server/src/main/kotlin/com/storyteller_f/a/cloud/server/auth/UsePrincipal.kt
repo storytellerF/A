@@ -15,6 +15,7 @@ import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import io.sentry.Sentry
 import kotlin.io.path.name
 
 suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> Result<R?>) = callRespond<R>(block)
@@ -117,6 +118,7 @@ suspend inline fun <reified R> RoutingContext.handleResult(it: Result<R>) {
         }
     }.onFailure {
         respondError(it)
+        Sentry.captureException(it)
         call.application.log.error("Occur server exception", it)
     }
 }
