@@ -95,7 +95,11 @@ class MinIoMediaService(private val connection: MinIoConnection, private val min
                             minioObjectUrl
                         } else {
                             val host = URIBuilder(minioHost)
-                            URIBuilder(minioObjectUrl).setScheme(host.scheme).setHost(host.host).build().toString()
+                            URIBuilder(minioObjectUrl)
+                                .setScheme(host.scheme)
+                                .setHost(host.host)
+                                .setPort(host.port)
+                                .build().toString()
                         }
                     }
                     val statObject =
