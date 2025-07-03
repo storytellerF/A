@@ -61,7 +61,7 @@ fun Community.toCommunityIfo(
     lastRead = lastRead
 )
 
-data class CommunityRawResult(
+data class RawCommunity(
     val community: Community,
     val joinedTime: LocalDateTime?,
     val lastRead: Long?,

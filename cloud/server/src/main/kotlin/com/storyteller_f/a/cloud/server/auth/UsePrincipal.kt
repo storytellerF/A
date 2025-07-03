@@ -118,7 +118,9 @@ suspend inline fun <reified R> RoutingContext.handleResult(it: Result<R>) {
         }
     }.onFailure {
         respondError(it)
-        Sentry.captureException(it)
+        if (it !is UnauthorizedException) {
+            Sentry.captureException(it)
+        }
         call.application.log.error("Occur server exception", it)
     }
 }

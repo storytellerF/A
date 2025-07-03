@@ -28,9 +28,9 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
         }
     }
 
-    override suspend fun getUserRawResult(
+    override suspend fun getRawUser(
         objectFetch: ObjectFetch,
-    ): Result<UserRawResult<User>?> {
+    ): Result<RawUser<User>?> {
         return exposedDatabaseSession.dbSearch {
             search {
                 Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
@@ -44,9 +44,9 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
         }
     }
 
-    override suspend fun getUserRawResultAndPublicKeyByAddress(
+    override suspend fun getRawUserAndPublicKeyByAddress(
         ad: String,
-    ): Result<Pair<UserRawResult<User>, String>?> {
+    ): Result<Pair<RawUser<User>, String>?> {
         return exposedDatabaseSession.dbSearch {
             search {
                 Users
@@ -58,7 +58,7 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
             }
             first {
                 val value = User.wrapRow(it)
-                Pair(UserRawResult(value), value.publicKey)
+                Pair(RawUser(value), value.publicKey)
             }
         }
     }
@@ -172,7 +172,7 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
         }
     }
 
-    override suspend fun getUserRawResultList(objectListFetch: ObjectListFetch): Result<List<UserRawResult<User>>> {
+    override suspend fun getRawUsers(objectListFetch: ObjectListFetch): Result<List<RawUser<User>>> {
         return exposedDatabaseSession.dbSearch {
             search {
                 Users
@@ -314,10 +314,10 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
         }
     }
 
-    override suspend fun getAlternativeRawResultPaginationListByHost(
+    override suspend fun getRawAlternativePaginationListByHost(
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<AlternateAccountRawResult>> {
+    ): Result<PaginationResult<RawAlternateAccount>> {
         return exposedDatabaseSession.dbSearch {
             search {
                 Users.join(AlternateAccounts, JoinType.INNER, Users.id, AlternateAccounts.uid)
@@ -329,7 +329,7 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
             map {
                 val alternateAccount = AlternateAccount.wrapRow(it)
                 val user = User.wrapRow(it)
-                AlternateAccountRawResult(alternateAccount, UserRawResult(user))
+                RawAlternateAccount(alternateAccount, RawUser(user))
             }
         }.mapResult { list ->
             exposedDatabaseSession.dbSearch {
@@ -347,7 +347,7 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
         }
     }
 
-    override suspend fun createAlternativeRawResult(hostId: PrimaryKey, privateKey: String, user: User): Result<Unit> {
+    override suspend fun createAlternativeAccount(hostId: PrimaryKey, privateKey: String, user: User): Result<Unit> {
         return exposedDatabaseSession.dbQuery {
             createUserRaw(user)
             check(AlternateAccounts.insert {

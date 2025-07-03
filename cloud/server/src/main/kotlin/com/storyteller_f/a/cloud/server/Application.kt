@@ -58,7 +58,6 @@ import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
-
     Napier.base(kmpLogger)
     loadCryptoLibIfNeed()
     loadAvif()

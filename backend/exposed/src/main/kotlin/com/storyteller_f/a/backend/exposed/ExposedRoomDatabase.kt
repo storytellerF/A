@@ -38,7 +38,7 @@ class ExposedRoomDatabase(
         community: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
-    ): Result<PaginationResult<RoomRawResult>> {
+    ): Result<PaginationResult<RawRoom>> {
         return exposedDatabaseSession.dbSearch {
             search {
                 Rooms
@@ -49,7 +49,7 @@ class ExposedRoomDatabase(
             }
             map(Room::wrapRow)
         }.mapResult {
-            processRoomListToRoomRawResult(uid, it).mapResult { list ->
+            processRoomListToRawRoom(uid, it).mapResult { list ->
                 exposedDatabaseSession.dbSearch {
                     search {
                         Rooms.select(Rooms.id).buildRoomSearchWhereQuery(joinSearch, community, word)
@@ -96,11 +96,11 @@ class ExposedRoomDatabase(
         }
     }
 
-    override suspend fun getRoomRawResult(
+    override suspend fun getRawRoom(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean?,
         uid: PrimaryKey?,
-    ): Result<RoomRawResult?> {
+    ): Result<RawRoom?> {
         if (uid == null && fillJoinInfo == true) return Result.failure(UnauthorizedException())
         return exposedDatabaseSession.dbSearch {
             search {
@@ -116,20 +116,20 @@ class ExposedRoomDatabase(
             }
             first(Room::wrapRow)
         }.mapResultIfNotNull { room ->
-            processRoomListToRoomRawResult(uid, listOf(room)).map {
+            processRoomListToRawRoom(uid, listOf(room)).map {
                 it.first()
             }
         }
     }
 
-    override suspend fun processRoomListToRoomRawResult(
+    override suspend fun processRoomListToRawRoom(
         uid: PrimaryKey?,
         rooms: List<Room>,
-    ): Result<List<RoomRawResult>> = containerDatabase.getContainerInfo(rooms.map {
+    ): Result<List<RawRoom>> = containerDatabase.getContainerInfo(rooms.map {
         it.id
     }, uid).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
         rooms.map { room ->
-            RoomRawResult(
+            RawRoom(
                 room,
                 joinedTimeMap[room.id]?.joinedTime,
                 lastReadMap[room.id]?.topicId,
@@ -161,9 +161,9 @@ class ExposedRoomDatabase(
         }
     }
 
-    override suspend fun getRoomRawResultList(
+    override suspend fun getRawRooms(
         objectListFetch: ObjectListFetch,
-    ): Result<List<RoomRawResult>> {
+    ): Result<List<RawRoom>> {
         return exposedDatabaseSession.dbSearch {
             search {
                 Rooms
@@ -179,7 +179,7 @@ class ExposedRoomDatabase(
                 val joinedTime = it.getOrNull(MemberJoins.joinedTime)
                 val topicId = it.getOrNull(UserTopicReads.topicId)
                 val room = Room.wrapRow(it)
-                RoomRawResult(room, joinedTime, topicId, 0)
+                RawRoom(room, joinedTime, topicId, 0)
             }
         }
     }

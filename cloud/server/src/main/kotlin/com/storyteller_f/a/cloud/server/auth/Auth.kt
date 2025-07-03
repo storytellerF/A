@@ -9,7 +9,7 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.exposed.tables.*
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getUserAlternateUserInfoList
-import com.storyteller_f.a.backend.service.processUserRawResultToUserInfo
+import com.storyteller_f.a.backend.service.processRawUserToUserInfo
 import com.storyteller_f.a.cloud.server.ServerConfig
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
@@ -134,14 +134,14 @@ private suspend fun RoutingContext.signIn(
     data: String
 ): Result<UserInfo?> {
     val f = finalData(data)
-    return backend.exposedDatabase.userDatabase.getUserRawResultAndPublicKeyByAddress(pack.ad).filterNotNull {
+    return backend.exposedDatabase.userDatabase.getRawUserAndPublicKeyByAddress(pack.ad).filterNotNull {
         CustomBadRequestException("user not found")
-    }.mapResult { (userRawResult, publicKey) ->
+    }.mapResult { (rawUser, publicKey) ->
         verify(publicKey, pack.sig, f).mapResult { isVerified ->
             if (isVerified) {
-                val id = userRawResult.user.id
+                val id = rawUser.user.id
                 backend.addUserLog(id, UserLogType.SIGN_IN, id ob ObjectType.USER)
-                backend.processUserRawResultToUserInfo(listOf(userRawResult)).mapIfNotNull {
+                backend.processRawUserToUserInfo(listOf(rawUser)).mapIfNotNull {
                     it.first()
                 }.mapIfNotNull { value ->
                     val id = value.id

@@ -185,7 +185,7 @@ suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<AlternativeAc
                         null, publicKey, address, null, nameService.parse(id), id, now(), 0, PassType.RAW,
                         AlgoType.P256
                     )
-                    exposedDatabase.userDatabase.createAlternativeRawResult(uid, derPrivateKey, user).map {
+                    exposedDatabase.userDatabase.createAlternativeAccount(uid, derPrivateKey, user).map {
                         addUserLog(uid, UserLogType.ADD_ALTERNATIVE_ACCOUNT, id ob ObjectType.USER)
                         AlternativeAccountInfo(uid, derPrivateKey, user.toUserInfo())
                     }

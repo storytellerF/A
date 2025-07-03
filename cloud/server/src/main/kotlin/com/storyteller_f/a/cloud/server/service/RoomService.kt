@@ -8,17 +8,16 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.isDup
 import com.storyteller_f.a.backend.exposed.query.PaginationResult
+import com.storyteller_f.a.backend.exposed.tables.RawRoom
 import com.storyteller_f.a.backend.exposed.tables.Room
-import com.storyteller_f.a.backend.exposed.tables.RoomRawResult
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.processRoomRawResultToRoomInfo
+import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
 import com.storyteller_f.a.cloud.server.auth.addUserLog
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
-import io.ktor.server.websocket.*
 
 suspend fun Backend.getRoomPubKeys(
     roomId: PrimaryKey,
@@ -109,8 +108,8 @@ suspend fun Backend.getRoomInfo(
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?,
 ): Result<RoomInfo?> {
-    return exposedDatabase.roomData.getRoomRawResult(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
-        processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
+    return exposedDatabase.roomData.getRawRoom(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
+        processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
     }
 }
 
@@ -148,9 +147,9 @@ suspend fun Backend.createRoom(
             val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
             exposedDatabase.roomData.createRoom(room)
                 .mapResult {
-                    processRoomRawResultToRoomInfo(
+                    processRawRoomToRoomInfo(
                         listOf(
-                            RoomRawResult(room, room.createdTime, null, 0)
+                            RawRoom(room, room.createdTime, null, 0)
                         )
                     ).mapIfNotNull(List<RoomInfo>::first)
                 }
@@ -199,9 +198,9 @@ suspend fun Backend.updateRoom(
             } else {
                 exposedDatabase.roomData.updateRoom(id, newRoom).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        exposedDatabase.roomData.getRoomRawResult(ObjectFetch.IdFetch(id), true, uid)
+                        exposedDatabase.roomData.getRawRoom(ObjectFetch.IdFetch(id), true, uid)
                             .mapResultIfNotNull {
-                                processRoomRawResultToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
+                                processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
                             }
                     } else {
                         Result.success(null)

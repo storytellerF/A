@@ -246,8 +246,8 @@ class WorldViewModel(
             info?.id?.toString()
         }
     }.flow.map {
-        it.map {
-            extractHeadlineIfPlain(it)
+        it.map { topicInfo ->
+            extractHeadlineIfPlain(topicInfo)
         }
     }.cachedIn(viewModelScope)
 }
@@ -290,29 +290,43 @@ class TopicsViewModel(
             )
         },
     ) {
-        CustomStoragePagingSource(
-            storageSource.getCollection(
-                collectionName,
-                TopicInfo::class
-            ),
-            listOf(StorageOrder.Asc("pinned"), StorageOrder.Desc("id")),
-            {
-                if (it != null) {
-                    arrayOf(StorageExpression.Less("id", it.toPrimaryKey()))
-                } else {
-                    emptyArray()
-                }
+        DecryptPagingSource(
+            CustomStoragePagingSource(
+                storageSource.getCollection(
+                    collectionName,
+                    TopicInfo::class
+                ),
+                listOf(StorageOrder.Asc("pinned"), StorageOrder.Desc("id")),
+                {
+                    if (it != null) {
+                        arrayOf(StorageExpression.Less("id", it.toPrimaryKey()))
+                    } else {
+                        emptyArray()
+                    }
+                },
+            ) { info ->
+                info?.id?.toString()
             },
-        ) { info ->
-            info?.id?.toString()
-        }
+            sessionManager
+        )
     }.flow.map {
-        it.map {
-            processEncryptedTopic(listOf(it), sessionManager).map {
-                extractHeadlineIfPlain(it)
-            }.first()
+        it.map { topicInfo ->
+            extractHeadlineIfPlain(topicInfo)
         }
     }.cachedIn(viewModelScope)
+}
+
+class DecryptPagingSource(val rawSource: CustomStoragePagingSource<TopicInfo>, val manager: SessionManager) :
+    PagingSource<String, TopicInfo>() {
+    override fun getRefreshKey(state: PagingState<String, TopicInfo>): String? {
+        return null
+    }
+
+    override suspend fun load(params: LoadParams<String>): LoadResult<String, TopicInfo> {
+        val result = rawSource.load(params)
+        if (result !is LoadResult.Page<String, TopicInfo>) return result
+        return result.copy(data = processEncryptedTopic(result.data, manager))
+    }
 }
 
 private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
@@ -721,9 +735,9 @@ class DownloadViewModel(
                         sessionManager.serviceCatching {
                             path.parent?.let { SystemFileSystem.createDirectories(it) }
                             downloadIfNeed(key, mediaInfo, path)
-                        }.recover({
+                        }.recover {
                             DownloadInfo(mediaInfo, DownloadStatus.FAILED, it.message.toString(), path.toString())
-                        })
+                        }
                     }
                 ) {
                     collection.saveDocument(key, it)

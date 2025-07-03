@@ -116,7 +116,7 @@ class AddPreset : Subcommand("add", "add entry") {
         Napier.i {
             "files count ${presetValue.fileData?.size}"
         }
-        val userMap = exposedDatabase.userDatabase.getUserRawResultList(ObjectListFetch.AidListFetch(files.map {
+        val userMap = exposedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(files.map {
             it.owner
         }.distinct())).getOrThrow().associate {
             it.user.aid!! to it.user
@@ -178,7 +178,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "topics count ${presetValue.topicData?.size}"
         }
         val data = presetValue.topicData!!
-        val userMap = exposedDatabase.userDatabase.getUserRawResultList(ObjectListFetch.AidListFetch(data.map {
+        val userMap = exposedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(data.map {
             it.author
         }.distinct())).getOrThrow().associate {
             it.user.aid!! to it.user
@@ -239,7 +239,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             InsertCommunityTuple(it, iconMedia, id, fontMedia)
         }
-        val userMap = exposedDatabase.userDatabase.getUserRawResultList(ObjectListFetch.AidListFetch(data.flatMap {
+        val userMap = exposedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(data.flatMap {
             it.community.users.orEmpty() + (it.community.admin ?: "System")
         }.distinct())).getOrThrow().associate {
             it.user.aid to it.user
@@ -379,7 +379,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
         }
 
-        val userMap = exposedDatabase.userDatabase.getUserRawResultList(
+        val userMap = exposedDatabase.userDatabase.getRawUsers(
             ObjectListFetch.AidListFetch(l.flatMap {
                 it.users + it.admin
             }.distinct())
@@ -388,7 +388,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
 
         val communityMap =
-            exposedDatabase.communityDatabase.getCommunityRawResults(ObjectListFetch.AidListFetch(l.mapNotNull {
+            exposedDatabase.communityDatabase.getRawCommunities(ObjectListFetch.AidListFetch(l.mapNotNull {
                 it.community
             }.distinct())).getOrThrow().associate {
                 it.community.aid to it.community
@@ -433,7 +433,7 @@ class AddPreset : Subcommand("add", "add entry") {
     }
 
     private suspend fun Backend.getCommunityMap(list: List<PresetTopic>): Map<String, PrimaryKey> {
-        return exposedDatabase.communityDatabase.getCommunityRawResults(ObjectListFetch.AidListFetch(list.mapNotNull {
+        return exposedDatabase.communityDatabase.getRawCommunities(ObjectListFetch.AidListFetch(list.mapNotNull {
             it.community
         })).getOrThrow().associate {
             it.community.aid to it.community.id

@@ -66,7 +66,9 @@ fun UploadInternal(my: UserInfo?, session: UploadSession) {
                 LazyColumn(contentPadding = PaddingValues(20.dp)) {
                     items(session.list.size) {
                         val file = session.list[it]
-                        UploadItem(viewModel.handlers[it], file)
+                        UploadItem(viewModel.handlers[it], file) {
+                            viewModel.retry(it)
+                        }
                     }
                 }
             }
@@ -79,13 +81,11 @@ fun UploadInternal(my: UserInfo?, session: UploadSession) {
 }
 
 @Composable
-fun UploadItem(p: LoadingHandler<MediaInfo>, file: ClientFile) {
+fun UploadItem(p: LoadingHandler<MediaInfo>, file: ClientFile, refresh: () -> Unit) {
     val handler = p
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
-    UploadItem(file, data, state) {
-        handler
-    }
+    UploadItem(file, data, state, refresh)
 }
 
 @Composable

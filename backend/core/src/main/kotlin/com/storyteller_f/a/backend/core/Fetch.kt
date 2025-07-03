@@ -3,7 +3,6 @@ package com.storyteller_f.a.backend.core
 import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.PrimaryKey
 
-
 sealed interface ObjectFetch {
     data class AidFetch(val aid: String) : ObjectFetch
     data class IdFetch(val id: PrimaryKey) : ObjectFetch
