@@ -140,6 +140,8 @@ services:
       timeout: 10s
       retries: 120
       start_period: 15s
+    profiles:
+      - es-kibana
 
   metricbeat01:
     depends_on:
@@ -166,7 +168,7 @@ services:
     command:
       - --strict.perms=false
     profiles:
-      - es-log
+      - es-metric
 
   filebeat01:
     depends_on:
