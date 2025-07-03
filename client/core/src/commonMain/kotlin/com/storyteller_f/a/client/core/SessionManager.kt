@@ -14,7 +14,10 @@ import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 interface SessionModel {
@@ -46,8 +49,7 @@ open class UserSessionManager(
     override val client: HttpClient,
     override val webSocketClient: WebSocketClientImpl,
     override val sessionModel: SessionModel,
-) :
-    SessionManager {
+) : SessionManager {
     override val isAlreadySignUp = MutableStateFlow(false)
     override val address = MutableStateFlow<String?>(null)
 
@@ -104,7 +106,7 @@ open class UserSessionManager(
 fun createUserSessionManager(
     webSocketUrl: String,
     createClient: (UserSessionModel, CookiesStorage) -> HttpClient,
-    onReceiveFrame: suspend (RoomFrame, UserSessionModel) -> Unit
+    onReceiveFrame: suspend (RoomFrame, UserSessionModel) -> Unit,
 ): UserSessionManager {
     val cookieManager = AcceptAllCookiesStorage()
     val model = UserSessionModel()
@@ -169,7 +171,7 @@ class UserSessionModel : SessionModel {
 suspend fun signUpOrInFromPrivateKey(
     privateKey: String,
     sessionManager: SessionManager,
-    isSignUp: Boolean
+    isSignUp: Boolean,
 ): Pair<RawUserPassInfo, UserInfo> {
     val sessionModel = sessionManager.sessionModel
     val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()

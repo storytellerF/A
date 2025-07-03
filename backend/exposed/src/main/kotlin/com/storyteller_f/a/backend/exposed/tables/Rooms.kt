@@ -47,7 +47,7 @@ class Room(
     }
 }
 
-data class RoomRawResult(
+data class RawRoom(
     val room: Room,
     val joinedTime: LocalDateTime?,
     val topicId: Long?,

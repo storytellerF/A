@@ -11,8 +11,8 @@ import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getUserInfoList
 import com.storyteller_f.a.backend.service.index.TopicDocument
 import com.storyteller_f.a.backend.service.insertTitleAndTopicDescription
-import com.storyteller_f.a.backend.service.processCommunityRawResultToCommunityInfo
-import com.storyteller_f.a.backend.service.processRoomRawResultToRoomInfo
+import com.storyteller_f.a.backend.service.processRawCommunityToCommunityInfo
+import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
 import com.storyteller_f.a.cloud.server.auth.addUserLog
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
@@ -96,18 +96,18 @@ private suspend fun Backend.getRelatedObject(
         }
     }, {
         if (roomIdList.isNotEmpty()) {
-            exposedDatabase.roomData.getRoomRawResultList(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
-                processRoomRawResultToRoomInfo(it)
+            exposedDatabase.roomData.getRawRooms(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
+                processRawRoomToRoomInfo(it)
             }
         } else {
             Result.success(emptyList())
         }
     }, {
         if (communityIdList.isNotEmpty()) {
-            exposedDatabase.communityDatabase.getCommunityRawResults(
+            exposedDatabase.communityDatabase.getRawCommunities(
                 ObjectListFetch.IdListFetch(communityIdList)
             ).mapResult {
-                processCommunityRawResultToCommunityInfo(it)
+                processRawCommunityToCommunityInfo(it)
             }
         } else {
             Result.success(emptyList())

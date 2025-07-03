@@ -27,15 +27,15 @@ interface Database<T> {
 
 interface UserDatabase<T> {
     suspend fun getUserAid(id: PrimaryKey): Result<String?>
-    suspend fun getUserRawResult(objectFetch: ObjectFetch): Result<UserRawResult<T>?>
-    suspend fun getUserRawResultAndPublicKeyByAddress(ad: String): Result<Pair<UserRawResult<T>, String>?>
+    suspend fun getRawUser(objectFetch: ObjectFetch): Result<RawUser<T>?>
+    suspend fun getRawUserAndPublicKeyByAddress(ad: String): Result<Pair<RawUser<T>, String>?>
     suspend fun createUser(user: User): Result<Unit>
     suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
     suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody): Result<Boolean>
     suspend fun isUserExistsByUid(id: Long): Result<Boolean>
     suspend fun getUserAuthDataByAid(predicate: SqlExpressionBuilder.() -> Op<Boolean>): Result<Pair<String, Long>?>
     suspend fun getUserAuthDataBy(predicate: SqlExpressionBuilder.() -> Op<Boolean>): Result<Pair<String, Long>?>
-    suspend fun getUserRawResultList(objectListFetch: ObjectListFetch): Result<List<UserRawResult<T>>>
+    suspend fun getRawUsers(objectListFetch: ObjectListFetch): Result<List<RawUser<T>>>
     suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch): Result<List<Pair<Long, Long>>>
     suspend fun addReadLog(userTopicRead: UserTopicRead): Result<Unit>
     suspend fun insertUserLog(log: UserLog): Result<Unit>
@@ -49,11 +49,11 @@ interface UserDatabase<T> {
         taskRecordId: PrimaryKey,
     ): Result<Unit>
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
-    suspend fun getAlternativeRawResultPaginationListByHost(
+    suspend fun getRawAlternativePaginationListByHost(
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<AlternateAccountRawResult>>
-    suspend fun createAlternativeRawResult(hostId: PrimaryKey, privateKey: String, user: User): Result<Unit>
+    ): Result<PaginationResult<RawAlternateAccount>>
+    suspend fun createAlternativeAccount(hostId: PrimaryKey, privateKey: String, user: User): Result<Unit>
 }
 
 interface TopicDatabase {
@@ -121,28 +121,24 @@ interface TitleDatabase {
 
 interface CommunityDatabase {
     suspend fun checkCommunityExists(parentId: PrimaryKey): Result<List<Long>>
-    suspend fun getCommunityRawResult(
+    suspend fun getRawCommunity(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean? = null,
         uid: PrimaryKey? = null,
-    ): Result<CommunityRawResult?>
+    ): Result<RawCommunity?>
     suspend fun getJoinedCommunityIds(uid: PrimaryKey): Result<List<Long>>
     suspend fun getCommunityPaginationResult(
         word: String?,
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
-    ): Result<PaginationResult<CommunityRawResult>?>
-    suspend fun processCommunityToCommunityRawResult(
-        uid: PrimaryKey?,
-        communities: List<Community>,
-    ): Result<List<CommunityRawResult>>
+    ): Result<PaginationResult<RawCommunity>?>
     suspend fun createCommunity(community: Community): Result<Unit>
     suspend fun getCommunityJoinedTimeByIds(
         uid: PrimaryKey,
         communityIds: List<PrimaryKey>,
     ): Result<List<Pair<Long, LocalDateTime>>>
-    suspend fun getCommunityRawResults(objectListFetch: ObjectListFetch): Result<List<CommunityRawResult>>
+    suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>>
     suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody): Result<Boolean>
 }
 
@@ -154,23 +150,23 @@ interface RoomDatabase {
         community: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
-    ): Result<PaginationResult<RoomRawResult>>
+    ): Result<PaginationResult<RawRoom>>
     suspend fun getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?>
     suspend fun getRoomPubKeyPaginationResult(
         roomId: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<UserPubKeyInfo>>
-    suspend fun getRoomRawResult(
+    suspend fun getRawRoom(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean? = null,
         uid: PrimaryKey? = null,
-    ): Result<RoomRawResult?>
-    suspend fun processRoomListToRoomRawResult(
+    ): Result<RawRoom?>
+    suspend fun processRoomListToRawRoom(
         uid: PrimaryKey?,
         rooms: List<Room>,
-    ): Result<List<RoomRawResult>>
+    ): Result<List<RawRoom>>
     suspend fun createRoom(room: Room): Result<Unit>
-    suspend fun getRoomRawResultList(objectListFetch: ObjectListFetch): Result<List<RoomRawResult>>
+    suspend fun getRawRooms(objectListFetch: ObjectListFetch): Result<List<RawRoom>>
     suspend fun getRoomList(objectListFetch: ObjectListFetch): Result<List<Room>>
     suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): Result<Boolean>
 }
@@ -212,5 +208,5 @@ interface ContainerDatabase {
         objectId: PrimaryKey?,
         word: String?,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<UserRawResult<User>>>
+    ): Result<PaginationResult<RawUser<User>>>
 }

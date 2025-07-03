@@ -198,16 +198,16 @@ suspend fun Backend.insertTitleAndTopicDescription(
 suspend fun Backend.getUserInfo(
     fetch: ObjectFetch,
 ): Result<UserInfo?> {
-    return exposedDatabase.userDatabase.getUserRawResult(fetch).mapResultIfNotNull {
-        processUserRawResultToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
+    return exposedDatabase.userDatabase.getRawUser(fetch).mapResultIfNotNull {
+        processRawUserToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
     }
 }
 
 suspend fun Backend.getUserInfoList(
     listFetch: ObjectListFetch,
-): Result<List<UserInfo>?> {
-    return exposedDatabase.userDatabase.getUserRawResultList(listFetch).mapResult {
-        processUserRawResultToUserInfo(it)
+): Result<List<UserInfo>> {
+    return exposedDatabase.userDatabase.getRawUsers(listFetch).mapResult {
+        processRawUserToUserInfo(it)
     }
 }
 
@@ -268,8 +268,8 @@ suspend fun Backend.getMediaPaginationResult(
         }
     }
 
-suspend fun Backend.processCommunityRawResultToCommunityInfo(
-    list: List<CommunityRawResult>,
+suspend fun Backend.processRawCommunityToCommunityInfo(
+    list: List<RawCommunity>,
 ): Result<List<CommunityInfo>?> {
     return exposedDatabase.mediaDatabase.getMediaByIds(list.flatMap { (community) ->
         listOf(community.iconId, community.posterId, community.fontId)
@@ -298,7 +298,7 @@ suspend fun Backend.searchMembers(
 ): Result<PaginationResult<UserInfo>?> {
     return exposedDatabase.containerDatabase.getMemberPaginationResult(objectId, word, primaryKeyFetch)
         .mapResult { (pairs, count) ->
-            processUserRawResultToUserInfo(pairs).mapIfNotNull {
+            processRawUserToUserInfo(pairs).mapIfNotNull {
                 PaginationResult(it, count)
             }
         }
@@ -326,7 +326,7 @@ suspend fun Backend.searchRoomPaginationResult(
         primaryKeyFetch,
         search
     ).mapResult { (list, count) ->
-        processRoomRawResultToRoomInfo(list).mapIfNotNull { value ->
+        processRawRoomToRoomInfo(list).mapIfNotNull { value ->
             PaginationResult(value, count)
         }
     }
@@ -353,11 +353,11 @@ suspend fun Backend.processMediaToMediaInfo(
     }
 }
 
-suspend fun Backend.processUserRawResultToUserInfo(
-    rawResults: List<UserRawResult<User>>,
+suspend fun Backend.processRawUserToUserInfo(
+    rawResults: List<RawUser<User>>,
 ) = exposedDatabase.mediaDatabase.getMediaByIds(rawResults.mapNotNull {
     it.user.icon
-}).mapResultIfNotNull { medias ->
+}).mapResult { medias ->
     processMediaToMediaInfo(medias).map {
         val mediaInfoMap = it.associateBy { it.id }
         rawResults.map { pair ->
@@ -366,19 +366,19 @@ suspend fun Backend.processUserRawResultToUserInfo(
     }
 }
 
-suspend fun Backend.processRoomRawResultToRoomInfo(list: List<RoomRawResult>): Result<List<RoomInfo>?> {
+suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>): Result<List<RoomInfo>?> {
     return exposedDatabase.mediaDatabase.getMediaByIds(list.mapNotNull {
         it.room.icon
     }).mapResultIfNotNull { medias ->
         processMediaToMediaInfo(medias).map {
             val mediaInfoMap = it.associateBy { it.id }
-            list.map { roomRawResult ->
-                roomRawResult.room.toRoomInfo()
+            list.map { rawRoom ->
+                rawRoom.room.toRoomInfo()
                     .copy(
-                        icon = roomRawResult.room.icon?.let { mediaInfoMap[it] },
-                        joinedTime = roomRawResult.joinedTime,
-                        lastRead = roomRawResult.topicId,
-                        memberCount = roomRawResult.memberCount
+                        icon = rawRoom.room.icon?.let { mediaInfoMap[it] },
+                        joinedTime = rawRoom.joinedTime,
+                        lastRead = rawRoom.topicId,
+                        memberCount = rawRoom.memberCount
                     )
             }
         }
@@ -389,18 +389,18 @@ suspend fun Backend.getUserAlternateUserInfoList(
     uid: PrimaryKey,
     fetch: PrimaryKeyFetch,
 ): Result<PaginationResult<AlternativeAccountInfo>?> {
-    return exposedDatabase.userDatabase.getAlternativeRawResultPaginationListByHost(
+    return exposedDatabase.userDatabase.getRawAlternativePaginationListByHost(
         uid,
         fetch
     ).mapResult { (results, total) ->
-        processUserRawResultToUserInfo(results.map {
-            it.userRawResult
+        processRawUserToUserInfo(results.map {
+            it.rawUser
         }).mapIfNotNull {
             val map = it.associateBy { it.id }
             PaginationResult(results.mapNotNull {
-                map[it.userRawResult.user.id]?.let { userInfo ->
+                map[it.rawUser.user.id]?.let { userInfo ->
                     AlternativeAccountInfo(
-                        it.userRawResult.user.id,
+                        it.rawUser.user.id,
                         it.alternateAccount.privateKey,
                         userInfo
                     )

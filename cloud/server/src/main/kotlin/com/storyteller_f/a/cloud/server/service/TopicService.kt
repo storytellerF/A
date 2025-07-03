@@ -7,14 +7,9 @@ import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.Topic
 import com.storyteller_f.a.backend.exposed.tables.Topics
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.getMediaInfoList
-import com.storyteller_f.a.backend.service.getUserInfo
-import com.storyteller_f.a.backend.service.getUserInfoList
+import com.storyteller_f.a.backend.service.*
 import com.storyteller_f.a.backend.service.index.DocumentSearch
 import com.storyteller_f.a.backend.service.index.TopicDocument
-import com.storyteller_f.a.backend.service.savePlainTopic
-import com.storyteller_f.a.backend.service.uploadFiles
 import com.storyteller_f.a.cloud.server.auth.addUserLog
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTopic
@@ -355,40 +350,58 @@ suspend fun Backend.processTopicExtension(
     processedTopics: List<TopicInfo>,
     uid: PrimaryKey?,
     addLatestSubTopic: Boolean,
-) = getUserInfoList(ObjectListFetch.IdListFetch(processedTopics.map {
-    it.author
-}.distinct())).mapResultIfNotNull { users ->
-    val userMap = users.associateBy { it.id }
-    if (addLatestSubTopic) {
-        Result.success(processedTopics.flatMap { t ->
-            exposedDatabase.topicDatabase.getTopicInfoListByPredicate(uid) {
-                where {
-                    Topics.parentId eq t.id
-                }.orderBy(Topics.pinned to SortOrder.DESC).bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
-            }.getOrThrow()
-        }.groupBy {
-            it.parentId
-        })
-    } else {
-        Result.success(emptyMap())
-    }.mapResultIfNotNull { processedSubTopicMap ->
-        exposedDatabase.topicDatabase.getReactionInfoPaginationResult(processedTopics.map {
-            it.id
-        }, uid, ReactionFetch(null, 20)).map {
-            it.list
-        }.map {
-            it.groupBy(ReactionInfo::objectId)
-        }.map { reactionMap ->
-            processedTopics.map {
-                val authorInfo = userMap[it.author] ?: throw CustomBadRequestException("author is null")
-                it.copy(
-                    extension = TopicInfo.Extension(
-                        authorInfo,
-                        subTopics = processedSubTopicMap[it.id]?.toImmutableList(),
-                        reactions = reactionMap[it.id]?.toImmutableList(),
-                    )
-                )
+): Result<List<TopicInfo>?> {
+    return merge(
+        {
+            (if (addLatestSubTopic) {
+                Result.success(processedTopics.flatMap { t ->
+                    exposedDatabase.topicDatabase.getTopicInfoListByPredicate(uid) {
+                        where {
+                            Topics.parentId eq t.id
+                        }.orderBy(Topics.pinned to SortOrder.DESC).bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
+                    }.getOrThrow()
+                }.groupBy {
+                    it.parentId
+                })
+            } else {
+                Result.success(emptyMap())
+            }).mapResult { subTopicsMap ->
+                val uidList = processedTopics.map {
+                    it.author
+                } + subTopicsMap.flatMap {
+                    it.value
+                }.map {
+                    it.author
+                }.distinct()
+                getUserInfoList(ObjectListFetch.IdListFetch(uidList)).map { users ->
+                    val userMap = users.associateBy { it.id }
+                    processedTopics.map {
+                        val authorInfo = userMap[it.author] ?: throw CustomBadRequestException("author is null")
+                        val processedSubTopics = subTopicsMap[it.id]?.map { subTopic ->
+                            subTopic.copy(
+                                extension = TopicInfo.Extension(
+                                    authorInfo = userMap[subTopic.author]
+                                        ?: throw CustomBadRequestException("author is null")
+                                )
+                            )
+                        }?.toImmutableList()
+                        it.copy(extension = TopicInfo.Extension(authorInfo, subTopics = processedSubTopics))
+                    }
+                }
             }
+        },
+        {
+            exposedDatabase.topicDatabase.getReactionInfoPaginationResult(processedTopics.map {
+                it.id
+            }, uid, ReactionFetch(null, 20)).map {
+                it.list
+            }.map {
+                it.groupBy(ReactionInfo::objectId)
+            }
+        },
+    ).mapIfNotNull { (topics, reactionMap) ->
+        topics.map {
+            it.copy(extension = it.extension?.copy(reactions = reactionMap[it.id]?.toImmutableList()))
         }
     }
 }
@@ -508,13 +521,13 @@ suspend fun Backend.checkRootAdminPermission(
         }
 
         ObjectType.ROOM -> {
-            exposedDatabase.roomData.getRoomRawResult(ObjectFetch.IdFetch(parentId), true, uid).mapIfNotNull {
+            exposedDatabase.roomData.getRawRoom(ObjectFetch.IdFetch(parentId), true, uid).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, it.room.creator == uid)
             }
         }
 
         ObjectType.COMMUNITY -> {
-            exposedDatabase.communityDatabase.getCommunityRawResult(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
+            exposedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, it.community.owner == uid)
             }
         }

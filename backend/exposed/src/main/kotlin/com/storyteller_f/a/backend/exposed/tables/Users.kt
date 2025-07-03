@@ -60,15 +60,15 @@ class User(
     }
 }
 
-fun mapUserInfo(it: ResultRow): UserRawResult<User> {
-    return UserRawResult(User.wrapRow(it))
+fun mapUserInfo(it: ResultRow): RawUser<User> {
+    return RawUser(User.wrapRow(it))
 }
 
 fun User.toUserInfo(): UserInfo {
     return UserInfo(id, address, 0, aid, nickname, null)
 }
 
-data class UserRawResult<T>(val user: T)
+data class RawUser<T>(val user: T)
 
 object AlternateAccounts : Table() {
     val uid = customPrimaryKey("uid")
@@ -97,4 +97,4 @@ class AlternateAccount(val uid: PrimaryKey, val privateKey: String, val hostId: 
     }
 }
 
-data class AlternateAccountRawResult(val alternateAccount: AlternateAccount, val userRawResult: UserRawResult<User>)
+data class RawAlternateAccount(val alternateAccount: AlternateAccount, val rawUser: RawUser<User>)

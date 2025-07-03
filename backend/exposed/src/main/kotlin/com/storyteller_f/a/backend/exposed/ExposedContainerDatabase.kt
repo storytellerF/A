@@ -150,7 +150,7 @@ class ExposedContainerDatabase(val exposedDatabaseSession: ExposedDatabaseSessio
         objectId: PrimaryKey?,
         word: String?,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<UserRawResult<User>>> {
+    ): Result<PaginationResult<RawUser<User>>> {
         return exposedDatabaseSession.dbSearch {
             search {
                 buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(

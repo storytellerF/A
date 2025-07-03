@@ -11,9 +11,9 @@ import com.storyteller_f.a.backend.exposed.query.buildCommunitySearchQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.Community
-import com.storyteller_f.a.backend.exposed.tables.CommunityRawResult
 import com.storyteller_f.a.backend.exposed.tables.MemberJoin
 import com.storyteller_f.a.backend.exposed.tables.MemberJoins
+import com.storyteller_f.a.backend.exposed.tables.RawCommunity
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
@@ -47,11 +47,11 @@ class ExposedCommunityDatabase(
         }
     }
 
-    override suspend fun getCommunityRawResult(
+    override suspend fun getRawCommunity(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean?,
         uid: PrimaryKey?
-    ): Result<CommunityRawResult?> {
+    ): Result<RawCommunity?> {
         if (uid == null && fillJoinInfo == true) {
             return Result.failure(UnauthorizedException())
         }
@@ -68,7 +68,7 @@ class ExposedCommunityDatabase(
             }
             first(Community::wrapRow)
         }.mapResultIfNotNull { community ->
-            processCommunityToCommunityRawResult(uid, listOf(community)).map {
+            processCommunityToRawCommunity(uid, listOf(community)).map {
                 it.first()
             }
         }
@@ -93,7 +93,7 @@ class ExposedCommunityDatabase(
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch
-    ): Result<PaginationResult<CommunityRawResult>?> {
+    ): Result<PaginationResult<RawCommunity>?> {
         return exposedDatabaseSession.dbSearch {
             search {
                 Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
@@ -115,21 +115,21 @@ class ExposedCommunityDatabase(
                     is JoinSearch.NotJoined -> joinSearch.uid
                     is JoinSearch.Unspecified -> joinSearch.uid
                 }
-                processCommunityToCommunityRawResult(uid, list).map { list ->
+                processCommunityToRawCommunity(uid, list).map { list ->
                     PaginationResult(list, count)
                 }
             }
         }
     }
 
-    override suspend fun processCommunityToCommunityRawResult(
+    suspend fun processCommunityToRawCommunity(
         uid: PrimaryKey?,
         communities: List<Community>
-    ): Result<List<CommunityRawResult>> {
+    ): Result<List<RawCommunity>> {
         return containerDatabase.getContainerInfo(communities.map { it.id }, uid)
             .map { (joinedTimeMap, lastReadMap, memberCountMap) ->
                 communities.map {
-                    CommunityRawResult(
+                    RawCommunity(
                         it,
                         joinedTimeMap[it.id]?.joinedTime,
                         lastReadMap[it.id]?.topicId,
@@ -179,9 +179,9 @@ class ExposedCommunityDatabase(
         }
     }
 
-    override suspend fun getCommunityRawResults(
+    override suspend fun getRawCommunities(
         objectListFetch: ObjectListFetch
-    ): Result<List<CommunityRawResult>> {
+    ): Result<List<RawCommunity>> {
         return exposedDatabaseSession.dbSearch {
             search {
                 Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
@@ -197,7 +197,7 @@ class ExposedCommunityDatabase(
                 val joinedTime = it.getOrNull(MemberJoins.joinedTime)
                 val lastRead = it.getOrNull(UserTopicReads.topicId)
                 val communityInfo = community
-                CommunityRawResult(
+                RawCommunity(
                     communityInfo,
                     joinedTime,
                     lastRead,

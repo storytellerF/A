@@ -9,12 +9,12 @@ import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.isDup
 import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.exposed.tables.Community
-import com.storyteller_f.a.backend.exposed.tables.CommunityRawResult
+import com.storyteller_f.a.backend.exposed.tables.RawCommunity
 import com.storyteller_f.a.backend.exposed.tables.toCommunityIfo
 import com.storyteller_f.a.backend.exposed.toJoinSearch
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.createCommunityRoomsRaw
-import com.storyteller_f.a.backend.service.processCommunityRawResultToCommunityInfo
+import com.storyteller_f.a.backend.service.processRawCommunityToCommunityInfo
 import com.storyteller_f.a.cloud.server.auth.addUserLog
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
@@ -37,12 +37,12 @@ suspend fun Backend.getCommunity(
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
-    return exposedDatabase.communityDatabase.getCommunityRawResult(
+    return exposedDatabase.communityDatabase.getRawCommunity(
         objectFetch,
         fillJoinInfo,
         id
     ).mapResultIfNotNull {
-        processCommunityRawResultToCommunityInfo(listOf(it)).mapIfNotNull(List<CommunityInfo>::first)
+        processRawCommunityToCommunityInfo(listOf(it)).mapIfNotNull(List<CommunityInfo>::first)
     }
 }
 
@@ -104,7 +104,7 @@ suspend fun Backend.searchCommunities(
         search.joinStatus.toJoinSearch(uid)
     })
 ).mapResultIfNotNull { (list, count) ->
-    processCommunityRawResultToCommunityInfo(list).mapResultIfNotNull { value ->
+    processRawCommunityToCommunityInfo(list).mapResultIfNotNull { value ->
         when {
             search.target == null -> Result.success(PaginationResult(value, count))
             uid != null -> processUserJoinedTimeReplace(value, uid, count)
@@ -167,9 +167,9 @@ suspend fun Backend.createCommunity(
 
         val communityInfo = community
         addUserLog(uid, UserLogType.CREATE, communityInfo.toCommunityIfo().tuple())
-        processCommunityRawResultToCommunityInfo(
+        processRawCommunityToCommunityInfo(
             listOf(
-                CommunityRawResult(
+                RawCommunity(
                     communityInfo,
                     community.createdTime,
                     null,
@@ -193,12 +193,12 @@ suspend fun Backend.updateCommunity(
             checkBeforeUpdateCommunity(newCommunity).mapResult {
                 exposedDatabase.communityDatabase.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        exposedDatabase.communityDatabase.getCommunityRawResult(
+                        exposedDatabase.communityDatabase.getRawCommunity(
                             ObjectFetch.IdFetch(id),
                             true,
                             uid
                         ).mapResultIfNotNull { rawResult ->
-                            processCommunityRawResultToCommunityInfo(
+                            processRawCommunityToCommunityInfo(
                                 listOf(rawResult)
                             ).mapIfNotNull(List<CommunityInfo>::first)
                         }

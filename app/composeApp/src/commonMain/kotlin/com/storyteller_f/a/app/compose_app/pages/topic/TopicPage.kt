@@ -132,9 +132,7 @@ private fun ColumnScope.TopicPageContent(
 
                     nestedStateView(topics, debounced, { subInfo, i ->
                         subInfo?.let { it1 ->
-                            TopicCell(
-                                it1
-                            )
+                            TopicCell(it1)
                         }
                         if (topics.itemCount - 1 != i) {
                             HorizontalDivider()

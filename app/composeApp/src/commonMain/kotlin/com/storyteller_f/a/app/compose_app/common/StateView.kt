@@ -92,26 +92,26 @@ fun <T : Any> StateView(
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
         when (val state = pagingItems.loadState.toLoadingState(pagingItems.itemCount)) {
-            null -> com.storyteller_f.a.app.compose_app.compontents.CenterBox {
+            null -> CenterBox {
                 CircularProgressIndicator()
             }
 
             is LoadingState.Loading -> if (pagingItems.itemCount == 0) {
-                com.storyteller_f.a.app.compose_app.compontents.CenterBox {
+                CenterBox {
                     CircularProgressIndicator()
                 }
             } else {
                 content()
             }
 
-            is LoadingState.Error -> com.storyteller_f.a.app.compose_app.compontents.CenterBox {
-                com.storyteller_f.a.app.compose_app.compontents.ExceptionCell(state.e) {
+            is LoadingState.Error -> CenterBox {
+                ExceptionCell(state.e) {
                     pagingItems.refresh()
                 }
             }
 
             is LoadingState.Done -> if (pagingItems.itemCount == 0) {
-                com.storyteller_f.a.app.compose_app.compontents.CenterBox {
+                CenterBox {
                     Text(text = stringResource(Res.string.no_content_yet))
                 }
             } else {
@@ -145,8 +145,8 @@ fun <T> StateView(
             is LoadingState.Error -> {
                 data.let {
                     if (it == null) {
-                        com.storyteller_f.a.app.compose_app.compontents.CenterBox {
-                            com.storyteller_f.a.app.compose_app.compontents.ExceptionCell(s.e) {
+                        CenterBox {
+                            ExceptionCell(s.e) {
                                 handler.refresh()
                             }
                         }
@@ -163,7 +163,7 @@ fun <T> StateView(
             else -> {
                 data.let {
                     if (it == null) {
-                        com.storyteller_f.a.app.compose_app.compontents.CenterBox {
+                        CenterBox {
                             CircularProgressIndicator()
                         }
                     } else {
@@ -210,15 +210,19 @@ fun <T : Any> RefCellStateView(
 ) {
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
-    val globalDialogController = com.storyteller_f.a.app.compose_app.LocalGlobalDialog.current
+    val globalDialogController = LocalGlobalDialog.current
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
         when (val localState = state) {
-            null, is LoadingState.Loading -> Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+            null, is LoadingState.Loading -> {
+                data?.let {
+                    content(it)
+                } ?: Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
 
             is LoadingState.Error -> Box(
@@ -229,7 +233,7 @@ fun <T : Any> RefCellStateView(
                 }.padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                com.storyteller_f.a.app.compose_app.compontents.ExceptionView(localState.e)
+                ExceptionView(localState.e)
             }
 
             else -> {
@@ -253,7 +257,7 @@ fun LazyListScope.topPrepend(combinedLoadStates: CombinedLoadStates, refresh: ()
     val loadState = combinedLoadStates.mediator?.refresh
     if (loadState is LoadState.Error) {
         item {
-            com.storyteller_f.a.app.compose_app.compontents.ExceptionCell(loadState.error, refresh)
+            ExceptionCell(loadState.error, refresh)
         }
     }
 }
@@ -274,7 +278,7 @@ fun LazyGridScope.topPrepend(count: Int, combinedLoadStates: CombinedLoadStates,
         item(span = {
             GridItemSpan(count)
         }) {
-            com.storyteller_f.a.app.compose_app.compontents.ExceptionCell(loadState.error, refresh)
+            ExceptionCell(loadState.error, refresh)
         }
     }
 }
