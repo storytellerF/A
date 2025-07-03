@@ -30,6 +30,7 @@ import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
+import io.sentry.Sentry
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -57,6 +58,7 @@ import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
+
     Napier.base(kmpLogger)
     loadCryptoLibIfNeed()
     loadAvif()
@@ -69,7 +71,10 @@ fun main(args: Array<String>) {
     processInitTaskIfNeed(map)
     val serverPort = map["SERVER_PORT"].takeIf { it.isNotEmpty() }?.toInt() ?: 80
     val extraArgs = arrayOf("-port=$serverPort")
-
+    Sentry.init { options ->
+        options.dsn = map["SENTRY_DSN"]
+        options.isDebug = false
+    }
     EngineMain.main(args + extraArgs)
 }
 

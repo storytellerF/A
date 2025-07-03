@@ -100,7 +100,7 @@ fun mediaService(env: MergedEnv): MediaService {
             val url = env["MINIO_URL"]
             val name = env["MINIO_NAME"]
             val pass = env["MINIO_PASS"]
-            MinIoMediaService(MinIoConnection(url, name, pass))
+            MinIoMediaService(MinIoConnection(url, name, pass), env["MINIO_HOST"])
         }
 
         "filesystem" -> {

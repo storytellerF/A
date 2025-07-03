@@ -144,12 +144,17 @@ private fun doTest(
         }
         coroutineScope {
             val task = CompletableDeferred<Unit>()
-            val job = launch(Dispatchers.IO) {
-                receiveExplainResult(task, env["port"]!!.toInt())
+            val port = env["port"]?.toIntOrNull()
+            if (port != null) {
+                val job = launch(Dispatchers.IO) {
+                    receiveExplainResult(task, port)
+                }
+                task.await()
+                block(this@testApplication)
+                job.cancel()
+            } else {
+                block(this@testApplication)
             }
-            task.await()
-            block(this@testApplication)
-            job.cancel()
         }
     }
 }

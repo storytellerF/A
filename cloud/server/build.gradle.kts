@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.serialization)
     application
     alias(libs.plugins.kotlinBuildConfig)
+    id("io.sentry.jvm.gradle") version ("5.8.0")
 }
 
 group = "com.storyteller_f.a.cloud"
@@ -88,4 +89,8 @@ tasks.withType<Zip> {
     filesMatching("vavi-commons-1.1.10.jar") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
     }
+}
+sentry {
+    org = "acommunity"
+    projectName = "kotlin"
 }
