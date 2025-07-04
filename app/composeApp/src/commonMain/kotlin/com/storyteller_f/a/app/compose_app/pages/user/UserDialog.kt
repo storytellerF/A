@@ -85,13 +85,12 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
             }
         }
     }
-    val settings = sessionManager.settings
     val globalDialogController = LocalGlobalDialog.current
     CustomAlertDialog(controller, {
         controller.close()
     }) {
         scope.launch {
-            signOut(sessionManager, settings, globalDialogController)
+            signOut(sessionManager, globalDialogController)
         }
     }
 }
@@ -153,9 +152,9 @@ private fun UserDialogMenuList(
 
 suspend fun signOut(
     sessionManager: SessionManager,
-    settings: Settings,
     globalDialogController: GlobalDialogController,
 ) {
+    val settings = (sessionManager as CustomSessionManager).settings
     globalDialogController.use {
         sessionManager.signOut().getOrThrow()
         sessionManager.sessionModel.clear()

@@ -99,11 +99,11 @@ val LocalDatabase = compositionLocalOf {
     StorageSource.EMPTY
 }
 
-val LocalSessionManager = compositionLocalOf<CustomSessionManager> {
+val LocalSessionManager = compositionLocalOf<SessionManager> {
     error("No user session")
 }
 
-val LocalMainSessionManager = compositionLocalOf<CustomSessionManager> {
+val LocalMainSessionManager = compositionLocalOf<SessionManager> {
     error("No main user session")
 }
 
@@ -347,7 +347,7 @@ private fun buildWsListener(
     hasPermission: Boolean,
     roomScreenId: () -> PrimaryKey?,
     topicScreenId: () -> PrimaryKey?,
-    sessionManager: UserSessionManager,
+    sessionManager: SessionManager,
     onClickTopic: (TopicInfo) -> Unit,
 ) = object : WebSocketClientListener {
     override suspend fun onReceived(frame: RoomFrame) {

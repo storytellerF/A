@@ -39,7 +39,6 @@ import com.storyteller_f.a.app.compose_app.pages.topic.MediaPicker
 import com.storyteller_f.a.app.compose_app.pages.topic.insertContent
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.SessionManager
-import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.WebSocketClient
 import com.storyteller_f.a.client.core.WebSocketClientListener
 import com.storyteller_f.a.client.core.addReadLog
@@ -338,7 +337,7 @@ private fun RoomInputTopContent(roomInfo: RoomInfo, keysState: LoadingState?, ke
 private fun buildInputBoxContentListener(
     input: String,
     userInfo: UserInfo?,
-    sessionManager: UserSessionManager,
+    sessionManager: SessionManager,
     updateInput: (String) -> Unit,
 ): WebSocketClientListener {
     return object : WebSocketClientListener {

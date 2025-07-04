@@ -1,21 +1,39 @@
 package com.storyteller_f.a.app.compose_app.pages.community
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.*
-import com.storyteller_f.a.app.compose_app.compontents.*
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalToaster
+import com.storyteller_f.a.app.compose_app.bus
+import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
+import com.storyteller_f.a.app.compose_app.compontents.CommunityPoster
+import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
+import com.storyteller_f.a.app.compose_app.compontents.SettingOptionResettableView
+import com.storyteller_f.a.app.compose_app.compontents.SettingOptionView
 import com.storyteller_f.a.app.compose_app.model.OnCommunityUpdated
 import com.storyteller_f.a.app.compose_app.model.createCommunityViewModel
 import com.storyteller_f.a.app.compose_app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.compose_app.pages.user.SettingOption
-import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.updateCommunityInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody
@@ -150,7 +168,7 @@ private fun CommunitySettingInternal(
 
 private suspend fun updateCommunityInfo(
     globalDialogController: GlobalDialogController,
-    sessionManager: CustomSessionManager,
+    sessionManager: SessionManager,
     communityInfo: CommunityInfo,
 ) {
     globalDialogController.use {
@@ -162,7 +180,7 @@ private suspend fun updateCommunityInfo(
 
 private suspend fun updateCommunity(
     communityId: PrimaryKey,
-    client: UserSessionManager,
+    client: SessionManager,
     string: String,
     showInputDialog: SettingOption?,
     globalDialogController: GlobalDialogController,
