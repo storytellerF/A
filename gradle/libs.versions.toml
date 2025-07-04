@@ -85,7 +85,6 @@ postgresql = "42.7.5"
 recordCore = "0.4.0"
 richeditorCompose = "1.0.0-rc12"
 robolectric = "4.15.1"
-screenshot = "0.0.1-alpha09"
 simplemagic = "1.17"
 tikaCore = "3.1.0"
 uiTestJunit4Android = "1.8.2"
@@ -275,7 +274,6 @@ kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
-screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 

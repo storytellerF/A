@@ -24,6 +24,7 @@ import com.storyteller_f.a.app.compose_app.compontents.MeasureTextLineCount
 import com.storyteller_f.a.app.compose_app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.app.compose_app.utils.platform
 import com.storyteller_f.a.client.core.ClientSessionState
+import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import io.github.vinceglb.filekit.FileKit
@@ -229,7 +230,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
 
 private suspend fun startSignFromFile(
     appNav: AppNav,
-    sessionManager: CustomSessionManager,
+    sessionManager: SessionManager,
     isSignUp: Boolean,
     globalDialogController: GlobalDialogController,
 ) {
@@ -247,7 +248,7 @@ private suspend fun startSignFromFile(
 
 private suspend fun startSign(
     appNav: AppNav,
-    sessionManager: CustomSessionManager,
+    sessionManager: SessionManager,
     privateKey: String,
     isSignUp: Boolean,
     globalDialogController: GlobalDialogController,
@@ -261,7 +262,7 @@ private suspend fun startSign(
 
 suspend fun signUpOrSignIn(
     privateKey: String,
-    sessionManager: CustomSessionManager,
+    sessionManager: SessionManager,
     isSignUp: Boolean,
     globalDialogController: GlobalDialogController,
 ): Result<Unit?> {
@@ -272,7 +273,7 @@ suspend fun signUpOrSignIn(
             isSignUp
         )
         val userSession = buildLoginUserSessionFactory(
-            sessionManager.settings
+            (sessionManager as CustomSessionManager).settings
         ).addSession(rawUserPassInfo)
         sessionManager.sessionModel.updateState(ClientSessionState.Success(userSession))
     }

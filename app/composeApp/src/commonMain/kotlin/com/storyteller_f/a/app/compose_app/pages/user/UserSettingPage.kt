@@ -27,7 +27,6 @@ import com.storyteller_f.a.app.compose_app.utils.androidAllowHardware
 import com.storyteller_f.a.app.compose_app.utils.coilImageToImageBitmap
 import com.storyteller_f.a.app.compose_app.utils.saveImageBitmap
 import com.storyteller_f.a.client.core.SessionManager
-import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
@@ -157,7 +156,7 @@ private fun processSelectedMedia(
     mediaList: List<MediaInfo>,
     scope: CoroutineScope,
     context: PlatformContext,
-    sessionManager: UserSessionManager,
+    sessionManager: SessionManager,
     imageCropper: ImageCropper,
     ratio: AspectRatio,
     mediaTarget: ObjectTuple,

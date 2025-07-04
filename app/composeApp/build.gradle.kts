@@ -20,7 +20,6 @@ plugins {
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.easylauncher)
     alias(libs.plugins.serialization)
-//    alias(libs.plugins.screenshot)
     id("com.mikepenz.aboutlibraries.plugin")
 }
 
@@ -106,6 +105,7 @@ kotlin {
             implementation(libs.connectivity.compose.device)
             implementation("com.shepeliev:webrtc-kmp:0.125.9")
             implementation("com.google.accompanist:accompanist-permissions:0.37.3")
+            implementation("androidx.compose.ui:ui-tooling-preview:1.9.0-beta01")
             if (isLlamaEnable)
                 implementation(":android-llama-cpp")
 
@@ -301,15 +301,10 @@ android {
     }
     dependencies {
         coreLibraryDesugaring(libs.desugar.jdk.libs)
-        debugImplementation(compose.uiTooling)
-//        screenshotTestImplementation(libs.androidx.ui.tooling)
-//        screenshotTestImplementation(compose.runtime)
     }
     lint {
         disable.addAll(arrayOf("RememberReturnType", "UnusedMaterial3ScaffoldPaddingParameter"))
     }
-//    @Suppress("UnstableApiUsage")
-//    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 }
 
 //https://developer.android.com/develop/ui/compose/testing#setup
