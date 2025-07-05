@@ -2,6 +2,8 @@ package com.storyteller_f.a.app.compose_app
 
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.*
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,6 +22,7 @@ import com.kdroid.composenotification.builder.Notification
 import com.kdroid.composenotification.builder.getNotificationProvider
 import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.compose_app.compontents.*
+import com.storyteller_f.a.app.compose_app.compontents.GlobalDialog
 import com.storyteller_f.a.app.compose_app.model.DownloadViewModel
 import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.model.getDownloadViewModel
@@ -53,7 +56,6 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -91,8 +93,8 @@ val LocalJson = compositionLocalOf<Json> {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-val LocalToaster = compositionLocalOf {
-    ToasterState(GlobalScope)
+val LocalToaster = compositionLocalOf<Toast> {
+    error("no default toast")
 }
 
 val LocalDatabase = compositionLocalOf {
@@ -178,7 +180,10 @@ private fun MainAppPage(
             appNav.gotoTopic(it.id)
         }
         val downloadViewModel = getDownloadViewModel()
-        CompositionLocalProvider(LocalAppNav provides appNav, LocalDownloadViewModel provides downloadViewModel) {
+        CompositionLocalProvider(
+            LocalAppNav provides appNav,
+            LocalDownloadViewModel provides downloadViewModel
+        ) {
             NavHost(navigator, startDestination = HomeScreen) {
                 buildRootNav(navigator)
             }
@@ -223,70 +228,55 @@ fun CommonEntry(
                 ignoreUnknownKeys = true
             }
         }
-        CommonEntryContent(
-            database,
-            globalDialogController,
-            toasterState,
-            currentUserSessionManager,
-            json,
-            accountSwitcher,
-            mainUserSessionManager,
-            {
+        LaunchedEffect(database) {
+            processEvent(database)
+        }
+        GlobalDialog(globalDialogController)
+        Toaster(toasterState, alignment = Alignment.Center)
+        CompositionLocalProvider(
+            LocalClient provides currentUserSessionManager.client,
+            LocalWsClient provides currentUserSessionManager.webSocketClient,
+            LocalSessionManager provides currentUserSessionManager,
+            LocalMainSessionManager provides mainUserSessionManager,
+            LocalToaster provides Sonner(toasterState),
+            LocalDatabase provides database,
+            LocalJson provides json,
+            LocalGlobalDialog provides globalDialogController,
+            LocalAccountSwitcher provides accountSwitcher,
+        ) {
+            CommonEntryInternal(content, accountSwitcher, globalDialogController) {
                 currentUser = it
-            },
-            content
-        )
+            }
+        }
     }
 }
 
 @Composable
-fun CommonEntryContent(
-    database: StorageSource,
-    globalDialogController: CustomGlobalDialogController,
-    toasterState: ToasterState,
-    currentUserSessionManager: CustomSessionManager,
-    json: Json,
+private fun CommonEntryInternal(
+    content: @Composable (() -> Unit),
     accountSwitcher: AccountSwitcher,
-    mainUserSessionManager: CustomSessionManager,
-    switch: (RawUserPass) -> Unit,
-    content: @Composable () -> Unit,
+    globalDialogController: CustomGlobalDialogController,
+    switch: (RawUserPass) -> Unit
 ) {
-    LaunchedEffect(database) {
-        processEvent(database)
-    }
-    GlobalDialog(globalDialogController)
-    Toaster(toasterState, alignment = Alignment.Center)
-    CompositionLocalProvider(
-        LocalClient provides currentUserSessionManager.client,
-        LocalWsClient provides currentUserSessionManager.webSocketClient,
-        LocalSessionManager provides currentUserSessionManager,
-        LocalMainSessionManager provides mainUserSessionManager,
-        LocalToaster provides toasterState,
-        LocalDatabase provides database,
-        LocalJson provides json,
-        LocalGlobalDialog provides globalDialogController,
-        LocalAccountSwitcher provides accountSwitcher,
+    val scope = rememberCoroutineScope()
+    ProvideIconParameters(
+        iconFont = MaterialSymbolsOutlined.rememberIconFont(),
+        size = 20.dp,
+        tintProvider = LocalContentColor,
+        weight = FontWeight.Normal
     ) {
-        val scope = rememberCoroutineScope()
-        ProvideIconParameters(
-            iconFont = MaterialSymbolsOutlined.rememberIconFont(),
-            size = 20.dp,
-            tintProvider = LocalContentColor,
-            weight = FontWeight.Normal
-        ) {
-            val dataStoreManager =
-                createCustomDataStoreManager()
-            ProvideDataStoreManager(dataStoreManager) {
-                setPreferences {
-                    "gpt_model" defaultValue ""
-                }
-                content()
-                AccountSwitch(
-                    accountSwitcher
-                ) { derPrivateKeyStr ->
-                    scope.launch {
-                        switchUser(globalDialogController, derPrivateKeyStr, switch)
-                    }
+        val dataStoreManager =
+            createCustomDataStoreManager()
+        ProvideDataStoreManager(dataStoreManager) {
+            setPreferences {
+                "gpt_model" defaultValue ""
+            }
+            content()
+            AccountSwitch(
+                accountSwitcher
+            ) { derPrivateKeyStr ->
+                scope.launch {
+                    switchUser(globalDialogController, derPrivateKeyStr, switch)
                 }
             }
         }
@@ -301,9 +291,13 @@ private fun createAppSessionManager(
 ): CustomSessionManager {
     val scope = rememberCoroutineScope()
     val sessionManager = remember(settingName) {
-        createCustomUserSessionManager(settingName, buildWebSocketUrl(wsServerUrl), { model, cookieManager ->
-            buildHttpClient(httpUrl, cookieManager, model)
-        }) { roomFrame, session ->
+        createCustomUserSessionManager(
+            settingName,
+            buildWebSocketUrl(wsServerUrl),
+            { model, cookieManager ->
+                buildHttpClient(httpUrl, cookieManager, model)
+            }
+        ) { roomFrame, session ->
             if (roomFrame is RoomFrame.NewTopicInfo) {
                 bus.emit(
                     OnTopicCreated(roomFrame.topicInfo)
@@ -353,7 +347,8 @@ private fun buildWsListener(
     override suspend fun onReceived(frame: RoomFrame) {
         if (frame is RoomFrame.NewTopicInfo) {
             val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
-                val topicInfo = processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
+                val topicInfo =
+                    processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
                 RoomFrame.NewTopicInfo(topicInfo)
             } else {
                 frame
@@ -394,7 +389,14 @@ private fun ObserveMessage(
     val notificationProvider = getNotificationProvider()
     val hasPermission by notificationProvider.hasPermissionState
     val listener = remember(hasPermission) {
-        buildWsListener(messageToasterState, hasPermission, roomScreenId, topicScreenId, sessionManager, onClickTopic)
+        buildWsListener(
+            messageToasterState,
+            hasPermission,
+            roomScreenId,
+            topicScreenId,
+            sessionManager,
+            onClickTopic
+        )
     }
     DisposableEffect(null) {
         clientWebSocketImpl.addListener(listener)
@@ -436,10 +438,6 @@ private suspend fun sendTopicNotification(
         ) {
         }
     }
-}
-
-fun ToasterState.showShortToast(message: String) {
-    show(message, duration = 1.seconds)
 }
 
 class CustomSessionManager(

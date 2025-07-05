@@ -2,9 +2,9 @@ package com.storyteller_f.a.cloud.cli
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomConfig
+import com.storyteller_f.a.backend.exposed.CombinedDatabase
 import com.storyteller_f.a.backend.exposed.CommunityDatabase
 import com.storyteller_f.a.backend.exposed.ContainerDatabase
-import com.storyteller_f.a.backend.exposed.Database
 import com.storyteller_f.a.backend.exposed.ExposedCommunityDatabase
 import com.storyteller_f.a.backend.exposed.ExposedContainerDatabase
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseFactory
@@ -54,8 +54,8 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 
     val databaseConnection = databaseConnection(env)
 
-    val buildType = env["BUILD_TYPE"]
-    val flavor = env["FLAVOR"]
+    val buildType = env["BUILD_TYPE"] ?: "prod"
+    val flavor = env["FLAVOR"] ?: throw Exception("FLAVOR is empty")
 
     val customConfig = CustomConfig(buildType, flavor, null)
 
@@ -71,7 +71,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         NameService(),
         database,
         databaseSession,
-        object : Database<User> {
+        object : CombinedDatabase<User> {
             override val userDatabase: UserDatabase<User>
                 get() = ExposedUserDatabase(databaseSession)
             override val topicDatabase: TopicDatabase

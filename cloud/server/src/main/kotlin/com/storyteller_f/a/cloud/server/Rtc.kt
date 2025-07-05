@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.cloud.server.service.checkRootReadPermission
+import com.storyteller_f.a.cloud.core.service.checkRootReadPermission
 import com.storyteller_f.shared.obj.CustomAnswer
 import com.storyteller_f.shared.obj.CustomOffer
 import com.storyteller_f.shared.obj.RoomFrame
@@ -55,10 +55,10 @@ private suspend fun processStartCall(
 ) {
     val session = userWebSocketSessionMap[uid]?.firstOrNull() ?: return
     val roomId = frame.roomId
-    backend.checkRootReadPermission(ObjectType.ROOM, roomId, uid).onSuccess {
-        if (it == null) {
+    backend.checkRootReadPermission(ObjectType.ROOM, roomId, uid).onSuccess { permission ->
+        if (permission == null) {
             session.sendSerialized(RoomFrame.Error("no permission") as RoomFrame)
-        } else if (it.hasRead) {
+        } else if (permission.hasRead) {
             val list = rtcSession.getOrPut(roomId) {
                 RtcSession(roomId)
             }

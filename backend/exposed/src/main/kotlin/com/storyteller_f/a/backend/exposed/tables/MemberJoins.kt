@@ -5,8 +5,9 @@ import com.storyteller_f.a.backend.exposed.objectType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.datetime.datetime
+import org.jetbrains.exposed.v1.r2dbc.insert
 
 object MemberJoins : Table() {
     val uid = customPrimaryKey("uid").index()
@@ -38,7 +39,7 @@ class MemberJoin(
             }
         }
 
-        fun addJoinRaw(
+        suspend fun addJoinRaw(
             uid: PrimaryKey,
             id: PrimaryKey,
             time: LocalDateTime,

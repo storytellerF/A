@@ -23,10 +23,11 @@ import com.storyteller_f.shared.type.JoinStatusSearch.NOT_JOINED
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.r2dbc.insert
+import org.jetbrains.exposed.v1.r2dbc.select
+import org.jetbrains.exposed.v1.r2dbc.selectAll
+import org.jetbrains.exposed.v1.r2dbc.update
 
 class ExposedCommunityDatabase(
     val exposedDatabaseSession: ExposedDatabaseSession,
@@ -156,7 +157,12 @@ class ExposedCommunityDatabase(
             }.insertedCount > 0) {
                 "insert aid failed"
             }
-            MemberJoin.addJoinRaw(community.owner, community.id, community.createdTime, ObjectType.COMMUNITY)
+            MemberJoin.addJoinRaw(
+                community.owner,
+                community.id,
+                community.createdTime,
+                ObjectType.COMMUNITY
+            )
         }
     }
 
@@ -166,7 +172,12 @@ class ExposedCommunityDatabase(
     ): Result<List<Pair<Long, LocalDateTime>>> {
         return exposedDatabaseSession.dbSearch {
             search {
-                Communities.join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+                Communities.join(
+                    MemberJoins,
+                    JoinType.INNER,
+                    Communities.id,
+                    MemberJoins.objectId
+                ) {
                     MemberJoins.uid eq uid
                 }.select(Communities.id, MemberJoins.joinedTime)
                     .where {
@@ -212,7 +223,7 @@ class ExposedCommunityDatabase(
         body: UpdateCommunityBody
     ): Result<Boolean> {
         return exposedDatabaseSession.dbQuery {
-            listOf {
+            listOf(suspend {
                 val newIcon = body.icon
                 val newName = body.name
                 val newPoster = body.poster
@@ -233,7 +244,7 @@ class ExposedCommunityDatabase(
                 } else {
                     true
                 }
-            }.all {
+            }).all {
                 it()
             }
         }

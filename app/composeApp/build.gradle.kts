@@ -103,9 +103,9 @@ kotlin {
             implementation(libs.androidx.datastore.preferences.core)
             implementation(libs.connectivity.device)
             implementation(libs.connectivity.compose.device)
-            implementation("com.shepeliev:webrtc-kmp:0.125.9")
-            implementation("com.google.accompanist:accompanist-permissions:0.37.3")
-            implementation("androidx.compose.ui:ui-tooling-preview:1.9.0-beta01")
+            implementation(libs.webrtc.kmp)
+            implementation(libs.accompanist.permissions)
+            implementation(libs.androidx.ui.tooling.preview)
             if (isLlamaEnable)
                 implementation(":android-llama-cpp")
 
@@ -147,7 +147,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             //network
             implementation(libs.bundles.ktor.client)
-            implementation("androidx.paging:paging-common:3.3.6")
+            implementation(libs.androidx.paging.common)
             //ui
             implementation(libs.bundles.coil)
             implementation(libs.multiplatform.markdown.renderer)
@@ -172,7 +172,7 @@ kotlin {
             implementation(libs.haze)
             implementation(libs.haze.materials)
             implementation(projects.client.kotbase)
-            implementation("de.jonasbroeckmann.kzip:kzip:1.1.0")
+            implementation(libs.kzip)
 
             implementation(libs.kim)
             implementation(libs.uri.kmp)

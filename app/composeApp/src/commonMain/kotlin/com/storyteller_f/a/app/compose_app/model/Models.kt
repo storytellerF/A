@@ -3,9 +3,9 @@ package com.storyteller_f.a.app.compose_app.model
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.*
-import com.storyteller_f.a.app.compose_app.UploadSession
 import com.storyteller_f.a.app.compose_app.common.*
 import com.storyteller_f.a.app.compose_app.compontents.DialogSaveState
+import com.storyteller_f.a.app.compose_app.pages.UploadSession
 import com.storyteller_f.a.app.compose_app.pages.topic.upload
 import com.storyteller_f.a.client.core.*
 import com.storyteller_f.shared.model.*

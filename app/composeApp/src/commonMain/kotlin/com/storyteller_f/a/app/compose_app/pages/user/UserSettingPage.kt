@@ -39,7 +39,6 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
 sealed class SettingOption(open val value: String?) {
     data class Name(override val value: String?) : SettingOption(value)
@@ -282,7 +281,7 @@ private fun UserSettingInternal(
             if (aid == null) {
                 showDialog(SettingOption.Aid(aid))
             } else {
-                toasterState.show("forbid", duration = 1.seconds)
+                toasterState.showMessage("forbid")
             }
         }, {
             if (aid == null) {

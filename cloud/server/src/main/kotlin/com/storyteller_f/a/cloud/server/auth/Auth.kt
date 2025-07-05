@@ -10,16 +10,16 @@ import com.storyteller_f.a.backend.exposed.tables.*
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getUserAlternateUserInfoList
 import com.storyteller_f.a.backend.service.processRawUserToUserInfo
+import com.storyteller_f.a.cloud.core.service.addAlternativeAccount
+import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.server.ServerConfig
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
-import com.storyteller_f.a.cloud.server.service.addAlternativeAccount
 import com.storyteller_f.shared.*
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
-import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -151,16 +151,6 @@ private suspend fun RoutingContext.signIn(
             } else {
                 Result.failure(BadRequestException("Verify failed"))
             }
-        }
-    }
-}
-
-suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple) {
-    val logId = SnowflakeFactory.nextId()
-    val log = UserLog(logId, now(), uid, type, objectTuple.objectId, objectTuple.objectType)
-    exposedDatabase.userDatabase.insertUserLog(log).onFailure {
-        Napier.i(tag = "user log", throwable = it) {
-            "add failed"
         }
     }
 }

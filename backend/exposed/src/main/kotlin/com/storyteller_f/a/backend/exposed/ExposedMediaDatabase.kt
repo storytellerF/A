@@ -9,10 +9,10 @@ import com.storyteller_f.a.backend.exposed.tables.Medias
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.r2dbc.batchInsert
+import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 class ExposedMediaDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : MediaDatabase {
     override suspend fun getMedia(owner: PrimaryKey, name: String): Result<Media?> {

@@ -8,7 +8,7 @@ import com.storyteller_f.a.backend.exposed.objectType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.v1.core.*
 
 object ReactionRecords : BaseTable() {
     val uid = customPrimaryKey("uid")

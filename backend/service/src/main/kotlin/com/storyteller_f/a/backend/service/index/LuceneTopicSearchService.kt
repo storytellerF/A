@@ -109,9 +109,9 @@ class LuceneTopicSearchService(private val path: Path, private val isInMemory: B
                     val searcher = IndexSearcher(reader)
                     val combinedQuery = buildQuery(primaryKeyFetch, words, documentSearch)
                     val reverse = when {
-                        primaryKeyFetch == null -> true
+                        primaryKeyFetch == null || primaryKeyFetch.cursor == null -> true
                         primaryKeyFetch.cursor is Cursor.NextCursor<PrimaryKey> -> true
-                        else -> true
+                        else -> false
                     }
                     val sortById = Sort(SortField("id2", SortField.Type.LONG, reverse))
                     Napier.i {

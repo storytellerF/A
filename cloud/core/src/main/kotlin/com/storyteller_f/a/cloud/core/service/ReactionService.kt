@@ -1,4 +1,4 @@
-package com.storyteller_f.a.cloud.server.service
+package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.ForbiddenException

@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.*
 import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
-import com.dokar.sonner.ToasterState
 import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.MediaProvider
 import io.github.aakira.napier.Napier
@@ -371,7 +370,7 @@ private fun MediaController.playNewMedia(
 private fun buildListener(
     player: Player,
     id: String,
-    toasterState: ToasterState,
+    toasterState: Toast,
     scope: CoroutineScope,
     listener: VideoListener
 ): Player.Listener {
@@ -389,13 +388,13 @@ private fun buildListener(
             if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW ||
                 error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT
             ) {
-                toasterState.show("source error, restart after 1 seconds")
+                toasterState.showMessage("source error, restart after 1 seconds")
                 scope.launch {
                     delay(1000)
                     player.play()
                 }
             } else if (error.errorCode == PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED) {
-                toasterState.show("source error, skip to next after 1 seconds")
+                toasterState.showMessage("source error, skip to next after 1 seconds")
                 scope.launch {
                     delay(1000)
                     player.seekToNext()

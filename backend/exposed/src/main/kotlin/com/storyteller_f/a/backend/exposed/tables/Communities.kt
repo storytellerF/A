@@ -7,7 +7,7 @@ import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.*
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.v1.core.*
 
 object Communities : BaseTable() {
     val name = communityName()

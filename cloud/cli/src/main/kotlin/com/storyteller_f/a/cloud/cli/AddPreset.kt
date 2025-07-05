@@ -28,8 +28,8 @@ import kotlinx.cli.Subcommand
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.statements.api.ExposedBlob
+import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
+import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import java.io.File
 import java.io.RandomAccessFile
 import java.security.MessageDigest
@@ -577,7 +577,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
     }
 
-    private fun insertTopics(
+    private suspend fun insertTopics(
         topicTuples: List<InsertTopicTuple>,
         userMap: Map<String, User>,
         rootType: ObjectType,
@@ -650,12 +650,6 @@ suspend fun downloadWithResume(
             }
         }
     }
-}
-
-fun sha256(input: String): String {
-    val bytes = input.toByteArray(Charsets.UTF_8)
-    val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
-    return digest.joinToString("") { "%02x".format(it) }
 }
 
 fun sha256File(file: File): String {

@@ -11,11 +11,12 @@ import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.merge
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.countDistinct
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.countDistinct
+import org.jetbrains.exposed.v1.r2dbc.deleteWhere
+import org.jetbrains.exposed.v1.r2dbc.select
+import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 class ExposedContainerDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : ContainerDatabase {
     override suspend fun isMemberJoined(

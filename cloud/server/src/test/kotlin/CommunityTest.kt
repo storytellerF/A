@@ -78,7 +78,7 @@ class CommunityTest {
     @Test
     fun `test communities pagination`() {
         test {
-            val (_, _, communities) = attachSession {
+            val session = attachSession {
                 buildList {
                     repeat(10) {
                         add(createCommunity(NewCommunity("c1", "aid$it")).getOrThrow().id)
@@ -86,7 +86,7 @@ class CommunityTest {
                 }
             }
             attachSession {
-                communities.forEach {
+                session.custom.forEach {
                     joinCommunity(it).getOrThrow()
                 }
                 var lastCommunityId: String? = null
@@ -109,13 +109,13 @@ class CommunityTest {
     @Test
     fun `test search community`() {
         test {
-            val (_, _, community1Id) = attachSession {
+            val session = attachSession {
                 val info = createCommunity(NewCommunity("name1", "c1")).getOrThrow()
                 createCommunity(NewCommunity("name2", "c2")).getOrThrow()
                 info.id
             }
             attachSession {
-                joinCommunity(community1Id)
+                joinCommunity(session.custom)
                 testSearchCommunityCount(1, null, 10, JoinStatusSearch.JOINED, null)
                 testSearchCommunityCount(1, null, 10, JoinStatusSearch.NOT_JOINED, null)
                 testSearchCommunityCount(2, null, 10, JoinStatusSearch.UNSPECIFIED, null)

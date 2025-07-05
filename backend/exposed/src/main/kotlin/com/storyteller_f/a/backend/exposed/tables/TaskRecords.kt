@@ -6,8 +6,8 @@ import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.r2dbc.insert
 
 object TaskRecords : BaseTable() {
     val type = enumerationByName<TaskRecordType>("type", 10)
@@ -31,7 +31,7 @@ class TaskRecord(id: PrimaryKey, createdTime: LocalDateTime, val type: TaskRecor
                 )
             }
         }
-        fun addTaskRecord(taskRecord: TaskRecord) {
+        suspend fun addTaskRecord(taskRecord: TaskRecord) {
             check(TaskRecords.insert {
                 it[TaskRecords.id] = taskRecord.id
                 it[TaskRecords.createdTime] = taskRecord.createdTime

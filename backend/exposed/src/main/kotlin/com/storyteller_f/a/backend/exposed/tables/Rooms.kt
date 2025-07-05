@@ -7,8 +7,8 @@ import com.storyteller_f.a.backend.exposed.roomName
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 object Rooms : BaseTable() {
     val name = roomName()

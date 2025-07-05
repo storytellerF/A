@@ -10,9 +10,11 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.jetbrains.exposed.sql.statements.api.ExposedBlob
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
+import org.jetbrains.exposed.v1.datetime.datetime
+import org.jetbrains.exposed.v1.r2dbc.insert
+import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 object Topics : BaseTable() {
     val author = customPrimaryKey("author").index()
@@ -64,7 +66,7 @@ class Topic(
             Topics.id eq topicId
         }
 
-        fun new(info: Topic) {
+        suspend fun new(info: Topic) {
             return check(Topics.insert {
                 it[id] = info.id
                 it[author] = info.author

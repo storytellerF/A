@@ -1,4 +1,4 @@
-package com.storyteller_f.a.cloud.server.service
+package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
@@ -12,7 +12,6 @@ import com.storyteller_f.a.backend.exposed.tables.RawRoom
 import com.storyteller_f.a.backend.exposed.tables.Room
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
-import com.storyteller_f.a.cloud.server.auth.addUserLog
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType

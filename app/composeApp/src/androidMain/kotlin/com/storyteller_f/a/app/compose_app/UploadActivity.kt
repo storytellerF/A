@@ -9,6 +9,10 @@ import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
+import com.storyteller_f.a.app.compose_app.pages.ClientFile
+import com.storyteller_f.a.app.compose_app.pages.UploadPage
+import com.storyteller_f.a.app.compose_app.pages.UploadSession
+import com.storyteller_f.a.app.compose_app.pages.Uploader
 import io.ktor.http.*
 import kotlinx.io.Source
 import kotlinx.io.asSource
@@ -63,7 +67,7 @@ class UploadActivity : ComponentActivity() {
         commonForActivity()
         flushSession()
         setContent {
-            Upload(uploader)
+            UploadPage(uploader)
         }
     }
 

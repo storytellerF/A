@@ -1,30 +1,68 @@
 package com.storyteller_f.a.app.compose_app.pages.topic
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Topic
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.dokar.sonner.ToasterState
-import com.storyteller_f.a.app.compose_app.*
+import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalToaster
+import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.Toast
+import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.common.StateView
 import com.storyteller_f.a.app.compose_app.common.debounceState
 import com.storyteller_f.a.app.compose_app.common.nestedStateView
-import com.storyteller_f.a.app.compose_app.compontents.*
-import com.storyteller_f.a.app.compose_app.model.*
+import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
+import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
+import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
+import com.storyteller_f.a.app.compose_app.compontents.InteractionRow
+import com.storyteller_f.a.app.compose_app.compontents.TopicCell
+import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
+import com.storyteller_f.a.app.compose_app.model.OnTopicChanged
+import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
+import com.storyteller_f.a.app.compose_app.model.TopicViewModel
+import com.storyteller_f.a.app.compose_app.model.createRoomViewModel
+import com.storyteller_f.a.app.compose_app.model.createTopicViewModel
+import com.storyteller_f.a.app.compose_app.model.createTopicsInTopicViewModel
 import com.storyteller_f.a.app.compose_app.pages.room.CommonInputButton
 import com.storyteller_f.a.app.compose_app.pages.room.InputGroupInternal
 import com.storyteller_f.a.app.compose_app.pages.room.RoomInputGroup
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
+import com.storyteller_f.a.app.compose_app.success
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.createNewTopic
@@ -37,7 +75,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -236,13 +273,13 @@ private fun sendTopic(
     input: String,
     updateInput: (String) -> Unit,
     focusManager: FocusManager,
-    toasterState: ToasterState,
+    toasterState: Toast,
     sessionManager: SessionManager,
     globalDialogController: GlobalDialogController,
     scrollTo: () -> Unit
 ) {
     if (!checkContent(input)) {
-        toasterState.show("invalid")
+        toasterState.showMessage("invalid")
         return
     }
     scope.launch {
@@ -261,7 +298,7 @@ private fun sendTopic(
                     topic.copy(commentCount = topic.commentCount + 1)
                 )
             )
-            toasterState.show(getString(Res.string.success), duration = 1.seconds)
+            toasterState.showMessage(getString(Res.string.success))
             scrollTo()
         } catch (e: Exception) {
             globalDialogController.showErrorMessage(e)

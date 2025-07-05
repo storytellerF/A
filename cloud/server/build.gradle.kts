@@ -31,6 +31,7 @@ dependencies {
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
     implementation(projects.backend.service)
+    implementation(projects.cloud.core)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.server.client)
     implementation(libs.bundles.exposed)
@@ -87,6 +88,17 @@ tasks.withType<Tar> {
 
 tasks.withType<Zip> {
     filesMatching("vavi-commons-1.1.10.jar") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
+    }
+}
+tasks.withType<Tar> {
+    filesMatching("core.jar") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
+    }
+}
+
+tasks.withType<Zip> {
+    filesMatching("core.jar") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
     }
 }

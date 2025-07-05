@@ -11,7 +11,8 @@ import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.r2dbc.insert
 
 fun Table.titleType(name: String) = enumerationByName<TitleType>(name, 10)
 
@@ -63,7 +64,7 @@ class Title(
                 row[Titles.descriptionTopicId]
             )
         }
-        fun insertTitle(title: Title, topic: Topic) {
+        suspend fun insertTitle(title: Title, topic: Topic) {
             check(Titles.insert {
                 it[Titles.id] = title.id
                 it[Titles.createdTime] = title.createdTime

@@ -25,7 +25,7 @@ actual fun createKotbaseStorageSource(scope: String?): StorageSource {
 
 class KotbaseObservable<T>(
     private val listenerToken: ListenerToken,
-    override val task: CompletableDeferred<List<T>>,
+    override val deferred: CompletableDeferred<List<T>>,
 ) :
     StorageObservable<T> {
     override fun remove() {

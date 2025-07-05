@@ -26,6 +26,7 @@ dependencies {
     runtimeOnly(libs.vavi.image.avif)
     implementation(libs.memoryfilesystem)
     implementation(libs.kotlinx.coroutines.slf4j)
+    implementation(libs.kreds)
 
     testImplementation(libs.commons.logging)
     testImplementation(kotlin("test"))

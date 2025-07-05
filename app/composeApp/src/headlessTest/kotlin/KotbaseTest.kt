@@ -3,8 +3,10 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.storage.StorageOrder
 import com.storyteller_f.storage.createKotbaseStorageSource
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Clock
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.ExperimentalTime
 
 class KotbaseTest : UsingContextTest() {
     @Test
@@ -17,6 +19,7 @@ class KotbaseTest : UsingContextTest() {
         assertEquals(params, params1)
     }
 
+    @OptIn(ExperimentalTime::class)
     @Test
     fun `test kotbase order`() = runTest {
         val collection = createKotbaseStorageSource(null).getCollection("communities_test", CommunityInfo::class)
@@ -24,13 +27,13 @@ class KotbaseTest : UsingContextTest() {
         collection.saveDocument("2", CommunityInfo.EMPTY.copy(hasPoster = false, id = 2))
         collection.saveDocument("3", CommunityInfo.EMPTY.copy(hasPoster = true, id = 3))
         collection.saveDocument("4", CommunityInfo.EMPTY.copy(hasPoster = false, id = 4))
-        val task = collection.observeData(listOf(StorageOrder.Desc("hasPoster"), StorageOrder.Desc("id")), 10) {
+        val deferred = collection.observeData(listOf(StorageOrder.Desc("hasPoster"), StorageOrder.Desc("id")), 10) {
 
-        }.task
-        while (!task.isCompleted) {
+        }.deferred
+        while (!deferred.isCompleted) {
             executeIfNeed()
         }
-        val communityInfos = task.await()
+        val communityInfos = deferred.await()
         communityInfos.forEach {
             println("${it.hasPoster} ${it.id}")
         }

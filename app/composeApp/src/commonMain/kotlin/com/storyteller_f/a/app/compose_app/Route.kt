@@ -2,7 +2,6 @@ package com.storyteller_f.a.app.compose_app
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -12,9 +11,11 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
-import com.mikepenz.aboutlibraries.ui.compose.m3.LibraryDefaults
-import com.mikepenz.aboutlibraries.ui.compose.m3.rememberLibraries
+import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
+import com.mikepenz.aboutlibraries.ui.compose.rememberLibraries
+import com.storyteller_f.a.app.compose_app.pages.HomePage
 import com.storyteller_f.a.app.compose_app.pages.PreferencePage
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityComposePage
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityPage
@@ -380,7 +381,7 @@ fun NavGraphBuilder.buildRootNav(
             LibrariesContainer(
                 libraries,
                 Modifier.fillMaxSize().statusBarsPadding(),
-                colors = LibraryDefaults.libraryColors(backgroundColor = MaterialTheme.colorScheme.background)
+                colors = LibraryDefaults.libraryColors()
             )
         }
     }

@@ -12,7 +12,9 @@ import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.r2dbc.Query
+import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 object Users : BaseTable() {
     val publicKey = userPublicKey()

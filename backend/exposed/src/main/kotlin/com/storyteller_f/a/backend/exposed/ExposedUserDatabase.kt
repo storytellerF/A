@@ -13,10 +13,17 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.v1.r2dbc.deleteWhere
+import org.jetbrains.exposed.v1.r2dbc.insert
+import org.jetbrains.exposed.v1.r2dbc.select
+import org.jetbrains.exposed.v1.r2dbc.selectAll
+import org.jetbrains.exposed.v1.r2dbc.update
+import org.jetbrains.exposed.v1.r2dbc.upsert
 
-class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : UserDatabase<User> {
+class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSession) :
+    UserDatabase<User> {
     override suspend fun getUserAid(id: PrimaryKey) = exposedDatabaseSession.dbSearch {
         search {
             Aids.selectAll().where {
@@ -71,12 +78,12 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
         }
     }
 
-    private fun createUserRaw(user: User) {
+    private suspend fun createUserRaw(user: User) {
         check(Users.insert {
             it[Users.id] = user.id
-            it[Users.publicKey] = user.publicKey
-            it[Users.address] = user.address
-            it[Users.nickname] = user.nickname
+            it[publicKey] = user.publicKey
+            it[address] = user.address
+            it[nickname] = user.nickname
             it[Users.createdTime] = user.createdTime
         }.insertedCount > 0) {
             "insert user failed"
@@ -86,7 +93,7 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
     override suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean> {
         return exposedDatabaseSession.dbSearch {
             search {
-                User.Companion.find {
+                User.find {
                     Users.publicKey eq pk
                 }
             }
@@ -99,7 +106,7 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
         newUser: UpdateUserBody,
     ): Result<Boolean> {
         return exposedDatabaseSession.dbQuery {
-            listOf({
+            listOf(suspend {
                 val avatar = newUser.avatar
                 val name = newUser.nickname
                 if (!name.isNullOrBlank() || avatar != null) {
@@ -107,10 +114,10 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
                         Users.id eq id
                     }) {
                         if (!name.isNullOrBlank()) {
-                            it[Users.nickname] = name
+                            it[nickname] = name
                         }
                         if (avatar != null) {
-                            it[Users.icon] = avatar
+                            it[icon] = avatar
                         }
                     } > 0
                 } else {
@@ -136,7 +143,7 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
     override suspend fun isUserExistsByUid(id: Long): Result<Boolean> {
         return exposedDatabaseSession.dbSearch {
             search {
-                User.Companion.find {
+                User.find {
                     Users.id eq id
                 }
             }
@@ -224,10 +231,10 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
         return exposedDatabaseSession.dbQuery {
             check(UserLogs.insert {
                 it[UserLogs.id] = log.id
-                it[UserLogs.uid] = log.uid
-                it[UserLogs.type] = log.type
-                it[UserLogs.objectId] = log.objectId
-                it[UserLogs.objectType] = log.objectType
+                it[uid] = log.uid
+                it[type] = log.type
+                it[objectId] = log.objectId
+                it[objectType] = log.objectType
                 it[UserLogs.createdTime] = log.createdTime
             }.insertedCount > 0) {
                 "Insert user log failed"
@@ -280,7 +287,7 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
                     Users.update({
                         Users.id eq id
                     }) {
-                        it[Users.acgAmount] = oldAcgAmount + acg
+                        it[acgAmount] = oldAcgAmount + acg
                     }
                     AssetTransaction.addAssetTransaction(
                         AssetTransaction(
@@ -347,7 +354,11 @@ class ExposedUserDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : 
         }
     }
 
-    override suspend fun createAlternativeAccount(hostId: PrimaryKey, privateKey: String, user: User): Result<Unit> {
+    override suspend fun createAlternativeAccount(
+        hostId: PrimaryKey,
+        privateKey: String,
+        user: User
+    ): Result<Unit> {
         return exposedDatabaseSession.dbQuery {
             createUserRaw(user)
             check(AlternateAccounts.insert {

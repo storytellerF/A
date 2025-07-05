@@ -2,19 +2,41 @@ package com.storyteller_f.a.backend.exposed
 
 import com.storyteller_f.a.backend.core.DatabaseConnection
 import com.storyteller_f.a.backend.core.UnauthorizedException
-import com.storyteller_f.a.backend.exposed.tables.*
+import com.storyteller_f.a.backend.exposed.tables.Aids
+import com.storyteller_f.a.backend.exposed.tables.AlternateAccounts
+import com.storyteller_f.a.backend.exposed.tables.AssetTransactions
+import com.storyteller_f.a.backend.exposed.tables.Communities
+import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
+import com.storyteller_f.a.backend.exposed.tables.MediaRefs
+import com.storyteller_f.a.backend.exposed.tables.Medias
+import com.storyteller_f.a.backend.exposed.tables.MemberJoins
+import com.storyteller_f.a.backend.exposed.tables.ReactionRecords
+import com.storyteller_f.a.backend.exposed.tables.Reactions
+import com.storyteller_f.a.backend.exposed.tables.Rooms
+import com.storyteller_f.a.backend.exposed.tables.TaskRecords
+import com.storyteller_f.a.backend.exposed.tables.Titles
+import com.storyteller_f.a.backend.exposed.tables.Topics
+import com.storyteller_f.a.backend.exposed.tables.UserDevices
+import com.storyteller_f.a.backend.exposed.tables.UserLogs
+import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
+import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.utils.transformThrowable
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.slf4j.MDCContext
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.r2dbc.Query
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
+import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
+import org.jetbrains.exposed.v1.r2dbc.SchemaUtils
+import org.jetbrains.exposed.v1.r2dbc.explain
+import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import java.io.PrintWriter
 import java.net.Socket
 import kotlin.concurrent.thread
@@ -23,28 +45,31 @@ import kotlin.coroutines.resumeWithException
 
 class DatabaseSearchConfig<R, Q> {
     lateinit var searchFunc: () -> Q
-    lateinit var transformFunc: Q.() -> R
+    lateinit var transformFunc: suspend Q.() -> R
 
     fun search(block: () -> Q) {
         searchFunc = block
     }
 
-    fun transform(block: Q.() -> R) {
+    fun transform(block: suspend Q.() -> R) {
         transformFunc = block
     }
 }
 
-fun <R> DatabaseSearchConfig<R?, Query>.first(block: (ResultRow) -> R) {
-    transformFunc = {
-        firstOrNull()?.let(block)
+fun <R> DatabaseSearchConfig<R?, Query>.first(block: suspend (ResultRow) -> R) {
+    val function: suspend Query.() -> R? = {
+        firstOrNull()?.let {
+            block(it)
+        }
     }
+    transformFunc = function
 }
 
 fun <T> DatabaseSearchConfig<List<T>, Query>.map(block: (ResultRow) -> T) {
     transformFunc = {
-        map {
+        toList().map {
             block(it)
-        }
+        }.toList()
     }
 }
 
@@ -66,7 +91,7 @@ fun DatabaseSearchConfig<Boolean, Query>.isNotEmpty() {
     }
 }
 
-class ExposedDatabaseSession(val database: Database, val port: Int?) {
+class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
     companion object {
         val json by lazy {
             Json {
@@ -91,10 +116,10 @@ class ExposedDatabaseSession(val database: Database, val port: Int?) {
         )
     }
 
-    suspend fun <T> dbQuery(block: suspend Transaction.() -> T): Result<T> {
+    suspend fun <T> dbQuery(block: suspend R2dbcTransaction.() -> T): Result<T> {
         val anchor = Exception("dbQuery")
         return runCatching {
-            newSuspendedTransaction(Dispatchers.IO + MDCContext(), database) {
+            suspendTransaction(Dispatchers.IO + MDCContext(), db = database) {
                 maxAttempts = 1
                 block()
             }
@@ -109,7 +134,7 @@ class ExposedDatabaseSession(val database: Database, val port: Int?) {
         val anchor = Exception()
         port?.let { explainQuery(it, query) }
         return runCatching {
-            newSuspendedTransaction(Dispatchers.IO + MDCContext(), database) {
+            suspendTransaction(Dispatchers.IO + MDCContext(), db = database) {
                 maxAttempts = 1
                 val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
                 databaseSearchConfig.apply(query).let {
@@ -121,10 +146,13 @@ class ExposedDatabaseSession(val database: Database, val port: Int?) {
         }
     }
 
-    private suspend fun <R> explainQuery(port: Int, query: DatabaseSearchConfig<R, Query>.() -> Unit) {
+    private suspend fun <R> explainQuery(
+        port: Int,
+        query: DatabaseSearchConfig<R, Query>.() -> Unit
+    ) {
         val anchor = Exception()
         try {
-            val explainResult = newSuspendedTransaction(Dispatchers.IO + MDCContext(), database) {
+            val explainResult = suspendTransaction(Dispatchers.IO + MDCContext(), db = database) {
                 explainQuery {
                     val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
                     databaseSearchConfig.apply(query).searchFunc()
@@ -141,6 +169,7 @@ class ExposedDatabaseSession(val database: Database, val port: Int?) {
         } catch (e: Exception) {
             throw handleDatabaseException(e, anchor)
         }
+        error("")
     }
 
     private fun sendExplainResult(
@@ -163,7 +192,7 @@ class ExposedDatabaseSession(val database: Database, val port: Int?) {
         }
     }
 
-    private fun <T> Transaction.explainQuery(block: () -> SizedIterable<T>): ExplainResult? {
+    private suspend fun R2dbcTransaction.explainQuery(block: () -> Query): ExplainResult? {
         debug = true
         val result = explain {
             block()
@@ -205,19 +234,19 @@ object ExposedDatabaseFactory {
         TaskRecords
     )
 
-    fun connect(connection: DatabaseConnection): Database {
+    fun connect(connection: DatabaseConnection): R2dbcDatabase {
         Napier.d {
             "connect $connection"
         }
         val (uri, driver, user, password) = connection
-        return Database.Companion.connect(uri, driver, user, password)
+        return R2dbcDatabase.connect(uri, driver, user, password)
     }
 
-    fun init(database: Database) {
+    suspend fun init(database: R2dbcDatabase) {
         Napier.i(tag = "database") {
             "init"
         }
-        transaction(database) {
+        suspendTransaction(Dispatchers.IO, db = database) {
             Napier.i(tag = "database") {
                 "create tables"
             }
@@ -225,11 +254,11 @@ object ExposedDatabaseFactory {
         }
     }
 
-    fun clean(database: Database) {
+    suspend fun clean(database: R2dbcDatabase) {
         Napier.i(tag = "database") {
             "clean"
         }
-        transaction(database) {
+        suspendTransaction(Dispatchers.IO, db = database) {
             Napier.i(tag = "database") {
                 "drop tables"
             }

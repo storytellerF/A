@@ -5,10 +5,10 @@ import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.backend.exposed.tables.Reactions
 import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.PrimaryKey
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.r2dbc.Query
+import org.jetbrains.exposed.v1.r2dbc.andWhere
+import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 fun buildReactionInfoQuery(objectId: List<PrimaryKey>, reactionFetch: ReactionFetch): Query {
     val query = Reactions.selectAll().where {

@@ -10,6 +10,7 @@ import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalMainSessionManager
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
+import com.storyteller_f.a.app.compose_app.Sonner
 import com.storyteller_f.a.app.compose_app.compontents.InteractionRowInternal
 import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
 import com.storyteller_f.a.app.compose_app.pages.topic.EditTopicPage
@@ -85,7 +86,7 @@ fun PreviewTopicDialog() {
     }
 
     CompositionLocalProvider(
-        LocalToaster provides toasterState, LocalAppNav provides appNav,
+        LocalToaster provides Sonner(toasterState), LocalAppNav provides appNav,
         LocalSessionManager provides userSession, LocalMainSessionManager provides userSession
     ) {
         TopicDialogInternal(

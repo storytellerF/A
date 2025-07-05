@@ -12,9 +12,10 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.r2dbc.insert
+import org.jetbrains.exposed.v1.r2dbc.select
+import org.jetbrains.exposed.v1.r2dbc.update
 
 class ExposedRoomDatabase(
     val exposedDatabaseSession: ExposedDatabaseSession,
@@ -52,7 +53,8 @@ class ExposedRoomDatabase(
             processRoomListToRawRoom(uid, it).mapResult { list ->
                 exposedDatabaseSession.dbSearch {
                     search {
-                        Rooms.select(Rooms.id).buildRoomSearchWhereQuery(joinSearch, community, word)
+                        Rooms.select(Rooms.id)
+                            .buildRoomSearchWhereQuery(joinSearch, community, word)
                     }
                     count()
                 }.map { count ->
@@ -209,7 +211,7 @@ class ExposedRoomDatabase(
         body: UpdateRoomBody,
     ): Result<Boolean> {
         return exposedDatabaseSession.dbQuery {
-            listOf {
+            listOf(suspend {
                 val newIcon = body.icon
                 val newName = body.name
                 if (!newName.isNullOrBlank() || newIcon != null) {
@@ -226,7 +228,7 @@ class ExposedRoomDatabase(
                 } else {
                     true
                 }
-            }.all {
+            }).all {
                 it()
             }
         }

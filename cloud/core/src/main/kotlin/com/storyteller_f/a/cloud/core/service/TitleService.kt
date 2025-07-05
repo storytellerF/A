@@ -1,4 +1,4 @@
-package com.storyteller_f.a.cloud.server.service
+package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.ForbiddenException
@@ -13,7 +13,6 @@ import com.storyteller_f.a.backend.service.index.TopicDocument
 import com.storyteller_f.a.backend.service.insertTitleAndTopicDescription
 import com.storyteller_f.a.backend.service.processRawCommunityToCommunityInfo
 import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
-import com.storyteller_f.a.cloud.server.auth.addUserLog
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.type.ObjectType

@@ -10,9 +10,11 @@ import com.storyteller_f.a.backend.service.createCommunityRoomsRaw
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.batchInsert
+import kotlinx.coroutines.flow.toList
+import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.r2dbc.batchInsert
+import org.jetbrains.exposed.v1.r2dbc.select
 
 suspend fun Backend.batchAddUser(users: List<User>): Result<List<ResultRow>> = databaseSession.dbQuery {
     Users.batchInsert(users) {
@@ -98,7 +100,7 @@ suspend fun Backend.getAllMembers(distinct: List<String>): Result<List<Triple<St
             .select(Users.fields + Aids.value)
             .where {
                 Aids.value inList distinct
-            }.map {
+            }.toList().map {
                 Triple(it[Users.publicKey], it[Users.id], it[Aids.value])
             }
     }

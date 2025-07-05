@@ -104,7 +104,7 @@ class CustomStoragePagingSource<RowType : Any>(
                 invalidate()
             }
             registeredToken[params.key] = observable
-            val data = observable.task.await()
+            val data = observable.deferred.await()
             val prevKey = buildKey(data.firstOrNull())
             val nextKey = buildKey(data.lastOrNull())
             Napier.v(tag = "pagination") {

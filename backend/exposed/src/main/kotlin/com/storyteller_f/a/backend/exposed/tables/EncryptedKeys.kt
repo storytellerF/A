@@ -2,8 +2,8 @@ package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.shared.type.PrimaryKey
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.Table
 
 object EncryptedKeys : Table() {
     val topicId = customPrimaryKey("topic_id").index()

@@ -72,7 +72,6 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import net.bjoernpetersen.m3u.M3uParser
 import java.net.URI
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun CustomCodeFence(modal: MarkdownComponentModel, mediaList1: Map<String, MediaInfo>) {
@@ -221,7 +220,7 @@ private fun PdfView(url: String) {
             IconButton({
                 scope.launch {
                     clipboardManager.setText(url)
-                    toasterState.show("copied", duration = 1.seconds)
+                    toasterState.showMessage("copied")
                 }
             }) {
                 Icon(Icons.Default.ContentCopy, "copy list")
