@@ -9,7 +9,12 @@ import com.storyteller_f.a.backend.exposed.tables.Rooms
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.r2dbc.Query
+import org.jetbrains.exposed.v1.r2dbc.andWhere
+import org.jetbrains.exposed.v1.r2dbc.batchInsert
+import org.jetbrains.exposed.v1.r2dbc.select
+import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 fun Query.buildRoomSearchWhereQuery(
     joinStatusSearch: JoinSearch,
@@ -76,7 +81,7 @@ fun buildRoomPubKeyQuery(roomId: PrimaryKey, getCount: Boolean): Query {
     }
 }
 
-fun batchCreateCommunityRooms(rooms: List<Room>) {
+suspend fun batchCreateCommunityRooms(rooms: List<Room>) {
     check(Rooms.batchInsert(rooms) {
         this[Rooms.id] = it.id
         this[Rooms.name] = it.name

@@ -1,4 +1,4 @@
-package com.storyteller_f.a.cloud.server.service
+package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
@@ -10,27 +10,25 @@ import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.service.*
 import com.storyteller_f.a.backend.service.index.DocumentSearch
 import com.storyteller_f.a.backend.service.index.TopicDocument
-import com.storyteller_f.a.cloud.server.auth.addUserLog
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
-import io.ktor.http.*
-import io.ktor.server.plugins.*
 import kotlinx.collections.immutable.toImmutableList
 import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
 import org.apache.pdfbox.pdmodel.font.PDType0Font
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.r2dbc.andWhere
 import rst.pdfbox.layout.elements.Document
 import rst.pdfbox.layout.elements.Paragraph
 import java.awt.GraphicsEnvironment
 import java.io.File
 import java.io.FileInputStream
 import java.security.KeyStore
+import kotlin.collections.sumOf
 
 suspend fun Backend.createPublicTopic(
     uid: PrimaryKey,
@@ -148,7 +146,7 @@ private suspend fun Backend.createTopicSnapshot(
                             uid,
                             ObjectType.USER,
                             pdfFile.length(),
-                            ContentType.Application.Pdf.contentType,
+                            "application/pdf",
                             null,
                         )
                     )
@@ -182,7 +180,7 @@ fun generateSignedSnapshot(
 ): Result<Unit?> {
     val content = topicInfo.content
     if (content !is TopicContent.Plain) {
-        return Result.failure(BadRequestException("unsupported"))
+        return Result.failure(CustomBadRequestException("unsupported"))
     }
     val saveToFile = snapshotVerify.path
     val parent = saveToFile.parentFile
@@ -559,7 +557,7 @@ suspend fun Backend.searchPublicTopics(
     return if (parentId != null && parentType != null) {
         checkRootReadPermission(parentType, parentId, uid).mapResultIfNotNull {
             if (it.isPrivate) {
-                Result.failure(BadRequestException("can't search in private chat"))
+                Result.failure(CustomBadRequestException("can't search in private chat"))
             } else {
                 Result.success(DocumentSearch.Topics(parentId))
             }

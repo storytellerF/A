@@ -22,8 +22,6 @@ import androidx.navigation.toRoute
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.dokar.sonner.ToastType
-import com.dokar.sonner.ToasterState
 import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.StateView
@@ -64,7 +62,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
@@ -364,7 +361,7 @@ private fun sendRoomTopic(
     input: String,
     scrollToNew: () -> Unit,
     scope: CoroutineScope,
-    toasterState: ToasterState,
+    toasterState: Toast,
     alertDialogState: CustomAlertDialogController,
     keysViewModel: RoomKeysViewModel,
     wsClient: WebSocketClient,
@@ -375,15 +372,13 @@ private fun sendRoomTopic(
     val keyData = handler.data.value
     if (roomInfo.isJoined) {
         if (!checkContent(input)) {
-            toasterState.show("invalid", duration = 1.seconds)
+            toasterState.showMessage("invalid",)
             return
         }
         if ((keyState !is LoadingState.Done || keyData == null) && roomInfo.isPrivate) {
             scope.launch {
-                toasterState.show(
+                toasterState.showMessage(
                     getString(Res.string.private_room_pub_key_loading),
-                    type = ToastType.Info,
-                    duration = 1.seconds
                 )
             }
             return
@@ -624,10 +619,8 @@ private fun RoomDialogButtons(
                 ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
                     scope.launch {
                         exitRoom(roomInfo, sessionManager, globalDialogController) {
-                            toasterState.show(
+                            toasterState.showMessage(
                                 getString(Res.string.success),
-                                type = ToastType.Success,
-                                duration = 1.seconds
                             )
                         }
                     }
@@ -636,10 +629,8 @@ private fun RoomDialogButtons(
                 ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_room)) {
                     scope.launch {
                         joinRoom(roomInfo, sessionManager, globalDialogController) {
-                            toasterState.show(
+                            toasterState.showMessage(
                                 getString(Res.string.success),
-                                type = ToastType.Success,
-                                duration = 1.seconds
                             )
                         }
                     }

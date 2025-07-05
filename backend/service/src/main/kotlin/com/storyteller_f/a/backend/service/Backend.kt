@@ -22,7 +22,7 @@ import com.storyteller_f.shared.utils.*
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.json.Json
 import org.apache.tika.Tika
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Paths
@@ -33,9 +33,9 @@ class Backend(
     val topicSearchService: TopicSearchService,
     val mediaService: MediaService,
     val nameService: NameService,
-    val database: Database,
+    val database: R2dbcDatabase,
     val databaseSession: ExposedDatabaseSession,
-    val exposedDatabase: com.storyteller_f.a.backend.exposed.Database<User>,
+    val exposedDatabase: com.storyteller_f.a.backend.exposed.CombinedDatabase<User>,
 ) {
     val json by lazy {
         Json {}
@@ -45,16 +45,16 @@ class Backend(
     }
 }
 
-class MergedEnv(val list: List<Map<String, String>?>) {
-    operator fun get(key: String): String {
+class MergedEnv(val list: List<Map<String, String>>) {
+    operator fun get(key: String): String? {
         return list.firstNotNullOfOrNull { map ->
-            map?.get(key)
-        } ?: ""
+            map[key]
+        }
     }
 }
 
-fun readEnv(envMap: Map<String, String> = emptyMap()) = MergedEnv(
-    listOf(
+fun readEnv(envMap: Map<String, String>? = null) = MergedEnv(
+    listOfNotNull(
         envMap,
         System.getenv(),
         readFileEnv("../../${BackendConfig.FLAVOR}.env"),
@@ -76,7 +76,7 @@ fun readResourceEnv(resName: String): Map<String, String>? {
     }?.associate { it }
 }
 
-fun readFileEnv(resName: String): Map<String, String> {
+fun readFileEnv(resName: String): Map<String, String>? {
     val file = File(resName)
     Napier.i {
         "read env from file: ${file.canonicalPath}"
@@ -90,29 +90,29 @@ fun readFileEnv(resName: String): Map<String, String> {
             it.key as String to it.value as String
         }.associate { it }
     } else {
-        emptyMap()
+        null
     }
 }
 
 fun mediaService(env: MergedEnv): MediaService {
     return when (env["MEDIA_SERVICE"]) {
         "minio" -> {
-            val url = env["MINIO_URL"]
-            val name = env["MINIO_NAME"]
-            val pass = env["MINIO_PASS"]
+            val url = env["MINIO_URL"] ?: throw Exception("MINIO_URL is empty")
+            val name = env["MINIO_NAME"] ?: throw Exception("MINIO_NAME is empty")
+            val pass = env["MINIO_PASS"] ?: throw Exception("MINIO_PASS is empty")
             MinIoMediaService(MinIoConnection(url, name, pass), env["MINIO_HOST"])
         }
 
         "filesystem" -> {
-            val url = env["SERVER_URL"]
+            val url = env["SERVER_URL"] ?: throw Exception("SERVER_URL is empty")
             val base = env["FILE_SYSTEM_MEDIA_PATH"]
-            val p = if (base.isBlank()) {
+            val p = if (base != null) {
+                Paths.get(base)
+            } else {
                 Napier.i {
                     "use in-memory amedia"
                 }
                 MemoryFileSystemBuilder.newLinux().build().getPath("/amedia")
-            } else {
-                Paths.get(base)
             }
             FileSystemMediaService(url, p)
         }
@@ -126,17 +126,17 @@ fun topicDocumentService(
 ): TopicSearchService {
     return when (val type = env["SEARCH_SERVICE"]) {
         "elastic" -> {
-            val certFile = env["ELASTIC_CERT_FILE"]
-            val url = env["ELASTIC_URL"]
-            val name = env["ELASTIC_NAME"]
-            val pass = env["ELASTIC_PASSWORD"]
+            val certFile = env["ELASTIC_CERT_FILE"] ?: throw Exception("ELASTIC_CERT_FILE is empty")
+            val url = env["ELASTIC_URL"] ?: throw Exception("ELASTIC_URL is empty")
+            val name = env["ELASTIC_NAME"] ?: throw Exception("ELASTIC_NAME is empty")
+            val pass = env["ELASTIC_PASSWORD"] ?: throw Exception("ELASTIC_PASSWORD is empty")
             val connection = ElasticConnection(url, certFile, name, pass)
             ElasticTopicSearchService(connection)
         }
 
         "lucene" -> {
             val luceneBase = env["LUCENE_BASE_PATH"]
-            val (path, isInMemory) = if (luceneBase.isBlank()) {
+            val (path, isInMemory) = if (luceneBase.isNullOrBlank()) {
                 Napier.i {
                     "use in-memory document service"
                 }
@@ -152,10 +152,10 @@ fun topicDocumentService(
 }
 
 fun databaseConnection(env: MergedEnv): DatabaseConnection {
-    val uri = env["DATABASE_URI"]
-    val driver = env["DATABASE_DRIVER"]
-    val user = env["DATABASE_USER"]
-    val pass = env["DATABASE_PASS"]
+    val uri = env["DATABASE_URI"] ?: throw Exception("DATABASE_URI is empty")
+    val driver = env["DATABASE_DRIVER"] ?: throw Exception("DATABASE_DRIVE is empty")
+    val user = env["DATABASE_USER"] ?: throw Exception("DATABASE_USER is empty")
+    val pass = env["DATABASE_PASS"] ?: throw Exception("DATABASE_PASS is empty")
     return DatabaseConnection(uri, driver, user, pass)
 }
 

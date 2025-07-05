@@ -27,7 +27,6 @@ import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
 import com.storyteller_f.a.app.compose_app.compontents.VideoView
 import com.storyteller_f.a.app.compose_app.compontents.globalLoader
-import com.storyteller_f.a.app.compose_app.showShortToast
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.client.core.copy
 import kotlinx.coroutines.launch
@@ -101,7 +100,7 @@ fun ImageSheet(
                 scope.launch {
                     globalDialogController.use {
                         sessionManager.copy(session.mediaInfo.id).getOrThrow()
-                        toaster.showShortToast("done")
+                        toaster.showMessage("done")
                     }
                 }
             }

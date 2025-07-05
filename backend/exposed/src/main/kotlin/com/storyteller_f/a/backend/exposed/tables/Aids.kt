@@ -2,7 +2,7 @@ package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.objectType
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.v1.core.Table
 
 object Aids : Table() {
     val value = varchar("value", 100).uniqueIndex()

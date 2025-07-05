@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 interface StorageObservable<T> {
-    val task: CompletableDeferred<List<T>>
+    val deferred: CompletableDeferred<List<T>>
 
     fun remove()
 }

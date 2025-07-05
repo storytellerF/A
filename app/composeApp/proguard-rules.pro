@@ -46,3 +46,7 @@
 -dontwarn com.google.protobuf.ProtoField
 -dontwarn com.google.protobuf.ProtoPresenceBits
 -dontwarn com.google.protobuf.ProtoPresenceCheckedField
+
+-dontwarn kotlinx.datetime.Instant$Companion
+-dontwarn kotlinx.datetime.Instant
+-dontwarn okhttp3.internal.Util

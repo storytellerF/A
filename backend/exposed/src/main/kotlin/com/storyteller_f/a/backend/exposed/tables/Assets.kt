@@ -2,8 +2,8 @@ package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.shared.model.AssetType
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.r2dbc.insert
 
 object AssetTransactions : BaseTable() {
     val type = enumerationByName<AssetType>("type", 20)
@@ -22,7 +22,7 @@ class AssetTransaction(val type: AssetType, val before: Long, val after: Long) {
                 )
             }
         }
-        fun addAssetTransaction(assetTransaction: AssetTransaction) =
+        suspend fun addAssetTransaction(assetTransaction: AssetTransaction) =
             check(AssetTransactions.insert {
                 it[AssetTransactions.type] = assetTransaction.type
                 it[AssetTransactions.before] = assetTransaction.before

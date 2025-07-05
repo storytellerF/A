@@ -1,13 +1,12 @@
 package com.storyteller_f.a.backend.exposed
 
-import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.exceptions.ExposedSQLException
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.datetime.datetime
+import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import java.net.ConnectException
 import java.sql.SQLIntegrityConstraintViolationException
 
@@ -33,15 +32,10 @@ const val MEDIA_NAME_LENGTH = 120
 fun Throwable.isDup(): Boolean {
     if (this is SQLIntegrityConstraintViolationException) return true
     if (this is ExposedSQLException) {
-        val throwable = this.cause
+        val throwable = cause
         Napier.e(throwable = this) {
-            if (throwable is PGSQLIntegrityConstraintViolationException) {
-                "dup check exception ${throwable.sqlState} ${throwable.errorCode}"
-            } else {
-                "dup check exception"
-            }
+            "dup check exception $throwable"
         }
-        return (throwable is PGSQLIntegrityConstraintViolationException && throwable.sqlState == "unique")
     }
     return false
 }

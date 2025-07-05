@@ -10,11 +10,11 @@ import kotlinx.coroutines.runBlocking
 @OptIn(ExperimentalCli::class)
 class CleanCommand : Subcommand("clean", "clean all data") {
     override fun execute() {
-        ExposedDatabaseFactory.clean(backend.database)
-        Napier.i {
-            "database tables delete done"
-        }
         runBlocking {
+            ExposedDatabaseFactory.clean(backend.database)
+            Napier.i {
+                "database tables delete done"
+            }
             backend.mediaService.clean(AMEDIA_DEFAULT_BUCKET).getOrThrow()
             backend.topicSearchService.clean().getOrThrow()
         }
@@ -27,7 +27,9 @@ class CleanCommand : Subcommand("clean", "clean all data") {
 @OptIn(ExperimentalCli::class)
 class InitTableCommand : Subcommand("init", "init table data") {
     override fun execute() {
-        ExposedDatabaseFactory.init(backend.database)
+        runBlocking {
+            ExposedDatabaseFactory.init(backend.database)
+        }
         Napier.i {
             "init done"
         }

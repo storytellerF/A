@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.server
 
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.CustomKeyStore
 import com.storyteller_f.a.backend.exposed.*
@@ -30,6 +31,10 @@ import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.InternalAPI
+import io.ktor.utils.io.close
 import io.sentry.Sentry
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.runBlocking
@@ -68,7 +73,7 @@ fun main(args: Array<String>) {
 
     val map = readEnv()
     processInitTaskIfNeed(map)
-    val serverPort = map["SERVER_PORT"].takeIf { it.isNotEmpty() }?.toInt() ?: 80
+    val serverPort = map["SERVER_PORT"]?.toInt() ?: 80
     val extraArgs = arrayOf("-port=$serverPort")
     Sentry.init { options ->
         options.dsn = map["SENTRY_DSN"]
@@ -81,7 +86,9 @@ fun Application.module() {
     val reader = buildDatabaseReader()
     val backend = buildBackend()
     if (backend.customConfig.buildType == "test") {
-        ExposedDatabaseFactory.init(backend.database)
+        runBlocking {
+            ExposedDatabaseFactory.init(backend.database)
+        }
     }
     startNewMessageTask(backend)
     configurePlugin(reader, backend)
@@ -217,7 +224,7 @@ private fun processInitTaskIfNeed(env: MergedEnv) {
     if (!env["INIT_ENABLE"].toBoolean()) return
     val initScriptContent = env["INIT_SCRIPT"]
     val workingDir = env["INIT_WORKING_DIR"]
-    if (initScriptContent.isBlank() || workingDir.isBlank()) {
+    if (initScriptContent.isNullOrBlank() || workingDir.isNullOrBlank()) {
         println("init failure")
         exitProcess(1)
     }
@@ -307,8 +314,8 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 
     val databaseConnection = databaseConnection(env)
 
-    val buildType = env["BUILD_TYPE"]
-    val flavor = env["FLAVOR"]
+    val buildType = env["BUILD_TYPE"] ?: "prod"
+    val flavor = env["FLAVOR"] ?: throw Exception("FLAVOR is empty")
 
     val topicDocumentService = topicDocumentService(env)
     val mediaService = mediaService(env)
@@ -317,7 +324,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val databaseSession = ExposedDatabaseSession(database, env["port"]?.toIntOrNull())
     val snapshotKeyStorePath = env["SNAPSHOT_KEYSTORE_PATH"]
     val snapshotKeyStorePassword = env["SNAPSHOT_KEYSTORE_PASS"]
-    val snapshotKeyStore = if (!snapshotKeyStorePath.isBlank() && !snapshotKeyStorePassword.isBlank()) {
+    val snapshotKeyStore = if (!snapshotKeyStorePath.isNullOrBlank() && !snapshotKeyStorePassword.isNullOrBlank()) {
         if (!File(snapshotKeyStorePath).exists()) {
             createKeystore(snapshotKeyStorePassword.toCharArray(), snapshotKeyStorePath)
         }
@@ -334,7 +341,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         NameService(),
         database,
         databaseSession,
-        object : Database<User> {
+        object : CombinedDatabase<User> {
             override val userDatabase: UserDatabase<User>
                 get() = ExposedUserDatabase(databaseSession)
             override val topicDatabase: TopicDatabase
@@ -402,4 +409,30 @@ fun createKeystore(keystorePassword: CharArray, path: String) {
     FileOutputStream(file).use { fos ->
         ks.store(fos, keystorePassword)
     }
+}
+
+@Suppress("ThrowsCount")
+@OptIn(InternalAPI::class)
+suspend fun ByteReadChannel.copyWithLimitAndClose(channel: ByteWriteChannel, limit: Long): Long {
+    var result = 0L
+    try {
+        while (!isClosedForRead) {
+            result += readBuffer.transferTo(channel.writeBuffer)
+            if (result > limit) {
+                throw CustomBadRequestException("exceed content length")
+            }
+            channel.flush()
+            awaitContent()
+        }
+
+        closedCause?.let { throw it }
+    } catch (cause: Throwable) {
+        cancel(cause)
+        channel.close(cause)
+        throw cause
+    } finally {
+        channel.flushAndClose()
+    }
+
+    return result
 }

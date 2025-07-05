@@ -12,6 +12,7 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
+import kotlinx.coroutines.flow.toList
 
 class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : TitleDatabase {
     override suspend fun getTitlePaginationResult(
@@ -23,10 +24,15 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
     ): Result<PaginationResult<TitleInfo>> {
         return exposedDatabaseSession.dbSearch {
             search {
-                buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(Titles, primaryKeyFetch)
+                buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(
+                    Titles,
+                    primaryKeyFetch
+                )
             }
             transform {
-                map(Title::wrapRow).map { it.toTitleInfo() }
+                toList().map {
+                    Title.wrapRow(it)
+                }.map { it.toTitleInfo() }
             }
         }.mapResult { list ->
             exposedDatabaseSession.dbSearch {

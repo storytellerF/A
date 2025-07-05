@@ -42,7 +42,6 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.*;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static org.apache.pdfbox.examples.signature.Log.LOG;
 

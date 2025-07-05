@@ -11,11 +11,11 @@ import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
+import org.jetbrains.exposed.v1.core.Op
+import org.jetbrains.exposed.v1.core.SqlExpressionBuilder
+import org.jetbrains.exposed.v1.r2dbc.Query
 
-interface Database<T> {
+interface CombinedDatabase<T> {
     val userDatabase: UserDatabase<T>
     val topicDatabase: TopicDatabase
     val titleDatabase: TitleDatabase

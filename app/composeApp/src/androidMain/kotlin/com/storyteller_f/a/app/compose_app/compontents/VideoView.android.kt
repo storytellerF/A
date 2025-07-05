@@ -1,11 +1,21 @@
 package com.storyteller_f.a.app.compose_app.compontents
 
 import android.app.PictureInPictureParams
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.ClipData
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.util.Rational
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.ContentCopy
@@ -15,7 +25,13 @@ import androidx.compose.material.icons.filled.PictureInPicture
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toAndroidRectF
@@ -35,11 +51,14 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
-import com.storyteller_f.a.app.compose_app.*
+import com.storyteller_f.a.app.compose_app.LocalJson
+import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
+import com.storyteller_f.a.app.compose_app.LocalToaster
+import com.storyteller_f.a.app.compose_app.MediaPlaySession
+import com.storyteller_f.a.app.compose_app.MediaPlayerActivity
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 
 // Constant for broadcast receiver
@@ -214,7 +233,7 @@ fun VideoOrAudioOpRow(
         IconButton({
             scope.launch {
                 clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", localMediaPlaySession.id)))
-                toasterState.show("copied", duration = 1.seconds)
+                toasterState.showMessage("copied")
             }
         }) {
             Icon(Icons.Default.ContentCopy, "copy list")
@@ -233,7 +252,7 @@ fun VideoOrAudioOpRow(
                     PictureInPictureParams.Builder().build()
                 )
             } else {
-                toasterState.show("not support")
+                toasterState.showMessage("not support")
             }
         }, enabled = isActive) {
             Icon(Icons.Default.PictureInPicture, "pip")

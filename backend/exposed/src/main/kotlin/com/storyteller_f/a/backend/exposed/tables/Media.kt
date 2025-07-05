@@ -10,7 +10,9 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.r2dbc.batchInsert
+import org.jetbrains.exposed.v1.r2dbc.insert
 
 object Medias : BaseTable() {
     val name = varchar("name", 200)
@@ -62,7 +64,7 @@ class Media(
                 )
             }
         }
-        fun insertMedia(data: List<Pair<PrimaryKey, UploadPack>>) {
+        suspend fun insertMedia(data: List<Pair<PrimaryKey, UploadPack>>) {
             Medias.batchInsert(data) { (i, e) ->
                 this[Medias.id] = i
                 this[Medias.createdTime] = now()
@@ -78,7 +80,7 @@ class Media(
             }
         }
 
-        fun insertCopiedMedia(
+        suspend fun insertCopiedMedia(
             id: PrimaryKey,
             media: Media,
             newOwner: PrimaryKey

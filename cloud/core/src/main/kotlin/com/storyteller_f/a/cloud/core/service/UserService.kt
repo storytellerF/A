@@ -1,4 +1,4 @@
-package com.storyteller_f.a.cloud.server.service
+package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
@@ -7,16 +7,17 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.exposed.AID_LENGTH
 import com.storyteller_f.a.backend.exposed.USER_NICKNAME
 import com.storyteller_f.a.backend.exposed.tables.User
+import com.storyteller_f.a.backend.exposed.tables.UserLog
 import com.storyteller_f.a.backend.exposed.tables.UserTopicRead
 import com.storyteller_f.a.backend.exposed.tables.toUserInfo
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getUserInfo
-import com.storyteller_f.a.cloud.server.auth.addUserLog
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
 import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.obj.ob
@@ -26,7 +27,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
-import io.ktor.server.plugins.*
+import io.github.aakira.napier.Napier
 
 suspend fun Backend.updateUser(
     uid: PrimaryKey,
@@ -79,7 +80,7 @@ private suspend fun Backend.checkAidModifyTimes(
     // check aid is null
     exposedDatabase.userDatabase.getUserAid(id).mapResult {
         if (it != null) {
-            Result.failure(BadRequestException("aid is not null."))
+            Result.failure(CustomBadRequestException("aid is not null."))
         } else {
             Result.success(Unit)
         }
@@ -191,6 +192,16 @@ suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<AlternativeAc
                     }
                 }
             }
+        }
+    }
+}
+
+suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple) {
+    val logId = SnowflakeFactory.nextId()
+    val log = UserLog(logId, now(), uid, type, objectTuple.objectId, objectTuple.objectType)
+    exposedDatabase.userDatabase.insertUserLog(log).onFailure {
+        Napier.i(tag = "user log", throwable = it) {
+            "add failed"
         }
     }
 }

@@ -9,9 +9,9 @@ import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.index.TopicDocument
 import com.storyteller_f.a.backend.service.isKeyVerified
 import com.storyteller_f.a.backend.service.savePlainTopic
-import com.storyteller_f.a.cloud.server.auth.addUserLog
+import com.storyteller_f.a.cloud.core.service.addUserLog
+import com.storyteller_f.a.cloud.core.service.processTopicExtension
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
-import com.storyteller_f.a.cloud.server.service.processTopicExtension
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserLogType

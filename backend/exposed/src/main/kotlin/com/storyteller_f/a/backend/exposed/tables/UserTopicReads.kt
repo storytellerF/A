@@ -5,8 +5,8 @@ import com.storyteller_f.a.backend.exposed.objectType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.datetime.datetime
 
 object UserTopicReads : Table() {
     val uid = customPrimaryKey("uid")

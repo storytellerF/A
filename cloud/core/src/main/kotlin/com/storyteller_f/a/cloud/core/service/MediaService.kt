@@ -1,4 +1,4 @@
-package com.storyteller_f.a.cloud.server.service
+package com.storyteller_f.a.cloud.core.service
 
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.core.Path
@@ -19,12 +19,6 @@ import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import io.ktor.http.content.*
-import io.ktor.server.plugins.*
-import io.ktor.server.request.*
-import io.ktor.server.routing.*
-import io.ktor.util.cio.*
-import io.ktor.utils.io.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -38,7 +32,7 @@ suspend fun Backend.getMediaList(
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<MediaInfo>?> {
     if (routeMedia.objectType == ObjectType.TOPIC) {
-        return Result.failure(BadRequestException("can't get topic media"))
+        return Result.failure(CustomBadRequestException("can't get topic media"))
     }
     val parentType = routeMedia.objectType
     val parentId = routeMedia.objectId
@@ -62,7 +56,7 @@ suspend fun Backend.getMediaByName(
     word: String,
 ): Result<MediaInfo?> {
     if (objectTuple.objectType == ObjectType.TOPIC) {
-        return Result.failure(BadRequestException("can't get topic media"))
+        return Result.failure(CustomBadRequestException("can't get topic media"))
     }
     val parentType = objectTuple.objectType
     val parentId = objectTuple.objectId
@@ -95,13 +89,19 @@ suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, uid: PrimaryKe
                 withContext(Dispatchers.IO) {
                     input.use {
                         val saveAlbum = { image: ByteArray, mimeType: String ->
-                            val file = File(root, "${Uuid.random()}.${getExtensionFromMimeType(mimeType)}")
+                            val file = File(
+                                root,
+                                "${Uuid.Companion.random()}.${getExtensionFromMimeType(mimeType)}"
+                            )
                             file.writeBytes(image)
                             file
                         }
                         when (media.contentType) {
                             "audio/mp3" -> it.readMp3AlbumFromAudioStream(saveAlbum)
-                            "audio/flac", "audio/x-flac" -> it.readFlacAlbumFromAudioStream(saveAlbum)
+                            "audio/flac", "audio/x-flac" -> it.readFlacAlbumFromAudioStream(
+                                saveAlbum
+                            )
+
                             else -> throw CustomBadRequestException("unsupported audio type: ${media.contentType}")
                         } to media.contentType
                     }
@@ -119,101 +119,16 @@ suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, uid: PrimaryKe
                 }
             }
         } else {
-            Result.failure(BadRequestException("not an audio file"))
+            Result.failure(CustomBadRequestException("not an audio file"))
         }
     }
 
 @OptIn(ExperimentalUuidApi::class)
-suspend fun RoutingContext.uploadMedia(
-    backend: Backend,
-    id: PrimaryKey,
-    root: File,
-    objectTuple: ObjectTuple,
-) = if (objectTuple.objectType == ObjectType.TOPIC) {
-    Result.failure(BadRequestException("can't upload to topic"))
-} else {
-    val parentType = objectTuple.objectType
-    val parentId = objectTuple.objectId
-    backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
-        val result = mutableListOf<MediaInfo>()
-
-        call.receiveMultipart().forEachPart { part ->
-            when (part) {
-                is PartData.FileItem -> {
-                    backend.processFilePart(part, root, it, result)
-                }
-
-                else -> {}
-            }
-            part.dispose()
-        }
-        Result.success(ServerResponse(result))
-    }
-}
-
-private suspend fun Backend.processFilePart(
-    part: PartData.FileItem,
-    root: File,
-    permission: RootWritePermission,
-    result: MutableList<MediaInfo>
-) {
-//    val length = part.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-//    if (length == null) error("content length not exists")
-//    if (length > 1024 * 1024 * 10) error("file too large")
-    val fileName = part.originalFileName as String
-    val newSavedName = newFileName(fileName)
-    val file = File(root, "$newSavedName.tmp")
-    val length = part.provider().copyAndClose(file.writeChannel())
-    try {
-        val mediaInfos = uploadFilesAfterDetectContentTypeAndDimension(
-            listOf(
-                UploadPack(
-                    file,
-                    newSavedName,
-                    permission.objectId,
-                    permission.objectType,
-                    length,
-                )
-            )
-        ).getOrThrow()
-        result.addAll(mediaInfos.filterNotNull())
-    } finally {
-        file.delete()
-    }
-}
-
-@Suppress("ThrowsCount")
-@OptIn(InternalAPI::class)
-suspend fun ByteReadChannel.copyWithLimitAndClose(channel: ByteWriteChannel, limit: Long): Long {
-    var result = 0L
-    try {
-        while (!isClosedForRead) {
-            result += readBuffer.transferTo(channel.writeBuffer)
-            if (result > limit) {
-                throw CustomBadRequestException("exceed content length")
-            }
-            channel.flush()
-            awaitContent()
-        }
-
-        closedCause?.let { throw it }
-    } catch (cause: Throwable) {
-        cancel(cause)
-        channel.close(cause)
-        throw cause
-    } finally {
-        channel.flushAndClose()
-    }
-
-    return result
-}
-
-@OptIn(ExperimentalUuidApi::class)
-private fun newFileName(fileName: String): String {
+fun newFileName(fileName: String): String {
     val extension = fileName.substringAfterLast(".").take(10)
     val originName = fileName.substringBeforeLast(".")
     // length 32
-    val uuid = Uuid.random().toHexString()
+    val uuid = Uuid.Companion.random().toHexString()
     val newSavedName = if (fileName.length > 60) {
         // 60 - 32 - 1 = 27
         "${originName.take(27 - extension.length)}$uuid.$extension"
@@ -228,7 +143,7 @@ fun newCopiedFileName(fileName: String): String {
     val extension = fileName.substringAfterLast(".").take(10)
     val originName = fileName.substringBeforeLast(".")
     // length 32
-    val uuid = Uuid.random().toHexString()
+    val uuid = Uuid.Companion.random().toHexString()
     return "${originName.take(27 - extension.length)}$uuid.$extension"
 }
 
@@ -237,7 +152,7 @@ private fun newCoverFileName(fileName: String, contentType: String): String {
     val extension = getExtensionFromMimeType(contentType)
     val originName = fileName.substringBeforeLast(".") + "_cover"
     // length 32
-    val uuid = Uuid.random().toHexString()
+    val uuid = Uuid.Companion.random().toHexString()
     return "${originName.take(27 - extension.length)}$uuid.$extension"
 }
 

@@ -1,19 +1,52 @@
 package com.storyteller_f.a.app.compose_app.pages.topic
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
-import com.dokar.sonner.ToasterState
-import com.storyteller_f.a.app.compose_app.*
-import com.storyteller_f.a.app.compose_app.compontents.*
+import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalToaster
+import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.bus
+import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
+import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
+import com.storyteller_f.a.app.compose_app.compontents.CustomIcon
+import com.storyteller_f.a.app.compose_app.compontents.DialogContainer
+import com.storyteller_f.a.app.compose_app.compontents.ExceptionView
+import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
+import com.storyteller_f.a.app.compose_app.compontents.IconRes
+import com.storyteller_f.a.app.compose_app.compontents.SheetContainer
+import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
+import com.storyteller_f.a.app.compose_app.copy
 import com.storyteller_f.a.app.compose_app.model.OnTopicChanged
 import com.storyteller_f.a.app.compose_app.model.createUserViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
@@ -22,6 +55,8 @@ import com.storyteller_f.a.app.compose_app.pages.user.UserCell
 import com.storyteller_f.a.app.compose_app.service.GPTOutput
 import com.storyteller_f.a.app.compose_app.service.buildGPT
 import com.storyteller_f.a.app.compose_app.service.buildTranslatePrompt
+import com.storyteller_f.a.app.compose_app.snapshot
+import com.storyteller_f.a.app.compose_app.success
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.utils.getCurrentLanguage
 import com.storyteller_f.a.app.compose_app.utils.setText
@@ -44,7 +79,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +129,6 @@ private fun TopicDialogMenuList(
     Column {
         TopicMenuList(
             content,
-            toasterState,
             topicInfo,
             dismissDialog,
         )
@@ -110,7 +143,7 @@ private fun TopicDialogMenuList(
             if (content is TopicContent.Plain) {
                 showSheet = true
             } else {
-                toasterState.show("can't translate", duration = 1.seconds)
+                toasterState.showMessage("can't translate")
             }
         }
         TopicTranslateSheet(showSheet, sheetState, topicInfo) {
@@ -122,10 +155,10 @@ private fun TopicDialogMenuList(
 @Composable
 private fun TopicMenuList(
     content: TopicContent,
-    toasterState: ToasterState,
     topicInfo: TopicInfo,
     dismissDialog: () -> Unit,
 ) {
+    val toasterState = LocalToaster.current
     val clipboardManager = LocalClipboard.current
     val userSessionManager = LocalSessionManager.current
     val alreadyLoginIn by userSessionManager.isAlreadySignUp.collectAsState()
@@ -139,7 +172,7 @@ private fun TopicMenuList(
             if (content is TopicContent.Plain) {
                 clipboardManager.setText(content.plain)
             } else {
-                toasterState.show("failed", duration = 1.seconds)
+                toasterState.showMessage("failed")
             }
         }
     }
@@ -152,7 +185,7 @@ private fun TopicMenuList(
             scope.launch {
                 globalDialogController.use {
                     userSessionManager.getTopicSnapshot(topicInfo.id)
-                    toasterState.show(getString(Res.string.success), duration = 1.seconds)
+                    toasterState.showMessage(getString(Res.string.success))
                 }
             }
         }

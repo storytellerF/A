@@ -1,4 +1,4 @@
-package com.storyteller_f.a.cloud.server.service
+package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
@@ -15,7 +15,6 @@ import com.storyteller_f.a.backend.exposed.toJoinSearch
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.createCommunityRoomsRaw
 import com.storyteller_f.a.backend.service.processRawCommunityToCommunityInfo
-import com.storyteller_f.a.cloud.server.auth.addUserLog
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserLogType
@@ -30,7 +29,6 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverResult
-import io.ktor.server.plugins.*
 
 suspend fun Backend.getCommunity(
     objectFetch: ObjectFetch,
@@ -84,7 +82,7 @@ suspend fun Backend.exitCommunity(
                     addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
                     Result.success(info.copy(joinedTime = null))
                 } else {
-                    Result.failure(BadRequestException("exit failed"))
+                    Result.failure(CustomBadRequestException("exit failed"))
                 }
             }
         }

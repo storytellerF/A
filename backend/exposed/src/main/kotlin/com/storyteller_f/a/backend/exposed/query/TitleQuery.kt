@@ -4,9 +4,9 @@ import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.PrimaryKey
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.r2dbc.Query
+import org.jetbrains.exposed.v1.r2dbc.andWhere
+import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 fun buildTitleSearchQuery(
     searchType: TitleSearchType,

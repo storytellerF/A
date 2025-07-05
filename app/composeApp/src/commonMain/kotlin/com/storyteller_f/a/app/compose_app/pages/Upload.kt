@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app
+package com.storyteller_f.a.app.compose_app.pages
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -44,11 +44,12 @@ class UploadSession(val name: String, val list: List<ClientFile>) {
 class Uploader(val session: MutableState<UploadSession?>)
 
 @Composable
-fun Upload(uploader: Uploader) {
-    val httpUrl = AppConfig.SERVER_URL
-    val wsServerUrl = AppConfig.WS_SERVER_URL
-    CommonEntry(httpUrl, wsServerUrl, {
-        val userSessionManager = LocalSessionManager.current
+fun UploadPage(uploader: Uploader) {
+    val httpUrl = _root_ide_package_.com.storyteller_f.a.app.compose_app.AppConfig.SERVER_URL
+    val wsServerUrl = _root_ide_package_.com.storyteller_f.a.app.compose_app.AppConfig.WS_SERVER_URL
+    _root_ide_package_.com.storyteller_f.a.app.compose_app.CommonEntry(httpUrl, wsServerUrl, {
+        val userSessionManager =
+            _root_ide_package_.com.storyteller_f.a.app.compose_app.LocalSessionManager.current
         val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
         val my = myInfo
         val session by uploader.session
@@ -95,7 +96,7 @@ private fun UploadItem(
     state: LoadingState?,
     refresh: () -> Unit
 ) {
-    val globalDialogController = LocalGlobalDialog.current
+    val globalDialogController = _root_ide_package_.com.storyteller_f.a.app.compose_app.LocalGlobalDialog.current
     val scope = rememberCoroutineScope()
     Row(modifier = Modifier.padding(20.dp)) {
         Column(modifier = Modifier.weight(1f)) {

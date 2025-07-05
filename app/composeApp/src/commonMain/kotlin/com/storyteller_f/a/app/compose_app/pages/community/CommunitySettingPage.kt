@@ -39,7 +39,6 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -159,7 +158,7 @@ private fun CommunitySettingInternal(
         })
         val aid = communityInfo.aid
         SettingOptionView("Aid", {
-            toasterState.show("forbid", duration = 1.seconds)
+            toasterState.showMessage("forbid")
         }, {
             Text(aid)
         })

@@ -60,9 +60,12 @@ private fun startMemoryTest(
     overrideEnv: Map<String, String>,
     block: suspend (ApplicationTestBuilder) -> Unit
 ) {
-    val env = readResourceEnv(".env")!! + Pair(
-        "DATABASE_URI",
-        "jdbc:h2:mem:${Uuid.random().toHexString()};DB_CLOSE_DELAY=-1;"
+    val env = readResourceEnv(".env")!! + mapOf(
+        Pair(
+            "DATABASE_URI",
+            "r2dbc:h2:mem:///${Uuid.random().toHexString()};DB_CLOSE_DELAY=-1;"
+        ),
+        "DATABASE_DRIVER" to "h2"
     ) + overrideEnv
     doTest(env, block)
 }
@@ -113,9 +116,9 @@ private fun startTestContainerTest(
                                 "pgvector/pgvector:pg16"
                             ).use { postgreSQLContainer ->
                                 postgreSQLContainer.start()
-                                println("jdbc: ${postgreSQLContainer.jdbcUrl}")
-                                env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl
-                                env["DATABASE_DRIVER"] = postgreSQLContainer.driverClassName
+                                Napier.i("jdbc: ${postgreSQLContainer.jdbcUrl}")
+                                env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl.replace("jdbc", "r2dbc")
+                                env["DATABASE_DRIVER"] = "postgresql"
                                 env["DATABASE_USER"] = postgreSQLContainer.username
                                 env["DATABASE_PASS"] = postgreSQLContainer.password
                                 env["DATABASE_DB"] = postgreSQLContainer.databaseName

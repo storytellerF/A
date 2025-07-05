@@ -14,9 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.kdroid.composenotification.builder.getNotificationProvider
-import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.compontents.*
+import com.storyteller_f.a.app.compose_app.pages.LoginButton
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.utils.clearStorage
 import com.storyteller_f.a.app.compose_app.utils.createConnectivity
