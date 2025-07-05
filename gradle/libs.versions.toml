@@ -1,7 +1,7 @@
 [versions]
 aboutlibrariesComposeM3 = "11.2.3"
 aboutlibrariesCore = "11.2.3"
-agp = "8.10.1"
+agp = "8.11.0"
 android-compileSdk = "36"
 android-minSdk = "24"
 android-targetSdk = "36"
