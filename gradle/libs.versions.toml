@@ -39,6 +39,7 @@ highlights = "1.0.0"
 humanReadable = "1.11.0"
 jacksonModuleKotlin = "2.19.1"
 javacvPlatform = "1.5.11"
+javet = "4.1.5"
 jlatexmath = "1.0.7"
 jlatexmathAndroid = "0.2.0"
 jlayer = "1.0.3"
@@ -147,6 +148,19 @@ github-newpipeextractor = { module = "com.github.teamnewpipe.NewPipeExtractor:Ne
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 javacv-platform = { module = "org.bytedeco:javacv-platform", version.ref = "javacvPlatform" }
+javet = { module = "com.caoccao.javet:javet", version.ref = "javet" }
+javet-node-android = { module = "com.caoccao.javet:javet-node-android", version.ref = "javet" }
+javet-node-windows-x86_x4 = { module = "com.caoccao.javet:javet-node-windows-x86_64", version.ref = "javet" }
+javet-node-macos-x86_x4 = { module = "com.caoccao.javet:javet-node-macos-x86_64", version.ref = "javet" }
+javet-node-macos-arm64 = { module = "com.caoccao.javet:javet-node-macos-arm64", version.ref = "javet" }
+javet-node-linux-x86_x4 = { module = "com.caoccao.javet:javet-node-linux-x86_64", version.ref = "javet" }
+javet-node-linux-arm64 = { module = "com.caoccao.javet:javet-node-linux-arm64", version.ref = "javet" }
+javet-v8-android = { module = "com.caoccao.javet:javet-v8-android", version.ref = "javet" }
+javet-v8-windows-x86_x4 = { module = "com.caoccao.javet:javet-v8-windows-x86_64", version.ref = "javet" }
+javet-v8-macos-x86_x4 = { module = "com.caoccao.javet:javet-v8-macos-x86_64", version.ref = "javet" }
+javet-v8-macos-arm64 = { module = "com.caoccao.javet:javet-v8-macos-arm64", version.ref = "javet" }
+javet-v8-linux-x86_x4 = { module = "com.caoccao.javet:javet-v8-linux-x86_64", version.ref = "javet" }
+javet-v8-linux-arm64 = { module = "com.caoccao.javet:javet-v8-linux-arm64", version.ref = "javet" }
 kfswatch = { module = "io.github.irgaly.kfswatch:kfswatch", version.ref = "kfswatch" }
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxCollectionsImmutable" }
 kotlinx-coroutines-slf4j = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-slf4j", version.ref = "kotlinxCoroutinesSwing" }
