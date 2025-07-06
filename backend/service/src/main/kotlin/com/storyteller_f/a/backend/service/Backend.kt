@@ -106,13 +106,13 @@ fun mediaService(env: MergedEnv): MediaService {
         "filesystem" -> {
             val url = env["SERVER_URL"] ?: throw Exception("SERVER_URL is empty")
             val base = env["FILE_SYSTEM_MEDIA_PATH"]
-            val p = if (base != null) {
-                Paths.get(base)
-            } else {
+            val p = if (base.isNullOrBlank()) {
                 Napier.i {
                     "use in-memory amedia"
                 }
                 MemoryFileSystemBuilder.newLinux().build().getPath("/amedia")
+            } else {
+                Paths.get(base)
             }
             FileSystemMediaService(url, p)
         }

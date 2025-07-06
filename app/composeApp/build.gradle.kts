@@ -5,12 +5,14 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.util.*
+import java.util.Base64
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -106,10 +108,11 @@ kotlin {
             implementation(libs.webrtc.kmp)
             implementation(libs.accompanist.permissions)
             implementation(libs.androidx.ui.tooling.preview)
+            implementation(libs.javet.node.android)
             if (isLlamaEnable)
                 implementation(":android-llama-cpp")
 
-            implementation(libs.connector.get().toString()) {
+            implementation(libs.connector) {
                 exclude(group = "com.google.protobuf", module = "protobuf-java")
             }
             implementation(libs.okhttp)
@@ -118,6 +121,12 @@ kotlin {
             implementation(libs.androidx.ui.test.junit4.android)
             implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
+
+            implementation(libs.javet.node.linux.arm64)
+            implementation(libs.javet.node.linux.x86.x4)
+            implementation(libs.javet.node.macos.arm64)
+            implementation(libs.javet.node.macos.x86.x4)
+            implementation(libs.javet.node.windows.x86.x4)
         }
         androidUnitTest {
             dependsOn(headlessTest)
@@ -182,6 +191,8 @@ kotlin {
             implementation(libs.human.readable)
             implementation(libs.kfswatch)
             implementation(libs.tasks.genai)
+            //javet
+            compileOnly(libs.javet)
 
             implementation(libs.connectivity.compose)
             implementation(libs.connectivity.core)
@@ -207,6 +218,12 @@ kotlin {
         }
         desktopTest.dependencies {
             implementation(compose.desktop.currentOs)
+            implementation(libs.javet)
+            implementation(libs.javet.node.linux.arm64)
+            implementation(libs.javet.node.linux.x86.x4)
+            implementation(libs.javet.node.macos.arm64)
+            implementation(libs.javet.node.macos.x86.x4)
+            implementation(libs.javet.node.windows.x86.x4)
         }
         desktopTest.dependsOn(headlessTest)
     }
@@ -264,7 +281,10 @@ android {
     }
     packaging {
         resources {
-            excludes += listOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+            excludes += listOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+            )
         }
     }
     testOptions {
@@ -282,7 +302,10 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             val releaseSignConfig = signingConfigs.findByName("release")
             if (releaseSignConfig != null)
                 signingConfig = releaseSignConfig
@@ -470,4 +493,11 @@ compose.resources {
     publicResClass = false
     packageOfResClass = "com.storyteller_f.a.app.compose_app"
     generateResClass = auto
+}
+
+private fun KotlinDependencyHandler.implementation(
+    dependencyNotation: Provider<MinimalExternalModuleDependency>,
+    configure: ExternalModuleDependency.() -> Unit
+) {
+    implementation(dependencyNotation.get().toString(), configure)
 }
