@@ -92,14 +92,28 @@ tasks.withType<Zip> {
     }
 }
 tasks.withType<Tar> {
-    filesMatching("core.jar") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
+    eachFile {
+        if (sourceName == "core.jar") {
+            val filePath = file.path
+            when {
+                filePath.contains("api") -> name = "api-core.jar"
+                filePath.contains("backend") -> name = "backend-core.jar"
+                filePath.contains("cloud") -> name = "cloud-core.jar"
+            }
+        }
     }
 }
 
 tasks.withType<Zip> {
-    filesMatching("core.jar") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
+    eachFile {
+        if (sourceName == "core.jar") {
+            val filePath = file.path
+            when {
+                filePath.contains("api") -> name = "api-core.jar"
+                filePath.contains("backend") -> name = "backend-core.jar"
+                filePath.contains("cloud") -> name = "cloud-core.jar"
+            }
+        }
     }
 }
 sentry {
