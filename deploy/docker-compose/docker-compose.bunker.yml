@@ -17,7 +17,7 @@ services:
   server:
     networks:
       - bw-services
-  db:
+  pg:
     networks:
       - bw-services
   minio:
