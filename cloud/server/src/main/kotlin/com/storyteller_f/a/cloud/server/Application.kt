@@ -5,11 +5,32 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.CustomKeyStore
-import com.storyteller_f.a.backend.exposed.*
+import com.storyteller_f.a.backend.exposed.CombinedDatabase
+import com.storyteller_f.a.backend.exposed.CommunityDatabase
+import com.storyteller_f.a.backend.exposed.ContainerDatabase
+import com.storyteller_f.a.backend.exposed.ExposedCommunityDatabase
+import com.storyteller_f.a.backend.exposed.ExposedContainerDatabase
+import com.storyteller_f.a.backend.exposed.ExposedDatabaseFactory
+import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
+import com.storyteller_f.a.backend.exposed.ExposedMediaDatabase
+import com.storyteller_f.a.backend.exposed.ExposedRoomDatabase
+import com.storyteller_f.a.backend.exposed.ExposedTitleDatabase
+import com.storyteller_f.a.backend.exposed.ExposedTopicDatabase
+import com.storyteller_f.a.backend.exposed.ExposedUserDatabase
+import com.storyteller_f.a.backend.exposed.MediaDatabase
+import com.storyteller_f.a.backend.exposed.RoomDatabase
+import com.storyteller_f.a.backend.exposed.TitleDatabase
+import com.storyteller_f.a.backend.exposed.TopicDatabase
+import com.storyteller_f.a.backend.exposed.UserDatabase
 import com.storyteller_f.a.backend.exposed.tables.User
-import com.storyteller_f.a.backend.service.*
+import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.MergedEnv
+import com.storyteller_f.a.backend.service.databaseConnection
 import com.storyteller_f.a.backend.service.media.loadAvif
+import com.storyteller_f.a.backend.service.mediaService
 import com.storyteller_f.a.backend.service.naming.NameService
+import com.storyteller_f.a.backend.service.readEnv
+import com.storyteller_f.a.backend.service.topicDocumentService
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.configureAuth
 import com.storyteller_f.a.cloud.server.auth.getRateLimitKey
@@ -17,20 +38,33 @@ import com.storyteller_f.a.cloud.server.route.configureRoute
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import io.github.aakira.napier.Napier
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.*
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.*
-import io.ktor.server.netty.*
-import io.ktor.server.plugins.*
-import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.calllogging.*
-import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.partialcontent.*
-import io.ktor.server.plugins.ratelimit.*
-import io.ktor.server.request.*
-import io.ktor.server.sessions.*
-import io.ktor.server.websocket.*
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.install
+import io.ktor.server.netty.EngineMain
+import io.ktor.server.plugins.callid.CallId
+import io.ktor.server.plugins.callid.callIdMdc
+import io.ktor.server.plugins.callid.generate
+import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.origin
+import io.ktor.server.plugins.partialcontent.PartialContent
+import io.ktor.server.plugins.ratelimit.RateLimit
+import io.ktor.server.request.header
+import io.ktor.server.request.httpMethod
+import io.ktor.server.request.queryString
+import io.ktor.server.request.uri
+import io.ktor.server.sessions.SessionTransportTransformerEncrypt
+import io.ktor.server.sessions.Sessions
+import io.ktor.server.sessions.SessionsConfig
+import io.ktor.server.sessions.cookie
+import io.ktor.server.websocket.WebSockets
+import io.ktor.server.websocket.pingPeriod
+import io.ktor.server.websocket.timeout
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.InternalAPI
@@ -52,9 +86,13 @@ import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.math.BigInteger
 import java.net.InetAddress
-import java.security.*
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.KeyStore
+import java.security.SecureRandom
+import java.security.Security
 import java.security.cert.X509Certificate
-import java.util.*
+import java.util.Date
 import kotlin.concurrent.thread
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -324,14 +362,15 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val databaseSession = ExposedDatabaseSession(database, env["port"]?.toIntOrNull())
     val snapshotKeyStorePath = env["SNAPSHOT_KEYSTORE_PATH"]
     val snapshotKeyStorePassword = env["SNAPSHOT_KEYSTORE_PASS"]
-    val snapshotKeyStore = if (!snapshotKeyStorePath.isNullOrBlank() && !snapshotKeyStorePassword.isNullOrBlank()) {
-        if (!File(snapshotKeyStorePath).exists()) {
-            createKeystore(snapshotKeyStorePassword.toCharArray(), snapshotKeyStorePath)
+    val snapshotKeyStore =
+        if (!snapshotKeyStorePath.isNullOrBlank() && !snapshotKeyStorePassword.isNullOrBlank()) {
+            if (!File(snapshotKeyStorePath).exists()) {
+                createKeystore(snapshotKeyStorePassword.toCharArray(), snapshotKeyStorePath)
+            }
+            CustomKeyStore(snapshotKeyStorePath, snapshotKeyStorePassword)
+        } else {
+            null
         }
-        CustomKeyStore(snapshotKeyStorePath, snapshotKeyStorePassword)
-    } else {
-        null
-    }
     val customConfig = CustomConfig(buildType, flavor, snapshotKeyStore)
 
     return Backend(
@@ -411,7 +450,7 @@ fun createKeystore(keystorePassword: CharArray, path: String) {
     }
 }
 
-@Suppress("ThrowsCount")
+@Suppress("ThrowsCount", "unused")
 @OptIn(InternalAPI::class)
 suspend fun ByteReadChannel.copyWithLimitAndClose(channel: ByteWriteChannel, limit: Long): Long {
     var result = 0L
