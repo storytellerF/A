@@ -2,9 +2,9 @@
 
 set -e
 ./gradlew build
-./scripts/android_scripts/create-avd.bat
-./scripts/android_scripts/start-wait-avd.bat
+./scripts/android_scripts/create-avd.sh
 ./gradlew app:devCli:run &
+./scripts/android_scripts/start-wait-avd.sh
 echo "Waiting for port 8888 to become available..."
 counter=0
 max_retries=60  # 最多尝试 60 次（5 分钟）
@@ -18,7 +18,7 @@ while true; do
     echo "Port 8888 is not available yet. Waiting..."
     sleep 5
 
-    ((counter++))
+    counter=$((counter + 1))
     if [ "$counter" -ge "$max_retries" ]; then
         echo "Timeout reached. Port 8888 is still unavailable."
         exit 1
@@ -28,6 +28,5 @@ done
 ./gradlew app:composeApp:desktopTest
 #./gradlew :composeApp:wasmJsTest
 #./gradlew :composeApp:iosSimulatorArm64Test
-kill -9 $(lsof -t -i :8888>)
-#kill -9 $(netstat -tuln | grep :8888 | awk '{print $7}' | cut -d'/' -f1)
+pid=$(lsof -t -i :8888) && kill -9 $pid
 adb emu kill

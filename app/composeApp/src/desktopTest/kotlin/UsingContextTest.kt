@@ -6,13 +6,6 @@ import java.io.File
 actual abstract class UsingContextTest {
     @Before
     fun setup() {
-        Assume.assumeTrue(System.getProperty("os.name").orEmpty().contains("win", true))
-        val e = runCatching {
-            System.load(File("src/androidUnitTest/jniLibs/LiteCore.dll").absolutePath)
-            System.load(File("src/androidUnitTest/jniLibs/LiteCoreJNI.dll").absolutePath)
-        }.exceptionOrNull()
-        e?.printStackTrace()
-        Assume.assumeNoException(e)
         loadKotbaseIfNeed()
     }
 

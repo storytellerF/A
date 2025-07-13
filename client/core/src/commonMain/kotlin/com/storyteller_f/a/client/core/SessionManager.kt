@@ -9,16 +9,12 @@ import com.storyteller_f.shared.signature
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.merge
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.websocket.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
 
 interface SessionModel {
     val uid: PrimaryKey?
@@ -42,65 +38,33 @@ interface SessionManager {
 
     val currentIsAlreadySignUp: Boolean get() = isAlreadySignUp.value
 
-    suspend fun login()
+    suspend fun login() {
+        val userPass = sessionModel.currentUserPass ?: return
+        val userHandler = sessionModel.userHandler
+        userHandler.request {
+            merge({
+                getData()
+            }, {
+                userPass.address()
+            }).mapResult { (data, address) ->
+                userPass.signature(finalData(data)).mapResult { signature ->
+                    signIn(address, signature).map {
+                        sessionModel.updateSignature(data, signature)
+                        it
+                    }
+                }
+            }
+        }
+    }
 }
 
-open class UserSessionManager(
+class UserSessionManager(
     override val client: HttpClient,
     override val webSocketClient: WebSocketClientImpl,
     override val sessionModel: SessionModel,
 ) : SessionManager {
     override val isAlreadySignUp = MutableStateFlow(false)
     override val address = MutableStateFlow<String?>(null)
-
-    override suspend fun login() {
-        val userHandler = sessionModel.userHandler
-        val userPass = sessionModel.currentUserPass ?: return
-        userHandler.request {
-            getData().mapResult { data ->
-                userPass.address().mapResult { address ->
-                    userPass.signature(finalData(data)).mapResult { signature ->
-                        signIn(address, signature).map {
-                            sessionModel.updateSignature(data, signature)
-                            it
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fun CoroutineScope.start(): List<Job> {
-        return listOf(launch {
-            listenerUserInfo()
-        }, launch {
-            listenerState()
-        }, launch {
-            listenerWebsocket()
-        })
-    }
-
-    suspend fun listenerUserInfo() {
-        val model = sessionModel
-        combine(model.state, model.userHandler.data) { t1, t2 ->
-            t1 to t2
-        }.distinctUntilChanged().collect { (state, userInfo) ->
-            if (state is ClientSessionState.Success && userInfo == null) {
-                login()
-            }
-        }
-    }
-
-    suspend fun listenerState() {
-        sessionModel.state.collect {
-            address.value = (it as? ClientSessionState.Success)?.session?.address()?.getOrNull()
-            isAlreadySignUp.value = it is ClientSessionState.Success
-        }
-    }
-
-    suspend fun listenerWebsocket() {
-        webSocketClient.start()
-    }
 }
 
 fun createUserSessionManager(

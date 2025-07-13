@@ -19,27 +19,27 @@ import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 import kotbase.Collection as KotbaseCollection
 
-actual fun createKotbaseStorageSource(scope: String?): StorageSource {
-    return KotbaseStorageSource(createKotbase(), scope)
+actual fun createKotbaseStorageSource(scope: String?): DocumentSource {
+    return KotbaseDocumentSource(createKotbase(), scope)
 }
 
 class KotbaseObservable<T>(
     private val listenerToken: ListenerToken,
     override val deferred: CompletableDeferred<List<T>>,
 ) :
-    StorageObservable<T> {
+    DocumentObservable<T> {
     override fun remove() {
         listenerToken.remove()
     }
 }
 
 
-class KotbaseStorageCollection<T>(
+class KotbaseDocumentCollection<T>(
     val collection: KotbaseCollection,
-    val source: KotbaseStorageSource,
+    val source: KotbaseDocumentSource,
     val serializer: KSerializer<T>,
 ) :
-    StorageCollection<T> {
+    DocumentCollection<T> {
     val json = Json {
         ignoreUnknownKeys = true
     }
@@ -48,7 +48,7 @@ class KotbaseStorageCollection<T>(
         collection.save(MutableDocument(id, json.encodeToString(serializer, t)))
     }
 
-    override fun observeDatum(expression: StorageExpression): Flow<T?> {
+    override fun observeDatum(expression: DocumentExpression): Flow<T?> {
         return select(all()).from(collection).where {
             buildExpression(expression)
         }.limit(1).queryChangeFlow().map {
@@ -64,7 +64,7 @@ class KotbaseStorageCollection<T>(
         }
     }
 
-    override fun getDocument(expression: StorageExpression): T? {
+    override fun getDocument(expression: DocumentExpression): T? {
         return kotbase.ktx.select(all()).from(collection)
             .where {
                 buildExpression(expression)
@@ -79,7 +79,7 @@ class KotbaseStorageCollection<T>(
         }
     }
 
-    override fun exists(expression: StorageExpression): Boolean {
+    override fun exists(expression: DocumentExpression): Boolean {
         return kotbase.ktx.select(all()).from(collection)
             .where {
                 buildExpression(expression)
@@ -87,12 +87,12 @@ class KotbaseStorageCollection<T>(
             .execute().next() != null
     }
 
-    private fun WhereBuilder.buildExpression(expression: StorageExpression): Expression = when (expression) {
-        is StorageExpression.IdEq -> expression.field equalTo expression.value
-        is StorageExpression.StrEq -> expression.field equalTo expression.value
-        is StorageExpression.Less -> expression.field lessThan expression.value
-        is StorageExpression.StrLess -> expression.field lessThan expression.value
-        is StorageExpression.IntLess -> expression.field lessThan expression.value
+    private fun WhereBuilder.buildExpression(expression: DocumentExpression): Expression = when (expression) {
+        is DocumentExpression.IdEq -> expression.field equalTo expression.value
+        is DocumentExpression.StrEq -> expression.field equalTo expression.value
+        is DocumentExpression.Less -> expression.field lessThan expression.value
+        is DocumentExpression.StrLess -> expression.field lessThan expression.value
+        is DocumentExpression.IntLess -> expression.field lessThan expression.value
     }
 
     override fun deleteDocument(id: String) {
@@ -102,11 +102,11 @@ class KotbaseStorageCollection<T>(
     }
 
     override fun observeData(
-        orders: List<StorageOrder>,
+        orders: List<DocumentSourceOrder>,
         size: Int,
-        vararg expressions: StorageExpression,
+        vararg expressions: DocumentExpression,
         invalidate: () -> Unit,
-    ): StorageObservable<T> {
+    ): DocumentObservable<T> {
         val task = CompletableDeferred<List<T>>()
         val selectQuery = select(all()).from(collection)
         val listenerToken = if (expressions.isNotEmpty()) {
@@ -121,8 +121,8 @@ class KotbaseStorageCollection<T>(
         }.orderBy {
             orders.forEach {
                 when (it) {
-                    is StorageOrder.Asc -> it.field.ascending()
-                    is StorageOrder.Desc -> it.field.descending()
+                    is DocumentSourceOrder.Asc -> it.field.ascending()
+                    is DocumentSourceOrder.Desc -> it.field.descending()
                 }
             }
         }.limit(size)
@@ -170,12 +170,12 @@ fun createKotbase(): Database {
     }
 }
 
-class KotbaseStorageSource(private val database: Database, val scope: String?) : StorageSource {
+class KotbaseDocumentSource(private val database: Database, val scope: String?) : DocumentSource {
     val clearing = mutableSetOf<String>()
     val mutex = Mutex()
 
     @OptIn(InternalSerializationApi::class)
-    override fun <T : Any> getCollection(name: String, clazz: KClass<T>): StorageCollection<T> {
+    override fun <T : Any> getCollection(name: String, clazz: KClass<T>): DocumentCollection<T> {
         val kotbaseScope = getKotbaseScope()
         val collection = kotbaseScope.getCollection(name) ?: database.createCollection(
             name, scope
@@ -193,10 +193,10 @@ class KotbaseStorageSource(private val database: Database, val scope: String?) :
                     ValueIndexConfiguration("pinned", "id")
                 )
         }
-        return KotbaseStorageCollection(collection, this, clazz.serializer())
+        return KotbaseDocumentCollection(collection, this, clazz.serializer())
     }
 
-    override fun <T : Any> getCollectionByPrefix(prefix: String, clazz: KClass<T>): List<StorageCollection<T>> {
+    override fun <T : Any> getCollectionByPrefix(prefix: String, clazz: KClass<T>): List<DocumentCollection<T>> {
         return getKotbaseScope().collections.filter {
             it.name.startsWith(prefix) && it.scope.name == scope
         }.map {
@@ -208,14 +208,17 @@ class KotbaseStorageSource(private val database: Database, val scope: String?) :
         val collection = getKotbaseScope().getCollection(collectionName) ?: return
         mutex.withLock {
             clearing.add(collectionName)
-            select(Meta.id).from(collection).execute().use {
-                it.toObjects { map: Map<String, Any?> ->
-                    collection.getDocument(map["id"].toString())?.let { document ->
-                        collection.delete(document)
+            try {
+                select(Meta.id).from(collection).execute().use {
+                    it.toObjects { map: Map<String, Any?> ->
+                        collection.getDocument(map["id"].toString())?.let { document ->
+                            collection.delete(document)
+                        }
                     }
                 }
+            } finally {
+                clearing.remove(collectionName)
             }
-            clearing.remove(collectionName)
         }
     }
 

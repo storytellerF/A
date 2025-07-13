@@ -1,6 +1,8 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.api.core.Path
+import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
@@ -9,12 +11,14 @@ import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.exposed.tables.ReactionRecord
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.obj.DeleteReaction
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverResult
+import com.storyteller_f.shared.utils.safeFirstEmoji
 import io.github.aakira.napier.Napier
 
 suspend fun Backend.addReaction(
@@ -77,4 +81,47 @@ suspend fun Backend.reactionList(
 ): Result<PaginationResult<ReactionInfo>> {
     if (fillHasReacted == true && uid == null) return Result.failure(UnauthorizedException())
     return exposedDatabase.topicDatabase.getReactionInfoPaginationResult(listOf(objectId), uid, reactionFetch)
+}
+
+suspend fun addReaction(
+    emoji: String,
+    backend: Backend,
+    uid: PrimaryKey,
+    p: Path
+): Result<ReactionInfo?> = if (isEmoji(emoji)) {
+    backend.addReaction(uid, p.id, emoji)
+} else {
+    Result.failure(CustomBadRequestException("invalid emoji"))
+}
+
+suspend fun deleteReaction(
+    deleteReaction: DeleteReaction,
+    backend: Backend,
+    uid: PrimaryKey,
+    p: Path
+): Result<ReactionInfo?> {
+    val emoji = deleteReaction.emoji
+    return if (isEmoji(emoji)) {
+        backend.exposedDatabase.topicDatabase.deleteReaction(uid, emoji, p.id).mapResult {
+            (if (it) {
+                backend.exposedDatabase.topicDatabase.statsReactionRecord(
+                    p.id,
+                    emoji,
+                    ObjectType.TOPIC
+                )
+            } else {
+                Result.success(Unit)
+            }).mapResult {
+                backend.exposedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji).map {
+                    it ?: ReactionInfo(emoji, p.id, 0, false, 0)
+                }
+            }
+        }
+    } else {
+        Result.failure(CustomBadRequestException("invalid emoji"))
+    }
+}
+
+private fun isEmoji(emoji: String): Boolean {
+    return safeFirstEmoji(emoji)?.length == emoji.length
 }

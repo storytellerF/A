@@ -15,13 +15,9 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
-import com.storyteller_f.storage.StorageExpression
-import com.storyteller_f.storage.StorageOrder
-import com.storyteller_f.storage.StorageSource
-import com.storyteller_f.storage.save
+import com.storyteller_f.storage.*
 import de.jonasbroeckmann.kzip.Zip
 import de.jonasbroeckmann.kzip.extractTo
 import de.jonasbroeckmann.kzip.open
@@ -42,7 +38,6 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 data class OnTopicChanged(val topicInfo: TopicInfo)
@@ -64,8 +59,8 @@ data class OnRoomJoined(val info: RoomInfo)
 data class OnRoomExited(val info: RoomInfo)
 
 data class OnRoomUpdated(val info: RoomInfo)
-data class OnAddReaction(val info: ReactionInfo)
-data class OnRemoveReaction(val info: ReactionInfo)
+data class OnAddReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
+data class OnRemoveReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
 
 abstract class CommunityViewModel :
     SimpleViewModel<CommunityInfo>() {
@@ -74,99 +69,90 @@ abstract class CommunityViewModel :
 
 class IdCommunityViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     communityId: PrimaryKey,
 ) :
     CommunityViewModel() {
+    val loader = DocumentExpression.IdEq("id", communityId)
+    val collectionName = CollectionName.Communities
     override val handler: LoadingHandler<CommunityInfo> =
         CachedLoadingHandler(
-            storageSource.getCollection("community", CommunityInfo::class),
             viewModelScope,
-            StorageExpression.IdEq("id", communityId),
             { sessionManager.getCommunityInfo(communityId) },
-        ) { t ->
-            save(communityId, t)
-            saveDocument(t.aid, t)
-        }
+            { t ->
+                documentStorage.communityStorage.save(collectionName, t)
+            },
+            documentStorage.communityStorage.observeDatum(collectionName, communityId)
+        )
 }
 
 class AidCommunityViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     aid: String,
 ) :
     CommunityViewModel() {
+    val collectionName = CollectionName.Communities
     override val handler: LoadingHandler<CommunityInfo> =
         CachedLoadingHandler(
-            storageSource.getCollection("community", CommunityInfo::class),
             viewModelScope,
-            StorageExpression.StrEq("aid", aid),
-            { sessionManager.getCommunityInfoByAid(aid) }
-        ) { t ->
-            saveDocument(aid, t)
-            save(t.id, t)
-        }
+            { sessionManager.getCommunityInfoByAid(aid) },
+            { t ->
+                documentStorage.communityStorage.save(collectionName, t)
+            },
+            documentStorage.communityStorage.observeDatum(collectionName, aid)
+        )
 }
 
 @OptIn(ExperimentalPagingApi::class)
 class CommunitiesViewModel(
     sessionManager: SessionManager,
-    private val storageSource: StorageSource,
+    private val documentStorage: Storage,
     private val joinStatusSearch: JoinStatusSearch,
     private val word: String,
     private val target: PrimaryKey? = null,
 ) : PagingViewModel<SectionLoadParams, CommunityInfo>() {
-    private val collectionName: String = "communities_${word}_${target}_$joinStatusSearch"
+    private val collectionName = CollectionName.SearchCommunity(joinStatusSearch, word, target)
 
     override val flow = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = sectionRemoteMediator(
-            sessionManager,
+        remoteMediator = CustomRemoteMediator(
+            documentStorage,
             collectionName,
-            storageSource
-        ) { sessionManager ->
-            listOf(
-                RegularPagingSource(
-                    sessionManager
-                ) { key, size ->
-                    sessionManager.searchCommunity(
-                        size,
-                        joinStatusSearch,
-                        word,
-                        target,
-                        key,
-                        PosterSearch.HAS_POSTER
+            IntermediatePagingSource(
+                SectionPagingSource(
+                    listOf(
+                        RegularPagingSource(sessionManager) { key, size ->
+                            sessionManager.searchCommunity(
+                                size,
+                                joinStatusSearch,
+                                word,
+                                target,
+                                key,
+                                PosterSearch.HAS_POSTER
+                            )
+                        },
+                        RegularPagingSource(sessionManager) { key, size ->
+                            sessionManager.searchCommunity(
+                                size,
+                                joinStatusSearch,
+                                word,
+                                target,
+                                key,
+                                PosterSearch.NO_POSTER
+                            )
+                        }
                     )
-                },
-                RegularPagingSource(
-                    sessionManager
-                ) { key, size ->
-                    sessionManager.searchCommunity(
-                        size,
-                        joinStatusSearch,
-                        word,
-                        target,
-                        key,
-                        PosterSearch.NO_POSTER
-                    )
-                }
-            )
+                ),
+                SectionLoadParams::class
+            ),
+        ) { info ->
+            documentStorage.communityStorage.save(collectionName, info)
         },
     ) {
-        CustomStoragePagingSource(
-            storageSource.getCollection(
-                collectionName,
-                CommunityInfo::class
-            ),
-            listOf(StorageOrder.Desc("hasPoster"), StorageOrder.Desc("id")),
-            {
-                if (it != null) {
-                    arrayOf(StorageExpression.Less("id", it.toPrimaryKey()))
-                } else {
-                    emptyArray()
-                }
-            },
-        ) { info ->
+        CustomStoragePagingSource({ key, loadSize, invalidate ->
+            documentStorage.communityStorage.observeData(collectionName, key, loadSize, invalidate)
+        }) { info ->
             info?.id?.toString()
         }
     }.flow.cachedIn(viewModelScope)
@@ -175,73 +161,69 @@ class CommunitiesViewModel(
 @OptIn(ExperimentalPagingApi::class)
 class RoomsViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     private val joinStatusSearch: JoinStatusSearch,
     private val word: String,
     val community: PrimaryKey? = null,
 ) : PagingViewModel<PrimaryKey, RoomInfo>() {
-    private val collectionName: String = "rooms_${word}_$community"
+    private val collectionName = CollectionName.SearchRoom(word, community)
 
     override val flow: Flow<PagingData<RoomInfo>> = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = primaryKeyRemoteMediator(
-            storageSource,
+        remoteMediator = CustomRemoteMediator(
+            documentStorage,
             collectionName,
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
                 searchRooms(size, key, joinStatusSearch, word, community)
-            }
-        ),
+            },
+        ) { info ->
+            documentStorage.roomStorage.save(collectionName, info)
+        },
     ) {
-        primaryKeyPagingSource(
-            collectionName,
-            storageSource
-        )
+        CustomStoragePagingSource(
+            { key, params, invalidate ->
+                documentStorage.roomStorage.observeData(collectionName, key, params, invalidate)
+            }
+        ) { info ->
+            info?.id?.toString()
+        }
     }.flow.cachedIn(viewModelScope)
 }
 
 @OptIn(ExperimentalPagingApi::class)
 class WorldViewModel(
     val sessionManager: SessionManager,
-    private val storageSource: StorageSource,
+    private val documentStorage: Storage,
 ) :
     PagingViewModel<SectionLoadParams, TopicInfo>() {
-    private val collectionName: String = "topics_0"
+    private val collectionName = CollectionName.Recommend
 
     @OptIn(FlowPreview::class)
     override val flow: Flow<PagingData<TopicInfo>> = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = sectionRemoteMediator<TopicInfo>(
-            sessionManager,
+        remoteMediator = CustomRemoteMediator(
+            documentStorage,
             collectionName,
-            storageSource,
-            {
-                with(storageSource.getCollection("topics", TopicInfo::class)) {
-                    save(it.id, it)
-                    it.aid?.let { aid -> saveDocument(aid, it) }
-                }
-            }
-        ) {
-            listOf(
-                RegularPagingSource(
-                    sessionManager
-                ) { loadKey, size ->
-                    getRecommendTopics(loadKey, size)
-                }
-            )
+            IntermediatePagingSource(
+                SectionPagingSource(
+                    listOf(
+                        RegularPagingSource(sessionManager) { loadKey, size ->
+                            getRecommendTopics(loadKey, size)
+                        }
+                    )
+                ),
+                SectionLoadParams::class
+            ),
+        ) { info ->
+            documentStorage.topicStorage.save(collectionName, info)
         },
     ) {
         CustomStoragePagingSource(
-            storageSource.getCollection(collectionName, TopicInfo::class),
-            listOf(StorageOrder.Desc("id")),
-            {
-                if (it != null) {
-                    arrayOf(StorageExpression.Less("id", it.toPrimaryKey()))
-                } else {
-                    emptyArray()
-                }
-            },
+            { key, size, invalidate ->
+                documentStorage.topicStorage.observeData(collectionName, key, size, invalidate)
+            }
         ) { info ->
             info?.id?.toString()
         }
@@ -255,54 +237,44 @@ class WorldViewModel(
 @OptIn(ExperimentalPagingApi::class)
 class TopicsViewModel(
     val sessionManager: SessionManager,
-    private val storageSource: StorageSource,
+    private val documentStorage: Storage,
     id: PrimaryKey,
     val type: ObjectType,
 ) :
     PagingViewModel<SectionLoadParams, TopicInfo>() {
-    private val collectionName: String = "topics_$id"
+    private val collectionName = CollectionName.TopicList(id)
 
     @OptIn(FlowPreview::class)
     override val flow: Flow<PagingData<TopicInfo>> = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = sectionRemoteMediator<TopicInfo>(
-            sessionManager,
+        remoteMediator = CustomRemoteMediator(
+            documentStorage,
             collectionName,
-            storageSource,
-            {
-                with(storageSource.getCollection("topics", TopicInfo::class)) {
-                    save(it.id, it)
-                    it.aid?.let { aid -> saveDocument(aid, it) }
-                }
-            }
-        ) {
-            listOf(
-                RegularPagingSource(
-                    sessionManager
-                ) { loadKey, size ->
-                    getTopicList(type, id, loadKey, size, TopicPinSearch.PINNED)
-                },
-                RegularPagingSource(
-                    sessionManager
-                ) { loadKey, size ->
-                    getTopicList(type, id, loadKey, size, TopicPinSearch.UNPINNED)
-                }
-            )
+            IntermediatePagingSource(
+                SectionPagingSource(
+                    listOf(
+                        RegularPagingSource(
+                            sessionManager
+                        ) { loadKey, size ->
+                            getTopicList(type, id, loadKey, size, TopicPinSearch.PINNED)
+                        },
+                        RegularPagingSource(
+                            sessionManager
+                        ) { loadKey, size ->
+                            getTopicList(type, id, loadKey, size, TopicPinSearch.UNPINNED)
+                        }
+                    )
+                ),
+                SectionLoadParams::class
+            ),
+        ) { info ->
+            documentStorage.topicStorage.save(collectionName, info)
         },
     ) {
         DecryptPagingSource(
             CustomStoragePagingSource(
-                storageSource.getCollection(
-                    collectionName,
-                    TopicInfo::class
-                ),
-                listOf(StorageOrder.Asc("pinned"), StorageOrder.Desc("id")),
-                {
-                    if (it != null) {
-                        arrayOf(StorageExpression.Less("id", it.toPrimaryKey()))
-                    } else {
-                        emptyArray()
-                    }
+                { key, loadSize, invalidate ->
+                    documentStorage.topicStorage.observeData(collectionName, key, loadSize, invalidate)
                 },
             ) { info ->
                 info?.id?.toString()
@@ -316,7 +288,10 @@ class TopicsViewModel(
     }.cachedIn(viewModelScope)
 }
 
-class DecryptPagingSource(val rawSource: CustomStoragePagingSource<TopicInfo>, val manager: SessionManager) :
+class DecryptPagingSource(
+    val rawSource: CustomStoragePagingSource<TopicInfo>,
+    val manager: SessionManager,
+) :
     PagingSource<String, TopicInfo>() {
     override fun getRefreshKey(state: PagingState<String, TopicInfo>): String? {
         return null
@@ -332,7 +307,13 @@ class DecryptPagingSource(val rawSource: CustomStoragePagingSource<TopicInfo>, v
 private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
     val content = it.content
     return if (content is TopicContent.Plain) {
-        it.copy(content = TopicContent.Extracted(extractMarkdownHeadline(content.plain), content.list, content.plain))
+        it.copy(
+            content = TopicContent.Extracted(
+                extractMarkdownHeadline(content.plain),
+                content.list,
+                content.plain
+            )
+        )
     } else {
         it
     }
@@ -345,99 +326,110 @@ abstract class RoomViewModel :
 
 class IdRoomViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     communityId: PrimaryKey,
 ) :
     RoomViewModel() {
+    val collectionName = CollectionName.Rooms
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
-            storageSource.getCollection("room", RoomInfo::class),
             viewModelScope,
-            StorageExpression.IdEq("id", communityId),
             {
                 sessionManager.getRoomInfo(communityId)
-            }
-        ) { t ->
-            save(communityId, t)
-            saveDocument(t.aid, t)
-        }
+            },
+            { t ->
+                documentStorage.roomStorage.save(collectionName, t)
+            },
+            documentStorage.roomStorage.observeDatum(
+                collectionName,
+                communityId
+            )
+        )
 }
 
 class AidRoomViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     aid: String,
 ) : RoomViewModel() {
+    val collectionName = CollectionName.Rooms
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
-            storageSource.getCollection("room", RoomInfo::class),
             viewModelScope,
-            StorageExpression.StrEq("aid", aid),
             {
                 sessionManager.getRoomInfoByAid(aid)
-            }
-        ) { t ->
-            saveDocument(aid, t)
-            save(t.id, t)
-        }
+            },
+            { t ->
+                documentStorage.roomStorage.save(collectionName, t)
+            },
+            documentStorage.roomStorage.observeDatum(collectionName, aid)
+        )
 }
 
 @OptIn(ExperimentalPagingApi::class)
 class TopicSearchViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     word: List<String>,
     parentId: PrimaryKey?,
     parentType: ObjectType?,
 ) :
     PagingViewModel<PrimaryKey, TopicInfo>() {
-    private val collectionName: String = "topics_search_${word}_$parentId"
+    private val collectionName = CollectionName.SearchTopic(word, parentId)
 
     override val flow: Flow<PagingData<TopicInfo>> = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = primaryKeyRemoteMediator(
-            storageSource,
+        remoteMediator = CustomRemoteMediator(
+            documentStorage,
             collectionName,
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
                 sessionManager.searchTopics(size, word, parentId, parentType, key)
-            }
-        ),
+            },
+        ) { info ->
+        },
     ) {
-        primaryKeyPagingSource(
-            collectionName,
-            storageSource
-        )
+        CustomStoragePagingSource(
+            { key, params, invalidate ->
+                documentStorage.topicStorage.observeData(collectionName, key, params, invalidate)
+            }
+        ) { info ->
+            info?.id?.toString()
+        }
     }.flow.cachedIn(viewModelScope)
 }
 
 class MediaListViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     private val objectId: PrimaryKey,
     private val objectType: ObjectType,
 ) :
     PagingViewModel<PrimaryKey, MediaInfo>() {
-    private val collectionName = "medias_$objectId"
+    private val collectionName = CollectionName.Medias(objectId)
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<MediaInfo>> = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = primaryKeyRemoteMediator(
-            storageSource,
+        remoteMediator = CustomRemoteMediator(
+            documentStorage,
             collectionName,
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
                 sessionManager.getMediaList(objectId, objectType, key, size)
-            }
-        ),
+            },
+        ) { info ->
+        },
     ) {
-        primaryKeyPagingSource(
-            collectionName,
-            storageSource
-        )
+        CustomStoragePagingSource(
+            { key, params, invalidate ->
+                documentStorage.mediasStorage.observeData(collectionName, key, params, invalidate)
+            }
+        ) { info ->
+            info?.id?.toString()
+        }
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -446,58 +438,58 @@ abstract class UserViewModel :
 
 class IdUserViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     id: PrimaryKey,
 ) :
     UserViewModel() {
+    val collectionName = CollectionName.Users
     override val handler: LoadingHandler<UserInfo> =
         CachedLoadingHandler(
-            storageSource.getCollection("users", UserInfo::class),
             viewModelScope,
-            StorageExpression.IdEq("id", id),
             {
                 sessionManager.getUserInfo(id)
-            }
-        ) { t ->
-            save(id, t)
-            t.aid?.let { saveDocument(it, t) }
-        }
+            },
+            { t ->
+                documentStorage.userStorage.save(collectionName, t)
+            },
+            documentStorage.userStorage.observeDatum(collectionName, id)
+        )
 }
 
 class AidUserViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     aid: String,
 ) : UserViewModel() {
+    val collectionName = CollectionName.Users
     override val handler: LoadingHandler<UserInfo> =
         CachedLoadingHandler(
-            storageSource.getCollection("users", UserInfo::class),
             viewModelScope,
-            StorageExpression.StrEq("aid", aid),
             {
                 sessionManager.getUserInfoByAid(aid)
-            }
-        ) { t ->
-            saveDocument(aid, t)
-            save(t.id, t)
-        }
+            },
+            { t ->
+                documentStorage.userStorage.save(collectionName, t)
+            },
+            documentStorage.userStorage.observeDatum(collectionName, aid)
+        )
 }
 
 @OptIn(ExperimentalPagingApi::class)
 class MemberViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     objectId: PrimaryKey,
     word: String,
     objectType: ObjectType,
 ) :
     PagingViewModel<PrimaryKey, UserInfo>() {
-    private val collectionName: String = "members_${objectId}_${word}_$"
+    private val collectionName = CollectionName.Members(word, objectId)
 
     override val flow: Flow<PagingData<UserInfo>> = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = primaryKeyRemoteMediator(
-            storageSource,
+        remoteMediator = CustomRemoteMediator(
+            documentStorage,
             collectionName,
             RegularPagingSource(
                 sessionManager
@@ -507,52 +499,51 @@ class MemberViewModel(
                     ObjectType.ROOM -> searchRoomMembers(objectId, key, size, word)
                     else -> searchAllMembers(key, size, word)
                 }
-            }
-        ),
+            },
+        ) { info ->
+        },
     ) {
-        primaryKeyPagingSource(
-            collectionName,
-            storageSource
-        )
+        CustomStoragePagingSource(
+            { key, params, invalidate ->
+                documentStorage.userStorage.observeData(collectionName, key, params, invalidate)
+            }
+        ) { info ->
+            info?.id?.toString()
+        }
     }.flow.cachedIn(viewModelScope)
 }
 
 class ReactionsViewModel(
     sessionManager: SessionManager,
     private val objectId: PrimaryKey,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     json: Json,
 ) : PagingViewModel<String, ReactionInfo>() {
+    val collectionName = CollectionName.ReactionList(objectId)
+
     @OptIn(ExperimentalPagingApi::class)
     override val flow = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = commonRemoteMediator(
-            storageSource,
-            "reactions_$objectId",
-            RegularPagingSource(
-                sessionManager
-            ) { key, size ->
-                sessionManager.getReactions(objectId, size, key)
+        remoteMediator = run {
+            fun DocumentCollection<ReactionInfo>.(info: ReactionInfo) {
+                saveDocument(info.emoji, info)
             }
-        ) { info ->
-            saveDocument(info.emoji, info)
+            CustomRemoteMediator(
+                documentStorage,
+                collectionName,
+                RegularPagingSource(
+                    sessionManager
+                ) { key, size ->
+                    sessionManager.getReactions(objectId, size, key)
+                },
+            ) { info ->
+                documentStorage.reactionStorage.save(collectionName, info)
+            }
         }
     ) {
         CustomStoragePagingSource(
-            storageSource.getCollection("reactions_$objectId", ReactionInfo::class),
-            listOf(StorageOrder.Desc("count")),
-            {
-                val param = it?.let {
-                    json.decodeFromString<ReactionCursorKey>(it)
-                }
-                if (param != null) {
-                    arrayOf(
-                        StorageExpression.Less("count", param.count),
-                        StorageExpression.Less("lastReactionId", param.reactionId)
-                    )
-                } else {
-                    emptyArray()
-                }
+            { key, size, invalidate ->
+                documentStorage.reactionStorage.observeData(collectionName, key, size, invalidate)
             },
             {
                 it?.let {
@@ -568,98 +559,111 @@ abstract class TopicViewModel :
 
 class IdTopicViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     topicId: PrimaryKey,
 ) :
     TopicViewModel() {
+    val collectionName = CollectionName.Topics
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
-            storageSource.getCollection("topics", TopicInfo::class),
             viewModelScope,
-            StorageExpression.IdEq("id", topicId),
             {
                 sessionManager.getTopicInfo(topicId).map {
                     processEncryptedTopic(listOf(it), sessionManager).first()
                 }
-            }
-        ) { t ->
-            save(topicId, t)
-            t.aid?.let { saveDocument(it, t) }
-        }
+            },
+            { t ->
+                documentStorage.topicStorage.save(collectionName, t)
+            },
+            documentStorage.topicStorage.observeDatum(collectionName, topicId)
+        )
 }
 
 class AidTopicViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     aid: String,
 ) :
     TopicViewModel() {
+    val collectionName = CollectionName.Topics
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
-            storageSource.getCollection("topics", TopicInfo::class),
             viewModelScope,
-            StorageExpression.StrEq("aid", aid),
             {
                 sessionManager.getTopicInfoByAid(aid)
-            }
-        ) { t ->
-            saveDocument(aid, t)
-            save(t.id, t)
-        }
+            },
+            { t ->
+                documentStorage.topicStorage.save(collectionName, t)
+            },
+            documentStorage.topicStorage.observeDatum(collectionName, aid)
+        )
 }
 
-class RoomKeysViewModel(sessionManager: SessionManager, private val id: PrimaryKey, val private: Boolean) :
+class RoomKeysViewModel(
+    sessionManager: SessionManager,
+    private val id: PrimaryKey,
+    val private: Boolean,
+) :
     SimpleViewModel<List<UserPubKeyInfo>>() {
-    override val handler: LoadingHandler<List<UserPubKeyInfo>> = SimpleLoadingHandler(viewModelScope) {
-        runCatching {
-            if (!private) return@runCatching emptyList()
-            val result = mutableListOf<UserPubKeyInfo>()
-            var last: String? = null
-            while (true) {
-                val list =
-                    sessionManager.requestRoomKeys(this@RoomKeysViewModel.id, last, 100)
-                        .getOrThrow()
-                result.addAll(list.data)
-                val nextKey = list.pagination?.nextPageToken ?: break
-                last = nextKey
+    override val handler: LoadingHandler<List<UserPubKeyInfo>> =
+        SimpleLoadingHandler(viewModelScope) {
+            runCatching {
+                if (!private) return@runCatching emptyList()
+                val result = mutableListOf<UserPubKeyInfo>()
+                var last: String? = null
+                while (true) {
+                    val list =
+                        sessionManager.requestRoomKeys(this@RoomKeysViewModel.id, last, 100)
+                            .getOrThrow()
+                    result.addAll(list.data)
+                    val nextKey = list.pagination?.nextPageToken ?: break
+                    last = nextKey
+                }
+                result
             }
-            result
         }
-    }
 }
 
 @OptIn(ExperimentalPagingApi::class)
 class TitlesViewModel(
     sessionManager: SessionManager,
-    storageSource: StorageSource,
+    documentStorage: Storage,
     uid: PrimaryKey,
     searchType: TitleSearchType,
     status: TitleStatus? = null,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
 ) : PagingViewModel<PrimaryKey, TitleInfo>() {
-    private val collectionName: String = "titles_${uid}_${searchType}_${status}_${type}_$scopeId"
+    private val collectionName = CollectionName.SearchTitle(uid, searchType, status, type, scopeId)
 
     override val flow: Flow<PagingData<TitleInfo>> = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = primaryKeyRemoteMediator(
-            storageSource,
+        remoteMediator = CustomRemoteMediator(
+            documentStorage,
             collectionName,
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
                 sessionManager.userTitles(uid, key, size, searchType, status, type, scopeId)
-            }
-        ),
+            },
+        ) { info ->
+        },
     ) {
-        primaryKeyPagingSource(
-            collectionName,
-            storageSource
-        )
+        CustomStoragePagingSource(
+            { key, params, invalidate ->
+                documentStorage.titleStorage.observeData(collectionName, key, params, invalidate)
+            }
+        ) { info ->
+            info?.id?.toString()
+        }
     }.flow.cachedIn(viewModelScope)
 }
 
-class UploadViewModel(sessionManager: SessionManager, private val uploader: UploadSession, myUid: PrimaryKey) :
+class UploadViewModel(
+    sessionManager: SessionManager,
+    private val uploader: UploadSession,
+    myUid: PrimaryKey,
+) :
     ViewModel() {
     private val queue = Channel<Int> {
     }
@@ -701,47 +705,44 @@ class UploadViewModel(sessionManager: SessionManager, private val uploader: Uplo
     }
 }
 
-enum class DownloadStatus {
-    NOT_DOWNLOADED, DOWNLOADING, DOWNLOADED, FAILED
-}
-
-@Serializable
-data class DownloadInfo(
-    val mediaInfo: MediaInfo,
-    val status: DownloadStatus,
-    val message: String,
-    val path: String,
-)
-
 class DownloadViewModel(
     private val sessionManager: SessionManager,
-    storageSource: StorageSource,
+    private val documentStorage: Storage,
 ) : ViewModel() {
     val lock = Mutex()
-    val collection = storageSource.getCollection("downloads", DownloadInfo::class)
+    val collectionName = CollectionName.Download
     private val queue = Channel<String> {
     }
     val handlers = mutableMapOf<String, CachedLoadingHandler<DownloadInfo>>()
 
-    suspend fun download(key: String, mediaInfo: MediaInfo): CachedLoadingHandler<DownloadInfo> {
+    suspend fun download(mediaInfo: MediaInfo): CachedLoadingHandler<DownloadInfo> {
+        val key = mediaInfo.id.toString()
         val path = Path(SystemTemporaryDirectory, "downloads", key, mediaInfo.name)
         return lock.withLock {
             handlers.getOrPut(key) {
                 CachedLoadingHandler(
-                    collection,
                     viewModelScope,
-                    StorageExpression.StrEq("_id", key),
                     {
                         sessionManager.serviceCatching {
                             path.parent?.let { SystemFileSystem.createDirectories(it) }
-                            downloadIfNeed(key, mediaInfo, path)
+                            downloadIfNeed(mediaInfo, path)
                         }.recover {
-                            DownloadInfo(mediaInfo, DownloadStatus.FAILED, it.message.toString(), path.toString())
+                            DownloadInfo(
+                                mediaInfo,
+                                DownloadStatus.FAILED,
+                                it.message.toString(),
+                                path.toString()
+                            )
                         }
-                    }
-                ) {
-                    collection.saveDocument(key, it)
-                }
+                    },
+                    {
+                        documentStorage.downloadStorage.save(collectionName, it)
+                    },
+                    documentStorage.downloadStorage.observeDatum(
+                        collectionName,
+                        mediaInfo.id
+                    )
+                )
             }
         }
     }
@@ -755,17 +756,19 @@ class DownloadViewModel(
     }
 
     private suspend fun HttpClient.downloadIfNeed(
-        key: String,
         mediaInfo: MediaInfo,
         path: Path,
     ): DownloadInfo {
-        val downloadInfo = getDocument(key, path, mediaInfo)
+        val downloadInfo = getDocument(path, mediaInfo)
 
         if (downloadInfo.status == DownloadStatus.DOWNLOADED || downloadInfo.status == DownloadStatus.DOWNLOADING) {
             return downloadInfo
         }
 
-        collection.saveDocument(key, downloadInfo.copy(status = DownloadStatus.DOWNLOADING))
+        documentStorage.downloadStorage.save(
+            collectionName,
+            downloadInfo.copy(status = DownloadStatus.DOWNLOADING)
+        )
         SystemFileSystem.sink(path).use {
             prepareGet(mediaInfo.url).execute { httpResponse ->
                 val channel: ByteReadChannel = httpResponse.body()
@@ -789,11 +792,10 @@ class DownloadViewModel(
     }
 
     private fun getDocument(
-        key: String,
         path: Path,
         mediaInfo: MediaInfo,
     ): DownloadInfo {
-        val document = collection.getDocument(key)
+        val document = documentStorage.downloadStorage.getDocument(collectionName, mediaInfo.id)
         if (document != null) {
             val isDownloaded = document.status == DownloadStatus.DOWNLOADED
             val isFileExists = SystemFileSystem.exists(path)
@@ -804,13 +806,13 @@ class DownloadViewModel(
                 return document
             } else if (document.status == DownloadStatus.FAILED) {
                 val t = document.copy(status = DownloadStatus.NOT_DOWNLOADED)
-                collection.saveDocument(key, t)
+                documentStorage.downloadStorage.save(collectionName, t)
                 return t
             }
             return document.copy(status = DownloadStatus.NOT_DOWNLOADED)
         }
         val t = DownloadInfo(mediaInfo, DownloadStatus.NOT_DOWNLOADED, "", path.toString())
-        collection.saveDocument(key, t)
+        documentStorage.downloadStorage.save(collectionName, t)
         return t
     }
 }
@@ -825,32 +827,40 @@ class MarkdownMediasViewModel(
         get() = SimpleLoadingHandler(viewModelScope) {
             runCatching {
                 extractMarkdownMediaLink(content).map {
-                    sessionManager.getMediaByName(it, objectTuple.objectId, objectTuple.objectType).getOrThrow()
+                    sessionManager.getMediaByName(it, objectTuple.objectId, objectTuple.objectType)
+                        .getOrThrow()
                 }
             }
         }
 }
 
-class AlternativeAccountsViewModel(val storageSource: StorageSource, sessionManager: SessionManager) :
+class AlternativeAccountsViewModel(
+    val documentStorage: Storage,
+    sessionManager: SessionManager,
+) :
     PagingViewModel<PrimaryKey, AlternativeAccountInfo>() {
-    val collectionName = "alternatives"
+    val collectionName = CollectionName.Alternatives
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<AlternativeAccountInfo>> = Pager(
         PagingConfig(pageSize = 20),
-        remoteMediator = primaryKeyRemoteMediator(
-            storageSource,
+        remoteMediator = CustomRemoteMediator(
+            documentStorage,
             collectionName,
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
                 sessionManager.getAlternativeAccounts(key, size)
-            }
-        ),
+            },
+        ) { info ->
+        },
     ) {
-        primaryKeyPagingSource(
-            collectionName,
-            storageSource
-        )
+        CustomStoragePagingSource(
+            { key, params, invalidate ->
+                documentStorage.alternativesStorage.observeData(collectionName, key, params, invalidate)
+            }
+        ) { info ->
+            info?.id?.toString()
+        }
     }.flow.cachedIn(viewModelScope)
 }

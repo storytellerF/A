@@ -8,6 +8,7 @@ import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.cloud.core.service.addReaction
 import com.storyteller_f.a.cloud.core.service.createPublicTopic
 import com.storyteller_f.a.cloud.core.service.createTopicSnapshot
+import com.storyteller_f.a.cloud.core.service.deleteReaction
 import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
 import com.storyteller_f.a.cloud.core.service.getTopic
 import com.storyteller_f.a.cloud.core.service.getTopicByAid
@@ -21,11 +22,7 @@ import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.ReactionPaginationGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
-import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.safeFirstEmoji
-import io.ktor.server.plugins.*
 import io.ktor.server.routing.*
 
 fun Route.bindTopicRoute(backend: Backend) {
@@ -100,36 +97,13 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
     CustomApi.Topics.Id.Reactions.add.invoke(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             val emoji = with(api) { receiveBody() }.emoji
-            if (isEmoji(emoji)) {
-                backend.addReaction(uid, p.id, emoji)
-            } else {
-                Result.failure(BadRequestException("invalid emoji"))
-            }
+            addReaction(emoji, backend, uid, p)
         }
     }
     CustomApi.Topics.Id.Reactions.delete.invoke(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             val deleteReaction = with(api) { receiveBody() }
-            val emoji = deleteReaction.emoji
-            if (isEmoji(emoji)) {
-                backend.exposedDatabase.topicDatabase.deleteReaction(uid, emoji, p.id).mapResult {
-                    (if (it) {
-                        backend.exposedDatabase.topicDatabase.statsReactionRecord(
-                            p.id,
-                            emoji,
-                            ObjectType.TOPIC
-                        )
-                    } else {
-                        Result.success(Unit)
-                    }).mapResult {
-                        backend.exposedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji).map {
-                            it ?: ReactionInfo(emoji, p.id, 0, false, 0)
-                        }
-                    }
-                }
-            } else {
-                Result.failure(BadRequestException("invalid emoji"))
-            }
+            deleteReaction(deleteReaction, backend, uid, p)
         }
     }
 
@@ -144,8 +118,4 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
             backend.updateTopicPin(uid, p.id, false)
         }
     }
-}
-
-private fun isEmoji(emoji: String): Boolean {
-    return safeFirstEmoji(emoji)?.length == emoji.length
 }

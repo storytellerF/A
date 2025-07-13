@@ -2,6 +2,7 @@ import android.content.ContentProvider
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
+import com.couchbase.lite.CouchbaseLite
 import com.storyteller_f.a.app.compose_app.AApplication
 import com.storyteller_f.a.app.compose_app.MainActivity
 import com.storyteller_f.storage.loadKotbaseIfNeed
@@ -20,13 +21,10 @@ actual abstract class UsingContextTest {
     @Before
     fun setup() {
         Assume.assumeTrue(System.getProperty("os.name").orEmpty().contains("win", true))
-        System.loadLibrary("LiteCore")
-        System.loadLibrary("LiteCoreJNI")
         RuntimeEnvironment.setApplicationSupplier {
             AApplication()
         }
-        val app = RuntimeEnvironment.getApplication()
-        loadKotbaseIfNeed(app)
+        CouchbaseLite.init(true)
         setupAndroidContextProvider()
     }
 

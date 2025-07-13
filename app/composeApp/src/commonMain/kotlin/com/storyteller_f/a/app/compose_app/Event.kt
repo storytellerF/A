@@ -6,9 +6,8 @@ import androidx.compose.runtime.remember
 import com.storyteller_f.a.app.compose_app.model.*
 import com.storyteller_f.a.client.core.WebSocketClient
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.storage.StorageExpression
-import com.storyteller_f.storage.StorageSource
-import com.storyteller_f.storage.save
+import com.storyteller_f.storage.CollectionName
+import com.storyteller_f.storage.DocumentStorage
 import com.storyteller_f.storage.update
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
@@ -16,69 +15,45 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 
 val bus = MutableSharedFlow<Any>()
 
-suspend fun processEvent(database: StorageSource) {
+suspend fun processEvent(database: DocumentStorage) {
     bus.collect { event ->
         when (event) {
             is OnAddReaction -> processOnAddReaction(database, event)
 
             is OnRemoveReaction -> processRemoveReaction(database, event)
 
-            is OnCommunityJoined -> database.getCollection(
-                "communities",
-                CommunityInfo::class
+            is OnCommunityJoined -> database.communityStorage.save(
+                CollectionName.Communities,
+                event.info
             )
-                .save(event.info.id, event.info)
 
-            is OnCommunityExited -> database.getCollection(
-                "communities",
-                CommunityInfo::class
-            )
-                .save(event.info.id, event.info)
+            is OnCommunityExited -> database.communityStorage
+                .save(CollectionName.Communities, event.info)
 
             is OnCommunityUpdated -> {
-                database.getCollection("communities", CommunityInfo::class).save(event.info.id, event.info)
-                database.getCollectionByPrefix("communities_", CommunityInfo::class).filter {
-                    it.exists(StorageExpression.IdEq("id", event.info.id))
-                }.forEach {
-                    it.save(event.info.id, event.info)
-                }
+                database.communityStorage
+                    .save(CollectionName.Communities, event.info)
             }
 
             is OnTopicChanged -> processTopicChanged(event, database)
 
             is OnTopicCreated -> processTopicCreated(event, database)
 
-            is OnRoomJoined -> database.getCollection(
-                "rooms",
-                RoomInfo::class
-            ).save(event.info.id, event.info)
+            is OnRoomJoined -> database.roomStorage.save(CollectionName.Rooms, event.info)
 
-            is OnRoomExited -> database.getCollection(
-                "rooms",
-                RoomInfo::class
-            ).save(event.info.id, event.info)
+            is OnRoomExited -> database.roomStorage.save(CollectionName.Rooms, event.info)
 
             is OnRoomUpdated -> {
-                database.getCollection("rooms", RoomInfo::class).save(event.info.id, event.info)
-                database.getCollectionByPrefix("rooms_", RoomInfo::class).filter {
-                    it.exists(StorageExpression.IdEq("id", event.info.id))
-                }.forEach {
-                    it.save(event.info.id, event.info)
-                }
+                database.roomStorage.save(CollectionName.Rooms, event.info)
             }
 
             is OnUserUpdated -> {
-                database.getCollection("users", UserInfo::class).save(event.info.id, event.info)
-                database.getCollectionByPrefix("users_", UserInfo::class).filter {
-                    it.exists(StorageExpression.IdEq("id", event.info.id))
-                }.forEach {
-                    it.save(event.info.id, event.info)
-                }
+                database.userStorage.save(CollectionName.Users, event.info)
             }
 
             is OnMediaUploaded -> {
                 event.mediaInfos.forEach {
-                    database.getCollection("medias_${it.owner}", MediaInfo::class).save(it.id, it)
+                    database.mediasStorage.save(CollectionName.Medias(it.owner), it)
                 }
             }
         }
@@ -87,59 +62,61 @@ suspend fun processEvent(database: StorageSource) {
 
 private fun processTopicCreated(
     event: OnTopicCreated,
-    database: StorageSource,
+    database: DocumentStorage,
 ) {
     val topicInfo = event.topicInfo
-    database.getCollection("topics_${topicInfo.parentId}", TopicInfo::class).save(topicInfo.id, topicInfo)
-    with(database.getCollection("topics", TopicInfo::class)) {
-        save(topicInfo.id, topicInfo)
-        topicInfo.aid?.let { saveDocument(it, topicInfo) }
-    }
+    database.topicStorage.save(CollectionName.TopicList(topicInfo.parentId), topicInfo)
 }
 
 private fun processTopicChanged(
     event: OnTopicChanged,
-    database: StorageSource,
+    database: DocumentStorage,
 ) {
     val topicInfo = event.topicInfo
-    database.getCollection("topics_${topicInfo.parentId}", TopicInfo::class).save(topicInfo.id, topicInfo)
-    with(database.getCollection("topics", TopicInfo::class)) {
-        save(topicInfo.id, topicInfo)
-        topicInfo.aid?.let { saveDocument(it, topicInfo) }
-    }
-    // 尝试更新到推荐
-    with(database.getCollection("topics_0", TopicInfo::class)) {
-        if (exists(StorageExpression.IdEq("id", topicInfo.id))) {
-            save(topicInfo.id, topicInfo)
-        }
+    database.topicStorage.save(CollectionName.TopicList(topicInfo.parentId), topicInfo)
+    if (database.topicStorage.getDocument(CollectionName.Recommend, event.topicInfo.id) != null) {
+        database.topicStorage.save(CollectionName.Recommend, topicInfo)
     }
 }
 
 private fun processRemoveReaction(
-    database: StorageSource,
+    database: DocumentStorage,
     event: OnRemoveReaction,
 ) {
-    database.getCollection("topic", TopicInfo::class).update(event.info.objectId) { old ->
-        val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
-        val new = extension.reactions.orEmpty().map { info ->
-            if (info.emoji != event.info.emoji) {
-                info
-            } else {
-                info
-            }
-        }.filter {
-            it.count <= 0
-        }.toImmutableList()
-        old.copy(extension = extension.copy(reactions = new), reactionCount = old.reactionCount - 1)
+    listOf(
+        CollectionName.Topics,
+        CollectionName.Recommend,
+        CollectionName.TopicList(event.topicInfo.parentId)
+    ).forEach { collectionName ->
+        database.topicStorage.update(collectionName, event.topicInfo.id) { old ->
+            val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
+            val new = extension.reactions.orEmpty().map { info ->
+                if (info.emoji != event.info.emoji) {
+                    info
+                } else {
+                    info
+                }
+            }.filter {
+                it.count <= 0
+            }.toImmutableList()
+            old.copy(
+                extension = extension.copy(reactions = new),
+                reactionCount = old.reactionCount - 1
+            )
+        }
     }
 }
 
 private fun processOnAddReaction(
-    database: StorageSource,
+    database: DocumentStorage,
     event: OnAddReaction,
 ) {
-    listOf("topics", "topics_0", "topics_${event.info.objectId}").forEach {
-        database.getCollection(it, TopicInfo::class).update(event.info.objectId) { old ->
+    listOf(
+        CollectionName.Topics,
+        CollectionName.Recommend,
+        CollectionName.TopicList(event.topicInfo.parentId)
+    ).forEach { collectionName ->
+        database.topicStorage.update(collectionName, event.info.objectId) { old ->
             val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
             val existing = extension.reactions?.firstOrNull {
                 it.emoji == event.info.emoji
@@ -156,7 +133,10 @@ private fun processOnAddReaction(
                     }
                 }.toImmutableList()
             }
-            old.copy(extension = extension.copy(reactions = new), reactionCount = old.reactionCount + 1)
+            old.copy(
+                extension = extension.copy(reactions = new),
+                reactionCount = old.reactionCount + 1
+            )
         }
     }
 }

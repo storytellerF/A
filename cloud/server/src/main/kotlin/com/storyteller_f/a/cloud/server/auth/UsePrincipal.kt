@@ -4,9 +4,9 @@ import com.storyteller_f.a.api.server.handleCaughtException
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.cloud.core.service.FileResponse
+import com.storyteller_f.a.cloud.core.service.PathResponse
 import com.storyteller_f.a.cloud.server.ServerConfig
-import com.storyteller_f.a.cloud.server.common.FileResponse
-import com.storyteller_f.a.cloud.server.common.PathResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.*
 import io.ktor.server.application.*

@@ -127,6 +127,8 @@ kotlin {
             implementation(libs.javet.node.macos.arm64)
             implementation(libs.javet.node.macos.x86.x4)
             implementation(libs.javet.node.windows.x86.x4)
+
+            implementation("com.couchbase.lite:couchbase-lite-java:3.1.9")
         }
         androidUnitTest {
             dependsOn(headlessTest)

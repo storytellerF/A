@@ -4,10 +4,10 @@ import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.server.invoke
 import com.storyteller_f.a.api.server.receiveBody
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.exposed.isDup
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getUserInfo
 import com.storyteller_f.a.backend.service.searchMembers
+import com.storyteller_f.a.cloud.core.service.addDevice
 import com.storyteller_f.a.cloud.core.service.addReadLog
 import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
 import com.storyteller_f.a.cloud.core.service.getUserTitles
@@ -18,7 +18,6 @@ import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.utils.recoverResult
 import io.ktor.server.routing.*
 
 fun Route.bindProtectedUserRoute(backend: Backend) {
@@ -35,13 +34,7 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
     CustomApi.Users.Devices.add.invoke(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
             val newDevice = with(api) { receiveBody() }
-            backend.exposedDatabase.userDatabase.addDevice(uid, newDevice.endpointUrl).recoverResult {
-                if (it.isDup()) {
-                    Result.success(Unit)
-                } else {
-                    Result.failure(it)
-                }
-            }
+            addDevice(backend, uid, newDevice)
         }
     }
 }

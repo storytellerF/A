@@ -211,3 +211,37 @@ private suspend fun toTitle(
         descriptionTopicId
     )
 }
+
+val titleMap = mutableMapOf(
+    ObjectType.COMMUNITY to listOf(
+        TitleType.REGULAR,
+        TitleType.JOIN
+    ),
+    ObjectType.ROOM to listOf(
+        TitleType.REGULAR,
+        TitleType.JOIN
+    ),
+    ObjectType.USER to listOf(
+        TitleType.REGULAR
+    ),
+    ObjectType.TOPIC to listOf(
+        TitleType.REGULAR
+    )
+)
+
+suspend fun createTitle(
+    title: NewTitle,
+    backend: Backend,
+    uid: PrimaryKey
+): Result<TitleInfo?> {
+    val supportType = titleMap[title.scopeType]
+    return if (supportType != null) {
+        if (supportType.contains(title.type)) {
+            backend.createTitle(title, uid)
+        } else {
+            Result.failure(ForbiddenException("unsupported title type ${title.type} in ${title.scopeType}"))
+        }
+    } else {
+        Result.success(null)
+    }
+}

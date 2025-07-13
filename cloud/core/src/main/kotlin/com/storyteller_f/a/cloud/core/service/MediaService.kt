@@ -10,6 +10,7 @@ import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.copyMedia
 import com.storyteller_f.a.backend.service.getMediaPaginationResult
+import com.storyteller_f.a.backend.service.media.FileSystemMediaService
 import com.storyteller_f.a.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
 import com.storyteller_f.a.backend.service.processMediaToMediaInfo
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
@@ -23,8 +24,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
+import kotlin.io.path.exists
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+
+class FileResponse(val file: File)
+
+class PathResponse(val file: java.nio.file.Path)
 
 suspend fun Backend.getMediaList(
     uid: PrimaryKey,
@@ -321,5 +327,23 @@ fun getExtensionFromMimeType(mimeType: String): String {
         "audio/wav" -> "wav"
         "audio/flac", "audio/x-flac" -> "flac"
         else -> error("Unsupported mime type: $mimeType")
+    }
+}
+
+suspend fun getFileSystemDownloadUrl(
+    backend: Backend,
+    paths: List<String>
+): Result<PathResponse?> {
+    val service = backend.mediaService
+    return if (service is FileSystemMediaService) {
+        val path = service.getPathResponse(paths)
+        if (path?.exists() == true) {
+            val value = PathResponse(path)
+            Result.success(value)
+        } else {
+            Result.success(null)
+        }
+    } else {
+        Result.failure(CustomBadRequestException("can't find file"))
     }
 }

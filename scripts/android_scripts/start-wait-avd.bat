@@ -1,5 +1,5 @@
 @echo off
-setlocal enabledelayedexpansion
+@setlocal enabledelayedexpansion
 
 :: Set the AVD name
 set AVD_NAME=ATest
