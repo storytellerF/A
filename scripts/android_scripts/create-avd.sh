@@ -49,12 +49,12 @@ fi
 echo "AVD '$AVD_NAME' created successfully!"
 
 # Ask the user whether to start the emulator
-read -p "Do you want to start the emulator now? (Y/N): " START_AVD
-if [[ "$START_AVD" =~ ^[Yy]$ ]]; then
-    echo "Starting AVD '$AVD_NAME'..."
-    emulator -avd "$AVD_NAME" &
-else
-    echo "You can start it later using: emulator -avd $AVD_NAME"
-fi
-
-exit 0
+#read -p "Do you want to start the emulator now? (Y/N): " START_AVD
+#if [[ "$START_AVD" =~ ^[Yy]$ ]]; then
+#    echo "Starting AVD '$AVD_NAME'..."
+#    emulator -avd "$AVD_NAME" &
+#else
+#    echo "You can start it later using: emulator -avd $AVD_NAME"
+#fi
+#
+#exit 0

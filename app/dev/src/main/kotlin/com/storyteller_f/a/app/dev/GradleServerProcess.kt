@@ -22,7 +22,7 @@ fun forceStop(port: Int) {
                 )
             )
     } else {
-        Runtime.getRuntime().exec("kill -9 $(sudo lsof -t -i :8080)")
+        Runtime.getRuntime().exec(arrayOf("/bin/sh", "-c", $$"pid=$(lsof -t -i :8080) && kill -9 $pid"))
     }
 }
 

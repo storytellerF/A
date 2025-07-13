@@ -22,7 +22,7 @@ fun createSearchCommunitiesViewModel(
 ) = viewModel(
     keys = listOf("search-community", finalOption.name, query)
 ) { client, databaseSource ->
-    CommunitiesViewModel(client, storageSource = databaseSource, finalOption, query)
+    CommunitiesViewModel(client, databaseSource, finalOption, query)
 }
 
 @Composable
@@ -30,7 +30,7 @@ fun createJoinedCommunitiesViewModel() =
     viewModel(
         keys = listOf("joined-communities")
     ) { client, databaseSource ->
-        CommunitiesViewModel(client, storageSource = databaseSource, JoinStatusSearch.JOINED, "")
+        CommunitiesViewModel(client, databaseSource, JoinStatusSearch.JOINED, "")
     }
 
 @Composable
@@ -204,7 +204,13 @@ fun createTopicSearchInTopicViewModel(
         current
     )
 ) { client, databaseSource ->
-    TopicSearchViewModel(client, databaseSource, current.split(" "), scope.topicId, ObjectType.TOPIC)
+    TopicSearchViewModel(
+        client,
+        databaseSource,
+        current.split(" "),
+        scope.topicId,
+        ObjectType.TOPIC
+    )
 }
 
 @Composable
@@ -243,7 +249,13 @@ fun createTopicSearchInCommunityViewModel(
         current
     )
 ) { client, databaseSource ->
-    TopicSearchViewModel(client, databaseSource, current.split(" "), scope.communityId, ObjectType.COMMUNITY)
+    TopicSearchViewModel(
+        client,
+        databaseSource,
+        current.split(" "),
+        scope.communityId,
+        ObjectType.COMMUNITY
+    )
 }
 
 @Composable

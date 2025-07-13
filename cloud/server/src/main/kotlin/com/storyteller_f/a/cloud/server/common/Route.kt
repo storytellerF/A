@@ -3,12 +3,6 @@ package com.storyteller_f.a.cloud.server.common
 import io.ktor.http.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
-import java.io.File
-import java.nio.file.Path
-
-class FileResponse(val file: File)
-
-class PathResponse(val file: Path)
 
 inline fun <reified T : Any, reified R : Any> RoutingContext.checkParameter(
     name: String,

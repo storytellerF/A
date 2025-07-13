@@ -1,6 +1,4 @@
-package unit_test
-
-import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute.Companion.parseRefUri
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -11,7 +9,7 @@ class RouteTest {
     fun testRouteMatch() {
         val string = "/room/a/test"
 
-        val result = parseRefUri(string)
+        val result = TopicRoute.Companion.parseRefUri(string)
         assertNotNull(result.first)
         assertEquals("test", result.second["aid"])
     }

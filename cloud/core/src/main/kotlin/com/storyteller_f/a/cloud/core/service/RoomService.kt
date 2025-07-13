@@ -1,17 +1,25 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.api.core.Path
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.isDup
 import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.exposed.tables.RawRoom
 import com.storyteller_f.a.backend.exposed.tables.Room
+import com.storyteller_f.a.backend.exposed.tables.Topic
 import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.index.TopicDocument
+import com.storyteller_f.a.backend.service.isKeyVerified
 import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
+import com.storyteller_f.a.backend.service.savePlainTopic
+import com.storyteller_f.a.backend.service.searchMembers
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
@@ -210,4 +218,110 @@ suspend fun Backend.updateRoom(
             Result.failure(CustomBadRequestException("forbid"))
         }
     }
+}
+
+suspend fun searchRoomMembers(
+    backend: Backend,
+    p: Path,
+    uid: PrimaryKey?,
+    q: CustomApi.Rooms.Id.Members.MemberQuery,
+    f: PrimaryKeyFetch
+): Result<PaginationResult<UserInfo>?> =
+    backend.checkRootReadPermission(ObjectType.ROOM, p.id, uid).mapResultIfNotNull { permission ->
+        if (permission.hasRead) {
+            backend.searchMembers(p.id, q.word, f)
+        } else {
+            Result.failure(UnauthorizedException())
+        }
+    }
+
+suspend fun Backend.addTopicAtRoom(
+    newTopic: NewRoomTopic,
+    uid: PrimaryKey,
+): Result<TopicInfo?> {
+    return when (newTopic.parentType) {
+        ObjectType.TOPIC -> {
+            exposedDatabase.topicDatabase.getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
+                if (type == ObjectType.ROOM) {
+                    addTopicIntoRoom(id, uid, newTopic)
+                } else {
+                    Result.failure(ForbiddenException())
+                }
+            }
+        }
+
+        ObjectType.ROOM -> {
+            addTopicIntoRoom(newTopic.parentId, uid, newTopic)
+        }
+
+        else -> {
+            Result.failure(ForbiddenException())
+        }
+    }
+}
+
+suspend fun Backend.addTopicIntoRoom(
+    roomId: PrimaryKey,
+    uid: PrimaryKey,
+    newTopic: NewRoomTopic,
+): Result<TopicInfo?> {
+    val bytes = when (val c = newTopic.content) {
+        is TopicContent.Plain -> c.bytes
+        is TopicContent.Encrypted -> c.bytes
+        else -> throw CustomBadRequestException("unsupported type")
+    }
+    return exposedDatabase.containerDatabase.isMemberJoined(roomId, uid).mapResult { bool ->
+        if (bool) {
+            val content = newTopic.content
+            val newId = SnowflakeFactory.nextId()
+            exposedDatabase.roomData.checkRoomIsPrivate(roomId).mapResultIfNotNull { isPrivate ->
+                val topic = Topic(
+                    newId,
+                    now(),
+                    uid,
+                    roomId,
+                    ObjectType.ROOM,
+                    newTopic.parentId,
+                    newTopic.parentType,
+                    bytes,
+                    isPrivate,
+                    false,
+                    null
+                )
+                when {
+                    isPrivate -> saveEncryptedTopic(content, roomId, topic)
+                    content is TopicContent.Plain -> savePlainTopic(topic, content = content).map {
+                        topicSearchService.saveDocument(
+                            listOf(TopicDocument.Companion.fromTopic(topic, content))
+                        ).getOrThrow()
+                        it
+                    }
+
+                    else -> Result.failure(ForbiddenException("Public room only accept unencrypted content."))
+                }
+            }.mapResultIfNotNull { topicInfo ->
+                processTopicExtension(listOf(topicInfo), uid, false).mapIfNotNull {
+                    it.first()
+                }
+            }
+        } else {
+            Result.failure(ForbiddenException("Can't publish content before join room."))
+        }
+    }
+}
+
+suspend fun Backend.saveEncryptedTopic(
+    content: TopicContent,
+    roomId: PrimaryKey,
+    topic: Topic,
+): Result<TopicInfo?> = if (content is TopicContent.Encrypted) {
+    isKeyVerified(roomId, content.encryptedKey).mapResult {
+        if (it) {
+            exposedDatabase.topicDatabase.saveEncryptedTopic(topic, content)
+        } else {
+            Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
+        }
+    }
+} else {
+    Result.failure(ForbiddenException("Private room only accept encrypted content."))
 }

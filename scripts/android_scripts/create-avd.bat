@@ -1,10 +1,9 @@
 @echo off
-setlocal enabledelayedexpansion
+@setlocal enabledelayedexpansion
 
-:: 设置模拟器名称和设备参数
-set AVD_NAME=ATest
-set SYSTEM_IMAGE=system-images;android-35;google_apis_playstore;x86_64
-set DEVICE=pixel_4
+@set AVD_NAME=ATest
+@set SYSTEM_IMAGE=system-images;android-35;google_apis_playstore;x86_64
+@set DEVICE=pixel_4
 
 :: Check if AVD already exists
 echo Checking if AVD "%AVD_NAME%" exists...
@@ -40,13 +39,13 @@ if %errorlevel% neq 0 (
 echo AVD "%AVD_NAME%" created successfully!
 
 :: Ask the user whether to start the emulator
-set /p START_AVD=Do you want to start the emulator now? (Y/N):
-if /I "%START_AVD%"=="Y" (
-    echo Starting AVD "%AVD_NAME%"...
-    start emulator -avd "%AVD_NAME%"
-) else (
-    echo You can start it later using: emulator -avd %AVD_NAME%
-)
-
-exit /b
-
+@REM set /p START_AVD=Do you want to start the emulator now? (Y/N):
+@REM if /I "%START_AVD%"=="Y" (
+@REM     echo Starting AVD "%AVD_NAME%"...
+@REM     start emulator -avd "%AVD_NAME%"
+@REM ) else (
+@REM     echo You can start it later using: emulator -avd %AVD_NAME%
+@REM )
+@REM
+@REM exit /b
+@REM

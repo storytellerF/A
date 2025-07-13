@@ -1,28 +1,15 @@
 package com.storyteller_f.a.cloud.server
 
 import com.maxmind.geoip2.DatabaseReader
-import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.backend.core.CustomBadRequestException
-import com.storyteller_f.a.backend.core.ForbiddenException
-import com.storyteller_f.a.backend.exposed.tables.Topic
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.index.TopicDocument
-import com.storyteller_f.a.backend.service.isKeyVerified
-import com.storyteller_f.a.backend.service.savePlainTopic
+import com.storyteller_f.a.cloud.core.service.addTopicAtRoom
 import com.storyteller_f.a.cloud.core.service.addUserLog
-import com.storyteller_f.a.cloud.core.service.processTopicExtension
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserLogType
-import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.RoomFrame
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
-import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -121,97 +108,6 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
     } catch (e: Exception) {
         call.application.log.error("Catch exception in ws", e)
     }
-}
-
-private suspend fun Backend.addTopicAtRoom(
-    newTopic: NewRoomTopic,
-    uid: PrimaryKey,
-): Result<TopicInfo?> {
-    return when (newTopic.parentType) {
-        ObjectType.TOPIC -> {
-            exposedDatabase.topicDatabase.getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
-                if (type == ObjectType.ROOM) {
-                    addTopicIntoRoom(id, uid, newTopic)
-                } else {
-                    Result.failure(ForbiddenException())
-                }
-            }
-        }
-
-        ObjectType.ROOM -> {
-            addTopicIntoRoom(newTopic.parentId, uid, newTopic)
-        }
-
-        else -> {
-            Result.failure(ForbiddenException())
-        }
-    }
-}
-
-private suspend fun Backend.addTopicIntoRoom(
-    roomId: PrimaryKey,
-    uid: PrimaryKey,
-    newTopic: NewRoomTopic,
-): Result<TopicInfo?> {
-    val bytes = when (val c = newTopic.content) {
-        is TopicContent.Plain -> c.bytes
-        is TopicContent.Encrypted -> c.bytes
-        else -> throw CustomBadRequestException("unsupported type")
-    }
-    return exposedDatabase.containerDatabase.isMemberJoined(roomId, uid).mapResult { bool ->
-        if (bool) {
-            val content = newTopic.content
-            val newId = SnowflakeFactory.nextId()
-            exposedDatabase.roomData.checkRoomIsPrivate(roomId).mapResultIfNotNull { isPrivate ->
-                val topic = Topic(
-                    newId,
-                    now(),
-                    uid,
-                    roomId,
-                    ObjectType.ROOM,
-                    newTopic.parentId,
-                    newTopic.parentType,
-                    bytes,
-                    isPrivate,
-                    false,
-                    null
-                )
-                when {
-                    isPrivate -> saveEncryptedTopic(content, roomId, topic)
-                    content is TopicContent.Plain -> savePlainTopic(topic, content = content).map {
-                        topicSearchService.saveDocument(
-                            listOf(TopicDocument.Companion.fromTopic(topic, content))
-                        ).getOrThrow()
-                        it
-                    }
-
-                    else -> Result.failure(ForbiddenException("Public room only accept unencrypted content."))
-                }
-            }.mapResultIfNotNull { topicInfo ->
-                processTopicExtension(listOf(topicInfo), uid, false).mapIfNotNull {
-                    it.first()
-                }
-            }
-        } else {
-            Result.failure(ForbiddenException("Can't publish content before join room."))
-        }
-    }
-}
-
-private suspend fun Backend.saveEncryptedTopic(
-    content: TopicContent,
-    roomId: PrimaryKey,
-    topic: Topic,
-): Result<TopicInfo?> = if (content is TopicContent.Encrypted) {
-    isKeyVerified(roomId, content.encryptedKey).mapResult {
-        if (it) {
-            exposedDatabase.topicDatabase.saveEncryptedTopic(topic, content)
-        } else {
-            Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
-        }
-    }
-} else {
-    Result.failure(ForbiddenException("Private room only accept encrypted content."))
 }
 
 suspend fun DefaultWebSocketServerSession.processNewMessage(

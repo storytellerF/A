@@ -22,7 +22,6 @@ import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.deleteReaction
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 
 @Composable
@@ -82,7 +81,7 @@ fun InteractionRowInternal(
             }
             if (data.isNotEmpty()) {
                 data.getOrNull(index)?.let { info ->
-                    EmojiCell(topicInfo.id, info)
+                    EmojiCell(info, topicInfo)
                 }
             }
         }
@@ -224,9 +223,10 @@ private fun SubcomposeMeasureScope.measureFirstStage(
 
 @Composable
 private fun EmojiCell(
-    topicId: PrimaryKey,
-    info: ReactionInfo
+    info: ReactionInfo,
+    topicInfo: TopicInfo
 ) {
+    val topicId = topicInfo.id
     val scope = rememberCoroutineScope()
     val emoji = info.emoji
     val hasReacted = info.hasReacted
@@ -244,7 +244,8 @@ private fun EmojiCell(
                         sessionManager.deleteReaction(string, topicId).map {
                             bus.emit(
                                 OnRemoveReaction(
-                                    it
+                                    it,
+                                    topicInfo
                                 )
                             )
                         }
@@ -256,7 +257,8 @@ private fun EmojiCell(
                         sessionManager.addReaction(topicId, string).onSuccess {
                             bus.emit(
                                 OnAddReaction(
-                                    it
+                                    it,
+                                    topicInfo
                                 )
                             )
                         }

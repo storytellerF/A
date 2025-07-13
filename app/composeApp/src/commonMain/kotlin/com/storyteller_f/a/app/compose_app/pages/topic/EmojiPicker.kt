@@ -122,9 +122,7 @@ private fun EmojiItem(
             globalDialogController.useResult {
                 sessionManager.addReaction(topic.id, emoji.details.string).onSuccess {
                     bus.emit(
-                        OnAddReaction(
-                            it
-                        )
+                        OnAddReaction(it, topic)
                     )
                     sheetState.hide()
                 }

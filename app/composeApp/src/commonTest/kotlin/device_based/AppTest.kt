@@ -1,20 +1,28 @@
 package device_based
 
-import androidx.compose.runtime.*
-import androidx.compose.ui.test.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.runComposeUiTest
 import coil3.compose.LocalPlatformContext
 import com.storyteller_f.a.app.compose_app.AppInternal
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.shared.getPlatform
-import io.ktor.client.plugins.*
 import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
+import io.ktor.client.plugins.timeout
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
-
 
 class AppTest {
 
@@ -70,4 +78,3 @@ class AppTest {
         }
     }
 }
-

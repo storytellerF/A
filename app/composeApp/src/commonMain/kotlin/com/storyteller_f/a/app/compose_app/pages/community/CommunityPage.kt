@@ -42,6 +42,8 @@ import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.storage.DownloadInfo
+import com.storyteller_f.storage.DownloadStatus
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -68,13 +70,13 @@ fun CommunityPage(
 fun getCommunityFont(communityId: PrimaryKey): Typography {
     val model = createCommunityViewModel(communityId)
     val community by model.handler.data.collectAsState()
-    val fontFamily = community?.font?.let {
+    val fontFamily = community?.font?.let { fontId ->
         val downloadViewModel = LocalDownloadViewModel.current
         val loadingHandler by produceState<CachedLoadingHandler<DownloadInfo>?>(
             null,
-            it
+            fontId
         ) {
-            value = downloadViewModel.download(it.id.toString(), it)
+            value = downloadViewModel.download(fontId)
         }
         loadingHandler?.let { handler ->
             val state by handler.state.collectAsState()
@@ -362,14 +364,14 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                     null,
                     it
                 ) {
-                    value = downloadViewModel.download(it.id.toString(), it)
+                    value = downloadViewModel.download(it)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     loadingHandler?.let { handler ->
                         val state by handler.state.collectAsState()
                         val data by handler.data.collectAsState()
                         Text(it.name, modifier = Modifier.weight(1f))
-                        DownloadStatus(state, data)
+                        DownloadStatusView(state, data)
                     }
                 }
             }
@@ -379,7 +381,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
 }
 
 @Composable
-private fun DownloadStatus(
+private fun DownloadStatusView(
     state: LoadingState?,
     data: DownloadInfo?,
 ) {

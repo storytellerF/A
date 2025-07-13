@@ -43,7 +43,8 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.storage.StorageSource
+import com.storyteller_f.storage.DocumentStorage
+import com.storyteller_f.storage.Storage
 import com.storyteller_f.storage.createKotbaseStorageSource
 import com.strabled.composepreferences.ProvideDataStoreManager
 import com.strabled.composepreferences.setPreferences
@@ -98,7 +99,7 @@ val LocalToaster = compositionLocalOf<Toast> {
 }
 
 val LocalDatabase = compositionLocalOf {
-    StorageSource.EMPTY
+    Storage.EMPTY
 }
 
 val LocalSessionManager = compositionLocalOf<SessionManager> {
@@ -216,7 +217,7 @@ fun CommonEntry(
         } ?: mainUserSessionManager
         val address by currentUserSessionManager.address.collectAsState()
         val database = remember(address) {
-            createKotbaseStorageSource(address)
+            DocumentStorage(createKotbaseStorageSource(address))
         }
 
         val globalDialogController = remember {
@@ -310,7 +311,7 @@ private fun createAppSessionManager(
     }
     DisposableEffect(sessionManager) {
         val job = scope.launch {
-            sessionManager.start()
+            sessionManager.manager.start()
         }
         onDispose {
             job.cancel()
@@ -441,13 +442,9 @@ private suspend fun sendTopicNotification(
 }
 
 class CustomSessionManager(
-    manager: UserSessionManager,
+    val manager: UserSessionManager,
     val settings: Settings,
-) : UserSessionManager(
-    manager.client,
-    manager.webSocketClient,
-    manager.sessionModel
-)
+) : SessionManager by manager
 
 fun createCustomUserSessionManager(
     settingsName: String,

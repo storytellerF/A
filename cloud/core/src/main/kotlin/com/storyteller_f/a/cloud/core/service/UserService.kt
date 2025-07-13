@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.exposed.AID_LENGTH
 import com.storyteller_f.a.backend.exposed.USER_NICKNAME
+import com.storyteller_f.a.backend.exposed.isDup
 import com.storyteller_f.a.backend.exposed.tables.User
 import com.storyteller_f.a.backend.exposed.tables.UserLog
 import com.storyteller_f.a.backend.exposed.tables.UserTopicRead
@@ -17,6 +18,7 @@ import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
 import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.obj.NewDevice
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.UpdateUserRead
@@ -27,6 +29,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
 
 suspend fun Backend.updateUser(
@@ -205,3 +208,16 @@ suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: 
         }
     }
 }
+
+suspend fun addDevice(
+    backend: Backend,
+    uid: PrimaryKey,
+    newDevice: NewDevice
+): Result<Unit> =
+    backend.exposedDatabase.userDatabase.addDevice(uid, newDevice.endpointUrl).recoverResult {
+        if (it.isDup()) {
+            Result.success(Unit)
+        } else {
+            Result.failure(it)
+        }
+    }

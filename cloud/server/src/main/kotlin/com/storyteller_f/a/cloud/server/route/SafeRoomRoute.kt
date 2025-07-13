@@ -4,18 +4,16 @@ import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.server.invoke
 import com.storyteller_f.a.api.server.receiveBody
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.exposed.toJoinSearch
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.searchMembers
 import com.storyteller_f.a.backend.service.searchRoomPaginationResult
-import com.storyteller_f.a.cloud.core.service.checkRootReadPermission
 import com.storyteller_f.a.cloud.core.service.createRoom
 import com.storyteller_f.a.cloud.core.service.exitRoom
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getRoomPubKeys
 import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
 import com.storyteller_f.a.cloud.core.service.joinRoom
+import com.storyteller_f.a.cloud.core.service.searchRoomMembers
 import com.storyteller_f.a.cloud.core.service.updateRoom
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
@@ -25,7 +23,6 @@ import com.storyteller_f.a.cloud.server.common.PrimaryKeyPagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import io.ktor.server.routing.*
 
 fun Route.bindRoomRoute(backend: Backend) {
@@ -40,13 +37,7 @@ fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.Id.Members.get.invoke(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
-                backend.checkRootReadPermission(ObjectType.ROOM, p.id, uid).mapResultIfNotNull { permission ->
-                    if (permission.hasRead) {
-                        backend.searchMembers(p.id, q.word, f)
-                    } else {
-                        Result.failure(UnauthorizedException())
-                    }
-                }
+                searchRoomMembers(backend, p, uid, q, f)
             }
         }
     }

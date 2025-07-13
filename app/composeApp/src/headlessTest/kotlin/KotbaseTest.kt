@@ -1,9 +1,8 @@
 import com.storyteller_f.a.app.compose_app.common.SectionLoadParams
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.storage.StorageOrder
+import com.storyteller_f.storage.DocumentSourceOrder
 import com.storyteller_f.storage.createKotbaseStorageSource
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.Clock
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.ExperimentalTime
@@ -27,7 +26,7 @@ class KotbaseTest : UsingContextTest() {
         collection.saveDocument("2", CommunityInfo.EMPTY.copy(hasPoster = false, id = 2))
         collection.saveDocument("3", CommunityInfo.EMPTY.copy(hasPoster = true, id = 3))
         collection.saveDocument("4", CommunityInfo.EMPTY.copy(hasPoster = false, id = 4))
-        val deferred = collection.observeData(listOf(StorageOrder.Desc("hasPoster"), StorageOrder.Desc("id")), 10) {
+        val deferred = collection.observeData(listOf(DocumentSourceOrder.Desc("hasPoster"), DocumentSourceOrder.Desc("id")), 10) {
 
         }.deferred
         while (!deferred.isCompleted) {
@@ -36,6 +35,13 @@ class KotbaseTest : UsingContextTest() {
         val communityInfos = deferred.await()
         communityInfos.forEach {
             println("${it.hasPoster} ${it.id}")
+        }
+    }
+
+    @Test
+    fun `test activity`() {
+        onActivity {
+            println("activity")
         }
     }
 

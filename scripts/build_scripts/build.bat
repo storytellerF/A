@@ -1,10 +1,14 @@
 @echo off
-setlocal enabledelayedexpansion
+@setlocal enabledelayedexpansion
+
 set AVD_NAME=ATest
 cmd /c .\gradlew.bat build || exit /b
-cmd /c .\scripts\android_scripts\create-avd.bat || exit /b
-cmd /c .\scripts\android_scripts\start-wait-avd.bat || exit /b
 start cmd /c .\gradlew.bat app:devCli:run
+
+echo "create avd"
+cmd /c .\scripts\android_scripts\create-avd.bat || exit /b
+echo "start avd"
+cmd /c .\scripts\android_scripts\start-wait-avd.bat || exit /b
 
 echo Waiting for port 8888 to become available...
 :wait_for_port
@@ -21,6 +25,13 @@ cmd /c .\gradlew.bat app:composeApp:connectedAndroidTest || exit /b
 cmd /c .\gradlew.bat app:composeApp:desktopTest || exit /b
 @REM ./gradlew :composeApp:wasmJsTest
 @REM ./gradlew :composeApp:iosSimulatorArm64Test
-for /f "tokens=5" %%i in ('netstat -ano ^| findstr :8888') do taskkill /PID %%i /F
+for /f "delims=" %%i in ('netstat -ano ^| findstr :8888 ^| sort ^| findstr /r "[0-9][0-9]*$"') do (
+    for /f "tokens=5" %%j in ("%%i") do (
+        if not defined PID_%%j (
+            set PID_%%j=1
+            taskkill /PID %%j /F
+        )
+    )
+)
 
 adb emu kill
