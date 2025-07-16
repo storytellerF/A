@@ -10,8 +10,8 @@ on:
       - 'scripts/build_scripts/build-app-on-ci.sh'
       - 'scripts/tool_scripts/modify-flavor.sh'
       - 'gradle/**'
-      - 'crypto-jvm/**'
       - 'client/**'
+      - 'api/**'
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -36,17 +36,11 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Build mini app
-        run: ./scripts/build_scripts/build-app-on-ci.sh mini www.acommunity.link android
+      - name: Build alpha app
+        run: ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link android
 
-      - name: Build koyeb app
-        run: ./scripts/build_scripts/build-app-on-ci.sh koyeb respectable-jobie-anabn-3d54150c.koyeb.app/server/ android
-
-      - name: Build mini deb
-        run: ./scripts/build_scripts/build-app-on-ci.sh mini www.acommunity.link desktop-deb
-
-      - name: Build koyeb deb
-        run: ./scripts/build_scripts/build-app-on-ci.sh koyeb respectable-jobie-anabn-3d54150c.koyeb.app/server/ desktop-deb
+      - name: Build alpha deb
+        run: ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-deb
 
       - uses: actions/upload-artifact@v4
         with:
@@ -73,13 +67,9 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Build mini msi
+      - name: Build alpha msi
         run: |
-          & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh mini www.acommunity.link desktop-msi"
-
-      - name: Build koyeb msi
-        run: |
-          & "C:\\Program Files\\Git\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh koyeb respectable-jobie-anabn-3d54150c.koyeb.app/server/ desktop-msi"
+          & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-msi"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -105,11 +95,8 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Build mini msi
-        run: ./scripts/build_scripts/build-app-on-ci.sh mini www.acommunity.link desktop-dmg
-
-      - name: Build koyeb msi
-        run: ./scripts/build_scripts/build-app-on-ci.sh koyeb respectable-jobie-anabn-3d54150c.koyeb.app/server/ desktop-dmg
+      - name: Build alpha msi
+        run: ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-dmg
 
       - uses: actions/upload-artifact@v4
         with:
