@@ -34,7 +34,7 @@ services:
     labels:
       - "bunkerweb.INSTANCE=yes"
     environment:
-      - SERVER_NAME=www.acommunity.link ui.acommunity.link
+      - SERVER_NAME=api.acommunity.link ui.acommunity.link media.acommunity.link
       - MULTISITE=yes
       - DATABASE_URI=${BUNKER_DB_URI}
       - API_WHITELIST_IP=127.0.0.0/8 10.20.30.0/24
@@ -54,9 +54,12 @@ services:
       - ui.acommunity.link_REVERSE_PROXY_HOST=http://bw-ui:7000
       - ui.acommunity.link_INTERCEPTED_ERROR_CODES=400 404 405 413 429 500 501 502 503 504
       - ui.acommunity.link_MAX_CLIENT_SIZE=50m
-      - www.acommunity.link_REVERSE_PROXY_HOST=http://server:8811
-      - www.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
-      - www.acommunity.link_INTERCEPTED_ERROR_CODES=
+      - api.acommunity.link_REVERSE_PROXY_HOST=http://server:8811
+      - api.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
+      - api.acommunity.link_INTERCEPTED_ERROR_CODES=
+      - media.acommunity.link_REVERSE_PROXY_HOST=http://minio:9001
+      - media.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
+      - media.acommunity.link_INTERCEPTED_ERROR_CODES=
     networks:
       - bw-universe
       - bw-services
@@ -84,7 +87,7 @@ services:
     networks:
       - bw-docker
   bw-ui:
-    image: bunkerity/bunkerweb-ui:1.5.12
+    image: bunkerity/bunkerweb-ui:${BUNKER_VERSION}
     depends_on:
       - bw-docker
       - bw-db
