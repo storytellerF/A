@@ -121,8 +121,22 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    val reader = buildDatabaseReader()
-    val backend = buildBackend()
+   val backend = try {
+        buildBackend()
+    } catch(e: Exception) {
+        Napier.e(e, tag = "module") {
+            "buildBackend failed"
+        }
+        throw e
+    }
+    val reader = try {
+        buildDatabaseReader()
+    } catch(e: Exception) {
+        Napier.i(e, tag = "module") {
+            "buildDatabaseReader failed"
+        }   
+        throw e 
+    }
     if (backend.customConfig.buildType == "test") {
         runBlocking {
             ExposedDatabaseFactory.init(backend.database)

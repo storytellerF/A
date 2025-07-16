@@ -29,7 +29,6 @@ dependencies {
     implementation(libs.geoip2)
     implementation(libs.simplemagic)
     implementation(libs.pdfbox.layout)
-    implementation(libs.h2)
 
     implementation(projects.app.dev)
 }

@@ -12,4 +12,4 @@ services:
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
     volumes:
-      - ../preset_data:/app/deploy/preset_data
+      - ${PRESET_PATH}:/app/deploy/preset_data

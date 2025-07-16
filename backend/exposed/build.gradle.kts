@@ -8,7 +8,6 @@ version = "unspecified"
 dependencies {
     implementation(libs.napier)
     implementation(libs.bundles.exposed)
-    implementation(libs.postgresql)
 
     implementation(libs.kotlinx.coroutines.slf4j)
     implementation(projects.backend.core)
