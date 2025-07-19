@@ -383,7 +383,7 @@ class RoomDocumentStorage(
     val documentSource: DocumentSource
 ) : RoomStorage {
     override fun observeDatum(collectionName: CollectionName, id: PrimaryKey): Flow<RoomInfo?> {
-        require(collectionName is CollectionName.Titles)
+        require(collectionName is CollectionName.Rooms)
         return documentSource.getCollection<RoomInfo>(collectionName.getName()).observeDatum(id)
     }
 
@@ -430,7 +430,7 @@ class RoomDocumentStorage(
         collectionName: CollectionName,
         key: String
     ): Flow<RoomInfo?> {
-        require(collectionName is CollectionName.Titles)
+        require(collectionName is CollectionName.Rooms)
         return documentSource.getCollection<RoomInfo>(collectionName.getName()).observeDatum(
             DocumentExpression.StrEq("aid", key)
         )

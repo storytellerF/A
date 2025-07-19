@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -20,9 +19,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.mikepenz.markdown.model.ImageData
 import com.storyteller_f.a.app.compose_app.LocalClient
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
-import kotlinx.coroutines.launch
 
 @Composable
 fun CommonImage(
@@ -39,21 +36,15 @@ fun CommonImage(
             ImageLoading()
         },
         error = {
-            ImageError(it.result.throwable)
+            ImageError()
         },
         contentScale = contentScale
     )
 }
 
 @Composable
-fun ImageError(throwable: Throwable) {
-    val globalDialogController = com.storyteller_f.a.app.compose_app.LocalGlobalDialog.current
-    val scope = rememberCoroutineScope()
-    CustomIcon(IconRes.Font(com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined.Error)) {
-        scope.launch {
-            globalDialogController.showErrorMessage(throwable)
-        }
-    }
+fun ImageError() {
+    CustomIcon(IconRes.Font(MaterialSymbolsOutlined.Error))
 }
 
 @Composable
@@ -65,10 +56,10 @@ fun ImageLoading() {
 
 @Composable
 fun globalLoader(url: String): ImageRequest {
-    val client = com.storyteller_f.a.app.compose_app.LocalClient.current
+    val client = LocalClient.current
     val platformContext = LocalPlatformContext.current
     return remember(url) {
-        ImageRequest.Builder(platformContext).data(url).crossfade(true).fetcherFactory(
+        ImageRequest.Builder(platformContext).data(url.replace("http://", "https://")).crossfade(true).fetcherFactory(
             KtorNetworkFetcherFactory(client)
         ).build()
     }
@@ -98,7 +89,7 @@ fun CustomMarkdownImage(imageData: ImageData) {
             }
 
             is AsyncImagePainter.State.Error -> {
-                ImageError(s.result.throwable)
+                ImageError()
             }
         }
     } else {
