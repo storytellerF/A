@@ -43,9 +43,6 @@ dependencies {
     implementation(libs.pdfbox.layout)
     implementation(libs.micrometer.registry.prometheus)
 
-    //runtimeOnly(libs.h2)
-    runtimeOnly(libs.postgresql)
-
     @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")
     testImplementation(libs.mysql.connector.java)
     testImplementation(projects.client.core)
