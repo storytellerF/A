@@ -34,7 +34,7 @@ services:
     labels:
       - "bunkerweb.INSTANCE=yes"
     environment:
-      - SERVER_NAME=api.acommunity.link ui.acommunity.link media.acommunity.link minio.acommunity.link
+      - SERVER_NAME=api.acommunity.link ui.acommunity.link media.acommunity.link minio.acommunity.link adminer.acommunity.link grafana.acommunity.link
       - MULTISITE=yes
       - DATABASE_URI=${BUNKER_DB_URI}
       - API_WHITELIST_IP=127.0.0.0/8 10.20.30.0/24
@@ -54,15 +54,21 @@ services:
       - ui.acommunity.link_REVERSE_PROXY_HOST=http://bw-ui:7000
       - ui.acommunity.link_INTERCEPTED_ERROR_CODES=400 404 405 413 429 500 501 502 503 504
       - ui.acommunity.link_MAX_CLIENT_SIZE=50m
-      - api.acommunity.link_REVERSE_PROXY_HOST=http://server:8811
+      - api.acommunity.link_REVERSE_PROXY_HOST=http://server:${SERVER_PORT}
       - api.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
       - api.acommunity.link_INTERCEPTED_ERROR_CODES=
-      - media.acommunity.link_REVERSE_PROXY_HOST=http://minio:9000
+      - media.acommunity.link_REVERSE_PROXY_HOST=http://minio:${MINIO_PORT}
       - media.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
       - media.acommunity.link_INTERCEPTED_ERROR_CODES=
-      - minio.acommunity.link_REVERSE_PROXY_HOST=http://minio:9001
+      - minio.acommunity.link_REVERSE_PROXY_HOST=http://minio:${MINIO_CONSOLE_PORT}
       - minio.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
       - minio.acommunity.link_INTERCEPTED_ERROR_CODES=
+      - adminer.acommunity.link_REVERSE_PROXY_HOST=http://adminer:${DATABASE_FRONT_PORT}
+      - adminer.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
+      - adminer.acommunity.link_INTERCEPTED_ERROR_CODES=
+      - grafana.acommunity.link_REVERSE_PROXY_HOST=http://grafana:3000
+      - grafana.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
+      - grafana.acommunity.link_INTERCEPTED_ERROR_CODES=
     networks:
       - bw-universe
       - bw-services
