@@ -55,33 +55,46 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
     description = "Merge SPI files from dependencies into a single output"
 
     val outputDir = layout.buildDirectory.dir("merged/services")
+
+    inputs.files(configurations.runtimeClasspath)
+    outputs.dir(outputDir)
     doLast {
 
         // Iterate through each jar/zip in runtimeClasspath
         val output = outputDir.get().asFile
         output.mkdirs()
         configurations.runtimeClasspath.get().flatMap { file ->
-            if (file.isFile && file.name.endsWith(".jar") && file.name.startsWith("lucene")) {
-                zipTree(file).filter {
-                    it.name.startsWith("org.apache.lucene.codecs")
-                }.map { serviceFile ->
-                    val serviceName = serviceFile.name
-                    val serviceContent =
-                        serviceFile.readText().lines().filter { it.startsWith("org.apache.lucene") }
-                    serviceName to serviceContent
+            when {
+                !file.isFile || !file.name.endsWith(".jar") -> {
+                    emptyList()
                 }
-            } else {
-                emptyList()
+
+                file.name.startsWith("lucene") -> {
+                    extractServiceContent(file, "org.apache.lucene.codecs", "org.apache.lucene")
+                }
+
+                file.name.startsWith("r2dbc") -> {
+                    extractServiceContent(
+                        file,
+                        "io.r2dbc.spi.ConnectionFactoryProvider",
+                        "io.r2dbc"
+                    )
+                }
+
+                else -> emptyList()
             }
         }.groupBy {
             it.first
-        }.forEach { entry ->
-            val outputFile = output.resolve("META-INF/services/${entry.key}")
+        }.forEach { (serviceName, fragments) ->
+            val outputFile = output.resolve("META-INF/services/${serviceName}")
             outputFile.parentFile.mkdirs()
 
-            outputFile.writeText(entry.value.flatMap {
-                it.second
-            }.joinToString("\n"))
+            val newContent = fragments.flatMap { it.second }.joinToString("\n")
+
+            // ✨ Only write if content differs
+            if (!outputFile.exists() || outputFile.readText() != newContent) {
+                outputFile.writeText(newContent)
+            }
         }
     }
 }
@@ -103,4 +116,19 @@ jmh {
     warmupIterations = 2
     iterations = 2
     fork = 2
+}
+
+fun extractServiceContent(
+    file: File,
+    serviceFullName: String,
+    keyword: String
+): List<Pair<String?, List<String>>> {
+    return zipTree(file).filter {
+        it.name.startsWith(serviceFullName)
+    }.map { serviceFile ->
+        val serviceName = serviceFile.name
+        val serviceContent =
+            serviceFile.readText().lines().filter { it.startsWith(keyword) }
+        serviceName to serviceContent
+    }
 }

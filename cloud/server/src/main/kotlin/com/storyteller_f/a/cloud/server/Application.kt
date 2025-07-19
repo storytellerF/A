@@ -121,9 +121,9 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-   val backend = try {
+    val backend = try {
         buildBackend()
-    } catch(e: Exception) {
+    } catch (e: Exception) {
         Napier.e(e, tag = "module") {
             "buildBackend failed"
         }
@@ -131,11 +131,11 @@ fun Application.module() {
     }
     val reader = try {
         buildDatabaseReader()
-    } catch(e: Exception) {
+    } catch (e: Exception) {
         Napier.i(e, tag = "module") {
             "buildDatabaseReader failed"
-        }   
-        throw e 
+        }
+        throw e
     }
     if (backend.customConfig.buildType == "test") {
         runBlocking {
