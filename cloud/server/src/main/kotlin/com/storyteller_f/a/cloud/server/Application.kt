@@ -32,6 +32,7 @@ import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.a.backend.service.readEnv
 import com.storyteller_f.a.backend.service.topicDocumentService
 import com.storyteller_f.a.cloud.server.auth.UserSession
+import io.ktor.util.toMap
 import com.storyteller_f.a.cloud.server.auth.configureAuth
 import com.storyteller_f.a.cloud.server.auth.getRateLimitKey
 import com.storyteller_f.a.cloud.server.route.configureRoute
@@ -248,6 +249,7 @@ private fun buildLog(
     return """Status: $status, HTTP method: $httpMethod, 
                 |Url: ${call.request.uri},
                 |Query: ${call.request.queryString()}
+                |Headers: ${call.request.headers.toMap()}
                 |Ip：$ipList}""".trimMargin()
 }
 
