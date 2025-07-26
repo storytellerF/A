@@ -23,6 +23,12 @@ services:
   minio:
     networks:
       - bw-services
+  adminer:
+    networks:
+      - bw-services
+  grafana:
+    networks:
+      - bw-services
 
   bunkerweb:
     image: bunkerity/bunkerweb:${BUNKER_VERSION}
@@ -35,30 +41,32 @@ services:
       - "bunkerweb.INSTANCE=yes"
     environment:
       - SERVER_NAME=api.acommunity.link ui.acommunity.link media.acommunity.link minio.acommunity.link adminer.acommunity.link grafana.acommunity.link
-      - MULTISITE=yes
       - DATABASE_URI=${BUNKER_DB_URI}
       - API_WHITELIST_IP=127.0.0.0/8 10.20.30.0/24
+      - DISABLE_DEFAULT_SERVER=yes
+      - SERVE_FILES=no
+      - MULTISITE=yes
       - USE_REVERSE_PROXY=yes
       - REVERSE_PROXY_URL=/
+      - REVERSE_PROXY_WS=yes
+      - USE_REAL_IP=yes
+      - USE_PROXY_PROTOCOL=yes
+      - REAL_IP_HEADER=proxy_protocol
       - AUTO_LETS_ENCRYPT=yes
       - EMAIL_LETS_ENCRYPT=34095089+storytellerF@users.noreply.github.com
       - LETS_ENCRYPT_CLEAR_OLD_CERTS=yes
-      - DISABLE_DEFAULT_SERVER=yes
       - USE_LIMIT_REQ=no
-      - SERVE_FILES=no
-      - REVERSE_PROXY_WS=yes
-      - USE_BAD_BEHAVIOR=yes
-      - BAD_BEHAVIOR_STATUS_CODES=400 403 404 405 429 444
+      - USE_BAD_BEHAVIOR=no
       - USE_MODSECURITY_CRS=no
       - ui.acommunity.link_USE_UI=yes
       - ui.acommunity.link_REVERSE_PROXY_HOST=http://bw-ui:7000
-      - ui.acommunity.link_INTERCEPTED_ERROR_CODES=400 404 405 413 429 500 501 502 503 504
       - ui.acommunity.link_MAX_CLIENT_SIZE=50m
       - api.acommunity.link_REVERSE_PROXY_HOST=http://server:${SERVER_PORT}
       - api.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
       - api.acommunity.link_INTERCEPTED_ERROR_CODES=
       - media.acommunity.link_REVERSE_PROXY_HOST=http://minio:${MINIO_PORT}
       - media.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
+      - media.acommunity.link_REVERSE_PROXY_CUSTOM_HOST=minio:9000
       - media.acommunity.link_INTERCEPTED_ERROR_CODES=
       - minio.acommunity.link_REVERSE_PROXY_HOST=http://minio:${MINIO_CONSOLE_PORT}
       - minio.acommunity.link_REVERSE_PROXY_INTERCEPT_ERRORS=no
