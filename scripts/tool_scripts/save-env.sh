@@ -19,6 +19,6 @@ while IFS= read -r key; do
   else
       echo "$upper_key=$value" >> "$OUTPUT_FILE"
   fi
-done < "env-filter"
+done < "env.filter"
 
 echo "$FLAVOR.env 文件已生成。"

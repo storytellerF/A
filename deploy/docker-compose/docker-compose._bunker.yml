@@ -1,0 +1,27 @@
+networks:
+  bw-services:
+    external: true
+    name: bw-services
+
+services:
+  server:
+    networks:
+      - bw-services
+  pg:
+    networks:
+      - bw-services
+  minio:
+    networks:
+      - bw-services
+  adminer:
+    networks:
+      - bw-services
+  grafana:
+    networks:
+      - bw-services
+  prometheus:
+    networks:
+      - bw-services
+  pg-exporter:
+    networks:
+      - bw-services

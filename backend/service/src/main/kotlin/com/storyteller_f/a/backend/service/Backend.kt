@@ -55,11 +55,11 @@ class MergedEnv(val list: List<Map<String, String>>) {
 
 fun readEnv(envMap: Map<String, String>? = null) = MergedEnv(
     listOfNotNull(
-        envMap,
-        System.getenv(),
-        readFileEnv("../../${BackendConfig.FLAVOR}.env"),
-        readFileEnv(".env"),
-        readResourceEnv(".env"),
+        envMap,//测试时手动传递
+        System.getenv(),//正式部署
+        readFileEnv("../../${BackendConfig.FLAVOR}.env"),//本地开发
+        readFileEnv(".env"),//koyeb 部署
+        readResourceEnv(".env"),//测试
     )
 )
 

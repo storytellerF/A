@@ -41,7 +41,7 @@ while IFS= read -r key; do
 
         replace_string_3+="ARG $clean_key${newline}"
     fi
-done < "env-filter"
+done < "koyeb-env.filter"
 
 # 完成 COPY 块的 EOF 部分
 replace_string_2+="EOF\nRUN mkdir -p build/envs \&\& cp ./\${FLAVOR}.env ./build/envs/.env"
