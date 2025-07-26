@@ -11,4 +11,4 @@ scrape_configs:
       - targets: [ 'pg-exporter:9187' ]
   - job_name: 'server'
     static_configs:
-        - targets: [ 'server:80' ]
+      - targets: [ 'server' ]

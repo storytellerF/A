@@ -1,12 +1,11 @@
 services:
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana
     ports:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASS}
     depends_on:
       - prometheus
     volumes:
@@ -15,7 +14,6 @@ services:
       - ../grafana/dashboards:/etc/grafana/dashboards
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
     ports:
       - "9090:9090"
     volumes:

@@ -10,6 +10,6 @@ services:
     env_file:
       - ../../${FLAVOR}.env
     ports:
-      - ${SERVER_PORT}:${SERVER_PORT}
+      - ${SERVER_EXPOSE_PORT}:${SERVER_PORT}
     volumes:
       - ${PRESET_PATH}:/app/deploy/preset_data
