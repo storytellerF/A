@@ -19,32 +19,40 @@ import com.storyteller_f.shared.utils.md5
 fun createSearchCommunitiesViewModel(
     finalOption: JoinStatusSearch,
     query: String,
-) = viewModel(
-    keys = listOf("search-community", finalOption.name, query)
-) { client, databaseSource ->
-    CommunitiesViewModel(client, databaseSource, finalOption, query)
+): CommunitiesViewModel {
+    val json = LocalJson.current
+    return viewModel(
+        keys = listOf("search-community", finalOption.name, query)
+    ) { client, databaseSource ->
+        CommunitiesViewModel(client, json = json, databaseSource, finalOption, query)
+    }
 }
 
 @Composable
-fun createJoinedCommunitiesViewModel() =
-    viewModel(
+fun createJoinedCommunitiesViewModel(): CommunitiesViewModel {
+    val json = LocalJson.current
+    return viewModel(
         keys = listOf("joined-communities")
     ) { client, databaseSource ->
-        CommunitiesViewModel(client, databaseSource, JoinStatusSearch.JOINED, "")
+        CommunitiesViewModel(client, json = json, databaseSource, JoinStatusSearch.JOINED)
     }
+}
 
 @Composable
 fun createTargetUserJoinedCommunitiesViewModel(
     target: PrimaryKey,
     word: String = "",
-) = viewModel(
-    keys = listOf(
-        "communities",
-        target,
-        word
-    )
-) { client, databaseSource ->
-    CommunitiesViewModel(client, databaseSource, JoinStatusSearch.JOINED, word, target)
+): CommunitiesViewModel {
+    val json = LocalJson.current
+    return viewModel(
+        keys = listOf(
+            "communities",
+            target,
+            word
+        )
+    ) { client, databaseSource ->
+        CommunitiesViewModel(client, json, databaseSource, JoinStatusSearch.JOINED, word, target)
+    }
 }
 
 @Composable
@@ -78,13 +86,13 @@ fun createCommunityRoomsViewModel(communityId: PrimaryKey) =
             communityId
         )
     ) { client, databaseSource ->
-        RoomsViewModel(client, databaseSource, JoinStatusSearch.UNSPECIFIED, "", communityId)
+        RoomsViewModel(client, databaseSource, JoinStatusSearch.UNSPECIFIED, community = communityId)
     }
 
 @Composable
 fun createJoinedRoomsViewModel() =
     viewModel { client, databaseSource ->
-        RoomsViewModel(client, databaseSource, JoinStatusSearch.JOINED, "")
+        RoomsViewModel(client, databaseSource, JoinStatusSearch.JOINED)
     }
 
 @Composable
@@ -151,35 +159,41 @@ fun createRoomViewModel(roomAid: String) =
     }
 
 @Composable
-fun createRoomTopicsViewModel(roomId: PrimaryKey) =
-    viewModel(
+fun createRoomTopicsViewModel(roomId: PrimaryKey): TopicsViewModel {
+    val json = LocalJson.current
+    return viewModel(
         keys = listOf(
             "room-topics",
             roomId
         )
     ) { client, databaseSource ->
-        TopicsViewModel(client, databaseSource, roomId, ObjectType.ROOM)
+        TopicsViewModel(client, databaseSource, roomId, ObjectType.ROOM, json)
     }
+}
 
 @Composable
 fun createCommunityTopicsViewModel(communityId: PrimaryKey): TopicsViewModel {
+    val json = LocalJson.current
     return viewModel<TopicsViewModel>(
         keys = listOf("community-topics", communityId)
     ) { client, databaseSource ->
-        TopicsViewModel(client, databaseSource, communityId, ObjectType.COMMUNITY)
+        TopicsViewModel(client, databaseSource, communityId, ObjectType.COMMUNITY, json)
     }
 }
 
 @Composable
 fun createUserTopicsViewModel(
     uid: PrimaryKey,
-) = viewModel(
-    keys = listOf(
-        "user-topics",
-        uid
-    )
-) { client, databaseSource ->
-    TopicsViewModel(client, databaseSource, uid, ObjectType.USER)
+): TopicsViewModel {
+    val json = LocalJson.current
+    return viewModel(
+        keys = listOf(
+            "user-topics",
+            uid
+        )
+    ) { client, databaseSource ->
+        TopicsViewModel(client, databaseSource, uid, ObjectType.USER, json)
+    }
 }
 
 @Composable
@@ -270,15 +284,17 @@ fun createTopicViewModel(topicId: PrimaryKey) =
     }
 
 @Composable
-fun createTopicsInTopicViewModel(topicId: PrimaryKey) =
-    viewModel(
+fun createTopicsInTopicViewModel(topicId: PrimaryKey): TopicsViewModel {
+    val json = LocalJson.current
+    return viewModel(
         keys = listOf(
             "topic-topics",
             topicId
         )
     ) { client, databaseSource ->
-        TopicsViewModel(client, databaseSource, topicId, ObjectType.TOPIC)
+        TopicsViewModel(client, databaseSource, topicId, ObjectType.TOPIC, json)
     }
+}
 
 @Composable
 fun createTopicViewModel(topicAid: String) =
@@ -381,12 +397,14 @@ fun createUserViewModel(userId: PrimaryKey) =
     }
 
 @Composable
-fun createWorldViewModel() =
-    viewModel(
+fun createWorldViewModel(): WorldViewModel {
+    val json = LocalJson.current
+    return viewModel(
         keys = listOf("world")
     ) { client, databaseSource ->
-        WorldViewModel(client, databaseSource)
+        WorldViewModel(client, databaseSource, json)
     }
+}
 
 @Composable
 fun createReactionsViewModel(objectId: PrimaryKey): ReactionsViewModel {

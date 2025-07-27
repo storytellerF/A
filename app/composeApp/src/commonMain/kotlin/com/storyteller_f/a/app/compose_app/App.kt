@@ -216,24 +216,25 @@ fun CommonEntry(
             sessionManager
         } ?: mainUserSessionManager
         val address by currentUserSessionManager.address.collectAsState()
+        val json = remember {
+            Json {
+                ignoreUnknownKeys = true
+            }
+        }
         val database = remember(address) {
-            DocumentStorage(createKotbaseStorageSource(address))
+            DocumentStorage(createKotbaseStorageSource(address, json), json)
         }
 
         val globalDialogController = remember {
             CustomGlobalDialogController()
         }
         val toasterState = rememberToasterState()
-        val json = remember {
-            Json {
-                ignoreUnknownKeys = true
-            }
-        }
+
         LaunchedEffect(database) {
             processEvent(database)
         }
         GlobalDialog(globalDialogController)
-        Toaster(toasterState, alignment = Alignment.Center)
+        Toaster(toasterState, alignment = Alignment.TopCenter)
         CompositionLocalProvider(
             LocalClient provides currentUserSessionManager.client,
             LocalWsClient provides currentUserSessionManager.webSocketClient,

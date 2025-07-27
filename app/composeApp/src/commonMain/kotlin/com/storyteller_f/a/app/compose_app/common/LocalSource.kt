@@ -17,10 +17,10 @@ import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 
 class CachedLoadingHandler<T : Any>(
+    flow: Flow<T?>,
     private val scope: CoroutineScope,
-    private val loader: suspend () -> Result<T>,
     private val onSaveDocument: (T) -> Unit,
-    flow: Flow<T?>
+    private val loader: suspend () -> Result<T>
 ) : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
 
@@ -38,14 +38,6 @@ class CachedLoadingHandler<T : Any>(
         } catch (e: Exception) {
             error(e)
         }
-    }
-
-    override fun error(error: Throwable) {
-        state.markError(error)
-    }
-
-    override fun update(t: T) {
-        done(t)
     }
 
     override fun refresh() {
@@ -214,12 +206,8 @@ class CustomRemoteMediator<Datum : Any>(
 class IntermediatePagingSource<Key : Any, T : Any>(
     val sectionPagingSource: PagingSource<Key, T>,
     val clazz: KClass<Key>,
+    val json: Json
 ) : PagingSource<String, T>() {
-    companion object {
-        val json by lazy {
-            Json { }
-        }
-    }
 
     override fun getRefreshKey(state: PagingState<String, T>): String? {
         return null

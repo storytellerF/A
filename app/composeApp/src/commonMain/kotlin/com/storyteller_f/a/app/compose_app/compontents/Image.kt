@@ -17,9 +17,19 @@ import coil3.compose.SubcomposeAsyncImage
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.ashampoo.kim.Kim
+import com.ashampoo.kim.common.convertToPhotoMetadata
 import com.mikepenz.markdown.model.ImageData
 import com.storyteller_f.a.app.compose_app.LocalClient
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
+import com.storyteller_f.shared.model.Dimension
+import com.storyteller_f.shared.model.MediaInfo
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readByteArray
+import kotlin.use
 
 @Composable
 fun CommonImage(
@@ -70,7 +80,7 @@ fun CustomMarkdownImage(imageData: ImageData) {
     val painter = imageData.painter
     if (painter is AsyncImagePainter) {
         val state by painter.state.collectAsState()
-        when (val s = state) {
+        when (state) {
             is AsyncImagePainter.State.Empty,
             is AsyncImagePainter.State.Loading -> {
                 ImageLoading()
@@ -103,4 +113,24 @@ fun CustomMarkdownImage(imageData: ImageData) {
             colorFilter = imageData.colorFilter
         )
     }
+}
+
+fun getImageDimension(
+    value: String,
+    mediaMap: ImmutableMap<String, MediaInfo>,
+): Dimension? {
+    if (!value.startsWith("file:///")) {
+        return mediaMap[value]?.dimension
+    }
+
+    val metadata = SystemFileSystem.source(Path(value.substring(7))).buffered().use {
+        Kim.readMetadata(it.readByteArray())?.convertToPhotoMetadata()
+    } ?: return null
+
+    val widthPx = metadata.widthPx
+    val heightPx = metadata.heightPx
+    if (widthPx == null || heightPx == null) {
+        return null
+    }
+    return Dimension(widthPx, heightPx)
 }

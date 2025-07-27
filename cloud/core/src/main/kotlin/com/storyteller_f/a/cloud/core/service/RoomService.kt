@@ -290,19 +290,17 @@ suspend fun Backend.addTopicIntoRoom(
                 )
                 when {
                     isPrivate -> saveEncryptedTopic(content, roomId, topic)
-                    content is TopicContent.Plain -> savePlainTopic(topic, content = content).map {
+                    content is TopicContent.Plain -> {
                         topicSearchService.saveDocument(
-                            listOf(TopicDocument.Companion.fromTopic(topic, content))
+                            listOf(TopicDocument.fromTopic(topic, content))
                         ).getOrThrow()
-                        it
+                        savePlainTopic(topic, content = content)
                     }
 
                     else -> Result.failure(ForbiddenException("Public room only accept unencrypted content."))
                 }
             }.mapResultIfNotNull { topicInfo ->
-                processTopicExtension(listOf(topicInfo), uid, false).mapIfNotNull {
-                    it.first()
-                }
+                processTopicAfterCreate(topicInfo, uid)
             }
         } else {
             Result.failure(ForbiddenException("Can't publish content before join room."))

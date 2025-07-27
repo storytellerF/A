@@ -3,6 +3,7 @@ package com.storyteller_f.a.app.compose_app.compontents
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -133,6 +134,8 @@ fun BoxScope.PlayerWaiting(
     if (coverMediaInfo != null) {
         val request = imageRequestInMarkdown(coverMediaInfo)
         AsyncImage(request, contentDescription = "cover", modifier = Modifier.fillMaxSize())
+    } else {
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh).fillMaxSize())
     }
     val scope = rememberCoroutineScope()
     val client = remember {

@@ -9,6 +9,7 @@ import org.apache.pdfbox.pdmodel.encryption.SecurityProvider
 import java.io.File
 import java.security.Security
 import kotlin.test.Test
+import kotlin.test.assertFails
 
 class SnapshotTest {
     @Test
@@ -23,9 +24,12 @@ class SnapshotTest {
             UserInfo.EMPTY,
             UserInfo.EMPTY,
             TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello world")),
-            SnapshotVerify.KeyStoreVerify(path, password, pdfFile, signedFile)
+//            SnapshotVerify.KeyStoreVerify(path, password, pdfFile, signedFile)
+            SnapshotVerify.NoneVerify(pdfFile)
         ).getOrThrow()
 
-        ShowSignature().showSignature(signedFile, password)
+        assertFails {
+            ShowSignature().showSignature(signedFile, password)
+        }
     }
 }

@@ -76,7 +76,10 @@ fun TopicCellInternal(
                     Modifier.padding(horizontal = 8.dp)
                 } else {
                     Modifier.fillMaxWidth().padding(start = 48.dp, end = 8.dp)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHigh,
+                            RoundedCornerShape(8.dp)
+                        )
                         .padding(horizontal = 12.dp).padding(top = 8.dp, bottom = 12.dp)
                 },
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -108,17 +111,21 @@ private fun SubTopics(topicInfo: TopicInfo) {
     if (topics.isNotEmpty()) {
         Column(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(10.dp))
+                .background(
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                    RoundedCornerShape(10.dp)
+                )
                 .padding(8.dp)
         ) {
             repeat(topics.size) {
                 val info = topics[it]
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    info.extension?.authorInfo?.nickname?.let { nickname -> Text("$nickname:") }
+                    val userInfo = info.extension?.authorInfo
+                    UserIcon(userInfo, size = 20.dp)
                     when (val content = info.content) {
                         is TopicContent.Extracted -> {
                             Text(content.plain, maxLines = 1)

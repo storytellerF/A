@@ -98,7 +98,7 @@ class WebSocketClientImpl(
             }
 
             is LoadingState.Error -> {}
-            null -> {}
+            else -> {}
         }
         try {
             val session = buildConnection(userInfo, sig)

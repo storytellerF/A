@@ -58,12 +58,13 @@ class ExposedTopicDatabase(
     ): Result<TopicInfo?> {
         return exposedDatabaseSession.dbSearch {
             search {
-                Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId).select(Topics.fields + Aids.value).where {
-                    when (fetch) {
-                        is ObjectFetch.IdFetch -> Topics.id eq fetch.id
-                        is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
+                Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+                    .select(Topics.fields + Aids.value).where {
+                        when (fetch) {
+                            is ObjectFetch.IdFetch -> Topics.id eq fetch.id
+                            is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
+                        }
                     }
-                }
             }
             first(Topic::wrapRow)
         }.mapResultIfNotNull { topic ->
@@ -89,14 +90,16 @@ class ExposedTopicDatabase(
         }
     }
 
-    override suspend fun getTopicPaginationResultByPredicate(
+    override suspend fun getTopicInfoPaginationByPredicate(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         extraQuery: Query.() -> Query,
     ): Result<PaginationResult<TopicInfo>> {
-        return getTopicInfoListByPredicate(uid) {
-            extraQuery().bindPaginationQuery(Topics, primaryKeyFetch)
-        }.mapResult { data ->
+        return merge({
+            getTopicInfoListByPredicate(uid) {
+                extraQuery().bindPaginationQuery(Topics, primaryKeyFetch)
+            }
+        }, {
             exposedDatabaseSession.dbSearch {
                 search {
                     Topics
@@ -104,9 +107,9 @@ class ExposedTopicDatabase(
                         .extraQuery()
                 }
                 count()
-            }.map { count ->
-                PaginationResult(data, count)
             }
+        }).map {
+            PaginationResult(it.first, it.second)
         }
     }
 
@@ -337,7 +340,10 @@ class ExposedTopicDatabase(
         return exposedDatabaseSession.dbSearch {
             search {
                 buildReactionInfoQuery(objectId, reactionFetch).limit(reactionFetch.size)
-                    .orderBy(Reactions.count to SortOrder.DESC, Reactions.lastReactionId to SortOrder.ASC)
+                    .orderBy(
+                        Reactions.count to SortOrder.DESC,
+                        Reactions.lastReactionId to SortOrder.ASC
+                    )
             }
             map(Reaction::wrapRow)
         }.mapResult { list ->

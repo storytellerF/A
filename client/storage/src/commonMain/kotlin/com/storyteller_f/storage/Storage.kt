@@ -11,11 +11,13 @@ import com.storyteller_f.shared.model.TitleStatus
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 interface DocumentObservable<T> {
     val deferred: CompletableDeferred<List<T>>
@@ -103,6 +105,14 @@ sealed interface CollectionName {
         override fun getName(): String {
             return "reactions_$objectId"
         }
+
+        fun encodeKey(json: Json, it: ReactionInfo): String {
+            return json.encodeToString(ReactionCursorKey(it.count, it.lastReactionId))
+        }
+
+        fun decodeKey(json: Json, key: String): ReactionCursorKey {
+            return json.decodeFromString(key)
+        }
     }
 
     data class SearchTitle(
@@ -151,15 +161,15 @@ sealed interface CollectionName {
 @Serializable
 data class RemoteKeys(val collectionName: String, val key: String?)
 
-interface CommonStorage<T> {
+interface SaveStorage<T> {
     fun save(collectionName: CollectionName, t: T)
 }
 
-interface CustomStorage3<T> {
+interface ObservePrimaryKeyDatumStorage<T> {
     fun observeDatum(collectionName: CollectionName, id: PrimaryKey): Flow<T?>
 }
 
-interface CustomStorage1<T> {
+interface ObserveDataStorage<T> {
     fun observeData(
         collectionName: CollectionName,
         key: String?,
@@ -168,11 +178,11 @@ interface CustomStorage1<T> {
     ): DocumentObservable<T>
 }
 
-interface CustomStorage2<T> {
+interface ObserveDatumStorage<T> {
     fun observeDatum(collectionName: CollectionName, key: String): Flow<T?>
 }
 
-interface CustomStorage4<T> {
+interface GetStorage<T> {
     fun getDocument(collectionName: CollectionName, id: PrimaryKey): T?
 }
 
@@ -214,31 +224,31 @@ interface Storage {
     }
 }
 
-interface UserStorage : CommonStorage<UserInfo>, CustomStorage1<UserInfo>, CustomStorage2<UserInfo>,
-    CustomStorage3<UserInfo>
+interface UserStorage : SaveStorage<UserInfo>, ObserveDataStorage<UserInfo>, ObserveDatumStorage<UserInfo>,
+    ObservePrimaryKeyDatumStorage<UserInfo>
 
-interface CommunityStorage : CommonStorage<CommunityInfo>, CustomStorage1<CommunityInfo>,
-    CustomStorage2<CommunityInfo>, CustomStorage3<CommunityInfo>, CustomStorage4<CommunityInfo>
+interface CommunityStorage : SaveStorage<CommunityInfo>, ObserveDataStorage<CommunityInfo>,
+    ObserveDatumStorage<CommunityInfo>, ObservePrimaryKeyDatumStorage<CommunityInfo>, GetStorage<CommunityInfo>
 
-interface TopicStorage : CommonStorage<TopicInfo>, CustomStorage1<TopicInfo>,
-    CustomStorage2<TopicInfo>, CustomStorage3<TopicInfo>, CustomStorage4<TopicInfo>
+interface TopicStorage : SaveStorage<TopicInfo>, ObserveDataStorage<TopicInfo>,
+    ObserveDatumStorage<TopicInfo>, ObservePrimaryKeyDatumStorage<TopicInfo>, GetStorage<TopicInfo>
 
-interface TitleStorage : CommonStorage<TitleInfo>, CustomStorage1<TitleInfo>,
-    CustomStorage3<TitleInfo>
+interface TitleStorage : SaveStorage<TitleInfo>, ObserveDataStorage<TitleInfo>,
+    ObservePrimaryKeyDatumStorage<TitleInfo>
 
-interface RoomStorage : CommonStorage<RoomInfo>, CustomStorage1<RoomInfo>, CustomStorage2<RoomInfo>,
-    CustomStorage3<RoomInfo>
+interface RoomStorage : SaveStorage<RoomInfo>, ObserveDataStorage<RoomInfo>, ObserveDatumStorage<RoomInfo>,
+    ObservePrimaryKeyDatumStorage<RoomInfo>
 
-interface ReactionStorage : CommonStorage<ReactionInfo>, CustomStorage1<ReactionInfo>,
-    CustomStorage3<ReactionInfo>
+interface ReactionStorage : SaveStorage<ReactionInfo>, ObserveDataStorage<ReactionInfo>,
+    ObservePrimaryKeyDatumStorage<ReactionInfo>
 
-interface AlternativesStorage : CommonStorage<AlternativeAccountInfo>,
-    CustomStorage1<AlternativeAccountInfo>
+interface AlternativesStorage : SaveStorage<AlternativeAccountInfo>,
+    ObserveDataStorage<AlternativeAccountInfo>
 
-interface MediasStorage : CommonStorage<MediaInfo>, CustomStorage1<MediaInfo>
+interface MediasStorage : SaveStorage<MediaInfo>, ObserveDataStorage<MediaInfo>
 
-interface DownloadStorage : CommonStorage<DownloadInfo>, CustomStorage3<DownloadInfo>,
-    CustomStorage4<DownloadInfo>
+interface DownloadStorage : SaveStorage<DownloadInfo>, ObservePrimaryKeyDatumStorage<DownloadInfo>,
+    GetStorage<DownloadInfo>
 
 interface RemoteKeyStorage {
     fun getPreRemoteKey(collectionName: CollectionName): RemoteKeys?
@@ -254,7 +264,7 @@ fun <T, Storage> Storage.update(
     collectionName: CollectionName,
     id: PrimaryKey,
     block: (T) -> T
-) where Storage : CommonStorage<T>, Storage : CustomStorage4<T> {
+) where Storage : SaveStorage<T>, Storage : GetStorage<T> {
     val document = getDocument(collectionName, id) ?: return
     val value = block(document)
     save(collectionName, value)

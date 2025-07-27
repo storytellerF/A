@@ -112,11 +112,21 @@ suspend fun SessionManager.getUserTopics(
 
 suspend fun SessionManager.getCommunityInfo(id: PrimaryKey) =
     serviceCatching {
-        CustomApi.Communities.Id.get(CustomApi.Communities.Id.CommunityIdQuery(currentIsAlreadySignUp), Path(id))
+        CustomApi.Communities.Id.get(
+            CustomApi.Communities.Id.CommunityIdQuery(
+                currentIsAlreadySignUp
+            ),
+            Path(id)
+        )
     }
 
 suspend fun SessionManager.getCommunityInfoByAid(aid: String) = serviceCatching {
-    CustomApi.Communities.Aid.get(CustomApi.Communities.Aid.CommunityAidQuery(aid, currentIsAlreadySignUp))
+    CustomApi.Communities.Aid.get(
+        CustomApi.Communities.Aid.CommunityAidQuery(
+            aid,
+            currentIsAlreadySignUp
+        )
+    )
 }
 
 suspend fun SessionManager.searchCommunity(
@@ -165,7 +175,14 @@ suspend fun SessionManager.searchRoomMembers(
     size: Int,
     word: String?,
 ) = serviceCatching {
-    CustomApi.Rooms.Id.Members.get(CustomApi.Rooms.Id.Members.MemberQuery(word, nextCommunityId, size), Path(roomId))
+    CustomApi.Rooms.Id.Members.get(
+        CustomApi.Rooms.Id.Members.MemberQuery(
+            word,
+            nextCommunityId,
+            size
+        ),
+        Path(roomId)
+    )
 }
 
 suspend fun SessionManager.getRecommendTopics(nextTopicId: String?, size: Int) =
@@ -211,7 +228,10 @@ suspend fun SessionManager.getTopicTopics(
     }
 
 suspend fun SessionManager.getTopicInfo(id: PrimaryKey) = serviceCatching {
-    CustomApi.Topics.Id.get.invoke(CustomApi.Topics.Id.TopicIdQuery(currentIsAlreadySignUp), Path(id))
+    CustomApi.Topics.Id.get.invoke(
+        CustomApi.Topics.Id.TopicIdQuery(currentIsAlreadySignUp),
+        Path(id)
+    )
 }
 
 suspend fun SessionManager.getTopicInfoByAid(aid: String) = serviceCatching {
@@ -311,10 +331,18 @@ suspend fun SessionManager.deleteReaction(emoji: String, objectId: PrimaryKey) =
     }
 }
 
-suspend fun SessionManager.getReactions(topicId: PrimaryKey, size: Int, nextCursor: String? = null) =
+suspend fun SessionManager.getReactions(
+    topicId: PrimaryKey,
+    size: Int,
+    nextCursor: String? = null
+) =
     serviceCatching {
         CustomApi.Topics.Id.Reactions.get.invoke(
-            CustomApi.Topics.Id.Reactions.ReactionQuery(currentIsAlreadySignUp, nextCursor, size = size),
+            CustomApi.Topics.Id.Reactions.ReactionQuery(
+                currentIsAlreadySignUp,
+                nextCursor,
+                size = size
+            ),
             Path(topicId),
         )
     }
@@ -323,14 +351,36 @@ suspend fun SessionManager.signOut() = serviceCatching {
     CustomApi.Accounts.signOut.invoke(Unit) {}
 }
 
-suspend fun SessionManager.getMediaList(objectId: PrimaryKey, objectType: ObjectType, nextId: String?, size: Int) =
+suspend fun SessionManager.getMediaList(
+    objectId: PrimaryKey,
+    objectType: ObjectType,
+    nextId: String?,
+    size: Int
+) =
     serviceCatching {
-        CustomApi.Medias.get.invoke(CustomApi.Medias.MediaQuery(objectId, objectType, nextId, size = size))
+        CustomApi.Medias.get.invoke(
+            CustomApi.Medias.MediaQuery(
+                objectId,
+                objectType,
+                nextId,
+                size = size
+            )
+        )
     }
 
-suspend fun SessionManager.getMediaByName(word: String, objectId: PrimaryKey, objectType: ObjectType) =
+suspend fun SessionManager.getMediaByName(
+    word: String,
+    objectId: PrimaryKey,
+    objectType: ObjectType
+) =
     serviceCatching {
-        CustomApi.Medias.getByName.invoke(CustomApi.Medias.MediaSearchQuery(word, objectId, objectType))
+        CustomApi.Medias.getByName.invoke(
+            CustomApi.Medias.MediaSearchQuery(
+                word,
+                objectId,
+                objectType
+            )
+        )
     }
 
 data class UploadData(val size: Long, val name: String, val contentType: ContentType)
@@ -338,6 +388,7 @@ data class UploadData(val size: Long, val name: String, val contentType: Content
 suspend fun SessionManager.upload(
     objectTuple: ObjectTuple,
     data: UploadData,
+    onUpload: (Long, Long?) -> Unit = { _, _ -> },
     block: () -> Input,
 ) = serviceCatching {
     CustomApi.Medias.upload.invoke(objectTuple, Unit) {
@@ -355,6 +406,7 @@ suspend fun SessionManager.upload(
             )
         )
         onUpload { bytesSentTotal, contentLength ->
+            onUpload(bytesSentTotal, contentLength)
             println("Sent $bytesSentTotal bytes from $contentLength")
         }
     }
@@ -442,17 +494,19 @@ suspend fun SessionManager.unpinTopic(topicId: PrimaryKey) = serviceCatching {
     }
 }
 
-suspend fun SessionManager.updateCommunityInfo(id: PrimaryKey, newInfo: UpdateCommunityBody) = serviceCatching {
-    CustomApi.Communities.Id.update.invoke(Path(id), newInfo) {
-        contentType(ContentType.Application.Json)
+suspend fun SessionManager.updateCommunityInfo(id: PrimaryKey, newInfo: UpdateCommunityBody) =
+    serviceCatching {
+        CustomApi.Communities.Id.update.invoke(Path(id), newInfo) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
-suspend fun SessionManager.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBody) = serviceCatching {
-    CustomApi.Rooms.Id.update.invoke(Path(id), newInfo) {
-        contentType(ContentType.Application.Json)
+suspend fun SessionManager.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBody) =
+    serviceCatching {
+        CustomApi.Rooms.Id.update.invoke(Path(id), newInfo) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun SessionManager.getTopicList(
     type: ObjectType?,

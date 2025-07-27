@@ -4,8 +4,8 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,7 +68,10 @@ interface GlobalDialogController {
 }
 
 @OptIn(ExperimentalUuidApi::class)
-class NestedGlobalDialogController(val customGlobalDialogController: CustomGlobalDialogController, val level: Int) :
+class NestedGlobalDialogController(
+    val customGlobalDialogController: CustomGlobalDialogController,
+    val level: Int
+) :
     GlobalDialogController {
     override val state: MutableState<GlobalDialogState>
         get() = customGlobalDialogController.state
@@ -87,7 +90,8 @@ class NestedGlobalDialogController(val customGlobalDialogController: CustomGloba
         val newController = NestedGlobalDialogController(customGlobalDialogController, level + 1)
         newController.block()
         return try {
-            val nestedGlobalDialogController = NestedGlobalDialogController(customGlobalDialogController, 1)
+            val nestedGlobalDialogController =
+                NestedGlobalDialogController(customGlobalDialogController, 1)
             nestedGlobalDialogController.block()
         } finally {
             customGlobalDialogController.state.value = GlobalDialogState.Loading(stack)
@@ -181,7 +185,10 @@ private fun GlobalDialogContent(
     Column(modifier = Modifier.height(200.dp)) {
         when (message) {
             is GlobalDialogState.Error -> {
-                ExceptionView(message.throwable, modifier = Modifier.weight(1f).verticalScroll(scrollState))
+                ExceptionView(
+                    message.throwable,
+                    modifier = Modifier.weight(1f).verticalScroll(scrollState)
+                )
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                     Button({
                         onDismissRequest()
@@ -192,34 +199,7 @@ private fun GlobalDialogContent(
             }
 
             is GlobalDialogState.Loading -> {
-                val stageState = message.stack.last()
-                if (stageState.content != null) {
-                    stageState.content.content()
-                } else {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            stageState.title?.let {
-                                Text(it)
-                                Spacer(Modifier.height(20.dp))
-                            }
-                            if (stageState.progress != null) {
-                                LinearProgressIndicator(
-                                    progress = { stageState.progress.value / stageState.progress.total },
-                                    color = ProgressIndicatorDefaults.linearColor,
-                                    trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                                    strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
-                                )
-                            } else {
-                                Box(modifier = Modifier, contentAlignment = Alignment.Center) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.align(Alignment.Center),
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                LoadingGlobalDialogContent(message)
             }
 
             is GlobalDialogState.Custom -> {
@@ -234,6 +214,40 @@ private fun GlobalDialogContent(
             }
 
             else -> {}
+        }
+    }
+}
+
+@Composable
+private fun LoadingGlobalDialogContent(
+    message: GlobalDialogState.Loading,
+) {
+    val stageState = message.stack.last()
+    if (stageState.content != null) {
+        stageState.content.content()
+    } else {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                stageState.title?.let {
+                    Text(it)
+                    Spacer(Modifier.height(20.dp))
+                }
+                if (stageState.progress != null) {
+                    LinearProgressIndicator(
+                        progress = { stageState.progress.value / stageState.progress.total },
+                        color = ProgressIndicatorDefaults.linearColor,
+                        trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                        strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                    )
+                } else {
+                    Box(modifier = Modifier, contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
         }
     }
 }

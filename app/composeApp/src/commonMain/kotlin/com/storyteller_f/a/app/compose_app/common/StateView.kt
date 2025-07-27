@@ -50,12 +50,7 @@ private fun LoadState?.toLoadingState() =
 private fun CombinedLoadStates.toLoadingState(itemCount: Int): LoadingState? {
     val state by produceState<LoadingState?>(null, this, itemCount) {
         delay(100)
-        val mediatorRefreshState = mediator?.refresh
-        val sourceRefreshState = source.refresh
-        value = when {
-            mediatorRefreshState is LoadState.Error && itemCount == 0 -> refresh.toLoadingState()
-            else -> sourceRefreshState.toLoadingState()
-        }
+        value = source.refresh.toLoadingState()
     }
     return state
 }
@@ -76,49 +71,43 @@ fun <T : Any> StateView(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    var refreshing by remember { mutableStateOf(false) }
-    val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
-        refreshing = true
+    var pullRefreshing by remember { mutableStateOf(false) }
+    val refreshState = rememberPullRefreshState(refreshing = pullRefreshing, onRefresh = {
+        pullRefreshing = true
         pagingItems.refresh()
     })
     val refreshLoadState = pagingItems.loadState.refresh
-    LaunchedEffect(key1 = refreshing, key2 = refreshLoadState) {
+    LaunchedEffect(key1 = pullRefreshing, key2 = refreshLoadState) {
         // 增加延时，确保pagingItems真正进入刷新状态
         delay(REFRESH_AFTER)
-        if (refreshing) {
+        if (pullRefreshing) {
             // 刷新结束或者当前没有内容时停止刷新，如果没有内容会使用列表刷新控件
-            if (refreshLoadState !is LoadState.Loading || pagingItems.itemCount == 0) refreshing = false
+            if (refreshLoadState !is LoadState.Loading || pagingItems.itemCount == 0) {
+                pullRefreshing = false
+            }
         }
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        when (val state = pagingItems.loadState.toLoadingState(pagingItems.itemCount)) {
-            null -> CenterBox {
-                CircularProgressIndicator()
-            }
-
-            is LoadingState.Loading -> if (pagingItems.itemCount == 0) {
-                CenterBox {
-                    CircularProgressIndicator()
+        if (pagingItems.itemCount > 0) {
+            content()
+        } else {
+            when (val state = pagingItems.loadState.toLoadingState(pagingItems.itemCount)) {
+                is LoadingState.Error -> CenterBox {
+                    ExceptionCell(state.e) {
+                        pagingItems.refresh()
+                    }
                 }
-            } else {
-                content()
-            }
 
-            is LoadingState.Error -> CenterBox {
-                ExceptionCell(state.e) {
-                    pagingItems.refresh()
-                }
-            }
-
-            is LoadingState.Done -> if (pagingItems.itemCount == 0) {
-                CenterBox {
+                is LoadingState.Done -> CenterBox {
                     Text(text = stringResource(Res.string.no_content_yet))
                 }
-            } else {
-                content()
+
+                else -> CenterBox {
+                    CircularProgressIndicator()
+                }
             }
         }
-        PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
+        PullRefreshIndicator(pullRefreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
 }
 
@@ -131,48 +120,46 @@ fun <T> StateView(
 ) {
     val state by handler.state.collectAsState()
     val data by handler.data.collectAsState()
-    var refreshing by remember { mutableStateOf(false) }
-    val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
-        refreshing = true
+    var pullRefreshing by remember { mutableStateOf(false) }
+    val refreshState = rememberPullRefreshState(refreshing = pullRefreshing, onRefresh = {
+        pullRefreshing = true
         handler.refresh()
     })
-    LaunchedEffect(key1 = refreshing, key2 = state) {
+    LaunchedEffect(key1 = pullRefreshing, key2 = state) {
         delay(REFRESH_AFTER)
-        if (refreshing && state !is LoadingState.Loading) refreshing = false
+        if (pullRefreshing && state !is LoadingState.Loading) pullRefreshing = false
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        when (val s = debounceState(state)) {
-            is LoadingState.Error -> {
-                data.let {
-                    if (it == null) {
+        data.let { safeData ->
+            if (safeData != null) {
+                Column {
+                    (state as? LoadingState.Error)?.let {
+                        ExceptionCell(it.e) {
+                            handler.refresh()
+                        }
+                    }
+                    content(safeData)
+                }
+            } else {
+                when (val capturedState = state) {
+                    is LoadingState.Error -> {
                         CenterBox {
-                            ExceptionCell(s.e) {
+                            ExceptionCell(capturedState.e) {
                                 handler.refresh()
                             }
                         }
-                    } else {
-                        content(it)
                     }
-                }
-            }
 
-            is LoadingState.Done -> data?.let {
-                content(it)
-            }
-
-            else -> {
-                data.let {
-                    if (it == null) {
+                    else -> {
                         CenterBox {
                             CircularProgressIndicator()
                         }
-                    } else {
-                        content(it)
                     }
                 }
             }
         }
-        PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
+
+        PullRefreshIndicator(pullRefreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
 }
 
@@ -213,32 +200,30 @@ fun <T : Any> RefCellStateView(
     val globalDialogController = LocalGlobalDialog.current
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
-        when (val localState = state) {
-            null, is LoadingState.Loading -> {
-                data?.let {
-                    content(it)
-                } ?: Box(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            is LoadingState.Error -> Box(
-                modifier = Modifier.fillMaxSize().clickable {
-                    scope.launch {
-                        globalDialogController.showErrorMessage(localState.e)
+        data.let {
+            if (it != null) {
+                content(it)
+            } else {
+                when (val localState = state) {
+                    is LoadingState.Error -> Box(
+                        modifier = Modifier.fillMaxSize().clickable {
+                            scope.launch {
+                                globalDialogController.showErrorMessage(localState.e)
+                            }
+                        }.padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ExceptionView(localState.e)
                     }
-                }.padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                ExceptionView(localState.e)
-            }
 
-            else -> {
-                data?.let {
-                    content(it)
+                    else -> {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
                 }
             }
         }
@@ -248,10 +233,7 @@ fun <T : Any> RefCellStateView(
 fun LazyListScope.topPrepend(combinedLoadStates: CombinedLoadStates, refresh: () -> Unit) {
     if (combinedLoadStates.prepend == LoadState.Loading) {
         item {
-            Text(
-                text = "Waiting for items to load from the backend",
-                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
-            )
+            RemoteMediatorLoadingView()
         }
     }
     val loadState = combinedLoadStates.mediator?.refresh
@@ -259,18 +241,37 @@ fun LazyListScope.topPrepend(combinedLoadStates: CombinedLoadStates, refresh: ()
         item {
             ExceptionCell(loadState.error, refresh)
         }
+    } else if (combinedLoadStates.refresh is LoadState.Loading) {
+        item {
+            RemoteMediatorLoadingView()
+        }
     }
 }
 
-fun LazyGridScope.topPrepend(count: Int, combinedLoadStates: CombinedLoadStates, refresh: () -> Unit) {
+@Composable
+private fun RemoteMediatorLoadingView() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        CircularProgressIndicator(modifier = Modifier.size(30.dp))
+        Text(
+            text = "Waiting for items to load from the backend",
+            modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+        )
+    }
+}
+
+fun LazyGridScope.topPrepend(
+    count: Int,
+    combinedLoadStates: CombinedLoadStates,
+    refresh: () -> Unit
+) {
     if (combinedLoadStates.prepend == LoadState.Loading) {
         item(span = {
             GridItemSpan(count)
         }) {
-            Text(
-                text = "Waiting for items to load from the backend",
-                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
-            )
+            RemoteMediatorLoadingView()
         }
     }
     val loadState = combinedLoadStates.mediator?.refresh
@@ -279,6 +280,10 @@ fun LazyGridScope.topPrepend(count: Int, combinedLoadStates: CombinedLoadStates,
             GridItemSpan(count)
         }) {
             ExceptionCell(loadState.error, refresh)
+        }
+    } else if (combinedLoadStates.refresh is LoadState.Loading) {
+        item(span = { GridItemSpan(count) }) {
+            RemoteMediatorLoadingView()
         }
     }
 }
@@ -286,9 +291,7 @@ fun LazyGridScope.topPrepend(count: Int, combinedLoadStates: CombinedLoadStates,
 fun LazyListScope.bottomAppending(combinedLoadStates: CombinedLoadStates) {
     if (combinedLoadStates.append == LoadState.Loading) {
         item {
-            CircularProgressIndicator(
-                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
-            )
+            RemoteMediatorLoadingView()
         }
     }
 }
@@ -301,9 +304,7 @@ fun LazyGridScope.bottomAppending(
         item(span = {
             GridItemSpan(count)
         }) {
-            CircularProgressIndicator(
-                modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
-            )
+            RemoteMediatorLoadingView()
         }
     }
 }

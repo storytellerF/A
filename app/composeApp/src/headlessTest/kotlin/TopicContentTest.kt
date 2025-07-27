@@ -31,12 +31,12 @@ class TopicContentTest : UsingContextTest() {
     }
 
     @Test
-    fun `test parse ansci doc`() {
-        val scriptDir = File("src//headlessTest//resources")
+    fun `test parse ascii doc`() {
+        val scriptDir = File("src/headlessTest/resources")
         if (!File(scriptDir, "node_modules").exists()) {
             return
         }
-        val scripts = File(scriptDir, "parse-ansci.js").bufferedReader().use {
+        val scripts = File(scriptDir, "parse-ascii.js").bufferedReader().use {
             it.readText()
         }
         (V8Host.getNodeInstance().createV8Runtime() as NodeRuntime).use {
