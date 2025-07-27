@@ -72,6 +72,7 @@ import com.storyteller_f.shared.utils.formatTime
 import com.strabled.composepreferences.getPreference
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onCompletion
@@ -99,18 +100,23 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
 
 @Composable
 fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismissDialog: () -> Unit) {
+    val appNav = LocalAppNav.current
     DialogContainer {
         UserCell(authorInfo, true)
         Text("pub: ${topicInfo.createdTime.formatTime()}")
 
         when (topicInfo.rootType) {
             ObjectType.COMMUNITY ->
-                CommunityRefCell(
-                    topicInfo.rootId
-                )
+                CommunityRefCell(topicInfo.rootId) {
+                    dismissDialog()
+                    appNav.gotoCommunity(topicInfo.rootId, false)
+                }
 
             ObjectType.ROOM ->
-                RoomRefCell(topicInfo.rootId)
+                RoomRefCell(topicInfo.rootId) {
+                    dismissDialog()
+                    appNav.gotoRoom(topicInfo.rootId, false)
+                }
 
             else -> {}
         }
