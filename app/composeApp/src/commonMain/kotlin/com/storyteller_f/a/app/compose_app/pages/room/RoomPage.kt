@@ -588,7 +588,10 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
         }
 
         roomInfo.communityId?.let { communityId ->
-            CommunityRefCell(communityId)
+            CommunityRefCell(communityId) {
+                dismiss()
+                appNav.gotoCommunity(communityId, false)
+            }
         }
 
         RoomDialogButtons(dismiss, appNav, roomInfo)

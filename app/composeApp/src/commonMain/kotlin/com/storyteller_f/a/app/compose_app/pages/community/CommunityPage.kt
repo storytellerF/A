@@ -2,19 +2,53 @@ package com.storyteller_f.a.app.compose_app.pages.community
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddHome
+import androidx.compose.material.icons.filled.CardMembership
+import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Title
+import androidx.compose.material.icons.filled.Topic
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.Text
+import androidx.compose.material3.Typography
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,11 +59,34 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.storyteller_f.a.app.compose_app.*
+import com.storyteller_f.a.app.compose_app.AppNav
+import com.storyteller_f.a.app.compose_app.CommunityScreen
+import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalDownloadViewModel
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.add
+import com.storyteller_f.a.app.compose_app.all_members
+import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.common.CachedLoadingHandler
-import com.storyteller_f.a.app.compose_app.compontents.*
-import com.storyteller_f.a.app.compose_app.model.*
+import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
+import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
+import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
+import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
+import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
+import com.storyteller_f.a.app.compose_app.compontents.DialogContainer
+import com.storyteller_f.a.app.compose_app.compontents.SheetContainer
+import com.storyteller_f.a.app.compose_app.exit_community
+import com.storyteller_f.a.app.compose_app.hasRouteFlow
+import com.storyteller_f.a.app.compose_app.join_community
+import com.storyteller_f.a.app.compose_app.join_community_prompt
+import com.storyteller_f.a.app.compose_app.model.CommunityViewModel
+import com.storyteller_f.a.app.compose_app.model.OnCommunityExited
+import com.storyteller_f.a.app.compose_app.model.OnCommunityJoined
+import com.storyteller_f.a.app.compose_app.model.createCommunityRoomsViewModel
+import com.storyteller_f.a.app.compose_app.model.createCommunityTopicsViewModel
+import com.storyteller_f.a.app.compose_app.model.createCommunityViewModel
 import com.storyteller_f.a.app.compose_app.pages.CustomBottomNav
 import com.storyteller_f.a.app.compose_app.pages.CustomRailNav
 import com.storyteller_f.a.app.compose_app.pages.NavRoute
@@ -37,6 +94,9 @@ import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.world.TopicList
+import com.storyteller_f.a.app.compose_app.permission_denied
+import com.storyteller_f.a.app.compose_app.rooms
+import com.storyteller_f.a.app.compose_app.topics
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.compose_app.utils.loadFontFromLocal
@@ -405,7 +465,8 @@ private fun FontView(info: MediaInfo) {
         }.padding(horizontal = 8.dp, vertical = 12.dp)
     ) {
         FontIcon(MaterialSymbolsOutlined.FontDownload, "font")
-        Text(info.name, modifier = Modifier.weight(1f))
+        val scrollState = rememberScrollState()
+        Text(info.name, modifier = Modifier.weight(1f).horizontalScroll(scrollState))
         loadingHandler?.let { handler ->
             val state by handler.state.collectAsState()
             val data by handler.data.collectAsState()
@@ -433,10 +494,8 @@ private fun DownloadStatusView(
                     strokeWidth = 2.dp
                 )
 
-                DownloadStatus.DOWNLOADED -> Text("✅")
-                DownloadStatus.FAILED -> Text(
-                    data.message.take(10)
-                )
+                DownloadStatus.DOWNLOADED -> FontIcon(MaterialSymbolsOutlined.DownloadDone, "download done")
+                DownloadStatus.FAILED -> FontIcon(MaterialSymbolsOutlined.Error, "error")
             }
         }
 
@@ -566,15 +625,18 @@ private fun DownloadInfoTitle(
 
 @Composable
 private fun DownloadInfoTable(
-    data: DownloadInfo?,
-    it: MediaInfo
+    downloadInfo: DownloadInfo?,
+    mediaInfo: MediaInfo
 ) {
-    val tableData = buildMap {
-        put("Path", data?.path)
-        put("Size", HumanReadable.fileSize(it.size))
-        put("Status", data?.status?.name)
-        if (data?.status == DownloadStatus.FAILED) {
-            put("Error", data.message)
+    val tableData = remember(downloadInfo, mediaInfo) {
+        buildMap {
+            put("Path", downloadInfo?.path)
+            put("Size", HumanReadable.fileSize(mediaInfo.size))
+            put("Status", downloadInfo?.status?.name)
+            if (downloadInfo?.status == DownloadStatus.FAILED) {
+                put("Error", downloadInfo.message)
+            }
+            put("Url", mediaInfo.url)
         }
     }
     DataTable(
@@ -593,7 +655,8 @@ private fun DownloadInfoTable(
                 }
                 cell {
                     value?.let {
-                        Text(it)
+                        val scrollState = rememberScrollState()
+                        Text(it, maxLines = 1, modifier = Modifier.horizontalScroll(scrollState))
                     }
                 }
             }

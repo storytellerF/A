@@ -22,25 +22,25 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun CommunityRefCell(communityId: PrimaryKey, onClick: ((CommunityInfo) -> Unit)? = null) {
-    val viewModel = com.storyteller_f.a.app.compose_app.model.createCommunityViewModel(communityId)
+    val viewModel = createCommunityViewModel(communityId)
     CommunityRefCellInternal(viewModel, onClick)
 }
 
 @Composable
 fun CommunityRefCell(communityAid: String, onClick: ((CommunityInfo) -> Unit)? = null) {
-    val viewModel = com.storyteller_f.a.app.compose_app.model.createCommunityViewModel(communityAid)
+    val viewModel = createCommunityViewModel(communityAid)
     CommunityRefCellInternal(viewModel, onClick)
 }
 
 @Composable
 private fun CommunityRefCellInternal(
-    viewModel: com.storyteller_f.a.app.compose_app.model.CommunityViewModel,
+    viewModel: CommunityViewModel,
     onClick: ((CommunityInfo) -> Unit)? = null
 ) {
     val communityInfo by viewModel.handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
-    val appNav = com.storyteller_f.a.app.compose_app.LocalAppNav.current
-    com.storyteller_f.a.app.compose_app.common.RefCellStateView(
+    val appNav = LocalAppNav.current
+    RefCellStateView(
         viewModel.handler,
         modifier = Modifier
             .fillMaxWidth()
