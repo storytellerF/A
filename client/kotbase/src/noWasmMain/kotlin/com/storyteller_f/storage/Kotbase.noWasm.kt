@@ -19,8 +19,8 @@ import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 import kotbase.Collection as KotbaseCollection
 
-actual fun createKotbaseStorageSource(scope: String?): DocumentSource {
-    return KotbaseDocumentSource(createKotbase(), scope)
+actual fun createKotbaseStorageSource(scope: String?, json: Json): DocumentSource {
+    return KotbaseDocumentSource(createKotbase(), scope, json)
 }
 
 class KotbaseObservable<T>(
@@ -38,11 +38,9 @@ class KotbaseDocumentCollection<T>(
     val collection: KotbaseCollection,
     val source: KotbaseDocumentSource,
     val serializer: KSerializer<T>,
+    val json: Json
 ) :
     DocumentCollection<T> {
-    val json = Json {
-        ignoreUnknownKeys = true
-    }
 
     override fun saveDocument(id: String, t: T) {
         collection.save(MutableDocument(id, json.encodeToString(serializer, t)))
@@ -170,7 +168,7 @@ fun createKotbase(): Database {
     }
 }
 
-class KotbaseDocumentSource(private val database: Database, val scope: String?) : DocumentSource {
+class KotbaseDocumentSource(private val database: Database, val scope: String?, val json: Json) : DocumentSource {
     val clearing = mutableSetOf<String>()
     val mutex = Mutex()
 
@@ -193,7 +191,7 @@ class KotbaseDocumentSource(private val database: Database, val scope: String?) 
                     ValueIndexConfiguration("pinned", "id")
                 )
         }
-        return KotbaseDocumentCollection(collection, this, clazz.serializer())
+        return KotbaseDocumentCollection(collection, this, clazz.serializer(), json)
     }
 
     override fun <T : Any> getCollectionByPrefix(prefix: String, clazz: KClass<T>): List<DocumentCollection<T>> {

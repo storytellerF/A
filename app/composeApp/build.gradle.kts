@@ -177,7 +177,7 @@ kotlin {
             implementation(libs.krop.ui)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.serialization)
-            implementation(libs.sunny.chung.composable.table)
+            implementation("io.github.windedge.table:table-m3:0.2.1")
             implementation(libs.compose.native.notification)
             implementation(libs.compose.preferences)
             implementation(libs.haze)

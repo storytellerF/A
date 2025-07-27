@@ -1,5 +1,6 @@
 package com.storyteller_f.a.app.compose_app.compontents
 
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Composable
@@ -8,25 +9,33 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.times
 import com.mikepenz.markdown.annotator.AnnotatorSettings
+import com.mikepenz.markdown.annotator.annotatorSettings
 import com.mikepenz.markdown.annotator.appendAutoLink
 import com.mikepenz.markdown.annotator.appendMarkdownLink
+import com.mikepenz.markdown.compose.LocalImageTransformer
 import com.mikepenz.markdown.compose.LocalMarkdownColors
 import com.mikepenz.markdown.compose.LocalMarkdownExtendedSpans
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.elements.material.MarkdownBasicText
 import com.mikepenz.markdown.compose.extendedspans.ExtendedSpans
 import com.mikepenz.markdown.compose.extendedspans.drawBehind
+import com.mikepenz.markdown.model.ImageTransformer
 import com.mikepenz.markdown.utils.getUnescapedTextInNode
+import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.utils.readInlineMath
 import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toImmutableMap
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
@@ -88,12 +97,13 @@ private fun AnnotatedString.Builder.processCustomMarkdownElement(
             width
         )
 
-        MarkdownElementTypes.IMAGE -> child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)?.let {
-            val id = "image${child.startOffset}-${child.endOffset}"
-            val url = it.getUnescapedTextInNode(content)
-            inlineContentMap[id] = url
-            appendInlineContent(id, url)
-        }
+        MarkdownElementTypes.IMAGE -> child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)
+            ?.let {
+                val id = "image${child.startOffset}-${child.endOffset}"
+                val url = it.getUnescapedTextInNode(content)
+                inlineContentMap[id] = url
+                appendInlineContent(id, url)
+            }
 
         MarkdownElementTypes.EMPH -> {
             pushStyle(SpanStyle(fontStyle = FontStyle.Italic))
@@ -151,8 +161,17 @@ private fun AnnotatedString.Builder.processCustomMarkdownElement(
 
         MarkdownElementTypes.AUTOLINK -> appendAutoLink(content, child, annotatorSettings)
         MarkdownElementTypes.INLINE_LINK -> appendMarkdownLink(content, child, annotatorSettings)
-        MarkdownElementTypes.SHORT_REFERENCE_LINK -> appendMarkdownLink(content, child, annotatorSettings)
-        MarkdownElementTypes.FULL_REFERENCE_LINK -> appendMarkdownLink(content, child, annotatorSettings)
+        MarkdownElementTypes.SHORT_REFERENCE_LINK -> appendMarkdownLink(
+            content,
+            child,
+            annotatorSettings
+        )
+
+        MarkdownElementTypes.FULL_REFERENCE_LINK -> appendMarkdownLink(
+            content,
+            child,
+            annotatorSettings
+        )
 
         // Token Types
         MarkdownTokenTypes.TEXT -> append(child.getUnescapedTextInNode(content))
@@ -216,16 +235,16 @@ private fun AnnotatedString.Builder.appendMathContent(
         return
     }
     val id = "math${child.startOffset}-${child.endOffset}"
-    val url = "file:///$path"
+    val url = "file://$path"
     inlineContentMap[id] = url
-    if (child.type != GFMElementTypes.BLOCK_MATH) {
+    if (child.type == GFMElementTypes.BLOCK_MATH) {
+        val style = ParagraphStyle()
+        pushStyle(style)
         appendInlineContent(id, url)
-        return
+        pop()
+    } else {
+        appendInlineContent(id, url)
     }
-    val style = ParagraphStyle()
-    pushStyle(style)
-    appendInlineContent(id, url)
-    pop()
 }
 
 internal fun ASTNode.findChildOfTypeRecursive(type: IElementType): ASTNode? {
@@ -308,4 +327,92 @@ private fun CustomMarkdownTextInternal(
             onTextLayout.invoke(it)
         }
     )
+}
+
+@Composable
+fun CustomMarkdownParagraph(
+    content: String,
+    node: ASTNode,
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalMarkdownTypography.current.paragraph,
+    mediaMap: ImmutableMap<String, MediaInfo>,
+    isEmbed: Boolean,
+) {
+    val density = LocalDensity.current
+    val annotatorSettings = annotatorSettings()
+    val transformer = LocalImageTransformer.current
+    BoxWithConstraints {
+        val width = this.maxWidth
+        val (styledText, inlineContentMap) = remember(
+            style,
+            content,
+            node.children,
+        ) {
+            val inlineContentMap = mutableMapOf<String, String>()
+            val text = buildAnnotatedString {
+                pushStyle(style.toSpanStyle())
+                customBuildMarkdownAnnotatedString(
+                    content,
+                    node.children,
+                    annotatorSettings,
+                    density,
+                    inlineContentMap,
+                    width
+                )
+                pop()
+            }
+            text to buildInlineTextContentFromMap(
+                inlineContentMap,
+                mediaMap,
+                width,
+                isEmbed,
+                density,
+                transformer
+            )
+        }
+
+        CustomMarkdownText(
+            styledText,
+            modifier = modifier,
+            style = style,
+            inlineContentMap = inlineContentMap
+        )
+    }
+}
+
+private fun buildInlineTextContentFromMap(
+    inlineContentMap: MutableMap<String, String>,
+    mediaMap: ImmutableMap<String, MediaInfo>,
+    width: Dp,
+    isEmbed: Boolean,
+    density: Density,
+    transformer: ImageTransformer,
+): ImmutableMap<String, InlineTextContent> {
+    return inlineContentMap.mapValues { (_, value) ->
+        val dimension = getImageDimension(value, mediaMap)
+        if (width > 10.dp && dimension != null) {
+            val imageWidth = pxToDp(dimension.width, density.density)
+            val imageHeight = pxToDp(dimension.height, density.density)
+            val width = minOf(width, imageWidth)
+            val height =
+                minOf(
+                    (width.value / imageWidth.value) * imageHeight,
+                    if (isEmbed) 300.dp else width * 2
+                )
+            val recalculatedWidth = height.value * imageWidth / imageHeight.value
+            InlineTextContent(
+                Placeholder(
+                    recalculatedWidth.value.sp,
+                    height.value.sp,
+                    PlaceholderVerticalAlign.Center
+                )
+            ) {
+                transformer.transform(value)?.let { imageData ->
+                    CustomMarkdownImage(imageData)
+                }
+            }
+        } else {
+            InlineTextContent(Placeholder(0.sp, 0.sp, PlaceholderVerticalAlign.Center)) {}
+        }
+    }.toImmutableMap()
 }

@@ -12,7 +12,6 @@ bcprovJdk18on = "1.81"
 buildconfig = "0.17.1"
 coil = "3.2.0"
 commonsLogging = "1.3.5"
-composableTableVersion = "1.3.1"
 compose-plugin = "1.8.2"
 composeNativeNotification = "0.2.0"
 composePdf = "1.2.0"
@@ -256,7 +255,6 @@ richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose"
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 simplemagic = { module = "com.j256.simplemagic:simplemagic", version.ref = "simplemagic" }
 sonner = "io.github.dokar3:sonner:0.3.8"
-sunny-chung-composable-table = { module = "io.github.sunny-chung:composable-table", version.ref = "composableTableVersion" }
 testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "testContainer" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testContainer" }
 testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testContainer" }

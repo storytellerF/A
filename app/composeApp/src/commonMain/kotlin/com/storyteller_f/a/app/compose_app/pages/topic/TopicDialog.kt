@@ -158,7 +158,7 @@ private fun TopicMenuList(
     topicInfo: TopicInfo,
     dismissDialog: () -> Unit,
 ) {
-    val toasterState = LocalToaster.current
+    val toast = LocalToaster.current
     val clipboardManager = LocalClipboard.current
     val userSessionManager = LocalSessionManager.current
     val alreadyLoginIn by userSessionManager.isAlreadySignUp.collectAsState()
@@ -171,8 +171,9 @@ private fun TopicMenuList(
         scope.launch {
             if (content is TopicContent.Plain) {
                 clipboardManager.setText(content.plain)
+                toast.showMessage("success")
             } else {
-                toasterState.showMessage("failed")
+                toast.showMessage("failed")
             }
         }
     }
@@ -185,7 +186,7 @@ private fun TopicMenuList(
             scope.launch {
                 globalDialogController.use {
                     userSessionManager.getTopicSnapshot(topicInfo.id)
-                    toasterState.showMessage(getString(Res.string.success))
+                    toast.showMessage(getString(Res.string.success))
                 }
             }
         }

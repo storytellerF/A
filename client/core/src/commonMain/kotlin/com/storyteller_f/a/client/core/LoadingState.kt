@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 
 sealed class LoadingState {
     data object Loading : LoadingState()
+    data class Processing(val value: Long, val total: Long) : LoadingState()
     data class Error(val e: Throwable) : LoadingState()
     data object Done : LoadingState()
 }
@@ -24,18 +25,24 @@ interface LoadingHandler<T> {
             if (res != null) {
                 done(res)
             } else {
-                error(Exception("nil"))
+                error(Exception("content not found"))
             }
         }.onFailure {
             error(it)
         }
     }
 
+    fun update(t: T) {
+        if (state.value is LoadingState.Loading) return
+        done(t)
+    }
+
+    fun error(error: Throwable) {
+        if (state.value !is LoadingState.Loading) return
+        state.markError(error)
+    }
+
     fun done(t: T)
-
-    fun error(error: Throwable)
-
-    fun update(t: T)
 
     fun refresh()
 }
@@ -47,15 +54,6 @@ class FixedLoadingHandler<T> : LoadingHandler<T> {
     override fun done(t: T) {
         data.value = t
         state.markDown()
-    }
-
-    override fun error(error: Throwable) {
-        state.markError(error)
-        data.value = null
-    }
-
-    override fun update(t: T) {
-        data.value = t
     }
 
     override fun refresh() = Unit
@@ -73,15 +71,6 @@ class SimpleLoadingHandler<T>(val scope: CoroutineScope, val loader: suspend () 
     override fun done(t: T) {
         data.value = t
         state.value = LoadingState.Done
-    }
-
-    override fun error(error: Throwable) {
-        data.value = null
-        state.value = LoadingState.Error(error)
-    }
-
-    override fun update(t: T) {
-        done(t)
     }
 
     override fun refresh() {

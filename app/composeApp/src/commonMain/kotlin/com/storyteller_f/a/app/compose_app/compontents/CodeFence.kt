@@ -38,6 +38,7 @@ import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
+import com.eygraber.uri.Uri
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
@@ -74,7 +75,7 @@ import net.bjoernpetersen.m3u.M3uParser
 import java.net.URI
 
 @Composable
-fun CustomCodeFence(modal: MarkdownComponentModel, mediaList1: Map<String, MediaInfo>) {
+fun CustomCodeFence(modal: MarkdownComponentModel, mediaList: Map<String, MediaInfo>) {
     val lang = remember(modal.node, modal.content) {
         getLang(modal.node, modal.content)
     }
@@ -83,7 +84,7 @@ fun CustomCodeFence(modal: MarkdownComponentModel, mediaList1: Map<String, Media
 
         lang == "math" -> LatexBlock(modal)
 
-        lang == "object" -> ObjectBlock(modal, mediaList1)
+        lang == "object" -> ObjectBlock(modal, mediaList)
 
         else -> HighlightCodeBlock(modal)
     }
@@ -102,7 +103,7 @@ fun ObjectBlock(
     when (obj.contentType) {
         YOUTUBE_MIMETYPE -> {
             val coverInfo = mediaList[obj.cover]
-            val name = "Youtube:${com.eygraber.uri.Uri.parse(obj.url).getQueryParameter("v")}"
+            val name = "Youtube:${Uri.parse(obj.url).getQueryParameter("v")}"
             VideoView(
                 RemoteMediaItem(obj.url, YOUTUBE_MIMETYPE, YOUTUBE_MIMETYPE, false, name, coverInfo, obj.title),
                 true
@@ -111,7 +112,7 @@ fun ObjectBlock(
 
         SOUND_CLOUD_MIME_TYPE -> {
             val coverInfo = mediaList[obj.cover]
-            val name = "SoundCloud:${com.eygraber.uri.Uri.parse(obj.url).lastPathSegment}"
+            val name = "SoundCloud:${Uri.parse(obj.url).lastPathSegment}"
             AudioView(
                 RemoteMediaItem(
                     obj.url,
@@ -133,7 +134,7 @@ fun ObjectBlock(
             val url = mediaInfo?.url
             val contentType = mediaInfo?.contentType
             when {
-                url == null || contentType == null -> HighlightCodeBlock(modal)
+                contentType.isNullOrBlank() || url.isNullOrBlank() -> HighlightCodeBlock(modal)
 
                 contentType == "application/pdf" -> PdfView(url)
 
@@ -365,7 +366,8 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInf
     override fun transform(link: String): ImageData {
         val appNav = LocalAppNav.current
         return if (link.startsWith("file:///")) {
-            val painter = rememberAsyncImagePainter(model = link.substring(7))
+            val model = link.substring(7)
+            val painter = rememberAsyncImagePainter(model = model)
             ImageData(painter)
         } else {
             val info = mediaMap[link]

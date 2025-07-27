@@ -1,6 +1,7 @@
 package com.storyteller_f.a.app.compose_app.pages.community
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -16,6 +17,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
@@ -34,18 +37,23 @@ import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.world.TopicList
+import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.compose_app.utils.loadFontFromLocal
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
+import dev.tclement.fonticons.FontIcon
 import io.github.aakira.napier.Napier
+import io.github.windedge.table.DataTable
 import kotlinx.coroutines.launch
+import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -60,7 +68,12 @@ fun CommunityPage(
 
     AppTheme(typography = typography) {
         when (size.widthSizeClass) {
-            WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(communityId, showDialog, model)
+            WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(
+                communityId,
+                showDialog,
+                model
+            )
+
             else -> CommunityNonCompatPageInternal(communityId, showDialog, model)
         }
     }
@@ -84,11 +97,9 @@ fun getCommunityFont(communityId: PrimaryKey): Typography {
             Napier.i {
                 "CommunityPage state:$state data:$data"
             }
-            if (state is LoadingState.Done) {
+            if (state is LoadingState.Done && data?.status == DownloadStatus.DOWNLOADED) {
                 data?.let {
-                    loadFontFromLocal(
-                        it.path + ".extracted"
-                    )
+                    loadFontFromLocal(it.path + ".extracted")
                 }
             } else {
                 null
@@ -99,9 +110,12 @@ fun getCommunityFont(communityId: PrimaryKey): Typography {
     return typography.copy(
         bodyLarge =
         typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
-        bodyMedium = typography.bodyMedium.copy(fontFamily = fontFamily ?: typography.bodyMedium.fontFamily),
-        bodySmall = typography.bodySmall.copy(fontFamily = fontFamily ?: typography.bodySmall.fontFamily),
-
+        bodyMedium = typography.bodyMedium.copy(
+            fontFamily = fontFamily ?: typography.bodyMedium.fontFamily
+        ),
+        bodySmall = typography.bodySmall.copy(
+            fontFamily = fontFamily ?: typography.bodySmall.fontFamily
+        )
     )
 }
 
@@ -120,6 +134,7 @@ private fun buildSearchScope(
     "/topics" -> SearchScope.CommunityTopic(
         communityId
     )
+
     else -> SearchScope.CommunityRoom(communityId)
 }
 
@@ -131,13 +146,13 @@ private fun CommunityNonCompatPageInternal(
 ) {
     val community by model.handler.data.collectAsState()
     val dialogShown by model.dialog.shownDialog.collectAsState()
-    val navs = communityNavRoutes()
+    val navRoutes = communityNavRoutes()
     val navigator = rememberNavController()
     val current by navigator.currentBackStackEntryFlow.collectAsState(null)
     val searchScope = buildSearchScope(current?.destination?.route, communityId)
     Scaffold { paddingValues ->
         Row(modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())) {
-            CustomRailNav(current?.destination?.route, navs) {
+            CustomRailNav(current?.destination?.route, navRoutes) {
                 navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
             }
             Column(
@@ -196,7 +211,7 @@ private fun CommunityCompatPageInternal(
         2
     }
     val searchScope = buildSearchScope(pagerState, communityId)
-    val navs = communityNavRoutes()
+    val navRoutes = communityNavRoutes()
     val appNav = LocalAppNav.current
     var showDialog by remember {
         mutableStateOf(false)
@@ -206,7 +221,7 @@ private fun CommunityCompatPageInternal(
             showDialog = true
         }
     }, bottomBar = {
-        CommunityBottomNav(navs, pagerState)
+        CommunityBottomNav(navRoutes, pagerState)
     }) { paddingValues ->
         Column(
             modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding()),
@@ -259,16 +274,16 @@ private fun CommunityFloatingButton(
 
 @Composable
 private fun CommunityBottomNav(
-    navs: List<NavRoute>,
+    navRoutes: List<NavRoute>,
     pagerState: PagerState,
 ) {
     val scope = rememberCoroutineScope()
     CustomBottomNav(
-        navs[pagerState.currentPage].path,
-        navs
+        navRoutes[pagerState.currentPage].path,
+        navRoutes
     ) { path ->
         scope.launch {
-            pagerState.animateScrollToPage(navs.indexOfFirst {
+            pagerState.animateScrollToPage(navRoutes.indexOfFirst {
                 it.path == path
             })
         }
@@ -337,12 +352,16 @@ fun CommunityDialog(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
     val communityId = communityInfo.id
     DialogContainer {
         Row(
-            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
+            modifier = Modifier.background(
+                MaterialTheme.colorScheme.surfaceDim,
+                RoundedCornerShape(8.dp)
+            )
                 .padding(8.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -357,26 +376,44 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
             }
         }
         communityInfo.font?.let {
-            Column {
-                val downloadViewModel =
-                    LocalDownloadViewModel.current
-                val loadingHandler by produceState<CachedLoadingHandler<DownloadInfo>?>(
-                    null,
-                    it
-                ) {
-                    value = downloadViewModel.download(it)
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    loadingHandler?.let { handler ->
-                        val state by handler.state.collectAsState()
-                        val data by handler.data.collectAsState()
-                        Text(it.name, modifier = Modifier.weight(1f))
-                        DownloadStatusView(state, data)
-                    }
-                }
-            }
+            FontView(it)
         }
         CommunityMenus(communityId, communityInfo, dismiss)
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun FontView(info: MediaInfo) {
+    val downloadViewModel =
+        LocalDownloadViewModel.current
+    val loadingHandler by produceState<CachedLoadingHandler<DownloadInfo>?>(
+        null,
+        info
+    ) {
+        value = downloadViewModel.download(info)
+    }
+    var showSheet by remember {
+        mutableStateOf(false)
+    }
+    val sheetState = rememberModalBottomSheetState()
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable {
+            showSheet = true
+        }.padding(horizontal = 8.dp, vertical = 12.dp)
+    ) {
+        FontIcon(MaterialSymbolsOutlined.FontDownload, "font")
+        Text(info.name, modifier = Modifier.weight(1f))
+        loadingHandler?.let { handler ->
+            val state by handler.state.collectAsState()
+            val data by handler.data.collectAsState()
+            DownloadStatusView(state, data)
+        }
+    }
+    DownloadInfoPage(info, showSheet, sheetState) {
+        showSheet = false
     }
 }
 
@@ -392,7 +429,7 @@ private fun DownloadStatusView(
         state is LoadingState.Done && data != null -> {
             when (data.status) {
                 DownloadStatus.NOT_DOWNLOADED, DownloadStatus.DOWNLOADING -> CircularProgressIndicator(
-                    modifier = Modifier.size(10.dp),
+                    modifier = Modifier.size(20.dp),
                     strokeWidth = 2.dp
                 )
 
@@ -405,9 +442,11 @@ private fun DownloadStatusView(
 
         state is LoadingState.Error -> Text(state.e.localizedMessage?.take(10) ?: "!")
         state == null || state is LoadingState.Loading -> CircularProgressIndicator(
-            modifier = Modifier.size(10.dp),
+            modifier = Modifier.size(20.dp),
             strokeWidth = 2.dp
         )
+
+        else -> FontIcon(MaterialSymbolsOutlined.Info, "warning")
     }
 }
 
@@ -464,6 +503,98 @@ private fun CommunityMenus(
                 ButtonNav(Icons.Default.Settings, "Settings") {
                     dismiss()
                     nav.gotoSettingPage(communityId, ObjectType.COMMUNITY)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DownloadInfoPage(
+    it: MediaInfo,
+    showSheet: Boolean,
+    sheetState: SheetState,
+    hideSheet: () -> Unit,
+) {
+    val downloadViewModel =
+        LocalDownloadViewModel.current
+    val loadingHandler by produceState<CachedLoadingHandler<DownloadInfo>?>(
+        null,
+        it
+    ) {
+        value = downloadViewModel.download(it)
+    }
+    loadingHandler?.let { handler ->
+        BaseSheet(showSheet, sheetState, hideSheet) {
+            SheetContainer {
+                Column(
+                    modifier = Modifier.heightIn(200.dp, 600.dp).padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    val data by handler.data.collectAsState()
+
+                    DownloadInfoTitle(it, data, handler)
+
+                    DownloadInfoTable(data, it)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DownloadInfoTitle(
+    it: MediaInfo,
+    data: DownloadInfo?,
+    handler: CachedLoadingHandler<DownloadInfo>
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text(it.name, modifier = Modifier.weight(1f))
+        if (data?.status == DownloadStatus.FAILED) {
+            Button({
+                handler.refresh()
+            }) {
+                Text("Retry")
+            }
+        }
+    }
+}
+
+@Composable
+private fun DownloadInfoTable(
+    data: DownloadInfo?,
+    it: MediaInfo
+) {
+    val tableData = buildMap {
+        put("Path", data?.path)
+        put("Size", HumanReadable.fileSize(it.size))
+        put("Status", data?.status?.name)
+        if (data?.status == DownloadStatus.FAILED) {
+            put("Error", data.message)
+        }
+    }
+    DataTable(
+        {
+            headerBackground {
+                Box(modifier = Modifier.background(color = Color.LightGray))
+            }
+            column { Text("Key") }
+            column { Text("Value") }
+        }
+    ) {
+        tableData.forEach { (key, value) ->
+            row(modifier = Modifier) {
+                cell {
+                    Text(key)
+                }
+                cell {
+                    value?.let {
+                        Text(it)
+                    }
                 }
             }
         }

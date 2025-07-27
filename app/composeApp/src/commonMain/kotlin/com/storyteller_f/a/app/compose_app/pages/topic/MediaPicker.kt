@@ -69,20 +69,28 @@ fun MediaPicker(
         val pagerState = rememberPagerState {
             support.size
         }
-        val tabs = listOf(Icons.Default.Cloud to "files", Icons.Default.Mic to "audio recorder").filter {
-            support.contains(it.second)
-        }
+        val tabs =
+            listOf(Icons.Default.Cloud to "files", Icons.Default.Mic to "audio recorder").filter {
+                support.contains(it.second)
+            }
         if (support.size != 1) {
             val currentPage = pagerState.currentPage
             val scope = rememberCoroutineScope()
-            PrimaryTabRow(currentPage, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+            PrimaryTabRow(
+                currentPage,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ) {
                 tabs.forEachIndexed { index, pair ->
                     Tab(currentPage == index, {
                         scope.launch {
                             pagerState.scrollToPage(index)
                         }
                     }) {
-                        Icon(pair.first, pair.second, modifier = Modifier.padding(vertical = 10.dp).size(30.dp))
+                        Icon(
+                            pair.first,
+                            pair.second,
+                            modifier = Modifier.padding(vertical = 10.dp).size(30.dp)
+                        )
                     }
                 }
             }
@@ -109,7 +117,10 @@ fun AudioRecorder(
     Box(modifier = Modifier.fillMaxSize()) {
         RecorderButton(isGranted, isRecording, uploadSuccess, mediaTarget)
         if (!isGranted) {
-            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer)) {
+            Box(
+                modifier = Modifier.fillMaxSize()
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+            ) {
                 Button({
                     requestPermission(
                         Permission.Audio
@@ -145,9 +156,10 @@ private fun BoxScope.RecorderButton(
                             Napier.i {
                                 "save to $path"
                             }
-                            globalDialogController.uploadPath(path, sessionManager, mediaTarget).mapIfNotNull {
-                                uploadSuccess(it)
-                            }
+                            globalDialogController.uploadPath(path, sessionManager, mediaTarget)
+                                .mapIfNotNull {
+                                    uploadSuccess(it)
+                                }
                         } else {
                             globalDialogController.use {
                                 Recorder.startRecord()
@@ -198,34 +210,48 @@ private fun MediaListView(
                     it.id
                 }) {
                     val item = pagingItems[it]
-                    if (item != null) {
-                        Row(modifier = Modifier.fillMaxWidth().clickable {
-                            clickItem(listOf(item))
-                        }) {
-                            FileIcon(item)
-                            Spacer(modifier = Modifier.width(20.dp))
-                            Column {
-                                Text(item.name, style = MaterialTheme.typography.labelMedium)
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Row {
-                                    Text(item.lastModified.formatTime(), style = MaterialTheme.typography.labelSmall)
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    Text(
-                                        HumanReadable.fileSize(item.size),
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(5.dp))
-                                item.dimension?.let {
-                                    Text("w${it.width}·h${it.height}", style = MaterialTheme.typography.labelSmall)
-                                }
-                            }
-                        }
-                    }
+                    MediaCell(item, clickItem)
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }
                 bottomAppending(debounced)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MediaCell(
+    item: com.storyteller_f.shared.model.MediaInfo?,
+    clickItem: (kotlin.collections.List<com.storyteller_f.shared.model.MediaInfo>) -> kotlin.Unit
+) {
+    if (item != null) {
+        Row(modifier = Modifier.fillMaxWidth().clickable {
+            clickItem(listOf(item))
+        }) {
+            FileIcon(item)
+            Spacer(modifier = Modifier.width(20.dp))
+            Column {
+                Text(item.name, style = MaterialTheme.typography.labelMedium)
+                Spacer(modifier = Modifier.height(10.dp))
+                Row {
+                    Text(
+                        item.lastModified.formatTime(),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        HumanReadable.fileSize(item.size),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+                Spacer(modifier = Modifier.height(5.dp))
+                item.dimension?.let {
+                    Text(
+                        "w${it.width}·h${it.height}",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
             }
         }
     }
@@ -306,12 +332,8 @@ suspend fun upload(
         return Result.failure(Exception("file size is too large"))
     }
 
-    return sessionManager.upload(mediaTarget, uploadData, readStream).map {
-        bus.emit(
-            OnMediaUploaded(
-                it.data
-            )
-        )
+    return sessionManager.upload(mediaTarget, uploadData, block = readStream).map {
+        bus.emit(OnMediaUploaded(it.data))
         it.data
     }
 }
@@ -349,13 +371,19 @@ fun ReactionListPage(topicId: PrimaryKey) {
             pagingItems,
             modifier = Modifier.padding(paddingValues)
         ) {
-            LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            LazyColumn(
+                contentPadding = PaddingValues(20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 items(pagingItems.itemCount, pagingItems.itemKey {
                     it.emoji
                 }) {
                     val info = pagingItems[it]
                     if (info != null) {
-                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(info.emoji, fontSize = 25.sp)
                             Spacer(modifier = Modifier.weight(1f))
                             Text(info.count.toString())

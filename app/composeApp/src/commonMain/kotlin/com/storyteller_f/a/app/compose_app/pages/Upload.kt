@@ -123,7 +123,7 @@ private fun UploadItem(
                 }
             }
 
-            LoadingState.Loading, null -> CircularProgressIndicator(Modifier.size(30.dp))
+            else -> CircularProgressIndicator(Modifier.size(30.dp))
         }
     }
 }

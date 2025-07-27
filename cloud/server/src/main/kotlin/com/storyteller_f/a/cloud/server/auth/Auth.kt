@@ -1,27 +1,17 @@
 package com.storyteller_f.a.cloud.server.auth
 
 import com.maxmind.geoip2.DatabaseReader
-import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.server.invoke
 import com.storyteller_f.a.api.server.receiveBody
-import com.storyteller_f.a.backend.core.CustomBadRequestException
-import com.storyteller_f.a.backend.exposed.tables.*
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getUserAlternateUserInfoList
-import com.storyteller_f.a.backend.service.processRawUserToUserInfo
 import com.storyteller_f.a.cloud.core.service.addAlternativeAccount
-import com.storyteller_f.a.cloud.core.service.addUserLog
-import com.storyteller_f.a.cloud.server.ServerConfig
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
-import com.storyteller_f.shared.*
-import com.storyteller_f.shared.model.AlgoType
-import com.storyteller_f.shared.model.PassType
-import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.model.UserLogType
-import com.storyteller_f.shared.obj.ob
-import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.a.cloud.server.route.checkApiRequest
+import com.storyteller_f.a.cloud.server.route.signIn
+import com.storyteller_f.a.cloud.server.route.signUp
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.*
@@ -128,136 +118,7 @@ suspend fun ApplicationCall.respondUnauthorizedResponse() {
     respond(UnauthorizedResponse(HttpAuthHeader.Single("Custom", data)))
 }
 
-private suspend fun RoutingContext.signIn(
-    backend: Backend,
-    pack: SignInPack,
-    data: String
-): Result<UserInfo?> {
-    val f = finalData(data)
-    return backend.exposedDatabase.userDatabase.getRawUserAndPublicKeyByAddress(pack.ad).filterNotNull {
-        CustomBadRequestException("user not found")
-    }.mapResult { (rawUser, publicKey) ->
-        verify(publicKey, pack.sig, f).mapResult { isVerified ->
-            if (isVerified) {
-                val id = rawUser.user.id
-                backend.addUserLog(id, UserLogType.SIGN_IN, id ob ObjectType.USER)
-                backend.processRawUserToUserInfo(listOf(rawUser)).mapIfNotNull {
-                    it.first()
-                }.mapIfNotNull { value ->
-                    val id = value.id
-                    saveSuccessSessionOnFirst(id)
-                    value
-                }
-            } else {
-                Result.failure(BadRequestException("Verify failed"))
-            }
-        }
-    }
-}
-
-private fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
-    call.getSession().first.let { session ->
-        if (session is UserSession.Pending) {
-            call.saveSuccessSession(session, id)
-        }
-    }
-}
-
-private suspend fun RoutingContext.signUp(
-    backend: Backend,
-    pack: SignUpPack
-): Result<UserInfo?> {
-    val data = call.getData()
-    val f = finalData(data)
-    return verify(pack.pk, pack.sig, f).mapResult {
-        if (it) {
-            backend.exposedDatabase.userDatabase.isUserNotExistsByPublicKey(pack.pk).mapResult { userNotExists ->
-                if (userNotExists) {
-                    calcAddress(pack.pk).mapResult { ad ->
-                        val newId = SnowflakeFactory.nextId()
-                        val name = backend.nameService.parse(newId)
-                        val user = User(
-                            null,
-                            pack.pk,
-                            ad,
-                            null,
-                            name,
-                            newId,
-                            now(),
-                            0,
-                            PassType.RAW,
-                            AlgoType.P256
-                        )
-                        backend.exposedDatabase.userDatabase.createUser(user).map {
-                            backend.addUserLog(newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
-                            saveSuccessSessionOnFirst(newId)
-                            user.toUserInfo()
-                        }
-                    }
-                } else {
-                    Result.failure(BadRequestException("User exists"))
-                }
-            }
-        } else {
-            Result.failure(CustomBadRequestException("Verify failed"))
-        }
-    }
-}
-
-private suspend fun ApplicationCall.checkApiRequest(
-    backend: Backend,
-    credential: CustomCredential,
-    session: UserSession.Pending
-): Result<CustomPrincipal?> {
-    val sig = credential.sig
-    @Suppress("SimplifyBooleanWithConstants", "KotlinConstantConditions")
-    return when {
-        !ServerConfig.IS_PROD && credential is CustomCredential.IdCredential && sig == credential.id.toString() -> {
-            val id = credential.id
-            backend.exposedDatabase.userDatabase.isUserExistsByUid(id).mapIfNotNull {
-                saveSuccessSession(session, id)
-                CustomPrincipal(id)
-            }
-        }
-
-        sig.isNotBlank() && session.data.isNotBlank() -> {
-            backend.getUserAuthData(credential).mapResultIfNotNull { (pubKey, id) ->
-                verify(
-                    pubKey,
-                    sig,
-                    finalData(session.data)
-                ).mapIfNotNull {
-                    saveSuccessSession(session, id)
-                    CustomPrincipal(id)
-                }
-            }
-        }
-
-        else -> {
-            Result.success(null)
-        }
-    }
-}
-
-private suspend fun Backend.getUserAuthData(
-    credential: CustomCredential
-): Result<Pair<String, Long>?> {
-    return when (credential) {
-        is CustomCredential.AidCredential -> exposedDatabase.userDatabase.getUserAuthDataByAid {
-            Aids.value eq credential.aid
-        }
-
-        is CustomCredential.IdCredential -> exposedDatabase.userDatabase.getUserAuthDataBy {
-            Users.id eq credential.id
-        }
-
-        is CustomCredential.AddressCredential -> exposedDatabase.userDatabase.getUserAuthDataBy {
-            Users.address eq credential.ad
-        }
-    }
-}
-
-private fun ApplicationCall.saveSuccessSession(
+fun ApplicationCall.saveSuccessSession(
     session: UserSession.Pending,
     id: PrimaryKey
 ) {
@@ -276,12 +137,12 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
     }
 }
 
-private fun ApplicationCall.getData(): String {
+fun ApplicationCall.getData(): String {
     val (_, data) = getSession()
     return data
 }
 
-private fun ApplicationCall.getSession(): Pair<UserSession, String> {
+fun ApplicationCall.getSession(): Pair<UserSession, String> {
     val remote = request.origin.remoteAddress
     return when (val session = sessions.get(UserSession::class)) {
         null -> {

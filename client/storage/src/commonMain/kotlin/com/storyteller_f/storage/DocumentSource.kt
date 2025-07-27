@@ -8,7 +8,6 @@ import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.storage.DocumentExpression.Less
@@ -471,19 +470,15 @@ class RemoteKeyDocumentStorage(
     }
 }
 
-class ReactionDocumentStorage(val documentSource: DocumentSource) : ReactionStorage {
-    companion object {
-        val json = Json {
-        }
-    }
+class ReactionDocumentStorage(val documentSource: DocumentSource, val json: Json) : ReactionStorage {
 
     override fun observeDatum(collectionName: CollectionName, id: PrimaryKey): Flow<ReactionInfo?> {
         require(collectionName is CollectionName.Reactions)
-        return documentSource.getCollection<ReactionInfo>("reactions").observeDatum(id)
+        return documentSource.getCollection<ReactionInfo>(collectionName.getName()).observeDatum(id)
     }
 
     override fun save(collectionName: CollectionName, t: ReactionInfo) {
-        TODO("Not yet implemented")
+        documentSource.getCollection<ReactionInfo>(collectionName.getName()).save("${t.objectId}-${t.emoji}", t)
     }
 
     override fun observeData(
@@ -495,7 +490,7 @@ class ReactionDocumentStorage(val documentSource: DocumentSource) : ReactionStor
         return when (collectionName) {
             is CollectionName.ReactionList -> {
                 val param = key?.let {
-                    json.decodeFromString<ReactionCursorKey>(it)
+                    collectionName.decodeKey(json, it)
                 }
                 val expressions = if (param != null) {
                     arrayOf(
@@ -608,7 +603,9 @@ class DownloadDocumentStorage(val documentSource: DocumentSource) : DownloadStor
         collectionName: CollectionName,
         id: PrimaryKey
     ): Flow<DownloadInfo?> {
-        return documentSource.getCollection<DownloadInfo>(collectionName.getName()).observeDatum(id)
+        return documentSource.getCollection<DownloadInfo>(collectionName.getName()).observeDatum(
+            DocumentExpression.IdEq("_id", id)
+        )
     }
 
     override fun getDocument(
@@ -619,7 +616,7 @@ class DownloadDocumentStorage(val documentSource: DocumentSource) : DownloadStor
     }
 }
 
-class DocumentStorage(documentSource: DocumentSource) : Storage {
+class DocumentStorage(documentSource: DocumentSource, json: Json) : Storage {
     override val userStorage: UserStorage =
         UserDocumentStorage(documentSource)
     override val communityStorage: CommunityStorage =
@@ -631,7 +628,7 @@ class DocumentStorage(documentSource: DocumentSource) : Storage {
     override val roomStorage: RoomStorage =
         RoomDocumentStorage(documentSource)
     override val remoteKeyStorage: RemoteKeyStorage = RemoteKeyDocumentStorage(documentSource)
-    override val reactionStorage: ReactionStorage = ReactionDocumentStorage(documentSource)
+    override val reactionStorage: ReactionStorage = ReactionDocumentStorage(documentSource, json)
     override val alternativesStorage: AlternativesStorage =
         AlternativesDocumentStorage(documentSource)
     override val mediasStorage: MediasStorage = MediasDocumentStorage(documentSource)

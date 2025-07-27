@@ -6,7 +6,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import java.io.File
 
-actual fun loadFontFromLocal(path: String): FontFamily {
+actual fun loadFontFromLocal(path: String): FontFamily? {
     val file = File(path)
     val fonts = file.listFiles()?.mapNotNull {
         when {
@@ -68,6 +68,7 @@ actual fun loadFontFromLocal(path: String): FontFamily {
 
             else -> null
         }
-    }
-    return FontFamily(fonts.orEmpty())
+    } ?: return null
+    if (fonts.isEmpty()) return null
+    return FontFamily(fonts)
 }

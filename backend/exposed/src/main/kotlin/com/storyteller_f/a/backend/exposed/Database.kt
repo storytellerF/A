@@ -60,7 +60,7 @@ interface TopicDatabase {
     suspend fun getTopicRootTuple(parentId: PrimaryKey): Result<ObjectTuple?>
     suspend fun getTopicInfo(fetch: ObjectFetch, uid: PrimaryKey?): Result<TopicInfo?>
     suspend fun getTopicInfoListByPredicate(uid: PrimaryKey?, queryBuilder: Query.() -> Query): Result<List<TopicInfo>>
-    suspend fun getTopicPaginationResultByPredicate(
+    suspend fun getTopicInfoPaginationByPredicate(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         extraQuery: Query.() -> Query,

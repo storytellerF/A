@@ -321,7 +321,7 @@ private fun RoomInputTopContent(roomInfo: RoomInfo, keysState: LoadingState?, ke
             when (val ks = keysState) {
                 LoadingState.Done -> Text("✅")
                 is LoadingState.Error -> Text(ks.e.localizedMessage?.take(10) ?: "!")
-                null, LoadingState.Loading -> CircularProgressIndicator(
+                else -> CircularProgressIndicator(
                     modifier = Modifier.size(10.dp),
                     strokeWidth = 2.dp
                 )
