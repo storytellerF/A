@@ -5,9 +5,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.m3.markdownColor
@@ -37,7 +40,10 @@ fun TopicContentField(
         }
 
         is TopicContent.Encrypted, is TopicContent.DecryptFailed, is TopicContent.Invalid -> {
-            Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 when (content) {
                     is TopicContent.DecryptFailed -> {
                         Text(content.message)
@@ -67,21 +73,30 @@ private fun TopicContentFieldInternal(
     plain: String,
     isEmbed: Boolean,
 ) {
-    val mediaMap = rawMediaList.associateBy { it.name }.toImmutableMap()
-    Markdown(
-        plain,
-        modifier = Modifier.fillMaxWidth(),
-        colors = markdownColor(),
-        typography = markdownTypography(),
-        imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap),
-        components = markdownComponents(
-            codeFence = {
-                CustomCodeFence(it, mediaMap)
-            },
-            codeBlock = { HighlightCodeBlock(it) },
-            paragraph = {
-                CustomMarkdownParagraph(it.content, it.node, mediaMap = mediaMap, isEmbed = isEmbed)
-            }
+    val mediaMap = remember(rawMediaList) {
+        rawMediaList.associateBy { it.name }.toImmutableMap()
+    }
+    CompositionLocalProvider(LocalInspectionMode provides true) {
+        Markdown(
+            plain,
+            modifier = Modifier.fillMaxWidth(),
+            colors = markdownColor(),
+            typography = markdownTypography(),
+            imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap),
+            components = markdownComponents(
+                codeFence = {
+                    CustomCodeFence(it, mediaMap)
+                },
+                codeBlock = { HighlightCodeBlock(it) },
+                paragraph = {
+                    CustomMarkdownParagraph(
+                        it.content,
+                        it.node,
+                        mediaMap = mediaMap,
+                        isEmbed = isEmbed
+                    )
+                }
+            )
         )
-    )
+    }
 }
