@@ -26,7 +26,6 @@ import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.StateView
 import com.storyteller_f.a.app.compose_app.common.bottomAppending
-import com.storyteller_f.a.app.compose_app.common.debounceState
 import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.*
 import com.storyteller_f.a.app.compose_app.model.*
@@ -173,7 +172,7 @@ private fun RoomMessageList(
     items: LazyPagingItems<TopicInfo>,
     lazyListState: LazyListState,
 ) {
-    val debounced = debounceState(items.loadState)
+    val debounced = items.loadState
     StateView(items) {
         LazyColumn(
             state = lazyListState,
