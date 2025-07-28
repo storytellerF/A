@@ -73,19 +73,16 @@ fun <T : Any> StateView(
         if (pagingItems.itemCount > 0) {
             content()
         } else {
-            when (val state = pagingItems.loadState.refresh.toLoadingState()) {
-                is LoadingState.Error -> CenterBox {
-                    ExceptionCell(state.e) {
+            CenterBox {
+                when (val state = pagingItems.loadState.refresh.toLoadingState()) {
+                    is LoadingState.Error -> ExceptionCell(state.e) {
                         pagingItems.refresh()
                     }
-                }
 
-                is LoadingState.Done -> CenterBox {
-                    Text(text = stringResource(Res.string.no_content_yet))
-                }
+                    is LoadingState.Done ->
+                        Text(text = stringResource(Res.string.no_content_yet))
 
-                else -> CenterBox {
-                    CircularProgressIndicator()
+                    else -> CircularProgressIndicator()
                 }
             }
         }
@@ -123,17 +120,14 @@ fun <T> StateView(
                     content(safeData)
                 }
             } else {
-                when (val capturedState = state) {
-                    is LoadingState.Error -> {
-                        CenterBox {
+                CenterBox {
+                    when (val capturedState = state) {
+                        is LoadingState.Error -> {
                             ExceptionCell(capturedState.e) {
                                 handler.refresh()
                             }
                         }
-                    }
-
-                    else -> {
-                        CenterBox {
+                        else -> {
                             CircularProgressIndicator()
                         }
                     }
@@ -214,17 +208,18 @@ fun <T : Any> RefCellStateView(
 
 fun LazyListScope.topPrepend(combinedLoadStates: CombinedLoadStates, refresh: () -> Unit) {
     if (combinedLoadStates.prepend == LoadState.Loading) {
-        item {
+        item("prepend") {
             RemoteMediatorLoadingView()
         }
     }
+    println(combinedLoadStates)
     val loadState = combinedLoadStates.mediator?.refresh
     if (loadState is LoadState.Error) {
-        item {
+        item("error") {
             ExceptionCell(loadState.error, refresh)
         }
     } else if (combinedLoadStates.refresh is LoadState.Loading) {
-        item {
+        item("loading") {
             RemoteMediatorLoadingView()
         }
     }
@@ -250,7 +245,7 @@ fun LazyGridScope.topPrepend(
     refresh: () -> Unit
 ) {
     if (combinedLoadStates.prepend == LoadState.Loading) {
-        item(span = {
+        item("prepend", span = {
             GridItemSpan(count)
         }) {
             RemoteMediatorLoadingView()
@@ -258,13 +253,13 @@ fun LazyGridScope.topPrepend(
     }
     val loadState = combinedLoadStates.mediator?.refresh
     if (loadState is LoadState.Error) {
-        item(span = {
+        item("error", span = {
             GridItemSpan(count)
         }) {
             ExceptionCell(loadState.error, refresh)
         }
     } else if (combinedLoadStates.refresh is LoadState.Loading) {
-        item(span = { GridItemSpan(count) }) {
+        item("loading", span = { GridItemSpan(count) }) {
             RemoteMediatorLoadingView()
         }
     }
@@ -272,7 +267,7 @@ fun LazyGridScope.topPrepend(
 
 fun LazyListScope.bottomAppending(combinedLoadStates: CombinedLoadStates) {
     if (combinedLoadStates.append == LoadState.Loading) {
-        item {
+        item("append") {
             RemoteMediatorLoadingView()
         }
     }
@@ -283,7 +278,7 @@ fun LazyGridScope.bottomAppending(
     combinedLoadStates: CombinedLoadStates,
 ) {
     if (combinedLoadStates.append == LoadState.Loading) {
-        item(span = {
+        item("append", span = {
             GridItemSpan(count)
         }) {
             RemoteMediatorLoadingView()

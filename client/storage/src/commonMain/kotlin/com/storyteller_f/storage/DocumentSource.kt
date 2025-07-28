@@ -470,7 +470,7 @@ class RemoteKeyDocumentStorage(
     }
 }
 
-class ReactionDocumentStorage(val documentSource: DocumentSource, val json: Json) : ReactionStorage {
+class ReactionDocumentStorage(val documentSource: DocumentSource) : ReactionStorage {
 
     override fun observeDatum(collectionName: CollectionName, id: PrimaryKey): Flow<ReactionInfo?> {
         require(collectionName is CollectionName.Reactions)
@@ -490,7 +490,7 @@ class ReactionDocumentStorage(val documentSource: DocumentSource, val json: Json
         return when (collectionName) {
             is CollectionName.ReactionList -> {
                 val param = key?.let {
-                    collectionName.decodeKey(json, it)
+                    collectionName.decodeKey(Json, it)
                 }
                 val expressions = if (param != null) {
                     arrayOf(
@@ -616,7 +616,7 @@ class DownloadDocumentStorage(val documentSource: DocumentSource) : DownloadStor
     }
 }
 
-class DocumentStorage(documentSource: DocumentSource, json: Json) : Storage {
+class DocumentStorage(documentSource: DocumentSource) : Storage {
     override val userStorage: UserStorage =
         UserDocumentStorage(documentSource)
     override val communityStorage: CommunityStorage =
@@ -628,7 +628,7 @@ class DocumentStorage(documentSource: DocumentSource, json: Json) : Storage {
     override val roomStorage: RoomStorage =
         RoomDocumentStorage(documentSource)
     override val remoteKeyStorage: RemoteKeyStorage = RemoteKeyDocumentStorage(documentSource)
-    override val reactionStorage: ReactionStorage = ReactionDocumentStorage(documentSource, json)
+    override val reactionStorage: ReactionStorage = ReactionDocumentStorage(documentSource)
     override val alternativesStorage: AlternativesStorage =
         AlternativesDocumentStorage(documentSource)
     override val mediasStorage: MediasStorage = MediasDocumentStorage(documentSource)

@@ -28,17 +28,19 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalMainSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
+import com.storyteller_f.a.app.compose_app.compontents.TopicList
 import com.storyteller_f.a.app.compose_app.design_spec
+import com.storyteller_f.a.app.compose_app.model.createWorldViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.MyCommunitiesPage
 import com.storyteller_f.a.app.compose_app.pages.room.MyRoomsPage
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
-import com.storyteller_f.a.app.compose_app.pages.world.WorldPage
 import com.storyteller_f.a.app.compose_app.sign_in
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -47,7 +49,7 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
 fun HomePage() {
     val size = calculateWindowSizeClass()
-    val homeNavs = listOf(
+    val homeNavRoutes = listOf(
         NavRoute("/world", Icons.Default.Public, "world"),
         NavRoute("/communities", Icons.Default.Diversity3, "communities"),
         NavRoute("/rooms", Icons.Default.ChatBubble, "rooms"),
@@ -59,9 +61,9 @@ fun HomePage() {
             }
             Scaffold(bottomBar = {
                 val scope = rememberCoroutineScope()
-                CustomBottomNav(homeNavs[pagerState.currentPage].path, homeNavs) { path ->
+                CustomBottomNav(homeNavRoutes[pagerState.currentPage].path, homeNavRoutes) { path ->
                     scope.launch {
-                        pagerState.animateScrollToPage(homeNavs.indexOfFirst {
+                        pagerState.animateScrollToPage(homeNavRoutes.indexOfFirst {
                             it.path == path
                         })
                     }
@@ -90,7 +92,7 @@ fun HomePage() {
                 Row(Modifier) {
                     val navigator = rememberNavController()
                     val currentEntry by navigator.currentBackStackEntryFlow.collectAsState(null)
-                    CustomRailNav(currentEntry?.destination?.route, homeNavs) {
+                    CustomRailNav(currentEntry?.destination?.route, homeNavRoutes) {
                         navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
                     }
                     HomeNavHost(
@@ -285,4 +287,11 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+fun WorldPage() {
+    val viewModel = createWorldViewModel()
+    val items = viewModel.flow.collectAsLazyPagingItems()
+    TopicList(items)
 }

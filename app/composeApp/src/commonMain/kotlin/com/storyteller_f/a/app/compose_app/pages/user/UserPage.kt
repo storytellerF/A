@@ -26,6 +26,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.compontents.TopicList
 import com.storyteller_f.a.app.compose_app.compontents.UserIcon
 import com.storyteller_f.a.app.compose_app.model.createTargetUserJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.model.createUserTitlesViewModel
@@ -38,7 +39,6 @@ import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.title.TitleList
-import com.storyteller_f.a.app.compose_app.pages.world.TopicList
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
@@ -76,7 +76,7 @@ private fun UserPageInternal(
 
 @Composable
 private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
-    val navs =
+    val navRoutes =
         listOf(
             NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
             NavRoute("/communities", Icons.Default.ChatBubble, "Communities"),
@@ -87,7 +87,7 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
     Scaffold {
         Row {
             val currentEntry = current?.destination?.route
-            CustomRailNav(currentEntry, navs) {
+            CustomRailNav(currentEntry, navRoutes) {
                 navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
             }
             Column {

@@ -15,26 +15,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.RoomScreen
+import com.storyteller_f.a.app.compose_app.hasRouteFlow
 import com.storyteller_f.a.app.compose_app.pages.topic.EmojiPicker
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicDropdownMenu
 import com.storyteller_f.a.app.compose_app.pages.user.UserCell
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserInfo
 import dev.tclement.fonticons.FontIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicCell(
     info: TopicInfo?,
-    contentAlignAvatar: Boolean = true,
     showAvatar: Boolean = true
 ) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    val authorInfo = info?.extension?.authorInfo
-    TopicCellInternal(info, authorInfo, showAvatar, contentAlignAvatar) {
+    TopicCellInternal(info, showAvatar) {
         showBottomSheet = true
     }
     info?.let {
@@ -44,26 +43,23 @@ fun TopicCell(
     }
 }
 
-/**
- * @param contentAlignAvatar true 代表和头像左边缘对其，否则和用户名对其
- */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TopicCellInternal(
     topicInfo: TopicInfo?,
-    authorInfo: UserInfo?,
     showAvatar: Boolean,
-    contentAlignAvatar: Boolean,
     startAddReaction: () -> Unit
 ) {
     topicInfo ?: return
+    val authorInfo = topicInfo.extension?.authorInfo
     val topicId = topicInfo.id
     val appNav = LocalAppNav.current
     var expanded by remember { mutableStateOf(false) }
+    val isRoomPage by appNav.hasRouteFlow<RoomScreen>().collectAsState(false)
     Box {
         Column(
             modifier = Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {
-                expanded = true
+                appNav.gotoTopic(topicId)
             }, onLongClickLabel = "topic menu") {
                 appNav.gotoTopic(topicId)
             }.padding(8.dp)
@@ -72,15 +68,15 @@ fun TopicCellInternal(
                 UserCell(authorInfo, true)
             }
             Column(
-                if (contentAlignAvatar) {
-                    Modifier.padding(horizontal = 8.dp)
-                } else {
+                if (isRoomPage) {
                     Modifier.fillMaxWidth().padding(start = 48.dp, end = 8.dp)
                         .background(
                             MaterialTheme.colorScheme.surfaceContainerHigh,
                             RoundedCornerShape(8.dp)
                         )
                         .padding(horizontal = 12.dp).padding(top = 8.dp, bottom = 12.dp)
+                } else {
+                    Modifier.padding(horizontal = 8.dp)
                 },
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {

@@ -35,8 +35,13 @@ import com.storyteller_f.a.app.compose_app.pages.user.UserSettingPage
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -108,7 +113,7 @@ inline fun <reified T : Any> AppNav.toRoute(): T? {
 }
 
 inline fun <reified T : Any> AppNav.hasRouteFlow(crossinline block: (T) -> Boolean = { true }): Flow<Boolean> {
-    return currentDestinationFlow.map {
+    return currentDestinationFlow.filterNotNull().map {
         it.destination.hasRoute<T>() && block(it.toRoute<T>())
     }
 }
@@ -116,7 +121,7 @@ inline fun <reified T : Any> AppNav.hasRouteFlow(crossinline block: (T) -> Boole
 interface AppNav {
     val currentDestination: NavBackStackEntry?
 
-    val currentDestinationFlow: Flow<NavBackStackEntry>
+    val currentDestinationFlow: StateFlow<NavBackStackEntry?>
 
     fun <T : Any> hasRoute(any: KClass<T>): Boolean {
         return currentDestination?.destination?.hasRoute(any) == true
@@ -171,7 +176,7 @@ interface AppNav {
             override val currentDestination: NavBackStackEntry
                 get() = TODO("Not yet implemented")
 
-            override val currentDestinationFlow: Flow<NavBackStackEntry>
+            override val currentDestinationFlow: StateFlow<NavBackStackEntry?>
                 get() = TODO("Not yet implemented")
 
             override fun gotoLogin() {
@@ -262,11 +267,11 @@ interface AppNav {
     }
 }
 
-fun newAppNav(navigator: NavHostController, json: Json) = object : AppNav {
+fun newAppNav(navigator: NavHostController, json: Json, scope: CoroutineScope) = object : AppNav {
     override val currentDestination: NavBackStackEntry?
         get() = navigator.currentBackStackEntry
-    override val currentDestinationFlow: Flow<NavBackStackEntry>
-        get() = navigator.currentBackStackEntryFlow
+    override val currentDestinationFlow: StateFlow<NavBackStackEntry?>
+        get() = navigator.currentBackStackEntryFlow.stateIn(scope, SharingStarted.Eagerly, null)
 
     override fun gotoLogin() {
         navigator.navigate(route = LoginScreen)

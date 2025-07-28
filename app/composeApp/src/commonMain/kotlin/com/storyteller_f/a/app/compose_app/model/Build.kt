@@ -398,11 +398,10 @@ fun createUserViewModel(userId: PrimaryKey) =
 
 @Composable
 fun createWorldViewModel(): WorldViewModel {
-    val json = LocalJson.current
     return viewModel(
         keys = listOf("world")
     ) { client, databaseSource ->
-        WorldViewModel(client, databaseSource, json)
+        WorldViewModel(client, databaseSource)
     }
 }
 

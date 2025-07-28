@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
@@ -247,22 +248,20 @@ fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest:
         val title = if (topicInfo.isPin) "Unpin" else "Pin"
         DropdownMenuItem(
             leadingIcon = {
-                CustomIcon(
-                    IconRes.Font(
-                        if (topicInfo.isPin) MaterialSymbolsOutlined.KeepOff else MaterialSymbolsOutlined.Keep
-                    )
-                )
+                val char = when {
+                    topicInfo.isPin -> MaterialSymbolsOutlined.KeepOff
+                    else -> MaterialSymbolsOutlined.Keep
+                }
+                Box(modifier = Modifier.size(20.dp)) {
+                    CustomIcon(IconRes.Font(char))
+                }
             },
             text = { Text(title) },
             onClick = {
                 scope.launch {
                     pinOrUnpinTopic(topicInfo, sessionManager, globalDialogController).onSuccess {
                         onDismissRequest()
-                        bus.emit(
-                            OnTopicChanged(
-                                it
-                            )
-                        )
+                        bus.emit(OnTopicChanged(it))
                     }
                 }
             }
