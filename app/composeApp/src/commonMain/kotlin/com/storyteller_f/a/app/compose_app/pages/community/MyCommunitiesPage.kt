@@ -25,7 +25,6 @@ import com.storyteller_f.a.app.compose_app.CommunityScreen
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.common.StateView
 import com.storyteller_f.a.app.compose_app.common.bottomAppending
-import com.storyteller_f.a.app.compose_app.common.debounceState
 import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compose_app.compontents.CommunityPoster
@@ -49,7 +48,7 @@ fun MyCommunitiesPage() {
 
 @Composable
 fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInfo) -> Unit)? = null) {
-    val debounced = debounceState(items.loadState)
+    val debounced = items.loadState
     StateView(items, modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints {
             val gridCount = (this.maxWidth / 128.dp).toInt()

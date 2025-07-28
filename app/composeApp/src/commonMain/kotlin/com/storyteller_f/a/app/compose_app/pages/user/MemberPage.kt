@@ -13,7 +13,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.common.StateView
 import com.storyteller_f.a.app.compose_app.common.bottomAppending
-import com.storyteller_f.a.app.compose_app.common.debounceState
 import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.model.createMemberViewModel
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
@@ -50,7 +49,7 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
 
 @Composable
 fun MemberList(items: LazyPagingItems<UserInfo>, onClick: ((UserInfo) -> Unit)? = null) {
-    val debounced = debounceState(items.loadState)
+    val debounced = items.loadState
     StateView(items) {
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),

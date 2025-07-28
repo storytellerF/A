@@ -46,24 +46,6 @@ private fun LoadState?.toLoadingState() =
         is LoadState.NotLoading -> LoadingState.Done
     }
 
-@Composable
-private fun CombinedLoadStates.toLoadingState(itemCount: Int): LoadingState? {
-    val state by produceState<LoadingState?>(null, this, itemCount) {
-        delay(100)
-        value = source.refresh.toLoadingState()
-    }
-    return state
-}
-
-@Composable
-fun <T> debounceState(v: T): T {
-    val value by produceState(v, v) {
-        delay(100)
-        value = v
-    }
-    return value
-}
-
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun <T : Any> StateView(
@@ -91,7 +73,7 @@ fun <T : Any> StateView(
         if (pagingItems.itemCount > 0) {
             content()
         } else {
-            when (val state = pagingItems.loadState.toLoadingState(pagingItems.itemCount)) {
+            when (val state = pagingItems.loadState.refresh.toLoadingState()) {
                 is LoadingState.Error -> CenterBox {
                     ExceptionCell(state.e) {
                         pagingItems.refresh()

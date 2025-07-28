@@ -29,7 +29,6 @@ import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.common.StateView
 import com.storyteller_f.a.app.compose_app.common.bottomAppending
-import com.storyteller_f.a.app.compose_app.common.debounceState
 import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.*
 import com.storyteller_f.a.app.compose_app.model.OnMediaUploaded
@@ -200,7 +199,7 @@ private fun MediaListView(
             }
         }
         val pagingItems = list.flow.collectAsLazyPagingItems()
-        val debounced = debounceState(pagingItems.loadState)
+        val debounced = pagingItems.loadState
         StateView(pagingItems, modifier = Modifier.weight(1f)) {
             LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
                 topPrepend(debounced) {

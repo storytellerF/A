@@ -43,7 +43,6 @@ import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.Toast
 import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.common.StateView
-import com.storyteller_f.a.app.compose_app.common.debounceState
 import com.storyteller_f.a.app.compose_app.common.nestedStateView
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
@@ -138,7 +137,7 @@ private fun ColumnScope.TopicPageContent(
         createTopicsInTopicViewModel(topicId)
     val topics = topicsViewModel.flow.collectAsLazyPagingItems()
     val lazyListState = rememberLazyListState()
-    val debounced = debounceState(topics.loadState)
+    val debounced = topics.loadState
     val topicState by viewModel.handler.state.collectAsState()
     LaunchedEffect(topicState) {
         if (topicState is LoadingState.Done) {
