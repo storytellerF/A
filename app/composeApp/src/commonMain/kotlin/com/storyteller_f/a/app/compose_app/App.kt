@@ -166,12 +166,12 @@ private fun MainAppPage(
 ) {
     val navigator = rememberNavController()
     val json = LocalJson.current
-
+    val scope = rememberCoroutineScope()
     if (isPip && localSession != null) {
         MediaPage(localSession)
     } else {
         val appNav = remember {
-            newAppNav(navigator, json)
+            newAppNav(navigator, json, scope)
         }
         ObserveMessage({
             appNav.toRoute<RoomScreen>()?.roomId
@@ -222,7 +222,7 @@ fun CommonEntry(
             }
         }
         val database = remember(address) {
-            DocumentStorage(createKotbaseStorageSource(address, json), json)
+            DocumentStorage(createKotbaseStorageSource(address))
         }
 
         val globalDialogController = remember {

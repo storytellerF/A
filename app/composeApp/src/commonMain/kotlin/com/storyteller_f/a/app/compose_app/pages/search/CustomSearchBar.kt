@@ -16,6 +16,7 @@ import com.storyteller_f.a.app.compose_app.AppNav
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.compontents.TopicList
 import com.storyteller_f.a.app.compose_app.compontents.UserIcon
 import com.storyteller_f.a.app.compose_app.input_search_community
 import com.storyteller_f.a.app.compose_app.input_search_members
@@ -29,7 +30,6 @@ import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.title.ComposeMenu
 import com.storyteller_f.a.app.compose_app.pages.user.MemberList
-import com.storyteller_f.a.app.compose_app.pages.world.TopicList
 import com.storyteller_f.a.app.compose_app.utils.platform
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
@@ -57,7 +57,7 @@ sealed interface SearchScope {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
-    val appNav = com.storyteller_f.a.app.compose_app.LocalAppNav.current
+    val appNav = LocalAppNav.current
     var query by remember {
         mutableStateOf("")
     }
@@ -80,7 +80,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
         showSheet = true
     }
     val sheetState = rememberModalBottomSheetState()
-    com.storyteller_f.a.app.compose_app.pages.title.ComposeMenu(showSheet, sheetState, {
+    ComposeMenu(showSheet, sheetState, {
         showSheet = false
     }) {
         showSheet = false
@@ -98,7 +98,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun CustomSearchBarInternal(
-    appNav: com.storyteller_f.a.app.compose_app.AppNav,
+    appNav: AppNav,
     scope: SearchScope,
     query: String,
     updateQuery: (String) -> Unit,
@@ -122,10 +122,10 @@ private fun CustomSearchBarInternal(
                         MergedLeadingIcon(leadingIcon, active, appNav)
                     },
                     trailingIcon = {
-                        val userSessionManager = com.storyteller_f.a.app.compose_app.LocalSessionManager.current
+                        val userSessionManager = LocalSessionManager.current
                         val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
                         val userInfo = myInfo
-                        com.storyteller_f.a.app.compose_app.compontents.UserIcon(
+                        UserIcon(
                             userInfo,
                             true,
                             onClickCreate = clickCreate
@@ -150,10 +150,10 @@ private fun CustomSearchBarInternal(
 private fun MergedLeadingIcon(
     leadingIcon: @Composable () -> Unit,
     active: Boolean,
-    appNav: com.storyteller_f.a.app.compose_app.AppNav
+    appNav: AppNav
 ) {
     var active1 = active
-    if (com.storyteller_f.a.app.compose_app.utils.platform.hasNativeBack) {
+    if (platform.hasNativeBack) {
         leadingIcon()
     } else {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -235,12 +235,12 @@ fun UserReceivedTitleSearchContent(x0: String, x1: SearchScope.UserReceivedTitle
 fun UserCommunitySearchContent(current: String, scope: SearchScope.UserCommunities) {
     if (current.isNotBlank()) {
         val communitiesViewModel =
-            com.storyteller_f.a.app.compose_app.model.createTargetUserJoinedCommunitiesViewModel(
+            createTargetUserJoinedCommunitiesViewModel(
                 scope.userId,
                 current
             )
         val pagingItems = communitiesViewModel.flow.collectAsLazyPagingItems()
-        com.storyteller_f.a.app.compose_app.pages.community.CommunityList(pagingItems)
+        CommunityList(pagingItems)
     }
 }
 
@@ -248,8 +248,8 @@ fun UserCommunitySearchContent(current: String, scope: SearchScope.UserCommuniti
 private fun MemberSearchContent(current: String) {
     if (current.isNotBlank()) {
         val viewModel =
-            com.storyteller_f.a.app.compose_app.model.createMemberSearchViewModel(current)
-        com.storyteller_f.a.app.compose_app.pages.user.MemberList(
+            createMemberSearchViewModel(current)
+        MemberList(
             viewModel.flow.collectAsLazyPagingItems()
         )
     }
@@ -258,11 +258,11 @@ private fun MemberSearchContent(current: String) {
 @Composable
 private fun RoomMemberSearchContent(current: String, scope: SearchScope.RoomMember) {
     if (current.isNotBlank()) {
-        val viewModel = com.storyteller_f.a.app.compose_app.model.createSearchMemberInRoomViewModel(
+        val viewModel = createSearchMemberInRoomViewModel(
             scope,
             current
         )
-        com.storyteller_f.a.app.compose_app.pages.user.MemberList(
+        MemberList(
             viewModel.flow.collectAsLazyPagingItems()
         )
     }
@@ -272,11 +272,11 @@ private fun RoomMemberSearchContent(current: String, scope: SearchScope.RoomMemb
 private fun CommunityMemberSearchContent(current: String, scope: SearchScope.CommunityMember) {
     if (current.isNotBlank()) {
         val viewModel =
-            com.storyteller_f.a.app.compose_app.model.createMemberSearchInCommunityViewModel(
+            createMemberSearchInCommunityViewModel(
                 scope,
                 current
             )
-        com.storyteller_f.a.app.compose_app.pages.user.MemberList(
+        MemberList(
             viewModel.flow.collectAsLazyPagingItems()
         )
     }
@@ -285,36 +285,36 @@ private fun CommunityMemberSearchContent(current: String, scope: SearchScope.Com
 @Composable
 private fun TopicTopicSearchContent(current: String, scope: SearchScope.TopicTopic) {
     if (current.isNotBlank()) {
-        val viewModel = com.storyteller_f.a.app.compose_app.model.createTopicSearchInTopicViewModel(
+        val viewModel = createTopicSearchInTopicViewModel(
             scope,
             current
         )
         val topics = viewModel.flow.collectAsLazyPagingItems()
-        com.storyteller_f.a.app.compose_app.pages.world.TopicList(topics)
+        TopicList(topics)
     }
 }
 
 @Composable
 private fun UserTopicSearchContent(current: String, scope: SearchScope.UserTopic) {
     if (current.isNotBlank()) {
-        val viewModel = com.storyteller_f.a.app.compose_app.model.createTopicSearchInUserViewModel(
+        val viewModel = createTopicSearchInUserViewModel(
             scope,
             current
         )
         val topics = viewModel.flow.collectAsLazyPagingItems()
-        com.storyteller_f.a.app.compose_app.pages.world.TopicList(topics)
+        TopicList(topics)
     }
 }
 
 @Composable
 private fun RoomTopicSearchContent(current: String, scope: SearchScope.RoomTopic) {
     if (current.isNotBlank()) {
-        val viewModel = com.storyteller_f.a.app.compose_app.model.createTopicSearchInRoomViewModel(
+        val viewModel = createTopicSearchInRoomViewModel(
             scope,
             current
         )
         val topics = viewModel.flow.collectAsLazyPagingItems()
-        com.storyteller_f.a.app.compose_app.pages.world.TopicList(topics)
+        TopicList(topics)
     }
 }
 
@@ -322,12 +322,12 @@ private fun RoomTopicSearchContent(current: String, scope: SearchScope.RoomTopic
 private fun CommunityRoomSearchContent(current: String, scope: SearchScope.CommunityRoom) {
     if (current.isNotBlank()) {
         val viewModel =
-            com.storyteller_f.a.app.compose_app.model.createRoomSearchInCommunityViewModel(
+            createRoomSearchInCommunityViewModel(
                 scope,
                 current
             )
         val items = viewModel.flow.collectAsLazyPagingItems()
-        com.storyteller_f.a.app.compose_app.pages.room.RoomList(items)
+        RoomList(items)
     }
 }
 
@@ -335,12 +335,12 @@ private fun CommunityRoomSearchContent(current: String, scope: SearchScope.Commu
 private fun CommunityTopicSearchContent(current: String, scope: SearchScope.CommunityTopic) {
     if (current.isNotBlank()) {
         val viewModel =
-            com.storyteller_f.a.app.compose_app.model.createTopicSearchInCommunityViewModel(
+            createTopicSearchInCommunityViewModel(
                 scope,
                 current
             )
         val topics = viewModel.flow.collectAsLazyPagingItems()
-        com.storyteller_f.a.app.compose_app.pages.world.TopicList(topics)
+        TopicList(topics)
     }
 }
 
@@ -352,7 +352,7 @@ private fun MyRoomSearchContent(current: String) {
             mutableStateOf(JoinStatusSearch.JOINED)
         }
 
-        val userSessionManager = com.storyteller_f.a.app.compose_app.LocalSessionManager.current
+        val userSessionManager = LocalSessionManager.current
         val isAlreadySignUp by userSessionManager.isAlreadySignUp.collectAsState()
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
@@ -370,12 +370,12 @@ private fun MyRoomSearchContent(current: String) {
             }
         }
         if (current.isNotBlank()) {
-            val viewModel = com.storyteller_f.a.app.compose_app.model.createRoomSearchViewModel(
+            val viewModel = createRoomSearchViewModel(
                 finalOption,
                 current
             )
             val items = viewModel.flow.collectAsLazyPagingItems()
-            com.storyteller_f.a.app.compose_app.pages.room.RoomList(items)
+            RoomList(items)
         }
     }
 }
@@ -387,7 +387,7 @@ private fun MyCommunitySearchContent(query: String) {
         var currentOption by remember {
             mutableStateOf(JoinStatusSearch.JOINED)
         }
-        val userSessionManager = com.storyteller_f.a.app.compose_app.LocalSessionManager.current
+        val userSessionManager = LocalSessionManager.current
         val isAlreadySignUp by userSessionManager.isAlreadySignUp.collectAsState()
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
@@ -409,12 +409,12 @@ private fun MyCommunitySearchContent(query: String) {
         }
         if (query.isNotBlank()) {
             val viewModel =
-                com.storyteller_f.a.app.compose_app.model.createSearchCommunitiesViewModel(
+                createSearchCommunitiesViewModel(
                     finalOption,
                     query
                 )
             val items = viewModel.flow.collectAsLazyPagingItems()
-            com.storyteller_f.a.app.compose_app.pages.community.CommunityList(items)
+            CommunityList(items)
         }
     }
 }
@@ -446,13 +446,13 @@ private fun WorldSearchContent(current: String) {
         HorizontalPager(pagerState) {
             if (it == 0) {
                 val viewModel =
-                    com.storyteller_f.a.app.compose_app.model.createTopicSearchViewModel(current)
+                    createTopicSearchViewModel(current)
                 val topics = viewModel.flow.collectAsLazyPagingItems()
-                com.storyteller_f.a.app.compose_app.pages.world.TopicList(topics)
+                TopicList(topics)
             } else {
                 val viewModel =
-                    com.storyteller_f.a.app.compose_app.model.createMemberSearchViewModel(current)
-                com.storyteller_f.a.app.compose_app.pages.user.MemberList(
+                    createMemberSearchViewModel(current)
+                MemberList(
                     viewModel.flow.collectAsLazyPagingItems()
                 )
             }

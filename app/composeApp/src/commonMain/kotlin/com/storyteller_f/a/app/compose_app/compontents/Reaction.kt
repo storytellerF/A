@@ -17,7 +17,6 @@ import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.model.OnAddReaction
 import com.storyteller_f.a.app.compose_app.model.OnRemoveReaction
-import com.storyteller_f.a.app.compose_app.pages.world.Pill
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.deleteReaction
 import com.storyteller_f.shared.model.ReactionInfo

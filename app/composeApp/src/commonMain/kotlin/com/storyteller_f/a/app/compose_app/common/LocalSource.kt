@@ -205,8 +205,7 @@ class CustomRemoteMediator<Datum : Any>(
 
 class IntermediatePagingSource<Key : Any, T : Any>(
     val sectionPagingSource: PagingSource<Key, T>,
-    val clazz: KClass<Key>,
-    val json: Json
+    val clazz: KClass<Key>
 ) : PagingSource<String, T>() {
 
     override fun getRefreshKey(state: PagingState<String, T>): String? {
@@ -219,14 +218,14 @@ class IntermediatePagingSource<Key : Any, T : Any>(
         val loadParams: LoadParams<Key> = when (params) {
             is LoadParams.Append<*> -> {
                 val key = params.key.let {
-                    json.decodeFromString(serializer, it)
+                    Json.decodeFromString(serializer, it)
                 }
                 LoadParams.Append(key, params.loadSize, params.placeholdersEnabled)
             }
 
             is LoadParams.Prepend<*> -> {
                 val key = params.key.let {
-                    json.decodeFromString(serializer, it)
+                    Json.decodeFromString(serializer, it)
                 }
                 LoadParams.Prepend(key, params.loadSize, params.placeholdersEnabled)
             }
@@ -242,8 +241,8 @@ class IntermediatePagingSource<Key : Any, T : Any>(
             is LoadResult.Error<Key, T> -> LoadResult.Error(load.throwable)
             is LoadResult.Invalid<Key, T> -> LoadResult.Invalid()
             is LoadResult.Page<Key, T> -> {
-                val preKey = load.prevKey?.let { json.encodeToString(serializer, it) }
-                val nextKey = load.nextKey?.let { json.encodeToString(serializer, it) }
+                val preKey = load.prevKey?.let { Json.encodeToString(serializer, it) }
+                val nextKey = load.nextKey?.let { Json.encodeToString(serializer, it) }
                 LoadResult.Page(load.data, preKey, nextKey)
             }
         }

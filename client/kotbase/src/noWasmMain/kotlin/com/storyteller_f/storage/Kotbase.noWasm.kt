@@ -19,8 +19,8 @@ import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 import kotbase.Collection as KotbaseCollection
 
-actual fun createKotbaseStorageSource(scope: String?, json: Json): DocumentSource {
-    return KotbaseDocumentSource(createKotbase(), scope, json)
+actual fun createKotbaseStorageSource(scope: String?): DocumentSource {
+    return KotbaseDocumentSource(createKotbase(), scope)
 }
 
 class KotbaseObservable<T>(
@@ -37,13 +37,12 @@ class KotbaseObservable<T>(
 class KotbaseDocumentCollection<T>(
     val collection: KotbaseCollection,
     val source: KotbaseDocumentSource,
-    val serializer: KSerializer<T>,
-    val json: Json
+    val serializer: KSerializer<T>
 ) :
     DocumentCollection<T> {
 
     override fun saveDocument(id: String, t: T) {
-        collection.save(MutableDocument(id, json.encodeToString(serializer, t)))
+        collection.save(MutableDocument(id, Json.encodeToString(serializer, t)))
     }
 
     override fun observeDatum(expression: DocumentExpression): Flow<T?> {
@@ -137,7 +136,7 @@ class KotbaseDocumentCollection<T>(
                         runCatching {
                             results.use {
                                 it.toObjects { jsonData: String ->
-                                    json.decodeFromString(serializer, jsonData)
+                                    Json.decodeFromString(serializer, jsonData)
                                 }
                             }
                         }.onSuccess {
@@ -168,7 +167,7 @@ fun createKotbase(): Database {
     }
 }
 
-class KotbaseDocumentSource(private val database: Database, val scope: String?, val json: Json) : DocumentSource {
+class KotbaseDocumentSource(private val database: Database, val scope: String?) : DocumentSource {
     val clearing = mutableSetOf<String>()
     val mutex = Mutex()
 
@@ -191,7 +190,7 @@ class KotbaseDocumentSource(private val database: Database, val scope: String?, 
                     ValueIndexConfiguration("pinned", "id")
                 )
         }
-        return KotbaseDocumentCollection(collection, this, clazz.serializer(), json)
+        return KotbaseDocumentCollection(collection, this, clazz.serializer())
     }
 
     override fun <T : Any> getCollectionByPrefix(prefix: String, clazz: KClass<T>): List<DocumentCollection<T>> {

@@ -143,8 +143,7 @@ class CommunitiesViewModel(
                         }
                     )
                 ),
-                SectionLoadParams::class,
-                json
+                SectionLoadParams::class
             ),
         ) { info ->
             documentStorage.communityStorage.save(collectionName, info)
@@ -196,7 +195,6 @@ class RoomsViewModel(
 class WorldViewModel(
     val sessionManager: SessionManager,
     documentStorage: Storage,
-    json: Json,
 ) :
     PagingViewModel<SectionLoadParams, TopicInfo>() {
     private val collectionName = CollectionName.Recommend
@@ -215,8 +213,7 @@ class WorldViewModel(
                         }
                     )
                 ),
-                SectionLoadParams::class,
-                json
+                SectionLoadParams::class
             ),
         ) { info ->
             documentStorage.topicStorage.save(collectionName, info)
@@ -268,8 +265,7 @@ class TopicsViewModel(
                         }
                     )
                 ),
-                SectionLoadParams::class,
-                json
+                SectionLoadParams::class
             ),
         ) { info ->
             documentStorage.topicStorage.save(collectionName, info)

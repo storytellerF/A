@@ -195,7 +195,6 @@ private fun RoomMessageList(
                 val info = items[index]
                 TopicCell(
                     info,
-                    false,
                     info != null && next?.author != info.author
                 )
             }
