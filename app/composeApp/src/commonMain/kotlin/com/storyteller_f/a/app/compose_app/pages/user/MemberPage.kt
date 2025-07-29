@@ -55,9 +55,7 @@ fun MemberList(items: LazyPagingItems<UserInfo>, onClick: ((UserInfo) -> Unit)? 
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            topPrepend(debounced) {
-                items.refresh()
-            }
+            topPrepend(debounced)
             items(
                 count = items.itemCount,
                 key = items.itemKey {

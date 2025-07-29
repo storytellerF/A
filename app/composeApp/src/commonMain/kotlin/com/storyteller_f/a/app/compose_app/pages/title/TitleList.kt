@@ -30,9 +30,7 @@ fun TitleList(pagingItems: LazyPagingItems<TitleInfo>) {
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            topPrepend(debounced) {
-                pagingItems.refresh()
-            }
+            topPrepend(debounced)
             items(
                 count = pagingItems.itemCount,
                 key = pagingItems.itemKey {

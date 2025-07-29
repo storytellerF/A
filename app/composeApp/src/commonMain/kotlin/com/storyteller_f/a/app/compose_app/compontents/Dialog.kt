@@ -19,9 +19,9 @@ import dev.tclement.fonticons.ProvideIconParameters
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class DialogSaveState {
-    val shownDialog = MutableStateFlow(false)
+    val dialogShown = MutableStateFlow(false)
     fun markDialogShown() {
-        shownDialog.value = true
+        dialogShown.value = true
     }
 }
 

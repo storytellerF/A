@@ -62,9 +62,7 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                topPrepend(lcm, debounced) {
-                    items.refresh()
-                }
+                topPrepend(lcm, debounced)
                 items(
                     count = items.itemCount,
                     key = items.itemKey {

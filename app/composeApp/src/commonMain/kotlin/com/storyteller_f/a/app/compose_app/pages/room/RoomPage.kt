@@ -83,7 +83,7 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
             var showDialog by remember {
                 mutableStateOf(false)
             }
-            val dialogShown by room.dialog.shownDialog.collectAsState()
+            val dialogShown by room.dialog.dialogShown.collectAsState()
             LaunchedEffect(needShowDialog, dialogShown) {
                 if (needShowDialog && !dialogShown) {
                     room.dialog.markDialogShown()
@@ -100,27 +100,26 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
                     showDialog = it
                 }
             }
-            StateView(room.handler, content = {
-                RoomPageInternal(Modifier.weight(1f), roomId, it) {
+            StateView(room.handler, Modifier.weight(1f)) {
+                RoomPageInternal(it) {
                     showDialog = true
                 }
-            })
+            }
         }
     }
 }
 
 @Composable
 private fun RoomPageInternal(
-    modifier: Modifier,
-    roomId: PrimaryKey,
     roomInfo: RoomInfo,
     updateDialog: (Boolean) -> Unit,
 ) {
+    val roomId = roomInfo.id
     val lazyListState = rememberLazyListState()
     val viewModel = createRoomTopicsViewModel(roomId)
     val items = viewModel.flow.collectAsLazyPagingItems()
     Column {
-        Box(modifier) {
+        Box(Modifier.weight(1f)) {
             RoomMessageList(items, lazyListState)
             val firstVisibleItemScrollOffset by remember {
                 derivedStateOf {
@@ -198,9 +197,7 @@ private fun RoomMessageList(
                     info != null && next?.author != info.author
                 )
             }
-            topPrepend(debounced) {
-                items.refresh()
-            }
+            topPrepend(debounced)
         }
     }
 }
