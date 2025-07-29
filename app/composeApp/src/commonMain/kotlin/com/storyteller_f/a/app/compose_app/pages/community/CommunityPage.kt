@@ -205,7 +205,7 @@ private fun CommunityNonCompatPageInternal(
     model: CommunityViewModel,
 ) {
     val community by model.handler.data.collectAsState()
-    val dialogShown by model.dialog.shownDialog.collectAsState()
+    val dialogShown by model.dialog.dialogShown.collectAsState()
     val navRoutes = communityNavRoutes()
     val navigator = rememberNavController()
     val current by navigator.currentBackStackEntryFlow.collectAsState(null)
@@ -266,7 +266,7 @@ private fun CommunityCompatPageInternal(
     model: CommunityViewModel,
 ) {
     val community by model.handler.data.collectAsState()
-    val dialogShown by model.dialog.shownDialog.collectAsState()
+    val dialogShown by model.dialog.dialogShown.collectAsState()
     val pagerState = rememberPagerState {
         2
     }

@@ -55,7 +55,7 @@ fun TopicCellInternal(
     val topicId = topicInfo.id
     val appNav = LocalAppNav.current
     var expanded by remember { mutableStateOf(false) }
-    val isRoomPage by appNav.hasRouteFlow<RoomScreen>().collectAsState(false)
+    val isRoomPage = appNav.hasRoute(RoomScreen::class)
     Box {
         Column(
             modifier = Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {

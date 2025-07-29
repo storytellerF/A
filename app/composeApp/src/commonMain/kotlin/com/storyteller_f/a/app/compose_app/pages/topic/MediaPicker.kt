@@ -202,9 +202,7 @@ private fun MediaListView(
         val debounced = pagingItems.loadState
         StateView(pagingItems, modifier = Modifier.weight(1f)) {
             LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
-                topPrepend(debounced) {
-                    pagingItems.refresh()
-                }
+                topPrepend(debounced)
                 items(pagingItems.itemCount, key = pagingItems.itemKey {
                     it.id
                 }) {

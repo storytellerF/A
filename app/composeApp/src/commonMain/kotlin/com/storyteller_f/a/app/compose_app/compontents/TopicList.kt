@@ -27,9 +27,7 @@ fun TopicList(
             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            topPrepend(items.loadState) {
-                items.refresh()
-            }
+            topPrepend(items.loadState)
             items(
                 count = items.itemCount,
                 key = items.itemKey {
