@@ -64,12 +64,21 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
             ) {
                 topPrepend(lcm, debounced)
                 items(
-                    count = items.itemCount,
+                    count = items.itemSnapshotList.size,
                     key = items.itemKey {
                         it.id.toString()
                     },
                     span = {
-                        getCommunityGridSpan(items, it, lcm, itemCount, gridCount, gridSpan)
+                        getCommunityGridSpan(
+                            it,
+                            lcm,
+                            itemCount,
+                            gridCount,
+                            gridSpan,
+                            items.itemCount
+                        ) {
+                            items[it]
+                        }
                     },
                 ) { index ->
                     val communityInfo = items[index]
@@ -88,12 +97,13 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
     }
 }
 
+@Composable
 private fun BoxWithConstraintsScope.getCommunityGridEndPadding(
     index: Int,
     items: LazyPagingItems<CommunityInfo>,
     gridCount: Int
 ): Dp {
-    val padding = if (index + 1 < items.itemCount && items[index + 1]?.poster == null) {
+    val padding = if (index + 1 < items.itemSnapshotList.size && items[index + 1]?.poster == null) {
         val t = (index + 1) % gridCount
         if (t == 0) {
             0.dp
@@ -109,15 +119,16 @@ private fun BoxWithConstraintsScope.getCommunityGridEndPadding(
 }
 
 private fun getCommunityGridSpan(
-    items: LazyPagingItems<CommunityInfo>,
     i: Int,
     lcm: Int,
     itemCount: Int,
     gridCount: Int,
-    gridSpan: Int
+    gridSpan: Int,
+    pagingItemCount: Int,
+    getItem: (Int) -> CommunityInfo?
 ): GridItemSpan = when {
-    items[i]?.poster == null -> GridItemSpan(lcm / itemCount)
-    items.itemCount > i + 1 && items[i + 1]?.poster == null -> {
+    getItem(i)?.poster == null -> GridItemSpan(lcm / itemCount)
+    pagingItemCount > i + 1 && getItem(i + 1)?.poster == null -> {
         val t = (i + 1) % gridCount
         if (t == 0) {
             GridItemSpan(gridSpan)

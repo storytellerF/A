@@ -29,7 +29,7 @@ fun TopicList(
         ) {
             topPrepend(items.loadState)
             items(
-                count = items.itemCount,
+                count = items.itemSnapshotList.size,
                 key = items.itemKey {
                     it.id
                 },
@@ -38,7 +38,7 @@ fun TopicList(
                     items[it],
                     showAvatar = showAvatar
                 )
-                if (it != items.itemCount - 1) {
+                if (it != items.itemSnapshotList.size - 1) {
                     HorizontalDivider()
                 }
             }

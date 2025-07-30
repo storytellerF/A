@@ -49,7 +49,7 @@ fun RoomList(
         ) {
             topPrepend(debounced)
             items(
-                count = items.itemCount,
+                count = items.itemSnapshotList.size,
                 key = items.itemKey {
                     it.id.toString()
                 },

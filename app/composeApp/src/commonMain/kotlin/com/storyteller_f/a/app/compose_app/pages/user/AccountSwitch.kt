@@ -88,7 +88,7 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
                         contentPadding = PaddingValues(10.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        items(pagingItems.itemCount, key = pagingItems.itemKey { accountInfo ->
+                        items(pagingItems.itemSnapshotList.size, key = pagingItems.itemKey { accountInfo ->
                             accountInfo.id
                         }) {
                             val alternativeAccountInfo = pagingItems[it]
