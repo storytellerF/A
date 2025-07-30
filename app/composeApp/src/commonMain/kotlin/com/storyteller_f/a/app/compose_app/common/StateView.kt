@@ -137,7 +137,7 @@ fun <T> StateView(
 
                         }
 
-                        else -> RemoteMediatorLoadingView()
+                        else -> if (!pullRefreshing) RemoteMediatorLoadingView()
                     }
                     Box(Modifier.weight(1f)) {
                         content(safeData)

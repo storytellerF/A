@@ -4,12 +4,14 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -344,9 +346,7 @@ fun CustomMarkdownParagraph(
     BoxWithConstraints {
         val width = this.maxWidth
         val (styledText, inlineContentMap) = remember(
-            style,
-            content,
-            node.children,
+            mediaMap, content
         ) {
             val inlineContentMap = mutableMapOf<String, String>()
             val text = buildAnnotatedString {
@@ -361,7 +361,7 @@ fun CustomMarkdownParagraph(
                 )
                 pop()
             }
-            text to buildInlineTextContentFromMap(
+            val immutableMap = buildInlineTextContentFromMap(
                 inlineContentMap,
                 mediaMap,
                 width,
@@ -369,6 +369,7 @@ fun CustomMarkdownParagraph(
                 density,
                 transformer
             )
+            text to immutableMap
         }
 
         CustomMarkdownText(
@@ -407,8 +408,10 @@ private fun buildInlineTextContentFromMap(
                     PlaceholderVerticalAlign.Center
                 )
             ) {
-                transformer.transform(value)?.let { imageData ->
-                    CustomMarkdownImage(imageData)
+                CompositionLocalProvider(LocalInspectionMode provides false) {
+                    transformer.transform(value)?.let { imageData ->
+                        CustomMarkdownImage(imageData)
+                    }
                 }
             }
         } else {
