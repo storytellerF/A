@@ -24,6 +24,7 @@ import com.storyteller_f.a.app.compose_app.LocalClient
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MediaInfo
+import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -80,7 +81,7 @@ fun CustomMarkdownImage(imageData: ImageData) {
     val painter = imageData.painter
     if (painter is AsyncImagePainter) {
         val state by painter.state.collectAsState()
-        when (state) {
+        when (val s = state) {
             is AsyncImagePainter.State.Empty,
             is AsyncImagePainter.State.Loading -> {
                 ImageLoading()
@@ -99,6 +100,9 @@ fun CustomMarkdownImage(imageData: ImageData) {
             }
 
             is AsyncImagePainter.State.Error -> {
+                Napier.e(s.result.throwable) {
+                    "CustomMarkdownImage"
+                }
                 ImageError()
             }
         }
