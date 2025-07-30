@@ -203,7 +203,7 @@ private fun MediaListView(
         StateView(pagingItems, modifier = Modifier.weight(1f)) {
             LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
                 topPrepend(debounced)
-                items(pagingItems.itemCount, key = pagingItems.itemKey {
+                items(pagingItems.itemSnapshotList.size, key = pagingItems.itemKey {
                     it.id
                 }) {
                     val item = pagingItems[it]
@@ -372,7 +372,7 @@ fun ReactionListPage(topicId: PrimaryKey) {
                 contentPadding = PaddingValues(20.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(pagingItems.itemCount, pagingItems.itemKey {
+                items(pagingItems.itemSnapshotList.size, pagingItems.itemKey {
                     it.emoji
                 }) {
                     val info = pagingItems[it]

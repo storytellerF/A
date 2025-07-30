@@ -181,12 +181,12 @@ private fun RoomMessageList(
         ) {
             bottomAppending(debounced)
             items(
-                count = items.itemCount,
+                count = items.itemSnapshotList.size,
                 key = items.itemKey { topicInfo ->
                     topicInfo.id.toString()
                 },
             ) { index ->
-                val next = if (index + 1 < items.itemCount) {
+                val next = if (index + 1 < items.itemSnapshotList.size) {
                     items[index + 1]
                 } else {
                     null

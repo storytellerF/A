@@ -57,14 +57,14 @@ fun MemberList(items: LazyPagingItems<UserInfo>, onClick: ((UserInfo) -> Unit)? 
         ) {
             topPrepend(debounced)
             items(
-                count = items.itemCount,
+                count = items.itemSnapshotList.size,
                 key = items.itemKey {
                     it.id
                 },
             ) { index ->
                 UserCell(items[index], true, onClickCell = onClick)
                 Spacer(modifier = Modifier.height(20.dp))
-                if (index != items.itemCount - 1) {
+                if (index != items.itemSnapshotList.size - 1) {
                     HorizontalDivider()
                 }
             }

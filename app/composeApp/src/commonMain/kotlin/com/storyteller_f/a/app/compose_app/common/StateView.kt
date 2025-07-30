@@ -70,7 +70,7 @@ fun <T : Any> StateView(
         }
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        if (pagingItems.itemCount > 0) {
+        if (pagingItems.itemSnapshotList.isNotEmpty()) {
             Column {
                 LoadStateAtTop(pagingItems, pullRefreshing)
                 Box(Modifier.weight(1f)) {
@@ -79,7 +79,7 @@ fun <T : Any> StateView(
             }
         } else {
             CenterBox {
-                when (val state = debounce(pagingItems.loadState.refresh)) {
+                when (val state = (pagingItems.loadState.refresh).toLoadingState()) {
                     is LoadingState.Error -> ExceptionCell(state.e) {
                         pagingItems.refresh()
                     }
@@ -161,30 +161,6 @@ fun <T> StateView(
         }
 
         PullRefreshIndicator(pullRefreshing, refreshState, Modifier.align(Alignment.TopCenter))
-    }
-}
-
-fun <T : PrimaryKeyIdentifiable> LazyListScope.nestedStateView(
-    items: LazyPagingItems<T>,
-    combinedLoadStates: CombinedLoadStates,
-    content: @Composable (T?, Int) -> Unit,
-) {
-    topPrepend(combinedLoadStates)
-    nestedStateList(items, content)
-    bottomAppending(combinedLoadStates)
-}
-
-private fun <T : PrimaryKeyIdentifiable> LazyListScope.nestedStateList(
-    items: LazyPagingItems<T>,
-    content: @Composable (T?, Int) -> Unit,
-) {
-    items(
-        items.itemCount,
-        key = items.itemKey {
-            it.id.toString()
-        }
-    ) {
-        content(items[it], it)
     }
 }
 

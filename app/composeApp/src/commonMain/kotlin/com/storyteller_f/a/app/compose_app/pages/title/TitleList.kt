@@ -32,7 +32,7 @@ fun TitleList(pagingItems: LazyPagingItems<TitleInfo>) {
         ) {
             topPrepend(debounced)
             items(
-                count = pagingItems.itemCount,
+                count = pagingItems.itemSnapshotList.size,
                 key = pagingItems.itemKey {
                     it.id.toString()
                 },

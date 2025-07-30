@@ -35,6 +35,7 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
@@ -43,7 +44,8 @@ import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.Toast
 import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.common.StateView
-import com.storyteller_f.a.app.compose_app.common.nestedStateView
+import com.storyteller_f.a.app.compose_app.common.bottomAppending
+import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
@@ -133,15 +135,14 @@ private fun ColumnScope.TopicPageContent(
     viewModel: TopicViewModel,
     startAddReaction: () -> Unit
 ) {
-    val topicsViewModel =
+    val subTopicsViewModel =
         createTopicsInTopicViewModel(topicId)
-    val topics = topicsViewModel.flow.collectAsLazyPagingItems()
+    val subTopics = subTopicsViewModel.flow.collectAsLazyPagingItems()
     val lazyListState = rememberLazyListState()
-    val debounced = topics.loadState
     val topicState by viewModel.handler.state.collectAsState()
     LaunchedEffect(topicState) {
         if (topicState is LoadingState.Done) {
-            topics.refresh()
+            subTopics.refresh()
         }
     }
     StateView(
@@ -166,14 +167,21 @@ private fun ColumnScope.TopicPageContent(
                         HorizontalDivider()
                     }
 
-                    nestedStateView(topics, debounced, { subInfo, i ->
-                        subInfo?.let { it1 ->
+                    topPrepend(subTopics.loadState)
+                    items(
+                        subTopics.itemSnapshotList.size,
+                        key = subTopics.itemKey { subTopic ->
+                            subTopic.id.toString()
+                        }
+                    ) { subTopicIndex ->
+                        subTopics[subTopicIndex]?.let { it1 ->
                             TopicCell(it1)
                         }
-                        if (topics.itemCount - 1 != i) {
+                        if (subTopics.itemSnapshotList.size - 1 != subTopicIndex) {
                             HorizontalDivider()
                         }
-                    })
+                    }
+                    bottomAppending(subTopics.loadState)
                 }
                 val scope = rememberCoroutineScope()
                 TopicPageInputGroup(it, it.id) {
@@ -247,9 +255,17 @@ private fun TopicInputGroup(
             input = it
         },
         {
-            appNav.gotoTopicCompose(ObjectType.TOPIC, topic.id, false, topic.rootId.takeIf { topic.isEncrypted }, null)
+            appNav.gotoTopicCompose(
+                ObjectType.TOPIC,
+                topic.id,
+                false,
+                topic.rootId.takeIf { topic.isEncrypted },
+                null
+            )
         },
-        if (topic.isEncrypted) ObjectTuple(topic.rootId, topic.rootType) else ObjectTuple(my?.id ?: 0, ObjectType.USER)
+        if (topic.isEncrypted) ObjectTuple(topic.rootId, topic.rootType) else ObjectTuple(
+            my?.id ?: 0, ObjectType.USER
+        )
     ) {
         CommonInputButton(
             LoadingState.Done,
