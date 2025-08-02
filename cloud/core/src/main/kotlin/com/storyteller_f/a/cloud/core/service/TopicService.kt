@@ -7,6 +7,7 @@ import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.Topic
 import com.storyteller_f.a.backend.exposed.tables.Topics
+import com.storyteller_f.a.backend.exposed.tables.toTopicInfo
 import com.storyteller_f.a.backend.service.*
 import com.storyteller_f.a.backend.service.index.DocumentSearch
 import com.storyteller_f.a.backend.service.index.TopicDocument
@@ -80,7 +81,9 @@ suspend fun Backend.createPublicTopic(
                 topicSearchService.saveDocument(
                     listOf(TopicDocument.Companion.fromTopic(topic, plain))
                 ).getOrThrow()
-                savePlainTopic(topic, plain).mapResult { topicInfo ->
+                exposedDatabase.topicDatabase.savePlainTopic(topic, plain).map<TopicInfo, Unit> {
+                    topic.toTopicInfo(content = plain)
+                }.mapResult { topicInfo ->
                     addUserLog(uid, UserLogType.CREATE, topicInfo.tuple())
                     processTopicAfterCreate(topicInfo, uid)
                 }

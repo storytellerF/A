@@ -17,6 +17,7 @@ import com.storyteller_f.shared.utils.mapCatchingNotNull
 import com.storyteller_f.shared.utils.mapResult
 import io.ktor.server.routing.*
 import io.ktor.util.converters.*
+import kotlinx.serialization.json.Json
 import kotlin.reflect.KClass
 
 interface PagingGenerator<in T, F : Any> {
@@ -124,13 +125,13 @@ class ReactionPaginationGenerator(val backend: Backend) : PagingGenerator<Reacti
         return ReactionFetch(
             when {
                 !nextPageToken.isNullOrBlank() -> Cursor.NextCursor(
-                    backend.json.decodeFromString<ReactionCursorKey>(
+                    Json.decodeFromString<ReactionCursorKey>(
                         nextPageToken
                     )
                 )
 
                 !prePageToken.isNullOrBlank() -> Cursor.PreCursor(
-                    backend.json.decodeFromString<ReactionCursorKey>(
+                    Json.decodeFromString<ReactionCursorKey>(
                         prePageToken
                     )
                 )
@@ -144,13 +145,13 @@ class ReactionPaginationGenerator(val backend: Backend) : PagingGenerator<Reacti
     override fun generate(list: List<ReactionInfo>, size: Int): Pair<String?, String?> {
         val next = if (size <= list.size) {
             val last = list.last()
-            backend.json.encodeToString(ReactionCursorKey(last.count, last.lastReactionId))
+            Json.encodeToString(ReactionCursorKey(last.count, last.lastReactionId))
         } else {
             null
         }
         val pre = if (list.isNotEmpty()) {
             val first = list.first()
-            backend.json.encodeToString(ReactionCursorKey(first.count, first.lastReactionId))
+            Json.encodeToString(ReactionCursorKey(first.count, first.lastReactionId))
         } else {
             null
         }

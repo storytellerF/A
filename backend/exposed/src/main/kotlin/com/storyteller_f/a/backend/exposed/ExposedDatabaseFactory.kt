@@ -92,12 +92,6 @@ fun DatabaseSearchConfig<Boolean, Query>.isNotEmpty() {
 }
 
 class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
-    companion object {
-        val json by lazy {
-            Json {
-            }
-        }
-    }
 
     private fun handleDatabaseException(e: Throwable, anchor: Throwable): Throwable {
         if (e is UnauthorizedException || e.isDup()) {
@@ -181,7 +175,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
             Socket("localhost", port).use { socket ->
                 socket.getOutputStream().use {
                     PrintWriter(it, true).use { writer ->
-                        writer.println(json.encodeToString(result))
+                        writer.println(Json.encodeToString(result))
                     }
                 }
             }

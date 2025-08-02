@@ -64,7 +64,7 @@ class Title(
                 row[Titles.descriptionTopicId]
             )
         }
-        suspend fun insertTitle(title: Title, topic: Topic) {
+        suspend fun new(title: Title) {
             check(Titles.insert {
                 it[Titles.id] = title.id
                 it[Titles.createdTime] = title.createdTime
@@ -79,7 +79,6 @@ class Title(
             }.insertedCount > 0) {
                 "insert title failed"
             }
-            Topic.Companion.new(topic)
         }
     }
 }

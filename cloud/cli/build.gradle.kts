@@ -14,7 +14,6 @@ dependencies {
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
     implementation(projects.backend.service)
-    implementation(libs.bundles.exposed)
     implementation(libs.napier)
     implementation(libs.kotlinx.cli)
     implementation(libs.cryptography.provider.jdk)

@@ -80,6 +80,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,6 +99,7 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismissDialog: () -> Unit) {
     val appNav = LocalAppNav.current

@@ -5,24 +5,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.CustomKeyStore
-import com.storyteller_f.a.backend.exposed.CombinedDatabase
-import com.storyteller_f.a.backend.exposed.CommunityDatabase
-import com.storyteller_f.a.backend.exposed.ContainerDatabase
-import com.storyteller_f.a.backend.exposed.ExposedCommunityDatabase
-import com.storyteller_f.a.backend.exposed.ExposedContainerDatabase
-import com.storyteller_f.a.backend.exposed.ExposedDatabaseFactory
-import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
-import com.storyteller_f.a.backend.exposed.ExposedMediaDatabase
-import com.storyteller_f.a.backend.exposed.ExposedRoomDatabase
-import com.storyteller_f.a.backend.exposed.ExposedTitleDatabase
-import com.storyteller_f.a.backend.exposed.ExposedTopicDatabase
-import com.storyteller_f.a.backend.exposed.ExposedUserDatabase
-import com.storyteller_f.a.backend.exposed.MediaDatabase
-import com.storyteller_f.a.backend.exposed.RoomDatabase
-import com.storyteller_f.a.backend.exposed.TitleDatabase
-import com.storyteller_f.a.backend.exposed.TopicDatabase
-import com.storyteller_f.a.backend.exposed.UserDatabase
-import com.storyteller_f.a.backend.exposed.tables.User
+import com.storyteller_f.a.backend.exposed.buildExposedDatabase
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.MergedEnv
 import com.storyteller_f.a.backend.service.databaseConnection
@@ -140,7 +123,7 @@ fun Application.module() {
     }
     if (backend.customConfig.buildType == "test") {
         runBlocking {
-            ExposedDatabaseFactory.init(backend.database)
+            backend.exposedDatabase.init()
         }
     }
     startNewMessageTask(backend)
@@ -374,8 +357,6 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val topicDocumentService = topicDocumentService(env)
     val mediaService = mediaService(env)
 
-    val database = ExposedDatabaseFactory.connect(databaseConnection)
-    val databaseSession = ExposedDatabaseSession(database, env["port"]?.toIntOrNull())
     val snapshotKeyStorePath = env["SNAPSHOT_KEYSTORE_PATH"]
     val snapshotKeyStorePassword = env["SNAPSHOT_KEYSTORE_PASS"]
     val snapshotKeyStore =
@@ -394,24 +375,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         topicDocumentService,
         mediaService,
         NameService(),
-        database,
-        databaseSession,
-        object : CombinedDatabase<User> {
-            override val userDatabase: UserDatabase<User>
-                get() = ExposedUserDatabase(databaseSession)
-            override val topicDatabase: TopicDatabase
-                get() = ExposedTopicDatabase(databaseSession, containerDatabase)
-            override val titleDatabase: TitleDatabase
-                get() = ExposedTitleDatabase(databaseSession)
-            override val communityDatabase: CommunityDatabase
-                get() = ExposedCommunityDatabase(databaseSession, containerDatabase)
-            override val roomData: RoomDatabase
-                get() = ExposedRoomDatabase(databaseSession, containerDatabase)
-            override val mediaDatabase: MediaDatabase
-                get() = ExposedMediaDatabase(databaseSession)
-            override val containerDatabase: ContainerDatabase
-                get() = ExposedContainerDatabase(databaseSession)
-        }
+        buildExposedDatabase(databaseConnection)
     )
 }
 

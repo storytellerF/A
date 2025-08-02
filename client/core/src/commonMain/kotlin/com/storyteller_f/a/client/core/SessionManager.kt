@@ -15,6 +15,7 @@ import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.time.ExperimentalTime
 
 interface SessionModel {
     val uid: PrimaryKey?
@@ -102,6 +103,7 @@ class UserSessionModel : SessionModel {
         get() = (state.value as? ClientSessionState.Success)?.session
     override val userHandler = FixedLoadingHandler<UserInfo?>()
 
+    @OptIn(ExperimentalTime::class)
     override fun generateData(): String {
         val (nowSeconds, isValid) = checkTsIsValid(currentStamp, 60 * 3)
         return if (isValid) {
