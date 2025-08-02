@@ -15,7 +15,6 @@ import com.storyteller_f.a.app.compose_app.common.bottomAppending
 import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.shared.model.TopicInfo
 
-
 @Composable
 fun TopicList(
     items: LazyPagingItems<TopicInfo>,

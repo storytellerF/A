@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
@@ -27,7 +26,6 @@ import com.storyteller_f.a.app.compose_app.compontents.ExceptionView
 import com.storyteller_f.a.app.compose_app.no_content_yet
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
-import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -134,7 +132,6 @@ fun <T> StateView(
                         }
 
                         is LoadingState.Done -> {
-
                         }
 
                         else -> if (!pullRefreshing) RemoteMediatorLoadingView()

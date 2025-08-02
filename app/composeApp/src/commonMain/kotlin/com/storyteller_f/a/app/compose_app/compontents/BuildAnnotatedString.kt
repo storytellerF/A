@@ -346,7 +346,8 @@ fun CustomMarkdownParagraph(
     BoxWithConstraints {
         val width = this.maxWidth
         val (styledText, inlineContentMap) = remember(
-            mediaMap, content
+            mediaMap,
+            content
         ) {
             val inlineContentMap = mutableMapOf<String, String>()
             val text = buildAnnotatedString {

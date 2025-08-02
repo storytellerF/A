@@ -2,8 +2,6 @@ package com.storyteller_f.a.cloud.server.auth
 
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.api.server.invoke
-import com.storyteller_f.a.api.server.receiveBody
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getUserAlternateUserInfoList
 import com.storyteller_f.a.cloud.core.service.addAlternativeAccount
@@ -12,6 +10,8 @@ import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.a.cloud.server.route.checkApiRequest
 import com.storyteller_f.a.cloud.server.route.signIn
 import com.storyteller_f.a.cloud.server.route.signUp
+import com.storyteller_f.route4k.ktor.server.invoke
+import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.*
@@ -224,11 +224,11 @@ fun Route.bindUnprotectedAccountRoute(
         Result.success(call.getData())
     }
     CustomApi.Accounts.signUp.invoke(RoutingContext::handleResult) {
-        signUp(backend, with(it) { receiveBody() })
+        signUp(backend, it.receiveBody())
     }
 
     CustomApi.Accounts.signIn.invoke(RoutingContext::handleResult) {
-        signIn(backend, with(it) { receiveBody() }, call.getData())
+        signIn(backend, it.receiveBody(), call.getData())
     }
 }
 

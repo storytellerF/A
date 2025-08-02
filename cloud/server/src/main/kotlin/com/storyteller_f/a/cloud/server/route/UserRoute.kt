@@ -1,8 +1,6 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.api.server.invoke
-import com.storyteller_f.a.api.server.receiveBody
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getUserInfo
@@ -17,23 +15,25 @@ import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
+import com.storyteller_f.route4k.ktor.server.invoke
+import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 
 fun Route.bindProtectedUserRoute(backend: Backend) {
     CustomApi.Users.update.invoke(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
-            backend.updateUser(uid, with(api) { receiveBody() })
+            backend.updateUser(uid, api.receiveBody())
         }
     }
     CustomApi.Users.Read.add.invoke(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
-            backend.addReadLog(uid, with(api) { receiveBody() })
+            backend.addReadLog(uid, api.receiveBody())
         }
     }
     CustomApi.Users.Devices.add.invoke(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
-            val newDevice = with(api) { receiveBody() }
+            val newDevice = api.receiveBody()
             addDevice(backend, uid, newDevice)
         }
     }

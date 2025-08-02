@@ -7,6 +7,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
     repositories {
+        mavenLocal()
         google {
             mavenContent {
                 includeGroupAndSubgroups("androidx")
@@ -25,6 +26,7 @@ plugins {
 
 dependencyResolutionManagement {
     repositories {
+        mavenLocal()
         google {
             mavenContent {
                 includeGroupAndSubgroups("androidx")
@@ -61,9 +63,7 @@ include(":client:bot-lib")
 include(":client:storage")
 include(":client:kotbase")
 
-include(":api:core")
-include(":api:client")
-include(":api:server")
+include(":api")
 
 include(":bot:builtin-bot")
 if (isLlamaEnable)

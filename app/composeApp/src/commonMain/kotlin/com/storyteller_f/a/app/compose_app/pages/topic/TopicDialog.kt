@@ -73,7 +73,6 @@ import com.storyteller_f.shared.utils.formatTime
 import com.strabled.composepreferences.getPreference
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onCompletion

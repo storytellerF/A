@@ -77,9 +77,7 @@ subprojects {
 }
 val jvmLibModules = listOf(
     ":cloud:server",
-    ":api:client",
-    ":api:core",
-    ":api:server",
+    ":api",
     ":backend:core",
     ":backend:service",
     ":backend:exposed"
