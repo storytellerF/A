@@ -1,10 +1,10 @@
 package com.storyteller_f.a.backend.exposed.query
 
 import com.storyteller_f.a.backend.core.JoinSearch
+import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.exposed.AID_LENGTH
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.MemberJoins
-import com.storyteller_f.a.backend.exposed.tables.Room
 import com.storyteller_f.a.backend.exposed.tables.Rooms
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.shared.type.ObjectType

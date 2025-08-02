@@ -1,20 +1,25 @@
 package com.storyteller_f.a.backend.exposed
 
+import com.storyteller_f.a.backend.core.CommunityDatabase
+import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
+import com.storyteller_f.a.backend.core.types.Community
+import com.storyteller_f.a.backend.core.types.MemberJoin
+import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildCommunitySearchQuery
+import com.storyteller_f.a.backend.exposed.query.createCommunityRoomsRaw
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
-import com.storyteller_f.a.backend.exposed.tables.Community
-import com.storyteller_f.a.backend.exposed.tables.MemberJoin
 import com.storyteller_f.a.backend.exposed.tables.MemberJoins
-import com.storyteller_f.a.backend.exposed.tables.RawCommunity
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
+import com.storyteller_f.a.backend.exposed.tables.addJoinRaw
+import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.*
@@ -163,6 +168,17 @@ class ExposedCommunityDatabase(
                 community.createdTime,
                 ObjectType.COMMUNITY
             )
+        }
+    }
+
+    override suspend fun createCommunityRooms(
+        id: PrimaryKey,
+        ownerUid: PrimaryKey,
+        communityAid: String,
+        roomIds: List<PrimaryKey>,
+    ): Result<Unit> {
+        return exposedDatabaseSession.dbQuery {
+            createCommunityRoomsRaw(id, ownerUid, communityAid, roomIds)
         }
     }
 

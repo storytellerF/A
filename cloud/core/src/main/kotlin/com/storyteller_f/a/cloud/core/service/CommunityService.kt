@@ -4,16 +4,15 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.types.Community
+import com.storyteller_f.a.backend.core.types.RawCommunity
+import com.storyteller_f.a.backend.core.types.toCommunityIfo
 import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.isDup
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
-import com.storyteller_f.a.backend.exposed.tables.Community
-import com.storyteller_f.a.backend.exposed.tables.RawCommunity
-import com.storyteller_f.a.backend.exposed.tables.toCommunityIfo
 import com.storyteller_f.a.backend.exposed.toJoinSearch
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.createCommunityRoomsRaw
 import com.storyteller_f.a.backend.service.processRawCommunityToCommunityInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
@@ -159,9 +158,9 @@ suspend fun Backend.createCommunity(
         null
     )
     return exposedDatabase.communityDatabase.createCommunity(community).mapResult {
-        databaseSession.dbQuery {
-            createCommunityRoomsRaw(community.id, community.owner, community.aid)
-        }
+        exposedDatabase.communityDatabase.createCommunityRooms(community.id, community.owner, community.aid, List(3) {
+            SnowflakeFactory.nextId()
+        })
 
         val communityInfo = community
         addUserLog(uid, UserLogType.CREATE, communityInfo.toCommunityIfo().tuple())

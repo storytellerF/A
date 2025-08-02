@@ -1,11 +1,15 @@
 package com.storyteller_f.a.backend.exposed
 
+import com.storyteller_f.a.backend.core.MediaDatabase
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
+import com.storyteller_f.a.backend.core.types.Media
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
-import com.storyteller_f.a.backend.exposed.tables.Media
 import com.storyteller_f.a.backend.exposed.tables.MediaRefs
 import com.storyteller_f.a.backend.exposed.tables.Medias
+import com.storyteller_f.a.backend.exposed.tables.insertCopiedMedia
+import com.storyteller_f.a.backend.exposed.tables.insertMediaList
+import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult

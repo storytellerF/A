@@ -1,10 +1,9 @@
 package com.storyteller_f.a.backend.exposed.tables
 
+import com.storyteller_f.a.backend.core.types.MediaRef
 import com.storyteller_f.a.backend.exposed.MEDIA_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.objectType
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Table
 
@@ -15,17 +14,13 @@ object MediaRefs : Table() {
     val mediaName = varchar("media_name", MEDIA_NAME_LENGTH)
 }
 
-class MediaRef(val objectId: PrimaryKey, val objectType: ObjectType, val author: PrimaryKey, val mediaName: String) {
-    companion object {
-        fun wrapRow(resultRow: ResultRow): MediaRef {
-            return with(MediaRefs) {
-                MediaRef(
-                    resultRow[objectId],
-                    resultRow[objectType],
-                    resultRow[author],
-                    resultRow[mediaName]
-                )
-            }
-        }
+fun MediaRef.Companion.wrapRow(resultRow: ResultRow): MediaRef {
+    return with(MediaRefs) {
+        MediaRef(
+            resultRow[objectId],
+            resultRow[objectType],
+            resultRow[author],
+            resultRow[mediaName]
+        )
     }
 }

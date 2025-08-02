@@ -1,7 +1,7 @@
 package com.storyteller_f.a.backend.exposed.tables
 
+import com.storyteller_f.a.backend.core.types.EncryptedKey
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
-import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Table
 
@@ -15,16 +15,12 @@ object EncryptedKeys : Table() {
     }
 }
 
-class EncryptedKey(val topicId: PrimaryKey, val uid: PrimaryKey, val encryptedAes: ByteArray) {
-    companion object {
-        fun wrapRow(row: ResultRow): EncryptedKey {
-            return with(EncryptedKeys) {
-                EncryptedKey(
-                    row[topicId],
-                    row[uid],
-                    row[encryptedAes].bytes
-                )
-            }
-        }
+fun EncryptedKey.Companion.wrapRow(row: ResultRow): EncryptedKey {
+    return with(EncryptedKeys) {
+        EncryptedKey(
+            row[topicId],
+            row[uid],
+            row[encryptedAes].bytes
+        )
     }
 }

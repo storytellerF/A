@@ -8,7 +8,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toKotlinInstant
 import kotlinx.datetime.toLocalDateTime
 import org.apache.hc.core5.net.URIBuilder
 import java.io.InputStream
@@ -17,6 +16,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.*
+import kotlin.time.ExperimentalTime
+import kotlin.time.toKotlinInstant
 
 class FileSystemMediaService(private val url: String, base: Path) : MediaService {
     private val base = if (!base.exists()) {
@@ -48,6 +49,7 @@ class FileSystemMediaService(private val url: String, base: Path) : MediaService
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     override suspend fun get(bucketName: String, names: List<String>): Result<List<MediaRecord>> {
         return useFileSystem {
             names.mapNotNull {

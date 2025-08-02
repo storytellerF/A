@@ -1,9 +1,17 @@
 package com.storyteller_f.a.backend.exposed
 
+import com.storyteller_f.a.backend.core.CliDatabase
+import com.storyteller_f.a.backend.core.CombinedDatabase
+import com.storyteller_f.a.backend.core.CommunityDatabase
+import com.storyteller_f.a.backend.core.ContainerDatabase
+import com.storyteller_f.a.backend.core.DatabaseConnection
+import com.storyteller_f.a.backend.core.MediaDatabase
+import com.storyteller_f.a.backend.core.RoomDatabase
+import com.storyteller_f.a.backend.core.TitleDatabase
+import com.storyteller_f.a.backend.core.TopicDatabase
+import com.storyteller_f.a.backend.core.UserDatabase
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
-import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.datetime
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
@@ -16,8 +24,6 @@ abstract class BaseTable : Table() {
 
     override val primaryKey = PrimaryKey(id)
 }
-
-abstract class BaseEntity(val id: PrimaryKey, val createdTime: LocalDateTime)
 
 const val PUBLIC_KEY_LENGTH = 512
 const val ADDRESS_LENGTH = 100
@@ -58,3 +64,36 @@ fun <T : Table> T.emoji() = varchar("emoji", 20)
 fun Table.communityName() = varchar("name", COMMUNITY_NAME_LENGTH).index()
 
 fun Table.titleName() = varchar("name", 20)
+
+class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDatabase {
+    override val userDatabase: UserDatabase
+        get() = ExposedUserDatabase(databaseSession)
+    override val topicDatabase: TopicDatabase
+        get() = ExposedTopicDatabase(databaseSession, containerDatabase, mediaDatabase)
+    override val titleDatabase: TitleDatabase
+        get() = ExposedTitleDatabase(databaseSession)
+    override val communityDatabase: CommunityDatabase
+        get() = ExposedCommunityDatabase(databaseSession, containerDatabase)
+    override val roomData: RoomDatabase
+        get() = ExposedRoomDatabase(databaseSession, containerDatabase)
+    override val mediaDatabase: MediaDatabase
+        get() = ExposedMediaDatabase(databaseSession)
+    override val containerDatabase: ContainerDatabase
+        get() = ExposedContainerDatabase(databaseSession)
+    override val cliDatabase: CliDatabase
+        get() = ExposedCliDatabase(databaseSession)
+
+    override suspend fun init() {
+        ExposedDatabaseFactory.init(databaseSession.database)
+    }
+
+    override suspend fun clean() {
+        ExposedDatabaseFactory.clean(databaseSession.database)
+    }
+}
+
+fun buildExposedDatabase(databaseConnection: DatabaseConnection): ExposedDatabase {
+    val database = ExposedDatabaseFactory.connect(databaseConnection)
+    val databaseSession = ExposedDatabaseSession(database, null)
+    return ExposedDatabase(databaseSession)
+}

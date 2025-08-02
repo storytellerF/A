@@ -4,9 +4,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.*
 import com.storyteller_f.a.backend.exposed.query.PaginationResult
-import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.Topic
-import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.toTopicInfo
 import com.storyteller_f.a.backend.service.*
 import com.storyteller_f.a.backend.service.index.DocumentSearch
@@ -21,8 +19,6 @@ import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
 import org.apache.pdfbox.pdmodel.font.PDType0Font
-import org.jetbrains.exposed.v1.core.SortOrder
-import org.jetbrains.exposed.v1.r2dbc.andWhere
 import rst.pdfbox.layout.elements.Document
 import rst.pdfbox.layout.elements.Paragraph
 import java.awt.GraphicsEnvironment
@@ -355,27 +351,12 @@ suspend fun Backend.getTopLevelTopicsInObject(
         if (isPrivate && !hasRead) {
             Result.failure(ForbiddenException("Permission Denied"))
         } else {
-            exposedDatabase.topicDatabase.getTopicInfoPaginationByPredicate(
+            exposedDatabase.topicDatabase.getSubTopicInfo(
                 uid,
-                primaryKeyFetch
-            ) { ->
-                where {
-                    Topics.parentId eq parentId
-                }
-                when (pinType) {
-                    TopicPinSearch.PINNED -> andWhere {
-                        Topics.pinned eq true
-                    }
-
-                    TopicPinSearch.UNPINNED -> andWhere {
-                        Topics.pinned eq false
-                    }
-
-                    else -> {
-                        orderBy(Topics.pinned to SortOrder.DESC)
-                    }
-                }
-            }.mapResult { (data, count) ->
+                primaryKeyFetch,
+                parentId,
+                pinType
+            ).mapResult { (data, count) ->
                 processTopicAfterGet(data, uid, true).mapIfNotNull {
                     PaginationResult(it, count)
                 }
@@ -393,12 +374,7 @@ suspend fun Backend.processTopicAfterGet(
         {
             (if (addLatestSubTopic) {
                 Result.success(processedTopics.flatMap { t ->
-                    exposedDatabase.topicDatabase.getTopicInfoListByPredicate(uid) {
-                        where {
-                            Topics.parentId eq t.id
-                        }.orderBy(Topics.pinned to SortOrder.DESC)
-                            .bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
-                    }.getOrThrow()
+                    exposedDatabase.topicDatabase.getLatestTopicInfo(uid, t.id).getOrThrow()
                 }.groupBy {
                     it.parentId
                 })
@@ -582,11 +558,7 @@ private suspend fun Backend.processTopicsDocument(
     if (ids.isEmpty()) {
         return Result.success(emptyList())
     }
-    return exposedDatabase.topicDatabase.getTopicInfoListByPredicate(uid) {
-        where {
-            Topics.id inList ids
-        }
-    }.mapResult { infos ->
+    return exposedDatabase.topicDatabase.getTopicInfoListByIds(uid, ids).mapResult { infos ->
         processTopicMedia(infos.sortedByDescending {
             it.id
         }).mapResultIfNotNull {
@@ -620,11 +592,7 @@ suspend fun Backend.getTopicByIds(
             }
         }
     }
-    return exposedDatabase.topicDatabase.getTopicInfoListByPredicate(uid) {
-        where {
-            Topics.id inList ids
-        }
-    }.mapResult { infos ->
+    return exposedDatabase.topicDatabase.getTopicInfoListByIds(uid, ids).mapResult { infos ->
         processTopicAfterGet(infos, uid, true)
     }
 }

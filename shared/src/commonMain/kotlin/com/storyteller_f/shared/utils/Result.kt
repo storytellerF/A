@@ -71,8 +71,8 @@ suspend fun <T> Result<T>.transformThrowable(block: suspend (Throwable) -> Throw
     }
 }
 
-data class Merged4<M1, M2, M3, M4>(val first: M1, val second: M2, val third: M3, val fourth: M4)
-data class Merged5<M1, M2, M3, M4, M5>(val first: M1, val second: M2, val third: M3, val fourth: M4, val five: M5)
+data class Tuple4<M1, M2, M3, M4>(val first: M1, val second: M2, val third: M3, val fourth: M4)
+data class Tuple5<M1, M2, M3, M4, M5>(val first: M1, val second: M2, val third: M3, val fourth: M4, val five: M5)
 
 inline fun <T1, T2, T3, T4, T5> merge(
     result1: () -> Result<T1>,
@@ -86,7 +86,7 @@ inline fun <T1, T2, T3, T4, T5> merge(
     val s3 = result3().getOrThrow()
     val s4 = result4().getOrThrow()
     val s5 = result5().getOrThrow()
-    Merged5(s1, s2, s3, s4, s5)
+    Tuple5(s1, s2, s3, s4, s5)
 }
 
 inline fun <T1, T2, T3, T4> merge(
@@ -99,7 +99,7 @@ inline fun <T1, T2, T3, T4> merge(
     val s2 = result2().getOrThrow()
     val s3 = result3().getOrThrow()
     val s4 = result4().getOrThrow()
-    Merged4(s1, s2, s3, s4)
+    Tuple4(s1, s2, s3, s4)
 }
 
 inline fun <T1, T2, T3> merge(

@@ -2,8 +2,19 @@ package com.storyteller_f.a.backend.exposed
 
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
+import com.storyteller_f.a.backend.core.UserDatabase
+import com.storyteller_f.a.backend.core.types.AlternateAccount
+import com.storyteller_f.a.backend.core.types.AssetTransaction
+import com.storyteller_f.a.backend.core.types.RawAlternateAccount
+import com.storyteller_f.a.backend.core.types.RawUser
+import com.storyteller_f.a.backend.core.types.TaskRecord
+import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.a.backend.core.types.User
+import com.storyteller_f.a.backend.core.types.UserDevice
+import com.storyteller_f.a.backend.core.types.UserLog
+import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.*
 import com.storyteller_f.shared.model.AssetType
@@ -23,7 +34,7 @@ import org.jetbrains.exposed.v1.r2dbc.update
 import org.jetbrains.exposed.v1.r2dbc.upsert
 
 class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSession) :
-    UserDatabase<User> {
+    UserDatabase {
     override suspend fun getUserAid(id: PrimaryKey) = exposedDatabaseSession.dbSearch {
         search {
             Aids.selectAll().where {
@@ -37,7 +48,7 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
 
     override suspend fun getRawUser(
         objectFetch: ObjectFetch,
-    ): Result<RawUser<User>?> {
+    ): Result<RawUser?> {
         return exposedDatabaseSession.dbSearch {
             search {
                 Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
@@ -53,7 +64,7 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
 
     override suspend fun getRawUserAndPublicKeyByAddress(
         ad: String,
-    ): Result<Pair<RawUser<User>, String>?> {
+    ): Result<Pair<RawUser, String>?> {
         return exposedDatabaseSession.dbSearch {
             search {
                 Users
@@ -151,7 +162,7 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
         }
     }
 
-    override suspend fun getUserAuthDataByAid(
+    suspend fun getUserAuthDataByAid(
         predicate: SqlExpressionBuilder.() -> Op<Boolean>,
     ): Result<Pair<String, Long>?> {
         return exposedDatabaseSession.dbSearch {
@@ -166,7 +177,7 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
         }
     }
 
-    override suspend fun getUserAuthDataBy(
+    suspend fun getUserAuthDataBy(
         predicate: SqlExpressionBuilder.() -> Op<Boolean>,
     ): Result<Pair<String, Long>?> {
         return exposedDatabaseSession.dbSearch {
@@ -179,7 +190,25 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
         }
     }
 
-    override suspend fun getRawUsers(objectListFetch: ObjectListFetch): Result<List<RawUser<User>>> {
+    override suspend fun getUserAuthDataById(id: PrimaryKey): Result<Pair<String, Long>?> {
+        return getUserAuthDataBy {
+            Users.id eq id
+        }
+    }
+
+    override suspend fun getUserAuthDataByAid(aid: String): Result<Pair<String, Long>?> {
+        return getUserAuthDataByAid {
+            Aids.value eq aid
+        }
+    }
+
+    override suspend fun getUserAuthDataByAddress(address: String): Result<Pair<String, Long>?> {
+        return getUserAuthDataBy {
+            Users.address eq address
+        }
+    }
+
+    override suspend fun getRawUsers(objectListFetch: ObjectListFetch): Result<List<RawUser>> {
         return exposedDatabaseSession.dbSearch {
             search {
                 Users

@@ -3,11 +3,11 @@ package com.storyteller_f.a.cloud.core.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
-import com.storyteller_f.a.backend.exposed.tables.Title
-import com.storyteller_f.a.backend.exposed.tables.Topic
-import com.storyteller_f.a.backend.exposed.tables.toTitleInfo
+import com.storyteller_f.a.backend.core.types.Title
+import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.a.backend.core.types.toTitleInfo
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getUserInfoList
 import com.storyteller_f.a.backend.service.index.TopicDocument

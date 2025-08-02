@@ -2,9 +2,7 @@ package com.storyteller_f.a.cloud.server.route
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
-import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.User
-import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.toUserInfo
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.processRawUserToUserInfo
@@ -117,17 +115,11 @@ suspend fun Backend.getUserAuthData(
     credential: CustomCredential
 ): Result<Pair<String, Long>?> {
     return when (credential) {
-        is CustomCredential.AidCredential -> exposedDatabase.userDatabase.getUserAuthDataByAid {
-            Aids.value eq credential.aid
-        }
+        is CustomCredential.AidCredential -> exposedDatabase.userDatabase.getUserAuthDataByAid(credential.aid)
 
-        is CustomCredential.IdCredential -> exposedDatabase.userDatabase.getUserAuthDataBy {
-            Users.id eq credential.id
-        }
+        is CustomCredential.IdCredential -> exposedDatabase.userDatabase.getUserAuthDataById(credential.id)
 
-        is CustomCredential.AddressCredential -> exposedDatabase.userDatabase.getUserAuthDataBy {
-            Users.address eq credential.ad
-        }
+        is CustomCredential.AddressCredential -> exposedDatabase.userDatabase.getUserAuthDataByAddress(credential.ad)
     }
 }
 

@@ -1,7 +1,11 @@
 package com.storyteller_f.a.backend.exposed
 
+import com.storyteller_f.a.backend.core.ContainerDatabase
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
+import com.storyteller_f.a.backend.core.types.MemberJoin
+import com.storyteller_f.a.backend.core.types.RawUser
+import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildSearchMembersQuery
 import com.storyteller_f.a.backend.exposed.tables.*
@@ -18,7 +22,8 @@ import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
-class ExposedContainerDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : ContainerDatabase {
+class ExposedContainerDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
+    ContainerDatabase {
     override suspend fun isMemberJoined(
         objectId: PrimaryKey,
         uid: PrimaryKey?,
@@ -151,7 +156,7 @@ class ExposedContainerDatabase(val exposedDatabaseSession: ExposedDatabaseSessio
         objectId: PrimaryKey?,
         word: String?,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<RawUser<User>>> {
+    ): Result<PaginationResult<RawUser>> {
         return exposedDatabaseSession.dbSearch {
             search {
                 buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(

@@ -1,5 +1,6 @@
 package com.storyteller_f.a.backend.exposed.tables
 
+import com.storyteller_f.a.backend.core.types.MemberJoin
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.objectType
 import com.storyteller_f.shared.type.ObjectType
@@ -21,38 +22,29 @@ object MemberJoins : Table() {
     }
 }
 
-class MemberJoin(
-    val uid: PrimaryKey,
-    val objectId: PrimaryKey,
-    val objectType: ObjectType,
-    val joinedTime: LocalDateTime
-) {
-    companion object {
-        fun wrapRow(row: ResultRow): MemberJoin {
-            return with(MemberJoins) {
-                MemberJoin(
-                    row[uid],
-                    row[objectId],
-                    row[objectType],
-                    row[joinedTime]
-                )
-            }
-        }
+fun MemberJoin.Companion.wrapRow(row: ResultRow): MemberJoin {
+    return with(MemberJoins) {
+        MemberJoin(
+            row[uid],
+            row[objectId],
+            row[objectType],
+            row[joinedTime]
+        )
+    }
+}
 
-        suspend fun addJoinRaw(
-            uid: PrimaryKey,
-            id: PrimaryKey,
-            time: LocalDateTime,
-            objectType: ObjectType,
-        ) {
-            check(MemberJoins.insert {
-                it[joinedTime] = time
-                it[this.uid] = uid
-                it[objectId] = id
-                it[this.objectType] = objectType
-            }.insertedCount > 0) {
-                "join failed"
-            }
-        }
+suspend fun MemberJoin.Companion.addJoinRaw(
+    uid: PrimaryKey,
+    id: PrimaryKey,
+    time: LocalDateTime,
+    objectType: ObjectType,
+) {
+    check(MemberJoins.insert {
+        it[joinedTime] = time
+        it[this.uid] = uid
+        it[objectId] = id
+        it[this.objectType] = objectType
+    }.insertedCount > 0) {
+        "join failed"
     }
 }

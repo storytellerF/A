@@ -37,6 +37,7 @@ dependencies {
     implementation(libs.bundles.ktor.server.client)
     implementation(libs.pdfbox)
     implementation(libs.kotlinx.collections.immutable)
+    implementation(libs.kotlinx.datetime)
 
     implementation(libs.geoip2)
     implementation(libs.tika.core)
