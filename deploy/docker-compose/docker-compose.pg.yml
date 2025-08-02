@@ -4,6 +4,7 @@ volumes:
 services:
   pg:
     image: postgres
+    restart: unless-stopped
     # set shared memory limit when using docker-compose
     shm_size: 128mb
     ports:
@@ -22,6 +23,7 @@ services:
 
   adminer:
     image: adminer
+    restart: unless-stopped
     ports:
       - ${DATABASE_FRONT_PORT}:8080
     depends_on:
@@ -29,6 +31,7 @@ services:
         condition: service_healthy
   pg-exporter:
     image: quay.io/prometheuscommunity/postgres-exporter
+    restart: unless-stopped
     ports:
       - "9187:9187"  # exporter 默认端口
     environment:
