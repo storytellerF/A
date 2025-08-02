@@ -1,6 +1,7 @@
 services:
   grafana:
     image: grafana/grafana:latest
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
@@ -14,6 +15,7 @@ services:
       - ../grafana/dashboards:/etc/grafana/dashboards
   prometheus:
     image: prom/prometheus:latest
+    restart: unless-stopped
     ports:
       - "9090:9090"
     volumes:

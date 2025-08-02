@@ -4,6 +4,7 @@ volumes:
 services:
   minio:
     image: minio/minio
+    restart: unless-stopped
     ports:
       - ${MINIO_PORT}:9000
       - ${MINIO_CONSOLE_PORT}:9001
