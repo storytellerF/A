@@ -4,11 +4,11 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.Path
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.types.ReactionRecord
 import com.storyteller_f.a.backend.exposed.isDup
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
-import com.storyteller_f.a.backend.exposed.tables.ReactionRecord
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.obj.DeleteReaction
@@ -112,8 +112,8 @@ suspend fun deleteReaction(
             } else {
                 Result.success(Unit)
             }).mapResult {
-                backend.exposedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji).map {
-                    it ?: ReactionInfo(emoji, p.id, 0, false, 0)
+                backend.exposedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji).map { reactionInfo ->
+                    reactionInfo ?: ReactionInfo(emoji, p.id, 0, false, 0)
                 }
             }
         }

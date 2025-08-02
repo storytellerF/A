@@ -4,6 +4,7 @@ import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.core.Path
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.backend.exposed.query.PaginationResult

@@ -3,8 +3,13 @@ package com.storyteller_f.a.backend.service
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.*
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
-import com.storyteller_f.a.backend.exposed.query.batchCreateCommunityRooms
+import com.storyteller_f.a.backend.core.types.Media
+import com.storyteller_f.a.backend.core.types.RawCommunity
+import com.storyteller_f.a.backend.core.types.RawRoom
+import com.storyteller_f.a.backend.core.types.RawUser
+import com.storyteller_f.a.backend.core.types.toCommunityIfo
+import com.storyteller_f.a.backend.core.types.toRoomInfo
+import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.a.backend.exposed.tables.*
 import com.storyteller_f.a.backend.service.index.ElasticTopicSearchService
 import com.storyteller_f.a.backend.service.index.LuceneTopicSearchService
@@ -30,7 +35,7 @@ class Backend(
     val topicSearchService: TopicSearchService,
     val mediaService: MediaService,
     val nameService: NameService,
-    val exposedDatabase: com.storyteller_f.a.backend.exposed.CombinedDatabase<User>,
+    val exposedDatabase: CombinedDatabase,
 ) {
     val tika by lazy {
         Tika()
@@ -342,7 +347,7 @@ suspend fun Backend.processMediaToMediaInfo(
 }
 
 suspend fun Backend.processRawUserToUserInfo(
-    rawResults: List<RawUser<User>>,
+    rawResults: List<RawUser>,
 ) = exposedDatabase.mediaDatabase.getMediaByIds(rawResults.mapNotNull {
     it.user.icon
 }).mapResult { medias ->
@@ -396,29 +401,6 @@ suspend fun Backend.getUserAlternateUserInfoList(
             }, total)
         }
     }
-}
-
-suspend fun createCommunityRoomsRaw(
-    id: PrimaryKey,
-    ownerUid: PrimaryKey,
-    communityAid: String,
-) {
-    batchCreateCommunityRooms(
-        listOf(
-            "${communityAid}_general" to "General",
-            "${communityAid}_lobby" to "Lobby",
-            "${communityAid}_support" to "Support"
-        ).map { pair ->
-            Room(
-                SnowflakeFactory.nextId(),
-                now(),
-                pair.first,
-                pair.second,
-                ownerUid,
-                communityId = id
-            )
-        }
-    )
 }
 
 suspend fun Backend.isKeyVerified(

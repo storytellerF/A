@@ -1,5 +1,6 @@
 package com.storyteller_f.a.backend.exposed.tables
 
+import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.shared.model.AssetType
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -11,24 +12,20 @@ object AssetTransactions : BaseTable() {
     val after = long("after")
 }
 
-class AssetTransaction(val type: AssetType, val before: Long, val after: Long) {
-    companion object {
-        fun wrapRow(row: ResultRow): AssetTransaction {
-            return with(AssetTransactions) {
-                AssetTransaction(
-                    row[type],
-                    row[before],
-                    row[after]
-                )
-            }
-        }
-        suspend fun addAssetTransaction(assetTransaction: AssetTransaction) =
-            check(AssetTransactions.insert {
-                it[AssetTransactions.type] = assetTransaction.type
-                it[AssetTransactions.before] = assetTransaction.before
-                it[AssetTransactions.after] = assetTransaction.after
-            }.insertedCount > 0) {
-                "Insert asset transaction failed"
-            }
+fun AssetTransaction.Companion.wrapRow(row: ResultRow): AssetTransaction {
+    return with(AssetTransactions) {
+        AssetTransaction(
+            row[type],
+            row[before],
+            row[after]
+        )
     }
 }
+suspend fun AssetTransaction.Companion.addAssetTransaction(assetTransaction: AssetTransaction) =
+    check(AssetTransactions.insert {
+        it[AssetTransactions.type] = assetTransaction.type
+        it[AssetTransactions.before] = assetTransaction.before
+        it[AssetTransactions.after] = assetTransaction.after
+    }.insertedCount > 0) {
+        "Insert asset transaction failed"
+    }

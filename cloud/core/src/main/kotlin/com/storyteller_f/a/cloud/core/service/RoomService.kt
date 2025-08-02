@@ -6,15 +6,15 @@ import com.storyteller_f.a.api.core.Path
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.types.RawRoom
+import com.storyteller_f.a.backend.core.types.Room
+import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.a.backend.core.types.toTopicInfo
 import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.isDup
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
-import com.storyteller_f.a.backend.exposed.tables.RawRoom
-import com.storyteller_f.a.backend.exposed.tables.Room
-import com.storyteller_f.a.backend.exposed.tables.Topic
-import com.storyteller_f.a.backend.exposed.tables.toTopicInfo
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.index.TopicDocument
 import com.storyteller_f.a.backend.service.isKeyVerified
@@ -34,7 +34,6 @@ suspend fun Backend.getRoomPubKeys(
     if (it) {
         exposedDatabase.roomData.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
             .map { (data, count) ->
-                PaginationResult(data, count)
             }
     } else {
         Result.failure(ForbiddenException("Permission denied"))
@@ -151,7 +150,8 @@ suspend fun Backend.createRoom(
     }.mapResultIfNotNull {
         if (it) {
             val roomId = SnowflakeFactory.nextId()
-            val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
+            val room =
+                Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
             exposedDatabase.roomData.createRoom(room)
                 .mapResult {
                     processRawRoomToRoomInfo(
@@ -295,7 +295,7 @@ suspend fun Backend.addTopicIntoRoom(
                             listOf(TopicDocument.fromTopic(topic, content))
                         ).getOrThrow()
                         exposedDatabase.topicDatabase.savePlainTopic(topic, content = content)
-                            .map<TopicInfo, Unit> {
+                            .map {
                                 topic.toTopicInfo(content = content)
                             }
                     }

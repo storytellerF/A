@@ -1,10 +1,19 @@
 package com.storyteller_f.a.backend.exposed
 
+import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.MediaDatabase
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
+import com.storyteller_f.a.backend.core.TopicDatabase
+import com.storyteller_f.a.backend.core.types.EncryptedKey
+import com.storyteller_f.a.backend.core.types.Reaction
+import com.storyteller_f.a.backend.core.types.ReactionRecord
+import com.storyteller_f.a.backend.core.types.Title
+import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.a.backend.core.types.toTopicInfo
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildReactionInfoQuery
 import com.storyteller_f.a.backend.exposed.tables.*
@@ -12,6 +21,7 @@ import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
@@ -75,7 +85,7 @@ class ExposedTopicDatabase(
         }
     }
 
-    override suspend fun getTopicInfoListByPredicate(
+    suspend fun getTopicInfoListByPredicate(
         uid: PrimaryKey?,
         queryBuilder: Query.() -> Query,
     ): Result<List<TopicInfo>> {
@@ -91,7 +101,18 @@ class ExposedTopicDatabase(
         }
     }
 
-    override suspend fun getTopicInfoPaginationByPredicate(
+    override suspend fun getTopicInfoListByIds(
+        uid: PrimaryKey?,
+        ids: List<PrimaryKey>
+    ): Result<List<TopicInfo>> {
+        return getTopicInfoListByPredicate(uid) {
+            where {
+                Topics.id inList ids
+            }
+        }
+    }
+
+    suspend fun getTopicInfoPaginationByPredicate(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         extraQuery: Query.() -> Query,
@@ -111,6 +132,47 @@ class ExposedTopicDatabase(
             }
         }).map {
             PaginationResult(it.first, it.second)
+        }
+    }
+
+    override suspend fun getSubTopicInfo(
+        uid: PrimaryKey?,
+        primaryKeyFetch: PrimaryKeyFetch,
+        parentId: PrimaryKey,
+        pinType: TopicPinSearch?
+    ): Result<PaginationResult<TopicInfo>> {
+        return getTopicInfoPaginationByPredicate(
+            uid,
+            primaryKeyFetch
+        ) { ->
+            where {
+                Topics.parentId eq parentId
+            }
+            when (pinType) {
+                TopicPinSearch.PINNED -> andWhere {
+                    Topics.pinned eq true
+                }
+
+                TopicPinSearch.UNPINNED -> andWhere {
+                    Topics.pinned eq false
+                }
+
+                else -> {
+                    orderBy(Topics.pinned to SortOrder.DESC)
+                }
+            }
+        }
+    }
+
+    override suspend fun getLatestTopicInfo(
+        uid: PrimaryKey?,
+        parentId: PrimaryKey
+    ): Result<List<TopicInfo>> {
+        return getTopicInfoListByPredicate(uid) {
+            where {
+                Topics.parentId eq parentId
+            }.orderBy(Topics.pinned to SortOrder.DESC)
+                .bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
         }
     }
 

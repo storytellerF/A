@@ -1,6 +1,6 @@
 package com.storyteller_f.a.backend.exposed.tables
 
-import com.storyteller_f.a.backend.exposed.BaseEntity
+import com.storyteller_f.a.backend.core.types.Media
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.shared.model.Dimension
@@ -32,81 +32,62 @@ object Medias : BaseTable() {
     }
 }
 
-class Media(
-    id: PrimaryKey,
-    createdTime: LocalDateTime,
-    val name: String,
-    val duration: Long,
-    val width: Int,
-    val height: Int,
-    val owner: PrimaryKey,
-    val ownerType: ObjectType,
-    val contentType: String,
-    val size: Long,
-) : BaseEntity(id, createdTime) {
-    val dimension = Dimension(width, height)
-    val fullName: String = "$owner/$name"
-
-    companion object {
-        fun wrapRow(resultRow: ResultRow): Media {
-            return with(Medias) {
-                Media(
-                    resultRow[id],
-                    resultRow[createdTime],
-                    resultRow[name],
-                    resultRow[duration],
-                    resultRow[width],
-                    resultRow[height],
-                    resultRow[owner],
-                    resultRow[ownerType],
-                    resultRow[contentType],
-                    resultRow[size],
-                )
-            }
-        }
-
-        suspend fun insertMediaList(
-            mediaList: List<Media>
-        ) {
-            Medias.batchInsert(mediaList) { e ->
-                this[Medias.id] = e.id
-                this[Medias.createdTime] = now()
-                this[Medias.name] = e.name
-                this[Medias.duration] = 0
-                this[Medias.width] = e.width
-                this[Medias.height] = e.height
-                this[Medias.owner] = e.owner
-                this[Medias.ownerType] = e.ownerType
-                this[Medias.contentType] = e.contentType
-                this[Medias.size] = e.size
-                this[Medias.fullName] = e.fullName
-            }
-        }
-
-        suspend fun insertCopiedMedia(
-            id: PrimaryKey,
-            media: Media,
-            newOwner: PrimaryKey
-        ) {
-            check(Medias.insert {
-                it[Medias.id] = id
-                it[Medias.createdTime] = now()
-                it[Medias.name] = media.name
-                it[Medias.duration] = media.duration
-                it[Medias.width] = media.width
-                it[Medias.height] = media.height
-                it[Medias.owner] = newOwner
-                it[Medias.ownerType] = media.ownerType
-                it[Medias.contentType] = media.contentType
-                it[Medias.size] = media.size
-                it[Medias.fullName] = media.fullName
-            }.insertedCount > 0) {
-                "insert media failed"
-            }
-        }
+fun Media.Companion.wrapRow(resultRow: ResultRow): Media {
+    return with(Medias) {
+        Media(
+            resultRow[id],
+            resultRow[createdTime],
+            resultRow[name],
+            resultRow[duration],
+            resultRow[width],
+            resultRow[height],
+            resultRow[owner],
+            resultRow[ownerType],
+            resultRow[contentType],
+            resultRow[size],
+        )
     }
 }
 
+suspend fun Media.Companion.insertMediaList(
+    mediaList: List<Media>
+) {
+    Medias.batchInsert(mediaList) { e ->
+        this[Medias.id] = e.id
+        this[Medias.createdTime] = now()
+        this[Medias.name] = e.name
+        this[Medias.duration] = 0
+        this[Medias.width] = e.width
+        this[Medias.height] = e.height
+        this[Medias.owner] = e.owner
+        this[Medias.ownerType] = e.ownerType
+        this[Medias.contentType] = e.contentType
+        this[Medias.size] = e.size
+        this[Medias.fullName] = e.fullName
+    }
+}
+
+suspend fun Media.Companion.insertCopiedMedia(
+    id: PrimaryKey,
+    media: Media,
+    newOwner: PrimaryKey
+) {
+    check(Medias.insert {
+        it[Medias.id] = id
+        it[Medias.createdTime] = now()
+        it[Medias.name] = media.name
+        it[Medias.duration] = media.duration
+        it[Medias.width] = media.width
+        it[Medias.height] = media.height
+        it[Medias.owner] = newOwner
+        it[Medias.ownerType] = media.ownerType
+        it[Medias.contentType] = media.contentType
+        it[Medias.size] = media.size
+        it[Medias.fullName] = media.fullName
+    }.insertedCount > 0) {
+        "insert media failed"
+    }
+}
 fun Media.toMediaInfo(url: String, lastModified: LocalDateTime): MediaInfo {
     return MediaInfo(
         id,

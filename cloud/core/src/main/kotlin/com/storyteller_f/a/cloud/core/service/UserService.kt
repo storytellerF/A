@@ -4,13 +4,13 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.types.User
+import com.storyteller_f.a.backend.core.types.UserLog
+import com.storyteller_f.a.backend.core.types.UserTopicRead
+import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.a.backend.exposed.AID_LENGTH
 import com.storyteller_f.a.backend.exposed.USER_NICKNAME
 import com.storyteller_f.a.backend.exposed.isDup
-import com.storyteller_f.a.backend.exposed.tables.User
-import com.storyteller_f.a.backend.exposed.tables.UserLog
-import com.storyteller_f.a.backend.exposed.tables.UserTopicRead
-import com.storyteller_f.a.backend.exposed.tables.toUserInfo
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getUserInfo
 import com.storyteller_f.shared.calcAddress
@@ -186,7 +186,15 @@ suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<AlternativeAc
                 calcAddress(publicKey).mapResult { address ->
                     val id = SnowflakeFactory.nextId()
                     val user = User(
-                        null, publicKey, address, null, nameService.parse(id), id, now(), 0, PassType.RAW,
+                        null,
+                        publicKey,
+                        address,
+                        null,
+                        nameService.parse(id),
+                        id,
+                        now(),
+                        0,
+                        PassType.RAW,
                         AlgoType.P256
                     )
                     exposedDatabase.userDatabase.createAlternativeAccount(uid, derPrivateKey, user).map {

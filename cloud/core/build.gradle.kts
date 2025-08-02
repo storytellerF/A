@@ -33,6 +33,7 @@ dependencies {
     implementation(libs.pdfbox)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.collections.immutable)
+    implementation(libs.kotlinx.coroutines.core)
 
     implementation(libs.geoip2)
     implementation(libs.tika.core)

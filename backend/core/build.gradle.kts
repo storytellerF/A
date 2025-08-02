@@ -7,6 +7,7 @@ version = "unspecified"
 
 dependencies {
     implementation(projects.shared)
+    implementation(libs.kotlinx.datetime)
     testImplementation(kotlin("test"))
 }
 

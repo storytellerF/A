@@ -1,8 +1,8 @@
 package com.storyteller_f.a.backend.service.index
 
 import com.storyteller_f.a.backend.core.Cursor
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey

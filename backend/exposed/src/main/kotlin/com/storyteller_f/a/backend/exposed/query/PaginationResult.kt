@@ -8,8 +8,6 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
 
-data class PaginationResult<T>(val list: List<T>, val total: Long)
-
 fun Query.bindPaginationQuery(
     table: BaseTable,
     primaryKeyFetch: PrimaryKeyFetch

@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.tika.core)
     implementation(libs.commons.logging)
     implementation(libs.bundles.ktor.server.client)
+    implementation(libs.kotlinx.datetime)
 }
 
 tasks.test {

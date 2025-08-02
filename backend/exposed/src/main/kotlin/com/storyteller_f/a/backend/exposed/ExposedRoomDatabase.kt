@@ -1,7 +1,9 @@
 package com.storyteller_f.a.backend.exposed
 
 import com.storyteller_f.a.backend.core.*
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
+import com.storyteller_f.a.backend.core.types.MemberJoin
+import com.storyteller_f.a.backend.core.types.RawRoom
+import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildRoomPubKeyQuery
 import com.storyteller_f.a.backend.exposed.query.buildRoomSearchWhereQuery

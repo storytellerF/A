@@ -1,11 +1,9 @@
 package com.storyteller_f.a.backend.exposed.tables
 
-import com.storyteller_f.a.backend.exposed.BaseEntity
+import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.r2dbc.insert
 
@@ -18,28 +16,23 @@ object TaskRecords : BaseTable() {
     }
 }
 
-class TaskRecord(id: PrimaryKey, createdTime: LocalDateTime, val type: TaskRecordType, val processedId: PrimaryKey) :
-    BaseEntity(id, createdTime) {
-    companion object {
-        fun wrapRow(resultRow: ResultRow): TaskRecord {
-            return with(TaskRecords) {
-                TaskRecord(
-                    resultRow[id],
-                    resultRow[createdTime],
-                    resultRow[type],
-                    resultRow[processedId]
-                )
-            }
-        }
-        suspend fun addTaskRecord(taskRecord: TaskRecord) {
-            check(TaskRecords.insert {
-                it[TaskRecords.id] = taskRecord.id
-                it[TaskRecords.createdTime] = taskRecord.createdTime
-                it[TaskRecords.type] = taskRecord.type
-                it[TaskRecords.processedId] = taskRecord.processedId
-            }.insertedCount > 0) {
-                "Insert task record failed"
-            }
-        }
+fun TaskRecord.Companion.wrapRow(resultRow: ResultRow): TaskRecord {
+    return with(TaskRecords) {
+        TaskRecord(
+            resultRow[id],
+            resultRow[createdTime],
+            resultRow[type],
+            resultRow[processedId]
+        )
+    }
+}
+suspend fun TaskRecord.Companion.addTaskRecord(taskRecord: TaskRecord) {
+    check(TaskRecords.insert {
+        it[TaskRecords.id] = taskRecord.id
+        it[TaskRecords.createdTime] = taskRecord.createdTime
+        it[TaskRecords.type] = taskRecord.type
+        it[TaskRecords.processedId] = taskRecord.processedId
+    }.insertedCount > 0) {
+        "Insert task record failed"
     }
 }

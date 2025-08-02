@@ -1,6 +1,8 @@
 package com.storyteller_f.a.backend.exposed.tables
 
-import com.storyteller_f.a.backend.exposed.BaseEntity
+import com.storyteller_f.a.backend.core.types.AlternateAccount
+import com.storyteller_f.a.backend.core.types.RawUser
+import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.userAddress
@@ -9,9 +11,7 @@ import com.storyteller_f.a.backend.exposed.userPrivateKey
 import com.storyteller_f.a.backend.exposed.userPublicKey
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -26,51 +26,30 @@ object Users : BaseTable() {
     val algoType = enumerationByName<AlgoType>("algo_type", 20).default(AlgoType.P256)
 }
 
-class User(
-    val aid: String?,
-    val publicKey: String,
-    val address: String,
-    val icon: PrimaryKey?,
-    val nickname: String,
-    id: PrimaryKey,
-    createdTime: LocalDateTime,
-    val acgAmount: Long,
-    val passType: PassType,
-    val algoType: AlgoType,
-) : BaseEntity(id, createdTime) {
-    companion object {
-        fun wrapRow(row: ResultRow): User {
-            return with(Users) {
-                User(
-                    row[Aids.value],
-                    row[publicKey],
-                    row[address],
-                    row[icon],
-                    row[nickname],
-                    row[id],
-                    row[createdTime],
-                    row[acgAmount],
-                    row[passType],
-                    row[algoType]
-                )
-            }
-        }
-
-        fun find(function: SqlExpressionBuilder.() -> Op<Boolean>): Query {
-            return Users.selectAll().where(function)
-        }
+fun User.Companion.wrapRow(row: ResultRow): User {
+    return with(Users) {
+        User(
+            row[Aids.value],
+            row[publicKey],
+            row[address],
+            row[icon],
+            row[nickname],
+            row[id],
+            row[createdTime],
+            row[acgAmount],
+            row[passType],
+            row[algoType]
+        )
     }
 }
 
-fun mapUserInfo(it: ResultRow): RawUser<User> {
+fun User.Companion.find(function: SqlExpressionBuilder.() -> Op<Boolean>): Query {
+    return Users.selectAll().where(function)
+}
+
+fun mapUserInfo(it: ResultRow): RawUser {
     return RawUser(User.wrapRow(it))
 }
-
-fun User.toUserInfo(): UserInfo {
-    return UserInfo(id, address, 0, aid, nickname, null)
-}
-
-data class RawUser<T>(val user: T)
 
 object AlternateAccounts : Table() {
     val uid = customPrimaryKey("uid")
@@ -84,19 +63,13 @@ object AlternateAccounts : Table() {
     }
 }
 
-class AlternateAccount(val uid: PrimaryKey, val privateKey: String, val hostId: PrimaryKey, val remark: String?) {
-    companion object {
-        fun wrapRow(row: ResultRow): AlternateAccount {
-            return with(AlternateAccounts) {
-                AlternateAccount(
-                    row[uid],
-                    row[privateKey],
-                    row[hostId],
-                    row[remark]
-                )
-            }
-        }
+fun AlternateAccount.Companion.wrapRow(row: ResultRow): AlternateAccount {
+    return with(AlternateAccounts) {
+        AlternateAccount(
+            row[uid],
+            row[privateKey],
+            row[hostId],
+            row[remark]
+        )
     }
 }
-
-data class RawAlternateAccount(val alternateAccount: AlternateAccount, val rawUser: RawUser<User>)

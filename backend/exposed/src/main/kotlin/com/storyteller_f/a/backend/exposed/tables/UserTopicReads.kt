@@ -1,11 +1,10 @@
 package com.storyteller_f.a.backend.exposed.tables
 
+import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.objectType
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.datetime
 
 object UserTopicReads : Table() {
@@ -22,24 +21,14 @@ object UserTopicReads : Table() {
     }
 }
 
-class UserTopicRead(
-    val uid: PrimaryKey,
-    val updatedAt: LocalDateTime,
-    val objectId: PrimaryKey,
-    val objectType: ObjectType,
-    val topicId: PrimaryKey
-) {
-    companion object {
-        fun wrapRow(resultRow: ResultRow): UserTopicRead {
-            return with(UserTopicReads) {
-                UserTopicRead(
-                    resultRow[uid],
-                    resultRow[updatedAt],
-                    resultRow[objectId],
-                    resultRow[objectType],
-                    resultRow[topicId]
-                )
-            }
-        }
+fun UserTopicRead.Companion.wrapRow(resultRow: ResultRow): UserTopicRead {
+    return with(UserTopicReads) {
+        UserTopicRead(
+            resultRow[uid],
+            resultRow[updatedAt],
+            resultRow[objectId],
+            resultRow[objectType],
+            resultRow[topicId]
+        )
     }
 }
