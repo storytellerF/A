@@ -30,8 +30,8 @@ dependencies {
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
     implementation(projects.backend.service)
-    implementation(libs.bundles.exposed)
     implementation(libs.pdfbox)
+    implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.collections.immutable)
 
     implementation(libs.geoip2)

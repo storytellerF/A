@@ -35,7 +35,6 @@ dependencies {
     implementation(projects.cloud.core)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.server.client)
-    implementation(libs.bundles.exposed)
     implementation(libs.pdfbox)
     implementation(libs.kotlinx.collections.immutable)
 

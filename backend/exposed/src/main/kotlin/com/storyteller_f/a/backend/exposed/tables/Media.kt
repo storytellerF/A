@@ -1,6 +1,5 @@
 package com.storyteller_f.a.backend.exposed.tables
 
-import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.backend.exposed.BaseEntity
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
@@ -47,6 +46,7 @@ class Media(
 ) : BaseEntity(id, createdTime) {
     val dimension = Dimension(width, height)
     val fullName: String = "$owner/$name"
+
     companion object {
         fun wrapRow(resultRow: ResultRow): Media {
             return with(Medias) {
@@ -64,19 +64,22 @@ class Media(
                 )
             }
         }
-        suspend fun insertMedia(data: List<Pair<PrimaryKey, UploadPack>>) {
-            Medias.batchInsert(data) { (i, e) ->
-                this[Medias.id] = i
+
+        suspend fun insertMediaList(
+            mediaList: List<Media>
+        ) {
+            Medias.batchInsert(mediaList) { e ->
+                this[Medias.id] = e.id
                 this[Medias.createdTime] = now()
                 this[Medias.name] = e.name
                 this[Medias.duration] = 0
-                this[Medias.width] = e.dimension?.width ?: 0
-                this[Medias.height] = e.dimension?.height ?: 0
+                this[Medias.width] = e.width
+                this[Medias.height] = e.height
                 this[Medias.owner] = e.owner
                 this[Medias.ownerType] = e.ownerType
                 this[Medias.contentType] = e.contentType
                 this[Medias.size] = e.size
-                this[Medias.fullName] = e.newFullName
+                this[Medias.fullName] = e.fullName
             }
         }
 

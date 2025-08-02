@@ -23,6 +23,9 @@ interface CombinedDatabase<T> {
     val roomData: RoomDatabase
     val mediaDatabase: MediaDatabase
     val containerDatabase: ContainerDatabase
+
+    suspend fun init()
+    suspend fun clean()
 }
 
 interface UserDatabase<T> {
@@ -68,6 +71,7 @@ interface TopicDatabase {
 
     @OptIn(ExperimentalStdlibApi::class)
     suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted): Result<TopicInfo>
+    suspend fun savePlainTopic(topic: Topic, content: TopicContent.Plain): Result<Unit>
     suspend fun updateTopicStatus(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
     suspend fun getTopicList(firstId: PrimaryKey): Result<List<Topic>>
     suspend fun getTopicCommentCount(
@@ -107,6 +111,7 @@ interface TopicDatabase {
         objectId: List<PrimaryKey>,
         emoji: String
     ): Result<List<Triple<Long, Long, PrimaryKey?>>>
+    suspend fun insertTopicDescription(title: Title, topic: Topic): Result<Unit>
 }
 
 interface TitleDatabase {
@@ -185,6 +190,8 @@ interface MediaDatabase {
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<Media>>
+    suspend fun insertMedia(mediaList: List<Media>)
+    suspend fun insertCopiedMedia(newId: PrimaryKey, media: Media, newOwner: PrimaryKey): Result<Unit>
 }
 
 interface ContainerDatabase {
@@ -209,4 +216,35 @@ interface ContainerDatabase {
         word: String?,
         fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<RawUser<User>>>
+}
+
+class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDatabase<User> {
+    override val userDatabase: UserDatabase<User>
+        get() = ExposedUserDatabase(databaseSession)
+    override val topicDatabase: TopicDatabase
+        get() = ExposedTopicDatabase(databaseSession, containerDatabase, mediaDatabase)
+    override val titleDatabase: TitleDatabase
+        get() = ExposedTitleDatabase(databaseSession)
+    override val communityDatabase: CommunityDatabase
+        get() = ExposedCommunityDatabase(databaseSession, containerDatabase)
+    override val roomData: RoomDatabase
+        get() = ExposedRoomDatabase(databaseSession, containerDatabase)
+    override val mediaDatabase: MediaDatabase
+        get() = ExposedMediaDatabase(databaseSession)
+    override val containerDatabase: ContainerDatabase
+        get() = ExposedContainerDatabase(databaseSession)
+
+    override suspend fun init() {
+        ExposedDatabaseFactory.init(databaseSession.database)
+    }
+
+    override suspend fun clean() {
+        ExposedDatabaseFactory.clean(databaseSession.database)
+    }
+}
+
+fun buildExposedDatabase(databaseConnection: DatabaseConnection): ExposedDatabase {
+    val database = ExposedDatabaseFactory.connect(databaseConnection)
+    val databaseSession = ExposedDatabaseSession(database, null)
+    return ExposedDatabase(databaseSession)
 }

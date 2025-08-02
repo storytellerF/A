@@ -102,4 +102,18 @@ class ExposedMediaDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
             }
         }
     }
+
+    override suspend fun insertMedia(
+        mediaList: List<Media>
+    ) {
+        exposedDatabaseSession.dbQuery {
+            Media.insertMediaList(mediaList)
+        }
+    }
+
+    override suspend fun insertCopiedMedia(newId: PrimaryKey, media: Media, newOwner: PrimaryKey): Result<Unit> {
+        return exposedDatabaseSession.dbQuery {
+            Media.insertCopiedMedia(newId, media, newOwner)
+        }
+    }
 }

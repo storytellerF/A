@@ -53,6 +53,7 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import nl.jacobras.humanreadable.HumanReadable
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -217,6 +218,7 @@ private fun MediaListView(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 private fun MediaCell(
     item: com.storyteller_f.shared.model.MediaInfo?,

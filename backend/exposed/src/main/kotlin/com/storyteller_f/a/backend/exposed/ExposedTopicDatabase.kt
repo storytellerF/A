@@ -33,6 +33,7 @@ import org.jetbrains.exposed.v1.r2dbc.upsert
 class ExposedTopicDatabase(
     val exposedDatabaseSession: ExposedDatabaseSession,
     val containerDatabase: ContainerDatabase,
+    val mediaDatabase: MediaDatabase
 ) :
     TopicDatabase {
     override suspend fun getTopicRootTuple(
@@ -127,6 +128,22 @@ class ExposedTopicDatabase(
                     ExposedBlob(content.encryptedKey[it]!!.hexToByteArray())
             }
             topic.toTopicInfo(content = content)
+        }
+    }
+
+    override suspend fun savePlainTopic(
+        topic: Topic,
+        content: TopicContent.Plain
+    ): Result<Unit> {
+        return exposedDatabaseSession.dbQuery {
+            Topic.new(topic)
+            mediaDatabase.insertMediaRefs(
+                topic.id,
+                ObjectType.TOPIC,
+                extractMarkdownMediaLink(content.plain).map {
+                    topic.author to it
+                }
+            ).getOrThrow()
         }
     }
 
@@ -535,6 +552,16 @@ class ExposedTopicDatabase(
             map {
                 Triple(it[ReactionRecords.objectId], it[column], it[lastReactionId] ?: 0)
             }
+        }
+    }
+
+    override suspend fun insertTopicDescription(
+        title: Title,
+        topic: Topic
+    ): Result<Unit> {
+        return exposedDatabaseSession.dbQuery {
+            Title.new(title)
+            Topic.new(topic)
         }
     }
 }

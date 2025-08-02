@@ -7,10 +7,10 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.exposed.tables.Title
 import com.storyteller_f.a.backend.exposed.tables.Topic
+import com.storyteller_f.a.backend.exposed.tables.toTitleInfo
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getUserInfoList
 import com.storyteller_f.a.backend.service.index.TopicDocument
-import com.storyteller_f.a.backend.service.insertTitleAndTopicDescription
 import com.storyteller_f.a.backend.service.processRawCommunityToCommunityInfo
 import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
 import com.storyteller_f.shared.model.*
@@ -175,10 +175,11 @@ suspend fun Backend.createTitle(
                 isPin = false,
                 lastModifiedTime = null
             )
-            insertTitleAndTopicDescription(
+            exposedDatabase.topicDatabase.insertTopicDescription(
                 title,
                 topic
-            ).mapResult { created ->
+            ).mapResult {
+                val created = title.toTitleInfo()
                 topicSearchService.saveDocument(
                     listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(newTitle.description)))
                 ).getOrThrow()

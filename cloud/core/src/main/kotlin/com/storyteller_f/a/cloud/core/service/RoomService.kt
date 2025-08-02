@@ -14,11 +14,11 @@ import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.exposed.tables.RawRoom
 import com.storyteller_f.a.backend.exposed.tables.Room
 import com.storyteller_f.a.backend.exposed.tables.Topic
+import com.storyteller_f.a.backend.exposed.tables.toTopicInfo
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.index.TopicDocument
 import com.storyteller_f.a.backend.service.isKeyVerified
 import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
-import com.storyteller_f.a.backend.service.savePlainTopic
 import com.storyteller_f.a.backend.service.searchMembers
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
@@ -294,7 +294,10 @@ suspend fun Backend.addTopicIntoRoom(
                         topicSearchService.saveDocument(
                             listOf(TopicDocument.fromTopic(topic, content))
                         ).getOrThrow()
-                        savePlainTopic(topic, content = content)
+                        exposedDatabase.topicDatabase.savePlainTopic(topic, content = content)
+                            .map<TopicInfo, Unit> {
+                                topic.toTopicInfo(content = content)
+                            }
                     }
 
                     else -> Result.failure(ForbiddenException("Public room only accept unencrypted content."))
