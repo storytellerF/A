@@ -26,7 +26,7 @@ dependencies {
     implementation(libs.cryptography.provider.jdk)
     implementation(libs.bcpkix.jdk18on)
     implementation(projects.shared)
-    implementation(projects.api.core)
+    implementation(projects.api)
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
     implementation(projects.backend.service)

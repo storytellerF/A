@@ -263,9 +263,14 @@ private fun TopicInputGroup(
                 null
             )
         },
-        if (topic.isEncrypted) ObjectTuple(topic.rootId, topic.rootType) else ObjectTuple(
-            my?.id ?: 0, ObjectType.USER
-        )
+        if (topic.isEncrypted) {
+            ObjectTuple(topic.rootId, topic.rootType)
+        } else {
+            ObjectTuple(
+                my?.id ?: 0,
+                ObjectType.USER
+            )
+        }
     ) {
         CommonInputButton(
             LoadingState.Done,

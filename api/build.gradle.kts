@@ -1,15 +1,16 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinBuildConfig)
+    alias(libs.plugins.serialization)
 }
 
 group = "com.storyteller_f.a.api"
 version = "unspecified"
 
 dependencies {
-    implementation(libs.ktor.server.core)
+    implementation(libs.kotlinx.serialization.json)
     implementation(projects.shared)
-    implementation(projects.api.core)
+    implementation(libs.route4k.common)
     testImplementation(kotlin("test"))
 }
 
@@ -18,7 +19,4 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(21)
-    compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
-    }
 }

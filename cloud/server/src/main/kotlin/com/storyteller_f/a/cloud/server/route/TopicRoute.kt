@@ -1,8 +1,6 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.api.server.invoke
-import com.storyteller_f.a.api.server.receiveBody
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.cloud.core.service.addReaction
@@ -22,8 +20,11 @@ import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.ReactionPaginationGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
+import com.storyteller_f.route4k.ktor.server.invoke
+import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
-import io.ktor.server.routing.*
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingContext
 
 fun Route.bindTopicRoute(backend: Backend) {
     CustomApi.Topics.search.invoke(RoutingContext::handleResult) {
@@ -90,19 +91,19 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
 
     CustomApi.Topics.add.invoke(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
-            backend.createPublicTopic(uid, with(api) { receiveBody() })
+            backend.createPublicTopic(uid, api.receiveBody())
         }
     }
 
     CustomApi.Topics.Id.Reactions.add.invoke(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
-            val emoji = with(api) { receiveBody() }.emoji
+            val emoji = api.receiveBody().emoji
             addReaction(emoji, backend, uid, p)
         }
     }
     CustomApi.Topics.Id.Reactions.delete.invoke(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
-            val deleteReaction = with(api) { receiveBody() }
+            val deleteReaction = api.receiveBody()
             deleteReaction(deleteReaction, backend, uid, p)
         }
     }

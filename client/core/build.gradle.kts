@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -60,8 +61,9 @@ kotlin {
             implementation(projects.shared)
             implementation(libs.bundles.ktor.client)
             implementation(libs.kotlinx.datetime)
-            implementation(projects.api.core)
-            implementation(projects.api.client)
+            implementation(projects.api)
+            implementation(libs.route4k.common)
+            implementation(libs.route4k.ktor.client)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

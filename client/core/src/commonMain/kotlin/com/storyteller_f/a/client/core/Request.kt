@@ -1,10 +1,10 @@
 package com.storyteller_f.a.client.core
 
-import com.storyteller_f.a.api.client.invoke
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.api.core.Path
 import com.storyteller_f.a.api.core.TopicQuery
+import com.storyteller_f.route4k.ktor.client.invoke
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
 import com.storyteller_f.shared.eciesEncrypt

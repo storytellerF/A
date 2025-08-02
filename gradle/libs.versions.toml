@@ -11,6 +11,7 @@ androidx-lifecycleProcess = "2.9.1"
 bcprovJdk18on = "1.81"
 buildconfig = "0.17.1"
 coil = "3.2.0"
+route4k-common = "1.0.0"
 commonsLogging = "1.3.5"
 compose-plugin = "1.8.2"
 composeNativeNotification = "0.2.0"
@@ -120,6 +121,9 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
+route4k-common = { module = "com.github.storytellerF.route4k:common", version.ref = "route4k-common" }
+route4k-ktor-client = { module = "com.github.storytellerF.route4k:ktor-client", version.ref = "route4k-common" }
+route4k-ktor-server = { module = "com.github.storytellerF.route4k:ktor-server", version.ref = "route4k-common" }
 commons-logging = { module = "commons-logging:commons-logging", version.ref = "commonsLogging" }
 compose-native-notification = { module = "io.github.kdroidfilter:compose-native-notification", version.ref = "composeNativeNotification" }
 compose-pdf = { module = "dev.zt64:compose-pdf", version.ref = "composePdf" }

@@ -1,8 +1,6 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.api.server.invoke
-import com.storyteller_f.a.api.server.receiveBody
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.exposed.toJoinSearch
 import com.storyteller_f.a.backend.service.Backend
@@ -21,12 +19,14 @@ import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.PrimaryKeyPagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
+import com.storyteller_f.route4k.ktor.server.invoke
+import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 
 fun Route.bindRoomRoute(backend: Backend) {
-    CustomApi.Rooms.search(RoutingContext::handleResult) {
+    CustomApi.Rooms.search.invoke(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchRoomPaginationResult(uid, it.word, it.community, f, it.joinStatus.toJoinSearch(uid))
@@ -88,13 +88,13 @@ fun Route.bindProtectedRoomRoute(backend: Backend) {
         }
     }
     CustomApi.Rooms.add.invoke(RoutingContext::handleResult) { api ->
-        val newRoom = with(api) { receiveBody() }
+        val newRoom = api.receiveBody()
         usePrincipal { uid ->
             backend.createRoom(newRoom, uid)
         }
     }
     CustomApi.Rooms.Id.update.invoke(RoutingContext::handleResult) { p, api ->
-        val newRoom = with(api) { receiveBody() }
+        val newRoom = api.receiveBody()
         usePrincipal { uid ->
             backend.updateRoom(p.id, newRoom, uid)
         }
