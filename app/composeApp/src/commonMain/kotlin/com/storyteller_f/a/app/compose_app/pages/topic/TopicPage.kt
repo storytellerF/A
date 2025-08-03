@@ -2,15 +2,20 @@ package com.storyteller_f.a.app.compose_app.pages.topic
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
@@ -52,12 +58,14 @@ import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.compontents.InteractionRow
 import com.storyteller_f.a.app.compose_app.compontents.TopicCell
 import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
+import com.storyteller_f.a.app.compose_app.compontents.UserIcon
 import com.storyteller_f.a.app.compose_app.model.OnTopicChanged
 import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.model.TopicViewModel
 import com.storyteller_f.a.app.compose_app.model.createRoomViewModel
 import com.storyteller_f.a.app.compose_app.model.createTopicViewModel
 import com.storyteller_f.a.app.compose_app.model.createTopicsInTopicViewModel
+import com.storyteller_f.a.app.compose_app.model.createUserViewModel
 import com.storyteller_f.a.app.compose_app.pages.room.CommonInputButton
 import com.storyteller_f.a.app.compose_app.pages.room.InputGroupInternal
 import com.storyteller_f.a.app.compose_app.pages.room.RoomInputGroup
@@ -108,6 +116,7 @@ private fun TopicPageInternal(
     viewModel: TopicViewModel,
     startAddReaction: () -> Unit
 ) {
+    val topic by viewModel.handler.data.collectAsState()
     Column(modifier = Modifier.fillMaxSize()) {
         var showDialog by remember {
             mutableStateOf(false)
@@ -117,12 +126,30 @@ private fun TopicPageInternal(
                 topicId
             )
         ) {
-            Icon(Icons.Default.Topic, "topic", modifier = Modifier.clickable {
-                showDialog = true
-            })
-            val topic by viewModel.handler.data.collectAsState()
+            Row(
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                topic?.let {
+                    val author = it.author
+                    val authorViewModel =
+                        createUserViewModel(author)
+                    val authorInfo by authorViewModel.handler.data.collectAsState()
+                    UserIcon(authorInfo)
+                }
+                Icon(Icons.Default.Topic, "topic", modifier = Modifier.size(40.dp).clip(CircleShape).clickable {
+                    showDialog = true
+                }.padding(8.dp))
+            }
             TopicDialog(topic, showDialog) {
                 showDialog = false
+            }
+        }
+        topic?.let {
+            if (it.rootId != it.parentId) {
+                Box(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 8.dp)) {
+                    TopicRefCell(it.parentId)
+                }
             }
         }
         TopicPageContent(topicId, viewModel, startAddReaction)

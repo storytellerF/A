@@ -22,7 +22,6 @@ import com.storyteller_f.a.client.core.WebSocketClient
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.client.HttpClient
@@ -90,8 +89,7 @@ fun PreviewTopicDialog() {
         LocalSessionManager provides userSession, LocalMainSessionManager provides userSession
     ) {
         TopicDialogInternal(
-            TopicInfo.Companion.EMPTY,
-            UserInfo.Companion.EMPTY
+            TopicInfo.Companion.EMPTY
         ) {}
     }
 }
