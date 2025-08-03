@@ -3,9 +3,9 @@ package com.storyteller_f.a.cloud.server.common
 import com.storyteller_f.a.api.core.PageableQuery
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.Fetch
+import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.ReactionInfo

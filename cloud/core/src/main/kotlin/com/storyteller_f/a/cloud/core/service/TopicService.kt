@@ -3,9 +3,8 @@ package com.storyteller_f.a.cloud.core.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.*
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
-import com.storyteller_f.a.backend.exposed.tables.Topic
-import com.storyteller_f.a.backend.exposed.tables.toTopicInfo
+import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.a.backend.core.types.toTopicInfo
 import com.storyteller_f.a.backend.service.*
 import com.storyteller_f.a.backend.service.index.DocumentSearch
 import com.storyteller_f.a.backend.service.index.TopicDocument
@@ -77,7 +76,7 @@ suspend fun Backend.createPublicTopic(
                 topicSearchService.saveDocument(
                     listOf(TopicDocument.Companion.fromTopic(topic, plain))
                 ).getOrThrow()
-                exposedDatabase.topicDatabase.savePlainTopic(topic, plain).map<TopicInfo, Unit> {
+                exposedDatabase.topicDatabase.savePlainTopic(topic, plain).map {
                     topic.toTopicInfo(content = plain)
                 }.mapResult { topicInfo ->
                     addUserLog(uid, UserLogType.CREATE, topicInfo.tuple())

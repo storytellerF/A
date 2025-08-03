@@ -24,6 +24,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -173,7 +174,7 @@ fun ApplicationCall.getSession(): Pair<UserSession, String> {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 private fun ApplicationCall.createPendingSession(remote: String): Pair<String, UserSession.Pending> {
     Napier.i {
         "pending session $remote"
