@@ -35,12 +35,12 @@ dependencies {
     implementation(projects.cloud.core)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.server.client)
-    implementation(libs.pdfbox)
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)
 
     implementation(libs.geoip2)
     implementation(libs.tika.core)
+    implementation(libs.pdfbox)
     implementation(libs.pdfbox.layout)
     implementation(libs.micrometer.registry.prometheus)
 

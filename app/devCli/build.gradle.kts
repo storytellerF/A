@@ -19,18 +19,8 @@ kotlin {
 }
 
 dependencies {
-    implementation(libs.logback)
-
-    implementation(libs.cryptography.provider.jdk)
-    implementation(projects.shared)
-    implementation(libs.bundles.ktor.server)
-    implementation(libs.pdfbox)
-        
-    implementation(libs.geoip2)
-    implementation(libs.simplemagic)
-    implementation(libs.pdfbox.layout)
-
     implementation(projects.app.dev)
+    implementation(libs.kotlinx.coroutines.core)
 }
 
 val buildType = project.findProperty("server.buildType") as String

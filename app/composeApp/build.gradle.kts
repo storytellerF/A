@@ -89,24 +89,27 @@ kotlin {
 
             implementation(libs.androidx.activity.compose)
 
-            implementation(libs.lifecycle.process)
             implementation(libs.jlatexmath.android)
             implementation(libs.jlatexmath.android.font.cyrillic)
             implementation(libs.jlatexmath.android.font.greek)
+
             implementation(libs.androidx.media3.exoplayer)
             implementation(libs.androidx.media3.exoplayer.dash)
             implementation(libs.androidx.media3.exoplayer.hls)
             implementation(libs.androidx.media3.ui)
             implementation(libs.androidx.media3.session)
+
             implementation(libs.record.core)
-            implementation(libs.github.newpipeextractor)
             implementation(libs.compose.webview)
-            implementation(libs.androidx.core.splashscreen)
-            implementation(libs.androidx.datastore.preferences.core)
             implementation(libs.connectivity.device)
             implementation(libs.connectivity.compose.device)
             implementation(libs.webrtc.kmp)
             implementation(libs.accompanist.permissions)
+
+            implementation(libs.github.newpipeextractor)
+            implementation(libs.androidx.core.splashscreen)
+            implementation(libs.androidx.datastore.preferences.core)
+
             implementation(libs.androidx.ui.tooling.preview)
             implementation(libs.javet.node.android)
             if (isLlamaEnable)
@@ -128,7 +131,7 @@ kotlin {
             implementation(libs.javet.node.macos.x86.x4)
             implementation(libs.javet.node.windows.x86.x4)
 
-            implementation("com.couchbase.lite:couchbase-lite-java:3.1.9")
+            implementation(libs.couchbase.lite.java)
         }
         androidUnitTest {
             dependsOn(headlessTest)
@@ -149,16 +152,18 @@ kotlin {
 
             implementation(projects.shared)
             implementation(projects.client.core)
-            implementation(libs.napier)
             implementation(projects.client.core)
             implementation(projects.client.storage)
             implementation(projects.client.kotbase)
 
+
+            implementation(libs.napier)
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
-            //network
-            implementation(libs.bundles.ktor.client)
             implementation(libs.androidx.paging.common)
+            implementation(libs.bundles.ktor.client)
+            implementation(libs.tasks.genai)
+            compileOnly(libs.javet)
             //ui
             implementation(libs.bundles.coil)
             implementation(libs.multiplatform.markdown.renderer)
@@ -177,27 +182,22 @@ kotlin {
             implementation(libs.krop.ui)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.serialization)
-            implementation("io.github.windedge.table:table-m3:0.2.1")
+            implementation(libs.table.m3)
             implementation(libs.compose.native.notification)
             implementation(libs.compose.preferences)
             implementation(libs.haze)
             implementation(libs.haze.materials)
-            implementation(projects.client.kotbase)
             implementation(libs.kzip)
+            implementation(libs.emoji.kt)
+            implementation(libs.emoji.compose.m3)
+            implementation(libs.connectivity.compose)
+            implementation(libs.connectivity.core)
 
             implementation(libs.kim)
             implementation(libs.uri.kmp)
-            implementation(libs.emoji.kt)
-            implementation(libs.emoji.compose.m3)
             implementation(libs.m3u.parser)
             implementation(libs.human.readable)
             implementation(libs.kfswatch)
-            implementation(libs.tasks.genai)
-            //javet
-            compileOnly(libs.javet)
-
-            implementation(libs.connectivity.compose)
-            implementation(libs.connectivity.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

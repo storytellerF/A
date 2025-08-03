@@ -26,85 +26,36 @@ interface DocumentObservable<T> {
 }
 
 sealed interface CollectionName {
-    fun getName(): String
+    data object Users : CollectionName
 
-    data object Users : CollectionName {
-        override fun getName(): String {
-            return "users"
-        }
-    }
+    data object Topics : CollectionName
 
-    data object Topics : CollectionName {
-        override fun getName(): String {
-            return "topics"
-        }
-    }
+    data object Titles : CollectionName
 
-    data object Titles : CollectionName {
-        override fun getName(): String {
-            return "title"
-        }
-    }
+    data object Rooms : CollectionName
 
-    data object Rooms : CollectionName {
-        override fun getName(): String {
-            return "rooms"
-        }
-    }
+    data object Communities : CollectionName
 
-    data object Communities : CollectionName {
-        override fun getName(): String {
-            return "communities"
-        }
-    }
+    data class SearchUser(val word: String) : CollectionName
 
-    data class SearchUser(val word: String) : CollectionName {
-        override fun getName(): String {
-            return "users_$word"
-        }
-    }
-
-    data class SearchRoom(val word: String, val community: PrimaryKey?) : CollectionName {
-        override fun getName(): String {
-            return "rooms_${word}_$community"
-        }
-    }
+    data class SearchRoom(val word: String, val community: PrimaryKey?) : CollectionName
 
     data class SearchTopic(
         val word: List<String>,
         val parentId: PrimaryKey?,
-    ) : CollectionName {
-        override fun getName(): String {
-            return "topics_${word}_$parentId"
-        }
-    }
+    ) : CollectionName
 
     data class SearchCommunity(
         val joinStatusSearch: JoinStatusSearch,
         val word: String,
         val target: PrimaryKey? = null,
-    ) : CollectionName {
-        override fun getName(): String {
-            return "communities_${word}_${target}_$joinStatusSearch"
-        }
-    }
+    ) : CollectionName
 
-    data object Recommend : CollectionName {
-        override fun getName(): String {
-            return "topics_recommend"
-        }
-    }
+    data object Recommend : CollectionName
 
-    data object Reactions : CollectionName {
-        override fun getName(): String {
-            return "reactions"
-        }
-    }
+    data object Reactions : CollectionName
 
     data class ReactionList(val objectId: PrimaryKey) : CollectionName {
-        override fun getName(): String {
-            return "reactions_$objectId"
-        }
 
         fun encodeKey(json: Json, it: ReactionInfo): String {
             return json.encodeToString(ReactionCursorKey(it.count, it.lastReactionId))
@@ -121,40 +72,39 @@ sealed interface CollectionName {
         val status: TitleStatus? = null,
         val type: TitleType? = null,
         val scopeId: PrimaryKey? = null,
-    ) : CollectionName {
-        override fun getName(): String {
-            return "titles_${uid}_${searchType}_${status}_${type}_$scopeId"
-        }
-    }
+    ) : CollectionName
 
-    data object Alternatives : CollectionName {
-        override fun getName(): String {
-            return "alternatives"
-        }
-    }
+    data object Alternatives : CollectionName
 
-    data class TopicList(val objectId: PrimaryKey) : CollectionName {
-        override fun getName(): String {
-            return "topics_$objectId"
-        }
-    }
+    data class TopicList(val objectId: PrimaryKey) : CollectionName
 
-    data class Medias(val objectId: PrimaryKey) : CollectionName {
-        override fun getName(): String {
-            return "medias_$objectId"
-        }
-    }
+    data class Medias(val objectId: PrimaryKey) : CollectionName
 
-    data class Members(val word: String, val objectId: PrimaryKey) : CollectionName {
-        override fun getName(): String {
-            return "members_${objectId}_$word"
-        }
-    }
+    data class Members(val word: String, val objectId: PrimaryKey) : CollectionName
 
-    data object Download : CollectionName {
-        override fun getName(): String {
-            return "downloads"
-        }
+    data object Download : CollectionName
+}
+
+fun CollectionName.getName(): String {
+    return when (this) {
+        CollectionName.Alternatives -> "alternatives"
+        CollectionName.Communities -> "communities"
+        CollectionName.Download -> "downloads"
+        is CollectionName.Medias -> "medias_$objectId"
+        is CollectionName.Members -> "members_${objectId}_$word"
+        is CollectionName.ReactionList -> "reactions_$objectId"
+        CollectionName.Reactions -> "reactions"
+        CollectionName.Recommend -> "topics_recommend"
+        CollectionName.Rooms -> "rooms"
+        is CollectionName.SearchCommunity -> "communities_${word}_${target}_$joinStatusSearch"
+        is CollectionName.SearchRoom -> "rooms_${word}_$community"
+        is CollectionName.SearchTitle -> "titles_${uid}_${searchType}_${status}_${type}_$scopeId"
+        is CollectionName.SearchTopic -> "topics_${word}_$parentId"
+        is CollectionName.SearchUser -> "users_$word"
+        CollectionName.Titles -> "title"
+        is CollectionName.TopicList -> "topics_$objectId"
+        CollectionName.Topics -> "topics"
+        CollectionName.Users -> "users"
     }
 }
 
@@ -224,11 +174,13 @@ interface Storage {
     }
 }
 
-interface UserStorage : SaveStorage<UserInfo>, ObserveDataStorage<UserInfo>, ObserveDatumStorage<UserInfo>,
+interface UserStorage : SaveStorage<UserInfo>, ObserveDataStorage<UserInfo>,
+    ObserveDatumStorage<UserInfo>,
     ObservePrimaryKeyDatumStorage<UserInfo>
 
 interface CommunityStorage : SaveStorage<CommunityInfo>, ObserveDataStorage<CommunityInfo>,
-    ObserveDatumStorage<CommunityInfo>, ObservePrimaryKeyDatumStorage<CommunityInfo>, GetStorage<CommunityInfo>
+    ObserveDatumStorage<CommunityInfo>, ObservePrimaryKeyDatumStorage<CommunityInfo>,
+    GetStorage<CommunityInfo>
 
 interface TopicStorage : SaveStorage<TopicInfo>, ObserveDataStorage<TopicInfo>,
     ObserveDatumStorage<TopicInfo>, ObservePrimaryKeyDatumStorage<TopicInfo>, GetStorage<TopicInfo>
@@ -236,7 +188,8 @@ interface TopicStorage : SaveStorage<TopicInfo>, ObserveDataStorage<TopicInfo>,
 interface TitleStorage : SaveStorage<TitleInfo>, ObserveDataStorage<TitleInfo>,
     ObservePrimaryKeyDatumStorage<TitleInfo>
 
-interface RoomStorage : SaveStorage<RoomInfo>, ObserveDataStorage<RoomInfo>, ObserveDatumStorage<RoomInfo>,
+interface RoomStorage : SaveStorage<RoomInfo>, ObserveDataStorage<RoomInfo>,
+    ObserveDatumStorage<RoomInfo>,
     ObservePrimaryKeyDatumStorage<RoomInfo>
 
 interface ReactionStorage : SaveStorage<ReactionInfo>, ObserveDataStorage<ReactionInfo>,

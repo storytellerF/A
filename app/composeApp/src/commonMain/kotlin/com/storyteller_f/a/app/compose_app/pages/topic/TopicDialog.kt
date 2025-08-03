@@ -49,7 +49,6 @@ import com.storyteller_f.a.app.compose_app.compontents.SheetContainer
 import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
 import com.storyteller_f.a.app.compose_app.copy
 import com.storyteller_f.a.app.compose_app.model.OnTopicChanged
-import com.storyteller_f.a.app.compose_app.model.createUserViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.room.RoomRefCell
 import com.storyteller_f.a.app.compose_app.service.GPTOutput
