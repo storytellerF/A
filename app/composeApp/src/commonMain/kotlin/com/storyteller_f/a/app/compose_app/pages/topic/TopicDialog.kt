@@ -52,7 +52,6 @@ import com.storyteller_f.a.app.compose_app.model.OnTopicChanged
 import com.storyteller_f.a.app.compose_app.model.createUserViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.room.RoomRefCell
-import com.storyteller_f.a.app.compose_app.pages.user.UserCell
 import com.storyteller_f.a.app.compose_app.service.GPTOutput
 import com.storyteller_f.a.app.compose_app.service.buildGPT
 import com.storyteller_f.a.app.compose_app.service.buildTranslatePrompt
@@ -67,7 +66,6 @@ import com.storyteller_f.a.client.core.pinTopic
 import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.formatTime
 import com.strabled.composepreferences.getPreference
@@ -89,22 +87,16 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
         BasicAlertDialog({
             dismiss()
         }) {
-            val author = topicInfo.author
-            val authorViewModel =
-                createUserViewModel(author)
-            val authorInfo by authorViewModel.handler.data.collectAsState()
-
-            TopicDialogInternal(topicInfo, authorInfo, dismiss)
+            TopicDialogInternal(topicInfo, dismiss)
         }
     }
 }
 
 @OptIn(ExperimentalTime::class)
 @Composable
-fun TopicDialogInternal(topicInfo: TopicInfo, authorInfo: UserInfo?, dismissDialog: () -> Unit) {
+fun TopicDialogInternal(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
     val appNav = LocalAppNav.current
     DialogContainer {
-        UserCell(authorInfo, true)
         Text("pub: ${topicInfo.createdTime.formatTime()}")
 
         when (topicInfo.rootType) {
