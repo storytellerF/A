@@ -11,6 +11,7 @@ androidx-lifecycleProcess = "2.9.1"
 bcprovJdk18on = "1.81"
 buildconfig = "0.17.1"
 coil = "3.3.0"
+couchbaseLiteJava = "3.1.9"
 route4k-common = "1.0.0"
 commonsLogging = "1.3.5"
 compose-plugin = "1.8.2"
@@ -74,6 +75,7 @@ newpipeextractorVersion = "v0.24.5"
 okhttp = "5.1.0"
 pagingCommon = "3.3.6"
 sqlFormatter = "2.0.5"
+tableM3 = "0.2.1"
 tasksGenai = "0.10.25"
 testContainer = "1.21.3"
 mosaicRuntime = "0.17.0"
@@ -121,6 +123,7 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
+couchbase-lite-java = { module = "com.couchbase.lite:couchbase-lite-java", version.ref = "couchbaseLiteJava" }
 route4k-common = { module = "com.github.storytellerF.route4k:common", version.ref = "route4k-common" }
 route4k-ktor-client = { module = "com.github.storytellerF.route4k:ktor-client", version.ref = "route4k-common" }
 route4k-ktor-server = { module = "com.github.storytellerF.route4k:ktor-server", version.ref = "route4k-common" }
@@ -177,6 +180,7 @@ micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-p
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnectorJava" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
+table-m3 = { module = "io.github.windedge.table:table-m3", version.ref = "tableM3" }
 tasks-genai = { module = "com.google.mediapipe:tasks-genai", version.ref = "tasksGenai" }
 testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearchJava" }

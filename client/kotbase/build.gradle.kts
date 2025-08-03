@@ -69,7 +69,6 @@ kotlin {
             }
         }
         androidMain.dependencies {
-            implementation(libs.ktor.client.okhttp)
         }
         androidMain {
             dependsOn(noWasmMain)
@@ -80,15 +79,14 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.shared)
-            implementation(libs.bundles.ktor.client)
-            implementation(libs.kotlinx.datetime)
             implementation(projects.client.storage)
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
         jvmMain.dependencies {
-            implementation(libs.ktor.client.okhttp)
         }
         jvmMain {
             dependsOn(noWasmMain)
@@ -99,7 +97,6 @@ kotlin {
         }
         if (buildIosTarget) {
             iosMain.dependencies {
-                implementation(libs.ktor.client.darwin)
             }
             iosMain {
                 dependsOn(noWasmMain)

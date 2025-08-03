@@ -12,7 +12,6 @@ version = "unspecified"
 dependencies {
     implementation(libs.napier)
     implementation(libs.kotlinx.datetime)
-    implementation(libs.bundles.exposed)
     implementation(libs.kotlinx.serialization.json)
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
@@ -25,7 +24,6 @@ dependencies {
     implementation(libs.tika.core)
     runtimeOnly(libs.vavi.image.avif)
     implementation(libs.memoryfilesystem)
-    implementation(libs.kotlinx.coroutines.slf4j)
     implementation(libs.kreds)
 
     testImplementation(libs.commons.logging)

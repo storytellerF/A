@@ -54,6 +54,8 @@ kotlin {
         val noWasmMain by creating {
             dependsOn(commonMain.get())
             dependencies {
+                implementation(libs.couchbase.lite)
+                implementation(libs.couchbase.lite.ktx)
             }
         }
         val generalJvmMain by creating {
@@ -63,6 +65,7 @@ kotlin {
             }
         }
         androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
         }
         androidMain {
             dependsOn(noWasmMain)
@@ -70,10 +73,11 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.shared)
-            implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.bundles.ktor.client)
+            implementation(libs.kotlinx.datetime)
         }
         jvmMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
         }
         jvmMain {
             dependsOn(noWasmMain)
@@ -81,6 +85,7 @@ kotlin {
         }
         if (buildIosTarget) {
             iosMain.dependencies {
+                implementation(libs.ktor.client.darwin)
             }
             iosMain {
                 dependsOn(noWasmMain)

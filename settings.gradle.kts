@@ -62,6 +62,7 @@ include(":client:core")
 include(":client:bot-lib")
 include(":client:storage")
 include(":client:kotbase")
+include(":client:room")
 
 include(":api")
 
