@@ -33,8 +33,6 @@ suspend fun Backend.getRoomPubKeys(
 ) = exposedDatabase.containerDatabase.isMemberJoined(roomId, userId).mapResult {
     if (it) {
         exposedDatabase.roomData.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
-            .map { (data, count) ->
-            }
     } else {
         Result.failure(ForbiddenException("Permission denied"))
     }

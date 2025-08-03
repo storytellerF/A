@@ -12,6 +12,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.yield
 import kotlinx.datetime.*
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.ExperimentalTime
 
 /**
  * Generates unique identifiers suitable for distributed systems based
@@ -117,9 +118,9 @@ object SnowflakeFactory {
 
         // Construct the ID.
 
-        return (lastTimestampMs.toLong() shl (MACHINE_ID_BITS + SEQUENCE_BITS)) or
+        return (lastTimestampMs shl (MACHINE_ID_BITS + SEQUENCE_BITS)) or
             (machineId!!.toLong() shl SEQUENCE_BITS) or
-            sequence.toLong()
+            sequence
     }
 
     /**
@@ -128,20 +129,21 @@ object SnowflakeFactory {
      * @param id The Snowflake ID to parse.
      * @return SnowflakeData containing the ID segments.
      */
+    @OptIn(ExperimentalTime::class)
     fun parse(id: PrimaryKey): SnowflakeData {
         // Extract the machine ID segment.
         val machineIdSegment = (id shr SEQUENCE_BITS) and MAX_MACHINE_ID.toLong()
 
         // Extract the timestamp segment.
-        val timestampMs: Long = (id shr (MACHINE_ID_BITS + SEQUENCE_BITS)).toLong()
-        val instant: Instant = Instant.fromEpochMilliseconds(timestampMs)
+        val timestampMs: Long = (id shr (MACHINE_ID_BITS + SEQUENCE_BITS))
+        val instant = kotlin.time.Instant.fromEpochMilliseconds(timestampMs)
         val utcTimestampSegment: LocalDateTime = instant.toLocalDateTime(TimeZone.UTC)
 
         // Convert the timestamp to LocalDateTime using the system's default timezone.
         val localTimestampSegment: LocalDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
 
         // Extract the sequence number segment.
-        val sequenceSegment: Long = id.toLong() and MAX_SEQUENCE.toLong()
+        val sequenceSegment: Long = id and MAX_SEQUENCE.toLong()
 
         return SnowflakeData(
             machineId = machineIdSegment.toInt(),

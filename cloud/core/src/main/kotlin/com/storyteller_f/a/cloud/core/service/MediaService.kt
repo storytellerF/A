@@ -7,7 +7,6 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UploadPack
-import com.storyteller_f.a.backend.exposed.query.PaginationResult
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.copyMedia
 import com.storyteller_f.a.backend.service.getMediaPaginationResult
@@ -73,8 +72,8 @@ suspend fun Backend.getMediaByName(
         uid
     ).mapResultIfNotNull { (_, objectId, hasWrite) ->
         if (hasWrite) {
-            exposedDatabase.mediaDatabase.getMedia(objectId, word).mapResultIfNotNull {
-                processMediaToMediaInfo(listOf(it)).map {
+            exposedDatabase.mediaDatabase.getMedia(objectId, word).mapResultIfNotNull { media ->
+                processMediaToMediaInfo(listOf(media)).map {
                     it.first()
                 }
             }
@@ -86,8 +85,8 @@ suspend fun Backend.getMediaByName(
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, uid: PrimaryKey) =
-    exposedDatabase.mediaDatabase.getMediaByIds(listOf(mediaId)).mapResultIfNotNull {
-        val media = it.first()
+    exposedDatabase.mediaDatabase.getMediaByIds(listOf(mediaId)).mapResultIfNotNull { mediaList ->
+        val media = mediaList.first()
         if (media.owner != uid) {
             throw ForbiddenException("no permission")
         }
@@ -167,8 +166,8 @@ suspend fun Backend.copyMedia(
     p: Path,
     uid: PrimaryKey
 ): Result<ServerResponse<MediaInfo>?> =
-    exposedDatabase.mediaDatabase.getMediaByIds(listOf(p.id)).mapResultIfNotNull {
-        val media = it.firstOrNull()
+    exposedDatabase.mediaDatabase.getMediaByIds(listOf(p.id)).mapResultIfNotNull { mediaList ->
+        val media = mediaList.firstOrNull()
         if (media != null) {
             checkRootReadPermission(media.ownerType, media.owner, uid).mapResultIfNotNull { permission ->
                 if (permission.hasRead) {

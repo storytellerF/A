@@ -2,8 +2,8 @@ package com.storyteller_f.a.cloud.server.route
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
-import com.storyteller_f.a.backend.exposed.tables.User
-import com.storyteller_f.a.backend.exposed.tables.toUserInfo
+import com.storyteller_f.a.backend.core.types.User
+import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.processRawUserToUserInfo
 import com.storyteller_f.a.cloud.core.service.addUserLog
