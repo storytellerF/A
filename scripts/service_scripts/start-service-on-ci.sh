@@ -38,20 +38,4 @@ eval $(ssh-agent)
 
 ssh-add ./remote.pem
 
-# 检查远端是否可用
-remoteName=$(ssh ubuntu@acommunity.link "whoami")
-if [ "$remoteName" != 'ubuntu' ]; then
-    echo "connect remote failed"
-    exit 1
-fi
-
-echo "prepare build $(date)"
-
-# 构建远端
-#echo "build docker image `date`"
-#HOST_TYPE=local ./scripts/build_scripts/build-server-image.sh
-HOST_TYPE=local ./scripts/build_scripts/build-server-on-condition.sh "$FLAVOR" prod local
-echo "push to remote `date`"
-# 远端没有生成的env 文件，需要使用原始env 文件
-./scripts/push_scripts/push-jar-to-remote.sh ubuntu@acommunity.link "./start-jar-service-in-ubuntu.sh $FLAVOR"
-echo "done $(date)"
+./scripts/service-scripts/start-service-in-remote-by-jar.sh "$FLAVOR" local ubuntu@acommunity.link

@@ -19,17 +19,19 @@ import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.supervisorScope
 
 fun main() {
     Napier.base(kmpLogger)
     val env = readEnv()
     Napier.i {
-        "start worker at ${env["SERVER_PORT"]}"
+        "start worker"
     }
     val backend = buildBackendFromEnv(env)
     runBlocking {
-        async {
+        val job = async {
             while (true) {
                 Napier.i(tag = "task") {
                     "execute ${now()}"
@@ -37,6 +39,17 @@ fun main() {
                 backend.doAcgTask()
             }
         }
+        // 注册 JVM 关闭钩子，捕获 SIGINT / SIGTERM
+        Runtime.getRuntime().addShutdownHook(Thread {
+            println("🔻 收到终止信号，准备退出...")
+            job.cancel()
+        })
+        try {
+            job.join()
+        } catch (_: Exception) {
+            Napier.i("job done")
+        }
+        Napier.i("worker done")
     }
 }
 

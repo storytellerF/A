@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    application
 }
 
 group = "com.storyteller_f.a.cloud"
@@ -21,4 +22,33 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(21)
+}
+
+application {
+    mainClass = "com.storyteller_f.a.cloud.worker.MainKt"
+    applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
+}
+
+
+tasks.withType<JavaExec> {
+    jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
+}
+
+tasks.withType<Tar> {
+    filesMatching("vavi-commons-1.1.10.jar") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
+    }
+}
+
+tasks.withType<Zip> {
+    filesMatching("vavi-commons-1.1.10.jar") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
+    }
+}
+
+
+tasks.withType<Sync> {
+    filesMatching("vavi-commons-1.1.10.jar") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
+    }
 }
