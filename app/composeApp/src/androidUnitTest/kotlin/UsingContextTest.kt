@@ -5,7 +5,6 @@ import androidx.test.core.app.ActivityScenario
 import com.couchbase.lite.CouchbaseLite
 import com.storyteller_f.a.app.compose_app.AApplication
 import com.storyteller_f.a.app.compose_app.MainActivity
-import com.storyteller_f.storage.loadKotbaseIfNeed
 import org.junit.Assume
 import org.junit.Before
 import org.junit.runner.RunWith

@@ -14,10 +14,10 @@ import com.storyteller_f.a.backend.exposed.tables.*
 import com.storyteller_f.a.backend.service.index.ElasticTopicSearchService
 import com.storyteller_f.a.backend.service.index.LuceneTopicSearchService
 import com.storyteller_f.a.backend.service.index.TopicSearchService
-import com.storyteller_f.a.backend.service.media.FileSystemMediaService
-import com.storyteller_f.a.backend.service.media.MediaService
-import com.storyteller_f.a.backend.service.media.MinIoMediaService
 import com.storyteller_f.a.backend.service.naming.NameService
+import com.storyteller_f.a.backend.service.object_storage.FileSystemObjectStorageService
+import com.storyteller_f.a.backend.service.object_storage.MinIoObjectStorageService
+import com.storyteller_f.a.backend.service.object_storage.ObjectStorageService
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
@@ -33,7 +33,7 @@ import java.util.*
 class Backend(
     val customConfig: CustomConfig,
     val topicSearchService: TopicSearchService,
-    val mediaService: MediaService,
+    val objectStorageService: ObjectStorageService,
     val nameService: NameService,
     val exposedDatabase: CombinedDatabase,
 ) {
@@ -91,13 +91,13 @@ fun readFileEnv(resName: String): Map<String, String>? {
     }
 }
 
-fun mediaService(env: MergedEnv): MediaService {
+fun mediaService(env: MergedEnv): ObjectStorageService {
     return when (env["MEDIA_SERVICE"]) {
         "minio" -> {
             val url = env["MINIO_URL"] ?: throw Exception("MINIO_URL is empty")
             val name = env["MINIO_NAME"] ?: throw Exception("MINIO_NAME is empty")
             val pass = env["MINIO_PASS"] ?: throw Exception("MINIO_PASS is empty")
-            MinIoMediaService(MinIoConnection(url, name, pass), env["MINIO_HOST"])
+            MinIoObjectStorageService(MinIoConnection(url, name, pass), env["MINIO_HOST"])
         }
 
         "filesystem" -> {
@@ -111,7 +111,7 @@ fun mediaService(env: MergedEnv): MediaService {
             } else {
                 Paths.get(base)
             }
-            FileSystemMediaService(url, p)
+            FileSystemObjectStorageService(url, p)
         }
 
         else -> throw UnsupportedOperationException("unsupported media service type ${env["MEDIA_SERVICE"]}")
@@ -173,7 +173,7 @@ suspend fun Backend.uploadFiles(uploadPacks: List<UploadPack>): Result<List<Medi
         )
     }
     return merge({
-        mediaService.upload(AMEDIA_DEFAULT_BUCKET, uploadPacks)
+        objectStorageService.upload(AMEDIA_DEFAULT_BUCKET, uploadPacks)
     }, {
         exposedDatabase.mediaDatabase.insertMedia(data)
         Result.success(Unit)
@@ -219,7 +219,7 @@ suspend fun Backend.copyMedia(
 ): Result<ServerResponse<MediaInfo>> {
     val id = SnowflakeFactory.nextId()
     return merge({
-        mediaService.copy(
+        objectStorageService.copy(
             AMEDIA_DEFAULT_BUCKET,
             listOf(CopyPack("${media.owner}/${media.name}", newName))
         ).map { list ->
@@ -334,7 +334,7 @@ suspend fun Backend.getMediaInfoList(names: List<String>): Result<List<MediaInfo
 suspend fun Backend.processMediaToMediaInfo(
     medias: List<Media>,
 ): Result<List<MediaInfo>> {
-    return mediaService.get(AMEDIA_DEFAULT_BUCKET, medias.map {
+    return objectStorageService.get(AMEDIA_DEFAULT_BUCKET, medias.map {
         it.fullName
     }).map { mediaList ->
         val mediaRecordMap = mediaList.associateBy { it.fullName }

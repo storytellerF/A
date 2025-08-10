@@ -51,37 +51,18 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val noWasmMain by creating {
-            dependsOn(commonMain.get())
-            dependencies {
-                implementation(libs.napier)
-                implementation(libs.couchbase.lite)
-                implementation(libs.couchbase.lite.ktx)
-            }
-        }
-        val noWasmTest by creating {
-            dependsOn(commonTest.get())
-        }
-        val generalJvmMain by creating {
-            dependsOn(commonMain.get())
-            dependencies {
-
-            }
-        }
         androidMain.dependencies {
-        }
-        androidMain {
-            dependsOn(noWasmMain)
-            dependsOn(generalJvmMain)
-        }
-        androidUnitTest {
-            dependsOn(noWasmTest)
         }
         commonMain.dependencies {
             implementation(projects.shared)
-            implementation(projects.client.storage)
+            implementation(projects.client.modelStorage)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.napier)
+            implementation(libs.couchbase.lite)
+            implementation(libs.couchbase.lite.ktx)
+            implementation("dev.kotbase:couchbase-lite-paging:3.1.9-1.1.1")
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -89,17 +70,13 @@ kotlin {
         jvmMain.dependencies {
         }
         jvmMain {
-            dependsOn(noWasmMain)
-            dependsOn(generalJvmMain)
         }
         jvmTest {
-            dependsOn(noWasmTest)
         }
         if (buildIosTarget) {
             iosMain.dependencies {
             }
             iosMain {
-                dependsOn(noWasmMain)
             }
         }
     }

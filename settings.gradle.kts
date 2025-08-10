@@ -60,7 +60,7 @@ include(":backend:core")
 
 include(":client:core")
 include(":client:bot-lib")
-include(":client:storage")
+include(":client:model-storage")
 include(":client:kotbase")
 include(":client:room")
 

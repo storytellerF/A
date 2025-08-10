@@ -32,7 +32,7 @@ interface LoadingHandler<T> {
         }
     }
 
-    fun update(t: T) {
+    suspend fun update(t: T) {
         if (state.value is LoadingState.Loading) return
         done(t)
     }
@@ -42,7 +42,7 @@ interface LoadingHandler<T> {
         state.markError(error)
     }
 
-    fun done(t: T)
+    suspend fun done(t: T)
 
     fun refresh()
 }
@@ -51,7 +51,7 @@ class FixedLoadingHandler<T> : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
     override val data = MutableStateFlow<T?>(null)
 
-    override fun done(t: T) {
+    override suspend fun done(t: T) {
         data.value = t
         state.markDown()
     }
@@ -68,7 +68,7 @@ class SimpleLoadingHandler<T>(val scope: CoroutineScope, val loader: suspend () 
         refresh()
     }
 
-    override fun done(t: T) {
+    override suspend fun done(t: T) {
         data.value = t
         state.value = LoadingState.Done
     }

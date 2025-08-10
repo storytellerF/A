@@ -37,15 +37,15 @@ import com.storyteller_f.a.app.compose_app.utils.createSettings
 import com.storyteller_f.a.app.compose_app.utils.platform
 import com.storyteller_f.a.app.compose_app.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.*
+import com.storyteller_f.a.client.room.RoomModelStorage
+import com.storyteller_f.a.client.room.getRoomDatabase
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.MediaInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.storage.DocumentStorage
-import com.storyteller_f.storage.Storage
-import com.storyteller_f.storage.createKotbaseStorageSource
+import com.storyteller_f.storage.ModelStorage
 import com.strabled.composepreferences.ProvideDataStoreManager
 import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.ProvideIconParameters
@@ -69,8 +69,8 @@ object StaticObj {
 fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
 
-val LocalAppNav = compositionLocalOf {
-    AppNav.EMPTY
+val LocalAppNav = compositionLocalOf<AppNav> {
+    error("no app nav")
 }
 
 val LocalDownloadViewModel = compositionLocalOf<DownloadViewModel> {
@@ -81,8 +81,8 @@ val LocalClient = compositionLocalOf {
     HttpClient()
 }
 
-val LocalWsClient = compositionLocalOf {
-    WebSocketClient.EMPTY
+val LocalWsClient = compositionLocalOf<WebSocketClient> {
+    error("no ws client")
 }
 
 val LocalGlobalDialog = compositionLocalOf<GlobalDialogController> {
@@ -98,8 +98,8 @@ val LocalToaster = compositionLocalOf<Toast> {
     error("no default toast")
 }
 
-val LocalDatabase = compositionLocalOf {
-    Storage.EMPTY
+val LocalDatabase = compositionLocalOf<ModelStorage> {
+    error("No database")
 }
 
 val LocalSessionManager = compositionLocalOf<SessionManager> {
@@ -118,7 +118,7 @@ val LocalAccountSwitcher = compositionLocalOf<AccountSwitcher> {
 sealed interface MediaPlaySession {
     @OptIn(ExperimentalUuidApi::class)
     @Serializable
-    @SerialName("video")
+    @SerialName("video-audio")
     data class VideoOrAudio(
         val obj: RemoteMediaItem,
         val contentType: String,
@@ -222,7 +222,8 @@ fun CommonEntry(
             }
         }
         val database = remember(address) {
-            DocumentStorage(createKotbaseStorageSource(address))
+            RoomModelStorage(getRoomDatabase(address ?: "default"))
+//            DocumentModelStorage(createKotbaseSource(address))
         }
 
         val globalDialogController = remember {

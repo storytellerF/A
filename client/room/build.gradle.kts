@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.serialization)
+    id("com.google.devtools.ksp")
+    id("androidx.room")
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
@@ -51,54 +53,38 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val noWasmMain by creating {
-            dependsOn(commonMain.get())
-            dependencies {
-                implementation(libs.couchbase.lite)
-                implementation(libs.couchbase.lite.ktx)
-            }
-        }
-        val generalJvmMain by creating {
-            dependsOn(commonMain.get())
-            dependencies {
-
-            }
-        }
         androidMain.dependencies {
-            implementation(libs.ktor.client.okhttp)
         }
         androidMain {
-            dependsOn(noWasmMain)
-            dependsOn(generalJvmMain)
         }
         commonMain.dependencies {
             implementation(projects.shared)
-            implementation(libs.bundles.ktor.client)
             implementation(libs.kotlinx.datetime)
+            implementation(projects.client.modelStorage)
+            implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.room.paging)
+            implementation(libs.androidx.sqlite.bundled)
         }
         jvmMain.dependencies {
-            implementation(libs.ktor.client.okhttp)
         }
         jvmMain {
-            dependsOn(noWasmMain)
-            dependsOn(generalJvmMain)
         }
         if (buildIosTarget) {
             iosMain.dependencies {
-                implementation(libs.ktor.client.darwin)
             }
             iosMain {
-                dependsOn(noWasmMain)
             }
         }
     }
     compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.addAll("-Xcontext-parameters", "-Xexpect-actual-classes")
     }
 }
 
 android {
-    namespace = "com.storyteller_f.a.client.storage"
+    namespace = "com.storyteller_f.a.client.room"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -107,4 +93,15 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
+}
+
+
+dependencies {
+    add("kspCommonMainMetadata", "androidx.room:room-compiler:2.7.2")
+    add("kspJvm", "androidx.room:room-compiler:2.7.2")
+    add("kspAndroid", "androidx.room:room-compiler:2.7.2")
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }

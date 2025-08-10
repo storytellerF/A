@@ -19,29 +19,6 @@ interface WebSocketClient {
     fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job?
     fun addListener(listener: WebSocketClientListener)
     fun removeListener(listener: WebSocketClientListener)
-
-    companion object {
-        val EMPTY = object : WebSocketClient {
-            override val connectionHandler: LoadingHandler<DefaultClientWebSocketSession>
-                get() = TODO("Not yet implemented")
-            override val localState: StateFlow<LoadingState?>
-                get() = TODO("Not yet implemented")
-            override val remoteState: SharedFlow<RoomFrame>
-                get() = TODO("Not yet implemented")
-
-            override fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job? {
-                TODO("Not yet implemented")
-            }
-
-            override fun addListener(listener: WebSocketClientListener) {
-                TODO("Not yet implemented")
-            }
-
-            override fun removeListener(listener: WebSocketClientListener) {
-                TODO("Not yet implemented")
-            }
-        }
-    }
 }
 
 @OptIn(DelicateCoroutinesApi::class)

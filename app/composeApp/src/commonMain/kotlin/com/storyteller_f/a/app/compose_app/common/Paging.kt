@@ -22,6 +22,14 @@ data class SectionLoadParams(val index: Int, val param: String?)
 class SectionPagingSource<DATUM : Any>(
     private val services: List<RegularPagingSource<DATUM>>
 ) : PagingSource<SectionLoadParams, DATUM>() {
+    init {
+        services.forEach {
+            it.registerInvalidatedCallback {
+                invalidate()
+            }
+        }
+    }
+
     override suspend fun load(
         params: LoadParams<SectionLoadParams>
     ): LoadResult<SectionLoadParams, DATUM> {
@@ -50,7 +58,12 @@ class SectionPagingSource<DATUM : Any>(
         return when (pageResult) {
             is LoadResult.Error<String, DATUM> -> LoadResult.Error(pageResult.throwable)
             is LoadResult.Invalid<String, DATUM> -> LoadResult.Invalid()
-            is LoadResult.Page<String, DATUM> -> load(loadSize, pageResult, index, placeholdersEnabled)
+            is LoadResult.Page<String, DATUM> -> load(
+                loadSize,
+                pageResult,
+                index,
+                placeholdersEnabled
+            )
         }
     }
 
@@ -62,7 +75,8 @@ class SectionPagingSource<DATUM : Any>(
     ): LoadResult<SectionLoadParams, DATUM> {
         return if (loadSize - prePageResult.data.size > 0) {
             getNextParams(prePageResult.nextKey, index)?.let {
-                when (val nextPageResult = load(it.index, it.param, loadSize, placeholdersEnabled)) {
+                when (val nextPageResult =
+                    load(it.index, it.param, loadSize, placeholdersEnabled)) {
                     is LoadResult.Error<SectionLoadParams, DATUM> ->
                         LoadResult.Error(nextPageResult.throwable)
 

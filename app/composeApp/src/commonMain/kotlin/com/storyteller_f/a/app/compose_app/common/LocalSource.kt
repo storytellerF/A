@@ -19,7 +19,7 @@ import kotlin.reflect.KClass
 class CachedLoadingHandler<T : Any>(
     flow: Flow<T?>,
     private val scope: CoroutineScope,
-    private val onSaveDocument: (T) -> Unit,
+    private val onSaveDocument: suspend (T) -> Unit,
     private val loader: suspend () -> Result<T>
 ) : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
@@ -31,7 +31,7 @@ class CachedLoadingHandler<T : Any>(
         refresh()
     }
 
-    override fun done(t: T) {
+    override suspend fun done(t: T) {
         try {
             onSaveDocument(t)
             state.markDown()
@@ -50,7 +50,7 @@ class CachedLoadingHandler<T : Any>(
 }
 
 class CustomStoragePagingSource<RowType : Any>(
-    private val observable: (String?, Int, () -> Unit) -> DocumentObservable<RowType>,
+    private val observable: (String?, Int, () -> Unit) -> ModelObservable<RowType>,
     private val buildKey: (RowType?) -> String?
 ) : PagingSource<String, RowType>() {
 
@@ -64,7 +64,7 @@ class CustomStoragePagingSource<RowType : Any>(
         return null
     }
 
-    private val registeredToken = mutableMapOf<String?, DocumentObservable<RowType>>()
+    private val registeredToken = mutableMapOf<String?, ModelObservable<RowType>>()
 
     override suspend fun load(
         params: LoadParams<String>,
@@ -118,10 +118,10 @@ class CustomStoragePagingSource<RowType : Any>(
 @Suppress("unused")
 @OptIn(ExperimentalPagingApi::class)
 class CustomRemoteMediator<Datum : Any>(
-    private val documentStorage: Storage,
-    private val collectionName: CollectionName,
+    private val documentModelStorage: ModelStorage,
+    private val modelCollection: ModelCollection,
     private val networkService: PagingSource<String, Datum>,
-    private val update: (Datum) -> Unit,
+    private val update: suspend (Datum) -> Unit,
 ) :
     RemoteMediator<String, Datum>() {
 
@@ -141,7 +141,7 @@ class CustomRemoteMediator<Datum : Any>(
 
             LoadType.PREPEND -> {
                 val remoteKey =
-                    documentStorage.remoteKeyStorage.getPreRemoteKey(collectionName)?.key
+                    documentModelStorage.remoteKeyStorage.getPreRemoteKey(modelCollection)?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
@@ -152,7 +152,7 @@ class CustomRemoteMediator<Datum : Any>(
 
             LoadType.APPEND -> {
                 val remoteKey =
-                    documentStorage.remoteKeyStorage.getNextRemoteKey(collectionName)?.key
+                    documentModelStorage.remoteKeyStorage.getNextRemoteKey(modelCollection)?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
@@ -187,9 +187,9 @@ class CustomRemoteMediator<Datum : Any>(
             val data = loadResult.data
             val nextKey = loadResult.nextKey
             val preKey = loadResult.prevKey
-            val collectionName = collectionName.getName()
-            documentStorage.remoteKeyStorage.savePreRemoteKey(RemoteKeys(collectionName, preKey))
-            documentStorage.remoteKeyStorage.saveNextRemoteKey(RemoteKeys(collectionName, nextKey))
+            val collectionName = modelCollection.getName()
+            documentModelStorage.remoteKeyStorage.savePreRemoteKey(RemoteKeys(collectionName, preKey))
+            documentModelStorage.remoteKeyStorage.saveNextRemoteKey(RemoteKeys(collectionName, nextKey))
             data.forEach {
                 update(it)
             }

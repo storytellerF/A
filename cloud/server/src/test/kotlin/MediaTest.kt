@@ -1,4 +1,4 @@
-import com.storyteller_f.a.backend.service.media.getImageDimension
+import com.storyteller_f.a.backend.service.object_storage.getImageDimension
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.copy
 import com.storyteller_f.a.client.core.extractAlbum

@@ -14,7 +14,7 @@ class CleanCommand : Subcommand("clean", "clean all data") {
             Napier.i {
                 "database tables delete done"
             }
-            backend.mediaService.clean(AMEDIA_DEFAULT_BUCKET).getOrThrow()
+            backend.objectStorageService.clean(AMEDIA_DEFAULT_BUCKET).getOrThrow()
             backend.topicSearchService.clean().getOrThrow()
         }
         Napier.i {

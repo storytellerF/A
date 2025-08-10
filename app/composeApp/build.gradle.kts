@@ -84,6 +84,9 @@ kotlin {
         val headlessTest by creating {
             dependsOn(commonTest.get())
         }
+        headlessTest.dependencies {
+            implementation(projects.client.kotbase)
+        }
         androidMain.dependencies {
             implementation(compose.preview)
 
@@ -152,11 +155,10 @@ kotlin {
 
             implementation(projects.shared)
             implementation(projects.client.core)
-            implementation(projects.client.core)
-            implementation(projects.client.storage)
-            implementation(projects.client.kotbase)
+            implementation(projects.client.modelStorage)
+            implementation(projects.client.room)
 
-
+            implementation(libs.androidx.room.runtime)
             implementation(libs.napier)
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -264,6 +266,16 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // 按 ABI 分包
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
+        }
     }
 
     signingConfigs {
