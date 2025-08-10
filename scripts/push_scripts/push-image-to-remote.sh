@@ -1,9 +1,8 @@
 #!/bin/bash
 set -e
 REMOTE_URI=$1
-REMOTE_COMMAND=$2
-if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_COMMAND" ]; then
-  echo "REMOTE_URI, REMOTE_COMMAND and REMOTE_CERT_FILE must be set"
+if [ -z "$REMOTE_URI" ]; then
+  echo "REMOTE_URI and REMOTE_CERT_FILE must be set"
   exit 1
 fi
 
@@ -51,6 +50,3 @@ if [ "$md" != "$mdRemote" ]; then
 else
   echo "docker image same, skip upload.`date`"
 fi
-
-echo "start docker `date`"
-ssh "$REMOTE_URI" "$REMOTE_COMMAND"

@@ -1,9 +1,8 @@
 #!/bin/bash
 set -e
 REMOTE_URI=$1
-REMOTE_COMMAND=$2
-if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_COMMAND" ]; then
-  echo "REMOTE_URI, REMOTE_COMMAND and REMOTE_CERT_FILE must be set"
+if [ -z "$REMOTE_URI" ]; then
+  echo "REMOTE_URI and REMOTE_CERT_FILE must be set"
   exit 1
 fi
 
@@ -16,9 +15,9 @@ ssh "$REMOTE_URI" "mkdir -p a-server/$FLAVOR"
 sleep 2
 
 mkdir -p ./build/jar
-unzip -qn ./server/build/libs/server-all.jar -d ./server/build/libs/server
-tar -cf ./server/build/libs/server.tar -C ./server/build/libs/server/ .
-tar -cf ./build/jar/server-cli.tar -C ./server/build/libs server.tar -C ../../../cli/build/distributions cli.tar
+unzip -qn ./cloud/server/build/libs/server-all.jar -d ./cloud/server/build/libs/server
+tar -cf ./cloud/server/build/libs/server.tar -C ./cloud/server/build/libs/server/ .
+tar -cf ./cloud/build/jar/server-cli.tar -C ./cloud/server/build/libs server.tar -C ../../../../cli/build/distributions cli.tar
 # 定义文件数组
 SERVER_JAR_FILES=(
   "./build/jar/server-cli.tar"
@@ -63,7 +62,3 @@ for i in "${!SERVER_JAR_FILES[@]}"; do
     echo "skip upload $SERVER_JAR_FILE"
   fi
 done
-
-
-echo "start docker `date`"
-ssh "$REMOTE_URI" "$REMOTE_COMMAND"

@@ -47,13 +47,18 @@ done < "koyeb-env.filter"
 replace_string_2+="EOF\nRUN mkdir -p build/envs \&\& cp ./\${FLAVOR}.env ./build/envs/.env"
 
 # 使用 sed 替换 dockerfile 模板中的 #1 和 #2
-sed -e "s|#1|$replace_string_1|" -e "s|#2|$replace_string_2|" -e "s|#3|$replace_string_3|" "$dockerfile_template" > "$dockerfile_output"
+sed -e "s|^#1.*|$replace_string_1|" \
+  -e "s|^#2.*|$replace_string_2|" \
+  -e "s|^#3.*|$replace_string_3|" "$dockerfile_template" > "$dockerfile_output"
 
 sed -i.bak '/#\^1/,/#!1/c\
 #patched
 ' "$dockerfile_output"
 
-#sed -i '' 's/#if//g' file.txt   # macOS
-sed -i 's/#if //g' "$dockerfile_output"      # Linux
+if [[ "$(uname -s)" =~ Darwin ]]; then
+  sed -i '' 's/#if //g' "$dockerfile_output"
+else
+  sed -i 's/#if //g' "$dockerfile_output"
+fi
 
 echo "Dockerfile 已生成: $dockerfile_output"

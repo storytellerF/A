@@ -1,11 +1,12 @@
 #!/bin/bash
 
 FLAVOR=$1
-USE_PREBUILD=$2
-CUSTOM_COMMAND=$3
+BUILD_ON=$2
+USE_PREBUILD=$3
+CUSTOM_COMMAND=$4
 
-if [ -z "$FLAVOR" ]; then
-    echo "FLAVOR must be set."
+if [ -z "$FLAVOR" ] || [ -z "$BUILD_ON" ]; then
+    echo "FLAVOR and BUILD_ON must be set."
     exit 1
 fi
 
@@ -34,6 +35,10 @@ for profile in "${COMPOSE_FILE_LIST[@]}"; do
 done
 
 IFS=' ' read -r -a custom_cmd_parts <<< "$CUSTOM_COMMAND"
+if [[ "${custom_cmd_parts[0]}" == "build" ]]; then
+    # 在数组后追加参数
+    custom_cmd_parts+=("--build-arg" "BUILD_ON=${BUILD_ON}")
+fi
 CMD=("docker" "compose" "--env-file" "./${FLAVOR}.env" "${COMPOSE_FILES[@]}" "${custom_cmd_parts[@]}")
 
 echo "Executing: ${CMD[@]}"
