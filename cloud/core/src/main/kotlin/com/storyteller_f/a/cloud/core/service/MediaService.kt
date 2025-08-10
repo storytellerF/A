@@ -10,8 +10,8 @@ import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.copyMedia
 import com.storyteller_f.a.backend.service.getMediaPaginationResult
-import com.storyteller_f.a.backend.service.media.FileSystemMediaService
-import com.storyteller_f.a.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
+import com.storyteller_f.a.backend.service.object_storage.FileSystemObjectStorageService
+import com.storyteller_f.a.backend.service.object_storage.uploadFilesAfterDetectContentTypeAndDimension
 import com.storyteller_f.a.backend.service.processMediaToMediaInfo
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.MediaInfo
@@ -91,7 +91,7 @@ suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, uid: PrimaryKe
             throw ForbiddenException("no permission")
         }
         if (media.contentType.startsWith("audio")) {
-            mediaService.getInputStream(AMEDIA_DEFAULT_BUCKET, media.fullName).map { input ->
+            objectStorageService.getInputStream(AMEDIA_DEFAULT_BUCKET, media.fullName).map { input ->
                 withContext(Dispatchers.IO) {
                     input.use {
                         val saveAlbum = { image: ByteArray, mimeType: String ->
@@ -334,8 +334,8 @@ suspend fun getFileSystemDownloadUrl(
     backend: Backend,
     paths: List<String>
 ): Result<PathResponse?> {
-    val service = backend.mediaService
-    return if (service is FileSystemMediaService) {
+    val service = backend.objectStorageService
+    return if (service is FileSystemObjectStorageService) {
         val path = service.getPathResponse(paths)
         if (path?.exists() == true) {
             val value = PathResponse(path)

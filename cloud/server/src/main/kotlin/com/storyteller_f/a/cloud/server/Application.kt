@@ -9,9 +9,9 @@ import com.storyteller_f.a.backend.exposed.buildExposedDatabase
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.MergedEnv
 import com.storyteller_f.a.backend.service.databaseConnection
-import com.storyteller_f.a.backend.service.media.loadAvif
 import com.storyteller_f.a.backend.service.mediaService
 import com.storyteller_f.a.backend.service.naming.NameService
+import com.storyteller_f.a.backend.service.object_storage.loadAvif
 import com.storyteller_f.a.backend.service.readEnv
 import com.storyteller_f.a.backend.service.topicDocumentService
 import com.storyteller_f.a.cloud.server.auth.UserSession

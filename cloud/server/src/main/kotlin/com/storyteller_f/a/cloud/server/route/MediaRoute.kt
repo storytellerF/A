@@ -4,7 +4,7 @@ import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
+import com.storyteller_f.a.backend.service.object_storage.uploadFilesAfterDetectContentTypeAndDimension
 import com.storyteller_f.a.cloud.core.service.RootWritePermission
 import com.storyteller_f.a.cloud.core.service.checkRootWritePermission
 import com.storyteller_f.a.cloud.core.service.copyMedia

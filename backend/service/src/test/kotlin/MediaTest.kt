@@ -1,4 +1,4 @@
-import com.storyteller_f.a.backend.service.media.getSvgDimension
+import com.storyteller_f.a.backend.service.object_storage.getSvgDimension
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

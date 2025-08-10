@@ -6,8 +6,8 @@ import androidx.compose.runtime.remember
 import com.storyteller_f.a.app.compose_app.model.*
 import com.storyteller_f.a.client.core.WebSocketClient
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.storage.CollectionName
-import com.storyteller_f.storage.DocumentStorage
+import com.storyteller_f.storage.ModelCollection
+import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.update
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 
 val bus = MutableSharedFlow<Any>()
 
-suspend fun processEvent(database: DocumentStorage) {
+suspend fun processEvent(database: ModelStorage) {
     bus.collect { event ->
         when (event) {
             is OnAddReaction -> processOnAddReaction(database, event)
@@ -23,70 +23,70 @@ suspend fun processEvent(database: DocumentStorage) {
             is OnRemoveReaction -> processRemoveReaction(database, event)
 
             is OnCommunityJoined -> database.communityStorage.save(
-                CollectionName.Communities,
+                ModelCollection.Communities,
                 event.info
             )
 
             is OnCommunityExited -> database.communityStorage
-                .save(CollectionName.Communities, event.info)
+                .save(ModelCollection.Communities, event.info)
 
             is OnCommunityUpdated -> {
                 database.communityStorage
-                    .save(CollectionName.Communities, event.info)
+                    .save(ModelCollection.Communities, event.info)
             }
 
             is OnTopicChanged -> processTopicChanged(event, database)
 
             is OnTopicCreated -> processTopicCreated(event, database)
 
-            is OnRoomJoined -> database.roomStorage.save(CollectionName.Rooms, event.info)
+            is OnRoomJoined -> database.roomStorage.save(ModelCollection.Rooms, event.info)
 
-            is OnRoomExited -> database.roomStorage.save(CollectionName.Rooms, event.info)
+            is OnRoomExited -> database.roomStorage.save(ModelCollection.Rooms, event.info)
 
             is OnRoomUpdated -> {
-                database.roomStorage.save(CollectionName.Rooms, event.info)
+                database.roomStorage.save(ModelCollection.Rooms, event.info)
             }
 
             is OnUserUpdated -> {
-                database.userStorage.save(CollectionName.Users, event.info)
+                database.userStorage.save(ModelCollection.Users, event.info)
             }
 
             is OnMediaUploaded -> {
                 event.mediaInfos.forEach {
-                    database.mediasStorage.save(CollectionName.Medias(it.owner), it)
+                    database.ossStorage.save(ModelCollection.Medias(it.owner), it)
                 }
             }
         }
     }
 }
 
-private fun processTopicCreated(
+private suspend fun processTopicCreated(
     event: OnTopicCreated,
-    database: DocumentStorage,
+    database: ModelStorage,
 ) {
     val topicInfo = event.topicInfo
-    database.topicStorage.save(CollectionName.TopicList(topicInfo.parentId), topicInfo)
+    database.topicStorage.save(ModelCollection.TopicList(topicInfo.parentId), topicInfo)
 }
 
-private fun processTopicChanged(
+private suspend fun processTopicChanged(
     event: OnTopicChanged,
-    database: DocumentStorage,
+    database: ModelStorage,
 ) {
     val topicInfo = event.topicInfo
-    database.topicStorage.save(CollectionName.TopicList(topicInfo.parentId), topicInfo)
-    if (database.topicStorage.getDocument(CollectionName.Recommend, event.topicInfo.id) != null) {
-        database.topicStorage.save(CollectionName.Recommend, topicInfo)
+    database.topicStorage.save(ModelCollection.TopicList(topicInfo.parentId), topicInfo)
+    if (database.topicStorage.getDocument(ModelCollection.Recommend, event.topicInfo.id) != null) {
+        database.topicStorage.save(ModelCollection.Recommend, topicInfo)
     }
 }
 
-private fun processRemoveReaction(
-    database: DocumentStorage,
+private suspend fun processRemoveReaction(
+    database: ModelStorage,
     event: OnRemoveReaction,
 ) {
     listOf(
-        CollectionName.Topics,
-        CollectionName.Recommend,
-        CollectionName.TopicList(event.topicInfo.parentId)
+        ModelCollection.Topics,
+        ModelCollection.Recommend,
+        ModelCollection.TopicList(event.topicInfo.parentId)
     ).forEach { collectionName ->
         database.topicStorage.update(collectionName, event.topicInfo.id) { old ->
             val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
@@ -107,14 +107,14 @@ private fun processRemoveReaction(
     }
 }
 
-private fun processOnAddReaction(
-    database: DocumentStorage,
+private suspend fun processOnAddReaction(
+    database: ModelStorage,
     event: OnAddReaction,
 ) {
     listOf(
-        CollectionName.Topics,
-        CollectionName.Recommend,
-        CollectionName.TopicList(event.topicInfo.parentId)
+        ModelCollection.Topics,
+        ModelCollection.Recommend,
+        ModelCollection.TopicList(event.topicInfo.parentId)
     ).forEach { collectionName ->
         database.topicStorage.update(collectionName, event.info.objectId) { old ->
             val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)

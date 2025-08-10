@@ -11,7 +11,7 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.getMediaInfoList
 import com.storyteller_f.a.backend.service.index.TopicDocument
-import com.storyteller_f.a.backend.service.media.uploadFilesAfterDetectContentTypeAndDimension
+import com.storyteller_f.a.backend.service.object_storage.uploadFilesAfterDetectContentTypeAndDimension
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.eciesEncrypt
 import com.storyteller_f.shared.encryptData

@@ -1,7 +1,6 @@
 package com.storyteller_f.a.app.compose_app.model
 
 import androidx.compose.runtime.Composable
-import com.storyteller_f.a.app.compose_app.LocalJson
 import com.storyteller_f.a.app.compose_app.common.viewModel
 import com.storyteller_f.a.app.compose_app.pages.UploadSession
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
@@ -20,21 +19,19 @@ fun createSearchCommunitiesViewModel(
     finalOption: JoinStatusSearch,
     query: String,
 ): CommunitiesViewModel {
-    val json = LocalJson.current
     return viewModel(
         keys = listOf("search-community", finalOption.name, query)
     ) { client, databaseSource ->
-        CommunitiesViewModel(client, json = json, databaseSource, finalOption, query)
+        CommunitiesViewModel(client, databaseSource, finalOption, query)
     }
 }
 
 @Composable
 fun createJoinedCommunitiesViewModel(): CommunitiesViewModel {
-    val json = LocalJson.current
     return viewModel(
         keys = listOf("joined-communities")
     ) { client, databaseSource ->
-        CommunitiesViewModel(client, json = json, databaseSource, JoinStatusSearch.JOINED)
+        CommunitiesViewModel(client, databaseSource, JoinStatusSearch.JOINED)
     }
 }
 
@@ -43,7 +40,6 @@ fun createTargetUserJoinedCommunitiesViewModel(
     target: PrimaryKey,
     word: String = "",
 ): CommunitiesViewModel {
-    val json = LocalJson.current
     return viewModel(
         keys = listOf(
             "communities",
@@ -51,7 +47,7 @@ fun createTargetUserJoinedCommunitiesViewModel(
             word
         )
     ) { client, databaseSource ->
-        CommunitiesViewModel(client, json, databaseSource, JoinStatusSearch.JOINED, word, target)
+        CommunitiesViewModel(client, databaseSource, JoinStatusSearch.JOINED, word, target)
     }
 }
 
@@ -160,24 +156,22 @@ fun createRoomViewModel(roomAid: String) =
 
 @Composable
 fun createRoomTopicsViewModel(roomId: PrimaryKey): TopicsViewModel {
-    val json = LocalJson.current
     return viewModel(
         keys = listOf(
             "room-topics",
             roomId
         )
     ) { client, databaseSource ->
-        TopicsViewModel(client, databaseSource, roomId, ObjectType.ROOM, json)
+        TopicsViewModel(client, databaseSource, roomId, ObjectType.ROOM)
     }
 }
 
 @Composable
 fun createCommunityTopicsViewModel(communityId: PrimaryKey): TopicsViewModel {
-    val json = LocalJson.current
     return viewModel<TopicsViewModel>(
         keys = listOf("community-topics", communityId)
     ) { client, databaseSource ->
-        TopicsViewModel(client, databaseSource, communityId, ObjectType.COMMUNITY, json)
+        TopicsViewModel(client, databaseSource, communityId, ObjectType.COMMUNITY)
     }
 }
 
@@ -185,14 +179,13 @@ fun createCommunityTopicsViewModel(communityId: PrimaryKey): TopicsViewModel {
 fun createUserTopicsViewModel(
     uid: PrimaryKey,
 ): TopicsViewModel {
-    val json = LocalJson.current
     return viewModel(
         keys = listOf(
             "user-topics",
             uid
         )
     ) { client, databaseSource ->
-        TopicsViewModel(client, databaseSource, uid, ObjectType.USER, json)
+        TopicsViewModel(client, databaseSource, uid, ObjectType.USER)
     }
 }
 
@@ -285,14 +278,13 @@ fun createTopicViewModel(topicId: PrimaryKey) =
 
 @Composable
 fun createTopicsInTopicViewModel(topicId: PrimaryKey): TopicsViewModel {
-    val json = LocalJson.current
     return viewModel(
         keys = listOf(
             "topic-topics",
             topicId
         )
     ) { client, databaseSource ->
-        TopicsViewModel(client, databaseSource, topicId, ObjectType.TOPIC, json)
+        TopicsViewModel(client, databaseSource, topicId, ObjectType.TOPIC)
     }
 }
 
@@ -407,14 +399,13 @@ fun createWorldViewModel(): WorldViewModel {
 
 @Composable
 fun createReactionsViewModel(objectId: PrimaryKey): ReactionsViewModel {
-    val json = LocalJson.current
     return viewModel(
         keys = listOf(
             "reactions",
             objectId
         )
     ) { client, databaseSource ->
-        ReactionsViewModel(client, objectId, databaseSource, json)
+        ReactionsViewModel(client, objectId, databaseSource)
     }
 }
 

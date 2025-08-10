@@ -7,13 +7,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.SessionManager
-import com.storyteller_f.storage.Storage
+import com.storyteller_f.storage.ModelStorage
 import io.github.aakira.napier.Napier
 
 abstract class SimpleViewModel<T : Any> : ViewModel() {
     abstract val handler: LoadingHandler<T>
 
-    fun update(t: T) {
+    suspend fun update(t: T) {
         handler.update(t)
     }
 }
@@ -21,7 +21,7 @@ abstract class SimpleViewModel<T : Any> : ViewModel() {
 @Composable
 inline fun <reified VM : ViewModel> viewModel(
     keys: List<Comparable<*>?>? = null,
-    crossinline factory: (SessionManager, Storage) -> VM
+    crossinline factory: (SessionManager, ModelStorage) -> VM
 ): VM {
     val sessionManager = com.storyteller_f.a.app.compose_app.LocalSessionManager.current
     val databaseSource = com.storyteller_f.a.app.compose_app.LocalDatabase.current

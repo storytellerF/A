@@ -46,7 +46,9 @@ case "$TARGET" in
         # 在这里添加 Android 相关命令
         ./gradlew app:composeApp:assembleRelease --no-daemon
         mkdir -p "build/outputs/apk/release"
-        mv app/composeApp/build/outputs/apk/release/*.apk "build/outputs/apk/release/$FLAVOR.apk"
+        for f in app/composeApp/build/outputs/apk/release/*.apk; do
+            cp "$f" "build/outputs/apk/release/${FLAVOR}_$(basename "$f")"
+        done
         ;;
     desktop-msi)
         echo "Running DesktopMsi-specific command..."

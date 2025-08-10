@@ -25,9 +25,9 @@ interface SessionModel {
     val userHandler: FixedLoadingHandler<UserInfo?>
     fun updateSignature(data: String, signature: String?)
     fun generateData(): String
-    fun clear()
+    suspend fun clear()
     fun updateState(newState: ClientSessionState)
-    fun updateUser(new: UserInfo)
+    suspend fun updateUser(new: UserInfo)
 }
 
 interface SessionManager {
@@ -119,7 +119,7 @@ class UserSessionModel : SessionModel {
         dataAndSignature = data to signature
     }
 
-    override fun updateUser(new: UserInfo) {
+    override suspend fun updateUser(new: UserInfo) {
         userHandler.update(new)
     }
 
@@ -127,7 +127,7 @@ class UserSessionModel : SessionModel {
         state.value = newState
     }
 
-    override fun clear() {
+    override suspend fun clear() {
         state.value = ClientSessionState.None
         userHandler.update(null)
         dataAndSignature = null

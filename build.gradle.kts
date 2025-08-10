@@ -17,6 +17,8 @@ plugins {
     id("com.github.ben-manes.versions") version "0.52.0"
     id("nl.littlerobots.version-catalog-update") version "0.8.5"
     alias(libs.plugins.kotlin.android) apply false
+    id("com.google.devtools.ksp") version "2.2.0-2.0.2" apply false
+    id ("androidx.room") version "2.7.2" apply false
 }
 
 val detektReportMergeSarif by tasks.registering(ReportMergeTask::class) {
@@ -87,7 +89,7 @@ val composeModules = listOf(
     ":app:composeApp",
     ":client:core",
     ":client:kotbase",
-    ":client:storage"
+    ":client:model-storage"
 )
 dependencies {
     (composeModules + jvmLibModules).forEach {
