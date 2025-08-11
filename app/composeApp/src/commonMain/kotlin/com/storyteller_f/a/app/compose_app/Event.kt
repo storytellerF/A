@@ -1,10 +1,6 @@
 package com.storyteller_f.a.app.compose_app
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import com.storyteller_f.a.app.compose_app.model.*
-import com.storyteller_f.a.client.core.WebSocketClient
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.storage.ModelCollection
 import com.storyteller_f.storage.ModelStorage
@@ -139,19 +135,4 @@ private suspend fun processOnAddReaction(
             )
         }
     }
-}
-
-@Composable
-fun TestContainer(block: @Composable () -> Unit) {
-    CommonEntry("", "", {
-        val appNav = remember {
-            AppNav.EMPTY
-        }
-        CompositionLocalProvider(LocalAppNav provides appNav) {
-            val ws = WebSocketClient.EMPTY
-            CompositionLocalProvider(LocalWsClient provides ws) {
-                block()
-            }
-        }
-    })
 }

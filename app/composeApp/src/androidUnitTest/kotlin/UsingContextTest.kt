@@ -19,7 +19,6 @@ import org.robolectric.annotation.Config
 actual abstract class UsingContextTest {
     @Before
     fun setup() {
-        Assume.assumeTrue(System.getProperty("os.name").orEmpty().contains("win", true))
         RuntimeEnvironment.setApplicationSupplier {
             AApplication()
         }

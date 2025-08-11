@@ -1,5 +1,6 @@
 import androidx.paging.PagingSource
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.storage.DocumentModelStorage
 import com.storyteller_f.storage.ModelCollection
 import com.storyteller_f.storage.RemoteKeys
@@ -31,7 +32,8 @@ class KotbaseTest : UsingContextTest() {
         modelStorage.communityStorage.save(ModelCollection.Communities, CommunityInfo.EMPTY.copy(hasPoster = false, id = 2))
         modelStorage.communityStorage.save(ModelCollection.Communities, CommunityInfo.EMPTY.copy(hasPoster = true, id = 3))
         modelStorage.communityStorage.save(ModelCollection.Communities, CommunityInfo.EMPTY.copy(hasPoster = false, id = 4))
-        val observeData = modelStorage.communityStorage.observeData(ModelCollection.Communities)
+        val observeData = modelStorage.communityStorage.observeData(ModelCollection.SearchCommunity(
+            JoinStatusSearch.JOINED, ""))
         val loadResult = observeData.load(PagingSource.LoadParams.Refresh(null, 10, false))
         assertTrue(loadResult is PagingSource.LoadResult.Page)
         loadResult.data.forEach {

@@ -47,53 +47,6 @@ private fun PreviewTopicPreview(@PreviewParameter(ContentListProvider::class) co
     PreviewTopicPage(content, ObjectTuple(0, ObjectType.USER))
 }
 
-private class TopicPagePreviewProvider :
-    PreviewParameterProvider<Pair<TopicInfo, List<TopicInfo>>> {
-    override val values: Sequence<Pair<TopicInfo, List<TopicInfo>>>
-        get() = sequence {
-            yield(TopicInfo.Companion.EMPTY to listOf(TopicInfo.Companion.EMPTY))
-        }
-}
-
-@Preview
-@Composable
-fun PreviewTopic(@PreviewParameter(TopicPagePreviewProvider::class) param: Pair<TopicInfo, List<TopicInfo>>) {
-    Text("hello")
-}
-
-@Preview
-@Composable
-fun PreviewTopicDialog() {
-    val appNav = AppNav.Companion.EMPTY
-    val toasterState = rememberToasterState()
-    val userSession = object : SessionManager {
-        override val client: HttpClient
-            get() = TODO("Not yet implemented")
-        override val webSocketClient: WebSocketClient
-            get() = TODO("Not yet implemented")
-        override val sessionModel: SessionModel
-            get() = TODO("Not yet implemented")
-        override val isAlreadySignUp: StateFlow<Boolean>
-            get() = TODO("Not yet implemented")
-        override val address: StateFlow<String?>
-            get() = TODO("Not yet implemented")
-
-        override suspend fun login() {
-            TODO("Not yet implemented")
-        }
-
-    }
-
-    CompositionLocalProvider(
-        LocalToaster provides Sonner(toasterState), LocalAppNav provides appNav,
-        LocalSessionManager provides userSession, LocalMainSessionManager provides userSession
-    ) {
-        TopicDialogInternal(
-            TopicInfo.Companion.EMPTY
-        ) {}
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 fun TopicContentPreview() {
@@ -109,22 +62,4 @@ fun ReactionPreview() {
         {},
         {}
     )
-}
-
-@Preview
-@Composable
-private fun PreviewCommunity(@PreviewParameter(CommunityProvider::class) communityInfo: CommunityInfo) {
-}
-
-@Preview
-@Composable
-private fun PreviewCommunityPage() {
-    Text("hello")
-}
-
-private class CommunityProvider : PreviewParameterProvider<CommunityInfo> {
-    override val values: Sequence<CommunityInfo>
-        get() = sequence {
-            yield(CommunityInfo.Companion.EMPTY)
-        }
 }
