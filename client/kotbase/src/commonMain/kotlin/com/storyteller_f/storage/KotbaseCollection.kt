@@ -34,6 +34,7 @@ suspend inline fun <reified T : Any> CustomKotbaseCollection<T>.save(key: Primar
 
 suspend inline fun <reified T : Any> CustomKotbaseCollection<T>.save(key: String?, data: T) {
     key ?: return
+    if (key.isEmpty()) return
     saveDocument(key, data)
 }
 
