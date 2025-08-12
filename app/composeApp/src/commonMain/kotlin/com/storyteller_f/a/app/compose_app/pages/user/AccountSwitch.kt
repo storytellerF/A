@@ -30,6 +30,7 @@ import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
 import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.compontents.SheetContainer
 import com.storyteller_f.a.app.compose_app.model.getAlternativeAccountsViewModel
+import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.addAlternativeAccount
@@ -65,7 +66,7 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
                 val viewModel = getAlternativeAccountsViewModel()
                 val pagingItems = viewModel.flow.collectAsLazyPagingItems()
                 if (isSwitched) {
-                    ButtonNav(Icons.AutoMirrored.Filled.ArrowBack, "Back") {
+                    ButtonNav(MaterialSymbolsOutlined.ArrowBack, "Back to main") {
                         val rawUserPass = mainSessionManager.sessionModel.currentUserPass as? RawUserPass
                         val pemPrivateKey = rawUserPass?.rawUSerPass?.pemPrivateKey
                         pemPrivateKey?.let {
@@ -73,7 +74,7 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
                         }
                     }
                 } else {
-                    ButtonNav(Icons.Default.Add, "Back") {
+                    ButtonNav(Icons.Default.Add, "Add alternative Account") {
                         scope.launch {
                             globalDialogController.useResult {
                                 mainSessionManager.addAlternativeAccount()
@@ -90,8 +91,8 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
                     ) {
                         items(pagingItems.itemSnapshotList.size, key = pagingItems.itemKey { accountInfo ->
                             accountInfo.id
-                        }) {
-                            val alternativeAccountInfo = pagingItems[it]
+                        }) { index ->
+                            val alternativeAccountInfo = pagingItems[index]
                             alternativeAccountInfo?.let {
                                 UserCell(it.userInfo, false) {
                                     switch(alternativeAccountInfo.privateKey)
