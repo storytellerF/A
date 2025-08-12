@@ -34,3 +34,4 @@ remote.pem
 *.bak
 aboutlibraries.json
 app/composeApp/src/headlessTest/resources/package*
+CouchbaseLiteTemp

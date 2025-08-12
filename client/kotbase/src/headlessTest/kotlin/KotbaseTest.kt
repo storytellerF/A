@@ -17,7 +17,12 @@ class KotbaseTest : UsingContextTest() {
     fun testSectionLoadParams() {
         val modelStorage = DocumentModelStorage(createKotbaseSource(null))
         runTest {
-            modelStorage.remoteKeyStorage.saveNextRemoteKey(RemoteKeys(ModelCollection.Recommend.getName(), "1"))
+            modelStorage.remoteKeyStorage.saveNextRemoteKey(
+                RemoteKeys(
+                    ModelCollection.Recommend.getName(),
+                    "1"
+                )
+            )
             val remoteKeys =
                 modelStorage.remoteKeyStorage.getNextRemoteKey(ModelCollection.Recommend)
             assertEquals("1", remoteKeys?.key)
@@ -28,23 +33,17 @@ class KotbaseTest : UsingContextTest() {
     @Test
     fun `test kotbase order`() = runTest {
         val modelStorage = DocumentModelStorage(createKotbaseSource(null))
-        modelStorage.communityStorage.save(ModelCollection.Communities, CommunityInfo.EMPTY.copy(hasPoster = true, id = 1))
-        modelStorage.communityStorage.save(ModelCollection.Communities, CommunityInfo.EMPTY.copy(hasPoster = false, id = 2))
-        modelStorage.communityStorage.save(ModelCollection.Communities, CommunityInfo.EMPTY.copy(hasPoster = true, id = 3))
-        modelStorage.communityStorage.save(ModelCollection.Communities, CommunityInfo.EMPTY.copy(hasPoster = false, id = 4))
-        val observeData = modelStorage.communityStorage.observeData(ModelCollection.SearchCommunity(
+        modelStorage.communityStorage.save(ModelCollection.Communities, CommunityInfo.Companion.EMPTY.copy(hasPoster = true, id = 1))
+        modelStorage.communityStorage.save(ModelCollection.Communities, CommunityInfo.Companion.EMPTY.copy(hasPoster = false, id = 2))
+        modelStorage.communityStorage.save(ModelCollection.Communities, CommunityInfo.Companion.EMPTY.copy(hasPoster = true, id = 3))
+        modelStorage.communityStorage.save(ModelCollection.Communities, CommunityInfo.Companion.EMPTY.copy(hasPoster = false, id = 4))
+        val observeData = modelStorage.communityStorage.observeData(
+            ModelCollection.SearchCommunity(
             JoinStatusSearch.JOINED, ""))
         val loadResult = observeData.load(PagingSource.LoadParams.Refresh(null, 10, false))
         assertTrue(loadResult is PagingSource.LoadResult.Page)
         loadResult.data.forEach {
             println("${it.hasPoster} ${it.id}")
-        }
-    }
-
-    @Test
-    fun `test activity`() {
-        onActivity {
-            println("activity")
         }
     }
 

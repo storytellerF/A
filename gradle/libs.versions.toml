@@ -129,6 +129,7 @@ coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 couchbase-lite-java = { module = "com.couchbase.lite:couchbase-lite-java", version.ref = "couchbaseLiteJava" }
+couchbase-lite-paging = { module = "dev.kotbase:couchbase-lite-paging", version.ref = "couchbaseLite" }
 route4k-common = { module = "com.github.storytellerF.route4k:common", version.ref = "route4k-common" }
 route4k-ktor-client = { module = "com.github.storytellerF.route4k:ktor-client", version.ref = "route4k-common" }
 route4k-ktor-server = { module = "com.github.storytellerF.route4k:ktor-server", version.ref = "route4k-common" }
