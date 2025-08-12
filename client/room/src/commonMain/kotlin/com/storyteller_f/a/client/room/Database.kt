@@ -58,7 +58,7 @@ interface CommonDao {
     suspend fun getAsList(collection: String, offset: Int, limit: Int): List<CommonEntity>
 }
 
-@Entity(primaryKeys = ["id"], indices = [Index("collection", "id")])
+@Entity(primaryKeys = ["collection", "id"])
 data class CommonEntity(
     val id: String,
     val collection: String,
@@ -89,7 +89,7 @@ interface CommunityDao {
     suspend fun getAsList(collection: String, offset: Int, limit: Int): List<CommunityEntity>
 }
 
-@Entity(primaryKeys = ["id"], indices = [Index("collection", "hasPoster", "id")])
+@Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "hasPoster", "id")])
 data class CommunityEntity(
     val id: String,
     val collection: String,
@@ -120,12 +120,12 @@ interface TopicDao {
 
     @Query(
         "select * from TopicEntity where collection = :collection " +
-            "order by isPinned desc, id desc limit :limit offset :offset"
+                "order by isPinned desc, id desc limit :limit offset :offset"
     )
     suspend fun getAsList(collection: String, offset: Int, limit: Int): List<TopicEntity>
 }
 
-@Entity(primaryKeys = ["id"], indices = [Index("collection", "isPinned", "id")])
+@Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "isPinned", "id")])
 data class TopicEntity(
     val id: String,
     val collection: String,
@@ -153,7 +153,10 @@ interface ReactionDao {
     suspend fun getAsList(collection: String, offset: Int, limit: Int): List<ReactionEntity>
 }
 
-@Entity(primaryKeys = ["id"], indices = [Index("collection", "count", "lastReactionId")])
+@Entity(
+    primaryKeys = ["collection", "id"],
+    indices = [Index("collection", "count", "lastReactionId")]
+)
 data class ReactionEntity(
     val id: String,
     val collection: String,
