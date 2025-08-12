@@ -51,6 +51,12 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
+        val headlessTest by creating {
+            dependsOn(commonTest.get())
+        }
+        headlessTest.dependencies {
+            implementation(projects.client.kotbase)
+        }
         androidMain.dependencies {
         }
         commonMain.dependencies {
@@ -62,16 +68,26 @@ kotlin {
             implementation(libs.napier)
             implementation(libs.couchbase.lite)
             implementation(libs.couchbase.lite.ktx)
-            implementation("dev.kotbase:couchbase-lite-paging:3.1.9-1.1.1")
+            implementation(libs.couchbase.lite.paging)
+        }
+        androidUnitTest.dependencies {
+            implementation(libs.androidx.ui.test.junit4.android)
+            implementation(libs.androidx.ui.test.manifest)
+            implementation(libs.robolectric)
+        }
+        androidUnitTest {
+            dependsOn(headlessTest)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
         jvmMain.dependencies {
         }
         jvmMain {
         }
         jvmTest {
+            dependsOn(headlessTest)
         }
         if (buildIosTarget) {
             iosMain.dependencies {
@@ -81,7 +97,7 @@ kotlin {
         }
     }
     compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.addAll("-Xcontext-parameters", "-Xexpect-actual-classes")
     }
 }
 
@@ -95,4 +111,46 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
+    testOptions {
+        unitTests.all {
+            val dir = project.layout.buildDirectory.dir("native-libs/couchbase").get().asFile
+            println("test ${it.path} $dir")
+
+            it.jvmArgs(
+                "-Djava.library.path=$dir"
+            )
+        }
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+}
+
+val extractCouchbaseLibsTask = tasks.register("extractCouchbaseNativeLib") {
+    group = "libs"
+    val outputDir = layout.buildDirectory.dir("native-libs/couchbase")
+    val runtimeClasspath = configurations.getByName("jvmRuntimeClasspath")
+
+    inputs.files(runtimeClasspath)
+    outputs.dir(outputDir)
+
+    doLast {
+        val output = outputDir.get().asFile
+        output.mkdirs()
+        runtimeClasspath.forEach { jarFile ->
+            if (jarFile.path.contains("couchbase-lite-java")) {
+                zipTree(jarFile).forEach {
+                    if (it.path.contains("libs") &&
+                        !it.path.contains("macos") || it.path.contains("universal")
+                    ) {
+                        it.copyTo(File(output, it.name), true)
+                    }
+                }
+            }
+        }
+    }
+}
+
+afterEvaluate {
+    tasks.getByName("testDebugUnitTest").dependsOn(extractCouchbaseLibsTask)
 }
