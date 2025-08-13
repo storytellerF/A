@@ -120,7 +120,7 @@ interface TopicDao {
 
     @Query(
         "select * from TopicEntity where collection = :collection " +
-                "order by isPinned desc, id desc limit :limit offset :offset"
+            "order by isPinned desc, id desc limit :limit offset :offset"
     )
     suspend fun getAsList(collection: String, offset: Int, limit: Int): List<TopicEntity>
 }

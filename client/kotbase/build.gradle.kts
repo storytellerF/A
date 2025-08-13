@@ -114,8 +114,6 @@ android {
     testOptions {
         unitTests.all {
             val dir = project.layout.buildDirectory.dir("native-libs/couchbase").get().asFile
-            println("test ${it.path} $dir")
-
             it.jvmArgs(
                 "-Djava.library.path=$dir"
             )

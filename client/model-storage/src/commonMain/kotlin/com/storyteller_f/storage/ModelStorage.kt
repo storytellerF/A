@@ -15,114 +15,115 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
-interface ModelObservable<T> {
-    val deferred: CompletableDeferred<List<T>>
-
-    fun remove()
+sealed interface UserCollection {
+    data object Users : UserCollection
+    data class SearchUser(val word: String) : UserCollection
+    data class Members(val word: String, val objectId: PrimaryKey) : UserCollection
 }
 
-sealed interface ModelCollection {
-    data object Users : ModelCollection
-
-    data object Topics : ModelCollection
-
-    data object Titles : ModelCollection
-
-    data object Rooms : ModelCollection
-
-    data object Communities : ModelCollection
-
-    data class SearchUser(val word: String) : ModelCollection
-
-    data class SearchRoom(val word: String, val community: PrimaryKey?) : ModelCollection
-
+sealed interface TopicCollection {
+    data object Topics : TopicCollection
     data class SearchTopic(
         val word: List<String>,
         val parentId: PrimaryKey?,
-    ) : ModelCollection
+    ) : TopicCollection
 
-    data class SearchCommunity(
-        val joinStatusSearch: JoinStatusSearch,
-        val word: String,
-        val target: PrimaryKey? = null,
-    ) : ModelCollection
+    data object Recommend : TopicCollection
+    data class TopicList(val objectId: PrimaryKey) : TopicCollection
+}
 
-    data object Recommend : ModelCollection
-
-    data object Reactions : ModelCollection
-
-    data class ReactionList(val objectId: PrimaryKey) : ModelCollection
-
+sealed interface TitleCollection {
+    data object Titles : TitleCollection
     data class SearchTitle(
         val uid: PrimaryKey,
         val searchType: TitleSearchType,
         val status: TitleStatus? = null,
         val type: TitleType? = null,
         val scopeId: PrimaryKey? = null,
-    ) : ModelCollection
-
-    data object Alternatives : ModelCollection
-
-    data class TopicList(val objectId: PrimaryKey) : ModelCollection
-
-    data class Medias(val objectId: PrimaryKey) : ModelCollection
-
-    data class Members(val word: String, val objectId: PrimaryKey) : ModelCollection
-
-    data object Download : ModelCollection
+    ) : TitleCollection
 }
 
-fun ModelCollection.getName(): String {
+sealed interface RoomCollection {
+    data object Rooms : RoomCollection
+    data class SearchRoom(val word: String, val community: PrimaryKey?) : RoomCollection
+}
+
+sealed interface CommunityCollection {
+    data object Communities : CommunityCollection
+
+    data class SearchCommunity(
+        val joinStatusSearch: JoinStatusSearch,
+        val word: String,
+        val target: PrimaryKey? = null,
+    ) : CommunityCollection
+}
+
+sealed interface ReactionCollection {
+    data object Reactions : ReactionCollection
+
+    data class ReactionList(val objectId: PrimaryKey) : ReactionCollection
+}
+
+data object DownloadCollection {
+    const val name = "download"
+}
+data class MediasCollection(val objectId: PrimaryKey) {
+    fun getName() = "medias_$objectId"
+}
+data object AlternativesCollection {
+    const val name = "alternatives"
+}
+
+fun UserCollection.getName(): String {
     return when (this) {
-        ModelCollection.Alternatives -> "alternatives"
-        ModelCollection.Communities -> "communities"
-        ModelCollection.Download -> "downloads"
-        is ModelCollection.Medias -> "medias_$objectId"
-        is ModelCollection.Members -> "members_${objectId}_$word"
-        is ModelCollection.ReactionList -> "reactions_$objectId"
-        ModelCollection.Reactions -> "reactions"
-        ModelCollection.Recommend -> "topics_recommend"
-        ModelCollection.Rooms -> "rooms"
-        is ModelCollection.SearchCommunity -> "communities_${word}_${target}_$joinStatusSearch"
-        is ModelCollection.SearchRoom -> "rooms_${word}_$community"
-        is ModelCollection.SearchTitle -> "titles_${uid}_${searchType}_${status}_${type}_$scopeId"
-        is ModelCollection.SearchTopic -> "topics_${word}_$parentId"
-        is ModelCollection.SearchUser -> "users_$word"
-        ModelCollection.Titles -> "title"
-        is ModelCollection.TopicList -> "topics_$objectId"
-        ModelCollection.Topics -> "topics"
-        ModelCollection.Users -> "users"
+        is UserCollection.SearchUser -> "users_$word"
+        UserCollection.Users -> "users"
+        is UserCollection.Members -> "members_${objectId}_$word"
+    }
+}
+
+fun RoomCollection.getName(): String {
+    return when (this) {
+        RoomCollection.Rooms -> "rooms"
+        is RoomCollection.SearchRoom -> "rooms_${word}_$community"
+    }
+}
+
+fun ReactionCollection.getName(): String {
+    return when (this) {
+        ReactionCollection.Reactions -> "reactions"
+        is ReactionCollection.ReactionList -> "reactions_$objectId"
+    }
+}
+
+fun TopicCollection.getName(): String {
+    return when (this) {
+        is TopicCollection.SearchTopic -> "topics_${word}_$parentId"
+        is TopicCollection.TopicList -> "topics_$objectId"
+        TopicCollection.Topics -> "topics"
+        TopicCollection.Recommend -> "topics_recommend"
+    }
+}
+
+fun CommunityCollection.getName(): String {
+    return when (this) {
+        CommunityCollection.Communities -> "communities"
+        is CommunityCollection.SearchCommunity -> "communities_${word}_${target}_$joinStatusSearch"
+    }
+}
+
+fun TitleCollection.getName(): String {
+    return when (this) {
+        is TitleCollection.SearchTitle -> "titles_${uid}_${searchType}_${status}_${type}_$scopeId"
+        TitleCollection.Titles -> "title"
     }
 }
 
 @Serializable
 data class RemoteKeys(val collectionName: String, val key: String?)
-
-interface SaveStorage<T> {
-    suspend fun save(modelCollection: ModelCollection, t: T)
-}
-
-interface ObservePrimaryKeyDatumStorage<T> {
-    fun observeDatum(id: PrimaryKey): Flow<T?>
-}
-
-interface ObserveDataStorage<T : Any> {
-    fun observeData(
-        modelCollection: ModelCollection,
-    ): PagingSource<Int, T>
-}
-
-interface ObserveDatumStorage<T : Any> {
-    fun observeDatum(key: String): Flow<T?>
-}
-
-interface GetStorage<T> {
-    suspend fun getDocument(modelCollection: ModelCollection, id: PrimaryKey): T?
-}
 
 interface ModelStorage {
     val userStorage: UserStorage
@@ -137,51 +138,81 @@ interface ModelStorage {
     val downloadStorage: DownloadStorage
 }
 
-interface UserStorage : SaveStorage<UserInfo>, ObserveDataStorage<UserInfo>,
-    ObserveDatumStorage<UserInfo>,
-    ObservePrimaryKeyDatumStorage<UserInfo>
+interface UserStorage {
+    fun observeDatum(id: PrimaryKey): Flow<UserInfo?>
+    suspend fun save(collection: UserCollection, t: UserInfo)
+    fun observeData(collection: UserCollection): PagingSource<Int, UserInfo>
+    fun observeDatum(key: String): Flow<UserInfo?>
+}
 
-interface CommunityStorage : SaveStorage<CommunityInfo>, ObserveDataStorage<CommunityInfo>,
-    ObserveDatumStorage<CommunityInfo>, ObservePrimaryKeyDatumStorage<CommunityInfo>,
-    GetStorage<CommunityInfo>
+interface CommunityStorage {
+    fun observeDatum(id: PrimaryKey): Flow<CommunityInfo?>
+    fun observeDatum(key: String): Flow<CommunityInfo?>
+    suspend fun save(collection: CommunityCollection, t: CommunityInfo)
+    fun observeData(collection: CommunityCollection): PagingSource<Int, CommunityInfo>
+    suspend fun getDocument(collection: CommunityCollection, id: PrimaryKey): CommunityInfo?
+}
 
-interface TopicStorage : SaveStorage<TopicInfo>, ObserveDataStorage<TopicInfo>,
-    ObserveDatumStorage<TopicInfo>, ObservePrimaryKeyDatumStorage<TopicInfo>, GetStorage<TopicInfo>
+interface TopicStorage {
+    fun observeDatum(id: PrimaryKey): Flow<TopicInfo?>
+    suspend fun save(collection: TopicCollection, t: TopicInfo)
+    fun observeData(collection: TopicCollection): PagingSource<Int, TopicInfo>
+    fun observeDatum(key: String): Flow<TopicInfo?>
+    suspend fun getDocument(collection: TopicCollection, id: PrimaryKey): TopicInfo?
+}
 
-interface TitleStorage : SaveStorage<TitleInfo>, ObserveDataStorage<TitleInfo>,
-    ObservePrimaryKeyDatumStorage<TitleInfo>
+interface TitleStorage {
+    fun observeDatum(id: PrimaryKey): Flow<TitleInfo?>
+    suspend fun save(collection: TitleCollection, t: TitleInfo)
+    fun observeData(collection: TitleCollection): PagingSource<Int, TitleInfo>
+}
 
-interface RoomStorage : SaveStorage<RoomInfo>, ObserveDataStorage<RoomInfo>,
-    ObserveDatumStorage<RoomInfo>,
-    ObservePrimaryKeyDatumStorage<RoomInfo>
+interface RoomStorage {
+    fun observeDatum(id: PrimaryKey): Flow<RoomInfo?>
+    suspend fun save(collection: RoomCollection, t: RoomInfo)
+    fun observeData(collection: RoomCollection): PagingSource<Int, RoomInfo>
+    fun observeDatum(key: String): Flow<RoomInfo?>
+}
 
-interface ReactionStorage : SaveStorage<ReactionInfo>, ObserveDataStorage<ReactionInfo>
-interface AlternativesStorage : SaveStorage<AlternativeAccountInfo>,
-    ObserveDataStorage<AlternativeAccountInfo>
+interface ReactionStorage {
+    suspend fun save(collection: ReactionCollection, t: ReactionInfo)
+    fun observeData(collection: ReactionCollection): PagingSource<Int, ReactionInfo>
+}
 
-interface OSSStorage : SaveStorage<MediaInfo>, ObserveDataStorage<MediaInfo>
+interface AlternativesStorage {
+    suspend fun save(collection: AlternativesCollection, t: AlternativeAccountInfo)
+    fun observeData(collection: AlternativesCollection): PagingSource<Int, AlternativeAccountInfo>
+}
 
-interface DownloadStorage : SaveStorage<DownloadInfo>, ObservePrimaryKeyDatumStorage<DownloadInfo>,
-    GetStorage<DownloadInfo>
+interface OSSStorage {
+    suspend fun save(collection: MediasCollection, t: MediaInfo)
+    fun observeData(collection: MediasCollection): PagingSource<Int, MediaInfo>
+}
+
+interface DownloadStorage {
+    suspend fun save(collection: DownloadCollection, t: DownloadInfo)
+    fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?>
+    suspend fun getDocument(collection: DownloadCollection, id: PrimaryKey): DownloadInfo?
+}
 
 interface RemoteKeyStorage {
-    suspend fun getPreRemoteKey(modelCollection: ModelCollection): RemoteKeys?
-    suspend fun getNextRemoteKey(modelCollection: ModelCollection): RemoteKeys?
+    suspend fun getPreRemoteKey(collection: String): RemoteKeys?
+    suspend fun getNextRemoteKey(collection: String): RemoteKeys?
     suspend fun savePreRemoteKey(remoteKeys: RemoteKeys)
     suspend fun saveNextRemoteKey(remoteKeys: RemoteKeys)
 
-    suspend fun deletePreRemoteKey(modelCollection: ModelCollection)
-    suspend fun deleteNextRemoteKey(modelCollection: ModelCollection)
+    suspend fun deletePreRemoteKey(collection: String)
+    suspend fun deleteNextRemoteKey(collection: String)
 }
 
-suspend fun <T, Storage> Storage.update(
-    modelCollection: ModelCollection,
+suspend fun TopicStorage.update(
+    collection: TopicCollection,
     id: PrimaryKey,
-    block: (T) -> T
-) where Storage : SaveStorage<T>, Storage : GetStorage<T> {
-    val document = getDocument(modelCollection, id) ?: return
+    block: (TopicInfo) -> TopicInfo
+) {
+    val document = getDocument(collection, id) ?: return
     val value = block(document)
-    save(modelCollection, value)
+    save(collection, value)
 }
 
 class WrappedPagingSource<K : Any, T : Any, M : Any>(
