@@ -72,7 +72,7 @@ class IdCommunityViewModel(
     communityId: PrimaryKey,
 ) :
     CommunityViewModel() {
-    val modelCollection = ModelCollection.Communities
+    val modelCollection = CommunityCollection.Communities
     override val handler: LoadingHandler<CommunityInfo> =
         CachedLoadingHandler(
             modelStorage.communityStorage.observeDatum(communityId),
@@ -89,7 +89,7 @@ class AidCommunityViewModel(
     aid: String,
 ) :
     CommunityViewModel() {
-    val modelCollection = ModelCollection.Communities
+    val modelCollection = CommunityCollection.Communities
     override val handler: LoadingHandler<CommunityInfo> =
         CachedLoadingHandler(
             modelStorage.communityStorage.observeDatum(aid),
@@ -108,13 +108,13 @@ class CommunitiesViewModel(
     word: String = "",
     target: PrimaryKey? = null,
 ) : PagingViewModel<SectionLoadParams, CommunityInfo>() {
-    private val modelCollection = ModelCollection.SearchCommunity(joinStatusSearch, word, target)
+    private val modelCollection = CommunityCollection.SearchCommunity(joinStatusSearch, word, target)
 
     override val flow = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection,
+            modelCollection.getName(),
             IntermediatePagingSource(
                 SectionPagingSource(
                     listOf(
@@ -161,13 +161,13 @@ class RoomsViewModel(
     word: String = "",
     val community: PrimaryKey? = null,
 ) : PagingViewModel<PrimaryKey, RoomInfo>() {
-    private val modelCollection = ModelCollection.SearchRoom(word, community)
+    private val modelCollection = RoomCollection.SearchRoom(word, community)
 
     override val flow: Flow<PagingData<RoomInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection,
+            modelCollection.getName(),
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
@@ -190,14 +190,14 @@ class WorldViewModel(
     modelStorage: ModelStorage,
 ) :
     PagingViewModel<SectionLoadParams, TopicInfo>() {
-    private val modelCollection = ModelCollection.Recommend
+    private val modelCollection = TopicCollection.Recommend
 
     @OptIn(FlowPreview::class)
     override val flow: Flow<PagingData<TopicInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection,
+            modelCollection.getName(),
             IntermediatePagingSource(
                 SectionPagingSource(
                     listOf(
@@ -231,14 +231,14 @@ class TopicsViewModel(
     type: ObjectType,
 ) :
     PagingViewModel<SectionLoadParams, TopicInfo>() {
-    private val modelCollection = ModelCollection.TopicList(id)
+    private val modelCollection = TopicCollection.TopicList(id)
 
     @OptIn(FlowPreview::class)
     override val flow: Flow<PagingData<TopicInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection,
+            modelCollection.getName(),
             IntermediatePagingSource(
                 SectionPagingSource(
                     listOf(
@@ -302,7 +302,7 @@ class IdRoomViewModel(
     communityId: PrimaryKey,
 ) :
     RoomViewModel() {
-    val modelCollection = ModelCollection.Rooms
+    val modelCollection = RoomCollection.Rooms
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
             modelStorage.roomStorage.observeDatum(
@@ -322,7 +322,7 @@ class AidRoomViewModel(
     modelStorage: ModelStorage,
     aid: String,
 ) : RoomViewModel() {
-    val modelCollection = ModelCollection.Rooms
+    val modelCollection = RoomCollection.Rooms
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
             modelStorage.roomStorage.observeDatum(aid),
@@ -359,13 +359,13 @@ class TopicSearchViewModel(
     parentType: ObjectType?,
 ) :
     PagingViewModel<PrimaryKey, TopicInfo>() {
-    private val modelCollection = ModelCollection.SearchTopic(word, parentId)
+    private val modelCollection = TopicCollection.SearchTopic(word, parentId)
 
     override val flow: Flow<PagingData<TopicInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection,
+            modelCollection.getName(),
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
@@ -388,14 +388,14 @@ class MediaListViewModel(
     objectType: ObjectType,
 ) :
     PagingViewModel<PrimaryKey, MediaInfo>() {
-    private val modelCollection = ModelCollection.Medias(objectId)
+    private val modelCollection = MediasCollection(objectId)
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<MediaInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection,
+            modelCollection.getName(),
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
@@ -420,7 +420,7 @@ class IdUserViewModel(
     id: PrimaryKey,
 ) :
     UserViewModel() {
-    val modelCollection = ModelCollection.Users
+    val modelCollection = UserCollection.Users
     override val handler: LoadingHandler<UserInfo> =
         CachedLoadingHandler(
             modelStorage.userStorage.observeDatum(id),
@@ -438,7 +438,7 @@ class AidUserViewModel(
     modelStorage: ModelStorage,
     aid: String,
 ) : UserViewModel() {
-    val modelCollection = ModelCollection.Users
+    val modelCollection = UserCollection.Users
     override val handler: LoadingHandler<UserInfo> =
         CachedLoadingHandler(
             modelStorage.userStorage.observeDatum(aid),
@@ -460,13 +460,13 @@ class MemberViewModel(
     objectType: ObjectType,
 ) :
     PagingViewModel<PrimaryKey, UserInfo>() {
-    private val modelCollection = ModelCollection.Members(word, objectId)
+    private val modelCollection = UserCollection.Members(word, objectId)
 
     override val flow: Flow<PagingData<UserInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection,
+            modelCollection.getName(),
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
@@ -491,14 +491,14 @@ class ReactionsViewModel(
     objectId: PrimaryKey,
     modelStorage: ModelStorage,
 ) : PagingViewModel<String, ReactionInfo>() {
-    val modelCollection = ModelCollection.ReactionList(objectId)
+    val modelCollection = ReactionCollection.ReactionList(objectId)
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection,
+            modelCollection.getName(),
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
@@ -524,7 +524,7 @@ class IdTopicViewModel(
     topicId: PrimaryKey,
 ) :
     TopicViewModel() {
-    val modelCollection = ModelCollection.Topics
+    val modelCollection = TopicCollection.Topics
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
             modelStorage.topicStorage.observeDatum(topicId),
@@ -545,7 +545,7 @@ class AidTopicViewModel(
     aid: String,
 ) :
     TopicViewModel() {
-    val modelCollection = ModelCollection.Topics
+    val modelCollection = TopicCollection.Topics
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
             modelStorage.topicStorage.observeDatum(aid),
@@ -594,13 +594,13 @@ class TitlesViewModel(
     scopeId: PrimaryKey? = null,
 ) : PagingViewModel<PrimaryKey, TitleInfo>() {
     private val modelCollection =
-        ModelCollection.SearchTitle(uid, searchType, status, type, scopeId)
+        TitleCollection.SearchTitle(uid, searchType, status, type, scopeId)
 
     override val flow: Flow<PagingData<TitleInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection,
+            modelCollection.getName(),
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
@@ -667,7 +667,7 @@ class DownloadViewModel(
     private val modelStorage: ModelStorage,
 ) : ViewModel() {
     val lock = Mutex()
-    val modelCollection = ModelCollection.Download
+    val modelCollection = DownloadCollection
     private val queue = Channel<String> {
     }
     val handlers = mutableMapOf<String, CachedLoadingHandler<DownloadInfo>>()
@@ -797,14 +797,14 @@ class AlternativeAccountsViewModel(
     sessionManager: SessionManager,
 ) :
     PagingViewModel<PrimaryKey, AlternativeAccountInfo>() {
-    val modelCollection = ModelCollection.Alternatives
+    val modelCollection = AlternativesCollection
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<AlternativeAccountInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection,
+            modelCollection.name,
             RegularPagingSource(
                 sessionManager
             ) { key, size ->

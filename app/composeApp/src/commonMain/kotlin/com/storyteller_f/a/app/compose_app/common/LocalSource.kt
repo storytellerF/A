@@ -49,77 +49,11 @@ class CachedLoadingHandler<T : Any>(
     }
 }
 
-class CustomStoragePagingSource<RowType : Any>(
-    private val observable: (String?, Int, () -> Unit) -> ModelObservable<RowType>,
-    private val buildKey: (RowType?) -> String?
-) : PagingSource<String, RowType>() {
-
-    init {
-        registerInvalidatedCallback {
-            removeAllToken()
-        }
-    }
-
-    override fun getRefreshKey(state: PagingState<String, RowType>): String? {
-        return null
-    }
-
-    private val registeredToken = mutableMapOf<String?, ModelObservable<RowType>>()
-
-    override suspend fun load(
-        params: LoadParams<String>,
-    ): LoadResult<String, RowType> {
-        val key = when (params) {
-            is LoadParams.Append<*> -> {
-                params.key
-            }
-
-            is LoadParams.Prepend<*> -> return LoadResult.Page(emptyList(), null, null)
-            is LoadParams.Refresh<*> -> {
-                removeAllToken()
-                null
-            }
-        }
-        Napier.v(tag = "pagination") {
-            "source load ${params.key} $key"
-        }
-        return try {
-            val observable = observable(key, params.loadSize) {
-                invalidate()
-            }
-            registeredToken[params.key] = observable
-            val data = observable.deferred.await()
-            val prevKey = buildKey(data.firstOrNull())
-            val nextKey = buildKey(data.lastOrNull())
-            Napier.v(tag = "pagination") {
-                "source load success key: ${params.key} data size: ${data.size} $prevKey $nextKey"
-            }
-            LoadResult.Page(
-                data = data,
-                prevKey = prevKey,
-                nextKey = nextKey,
-            )
-        } catch (e: Exception) {
-            Napier.e(e, tag = "pagination") {
-                "source load error"
-            }
-            LoadResult.Error(e)
-        }
-    }
-
-    private fun removeAllToken() {
-        registeredToken.values.forEach {
-            it.remove()
-        }
-        registeredToken.clear()
-    }
-}
-
 @Suppress("unused")
 @OptIn(ExperimentalPagingApi::class)
 class CustomRemoteMediator<Datum : Any>(
     private val documentModelStorage: ModelStorage,
-    private val modelCollection: ModelCollection,
+    private val collection: String,
     private val networkService: PagingSource<String, Datum>,
     private val update: suspend (Datum) -> Unit,
 ) :
@@ -141,7 +75,7 @@ class CustomRemoteMediator<Datum : Any>(
 
             LoadType.PREPEND -> {
                 val remoteKey =
-                    documentModelStorage.remoteKeyStorage.getPreRemoteKey(modelCollection)?.key
+                    documentModelStorage.remoteKeyStorage.getPreRemoteKey(collection)?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
@@ -152,7 +86,7 @@ class CustomRemoteMediator<Datum : Any>(
 
             LoadType.APPEND -> {
                 val remoteKey =
-                    documentModelStorage.remoteKeyStorage.getNextRemoteKey(modelCollection)?.key
+                    documentModelStorage.remoteKeyStorage.getNextRemoteKey(collection)?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
@@ -187,9 +121,8 @@ class CustomRemoteMediator<Datum : Any>(
             val data = loadResult.data
             val nextKey = loadResult.nextKey
             val preKey = loadResult.prevKey
-            val collectionName = modelCollection.getName()
-            documentModelStorage.remoteKeyStorage.savePreRemoteKey(RemoteKeys(collectionName, preKey))
-            documentModelStorage.remoteKeyStorage.saveNextRemoteKey(RemoteKeys(collectionName, nextKey))
+            documentModelStorage.remoteKeyStorage.savePreRemoteKey(RemoteKeys(collection, preKey))
+            documentModelStorage.remoteKeyStorage.saveNextRemoteKey(RemoteKeys(collection, nextKey))
             data.forEach {
                 update(it)
             }

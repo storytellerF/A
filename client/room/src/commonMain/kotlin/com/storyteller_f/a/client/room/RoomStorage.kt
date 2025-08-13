@@ -10,19 +10,27 @@ import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.storage.AlternativesCollection
 import com.storyteller_f.storage.AlternativesStorage
+import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.CommunityStorage
+import com.storyteller_f.storage.DownloadCollection
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStorage
-import com.storyteller_f.storage.ModelCollection
+import com.storyteller_f.storage.MediasCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.OSSStorage
+import com.storyteller_f.storage.ReactionCollection
 import com.storyteller_f.storage.ReactionStorage
 import com.storyteller_f.storage.RemoteKeyStorage
 import com.storyteller_f.storage.RemoteKeys
+import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.RoomStorage
+import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TitleStorage
+import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.TopicStorage
+import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.UserStorage
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
@@ -33,27 +41,27 @@ import kotlinx.serialization.json.Json
 class UserRoomStorage(val appDatabase: AppDatabase) : UserStorage {
     val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(
-        modelCollection: ModelCollection,
+        collection: UserCollection,
         t: UserInfo
     ) {
         val data = Json.encodeToString(t)
-        val item = CommonEntity(t.id, ModelCollection.Users.getName(), data)
+        val item = CommonEntity(t.id, UserCollection.Users.getName(), data)
         appDatabase.getCommonDao().insert(item)
-        if (modelCollection is ModelCollection.SearchUser) {
-            appDatabase.getCommonDao().insert(item.copy(collection = modelCollection.getName()))
+        if (collection is UserCollection.SearchUser) {
+            appDatabase.getCommonDao().insert(item.copy(collection = collection.getName()))
         }
     }
 
     override fun observeData(
-        modelCollection: ModelCollection,
+        collection: UserCollection,
     ): PagingSource<Int, UserInfo> {
-        return impl.observeData(modelCollection)
+        return impl.observeData(collection.getName())
     }
 
     override fun observeDatum(
         key: String
     ): Flow<UserInfo?> {
-        return impl.observeDatum(ModelCollection.Users, key)
+        return impl.observeDatum(UserCollection.Users.getName(), key)
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<UserInfo?> {
@@ -63,21 +71,22 @@ class UserRoomStorage(val appDatabase: AppDatabase) : UserStorage {
 
 class CommunityRoomStorage(val appDatabase: AppDatabase) : CommunityStorage {
     override suspend fun save(
-        modelCollection: ModelCollection,
+        collection: CommunityCollection,
         t: CommunityInfo
     ) {
         val data = Json.encodeToString(t)
-        val item = CommunityEntity(t.id, ModelCollection.Communities.getName(), data, t.hasPoster)
+        val item =
+            CommunityEntity(t.id, CommunityCollection.Communities.getName(), data, t.hasPoster)
         appDatabase.getCommunityDao().insert(item)
-        if (modelCollection is ModelCollection.SearchCommunity) {
-            appDatabase.getCommunityDao().insert(item.copy(collection = modelCollection.getName()))
+        if (collection is CommunityCollection.SearchCommunity) {
+            appDatabase.getCommunityDao().insert(item.copy(collection = collection.getName()))
         }
     }
 
     override fun observeData(
-        modelCollection: ModelCollection,
+        collection: CommunityCollection,
     ): PagingSource<Int, CommunityInfo> {
-        val source = appDatabase.getCommunityDao().getAsSource(modelCollection.getName())
+        val source = appDatabase.getCommunityDao().getAsSource(collection.getName())
         return WrappedPagingSource(source) { list ->
             list.map {
                 Json.decodeFromString(it.data)
@@ -86,7 +95,7 @@ class CommunityRoomStorage(val appDatabase: AppDatabase) : CommunityStorage {
     }
 
     override fun observeDatum(key: String): Flow<CommunityInfo?> {
-        val scope = ModelCollection.Communities.getName()
+        val scope = CommunityCollection.Communities.getName()
         return appDatabase.getCommunityDao().getAsFlow(scope, key).map {
             it?.let { it1 -> Json.decodeFromString(it1.data) }
         }
@@ -97,34 +106,34 @@ class CommunityRoomStorage(val appDatabase: AppDatabase) : CommunityStorage {
     }
 
     override suspend fun getDocument(
-        modelCollection: ModelCollection,
+        collection: CommunityCollection,
         id: PrimaryKey
     ): CommunityInfo? {
-        val entity = appDatabase.getCommunityDao().get(modelCollection.getName(), id.toString())
+        val entity = appDatabase.getCommunityDao().get(collection.getName(), id.toString())
         return entity?.data?.let { Json.decodeFromString(it) }
     }
 }
 
 class TopicRoomStorage(val appDatabase: AppDatabase) : TopicStorage {
     override suspend fun save(
-        modelCollection: ModelCollection,
+        collection: TopicCollection,
         t: TopicInfo
     ) {
         val data = Json.encodeToString(t)
-        val item = TopicEntity(t.id, ModelCollection.Topics.getName(), data, t.isPin)
+        val item = TopicEntity(t.id, TopicCollection.Topics.getName(), data, t.isPin)
         appDatabase.getTopicDao().insert(item)
-        if (modelCollection is ModelCollection.TopicList ||
-            modelCollection is ModelCollection.SearchTopic ||
-            modelCollection is ModelCollection.Recommend
+        if (collection is TopicCollection.TopicList ||
+            collection is TopicCollection.SearchTopic ||
+            collection is TopicCollection.Recommend
         ) {
-            appDatabase.getTopicDao().insert(item.copy(collection = modelCollection.getName()))
+            appDatabase.getTopicDao().insert(item.copy(collection = collection.getName()))
         }
     }
 
     override fun observeData(
-        modelCollection: ModelCollection,
+        collection: TopicCollection,
     ): PagingSource<Int, TopicInfo> {
-        val source = appDatabase.getTopicDao().getAsSource(modelCollection.getName())
+        val source = appDatabase.getTopicDao().getAsSource(collection.getName())
         return WrappedPagingSource(source) { list ->
             list.map {
                 Json.decodeFromString(it.data)
@@ -133,7 +142,7 @@ class TopicRoomStorage(val appDatabase: AppDatabase) : TopicStorage {
     }
 
     override fun observeDatum(key: String): Flow<TopicInfo?> {
-        val scope = ModelCollection.Topics.getName()
+        val scope = TopicCollection.Topics.getName()
         return appDatabase.getTopicDao().getAsFlow(scope, key).map {
             it?.data?.let { string -> Json.decodeFromString(string) }
         }
@@ -144,31 +153,31 @@ class TopicRoomStorage(val appDatabase: AppDatabase) : TopicStorage {
     }
 
     override suspend fun getDocument(
-        modelCollection: ModelCollection,
+        collection: TopicCollection,
         id: PrimaryKey
     ): TopicInfo? {
-        val entity = appDatabase.getTopicDao().get(modelCollection.getName(), id.toString())
+        val entity = appDatabase.getTopicDao().get(collection.getName(), id.toString())
         return entity?.data?.let { Json.decodeFromString(it) }
     }
 }
 
 class TitleRoomStorage(val appDatabase: AppDatabase) : TitleStorage {
     override suspend fun save(
-        modelCollection: ModelCollection,
+        collection: TitleCollection,
         t: TitleInfo
     ) {
         val data = Json.encodeToString(t)
-        val item = CommonEntity(t.id, ModelCollection.Titles.getName(), data)
+        val item = CommonEntity(t.id, TitleCollection.Titles.getName(), data)
         appDatabase.getCommonDao().insert(item)
-        if (modelCollection is ModelCollection.SearchTitle) {
-            appDatabase.getCommonDao().insert(item.copy(collection = modelCollection.getName()))
+        if (collection is TitleCollection.SearchTitle) {
+            appDatabase.getCommonDao().insert(item.copy(collection = collection.getName()))
         }
     }
 
     override fun observeData(
-        modelCollection: ModelCollection,
+        collection: TitleCollection,
     ): PagingSource<Int, TitleInfo> {
-        val source = appDatabase.getCommonDao().getAsSource(modelCollection.getName())
+        val source = appDatabase.getCommonDao().getAsSource(collection.getName())
         return WrappedPagingSource(source) { list ->
             list.mapNotNull {
                 it.data?.let { string -> Json.decodeFromString(string) }
@@ -177,7 +186,7 @@ class TitleRoomStorage(val appDatabase: AppDatabase) : TitleStorage {
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<TitleInfo?> {
-        val scope = ModelCollection.Titles.getName()
+        val scope = TitleCollection.Titles.getName()
         return appDatabase.getTopicDao().getAsFlow(scope, id.toString()).map {
             it?.data?.let { string -> Json.decodeFromString(string) }
         }
@@ -186,9 +195,9 @@ class TitleRoomStorage(val appDatabase: AppDatabase) : TitleStorage {
 
 class CommonStorageImpl(val appDatabase: AppDatabase) {
     inline fun <reified T : Any> observeData(
-        modelCollection: ModelCollection,
+        collection: String,
     ): PagingSource<Int, T> {
-        val source = appDatabase.getCommonDao().getAsSource(modelCollection.getName())
+        val source = appDatabase.getCommonDao().getAsSource(collection)
         return WrappedPagingSource(source) { list ->
             list.mapNotNull {
                 it.data?.let { string -> Json.decodeFromString(string) }
@@ -197,10 +206,10 @@ class CommonStorageImpl(val appDatabase: AppDatabase) {
     }
 
     inline fun <reified T : Any> observeDatum(
-        modelCollection: ModelCollection,
+        collection: String,
         id: String
     ): Flow<T?> {
-        val source = appDatabase.getCommonDao().getAsFlow(modelCollection.getName(), id)
+        val source = appDatabase.getCommonDao().getAsFlow(collection, id)
         return source.map {
             it?.data?.let { string -> Json.decodeFromString(string) }
         }
@@ -210,25 +219,25 @@ class CommonStorageImpl(val appDatabase: AppDatabase) {
 class RoomRoomStorage(val appDatabase: AppDatabase) : RoomStorage {
     val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(
-        modelCollection: ModelCollection,
+        collection: RoomCollection,
         t: RoomInfo
     ) {
         val data = Json.encodeToString(t)
-        val item = CommonEntity(t.id, ModelCollection.Rooms.getName(), data)
+        val item = CommonEntity(t.id, RoomCollection.Rooms.getName(), data)
         appDatabase.getCommonDao().insert(item)
-        if (modelCollection is ModelCollection.SearchRoom) {
-            appDatabase.getCommonDao().insert(item.copy(collection = modelCollection.getName()))
+        if (collection is RoomCollection.SearchRoom) {
+            appDatabase.getCommonDao().insert(item.copy(collection = collection.getName()))
         }
     }
 
     override fun observeData(
-        modelCollection: ModelCollection,
+        collection: RoomCollection,
     ): PagingSource<Int, RoomInfo> {
-        return impl.observeData(modelCollection)
+        return impl.observeData(collection.getName())
     }
 
     override fun observeDatum(key: String): Flow<RoomInfo?> {
-        return impl.observeDatum(ModelCollection.Rooms, key)
+        return impl.observeDatum(RoomCollection.Rooms.getName(), key)
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<RoomInfo?> {
@@ -237,52 +246,52 @@ class RoomRoomStorage(val appDatabase: AppDatabase) : RoomStorage {
 }
 
 class RemoteKeyRoomStorage(val appDatabase: AppDatabase) : RemoteKeyStorage {
-    override suspend fun getPreRemoteKey(modelCollection: ModelCollection): RemoteKeys? {
-        return appDatabase.getCommonDao().get(modelCollection.getName(), "pre")?.let {
-            RemoteKeys(modelCollection.getName(), it.data)
+    override suspend fun getPreRemoteKey(collection: String): RemoteKeys? {
+        return appDatabase.getCommonDao().get("pre_remote_keys", collection)?.let {
+            RemoteKeys(collection, it.data)
         }
     }
 
-    override suspend fun getNextRemoteKey(modelCollection: ModelCollection): RemoteKeys? {
-        return appDatabase.getCommonDao().get(modelCollection.getName(), "next")?.let {
-            RemoteKeys(modelCollection.getName(), it.data)
+    override suspend fun getNextRemoteKey(collection: String): RemoteKeys? {
+        return appDatabase.getCommonDao().get("next_remote_keys", collection)?.let {
+            RemoteKeys(collection, it.data)
         }
     }
 
     override suspend fun savePreRemoteKey(remoteKeys: RemoteKeys) {
         appDatabase.getCommonDao()
-            .insert(CommonEntity("pre", remoteKeys.collectionName, remoteKeys.key))
+            .insert(CommonEntity(remoteKeys.collectionName, "pre_remote_keys", remoteKeys.key))
     }
 
     override suspend fun saveNextRemoteKey(remoteKeys: RemoteKeys) {
         appDatabase.getCommonDao()
-            .insert(CommonEntity("next", remoteKeys.collectionName, remoteKeys.key))
+            .insert(CommonEntity(remoteKeys.collectionName, "next_remote_keys", remoteKeys.key))
     }
 
-    override suspend fun deletePreRemoteKey(modelCollection: ModelCollection) {
-        appDatabase.getCommonDao().delete(modelCollection.getName(), "pre")
+    override suspend fun deletePreRemoteKey(collection: String) {
+        appDatabase.getCommonDao().delete("pre_remote_keys", collection)
     }
 
-    override suspend fun deleteNextRemoteKey(modelCollection: ModelCollection) {
-        appDatabase.getCommonDao().delete(modelCollection.getName(), "next")
+    override suspend fun deleteNextRemoteKey(collection: String) {
+        appDatabase.getCommonDao().delete("next_remote_keys", collection)
     }
 }
 
 class ReactionRoomStorage(val appDatabase: AppDatabase) : ReactionStorage {
     override suspend fun save(
-        modelCollection: ModelCollection,
+        collection: ReactionCollection,
         t: ReactionInfo
     ) {
         val id = "${t.objectId}-${t.emoji}"
         val data = Json.encodeToString(t)
         appDatabase.getReactionDao()
-            .insert(ReactionEntity(id, modelCollection.getName(), data, t.count, t.lastReactionId))
+            .insert(ReactionEntity(id, collection.getName(), data, t.count, t.lastReactionId))
     }
 
     override fun observeData(
-        modelCollection: ModelCollection,
+        collection: ReactionCollection,
     ): PagingSource<Int, ReactionInfo> {
-        val raw = appDatabase.getReactionDao().getAsSource(modelCollection.getName())
+        val raw = appDatabase.getReactionDao().getAsSource(collection.getName())
         return WrappedPagingSource(raw) { list ->
             list.map {
                 Json.decodeFromString(it.data)
@@ -292,18 +301,13 @@ class ReactionRoomStorage(val appDatabase: AppDatabase) : ReactionStorage {
 }
 
 class AlternativesRoomStorage(val appDatabase: AppDatabase) : AlternativesStorage {
-    override suspend fun save(
-        modelCollection: ModelCollection,
-        t: AlternativeAccountInfo
-    ) {
+    override suspend fun save(collection: AlternativesCollection, t: AlternativeAccountInfo) {
         val data = Json.encodeToString(t)
-        appDatabase.getCommonDao().insert(CommonEntity(t.id, modelCollection.getName(), data))
+        appDatabase.getCommonDao().insert(CommonEntity(t.id, collection.name, data))
     }
 
-    override fun observeData(
-        modelCollection: ModelCollection,
-    ): PagingSource<Int, AlternativeAccountInfo> {
-        val raw = appDatabase.getReactionDao().getAsSource(modelCollection.getName())
+    override fun observeData(collection: AlternativesCollection): PagingSource<Int, AlternativeAccountInfo> {
+        val raw = appDatabase.getReactionDao().getAsSource(collection.name)
         return WrappedPagingSource(raw) { list ->
             list.map {
                 Json.decodeFromString(it.data)
@@ -314,17 +318,15 @@ class AlternativesRoomStorage(val appDatabase: AppDatabase) : AlternativesStorag
 
 class OSSRoomStorage(val appDatabase: AppDatabase) : OSSStorage {
     override suspend fun save(
-        modelCollection: ModelCollection,
+        collection: MediasCollection,
         t: MediaInfo
     ) {
         val data = Json.encodeToString(t)
-        appDatabase.getCommonDao().insert(CommonEntity(t.id, modelCollection.getName(), data))
+        appDatabase.getCommonDao().insert(CommonEntity(t.id, collection.getName(), data))
     }
 
-    override fun observeData(
-        modelCollection: ModelCollection,
-    ): PagingSource<Int, MediaInfo> {
-        val raw = appDatabase.getReactionDao().getAsSource(modelCollection.getName())
+    override fun observeData(collection: MediasCollection): PagingSource<Int, MediaInfo> {
+        val raw = appDatabase.getReactionDao().getAsSource(collection.getName())
         return WrappedPagingSource(raw) { list ->
             list.map {
                 Json.decodeFromString(it.data)
@@ -334,27 +336,24 @@ class OSSRoomStorage(val appDatabase: AppDatabase) : OSSStorage {
 }
 
 class DownloadRoomStorage(val appDatabase: AppDatabase) : DownloadStorage {
-    override suspend fun save(
-        modelCollection: ModelCollection,
-        t: DownloadInfo
-    ) {
+    override suspend fun save(collection: DownloadCollection, t: DownloadInfo) {
         val data = Json.encodeToString(t)
         appDatabase.getCommonDao()
-            .insert(CommonEntity(t.mediaInfo.id, modelCollection.getName(), data))
+            .insert(CommonEntity(t.mediaInfo.id, collection.name, data))
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?> {
         return appDatabase.getCommonDao()
-            .getAsFlow(ModelCollection.Download.getName(), id.toString()).map {
+            .getAsFlow(DownloadCollection.name, id.toString()).map {
                 it?.data?.let { string -> Json.decodeFromString(string) }
             }
     }
 
     override suspend fun getDocument(
-        modelCollection: ModelCollection,
+        collection: DownloadCollection,
         id: PrimaryKey
     ): DownloadInfo? {
-        return appDatabase.getCommonDao().get(modelCollection.getName(), id.toString())?.let {
+        return appDatabase.getCommonDao().get(collection.name, id.toString())?.let {
             it.data?.let { string -> Json.decodeFromString(string) }
         }
     }

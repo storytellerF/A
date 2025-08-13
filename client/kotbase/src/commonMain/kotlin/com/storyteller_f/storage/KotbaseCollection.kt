@@ -8,7 +8,6 @@ import kotbase.QueryBuilder.select
 import kotbase.ktx.*
 import kotbase.ktx.from
 import kotbase.paging.QueryPagingSource
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -55,16 +54,6 @@ suspend fun <T : Any> CustomKotbaseCollection<T>.update(id: PrimaryKey, block: (
 fun <T : Any> CustomKotbaseCollection<T>.observeDatum(id: PrimaryKey): Flow<T?> {
     return observeDatum {
         "id" equalTo id
-    }
-}
-
-class KotbaseObservable<T>(
-    private val listenerToken: ListenerToken,
-    override val deferred: CompletableDeferred<List<T>>,
-) :
-    ModelObservable<T> {
-    override fun remove() {
-        listenerToken.remove()
     }
 }
 
