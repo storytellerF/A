@@ -1,5 +1,6 @@
 package com.storyteller_f.a.built_in_bot
 
+import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
@@ -9,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
 fun main() {
+    Napier.base(kmpLogger)
     runBlocking {
         val job = launch {
             while (isActive) {
