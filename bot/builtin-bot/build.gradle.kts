@@ -11,5 +11,9 @@ application {
 }
 
 dependencies {
-
+    implementation(libs.napier)
+    implementation(projects.shared)
+    implementation(projects.client.core)
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.coroutines.core)
 }

@@ -68,13 +68,13 @@ sealed interface ReactionCollection {
 }
 
 data object DownloadCollection {
-    const val name = "download"
+    const val NAME = "download"
 }
 data class MediasCollection(val objectId: PrimaryKey) {
     fun getName() = "medias_$objectId"
 }
 data object AlternativesCollection {
-    const val name = "alternatives"
+    const val NAME = "alternatives"
 }
 
 fun UserCollection.getName(): String {
@@ -143,6 +143,7 @@ interface UserStorage {
     suspend fun save(collection: UserCollection, t: UserInfo)
     fun observeData(collection: UserCollection): PagingSource<Int, UserInfo>
     fun observeDatum(key: String): Flow<UserInfo?>
+    suspend fun clean(collection: UserCollection)
 }
 
 interface CommunityStorage {
@@ -151,6 +152,7 @@ interface CommunityStorage {
     suspend fun save(collection: CommunityCollection, t: CommunityInfo)
     fun observeData(collection: CommunityCollection): PagingSource<Int, CommunityInfo>
     suspend fun getDocument(collection: CommunityCollection, id: PrimaryKey): CommunityInfo?
+    suspend fun clean(collection: CommunityCollection)
 }
 
 interface TopicStorage {
@@ -159,12 +161,14 @@ interface TopicStorage {
     fun observeData(collection: TopicCollection): PagingSource<Int, TopicInfo>
     fun observeDatum(key: String): Flow<TopicInfo?>
     suspend fun getDocument(collection: TopicCollection, id: PrimaryKey): TopicInfo?
+    suspend fun clean(collection: TopicCollection)
 }
 
 interface TitleStorage {
     fun observeDatum(id: PrimaryKey): Flow<TitleInfo?>
     suspend fun save(collection: TitleCollection, t: TitleInfo)
     fun observeData(collection: TitleCollection): PagingSource<Int, TitleInfo>
+    suspend fun clean(collection: TitleCollection)
 }
 
 interface RoomStorage {
@@ -172,21 +176,25 @@ interface RoomStorage {
     suspend fun save(collection: RoomCollection, t: RoomInfo)
     fun observeData(collection: RoomCollection): PagingSource<Int, RoomInfo>
     fun observeDatum(key: String): Flow<RoomInfo?>
+    suspend fun clean(collection: RoomCollection)
 }
 
 interface ReactionStorage {
     suspend fun save(collection: ReactionCollection, t: ReactionInfo)
     fun observeData(collection: ReactionCollection): PagingSource<Int, ReactionInfo>
+    suspend fun clean(collection: ReactionCollection)
 }
 
 interface AlternativesStorage {
     suspend fun save(collection: AlternativesCollection, t: AlternativeAccountInfo)
     fun observeData(collection: AlternativesCollection): PagingSource<Int, AlternativeAccountInfo>
+    suspend fun clean(collection: AlternativesCollection)
 }
 
 interface OSSStorage {
     suspend fun save(collection: MediasCollection, t: MediaInfo)
     fun observeData(collection: MediasCollection): PagingSource<Int, MediaInfo>
+    suspend fun clean(collection: MediasCollection)
 }
 
 interface DownloadStorage {
@@ -203,6 +211,10 @@ interface RemoteKeyStorage {
 
     suspend fun deletePreRemoteKey(collection: String)
     suspend fun deleteNextRemoteKey(collection: String)
+    companion object {
+        const val PRE_COLLECTION = "pre_remote_keys"
+        const val NEXT_COLLECTION = "next_remote_keys"
+    }
 }
 
 suspend fun TopicStorage.update(

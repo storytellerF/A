@@ -24,25 +24,31 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun UserRefCell(userId: PrimaryKey, onClick: ((UserInfo) -> Unit)? = null) {
-    val viewModel = com.storyteller_f.a.app.compose_app.model.createUserViewModel(userId)
-    UserRefCellInternal(viewModel, onClick)
+    val appNav = LocalAppNav.current
+    val viewModel = createUserViewModel(userId)
+    UserRefCellInternal(viewModel) {
+        onClick?.invoke(it) ?: appNav.gotoUser(it.id)
+    }
 }
 
 @Composable
 fun UserRefCell(userAid: String, onClick: ((UserInfo) -> Unit)? = null) {
-    val viewModel = com.storyteller_f.a.app.compose_app.model.createUserViewModel(userAid)
-    UserRefCellInternal(viewModel, onClick)
+    val appNav = LocalAppNav.current
+    val viewModel = createUserViewModel(userAid)
+    UserRefCellInternal(viewModel) {
+        onClick?.invoke(it) ?: appNav.gotoUser(it.id)
+    }
 }
 
 @Composable
 private fun UserRefCellInternal(
-    viewModel: com.storyteller_f.a.app.compose_app.model.UserViewModel,
-    onClick: ((UserInfo) -> Unit)? = null,
+    viewModel: UserViewModel,
+    onClick: (UserInfo) -> Unit
 ) {
     val userInfo by viewModel.handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
-    val appNav = com.storyteller_f.a.app.compose_app.LocalAppNav.current
-    com.storyteller_f.a.app.compose_app.common.RefCellStateView(
+    val appNav = LocalAppNav.current
+    RefCellStateView(
         viewModel.handler,
         modifier = Modifier
             .fillMaxWidth()
@@ -66,10 +72,9 @@ fun UserCell(
     iconClickable: Boolean = true,
     cellClickable: Boolean = true,
     size: Dp = 40.dp,
-    onClickCell: ((UserInfo) -> Unit)? = null,
+    onClickCell: (UserInfo) -> Unit
 ) {
     val shape = RoundedCornerShape(8.dp)
-    val appNav = com.storyteller_f.a.app.compose_app.LocalAppNav.current
     val baseModifier = Modifier.fillMaxWidth()
     val modifier = if (hideBackground) {
         baseModifier
@@ -78,7 +83,7 @@ fun UserCell(
     }.clip(shape)
         .clickable(userInfo != null && cellClickable) {
             userInfo?.let {
-                onClickCell?.invoke(it) ?: appNav.gotoUser(it.id)
+                onClickCell.invoke(it)
             }
         }
     Row(
@@ -86,7 +91,7 @@ fun UserCell(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        com.storyteller_f.a.app.compose_app.compontents.UserIcon(
+        UserIcon(
             userInfo,
             setClickEvent = iconClickable,
             size = size

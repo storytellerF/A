@@ -64,7 +64,8 @@ fun TopicCellInternal(
             }.padding(8.dp)
         ) {
             if (showAvatar) {
-                UserCell(authorInfo, true)
+                UserCell(authorInfo, true) {
+                }
             }
             Column(
                 if (isRoomPage) {

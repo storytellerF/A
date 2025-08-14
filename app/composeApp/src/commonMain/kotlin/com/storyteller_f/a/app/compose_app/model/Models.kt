@@ -108,7 +108,8 @@ class CommunitiesViewModel(
     word: String = "",
     target: PrimaryKey? = null,
 ) : PagingViewModel<SectionLoadParams, CommunityInfo>() {
-    private val modelCollection = CommunityCollection.SearchCommunity(joinStatusSearch, word, target)
+    private val modelCollection =
+        CommunityCollection.SearchCommunity(joinStatusSearch, word, target)
 
     override val flow = Pager(
         PagingConfig(pageSize = 20),
@@ -142,8 +143,13 @@ class CommunitiesViewModel(
                 ),
                 SectionLoadParams::class
             ),
-        ) { info ->
-            modelStorage.communityStorage.save(modelCollection, info)
+        ) { data, clean ->
+            if (clean) {
+                modelStorage.communityStorage.clean(modelCollection)
+            }
+            data.forEach {
+                modelStorage.communityStorage.save(modelCollection, it)
+            }
         },
     ) {
         CompatPagingSource(
@@ -173,8 +179,13 @@ class RoomsViewModel(
             ) { key, size ->
                 searchRooms(size, key, joinStatusSearch, word, community)
             },
-        ) { info ->
-            modelStorage.roomStorage.save(modelCollection, info)
+        ) { data, clean ->
+            if (clean) {
+                modelStorage.roomStorage.clean(modelCollection)
+            }
+            data.forEach {
+                modelStorage.roomStorage.save(modelCollection, it)
+            }
         },
     ) {
         CompatPagingSource(
@@ -208,8 +219,13 @@ class WorldViewModel(
                 ),
                 SectionLoadParams::class
             ),
-        ) { info ->
-            modelStorage.topicStorage.save(modelCollection, info)
+        ) { data, clean ->
+            if (clean) {
+                modelStorage.topicStorage.clean(modelCollection)
+            }
+            data.forEach {
+                modelStorage.topicStorage.save(modelCollection, it)
+            }
         },
     ) {
         CompatPagingSource(
@@ -256,8 +272,10 @@ class TopicsViewModel(
                 ),
                 SectionLoadParams::class
             ),
-        ) { info ->
-            modelStorage.topicStorage.save(modelCollection, info)
+        ) { data, refresh ->
+            data.forEach {
+                modelStorage.topicStorage.save(modelCollection, it)
+            }
         },
     ) {
 
@@ -371,7 +389,13 @@ class TopicSearchViewModel(
             ) { key, size ->
                 sessionManager.searchTopics(size, word, parentId, parentType, key)
             },
-        ) { info ->
+        ) { data, clean ->
+            if (clean) {
+                modelStorage.topicStorage.clean(modelCollection)
+            }
+            data.forEach {
+                modelStorage.topicStorage.save(modelCollection, it)
+            }
         },
     ) {
         CompatPagingSource(
@@ -401,7 +425,13 @@ class MediaListViewModel(
             ) { key, size ->
                 sessionManager.getMediaList(objectId, objectType, key, size)
             },
-        ) { info ->
+        ) { data, clean ->
+            if (clean) {
+                modelStorage.ossStorage.clean(modelCollection)
+            }
+            data.forEach {
+                modelStorage.ossStorage.save(modelCollection, it)
+            }
         },
     ) {
         CompatPagingSource(
@@ -476,7 +506,13 @@ class MemberViewModel(
                     else -> searchAllMembers(key, size, word)
                 }
             },
-        ) { info ->
+        ) { data, clean ->
+            if (clean) {
+                modelStorage.userStorage.clean(modelCollection)
+            }
+            data.forEach {
+                modelStorage.userStorage.save(modelCollection, it)
+            }
         },
     ) {
         CompatPagingSource(
@@ -504,8 +540,13 @@ class ReactionsViewModel(
             ) { key, size ->
                 sessionManager.getReactions(objectId, size, key)
             },
-        ) { info ->
-            modelStorage.reactionStorage.save(modelCollection, info)
+        ) { data, clean ->
+            if (clean) {
+                modelStorage.reactionStorage.clean(modelCollection)
+            }
+            data.forEach {
+                modelStorage.reactionStorage.save(modelCollection, it)
+            }
         }
     ) {
         CompatPagingSource(
@@ -606,7 +647,13 @@ class TitlesViewModel(
             ) { key, size ->
                 sessionManager.userTitles(uid, key, size, searchType, status, type, scopeId)
             },
-        ) { info ->
+        ) { data, clean ->
+            if (clean) {
+                modelStorage.titleStorage.clean(modelCollection)
+            }
+            data.forEach {
+                modelStorage.titleStorage.save(modelCollection, it)
+            }
         },
     ) {
         CompatPagingSource(
@@ -781,19 +828,18 @@ class MarkdownMediasViewModel(
     private val objectTuple: ObjectTuple,
 ) :
     SimpleViewModel<List<MediaInfo>>() {
-    override val handler: LoadingHandler<List<MediaInfo>>
-        get() = SimpleLoadingHandler(viewModelScope) {
-            runCatching {
-                extractMarkdownMediaLink(content).map {
-                    sessionManager.getMediaByName(it, objectTuple.objectId, objectTuple.objectType)
-                        .getOrThrow()
-                }
+    override val handler: LoadingHandler<List<MediaInfo>> = SimpleLoadingHandler(viewModelScope) {
+        runCatching {
+            extractMarkdownMediaLink(content).map {
+                sessionManager.getMediaByName(it, objectTuple.objectId, objectTuple.objectType)
+                    .getOrThrow()
             }
         }
+    }
 }
 
 class AlternativeAccountsViewModel(
-    val modelStorage: ModelStorage,
+    modelStorage: ModelStorage,
     sessionManager: SessionManager,
 ) :
     PagingViewModel<PrimaryKey, AlternativeAccountInfo>() {
@@ -804,19 +850,23 @@ class AlternativeAccountsViewModel(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection.name,
+            modelCollection.NAME,
             RegularPagingSource(
                 sessionManager
             ) { key, size ->
                 sessionManager.getAlternativeAccounts(key, size)
             },
-        ) { info ->
+        ) { data, clean ->
+            if (clean) {
+                modelStorage.alternativesStorage.clean(modelCollection)
+            }
+            data.forEach {
+                modelStorage.alternativesStorage.save(modelCollection, it)
+            }
         },
     ) {
         CompatPagingSource(
-            modelStorage.alternativesStorage.observeData(
-                modelCollection,
-            ),
+            modelStorage.alternativesStorage.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)

@@ -19,7 +19,6 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.KClass
 import kotbase.Collection as KotbaseCollection
 
@@ -68,7 +67,7 @@ class CustomKotbaseCollection<T : Any>(
     }
 
     fun observeDatum(function: WhereBuilder.() -> Expression): Flow<T?> {
-        return select(all()).from(collection).where(function).limit(1).queryChangeFlow().map {
+        return select(all()).from(collection).where(function).limit(1).queryChangeFlow(Dispatchers.IO).map {
             if (it.error != null) {
                 Napier.e(throwable = it.error) {
                     "get data failed from ${collection.name}"
@@ -119,7 +118,7 @@ class CustomKotbaseCollection<T : Any>(
             Json.decodeFromString(serializer, json)
         }
         return QueryPagingSource(
-            EmptyCoroutineContext,
+            Dispatchers.IO,
             select(all()),
             collection,
             mapper,

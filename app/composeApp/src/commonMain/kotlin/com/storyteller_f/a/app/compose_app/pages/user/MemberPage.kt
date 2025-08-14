@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.common.StateView
 import com.storyteller_f.a.app.compose_app.common.bottomAppending
 import com.storyteller_f.a.app.compose_app.common.topPrepend
@@ -50,6 +51,7 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
 @Composable
 fun MemberList(items: LazyPagingItems<UserInfo>, onClick: ((UserInfo) -> Unit)? = null) {
     val debounced = items.loadState
+    val appNav = LocalAppNav.current
     StateView(items) {
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
@@ -62,7 +64,9 @@ fun MemberList(items: LazyPagingItems<UserInfo>, onClick: ((UserInfo) -> Unit)? 
                     it.id
                 },
             ) { index ->
-                UserCell(items[index], true, onClickCell = onClick)
+                UserCell(items[index], true, onClickCell = {
+                    onClick?.invoke(it) ?: appNav.gotoUser(it.id)
+                })
                 Spacer(modifier = Modifier.height(20.dp))
                 if (index != items.itemSnapshotList.size - 1) {
                     HorizontalDivider()

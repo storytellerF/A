@@ -10,6 +10,8 @@ import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.storage.RemoteKeyStorage.Companion.NEXT_COLLECTION
+import com.storyteller_f.storage.RemoteKeyStorage.Companion.PRE_COLLECTION
 import kotbase.Expression
 import kotbase.From
 import kotbase.OrderByRouter
@@ -64,6 +66,8 @@ class UserDocumentStorage(
                 "aid" equalTo key
             }
     }
+
+    override suspend fun clean(collection: UserCollection) = Unit
 }
 
 class CommunityDocumentStorage(
@@ -126,6 +130,8 @@ class CommunityDocumentStorage(
         return kotbaseDocumentSource.getCollection<CommunityInfo>(collection.getName())
             .getDocument(id)
     }
+
+    override suspend fun clean(collection: CommunityCollection) = Unit
 }
 
 class TopicDocumentStorage(
@@ -204,6 +210,8 @@ class TopicDocumentStorage(
         return kotbaseDocumentSource.getCollection<TopicInfo>(collection.getName())
             .getDocument(id)
     }
+
+    override suspend fun clean(collection: TopicCollection) = Unit
 }
 
 class TitleDocumentStorage(
@@ -240,6 +248,8 @@ class TitleDocumentStorage(
             else -> throw Exception("unsupported")
         }
     }
+
+    override suspend fun clean(collection: TitleCollection) = Unit
 }
 
 class RoomDocumentStorage(
@@ -291,38 +301,40 @@ class RoomDocumentStorage(
                 "aid" equalTo key
             }
     }
+
+    override suspend fun clean(collection: RoomCollection) = Unit
 }
 
 class RemoteKeyDocumentStorage(
     val kotbaseDocumentSource: KotbaseDocumentSource,
 ) : RemoteKeyStorage {
     override suspend fun getPreRemoteKey(collection: String): RemoteKeys? {
-        return kotbaseDocumentSource.getCollection<RemoteKeys>("pre_remote_keys")
+        return kotbaseDocumentSource.getCollection<RemoteKeys>(PRE_COLLECTION)
             .getDocument(collection)
     }
 
     override suspend fun getNextRemoteKey(collection: String): RemoteKeys? {
-        return kotbaseDocumentSource.getCollection<RemoteKeys>("next_remote_keys")
+        return kotbaseDocumentSource.getCollection<RemoteKeys>(NEXT_COLLECTION)
             .getDocument(collection)
     }
 
     override suspend fun savePreRemoteKey(remoteKeys: RemoteKeys) {
-        kotbaseDocumentSource.getCollection<RemoteKeys>("pre_remote_keys")
+        kotbaseDocumentSource.getCollection<RemoteKeys>(PRE_COLLECTION)
             .saveDocument(remoteKeys.collectionName, remoteKeys)
     }
 
     override suspend fun saveNextRemoteKey(remoteKeys: RemoteKeys) {
-        kotbaseDocumentSource.getCollection<RemoteKeys>("next_remote_keys")
+        kotbaseDocumentSource.getCollection<RemoteKeys>(NEXT_COLLECTION)
             .saveDocument(remoteKeys.collectionName, remoteKeys)
     }
 
     override suspend fun deletePreRemoteKey(collection: String) {
-        kotbaseDocumentSource.getCollection<RemoteKeys>("pre_remote_keys")
+        kotbaseDocumentSource.getCollection<RemoteKeys>(PRE_COLLECTION)
             .deleteDocument(collection)
     }
 
     override suspend fun deleteNextRemoteKey(collection: String) {
-        kotbaseDocumentSource.getCollection<RemoteKeys>("next_remote_keys")
+        kotbaseDocumentSource.getCollection<RemoteKeys>(NEXT_COLLECTION)
             .deleteDocument(collection)
     }
 }
@@ -351,26 +363,30 @@ class ReactionDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) 
             else -> throw Exception("unsupported")
         }
     }
+
+    override suspend fun clean(collection: ReactionCollection) = Unit
 }
 
 class AlternativesDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) :
     AlternativesStorage {
 
     override suspend fun save(collection: AlternativesCollection, t: AlternativeAccountInfo) {
-        kotbaseDocumentSource.getCollection<AlternativeAccountInfo>(collection.name)
+        kotbaseDocumentSource.getCollection<AlternativeAccountInfo>(collection.NAME)
             .save(t.id, t)
     }
 
     override fun observeData(
         collection: AlternativesCollection,
     ): PagingSource<Int, AlternativeAccountInfo> {
-        return kotbaseDocumentSource.getCollection<AlternativeAccountInfo>(collection.name)
+        return kotbaseDocumentSource.getCollection<AlternativeAccountInfo>(collection.NAME)
             .getSource {
                 orderBy {
                     "id".descending()
                 }
             }
     }
+
+    override suspend fun clean(collection: AlternativesCollection) = Unit
 }
 
 class OSSDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : OSSStorage {
@@ -392,6 +408,8 @@ class OSSDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : OSS
                 }
             }
     }
+
+    override suspend fun clean(collection: MediasCollection) = Unit
 }
 
 class DownloadDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : DownloadStorage {
@@ -400,14 +418,14 @@ class DownloadDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) 
         collection: DownloadCollection,
         t: DownloadInfo
     ) {
-        kotbaseDocumentSource.getCollection<DownloadInfo>(collection.name)
+        kotbaseDocumentSource.getCollection<DownloadInfo>(collection.NAME)
             .save(t.mediaInfo.id, t)
     }
 
     override fun observeDatum(
         id: PrimaryKey
     ): Flow<DownloadInfo?> {
-        return kotbaseDocumentSource.getCollection<DownloadInfo>(DownloadCollection.name)
+        return kotbaseDocumentSource.getCollection<DownloadInfo>(DownloadCollection.NAME)
             .observeDatum {
                 "_id" equalTo id
             }
@@ -417,7 +435,7 @@ class DownloadDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) 
         collection: DownloadCollection,
         id: PrimaryKey
     ): DownloadInfo? {
-        return kotbaseDocumentSource.getCollection<DownloadInfo>(collection.name)
+        return kotbaseDocumentSource.getCollection<DownloadInfo>(collection.NAME)
             .getDocument(id)
     }
 }

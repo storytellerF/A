@@ -52,10 +52,10 @@ class CachedLoadingHandler<T : Any>(
 @Suppress("unused")
 @OptIn(ExperimentalPagingApi::class)
 class CustomRemoteMediator<Datum : Any>(
-    private val documentModelStorage: ModelStorage,
+    private val modelStorage: ModelStorage,
     private val collection: String,
     private val networkService: PagingSource<String, Datum>,
-    private val update: suspend (Datum) -> Unit,
+    private val update: suspend (List<Datum>, Boolean) -> Unit,
 ) :
     RemoteMediator<String, Datum>() {
 
@@ -75,7 +75,7 @@ class CustomRemoteMediator<Datum : Any>(
 
             LoadType.PREPEND -> {
                 val remoteKey =
-                    documentModelStorage.remoteKeyStorage.getPreRemoteKey(collection)?.key
+                    modelStorage.remoteKeyStorage.getPreRemoteKey(collection)?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
@@ -86,7 +86,7 @@ class CustomRemoteMediator<Datum : Any>(
 
             LoadType.APPEND -> {
                 val remoteKey =
-                    documentModelStorage.remoteKeyStorage.getNextRemoteKey(collection)?.key
+                    modelStorage.remoteKeyStorage.getNextRemoteKey(collection)?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
@@ -121,11 +121,9 @@ class CustomRemoteMediator<Datum : Any>(
             val data = loadResult.data
             val nextKey = loadResult.nextKey
             val preKey = loadResult.prevKey
-            documentModelStorage.remoteKeyStorage.savePreRemoteKey(RemoteKeys(collection, preKey))
-            documentModelStorage.remoteKeyStorage.saveNextRemoteKey(RemoteKeys(collection, nextKey))
-            data.forEach {
-                update(it)
-            }
+            modelStorage.remoteKeyStorage.savePreRemoteKey(RemoteKeys(collection, preKey))
+            modelStorage.remoteKeyStorage.saveNextRemoteKey(RemoteKeys(collection, nextKey))
+            update(data, loadType == LoadType.REFRESH)
             Napier.v(tag = "pagination") {
                 "mediator success type: $loadType key: ${params.key}"
             }

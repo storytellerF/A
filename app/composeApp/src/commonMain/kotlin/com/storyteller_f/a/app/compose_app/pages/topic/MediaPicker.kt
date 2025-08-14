@@ -184,7 +184,7 @@ private fun MediaListView(
     clickItem: (List<MediaInfo>) -> Unit,
 ) {
     val sessionManager = LocalSessionManager.current
-    val list = createMediaListViewModel(mediaTarget)
+    val viewModel = createMediaListViewModel(mediaTarget)
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     Column(modifier = Modifier.padding(top = 10.dp)) {
@@ -199,7 +199,7 @@ private fun MediaListView(
                 Icon(Icons.Default.CloudUpload, "upload file")
             }
         }
-        val pagingItems = list.flow.collectAsLazyPagingItems()
+        val pagingItems = viewModel.flow.collectAsLazyPagingItems()
         val debounced = pagingItems.loadState
         StateView(pagingItems, modifier = Modifier.weight(1f)) {
             LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {

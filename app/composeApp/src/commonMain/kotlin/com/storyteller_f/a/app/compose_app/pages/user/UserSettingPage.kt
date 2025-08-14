@@ -175,19 +175,20 @@ private fun processSelectedMedia(
             )
         ) {
             onInputMedia(info)
-        }
-        scope.launch {
-            globalDialogController.useResult {
-                cropImage(
-                    context,
-                    sessionManager,
-                    info,
-                    imageCropper,
-                    mediaTarget
-                )
-            }.onSuccess {
-                if (it != null) {
-                    onInputMedia(it)
+        } else {
+            scope.launch {
+                globalDialogController.useResult {
+                    cropImage(
+                        context,
+                        sessionManager,
+                        info,
+                        imageCropper,
+                        mediaTarget
+                    )
+                }.onSuccess {
+                    if (it != null) {
+                        onInputMedia(it)
+                    }
                 }
             }
         }
