@@ -52,7 +52,7 @@ suspend fun Backend.updateUser(
     }, suspend {
         checkIcon(newUser.avatar).mapResult {
             when (it) {
-                MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("avatar not valid"))
+                MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("avatar not font"))
                 MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
                     CustomBadRequestException("avatar must be image")
                 )
@@ -134,11 +134,11 @@ enum class StringCheckResult {
 }
 
 suspend fun Backend.checkIcon(
-    iconName: PrimaryKey?,
+    icon: PrimaryKey?,
     aspectRatio: Dimension? = null,
 ): Result<MediaCheckResult?> {
-    return if (iconName != null) {
-        exposedDatabase.mediaDatabase.getMediaByIds(listOf(iconName)).mapIfNotNull {
+    return if (icon != null) {
+        exposedDatabase.mediaDatabase.getMediaByIds(listOf(icon)).mapIfNotNull {
             val mediaInfo = it.firstOrNull()
             val dimension = mediaInfo?.dimension
             when {

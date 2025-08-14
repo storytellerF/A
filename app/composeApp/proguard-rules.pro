@@ -30,8 +30,6 @@
 -keep class org.mozilla.classfile.ClassFileWriter
 -dontwarn org.mozilla.javascript.tools.**
 
-# Please add these rules to your existing keep rules in order to suppress warnings.
-# This is generated automatically by the Android Gradle plugin.
 -dontwarn java.beans.BeanDescriptor
 -dontwarn java.beans.BeanInfo
 -dontwarn java.beans.IntrospectionException
@@ -50,3 +48,5 @@
 -dontwarn kotlinx.datetime.Instant$Companion
 -dontwarn kotlinx.datetime.Instant
 -dontwarn okhttp3.internal.Util
+
+-keep class com.storyteller_f.a.app.compose_app.ui.** { *; }

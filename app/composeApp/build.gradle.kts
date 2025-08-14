@@ -133,8 +133,6 @@ kotlin {
             implementation(libs.javet.node.macos.arm64)
             implementation(libs.javet.node.macos.x86.x4)
             implementation(libs.javet.node.windows.x86.x4)
-
-            implementation(libs.couchbase.lite.java)
         }
         androidUnitTest {
             dependsOn(headlessTest)

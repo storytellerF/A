@@ -23,6 +23,8 @@ import com.storyteller_f.storage.OSSStorage
 import com.storyteller_f.storage.ReactionCollection
 import com.storyteller_f.storage.ReactionStorage
 import com.storyteller_f.storage.RemoteKeyStorage
+import com.storyteller_f.storage.RemoteKeyStorage.Companion.NEXT_COLLECTION
+import com.storyteller_f.storage.RemoteKeyStorage.Companion.PRE_COLLECTION
 import com.storyteller_f.storage.RemoteKeys
 import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.RoomStorage
@@ -62,6 +64,10 @@ class UserRoomStorage(val appDatabase: AppDatabase) : UserStorage {
         key: String
     ): Flow<UserInfo?> {
         return impl.observeDatum(UserCollection.Users.getName(), key)
+    }
+
+    override suspend fun clean(collection: UserCollection) {
+        appDatabase.getCommonDao().clean(collection.getName())
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<UserInfo?> {
@@ -112,6 +118,10 @@ class CommunityRoomStorage(val appDatabase: AppDatabase) : CommunityStorage {
         val entity = appDatabase.getCommunityDao().get(collection.getName(), id.toString())
         return entity?.data?.let { Json.decodeFromString(it) }
     }
+
+    override suspend fun clean(collection: CommunityCollection) {
+        appDatabase.getCommunityDao().clean(collection.getName())
+    }
 }
 
 class TopicRoomStorage(val appDatabase: AppDatabase) : TopicStorage {
@@ -159,6 +169,10 @@ class TopicRoomStorage(val appDatabase: AppDatabase) : TopicStorage {
         val entity = appDatabase.getTopicDao().get(collection.getName(), id.toString())
         return entity?.data?.let { Json.decodeFromString(it) }
     }
+
+    override suspend fun clean(collection: TopicCollection) {
+        appDatabase.getTopicDao().clean(collection.getName())
+    }
 }
 
 class TitleRoomStorage(val appDatabase: AppDatabase) : TitleStorage {
@@ -179,10 +193,14 @@ class TitleRoomStorage(val appDatabase: AppDatabase) : TitleStorage {
     ): PagingSource<Int, TitleInfo> {
         val source = appDatabase.getCommonDao().getAsSource(collection.getName())
         return WrappedPagingSource(source) { list ->
-            list.mapNotNull {
-                it.data?.let { string -> Json.decodeFromString(string) }
+            list.map {
+                Json.decodeFromString(it.data)
             }
         }
+    }
+
+    override suspend fun clean(collection: TitleCollection) {
+        appDatabase.getCommonDao().clean(collection.getName())
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<TitleInfo?> {
@@ -199,8 +217,8 @@ class CommonStorageImpl(val appDatabase: AppDatabase) {
     ): PagingSource<Int, T> {
         val source = appDatabase.getCommonDao().getAsSource(collection)
         return WrappedPagingSource(source) { list ->
-            list.mapNotNull {
-                it.data?.let { string -> Json.decodeFromString(string) }
+            list.map {
+                Json.decodeFromString(it.data)
             }
         }
     }
@@ -240,40 +258,55 @@ class RoomRoomStorage(val appDatabase: AppDatabase) : RoomStorage {
         return impl.observeDatum(RoomCollection.Rooms.getName(), key)
     }
 
+    override suspend fun clean(collection: RoomCollection) = Unit
+
     override fun observeDatum(id: PrimaryKey): Flow<RoomInfo?> {
         return observeDatum(id.toString())
     }
 }
 
 class RemoteKeyRoomStorage(val appDatabase: AppDatabase) : RemoteKeyStorage {
+
     override suspend fun getPreRemoteKey(collection: String): RemoteKeys? {
-        return appDatabase.getCommonDao().get("pre_remote_keys", collection)?.let {
-            RemoteKeys(collection, it.data)
+        return appDatabase.getCommonDao().get(PRE_COLLECTION, collection)?.let {
+            Json.decodeFromString(it.data)
         }
     }
 
     override suspend fun getNextRemoteKey(collection: String): RemoteKeys? {
-        return appDatabase.getCommonDao().get("next_remote_keys", collection)?.let {
-            RemoteKeys(collection, it.data)
+        return appDatabase.getCommonDao().get(NEXT_COLLECTION, collection)?.let {
+            Json.decodeFromString(it.data)
         }
     }
 
     override suspend fun savePreRemoteKey(remoteKeys: RemoteKeys) {
         appDatabase.getCommonDao()
-            .insert(CommonEntity(remoteKeys.collectionName, "pre_remote_keys", remoteKeys.key))
+            .insert(
+                CommonEntity(
+                    remoteKeys.collectionName,
+                    PRE_COLLECTION,
+                    Json.encodeToString(remoteKeys)
+                )
+            )
     }
 
     override suspend fun saveNextRemoteKey(remoteKeys: RemoteKeys) {
         appDatabase.getCommonDao()
-            .insert(CommonEntity(remoteKeys.collectionName, "next_remote_keys", remoteKeys.key))
+            .insert(
+                CommonEntity(
+                    remoteKeys.collectionName,
+                    NEXT_COLLECTION,
+                    Json.encodeToString(remoteKeys)
+                )
+            )
     }
 
     override suspend fun deletePreRemoteKey(collection: String) {
-        appDatabase.getCommonDao().delete("pre_remote_keys", collection)
+        appDatabase.getCommonDao().delete(PRE_COLLECTION, collection)
     }
 
     override suspend fun deleteNextRemoteKey(collection: String) {
-        appDatabase.getCommonDao().delete("next_remote_keys", collection)
+        appDatabase.getCommonDao().delete(NEXT_COLLECTION, collection)
     }
 }
 
@@ -298,21 +331,29 @@ class ReactionRoomStorage(val appDatabase: AppDatabase) : ReactionStorage {
             }
         }
     }
+
+    override suspend fun clean(collection: ReactionCollection) {
+        appDatabase.getReactionDao().clean(collection.getName())
+    }
 }
 
 class AlternativesRoomStorage(val appDatabase: AppDatabase) : AlternativesStorage {
     override suspend fun save(collection: AlternativesCollection, t: AlternativeAccountInfo) {
         val data = Json.encodeToString(t)
-        appDatabase.getCommonDao().insert(CommonEntity(t.id, collection.name, data))
+        appDatabase.getCommonDao().insert(CommonEntity(t.id, collection.NAME, data))
     }
 
     override fun observeData(collection: AlternativesCollection): PagingSource<Int, AlternativeAccountInfo> {
-        val raw = appDatabase.getReactionDao().getAsSource(collection.name)
+        val raw = appDatabase.getCommonDao().getAsSource(collection.NAME)
         return WrappedPagingSource(raw) { list ->
             list.map {
                 Json.decodeFromString(it.data)
             }
         }
+    }
+
+    override suspend fun clean(collection: AlternativesCollection) {
+        appDatabase.getCommonDao().clean(collection.NAME)
     }
 }
 
@@ -326,12 +367,16 @@ class OSSRoomStorage(val appDatabase: AppDatabase) : OSSStorage {
     }
 
     override fun observeData(collection: MediasCollection): PagingSource<Int, MediaInfo> {
-        val raw = appDatabase.getReactionDao().getAsSource(collection.getName())
+        val raw = appDatabase.getCommonDao().getAsSource(collection.getName())
         return WrappedPagingSource(raw) { list ->
             list.map {
                 Json.decodeFromString(it.data)
             }
         }
+    }
+
+    override suspend fun clean(collection: MediasCollection) {
+        appDatabase.getCommonDao().clean(collection.getName())
     }
 }
 
@@ -339,12 +384,12 @@ class DownloadRoomStorage(val appDatabase: AppDatabase) : DownloadStorage {
     override suspend fun save(collection: DownloadCollection, t: DownloadInfo) {
         val data = Json.encodeToString(t)
         appDatabase.getCommonDao()
-            .insert(CommonEntity(t.mediaInfo.id, collection.name, data))
+            .insert(CommonEntity(t.mediaInfo.id, collection.NAME, data))
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?> {
         return appDatabase.getCommonDao()
-            .getAsFlow(DownloadCollection.name, id.toString()).map {
+            .getAsFlow(DownloadCollection.NAME, id.toString()).map {
                 it?.data?.let { string -> Json.decodeFromString(string) }
             }
     }
@@ -353,8 +398,8 @@ class DownloadRoomStorage(val appDatabase: AppDatabase) : DownloadStorage {
         collection: DownloadCollection,
         id: PrimaryKey
     ): DownloadInfo? {
-        return appDatabase.getCommonDao().get(collection.name, id.toString())?.let {
-            it.data?.let { string -> Json.decodeFromString(string) }
+        return appDatabase.getCommonDao().get(collection.NAME, id.toString())?.let {
+            Json.decodeFromString(it.data)
         }
     }
 }

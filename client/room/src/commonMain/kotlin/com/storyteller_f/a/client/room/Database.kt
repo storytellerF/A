@@ -29,7 +29,8 @@ abstract class AppDatabase : RoomDatabase() {
 @Suppress(
     "NO_ACTUAL_FOR_EXPECT",
     "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING",
-    "KotlinNoActualForExpect"
+    "KotlinNoActualForExpect",
+    "RedundantSuppression"
 )
 expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
     override fun initialize(): AppDatabase
@@ -54,15 +55,15 @@ interface CommonDao {
     @Query("select * from CommonEntity where collection = :collection order by id desc")
     fun getAsSource(collection: String): PagingSource<Int, CommonEntity>
 
-    @Query("select * from CommonEntity where collection = :collection order by id desc limit :limit offset :offset")
-    suspend fun getAsList(collection: String, offset: Int, limit: Int): List<CommonEntity>
+    @Query("delete from CommonEntity where collection = :collection")
+    suspend fun clean(collection: String)
 }
 
 @Entity(primaryKeys = ["collection", "id"])
 data class CommonEntity(
     val id: String,
     val collection: String,
-    val data: String?,
+    val data: String,
 ) {
     constructor(
         id: Long,
@@ -85,8 +86,8 @@ interface CommunityDao {
     @Query("select * from CommunityEntity where collection = :collection and id = :id")
     suspend fun get(collection: String, id: String): CommunityEntity?
 
-    @Query("select * from CommunityEntity where collection = :collection order by id desc limit :limit offset :offset")
-    suspend fun getAsList(collection: String, offset: Int, limit: Int): List<CommunityEntity>
+    @Query("delete from CommunityEntity where collection = :collection")
+    suspend fun clean(collection: String)
 }
 
 @Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "hasPoster", "id")])
@@ -118,11 +119,8 @@ interface TopicDao {
     @Query("select * from TopicEntity where collection = :collection and id = :id")
     suspend fun get(collection: String, id: String): TopicEntity?
 
-    @Query(
-        "select * from TopicEntity where collection = :collection " +
-            "order by isPinned desc, id desc limit :limit offset :offset"
-    )
-    suspend fun getAsList(collection: String, offset: Int, limit: Int): List<TopicEntity>
+    @Query("delete from TopicEntity where collection = :collection")
+    suspend fun clean(collection: String)
 }
 
 @Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "isPinned", "id")])
@@ -149,8 +147,8 @@ interface ReactionDao {
     @Query("select * from ReactionEntity where collection = :collection order by count desc, lastReactionId asc")
     fun getAsSource(collection: String): PagingSource<Int, ReactionEntity>
 
-    @Query("select * from ReactionEntity where collection = :collection order by id desc limit :limit offset :offset")
-    suspend fun getAsList(collection: String, offset: Int, limit: Int): List<ReactionEntity>
+    @Query("delete from ReactionEntity where collection = :collection")
+    suspend fun clean(collection: String)
 }
 
 @Entity(

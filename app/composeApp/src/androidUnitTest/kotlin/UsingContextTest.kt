@@ -2,10 +2,8 @@ import android.content.ContentProvider
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
-import com.couchbase.lite.CouchbaseLite
 import com.storyteller_f.a.app.compose_app.AApplication
 import com.storyteller_f.a.app.compose_app.MainActivity
-import org.junit.Assume
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -22,7 +20,6 @@ actual abstract class UsingContextTest {
         RuntimeEnvironment.setApplicationSupplier {
             AApplication()
         }
-        CouchbaseLite.init(true)
         setupAndroidContextProvider()
     }
 

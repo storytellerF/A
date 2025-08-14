@@ -33,14 +33,15 @@ class KotbaseTest : UsingContextTest() {
     @OptIn(ExperimentalTime::class)
     @Test
     fun `test kotbase order`() = runTest {
+        val collection = CommunityCollection.SearchCommunity(
+            JoinStatusSearch.JOINED, ""
+        )
         val modelStorage = DocumentModelStorage(createKotbaseSource(null))
-        modelStorage.communityStorage.save(CommunityCollection.Communities, CommunityInfo.Companion.EMPTY.copy(hasPoster = true, id = 1))
-        modelStorage.communityStorage.save(CommunityCollection.Communities, CommunityInfo.Companion.EMPTY.copy(hasPoster = false, id = 2))
-        modelStorage.communityStorage.save(CommunityCollection.Communities, CommunityInfo.Companion.EMPTY.copy(hasPoster = true, id = 3))
-        modelStorage.communityStorage.save(CommunityCollection.Communities, CommunityInfo.Companion.EMPTY.copy(hasPoster = false, id = 4))
-        val observeData = modelStorage.communityStorage.observeData(
-            CommunityCollection.SearchCommunity(
-            JoinStatusSearch.JOINED, ""))
+        modelStorage.communityStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = true, id = 1))
+        modelStorage.communityStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = false, id = 2))
+        modelStorage.communityStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = true, id = 3))
+        modelStorage.communityStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = false, id = 4))
+        val observeData = modelStorage.communityStorage.observeData(collection)
         val loadResult = observeData.load(PagingSource.LoadParams.Refresh(null, 10, false))
         assertTrue(loadResult is PagingSource.LoadResult.Page)
         loadResult.data.forEach {

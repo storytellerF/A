@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "252e6b55b89101bb4beee4f26978fb46",
+    "identityHash": "b286e52dab48e9958244ff6da145071c",
     "entities": [
       {
         "tableName": "CommonEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `collection` TEXT NOT NULL, `data` TEXT, PRIMARY KEY(`collection`, `id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `collection` TEXT NOT NULL, `data` TEXT NOT NULL, PRIMARY KEY(`collection`, `id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -23,7 +23,8 @@
           {
             "fieldPath": "data",
             "columnName": "data",
-            "affinity": "TEXT"
+            "affinity": "TEXT",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -193,7 +194,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '252e6b55b89101bb4beee4f26978fb46')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b286e52dab48e9958244ff6da145071c')"
     ]
   }
 }

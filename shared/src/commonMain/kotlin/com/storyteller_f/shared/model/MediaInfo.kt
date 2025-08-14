@@ -2,6 +2,7 @@ package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import io.github.aakira.napier.Napier
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
@@ -30,5 +31,9 @@ data class MediaInfo(
 
 fun checkMediaDimensionRatioMatch(dimension: Dimension, aspectRatio: Dimension): Boolean {
     val aspectHeight = dimension.width.toFloat() * aspectRatio.height / aspectRatio.width
-    return abs(aspectHeight - dimension.height) < 1
+    val abs = abs(aspectHeight - dimension.height)
+    Napier.i {
+        "checkMediaDimensionRatioMatch $dimension $aspectRatio $abs $aspectHeight"
+    }
+    return abs < 1
 }

@@ -460,7 +460,7 @@ fun getDownloadViewModel(): DownloadViewModel =
 @Composable
 fun getAlternativeAccountsViewModel(): AlternativeAccountsViewModel =
     viewModel(
-        listOf("alternative accounts")
+        listOf("alternative")
     ) { sessionManager, storageSource ->
         AlternativeAccountsViewModel(storageSource, sessionManager)
     }

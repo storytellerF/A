@@ -58,7 +58,7 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
             val currentUserSessionManager = LocalSessionManager.current
             val mainSessionManager = LocalMainSessionManager.current
             val currentAddress by currentUserSessionManager.address.collectAsState()
-            val mainAddress by currentUserSessionManager.address.collectAsState()
+            val mainAddress by mainSessionManager.address.collectAsState()
             val isSwitched = currentAddress != mainAddress
             val scope = rememberCoroutineScope()
             val globalDialogController = LocalGlobalDialog.current
@@ -84,6 +84,7 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
                         }
                     }
                 }
+                println("alternatives ${pagingItems.itemSnapshotList.size}")
                 StateView(pagingItems, modifier = Modifier.height(300.dp)) {
                     LazyColumn(
                         contentPadding = PaddingValues(10.dp),

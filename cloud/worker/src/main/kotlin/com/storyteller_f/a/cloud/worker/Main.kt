@@ -17,8 +17,9 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 fun main() {
@@ -29,8 +30,8 @@ fun main() {
     }
     val backend = buildBackendFromEnv(env)
     runBlocking {
-        val job = async {
-            while (true) {
+        val job = launch {
+            while (isActive) {
                 Napier.i(tag = "task") {
                     "execute ${now()}"
                 }

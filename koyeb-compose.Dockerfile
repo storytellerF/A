@@ -7,21 +7,15 @@ RUN apt-get install -y --no-install-recommends \
     unzip \
     jq
 
-#3
-
 WORKDIR /app
-
-COPY . .
-
-#2
+COPY deploy .
+ENV HOST_TYPE=local
 
 RUN find scripts/ -type f -name "*.sh" -exec sed -i 's/\r$//' {} + && \
     sed -i 's/\r$//' gradlew
 
 RUN ./scripts/download_scripts/manual-download-docker-image.sh
 
-#mock host environment
-ENV HOST_TYPE=local
 
 RUN --mount=type=cache,target=/root/.gradle \
     ./scripts/build_scripts/build-server-on-condition.sh ${FLAVOR} ${BUILD_TYPE} ${BUILD_ON}
@@ -30,10 +24,8 @@ FROM koyeb/docker-compose
 
 RUN apk add --no-cache git
 
-#3
-
 WORKDIR /app
 
-COPY --from=builder /app .
+COPY --from=builder / .
 
 CMD sh ./scripts/service_scripts/start-compose-in-koyeb.sh ${FLAVOR}
