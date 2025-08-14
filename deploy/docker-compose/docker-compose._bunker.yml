@@ -7,6 +7,9 @@ services:
   server:
     networks:
       - bw-services
+  worker:
+    networks:
+      - bw-services
   pg:
     networks:
       - bw-services
