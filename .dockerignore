@@ -2,3 +2,6 @@
 !dev.win.env
 !dev.env
 .git
+android-llama-cpp
+app
+build
