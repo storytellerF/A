@@ -18,15 +18,13 @@ RUN --mount=type=cache,target=/root/.gradle \
     "./scripts/build_scripts/build-bot.sh"
 
 RUN mkdir -p ./bot/builtin-bot/build/decompressed && \
-    tar -xf ./bot/builtin-bot/build/distributions/worker.tar -C ./cloud/worker/build/decompressed
+    tar -xf ./bot/builtin-bot/build/distributions/builtin-bot.tar -C ./bot/builtin-bot/build/decompressed
 
 FROM eclipse-temurin:21-alpine
 
-RUN apk add libavif-dev
-
 WORKDIR /app
 
-COPY --from=builder /app/bot/builtin-bot/build/decompressed/worker .
+COPY --from=builder /app/bot/builtin-bot/build/decompressed/builtin-bot .
 #if COPY --from=builder /app/deploy ./deploy
 # 使用koyeb 需要把args 变成env 后文件导入
 #if COPY --from=builder /app/build/envs/*.env .
