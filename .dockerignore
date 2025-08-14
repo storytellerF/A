@@ -1,3 +1,4 @@
 *.env
 !dev.win.env
 !dev.env
+.git

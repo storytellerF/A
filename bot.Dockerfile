@@ -25,9 +25,6 @@ FROM eclipse-temurin:21-alpine
 WORKDIR /app
 
 COPY --from=builder /app/bot/builtin-bot/build/decompressed/builtin-bot .
-#if COPY --from=builder /app/deploy ./deploy
-# 使用koyeb 需要把args 变成env 后文件导入
-#if COPY --from=builder /app/build/envs/*.env .
 
 ENTRYPOINT ["sh", "./bin/builtin-bot"]
 # ENTRYPOINT ["sh", "-c", "while true; do sleep 3600; done"]
