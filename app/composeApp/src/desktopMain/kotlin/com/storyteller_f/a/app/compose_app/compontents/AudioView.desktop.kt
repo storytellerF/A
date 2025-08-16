@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import javazoom.jl.player.FactoryRegistry
 import javazoom.jl.player.JavaSoundAudioDeviceFactory
@@ -34,14 +35,32 @@ actual fun AudioView(obj: RemoteMediaItem, isEmbed: Boolean) {
     }
 
     val player = remember {
-        jlp.createInstance(emptyArray()).apply {
-            setAudioDevice(FactoryRegistry.systemRegistry().createAudioDevice(JavaSoundAudioDeviceFactory::class.java))
+        try {
+            jlp.createInstance(arrayOf("-url", url)).apply {
+                setAudioDevice(
+                    FactoryRegistry.systemRegistry()
+                        .createAudioDevice(JavaSoundAudioDeviceFactory::class.java)
+                )
+            }
+        } catch (e: Exception) {
+            Napier.e(e) {
+                "AudioView"
+            }
+            null
         }
+
     }
 
     DisposableEffect(player) {
         onDispose {
-            player.stop()
+            try {
+                player?.stop()
+            } catch (e: Exception) {
+                Napier.e(e) {
+                    "AudioView"
+                }
+            }
+
         }
     }
     val shape = RoundedCornerShape(20.dp)
@@ -53,17 +72,32 @@ actual fun AudioView(obj: RemoteMediaItem, isEmbed: Boolean) {
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
             .clip(shape)
     ) {
-        IconButton({
-            if (currentPlaying) {
-                player.stop()
-                currentPlaying = false
-            } else {
-                player.play()
-                currentPlaying = true
-            }
-        }) {
+        IconButton(
+            {
+                try {
+                    if (currentPlaying) {
+                        player?.stop()
+                        currentPlaying = false
+                    } else {
+                        player?.play()
+                        currentPlaying = true
+                    }
+                } catch (e: Exception) {
+                    Napier.e(e) {
+                        "AudioView"
+                    }
+                }
+
+            },
+            enabled = player != null,
+        ) {
             when {
-                currentPlaying -> Icon(Icons.Default.PauseCircle, "pause", modifier = Modifier.size(40.dp))
+                currentPlaying -> Icon(
+                    Icons.Default.PauseCircle,
+                    "pause",
+                    modifier = Modifier.size(40.dp)
+                )
+
                 else -> Icon(Icons.Default.PlayCircle, "play", modifier = Modifier.size(40.dp))
             }
         }
