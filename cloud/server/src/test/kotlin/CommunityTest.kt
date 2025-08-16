@@ -52,7 +52,10 @@ class CommunityTest {
                 1,
                 searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY)
             )
-            assertListSize(1, getCommunityTopics(communityId, null, 10))
+            assertListSize(1, getCommunityTopics(
+                communityId,
+                paginationQuery = PaginationQuery(null, null, size = 10)
+            ))
             // 测试上传加密话题
             assertFails {
                 client.post("/topics") {

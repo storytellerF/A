@@ -42,12 +42,9 @@ fun main() {
         Runtime.getRuntime().addShutdownHook(Thread {
             println("🔻 收到终止信号，准备退出...")
             job.cancel()
+            Thread.sleep(1000)
         })
-        try {
-            job.join()
-        } catch (_: Exception) {
-            Napier.i("job done")
-        }
+        job.join()
         Napier.i("worker done")
     }
 }

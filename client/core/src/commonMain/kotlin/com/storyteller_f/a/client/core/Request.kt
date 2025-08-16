@@ -47,9 +47,12 @@ suspend fun SessionManager.getRoomInfoByAid(aid: String) = serviceCatching {
     CustomApi.Rooms.Aid.get.invoke(CustomApi.Rooms.Aid.RoomAidQuery(aid, currentIsAlreadySignUp))
 }
 
-suspend fun SessionManager.requestRoomKeys(id: PrimaryKey, nextId: String?, size: Int) =
+suspend fun SessionManager.getRoomMembersPublicKeys(
+    id: PrimaryKey,
+    paginationQuery: PaginationQuery
+) =
     serviceCatching {
-        CustomApi.Rooms.Id.Members.publicKeys.invoke(PaginationQuery(nextId, size = size), Path(id))
+        CustomApi.Rooms.Id.Members.publicKeys.invoke(paginationQuery, Path(id))
     }
 
 suspend fun SessionManager.joinRoom(id: PrimaryKey) = serviceCatching {
@@ -64,15 +67,14 @@ suspend fun SessionManager.joinCommunity(id: PrimaryKey) = serviceCatching {
 
 suspend fun SessionManager.getRoomTopics(
     roomId: PrimaryKey,
-    nextTopicId: String?,
-    size: Int,
-    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED,
+    pinType: TopicPinSearch? = null,
+    paginationQuery: PaginationQuery,
 ) = serviceCatching {
     CustomApi.Rooms.Id.Topics.get.invoke(
         TopicQuery(
             pinType,
             currentIsAlreadySignUp,
-            PaginationQuery(nextTopicId, size = size)
+            paginationQuery
         ),
         Path(roomId)
     )
@@ -80,15 +82,14 @@ suspend fun SessionManager.getRoomTopics(
 
 suspend fun SessionManager.getCommunityTopics(
     communityId: PrimaryKey,
-    nextTopicId: String?,
-    size: Int,
-    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED,
+    pinType: TopicPinSearch? = null,
+    paginationQuery: PaginationQuery,
 ) = serviceCatching {
     CustomApi.Communities.Id.Topics.get.invoke(
         TopicQuery(
             pinType,
             currentIsAlreadySignUp,
-            PaginationQuery(nextTopicId, size = size)
+            paginationQuery
         ),
         Path(communityId)
     )
@@ -96,15 +97,14 @@ suspend fun SessionManager.getCommunityTopics(
 
 suspend fun SessionManager.getUserTopics(
     userId: PrimaryKey,
-    nextTopicId: String?,
-    size: Int,
-    pinType: TopicPinSearch = TopicPinSearch.UNSPECIFIED,
+    pinType: TopicPinSearch? = null,
+    paginationQuery: PaginationQuery,
 ) = serviceCatching {
     CustomApi.Users.Id.Topics.get.invoke(
         TopicQuery(
             pinType,
             currentIsAlreadySignUp,
-            PaginationQuery(nextTopicId, size = size)
+            paginationQuery
         ),
         Path(userId)
     )
@@ -212,16 +212,15 @@ suspend fun SessionManager.getUserInfoByAid(aid: String) = serviceCatching {
 
 suspend fun SessionManager.getTopicTopics(
     topicId: PrimaryKey,
-    nextTopicId: String?,
-    size: Int,
     pinType: TopicPinSearch,
+    paginationQuery: PaginationQuery,
 ) =
     serviceCatching {
         CustomApi.Topics.Id.Topics.get.invoke(
             TopicQuery(
                 pinType,
                 currentIsAlreadySignUp,
-                PaginationQuery(nextTopicId, size = size)
+                paginationQuery
             ),
             Path(topicId)
         )
@@ -509,16 +508,15 @@ suspend fun SessionManager.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBod
     }
 
 suspend fun SessionManager.getTopicList(
-    type: ObjectType?,
+    type: ObjectType,
     id: PrimaryKey,
-    loadKey: String?,
-    size: Int,
     pinSearch: TopicPinSearch,
+    paginationQuery: PaginationQuery,
 ) = when (type) {
-    ROOM -> getRoomTopics(id, loadKey, size, pinSearch)
-    COMMUNITY -> getCommunityTopics(id, loadKey, size, pinSearch)
-    USER -> getUserTopics(id, loadKey, size, pinSearch)
-    TOPIC -> getTopicTopics(id, loadKey, size, pinSearch)
+    ROOM -> getRoomTopics(id, pinSearch, paginationQuery)
+    COMMUNITY -> getCommunityTopics(id, pinSearch, paginationQuery)
+    USER -> getUserTopics(id, pinSearch, paginationQuery)
+    TOPIC -> getTopicTopics(id, pinSearch, paginationQuery)
     else -> Result.failure(IllegalArgumentException("unrecognized $type"))
 }
 

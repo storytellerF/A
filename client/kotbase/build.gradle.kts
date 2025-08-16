@@ -135,13 +135,25 @@ val extractCouchbaseLibsTask = tasks.register("extractCouchbaseNativeLib") {
     doLast {
         val output = outputDir.get().asFile
         output.mkdirs()
+        val osName = System.getProperty("os.name").lowercase()
+        val arch = System.getProperty("os.arch")
         runtimeClasspath.forEach { jarFile ->
             if (jarFile.path.contains("couchbase-lite-java")) {
-                zipTree(jarFile).forEach {
-                    if (it.path.contains("libs") &&
-                        !it.path.contains("macos") || it.path.contains("universal")
-                    ) {
-                        it.copyTo(File(output, it.name), true)
+                zipTree(jarFile).forEach { file ->
+                    val match = if (osName.contains("mac")) {
+                        file.path.contains("macos") &&
+                                (file.path.contains("universal") || file.path.contains(arch))
+                    } else if (osName.contains("win")) {
+                        file.path.contains("windows") &&
+                                file.path.contains(arch)
+                    } else if (osName.contains("nux")) {
+                        file.path.contains("linux") &&
+                                file.path.contains(arch)
+                    } else {
+                        false
+                    }
+                    if (match) {
+                        file.copyTo(File(output, file.name), true)
                     }
                 }
             }

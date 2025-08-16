@@ -36,6 +36,7 @@ fun HttpClientConfig<*>.defaultClientConfigure(
     cookiesStorage: CookiesStorage,
     manager: SessionModel,
     httpUrl: String? = null,
+    logLevel: LogLevel = LogLevel.HEADERS
 ) {
     expectSuccess = true
     install(Auth) {
@@ -59,6 +60,7 @@ fun HttpClientConfig<*>.defaultClientConfigure(
         addToHeader(HttpHeaders.XRequestId)
     }
     install(Logging) {
+        level = logLevel
     }
     install(HttpCookies) {
         storage = cookiesStorage
@@ -158,3 +160,8 @@ suspend fun processEncryptedTopic(topicInfos: List<TopicInfo>, manager: SessionM
         }
     }
 }
+
+fun buildWebSocketUrl(wsServerUrl: String): String = buildUrl {
+    takeFrom(wsServerUrl)
+    appendPathSegments("link")
+}.toString()

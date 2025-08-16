@@ -1,7 +1,6 @@
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.service.readResourceEnv
-import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.SessionModel
@@ -35,7 +34,10 @@ import kotlin.test.assertEquals
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend ApplicationTestBuilder.() -> Unit) {
+fun test(
+    overrideEnv: Map<String, String> = emptyMap(),
+    block: suspend ApplicationTestBuilder.() -> Unit
+) {
     Napier.base(kmpLogger)
     val freeMemory = Runtime.getRuntime().freeMemory() / (1024 * 1024)
     Napier.i {
@@ -101,7 +103,8 @@ private fun startTestContainerTest(
                                 "mysql:8.0"
                             ).withUrlParam("characterEncoding", "utf8")
                                 .withUrlParam("useUnicode", "true")
-                                .withUrlParam("connectionCollation", "utf8mb4_unicode_ci").use { mySQLContainer ->
+                                .withUrlParam("connectionCollation", "utf8mb4_unicode_ci")
+                                .use { mySQLContainer ->
                                     mySQLContainer.start()
                                     println("jdbc: ${mySQLContainer.jdbcUrl}")
                                     env["DATABASE_URI"] = mySQLContainer.jdbcUrl
@@ -117,7 +120,8 @@ private fun startTestContainerTest(
                             ).use { postgreSQLContainer ->
                                 postgreSQLContainer.start()
                                 Napier.i("jdbc: ${postgreSQLContainer.jdbcUrl}")
-                                env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl.replace("jdbc", "r2dbc")
+                                env["DATABASE_URI"] =
+                                    postgreSQLContainer.jdbcUrl.replace("jdbc", "r2dbc")
                                 env["DATABASE_DRIVER"] = "postgresql"
                                 env["DATABASE_USER"] = postgreSQLContainer.username
                                 env["DATABASE_PASS"] = postgreSQLContainer.password
@@ -237,8 +241,9 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
         sessionManager.start {
             val sessionModel = sessionModel
             val priKey = generateECDSAPemPrivateKey().getOrThrow()
-            val (rawUserPassInfo, userInfo) = signUpOrInFromPrivateKey(priKey, this, true)
-            sessionModel.updateState(ClientSessionState.Success(RawUserPass(rawUserPassInfo)))
+            val userInfo = signUpOrInFromPrivateKey(priKey, true) {
+                RawUserPass(it)
+            }
             val custom = block(SessionTuple(priKey, userInfo.id))
             signOut().getOrThrow()
             sessionModel.clear()
@@ -261,9 +266,10 @@ suspend fun <R1, R2> ApplicationTestBuilder.loginSession(
         sessionManager.start {
             val (privateKey) = session
             val sessionModel = sessionModel
-            val (rawUserPass, userInfo) = signUpOrInFromPrivateKey(privateKey, this, false)
+            val userInfo = signUpOrInFromPrivateKey(privateKey, false) {
+                RawUserPass(it)
+            }
             assertEquals(session.uid, userInfo.id)
-            sessionModel.updateState(ClientSessionState.Success(RawUserPass(rawUserPass)))
             val custom = block(SessionTuple(session.privateKey, session.uid))
             signOut().getOrThrow()
             sessionModel.clear()
@@ -295,12 +301,17 @@ fun <T> assertListTotalSize(count: Int, result: Result<ServerResponse<T>>) {
     assertEquals(count.toLong(), result.getOrThrow().pagination?.total)
 }
 
-inline fun <T> assertResponse(count: Int, result: Result<ServerResponse<T>>, block: (ServerResponse<T>) -> Unit) {
+inline fun <T> assertResponse(
+    count: Int,
+    result: Result<ServerResponse<T>>,
+    block: (ServerResponse<T>) -> Unit
+) {
     assertListSize(count, result)
     block(result.getOrThrow())
 }
 
 fun extractTableNames(query: String): List<String> {
     val regex = Regex("(?i)\\bFROM\\s+([a-zA-Z0-9_.]+)|\\bJOIN\\s+([a-zA-Z0-9_.]+)")
-    return regex.findAll(query).flatMap { it.groupValues.drop(1).filter { name -> name.isNotEmpty() } }.toList()
+    return regex.findAll(query)
+        .flatMap { it.groupValues.drop(1).filter { name -> name.isNotEmpty() } }.toList()
 }
