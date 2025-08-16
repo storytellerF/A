@@ -86,7 +86,8 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switchToMain: () -> Unit, sw
                             pagingItems.itemSnapshotList.size,
                             key = pagingItems.itemKey { accountInfo ->
                                 accountInfo.id
-                            }) { index ->
+                            }
+                        ) { index ->
                             val alternativeAccountInfo = pagingItems[index]
                             alternativeAccountInfo?.let {
                                 UserCell(it.userInfo, false) {

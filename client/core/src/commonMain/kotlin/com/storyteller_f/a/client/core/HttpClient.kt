@@ -70,7 +70,7 @@ fun HttpClientConfig<*>.defaultClientConfigure(
             response.status == HttpStatusCode.TooManyRequests
         }
         delayMillis {
-            0
+            1000
         }
     }
     install(WebSockets) {

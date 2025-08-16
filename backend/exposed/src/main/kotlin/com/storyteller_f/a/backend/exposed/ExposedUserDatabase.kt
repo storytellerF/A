@@ -383,6 +383,19 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
         }
     }
 
+    override suspend fun getRawAlternativeAccount(uid: PrimaryKey): Result<AlternateAccount?> {
+        return exposedDatabaseSession.dbSearch {
+            search {
+                AlternateAccounts.selectAll().where {
+                    AlternateAccounts.uid eq uid
+                }
+            }
+            first {
+                AlternateAccount.wrapRow(it)
+            }
+        }
+    }
+
     override suspend fun createAlternativeAccount(
         hostId: PrimaryKey,
         privateKey: String,

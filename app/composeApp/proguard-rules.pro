@@ -1,7 +1,3 @@
--dontwarn org.slf4j.impl.StaticLoggerBinder
--dontwarn java.lang.management.ManagementFactory
--dontwarn java.lang.management.RuntimeMXBean
-
 -keep class org.bouncycastle.jcajce.provider.** { *; }
 -keep class org.bouncycastle.jce.provider.** { *; }
 
@@ -28,25 +24,10 @@
 -keep class org.schabi.newpipe.extractor.timeago.patterns.** { *; }
 -keep class org.mozilla.javascript.** { *; }
 -keep class org.mozilla.classfile.ClassFileWriter
--dontwarn org.mozilla.javascript.tools.**
-
--dontwarn java.beans.BeanDescriptor
--dontwarn java.beans.BeanInfo
--dontwarn java.beans.IntrospectionException
--dontwarn java.beans.Introspector
--dontwarn java.beans.PropertyDescriptor
 
 -keep class de.kherud.llama.** { *; }
 
--dontwarn com.google.auto.value.AutoValue$Builder
--dontwarn com.google.auto.value.AutoValue
--dontwarn com.google.protobuf.Internal$ProtoNonnullApi
--dontwarn com.google.protobuf.ProtoField
--dontwarn com.google.protobuf.ProtoPresenceBits
--dontwarn com.google.protobuf.ProtoPresenceCheckedField
-
--dontwarn kotlinx.datetime.Instant$Companion
--dontwarn kotlinx.datetime.Instant
--dontwarn okhttp3.internal.Util
+-dontwarn **
 
 -keep class com.storyteller_f.a.app.compose_app.ui.** { *; }
+-keep class dev.tclement.fonticons.** { *; }

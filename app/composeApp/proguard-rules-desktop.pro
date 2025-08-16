@@ -1,9 +1,5 @@
 -keepattributes *Annotation*, Signature
 
--dontwarn org.slf4j.impl.StaticLoggerBinder
--dontwarn java.lang.management.ManagementFactory
--dontwarn java.lang.management.RuntimeMXBean
-
 -dontwarn **
 
 -keep class org.bouncycastle.jcajce.provider.** { *; }
@@ -28,5 +24,5 @@
     <init>(...);
 }
 
-#-keep class * implements uk.co.caprica.vlcj.factory.discovery.provider.DiscoveryDirectoryProvider { *; }
-#-keep interface uk.co.caprica.vlcj.factory.discovery.provider.DiscoveryDirectoryProvider { *; }
+-keep class com.storyteller_f.a.app.compose_app.ui.** { *; }
+-keep class dev.tclement.fonticons.** { *; }

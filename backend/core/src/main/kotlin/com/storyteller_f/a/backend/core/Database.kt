@@ -1,5 +1,6 @@
 package com.storyteller_f.a.backend.core
 
+import com.storyteller_f.a.backend.core.types.AlternateAccount
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Media
 import com.storyteller_f.a.backend.core.types.MemberJoin
@@ -91,6 +92,8 @@ interface UserDatabase {
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<RawAlternateAccount>>
+
+    suspend fun getRawAlternativeAccount(uid: PrimaryKey): Result<AlternateAccount?>
 
     suspend fun createAlternativeAccount(
         hostId: PrimaryKey,
