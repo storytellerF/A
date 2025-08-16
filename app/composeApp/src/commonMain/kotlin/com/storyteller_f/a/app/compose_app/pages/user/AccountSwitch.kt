@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -21,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.storyteller_f.a.app.compose_app.CustomSessionManager
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalMainSessionManager
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
@@ -48,30 +48,22 @@ class AccountSwitcher(val state: MutableState<Boolean> = mutableStateOf(false)) 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
+fun AccountSwitch(accountSwitcher: AccountSwitcher, switchToMain: () -> Unit, switch: (String) -> Unit) {
     var expand by accountSwitcher.state
     val sheetState = rememberModalBottomSheetState()
     BaseSheet(expand, sheetState, {
         expand = false
     }) {
         SheetContainer {
-            val currentUserSessionManager = LocalSessionManager.current
-            val mainSessionManager = LocalMainSessionManager.current
-            val currentAddress by currentUserSessionManager.address.collectAsState()
-            val mainAddress by mainSessionManager.address.collectAsState()
-            val isSwitched = currentAddress != mainAddress
+            val (mainSessionManager, isSwitched) = isSwitched()
             val scope = rememberCoroutineScope()
             val globalDialogController = LocalGlobalDialog.current
             CompositionLocalProvider(LocalSessionManager provides mainSessionManager) {
                 val viewModel = getAlternativeAccountsViewModel()
                 val pagingItems = viewModel.flow.collectAsLazyPagingItems()
                 if (isSwitched) {
-                    ButtonNav(MaterialSymbolsOutlined.ArrowBack, "Back to main") {
-                        val rawUserPass = mainSessionManager.sessionModel.currentUserPass as? RawUserPass
-                        val pemPrivateKey = rawUserPass?.rawUSerPass?.pemPrivateKey
-                        pemPrivateKey?.let {
-                            switch(it)
-                        }
+                    ButtonNav(MaterialSymbolsOutlined.ArrowBack, "Back to main account") {
+                        switchToMain()
                     }
                 } else {
                     ButtonNav(Icons.Default.Add, "Add alternative Account") {
@@ -90,9 +82,11 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
                         contentPadding = PaddingValues(10.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        items(pagingItems.itemSnapshotList.size, key = pagingItems.itemKey { accountInfo ->
-                            accountInfo.id
-                        }) { index ->
+                        items(
+                            pagingItems.itemSnapshotList.size,
+                            key = pagingItems.itemKey { accountInfo ->
+                                accountInfo.id
+                            }) { index ->
                             val alternativeAccountInfo = pagingItems[index]
                             alternativeAccountInfo?.let {
                                 UserCell(it.userInfo, false) {
@@ -105,6 +99,16 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switch: (String) -> Unit) {
             }
         }
     }
+}
+
+@Composable
+fun isSwitched(): Pair<CustomSessionManager, Boolean> {
+    val currentUserSessionManager = LocalSessionManager.current
+    val mainSessionManager = LocalMainSessionManager.current
+    val currentAddress by currentUserSessionManager.address.collectAsState()
+    val mainAddress by mainSessionManager.address.collectAsState()
+    val isSwitched = currentAddress != mainAddress
+    return Pair(mainSessionManager, isSwitched)
 }
 
 suspend fun switchUser(

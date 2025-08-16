@@ -274,8 +274,15 @@ private fun CommonEntryInternal(
                 "gpt_model" defaultValue ""
             }
             content()
+            val mainSessionManager = LocalMainSessionManager.current
             AccountSwitch(
-                accountSwitcher
+                accountSwitcher, {
+                    (mainSessionManager.sessionModel.currentUserPass as? RawUserPass)?.let {
+                        switch(
+                            it
+                        )
+                    }
+                }
             ) { derPrivateKeyStr ->
                 scope.launch {
                     switchUser(globalDialogController, derPrivateKeyStr, switch)

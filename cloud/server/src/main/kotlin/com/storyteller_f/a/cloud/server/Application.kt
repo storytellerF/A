@@ -180,7 +180,7 @@ private fun Application.setupRateLimit() {
             }
             requestWeight { applicationCall, key ->
                 when (applicationCall.request.httpMethod) {
-                    HttpMethod.Post -> 10
+                    HttpMethod.Post -> 2
                     else -> 1
                 }
             }

@@ -145,8 +145,11 @@ private fun UserDialogMenuList(
         dismiss()
         appNav.gotoUserSetting()
     }
-    ButtonNav(Icons.AutoMirrored.Default.Logout, stringResource(Res.string.sign_out)) {
-        controller.showTitle(title)
+    val (_, isSwitched) = isSwitched()
+    if (!isSwitched) {
+        ButtonNav(Icons.AutoMirrored.Default.Logout, stringResource(Res.string.sign_out)) {
+            controller.showTitle(title)
+        }
     }
 }
 

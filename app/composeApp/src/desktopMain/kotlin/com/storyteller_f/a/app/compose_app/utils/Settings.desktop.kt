@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
 import com.strabled.composepreferences.utilis.DataStoreManager
+import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.utils.toFile
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -19,8 +20,14 @@ private val store by lazy {
     DataStoreManager(
         PreferenceDataStoreFactory.createWithPath(
             produceFile = {
-                val pb = SystemFileSystem.resolve(Path(SystemTemporaryDirectory, "main.preferences_pb"))
-                pb.toFile().toOkioPath()
+                val pb = Path(SystemTemporaryDirectory, "main.preferences_pb")
+                val file = pb.toFile()
+                if (!file.exists() && !file.createNewFile()) {
+                    Napier.e {
+                        "$file create failed"
+                    }
+                }
+                file.toOkioPath()
             }
         )
     )

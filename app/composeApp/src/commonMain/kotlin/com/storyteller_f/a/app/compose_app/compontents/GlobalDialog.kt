@@ -122,7 +122,7 @@ class CustomGlobalDialogController(
                 val initStage = GlobalDialogStageState()
                 state.value = GlobalDialogState.Loading(persistentListOf(initStage))
             } else {
-                return Result.failure(Exception("lock failed, currentState is $dialogState"))
+                return Result.failure(Exception("dialog show failed, currentState is $dialogState"))
             }
             try {
                 val nestedGlobalDialogController = NestedGlobalDialogController(this, 1)
