@@ -134,23 +134,22 @@ class UserSessionModel : SessionModel {
     }
 }
 
-suspend fun signUpOrInFromPrivateKey(
-    privateKey: String,
-    sessionManager: SessionManager,
+suspend fun SessionManager.signUpOrInFromPrivateKey(
+    pemPrivateKey: String,
     isSignUp: Boolean,
-): Pair<RawUserPassInfo, UserInfo> {
-    val sessionModel = sessionManager.sessionModel
-    val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
-    val data = sessionManager.getData().getOrThrow()
+    buildUserPass: suspend (RawUserPassInfo) -> UserPass
+): UserInfo {
+    val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
+    val data = getData().getOrThrow()
     val f = finalData(data)
-    val sig = signature(privateKey, f).getOrThrow()
+    val sig = signature(pemPrivateKey, f).getOrThrow()
     val ad = calcAddress(publicKey).getOrThrow()
     val u = when {
-        isSignUp -> sessionManager.signUp(publicKey, sig)
-        else -> sessionManager.signIn(ad, sig)
+        isSignUp -> signUp(publicKey, sig)
+        else -> signIn(ad, sig)
     }.getOrThrow()
-    val session = RawUserPassInfo(privateKey, publicKey, ad)
     sessionModel.updateUser(u)
     sessionModel.updateSignature(data, sig)
-    return session to u
+    sessionModel.updateState(ClientSessionState.Success(buildUserPass(RawUserPassInfo(pemPrivateKey, publicKey, ad))))
+    return u
 }

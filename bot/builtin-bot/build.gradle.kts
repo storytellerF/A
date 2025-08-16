@@ -9,10 +9,22 @@ application {
     mainClass.set("com.storyteller_f.a.built_in_bot.BuiltInBotKt")
 }
 
+kotlin {
+    jvmToolchain(21)
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-parameters")
+    }
+}
+
 dependencies {
     implementation(libs.napier)
     implementation(projects.shared)
     implementation(projects.client.core)
+    implementation(projects.api)
+    implementation(libs.bundles.ktor.client)
+    implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.core)
+
+    implementation(libs.google.genai)
 }

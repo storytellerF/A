@@ -3,6 +3,7 @@ package com.storyteller_f.a.app.compose_app.model
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.*
+import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.app.compose_app.common.*
 import com.storyteller_f.a.app.compose_app.compontents.DialogSaveState
 import com.storyteller_f.a.app.compose_app.pages.UploadSession
@@ -261,12 +262,22 @@ class TopicsViewModel(
                         RegularPagingSource(
                             sessionManager
                         ) { loadKey, size ->
-                            getTopicList(type, id, loadKey, size, TopicPinSearch.PINNED)
+                            getTopicList(
+                                type,
+                                id,
+                                TopicPinSearch.PINNED,
+                                PaginationQuery(loadKey, null, size = size)
+                            )
                         },
                         RegularPagingSource(
                             sessionManager
                         ) { loadKey, size ->
-                            getTopicList(type, id, loadKey, size, TopicPinSearch.UNPINNED)
+                            getTopicList(
+                                type,
+                                id,
+                                TopicPinSearch.UNPINNED,
+                                PaginationQuery(loadKey, null, size = size)
+                            )
                         }
                     )
                 ),
@@ -613,7 +624,10 @@ class RoomKeysViewModel(
                 var last: String? = null
                 while (true) {
                     val list =
-                        sessionManager.requestRoomKeys(this@RoomKeysViewModel.id, last, 100)
+                        sessionManager.getRoomMembersPublicKeys(
+                            this@RoomKeysViewModel.id,
+                            PaginationQuery(last, size = 100)
+                        )
                             .getOrThrow()
                     result.addAll(list.data)
                     val nextKey = list.pagination?.nextPageToken ?: break

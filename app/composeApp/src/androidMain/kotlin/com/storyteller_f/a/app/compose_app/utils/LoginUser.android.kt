@@ -41,7 +41,7 @@ actual fun buildLoginUserSessionFactory(settings: Settings): LoginUserSessionMan
     return DefaultLoginUserSessionManager(settings)
 }
 
-class AndroidKeyStoreUserPassSession(private val alias: String) : UserPass {
+class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
     @OptIn(ExperimentalStdlibApi::class)
     override suspend fun signature(data: String): Result<String> {
         return runCatching {
@@ -146,11 +146,11 @@ class AndroidKeyStoreLoginUserSessionManager(val defaultSettings: Settings) : Lo
         val current = "default"
         importEcdsaPrivateKey(current, session.pemPrivateKey)
         defaultSettings.encodeValue(LoginHistory.serializer(), "login_history", LoginHistory(current, current))
-        return AndroidKeyStoreUserPassSession(current)
+        return AndroidKeyStoreUserPass(current)
     }
 
     override fun buildSession(alias: String): UserPass {
-        return AndroidKeyStoreUserPassSession(alias)
+        return AndroidKeyStoreUserPass(alias)
     }
 
     private suspend fun importEcdsaPrivateKey(alias: String, pemPrivateKey: String) {

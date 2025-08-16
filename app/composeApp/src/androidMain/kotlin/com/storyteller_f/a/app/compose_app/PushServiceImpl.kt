@@ -1,13 +1,13 @@
 package com.storyteller_f.a.app.compose_app
 
 import android.Manifest
-import android.R
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.storyteller_f.a.client.core.addDevice
+import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.start
 import io.github.aakira.napier.Napier
@@ -58,7 +58,7 @@ class PushServiceImpl : PushService(), CoroutineScope {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             val notification = NotificationCompat.Builder(context, channel)
-                .setSmallIcon(R.drawable.ic_notification_overlay)
+                .setSmallIcon(com.storyteller_f.a.app.R.drawable.ic_notify)
                 .setContentTitle("New message")
             notificationManager.notify(1, notification.build())
         }

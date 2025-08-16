@@ -102,11 +102,11 @@ val LocalDatabase = compositionLocalOf<ModelStorage> {
     error("No database")
 }
 
-val LocalSessionManager = compositionLocalOf<SessionManager> {
+val LocalSessionManager = compositionLocalOf<CustomSessionManager> {
     error("No user session")
 }
 
-val LocalMainSessionManager = compositionLocalOf<SessionManager> {
+val LocalMainSessionManager = compositionLocalOf<CustomSessionManager> {
     error("No main user session")
 }
 
@@ -332,11 +332,6 @@ fun buildHttpClient(
         defaultClientConfigure(cookieManager, manager = model, httpUrl = httpUrl)
     }
 }
-
-fun buildWebSocketUrl(wsServerUrl: String): String = buildUrl {
-    takeFrom(wsServerUrl)
-    appendPathSegments("link")
-}.toString()
 
 private fun buildWsListener(
     messageToasterState: ToasterState,

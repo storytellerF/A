@@ -1,3 +1,4 @@
+import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.addReadLog
@@ -10,6 +11,7 @@ import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getReactions
 import com.storyteller_f.a.client.core.getRecommendTopics
 import com.storyteller_f.a.client.core.getRoomInfo
+import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
 import com.storyteller_f.a.client.core.getRoomTopics
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getTopicSnapshot
@@ -17,24 +19,34 @@ import com.storyteller_f.a.client.core.getUserTopics
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.pinTopic
-import com.storyteller_f.a.client.core.requestRoomKeys
 import com.storyteller_f.a.client.core.searchTopics
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.obj.*
+import com.storyteller_f.shared.obj.NewCommunity
+import com.storyteller_f.shared.obj.NewRoom
+import com.storyteller_f.shared.obj.NewTitle
+import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.RoomFrame
+import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.ObjectType
-import io.ktor.http.*
+import io.ktor.http.ContentType
+import io.ktor.http.defaultForFileExtension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.io.Buffer
 import kotlinx.io.writeString
 import org.junit.jupiter.api.assertNotNull
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
+@Suppress("LongMethod")
 class TopicTest {
 
     @Test
@@ -145,14 +157,26 @@ class TopicTest {
                     (topicInfo.content as TopicContent.Plain).list.first().fullName
                 )
                 // 查询单个topic
-                assertListSize(1, getUserTopics(it.uid, null, 10))
+                assertListSize(
+                    1,
+                    getUserTopics(
+                        it.uid,
+                        paginationQuery = PaginationQuery(null, null, size = 10)
+                    )
+                )
                 createNewTopic(
                     ObjectType.USER,
                     it.uid,
                     "test"
                 ).getOrThrow()
                 // 查询多个topic
-                assertListSize(2, getUserTopics(it.uid, null, 10))
+                assertListSize(
+                    2,
+                    getUserTopics(
+                        it.uid,
+                        paginationQuery = PaginationQuery(null, null, size = 10)
+                    )
+                )
             }
         }
     }
@@ -187,7 +211,13 @@ class TopicTest {
                     delay(100)
                 }
                 assertNotNull((receivedFrame.first() as RoomFrame.NewTopicInfo).topicInfo.extension?.authorInfo)
-                assertListSize(1, getRoomTopics(publicRoomId, null, 10))
+                assertListSize(
+                    1,
+                    getRoomTopics(
+                        publicRoomId,
+                        paginationQuery = PaginationQuery(null, null, size = 10)
+                    )
+                )
                 assertFails {
                     createNewTopic(
                         ObjectType.ROOM,
@@ -211,14 +241,7 @@ class TopicTest {
             }
             loginSession(user1) {
                 createTitle(
-                    NewTitle(
-                        "join",
-                        TitleType.JOIN,
-                        user2.uid,
-                        privateRoomId,
-                        ObjectType.ROOM,
-                        ""
-                    )
+                    NewTitle("join", TitleType.JOIN, user2.uid, privateRoomId, ObjectType.ROOM, "")
                 )
             }
             val receivedFrame = mutableListOf<RoomFrame>()
@@ -227,7 +250,10 @@ class TopicTest {
             }) {
                 joinRoom(privateRoomId).getOrThrow()
                 val roomInfo2 = getRoomInfo(privateRoomId).getOrThrow()
-                val keys = requestRoomKeys(privateRoomId, null, 10).getOrThrow().data
+                val keys = getRoomMembersPublicKeys(
+                    privateRoomId,
+                    PaginationQuery(null, size = 10)
+                ).getOrThrow().data
                 webSocketClient.useWebSocket {
                     sendMessage(
                         ObjectTuple(roomInfo2.id, ObjectType.ROOM),
@@ -243,7 +269,13 @@ class TopicTest {
                     delay(100)
                 }
                 assertNotNull((receivedFrame.first() as RoomFrame.NewTopicInfo).topicInfo.extension?.authorInfo)
-                assertResponse(1, getRoomTopics(privateRoomId, null, 10)) {
+                assertResponse(
+                    1,
+                    getRoomTopics(
+                        privateRoomId,
+                        paginationQuery = PaginationQuery(null, null, size = 10)
+                    )
+                ) {
                     val privateRoomTopicList = it.data
                     assertEquals(1, privateRoomTopicList.size)
                     val id = privateRoomTopicList.first().id
@@ -309,7 +341,8 @@ class TopicTest {
                 receivedFrame.add(roomFrame)
             }) {
                 val roomInfo = createRoom(NewRoom("r1", "r1")).getOrThrow()
-                val keys = requestRoomKeys(roomInfo.id, null, 10).getOrThrow().data
+                val keys =
+                    getRoomMembersPublicKeys(roomInfo.id, PaginationQuery(null, size = 10)).getOrThrow().data
                 webSocketClient.useWebSocket {
                     sendMessage(roomInfo.tuple(), true, "hello", keys)
                 }?.join()
