@@ -100,7 +100,11 @@ private suspend fun process(
             JoinStatusSearch.JOINED,
             nextCommunityId = next
         ).getOrThrow()
+        delay(1.seconds)
         resp.data.forEach { communityInfo ->
+            Napier.i {
+                "check community ${communityInfo.aid} ${communityInfo.name}"
+            }
             handle(sessionManager, communityInfo, client, prompt)
         }
         next = resp.pagination?.nextPageToken ?: break
@@ -123,6 +127,7 @@ private suspend fun handle(
             TopicPinSearch.UNSPECIFIED,
             PaginationQuery(next, null, size = 10)
         ).getOrThrow()
+        delay(1.seconds)
         for (topicInfo in resp.data) {
             if (topicInfo.hasComment) {
                 hasCommentId = topicInfo.id
@@ -143,11 +148,13 @@ private suspend fun handle(
             TopicPinSearch.UNSPECIFIED,
             PaginationQuery(null, pre, size = 10)
         ).getOrThrow()
+        delay(1.seconds)
         resp.data.forEach { topicInfo ->
             Napier.i {
                 "handle ${topicInfo.id} ${topicInfo.hasComment}"
             }
             handleTopic(topicInfo, client, sessionManager, prompt)
+            delay(1.seconds)
         }
         pre = resp.pagination?.prePageToken ?: break
     }
@@ -184,4 +191,5 @@ private suspend fun handleTopic(
                 "createNewTopic failed"
             }
         }
+    delay(1.seconds)
 }
