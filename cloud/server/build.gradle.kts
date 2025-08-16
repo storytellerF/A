@@ -58,8 +58,6 @@ dependencies {
     testImplementation(libs.javacv.platform)
 }
 
-
-
 tasks.withType<JavaExec> {
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
