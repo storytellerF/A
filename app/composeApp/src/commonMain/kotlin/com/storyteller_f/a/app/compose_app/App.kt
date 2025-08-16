@@ -276,7 +276,8 @@ private fun CommonEntryInternal(
             content()
             val mainSessionManager = LocalMainSessionManager.current
             AccountSwitch(
-                accountSwitcher, {
+                accountSwitcher,
+                {
                     (mainSessionManager.sessionModel.currentUserPass as? RawUserPass)?.let {
                         switch(
                             it

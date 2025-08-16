@@ -27,7 +27,7 @@ import javazoom.jl.player.jlp
 actual fun AudioView(obj: RemoteMediaItem, isEmbed: Boolean) {
     val url = obj.url
     log {
-        "Audio $url"
+        "AudioView $url"
     }
 
     var currentPlaying by remember {
@@ -35,20 +35,7 @@ actual fun AudioView(obj: RemoteMediaItem, isEmbed: Boolean) {
     }
 
     val player = remember {
-        try {
-            jlp.createInstance(arrayOf("-url", url)).apply {
-                setAudioDevice(
-                    FactoryRegistry.systemRegistry()
-                        .createAudioDevice(JavaSoundAudioDeviceFactory::class.java)
-                )
-            }
-        } catch (e: Exception) {
-            Napier.e(e) {
-                "AudioView"
-            }
-            null
-        }
-
+        createPlayer(url)
     }
 
     DisposableEffect(player) {
@@ -60,7 +47,6 @@ actual fun AudioView(obj: RemoteMediaItem, isEmbed: Boolean) {
                     "AudioView"
                 }
             }
-
         }
     }
     val shape = RoundedCornerShape(20.dp)
@@ -74,20 +60,9 @@ actual fun AudioView(obj: RemoteMediaItem, isEmbed: Boolean) {
     ) {
         IconButton(
             {
-                try {
-                    if (currentPlaying) {
-                        player?.stop()
-                        currentPlaying = false
-                    } else {
-                        player?.play()
-                        currentPlaying = true
-                    }
-                } catch (e: Exception) {
-                    Napier.e(e) {
-                        "AudioView"
-                    }
+                adjust(currentPlaying, player) {
+                    currentPlaying = it
                 }
-
             },
             enabled = player != null,
         ) {
@@ -100,6 +75,36 @@ actual fun AudioView(obj: RemoteMediaItem, isEmbed: Boolean) {
 
                 else -> Icon(Icons.Default.PlayCircle, "play", modifier = Modifier.size(40.dp))
             }
+        }
+    }
+}
+
+private fun createPlayer(url: String): jlp? = try {
+    jlp.createInstance(arrayOf("-url", url)).apply {
+        setAudioDevice(
+            FactoryRegistry.systemRegistry()
+                .createAudioDevice(JavaSoundAudioDeviceFactory::class.java)
+        )
+    }
+} catch (e: Exception) {
+    Napier.e(e) {
+        "AudioView"
+    }
+    null
+}
+
+private fun adjust(currentPlaying: Boolean, player: jlp?, update: (Boolean) -> Unit) {
+    try {
+        if (currentPlaying) {
+            player?.stop()
+            update(false)
+        } else {
+            player?.play()
+            update(false)
+        }
+    } catch (e: Exception) {
+        Napier.e(e) {
+            "AudioView"
         }
     }
 }

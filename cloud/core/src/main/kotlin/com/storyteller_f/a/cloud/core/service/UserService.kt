@@ -28,6 +28,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
@@ -36,7 +37,8 @@ suspend fun Backend.updateUser(
     uid: PrimaryKey,
     old: UpdateUserBody,
 ): Result<UserInfo?> {
-    val newUser = old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar)
+    val newUser =
+        old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar)
     val firstError = listOf(suspend {
         checkAidModifyTimes(newUser, uid)
     }, suspend {
@@ -180,26 +182,42 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
 }
 
 suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<AlternativeAccountInfo> {
-    return generateECDSAPemPrivateKey().mapResult { pemPrivateKey ->
-        getDerPrivateKey(pemPrivateKey).mapResult { derPrivateKey ->
-            getDerPublicKeyFromPrivateKey(pemPrivateKey).mapResult { publicKey ->
-                calcAddress(publicKey).mapResult { address ->
-                    val id = SnowflakeFactory.nextId()
-                    val user = User(
-                        null,
-                        publicKey,
-                        address,
-                        null,
-                        nameService.parse(id),
-                        id,
-                        now(),
-                        0,
-                        PassType.RAW,
-                        AlgoType.P256
-                    )
-                    exposedDatabase.userDatabase.createAlternativeAccount(uid, derPrivateKey, user).map {
-                        addUserLog(uid, UserLogType.ADD_ALTERNATIVE_ACCOUNT, id ob ObjectType.USER)
-                        AlternativeAccountInfo(uid, derPrivateKey, user.toUserInfo())
+    return exposedDatabase.userDatabase.getRawAlternativeAccount(uid).mapResult {
+        if (it != null) {
+            Result.failure(CustomBadRequestException("alternative account can't create alternative"))
+        } else {
+            generateECDSAPemPrivateKey().mapResult { pemPrivateKey ->
+                getDerPublicKeyFromPrivateKey(pemPrivateKey).mapResult { publicKey ->
+                    merge({
+                        getDerPrivateKey(pemPrivateKey)
+                    }, {
+                        calcAddress(publicKey)
+                    }).mapResult { (derPrivateKey, address) ->
+                        val id = SnowflakeFactory.nextId()
+                        val user = User(
+                            null,
+                            publicKey,
+                            address,
+                            null,
+                            nameService.parse(id),
+                            id,
+                            now(),
+                            0,
+                            PassType.RAW,
+                            AlgoType.P256
+                        )
+                        exposedDatabase.userDatabase.createAlternativeAccount(
+                            uid,
+                            derPrivateKey,
+                            user
+                        ).map {
+                            addUserLog(
+                                uid,
+                                UserLogType.ADD_ALTERNATIVE_ACCOUNT,
+                                id ob ObjectType.USER
+                            )
+                            AlternativeAccountInfo(uid, derPrivateKey, user.toUserInfo())
+                        }
                     }
                 }
             }

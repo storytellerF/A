@@ -6,6 +6,7 @@ import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.*
 
 interface WebSocketClientListener {
@@ -122,8 +123,14 @@ class WebSocketClientImpl(
                         else -> {}
                     }
                 } catch (e: Exception) {
-                    Napier.e(e, tag = "ClientWebSocket") {
-                        "Listener WebSocket failed: ${session.isActive}"
+                    if (e is ClosedReceiveChannelException) {
+                        Napier.e {
+                            "Listener WebSocket failed: ${e.message}"
+                        }
+                    } else {
+                        Napier.e(e, tag = "ClientWebSocket") {
+                            "Listener WebSocket failed: ${session.isActive}"
+                        }
                     }
                     break
                 }

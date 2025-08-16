@@ -1,8 +1,12 @@
 package com.storyteller_f.a.built_in_bot
 
 import com.google.genai.Client
+import com.google.genai.types.GenerateContentConfig
+import com.google.genai.types.GoogleSearch
+import com.google.genai.types.Tool
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.client.core.RawUserPass
+import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createNewTopic
@@ -25,11 +29,18 @@ import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.util.decodeBase64String
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 fun main() {
     Napier.base(kmpLogger)
@@ -50,32 +61,13 @@ fun main() {
             }
         }) { r, t ->
         }
-    val prompt = ClassLoader.getSystemClassLoader().getResourceAsStream("prompt")!!.bufferedReader()
-        .readText()
+    val classLoader = ClassLoader.getSystemClassLoader()
+    val commentPrompt = readResource(classLoader, "comment.prompt")
+    val newsPrompt = readResource(classLoader, "news.prompt")
     val client = Client()
     runBlocking {
         val job = launch {
-            while (isActive) {
-                Napier.i(tag = "task") {
-                    "execute ${now()}"
-                }
-                try {
-                    sessionManager.signUpOrInFromPrivateKey(pem, false) {
-                        RawUserPass(it)
-                    }
-                    sessionManager.start {
-                        process(sessionManager, client, prompt)
-                    }
-                } catch (e: Exception) {
-                    Napier.e(e) {
-                        "process failed"
-                    }
-                    if (e.message?.contains("User location is not supported for the API use") == true) {
-                        break
-                    }
-                }
-                delay(10.seconds)
-            }
+            processJob(sessionManager, pem, client, commentPrompt, newsPrompt)
         }
         // 注册 JVM 关闭钩子，捕获 SIGINT / SIGTERM
         Runtime.getRuntime().addShutdownHook(Thread {
@@ -88,10 +80,52 @@ fun main() {
     }
 }
 
-private suspend fun process(
+private suspend fun CoroutineScope.processJob(
     sessionManager: UserSessionManager,
+    pem: String,
     client: Client,
-    prompt: String
+    commentPrompt: String,
+    newsPrompt: String
+) {
+    while (isActive) {
+        Napier.i(tag = "task") {
+            "execute ${now()}"
+        }
+        try {
+            sessionManager.signUpOrInFromPrivateKey(pem, false) {
+                RawUserPass(it)
+            }
+            sessionManager.start {
+                processCommunityTask(sessionManager) { communityInfo ->
+                    handleCommunityComment(
+                        sessionManager,
+                        client,
+                        communityInfo,
+                        commentPrompt
+                    )
+                }
+                processCommunityTask(sessionManager) { communityInfo ->
+                    handleCommunityNews(sessionManager, client, communityInfo, newsPrompt)
+                }
+            }
+        } catch (e: Exception) {
+            Napier.e(e) {
+                "process failed"
+            }
+            if (e.message?.contains("User location is not supported for the API use") == true) {
+                break
+            }
+        }
+        delay(10.seconds)
+    }
+}
+
+private fun readResource(classLoader: ClassLoader?, name: String): String =
+    classLoader!!.getResourceAsStream(name)!!.bufferedReader().readText()
+
+private suspend fun processCommunityTask(
+    sessionManager: UserSessionManager,
+    extracted: suspend (CommunityInfo) -> Unit
 ) {
     var next: String? = null
     while (true) {
@@ -102,21 +136,21 @@ private suspend fun process(
         ).getOrThrow()
         delay(1.seconds)
         resp.data.forEach { communityInfo ->
-            Napier.i {
-                "check community ${communityInfo.aid} ${communityInfo.name}"
-            }
-            handle(sessionManager, communityInfo, client, prompt)
+            extracted(communityInfo)
         }
         next = resp.pagination?.nextPageToken ?: break
     }
 }
 
-private suspend fun handle(
+private suspend fun handleCommunityComment(
     sessionManager: UserSessionManager,
-    info: CommunityInfo,
     client: Client,
+    info: CommunityInfo,
     prompt: String
 ) {
+    Napier.i {
+        "check community latest processed topic ${info.aid} ${info.name}"
+    }
     var next: String? = null
     // 找出最新的评论过的topic
     var hasCommentId = 0L
@@ -138,7 +172,7 @@ private suspend fun handle(
         next = resp.pagination?.nextPageToken ?: break
     }
     Napier.i {
-        "latest comment topic is $hasCommentId"
+        "latest processed topic is $hasCommentId"
     }
     var pre = hasCommentId.toString()
     while (true) {
@@ -151,7 +185,7 @@ private suspend fun handle(
         delay(1.seconds)
         resp.data.forEach { topicInfo ->
             Napier.i {
-                "handle ${topicInfo.id} ${topicInfo.hasComment}"
+                "handle ${topicInfo.id} ${topicInfo.hasComment} ${topicInfo.createdTime}"
             }
             handleTopic(topicInfo, client, sessionManager, prompt)
             delay(1.seconds)
@@ -166,7 +200,7 @@ private suspend fun handleTopic(
     sessionManager: UserSessionManager,
     prompt: String
 ) {
-    if (topicInfo.author != sessionManager.sessionModel.uid && !topicInfo.hasComment) {
+    if (topicInfo.author == sessionManager.sessionModel.uid || topicInfo.hasComment) {
         return
     }
 
@@ -192,4 +226,108 @@ private suspend fun handleTopic(
             }
         }
     delay(1.seconds)
+}
+
+@OptIn(ExperimentalTime::class)
+private suspend fun handleCommunityNews(
+    sessionManager: SessionManager,
+    client: Client,
+    communityInfo: CommunityInfo,
+    prompt: String
+) {
+    var next: String? = null
+    // 找出最新的评论过的topic
+    var latestTopic: TopicInfo? = null
+    while (true) {
+        val resp = sessionManager.getTopicList(
+            ObjectType.COMMUNITY,
+            communityInfo.id,
+            TopicPinSearch.UNSPECIFIED,
+            PaginationQuery(next, null, size = 10)
+        ).getOrThrow()
+        delay(1.seconds)
+        for (topicInfo in resp.data) {
+            if (topicInfo.author == sessionManager.sessionModel.uid) {
+                latestTopic = topicInfo
+                break
+            }
+        }
+        if (latestTopic != null) break
+        next = resp.pagination?.nextPageToken ?: break
+    }
+    addTopic(latestTopic, client, prompt, communityInfo, sessionManager)
+}
+
+@OptIn(ExperimentalTime::class)
+private suspend fun addTopic(
+    latestTopic: TopicInfo?,
+    client: Client,
+    prompt: String,
+    communityInfo: CommunityInfo,
+    sessionManager: SessionManager
+) {
+    val now = now()
+    val previousDate = now.toInstant(TimeZone.UTC).minus(1.days).toLocalDateTime(TimeZone.UTC)
+    val year = previousDate.year
+    val month = previousDate.month // 1-12
+    val day = previousDate.day
+    Napier.i {
+        "previous day $year $month $day and now is $now"
+    }
+    if (latestTopic != null) {
+        Napier.i {
+            "last created topic is ${latestTopic.id} ${latestTopic.createdTime}"
+        }
+        var start = latestTopic.createdTime
+        var count = 0
+        while (true) {
+            if (start >= previousDate) break
+            val startYear = start.year
+            val startMonth = start.month
+            val startDay = start.day
+            if (startYear != year && startMonth != month && startDay != day) {
+                createNewsTopic(client, prompt, communityInfo, sessionManager, start)
+                delay(1.seconds)
+                count++
+            }
+            start = start.toInstant(TimeZone.UTC).plus(1.days).toLocalDateTime(TimeZone.UTC)
+        }
+        Napier.i {
+            "create topic success in ${communityInfo.aid} $count"
+        }
+    } else {
+        Napier.i {
+            "never created topic"
+        }
+        createNewsTopic(client, prompt, communityInfo, sessionManager, previousDate)
+        delay(1.seconds)
+    }
+}
+
+private suspend fun createNewsTopic(
+    client: Client,
+    newPrompt: String,
+    communityInfo: CommunityInfo,
+    sessionManager: SessionManager,
+    date: LocalDateTime
+) {
+    val year = date.year
+    val month = date.month // 1-12
+    val day = date.day
+    val response = client.models.generateContent(
+        "gemini-2.5-flash",
+        "$newPrompt\n日期:${year}年${month}月${day}日，领域:${communityInfo.name}",
+        GenerateContentConfig.builder().tools(Tool.builder().googleSearch(GoogleSearch.builder()))
+            .build()
+    )
+    val content = response.text()?.take(1000) ?: "😴"
+    sessionManager.createNewTopic(ObjectType.COMMUNITY, communityInfo.id, content).onSuccess {
+        Napier.i {
+            "create $date new topic success"
+        }
+    }.onFailure {
+        Napier.e(it) {
+            "create $date new topic failed"
+        }
+    }
 }
