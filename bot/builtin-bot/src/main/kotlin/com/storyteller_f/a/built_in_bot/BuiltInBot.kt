@@ -109,11 +109,17 @@ private suspend fun CoroutineScope.processJob(
                 }
             }
         } catch (e: Exception) {
-            Napier.e(e) {
-                "process failed"
-            }
-            if (e.message?.contains("User location is not supported for the API use") == true) {
-                break
+            if (e is kotlinx.coroutines.CancellationException) {
+                Napier.i {
+                    "bot canceled"
+                }
+            } else {
+                Napier.e(e) {
+                    "process failed"
+                }
+                if (e.message?.contains("User location is not supported for the API use") == true) {
+                    break
+                }
             }
         }
         delay(10.seconds)
@@ -149,11 +155,11 @@ private suspend fun handleCommunityComment(
     prompt: String
 ) {
     Napier.i {
-        "check community latest processed topic ${info.aid} ${info.name}"
+        "check community latest commented topic ${info.name}[${info.aid}]"
     }
     var next: String? = null
     // 找出最新的评论过的topic
-    var hasCommentId = 0L
+    var latestHasCommentedTopicId = 0L
     while (true) {
         val resp = sessionManager.getTopicList(
             ObjectType.COMMUNITY,
@@ -164,17 +170,17 @@ private suspend fun handleCommunityComment(
         delay(1.seconds)
         for (topicInfo in resp.data) {
             if (topicInfo.hasComment) {
-                hasCommentId = topicInfo.id
+                latestHasCommentedTopicId = topicInfo.id
                 break
             }
         }
-        if (hasCommentId != 0L) break
+        if (latestHasCommentedTopicId != 0L) break
         next = resp.pagination?.nextPageToken ?: break
     }
     Napier.i {
-        "latest processed topic is $hasCommentId"
+        "latest commented topic is $latestHasCommentedTopicId"
     }
-    var pre = hasCommentId.toString()
+    var pre = latestHasCommentedTopicId.toString()
     while (true) {
         val resp = sessionManager.getTopicList(
             ObjectType.COMMUNITY,
@@ -184,11 +190,21 @@ private suspend fun handleCommunityComment(
         ).getOrThrow()
         delay(1.seconds)
         resp.data.forEach { topicInfo ->
-            Napier.i {
-                "handle ${topicInfo.id} ${topicInfo.hasComment} ${topicInfo.createdTime}"
+            val isAuthor = topicInfo.author == sessionManager.sessionModel.uid
+            if (isAuthor || topicInfo.hasComment) {
+                Napier.i {
+                    "skip topic ${topicInfo.id} " +
+                            "isAuthor: $isAuthor " +
+                            "hasComment: ${topicInfo.hasComment} " +
+                            "createdTime: ${topicInfo.createdTime}"
+                }
+            } else {
+                Napier.i {
+                    "handle ${topicInfo.id} createdTime: ${topicInfo.createdTime}"
+                }
+                handleTopic(topicInfo, client, sessionManager, prompt)
+                delay(1.seconds)
             }
-            handleTopic(topicInfo, client, sessionManager, prompt)
-            delay(1.seconds)
         }
         pre = resp.pagination?.prePageToken ?: break
     }
@@ -200,10 +216,6 @@ private suspend fun handleTopic(
     sessionManager: UserSessionManager,
     prompt: String
 ) {
-    if (topicInfo.author == sessionManager.sessionModel.uid || topicInfo.hasComment) {
-        return
-    }
-
     val plain = (topicInfo.content as TopicContent.Plain).plain
     val text = if (plain.length < 10) {
         null
@@ -235,6 +247,9 @@ private suspend fun handleCommunityNews(
     communityInfo: CommunityInfo,
     prompt: String
 ) {
+    Napier.i {
+        "check community bot created latest topic ${communityInfo.name}[${communityInfo.aid}]"
+    }
     var next: String? = null
     // 找出最新的评论过的topic
     var latestTopic: TopicInfo? = null
@@ -255,6 +270,9 @@ private suspend fun handleCommunityNews(
         if (latestTopic != null) break
         next = resp.pagination?.nextPageToken ?: break
     }
+    Napier.i {
+        "latest bot created topic ${latestTopic?.id}"
+    }
     addTopic(latestTopic, client, prompt, communityInfo, sessionManager)
 }
 
@@ -270,30 +288,28 @@ private suspend fun addTopic(
     val previousDate = now.toInstant(TimeZone.UTC).minus(1.days).toLocalDateTime(TimeZone.UTC)
     val year = previousDate.year
     val month = previousDate.month // 1-12
-    val day = previousDate.day
+    val previousDay = previousDate.day
     Napier.i {
-        "previous day $year $month $day and now is $now"
+        "previous day [${year} $month $previousDay] and now is $now"
     }
     if (latestTopic != null) {
         Napier.i {
-            "last created topic is ${latestTopic.id} ${latestTopic.createdTime}"
+            "latest bot created topic is ${latestTopic.id} createdTime: ${latestTopic.createdTime}"
         }
-        var start = latestTopic.createdTime
-        var count = 0
-        while (true) {
-            if (start >= previousDate) break
-            val startYear = start.year
-            val startMonth = start.month
-            val startDay = start.day
-            if (startYear != year && startMonth != month && startDay != day) {
-                createNewsTopic(client, prompt, communityInfo, sessionManager, start)
-                delay(1.seconds)
-                count++
+        val start = latestTopic.createdTime
+        val latestYear = start.year
+        val latestMonth = start.month
+        val latestDay = start.day
+        if (latestDay != previousDay + 1 || latestYear != year || latestMonth != month) {
+            createNewsTopic(client, prompt, communityInfo, sessionManager, previousDate)
+            Napier.i {
+                "create topic success"
             }
-            start = start.toInstant(TimeZone.UTC).plus(1.days).toLocalDateTime(TimeZone.UTC)
-        }
-        Napier.i {
-            "create topic success in ${communityInfo.aid} $count"
+            delay(1.seconds)
+        } else {
+            Napier.i {
+                "skip create topic"
+            }
         }
     } else {
         Napier.i {
