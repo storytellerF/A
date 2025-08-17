@@ -142,6 +142,9 @@ private fun Application.configurePlugin(
     install(CallLogging) {
         level = Level.INFO
         callIdMdc("call-id")
+        filter {
+            it.request.uri != "/metrics"
+        }
         format { call ->
             buildLog(call, reader)
         }

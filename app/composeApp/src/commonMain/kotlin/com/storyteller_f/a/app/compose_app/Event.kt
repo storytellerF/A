@@ -90,17 +90,17 @@ private suspend fun processRemoveReaction(
     ).forEach { collectionName ->
         database.topicStorage.update(collectionName, event.topicInfo.id) { old ->
             val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
-            val new = extension.reactions.orEmpty().map { info ->
-                if (info.emoji != event.info.emoji) {
-                    info
+            val newReactions = extension.reactions.orEmpty().map { info ->
+                if (info.emoji == event.info.emoji) {
+                    event.info
                 } else {
                     info
                 }
             }.filter {
-                it.count <= 0
+                it.count > 0
             }.toImmutableList()
             old.copy(
-                extension = extension.copy(reactions = new),
+                extension = extension.copy(reactions = newReactions),
                 reactionCount = old.reactionCount - 1
             )
         }
@@ -118,14 +118,15 @@ private suspend fun processOnAddReaction(
     ).forEach { collectionName ->
         database.topicStorage.update(collectionName, event.info.objectId) { old ->
             val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
-            val existing = extension.reactions?.firstOrNull {
+            val oldReactions = extension.reactions.orEmpty()
+            val existing = oldReactions.firstOrNull {
                 it.emoji == event.info.emoji
             }
-            val new = if (existing == null) {
+            val newReactions = if (existing == null) {
                 val info = event.info
-                extension.reactions.orEmpty().toPersistentList().add(info)
+                oldReactions.toPersistentList().add(info)
             } else {
-                extension.reactions.orEmpty().map { info ->
+                oldReactions.map { info ->
                     if (info.emoji == event.info.emoji) {
                         event.info
                     } else {
@@ -134,7 +135,7 @@ private suspend fun processOnAddReaction(
                 }.toImmutableList()
             }
             old.copy(
-                extension = extension.copy(reactions = new),
+                extension = extension.copy(reactions = newReactions),
                 reactionCount = old.reactionCount + 1
             )
         }
