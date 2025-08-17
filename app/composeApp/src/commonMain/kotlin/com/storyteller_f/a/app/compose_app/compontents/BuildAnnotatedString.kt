@@ -34,7 +34,7 @@ import com.mikepenz.markdown.compose.extendedspans.ExtendedSpans
 import com.mikepenz.markdown.compose.extendedspans.drawBehind
 import com.mikepenz.markdown.model.ImageTransformer
 import com.mikepenz.markdown.utils.getUnescapedTextInNode
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.readInlineMath
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toImmutableMap
@@ -337,7 +337,7 @@ fun CustomMarkdownParagraph(
     node: ASTNode,
     modifier: Modifier = Modifier,
     style: TextStyle = LocalMarkdownTypography.current.paragraph,
-    mediaMap: ImmutableMap<String, MediaInfo>,
+    mediaMap: ImmutableMap<String, FileInfo>,
     isEmbed: Boolean,
 ) {
     val density = LocalDensity.current
@@ -384,7 +384,7 @@ fun CustomMarkdownParagraph(
 
 private fun buildInlineTextContentFromMap(
     inlineContentMap: MutableMap<String, String>,
-    mediaMap: ImmutableMap<String, MediaInfo>,
+    mediaMap: ImmutableMap<String, FileInfo>,
     width: Dp,
     isEmbed: Boolean,
     density: Density,

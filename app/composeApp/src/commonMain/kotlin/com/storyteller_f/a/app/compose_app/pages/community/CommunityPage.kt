@@ -105,7 +105,7 @@ import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.DownloadInfo
@@ -447,7 +447,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun FontView(info: MediaInfo) {
+private fun FontView(info: FileInfo) {
     val downloadViewModel =
         LocalDownloadViewModel.current
     val loadingHandler by produceState<LoadingHandler<DownloadInfo>?>(
@@ -574,7 +574,7 @@ private fun CommunityMenus(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DownloadInfoPage(
-    mediaInfo: MediaInfo,
+    fileInfo: FileInfo,
     showSheet: Boolean,
     sheetState: SheetState,
     hideSheet: () -> Unit,
@@ -583,9 +583,9 @@ private fun DownloadInfoPage(
         LocalDownloadViewModel.current
     val loadingHandler by produceState<LoadingHandler<DownloadInfo>?>(
         null,
-        mediaInfo.id
+        fileInfo.id
     ) {
-        value = downloadViewModel.download(mediaInfo)
+        value = downloadViewModel.download(fileInfo)
     }
     loadingHandler?.let { handler ->
         BaseSheet(showSheet, sheetState, hideSheet) {
@@ -596,9 +596,9 @@ private fun DownloadInfoPage(
                 ) {
                     val data by handler.data.collectAsState()
 
-                    DownloadInfoTitle(mediaInfo, data, handler)
+                    DownloadInfoTitle(fileInfo, data, handler)
 
-                    DownloadInfoTable(data, mediaInfo)
+                    DownloadInfoTable(data, fileInfo)
                 }
             }
         }
@@ -607,7 +607,7 @@ private fun DownloadInfoPage(
 
 @Composable
 private fun DownloadInfoTitle(
-    it: MediaInfo,
+    it: FileInfo,
     data: DownloadInfo?,
     handler: LoadingHandler<DownloadInfo>
 ) {
@@ -629,18 +629,18 @@ private fun DownloadInfoTitle(
 @Composable
 private fun DownloadInfoTable(
     downloadInfo: DownloadInfo?,
-    mediaInfo: MediaInfo
+    fileInfo: FileInfo
 ) {
-    val tableData = remember(downloadInfo, mediaInfo) {
+    val tableData = remember(downloadInfo, fileInfo) {
         buildMap {
             put("Path", downloadInfo?.path)
-            put("Size", HumanReadable.fileSize(mediaInfo.size))
+            put("Size", HumanReadable.fileSize(fileInfo.size))
             put("Status", downloadInfo?.status?.name)
             if (downloadInfo?.status == DownloadStatus.FAILED) {
                 put("Error", downloadInfo.message)
             }
             put("Message", downloadInfo?.message)
-            put("Url", mediaInfo.url)
+            put("Url", fileInfo.url)
         }
     }
     DataTable(

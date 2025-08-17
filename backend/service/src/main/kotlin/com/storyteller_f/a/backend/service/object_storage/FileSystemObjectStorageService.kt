@@ -35,7 +35,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
     override suspend fun upload(
         bucketName: String,
         uploadPacks: List<UploadPack>,
-    ): Result<List<MediaRecord>> {
+    ): Result<List<ObjectStorageRecord>> {
         return useFileSystem {
             val bucketPath = base.resolve(bucketName)
             uploadPacks.map { uploadPack ->
@@ -50,12 +50,12 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
     }
 
     @OptIn(ExperimentalTime::class)
-    override suspend fun get(bucketName: String, names: List<String>): Result<List<MediaRecord>> {
+    override suspend fun get(bucketName: String, names: List<String>): Result<List<ObjectStorageRecord>> {
         return useFileSystem {
             names.mapNotNull {
                 val mediaPath = base.resolve("$bucketName/$it")
                 if (mediaPath.exists()) {
-                    MediaRecord(
+                    ObjectStorageRecord(
                         URIBuilder(url).setPath("amedia/${AMEDIA_DEFAULT_BUCKET}/$it").build()
                             .toString(),
                         mediaPath.getLastModifiedTime().toInstant().toKotlinInstant()
@@ -77,7 +77,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
         }
     }
 
-    override suspend fun list(bucketName: String, prefix: String): Result<List<MediaRecord>> {
+    override suspend fun list(bucketName: String, prefix: String): Result<List<ObjectStorageRecord>> {
         return useFileSystem {
             val p = base.resolve("$bucketName/$prefix")
             buildList<String?> {
@@ -96,7 +96,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
     override suspend fun copy(
         bucketName: String,
         copyPacks: List<CopyPack>,
-    ): Result<List<MediaRecord>> {
+    ): Result<List<ObjectStorageRecord>> {
         return useFileSystem {
             val bucketPath = base.resolve(bucketName)
             copyPacks.map {

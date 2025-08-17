@@ -32,7 +32,7 @@ import com.storyteller_f.a.app.compose_app.pages.user.LoginPage
 import com.storyteller_f.a.app.compose_app.pages.user.MemberPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserSettingPage
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.CoroutineScope
@@ -157,7 +157,7 @@ interface AppNav {
 
     fun gotoPreference()
 
-    fun gotoMedia(info: MediaInfo)
+    fun gotoMedia(info: FileInfo)
 
     fun gotoLocalImage(url: String)
 
@@ -243,7 +243,7 @@ fun newAppNav(navigator: NavHostController, json: Json, scope: CoroutineScope) =
         navigator.navigate(PreferenceScreen)
     }
 
-    override fun gotoMedia(info: MediaInfo) {
+    override fun gotoMedia(info: FileInfo) {
         val route = MediaScreen(json.encodeToString<MediaPlaySession>(MediaPlaySession.Image(info)))
         navigator.navigate(route)
     }

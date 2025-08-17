@@ -3,7 +3,7 @@ package com.storyteller_f.storage
 import androidx.paging.PagingSource
 import com.storyteller_f.shared.model.AlternativeAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
@@ -19,23 +19,23 @@ import kotbase.ktx.WhereBuilder
 import kotbase.ktx.orderBy
 import kotlinx.coroutines.flow.Flow
 
-class UserDocumentStorage(
+class UserDocumentInfoStorage(
     val kotbaseDocumentSource: KotbaseDocumentSource
-) : UserStorage {
+) : UserInfoStorage {
     override fun observeDatum(id: PrimaryKey): Flow<UserInfo?> {
         return kotbaseDocumentSource.getCollection<UserInfo>(UserCollection.Users.getName())
             .observeDatum(id)
     }
 
-    override suspend fun save(collection: UserCollection, t: UserInfo) {
+    override suspend fun save(collection: UserCollection, userInfo: UserInfo) {
         with(kotbaseDocumentSource.getCollection<UserInfo>(UserCollection.Users.getName())) {
-            save(t.id, t)
-            save(t.aid, t)
+            save(userInfo.id, userInfo)
+            save(userInfo.aid, userInfo)
         }
         when (collection) {
             is UserCollection.SearchUser, is UserCollection.Members ->
                 kotbaseDocumentSource.getCollection<UserInfo>(collection.getName())
-                    .save(t.id, t)
+                    .save(userInfo.id, userInfo)
 
             else -> {
             }
@@ -70,10 +70,10 @@ class UserDocumentStorage(
     override suspend fun clean(collection: UserCollection) = Unit
 }
 
-class CommunityDocumentStorage(
+class CommunityDocumentInfoStorage(
     val kotbaseDocumentSource: KotbaseDocumentSource
 ) :
-    CommunityStorage {
+    CommunityInfoStorage {
     override fun observeDatum(
         id: PrimaryKey
     ): Flow<CommunityInfo?> {
@@ -90,15 +90,15 @@ class CommunityDocumentStorage(
             }
     }
 
-    override suspend fun save(collection: CommunityCollection, t: CommunityInfo) {
+    override suspend fun save(collection: CommunityCollection, communityInfo: CommunityInfo) {
         with(kotbaseDocumentSource.getCollection<CommunityInfo>(CommunityCollection.Communities.getName())) {
-            save(t.id, t)
-            save(t.aid, t)
+            save(communityInfo.id, communityInfo)
+            save(communityInfo.aid, communityInfo)
         }
         when (collection) {
             is CommunityCollection.SearchCommunity -> {
                 kotbaseDocumentSource.getCollection<CommunityInfo>(collection.getName())
-                    .save(t.id, t)
+                    .save(communityInfo.id, communityInfo)
             }
 
             else -> {}
@@ -134,24 +134,24 @@ class CommunityDocumentStorage(
     override suspend fun clean(collection: CommunityCollection) = Unit
 }
 
-class TopicDocumentStorage(
+class TopicDocumentInfoStorage(
     val kotbaseDocumentSource: KotbaseDocumentSource
-) : TopicStorage {
+) : TopicInfoStorage {
     override fun observeDatum(id: PrimaryKey): Flow<TopicInfo?> {
         return kotbaseDocumentSource.getCollection<TopicInfo>(TopicCollection.Topics.getName())
             .observeDatum(id)
     }
 
-    override suspend fun save(collection: TopicCollection, t: TopicInfo) {
+    override suspend fun save(collection: TopicCollection, topicInfo: TopicInfo) {
         with(kotbaseDocumentSource.getCollection<TopicInfo>(TopicCollection.Topics.getName())) {
-            save(t.id, t)
-            save(t.aid, t)
+            save(topicInfo.id, topicInfo)
+            save(topicInfo.aid, topicInfo)
         }
-        kotbaseDocumentSource.getCollection<TopicInfo>(collection.getName()).save(t.id, t)
+        kotbaseDocumentSource.getCollection<TopicInfo>(collection.getName()).save(topicInfo.id, topicInfo)
         when (collection) {
             is TopicCollection.Recommend, is TopicCollection.TopicList, is TopicCollection.SearchTopic -> {
                 kotbaseDocumentSource.getCollection<TopicInfo>(collection.getName())
-                    .save(t.id, t)
+                    .save(topicInfo.id, topicInfo)
             }
 
             else -> {}
@@ -214,18 +214,18 @@ class TopicDocumentStorage(
     override suspend fun clean(collection: TopicCollection) = Unit
 }
 
-class TitleDocumentStorage(
+class TitleDocumentInfoStorage(
     val kotbaseDocumentSource: KotbaseDocumentSource
-) : TitleStorage {
+) : TitleInfoStorage {
     override fun observeDatum(id: PrimaryKey): Flow<TitleInfo?> {
         return kotbaseDocumentSource.getCollection<TitleInfo>(TitleCollection.Titles.getName())
             .observeDatum(id)
     }
 
-    override suspend fun save(collection: TitleCollection, t: TitleInfo) {
+    override suspend fun save(collection: TitleCollection, titleInfo: TitleInfo) {
         when (collection) {
             is TitleCollection.Titles -> {
-                kotbaseDocumentSource.getCollection<TitleInfo>("titles").save(t.id, t)
+                kotbaseDocumentSource.getCollection<TitleInfo>("titles").save(titleInfo.id, titleInfo)
             }
 
             else -> {}
@@ -252,23 +252,23 @@ class TitleDocumentStorage(
     override suspend fun clean(collection: TitleCollection) = Unit
 }
 
-class RoomDocumentStorage(
+class RoomDocumentInfoStorage(
     val kotbaseDocumentSource: KotbaseDocumentSource
-) : RoomStorage {
+) : RoomInfoStorage {
     override fun observeDatum(id: PrimaryKey): Flow<RoomInfo?> {
         return kotbaseDocumentSource.getCollection<RoomInfo>(RoomCollection.Rooms.getName())
             .observeDatum(id)
     }
 
-    override suspend fun save(collection: RoomCollection, t: RoomInfo) {
+    override suspend fun save(collection: RoomCollection, roomInfo: RoomInfo) {
         with(kotbaseDocumentSource.getCollection<RoomInfo>(RoomCollection.Rooms.getName())) {
-            save(t.id, t)
-            save(t.aid, t)
+            save(roomInfo.id, roomInfo)
+            save(roomInfo.aid, roomInfo)
         }
         when (collection) {
             is RoomCollection.SearchRoom -> {
                 kotbaseDocumentSource.getCollection<RoomInfo>(collection.getName())
-                    .save(t.id, t)
+                    .save(roomInfo.id, roomInfo)
             }
 
             else -> {}
@@ -339,11 +339,11 @@ class RemoteKeyDocumentStorage(
     }
 }
 
-class ReactionDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : ReactionStorage {
+class ReactionDocumentInfoStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : ReactionInfoStorage {
 
-    override suspend fun save(collection: ReactionCollection, t: ReactionInfo) {
+    override suspend fun save(collection: ReactionCollection, reactionInfo: ReactionInfo) {
         kotbaseDocumentSource.getCollection<ReactionInfo>(collection.getName())
-            .save("${t.objectId}-${t.emoji}", t)
+            .save("${reactionInfo.objectId}-${reactionInfo.emoji}", reactionInfo)
     }
 
     override fun observeData(
@@ -367,12 +367,12 @@ class ReactionDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) 
     override suspend fun clean(collection: ReactionCollection) = Unit
 }
 
-class AlternativesDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) :
-    AlternativesStorage {
+class AlternativeInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) :
+    AlternativeInfoStorage {
 
-    override suspend fun save(collection: AlternativesCollection, t: AlternativeAccountInfo) {
+    override suspend fun save(collection: AlternativesCollection, alternativeAccountInfo: AlternativeAccountInfo) {
         kotbaseDocumentSource.getCollection<AlternativeAccountInfo>(collection.NAME)
-            .save(t.id, t)
+            .save(alternativeAccountInfo.id, alternativeAccountInfo)
     }
 
     override fun observeData(
@@ -389,19 +389,19 @@ class AlternativesDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSour
     override suspend fun clean(collection: AlternativesCollection) = Unit
 }
 
-class OSSDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : OSSStorage {
+class FileInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : FileInfoStorage {
 
     override suspend fun save(
         collection: MediasCollection,
-        t: MediaInfo
+        fileInfo: FileInfo
     ) {
-        kotbaseDocumentSource.getCollection<MediaInfo>(collection.getName()).save(t.id, t)
+        kotbaseDocumentSource.getCollection<FileInfo>(collection.getName()).save(fileInfo.id, fileInfo)
     }
 
     override fun observeData(
         collection: MediasCollection,
-    ): PagingSource<Int, MediaInfo> {
-        return kotbaseDocumentSource.getCollection<MediaInfo>(collection.getName())
+    ): PagingSource<Int, FileInfo> {
+        return kotbaseDocumentSource.getCollection<FileInfo>(collection.getName())
             .getSource {
                 orderBy {
                     "id".descending()
@@ -412,14 +412,14 @@ class OSSDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : OSS
     override suspend fun clean(collection: MediasCollection) = Unit
 }
 
-class DownloadDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : DownloadStorage {
+class DownloadInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : DownloadInfoStorage {
 
     override suspend fun save(
         collection: DownloadCollection,
-        t: DownloadInfo
+        downloadInfo: DownloadInfo
     ) {
         kotbaseDocumentSource.getCollection<DownloadInfo>(collection.NAME)
-            .save(t.mediaInfo.id, t)
+            .save(downloadInfo.fileInfo.id, downloadInfo)
     }
 
     override fun observeDatum(
@@ -441,23 +441,23 @@ class DownloadDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) 
 }
 
 class DocumentModelStorage(source: KotbaseDocumentSource) : ModelStorage {
-    override val userStorage: UserStorage =
-        UserDocumentStorage(source)
-    override val communityStorage: CommunityStorage =
-        CommunityDocumentStorage(source)
-    override val topicStorage: TopicStorage =
-        TopicDocumentStorage(source)
-    override val titleStorage: TitleStorage =
-        TitleDocumentStorage(source)
-    override val roomStorage: RoomStorage =
-        RoomDocumentStorage(source)
+    override val userInfoStorage: UserInfoStorage =
+        UserDocumentInfoStorage(source)
+    override val communityInfoStorage: CommunityInfoStorage =
+        CommunityDocumentInfoStorage(source)
+    override val topicInfoStorage: TopicInfoStorage =
+        TopicDocumentInfoStorage(source)
+    override val titleInfoStorage: TitleInfoStorage =
+        TitleDocumentInfoStorage(source)
+    override val roomInfoStorage: RoomInfoStorage =
+        RoomDocumentInfoStorage(source)
     override val remoteKeyStorage: RemoteKeyStorage =
         RemoteKeyDocumentStorage(source)
-    override val reactionStorage: ReactionStorage = ReactionDocumentStorage(source)
-    override val alternativesStorage: AlternativesStorage =
-        AlternativesDocumentStorage(source)
-    override val ossStorage: OSSStorage = OSSDocumentStorage(source)
-    override val downloadStorage: DownloadStorage = DownloadDocumentStorage(source)
+    override val reactionInfoStorage: ReactionInfoStorage = ReactionDocumentInfoStorage(source)
+    override val alternativeInfoStorage: AlternativeInfoStorage =
+        AlternativeInfoDocumentStorage(source)
+    override val fileInfoStorage: FileInfoStorage = FileInfoDocumentStorage(source)
+    override val downloadInfoStorage: DownloadInfoStorage = DownloadInfoDocumentStorage(source)
 }
 
 fun From.whereIf(block: WhereBuilder.() -> Expression?): OrderByRouter {

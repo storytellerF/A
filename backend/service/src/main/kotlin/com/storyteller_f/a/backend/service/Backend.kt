@@ -156,7 +156,7 @@ fun databaseConnection(env: MergedEnv): DatabaseConnection {
     return DatabaseConnection(uri, driver, user, pass)
 }
 
-suspend fun Backend.uploadFiles(uploadPacks: List<UploadPack>): Result<List<MediaInfo?>> {
+suspend fun Backend.uploadFiles(uploadPacks: List<UploadPack>): Result<List<FileInfo?>> {
     val data = uploadPacks.map {
         val nextId = SnowflakeFactory.nextId()
         Media(
@@ -175,12 +175,12 @@ suspend fun Backend.uploadFiles(uploadPacks: List<UploadPack>): Result<List<Medi
     return merge({
         objectStorageService.upload(AMEDIA_DEFAULT_BUCKET, uploadPacks)
     }, {
-        exposedDatabase.mediaDatabase.insertMedia(data)
+        exposedDatabase.fileDatabase.insertMedia(data)
         Result.success(Unit)
     }).map { (mediaRecords) ->
         mediaRecords.mapIndexed { i, e ->
             val uploadPack = uploadPacks[i]
-            MediaInfo(
+            FileInfo(
                 data[i].id,
                 e.url,
                 uploadPack.newFullName,
@@ -216,7 +216,7 @@ suspend fun Backend.copyMedia(
     media: Media,
     newOwner: PrimaryKey,
     newName: String,
-): Result<ServerResponse<MediaInfo>> {
+): Result<ServerResponse<FileInfo>> {
     val id = SnowflakeFactory.nextId()
     return merge({
         objectStorageService.copy(
@@ -233,7 +233,7 @@ suspend fun Backend.copyMedia(
                     } else {
                         null
                     }
-                MediaInfo(
+                FileInfo(
                     id,
                     it.url,
                     newName,
@@ -248,7 +248,7 @@ suspend fun Backend.copyMedia(
             }, null)
         }
     }, {
-        exposedDatabase.mediaDatabase.insertCopiedMedia(id, media, newOwner)
+        exposedDatabase.fileDatabase.insertCopiedMedia(id, media, newOwner)
     }).map {
         it.first
     }
@@ -257,8 +257,8 @@ suspend fun Backend.copyMedia(
 suspend fun Backend.getMediaPaginationResult(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
-): Result<PaginationResult<MediaInfo>> =
-    exposedDatabase.mediaDatabase.getMediaPaginationList(uid, primaryKeyFetch)
+): Result<PaginationResult<FileInfo>> =
+    exposedDatabase.fileDatabase.getMediaPaginationList(uid, primaryKeyFetch)
         .mapResult { (list, count) ->
             processMediaToMediaInfo(list).map {
                 PaginationResult(it, count)
@@ -268,7 +268,7 @@ suspend fun Backend.getMediaPaginationResult(
 suspend fun Backend.processRawCommunityToCommunityInfo(
     list: List<RawCommunity>,
 ): Result<List<CommunityInfo>?> {
-    return exposedDatabase.mediaDatabase.getMediaByIds(list.flatMap { (community) ->
+    return exposedDatabase.fileDatabase.getMediaByIds(list.flatMap { (community) ->
         listOf(community.iconId, community.posterId, community.fontId)
     }.filterNotNull()).mapResultIfNotNull { medias ->
         processMediaToMediaInfo(medias).map { mediaList ->
@@ -325,15 +325,15 @@ suspend fun Backend.searchRoomPaginationResult(
     }
 }
 
-suspend fun Backend.getMediaInfoList(names: List<String>): Result<List<MediaInfo?>?> {
-    return exposedDatabase.mediaDatabase.getMediaByNames(names).mapResult { medias ->
+suspend fun Backend.getMediaInfoList(names: List<String>): Result<List<FileInfo?>?> {
+    return exposedDatabase.fileDatabase.getMediaByNames(names).mapResult { medias ->
         processMediaToMediaInfo(medias)
     }
 }
 
 suspend fun Backend.processMediaToMediaInfo(
     medias: List<Media>,
-): Result<List<MediaInfo>> {
+): Result<List<FileInfo>> {
     return objectStorageService.get(AMEDIA_DEFAULT_BUCKET, medias.map {
         it.fullName
     }).map { mediaList ->
@@ -348,7 +348,7 @@ suspend fun Backend.processMediaToMediaInfo(
 
 suspend fun Backend.processRawUserToUserInfo(
     rawResults: List<RawUser>,
-) = exposedDatabase.mediaDatabase.getMediaByIds(rawResults.mapNotNull {
+) = exposedDatabase.fileDatabase.getMediaByIds(rawResults.mapNotNull {
     it.user.icon
 }).mapResult { medias ->
     processMediaToMediaInfo(medias).map { list ->
@@ -360,7 +360,7 @@ suspend fun Backend.processRawUserToUserInfo(
 }
 
 suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>): Result<List<RoomInfo>?> {
-    return exposedDatabase.mediaDatabase.getMediaByIds(list.mapNotNull {
+    return exposedDatabase.fileDatabase.getMediaByIds(list.mapNotNull {
         it.room.icon
     }).mapResultIfNotNull { medias ->
         processMediaToMediaInfo(medias).map { mediaList ->

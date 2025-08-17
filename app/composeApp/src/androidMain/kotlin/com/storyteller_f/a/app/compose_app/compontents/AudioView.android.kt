@@ -61,7 +61,7 @@ private fun BoxScope.AudioPlayer(
     playingSession: MediaPlaySession.VideoOrAudio
 ) {
     AndroidPlayerContainer(currentSession, player) { pipModifier, state ->
-        val coverMediaInfo = obj.coverMediaInfo
+        val coverMediaInfo = obj.cover
         Row(
             modifier = pipModifier.padding(10.dp).fillMaxHeight(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),

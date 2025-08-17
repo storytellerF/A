@@ -37,11 +37,11 @@ class KotbaseTest : UsingContextTest() {
             JoinStatusSearch.JOINED, ""
         )
         val modelStorage = DocumentModelStorage(createKotbaseSource(null))
-        modelStorage.communityStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = true, id = 1))
-        modelStorage.communityStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = false, id = 2))
-        modelStorage.communityStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = true, id = 3))
-        modelStorage.communityStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = false, id = 4))
-        val observeData = modelStorage.communityStorage.observeData(collection)
+        modelStorage.communityInfoStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = true, id = 1))
+        modelStorage.communityInfoStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = false, id = 2))
+        modelStorage.communityInfoStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = true, id = 3))
+        modelStorage.communityInfoStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = false, id = 4))
+        val observeData = modelStorage.communityInfoStorage.observeData(collection)
         val loadResult = observeData.load(PagingSource.LoadParams.Refresh(null, 10, false))
         assertTrue(loadResult is PagingSource.LoadResult.Page)
         loadResult.data.forEach {

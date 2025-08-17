@@ -130,7 +130,7 @@ fun BoxScope.PlayerWaiting(
     localMediaPlaySession: LocalMediaPlaySession,
     obj: RemoteMediaItem
 ) {
-    val coverMediaInfo = obj.coverMediaInfo
+    val coverMediaInfo = obj.cover
     if (coverMediaInfo != null) {
         val request = imageRequestInMarkdown(coverMediaInfo)
         AsyncImage(request, contentDescription = "cover", modifier = Modifier.fillMaxSize())

@@ -13,7 +13,7 @@ const val AMEDIA_DEFAULT_BUCKET = "default"
 data class Dimension(val width: Int, val height: Int)
 
 @Serializable
-data class MediaInfo(
+data class FileInfo(
     override val id: PrimaryKey,
     val url: String,
     val fullName: String,

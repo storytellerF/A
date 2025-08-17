@@ -4,7 +4,7 @@ import com.storyteller_f.a.backend.core.types.Media
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.shared.model.Dimension
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
@@ -88,8 +88,8 @@ suspend fun Media.Companion.insertCopiedMedia(
         "insert media failed"
     }
 }
-fun Media.toMediaInfo(url: String, lastModified: LocalDateTime): MediaInfo {
-    return MediaInfo(
+fun Media.toMediaInfo(url: String, lastModified: LocalDateTime): FileInfo {
+    return FileInfo(
         id,
         url,
         fullName,

@@ -15,7 +15,7 @@ data class RoomInfo(
     val aid: String,
     val creator: PrimaryKey,
     val memberCount: Long,
-    val icon: MediaInfo? = null,
+    val icon: FileInfo? = null,
     val joinedTime: LocalDateTime? = null,
     val communityId: PrimaryKey? = null,
     val lastRead: PrimaryKey? = null,

@@ -1,8 +1,8 @@
 package com.storyteller_f.a.backend.exposed
 
 import com.storyteller_f.a.backend.core.ContainerDatabase
+import com.storyteller_f.a.backend.core.FileDatabase
 import com.storyteller_f.a.backend.core.ForbiddenException
-import com.storyteller_f.a.backend.core.MediaDatabase
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -43,7 +43,7 @@ import org.jetbrains.exposed.v1.r2dbc.upsert
 class ExposedTopicDatabase(
     val exposedDatabaseSession: ExposedDatabaseSession,
     val containerDatabase: ContainerDatabase,
-    val mediaDatabase: MediaDatabase
+    val fileDatabase: FileDatabase
 ) :
     TopicDatabase {
     override suspend fun getTopicRootTuple(
@@ -199,7 +199,7 @@ class ExposedTopicDatabase(
     ): Result<Unit> {
         return exposedDatabaseSession.dbQuery {
             Topic.new(topic)
-            mediaDatabase.insertMediaRefs(
+            fileDatabase.insertMediaRefs(
                 topic.id,
                 ObjectType.TOPIC,
                 extractMarkdownMediaLink(content.plain).map {

@@ -5,7 +5,7 @@ import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.uploadFiles
 import com.storyteller_f.shared.model.Dimension
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -15,28 +15,28 @@ import javax.imageio.ImageIO
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamConstants
 
-data class MediaRecord(val url: String, val lastModified: LocalDateTime, val fullName: String)
+data class ObjectStorageRecord(val url: String, val lastModified: LocalDateTime, val fullName: String)
 
 interface ObjectStorageService {
-    suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<MediaRecord>>
+    suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<ObjectStorageRecord>>
 
     /**
      * @param names 完整的name
      */
-    suspend fun get(bucketName: String, names: List<String>): Result<List<MediaRecord>>
+    suspend fun get(bucketName: String, names: List<String>): Result<List<ObjectStorageRecord>>
 
     suspend fun clean(bucketName: String): Result<Unit>
 
-    suspend fun list(bucketName: String, prefix: String): Result<List<MediaRecord>>
+    suspend fun list(bucketName: String, prefix: String): Result<List<ObjectStorageRecord>>
 
-    suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<MediaRecord>>
+    suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<ObjectStorageRecord>>
 
     suspend fun getInputStream(bucketName: String, name: String): Result<InputStream>
 }
 
 suspend fun Backend.uploadFilesAfterDetectContentTypeAndDimension(
     files: List<UploadPack>
-): Result<List<MediaInfo?>> {
+): Result<List<FileInfo?>> {
     return uploadFiles(files.map {
         val detectedType = tika.detect(it.path)
         val dimension = if (detectedType.startsWith("image")) {

@@ -4,7 +4,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.storyteller_f.shared.model.AlternativeAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
@@ -126,79 +126,79 @@ fun TitleCollection.getName(): String {
 data class RemoteKeys(val collectionName: String, val key: String?)
 
 interface ModelStorage {
-    val userStorage: UserStorage
-    val communityStorage: CommunityStorage
-    val topicStorage: TopicStorage
-    val titleStorage: TitleStorage
-    val roomStorage: RoomStorage
+    val userInfoStorage: UserInfoStorage
+    val communityInfoStorage: CommunityInfoStorage
+    val topicInfoStorage: TopicInfoStorage
+    val titleInfoStorage: TitleInfoStorage
+    val roomInfoStorage: RoomInfoStorage
     val remoteKeyStorage: RemoteKeyStorage
-    val reactionStorage: ReactionStorage
-    val alternativesStorage: AlternativesStorage
-    val ossStorage: OSSStorage
-    val downloadStorage: DownloadStorage
+    val reactionInfoStorage: ReactionInfoStorage
+    val alternativeInfoStorage: AlternativeInfoStorage
+    val fileInfoStorage: FileInfoStorage
+    val downloadInfoStorage: DownloadInfoStorage
 }
 
-interface UserStorage {
+interface UserInfoStorage {
     fun observeDatum(id: PrimaryKey): Flow<UserInfo?>
-    suspend fun save(collection: UserCollection, t: UserInfo)
+    suspend fun save(collection: UserCollection, userInfo: UserInfo)
     fun observeData(collection: UserCollection): PagingSource<Int, UserInfo>
     fun observeDatum(key: String): Flow<UserInfo?>
     suspend fun clean(collection: UserCollection)
 }
 
-interface CommunityStorage {
+interface CommunityInfoStorage {
     fun observeDatum(id: PrimaryKey): Flow<CommunityInfo?>
     fun observeDatum(key: String): Flow<CommunityInfo?>
-    suspend fun save(collection: CommunityCollection, t: CommunityInfo)
+    suspend fun save(collection: CommunityCollection, communityInfo: CommunityInfo)
     fun observeData(collection: CommunityCollection): PagingSource<Int, CommunityInfo>
     suspend fun getDocument(collection: CommunityCollection, id: PrimaryKey): CommunityInfo?
     suspend fun clean(collection: CommunityCollection)
 }
 
-interface TopicStorage {
+interface TopicInfoStorage {
     fun observeDatum(id: PrimaryKey): Flow<TopicInfo?>
-    suspend fun save(collection: TopicCollection, t: TopicInfo)
+    suspend fun save(collection: TopicCollection, topicInfo: TopicInfo)
     fun observeData(collection: TopicCollection): PagingSource<Int, TopicInfo>
     fun observeDatum(key: String): Flow<TopicInfo?>
     suspend fun getDocument(collection: TopicCollection, id: PrimaryKey): TopicInfo?
     suspend fun clean(collection: TopicCollection)
 }
 
-interface TitleStorage {
+interface TitleInfoStorage {
     fun observeDatum(id: PrimaryKey): Flow<TitleInfo?>
-    suspend fun save(collection: TitleCollection, t: TitleInfo)
+    suspend fun save(collection: TitleCollection, titleInfo: TitleInfo)
     fun observeData(collection: TitleCollection): PagingSource<Int, TitleInfo>
     suspend fun clean(collection: TitleCollection)
 }
 
-interface RoomStorage {
+interface RoomInfoStorage {
     fun observeDatum(id: PrimaryKey): Flow<RoomInfo?>
-    suspend fun save(collection: RoomCollection, t: RoomInfo)
+    suspend fun save(collection: RoomCollection, roomInfo: RoomInfo)
     fun observeData(collection: RoomCollection): PagingSource<Int, RoomInfo>
     fun observeDatum(key: String): Flow<RoomInfo?>
     suspend fun clean(collection: RoomCollection)
 }
 
-interface ReactionStorage {
-    suspend fun save(collection: ReactionCollection, t: ReactionInfo)
+interface ReactionInfoStorage {
+    suspend fun save(collection: ReactionCollection, reactionInfo: ReactionInfo)
     fun observeData(collection: ReactionCollection): PagingSource<Int, ReactionInfo>
     suspend fun clean(collection: ReactionCollection)
 }
 
-interface AlternativesStorage {
-    suspend fun save(collection: AlternativesCollection, t: AlternativeAccountInfo)
+interface AlternativeInfoStorage {
+    suspend fun save(collection: AlternativesCollection, alternativeAccountInfo: AlternativeAccountInfo)
     fun observeData(collection: AlternativesCollection): PagingSource<Int, AlternativeAccountInfo>
     suspend fun clean(collection: AlternativesCollection)
 }
 
-interface OSSStorage {
-    suspend fun save(collection: MediasCollection, t: MediaInfo)
-    fun observeData(collection: MediasCollection): PagingSource<Int, MediaInfo>
+interface FileInfoStorage {
+    suspend fun save(collection: MediasCollection, fileInfo: FileInfo)
+    fun observeData(collection: MediasCollection): PagingSource<Int, FileInfo>
     suspend fun clean(collection: MediasCollection)
 }
 
-interface DownloadStorage {
-    suspend fun save(collection: DownloadCollection, t: DownloadInfo)
+interface DownloadInfoStorage {
+    suspend fun save(collection: DownloadCollection, downloadInfo: DownloadInfo)
     fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?>
     suspend fun getDocument(collection: DownloadCollection, id: PrimaryKey): DownloadInfo?
 }
@@ -217,7 +217,7 @@ interface RemoteKeyStorage {
     }
 }
 
-suspend fun TopicStorage.update(
+suspend fun TopicInfoStorage.update(
     collection: TopicCollection,
     id: PrimaryKey,
     block: (TopicInfo) -> TopicInfo

@@ -1,6 +1,6 @@
 package com.storyteller_f.storage
 
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import kotlinx.serialization.Serializable
 
 enum class DownloadStatus {
@@ -9,7 +9,7 @@ enum class DownloadStatus {
 
 @Serializable
 data class DownloadInfo(
-    val mediaInfo: MediaInfo,
+    val fileInfo: FileInfo,
     val status: DownloadStatus,
     val message: String,
     val path: String,
