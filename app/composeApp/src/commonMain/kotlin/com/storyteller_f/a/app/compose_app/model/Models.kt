@@ -219,7 +219,7 @@ class WorldViewModel(
                 SectionPagingSource(
                     listOf(
                         RegularPagingSource(sessionManager) { loadKey, size ->
-                            getRecommendTopics(loadKey, size)
+                            getRecommendTopics(PaginationQuery(loadKey, size = size))
                         }
                     )
                 ),
@@ -731,7 +731,7 @@ class UploadViewModel(
 class DownloadHandler<T>(
     flow: Flow<T?>,
     private val scope: CoroutineScope,
-    val load: suspend DownloadHandler<T>.() -> Unit
+    private val load: suspend DownloadHandler<T>.() -> Unit
 ) : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
 
@@ -742,15 +742,11 @@ class DownloadHandler<T>(
         refresh()
     }
 
-    override suspend fun done(t: T) {
-    }
-
     override fun refresh() {
         scope.launch {
             load()
         }
     }
-
 }
 
 class DownloadViewModel(
@@ -789,13 +785,14 @@ class DownloadViewModel(
         sessionManager.serviceCatching {
             path.parent?.let { SystemFileSystem.createDirectories(it) }
             downloadIfNeed(mediaInfo, path)
-            state.markDown()
+            state.markDone()
         }.onFailure {
             Napier.e(it) {
                 "download failed ${mediaInfo.fullName}"
             }
             modelStorage.downloadStorage.save(
-                modelCollection, DownloadInfo(
+                modelCollection,
+                DownloadInfo(
                     mediaInfo,
                     DownloadStatus.FAILED,
                     it.message.toString(),
@@ -887,7 +884,6 @@ class DownloadViewModel(
                 }
             }
         }
-
     }
 
     private suspend fun getDocument(

@@ -19,7 +19,7 @@ import kotlin.reflect.KClass
 class CachedLoadingHandler<T : Any>(
     flow: Flow<T?>,
     private val scope: CoroutineScope,
-    private val onSaveDocument: suspend (T) -> Unit,
+    private val onSave: suspend (T) -> Unit,
     private val loader: suspend () -> Result<T>
 ) : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
@@ -31,18 +31,11 @@ class CachedLoadingHandler<T : Any>(
         refresh()
     }
 
-    override suspend fun done(t: T) {
-        try {
-            onSaveDocument(t)
-            state.markDown()
-        } catch (e: Exception) {
-            error(e)
-        }
-    }
-
     override fun refresh() {
         scope.launch {
-            request {
+            request({
+                onSave(it)
+            }) {
                 loader()
             }
         }

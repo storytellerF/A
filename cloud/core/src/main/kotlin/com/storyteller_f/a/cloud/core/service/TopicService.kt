@@ -400,7 +400,7 @@ suspend fun Backend.processTopicAfterGet(
             }.map {
                 it.groupBy(ReactionInfo::objectId)
             }
-        },
+        }
     ).mapResultIfNotNull { (topics, reactionMap) ->
         processTopicMedia(topics).mapIfNotNull {
             it.map { topic ->
@@ -441,6 +441,7 @@ suspend fun Backend.searchPublicTopics(
     primaryKeyFetch: PrimaryKeyFetch,
     uid: PrimaryKey?,
 ): Result<PaginationResult<TopicInfo>?> {
+    if (search.fillHasCommented == true && uid == null) return Result.failure(UnauthorizedException())
     val word = search.word
     if (word != null && word.sumOf {
             it.length
@@ -558,11 +559,7 @@ private suspend fun Backend.processTopicsDocument(
         return Result.success(emptyList())
     }
     return exposedDatabase.topicDatabase.getTopicInfoListByIds(uid, ids).mapResult { infos ->
-        processTopicMedia(infos.sortedByDescending {
-            it.id
-        }).mapResultIfNotNull {
-            processTopicAfterGet(it, uid, addLatestSubTopic = true)
-        }
+        processTopicAfterGet(infos, uid, addLatestSubTopic = true)
     }
 }
 

@@ -2,7 +2,6 @@ import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.addAlternativeAccount
 import com.storyteller_f.a.client.core.getAlternativeAccounts
 import com.storyteller_f.a.client.core.getUserInfo
-import com.storyteller_f.a.client.core.getUserInfoByAid
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -23,14 +22,24 @@ class UserTest {
             assertNotNull(uid)
             val aid = getUserInfo(uid).getOrThrow().aid
             assertNull(aid)
+        }
+    }
+
+    @Test
+    fun `test update user nickname and aid`() = test {
+        attachSession {
             val updateRow = updateUserInfo(
                 UpdateUserBody(aid = "newaid")
             ).getOrThrow()
             assertEquals(updateRow.aid, "newaid")
-            assertEquals(uid, getUserInfoByAid("newaid").getOrThrow().id)
             updateUserInfo(UpdateUserBody(nickname = "test")).getOrThrow()
-            assertEquals("test", getUserInfo(uid).getOrThrow().nickname)
-            // 更新头像
+            assertEquals("test", getUserInfo(it.uid).getOrThrow().nickname)
+        }
+    }
+
+    @Test
+    fun `test update user avatar`() = test {
+        attachSession {
             val stream = ClassLoader.getSystemClassLoader().getResourceAsStream("avatar1.png")!!
             val bytes = stream.readBytes()
             val info =

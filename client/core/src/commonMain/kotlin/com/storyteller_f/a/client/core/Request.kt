@@ -185,13 +185,14 @@ suspend fun SessionManager.searchRoomMembers(
     )
 }
 
-suspend fun SessionManager.getRecommendTopics(nextTopicId: String?, size: Int) =
+suspend fun SessionManager.getRecommendTopics(
+    paginationQuery: PaginationQuery
+) =
     serviceCatching {
         CustomApi.Topics.recommend.invoke(
             CustomApi.Topics.RecommendQuery(
                 currentIsAlreadySignUp,
-                nextTopicId,
-                size = size
+                paginationQuery
             )
         )
     }
@@ -305,7 +306,8 @@ suspend fun SessionManager.searchTopics(
             parentId,
             parentType,
             nextTopicId,
-            size
+            size,
+            currentIsAlreadySignUp
         )
     )
 }

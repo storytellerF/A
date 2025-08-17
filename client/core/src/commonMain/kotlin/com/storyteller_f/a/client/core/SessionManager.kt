@@ -42,7 +42,9 @@ interface SessionManager {
     suspend fun login() {
         val userPass = sessionModel.currentUserPass ?: return
         val userHandler = sessionModel.userHandler
-        userHandler.request {
+        userHandler.request({
+            userHandler.done(it)
+        }) {
             merge({
                 getData()
             }, {
@@ -120,7 +122,7 @@ class UserSessionModel : SessionModel {
     }
 
     override suspend fun updateUser(new: UserInfo) {
-        userHandler.update(new)
+        userHandler.done(new)
     }
 
     override fun updateState(newState: ClientSessionState) {
@@ -129,7 +131,7 @@ class UserSessionModel : SessionModel {
 
     override suspend fun clear() {
         state.value = ClientSessionState.None
-        userHandler.update(null)
+        userHandler.done(null)
         dataAndSignature = null
     }
 }
