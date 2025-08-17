@@ -20,6 +20,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -43,6 +44,9 @@ fun HttpClientConfig<*>.defaultClientConfigure(
         custom {
             configClientAuth(manager)
         }
+    }
+    install(HttpTimeout) {
+        requestTimeoutMillis = 15.minutes.inWholeMilliseconds
     }
     defaultRequest {
         header("a-ts", manager.generateData())

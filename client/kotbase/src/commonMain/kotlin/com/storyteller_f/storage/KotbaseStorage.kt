@@ -440,24 +440,24 @@ class DownloadDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) 
     }
 }
 
-class DocumentModelStorage(kotbaseDocumentSource: KotbaseDocumentSource) : ModelStorage {
+class DocumentModelStorage(source: KotbaseDocumentSource) : ModelStorage {
     override val userStorage: UserStorage =
-        UserDocumentStorage(kotbaseDocumentSource)
+        UserDocumentStorage(source)
     override val communityStorage: CommunityStorage =
-        CommunityDocumentStorage(kotbaseDocumentSource)
+        CommunityDocumentStorage(source)
     override val topicStorage: TopicStorage =
-        TopicDocumentStorage(kotbaseDocumentSource)
+        TopicDocumentStorage(source)
     override val titleStorage: TitleStorage =
-        TitleDocumentStorage(kotbaseDocumentSource)
+        TitleDocumentStorage(source)
     override val roomStorage: RoomStorage =
-        RoomDocumentStorage(kotbaseDocumentSource)
+        RoomDocumentStorage(source)
     override val remoteKeyStorage: RemoteKeyStorage =
-        RemoteKeyDocumentStorage(kotbaseDocumentSource)
-    override val reactionStorage: ReactionStorage = ReactionDocumentStorage(kotbaseDocumentSource)
+        RemoteKeyDocumentStorage(source)
+    override val reactionStorage: ReactionStorage = ReactionDocumentStorage(source)
     override val alternativesStorage: AlternativesStorage =
-        AlternativesDocumentStorage(kotbaseDocumentSource)
-    override val ossStorage: OSSStorage = OSSDocumentStorage(kotbaseDocumentSource)
-    override val downloadStorage: DownloadStorage = DownloadDocumentStorage(kotbaseDocumentSource)
+        AlternativesDocumentStorage(source)
+    override val ossStorage: OSSStorage = OSSDocumentStorage(source)
+    override val downloadStorage: DownloadStorage = DownloadDocumentStorage(source)
 }
 
 fun From.whereIf(block: WhereBuilder.() -> Expression?): OrderByRouter {

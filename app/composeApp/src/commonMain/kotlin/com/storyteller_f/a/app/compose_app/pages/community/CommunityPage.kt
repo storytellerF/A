@@ -43,6 +43,7 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -69,7 +70,6 @@ import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.add
 import com.storyteller_f.a.app.compose_app.all_members
 import com.storyteller_f.a.app.compose_app.bus
-import com.storyteller_f.a.app.compose_app.common.CachedLoadingHandler
 import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
 import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
 import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
@@ -100,6 +100,7 @@ import com.storyteller_f.a.app.compose_app.topics
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.compose_app.utils.loadFontFromLocal
+import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
@@ -143,26 +144,28 @@ fun CommunityPage(
 fun getCommunityFont(communityId: PrimaryKey): Typography {
     val model = createCommunityViewModel(communityId)
     val community by model.handler.data.collectAsState()
-    val fontFamily = community?.font?.let { fontId ->
-        val downloadViewModel = LocalDownloadViewModel.current
-        val loadingHandler by produceState<CachedLoadingHandler<DownloadInfo>?>(
-            null,
-            fontId
-        ) {
-            value = downloadViewModel.download(fontId)
-        }
-        loadingHandler?.let { handler ->
-            val state by handler.state.collectAsState()
-            val data by handler.data.collectAsState()
-            Napier.i {
-                "CommunityPage state:$state data:$data"
-            }
-            if (state is LoadingState.Done && data?.status == DownloadStatus.DOWNLOADED) {
-                data?.let {
-                    loadFontFromLocal(it.path + ".extracted")
+    val downloadViewModel = LocalDownloadViewModel.current
+    val loadingHandler by produceState<LoadingHandler<DownloadInfo>?>(
+        null,
+        community?.font?.id
+    ) {
+        value = downloadViewModel.download(community?.font)
+    }
+    val fontFamily by remember {
+        derivedStateOf {
+            community?.font?.let { font ->
+                loadingHandler?.let { handler ->
+                    val state = handler.state.value
+                    val data = handler.data.value
+                    Napier.i {
+                        "CommunityPage state:$state data:$data"
+                    }
+                    if (state is LoadingState.Done && data?.status == DownloadStatus.DOWNLOADED) {
+                        loadFontFromLocal(data.path + ".extracted")
+                    } else {
+                        null
+                    }
                 }
-            } else {
-                null
             }
         }
     }
@@ -447,9 +450,9 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
 private fun FontView(info: MediaInfo) {
     val downloadViewModel =
         LocalDownloadViewModel.current
-    val loadingHandler by produceState<CachedLoadingHandler<DownloadInfo>?>(
+    val loadingHandler by produceState<LoadingHandler<DownloadInfo>?>(
         null,
-        info
+        info.id
     ) {
         value = downloadViewModel.download(info)
     }
@@ -484,7 +487,7 @@ private fun DownloadStatusView(
     data: DownloadInfo?,
 ) {
     Napier.i {
-        "DownloadStatus state:$state data:$data"
+        "DownloadStatusView state:$state data:$data"
     }
     when {
         state is LoadingState.Done && data != null -> {
@@ -571,18 +574,18 @@ private fun CommunityMenus(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DownloadInfoPage(
-    it: MediaInfo,
+    mediaInfo: MediaInfo,
     showSheet: Boolean,
     sheetState: SheetState,
     hideSheet: () -> Unit,
 ) {
     val downloadViewModel =
         LocalDownloadViewModel.current
-    val loadingHandler by produceState<CachedLoadingHandler<DownloadInfo>?>(
+    val loadingHandler by produceState<LoadingHandler<DownloadInfo>?>(
         null,
-        it
+        mediaInfo.id
     ) {
-        value = downloadViewModel.download(it)
+        value = downloadViewModel.download(mediaInfo)
     }
     loadingHandler?.let { handler ->
         BaseSheet(showSheet, sheetState, hideSheet) {
@@ -593,9 +596,9 @@ private fun DownloadInfoPage(
                 ) {
                     val data by handler.data.collectAsState()
 
-                    DownloadInfoTitle(it, data, handler)
+                    DownloadInfoTitle(mediaInfo, data, handler)
 
-                    DownloadInfoTable(data, it)
+                    DownloadInfoTable(data, mediaInfo)
                 }
             }
         }
@@ -606,7 +609,7 @@ private fun DownloadInfoPage(
 private fun DownloadInfoTitle(
     it: MediaInfo,
     data: DownloadInfo?,
-    handler: CachedLoadingHandler<DownloadInfo>
+    handler: LoadingHandler<DownloadInfo>
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -636,6 +639,7 @@ private fun DownloadInfoTable(
             if (downloadInfo?.status == DownloadStatus.FAILED) {
                 put("Error", downloadInfo.message)
             }
+            put("Message", downloadInfo?.message)
             put("Url", mediaInfo.url)
         }
     }
