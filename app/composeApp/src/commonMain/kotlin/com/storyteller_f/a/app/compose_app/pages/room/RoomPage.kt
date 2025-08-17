@@ -133,7 +133,8 @@ private fun RoomPageInternal(
                 try {
                     val info = items[firstVisibleItemIndex]
                     if (info != null) {
-                        sessionManager.addReadLog(UpdateUserRead(roomInfo.tuple(), info.id)).getOrThrow()
+                        sessionManager.addReadLog(UpdateUserRead(roomInfo.tuple(), info.id))
+                            .getOrThrow()
                     }
                 } catch (e: Exception) {
                     Napier.e(e) {
@@ -261,9 +262,7 @@ private fun RoomInputGroupInternal(
     updateInput: (String) -> Unit,
 ) {
     val userSessionManager = LocalSessionManager.current
-    val myInfo1 by userSessionManager.sessionModel.userHandler.data.collectAsState()
-    val myInfo = myInfo1
-    val wsClient = LocalWsClient.current
+    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
     val mediaTarget = if (roomInfo.isPrivate) {
         ObjectTuple(roomInfo.id, ObjectType.ROOM)
     } else {
@@ -272,8 +271,6 @@ private fun RoomInputGroupInternal(
     val controller = remember {
         CustomAlertDialogController()
     }
-    val scope = rememberCoroutineScope()
-    val toasterState = LocalToaster.current
     val keysViewModel =
         createRoomKeysViewModel(roomId, roomInfo)
     val keysData by keysViewModel.handler.data.collectAsState()
@@ -284,33 +281,31 @@ private fun RoomInputGroupInternal(
         MaterialTheme.colorScheme.tertiaryContainer,
         updateInput,
         {
-            appNav.gotoTopicCompose(parentTarget.objectType, parentTarget.objectId, false, roomId.takeIf {
-                roomInfo.isPrivate
-            }, null)
+            appNav.gotoTopicCompose(
+                parentTarget.objectType,
+                parentTarget.objectId,
+                false,
+                roomId.takeIf {
+                    roomInfo.isPrivate
+                },
+                null
+            )
         },
         mediaTarget,
         {
             RoomInputTopContent(roomInfo, keysState, keysData)
         }
     ) {
-        RoomSendButton(input = input) {
-            sendRoomTopic(
-                roomInfo,
-                input,
-                scrollToNew,
-                scope,
-                toasterState,
-                controller,
-                keysViewModel,
-                wsClient,
-                parentTarget
-            )
-        }
+        RoomSendButton(input = input, roomInfo, scrollToNew, controller, parentTarget)
     }
 }
 
 @Composable
-private fun RoomInputTopContent(roomInfo: RoomInfo, keysState: LoadingState?, keysData: List<UserPubKeyInfo>?) {
+private fun RoomInputTopContent(
+    roomInfo: RoomInfo,
+    keysState: LoadingState?,
+    keysData: List<UserPubKeyInfo>?
+) {
     if (roomInfo.isPrivate) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             when (val ks = keysState) {
@@ -336,7 +331,8 @@ private fun buildInputBoxContentListener(
         override suspend fun onReceived(frame: RoomFrame) {
             if (frame is RoomFrame.NewTopicInfo) {
                 val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
-                    val topicInfo = processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
+                    val topicInfo =
+                        processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
                     RoomFrame.NewTopicInfo(topicInfo)
                 } else {
                     frame
@@ -367,7 +363,7 @@ private fun sendRoomTopic(
     val keyData = handler.data.value
     if (roomInfo.isJoined) {
         if (!checkContent(input)) {
-            toasterState.showMessage("invalid",)
+            toasterState.showMessage("invalid")
             return
         }
         if ((keyState !is LoadingState.Done || keyData == null) && roomInfo.isPrivate) {
@@ -413,13 +409,32 @@ private fun checkRoomRouteAndAlert(
 @Composable
 fun RoomSendButton(
     input: String,
-    send: () -> Unit,
+    roomInfo: RoomInfo,
+    scrollToNew: () -> Unit,
+    alertDialogState: CustomAlertDialogController,
+    parentTarget: ObjectTuple,
 ) {
+    val toasterState = LocalToaster.current
+    val scope = rememberCoroutineScope()
     val wsClient = LocalWsClient.current
     val state by wsClient.connectionHandler.state.collectAsState()
     val sendState by wsClient.localState.collectAsState()
     val isSending = sendState is LoadingState.Loading
-    CommonInputButton(state, input, isSending, send)
+    val keysViewModel =
+        createRoomKeysViewModel(roomInfo.id, roomInfo)
+    CommonInputButton(state, input, isSending) {
+        sendRoomTopic(
+            roomInfo,
+            input,
+            scrollToNew,
+            scope,
+            toasterState,
+            alertDialogState,
+            keysViewModel,
+            wsClient,
+            parentTarget
+        )
+    }
 }
 
 @Composable
@@ -476,7 +491,8 @@ fun InputGroupInternal(
         Modifier.background(
             backgroundColor,
             shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
-        ).padding(horizontal = 20.dp).padding(top = 10.dp).navigationBarsPadding().imePadding().imeAnimation(),
+        ).padding(horizontal = 20.dp).padding(top = 10.dp).navigationBarsPadding().imePadding()
+            .imeAnimation(),
     ) {
         topContent()
         Row(
@@ -512,7 +528,10 @@ private fun InputGroupSuffix(
         mutableStateOf(false)
     }
     val scope = rememberCoroutineScope()
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
         if (input.isNotEmpty()) {
             Icon(Icons.Default.Clear, "clear input", modifier = Modifier.clickable {
                 updateInput("")

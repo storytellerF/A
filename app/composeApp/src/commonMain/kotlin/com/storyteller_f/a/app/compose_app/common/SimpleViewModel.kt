@@ -14,10 +14,6 @@ import io.github.aakira.napier.Napier
 
 abstract class SimpleViewModel<T : Any> : ViewModel() {
     abstract val handler: LoadingHandler<T>
-
-    suspend fun update(t: T) {
-        handler.update(t)
-    }
 }
 
 @Composable

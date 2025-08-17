@@ -1,4 +1,5 @@
 import com.storyteller_f.a.api.core.PaginationQuery
+import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.addReadLog
@@ -8,6 +9,7 @@ import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.deleteReaction
 import com.storyteller_f.a.client.core.getCommunityInfo
+import com.storyteller_f.a.client.core.getCommunityTopics
 import com.storyteller_f.a.client.core.getReactions
 import com.storyteller_f.a.client.core.getRecommendTopics
 import com.storyteller_f.a.client.core.getRoomInfo
@@ -32,6 +34,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.ObjectType
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFileExtension
 import kotlinx.coroutines.Dispatchers
@@ -50,21 +53,16 @@ import kotlin.test.assertTrue
 class TopicTest {
 
     @Test
-    fun `test topic search`() {
+    fun `test community topic search and pagination`() {
         test {
             attachSession {
-                val newId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
+                val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
                 val lastTopic =
-                    createNewTopic(ObjectType.COMMUNITY, newId, "hello world").getOrThrow()
-                createNewTopic(ObjectType.COMMUNITY, newId, "sysroot").getOrThrow()
+                    createNewTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
+                createNewTopic(ObjectType.COMMUNITY, communityId, "sysroot").getOrThrow()
                 val firstTopic =
-                    createNewTopic(ObjectType.COMMUNITY, newId, "best world").getOrThrow()
-                withContext(Dispatchers.IO) { delay(1000) }
-
+                    createNewTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
                 val topics = searchTopics(1, listOf("world")).getOrThrow()
-                topics.data.forEach {
-                    assertNotNull(it.extension?.authorInfo)
-                }
                 assertEquals(2, topics.pagination?.total)
                 assertEquals(1, topics.data.size)
                 assertEquals(firstTopic.id, topics.data.first().id)
@@ -74,6 +72,49 @@ class TopicTest {
                     nextTopicId = topics.data.first().id.toString()
                 ).getOrThrow()
                 assertEquals(lastTopic.id, topics2.data.first().id)
+            }
+        }
+    }
+
+    @Test
+    fun `test community topic author is not null`() {
+        test {
+            attachSession {
+                val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
+                createNewTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
+                createNewTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
+                searchTopics(10, listOf("world")).getOrThrow().data.forEach {
+                    assertNotNull(it.extension?.authorInfo)
+                }
+                getCommunityTopics(
+                    communityId,
+                    paginationQuery = PaginationQuery(size = 10)
+                ).getOrThrow().data.forEach {
+                    assertNotNull(it.extension?.authorInfo)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `test community topic has comment and comment count`() {
+        test {
+            attachSession {
+                val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
+                val topicId =
+                    createNewTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow().id
+                createNewTopic(ObjectType.TOPIC, topicId, "best world").getOrThrow()
+                searchTopics(10, listOf("world")).getOrThrow().data.forEach {
+                    assertNotNull(it.hasComment)
+                    assertEquals(1, it.commentCount)
+                }
+                getCommunityTopics(
+                    communityId,
+                    paginationQuery = PaginationQuery(size = 10)
+                ).getOrThrow().data.forEach {
+                    assertNotNull(it.hasComment)
+                    assertEquals(1, it.commentCount)
+                }
             }
         }
     }
@@ -90,10 +131,10 @@ class TopicTest {
     }
 
     @Test
-    fun `test reaction`() {
+    fun `test add reaction`() {
         test {
             val emoji = "\uD83D\uDE00"
-            val session = attachSession {
+            attachSession {
                 val c = createCommunity(NewCommunity("name", "aid")).getOrThrow()
                 val topicInfo = createNewTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
                 // 测试并发
@@ -106,27 +147,53 @@ class TopicTest {
                 addReaction(topicInfo.id, emoji).getOrThrow()
                 topicInfo
             }
+        }
+    }
+
+    @Test
+    fun `test delete reaction`() {
+        test {
+            val emoji = "\uD83D\uDE00"
+            attachSession {
+                val c = createCommunity(NewCommunity("name", "aid")).getOrThrow()
+                val topicInfo = createNewTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
+                // 测试幂等
+                val old = addReaction(topicInfo.id, emoji).getOrThrow()
+                assertEquals(1, old.count)
+                assertTrue(old.hasReacted)
+                assertListSize(1, getReactions(topicInfo.id, 10))
+                val reactionInfo = deleteReaction(emoji, topicInfo.id).getOrThrow()
+                assertEquals(0, reactionInfo.count)
+                assertFalse(reactionInfo.hasReacted)
+                assertListSize(0, getReactions(topicInfo.id, 10))
+            }
+        }
+    }
+
+    @Test
+    fun `test reaction permission check`() {
+        test {
+            val emoji = "\uD83D\uDE00"
+            val session = attachSession {
+                val communityInfo = createCommunity(NewCommunity("name", "aid")).getOrThrow()
+                val topicInfo =
+                    createNewTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
+                addReaction(topicInfo.id, emoji).getOrThrow()
+                topicInfo
+            }
             val topicId = session.custom.id
             attachSession {
                 assertFails {
                     addReaction(topicId, emoji).getOrThrow()
                 }
                 joinCommunity(session.custom.rootId)
-                val reactions = getReactions(topicId, 10).getOrThrow()
-                assertEquals(1, reactions.data.size)
-                assertFalse(reactions.data.first().hasReacted)
-            }
-            loginSession(session) {
-                val reactionInfo = deleteReaction(emoji, topicId).getOrThrow()
-                assertEquals(0, reactionInfo.count)
-                assertFalse(reactionInfo.hasReacted)
-                assertListSize(0, getReactions(topicId, 10))
+                addReaction(topicId, emoji).getOrThrow()
             }
         }
     }
 
     @Test
-    fun `test create user topic`() {
+    fun `test file in user topic`() {
         test {
             attachSession {
                 val media = upload(
@@ -148,7 +215,6 @@ class TopicTest {
                         it.uid,
                         "![hello.txt](${media.name})"
                     ).getOrThrow()
-                assertNotNull(info.extension?.authorInfo)
                 val plain = info.content as TopicContent.Plain
                 assertEquals(media.fullName, plain.list.first().fullName)
                 val topicInfo = getTopicInfo(info.id).getOrThrow()
@@ -156,6 +222,15 @@ class TopicTest {
                     media.fullName,
                     (topicInfo.content as TopicContent.Plain).list.first().fullName
                 )
+            }
+        }
+    }
+
+    @Test
+    fun `test create user topic`() {
+        test {
+            attachSession {
+                createNewTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
                 // 查询单个topic
                 assertListSize(
                     1,
@@ -164,11 +239,7 @@ class TopicTest {
                         paginationQuery = PaginationQuery(null, null, size = 10)
                     )
                 )
-                createNewTopic(
-                    ObjectType.USER,
-                    it.uid,
-                    "test"
-                ).getOrThrow()
+                createNewTopic(ObjectType.USER, it.uid, "test").getOrThrow()
                 // 查询多个topic
                 assertListSize(
                     2,
@@ -182,7 +253,31 @@ class TopicTest {
     }
 
     @Test
-    fun `test create topic in room`() {
+    fun `test forbid use api send message in room`() {
+        test {
+            val (communityId, publicRoomId) = attachSession {
+                val communityId = createCommunity(NewCommunity("test1", "test1")).getOrThrow().id
+                val publicRoomId =
+                    createRoom(NewRoom("room1", "room1", communityId = communityId)).getOrThrow().id
+                communityId to publicRoomId
+            }.custom
+            attachSession({ roomFrame, model ->
+            }) {
+                joinCommunity(communityId).getOrThrow()
+                joinRoom(publicRoomId).getOrThrow()
+                assertFails {
+                    createNewTopic(
+                        ObjectType.ROOM,
+                        publicRoomId,
+                        "forbid use api add topic to room"
+                    ).getOrThrow()
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `test community room permission check`() {
         test {
             val (communityId, publicRoomId) = attachSession {
                 val communityId = createCommunity(NewCommunity("test1", "test1")).getOrThrow().id
@@ -194,23 +289,26 @@ class TopicTest {
             attachSession({ roomFrame, model ->
                 receivedFrame.add(roomFrame)
             }) {
-                joinCommunity(communityId).getOrThrow()
-                val roomInfo = joinRoom(publicRoomId).getOrThrow()
-                webSocketClient.useWebSocket {
+                val roomInfo = getRoomInfo(publicRoomId).getOrThrow()
+                createTopicInRoomAndWait(receivedFrame) {
                     sendMessage(
                         ObjectTuple(roomInfo.id, ObjectType.ROOM),
                         roomInfo.isPrivate,
                         "test",
                         emptyList()
                     )
-                }?.join()
-                while (true) {
-                    if (receivedFrame.size == 1) {
-                        break
-                    }
-                    delay(100)
                 }
-                assertNotNull((receivedFrame.first() as RoomFrame.NewTopicInfo).topicInfo.extension?.authorInfo)
+                assertTrue(receivedFrame.first() is RoomFrame.Error)
+                joinCommunity(communityId).getOrThrow()
+                joinRoom(publicRoomId).getOrThrow()
+                createTopicInRoomAndWait(receivedFrame) {
+                    sendMessage(
+                        ObjectTuple(roomInfo.id, ObjectType.ROOM),
+                        roomInfo.isPrivate,
+                        "test",
+                        emptyList()
+                    )
+                }
                 assertListSize(
                     1,
                     getRoomTopics(
@@ -218,32 +316,40 @@ class TopicTest {
                         paginationQuery = PaginationQuery(null, null, size = 10)
                     )
                 )
-                assertFails {
-                    createNewTopic(
-                        ObjectType.ROOM,
-                        publicRoomId,
-                        "forbid use api add topic to room"
-                    ).getOrThrow()
-                }
             }
             receivedFrame.clear()
+        }
+    }
+
+    private suspend fun SessionManager.createTopicInRoomAndWait(
+        receivedFrame: MutableList<RoomFrame>,
+        block: suspend DefaultClientWebSocketSession.() -> Unit
+    ) {
+        val old = receivedFrame.size
+        webSocketClient.useWebSocket(block)?.join()
+        while (true) {
+            if (receivedFrame.size == old + 1) {
+                break
+            }
+            withContext(Dispatchers.IO) {
+                delay(100)
+            }
         }
     }
 
     @Test
     fun `test create topic in private room`() {
         test {
-            val user1 = attachSession {
-                createRoom(NewRoom("room2", "room2")).getOrThrow().id
-            }
-            val privateRoomId = user1.custom
             val user2 = attachSession {
             }
-            loginSession(user1) {
+            val user1 = attachSession {
+                val id = createRoom(NewRoom("room2", "room2")).getOrThrow().id
                 createTitle(
-                    NewTitle("join", TitleType.JOIN, user2.uid, privateRoomId, ObjectType.ROOM, "")
+                    NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, "")
                 )
+                id
             }
+            val privateRoomId = user1.custom
             val receivedFrame = mutableListOf<RoomFrame>()
             loginSession(user2, { roomFrame, model ->
                 receivedFrame.add(roomFrame)
@@ -254,43 +360,43 @@ class TopicTest {
                     privateRoomId,
                     PaginationQuery(null, size = 10)
                 ).getOrThrow().data
-                webSocketClient.useWebSocket {
+                createTopicInRoomAndWait(receivedFrame) {
                     sendMessage(
                         ObjectTuple(roomInfo2.id, ObjectType.ROOM),
                         roomInfo2.isPrivate,
                         "hello",
                         keys
                     )
-                }?.join()
-                while (true) {
-                    if (receivedFrame.size == 1) {
-                        break
-                    }
-                    delay(100)
                 }
                 assertNotNull((receivedFrame.first() as RoomFrame.NewTopicInfo).topicInfo.extension?.authorInfo)
-                assertResponse(
-                    1,
-                    getRoomTopics(
-                        privateRoomId,
-                        paginationQuery = PaginationQuery(null, null, size = 10)
-                    )
-                ) {
-                    val privateRoomTopicList = it.data
-                    assertEquals(1, privateRoomTopicList.size)
-                    val id = privateRoomTopicList.first().id
-                    getTopicInfo(id).getOrThrow()
-                    assertFails {
-                        createNewTopic(
-                            ObjectType.TOPIC,
-                            id,
-                            "forbid use api add topic to room"
-                        ).getOrThrow()
-                    }
+            }
+            receivedFrame.clear()
+        }
+    }
+
+    @Test
+    fun `test private room join`() {
+        test {
+            val user1 = attachSession {
+                val id = createRoom(NewRoom("room2", "room2")).getOrThrow().id
+                id
+            }
+            val privateRoomId = user1.custom
+
+            val user2 = attachSession {
+                assertFails {
+                    joinRoom(privateRoomId).getOrThrow()
                 }
             }
-
-            receivedFrame.clear()
+            loginSession(user1) {
+                createTitle(
+                    NewTitle("join", TitleType.JOIN, user2.uid, privateRoomId, ObjectType.ROOM, "")
+                )
+            }
+            loginSession(user2, { roomFrame, model ->
+            }) {
+                joinRoom(privateRoomId).getOrThrow()
+            }
         }
     }
 
@@ -306,29 +412,45 @@ class TopicTest {
     @Test
     fun `test recommend`() {
         test {
-            val custom = attachSession {
-                createCommunity(NewCommunity("c1", "c1")).getOrThrow().id
+            attachSession {
+                val id = createCommunity(NewCommunity("c1", "c1")).getOrThrow().id
+                repeat(4) {
+                    createNewTopic(ObjectType.COMMUNITY, id, "hello $it").getOrThrow()
+                }
+                id
             }.custom
             val custom2 = attachSession {
                 val id = createCommunity(NewCommunity("c2", "c2")).getOrThrow().id
                 createNewTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
                 id
             }.custom
-
-            attachSession {
-                joinCommunity(custom).getOrThrow()
-                repeat(4) {
-                    createNewTopic(ObjectType.COMMUNITY, custom, "hello $it").getOrThrow()
-                }
-            }
-            noneSession {
-                assertEquals(5, getRecommendTopics(null, 10).getOrThrow().data.size)
-            }
             attachSession {
                 joinCommunity(custom2).getOrThrow()
                 createNewTopic(ObjectType.COMMUNITY, custom2, "only").getOrThrow()
-                withContext(Dispatchers.IO) { delay(1000) }
-                assertListSize(1, getRecommendTopics(null, 10))
+                assertListSize(1, getRecommendTopics(PaginationQuery(null, size = 10)))
+            }
+        }
+    }
+
+    @Test
+    fun `test none session recommend`() {
+        test {
+            attachSession {
+                val id = createCommunity(NewCommunity("c1", "c1")).getOrThrow().id
+                repeat(4) {
+                    createNewTopic(ObjectType.COMMUNITY, id, "hello $it").getOrThrow()
+                }
+            }
+            attachSession {
+                val id = createCommunity(NewCommunity("c2", "c2")).getOrThrow().id
+                createNewTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
+                id
+            }
+            noneSession {
+                assertEquals(
+                    5,
+                    getRecommendTopics(PaginationQuery(null, size = 10)).getOrThrow().data.size
+                )
             }
         }
     }
@@ -342,15 +464,12 @@ class TopicTest {
             }) {
                 val roomInfo = createRoom(NewRoom("r1", "r1")).getOrThrow()
                 val keys =
-                    getRoomMembersPublicKeys(roomInfo.id, PaginationQuery(null, size = 10)).getOrThrow().data
-                webSocketClient.useWebSocket {
+                    getRoomMembersPublicKeys(
+                        roomInfo.id,
+                        PaginationQuery(null, size = 10)
+                    ).getOrThrow().data
+                createTopicInRoomAndWait(receivedFrame) {
                     sendMessage(roomInfo.tuple(), true, "hello", keys)
-                }?.join()
-                while (true) {
-                    if (receivedFrame.size == 1) {
-                        break
-                    }
-                    delay(100)
                 }
                 val topicId = (receivedFrame.first() as RoomFrame.NewTopicInfo).topicInfo.id
                 addReadLog(

@@ -33,6 +33,7 @@ object CustomApi {
             val parentType: ObjectType? = null,
             val nextPageToken: String? = null,
             val size: Int = 10,
+            val fillHasCommented: Boolean? = null
         ) : PageableQuery {
 
             override val pagination: PaginationQuery
@@ -49,6 +50,10 @@ object CustomApi {
         ) : PageableQuery {
             override val pagination: PaginationQuery
                 get() = PaginationQuery(nextPageToken, size = size)
+            constructor(
+                fillHasCommented: Boolean?,
+                paginationQuery: PaginationQuery
+            ) : this(fillHasCommented, paginationQuery.nextPageToken, paginationQuery.size)
         }
 
         val recommend = safeApiWithQuery<ServerResponse<TopicInfo>, RecommendQuery>("topics/recommend")

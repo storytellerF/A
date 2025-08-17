@@ -85,10 +85,6 @@ fun InteractionRowInternal(
             }
         }
     )
-//    val sheetState = rememberModalBottomSheetState()
-//    EmojiSheet(topicInfo,showBottomSheet, sheetState, topicInfo.id, data) {
-//        showBottomSheet = false
-//    }
 }
 
 @Composable
@@ -101,35 +97,35 @@ private fun EmojiRow(
     val horizontalPx = 8.dp
     SubcomposeLayout { constraints ->
         val maxWidth = constraints.maxWidth
-        val firstMeasureResult = measureFirstStage(data, constraints, maxWidth, horizontalPx, content)
+        val firstMeasureResult =
+            measureFirstStage(data, constraints, maxWidth, horizontalPx, content)
         val currentRow = firstMeasureResult.first.last()
         var currentWidth = firstMeasureResult.second
         var emojiUsed = firstMeasureResult.third
 
         while (true) {
+            //提前计算overflow 的尺寸
             val overflowPlaceable = subcompose("overflow$emojiUsed") {
                 overflow(emojiUsed)
             }.map {
                 it.measure(constraints)
             }
             val spacing = horizontalPx.roundToPx() * (overflowPlaceable.size - 1)
-            if (currentWidth + overflowPlaceable.sumOf { it.width } + spacing > maxWidth) {
-                if (firstMeasureResult.first.size < 2) {
-                    // 超过了当前行，但是现在只有一行，选择跳到下一行
-                    firstMeasureResult.first.add(mutableListOf<Placeable>().apply {
-                        addAll(overflowPlaceable)
-                    })
-                    break
-                } else {
-                    // 现在已经有两行了，只能选择删除后面的emoji
-                    currentWidth -= currentRow.last().width + horizontalPx.roundToPx()
-                    currentRow.removeAt(currentRow.size - 1)
-                    emojiUsed--
-                }
-            } else {
+            if (currentWidth + overflowPlaceable.sumOf { it.width } + spacing <= maxWidth) {
                 currentRow.addAll(overflowPlaceable)
                 break
+            } else if (firstMeasureResult.first.size < 2) {
+                // 超过了当前行，但是现在只有一行，选择跳到下一行
+                firstMeasureResult.first.add(mutableListOf<Placeable>().apply {
+                    addAll(overflowPlaceable)
+                })
+                break
             }
+            //不停的删除最后一行的emoji 直到overflow 可以加入进来
+            // 现在已经有两行了，只能选择删除后面的emoji
+            currentWidth -= currentRow.last().width + horizontalPx.roundToPx()
+            currentRow.removeAt(currentRow.size - 1)
+            emojiUsed--
         }
 
         val height = firstMeasureResult.first.sumOf {
@@ -161,7 +157,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
     var currentRow = mutableListOf<Placeable>()
     var currentWidth = 0
     var index = 0
-    var emojiUsed = 0
+    var emojiUsedCount = 0
 
     while (index < data.size.coerceAtLeast(1) && rows.size < 2) {
         val placeableList = subcompose("emoji_$index") {
@@ -173,14 +169,15 @@ private fun SubcomposeMeasureScope.measureFirstStage(
             it.width
         } + horizontalPx.roundToPx() * (placeableList.size - 1)
 
-        val nextWidth = if (currentRow.isEmpty()) newWidth else currentWidth + horizontalPx.roundToPx() + newWidth
+        val nextWidth =
+            if (currentRow.isEmpty()) newWidth else currentWidth + horizontalPx.roundToPx() + newWidth
 
         when {
             nextWidth <= maxWidth -> {
                 currentRow.addAll(placeableList)
                 currentWidth = nextWidth
                 if (data.isNotEmpty()) {
-                    emojiUsed++
+                    emojiUsedCount++
                 }
                 // index++ 会导致退出循环，需要循环后面手动补上最后一行
                 index++
@@ -191,7 +188,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
                 rows.add(currentRow)
                 // 新的一行作为第二行，并且把计算好的placeable 放进list 中，防止重复测量
                 index++
-                emojiUsed++
+                emojiUsedCount++
                 currentRow = mutableListOf<Placeable>().apply {
                     addAll(placeableList)
                 }
@@ -217,7 +214,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
             it.width
         } + (it.size - 1).coerceAtLeast(0) * horizontalPx.roundToPx()
     }
-    return Triple(rows, lastRowWidth, emojiUsed)
+    return Triple(rows, lastRowWidth, emojiUsedCount)
 }
 
 @Composable
@@ -236,31 +233,19 @@ private fun EmojiCell(
         emoji = emoji,
         selected = hasReacted
     ) {
-        emoji.let { string ->
-            if (hasReacted) {
-                scope.launch {
-                    globalDialogController.use {
-                        sessionManager.deleteReaction(string, topicId).map {
-                            bus.emit(
-                                OnRemoveReaction(
-                                    it,
-                                    topicInfo
-                                )
-                            )
-                        }
+        if (hasReacted) {
+            scope.launch {
+                globalDialogController.use {
+                    sessionManager.deleteReaction(emoji, topicId).map {
+                        bus.emit(OnRemoveReaction(it, topicInfo))
                     }
                 }
-            } else {
-                scope.launch {
-                    globalDialogController.use {
-                        sessionManager.addReaction(topicId, string).onSuccess {
-                            bus.emit(
-                                OnAddReaction(
-                                    it,
-                                    topicInfo
-                                )
-                            )
-                        }
+            }
+        } else {
+            scope.launch {
+                globalDialogController.use {
+                    sessionManager.addReaction(topicId, emoji).onSuccess {
+                        bus.emit(OnAddReaction(it, topicInfo))
                     }
                 }
             }

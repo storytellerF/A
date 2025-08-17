@@ -157,6 +157,40 @@ private suspend fun handleCommunityComment(
     Napier.i {
         "check community latest commented topic ${info.name}[${info.aid}]"
     }
+    var pre = getLatestHasCommentedTopic(sessionManager, info).toString()
+    while (true) {
+        val resp = sessionManager.getTopicList(
+            ObjectType.COMMUNITY,
+            info.id,
+            TopicPinSearch.UNSPECIFIED,
+            PaginationQuery(null, pre, size = 10)
+        ).getOrThrow()
+        delay(1.seconds)
+        resp.data.forEach { topicInfo ->
+            val isAuthor = topicInfo.author == sessionManager.sessionModel.uid
+            if (isAuthor || topicInfo.hasComment) {
+                Napier.i {
+                    "skip topic ${topicInfo.id} " +
+                        "isAuthor: $isAuthor " +
+                        "hasComment: ${topicInfo.hasComment} " +
+                        "createdTime: ${topicInfo.createdTime}"
+                }
+            } else {
+                Napier.i {
+                    "handle ${topicInfo.id} createdTime: ${topicInfo.createdTime}"
+                }
+                handleTopic(topicInfo, client, sessionManager, prompt)
+                delay(1.seconds)
+            }
+        }
+        pre = resp.pagination?.prePageToken ?: break
+    }
+}
+
+private suspend fun getLatestHasCommentedTopic(
+    sessionManager: UserSessionManager,
+    info: CommunityInfo
+): Long {
     var next: String? = null
     // 找出最新的评论过的topic
     var latestHasCommentedTopicId = 0L
@@ -180,34 +214,7 @@ private suspend fun handleCommunityComment(
     Napier.i {
         "latest commented topic is $latestHasCommentedTopicId"
     }
-    var pre = latestHasCommentedTopicId.toString()
-    while (true) {
-        val resp = sessionManager.getTopicList(
-            ObjectType.COMMUNITY,
-            info.id,
-            TopicPinSearch.UNSPECIFIED,
-            PaginationQuery(null, pre, size = 10)
-        ).getOrThrow()
-        delay(1.seconds)
-        resp.data.forEach { topicInfo ->
-            val isAuthor = topicInfo.author == sessionManager.sessionModel.uid
-            if (isAuthor || topicInfo.hasComment) {
-                Napier.i {
-                    "skip topic ${topicInfo.id} " +
-                            "isAuthor: $isAuthor " +
-                            "hasComment: ${topicInfo.hasComment} " +
-                            "createdTime: ${topicInfo.createdTime}"
-                }
-            } else {
-                Napier.i {
-                    "handle ${topicInfo.id} createdTime: ${topicInfo.createdTime}"
-                }
-                handleTopic(topicInfo, client, sessionManager, prompt)
-                delay(1.seconds)
-            }
-        }
-        pre = resp.pagination?.prePageToken ?: break
-    }
+    return latestHasCommentedTopicId
 }
 
 private suspend fun handleTopic(
@@ -290,7 +297,7 @@ private suspend fun addTopic(
     val month = previousDate.month // 1-12
     val previousDay = previousDate.day
     Napier.i {
-        "previous day [${year} $month $previousDay] and now is $now"
+        "previous day [$year $month $previousDay] and now is $now"
     }
     if (latestTopic != null) {
         Napier.i {

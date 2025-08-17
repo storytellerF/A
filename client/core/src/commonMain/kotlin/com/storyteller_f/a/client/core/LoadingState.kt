@@ -12,37 +12,27 @@ sealed class LoadingState {
     data object Done : LoadingState()
 }
 
+suspend fun <T> LoadingHandler<T>.request(
+    onSave: suspend (T) -> Unit,
+    service: suspend () -> Result<T>,
+) {
+    if (state.value is LoadingState.Loading) return
+    state.markLoading()
+    service().onSuccess { res ->
+        if (res != null) {
+            onSave(res)
+            state.markDone()
+        } else {
+            state.markError("content not found")
+        }
+    }.onFailure {
+        state.markError(it)
+    }
+}
+
 interface LoadingHandler<T> {
     val state: MutableStateFlow<LoadingState?>
     val data: StateFlow<T?>
-
-    suspend fun request(
-        service: suspend () -> Result<T>,
-    ) {
-        if (state.value is LoadingState.Loading) return
-        state.markLoading()
-        service().onSuccess { res ->
-            if (res != null) {
-                done(res)
-            } else {
-                error(Exception("content not found"))
-            }
-        }.onFailure {
-            error(it)
-        }
-    }
-
-    suspend fun update(t: T) {
-        if (state.value is LoadingState.Loading) return
-        done(t)
-    }
-
-    fun error(error: Throwable) {
-        if (state.value !is LoadingState.Loading) return
-        state.markError(error)
-    }
-
-    suspend fun done(t: T)
 
     fun refresh()
 }
@@ -51,9 +41,8 @@ class FixedLoadingHandler<T> : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
     override val data = MutableStateFlow<T?>(null)
 
-    override suspend fun done(t: T) {
+    fun done(t: T) {
         data.value = t
-        state.markDown()
     }
 
     override fun refresh() = Unit
@@ -68,14 +57,16 @@ class SimpleLoadingHandler<T>(val scope: CoroutineScope, val loader: suspend () 
         refresh()
     }
 
-    override suspend fun done(t: T) {
+    fun done(t: T) {
         data.value = t
         state.value = LoadingState.Done
     }
 
     override fun refresh() {
         scope.launch {
-            request {
+            request({
+                data.value = it
+            }) {
                 loader()
             }
         }
@@ -86,7 +77,7 @@ fun MutableStateFlow<LoadingState?>.markError(e: Throwable) {
     value = LoadingState.Error(e)
 }
 
-fun MutableStateFlow<LoadingState?>.markDown() {
+fun MutableStateFlow<LoadingState?>.markDone() {
     value = LoadingState.Done
 }
 
@@ -97,3 +88,5 @@ fun MutableStateFlow<LoadingState?>.markError(e: String) {
 fun MutableStateFlow<LoadingState?>.markLoading() {
     value = LoadingState.Loading
 }
+
+val MutableStateFlow<LoadingState?>.isLoading get() = this.value is LoadingState.Loading

@@ -244,12 +244,12 @@ class ExposedTopicDatabase(
         return exposedDatabaseSession.dbSearch {
             val countColumn = Topics.id.countDistinct()
             search {
-                Topics.select(countColumn, Topics.id).where {
+                Topics.select(countColumn, Topics.parentId).where {
                     Topics.parentId inList topicIdList
-                }.groupBy(Topics.id)
+                }.groupBy(Topics.parentId)
             }
             map {
-                it[Topics.id] to it[countColumn]
+                it[Topics.parentId] to it[countColumn]
             }
         }
     }

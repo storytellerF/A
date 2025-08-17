@@ -75,16 +75,16 @@ class WebSocketClientImpl(
                 if (oldSession?.isActive == true) return
             }
 
-            is LoadingState.Error -> {}
             else -> {}
         }
+        connectionHandler.state.markLoading()
         try {
             val session = buildConnection(userInfo, sig)
-
             startListenerWebSocket(session)
             connectionHandler.done(session)
+            connectionHandler.state.markDone()
         } catch (e: Exception) {
-            connectionHandler.error(e)
+            connectionHandler.state.markError(e)
         }
     }
 
