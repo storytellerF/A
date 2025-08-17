@@ -235,18 +235,18 @@ private fun EmojiCell(
     ) {
         if (hasReacted) {
             scope.launch {
-                globalDialogController.use {
-                    sessionManager.deleteReaction(emoji, topicId).map {
-                        bus.emit(OnRemoveReaction(it, topicInfo))
-                    }
+                globalDialogController.useResult {
+                    sessionManager.deleteReaction(emoji, topicId)
+                }.onSuccess {
+                    bus.emit(OnRemoveReaction(it, topicInfo))
                 }
             }
         } else {
             scope.launch {
-                globalDialogController.use {
-                    sessionManager.addReaction(topicId, emoji).onSuccess {
-                        bus.emit(OnAddReaction(it, topicInfo))
-                    }
+                globalDialogController.useResult {
+                    sessionManager.addReaction(topicId, emoji)
+                }.onSuccess {
+                    bus.emit(OnAddReaction(it, topicInfo))
                 }
             }
         }
