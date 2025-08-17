@@ -49,7 +49,7 @@ import com.storyteller_f.a.app.compose_app.LocalJson
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
 import com.storyteller_f.a.app.compose_app.utils.setText
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.MarkdownObject
 import com.storyteller_f.shared.utils.getLang
 import com.storyteller_f.shared.utils.md5
@@ -75,7 +75,7 @@ import net.bjoernpetersen.m3u.M3uParser
 import java.net.URI
 
 @Composable
-fun CustomCodeFence(modal: MarkdownComponentModel, mediaList: Map<String, MediaInfo>) {
+fun CustomCodeFence(modal: MarkdownComponentModel, mediaList: Map<String, FileInfo>) {
     val lang = remember(modal.node, modal.content) {
         getLang(modal.node, modal.content)
     }
@@ -93,7 +93,7 @@ fun CustomCodeFence(modal: MarkdownComponentModel, mediaList: Map<String, MediaI
 @Composable
 fun ObjectBlock(
     modal: MarkdownComponentModel,
-    mediaList: Map<String, MediaInfo>
+    mediaList: Map<String, FileInfo>
 ) {
     val json = LocalJson.current
     val obj = remember(modal.node, modal.content) {
@@ -164,7 +164,7 @@ fun ObjectBlock(
 private fun M3UView(
     obj: MarkdownObject,
     modal: MarkdownComponentModel,
-    mediaList: Map<String, MediaInfo>,
+    mediaList: Map<String, FileInfo>,
 ) {
     when {
         obj.url.trim().isEmpty() -> HighlightCodeBlock(modal)
@@ -331,7 +331,7 @@ fun Path.sink(): RawSink {
 
 @Composable
 fun imageRequestInMarkdown(
-    info: MediaInfo?
+    info: FileInfo?
 ): ImageRequest {
     val client = LocalClient.current
     val context = LocalPlatformContext.current
@@ -341,13 +341,13 @@ fun imageRequestInMarkdown(
 fun imageRequest(
     context: PlatformContext,
     client: HttpClient,
-    info: MediaInfo?
+    info: FileInfo?
 ) = ImageRequest.Builder(context)
     .fetcherFactory(KtorNetworkFetcherFactory(client))
     .data(info?.url)
 
 @Composable
-fun getSize(info: MediaInfo?): Pair<Float, Float>? {
+fun getSize(info: FileInfo?): Pair<Float, Float>? {
     val dimension = info?.dimension
     val s = if (info != null && dimension != null) {
         val hDp = convertPxToDp(dimension.height).value
@@ -360,7 +360,7 @@ fun getSize(info: MediaInfo?): Pair<Float, Float>? {
     return s
 }
 
-class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, MediaInfo>) :
+class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, FileInfo>) :
     ImageTransformer {
     @Composable
     override fun transform(link: String): ImageData {

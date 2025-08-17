@@ -92,7 +92,7 @@ object CustomApi {
             val pin = mutationApiWithPath<TopicInfo, Unit, Path>("topics/{id}/pin")
             val unpin =
                 mutationApiWithPath<TopicInfo, Unit, Path>("topics/{id}/pin", methodType = MutationMethodType.DELETE)
-            val createSnapshot = mutationApiWithPath<MediaInfo, Unit, Path>("topics/{id}/create-snapshot")
+            val createSnapshot = mutationApiWithPath<FileInfo, Unit, Path>("topics/{id}/create-snapshot")
         }
 
         val add = mutationApi<TopicInfo, NewTopic>("topics")
@@ -293,16 +293,16 @@ object CustomApi {
                 get() = PaginationQuery(nextPageToken, size = size)
         }
 
-        val get = safeApiWithQuery<ServerResponse<MediaInfo>, MediaQuery>("medias")
+        val get = safeApiWithQuery<ServerResponse<FileInfo>, MediaQuery>("medias")
 
         object Id {
-            val copy = mutationApiWithPath<ServerResponse<MediaInfo>, Unit, Path>("medias/{id}/copy")
-            val get = safeApiWithPath<MediaInfo, Path>("medias/{id}")
+            val copy = mutationApiWithPath<ServerResponse<FileInfo>, Unit, Path>("medias/{id}/copy")
+            val get = safeApiWithPath<FileInfo, Path>("medias/{id}")
             val delete = mutationApiWithPath<Boolean, Unit, Path>("medias/{id}", methodType = MutationMethodType.DELETE)
-            val extractAlbum = mutationApiWithPath<ServerResponse<MediaInfo>, Unit, Path>("medias/{id}/extract-album")
+            val extractAlbum = mutationApiWithPath<ServerResponse<FileInfo>, Unit, Path>("medias/{id}/extract-album")
         }
 
-        val upload = mutationApiWithQuery<ServerResponse<MediaInfo>, Unit, ObjectTuple>("medias/upload")
+        val upload = mutationApiWithQuery<ServerResponse<FileInfo>, Unit, ObjectTuple>("medias/upload")
 
         @Serializable
         class MediaSearchQuery(
@@ -311,7 +311,7 @@ object CustomApi {
             val objectType: ObjectType,
         )
 
-        val getByName = safeApiWithQuery<MediaInfo, MediaSearchQuery>("medias/get-by-name")
+        val getByName = safeApiWithQuery<FileInfo, MediaSearchQuery>("medias/get-by-name")
     }
 
     object Titles {

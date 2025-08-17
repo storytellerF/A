@@ -48,7 +48,7 @@ import kotlinx.io.files.SystemTemporaryDirectory
 data class OnTopicChanged(val topicInfo: TopicInfo)
 data class OnTopicCreated(val topicInfo: TopicInfo)
 
-data class OnMediaUploaded(val mediaInfos: List<MediaInfo>)
+data class OnMediaUploaded(val fileInfos: List<FileInfo>)
 
 data class OnUserUpdated(val info: UserInfo)
 
@@ -81,10 +81,10 @@ class IdCommunityViewModel(
     val modelCollection = CommunityCollection.Communities
     override val handler: LoadingHandler<CommunityInfo> =
         CachedLoadingHandler(
-            modelStorage.communityStorage.observeDatum(communityId),
+            modelStorage.communityInfoStorage.observeDatum(communityId),
             viewModelScope,
             { t ->
-                modelStorage.communityStorage.save(modelCollection, t)
+                modelStorage.communityInfoStorage.save(modelCollection, t)
             }
         ) { sessionManager.getCommunityInfo(communityId) }
 }
@@ -98,10 +98,10 @@ class AidCommunityViewModel(
     val modelCollection = CommunityCollection.Communities
     override val handler: LoadingHandler<CommunityInfo> =
         CachedLoadingHandler(
-            modelStorage.communityStorage.observeDatum(aid),
+            modelStorage.communityInfoStorage.observeDatum(aid),
             viewModelScope,
             { t ->
-                modelStorage.communityStorage.save(modelCollection, t)
+                modelStorage.communityInfoStorage.save(modelCollection, t)
             }
         ) { sessionManager.getCommunityInfoByAid(aid) }
 }
@@ -151,15 +151,15 @@ class CommunitiesViewModel(
             ),
         ) { data, clean ->
             if (clean) {
-                modelStorage.communityStorage.clean(modelCollection)
+                modelStorage.communityInfoStorage.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.communityStorage.save(modelCollection, it)
+                modelStorage.communityInfoStorage.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.communityStorage.observeData(modelCollection),
+            modelStorage.communityInfoStorage.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -187,15 +187,15 @@ class RoomsViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.roomStorage.clean(modelCollection)
+                modelStorage.roomInfoStorage.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.roomStorage.save(modelCollection, it)
+                modelStorage.roomInfoStorage.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.roomStorage.observeData(modelCollection),
+            modelStorage.roomInfoStorage.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -227,15 +227,15 @@ class WorldViewModel(
             ),
         ) { data, clean ->
             if (clean) {
-                modelStorage.topicStorage.clean(modelCollection)
+                modelStorage.topicInfoStorage.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.topicStorage.save(modelCollection, it)
+                modelStorage.topicInfoStorage.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.topicStorage.observeData(modelCollection),
+            modelStorage.topicInfoStorage.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.map {
@@ -290,14 +290,14 @@ class TopicsViewModel(
             ),
         ) { data, refresh ->
             data.forEach {
-                modelStorage.topicStorage.save(modelCollection, it)
+                modelStorage.topicInfoStorage.save(modelCollection, it)
             }
         },
     ) {
 
         WrappedPagingSource(
             CompatPagingSource(
-                modelStorage.topicStorage.observeData(
+                modelStorage.topicInfoStorage.observeData(
                     modelCollection,
                 ),
                 IntKeyConverter
@@ -339,12 +339,12 @@ class IdRoomViewModel(
     val modelCollection = RoomCollection.Rooms
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
-            modelStorage.roomStorage.observeDatum(
+            modelStorage.roomInfoStorage.observeDatum(
                 communityId
             ),
             viewModelScope,
             { t ->
-                modelStorage.roomStorage.save(modelCollection, t)
+                modelStorage.roomInfoStorage.save(modelCollection, t)
             }
         ) {
             sessionManager.getRoomInfo(communityId)
@@ -359,10 +359,10 @@ class AidRoomViewModel(
     val modelCollection = RoomCollection.Rooms
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
-            modelStorage.roomStorage.observeDatum(aid),
+            modelStorage.roomInfoStorage.observeDatum(aid),
             viewModelScope,
             { t ->
-                modelStorage.roomStorage.save(modelCollection, t)
+                modelStorage.roomInfoStorage.save(modelCollection, t)
             }
         ) {
             sessionManager.getRoomInfoByAid(aid)
@@ -407,15 +407,15 @@ class TopicSearchViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.topicStorage.clean(modelCollection)
+                modelStorage.topicInfoStorage.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.topicStorage.save(modelCollection, it)
+                modelStorage.topicInfoStorage.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.topicStorage.observeData(modelCollection),
+            modelStorage.topicInfoStorage.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -427,11 +427,11 @@ class MediaListViewModel(
     objectId: PrimaryKey,
     objectType: ObjectType,
 ) :
-    PagingViewModel<PrimaryKey, MediaInfo>() {
+    PagingViewModel<PrimaryKey, FileInfo>() {
     private val modelCollection = MediasCollection(objectId)
 
     @OptIn(ExperimentalPagingApi::class)
-    override val flow: Flow<PagingData<MediaInfo>> = Pager(
+    override val flow: Flow<PagingData<FileInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
@@ -443,15 +443,15 @@ class MediaListViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.ossStorage.clean(modelCollection)
+                modelStorage.fileInfoStorage.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.ossStorage.save(modelCollection, it)
+                modelStorage.fileInfoStorage.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.ossStorage.observeData(modelCollection),
+            modelStorage.fileInfoStorage.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -469,10 +469,10 @@ class IdUserViewModel(
     val modelCollection = UserCollection.Users
     override val handler: LoadingHandler<UserInfo> =
         CachedLoadingHandler(
-            modelStorage.userStorage.observeDatum(id),
+            modelStorage.userInfoStorage.observeDatum(id),
             viewModelScope,
             { t ->
-                modelStorage.userStorage.save(modelCollection, t)
+                modelStorage.userInfoStorage.save(modelCollection, t)
             }
         ) {
             sessionManager.getUserInfo(id)
@@ -487,10 +487,10 @@ class AidUserViewModel(
     val modelCollection = UserCollection.Users
     override val handler: LoadingHandler<UserInfo> =
         CachedLoadingHandler(
-            modelStorage.userStorage.observeDatum(aid),
+            modelStorage.userInfoStorage.observeDatum(aid),
             viewModelScope,
             { t ->
-                modelStorage.userStorage.save(modelCollection, t)
+                modelStorage.userInfoStorage.save(modelCollection, t)
             }
         ) {
             sessionManager.getUserInfoByAid(aid)
@@ -524,15 +524,15 @@ class MemberViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.userStorage.clean(modelCollection)
+                modelStorage.userInfoStorage.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.userStorage.save(modelCollection, it)
+                modelStorage.userInfoStorage.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.userStorage.observeData(modelCollection),
+            modelStorage.userInfoStorage.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -558,15 +558,15 @@ class ReactionsViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.reactionStorage.clean(modelCollection)
+                modelStorage.reactionInfoStorage.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.reactionStorage.save(modelCollection, it)
+                modelStorage.reactionInfoStorage.save(modelCollection, it)
             }
         }
     ) {
         CompatPagingSource(
-            modelStorage.reactionStorage.observeData(modelCollection),
+            modelStorage.reactionInfoStorage.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -584,10 +584,10 @@ class IdTopicViewModel(
     val modelCollection = TopicCollection.Topics
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
-            modelStorage.topicStorage.observeDatum(topicId),
+            modelStorage.topicInfoStorage.observeDatum(topicId),
             viewModelScope,
             { t ->
-                modelStorage.topicStorage.save(modelCollection, t)
+                modelStorage.topicInfoStorage.save(modelCollection, t)
             }
         ) {
             sessionManager.getTopicInfo(topicId).map {
@@ -605,10 +605,10 @@ class AidTopicViewModel(
     val modelCollection = TopicCollection.Topics
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
-            modelStorage.topicStorage.observeDatum(aid),
+            modelStorage.topicInfoStorage.observeDatum(aid),
             viewModelScope,
             { t ->
-                modelStorage.topicStorage.save(modelCollection, t)
+                modelStorage.topicInfoStorage.save(modelCollection, t)
             }
         ) {
             sessionManager.getTopicInfoByAid(aid)
@@ -668,15 +668,15 @@ class TitlesViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.titleStorage.clean(modelCollection)
+                modelStorage.titleInfoStorage.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.titleStorage.save(modelCollection, it)
+                modelStorage.titleInfoStorage.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.titleStorage.observeData(modelCollection),
+            modelStorage.titleInfoStorage.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -759,18 +759,18 @@ class DownloadViewModel(
     }
     val handlers = mutableMapOf<String, LoadingHandler<DownloadInfo>>()
 
-    suspend fun download(mediaInfo: MediaInfo?): LoadingHandler<DownloadInfo> {
-        val key = mediaInfo?.id.toString()
-        val path = Path(SystemTemporaryDirectory, "downloads", key, mediaInfo?.name.toString())
+    suspend fun download(fileInfo: FileInfo?): LoadingHandler<DownloadInfo> {
+        val key = fileInfo?.id.toString()
+        val path = Path(SystemTemporaryDirectory, "downloads", key, fileInfo?.name.toString())
         return lock.withLock {
             handlers.getOrPut(key) {
                 DownloadHandler(
-                    modelStorage.downloadStorage.observeDatum(
-                        mediaInfo?.id ?: 0
+                    modelStorage.downloadInfoStorage.observeDatum(
+                        fileInfo?.id ?: 0
                     ),
                     viewModelScope,
                 ) {
-                    this.downloadFile(path, mediaInfo)
+                    this.downloadFile(path, fileInfo)
                 }
             }
         }
@@ -778,22 +778,22 @@ class DownloadViewModel(
 
     private suspend fun DownloadHandler<DownloadInfo>.downloadFile(
         path: Path,
-        mediaInfo: MediaInfo?
+        fileInfo: FileInfo?
     ) {
-        mediaInfo ?: return
+        fileInfo ?: return
         state.markLoading()
         sessionManager.serviceCatching {
             path.parent?.let { SystemFileSystem.createDirectories(it) }
-            downloadIfNeed(mediaInfo, path)
+            downloadIfNeed(fileInfo, path)
             state.markDone()
         }.onFailure {
             Napier.e(it) {
-                "download failed ${mediaInfo.fullName}"
+                "download failed ${fileInfo.fullName}"
             }
-            modelStorage.downloadStorage.save(
+            modelStorage.downloadInfoStorage.save(
                 modelCollection,
                 DownloadInfo(
-                    mediaInfo,
+                    fileInfo,
                     DownloadStatus.FAILED,
                     it.message.toString(),
                     path.toString()
@@ -812,10 +812,10 @@ class DownloadViewModel(
     }
 
     private suspend fun HttpClient.downloadIfNeed(
-        mediaInfo: MediaInfo,
+        fileInfo: FileInfo,
         path: Path,
     ) {
-        val downloadInfo = getDocument(path, mediaInfo)
+        val downloadInfo = getDocument(path, fileInfo)
         Napier.i(tag = "download") {
             "downloadInfo $downloadInfo"
         }
@@ -823,14 +823,14 @@ class DownloadViewModel(
             return
         }
         val downloadingInfo = downloadInfo.copy(status = DownloadStatus.DOWNLOADING)
-        modelStorage.downloadStorage.save(modelCollection, downloadingInfo)
-        segmentedDownload(this, mediaInfo, path, downloadingInfo)
+        modelStorage.downloadInfoStorage.save(modelCollection, downloadingInfo)
+        segmentedDownload(this, fileInfo, path, downloadingInfo)
         if (path.toString().endsWith(".zip")) {
             Zip.open(path).use { zip ->
                 zip.extractTo(Path(path.parent!!, "${path.name}.extracted"))
             }
         }
-        modelStorage.downloadStorage.save(
+        modelStorage.downloadInfoStorage.save(
             modelCollection,
             downloadInfo.copy(status = DownloadStatus.DOWNLOADED, message = "download success ${now()}")
         )
@@ -838,7 +838,7 @@ class DownloadViewModel(
 
     suspend fun segmentedDownload(
         client: HttpClient,
-        mediaInfo: MediaInfo,
+        fileInfo: FileInfo,
         path: Path,
         downloadingInfo: DownloadInfo
     ) {
@@ -849,7 +849,7 @@ class DownloadViewModel(
             downloadedBytes = SystemFileSystem.metadataOrNull(path)?.size ?: 0L
         }
 
-        client.prepareGet(mediaInfo.url) {
+        client.prepareGet(fileInfo.url) {
             // Set the Range header to request the remaining part of the file
             header(HttpHeaders.Range, "bytes=$downloadedBytes-")
         }.execute { httpResponse ->
@@ -877,7 +877,7 @@ class DownloadViewModel(
                     } else {
                         ""
                     }
-                    modelStorage.downloadStorage.save(
+                    modelStorage.downloadInfoStorage.save(
                         modelCollection,
                         downloadingInfo.copy(message = "Received $downloadedBytes bytes$totalSizeMessage")
                     )
@@ -888,28 +888,28 @@ class DownloadViewModel(
 
     private suspend fun getDocument(
         path: Path,
-        mediaInfo: MediaInfo,
+        fileInfo: FileInfo,
     ): DownloadInfo {
         val document =
-            modelStorage.downloadStorage.getDocument(modelCollection, mediaInfo.id)
+            modelStorage.downloadInfoStorage.getDocument(modelCollection, fileInfo.id)
         if (document != null) {
             val isDownloaded = document.status == DownloadStatus.DOWNLOADED
             val isFileExists = SystemFileSystem.exists(path)
-            val isMediaSizeMatch = SystemFileSystem.metadataOrNull(path)?.size == mediaInfo.size
+            val isMediaSizeMatch = SystemFileSystem.metadataOrNull(path)?.size == fileInfo.size
             return when {
                 isDownloaded && isFileExists && isMediaSizeMatch -> document
                 document.status == DownloadStatus.DOWNLOADING -> document
                 document.status == DownloadStatus.FAILED -> {
                     val t = document.copy(status = DownloadStatus.NOT_DOWNLOADED)
-                    modelStorage.downloadStorage.save(modelCollection, t)
+                    modelStorage.downloadInfoStorage.save(modelCollection, t)
                     t
                 }
 
                 else -> document.copy(status = DownloadStatus.NOT_DOWNLOADED)
             }
         }
-        val t = DownloadInfo(mediaInfo, DownloadStatus.NOT_DOWNLOADED, "", path.toString())
-        modelStorage.downloadStorage.save(modelCollection, t)
+        val t = DownloadInfo(fileInfo, DownloadStatus.NOT_DOWNLOADED, "", path.toString())
+        modelStorage.downloadInfoStorage.save(modelCollection, t)
         return t
     }
 }
@@ -919,8 +919,8 @@ class MarkdownMediasViewModel(
     private val content: String,
     private val objectTuple: ObjectTuple,
 ) :
-    SimpleViewModel<List<MediaInfo>>() {
-    override val handler: LoadingHandler<List<MediaInfo>> = SimpleLoadingHandler(viewModelScope) {
+    SimpleViewModel<List<FileInfo>>() {
+    override val handler: LoadingHandler<List<FileInfo>> = SimpleLoadingHandler(viewModelScope) {
         runCatching {
             extractMarkdownMediaLink(content).map {
                 sessionManager.getMediaByName(it, objectTuple.objectId, objectTuple.objectType)
@@ -950,15 +950,15 @@ class AlternativeAccountsViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.alternativesStorage.clean(modelCollection)
+                modelStorage.alternativeInfoStorage.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.alternativesStorage.save(modelCollection, it)
+                modelStorage.alternativeInfoStorage.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.alternativesStorage.observeData(modelCollection),
+            modelStorage.alternativeInfoStorage.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)

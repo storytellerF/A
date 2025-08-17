@@ -14,8 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.compose_app.MediaPlaySession
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import kotlinx.serialization.Serializable
 
 const val M3U8_MIMETYPE = "application/vnd.apple.mpegurl"
@@ -32,7 +31,7 @@ data class RemoteMediaItem(
     val userInputContentType: String,
     val isM3U8PlayList: Boolean,
     val name: String,
-    val coverMediaInfo: MediaInfo? = null,
+    val cover: FileInfo? = null,
     val title: String? = null
 )
 

@@ -29,7 +29,7 @@ import com.storyteller_f.a.app.compose_app.utils.saveImageBitmap
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -94,7 +94,7 @@ fun ObjectSettingDialog(
     closeDialog: () -> Unit,
     currentOption: SettingOption?,
     sheetState: SheetState,
-    onInputMedia: (MediaInfo) -> Unit,
+    onInputMedia: (FileInfo) -> Unit,
     onInputString: (String) -> Unit,
 ) {
     val sessionManager = LocalSessionManager.current
@@ -152,7 +152,7 @@ fun ObjectSettingDialog(
 }
 
 private fun processSelectedMedia(
-    mediaList: List<MediaInfo>,
+    mediaList: List<FileInfo>,
     scope: CoroutineScope,
     context: PlatformContext,
     sessionManager: SessionManager,
@@ -160,7 +160,7 @@ private fun processSelectedMedia(
     ratio: AspectRatio,
     mediaTarget: ObjectTuple,
     globalDialogController: GlobalDialogController,
-    onInputMedia: (MediaInfo) -> Unit,
+    onInputMedia: (FileInfo) -> Unit,
 ) {
     val info = mediaList.first()
     val dimension = info.dimension
@@ -198,10 +198,10 @@ private fun processSelectedMedia(
 private suspend fun GlobalDialogController.cropImage(
     context: PlatformContext,
     sessionManager: SessionManager,
-    info: MediaInfo,
+    info: FileInfo,
     imageCropper: ImageCropper,
     mediaTarget: ObjectTuple,
-): Result<MediaInfo?> {
+): Result<FileInfo?> {
     val image = useResult {
         val image = ImageLoader(context)
             .execute(imageRequest(context, sessionManager.client, info).androidAllowHardware(false).build())

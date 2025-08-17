@@ -54,7 +54,7 @@ interface CombinedDatabase {
     val titleDatabase: TitleDatabase
     val communityDatabase: CommunityDatabase
     val roomData: RoomDatabase
-    val mediaDatabase: MediaDatabase
+    val fileDatabase: FileDatabase
     val containerDatabase: ContainerDatabase
     val cliDatabase: CliDatabase
 
@@ -272,7 +272,7 @@ interface RoomDatabase {
     suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): Result<Boolean>
 }
 
-interface MediaDatabase {
+interface FileDatabase {
     suspend fun getMedia(owner: PrimaryKey, name: String): Result<Media?>
     suspend fun getMediaByIds(ids: List<PrimaryKey>): Result<List<Media>>
     suspend fun getMediaListByOwner(owner: PrimaryKey): Result<List<Media>>

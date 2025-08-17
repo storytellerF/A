@@ -42,7 +42,7 @@ fun MediaPage(session: MediaPlaySession) {
                 }
                 val sheetState = rememberModalBottomSheetState()
                 CoilZoomAsyncImage(
-                    model = globalLoader(session.mediaInfo.url),
+                    model = globalLoader(session.fileInfo.url),
                     contentDescription = "view image",
                     modifier = Modifier.fillMaxSize(),
                     onLongPress = {
@@ -99,7 +99,7 @@ fun ImageSheet(
             ButtonNav(MaterialSymbolsOutlined.FileCopy, "copy") {
                 scope.launch {
                     globalDialogController.use {
-                        sessionManager.copy(session.mediaInfo.id).getOrThrow()
+                        sessionManager.copy(session.fileInfo.id).getOrThrow()
                         toaster.showMessage("done")
                     }
                 }

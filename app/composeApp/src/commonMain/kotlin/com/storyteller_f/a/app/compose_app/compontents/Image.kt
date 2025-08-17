@@ -23,7 +23,7 @@ import com.mikepenz.markdown.model.ImageData
 import com.storyteller_f.a.app.compose_app.LocalClient
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.shared.model.Dimension
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.io.buffered
@@ -121,7 +121,7 @@ fun CustomMarkdownImage(imageData: ImageData) {
 
 fun getImageDimension(
     value: String,
-    mediaMap: ImmutableMap<String, MediaInfo>,
+    mediaMap: ImmutableMap<String, FileInfo>,
 ): Dimension? {
     if (!value.startsWith("file:///")) {
         return mediaMap[value]?.dimension

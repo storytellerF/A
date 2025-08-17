@@ -1,6 +1,6 @@
 package com.storyteller_f.a.backend.exposed
 
-import com.storyteller_f.a.backend.core.MediaDatabase
+import com.storyteller_f.a.backend.core.FileDatabase
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.Media
@@ -18,7 +18,7 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
-class ExposedMediaDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : MediaDatabase {
+class ExposedFileDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : FileDatabase {
     override suspend fun getMedia(owner: PrimaryKey, name: String): Result<Media?> {
         return exposedDatabaseSession.dbSearch {
             search {

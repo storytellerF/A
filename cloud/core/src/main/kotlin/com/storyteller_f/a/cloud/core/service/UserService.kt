@@ -140,7 +140,7 @@ suspend fun Backend.checkIcon(
     aspectRatio: Dimension? = null,
 ): Result<MediaCheckResult?> {
     return if (icon != null) {
-        exposedDatabase.mediaDatabase.getMediaByIds(listOf(icon)).mapIfNotNull {
+        exposedDatabase.fileDatabase.getMediaByIds(listOf(icon)).mapIfNotNull {
             val mediaInfo = it.firstOrNull()
             val dimension = mediaInfo?.dimension
             when {

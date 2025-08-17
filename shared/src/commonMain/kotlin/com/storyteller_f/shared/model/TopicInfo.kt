@@ -70,11 +70,11 @@ sealed interface TopicContent {
 
     @Serializable
     @SerialName("extracted")
-    data class Extracted(val plain: String, val list: List<MediaInfo> = emptyList(), val origin: String) : TopicContent
+    data class Extracted(val plain: String, val list: List<FileInfo> = emptyList(), val origin: String) : TopicContent
 
     @Serializable
     @SerialName("plain")
-    data class Plain(val plain: String, val list: List<MediaInfo> = emptyList()) : TopicContent {
+    data class Plain(val plain: String, val list: List<FileInfo> = emptyList()) : TopicContent {
         val bytes: ByteArray
             get() = plain.encodeToByteArray()
     }

@@ -40,7 +40,7 @@ import com.storyteller_f.a.client.core.*
 import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomDatabase
 import com.storyteller_f.shared.kmpLogger
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.RoomFrame
@@ -52,7 +52,6 @@ import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
-import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -131,7 +130,7 @@ sealed interface MediaPlaySession {
 
     @Serializable
     @SerialName("image")
-    data class Image(val mediaInfo: MediaInfo) : MediaPlaySession
+    data class Image(val fileInfo: FileInfo) : MediaPlaySession
 
     @Serializable
     @SerialName("local-image")

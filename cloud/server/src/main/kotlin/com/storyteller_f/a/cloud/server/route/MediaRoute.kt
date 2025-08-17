@@ -17,7 +17,7 @@ import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.route4k.ktor.server.invoke
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.obj.ob
@@ -85,7 +85,7 @@ suspend fun RoutingContext.uploadMedia(
     val parentType = objectTuple.objectType
     val parentId = objectTuple.objectId
     backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
-        val result = mutableListOf<MediaInfo>()
+        val result = mutableListOf<FileInfo>()
 
         call.receiveMultipart().forEachPart { part ->
             when (part) {
@@ -105,7 +105,7 @@ private suspend fun Backend.processFilePart(
     part: PartData.FileItem,
     root: File,
     permission: RootWritePermission,
-    result: MutableList<MediaInfo>
+    result: MutableList<FileInfo>
 ) {
 //    val length = part.headers[HttpHeaders.ContentLength]?.toLongOrNull()
 //    if (length == null) error("content length not exists")

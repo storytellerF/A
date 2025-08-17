@@ -15,13 +15,13 @@ data class CommunityInfo(
     val owner: PrimaryKey,
     val createdTime: LocalDateTime,
     val memberCount: Long,
-    val icon: MediaInfo? = null,
-    val poster: MediaInfo? = null,
+    val icon: FileInfo? = null,
+    val poster: FileInfo? = null,
     val joinedTime: LocalDateTime? = null,
     val extension: Extension? = null,
     val lastRead: PrimaryKey? = null,
     val hasPoster: Boolean = poster != null,
-    val font: MediaInfo? = null,
+    val font: FileInfo? = null,
 ) : PrimaryKeyIdentifiable {
     val isJoined = joinedTime != null
     override val objectType: ObjectType

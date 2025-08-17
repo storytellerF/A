@@ -104,7 +104,7 @@ private fun EmojiRow(
         var emojiUsed = firstMeasureResult.third
 
         while (true) {
-            //提前计算overflow 的尺寸
+            // 提前计算overflow 的尺寸
             val overflowPlaceable = subcompose("overflow$emojiUsed") {
                 overflow(emojiUsed)
             }.map {
@@ -121,7 +121,7 @@ private fun EmojiRow(
                 })
                 break
             }
-            //不停的删除最后一行的emoji 直到overflow 可以加入进来
+            // 不停的删除最后一行的emoji 直到overflow 可以加入进来
             // 现在已经有两行了，只能选择删除后面的emoji
             currentWidth -= currentRow.last().width + horizontalPx.roundToPx()
             currentRow.removeAt(currentRow.size - 1)

@@ -22,16 +22,16 @@ suspend fun processEvent(database: ModelStorage) {
 
             is OnRemoveReaction -> processRemoveReaction(database, event)
 
-            is OnCommunityJoined -> database.communityStorage.save(
+            is OnCommunityJoined -> database.communityInfoStorage.save(
                 CommunityCollection.Communities,
                 event.info
             )
 
-            is OnCommunityExited -> database.communityStorage
+            is OnCommunityExited -> database.communityInfoStorage
                 .save(CommunityCollection.Communities, event.info)
 
             is OnCommunityUpdated -> {
-                database.communityStorage
+                database.communityInfoStorage
                     .save(CommunityCollection.Communities, event.info)
             }
 
@@ -39,21 +39,21 @@ suspend fun processEvent(database: ModelStorage) {
 
             is OnTopicCreated -> processTopicCreated(event, database)
 
-            is OnRoomJoined -> database.roomStorage.save(RoomCollection.Rooms, event.info)
+            is OnRoomJoined -> database.roomInfoStorage.save(RoomCollection.Rooms, event.info)
 
-            is OnRoomExited -> database.roomStorage.save(RoomCollection.Rooms, event.info)
+            is OnRoomExited -> database.roomInfoStorage.save(RoomCollection.Rooms, event.info)
 
             is OnRoomUpdated -> {
-                database.roomStorage.save(RoomCollection.Rooms, event.info)
+                database.roomInfoStorage.save(RoomCollection.Rooms, event.info)
             }
 
             is OnUserUpdated -> {
-                database.userStorage.save(UserCollection.Users, event.info)
+                database.userInfoStorage.save(UserCollection.Users, event.info)
             }
 
             is OnMediaUploaded -> {
-                event.mediaInfos.forEach {
-                    database.ossStorage.save(MediasCollection(it.owner), it)
+                event.fileInfos.forEach {
+                    database.fileInfoStorage.save(MediasCollection(it.owner), it)
                 }
             }
         }
@@ -65,7 +65,7 @@ private suspend fun processTopicCreated(
     database: ModelStorage,
 ) {
     val topicInfo = event.topicInfo
-    database.topicStorage.save(TopicCollection.TopicList(topicInfo.parentId), topicInfo)
+    database.topicInfoStorage.save(TopicCollection.TopicList(topicInfo.parentId), topicInfo)
 }
 
 private suspend fun processTopicChanged(
@@ -73,9 +73,9 @@ private suspend fun processTopicChanged(
     database: ModelStorage,
 ) {
     val topicInfo = event.topicInfo
-    database.topicStorage.save(TopicCollection.TopicList(topicInfo.parentId), topicInfo)
-    if (database.topicStorage.getDocument(TopicCollection.Recommend, event.topicInfo.id) != null) {
-        database.topicStorage.save(TopicCollection.Recommend, topicInfo)
+    database.topicInfoStorage.save(TopicCollection.TopicList(topicInfo.parentId), topicInfo)
+    if (database.topicInfoStorage.getDocument(TopicCollection.Recommend, event.topicInfo.id) != null) {
+        database.topicInfoStorage.save(TopicCollection.Recommend, topicInfo)
     }
 }
 
@@ -88,7 +88,7 @@ private suspend fun processRemoveReaction(
         TopicCollection.Recommend,
         TopicCollection.TopicList(event.topicInfo.parentId)
     ).forEach { collectionName ->
-        database.topicStorage.update(collectionName, event.topicInfo.id) { old ->
+        database.topicInfoStorage.update(collectionName, event.topicInfo.id) { old ->
             val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
             val newReactions = extension.reactions.orEmpty().map { info ->
                 if (info.emoji == event.info.emoji) {
@@ -116,7 +116,7 @@ private suspend fun processOnAddReaction(
         TopicCollection.Recommend,
         TopicCollection.TopicList(event.topicInfo.parentId)
     ).forEach { collectionName ->
-        database.topicStorage.update(collectionName, event.info.objectId) { old ->
+        database.topicInfoStorage.update(collectionName, event.info.objectId) { old ->
             val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
             val oldReactions = extension.reactions.orEmpty()
             val existing = oldReactions.firstOrNull {

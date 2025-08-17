@@ -38,7 +38,7 @@ import com.storyteller_f.a.app.compose_app.utils.Recorder
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.upload
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.formatTime
@@ -62,7 +62,7 @@ fun MediaPicker(
     sheetState: SheetState,
     mediaTarget: ObjectTuple,
     support: List<String> = listOf("files", "audio recorder"),
-    onClickItem: (List<MediaInfo>) -> Unit,
+    onClickItem: (List<FileInfo>) -> Unit,
     hideSheet: () -> Unit,
 ) {
     BaseSheet(showSheet, sheetState, hideSheet) {
@@ -108,7 +108,7 @@ fun MediaPicker(
 @Composable
 fun AudioRecorder(
     mediaTarget: ObjectTuple,
-    uploadSuccess: (List<MediaInfo>) -> Unit,
+    uploadSuccess: (List<FileInfo>) -> Unit,
 ) {
     val isRecording by Recorder.isRecording
     val isGranted by isPermissionGranted(
@@ -137,7 +137,7 @@ fun AudioRecorder(
 private fun BoxScope.RecorderButton(
     isGranted: Boolean,
     isRecording: Boolean,
-    uploadSuccess: (List<MediaInfo>) -> Unit,
+    uploadSuccess: (List<FileInfo>) -> Unit,
     mediaTarget: ObjectTuple,
 ) {
     val sessionManager = LocalSessionManager.current
@@ -181,7 +181,7 @@ private fun BoxScope.RecorderButton(
 @Composable
 private fun MediaListView(
     mediaTarget: ObjectTuple,
-    clickItem: (List<MediaInfo>) -> Unit,
+    clickItem: (List<FileInfo>) -> Unit,
 ) {
     val sessionManager = LocalSessionManager.current
     val viewModel = createMediaListViewModel(mediaTarget)
@@ -221,8 +221,8 @@ private fun MediaListView(
 @OptIn(ExperimentalTime::class)
 @Composable
 private fun MediaCell(
-    item: com.storyteller_f.shared.model.MediaInfo?,
-    clickItem: (kotlin.collections.List<com.storyteller_f.shared.model.MediaInfo>) -> kotlin.Unit
+    item: com.storyteller_f.shared.model.FileInfo?,
+    clickItem: (kotlin.collections.List<com.storyteller_f.shared.model.FileInfo>) -> kotlin.Unit
 ) {
     if (item != null) {
         Row(modifier = Modifier.fillMaxWidth().clickable {
@@ -257,7 +257,7 @@ private fun MediaCell(
 }
 
 @Composable
-private fun FileIcon(it: MediaInfo) {
+private fun FileIcon(it: FileInfo) {
     val contentType = it.contentType
     val modifier = Modifier.size(40.dp)
     if (contentType.startsWith("image")) {
@@ -280,7 +280,7 @@ private suspend fun selectFileAndUpload(
     mediaTarget: ObjectTuple,
     sessionManager: SessionManager,
     globalDialogController: GlobalDialogController,
-    uploadSuccess: (List<MediaInfo>) -> Unit,
+    uploadSuccess: (List<FileInfo>) -> Unit,
 ) {
     globalDialogController.useResult {
         val f = FileKit.openFilePicker()
@@ -308,7 +308,7 @@ suspend fun GlobalDialogController.uploadPath(
     path: Path,
     sessionManager: SessionManager,
     mediaTarget: ObjectTuple,
-): Result<List<MediaInfo>?> {
+): Result<List<FileInfo>?> {
     val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
     return useResult {
         upload(
@@ -326,7 +326,7 @@ suspend fun upload(
     mediaTarget: ObjectTuple,
     uploadData: UploadData,
     readStream: () -> Input,
-): Result<List<MediaInfo>> {
+): Result<List<FileInfo>> {
     if (uploadData.size > 100 * 1024 * 1024) {
         return Result.failure(Exception("file size is too large"))
     }
@@ -338,7 +338,7 @@ suspend fun upload(
 }
 
 fun insertContent(
-    it: MediaInfo,
+    it: FileInfo,
     updateInput: (String) -> Unit,
     input: String,
 ) {

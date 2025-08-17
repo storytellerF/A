@@ -14,7 +14,7 @@ import com.storyteller_f.a.backend.service.object_storage.FileSystemObjectStorag
 import com.storyteller_f.a.backend.service.object_storage.uploadFilesAfterDetectContentTypeAndDimension
 import com.storyteller_f.a.backend.service.processMediaToMediaInfo
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
@@ -36,7 +36,7 @@ suspend fun Backend.getMediaList(
     uid: PrimaryKey,
     routeMedia: CustomApi.Medias.MediaQuery,
     primaryKeyFetch: PrimaryKeyFetch
-): Result<PaginationResult<MediaInfo>?> {
+): Result<PaginationResult<FileInfo>?> {
     if (routeMedia.objectType == ObjectType.TOPIC) {
         return Result.failure(CustomBadRequestException("can't get topic media"))
     }
@@ -60,7 +60,7 @@ suspend fun Backend.getMediaByName(
     uid: PrimaryKey,
     objectTuple: ObjectTuple,
     word: String,
-): Result<MediaInfo?> {
+): Result<FileInfo?> {
     if (objectTuple.objectType == ObjectType.TOPIC) {
         return Result.failure(CustomBadRequestException("can't get topic media"))
     }
@@ -72,7 +72,7 @@ suspend fun Backend.getMediaByName(
         uid
     ).mapResultIfNotNull { (_, objectId, hasWrite) ->
         if (hasWrite) {
-            exposedDatabase.mediaDatabase.getMedia(objectId, word).mapResultIfNotNull { media ->
+            exposedDatabase.fileDatabase.getMedia(objectId, word).mapResultIfNotNull { media ->
                 processMediaToMediaInfo(listOf(media)).map {
                     it.first()
                 }
@@ -85,7 +85,7 @@ suspend fun Backend.getMediaByName(
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, uid: PrimaryKey) =
-    exposedDatabase.mediaDatabase.getMediaByIds(listOf(mediaId)).mapResultIfNotNull { mediaList ->
+    exposedDatabase.fileDatabase.getMediaByIds(listOf(mediaId)).mapResultIfNotNull { mediaList ->
         val media = mediaList.first()
         if (media.owner != uid) {
             throw ForbiddenException("no permission")
@@ -165,14 +165,14 @@ private fun newCoverFileName(fileName: String, contentType: String): String {
 suspend fun Backend.copyMedia(
     p: Path,
     uid: PrimaryKey
-): Result<ServerResponse<MediaInfo>?> =
-    exposedDatabase.mediaDatabase.getMediaByIds(listOf(p.id)).mapResultIfNotNull { mediaList ->
+): Result<ServerResponse<FileInfo>?> =
+    exposedDatabase.fileDatabase.getMediaByIds(listOf(p.id)).mapResultIfNotNull { mediaList ->
         val media = mediaList.firstOrNull()
         if (media != null) {
             checkRootReadPermission(media.ownerType, media.owner, uid).mapResultIfNotNull { permission ->
                 if (permission.hasRead) {
                     // 检查重复媒体
-                    exposedDatabase.mediaDatabase.getMedia(uid, media.name).map {
+                    exposedDatabase.fileDatabase.getMedia(uid, media.name).map {
                         if (it == null) {
                             "$uid/${media.name}"
                         } else {

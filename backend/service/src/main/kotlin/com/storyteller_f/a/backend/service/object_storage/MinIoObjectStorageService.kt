@@ -42,7 +42,7 @@ class MinIoObjectStorageService(
         }
     }
 
-    override suspend fun list(bucketName: String, prefix: String): Result<List<MediaRecord>> {
+    override suspend fun list(bucketName: String, prefix: String): Result<List<ObjectStorageRecord>> {
         return useMinIoClient(connection) {
             val names = listObjects(
                 ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build()
@@ -56,7 +56,7 @@ class MinIoObjectStorageService(
     override suspend fun copy(
         bucketName: String,
         copyPacks: List<CopyPack>,
-    ): Result<List<MediaRecord>> {
+    ): Result<List<ObjectStorageRecord>> {
         return useMinIoClient(connection) {
             copyPacks.map {
                 copyObject(
@@ -91,7 +91,7 @@ class MinIoObjectStorageService(
     override suspend operator fun get(
         bucketName: String,
         names: List<String>
-    ): Result<List<MediaRecord>> {
+    ): Result<List<ObjectStorageRecord>> {
         return useMinIoClient(connection) {
             names.mapNotNull {
                 try {
@@ -112,7 +112,7 @@ class MinIoObjectStorageService(
                         statObject(StatObjectArgs.builder().bucket(bucketName).`object`(it).build())
                     val lastModified =
                         statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime()
-                    MediaRecord(url, lastModified, it)
+                    ObjectStorageRecord(url, lastModified, it)
                 } catch (e: ErrorResponseException) {
                     if (e.errorResponse().code() == "NoSuchKey") {
                         null
@@ -127,7 +127,7 @@ class MinIoObjectStorageService(
     override suspend fun upload(
         bucketName: String,
         uploadPacks: List<UploadPack>,
-    ): Result<List<MediaRecord>> {
+    ): Result<List<ObjectStorageRecord>> {
         return useMinIoClient(connection) {
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())

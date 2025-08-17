@@ -15,7 +15,7 @@ import com.storyteller_f.a.app.compose_app.compontents.CenterBox
 import com.storyteller_f.a.app.compose_app.model.createUploadViewModel
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
-import com.storyteller_f.shared.model.MediaInfo
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.UserInfo
 import io.ktor.http.*
 import kotlinx.coroutines.launch
@@ -82,7 +82,7 @@ fun UploadInternal(my: UserInfo?, session: UploadSession) {
 }
 
 @Composable
-fun UploadItem(p: LoadingHandler<MediaInfo>, file: ClientFile, refresh: () -> Unit) {
+fun UploadItem(p: LoadingHandler<FileInfo>, file: ClientFile, refresh: () -> Unit) {
     val handler = p
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
@@ -92,7 +92,7 @@ fun UploadItem(p: LoadingHandler<MediaInfo>, file: ClientFile, refresh: () -> Un
 @Composable
 private fun UploadItem(
     file: ClientFile,
-    data: MediaInfo?,
+    data: FileInfo?,
     state: LoadingState?,
     refresh: () -> Unit
 ) {

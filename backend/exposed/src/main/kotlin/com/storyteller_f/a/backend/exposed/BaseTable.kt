@@ -5,7 +5,7 @@ import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.CommunityDatabase
 import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.DatabaseConnection
-import com.storyteller_f.a.backend.core.MediaDatabase
+import com.storyteller_f.a.backend.core.FileDatabase
 import com.storyteller_f.a.backend.core.RoomDatabase
 import com.storyteller_f.a.backend.core.TitleDatabase
 import com.storyteller_f.a.backend.core.TopicDatabase
@@ -69,15 +69,15 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
     override val userDatabase: UserDatabase
         get() = ExposedUserDatabase(databaseSession)
     override val topicDatabase: TopicDatabase
-        get() = ExposedTopicDatabase(databaseSession, containerDatabase, mediaDatabase)
+        get() = ExposedTopicDatabase(databaseSession, containerDatabase, fileDatabase)
     override val titleDatabase: TitleDatabase
         get() = ExposedTitleDatabase(databaseSession)
     override val communityDatabase: CommunityDatabase
         get() = ExposedCommunityDatabase(databaseSession, containerDatabase)
     override val roomData: RoomDatabase
         get() = ExposedRoomDatabase(databaseSession, containerDatabase)
-    override val mediaDatabase: MediaDatabase
-        get() = ExposedMediaDatabase(databaseSession)
+    override val fileDatabase: FileDatabase
+        get() = ExposedFileDatabase(databaseSession)
     override val containerDatabase: ContainerDatabase
         get() = ExposedContainerDatabase(databaseSession)
     override val cliDatabase: CliDatabase

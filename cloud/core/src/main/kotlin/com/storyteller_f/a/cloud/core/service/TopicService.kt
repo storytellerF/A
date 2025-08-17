@@ -119,7 +119,7 @@ suspend fun Backend.processTopicAfterCreate(
 suspend fun Backend.createTopicSnapshot(
     uid: PrimaryKey,
     topicId: PrimaryKey,
-): Result<MediaInfo?> {
+): Result<FileInfo?> {
     return getUserInfo(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { userInfo ->
         checkRootReadPermission(
             ObjectType.TOPIC,
@@ -144,7 +144,7 @@ private suspend fun Backend.createTopicSnapshot(
     topicInfo: TopicInfo,
     creatorInfo: UserInfo,
     uid: PrimaryKey,
-): Result<MediaInfo?> {
+): Result<FileInfo?> {
     val topicId = topicInfo.id
     return getUserInfo(
         ObjectFetch.IdFetch(topicInfo.author)
