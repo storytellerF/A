@@ -225,7 +225,8 @@ fun Route.bindUnprotectedAccountRoute(
         Result.success(call.getData())
     }
     CustomApi.Accounts.signUp.invoke(RoutingContext::handleResult) {
-        signUp(backend, it.receiveBody())
+        Result.failure(Exception("not support"))
+//        signUp(backend, it.receiveBody())
     }
 
     CustomApi.Accounts.signIn.invoke(RoutingContext::handleResult) {
