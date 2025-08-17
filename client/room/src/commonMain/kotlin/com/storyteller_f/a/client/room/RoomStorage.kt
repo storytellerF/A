@@ -404,25 +404,15 @@ class DownloadRoomStorage(val appDatabase: AppDatabase) : DownloadStorage {
     }
 }
 
-class RoomModelStorage(val appDatabase: AppDatabase) : ModelStorage {
-    override val userStorage: UserStorage
-        get() = UserRoomStorage(appDatabase)
-    override val communityStorage: CommunityStorage
-        get() = CommunityRoomStorage(appDatabase)
-    override val topicStorage: TopicStorage
-        get() = TopicRoomStorage(appDatabase)
-    override val titleStorage: TitleStorage
-        get() = TitleRoomStorage(appDatabase)
-    override val roomStorage: RoomStorage
-        get() = RoomRoomStorage(appDatabase)
-    override val remoteKeyStorage: RemoteKeyStorage
-        get() = RemoteKeyRoomStorage(appDatabase)
-    override val reactionStorage: ReactionStorage
-        get() = ReactionRoomStorage(appDatabase)
-    override val alternativesStorage: AlternativesStorage
-        get() = AlternativesRoomStorage(appDatabase)
-    override val ossStorage: OSSStorage
-        get() = OSSRoomStorage(appDatabase)
-    override val downloadStorage: DownloadStorage
-        get() = DownloadRoomStorage(appDatabase)
+class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
+    override val userStorage: UserStorage = UserRoomStorage(appDatabase)
+    override val communityStorage: CommunityStorage = CommunityRoomStorage(appDatabase)
+    override val topicStorage: TopicStorage = TopicRoomStorage(appDatabase)
+    override val titleStorage: TitleStorage = TitleRoomStorage(appDatabase)
+    override val roomStorage: RoomStorage = RoomRoomStorage(appDatabase)
+    override val remoteKeyStorage: RemoteKeyStorage = RemoteKeyRoomStorage(appDatabase)
+    override val reactionStorage: ReactionStorage = ReactionRoomStorage(appDatabase)
+    override val alternativesStorage: AlternativesStorage = AlternativesRoomStorage(appDatabase)
+    override val ossStorage: OSSStorage = OSSRoomStorage(appDatabase)
+    override val downloadStorage: DownloadStorage = DownloadRoomStorage(appDatabase)
 }

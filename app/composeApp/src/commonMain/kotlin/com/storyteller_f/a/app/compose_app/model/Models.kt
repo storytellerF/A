@@ -17,6 +17,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
+import com.storyteller_f.shared.utils.now
 import com.storyteller_f.storage.*
 import de.jonasbroeckmann.kzip.Zip
 import de.jonasbroeckmann.kzip.extractTo
@@ -28,10 +29,14 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -723,6 +728,31 @@ class UploadViewModel(
     }
 }
 
+class DownloadHandler<T>(
+    flow: Flow<T?>,
+    private val scope: CoroutineScope,
+    val load: suspend DownloadHandler<T>.() -> Unit
+) : LoadingHandler<T> {
+    override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
+
+    @OptIn(FlowPreview::class)
+    override val data = flow.stateIn(scope, SharingStarted.Lazily, null)
+
+    init {
+        refresh()
+    }
+
+    override suspend fun done(t: T) {
+    }
+
+    override fun refresh() {
+        scope.launch {
+            load()
+        }
+    }
+
+}
+
 class DownloadViewModel(
     private val sessionManager: SessionManager,
     private val modelStorage: ModelStorage,
@@ -731,35 +761,48 @@ class DownloadViewModel(
     val modelCollection = DownloadCollection
     private val queue = Channel<String> {
     }
-    val handlers = mutableMapOf<String, CachedLoadingHandler<DownloadInfo>>()
+    val handlers = mutableMapOf<String, LoadingHandler<DownloadInfo>>()
 
-    suspend fun download(mediaInfo: MediaInfo): CachedLoadingHandler<DownloadInfo> {
-        val key = mediaInfo.id.toString()
-        val path = Path(SystemTemporaryDirectory, "downloads", key, mediaInfo.name)
+    suspend fun download(mediaInfo: MediaInfo?): LoadingHandler<DownloadInfo> {
+        val key = mediaInfo?.id.toString()
+        val path = Path(SystemTemporaryDirectory, "downloads", key, mediaInfo?.name.toString())
         return lock.withLock {
             handlers.getOrPut(key) {
-                CachedLoadingHandler(
+                DownloadHandler(
                     modelStorage.downloadStorage.observeDatum(
-                        mediaInfo.id
+                        mediaInfo?.id ?: 0
                     ),
                     viewModelScope,
-                    {
-                        modelStorage.downloadStorage.save(modelCollection, it)
-                    }
                 ) {
-                    sessionManager.serviceCatching {
-                        path.parent?.let { SystemFileSystem.createDirectories(it) }
-                        downloadIfNeed(mediaInfo, path)
-                    }.recover {
-                        DownloadInfo(
-                            mediaInfo,
-                            DownloadStatus.FAILED,
-                            it.message.toString(),
-                            path.toString()
-                        )
-                    }
+                    this.downloadFile(path, mediaInfo)
                 }
             }
+        }
+    }
+
+    private suspend fun DownloadHandler<DownloadInfo>.downloadFile(
+        path: Path,
+        mediaInfo: MediaInfo?
+    ) {
+        mediaInfo ?: return
+        state.markLoading()
+        sessionManager.serviceCatching {
+            path.parent?.let { SystemFileSystem.createDirectories(it) }
+            downloadIfNeed(mediaInfo, path)
+            state.markDown()
+        }.onFailure {
+            Napier.e(it) {
+                "download failed ${mediaInfo.fullName}"
+            }
+            modelStorage.downloadStorage.save(
+                modelCollection, DownloadInfo(
+                    mediaInfo,
+                    DownloadStatus.FAILED,
+                    it.message.toString(),
+                    path.toString()
+                )
+            )
+            state.markError(it)
         }
     }
 
@@ -774,39 +817,77 @@ class DownloadViewModel(
     private suspend fun HttpClient.downloadIfNeed(
         mediaInfo: MediaInfo,
         path: Path,
-    ): DownloadInfo {
+    ) {
         val downloadInfo = getDocument(path, mediaInfo)
         Napier.i(tag = "download") {
             "downloadInfo $downloadInfo"
         }
         if (downloadInfo.status == DownloadStatus.DOWNLOADED) {
-            return downloadInfo
+            return
         }
-
-        modelStorage.downloadStorage.save(
-            modelCollection,
-            downloadInfo.copy(status = DownloadStatus.DOWNLOADING)
-        )
-        SystemFileSystem.sink(path).use {
-            prepareGet(mediaInfo.url).execute { httpResponse ->
-                val channel: ByteReadChannel = httpResponse.body()
-                var count = 0L
-
-                while (!channel.exhausted()) {
-                    val chunk = channel.readRemaining()
-                    count += chunk.remaining
-
-                    chunk.transferTo(it)
-                    println("Received $count bytes from ${httpResponse.contentLength()}")
-                }
-            }
-        }
+        val downloadingInfo = downloadInfo.copy(status = DownloadStatus.DOWNLOADING)
+        modelStorage.downloadStorage.save(modelCollection, downloadingInfo)
+        segmentedDownload(this, mediaInfo, path, downloadingInfo)
         if (path.toString().endsWith(".zip")) {
             Zip.open(path).use { zip ->
                 zip.extractTo(Path(path.parent!!, "${path.name}.extracted"))
             }
         }
-        return downloadInfo.copy(status = DownloadStatus.DOWNLOADED)
+        modelStorage.downloadStorage.save(
+            modelCollection,
+            downloadInfo.copy(status = DownloadStatus.DOWNLOADED, message = "download success ${now()}")
+        )
+    }
+
+    suspend fun segmentedDownload(
+        client: HttpClient,
+        mediaInfo: MediaInfo,
+        path: Path,
+        downloadingInfo: DownloadInfo
+    ) {
+        var downloadedBytes = 0L
+
+        // Check if the file already exists and get its size to resume the download
+        if (SystemFileSystem.exists(path)) {
+            downloadedBytes = SystemFileSystem.metadataOrNull(path)?.size ?: 0L
+        }
+
+        client.prepareGet(mediaInfo.url) {
+            // Set the Range header to request the remaining part of the file
+            header(HttpHeaders.Range, "bytes=$downloadedBytes-")
+        }.execute { httpResponse ->
+            // Check for successful partial or full content
+            val httpStatus = httpResponse.status
+            if (httpStatus != HttpStatusCode.OK && httpStatus != HttpStatusCode.PartialContent) {
+                throw Exception("Download failed: ${httpStatus.description}")
+            }
+
+            val channel: ByteReadChannel = httpResponse.body()
+            val totalContentLength = httpResponse.contentLength()
+
+            // Open the sink in append mode to continue writing to the file
+            SystemFileSystem.sink(path, append = true).use { sink ->
+                while (!channel.isClosedForRead) {
+                    val chunk = channel.readRemaining(10240)
+                    if (chunk.exhausted()) continue
+
+                    downloadedBytes += chunk.remaining
+                    chunk.transferTo(sink)
+
+                    // Save the updated progress
+                    val totalSizeMessage = if (totalContentLength != null) {
+                        " of ${totalContentLength + downloadedBytes - chunk.remaining} bytes"
+                    } else {
+                        ""
+                    }
+                    modelStorage.downloadStorage.save(
+                        modelCollection,
+                        downloadingInfo.copy(message = "Received $downloadedBytes bytes$totalSizeMessage")
+                    )
+                }
+            }
+        }
+
     }
 
     private suspend fun getDocument(
@@ -819,16 +900,17 @@ class DownloadViewModel(
             val isDownloaded = document.status == DownloadStatus.DOWNLOADED
             val isFileExists = SystemFileSystem.exists(path)
             val isMediaSizeMatch = SystemFileSystem.metadataOrNull(path)?.size == mediaInfo.size
-            if (isDownloaded && isFileExists && isMediaSizeMatch) {
-                return document
-            } else if (document.status == DownloadStatus.DOWNLOADING) {
-                return document
-            } else if (document.status == DownloadStatus.FAILED) {
-                val t = document.copy(status = DownloadStatus.NOT_DOWNLOADED)
-                modelStorage.downloadStorage.save(modelCollection, t)
-                return t
+            return when {
+                isDownloaded && isFileExists && isMediaSizeMatch -> document
+                document.status == DownloadStatus.DOWNLOADING -> document
+                document.status == DownloadStatus.FAILED -> {
+                    val t = document.copy(status = DownloadStatus.NOT_DOWNLOADED)
+                    modelStorage.downloadStorage.save(modelCollection, t)
+                    t
+                }
+
+                else -> document.copy(status = DownloadStatus.NOT_DOWNLOADED)
             }
-            return document.copy(status = DownloadStatus.NOT_DOWNLOADED)
         }
         val t = DownloadInfo(mediaInfo, DownloadStatus.NOT_DOWNLOADED, "", path.toString())
         modelStorage.downloadStorage.save(modelCollection, t)
