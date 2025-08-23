@@ -41,30 +41,6 @@ interface GlobalDialogController {
         block: suspend GlobalDialogController.() -> Result<T>,
     ): Result<T>
 
-    suspend fun showErrorMessage(throwable: Throwable) {
-        useResult<Unit> {
-            Result.failure(throwable)
-        }
-    }
-
-    suspend fun showMessage(text: String) {
-        use {
-            CustomGlobalDialogContent {
-                Text(text)
-            }
-        }
-    }
-
-    suspend fun <T> use(
-        block: suspend GlobalDialogController.() -> T,
-    ): Result<T> {
-        return useResult {
-            runCatching {
-                block()
-            }
-        }
-    }
-
     fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading)
 }
 

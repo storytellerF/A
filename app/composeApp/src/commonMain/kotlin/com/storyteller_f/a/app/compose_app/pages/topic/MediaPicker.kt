@@ -47,7 +47,6 @@ import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.*
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.ktor.http.*
-import io.ktor.utils.io.core.*
 import kotlinx.coroutines.launch
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -62,7 +61,7 @@ fun MediaPicker(
     sheetState: SheetState,
     mediaTarget: ObjectTuple,
     support: List<String> = listOf("files", "audio recorder"),
-    onClickItem: (List<FileInfo>) -> Unit,
+    onClickItems: (List<FileInfo>) -> Unit,
     hideSheet: () -> Unit,
 ) {
     BaseSheet(showSheet, sheetState, hideSheet) {
@@ -97,9 +96,9 @@ fun MediaPicker(
         }
         HorizontalPager(pagerState, modifier = Modifier.height(300.dp)) {
             if (tabs[it].second == "files") {
-                MediaListView(mediaTarget, onClickItem)
+                MediaListView(mediaTarget, onClickItems)
             } else {
-                AudioRecorder(mediaTarget, onClickItem)
+                AudioRecorder(mediaTarget, onClickItems)
             }
         }
     }
@@ -161,8 +160,10 @@ private fun BoxScope.RecorderButton(
                                     uploadSuccess(it)
                                 }
                         } else {
-                            globalDialogController.use {
-                                Recorder.startRecord()
+                            globalDialogController.useResult {
+                                runCatching {
+                                    Recorder.startRecord()
+                                }
                             }
                         }
                     }

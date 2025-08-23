@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.Res
@@ -54,11 +53,11 @@ import com.storyteller_f.a.app.compose_app.common.bottomAppending
 import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
-import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.compontents.InteractionRow
 import com.storyteller_f.a.app.compose_app.compontents.TopicCell
 import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
 import com.storyteller_f.a.app.compose_app.compontents.UserIcon
+import com.storyteller_f.a.app.compose_app.compontents.rememberAlertDialogController
 import com.storyteller_f.a.app.compose_app.model.OnTopicChanged
 import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.model.TopicViewModel
@@ -259,22 +258,13 @@ private fun TopicInputGroup(
     scrollTo: () -> Unit,
     topic: TopicInfo
 ) {
-    val scope = rememberCoroutineScope()
-    val toasterState = LocalToaster.current
     var input by remember {
         mutableStateOf("")
     }
-    val focusManager = LocalFocusManager.current
-    val sendState = remember {
-        mutableStateOf<LoadingState>(LoadingState.Done)
-    }
-    val sessionManager = LocalSessionManager.current
-    val isSending = sendState.value is LoadingState.Loading
     val appNav = LocalAppNav.current
     val userSessionManager = LocalSessionManager.current
     val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
     val my = myInfo
-    val globalDialogController = LocalGlobalDialog.current
     InputGroupInternal(
         input,
         MaterialTheme.colorScheme.secondaryContainer,
@@ -299,17 +289,38 @@ private fun TopicInputGroup(
             )
         }
     ) {
-        CommonInputButton(
-            LoadingState.Done,
-            input,
-            isSending
-        ) {
-            if (!isSending) {
-                sendTopic(scope, sendState, topic, input, {
-                    input = it
-                }, focusManager, toasterState, sessionManager, globalDialogController, scrollTo)
-            }
+        TopicSendButton(input, {
+            input = it
+        }, topic, scrollTo)
+    }
+}
+
+@Composable
+fun TopicSendButton(input: String, updateInput: (String) -> Unit, topic: TopicInfo, scrollTo: () -> Unit) {
+    val focusManager = LocalFocusManager.current
+    val sendState = remember {
+        mutableStateOf<LoadingState>(LoadingState.Done)
+    }
+    val scope = rememberCoroutineScope()
+    val toasterState = LocalToaster.current
+    val sessionManager = LocalSessionManager.current
+    val isSending = sendState.value is LoadingState.Loading
+    val alertDialogController = rememberAlertDialogController()
+    CommonInputButton(
+        LoadingState.Done,
+        input,
+        isSending
+    ) {
+        if (!isSending) {
+            sendTopic(scope, sendState, topic, input, {
+                updateInput(it)
+            }, focusManager, toasterState, sessionManager, alertDialogController, scrollTo)
         }
+    }
+    CustomAlertDialog(alertDialogController, {
+        alertDialogController.close()
+    }) {
+
     }
 }
 
@@ -322,7 +333,7 @@ private fun sendTopic(
     focusManager: FocusManager,
     toasterState: Toast,
     sessionManager: SessionManager,
-    globalDialogController: GlobalDialogController,
+    alertDialogController: CustomAlertDialogController,
     scrollTo: () -> Unit
 ) {
     if (!checkContent(input)) {
@@ -348,7 +359,7 @@ private fun sendTopic(
             toasterState.showMessage(getString(Res.string.success))
             scrollTo()
         } catch (e: Exception) {
-            globalDialogController.showErrorMessage(e)
+            alertDialogController.showErrorMessage(e)
         } finally {
             sendState.value = LoadingState.Done
         }

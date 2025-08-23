@@ -71,17 +71,22 @@ fun UserSettingPage() {
             val scope = rememberCoroutineScope()
             ObjectSettingDialog(closeDialog, currentOption, sheetState, {
                 scope.launch {
-                    globalDialogController.use {
-                        val newInfo = sessionManager.updateUserInfo(
-                            UpdateUserBody(avatar = it.id)
-                        ).getOrThrow()
+                    globalDialogController.useResult {
+                        sessionManager.updateUserInfo(UpdateUserBody(avatar = it.id))
+                    }.onSuccess { newInfo ->
                         sessionManager.sessionModel.updateUser(newInfo)
                         closeDialog()
                     }
                 }
             }) {
                 scope.launch {
-                    updateUser(currentOption, sessionManager, it, globalDialogController, closeDialog)
+                    updateUser(
+                        currentOption,
+                        sessionManager,
+                        it,
+                        globalDialogController,
+                        closeDialog
+                    )
                 }
             }
         }
@@ -122,6 +127,7 @@ fun ObjectSettingDialog(
     val my = myInfo
     val mediaTarget = ObjectTuple(my?.id ?: 0, ObjectType.USER)
     val globalDialogController = LocalGlobalDialog.current
+    val alertDialogController = rememberAlertDialogController()
     MediaPicker(
         currentOption is SettingOption.Icon || currentOption is SettingOption.Poster,
         sheetState,
@@ -137,6 +143,7 @@ fun ObjectSettingDialog(
                 ratio,
                 mediaTarget,
                 globalDialogController,
+                alertDialogController,
                 onInputMedia
             )
         }
@@ -149,6 +156,11 @@ fun ObjectSettingDialog(
             closeDialog()
         }, onInputString)
     }
+    CustomAlertDialog(alertDialogController, {
+        alertDialogController.close()
+    }) {
+
+    }
 }
 
 private fun processSelectedMedia(
@@ -160,14 +172,13 @@ private fun processSelectedMedia(
     ratio: AspectRatio,
     mediaTarget: ObjectTuple,
     globalDialogController: GlobalDialogController,
+    alertDialogController: CustomAlertDialogController,
     onInputMedia: (FileInfo) -> Unit,
 ) {
     val info = mediaList.first()
     val dimension = info.dimension
     if (dimension == null || !info.contentType.startsWith("image/")) {
-        scope.launch {
-            globalDialogController.showMessage("invalid image: ${info.contentType} $dimension")
-        }
+        alertDialogController.showTitle("invalid image: ${info.contentType} $dimension")
     } else {
         if (checkMediaDimensionRatioMatch(
                 dimension,
@@ -204,7 +215,10 @@ private suspend fun GlobalDialogController.cropImage(
 ): Result<FileInfo?> {
     val image = useResult {
         val image = ImageLoader(context)
-            .execute(imageRequest(context, sessionManager.client, info).androidAllowHardware(false).build())
+            .execute(
+                imageRequest(context, sessionManager.client, info).androidAllowHardware(false)
+                    .build()
+            )
             .image
         image?.coilImageToImageBitmap() ?: Result.failure(Exception("download"))
     }
@@ -254,14 +268,11 @@ private fun UserSettingInternal(
             {
                 if (it) {
                     scope.launch {
-                        globalDialogController.use {
+                        globalDialogController.useResult {
                             val body = UpdateUserBody(avatar = 0)
-                            val newInfo = sessionManager.updateUserInfo(body).getOrThrow()
-                            bus.emit(
-                                OnUserUpdated(
-                                    newInfo
-                                )
-                            )
+                            sessionManager.updateUserInfo(body)
+                        }.onSuccess { newInfo ->
+                            bus.emit(OnUserUpdated(newInfo))
                         }
                     }
                 } else {
@@ -308,14 +319,11 @@ private suspend fun updateUser(
 
         else -> null
     } ?: return
-    globalDialogController.use {
-        val newInfo = sessionManager.updateUserInfo(body).getOrThrow()
+    globalDialogController.useResult {
+        sessionManager.updateUserInfo(body)
+    }.onSuccess { newInfo ->
         sessionManager.sessionModel.updateUser(newInfo)
-        bus.emit(
-            OnUserUpdated(
-                newInfo
-            )
-        )
+        bus.emit(OnUserUpdated(newInfo))
         closeDialog()
     }
 }

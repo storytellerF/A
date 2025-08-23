@@ -125,7 +125,7 @@ private fun TopicComposeScaffold(
         }
     }
     val sheetState = rememberModalBottomSheetState()
-    MediaPicker(showSheet, sheetState, mediaTarget, onClickItem = { info ->
+    MediaPicker(showSheet, sheetState, mediaTarget, onClickItems = { info ->
         insertContent(info.first(), {
             input = it
         }, input)
@@ -273,13 +273,10 @@ private fun TopicComposeSubmitButton(
         val finalInput = input.trim()
         if (finalInput.isNotEmpty()) {
             scope.launch {
-                globalDialogController.use {
-                    val info = sessionManager.createNewTopic(objectType, objectId, finalInput).getOrThrow()
-                    bus.emit(
-                        OnTopicCreated(
-                            info
-                        )
-                    )
+                globalDialogController.useResult {
+                    sessionManager.createNewTopic(objectType, objectId, finalInput)
+                }.onSuccess { info ->
+                    bus.emit(OnTopicCreated(info))
                     backPrePage()
                 }
             }

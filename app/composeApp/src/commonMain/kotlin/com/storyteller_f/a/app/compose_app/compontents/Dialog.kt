@@ -27,58 +27,6 @@ class DialogSaveState {
 
 fun ServerErrorException.isHtmlContent(): Boolean = text.startsWith("<html") || text.startsWith("<!DOCTYPE html")
 
-sealed interface IconRes {
-    data class Vector(val vector: ImageVector, val description: String = "") : IconRes
-    data class Font(val char: Char, val description: String = "") : IconRes
-}
-
-@Composable
-fun ButtonNav(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
-    ButtonNav(IconRes.Vector(icon), title, onClick)
-}
-
-@Composable
-fun ButtonNav(icon: Char, title: String, onClick: () -> Unit = {}) {
-    ButtonNav(IconRes.Font(icon), title, onClick)
-}
-
-@Composable
-fun ButtonNav(icon: IconRes, title: String, onClick: () -> Unit = {}) {
-    val shape = RoundedCornerShape(8.dp)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth().clip(shape).clickable {
-            onClick()
-        }.padding(horizontal = 8.dp, vertical = 12.dp)
-    ) {
-        CustomIcon(icon)
-        Text(title)
-    }
-}
-
-@Composable
-fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
-    when (icon) {
-        is IconRes.Font -> {
-            ProvideIconParameters(
-                size = 20.dp,
-                tintProvider = LocalContentColor
-            ) {
-                FontIcon(icon.char, icon.description, modifier = Modifier.clickableIfNeed(onClick))
-            }
-        }
-
-        is IconRes.Vector -> {
-            Icon(
-                imageVector = icon.vector,
-                contentDescription = icon.description,
-                modifier = Modifier.clickableIfNeed(onClick)
-            )
-        }
-    }
-}
-
 @Composable
 fun DialogContainer(block: @Composable ColumnScope.() -> Unit) {
     Surface(shape = RoundedCornerShape(8.dp)) {
@@ -87,7 +35,12 @@ fun DialogContainer(block: @Composable ColumnScope.() -> Unit) {
         }
     }
 }
-
+@Composable
+fun rememberAlertDialogController(): CustomAlertDialogController {
+    return remember {
+        CustomAlertDialogController()
+    }
+}
 class CustomAlertDialogController(val state: MutableState<CustomAlertDialogState?> = mutableStateOf(null)) {
 
     fun showMessage(title: String, message: String) {
@@ -100,6 +53,10 @@ class CustomAlertDialogController(val state: MutableState<CustomAlertDialogState
 
     fun close() {
         state.value = null
+    }
+
+    fun showErrorMessage(e: Throwable) {
+        state.value = CustomAlertDialogState(e.message.toString(), e.stackTraceToString())
     }
 }
 

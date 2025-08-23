@@ -57,6 +57,7 @@ import com.storyteller_f.a.app.compose_app.utils.buildLoginUserSessionFactory
 import com.storyteller_f.a.app.compose_app.utils.platform
 import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
+import com.storyteller_f.shared.model.UserInfo
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
@@ -325,12 +326,13 @@ suspend fun GlobalDialogController.signUpOrSignIn(
     privateKey: String,
     sessionManager: CustomSessionManager,
     isSignUp: Boolean,
-): Result<Unit?> {
-    return use {
-        sessionManager.signUpOrInFromPrivateKey(privateKey, isSignUp) {
-            buildLoginUserSessionFactory(sessionManager.settings).addSession(it)
+): Result<UserInfo> {
+    return useResult {
+        runCatching {
+            sessionManager.signUpOrInFromPrivateKey(privateKey, isSignUp) {
+                buildLoginUserSessionFactory(sessionManager.settings).addSession(it)
+            }
         }
-        Unit
     }
 }
 

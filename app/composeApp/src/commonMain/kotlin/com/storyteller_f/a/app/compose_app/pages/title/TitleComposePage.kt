@@ -82,9 +82,9 @@ fun TitleComposeInternal() {
     val globalDialogController = LocalGlobalDialog.current
     CommonComposePage({
         scope.launch {
-            if (globalDialogController.use {
-                    createTitle(titleType, receiver, titleScope, sessionManager, name, content)
-                }.isSuccess) {
+            globalDialogController.useResult {
+                createTitle(titleType, receiver, titleScope, sessionManager, name, content)
+            }.onSuccess {
                 appNav.back()
             }
         }
@@ -311,7 +311,7 @@ private suspend fun createTitle(
     sessionManager: SessionManager,
     name: String,
     content: String,
-) {
+): Result<TitleInfo> {
     check(titleType != null) {
         "titleType is empty"
     }
@@ -321,12 +321,11 @@ private suspend fun createTitle(
     check(titleScope != null) {
         "titleScope is empty"
     }
-    val title =
-        sessionManager.createTitle(
-            NewTitle(name, titleType, receiver, titleScope.objectId, titleScope.objectType, content)
-        )
-            .getOrThrow()
-    bus.emit(OnTitleCreated(title))
+    return sessionManager.createTitle(
+        NewTitle(name, titleType, receiver, titleScope.objectId, titleScope.objectType, content)
+    ).onSuccess { title ->
+        bus.emit(OnTitleCreated(title))
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -384,7 +383,8 @@ private fun TypeSelector(
     ) {
         val shape = RoundedCornerShape(10.dp)
         Row(
-            modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer, shape).clip(shape)
+            modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer, shape)
+                .clip(shape)
                 .clickable {
                     expanded = true
                 }.padding(18.dp),
@@ -430,8 +430,12 @@ fun ObjectList(
     if (input.isNotBlank() && currentType != null) {
         when (currentType) {
             ObjectType.COMMUNITY -> {
-                val communitiesViewModel = createSearchCommunitiesViewModel(JoinStatusSearch.JOINED, input)
-                CommunityList(communitiesViewModel.flow.collectAsLazyPagingItems(), onClickCommunity)
+                val communitiesViewModel =
+                    createSearchCommunitiesViewModel(JoinStatusSearch.JOINED, input)
+                CommunityList(
+                    communitiesViewModel.flow.collectAsLazyPagingItems(),
+                    onClickCommunity
+                )
             }
 
             ObjectType.ROOM -> {
@@ -483,7 +487,8 @@ fun ComposeMenu(
 fun ComposeMenuItem(icon: ImageVector, title: String, onClick: () -> Unit) {
     val shape = RoundedCornerShape(12.dp)
     Row(
-        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primaryContainer, shape).clip(shape)
+        modifier = Modifier.fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primaryContainer, shape).clip(shape)
             .clickable {
                 onClick()
             }.padding(12.dp)

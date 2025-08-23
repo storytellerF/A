@@ -68,19 +68,16 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
             sheetState,
             { media ->
                 scope.launch {
-                    globalDialogController.use {
+                    globalDialogController.useResult {
                         val body =
                             if (currentOption is SettingOption.Poster) {
                                 UpdateCommunityBody(poster = media.id)
                             } else {
                                 UpdateCommunityBody(icon = media.id)
                             }
-                        val newInfo = sessionManager.updateCommunityInfo(communityId, body).getOrThrow()
-                        bus.emit(
-                            OnCommunityUpdated(
-                                newInfo
-                            )
-                        )
+                        sessionManager.updateCommunityInfo(communityId, body)
+                    }.onSuccess { newInfo ->
+                        bus.emit(OnCommunityUpdated(newInfo))
                         closeDialog()
                     }
                 }
@@ -170,10 +167,12 @@ private suspend fun updateCommunityInfo(
     sessionManager: SessionManager,
     communityInfo: CommunityInfo,
 ) {
-    globalDialogController.use {
+    globalDialogController.useResult {
         val body = UpdateCommunityBody(icon = 0)
-        val newInfo = sessionManager.updateCommunityInfo(communityInfo.id, body).getOrThrow()
+        sessionManager.updateCommunityInfo(communityInfo.id, body)
+    }.onSuccess { newInfo ->
         bus.emit(OnCommunityUpdated(newInfo))
+
     }
 }
 
@@ -194,13 +193,10 @@ private suspend fun updateCommunity(
             null
         }
     } ?: return
-    globalDialogController.use {
-        val newInfo = client.updateCommunityInfo(communityId, body).getOrThrow()
-        bus.emit(
-            OnCommunityUpdated(
-                newInfo
-            )
-        )
+    globalDialogController.useResult {
+        client.updateCommunityInfo(communityId, body)
+    }.onSuccess { newInfo ->
+        bus.emit(OnCommunityUpdated(newInfo))
         closeDialog()
     }
 }

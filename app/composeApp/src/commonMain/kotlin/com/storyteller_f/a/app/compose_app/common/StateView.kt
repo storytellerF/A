@@ -18,11 +18,12 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
+import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compose_app.compontents.ExceptionCell
 import com.storyteller_f.a.app.compose_app.compontents.ExceptionView
+import com.storyteller_f.a.app.compose_app.compontents.rememberAlertDialogController
 import com.storyteller_f.a.app.compose_app.no_content_yet
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
@@ -169,7 +170,7 @@ fun <T : Any> RefCellStateView(
 ) {
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
-    val globalDialogController = LocalGlobalDialog.current
+    val alertDialogController = rememberAlertDialogController()
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
         data.let {
@@ -180,7 +181,7 @@ fun <T : Any> RefCellStateView(
                     is LoadingState.Error -> Box(
                         modifier = Modifier.fillMaxSize().clickable {
                             scope.launch {
-                                globalDialogController.showErrorMessage(localState.e)
+                                alertDialogController.showErrorMessage(localState.e)
                             }
                         }.padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
@@ -199,6 +200,11 @@ fun <T : Any> RefCellStateView(
                 }
             }
         }
+    }
+    CustomAlertDialog(alertDialogController, {
+        alertDialogController.close()
+    }) {
+
     }
 }
 
