@@ -444,14 +444,14 @@ fun CommonInputButton(
     isSending: Boolean,
     send: () -> Unit,
 ) {
-    val globalDialogController = LocalGlobalDialog.current
+    val alertDialogController = rememberAlertDialogController()
     val scope = rememberCoroutineScope()
     when (state) {
         is LoadingState.Done -> {
             IconButton({
                 if (input.isBlank()) {
                     scope.launch {
-                        globalDialogController.showMessage(getString(Res.string.input_is_empty))
+                        alertDialogController.showTitle(getString(Res.string.input_is_empty))
                     }
                 } else {
                     send()
@@ -463,9 +463,7 @@ fun CommonInputButton(
 
         is LoadingState.Error -> {
             IconButton({
-                scope.launch {
-                    globalDialogController.showErrorMessage(state.e)
-                }
+                alertDialogController.showErrorMessage(state.e)
             }) {
                 Icon(Icons.Default.Error, stringResource(Res.string.error))
             }
@@ -522,7 +520,7 @@ private fun InputGroupSuffix(
     gotoCompose: () -> Unit,
 ) {
     val userSessionManager = LocalSessionManager.current
-    val globalDialogController = LocalGlobalDialog.current
+    val alertDialogController = rememberAlertDialogController()
     val alreadyLoginIn by userSessionManager.isAlreadySignUp.collectAsState(false)
     var showSheet by remember {
         mutableStateOf(false)
@@ -544,9 +542,7 @@ private fun InputGroupSuffix(
                 if (alreadyLoginIn) {
                     gotoCompose()
                 } else {
-                    scope.launch {
-                        globalDialogController.showMessage("need sign in")
-                    }
+                    alertDialogController.showTitle("need sign in")
                 }
             }
         )
@@ -554,9 +550,7 @@ private fun InputGroupSuffix(
             if (alreadyLoginIn) {
                 showSheet = true
             } else {
-                scope.launch {
-                    globalDialogController.showMessage("need sign in")
-                }
+                alertDialogController.showTitle("need sign in")
             }
         })
     }
@@ -565,7 +559,7 @@ private fun InputGroupSuffix(
         showSheet,
         sheetState,
         mediaTarget,
-        onClickItem = { info ->
+        onClickItems = { info ->
             insertContent(
                 info.first(),
                 updateInput,
@@ -574,6 +568,11 @@ private fun InputGroupSuffix(
         }
     ) {
         showSheet = false
+    }
+    CustomAlertDialog(alertDialogController, {
+        alertDialogController.close()
+    }) {
+
     }
 }
 
@@ -670,19 +669,18 @@ private suspend fun joinRoom(
     globalDialogController: GlobalDialogController,
     onSuccess: suspend () -> Unit,
 ) {
-    globalDialogController.use {
-        val communityId = roomInfo.communityId
-        if (communityId != null) {
-            if (!sessionManager.getCommunityInfo(communityId).getOrThrow().isJoined) {
-                throw Exception("you should join community first.")
+    globalDialogController.useResult {
+        runCatching {
+            val communityId = roomInfo.communityId
+            if (communityId != null) {
+                if (!sessionManager.getCommunityInfo(communityId).getOrThrow().isJoined) {
+                    throw Exception("you should join community first.")
+                }
             }
+            sessionManager.joinRoom(roomInfo.id).getOrThrow()
         }
-        val info = sessionManager.joinRoom(roomInfo.id).getOrThrow()
-        bus.emit(
-            OnRoomJoined(
-                info
-            )
-        )
+    }.onSuccess { info ->
+        bus.emit(OnRoomJoined(info))
         onSuccess()
     }
 }
@@ -693,13 +691,10 @@ private suspend fun exitRoom(
     globalDialogController: GlobalDialogController,
     onSuccess: suspend () -> Unit,
 ) {
-    globalDialogController.use {
-        val info = sessionManager.exitRoom(roomInfo.id).getOrThrow()
-        bus.emit(
-            OnRoomExited(
-                info
-            )
-        )
+    globalDialogController.useResult {
+        sessionManager.exitRoom(roomInfo.id)
+    }.onSuccess { info ->
+        bus.emit(OnRoomExited(info))
         onSuccess()
     }
 }

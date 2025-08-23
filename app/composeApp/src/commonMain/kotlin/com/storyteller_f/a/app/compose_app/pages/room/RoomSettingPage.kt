@@ -62,20 +62,24 @@ fun RoomSettingPage(roomId: PrimaryKey) {
             sheetState,
             {
                 scope.launch {
-                    globalDialogController.use {
+                    globalDialogController.useResult {
                         val body = UpdateRoomBody(icon = it.id)
-                        val newInfo = sessionManager.updateRoomInfo(roomId, body).getOrThrow()
-                        bus.emit(
-                            OnRoomUpdated(
-                                newInfo
-                            )
-                        )
+                        sessionManager.updateRoomInfo(roomId, body)
+                    }.onSuccess { newInfo ->
+                        bus.emit(OnRoomUpdated(newInfo))
                     }
                 }
             },
             {
                 scope.launch {
-                    updateRoom(roomId, sessionManager, it, currentOption, globalDialogController, closeDialog)
+                    updateRoom(
+                        roomId,
+                        sessionManager,
+                        it,
+                        currentOption,
+                        globalDialogController,
+                        closeDialog
+                    )
                 }
             }
         )
@@ -99,14 +103,11 @@ private fun RoomSettingInternal(
             {
                 if (it) {
                     scope.launch {
-                        globalDialogController.use {
+                        globalDialogController.useResult {
                             val body = UpdateRoomBody(icon = 0)
-                            val newInfo = sessionManager.updateRoomInfo(roomInfo.id, body).getOrThrow()
-                            bus.emit(
-                                OnRoomUpdated(
-                                    newInfo
-                                )
-                            )
+                            sessionManager.updateRoomInfo(roomInfo.id, body)
+                        }.onSuccess { newInfo ->
+                            bus.emit(OnRoomUpdated(newInfo))
                         }
                     }
                 } else {
@@ -154,13 +155,10 @@ private suspend fun updateRoom(
             null
         }
     } ?: return
-    globalDialogController.use {
-        val newInfo = sessionManager.updateRoomInfo(roomId, body).getOrThrow()
-        bus.emit(
-            OnRoomUpdated(
-                newInfo
-            )
-        )
+    globalDialogController.useResult {
+        sessionManager.updateRoomInfo(roomId, body)
+    }.onSuccess { newInfo ->
+        bus.emit(OnRoomUpdated(newInfo))
         closeDialog()
     }
 }

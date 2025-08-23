@@ -533,8 +533,9 @@ private fun CommunityMenus(
             if (communityInfo.isJoined) {
                 ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_community)) {
                     scope.launch {
-                        globalDialogController.use {
-                            val info = sessionViewModel.exitCommunity(communityId).getOrThrow()
+                        globalDialogController.useResult {
+                            sessionViewModel.exitCommunity(communityId)
+                        }.onSuccess { info ->
                             bus.emit(OnCommunityExited(info))
                         }
                     }
@@ -542,9 +543,10 @@ private fun CommunityMenus(
             } else {
                 ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_community)) {
                     scope.launch {
-                        globalDialogController.use {
-                            val info = sessionViewModel.joinCommunity(communityId).getOrThrow()
-                            bus.emit(OnCommunityJoined(info))
+                        globalDialogController.useResult {
+                            sessionViewModel.joinCommunity(communityId)
+                        }.onSuccess { info ->
+                            bus.emit(OnCommunityExited(info))
                         }
                     }
                 }

@@ -35,14 +35,10 @@ fun RoomComposePage() {
     val globalDialogController = LocalGlobalDialog.current
     CommonComposePage({
         scope.launch {
-            if (globalDialogController.use {
-                    val community = sessionManager.createRoom(NewRoom(name, aid)).getOrThrow()
-                    bus.emit(
-                        OnRoomCreated(
-                            community
-                        )
-                    )
-                }.isSuccess) {
+            globalDialogController.useResult {
+                sessionManager.createRoom(NewRoom(name, aid))
+            }.onSuccess { roomInfo ->
+                bus.emit(OnRoomCreated(roomInfo))
                 appNav.back()
             }
         }

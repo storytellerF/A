@@ -33,14 +33,14 @@ fun CommunityComposePage() {
     val globalDialogController = LocalGlobalDialog.current
     CommonComposePage({
         scope.launch {
-            if (globalDialogController.use {
-                    val community = sessionManager.createCommunity(NewCommunity(name, aid)).getOrThrow()
-                    bus.emit(
-                        OnCommunityCreated(
-                            community
-                        )
+            globalDialogController.useResult {
+                sessionManager.createCommunity(NewCommunity(name, aid))
+            }.onSuccess {
+                bus.emit(
+                    OnCommunityCreated(
+                        it
                     )
-                }.isSuccess) {
+                )
                 appNav.back()
             }
         }

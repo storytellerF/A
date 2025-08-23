@@ -183,8 +183,9 @@ private fun TopicMenuList(
             stringResource(Res.string.snapshot)
         ) {
             scope.launch {
-                globalDialogController.use {
+                globalDialogController.useResult {
                     userSessionManager.getTopicSnapshot(topicInfo.id)
+                }.onSuccess {
                     toast.showMessage(getString(Res.string.success))
                 }
             }
@@ -219,12 +220,12 @@ suspend fun pinOrUnpinTopic(
     sessionManager: SessionManager,
     globalDialogController: GlobalDialogController,
 ): Result<TopicInfo> {
-    return globalDialogController.use {
+    return globalDialogController.useResult {
         if (topicInfo.isPin) {
             sessionManager.unpinTopic(topicInfo.id)
         } else {
             sessionManager.pinTopic(topicInfo.id)
-        }.getOrThrow()
+        }
     }
 }
 

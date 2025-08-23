@@ -11,7 +11,12 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.compose_app.AppConfig
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
+import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
+import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
+import com.storyteller_f.a.app.compose_app.compontents.rememberAlertDialogController
 import com.storyteller_f.a.app.compose_app.model.createUploadViewModel
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
@@ -45,8 +50,8 @@ class Uploader(val session: MutableState<UploadSession?>)
 
 @Composable
 fun UploadPage(uploader: Uploader) {
-    val httpUrl = _root_ide_package_.com.storyteller_f.a.app.compose_app.AppConfig.SERVER_URL
-    val wsServerUrl = _root_ide_package_.com.storyteller_f.a.app.compose_app.AppConfig.WS_SERVER_URL
+    val httpUrl = AppConfig.SERVER_URL
+    val wsServerUrl = AppConfig.WS_SERVER_URL
     _root_ide_package_.com.storyteller_f.a.app.compose_app.CommonEntry(httpUrl, wsServerUrl, {
         val userSessionManager =
             _root_ide_package_.com.storyteller_f.a.app.compose_app.LocalSessionManager.current
@@ -96,7 +101,7 @@ private fun UploadItem(
     state: LoadingState?,
     refresh: () -> Unit
 ) {
-    val globalDialogController = _root_ide_package_.com.storyteller_f.a.app.compose_app.LocalGlobalDialog.current
+    val globalDialogController = rememberAlertDialogController()
     val scope = rememberCoroutineScope()
     Row(modifier = Modifier.padding(20.dp)) {
         Column(modifier = Modifier.weight(1f)) {
@@ -125,5 +130,10 @@ private fun UploadItem(
 
             else -> CircularProgressIndicator(Modifier.size(30.dp))
         }
+    }
+    CustomAlertDialog(globalDialogController, {
+        globalDialogController.close()
+    }) {
+
     }
 }

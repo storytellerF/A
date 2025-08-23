@@ -158,8 +158,9 @@ suspend fun signOut(
     globalDialogController: GlobalDialogController,
 ) {
     val settings = (sessionManager as CustomSessionManager).settings
-    globalDialogController.use {
-        sessionManager.signOut().getOrThrow()
+    globalDialogController.useResult {
+        sessionManager.signOut()
+    }.onSuccess {
         sessionManager.sessionModel.clear()
         clearStorage(settings)
         unregisterPushService()
