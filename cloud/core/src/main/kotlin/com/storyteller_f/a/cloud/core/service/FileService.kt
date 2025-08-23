@@ -1,25 +1,35 @@
 package com.storyteller_f.a.cloud.core.service
 
+import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.api.core.Path
+import com.storyteller_f.a.api.core.CommonPath
+import com.storyteller_f.a.backend.core.CopyPack
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.ProcessedUploadPack
 import com.storyteller_f.a.backend.core.UploadPack
+import com.storyteller_f.a.backend.core.types.FileRecord
+import com.storyteller_f.a.backend.core.types.toFileInfo
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.copyMedia
-import com.storyteller_f.a.backend.service.getMediaPaginationResult
+import com.storyteller_f.a.backend.service.lockQuotaInfo
 import com.storyteller_f.a.backend.service.object_storage.FileSystemObjectStorageService
-import com.storyteller_f.a.backend.service.object_storage.uploadFilesAfterDetectContentTypeAndDimension
-import com.storyteller_f.a.backend.service.processMediaToMediaInfo
+import com.storyteller_f.a.backend.service.object_storage.getImageDimension
+import com.storyteller_f.a.backend.service.processFileRecordToFileInfo
+import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
+import com.storyteller_f.a.cloud.core.utils.readMp3AlbumFromAudioStream
 import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.shared.utils.merge
+import com.storyteller_f.shared.utils.now
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -34,14 +44,14 @@ class PathResponse(val file: java.nio.file.Path)
 
 suspend fun Backend.getMediaList(
     uid: PrimaryKey,
-    routeMedia: CustomApi.Medias.MediaQuery,
+    mediaQuery: CustomApi.Medias.MediaQuery,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<FileInfo>?> {
-    if (routeMedia.objectType == ObjectType.TOPIC) {
+    if (mediaQuery.objectType == ObjectType.TOPIC) {
         return Result.failure(CustomBadRequestException("can't get topic media"))
     }
-    val parentType = routeMedia.objectType
-    val parentId = routeMedia.objectId
+    val parentType = mediaQuery.objectType
+    val parentId = mediaQuery.objectId
     if (parentId == null || parentType == null) error("invalid query")
     return checkRootWritePermission(
         parentType,
@@ -49,7 +59,7 @@ suspend fun Backend.getMediaList(
         uid
     ).mapResultIfNotNull { (_, _, hasWrite) ->
         if (hasWrite) {
-            getMediaPaginationResult(uid, primaryKeyFetch)
+            getFileInfoPaginationResult(parentId, primaryKeyFetch)
         } else {
             Result.failure(ForbiddenException("no permission"))
         }
@@ -72,11 +82,12 @@ suspend fun Backend.getMediaByName(
         uid
     ).mapResultIfNotNull { (_, objectId, hasWrite) ->
         if (hasWrite) {
-            exposedDatabase.fileDatabase.getMedia(objectId, word).mapResultIfNotNull { media ->
-                processMediaToMediaInfo(listOf(media)).map {
-                    it.first()
+            combinedDatabase.fileDatabase.getFileRecord(objectId, word)
+                .mapResultIfNotNull { media ->
+                    processFileRecordToFileInfo(listOf(media)).map {
+                        it.first()
+                    }
                 }
-            }
         } else {
             Result.failure(ForbiddenException("no permission"))
         }
@@ -85,49 +96,69 @@ suspend fun Backend.getMediaByName(
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(mediaId: PrimaryKey, root: File, uid: PrimaryKey) =
-    exposedDatabase.fileDatabase.getMediaByIds(listOf(mediaId)).mapResultIfNotNull { mediaList ->
-        val media = mediaList.first()
-        if (media.owner != uid) {
-            throw ForbiddenException("no permission")
-        }
-        if (media.contentType.startsWith("audio")) {
-            objectStorageService.getInputStream(AMEDIA_DEFAULT_BUCKET, media.fullName).map { input ->
-                withContext(Dispatchers.IO) {
-                    input.use {
-                        val saveAlbum = { image: ByteArray, mimeType: String ->
-                            val file = File(
-                                root,
-                                "${Uuid.Companion.random()}.${getExtensionFromMimeType(mimeType)}"
-                            )
-                            file.writeBytes(image)
-                            file
-                        }
-                        when (media.contentType) {
-                            "audio/mp3" -> it.readMp3AlbumFromAudioStream(saveAlbum)
-                            "audio/flac", "audio/x-flac" -> it.readFlacAlbumFromAudioStream(
-                                saveAlbum
-                            )
-
-                            else -> throw CustomBadRequestException("unsupported audio type: ${media.contentType}")
-                        } to media.contentType
-                    }
-                }
-            }.mapResultIfNotNull { (file, contentType) ->
-                if (file != null) {
-                    val name = newCoverFileName(media.name, contentType)
-                    uploadFilesAfterDetectContentTypeAndDimension(
-                        listOf(UploadPack(file, name, media.owner, media.ownerType, media.size))
-                    ).map {
-                        ServerResponse(it.filterNotNull())
-                    }
-                } else {
-                    Result.success(null)
-                }
+    combinedDatabase.fileDatabase.getFileRecordByIds(listOf(mediaId))
+        .mapResultIfNotNull { mediaList ->
+            val media = mediaList.first()
+            if (media.owner != uid) {
+                throw ForbiddenException("no permission")
             }
-        } else {
-            Result.failure(CustomBadRequestException("not an audio file"))
+            if (media.contentType.startsWith("audio")) {
+                objectStorageService.getInputStream(AMEDIA_DEFAULT_BUCKET, media.fullName)
+                    .map { input ->
+                        extractAlbumFromStream(input, root, media)
+                    }.mapResultIfNotNull { (file, contentType) ->
+                        if (file != null) {
+                            val name = newCoverFileName(media.name, contentType)
+                            tryUploadFiles(
+                                media.owner, media.ownerType, listOf(
+                                    UploadPack(
+                                        file,
+                                        name,
+                                        media.size,
+                                        "${media.owner}/$name"
+                                    )
+                                )
+                            ).map {
+                                ServerResponse(it.filterNotNull())
+                            }
+                        } else {
+                            Result.success(null)
+                        }
+                    }
+            } else {
+                Result.failure(CustomBadRequestException("not an audio file"))
+            }
         }
+
+@OptIn(ExperimentalUuidApi::class)
+private suspend fun extractAlbumFromStream(
+    input: InputStream,
+    root: File,
+    media: FileRecord
+): Pair<File?, String> = withContext(Dispatchers.IO) {
+    input.use {
+        val saveAlbum = { image: ByteArray, mimeType: String ->
+            val file = File(
+                root,
+                "${Uuid.Companion.random()}.${
+                    getExtensionFromMimeType(
+                        mimeType
+                    )
+                }"
+            )
+            file.writeBytes(image)
+            file
+        }
+        when (media.contentType) {
+            "audio/mp3" -> it.readMp3AlbumFromAudioStream(saveAlbum)
+            "audio/flac", "audio/x-flac" -> it.readFlacAlbumFromAudioStream(
+                saveAlbum
+            )
+
+            else -> throw CustomBadRequestException("unsupported audio type: ${media.contentType}")
+        } to media.contentType
     }
+}
 
 @OptIn(ExperimentalUuidApi::class)
 fun newFileName(fileName: String): String {
@@ -162,158 +193,6 @@ private fun newCoverFileName(fileName: String, contentType: String): String {
     return "${originName.take(27 - extension.length)}$uuid.$extension"
 }
 
-suspend fun Backend.copyMedia(
-    p: Path,
-    uid: PrimaryKey
-): Result<ServerResponse<FileInfo>?> =
-    exposedDatabase.fileDatabase.getMediaByIds(listOf(p.id)).mapResultIfNotNull { mediaList ->
-        val media = mediaList.firstOrNull()
-        if (media != null) {
-            checkRootReadPermission(media.ownerType, media.owner, uid).mapResultIfNotNull { permission ->
-                if (permission.hasRead) {
-                    // 检查重复媒体
-                    exposedDatabase.fileDatabase.getMedia(uid, media.name).map {
-                        if (it == null) {
-                            "$uid/${media.name}"
-                        } else {
-                            "$uid/${newCopiedFileName(media.name)}"
-                        }
-                    }.mapResultIfNotNull {
-                        copyMedia(media, uid, it)
-                    }
-                } else {
-                    Result.failure(ForbiddenException())
-                }
-            }
-        } else {
-            Result.success(null)
-        }
-    }
-
-fun <T> InputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, String) -> T): T? {
-    val signature = ByteArray(4)
-    read(signature)
-
-    if (String(signature) != "fLaC") {
-        error("Not a valid FLAC file")
-    }
-
-    while (true) {
-        val header = read()
-        val blockType = header and 0x7F
-        val lengthBytes = ByteArray(3)
-        read(lengthBytes)
-        val blockLength = ((lengthBytes[0].toInt() and 0xFF) shl 16) or
-            ((lengthBytes[1].toInt() and 0xFF) shl 8) or
-            (lengthBytes[2].toInt() and 0xFF)
-
-        if (blockType == 6) {
-            val pictureData = ByteArray(blockLength)
-            read(pictureData)
-
-            val dataInput = pictureData.inputStream().buffered()
-
-            fun readInt(): Int =
-                (dataInput.read() shl 24) or (dataInput.read() shl 16) or
-                    (dataInput.read() shl 8) or dataInput.read()
-
-            readInt() // picture type
-            val mimeLength = readInt()
-            val mimeBytes = ByteArray(mimeLength)
-            dataInput.read(mimeBytes)
-            val mimeType = String(mimeBytes)
-
-            val descLength = readInt()
-            dataInput.skip(descLength.toLong())
-
-            readInt() // width
-            readInt() // height
-            readInt() // color depth
-            readInt() // indexed colors
-
-            val picDataLength = readInt()
-            val realImage = ByteArray(picDataLength)
-            dataInput.read(realImage)
-
-            return saveAlbum(realImage, mimeType)
-        } else {
-            skip(blockLength.toLong())
-        }
-
-        if ((header and 0x80) != 0) {
-            break
-        }
-    }
-    return null
-}
-
-@Suppress("CyclomaticComplexMethod")
-fun <T> InputStream.readMp3AlbumFromAudioStream(
-    saveAlbum: (ByteArray, String) -> T
-): T? {
-    // 读取 ID3 header（10 bytes）
-    val header = ByteArray(10)
-    if (read(header) != 10 ||
-        header[0] != 'I'.code.toByte() ||
-        header[1] != 'D'.code.toByte() ||
-        header[2] != '3'.code.toByte()
-    ) {
-        error("不是有效的 ID3v2 标签")
-    }
-
-    // 计算标签总长度（同步安全整数：4 x 7bits）
-    val tagSize = syncSafeInt(header.copyOfRange(6, 10))
-    var totalRead = 0
-
-    while (totalRead < tagSize) {
-        val frameHeader = ByteArray(10)
-        val read = read(frameHeader)
-        if (read < 10) break
-
-        val frameId = String(frameHeader, 0, 4)
-        val frameSize = ((frameHeader[4].toInt() and 0xFF) shl 24) or
-            ((frameHeader[5].toInt() and 0xFF) shl 16) or
-            ((frameHeader[6].toInt() and 0xFF) shl 8) or
-            (frameHeader[7].toInt() and 0xFF)
-
-        totalRead += 10 + frameSize
-        if (frameId != "APIC") {
-            skip(frameSize.toLong())
-            continue
-        }
-
-        val frameData = ByteArray(frameSize)
-        if (read(frameData) != frameSize) return null
-
-        var idx = 1 // skip text encoding byte
-
-        // 读取 MIME 类型字符串
-        val mimeStart = idx
-        while (idx < frameData.size && frameData[idx] != 0.toByte()) idx++
-        val mimeType = String(frameData, mimeStart, idx - mimeStart)
-        idx++ // skip null byte
-
-        // 跳过图片类型（1 byte）
-        idx++
-
-        // 跳过描述字符串
-        while (idx < frameData.size && frameData[idx] != 0.toByte()) idx++
-        idx++ // skip null byte
-
-        if (idx >= frameData.size) return null
-
-        val imageData = frameData.copyOfRange(idx, frameData.size)
-        return saveAlbum(imageData, mimeType)
-    }
-    return null
-}
-
-private fun syncSafeInt(bytes: ByteArray): Int {
-    return ((bytes[0].toInt() and 0x7F) shl 21) or
-        ((bytes[1].toInt() and 0x7F) shl 14) or
-        ((bytes[2].toInt() and 0x7F) shl 7) or
-        (bytes[3].toInt() and 0x7F)
-}
 
 fun getExtensionFromMimeType(mimeType: String): String {
     return when (mimeType) {
@@ -345,5 +224,151 @@ suspend fun getFileSystemDownloadUrl(
         }
     } else {
         Result.failure(CustomBadRequestException("can't find file"))
+    }
+}
+
+
+suspend fun Backend.getFileInfoList(names: List<String>): Result<List<FileInfo?>?> {
+    return combinedDatabase.fileDatabase.getFileRecordByNames(names).mapResult { medias ->
+        processFileRecordToFileInfo(medias)
+    }
+}
+
+suspend fun Backend.getFileInfoPaginationResult(
+    uid: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch,
+): Result<PaginationResult<FileInfo>> =
+    combinedDatabase.fileDatabase.getFileRecordPaginationList(uid, primaryKeyFetch)
+        .mapResult { (list, count) ->
+            processFileRecordToFileInfo(list).map {
+                PaginationResult(it, count)
+            }
+        }
+
+@OptIn(ExperimentalUuidApi::class)
+suspend fun Backend.tryUploadFiles(
+    ownerId: PrimaryKey,
+    ownerType: ObjectType,
+    files: List<UploadPack>
+): Result<List<FileInfo?>> {
+    val totalLength = files.sumOf {
+        it.size
+    }
+    return lockQuotaInfo(
+        ownerId,
+        QuotaType.FILE,
+        ownerType,
+        totalLength,
+        Uuid.random().toHexString()
+    ) {
+        uploadFiles(ownerId, ownerType, files.map {
+            val detectedType = tika.detect(it.path)
+            val dimension = if (detectedType.startsWith("image")) {
+                getImageDimension(it.path.absolutePath, detectedType) {
+                    it.path.inputStream()
+                }
+            } else {
+                null
+            }
+            ProcessedUploadPack(it, detectedType, dimension)
+        })
+    }
+}
+
+private suspend fun Backend.uploadFiles(
+    ownerId: PrimaryKey,
+    ownerType: ObjectType,
+    uploadPacks: List<ProcessedUploadPack>
+): Result<List<FileInfo?>> {
+    val data = uploadPacks.map { p ->
+        val uploadPack = p.pack
+        val nextId = SnowflakeFactory.nextId()
+        val dimension = p.dimension
+        FileRecord(
+            nextId,
+            now(),
+            uploadPack.name,
+            0,
+            dimension?.width ?: 0,
+            dimension?.height ?: 0,
+            ownerId,
+            ownerType,
+            p.contentType,
+            uploadPack.size,
+            uploadPack.fullName
+        )
+    }
+    return merge({
+        objectStorageService.upload(AMEDIA_DEFAULT_BUCKET, uploadPacks.map {
+            it.pack
+        })
+    }, {
+        combinedDatabase.fileDatabase.insertFileRecord(data, ownerId, ownerType)
+    }).map { (mediaRecords) ->
+        mediaRecords.mapIndexed { i, e ->
+            data[i].toFileInfo(e.url, e.lastModified)
+        }
+    }
+}
+
+
+suspend fun Backend.tryCopyMedia(
+    p: CommonPath,
+    uid: PrimaryKey
+): Result<ServerResponse<FileInfo>?> =
+    combinedDatabase.fileDatabase.getFileRecordByIds(listOf(p.id)).mapResultIfNotNull { mediaList ->
+        val media = mediaList.firstOrNull()
+        if (media != null) {
+            checkRootReadPermission(
+                media.ownerType,
+                media.owner,
+                uid
+            ).mapResultIfNotNull { permission ->
+                if (permission.hasRead) {
+                    // 检查重复媒体
+                    combinedDatabase.fileDatabase.getFileRecord(uid, media.name).map {
+                        if (it == null) {
+                            "$uid/${media.name}"
+                        } else {
+                            "$uid/${newCopiedFileName(media.name)}"
+                        }
+                    }.mapResultIfNotNull {
+                        copyMedia(media, uid, it)
+                    }
+                } else {
+                    Result.failure(ForbiddenException())
+                }
+            }
+        } else {
+            Result.success(null)
+        }
+    }
+
+private suspend fun Backend.copyMedia(
+    fileRecord: FileRecord,
+    newOwner: PrimaryKey,
+    newName: String,
+): Result<ServerResponse<FileInfo>> {
+    val id = SnowflakeFactory.nextId()
+    return merge({
+        objectStorageService.copy(
+            AMEDIA_DEFAULT_BUCKET,
+            listOf(CopyPack("${fileRecord.owner}/${fileRecord.name}", newName))
+        )
+    }, {
+        combinedDatabase.fileDatabase.insertFileRecord(
+            listOf(
+                fileRecord.copy(
+                    id = id,
+                    owner = newOwner
+                )
+            ),
+            newOwner,
+            ObjectType.USER
+        )
+    }).map { (list) ->
+        ServerResponse(list.map {
+            fileRecord.copy(owner = newOwner, id = id).toFileInfo(it.url, it.lastModified)
+        }, null)
     }
 }

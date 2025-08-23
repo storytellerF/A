@@ -4,6 +4,9 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserTopicRead
@@ -12,7 +15,7 @@ import com.storyteller_f.a.backend.exposed.AID_LENGTH
 import com.storyteller_f.a.backend.exposed.USER_NICKNAME
 import com.storyteller_f.a.backend.exposed.isDup
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.getUserInfo
+import com.storyteller_f.a.backend.service.processRawUserToUserInfo
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.getDerPrivateKey
@@ -66,7 +69,7 @@ suspend fun Backend.updateUser(
         it().exceptionOrNull()
     }
     if (firstError != null) return Result.failure(firstError)
-    return exposedDatabase.userDatabase.updateUserInfo(uid, newUser).mapResult {
+    return combinedDatabase.userDatabase.updateUserInfo(uid, newUser).mapResult {
         if (it) {
             addUserLog(uid, UserLogType.UPDATE, uid ob ObjectType.USER)
             getUserInfo(ObjectFetch.IdFetch(uid))
@@ -83,7 +86,7 @@ private suspend fun Backend.checkAidModifyTimes(
     Result.success(Unit)
 } else {
     // check aid is null
-    exposedDatabase.userDatabase.getUserAid(id).mapResult {
+    combinedDatabase.userDatabase.getUserAid(id).mapResult {
         if (it != null) {
             Result.failure(CustomBadRequestException("aid is not null."))
         } else {
@@ -140,7 +143,7 @@ suspend fun Backend.checkIcon(
     aspectRatio: Dimension? = null,
 ): Result<MediaCheckResult?> {
     return if (icon != null) {
-        exposedDatabase.fileDatabase.getMediaByIds(listOf(icon)).mapIfNotNull {
+        combinedDatabase.fileDatabase.getFileRecordByIds(listOf(icon)).mapIfNotNull {
             val mediaInfo = it.firstOrNull()
             val dimension = mediaInfo?.dimension
             when {
@@ -166,7 +169,7 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
         uid
     ).mapResultIfNotNull {
         if (it.hasRead) {
-            exposedDatabase.userDatabase.addReadLog(
+            combinedDatabase.userDatabase.addReadLog(
                 UserTopicRead(
                     uid,
                     now(),
@@ -181,8 +184,8 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
     }
 }
 
-suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<AlternativeAccountInfo> {
-    return exposedDatabase.userDatabase.getRawAlternativeAccount(uid).mapResult {
+suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
+    return combinedDatabase.userDatabase.getRawChildAccount(uid).mapResult {
         if (it != null) {
             Result.failure(CustomBadRequestException("alternative account can't create alternative"))
         } else {
@@ -206,7 +209,7 @@ suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<AlternativeAc
                             PassType.RAW,
                             AlgoType.P256
                         )
-                        exposedDatabase.userDatabase.createAlternativeAccount(
+                        combinedDatabase.userDatabase.createChildAccount(
                             uid,
                             derPrivateKey,
                             user
@@ -216,7 +219,7 @@ suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<AlternativeAc
                                 UserLogType.ADD_ALTERNATIVE_ACCOUNT,
                                 id ob ObjectType.USER
                             )
-                            AlternativeAccountInfo(uid, derPrivateKey, user.toUserInfo())
+                            ChildAccountInfo(uid, derPrivateKey, user.toUserInfo())
                         }
                     }
                 }
@@ -228,7 +231,7 @@ suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<AlternativeAc
 suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple) {
     val logId = SnowflakeFactory.nextId()
     val log = UserLog(logId, now(), uid, type, objectTuple.objectId, objectTuple.objectType)
-    exposedDatabase.userDatabase.insertUserLog(log).onFailure {
+    combinedDatabase.userDatabase.insertUserLog(log).onFailure {
         Napier.i(tag = "user log", throwable = it) {
             "add failed"
         }
@@ -240,10 +243,79 @@ suspend fun addDevice(
     uid: PrimaryKey,
     newDevice: NewDevice
 ): Result<Unit> =
-    backend.exposedDatabase.userDatabase.addDevice(uid, newDevice.endpointUrl).recoverResult {
+    backend.combinedDatabase.userDatabase.addDevice(uid, newDevice.endpointUrl).recoverResult {
         if (it.isDup()) {
             Result.success(Unit)
         } else {
             Result.failure(it)
         }
     }
+
+suspend fun Backend.getUserAlternateUserInfoList(
+    uid: PrimaryKey,
+    fetch: PrimaryKeyFetch,
+): Result<PaginationResult<ChildAccountInfo>?> {
+    return combinedDatabase.userDatabase.getRawChildAccountPaginationListByHost(
+        uid,
+        fetch
+    ).mapResult { (results, total) ->
+        processRawUserToUserInfo(results.map {
+            it.rawUser
+        }).mapIfNotNull { userList ->
+            val map = userList.associateBy { it.id }
+            PaginationResult(results.mapNotNull {
+                map[it.rawUser.user.id]?.let { userInfo ->
+                    ChildAccountInfo(
+                        it.rawUser.user.id,
+                        it.childAccount.privateKey,
+                        userInfo
+                    )
+                }
+            }, total)
+        }
+    }
+}
+
+suspend fun Backend.isKeyVerified(
+    roomId: PrimaryKey,
+    encryptedAes: Map<PrimaryKey, String>,
+): Result<Boolean> {
+    return combinedDatabase.containerDatabase.getJoinedUserList(roomId).map { value ->
+        value.map {
+            it.uid
+        }.toSet().minus(encryptedAes.keys).isEmpty()
+    }
+}
+
+suspend fun Backend.searchMembers(
+    objectId: PrimaryKey?,
+    word: String?,
+    primaryKeyFetch: PrimaryKeyFetch,
+): Result<PaginationResult<UserInfo>?> {
+    return combinedDatabase.containerDatabase.getMemberPaginationResult(
+        objectId,
+        word,
+        primaryKeyFetch
+    )
+        .mapResult { (pairs, count) ->
+            processRawUserToUserInfo(pairs).mapIfNotNull {
+                PaginationResult(it, count)
+            }
+        }
+}
+
+suspend fun Backend.getUserInfoList(
+    listFetch: ObjectListFetch,
+): Result<List<UserInfo>> {
+    return combinedDatabase.userDatabase.getRawUsers(listFetch).mapResult {
+        processRawUserToUserInfo(it)
+    }
+}
+
+suspend fun Backend.getUserInfo(
+    fetch: ObjectFetch,
+): Result<UserInfo?> {
+    return combinedDatabase.userDatabase.getRawUser(fetch).mapResultIfNotNull {
+        processRawUserToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
+    }
+}

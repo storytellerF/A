@@ -14,11 +14,11 @@ dependencies {
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
     implementation(projects.backend.service)
+    implementation(projects.cloud.core)
     implementation(libs.napier)
     implementation(libs.kotlinx.cli)
     implementation(libs.cryptography.provider.jdk)
     implementation(libs.tika.core)
-    implementation(libs.commons.logging)
     implementation(libs.bundles.ktor.server.client)
     implementation(libs.kotlinx.datetime)
 }

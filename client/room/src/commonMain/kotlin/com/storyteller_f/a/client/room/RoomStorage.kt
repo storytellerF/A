@@ -1,7 +1,7 @@
 package com.storyteller_f.a.client.room
 
 import androidx.paging.PagingSource
-import com.storyteller_f.shared.model.AlternativeAccountInfo
+import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.ReactionInfo
@@ -10,8 +10,8 @@ import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.storage.AlternativeInfoStorage
-import com.storyteller_f.storage.AlternativesCollection
+import com.storyteller_f.storage.ChildAccountStorage
+import com.storyteller_f.storage.ChildAccountCollection
 import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.CommunityInfoStorage
 import com.storyteller_f.storage.DownloadCollection
@@ -337,13 +337,13 @@ class ReactionRoomInfoStorage(val appDatabase: AppDatabase) : ReactionInfoStorag
     }
 }
 
-class AlternativeInfoRoomStorage(val appDatabase: AppDatabase) : AlternativeInfoStorage {
-    override suspend fun save(collection: AlternativesCollection, alternativeAccountInfo: AlternativeAccountInfo) {
-        val data = Json.encodeToString(alternativeAccountInfo)
-        appDatabase.getCommonDao().insert(CommonEntity(alternativeAccountInfo.id, collection.NAME, data))
+class ChildAccountRoomStorage(val appDatabase: AppDatabase) : ChildAccountStorage {
+    override suspend fun save(collection: ChildAccountCollection, childAccountInfo: ChildAccountInfo) {
+        val data = Json.encodeToString(childAccountInfo)
+        appDatabase.getCommonDao().insert(CommonEntity(childAccountInfo.id, collection.NAME, data))
     }
 
-    override fun observeData(collection: AlternativesCollection): PagingSource<Int, AlternativeAccountInfo> {
+    override fun observeData(collection: ChildAccountCollection): PagingSource<Int, ChildAccountInfo> {
         val raw = appDatabase.getCommonDao().getAsSource(collection.NAME)
         return WrappedPagingSource(raw) { list ->
             list.map {
@@ -352,7 +352,7 @@ class AlternativeInfoRoomStorage(val appDatabase: AppDatabase) : AlternativeInfo
         }
     }
 
-    override suspend fun clean(collection: AlternativesCollection) {
+    override suspend fun clean(collection: ChildAccountCollection) {
         appDatabase.getCommonDao().clean(collection.NAME)
     }
 }
@@ -412,7 +412,7 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val roomInfoStorage: RoomInfoStorage = RoomRoomInfoStorage(appDatabase)
     override val remoteKeyStorage: RemoteKeyStorage = RemoteKeyRoomStorage(appDatabase)
     override val reactionInfoStorage: ReactionInfoStorage = ReactionRoomInfoStorage(appDatabase)
-    override val alternativeInfoStorage: AlternativeInfoStorage = AlternativeInfoRoomStorage(appDatabase)
+    override val childAccountStorage: ChildAccountStorage = ChildAccountRoomStorage(appDatabase)
     override val fileInfoStorage: FileInfoStorage = FileInfoRoomStorage(appDatabase)
     override val downloadInfoStorage: DownloadInfoStorage = DownloadInfoRoomStorage(appDatabase)
 }

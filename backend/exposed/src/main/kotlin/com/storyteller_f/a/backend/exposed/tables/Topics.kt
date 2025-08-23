@@ -47,18 +47,3 @@ fun Topic.Companion.findById(topicId: PrimaryKey) = Topics.selectAll().where {
     Topics.id eq topicId
 }
 
-suspend fun Topic.Companion.new(info: Topic) {
-    return check(Topics.insert {
-        it[id] = info.id
-        it[author] = info.author
-        it[createdTime] = now()
-        it[parentType] = info.parentType
-        it[parentId] = info.parentId
-        it[rootId] = info.rootId
-        it[rootType] = info.rootType
-        it[content] = ExposedBlob(info.content)
-        it[isEncrypted] = info.isEncrypted
-    }.insertedCount > 0) {
-        "insert topic failed"
-    }
-}

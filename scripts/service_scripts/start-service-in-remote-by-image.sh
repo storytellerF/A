@@ -17,9 +17,9 @@ if [ -z "$FLAVOR" ] || [ -z "$BUILD_ON" ]; then
   exit 1
 fi
 
-if [ -z "$REMOTE_URI"] || [ -z "$REMOTE_CERT_FILE"] || [ -z "$REMOTE_COMMAND"]; then
+if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_COMMAND" ]; then
   echo "FLAVOR and BUILD_ON must be set"
-    exit 1
+  exit 1
 fi
 
 ./scripts/build_scripts/build-cloud.sh "$FLAVOR" prod local

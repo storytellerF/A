@@ -33,7 +33,7 @@ fun main(args: Array<String>) {
 }
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {
-    println("load env: ${env["COMPOSE_PROJECT_NAME"]}")
+    Napier.i("load env: ${env["COMPOSE_PROJECT_NAME"]}")
 
     val databaseConnection = databaseConnection(env)
 

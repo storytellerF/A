@@ -5,7 +5,7 @@ if [ -z "$FLAVOR" ]; then
   echo "FLAVOR must be set"
   exit 1
 fi
-cd "a-server/$FLAVOR"
+cd "a-server/$FLAVOR" || exit
 mkdir -p server-all
 tar -xf server-cli.tar
 tar -xf server.tar -C server-all
@@ -20,4 +20,5 @@ cp "./a-server/$FLAVOR/server-all.jar" ./cloud/server/build/libs/server-all.jar
 cp "./a-server/$FLAVOR/cli.tar" ./cloud/cli/build/distributions/cli.tar
 cp "./a-server/$FLAVOR/worker.tar" ./cloud/worker/build/distributions/worker.tar
 
-./scripts/service_scripts/compose-service.sh "$FLAVOR" local false 'up -d --build'
+export BUILD_ON=local
+./scripts/service_scripts/compose-service.sh "$FLAVOR" false 'up -d --build'

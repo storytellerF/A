@@ -9,7 +9,7 @@ import kotlinx.collections.immutable.persistentListOf
 @Preview(showSystemUi = true)
 @Composable
 private fun PreviewLoading() {
-    GlobalDialogInternal(GlobalDialogState.Loading(persistentListOf())) {
+    GlobalDialogInternal(GlobalDialogState.Loading()) {
     }
 }
 

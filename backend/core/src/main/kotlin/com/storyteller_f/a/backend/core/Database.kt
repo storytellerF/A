@@ -1,10 +1,11 @@
 package com.storyteller_f.a.backend.core
 
-import com.storyteller_f.a.backend.core.types.AlternateAccount
+import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.Community
-import com.storyteller_f.a.backend.core.types.Media
+import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.MemberJoin
-import com.storyteller_f.a.backend.core.types.RawAlternateAccount
+import com.storyteller_f.a.backend.core.types.Quota
+import com.storyteller_f.a.backend.core.types.RawChildAccount
 import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.RawUser
@@ -13,6 +14,7 @@ import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserDevice
 import com.storyteller_f.a.backend.core.types.UserLog
@@ -26,7 +28,6 @@ import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.Tuple4
 import kotlinx.datetime.LocalDateTime
 
 data class PaginationResult<T>(val list: List<T>, val total: Long)
@@ -88,18 +89,19 @@ interface UserDatabase {
     ): Result<Unit>
 
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
-    suspend fun getRawAlternativePaginationListByHost(
+    suspend fun getRawChildAccountPaginationListByHost(
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<RawAlternateAccount>>
+    ): Result<PaginationResult<RawChildAccount>>
 
-    suspend fun getRawAlternativeAccount(uid: PrimaryKey): Result<AlternateAccount?>
+    suspend fun getRawChildAccount(uid: PrimaryKey): Result<ChildAccount?>
 
-    suspend fun createAlternativeAccount(
+    suspend fun createChildAccount(
         hostId: PrimaryKey,
         privateKey: String,
         user: User
     ): Result<Unit>
+
 }
 
 interface TopicDatabase {
@@ -194,7 +196,7 @@ interface TopicDatabase {
         emoji: String
     ): Result<List<Triple<Long, Long, PrimaryKey?>>>
 
-    suspend fun insertTopicDescription(title: Title, topic: Topic): Result<Unit>
+    suspend fun createTitle(title: Title, topic: Topic): Result<Unit>
 }
 
 interface TitleDatabase {
@@ -224,12 +226,7 @@ interface CommunityDatabase {
     ): Result<PaginationResult<RawCommunity>?>
 
     suspend fun createCommunity(community: Community): Result<Unit>
-    suspend fun createCommunityRooms(
-        id: PrimaryKey,
-        ownerUid: PrimaryKey,
-        communityAid: String,
-        roomIds: List<PrimaryKey>
-    ): Result<Unit>
+    suspend fun createCommunityRooms(rooms: List<Room>): Result<Unit>
     suspend fun getCommunityJoinedTimeByIds(
         uid: PrimaryKey,
         communityIds: List<PrimaryKey>,
@@ -273,27 +270,32 @@ interface RoomDatabase {
 }
 
 interface FileDatabase {
-    suspend fun getMedia(owner: PrimaryKey, name: String): Result<Media?>
-    suspend fun getMediaByIds(ids: List<PrimaryKey>): Result<List<Media>>
-    suspend fun getMediaListByOwner(owner: PrimaryKey): Result<List<Media>>
-    suspend fun getMediaByNames(names: List<String?>): Result<List<Media>>
-    suspend fun insertMediaRefs(
+    suspend fun getFileRecord(owner: PrimaryKey, name: String): Result<FileRecord?>
+    suspend fun getFileRecordByIds(ids: List<PrimaryKey>): Result<List<FileRecord>>
+    suspend fun getFileRecordListByOwner(owner: PrimaryKey): Result<List<FileRecord>>
+    suspend fun getFileRecordByNames(names: List<String?>): Result<List<FileRecord>>
+    suspend fun insertFileRefs(
         objectId: PrimaryKey,
         objectType: ObjectType,
         mediaName: List<Pair<PrimaryKey, String>>,
     ): Result<Unit>
 
-    suspend fun getMediaPaginationList(
+    suspend fun getFileRecordPaginationList(
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<Media>>
+    ): Result<PaginationResult<FileRecord>>
 
-    suspend fun insertMedia(mediaList: List<Media>)
-    suspend fun insertCopiedMedia(
-        newId: PrimaryKey,
-        media: Media,
-        newOwner: PrimaryKey
-    ): Result<Unit>
+    suspend fun insertFileRecord(
+        fileRecordList: List<FileRecord>,
+        ownerId: PrimaryKey,
+        ownerType: ObjectType
+    ) : Result<Unit>
+    suspend fun insertUploadRecord(record: UploadRecord): Result<Unit>
+    suspend fun deleteUploadRecord(
+        id: PrimaryKey,
+        quotaInfo: QuotaInfo,
+        length: Long
+    ) : Result<Unit>
 }
 
 interface ContainerDatabase {
@@ -305,7 +307,7 @@ interface ContainerDatabase {
         objectType: ObjectType,
     ): Result<Unit>
 
-    suspend fun exit(containerId: PrimaryKey, id: PrimaryKey): Result<Int>
+    suspend fun exitContainer(containerId: PrimaryKey, id: PrimaryKey): Result<Int>
     suspend fun getJoinedUserList(roomId: PrimaryKey): Result<List<MemberJoin>>
     suspend fun getUserJoinedTime(
         parentIds: List<PrimaryKey>,
@@ -328,14 +330,16 @@ interface ContainerDatabase {
         word: String?,
         fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<RawUser>>
+
+    suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType) : Result<QuotaInfo?>
+    suspend fun insertQuota(quota: Quota) : Result<Unit>
 }
 
 interface CliDatabase {
     suspend fun batchAddUser(users: List<User>)
     suspend fun batchAddCommunities(
-        l2: List<Community>,
+        communities: List<Community>,
         memberList: List<Pair<PrimaryKey, List<PrimaryKey>>>,
-        l3: List<Tuple4<PrimaryKey, PrimaryKey, String, List<PrimaryKey>>>
     )
     suspend fun batchAddRooms(
         roomList: List<Room>,

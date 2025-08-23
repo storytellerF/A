@@ -3,12 +3,12 @@ package com.storyteller_f.a.cloud.server.route
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.getUserInfo
-import com.storyteller_f.a.backend.service.searchMembers
 import com.storyteller_f.a.cloud.core.service.addDevice
 import com.storyteller_f.a.cloud.core.service.addReadLog
 import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
+import com.storyteller_f.a.cloud.core.service.getUserInfo
 import com.storyteller_f.a.cloud.core.service.getUserTitles
+import com.storyteller_f.a.cloud.core.service.searchMembers
 import com.storyteller_f.a.cloud.core.service.updateUser
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal

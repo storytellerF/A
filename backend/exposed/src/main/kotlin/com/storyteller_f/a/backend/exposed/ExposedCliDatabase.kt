@@ -5,7 +5,6 @@ import com.storyteller_f.a.backend.core.InsertTopicTuple
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.User
-import com.storyteller_f.a.backend.exposed.query.createCommunityRoomsRaw
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
@@ -18,7 +17,6 @@ import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.Tuple4
 import com.storyteller_f.shared.utils.now
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.v1.core.JoinType
@@ -48,12 +46,11 @@ class ExposedCliDatabase(val databaseSession: ExposedDatabaseSession) : CliDatab
     }
 
     override suspend fun batchAddCommunities(
-        l2: List<Community>,
+        communities: List<Community>,
         memberList: List<Pair<PrimaryKey, List<PrimaryKey>>>,
-        l3: List<Tuple4<PrimaryKey, PrimaryKey, String, List<PrimaryKey>>>
     ) {
         databaseSession.dbQuery {
-            Communities.batchInsert(l2) {
+            Communities.batchInsert(communities) {
                 this[Communities.id] = it.id
                 this[Communities.createdTime] = it.createdTime
                 this[Communities.name] = it.name
@@ -61,7 +58,7 @@ class ExposedCliDatabase(val databaseSession: ExposedDatabaseSession) : CliDatab
                 this[Communities.owner] = it.owner
                 this[Communities.fontId] = it.fontId
             }
-            Aids.batchInsert(l2) {
+            Aids.batchInsert(communities) {
                 this[Aids.value] = it.aid
                 this[Aids.objectId] = it.id
                 this[Aids.objectType] = ObjectType.COMMUNITY
@@ -73,9 +70,6 @@ class ExposedCliDatabase(val databaseSession: ExposedDatabaseSession) : CliDatab
                     this[objectId] = communityId
                     this[MemberJoins.objectType] = ObjectType.COMMUNITY
                 }
-            }
-            l3.forEach { (c, communityId, aid, ids) ->
-                createCommunityRoomsRaw(communityId, c, aid, ids)
             }
         }.getOrThrow()
     }

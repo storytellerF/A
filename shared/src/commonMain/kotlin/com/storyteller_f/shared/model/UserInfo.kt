@@ -49,7 +49,7 @@ enum class PassType {
 }
 
 @Serializable
-data class AlternativeAccountInfo(
+data class ChildAccountInfo(
     val hostId: PrimaryKey,
     val privateKey: String,
     val userInfo: UserInfo
@@ -59,3 +59,17 @@ data class AlternativeAccountInfo(
     override val objectType: ObjectType
         get() = ObjectType.USER
 }
+
+enum class QuotaType {
+    FILE
+}
+
+@Serializable
+data class QuotaInfo(
+    val ownerId: PrimaryKey,
+    val ownerType: ObjectType,
+    val quotaType: QuotaType,
+    val total: Long,
+    val used: Long,
+    val locking: Boolean
+)

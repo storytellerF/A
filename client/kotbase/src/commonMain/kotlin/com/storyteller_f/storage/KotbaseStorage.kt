@@ -1,7 +1,7 @@
 package com.storyteller_f.storage
 
 import androidx.paging.PagingSource
-import com.storyteller_f.shared.model.AlternativeAccountInfo
+import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.ReactionInfo
@@ -367,18 +367,18 @@ class ReactionDocumentInfoStorage(val kotbaseDocumentSource: KotbaseDocumentSour
     override suspend fun clean(collection: ReactionCollection) = Unit
 }
 
-class AlternativeInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) :
-    AlternativeInfoStorage {
+class ChildAccountDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) :
+    ChildAccountStorage {
 
-    override suspend fun save(collection: AlternativesCollection, alternativeAccountInfo: AlternativeAccountInfo) {
-        kotbaseDocumentSource.getCollection<AlternativeAccountInfo>(collection.NAME)
-            .save(alternativeAccountInfo.id, alternativeAccountInfo)
+    override suspend fun save(collection: ChildAccountCollection, childAccountInfo: ChildAccountInfo) {
+        kotbaseDocumentSource.getCollection<ChildAccountInfo>(collection.NAME)
+            .save(childAccountInfo.id, childAccountInfo)
     }
 
     override fun observeData(
-        collection: AlternativesCollection,
-    ): PagingSource<Int, AlternativeAccountInfo> {
-        return kotbaseDocumentSource.getCollection<AlternativeAccountInfo>(collection.NAME)
+        collection: ChildAccountCollection,
+    ): PagingSource<Int, ChildAccountInfo> {
+        return kotbaseDocumentSource.getCollection<ChildAccountInfo>(collection.NAME)
             .getSource {
                 orderBy {
                     "id".descending()
@@ -386,7 +386,7 @@ class AlternativeInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentS
             }
     }
 
-    override suspend fun clean(collection: AlternativesCollection) = Unit
+    override suspend fun clean(collection: ChildAccountCollection) = Unit
 }
 
 class FileInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : FileInfoStorage {
@@ -454,8 +454,8 @@ class DocumentModelStorage(source: KotbaseDocumentSource) : ModelStorage {
     override val remoteKeyStorage: RemoteKeyStorage =
         RemoteKeyDocumentStorage(source)
     override val reactionInfoStorage: ReactionInfoStorage = ReactionDocumentInfoStorage(source)
-    override val alternativeInfoStorage: AlternativeInfoStorage =
-        AlternativeInfoDocumentStorage(source)
+    override val childAccountStorage: ChildAccountStorage =
+        ChildAccountDocumentStorage(source)
     override val fileInfoStorage: FileInfoStorage = FileInfoDocumentStorage(source)
     override val downloadInfoStorage: DownloadInfoStorage = DownloadInfoDocumentStorage(source)
 }

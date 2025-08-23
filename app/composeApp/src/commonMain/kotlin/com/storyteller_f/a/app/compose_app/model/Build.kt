@@ -458,9 +458,9 @@ fun getDownloadViewModel(): DownloadViewModel =
     }
 
 @Composable
-fun getAlternativeAccountsViewModel(): AlternativeAccountsViewModel =
+fun getAlternativeAccountsViewModel(): ChildAccountsViewModel =
     viewModel(
         listOf("alternative")
     ) { sessionManager, storageSource ->
-        AlternativeAccountsViewModel(storageSource, sessionManager)
+        ChildAccountsViewModel(storageSource, sessionManager)
     }

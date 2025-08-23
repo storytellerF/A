@@ -38,13 +38,14 @@ class MediaTest {
                         UploadData(
                             5,
                             "hello.txt",
-                            ContentType.defaultForFileExtension("txt")
+                            ContentType.defaultForFileExtension("txt"),
+                            {
+                                Buffer().apply {
+                                    writeString("hello")
+                                }
+                            }
                         )
-                    ) {
-                        Buffer().apply {
-                            writeString("hello")
-                        }
-                    }.getOrThrow()
+                    ).getOrThrow()
                 assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
                 val mediaList = getMediaList(it.uid, ObjectType.USER, null, 10)
                 assertListSize(1, mediaList)
@@ -72,14 +73,15 @@ class MediaTest {
 
     @Test
     fun `extract audio album`() {
-        ClassLoader.getSystemClassLoader().getResourceAsStream("I_Don’t_Wanna_Live_Forever.flac")?.use {
-            it.readFlacAlbumFromAudioStream { image, mimeType ->
-                val name = "build/test/cover.${getExtensionFromMimeType(mimeType)}"
-                FileOutputStream(name).use { output ->
-                    output.write(image)
+        ClassLoader.getSystemClassLoader().getResourceAsStream("I_Don’t_Wanna_Live_Forever.flac")
+            ?.use {
+                it.readFlacAlbumFromAudioStream { image, mimeType ->
+                    val name = "build/test/cover.${getExtensionFromMimeType(mimeType)}"
+                    FileOutputStream(name).use { output ->
+                        output.write(image)
+                    }
                 }
-            }
-        } ?: throw Exception("flac is not exists")
+            } ?: throw Exception("flac is not exists")
         ClassLoader.getSystemClassLoader().getResourceAsStream("cover.jpg")?.use {
             Files.copy(it, Path("build/test/cover_origin.jpg"), StandardCopyOption.REPLACE_EXISTING)
         } ?: throw Exception("cover is not exists")
@@ -113,13 +115,14 @@ class MediaTest {
                 UploadData(
                     bytes.size.toLong(),
                     name,
-                    ContentType.defaultForFileExtension("flac")
+                    ContentType.defaultForFileExtension("flac"),
+                    {
+                        Buffer().apply {
+                            write(bytes)
+                        }
+                    }
                 )
-            ) {
-                Buffer().apply {
-                    write(bytes)
-                }
-            }.getOrThrow()
+            ).getOrThrow()
             extractAlbum(response.data.first().id).getOrThrow()
         }
     }
@@ -175,12 +178,17 @@ private fun getMSSIM(i1: Mat, i2: Mat): Scalar? {
     val sigma2Squared1 = opencv_core.subtract(sigma2Squared, mean2Squared).asMat()
     opencv_imgproc.GaussianBlur(matrix1Matrix2, sigma12, Size(11, 11), 1.5)
     val sigma121 = opencv_core.subtract(sigma12, mean1Mean2).asMat()
-    val temp1 = opencv_core.add(opencv_core.multiply(2.0, mean1Mean2), Scalar.all(constant1)).asMat()
+    val temp1 =
+        opencv_core.add(opencv_core.multiply(2.0, mean1Mean2), Scalar.all(constant1)).asMat()
     val temp2 = opencv_core.add(opencv_core.multiply(2.0, sigma121), Scalar.all(constant2)).asMat()
     val temp3 = temp1.mul(temp2).asMat() // t3 = ((2*mu1_mu2 + C1).*(2*sigma12 + C2))
-    val temp1Final = opencv_core.add(opencv_core.add(mean1Squared, mean2Squared), Scalar.all(constant1)).asMat()
-    val temp2Final = opencv_core.add(opencv_core.add(sigma1Squared1, sigma2Squared1), Scalar.all(constant2)).asMat()
-    val temp1Result = temp1Final.mul(temp2Final).asMat() // t1 =((mu1_2 + mu2_2 + C1).*(sigma1_2 + sigma2_2 + C2))
+    val temp1Final =
+        opencv_core.add(opencv_core.add(mean1Squared, mean2Squared), Scalar.all(constant1)).asMat()
+    val temp2Final =
+        opencv_core.add(opencv_core.add(sigma1Squared1, sigma2Squared1), Scalar.all(constant2))
+            .asMat()
+    val temp1Result =
+        temp1Final.mul(temp2Final).asMat() // t1 =((mu1_2 + mu2_2 + C1).*(sigma1_2 + sigma2_2 + C2))
     val ssimMap = Mat()
     opencv_core.divide(temp3, temp1Result, ssimMap) // ssim_map =  t3./t1;
     return opencv_core.mean(ssimMap)

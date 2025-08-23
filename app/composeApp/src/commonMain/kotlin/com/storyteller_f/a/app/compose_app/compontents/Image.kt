@@ -20,6 +20,7 @@ import coil3.request.crossfade
 import com.ashampoo.kim.Kim
 import com.ashampoo.kim.common.convertToPhotoMetadata
 import com.mikepenz.markdown.model.ImageData
+import com.storyteller_f.a.app.compose_app.AppConfig
 import com.storyteller_f.a.app.compose_app.LocalClient
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.shared.model.Dimension
@@ -70,7 +71,9 @@ fun globalLoader(url: String): ImageRequest {
     val client = LocalClient.current
     val platformContext = LocalPlatformContext.current
     return remember(url) {
-        ImageRequest.Builder(platformContext).data(url.replace("http://", "https://")).crossfade(true).fetcherFactory(
+        @Suppress("KotlinConstantConditions") val data =
+            if (AppConfig.BUILD_TYPE == "prod") url.replace("http://", "https://") else url
+        ImageRequest.Builder(platformContext).data(data).crossfade(true).fetcherFactory(
             KtorNetworkFetcherFactory(client)
         ).build()
     }

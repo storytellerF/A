@@ -9,15 +9,17 @@ import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.getMediaInfoList
+import com.storyteller_f.a.backend.service.getCommunityRoomsTemplateList
 import com.storyteller_f.a.backend.service.index.TopicDocument
-import com.storyteller_f.a.backend.service.object_storage.uploadFilesAfterDetectContentTypeAndDimension
+import com.storyteller_f.a.cloud.core.service.getFileInfoList
+import com.storyteller_f.a.cloud.core.service.tryUploadFiles
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.eciesEncrypt
 import com.storyteller_f.shared.encryptData
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.obj.PresetRoom
 import com.storyteller_f.shared.obj.PresetTopic
@@ -25,7 +27,6 @@ import com.storyteller_f.shared.obj.PresetUser
 import com.storyteller_f.shared.obj.PresetValue
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.Tuple4
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
@@ -107,67 +108,73 @@ class AddPreset : Subcommand("add", "add entry") {
         }
     }
 
-    private suspend fun Backend.addFiles(presetValue: PresetValue, parentDir: File?) {
+    private suspend fun Backend.addFiles(presetValue: PresetValue, parentDir: File) {
         val files = presetValue.fileData ?: return
         Napier.i {
             "files count ${presetValue.fileData?.size}"
         }
         val userMap =
-            exposedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(files.map {
+            combinedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(files.map {
                 it.owner
             }.distinct())).getOrThrow().associate {
                 it.user.aid!! to it.user
             }
-        val lists = HttpClient(OkHttp).use { client ->
+        val fileList = HttpClient(OkHttp).use { client ->
             files.map {
                 it.paths.mapNotNull { p ->
-                    if (p.endsWith("download")) {
-                        val path = File(parentDir, p)
-                        val lines = path.readLines()
-                        if (lines.size >= 3) {
-                            val name = lines.first()
-                            val link = lines[1]
-                            val hash = lines[2]
-                            val realPath = File(parentDir, "download/$name")
-                            if (realPath.exists()) {
-                                if (hash.startsWith("sha256:")) {
-                                    val calculatedSha = sha256File(realPath)
-                                    val hashValue = hash.removePrefix("sha256:")
-                                    Napier.i {
-                                        "calculated $name sha $calculatedSha, real $hashValue"
-                                    }
-                                    if (calculatedSha != hashValue) {
-                                        downloadWithResume(link, realPath, client)
-                                    }
-                                }
-                            } else {
-                                downloadWithResume(link, realPath, client)
-                            }
-
-                            realPath
-                        } else {
-                            null
-                        }
-                    } else {
-                        File(parentDir, p)
-                    }
+                    downloadFileIfNeed(p, parentDir, client)
                 } to it.owner
             }
         }
-        lists.forEach { (it, owner) ->
-            uploadFilesAfterDetectContentTypeAndDimension(it.map { path ->
-                UploadPack(path, path.name, userMap[owner]!!.id, ObjectType.USER, path.length())
-            }).getOrThrow()
+        fileList.forEach { (it, owner) ->
+            uploadFile(userMap[owner]!!.id, ObjectType.USER, parentDir, it.map {
+                it.toRelativeString(parentDir)
+            })
         }
     }
 
-    private suspend fun Backend.addRooms(presetValue: PresetValue, parentDir: File?) {
+    private suspend fun downloadFileIfNeed(
+        p: String,
+        parentDir: File?,
+        client: HttpClient
+    ): File? = if (p.endsWith("download")) {
+        val path = File(parentDir, p)
+        val lines = path.readLines()
+        if (lines.size >= 3) {
+            val name = lines.first()
+            val link = lines[1]
+            val hash = lines[2]
+            val realPath = File(parentDir, "download/$name")
+            if (realPath.exists()) {
+                if (hash.startsWith("sha256:")) {
+                    val calculatedSha = sha256File(realPath)
+                    val hashValue = hash.removePrefix("sha256:")
+                    Napier.i {
+                        "calculated $name sha $calculatedSha, real $hashValue"
+                    }
+                    if (calculatedSha != hashValue) {
+                        downloadWithResume(link, realPath, client)
+                    }
+                }
+            } else {
+                downloadWithResume(link, realPath, client)
+            }
+
+            realPath
+        } else {
+            null
+        }
+    } else {
+        File(parentDir, p)
+    }
+
+    private suspend fun Backend.addRooms(presetValue: PresetValue, parentDir: File) {
         val l = presetValue.roomData ?: return
         Napier.i {
             "rooms count ${presetValue.roomData?.size}"
         }
         val (roomList, membersList) = getRoomsData(l, parentDir)
-        exposedDatabase.cliDatabase.batchAddRooms(roomList, membersList)
+        combinedDatabase.cliDatabase.batchAddRooms(roomList, membersList)
     }
 
     private suspend fun Backend.addTopics(presetValue: PresetValue, parentDir: File) {
@@ -176,7 +183,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val data = presetValue.topicData!!
         val userMap =
-            exposedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(data.map {
+            combinedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(data.map {
                 it.author
             }.distinct())).getOrThrow().associate {
                 it.user.aid!! to it.user
@@ -196,16 +203,16 @@ class AddPreset : Subcommand("add", "add entry") {
         }
     }
 
-    private suspend fun Backend.addUsers(presetValue: PresetValue, parentDir: File?) {
+    private suspend fun Backend.addUsers(presetValue: PresetValue, parentDir: File) {
         val userList = presetValue.userData ?: return
         Napier.i {
             "users count ${presetValue.userData?.size}"
         }
         val users = getUserData(userList, parentDir)
-        exposedDatabase.cliDatabase.batchAddUser(users)
+        combinedDatabase.cliDatabase.batchAddUser(users)
     }
 
-    private suspend fun Backend.addCommunities(presetValue: PresetValue, parentDir: File?) {
+    private suspend fun Backend.addCommunities(presetValue: PresetValue, parentDir: File) {
         val communityData = presetValue.communityData!!
         Napier.i {
             "communities count ${presetValue.communityData?.size}"
@@ -217,33 +224,22 @@ class AddPreset : Subcommand("add", "add entry") {
             val iconMedia = if (icon == null) {
                 null
             } else {
-                val path = File(parentDir, icon)
-                uploadFilesAfterDetectContentTypeAndDimension(
-                    listOf(
-                        UploadPack(
-                            path,
-                            "community-icon.${path.extension}",
-                            id,
-                            ObjectType.COMMUNITY,
-                            path.length(),
-                        )
-                    )
-                ).getOrThrow().first()?.id
+                uploadFile(id, ObjectType.COMMUNITY, parentDir, listOf(icon))?.id
             }
             val fontMedia = if (font == null) {
                 null
             } else {
-                backend.getMediaInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
+                backend.getFileInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
             }
             InsertCommunityTuple(it, iconMedia, id, fontMedia)
         }
         val userMap =
-            exposedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(data.flatMap {
+            combinedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(data.flatMap {
                 it.community.users.orEmpty() + (it.community.admin ?: "System")
             }.distinct())).getOrThrow().associate {
                 it.user.aid to it.user
             }
-        exposedDatabase.cliDatabase.batchAddCommunities(data.map {
+        val communities = data.map {
             Community(
                 it.id,
                 now(),
@@ -253,15 +249,15 @@ class AddPreset : Subcommand("add", "add entry") {
                 it.icon,
                 fontId = it.font,
             )
-        }, data.map {
+        }
+        combinedDatabase.cliDatabase.batchAddCommunities(communities, data.map {
             it.id to it.community.users?.map { s ->
                 userMap[s]!!.id
             }.orEmpty() + userMap["System"]!!.id
-        }, data.map {
-            Tuple4(userMap[it.community.admin ?: "System"]!!.id, it.id, it.community.id, List(3) {
-                SnowflakeFactory.nextId()
-            })
         })
+        communities.map {
+            combinedDatabase.communityDatabase.createCommunityRooms(getCommunityRoomsTemplateList(it))
+        }
     }
 
     private suspend fun Backend.addTopics(
@@ -271,7 +267,7 @@ class AddPreset : Subcommand("add", "add entry") {
         objectType: ObjectType,
     ) {
         val communityMap =
-            exposedDatabase.communityDatabase.getRawCommunities(ObjectListFetch.AidListFetch(list.mapNotNull {
+            combinedDatabase.communityDatabase.getRawCommunities(ObjectListFetch.AidListFetch(list.mapNotNull {
                 it.community
             })).getOrThrow().associate {
                 it.community.aid to it.community.id
@@ -286,13 +282,16 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 communityMap[addTopic.community]!!
             }
-            if (parent == null || parent == 0 || level == null || level == 0) {
-                InsertTopicTuple(addTopic, index, 0, id, content, false, rootId)
-            } else {
-                InsertTopicTuple(addTopic, index, level, id, content, false, rootId)
-            }
+            InsertTopicTuple(
+                addTopic, index,
+                if (parent == null || parent == 0 || level == null || level == 0) {
+                    0
+                } else {
+                    level
+                }, id, content, false, rootId
+            )
         }
-        exposedDatabase.cliDatabase.batchAddTopics(tuples, userMap, objectType)
+        combinedDatabase.cliDatabase.batchAddTopics(tuples, userMap, objectType)
         topicSearchService.saveDocument(
             tuples.mapIndexed { index, topicTuple ->
                 val level = topicTuple.level
@@ -320,7 +319,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun Backend.getUserData(
         userList: List<PresetUser>,
-        parentDir: File?,
+        parentDir: File,
     ): List<User> {
         return userList.map {
             val id = it.id ?: SnowflakeFactory.nextId()
@@ -330,23 +329,12 @@ class AddPreset : Subcommand("add", "add entry") {
                 ).getOrThrow()
             val ad = calcAddress(derPublicKey).getOrThrow()
             val icon = it.icon
-            if (icon == null) {
-                UserPresetTuple(it, null, derPublicKey, ad, id)
+            val p = if (icon == null) {
+                null
             } else {
-                val path = File(parentDir, icon)
-                val mediaInfo = uploadFilesAfterDetectContentTypeAndDimension(
-                    listOf(
-                        UploadPack(
-                            path,
-                            "avatar.${path.extension}",
-                            id,
-                            ObjectType.USER,
-                            path.length()
-                        )
-                    )
-                ).getOrThrow().first()
-                UserPresetTuple(it, mediaInfo?.id, derPublicKey, ad, id)
+                uploadFile(id, ObjectType.USER, parentDir, listOf(icon))?.id
             }
+            UserPresetTuple(it, p, derPublicKey, ad, id)
         }.map {
             User(
                 it.presetUser.aid,
@@ -365,31 +353,20 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun Backend.getRoomsData(
         l: List<PresetRoom>,
-        parentDir: File?,
+        parentDir: File,
     ): Pair<List<Room>, List<Pair<List<PrimaryKey>, PrimaryKey>>> {
         val data = l.map {
             val id = SnowflakeFactory.nextId()
             val icon = it.icon
-            if (icon == null) {
-                Triple(it, null, id)
+            val s = if (icon == null) {
+                null
             } else {
-                val path = File(parentDir, icon)
-                val mediaInfo = uploadFilesAfterDetectContentTypeAndDimension(
-                    listOf(
-                        UploadPack(
-                            path,
-                            "room-icon.${path.extension}",
-                            id,
-                            ObjectType.ROOM,
-                            path.length(),
-                        )
-                    )
-                ).getOrThrow().first()
-                Triple(it, mediaInfo?.id, id)
+                uploadFile(id, ObjectType.ROOM, parentDir, listOf(icon))?.id
             }
+            Triple(it, s, id)
         }
 
-        val userMap = exposedDatabase.userDatabase.getRawUsers(
+        val userMap = combinedDatabase.userDatabase.getRawUsers(
             ObjectListFetch.AidListFetch(l.flatMap {
                 it.users + it.admin
             }.distinct())
@@ -398,7 +375,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
 
         val communityMap =
-            exposedDatabase.communityDatabase.getRawCommunities(ObjectListFetch.AidListFetch(l.mapNotNull {
+            combinedDatabase.communityDatabase.getRawCommunities(ObjectListFetch.AidListFetch(l.mapNotNull {
                 it.community
             }.distinct())).getOrThrow().associate {
                 it.community.aid to it.community
@@ -426,7 +403,7 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File,
     ) {
         val roomMap =
-            exposedDatabase.roomData.getRoomList(ObjectListFetch.AidListFetch(list.mapNotNull {
+            combinedDatabase.roomData.getRoomList(ObjectListFetch.AidListFetch(list.mapNotNull {
                 it.room
             })).getOrThrow().associateBy { it.aid }
         insertEncryptedTopicToRoom(parentDir, roomMap, list.filter {
@@ -450,13 +427,14 @@ class AddPreset : Subcommand("add", "add entry") {
             val parent = addTopic.first.parent
             val content = getTopicContent(addTopic.first, parentDir).encodeToByteArray()
             val rootId = roomMap[topic.room]!!.id
-            if (parent == null || parent == 0 || level == null || level == 0) {
-                InsertTopicTuple(addTopic.first, index, 0, id, content, false, rootId)
+            val l = if (parent == null || parent == 0 || level == null || level == 0) {
+                0
             } else {
-                InsertTopicTuple(addTopic.first, index, level, id, content, false, rootId)
+                level
             }
+            InsertTopicTuple(addTopic.first, index, l, id, content, false, rootId)
         }
-        exposedDatabase.cliDatabase.batchAddTopics(tuples, userMap, ObjectType.ROOM)
+        combinedDatabase.cliDatabase.batchAddTopics(tuples, userMap, ObjectType.ROOM)
         topicSearchService.saveDocument(
             publicRoomList.mapIndexed { index, first ->
                 val level = first.level
@@ -487,14 +465,13 @@ class AddPreset : Subcommand("add", "add entry") {
     ) {
         val content = getTopicContent(presetTopic, parentDir)
         val mediaLink = extractMarkdownMediaLink(content)
-        val mediaNames = mediaLink.map {
-            userMap[presetTopic.author]!!.id to it
-        }
-        uploadFilesAfterDetectContentTypeAndDimension(mediaNames.map { (author, pic) ->
-            val path = File(parentDir, "medias/topics/$pic")
-            UploadPack(path, pic, author, ObjectType.USER, path.length())
-        }).getOrThrow()
-        exposedDatabase.fileDatabase.insertMediaRefs(topicId, ObjectType.TOPIC, mediaNames)
+        val author = userMap[presetTopic.author]!!.id
+        uploadFile(author, ObjectType.USER, parentDir, mediaLink.map {
+            "medias/topics/$it"
+        })
+        combinedDatabase.fileDatabase.insertFileRefs(topicId, ObjectType.TOPIC, mediaLink.map {
+            author to it
+        })
     }
 
     private suspend fun Backend.insertEncryptedTopicToRoom(
@@ -503,12 +480,13 @@ class AddPreset : Subcommand("add", "add entry") {
         privateRoomList: List<PresetTopic>,
         userMap: Map<String, User>,
     ) {
-        val distinct = privateRoomList.mapNotNull {
+        val roomAids = privateRoomList.mapNotNull {
             it.room
         }.distinct()
-        val roomMembers = exposedDatabase.cliDatabase.getAllMembers(distinct).getOrThrow().groupBy {
-            it.third
-        }
+        val roomMembers =
+            combinedDatabase.cliDatabase.getAllMembers(roomAids).getOrThrow().groupBy {
+                it.third
+            }
         val encryptedContents = privateRoomList.map {
             val (encryptedContent, aesBytes) = encryptData(
                 getTopicContent(
@@ -532,24 +510,46 @@ class AddPreset : Subcommand("add", "add entry") {
             val parent = tuple.presetTopic.parent
             val content = tuple.encryptedContent
             val rootId = roomMap[tuple.presetTopic.room]!!.id
-            if (parent == null || parent == 0 || level == null || level == 0) {
-                InsertTopicTuple(tuple.presetTopic, index, 0, id, content, true, rootId)
-            } else {
-                InsertTopicTuple(tuple.presetTopic, index, level, id, content, true, rootId)
-            }
+            InsertTopicTuple(
+                tuple.presetTopic, index,
+                if (parent == null || parent == 0 || level == null || level == 0) {
+                    0
+                } else {
+                    level
+                }, id, content, true, rootId
+            )
         }
-        exposedDatabase.cliDatabase.batchAddEncryptTopics(tuples, userMap, roomMap, encryptedKeys)
-
+        combinedDatabase.cliDatabase.batchAddEncryptTopics(tuples, userMap, roomMap, encryptedKeys)
         privateRoomList.forEach { topic ->
             val room = roomMap[topic.room]
             if (room != null) {
                 val content = getTopicContent(topic, parentDir)
-                uploadFilesAfterDetectContentTypeAndDimension(extractMarkdownMediaLink(content).map {
-                    val path = File(parentDir, "medias/topics/$it")
-                    UploadPack(path, it, room.id, ObjectType.ROOM, path.length())
-                }).getOrThrow()
+                uploadFile(room.id, ObjectType.ROOM, parentDir, extractMarkdownMediaLink(content).map {
+                    "medias/topics/$it"
+                })
             }
         }
+    }
+
+    suspend fun Backend.uploadFile(
+        id: PrimaryKey,
+        type: ObjectType,
+        parentDir: File,
+        p: List<String>
+    ): FileInfo? {
+        if (p.isEmpty()) return null
+        return tryUploadFiles(
+            id, type, p.map {
+                val path = File(parentDir, it)
+                val name = path.name
+                UploadPack(
+                    path,
+                    name,
+                    path.length(),
+                    "${id}/$name"
+                )
+            }
+        ).getOrThrow().first()
     }
 
     private fun getTopicContent(presetTopic: PresetTopic, parentDir: File): String {

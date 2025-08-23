@@ -3,19 +3,21 @@ package com.storyteller_f.a.backend.exposed
 import com.storyteller_f.a.backend.core.DatabaseConnection
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.exposed.tables.Aids
-import com.storyteller_f.a.backend.exposed.tables.AlternateAccounts
+import com.storyteller_f.a.backend.exposed.tables.ChildAccounts
 import com.storyteller_f.a.backend.exposed.tables.AssetTransactions
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
-import com.storyteller_f.a.backend.exposed.tables.MediaRefs
-import com.storyteller_f.a.backend.exposed.tables.Medias
+import com.storyteller_f.a.backend.exposed.tables.FileRefs
+import com.storyteller_f.a.backend.exposed.tables.FileRecords
 import com.storyteller_f.a.backend.exposed.tables.MemberJoins
+import com.storyteller_f.a.backend.exposed.tables.Quotas
 import com.storyteller_f.a.backend.exposed.tables.ReactionRecords
 import com.storyteller_f.a.backend.exposed.tables.Reactions
 import com.storyteller_f.a.backend.exposed.tables.Rooms
 import com.storyteller_f.a.backend.exposed.tables.TaskRecords
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.Topics
+import com.storyteller_f.a.backend.exposed.tables.UploadRecords
 import com.storyteller_f.a.backend.exposed.tables.UserDevices
 import com.storyteller_f.a.backend.exposed.tables.UserLogs
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
@@ -209,12 +211,12 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
 object ExposedDatabaseFactory {
     private val tables = arrayOf(
         Aids,
-        AlternateAccounts,
+        ChildAccounts,
         AssetTransactions,
         Communities,
         EncryptedKeys,
-        MediaRefs,
-        Medias,
+        FileRefs,
+        FileRecords,
         MemberJoins,
         Reactions,
         ReactionRecords,
@@ -225,7 +227,9 @@ object ExposedDatabaseFactory {
         UserLogs,
         UserDevices,
         UserTopicReads,
-        TaskRecords
+        TaskRecords,
+        Quotas,
+        UploadRecords,
     )
 
     fun connect(connection: DatabaseConnection): R2dbcDatabase {

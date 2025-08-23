@@ -1,4 +1,2 @@
 
-expect abstract class UsingContextTest() {
-
-}
+expect abstract class UsingContextTest()

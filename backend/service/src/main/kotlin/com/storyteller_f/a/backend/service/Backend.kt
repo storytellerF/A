@@ -3,14 +3,20 @@ package com.storyteller_f.a.backend.service
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.*
-import com.storyteller_f.a.backend.core.types.Media
+import com.storyteller_f.a.backend.core.types.Community
+import com.storyteller_f.a.backend.core.types.FileRecord
+import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.RawUser
+import com.storyteller_f.a.backend.core.types.Room
+import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.toCommunityIfo
+import com.storyteller_f.a.backend.core.types.toFileInfo
+import com.storyteller_f.a.backend.core.types.toQuotaInfo
 import com.storyteller_f.a.backend.core.types.toRoomInfo
 import com.storyteller_f.a.backend.core.types.toUserInfo
-import com.storyteller_f.a.backend.exposed.tables.*
+import com.storyteller_f.a.backend.exposed.isDup
 import com.storyteller_f.a.backend.service.index.ElasticTopicSearchService
 import com.storyteller_f.a.backend.service.index.LuceneTopicSearchService
 import com.storyteller_f.a.backend.service.index.TopicSearchService
@@ -19,7 +25,6 @@ import com.storyteller_f.a.backend.service.object_storage.FileSystemObjectStorag
 import com.storyteller_f.a.backend.service.object_storage.MinIoObjectStorageService
 import com.storyteller_f.a.backend.service.object_storage.ObjectStorageService
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
@@ -35,7 +40,7 @@ class Backend(
     val topicSearchService: TopicSearchService,
     val objectStorageService: ObjectStorageService,
     val nameService: NameService,
-    val exposedDatabase: CombinedDatabase,
+    val combinedDatabase: CombinedDatabase,
 ) {
     val tika by lazy {
         Tika()
@@ -156,122 +161,13 @@ fun databaseConnection(env: MergedEnv): DatabaseConnection {
     return DatabaseConnection(uri, driver, user, pass)
 }
 
-suspend fun Backend.uploadFiles(uploadPacks: List<UploadPack>): Result<List<FileInfo?>> {
-    val data = uploadPacks.map {
-        val nextId = SnowflakeFactory.nextId()
-        Media(
-            nextId,
-            now(),
-            it.name,
-            0,
-            it.dimension?.width ?: 0,
-            it.dimension?.height ?: 0,
-            it.owner,
-            it.ownerType,
-            it.contentType,
-            it.size
-        )
-    }
-    return merge({
-        objectStorageService.upload(AMEDIA_DEFAULT_BUCKET, uploadPacks)
-    }, {
-        exposedDatabase.fileDatabase.insertMedia(data)
-        Result.success(Unit)
-    }).map { (mediaRecords) ->
-        mediaRecords.mapIndexed { i, e ->
-            val uploadPack = uploadPacks[i]
-            FileInfo(
-                data[i].id,
-                e.url,
-                uploadPack.newFullName,
-                uploadPack.contentType,
-                uploadPack.size,
-                uploadPack.name,
-                uploadPack.owner,
-                uploadPack.ownerType,
-                e.lastModified,
-                uploadPack.dimension
-            )
-        }
-    }
-}
-
-suspend fun Backend.getUserInfo(
-    fetch: ObjectFetch,
-): Result<UserInfo?> {
-    return exposedDatabase.userDatabase.getRawUser(fetch).mapResultIfNotNull {
-        processRawUserToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
-    }
-}
-
-suspend fun Backend.getUserInfoList(
-    listFetch: ObjectListFetch,
-): Result<List<UserInfo>> {
-    return exposedDatabase.userDatabase.getRawUsers(listFetch).mapResult {
-        processRawUserToUserInfo(it)
-    }
-}
-
-suspend fun Backend.copyMedia(
-    media: Media,
-    newOwner: PrimaryKey,
-    newName: String,
-): Result<ServerResponse<FileInfo>> {
-    val id = SnowflakeFactory.nextId()
-    return merge({
-        objectStorageService.copy(
-            AMEDIA_DEFAULT_BUCKET,
-            listOf(CopyPack("${media.owner}/${media.name}", newName))
-        ).map { list ->
-            ServerResponse(list.map {
-                val dimension =
-                    if (media.width != 0 && media.height != 0) {
-                        Dimension(
-                            media.width,
-                            media.height
-                        )
-                    } else {
-                        null
-                    }
-                FileInfo(
-                    id,
-                    it.url,
-                    newName,
-                    media.contentType,
-                    media.size,
-                    media.name,
-                    newOwner,
-                    ObjectType.USER,
-                    it.lastModified,
-                    dimension
-                )
-            }, null)
-        }
-    }, {
-        exposedDatabase.fileDatabase.insertCopiedMedia(id, media, newOwner)
-    }).map {
-        it.first
-    }
-}
-
-suspend fun Backend.getMediaPaginationResult(
-    uid: PrimaryKey,
-    primaryKeyFetch: PrimaryKeyFetch,
-): Result<PaginationResult<FileInfo>> =
-    exposedDatabase.fileDatabase.getMediaPaginationList(uid, primaryKeyFetch)
-        .mapResult { (list, count) ->
-            processMediaToMediaInfo(list).map {
-                PaginationResult(it, count)
-            }
-        }
-
 suspend fun Backend.processRawCommunityToCommunityInfo(
     list: List<RawCommunity>,
 ): Result<List<CommunityInfo>?> {
-    return exposedDatabase.fileDatabase.getMediaByIds(list.flatMap { (community) ->
+    return combinedDatabase.fileDatabase.getFileRecordByIds(list.flatMap { (community) ->
         listOf(community.iconId, community.posterId, community.fontId)
     }.filterNotNull()).mapResultIfNotNull { medias ->
-        processMediaToMediaInfo(medias).map { mediaList ->
+        processFileRecordToFileInfo(medias).map { mediaList ->
             val map = mediaList.associateBy { it.id }
             list.mapIndexed { i, rawResult ->
                 rawResult.community.toCommunityIfo().copy(
@@ -288,59 +184,16 @@ suspend fun Backend.processRawCommunityToCommunityInfo(
     }
 }
 
-suspend fun Backend.searchMembers(
-    objectId: PrimaryKey?,
-    word: String?,
-    primaryKeyFetch: PrimaryKeyFetch,
-): Result<PaginationResult<UserInfo>?> {
-    return exposedDatabase.containerDatabase.getMemberPaginationResult(
-        objectId,
-        word,
-        primaryKeyFetch
-    )
-        .mapResult { (pairs, count) ->
-            processRawUserToUserInfo(pairs).mapIfNotNull {
-                PaginationResult(it, count)
-            }
-        }
-}
-
-suspend fun Backend.searchRoomPaginationResult(
-    uid: PrimaryKey?,
-    word: String?,
-    community: PrimaryKey?,
-    primaryKeyFetch: PrimaryKeyFetch,
-    search: JoinSearch,
-): Result<PaginationResult<RoomInfo>?> {
-    return exposedDatabase.roomData.getRoomPaginationResult(
-        uid,
-        word,
-        community,
-        primaryKeyFetch,
-        search
-    ).mapResult { (list, count) ->
-        processRawRoomToRoomInfo(list).mapIfNotNull { value ->
-            PaginationResult(value, count)
-        }
-    }
-}
-
-suspend fun Backend.getMediaInfoList(names: List<String>): Result<List<FileInfo?>?> {
-    return exposedDatabase.fileDatabase.getMediaByNames(names).mapResult { medias ->
-        processMediaToMediaInfo(medias)
-    }
-}
-
-suspend fun Backend.processMediaToMediaInfo(
-    medias: List<Media>,
+suspend fun Backend.processFileRecordToFileInfo(
+    fileRecords: List<FileRecord>,
 ): Result<List<FileInfo>> {
-    return objectStorageService.get(AMEDIA_DEFAULT_BUCKET, medias.map {
+    return objectStorageService.get(AMEDIA_DEFAULT_BUCKET, fileRecords.map {
         it.fullName
     }).map { mediaList ->
         val mediaRecordMap = mediaList.associateBy { it.fullName }
-        medias.map { media ->
+        fileRecords.map { media ->
             mediaRecordMap[media.fullName]!!.let {
-                media.toMediaInfo(it.url, it.lastModified)
+                media.toFileInfo(it.url, it.lastModified)
             }
         }
     }
@@ -348,10 +201,10 @@ suspend fun Backend.processMediaToMediaInfo(
 
 suspend fun Backend.processRawUserToUserInfo(
     rawResults: List<RawUser>,
-) = exposedDatabase.fileDatabase.getMediaByIds(rawResults.mapNotNull {
+) = combinedDatabase.fileDatabase.getFileRecordByIds(rawResults.mapNotNull {
     it.user.icon
 }).mapResult { medias ->
-    processMediaToMediaInfo(medias).map { list ->
+    processFileRecordToFileInfo(medias).map { list ->
         val mediaInfoMap = list.associateBy { it.id }
         rawResults.map { pair ->
             pair.user.toUserInfo().copy(avatar = pair.user.icon?.let { mediaInfoMap[it] })
@@ -360,10 +213,10 @@ suspend fun Backend.processRawUserToUserInfo(
 }
 
 suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>): Result<List<RoomInfo>?> {
-    return exposedDatabase.fileDatabase.getMediaByIds(list.mapNotNull {
+    return combinedDatabase.fileDatabase.getFileRecordByIds(list.mapNotNull {
         it.room.icon
     }).mapResultIfNotNull { medias ->
-        processMediaToMediaInfo(medias).map { mediaList ->
+        processFileRecordToFileInfo(medias).map { mediaList ->
             val mediaInfoMap = mediaList.associateBy { it.id }
             list.map { rawRoom ->
                 rawRoom.room.toRoomInfo()
@@ -378,38 +231,76 @@ suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>): Result<List<R
     }
 }
 
-suspend fun Backend.getUserAlternateUserInfoList(
-    uid: PrimaryKey,
-    fetch: PrimaryKeyFetch,
-): Result<PaginationResult<AlternativeAccountInfo>?> {
-    return exposedDatabase.userDatabase.getRawAlternativePaginationListByHost(
-        uid,
-        fetch
-    ).mapResult { (results, total) ->
-        processRawUserToUserInfo(results.map {
-            it.rawUser
-        }).mapIfNotNull { userList ->
-            val map = userList.associateBy { it.id }
-            PaginationResult(results.mapNotNull {
-                map[it.rawUser.user.id]?.let { userInfo ->
-                    AlternativeAccountInfo(
-                        it.rawUser.user.id,
-                        it.alternateAccount.privateKey,
-                        userInfo
-                    )
-                }
-            }, total)
+suspend fun <T> Backend.lockQuotaInfo(
+    ownerId: PrimaryKey,
+    quotaType: QuotaType,
+    ownerType: ObjectType,
+    length: Long,
+    name: String,
+    block: suspend () -> Result<T>
+): Result<T> {
+    try {
+        val quotaInfo = getQuotaInfo(ownerId, quotaType, ownerType).getOrThrow()
+        if (quotaInfo.locking) {
+            throw CustomBadRequestException("quota is locking")
         }
+        val id = SnowflakeFactory.nextId()
+        combinedDatabase.fileDatabase.insertUploadRecord(
+            UploadRecord(
+                id,
+                now(),
+                ownerId,
+                ownerType,
+                length,
+                0,
+                name
+            )
+        ).getOrThrow()
+        val t = block()
+        quotaInfo.used
+        combinedDatabase.fileDatabase.deleteUploadRecord(id, quotaInfo, length).getOrThrow()
+        return t
+    } catch (e: Exception) {
+        return Result.failure(e)
     }
 }
 
-suspend fun Backend.isKeyVerified(
-    roomId: PrimaryKey,
-    encryptedAes: Map<PrimaryKey, String>,
-): Result<Boolean> {
-    return exposedDatabase.containerDatabase.getJoinedUserList(roomId).map { value ->
-        value.map {
-            it.uid
-        }.toSet().minus(encryptedAes.keys).isEmpty()
+suspend fun Backend.getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType, ownerType: ObjectType) =
+    combinedDatabase.containerDatabase.getQuotaInfo(ownerId, quotaType).mapResult {
+        if (it == null) {
+            insertQuotaAndGet(ownerId, ownerType, quotaType)
+        } else {
+            Result.success(it)
+        }
+    }
+
+private suspend fun Backend.insertQuotaAndGet(
+    ownerId: PrimaryKey,
+    ownerType: ObjectType,
+    quotaType: QuotaType
+): Result<QuotaInfo> {
+    val quota = Quota(
+        ownerId,
+        ownerType,
+        1024 * 1024 * 1024,
+        0,
+        quotaType,
+        false
+    )
+    return combinedDatabase.containerDatabase.insertQuota(quota).mapResult {
+        Result.success(quota.toQuotaInfo())
+    }.recoverResult { throwable ->
+        if (throwable.isDup()) {
+            combinedDatabase.containerDatabase.getQuotaInfo(ownerId, quotaType)
+                .mapResult {
+                    if (it == null) {
+                        Result.failure(Exception("get quota failed"))
+                    } else {
+                        Result.success(it)
+                    }
+                }
+        } else {
+            Result.failure(throwable)
+        }
     }
 }

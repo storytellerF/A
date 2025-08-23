@@ -2,7 +2,7 @@ package com.storyteller_f.a.client.core
 
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.core.PaginationQuery
-import com.storyteller_f.a.api.core.Path
+import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.api.core.TopicQuery
 import com.storyteller_f.route4k.ktor.client.invoke
 import com.storyteller_f.shared.SignInPack
@@ -40,7 +40,7 @@ suspend fun <R> SessionManager.serviceCatching(block: suspend HttpClient.() -> R
 }
 
 suspend fun SessionManager.getRoomInfo(id: PrimaryKey) = serviceCatching {
-    CustomApi.Rooms.Id.get.invoke(CustomApi.Rooms.Id.RoomIdQuery(currentIsAlreadySignUp), Path(id))
+    CustomApi.Rooms.Id.get.invoke(CustomApi.Rooms.Id.RoomIdQuery(currentIsAlreadySignUp), CommonPath(id))
 }
 
 suspend fun SessionManager.getRoomInfoByAid(aid: String) = serviceCatching {
@@ -52,17 +52,17 @@ suspend fun SessionManager.getRoomMembersPublicKeys(
     paginationQuery: PaginationQuery
 ) =
     serviceCatching {
-        CustomApi.Rooms.Id.Members.publicKeys.invoke(paginationQuery, Path(id))
+        CustomApi.Rooms.Id.Members.publicKeys.invoke(paginationQuery, CommonPath(id))
     }
 
 suspend fun SessionManager.joinRoom(id: PrimaryKey) = serviceCatching {
-    CustomApi.Rooms.Id.Members.join.invoke(Path(id), Unit) {
+    CustomApi.Rooms.Id.Members.join.invoke(CommonPath(id), Unit) {
         contentType(ContentType.Application.Json)
     }
 }
 
 suspend fun SessionManager.joinCommunity(id: PrimaryKey) = serviceCatching {
-    CustomApi.Communities.Id.Members.join.invoke(Path(id), Unit) {}
+    CustomApi.Communities.Id.Members.join.invoke(CommonPath(id), Unit) {}
 }
 
 suspend fun SessionManager.getRoomTopics(
@@ -76,7 +76,7 @@ suspend fun SessionManager.getRoomTopics(
             currentIsAlreadySignUp,
             paginationQuery
         ),
-        Path(roomId)
+        CommonPath(roomId)
     )
 }
 
@@ -91,7 +91,7 @@ suspend fun SessionManager.getCommunityTopics(
             currentIsAlreadySignUp,
             paginationQuery
         ),
-        Path(communityId)
+        CommonPath(communityId)
     )
 }
 
@@ -106,7 +106,7 @@ suspend fun SessionManager.getUserTopics(
             currentIsAlreadySignUp,
             paginationQuery
         ),
-        Path(userId)
+        CommonPath(userId)
     )
 }
 
@@ -116,7 +116,7 @@ suspend fun SessionManager.getCommunityInfo(id: PrimaryKey) =
             CustomApi.Communities.Id.CommunityIdQuery(
                 currentIsAlreadySignUp
             ),
-            Path(id)
+            CommonPath(id)
         )
     }
 
@@ -157,7 +157,7 @@ suspend fun SessionManager.searchCommunityMembers(
 ) = serviceCatching {
     CustomApi.Communities.Id.Members.get(
         CustomApi.Communities.Id.Members.CommunityMemberQuery(word, nextCommunityId, size),
-        Path(communityId)
+        CommonPath(communityId)
     )
 }
 
@@ -181,7 +181,7 @@ suspend fun SessionManager.searchRoomMembers(
             nextCommunityId,
             size
         ),
-        Path(roomId)
+        CommonPath(roomId)
     )
 }
 
@@ -198,7 +198,7 @@ suspend fun SessionManager.getRecommendTopics(
     }
 
 suspend fun SessionManager.getUserInfo(id: PrimaryKey) = serviceCatching {
-    CustomApi.Users.Id.get.invoke(Path(id))
+    CustomApi.Users.Id.get.invoke(CommonPath(id))
 }
 
 suspend fun SessionManager.updateUserInfo(newInfo: UpdateUserBody) = serviceCatching {
@@ -223,14 +223,14 @@ suspend fun SessionManager.getTopicTopics(
                 currentIsAlreadySignUp,
                 paginationQuery
             ),
-            Path(topicId)
+            CommonPath(topicId)
         )
     }
 
 suspend fun SessionManager.getTopicInfo(id: PrimaryKey) = serviceCatching {
     CustomApi.Topics.Id.get.invoke(
         CustomApi.Topics.Id.TopicIdQuery(currentIsAlreadySignUp),
-        Path(id)
+        CommonPath(id)
     )
 }
 
@@ -289,7 +289,7 @@ suspend fun SessionManager.getData() = serviceCatching {
 }
 
 suspend fun SessionManager.getTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
-    CustomApi.Topics.Id.createSnapshot.invoke(Path(topicId), Unit) {
+    CustomApi.Topics.Id.createSnapshot.invoke(CommonPath(topicId), Unit) {
     }
 }
 
@@ -313,21 +313,21 @@ suspend fun SessionManager.searchTopics(
 }
 
 suspend fun SessionManager.exitRoom(roomId: PrimaryKey) = serviceCatching {
-    CustomApi.Rooms.Id.Members.leave.invoke(Path(roomId), Unit) {}
+    CustomApi.Rooms.Id.Members.leave.invoke(CommonPath(roomId), Unit) {}
 }
 
 suspend fun SessionManager.exitCommunity(communityId: PrimaryKey) = serviceCatching {
-    CustomApi.Communities.Id.Members.leave.invoke(Path(communityId), Unit) {}
+    CustomApi.Communities.Id.Members.leave.invoke(CommonPath(communityId), Unit) {}
 }
 
 suspend fun SessionManager.addReaction(topicId: PrimaryKey, emoji: String) = serviceCatching {
-    CustomApi.Topics.Id.Reactions.add.invoke(Path(topicId), NewReaction(emoji)) {
+    CustomApi.Topics.Id.Reactions.add.invoke(CommonPath(topicId), NewReaction(emoji)) {
         contentType(ContentType.Application.Json)
     }
 }
 
 suspend fun SessionManager.deleteReaction(emoji: String, objectId: PrimaryKey) = serviceCatching {
-    CustomApi.Topics.Id.Reactions.delete.invoke(Path(objectId), DeleteReaction(emoji)) {
+    CustomApi.Topics.Id.Reactions.delete.invoke(CommonPath(objectId), DeleteReaction(emoji)) {
         contentType(ContentType.Application.Json)
     }
 }
@@ -344,7 +344,7 @@ suspend fun SessionManager.getReactions(
                 nextCursor,
                 size = size
             ),
-            Path(topicId),
+            CommonPath(topicId),
         )
     }
 
@@ -384,13 +384,12 @@ suspend fun SessionManager.getMediaByName(
         )
     }
 
-data class UploadData(val size: Long, val name: String, val contentType: ContentType)
+class UploadData(val size: Long, val name: String, val contentType: ContentType, val block: () -> Input)
 
 suspend fun SessionManager.upload(
     objectTuple: ObjectTuple,
     data: UploadData,
     onUpload: (Long, Long?) -> Unit = { _, _ -> },
-    block: () -> Input,
 ) = serviceCatching {
     CustomApi.Medias.upload.invoke(objectTuple, Unit) {
         setBody(
@@ -401,7 +400,7 @@ suspend fun SessionManager.upload(
                         append(HttpHeaders.ContentType, data.contentType)
                         append(HttpHeaders.ContentDisposition, "filename=\"${data.name}\"")
                         append(HttpHeaders.ContentLength, data.size)
-                    }, data.size, block)
+                    }, data.size, data.block)
                 },
                 boundary = "WebAppBoundary"
             )
@@ -415,7 +414,7 @@ suspend fun SessionManager.upload(
 
 suspend fun SessionManager.copy(mediaId: PrimaryKey) =
     serviceCatching {
-        CustomApi.Medias.Id.copy.invoke(Path(mediaId), Unit) {
+        CustomApi.Medias.Id.copy.invoke(CommonPath(mediaId), Unit) {
         }
     }
 
@@ -462,7 +461,7 @@ suspend fun SessionManager.userTitles(
             nextId,
             size
         ),
-        Path(uid)
+        CommonPath(uid)
     )
 }
 
@@ -485,26 +484,26 @@ suspend fun SessionManager.createRoom(newRoom: NewRoom) = serviceCatching {
 }
 
 suspend fun SessionManager.pinTopic(topicId: PrimaryKey) = serviceCatching {
-    CustomApi.Topics.Id.pin.invoke(Path(topicId), Unit) {
+    CustomApi.Topics.Id.pin.invoke(CommonPath(topicId), Unit) {
         contentType(ContentType.Application.Json)
     }
 }
 
 suspend fun SessionManager.unpinTopic(topicId: PrimaryKey) = serviceCatching {
-    CustomApi.Topics.Id.unpin.invoke(Path(topicId), Unit) {
+    CustomApi.Topics.Id.unpin.invoke(CommonPath(topicId), Unit) {
     }
 }
 
 suspend fun SessionManager.updateCommunityInfo(id: PrimaryKey, newInfo: UpdateCommunityBody) =
     serviceCatching {
-        CustomApi.Communities.Id.update.invoke(Path(id), newInfo) {
+        CustomApi.Communities.Id.update.invoke(CommonPath(id), newInfo) {
             contentType(ContentType.Application.Json)
         }
     }
 
 suspend fun SessionManager.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBody) =
     serviceCatching {
-        CustomApi.Rooms.Id.update.invoke(Path(id), newInfo) {
+        CustomApi.Rooms.Id.update.invoke(CommonPath(id), newInfo) {
             contentType(ContentType.Application.Json)
         }
     }
@@ -537,16 +536,16 @@ suspend fun SessionManager.addDevice(endpointUrl: String) = serviceCatching {
 }
 
 suspend fun SessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatching {
-    CustomApi.Medias.Id.extractAlbum.invoke(Path(mediaId), Unit) {}
+    CustomApi.Medias.Id.extractAlbum.invoke(CommonPath(mediaId), Unit) {}
 }
 
 suspend fun SessionManager.addAlternativeAccount() = serviceCatching {
-    CustomApi.Accounts.AlternativeAccounts.add.invoke(Unit) {}
+    CustomApi.Accounts.ChildAccounts.add.invoke(Unit) {}
 }
 
 suspend fun SessionManager.getAlternativeAccounts(nextId: String?, size: Int) = serviceCatching {
-    CustomApi.Accounts.AlternativeAccounts.get.invoke(
-        CustomApi.Accounts.AlternativeAccounts.AlternativeAccountQuery(
+    CustomApi.Accounts.ChildAccounts.get.invoke(
+        CustomApi.Accounts.ChildAccounts.ChildAccountQuery(
             nextId,
             size
         )

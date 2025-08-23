@@ -164,7 +164,7 @@ private suspend fun dispatchNewMessage(
     httpClient: HttpClient,
 ): Nothing {
     sharedFlow.collect { frame ->
-        backend.exposedDatabase.containerDatabase.getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
+        backend.combinedDatabase.containerDatabase.getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
             val memberJoins = list.filter {
                 it.uid != frame.topicInfo.author
             }
@@ -173,7 +173,7 @@ private suspend fun dispatchNewMessage(
             }.flatten().map {
                 WebsocketDispatcher(it)
             }
-            backend.exposedDatabase.userDatabase.getUserDevices(memberJoins.map {
+            backend.combinedDatabase.userDatabase.getUserDevices(memberJoins.map {
                 it.uid
             }).map { list ->
                 list.map {

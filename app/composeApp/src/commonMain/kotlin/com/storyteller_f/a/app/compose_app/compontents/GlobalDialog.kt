@@ -19,24 +19,23 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.uuid.ExperimentalUuidApi
 
 sealed interface GlobalDialogState {
-    data class Loading(val stack: PersistentList<GlobalDialogStageState>) : GlobalDialogState
+    data class Loading(
+        val title: String? = null,
+        val progress: GlobalDialogStateProgress? = null,
+        val content: CustomGlobalDialogContent? = null,
+    ) : GlobalDialogState
+
     data class Error(val throwable: Throwable) : GlobalDialogState
-    data object None : GlobalDialogState
+
     class Custom(val content: CustomGlobalDialogContent) : GlobalDialogState
 }
 
 private val mutex = Mutex()
 
-data class GlobalDialogStateProgress(val value: Float, val total: Float)
-
-data class GlobalDialogStageState(
-    val title: String? = null,
-    val progress: GlobalDialogStateProgress? = null,
-    val content: CustomGlobalDialogContent? = null,
-)
+data class GlobalDialogStateProgress(val value: Float, val total: Float?)
 
 interface GlobalDialogController {
-    val state: MutableState<GlobalDialogState>
+    val state: MutableState<PersistentList<GlobalDialogState>>
 
     suspend fun <T> useResult(
         block: suspend GlobalDialogController.() -> Result<T>,
@@ -65,6 +64,8 @@ interface GlobalDialogController {
             }
         }
     }
+
+    fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading)
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -73,44 +74,49 @@ class NestedGlobalDialogController(
     val level: Int
 ) :
     GlobalDialogController {
-    override val state: MutableState<GlobalDialogState>
+    override val state: MutableState<PersistentList<GlobalDialogState>>
         get() = customGlobalDialogController.state
 
     override suspend fun <T> useResult(block: suspend GlobalDialogController.() -> Result<T>): Result<T> {
-        val value = customGlobalDialogController.state.value
-        if (value !is GlobalDialogState.Loading) {
+        val value = state.value
+        if (value.last() !is GlobalDialogState.Loading) {
             return Result.failure(Exception("lock failed"))
         }
-        val stack = value.stack
+        val stack = state.value
         if (stack.size != level) {
             return Result.failure(Exception("level mismatch"))
         }
-        val newLevel = GlobalDialogStageState()
-        customGlobalDialogController.state.value = GlobalDialogState.Loading(stack.add(newLevel))
-        val newController = NestedGlobalDialogController(customGlobalDialogController, level + 1)
-        newController.block()
-        return try {
-            val nestedGlobalDialogController =
-                NestedGlobalDialogController(customGlobalDialogController, 1)
-            nestedGlobalDialogController.block()
+        state.value = stack.add(GlobalDialogState.Loading())
+        val nestedGlobalDialogController =
+            NestedGlobalDialogController(customGlobalDialogController, level + 1)
+        try {
+            return nestedGlobalDialogController.block()
         } finally {
-            customGlobalDialogController.state.value = GlobalDialogState.Loading(stack)
+            state.value = stack
         }
+    }
+
+    override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
+        val value = state.value
+        if (value.size != level) {
+            return
+        }
+        val last = value.last()
+        if (last !is GlobalDialogState.Loading) {
+            return
+        }
+        state.value = value.set(level - 1, block(last))
     }
 }
 
 class CustomGlobalDialogContent(val content: @Composable () -> Unit)
 
 class CustomGlobalDialogController(
-    override val state: MutableState<GlobalDialogState> = mutableStateOf(
-        GlobalDialogState.None
+    override val state: MutableState<PersistentList<GlobalDialogState>> = mutableStateOf(
+        persistentListOf()
     ),
 ) :
     GlobalDialogController {
-
-    private fun showCloseState() {
-        state.value = GlobalDialogState.None
-    }
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun <T> useResult(
@@ -118,60 +124,62 @@ class CustomGlobalDialogController(
     ): Result<T> {
         return mutex.withLock {
             val dialogState = state.value
-            if (dialogState is GlobalDialogState.None) {
-                val initStage = GlobalDialogStageState()
-                state.value = GlobalDialogState.Loading(persistentListOf(initStage))
-            } else {
-                return Result.failure(Exception("dialog show failed, currentState is $dialogState"))
+            if (!dialogState.isEmpty()) {
+                return Result.failure(Exception("dialog show failed"))
             }
             try {
+                state.value = persistentListOf(GlobalDialogState.Loading())
                 val nestedGlobalDialogController = NestedGlobalDialogController(this, 1)
                 val result = nestedGlobalDialogController.block().getOrThrow()
                 if (result is CustomGlobalDialogContent) {
-                    state.value = GlobalDialogState.Custom(result)
+                    state.value = persistentListOf(GlobalDialogState.Custom(result))
                 } else {
-                    showCloseState()
+                    state.value = persistentListOf()
                 }
                 Result.success(result)
             } catch (e: Exception) {
                 Napier.e(e) {
                     "global dialog"
                 }
-                state.value = GlobalDialogState.Error(e)
+                state.value = persistentListOf(GlobalDialogState.Error(e))
                 Result.failure(e)
             }
         }
+    }
+
+    override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
     }
 }
 
 @Composable
 fun GlobalDialog(state: CustomGlobalDialogController) {
     var message by state.state
-    GlobalDialogInternal(message) {
-        message = GlobalDialogState.None
+    val dialogState = message.lastOrNull()
+    dialogState?.let {
+        GlobalDialogInternal(it) {
+            message = persistentListOf()
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GlobalDialogInternal(message: GlobalDialogState, dismiss: () -> Unit) {
-    if (message != GlobalDialogState.None) {
-        val scrollState = rememberScrollState()
+    val scrollState = rememberScrollState()
 
-        BasicAlertDialog(
-            dismiss,
-            properties = if (message is GlobalDialogState.Loading) {
-                DialogProperties(
-                    dismissOnClickOutside = false,
-                    dismissOnBackPress = false
-                )
-            } else {
-                DialogProperties()
-            }
-        ) {
-            DialogContainer {
-                GlobalDialogContent(message, scrollState, dismiss)
-            }
+    BasicAlertDialog(
+        dismiss,
+        properties = if (message is GlobalDialogState.Loading) {
+            DialogProperties(
+                dismissOnClickOutside = false,
+                dismissOnBackPress = false
+            )
+        } else {
+            DialogProperties()
+        }
+    ) {
+        DialogContainer {
+            GlobalDialogContent(message, scrollState, dismiss)
         }
     }
 }
@@ -213,28 +221,26 @@ private fun GlobalDialogContent(
                 }
             }
 
-            else -> {}
         }
     }
 }
 
 @Composable
 private fun LoadingGlobalDialogContent(
-    message: GlobalDialogState.Loading,
+    loading: GlobalDialogState.Loading,
 ) {
-    val stageState = message.stack.last()
-    if (stageState.content != null) {
-        stageState.content.content()
+    if (loading.content != null) {
+        loading.content.content()
     } else {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                stageState.title?.let {
+                loading.title?.let {
                     Text(it)
                     Spacer(Modifier.height(20.dp))
                 }
-                if (stageState.progress != null) {
+                if (loading.progress != null && loading.progress.total != null) {
                     LinearProgressIndicator(
-                        progress = { stageState.progress.value / stageState.progress.total },
+                        progress = { loading.progress.value / loading.progress.total },
                         color = ProgressIndicatorDefaults.linearColor,
                         trackColor = ProgressIndicatorDefaults.linearTrackColor,
                         strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,

@@ -9,7 +9,6 @@ import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.toTitleInfo
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.getUserInfoList
 import com.storyteller_f.a.backend.service.index.TopicDocument
 import com.storyteller_f.a.backend.service.processRawCommunityToCommunityInfo
 import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
@@ -25,7 +24,7 @@ suspend fun Backend.getUserTitles(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
     fetch: PrimaryKeyFetch
-) = exposedDatabase.titleDatabase.getTitlePaginationResult(
+) = combinedDatabase.titleDatabase.getTitlePaginationResult(
     fetch,
     uid,
     searchType,
@@ -95,7 +94,7 @@ private suspend fun Backend.getRelatedObject(
         }
     }, {
         if (roomIdList.isNotEmpty()) {
-            exposedDatabase.roomData.getRawRooms(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
+            combinedDatabase.roomData.getRawRooms(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
                 processRawRoomToRoomInfo(it)
             }
         } else {
@@ -103,7 +102,7 @@ private suspend fun Backend.getRelatedObject(
         }
     }, {
         if (communityIdList.isNotEmpty()) {
-            exposedDatabase.communityDatabase.getRawCommunities(
+            combinedDatabase.communityDatabase.getRawCommunities(
                 ObjectListFetch.IdListFetch(communityIdList)
             ).mapResult {
                 processRawCommunityToCommunityInfo(it)
@@ -175,7 +174,7 @@ suspend fun Backend.createTitle(
                 isPin = false,
                 lastModifiedTime = null
             )
-            exposedDatabase.topicDatabase.insertTopicDescription(
+            combinedDatabase.topicDatabase.createTitle(
                 title,
                 topic
             ).mapResult {

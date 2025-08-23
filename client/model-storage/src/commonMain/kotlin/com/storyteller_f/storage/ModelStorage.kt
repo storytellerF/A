@@ -2,7 +2,7 @@ package com.storyteller_f.storage
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.storyteller_f.shared.model.AlternativeAccountInfo
+import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.ReactionInfo
@@ -73,8 +73,8 @@ data object DownloadCollection {
 data class MediasCollection(val objectId: PrimaryKey) {
     fun getName() = "medias_$objectId"
 }
-data object AlternativesCollection {
-    const val NAME = "alternatives"
+data object ChildAccountCollection {
+    const val NAME = "child_accounts"
 }
 
 fun UserCollection.getName(): String {
@@ -133,7 +133,7 @@ interface ModelStorage {
     val roomInfoStorage: RoomInfoStorage
     val remoteKeyStorage: RemoteKeyStorage
     val reactionInfoStorage: ReactionInfoStorage
-    val alternativeInfoStorage: AlternativeInfoStorage
+    val childAccountStorage: ChildAccountStorage
     val fileInfoStorage: FileInfoStorage
     val downloadInfoStorage: DownloadInfoStorage
 }
@@ -185,10 +185,10 @@ interface ReactionInfoStorage {
     suspend fun clean(collection: ReactionCollection)
 }
 
-interface AlternativeInfoStorage {
-    suspend fun save(collection: AlternativesCollection, alternativeAccountInfo: AlternativeAccountInfo)
-    fun observeData(collection: AlternativesCollection): PagingSource<Int, AlternativeAccountInfo>
-    suspend fun clean(collection: AlternativesCollection)
+interface ChildAccountStorage {
+    suspend fun save(collection: ChildAccountCollection, childAccountInfo: ChildAccountInfo)
+    fun observeData(collection: ChildAccountCollection): PagingSource<Int, ChildAccountInfo>
+    suspend fun clean(collection: ChildAccountCollection)
 }
 
 interface FileInfoStorage {

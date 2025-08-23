@@ -48,13 +48,14 @@ class UserTest {
                     UploadData(
                         bytes.size.toLong(),
                         "avatar1.png",
-                        ContentType.parse("image/png")
+                        ContentType.parse("image/png"),
+                        {
+                            Buffer().apply {
+                                write(bytes)
+                            }
+                        }
                     )
-                ) {
-                    Buffer().apply {
-                        write(bytes)
-                    }
-                }
+                )
                     .getOrThrow().data.first()
             assertEquals(
                 "avatar1.png",

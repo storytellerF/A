@@ -1,12 +1,11 @@
 #!/bin/bash
 
 FLAVOR=$1
-BUILD_ON=$2
-USE_PREBUILD=$3
-CUSTOM_COMMAND=$4
+USE_PREBUILD=$2
+CUSTOM_COMMAND=$3
 
-if [ -z "$FLAVOR" ] || [ -z "$BUILD_ON" ]; then
-    echo "FLAVOR and BUILD_ON must be set."
+if [ -z "$FLAVOR" ]; then
+    echo "FLAVOR must be set."
     exit 1
 fi
 
@@ -18,16 +17,8 @@ fi
 IFS=',' read -ra COMPOSE_FILE_LIST <<< "$(grep '^COMPOSE_FILE_LIST=' "$FLAVOR.env" | cut -d '=' -f2-)"
 echo "${COMPOSE_FILE_LIST[@]}"
 
-COMPOSE_PROFILES=$(grep '^COMPOSE_PROFILES=' "$FLAVOR.env" | cut -d '=' -f2-)
-echo "$COMPOSE_PROFILES"
-
 # 公共 compose 文件
 COMPOSE_FILES=("-f" "./deploy/docker-compose/docker-compose.yml")
-
-# 条件：USE_PREBUILD = true
-if [ "$USE_PREBUILD" = "true" ]; then
-    COMPOSE_FILES+=("-f" "./deploy/docker-compose/docker-compose.prebuild.yml")
-fi
 
 for profile in "${COMPOSE_FILE_LIST[@]}"; do
     profile=$(echo "$profile" | xargs)
@@ -35,10 +26,24 @@ for profile in "${COMPOSE_FILE_LIST[@]}"; do
 done
 
 IFS=' ' read -r -a custom_cmd_parts <<< "$CUSTOM_COMMAND"
-if [[ "${custom_cmd_parts[0]}" == "build" ]]; then
-    # 在数组后追加参数
-    custom_cmd_parts+=("--build-arg" "BUILD_ON=${BUILD_ON}")
+
+# 条件：USE_PREBUILD = true
+if [ "$USE_PREBUILD" = "true" ]; then
+    COMPOSE_FILES+=("-f" "./deploy/docker-compose/docker-compose.prebuild.yml")
+else
+  for p in "${COMPOSE_FILE_LIST[@]}"; do
+      if [[ "$p" == "server" ]]; then
+          echo "包含 server"
+          if [ -z "$BUILD_ON" ]; then
+              echo "BUILD_ON must be set."
+              exit 1
+          fi
+          custom_cmd_parts+=("--build-arg" "BUILD_ON=${BUILD_ON}")
+          break
+      fi
+  done
 fi
+
 CMD=("docker" "compose" "--env-file" "./${FLAVOR}.env" "${COMPOSE_FILES[@]}" "${custom_cmd_parts[@]}")
 
 echo "Executing: ${CMD[@]}"

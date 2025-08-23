@@ -136,7 +136,7 @@ class MinIoObjectStorageService(
                 uploadObject(
                     UploadObjectArgs.builder()
                         .bucket(bucketName)
-                        .`object`(it.newFullName)
+                        .`object`(it.fullName)
                         .filename(it.path.absolutePath)
                         .build()
                 ).`object`()

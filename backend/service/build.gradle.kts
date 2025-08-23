@@ -48,36 +48,54 @@ sourceSets {
     }
 }
 
+interface Injected {
+    @get:Inject
+    val operations: ArchiveOperations
+}
+
 val mergeServiceFiles = tasks.register("mergeServiceFiles") {
     group = "build"
     description = "Merge SPI files from dependencies into a single output"
 
-    val outputDir = layout.buildDirectory.dir("merged/services")
+    val outputDir = layout.buildDirectory.dir("merged/services").get()
+    val runtimeClasspath = configurations.named("runtimeClasspath").get().files.toList()
+    val injected = project.objects.newInstance<Injected>()
 
-    inputs.files(configurations.runtimeClasspath)
+    inputs.files(runtimeClasspath)
     outputs.dir(outputDir)
     doLast {
+        fun extractServiceContent(
+            file: File,
+            servicePrefixName: String,
+            classPrefixName: String
+        ): List<Pair<String?, List<String>>> {
+            return injected.operations.zipTree(file).filter {
+                it.name.startsWith(servicePrefixName)
+            }.map { serviceFile ->
+                val serviceName = serviceFile.name
+                val serviceContent =
+                    serviceFile.readText().lines().filter { it.startsWith(classPrefixName) }
+                serviceName to serviceContent
+            }
+        }
 
-        // Iterate through each jar/zip in runtimeClasspath
-        val output = outputDir.get().asFile
+        val output = outputDir.asFile
         output.mkdirs()
-        configurations.runtimeClasspath.get().flatMap { file ->
+        runtimeClasspath.flatMap { file ->
             when {
-                !file.isFile || !file.name.endsWith(".jar") -> {
-                    emptyList()
-                }
+                !file.isFile || !file.name.endsWith(".jar") -> emptyList()
 
-                file.name.startsWith("lucene") -> {
-                    extractServiceContent(file, "org.apache.lucene.codecs", "org.apache.lucene")
-                }
+                file.name.startsWith("lucene") -> extractServiceContent(
+                    file,
+                    "org.apache.lucene.codecs",
+                    "org.apache.lucene"
+                )
 
-                file.name.startsWith("r2dbc") -> {
-                    extractServiceContent(
-                        file,
-                        "io.r2dbc.spi.ConnectionFactoryProvider",
-                        "io.r2dbc"
-                    )
-                }
+                file.name.startsWith("r2dbc") -> extractServiceContent(
+                    file,
+                    "io.r2dbc.spi.ConnectionFactoryProvider",
+                    "io.r2dbc"
+                )
 
                 else -> emptyList()
             }
@@ -89,7 +107,6 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
 
             val newContent = fragments.flatMap { it.second }.joinToString("\n")
 
-            // ✨ Only write if content differs
             if (!outputFile.exists() || outputFile.readText() != newContent) {
                 outputFile.writeText(newContent)
             }
@@ -116,17 +133,3 @@ jmh {
     fork = 2
 }
 
-fun extractServiceContent(
-    file: File,
-    serviceFullName: String,
-    keyword: String
-): List<Pair<String?, List<String>>> {
-    return zipTree(file).filter {
-        it.name.startsWith(serviceFullName)
-    }.map { serviceFile ->
-        val serviceName = serviceFile.name
-        val serviceContent =
-            serviceFile.readText().lines().filter { it.startsWith(keyword) }
-        serviceName to serviceContent
-    }
-}

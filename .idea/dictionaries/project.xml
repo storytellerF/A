@@ -2,8 +2,10 @@
   <dictionary name="project">
     <words>
       <w>amedia</w>
+      <w>avif</w>
       <w>kotbase</w>
       <w>koyeb</w>
+      <w>libavif</w>
       <w>perraco</w>
     </words>
   </dictionary>

@@ -39,12 +39,12 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
         return useFileSystem {
             val bucketPath = base.resolve(bucketName)
             uploadPacks.map { uploadPack ->
-                val target = bucketPath.resolve(uploadPack.newFullName).createParentDirectories()
+                val target = bucketPath.resolve(uploadPack.fullName).createParentDirectories()
                 Files.copy(uploadPack.path.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
             }
         }.mapResult {
             get(bucketName, uploadPacks.map {
-                it.newFullName
+                it.fullName
             })
         }
     }

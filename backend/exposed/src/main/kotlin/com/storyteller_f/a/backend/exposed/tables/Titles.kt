@@ -46,19 +46,3 @@ fun Title.Companion.wrapRow(row: ResultRow): Title {
         row[Titles.descriptionTopicId]
     )
 }
-suspend fun Title.Companion.new(title: Title) {
-    check(Titles.insert {
-        it[Titles.id] = title.id
-        it[Titles.createdTime] = title.createdTime
-        it[Titles.name] = title.name
-        it[Titles.creator] = title.creator
-        it[Titles.receiver] = title.receiver
-        it[Titles.type] = title.type
-        it[Titles.scopeId] = title.scopeId
-        it[Titles.scopeType] = title.scopeType
-        it[Titles.status] = title.status
-        it[Titles.descriptionTopicId] = title.descriptionTopicId
-    }.insertedCount > 0) {
-        "insert title failed"
-    }
-}

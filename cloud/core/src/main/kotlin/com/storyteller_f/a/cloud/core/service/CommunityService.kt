@@ -8,6 +8,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.RawCommunity
+import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.toCommunityIfo
 import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.isDup
@@ -34,7 +35,7 @@ suspend fun Backend.getCommunity(
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
-    return exposedDatabase.communityDatabase.getRawCommunity(
+    return combinedDatabase.communityDatabase.getRawCommunity(
         objectFetch,
         fillJoinInfo,
         id
@@ -55,7 +56,7 @@ suspend fun Backend.doUserJoinCommunity(
         Result.success(community)
     } else {
         val time = now()
-        exposedDatabase.containerDatabase.joinContainer(communityId, uid, time, ObjectType.COMMUNITY).mapResult {
+        combinedDatabase.containerDatabase.joinContainer(communityId, uid, time, ObjectType.COMMUNITY).mapResult {
             addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
             Result.success(community.copy(joinedTime = time))
         }.recoverResult {
@@ -76,7 +77,7 @@ suspend fun Backend.exitCommunity(
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            exposedDatabase.containerDatabase.exit(communityId, id).mapResult { i ->
+            combinedDatabase.containerDatabase.exitContainer(communityId, id).mapResult { i ->
                 if (i > 0) {
                     addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
                     Result.success(info.copy(joinedTime = null))
@@ -91,7 +92,7 @@ suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
     search: CustomApi.Communities.CommunitySearchQuery,
     primaryKeyFetch: PrimaryKeyFetch
-) = exposedDatabase.communityDatabase.getCommunityPaginationResult(
+) = combinedDatabase.communityDatabase.getCommunityPaginationResult(
     search.word,
     search.hasPoster,
     primaryKeyFetch,
@@ -120,7 +121,7 @@ private suspend fun Backend.processUserJoinedTimeReplace(
     val communityIds = value.map {
         it.id
     }
-    return exposedDatabase.communityDatabase.getCommunityJoinedTimeByIds(uid, communityIds).map { joinedTimeList ->
+    return combinedDatabase.communityDatabase.getCommunityJoinedTimeByIds(uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         PaginationResult(value.map {
             it.copy(joinedTime = map[it.id], extension = CommunityInfo.Extension(it.joinedTime))
@@ -157,17 +158,13 @@ suspend fun Backend.createCommunity(
         newCommunity.icon,
         null
     )
-    return exposedDatabase.communityDatabase.createCommunity(community).mapResult {
-        exposedDatabase.communityDatabase.createCommunityRooms(community.id, community.owner, community.aid, List(3) {
-            SnowflakeFactory.nextId()
-        })
-
-        val communityInfo = community
-        addUserLog(uid, UserLogType.CREATE, communityInfo.toCommunityIfo().tuple())
+    return combinedDatabase.communityDatabase.createCommunity(community).mapResult {
+        combinedDatabase.communityDatabase.createCommunityRooms(getCommunityRoomsTemplateList(community))
+        addUserLog(uid, UserLogType.CREATE, community.toCommunityIfo().tuple())
         processRawCommunityToCommunityInfo(
             listOf(
                 RawCommunity(
-                    communityInfo,
+                    community,
                     community.createdTime,
                     null,
                     0
@@ -188,9 +185,9 @@ suspend fun Backend.updateCommunity(
     return checkRootAdminPermission(ObjectType.COMMUNITY, id, uid).mapResultIfNotNull { permission ->
         if (permission.hasAdmin) {
             checkBeforeUpdateCommunity(newCommunity).mapResult {
-                exposedDatabase.communityDatabase.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
+                combinedDatabase.communityDatabase.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        exposedDatabase.communityDatabase.getRawCommunity(
+                        combinedDatabase.communityDatabase.getRawCommunity(
                             ObjectFetch.IdFetch(id),
                             true,
                             uid
@@ -258,5 +255,23 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
         Result.failure(firstError)
     } else {
         Result.success(Unit)
+    }
+}
+
+suspend fun getCommunityRoomsTemplateList(community: Community): List<Room> {
+    val communityAid = community.aid
+    return listOf(
+        "${communityAid}_general" to "General",
+        "${communityAid}_lobby" to "Lobby",
+        "${communityAid}_support" to "Support"
+    ).mapIndexed { i, pair ->
+        Room(
+            SnowflakeFactory.nextId(),
+            now(),
+            pair.first,
+            pair.second,
+            community.owner,
+            communityId = community.id
+        )
     }
 }
