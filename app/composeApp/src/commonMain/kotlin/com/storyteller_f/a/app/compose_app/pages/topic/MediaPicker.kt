@@ -188,10 +188,11 @@ private fun MediaListView(
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     Column(modifier = Modifier.padding(top = 10.dp)) {
+        Text(mediaTarget.toString())
         Row {
             IconButton({
                 scope.launch {
-                    selectFileAndUpload(mediaTarget, sessionManager, globalDialogController) {
+                    globalDialogController.selectFileAndUpload(mediaTarget, sessionManager) {
                         clickItem(it)
                     }
                 }
@@ -276,13 +277,12 @@ private fun FileIcon(it: FileInfo) {
     }
 }
 
-private suspend fun selectFileAndUpload(
+private suspend fun GlobalDialogController.selectFileAndUpload(
     mediaTarget: ObjectTuple,
     sessionManager: SessionManager,
-    globalDialogController: GlobalDialogController,
     uploadSuccess: (List<FileInfo>) -> Unit,
 ) {
-    globalDialogController.useResult {
+    useResult {
         val f = FileKit.openFilePicker()
         if (f != null) {
             upload(
@@ -292,9 +292,18 @@ private suspend fun selectFileAndUpload(
                     f.size(),
                     f.name,
                     ContentType.defaultForFileExtension(f.extension)
-                )
-            ) {
-                f.source().buffered()
+                ) {
+                    f.source().buffered()
+                }
+            ) { p, t ->
+                emitProgress {
+                    GlobalDialogState.Loading(
+                        progress = GlobalDialogStateProgress(
+                            p.toFloat(),
+                            t?.toFloat()
+                        )
+                    )
+                }
             }
         } else {
             Result.success(null)
@@ -314,9 +323,18 @@ suspend fun GlobalDialogController.uploadPath(
         upload(
             sessionManager,
             mediaTarget,
-            UploadData(meta.size, path.name, ContentType.defaultForFileExtension(path.toString())),
-        ) {
-            SystemFileSystem.source(path).buffered()
+            UploadData(meta.size, path.name, ContentType.defaultForFileExtension(path.toString())) {
+                SystemFileSystem.source(path).buffered()
+            }
+        ) { p, t ->
+            emitProgress {
+                GlobalDialogState.Loading(
+                    progress = GlobalDialogStateProgress(
+                        p.toFloat(),
+                        t?.toFloat()
+                    )
+                )
+            }
         }
     }
 }
@@ -325,13 +343,13 @@ suspend fun upload(
     sessionManager: SessionManager,
     mediaTarget: ObjectTuple,
     uploadData: UploadData,
-    readStream: () -> Input,
+    onUpload: (Long, Long?) -> Unit = { _, _ -> },
 ): Result<List<FileInfo>> {
     if (uploadData.size > 100 * 1024 * 1024) {
         return Result.failure(Exception("file size is too large"))
     }
 
-    return sessionManager.upload(mediaTarget, uploadData, block = readStream).map {
+    return sessionManager.upload(mediaTarget, uploadData, onUpload).map {
         bus.emit(OnMediaUploaded(it.data))
         it.data
     }

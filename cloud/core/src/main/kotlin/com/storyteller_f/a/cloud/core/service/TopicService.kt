@@ -76,7 +76,7 @@ suspend fun Backend.createPublicTopic(
                 topicSearchService.saveDocument(
                     listOf(TopicDocument.Companion.fromTopic(topic, plain))
                 ).getOrThrow()
-                exposedDatabase.topicDatabase.savePlainTopic(topic, plain).map {
+                combinedDatabase.topicDatabase.savePlainTopic(topic, plain).map {
                     topic.toTopicInfo(content = plain)
                 }.mapResult { topicInfo ->
                     addUserLog(uid, UserLogType.CREATE, topicInfo.tuple())
@@ -127,7 +127,7 @@ suspend fun Backend.createTopicSnapshot(
             uid
         ).mapResultIfNotNull { (hasRead, _, isPrivate) ->
             if (hasRead && !isPrivate) {
-                exposedDatabase.topicDatabase.getTopicInfo(
+                combinedDatabase.topicDatabase.getTopicInfo(
                     ObjectFetch.IdFetch(topicId),
                     null
                 ).mapResultIfNotNull { value ->
@@ -161,16 +161,13 @@ private suspend fun Backend.createTopicSnapshot(
                     SnapshotVerify.KeyStoreVerify(it.path, it.pass, pdfFile, signedFile)
                 } ?: SnapshotVerify.NoneVerify(pdfFile)
             ).mapResultIfNotNull {
-                uploadFiles(
-                    listOf(
+                tryUploadFiles(
+                    uid, ObjectType.USER, listOf(
                         UploadPack(
                             pdfFile,
                             "$topicId.pdf",
-                            uid,
-                            ObjectType.USER,
                             pdfFile.length(),
-                            "application/pdf",
-                            null,
+                            "${uid}/$topicId.pdf"
                         )
                     )
                 ).map {
@@ -291,7 +288,7 @@ suspend fun Backend.getTopic(
         uid
     ).mapResultIfNotNull { (hasRead, hasJoined) ->
         if (hasRead) {
-            exposedDatabase.topicDatabase.getTopicInfo(
+            combinedDatabase.topicDatabase.getTopicInfo(
                 ObjectFetch.IdFetch(topicId),
                 uid
             ).mapResultIfNotNull { info ->
@@ -313,7 +310,7 @@ suspend fun Backend.getTopicByAid(
     fillHasCommented: Boolean?,
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return exposedDatabase.topicDatabase.getTopicInfo(ObjectFetch.AidFetch(aid), uid)
+    return combinedDatabase.topicDatabase.getTopicInfo(ObjectFetch.AidFetch(aid), uid)
         .mapResultIfNotNull { info ->
             checkRootReadPermission(
                 ObjectType.TOPIC,
@@ -350,7 +347,7 @@ suspend fun Backend.getTopLevelTopicsInObject(
         if (isPrivate && !hasRead) {
             Result.failure(ForbiddenException("Permission Denied"))
         } else {
-            exposedDatabase.topicDatabase.getSubTopicInfo(
+            combinedDatabase.topicDatabase.getSubTopicInfo(
                 uid,
                 primaryKeyFetch,
                 parentId,
@@ -373,7 +370,7 @@ suspend fun Backend.processTopicAfterGet(
         {
             (if (addLatestSubTopic) {
                 Result.success(processedTopics.flatMap { t ->
-                    exposedDatabase.topicDatabase.getLatestTopicInfo(uid, t.id).getOrThrow()
+                    combinedDatabase.topicDatabase.getLatestTopicInfo(uid, t.id).getOrThrow()
                 }.groupBy {
                     it.parentId
                 })
@@ -393,7 +390,7 @@ suspend fun Backend.processTopicAfterGet(
             }
         },
         {
-            exposedDatabase.topicDatabase.getReactionInfoPaginationResult(processedTopics.map {
+            combinedDatabase.topicDatabase.getReactionInfoPaginationResult(processedTopics.map {
                 it.id
             }, uid, ReactionFetch(null, 20)).map {
                 it.list
@@ -489,7 +486,7 @@ suspend fun Backend.processTopicMedia(
     val mediaMap = mediaList.groupBy {
         it.first
     }
-    return getMediaInfoList(mediaNameList).mapIfNotNull { mediaUrls ->
+    return getFileInfoList(mediaNameList).mapIfNotNull { mediaUrls ->
         val mediaInfoMap = mediaUrls.filterNotNull().mapIndexed { index, url ->
             mediaNameList[index] to url
         }.associate {
@@ -530,7 +527,7 @@ suspend fun Backend.recommendTopics(
     primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<TopicInfo>?> {
     return if (uid != null) {
-        exposedDatabase.communityDatabase.getJoinedCommunityIds(uid).mapResult {
+        combinedDatabase.communityDatabase.getJoinedCommunityIds(uid).mapResult {
             topicSearchService.searchDocument(
                 documentSearch = DocumentSearch.Recommend(uid, it),
                 primaryKeyFetch = primaryKeyFetch
@@ -558,7 +555,7 @@ private suspend fun Backend.processTopicsDocument(
     if (ids.isEmpty()) {
         return Result.success(emptyList())
     }
-    return exposedDatabase.topicDatabase.getTopicInfoListByIds(uid, ids).mapResult { infos ->
+    return combinedDatabase.topicDatabase.getTopicInfoListByIds(uid, ids).mapResult { infos ->
         processTopicAfterGet(infos, uid, addLatestSubTopic = true)
     }
 }
@@ -588,7 +585,7 @@ suspend fun Backend.getTopicByIds(
             }
         }
     }
-    return exposedDatabase.topicDatabase.getTopicInfoListByIds(uid, ids).mapResult { infos ->
+    return combinedDatabase.topicDatabase.getTopicInfoListByIds(uid, ids).mapResult { infos ->
         processTopicAfterGet(infos, uid, true)
     }
 }
@@ -600,14 +597,14 @@ suspend fun Backend.updateTopicPin(
 ) =
     checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
         if (it.hasAdmin) {
-            exposedDatabase.topicDatabase.getTopicInfo(
+            combinedDatabase.topicDatabase.getTopicInfo(
                 ObjectFetch.IdFetch(topicId),
                 uid
             ).mapResultIfNotNull { info ->
                 if (info.isPin == newValue) {
                     Result.success(info)
                 } else {
-                    exposedDatabase.topicDatabase.updateTopicStatus(topicId, newValue)
+                    combinedDatabase.topicDatabase.updateTopicStatus(topicId, newValue)
                         .map { isSuccess ->
                             if (isSuccess) {
                                 info.copy(isPin = newValue)

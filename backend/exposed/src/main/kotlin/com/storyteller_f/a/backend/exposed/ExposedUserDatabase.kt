@@ -5,9 +5,9 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UserDatabase
-import com.storyteller_f.a.backend.core.types.AlternateAccount
+import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.AssetTransaction
-import com.storyteller_f.a.backend.core.types.RawAlternateAccount
+import com.storyteller_f.a.backend.core.types.RawChildAccount
 import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.Topic
@@ -17,6 +17,7 @@ import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.*
+import com.storyteller_f.a.backend.exposed.tables.AssetTransactions
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.UpdateUserBody
@@ -318,13 +319,18 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
                     }) {
                         it[acgAmount] = oldAcgAmount + acg
                     }
-                    AssetTransaction.addAssetTransaction(
-                        AssetTransaction(
-                            AssetType.ACG,
-                            oldAcgAmount,
-                            oldAcgAmount + acg
-                        )
+                    val assetTransaction = AssetTransaction(
+                        AssetType.ACG,
+                        oldAcgAmount,
+                        oldAcgAmount + acg
                     )
+                    check(AssetTransactions.insert {
+                        it[AssetTransactions.type] = assetTransaction.type
+                        it[AssetTransactions.before] = assetTransaction.before
+                        it[AssetTransactions.after] = assetTransaction.after
+                    }.insertedCount > 0) {
+                        "Insert asset transaction failed"
+                    }
                 }
             }
 
@@ -350,30 +356,30 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
         }
     }
 
-    override suspend fun getRawAlternativePaginationListByHost(
+    override suspend fun getRawChildAccountPaginationListByHost(
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<RawAlternateAccount>> {
+    ): Result<PaginationResult<RawChildAccount>> {
         return exposedDatabaseSession.dbSearch {
             search {
-                Users.join(AlternateAccounts, JoinType.INNER, Users.id, AlternateAccounts.uid)
+                Users.join(ChildAccounts, JoinType.INNER, Users.id, ChildAccounts.uid)
                     .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-                    .select(Users.fields + AlternateAccounts.fields + Aids.value).where {
-                        AlternateAccounts.hostId eq hostId
+                    .select(Users.fields + ChildAccounts.fields + Aids.value).where {
+                        ChildAccounts.hostId eq hostId
                     }.bindPaginationQuery(Users, fetch)
             }
             map {
-                val alternateAccount = AlternateAccount.wrapRow(it)
+                val childAccount = ChildAccount.wrapRow(it)
                 val user = User.wrapRow(it)
-                RawAlternateAccount(alternateAccount, RawUser(user))
+                RawChildAccount(childAccount, RawUser(user))
             }
         }.mapResult { list ->
             exposedDatabaseSession.dbSearch {
                 search {
-                    AlternateAccounts.join(Users, JoinType.INNER, AlternateAccounts.uid, Users.id)
+                    ChildAccounts.join(Users, JoinType.INNER, ChildAccounts.uid, Users.id)
                         .selectAll()
                         .where {
-                            AlternateAccounts.hostId eq hostId
+                            ChildAccounts.hostId eq hostId
                         }
                 }
                 count()
@@ -383,27 +389,27 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
         }
     }
 
-    override suspend fun getRawAlternativeAccount(uid: PrimaryKey): Result<AlternateAccount?> {
+    override suspend fun getRawChildAccount(uid: PrimaryKey): Result<ChildAccount?> {
         return exposedDatabaseSession.dbSearch {
             search {
-                AlternateAccounts.selectAll().where {
-                    AlternateAccounts.uid eq uid
+                ChildAccounts.selectAll().where {
+                    ChildAccounts.uid eq uid
                 }
             }
             first {
-                AlternateAccount.wrapRow(it)
+                ChildAccount.wrapRow(it)
             }
         }
     }
 
-    override suspend fun createAlternativeAccount(
+    override suspend fun createChildAccount(
         hostId: PrimaryKey,
         privateKey: String,
         user: User
     ): Result<Unit> {
         return exposedDatabaseSession.dbQuery {
             createUserRaw(user)
-            check(AlternateAccounts.insert {
+            check(ChildAccounts.insert {
                 it[this.hostId] = hostId
                 it[this.privateKey] = privateKey
                 it[uid] = user.id

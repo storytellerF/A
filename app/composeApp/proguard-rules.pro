@@ -29,5 +29,3 @@
 
 -dontwarn **
 
--keep class com.storyteller_f.a.app.compose_app.ui.** { *; }
--keep class dev.tclement.fonticons.** { *; }

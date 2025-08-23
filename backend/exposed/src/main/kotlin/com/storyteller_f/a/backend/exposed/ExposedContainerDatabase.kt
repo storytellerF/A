@@ -4,11 +4,15 @@ import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.MemberJoin
+import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.UserTopicRead
+import com.storyteller_f.a.backend.core.types.toQuotaInfo
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildSearchMembersQuery
 import com.storyteller_f.a.backend.exposed.tables.*
+import com.storyteller_f.shared.model.QuotaInfo
+import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
@@ -19,6 +23,7 @@ import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
+import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
@@ -53,7 +58,7 @@ class ExposedContainerDatabase(val exposedDatabaseSession: ExposedDatabaseSessio
         }
     }
 
-    override suspend fun exit(
+    override suspend fun exitContainer(
         containerId: PrimaryKey,
         id: PrimaryKey,
     ): Result<Int> {
@@ -173,6 +178,35 @@ class ExposedContainerDatabase(val exposedDatabaseSession: ExposedDatabaseSessio
                 count()
             }.map { value ->
                 PaginationResult(results, value)
+            }
+        }
+    }
+
+    override suspend fun getQuotaInfo(
+        ownerId: PrimaryKey,
+        quotaType: QuotaType
+    ): Result<QuotaInfo?> {
+        return exposedDatabaseSession.dbSearch {
+            search {
+                Quotas.selectAll().where {
+                    Quotas.ownerId eq ownerId and (Quotas.quotaType eq quotaType)
+                }
+            }
+            first {
+                Quota.wrapRow(it).toQuotaInfo()
+            }
+        }
+    }
+
+    override suspend fun insertQuota(quota: Quota): Result<Unit> {
+        return exposedDatabaseSession.dbQuery {
+            Quotas.insert {
+                it[ownerId] = quota.ownerId
+                it[ownerType] = quota.ownerType
+                it[total] = quota.total
+                it[used] = quota.used
+                it[quotaType] = quota.quotaType
+                it[locking] = false
             }
         }
     }

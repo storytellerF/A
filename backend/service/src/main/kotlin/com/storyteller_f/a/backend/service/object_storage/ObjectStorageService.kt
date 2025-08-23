@@ -2,10 +2,7 @@ package com.storyteller_f.a.backend.service.object_storage
 
 import com.storyteller_f.a.backend.core.CopyPack
 import com.storyteller_f.a.backend.core.UploadPack
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.uploadFiles
 import com.storyteller_f.shared.model.Dimension
-import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,22 +29,6 @@ interface ObjectStorageService {
     suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<ObjectStorageRecord>>
 
     suspend fun getInputStream(bucketName: String, name: String): Result<InputStream>
-}
-
-suspend fun Backend.uploadFilesAfterDetectContentTypeAndDimension(
-    files: List<UploadPack>
-): Result<List<FileInfo?>> {
-    return uploadFiles(files.map {
-        val detectedType = tika.detect(it.path)
-        val dimension = if (detectedType.startsWith("image")) {
-            getImageDimension(it.path.absolutePath, detectedType) {
-                it.path.inputStream()
-            }
-        } else {
-            null
-        }
-        it.copy(contentType = detectedType, dimension = dimension)
-    })
 }
 
 // 在windows 中安装的libavif 名称不符合条件，需要手动改名

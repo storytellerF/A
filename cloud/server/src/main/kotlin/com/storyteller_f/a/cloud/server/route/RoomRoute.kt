@@ -4,7 +4,6 @@ import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.exposed.toJoinSearch
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.searchRoomPaginationResult
 import com.storyteller_f.a.cloud.core.service.createRoom
 import com.storyteller_f.a.cloud.core.service.exitRoom
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
@@ -12,6 +11,7 @@ import com.storyteller_f.a.cloud.core.service.getRoomPubKeys
 import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
 import com.storyteller_f.a.cloud.core.service.joinRoom
 import com.storyteller_f.a.cloud.core.service.searchRoomMembers
+import com.storyteller_f.a.cloud.core.service.searchRoomPaginationResult
 import com.storyteller_f.a.cloud.core.service.updateRoom
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal

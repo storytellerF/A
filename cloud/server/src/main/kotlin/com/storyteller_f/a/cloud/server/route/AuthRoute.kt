@@ -41,7 +41,7 @@ suspend fun RoutingContext.signIn(
     data: String
 ): Result<UserInfo?> {
     val f = finalData(data)
-    return backend.exposedDatabase.userDatabase.getRawUserAndPublicKeyByAddress(pack.ad).filterNotNull {
+    return backend.combinedDatabase.userDatabase.getRawUserAndPublicKeyByAddress(pack.ad).filterNotNull {
         CustomBadRequestException("user not found")
     }.mapResult { (rawUser, publicKey) ->
         verify(publicKey, pack.sig, f).mapResult { isVerified ->
@@ -78,7 +78,7 @@ suspend fun RoutingContext.signUp(
     val f = finalData(data)
     return verify(pack.pk, pack.sig, f).mapResult {
         if (it) {
-            backend.exposedDatabase.userDatabase.isUserNotExistsByPublicKey(pack.pk).mapResult { userNotExists ->
+            backend.combinedDatabase.userDatabase.isUserNotExistsByPublicKey(pack.pk).mapResult { userNotExists ->
                 if (userNotExists) {
                     calcAddress(pack.pk).mapResult { ad ->
                         val newId = SnowflakeFactory.nextId()
@@ -95,7 +95,7 @@ suspend fun RoutingContext.signUp(
                             PassType.RAW,
                             AlgoType.P256
                         )
-                        backend.exposedDatabase.userDatabase.createUser(user).map {
+                        backend.combinedDatabase.userDatabase.createUser(user).map {
                             backend.addUserLog(newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
                             saveSuccessSessionOnFirst(newId)
                             user.toUserInfo()
@@ -115,11 +115,11 @@ suspend fun Backend.getUserAuthData(
     credential: CustomCredential
 ): Result<Pair<String, Long>?> {
     return when (credential) {
-        is CustomCredential.AidCredential -> exposedDatabase.userDatabase.getUserAuthDataByAid(credential.aid)
+        is CustomCredential.AidCredential -> combinedDatabase.userDatabase.getUserAuthDataByAid(credential.aid)
 
-        is CustomCredential.IdCredential -> exposedDatabase.userDatabase.getUserAuthDataById(credential.id)
+        is CustomCredential.IdCredential -> combinedDatabase.userDatabase.getUserAuthDataById(credential.id)
 
-        is CustomCredential.AddressCredential -> exposedDatabase.userDatabase.getUserAuthDataByAddress(credential.ad)
+        is CustomCredential.AddressCredential -> combinedDatabase.userDatabase.getUserAuthDataByAddress(credential.ad)
     }
 }
 
@@ -133,7 +133,7 @@ suspend fun ApplicationCall.checkApiRequest(
     return when {
         !ServerConfig.IS_PROD && credential is CustomCredential.IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            backend.exposedDatabase.userDatabase.isUserExistsByUid(id).mapIfNotNull {
+            backend.combinedDatabase.userDatabase.isUserExistsByUid(id).mapIfNotNull {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             }

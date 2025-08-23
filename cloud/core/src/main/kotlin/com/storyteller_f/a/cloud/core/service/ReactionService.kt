@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.api.core.Path
+import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PaginationResult
@@ -28,14 +28,14 @@ suspend fun Backend.addReaction(
 ) = checkRootWritePermission(ObjectType.TOPIC, topicId, userId).mapResultIfNotNull {
     if (it.hasWrite) {
         val newId = SnowflakeFactory.nextId()
-        exposedDatabase.topicDatabase.getReactionInfo(userId, topicId, emojiText).mapResult { oldReaction ->
+        combinedDatabase.topicDatabase.getReactionInfo(userId, topicId, emojiText).mapResult { oldReaction ->
             if (oldReaction != null && oldReaction.hasReacted) {
                 Result.success(oldReaction)
             } else {
                 val reactionRecord =
                     ReactionRecord(userId, topicId, ObjectType.TOPIC, emojiText, newId, now())
-                exposedDatabase.topicDatabase.insertReaction(reactionRecord).map {
-                    exposedDatabase.topicDatabase.statsReactionRecord(
+                combinedDatabase.topicDatabase.insertReaction(reactionRecord).map {
+                    combinedDatabase.topicDatabase.statsReactionRecord(
                         reactionRecord.objectId,
                         reactionRecord.emoji,
                         reactionRecord.objectType
@@ -80,14 +80,14 @@ suspend fun Backend.reactionList(
     reactionFetch: ReactionFetch,
 ): Result<PaginationResult<ReactionInfo>> {
     if (fillHasReacted == true && uid == null) return Result.failure(UnauthorizedException())
-    return exposedDatabase.topicDatabase.getReactionInfoPaginationResult(listOf(objectId), uid, reactionFetch)
+    return combinedDatabase.topicDatabase.getReactionInfoPaginationResult(listOf(objectId), uid, reactionFetch)
 }
 
 suspend fun addReaction(
     emoji: String,
     backend: Backend,
     uid: PrimaryKey,
-    p: Path
+    p: CommonPath
 ): Result<ReactionInfo?> = if (isEmoji(emoji)) {
     backend.addReaction(uid, p.id, emoji)
 } else {
@@ -98,13 +98,13 @@ suspend fun deleteReaction(
     deleteReaction: DeleteReaction,
     backend: Backend,
     uid: PrimaryKey,
-    p: Path
+    p: CommonPath
 ): Result<ReactionInfo?> {
     val emoji = deleteReaction.emoji
     return if (isEmoji(emoji)) {
-        backend.exposedDatabase.topicDatabase.deleteReaction(uid, emoji, p.id).mapResult {
+        backend.combinedDatabase.topicDatabase.deleteReaction(uid, emoji, p.id).mapResult {
             (if (it) {
-                backend.exposedDatabase.topicDatabase.statsReactionRecord(
+                backend.combinedDatabase.topicDatabase.statsReactionRecord(
                     p.id,
                     emoji,
                     ObjectType.TOPIC
@@ -112,7 +112,7 @@ suspend fun deleteReaction(
             } else {
                 Result.success(Unit)
             }).mapResult {
-                backend.exposedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji).map { reactionInfo ->
+                backend.combinedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji).map { reactionInfo ->
                     reactionInfo ?: ReactionInfo(emoji, p.id, 0, false, 0)
                 }
             }

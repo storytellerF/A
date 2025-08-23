@@ -12,10 +12,14 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.plugins.*
+import io.ktor.server.request.queryString
+import io.ktor.server.request.uri
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import io.ktor.util.toMap
 import io.sentry.Sentry
+import io.sentry.protocol.Request
 import kotlin.io.path.name
 
 suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> Result<R?>) = callRespond<R>(block)
@@ -116,11 +120,20 @@ suspend inline fun <reified R> RoutingContext.handleResult(it: Result<R>) {
             is Unit -> call.respond(HttpStatusCode.OK)
             else -> call.respond(it)
         }
-    }.onFailure {
-        respondError(it)
-        if (it !is UnauthorizedException) {
-            Sentry.captureException(it)
+    }.onFailure { throwable ->
+        respondError(throwable)
+        if (throwable !is UnauthorizedException) {
+            Sentry.withIsolationScope { scope ->
+                scope.request = Request().apply {
+                    url = call.request.uri
+                    headers = call.request.headers.toMap().mapValues {
+                        it.value.joinToString(",")
+                    }
+                    queryString = call.request.queryString()
+                }
+                Sentry.captureException(throwable)
+            }
         }
-        call.application.log.error("Occur server exception", it)
+        call.application.log.error("Occur server exception", throwable)
     }
 }

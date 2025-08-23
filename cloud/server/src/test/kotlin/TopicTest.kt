@@ -201,13 +201,14 @@ class TopicTest {
                     UploadData(
                         5,
                         "hello.txt",
-                        ContentType.defaultForFileExtension("txt")
+                        ContentType.defaultForFileExtension("txt"),
+                        {
+                            Buffer().apply {
+                                writeString("hello")
+                            }
+                        }
                     )
-                ) {
-                    Buffer().apply {
-                        writeString("hello")
-                    }
-                }
+                )
                     .getOrThrow().data.first()
                 val info =
                     createNewTopic(

@@ -698,11 +698,12 @@ class UploadViewModel(
                 UploadData(
                     e.size,
                     e.name,
-                    e.contentType
+                    e.contentType,
+                    {
+                        e.source()?.buffered() ?: throw Exception("upload failed")
+                    }
                 )
-            ) {
-                e.source()?.buffered() ?: throw Exception("upload failed")
-            }.map {
+            ).map {
                 it.first()
             }
         }
@@ -832,7 +833,10 @@ class DownloadViewModel(
         }
         modelStorage.downloadInfoStorage.save(
             modelCollection,
-            downloadInfo.copy(status = DownloadStatus.DOWNLOADED, message = "download success ${now()}")
+            downloadInfo.copy(
+                status = DownloadStatus.DOWNLOADED,
+                message = "download success ${now()}"
+            )
         )
     }
 
@@ -930,15 +934,15 @@ class MarkdownMediasViewModel(
     }
 }
 
-class AlternativeAccountsViewModel(
+class ChildAccountsViewModel(
     modelStorage: ModelStorage,
     sessionManager: SessionManager,
 ) :
-    PagingViewModel<PrimaryKey, AlternativeAccountInfo>() {
-    val modelCollection = AlternativesCollection
+    PagingViewModel<PrimaryKey, ChildAccountInfo>() {
+    val modelCollection = ChildAccountCollection
 
     @OptIn(ExperimentalPagingApi::class)
-    override val flow: Flow<PagingData<AlternativeAccountInfo>> = Pager(
+    override val flow: Flow<PagingData<ChildAccountInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
@@ -950,15 +954,15 @@ class AlternativeAccountsViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.alternativeInfoStorage.clean(modelCollection)
+                modelStorage.childAccountStorage.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.alternativeInfoStorage.save(modelCollection, it)
+                modelStorage.childAccountStorage.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.alternativeInfoStorage.observeData(modelCollection),
+            modelStorage.childAccountStorage.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)

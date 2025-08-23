@@ -48,7 +48,7 @@ suspend fun CoroutineScope.startServerByRun(envFilePath: String, port: Int): Pro
 
     val builder = ProcessBuilder(
         gradleCommand,
-        "cloud:server:run",
+        "cloud:server:runShadow",
         "-Dorg.gradle.logging.level=quiet",
         "--quiet",
     )

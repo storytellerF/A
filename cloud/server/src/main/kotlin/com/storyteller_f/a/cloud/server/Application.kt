@@ -97,10 +97,11 @@ fun main(args: Array<String>) {
     processInitTaskIfNeed(map)
     val serverPort = map["SERVER_PORT"]?.toInt() ?: 80
     val extraArgs = arrayOf("-port=$serverPort")
-    Sentry.init { options ->
-        options.dsn = map["SENTRY_DSN"]
-        options.isDebug = false
-    }
+    if (map["BUILD_TYPE"] == "prod")
+        Sentry.init { options ->
+            options.dsn = map["SENTRY_DSN"]
+            options.isDebug = false
+        }
     EngineMain.main(args + extraArgs)
 }
 
@@ -123,7 +124,7 @@ fun Application.module() {
     }
     if (backend.customConfig.buildType == "test") {
         runBlocking {
-            backend.exposedDatabase.init()
+            backend.combinedDatabase.init()
         }
     }
     startNewMessageTask(backend)
@@ -350,7 +351,7 @@ private fun executeScriptInThread(
 }
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {
-    println("load env: ${env["COMPOSE_PROJECT_NAME"]}")
+    Napier.i("load env: ${env["COMPOSE_PROJECT_NAME"]}")
 
     val databaseConnection = databaseConnection(env)
 

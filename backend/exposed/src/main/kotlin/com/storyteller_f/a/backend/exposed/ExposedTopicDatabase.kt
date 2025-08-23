@@ -17,6 +17,7 @@ import com.storyteller_f.a.backend.core.types.toTopicInfo
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildReactionInfoQuery
 import com.storyteller_f.a.backend.exposed.tables.*
+import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -199,7 +200,7 @@ class ExposedTopicDatabase(
     ): Result<Unit> {
         return exposedDatabaseSession.dbQuery {
             Topic.new(topic)
-            fileDatabase.insertMediaRefs(
+            fileDatabase.insertFileRefs(
                 topic.id,
                 ObjectType.TOPIC,
                 extractMarkdownMediaLink(content.plain).map {
@@ -617,13 +618,42 @@ class ExposedTopicDatabase(
         }
     }
 
-    override suspend fun insertTopicDescription(
+    override suspend fun createTitle(
         title: Title,
         topic: Topic
     ): Result<Unit> {
         return exposedDatabaseSession.dbQuery {
-            Title.new(title)
+            check(Titles.insert {
+                it[Titles.id] = title.id
+                it[Titles.createdTime] = title.createdTime
+                it[Titles.name] = title.name
+                it[Titles.creator] = title.creator
+                it[Titles.receiver] = title.receiver
+                it[Titles.type] = title.type
+                it[Titles.scopeId] = title.scopeId
+                it[Titles.scopeType] = title.scopeType
+                it[Titles.status] = title.status
+                it[Titles.descriptionTopicId] = title.descriptionTopicId
+            }.insertedCount > 0) {
+                "insert title failed"
+            }
             Topic.new(topic)
+        }
+    }
+
+    suspend fun Topic.Companion.new(info: Topic) {
+        return check(Topics.insert {
+            it[id] = info.id
+            it[author] = info.author
+            it[createdTime] = now()
+            it[parentType] = info.parentType
+            it[parentId] = info.parentId
+            it[rootId] = info.rootId
+            it[rootType] = info.rootType
+            it[content] = ExposedBlob(info.content)
+            it[isEncrypted] = info.isEncrypted
+        }.insertedCount > 0) {
+            "insert topic failed"
         }
     }
 }

@@ -11,9 +11,10 @@ import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.MemberJoin
 import com.storyteller_f.a.backend.core.types.RawCommunity
+import com.storyteller_f.a.backend.core.types.Room
+import com.storyteller_f.a.backend.exposed.query.batchCreateCommunityRooms
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildCommunitySearchQuery
-import com.storyteller_f.a.backend.exposed.query.createCommunityRoomsRaw
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.MemberJoins
@@ -171,14 +172,9 @@ class ExposedCommunityDatabase(
         }
     }
 
-    override suspend fun createCommunityRooms(
-        id: PrimaryKey,
-        ownerUid: PrimaryKey,
-        communityAid: String,
-        roomIds: List<PrimaryKey>,
-    ): Result<Unit> {
+    override suspend fun createCommunityRooms(rooms: List<Room>): Result<Unit> {
         return exposedDatabaseSession.dbQuery {
-            createCommunityRoomsRaw(id, ownerUid, communityAid, roomIds)
+            batchCreateCommunityRooms(rooms)
         }
     }
 

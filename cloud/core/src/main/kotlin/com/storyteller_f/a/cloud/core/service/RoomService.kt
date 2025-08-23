@@ -2,9 +2,10 @@ package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.api.core.Path
+import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -17,9 +18,7 @@ import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.isDup
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.index.TopicDocument
-import com.storyteller_f.a.backend.service.isKeyVerified
 import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
-import com.storyteller_f.a.backend.service.searchMembers
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
@@ -30,9 +29,9 @@ suspend fun Backend.getRoomPubKeys(
     roomId: PrimaryKey,
     userId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
-) = exposedDatabase.containerDatabase.isMemberJoined(roomId, userId).mapResult {
+) = combinedDatabase.containerDatabase.isMemberJoined(roomId, userId).mapResult {
     if (it) {
-        exposedDatabase.roomData.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
+        combinedDatabase.roomData.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
     } else {
         Result.failure(ForbiddenException("Permission denied"))
     }
@@ -48,7 +47,7 @@ suspend fun Backend.joinRoom(
         val communityId = roomInfo.communityId
         if (communityId == null) {
             // 检查是否存在title
-            exposedDatabase.titleDatabase.getTitlePaginationResult(
+            combinedDatabase.titleDatabase.getTitlePaginationResult(
                 PrimaryKeyFetch(null, 1),
                 uid,
                 TitleSearchType.RECEIVER,
@@ -62,7 +61,7 @@ suspend fun Backend.joinRoom(
                 }
             }
         } else {
-            exposedDatabase.containerDatabase.isMemberJoined(communityId, uid).mapResult { hasJoined ->
+            combinedDatabase.containerDatabase.isMemberJoined(communityId, uid).mapResult { hasJoined ->
                 if (hasJoined) {
                     directJoinRoom(uid, roomInfo)
                 } else {
@@ -78,7 +77,7 @@ private suspend fun Backend.directJoinRoom(
     roomInfo: RoomInfo,
 ): Result<RoomInfo?> {
     val time = now()
-    return exposedDatabase.containerDatabase.joinContainer(
+    return combinedDatabase.containerDatabase.joinContainer(
         roomInfo.id,
         uid,
         time,
@@ -100,7 +99,7 @@ suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            exposedDatabase.containerDatabase.exit(roomId, uid).map {
+            combinedDatabase.containerDatabase.exitContainer(roomId, uid).map {
                 addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
                 info.copy(joinedTime = null)
             }
@@ -112,7 +111,7 @@ suspend fun Backend.getRoomInfo(
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?,
 ): Result<RoomInfo?> {
-    return exposedDatabase.roomData.getRawRoom(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
+    return combinedDatabase.roomData.getRawRoom(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
         processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
     }
 }
@@ -150,7 +149,7 @@ suspend fun Backend.createRoom(
             val roomId = SnowflakeFactory.nextId()
             val room =
                 Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
-            exposedDatabase.roomData.createRoom(room)
+            combinedDatabase.roomData.createRoom(room)
                 .mapResult {
                     processRawRoomToRoomInfo(
                         listOf(
@@ -201,9 +200,9 @@ suspend fun Backend.updateRoom(
             if (firstError != null) {
                 Result.failure(firstError)
             } else {
-                exposedDatabase.roomData.updateRoom(id, newRoom).mapResult { updateSuccess ->
+                combinedDatabase.roomData.updateRoom(id, newRoom).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        exposedDatabase.roomData.getRawRoom(ObjectFetch.IdFetch(id), true, uid)
+                        combinedDatabase.roomData.getRawRoom(ObjectFetch.IdFetch(id), true, uid)
                             .mapResultIfNotNull {
                                 processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
                             }
@@ -220,7 +219,7 @@ suspend fun Backend.updateRoom(
 
 suspend fun searchRoomMembers(
     backend: Backend,
-    p: Path,
+    p: CommonPath,
     uid: PrimaryKey?,
     q: CustomApi.Rooms.Id.Members.MemberQuery,
     f: PrimaryKeyFetch
@@ -239,7 +238,7 @@ suspend fun Backend.addTopicAtRoom(
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            exposedDatabase.topicDatabase.getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
+            combinedDatabase.topicDatabase.getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
                 if (type == ObjectType.ROOM) {
                     addTopicIntoRoom(id, uid, newTopic)
                 } else {
@@ -268,11 +267,11 @@ suspend fun Backend.addTopicIntoRoom(
         is TopicContent.Encrypted -> c.bytes
         else -> throw CustomBadRequestException("unsupported type")
     }
-    return exposedDatabase.containerDatabase.isMemberJoined(roomId, uid).mapResult { bool ->
+    return combinedDatabase.containerDatabase.isMemberJoined(roomId, uid).mapResult { bool ->
         if (bool) {
             val content = newTopic.content
             val newId = SnowflakeFactory.nextId()
-            exposedDatabase.roomData.checkRoomIsPrivate(roomId).mapResultIfNotNull { isPrivate ->
+            combinedDatabase.roomData.checkRoomIsPrivate(roomId).mapResultIfNotNull { isPrivate ->
                 val topic = Topic(
                     newId,
                     now(),
@@ -292,7 +291,7 @@ suspend fun Backend.addTopicIntoRoom(
                         topicSearchService.saveDocument(
                             listOf(TopicDocument.fromTopic(topic, content))
                         ).getOrThrow()
-                        exposedDatabase.topicDatabase.savePlainTopic(topic, content = content)
+                        combinedDatabase.topicDatabase.savePlainTopic(topic, content = content)
                             .map {
                                 topic.toTopicInfo(content = content)
                             }
@@ -316,11 +315,31 @@ suspend fun Backend.saveEncryptedTopic(
 ): Result<TopicInfo?> = if (content is TopicContent.Encrypted) {
     isKeyVerified(roomId, content.encryptedKey).mapResult {
         if (it) {
-            exposedDatabase.topicDatabase.saveEncryptedTopic(topic, content)
+            combinedDatabase.topicDatabase.saveEncryptedTopic(topic, content)
         } else {
             Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
         }
     }
 } else {
     Result.failure(ForbiddenException("Private room only accept encrypted content."))
+}
+
+suspend fun Backend.searchRoomPaginationResult(
+    uid: PrimaryKey?,
+    word: String?,
+    community: PrimaryKey?,
+    primaryKeyFetch: PrimaryKeyFetch,
+    search: JoinSearch,
+): Result<PaginationResult<RoomInfo>?> {
+    return combinedDatabase.roomData.getRoomPaginationResult(
+        uid,
+        word,
+        community,
+        primaryKeyFetch,
+        search
+    ).mapResult { (list, count) ->
+        processRawRoomToRoomInfo(list).mapIfNotNull { value ->
+            PaginationResult(value, count)
+        }
+    }
 }

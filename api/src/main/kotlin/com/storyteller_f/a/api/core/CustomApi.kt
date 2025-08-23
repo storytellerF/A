@@ -62,10 +62,10 @@ object CustomApi {
             @Serializable
             class TopicIdQuery(val fillHasCommented: Boolean? = null)
 
-            val get = safeApiWithQueryAndPath<TopicInfo, TopicIdQuery, Path>("topics/{id}")
+            val get = safeApiWithQueryAndPath<TopicInfo, TopicIdQuery, CommonPath>("topics/{id}")
 
             object Topics {
-                val get = safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, Path>("topics/{id}/topics")
+                val get = safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("topics/{id}/topics")
             }
 
             object Reactions {
@@ -80,19 +80,19 @@ object CustomApi {
                 }
 
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<ReactionInfo>, ReactionQuery, Path>("topics/{id}/reactions")
-                val add = mutationApiWithPath<ReactionInfo, NewReaction, Path>("topics/{id}/reactions")
+                    safeApiWithQueryAndPath<ServerResponse<ReactionInfo>, ReactionQuery, CommonPath>("topics/{id}/reactions")
+                val add = mutationApiWithPath<ReactionInfo, NewReaction, CommonPath>("topics/{id}/reactions")
                 val delete =
-                    mutationApiWithPath<ReactionInfo, DeleteReaction, Path>(
+                    mutationApiWithPath<ReactionInfo, DeleteReaction, CommonPath>(
                         "topics/{id}/reactions",
                         methodType = MutationMethodType.DELETE
                     )
             }
 
-            val pin = mutationApiWithPath<TopicInfo, Unit, Path>("topics/{id}/pin")
+            val pin = mutationApiWithPath<TopicInfo, Unit, CommonPath>("topics/{id}/pin")
             val unpin =
-                mutationApiWithPath<TopicInfo, Unit, Path>("topics/{id}/pin", methodType = MutationMethodType.DELETE)
-            val createSnapshot = mutationApiWithPath<FileInfo, Unit, Path>("topics/{id}/create-snapshot")
+                mutationApiWithPath<TopicInfo, Unit, CommonPath>("topics/{id}/pin", methodType = MutationMethodType.DELETE)
+            val createSnapshot = mutationApiWithPath<FileInfo, Unit, CommonPath>("topics/{id}/create-snapshot")
         }
 
         val add = mutationApi<TopicInfo, NewTopic>("topics")
@@ -129,7 +129,7 @@ object CustomApi {
             @Serializable
             class CommunityIdQuery(val fillJoinInfo: Boolean = false)
 
-            val get = safeApiWithQueryAndPath<CommunityInfo, CommunityIdQuery, Path>("communities/{id}")
+            val get = safeApiWithQueryAndPath<CommunityInfo, CommunityIdQuery, CommonPath>("communities/{id}")
 
             object Members {
                 @Serializable
@@ -140,12 +140,12 @@ object CustomApi {
                 )
 
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<UserInfo>, CommunityMemberQuery, Path>(
+                    safeApiWithQueryAndPath<ServerResponse<UserInfo>, CommunityMemberQuery, CommonPath>(
                         "communities/{id}/members"
                     )
-                val join = mutationApiWithPath<CommunityInfo, Unit, Path>("communities/{id}/members")
+                val join = mutationApiWithPath<CommunityInfo, Unit, CommonPath>("communities/{id}/members")
                 val leave =
-                    mutationApiWithPath<CommunityInfo, Unit, Path>(
+                    mutationApiWithPath<CommunityInfo, Unit, CommonPath>(
                         "communities/{id}/members",
                         methodType = MutationMethodType.DELETE
                     )
@@ -153,10 +153,10 @@ object CustomApi {
 
             object Topics {
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, Path>("communities/{id}/topics")
+                    safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("communities/{id}/topics")
             }
 
-            val update = mutationApiWithPath<CommunityInfo, UpdateCommunityBody, Path>("communities/{id}")
+            val update = mutationApiWithPath<CommunityInfo, UpdateCommunityBody, CommonPath>("communities/{id}")
         }
 
         val add = mutationApi<CommunityInfo, NewCommunity>("communities")
@@ -181,7 +181,7 @@ object CustomApi {
             @Serializable
             class RoomIdQuery(val fillJoinInfo: Boolean = false)
 
-            val get = safeApiWithQueryAndPath<RoomInfo, RoomIdQuery, Path>("rooms/{id}")
+            val get = safeApiWithQueryAndPath<RoomInfo, RoomIdQuery, CommonPath>("rooms/{id}")
 
             object Members {
                 @Serializable
@@ -191,28 +191,28 @@ object CustomApi {
                         get() = PaginationQuery(nextPageToken, size = size)
                 }
 
-                val get = safeApiWithQueryAndPath<ServerResponse<UserInfo>, MemberQuery, Path>("rooms/{id}/members")
+                val get = safeApiWithQueryAndPath<ServerResponse<UserInfo>, MemberQuery, CommonPath>("rooms/{id}/members")
                 val join =
-                    mutationApiWithPath<RoomInfo, Unit, Path>(
+                    mutationApiWithPath<RoomInfo, Unit, CommonPath>(
                         "rooms/{id}/members",
                         methodType = MutationMethodType.POST
                     )
                 val leave =
-                    mutationApiWithPath<RoomInfo, Unit, Path>(
+                    mutationApiWithPath<RoomInfo, Unit, CommonPath>(
                         "rooms/{id}/members",
                         methodType = MutationMethodType.DELETE
                     )
                 val publicKeys =
-                    safeApiWithQueryAndPath<ServerResponse<UserPubKeyInfo>, PaginationQuery, Path>(
+                    safeApiWithQueryAndPath<ServerResponse<UserPubKeyInfo>, PaginationQuery, CommonPath>(
                         "rooms/{id}/public-keys"
                     )
             }
 
             object Topics {
-                val get = safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, Path>("rooms/{id}/topics")
+                val get = safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("rooms/{id}/topics")
             }
 
-            val update = mutationApiWithPath<RoomInfo, UpdateRoomBody, Path>("rooms/{id}/update")
+            val update = mutationApiWithPath<RoomInfo, UpdateRoomBody, CommonPath>("rooms/{id}/update")
         }
 
         object Aid {
@@ -234,10 +234,10 @@ object CustomApi {
         }
 
         object Id {
-            val get = safeApiWithPath<UserInfo, Path>("users/{id}")
+            val get = safeApiWithPath<UserInfo, CommonPath>("users/{id}")
 
             object Topics {
-                val get = safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, Path>("users/{id}/topics")
+                val get = safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("users/{id}/topics")
             }
 
             object Titles {
@@ -254,7 +254,7 @@ object CustomApi {
                         get() = PaginationQuery(nextPageToken, size = size)
                 }
 
-                val get = safeApiWithQueryAndPath<ServerResponse<TitleInfo>, TitleQuery, Path>("users/{id}/titles")
+                val get = safeApiWithQueryAndPath<ServerResponse<TitleInfo>, TitleQuery, CommonPath>("users/{id}/titles")
             }
         }
 
@@ -296,10 +296,10 @@ object CustomApi {
         val get = safeApiWithQuery<ServerResponse<FileInfo>, MediaQuery>("medias")
 
         object Id {
-            val copy = mutationApiWithPath<ServerResponse<FileInfo>, Unit, Path>("medias/{id}/copy")
-            val get = safeApiWithPath<FileInfo, Path>("medias/{id}")
-            val delete = mutationApiWithPath<Boolean, Unit, Path>("medias/{id}", methodType = MutationMethodType.DELETE)
-            val extractAlbum = mutationApiWithPath<ServerResponse<FileInfo>, Unit, Path>("medias/{id}/extract-album")
+            val copy = mutationApiWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("medias/{id}/copy")
+            val get = safeApiWithPath<FileInfo, CommonPath>("medias/{id}")
+            val delete = mutationApiWithPath<Boolean, Unit, CommonPath>("medias/{id}", methodType = MutationMethodType.DELETE)
+            val extractAlbum = mutationApiWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("medias/{id}/extract-album")
         }
 
         val upload = mutationApiWithQuery<ServerResponse<FileInfo>, Unit, ObjectTuple>("medias/upload")
@@ -324,9 +324,9 @@ object CustomApi {
         val signUp = mutationApi<UserInfo, SignUpPack>("/accounts/sign_up")
         val getData = safeApi<String>("/accounts/get_data")
 
-        object AlternativeAccounts {
+        object ChildAccounts {
             @Serializable
-            class AlternativeAccountQuery(
+            class ChildAccountQuery(
                 val nextPageToken: String? = null,
                 val size: Int = 10,
             ) : PageableQuery {
@@ -335,17 +335,17 @@ object CustomApi {
             }
 
             val get =
-                safeApiWithQuery<ServerResponse<AlternativeAccountInfo>, AlternativeAccountQuery>(
-                    "/accounts/alternative_accounts"
+                safeApiWithQuery<ServerResponse<ChildAccountInfo>, ChildAccountQuery>(
+                    "/accounts/child-accounts"
                 )
-            val add = mutationApi<AlternativeAccountInfo, Unit>("/accounts/alternative_accounts")
-            val delete = mutationApi<Unit, Unit>("/accounts/alternative_accounts")
+            val add = mutationApi<ChildAccountInfo, Unit>("/accounts/child-accounts")
+            val delete = mutationApi<Unit, Unit>("/accounts/child-accounts")
         }
     }
 }
 
 @Serializable
-class Path(val id: PrimaryKey)
+class CommonPath(val id: PrimaryKey)
 
 @Serializable
 class TopicQuery(

@@ -3,13 +3,13 @@ package com.storyteller_f.a.cloud.server.route
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.searchMembers
 import com.storyteller_f.a.cloud.core.service.createCommunity
 import com.storyteller_f.a.cloud.core.service.doUserJoinCommunity
 import com.storyteller_f.a.cloud.core.service.exitCommunity
 import com.storyteller_f.a.cloud.core.service.getCommunity
 import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
 import com.storyteller_f.a.cloud.core.service.searchCommunities
+import com.storyteller_f.a.cloud.core.service.searchMembers
 import com.storyteller_f.a.cloud.core.service.updateCommunity
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal

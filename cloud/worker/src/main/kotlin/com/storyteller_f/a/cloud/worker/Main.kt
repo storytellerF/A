@@ -51,7 +51,7 @@ fun main() {
 
 private suspend fun Backend.doAcgTask() {
     getAcgTaskListFromTopics().mapResultIfNotNull { (acgList, userAcgMap, list) ->
-        exposedDatabase.userDatabase.addAcgForUser(acgList, userAcgMap, list, SnowflakeFactory.nextId())
+        combinedDatabase.userDatabase.addAcgForUser(acgList, userAcgMap, list, SnowflakeFactory.nextId())
     }.onSuccess {
         delay(1000)
         Napier.i(tag = "task") {
@@ -66,8 +66,8 @@ private suspend fun Backend.doAcgTask() {
 }
 
 private suspend fun Backend.getAcgTaskListFromTopics() =
-    exposedDatabase.userDatabase.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult {
-        exposedDatabase.topicDatabase.getTopicList(it?.processedId ?: 0)
+    combinedDatabase.userDatabase.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult {
+        combinedDatabase.topicDatabase.getTopicList(it?.processedId ?: 0)
     }.mapResult { list ->
         if (list.isNotEmpty()) {
             val acgList = list.groupBy {
@@ -78,7 +78,7 @@ private suspend fun Backend.getAcgTaskListFromTopics() =
             val uids = acgList.map {
                 it.first
             }
-            exposedDatabase.userDatabase.getUserAcgByIds(ObjectListFetch.IdListFetch(uids)).map { list ->
+            combinedDatabase.userDatabase.getUserAcgByIds(ObjectListFetch.IdListFetch(uids)).map { list ->
                 list.associate {
                     it.first to it.second
                 }
@@ -91,7 +91,7 @@ private suspend fun Backend.getAcgTaskListFromTopics() =
     }
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {
-    println("load env: ${env["COMPOSE_PROJECT_NAME"]}")
+    Napier.i("load env: ${env["COMPOSE_PROJECT_NAME"]}")
 
     val databaseConnection = databaseConnection(env)
 

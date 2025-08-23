@@ -26,4 +26,3 @@ fun User.toUserInfo(): UserInfo {
 }
 
 data class RawUser(val user: User)
-data class RawAlternateAccount(val alternateAccount: AlternateAccount, val rawUser: RawUser)

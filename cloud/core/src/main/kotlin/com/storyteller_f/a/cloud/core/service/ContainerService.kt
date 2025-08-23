@@ -35,18 +35,18 @@ suspend fun Backend.checkRootReadPermission(
 ): Result<RootReadPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            exposedDatabase.topicDatabase.getTopicRootTuple(parentId)
+            combinedDatabase.topicDatabase.getTopicRootTuple(parentId)
                 .mapResultIfNotNull { (rootId, rootType) ->
                     checkRootReadPermission(rootType, rootId, uid)
                 }
         }
 
         ObjectType.ROOM -> {
-            exposedDatabase.roomData.getRoomCommunityId(parentId).mapResult { communityId ->
+            combinedDatabase.roomData.getRoomCommunityId(parentId).mapResult { communityId ->
                 if (communityId == null && uid == null) {
                     Result.failure(UnauthorizedException())
                 } else {
-                    exposedDatabase.containerDatabase.isMemberJoined(parentId, uid)
+                    combinedDatabase.containerDatabase.isMemberJoined(parentId, uid)
                         .map { hasJoined ->
                             RootReadPermission(
                                 hasJoined || communityId != null,
@@ -59,14 +59,14 @@ suspend fun Backend.checkRootReadPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            exposedDatabase.communityDatabase.checkCommunityExists(parentId).mapResultIfNotNull {
-                exposedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
+            combinedDatabase.communityDatabase.checkCommunityExists(parentId).mapResultIfNotNull {
+                combinedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                     RootReadPermission(true, hasJoined, false)
                 }
             }
         }
 
-        ObjectType.USER -> exposedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
+        ObjectType.USER -> combinedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
             RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         }
 
@@ -89,23 +89,23 @@ suspend fun Backend.checkRootWritePermission(
 ): Result<RootWritePermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            exposedDatabase.topicDatabase.getTopicRootTuple(parentId)
+            combinedDatabase.topicDatabase.getTopicRootTuple(parentId)
                 .mapResultIfNotNull { (rootId, rootType) ->
                     checkRootWritePermission(rootType, rootId, uid)
                 }
         }
 
         ObjectType.ROOM -> {
-            exposedDatabase.roomData.getRoomCommunityId(parentId).mapResult {
-                exposedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
+            combinedDatabase.roomData.getRoomCommunityId(parentId).mapResult {
+                combinedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
             }
         }
 
         ObjectType.COMMUNITY -> {
-            exposedDatabase.communityDatabase.checkCommunityExists(parentId).mapResultIfNotNull {
-                exposedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
+            combinedDatabase.communityDatabase.checkCommunityExists(parentId).mapResultIfNotNull {
+                combinedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
             }
@@ -113,7 +113,7 @@ suspend fun Backend.checkRootWritePermission(
 
         ObjectType.USER -> {
             if (uid == parentId) {
-                exposedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
+                combinedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
                     RootWritePermission(parentType, parentId, parentId == uid)
                 }
             } else {
@@ -133,28 +133,28 @@ suspend fun Backend.checkRootAdminPermission(
 ): Result<RootAdminPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            exposedDatabase.topicDatabase.getTopicRootTuple(parentId)
+            combinedDatabase.topicDatabase.getTopicRootTuple(parentId)
                 .mapResultIfNotNull { (rootId, rootType) ->
                     checkRootAdminPermission(rootType, rootId, uid)
                 }
         }
 
         ObjectType.ROOM -> {
-            exposedDatabase.roomData.getRawRoom(ObjectFetch.IdFetch(parentId), true, uid)
+            combinedDatabase.roomData.getRawRoom(ObjectFetch.IdFetch(parentId), true, uid)
                 .mapIfNotNull {
                     RootAdminPermission(parentType, parentId, it.room.creator == uid)
                 }
         }
 
         ObjectType.COMMUNITY -> {
-            exposedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId))
+            combinedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId))
                 .mapIfNotNull {
                     RootAdminPermission(parentType, parentId, it.community.owner == uid)
                 }
         }
 
         ObjectType.USER -> {
-            exposedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
+            combinedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, parentId == uid)
             }
         }

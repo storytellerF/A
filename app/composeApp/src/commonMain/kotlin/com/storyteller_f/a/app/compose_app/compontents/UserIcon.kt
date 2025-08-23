@@ -34,7 +34,7 @@ fun UserIcon(
     UserIconInternal(isMe, setClickEvent, url, size = size) {
         showUserDialog = true
     }
-    com.storyteller_f.a.app.compose_app.pages.user.UserDialog(
+    UserDialog(
         isMe,
         userInfo,
         showUserDialog,

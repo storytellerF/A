@@ -3,13 +3,12 @@ package com.storyteller_f.a.cloud.server.auth
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.getUserAlternateUserInfoList
 import com.storyteller_f.a.cloud.core.service.addAlternativeAccount
+import com.storyteller_f.a.cloud.core.service.getUserAlternateUserInfoList
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.a.cloud.server.route.checkApiRequest
 import com.storyteller_f.a.cloud.server.route.signIn
-import com.storyteller_f.a.cloud.server.route.signUp
 import com.storyteller_f.route4k.ktor.server.invoke
 import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.PrimaryKey
@@ -130,7 +129,7 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        exposedDatabase.userDatabase.isUserExistsByUid(id).map {
+        combinedDatabase.userDatabase.isUserExistsByUid(id).map {
             CustomPrincipal(id)
         }
     } else {
@@ -244,12 +243,12 @@ fun Route.bindAccountRoute() {
 }
 
 fun Route.bindProtectedAccountRoute(backend: Backend) {
-    CustomApi.Accounts.AlternativeAccounts.add.invoke(RoutingContext::handleResult) {
+    CustomApi.Accounts.ChildAccounts.add.invoke(RoutingContext::handleResult) {
         usePrincipal { uid ->
             backend.addAlternativeAccount(uid)
         }
     }
-    CustomApi.Accounts.AlternativeAccounts.get.invoke(RoutingContext::handleResult) {
+    CustomApi.Accounts.ChildAccounts.get.invoke(RoutingContext::handleResult) {
         usePrincipal { uid ->
             pagination(IdentifiablePagingGenerator) {
                 backend.getUserAlternateUserInfoList(uid, it)

@@ -5,8 +5,6 @@ import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.MemberJoins
 import com.storyteller_f.shared.model.PosterSearch
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.isNull
@@ -63,28 +61,4 @@ fun Query.buildCommunitySearchQuery(
         }
     }
     return bindPosterSearch(hasPosterSearch)
-}
-
-suspend fun createCommunityRoomsRaw(
-    id: PrimaryKey,
-    ownerUid: PrimaryKey,
-    communityAid: String,
-    roomIds: List<PrimaryKey>
-) {
-    batchCreateCommunityRooms(
-        listOf(
-            "${communityAid}_general" to "General",
-            "${communityAid}_lobby" to "Lobby",
-            "${communityAid}_support" to "Support"
-        ).mapIndexed { i, pair ->
-            Room(
-                roomIds[i],
-                now(),
-                pair.first,
-                pair.second,
-                ownerUid,
-                communityId = id
-            )
-        }
-    )
 }

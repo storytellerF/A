@@ -114,7 +114,6 @@ kotlin {
             implementation(libs.androidx.datastore.preferences.core)
 
             implementation(libs.androidx.ui.tooling.preview)
-            implementation(libs.javet.node.android)
             if (isLlamaEnable)
                 implementation(":android-llama-cpp")
 
@@ -127,12 +126,6 @@ kotlin {
             implementation(libs.androidx.ui.test.junit4.android)
             implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
-
-            implementation(libs.javet.node.linux.arm64)
-            implementation(libs.javet.node.linux.x86.x4)
-            implementation(libs.javet.node.macos.arm64)
-            implementation(libs.javet.node.macos.x86.x4)
-            implementation(libs.javet.node.windows.x86.x4)
         }
         androidUnitTest {
             dependsOn(headlessTest)
@@ -160,7 +153,6 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.bundles.ktor.client)
             implementation(libs.tasks.genai)
-            compileOnly(libs.javet)
             //ui
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -217,12 +209,6 @@ kotlin {
         }
         desktopTest.dependencies {
             implementation(compose.desktop.currentOs)
-            implementation(libs.javet)
-            implementation(libs.javet.node.linux.arm64)
-            implementation(libs.javet.node.linux.x86.x4)
-            implementation(libs.javet.node.macos.arm64)
-            implementation(libs.javet.node.macos.x86.x4)
-            implementation(libs.javet.node.windows.x86.x4)
         }
         desktopTest.dependsOn(headlessTest)
     }

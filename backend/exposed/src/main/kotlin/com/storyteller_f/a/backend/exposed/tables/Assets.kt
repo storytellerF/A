@@ -21,11 +21,3 @@ fun AssetTransaction.Companion.wrapRow(row: ResultRow): AssetTransaction {
         )
     }
 }
-suspend fun AssetTransaction.Companion.addAssetTransaction(assetTransaction: AssetTransaction) =
-    check(AssetTransactions.insert {
-        it[AssetTransactions.type] = assetTransaction.type
-        it[AssetTransactions.before] = assetTransaction.before
-        it[AssetTransactions.after] = assetTransaction.after
-    }.insertedCount > 0) {
-        "Insert asset transaction failed"
-    }

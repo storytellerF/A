@@ -1,6 +1,6 @@
 package com.storyteller_f.a.backend.exposed.tables
 
-import com.storyteller_f.a.backend.core.types.AlternateAccount
+import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.exposed.BaseTable
@@ -11,7 +11,6 @@ import com.storyteller_f.a.backend.exposed.userPrivateKey
 import com.storyteller_f.a.backend.exposed.userPublicKey
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
-import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -51,7 +50,7 @@ fun mapUserInfo(it: ResultRow): RawUser {
     return RawUser(User.wrapRow(it))
 }
 
-object AlternateAccounts : Table() {
+object ChildAccounts : Table() {
     val uid = customPrimaryKey("uid")
     val hostId = customPrimaryKey("host_id")
     val privateKey = userPrivateKey()
@@ -59,13 +58,13 @@ object AlternateAccounts : Table() {
     override val primaryKey: PrimaryKey = PrimaryKey(uid)
 
     init {
-        index("alternate-accounts-main", false, hostId, uid)
+        index("child-accounts-main", false, hostId, uid)
     }
 }
 
-fun AlternateAccount.Companion.wrapRow(row: ResultRow): AlternateAccount {
-    return with(AlternateAccounts) {
-        AlternateAccount(
+fun ChildAccount.Companion.wrapRow(row: ResultRow): ChildAccount {
+    return with(ChildAccounts) {
+        ChildAccount(
             row[uid],
             row[privateKey],
             row[hostId],

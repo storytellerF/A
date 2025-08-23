@@ -1,7 +1,6 @@
 package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.shared.model.Dimension
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import java.io.File
 
@@ -16,14 +15,15 @@ class CustomConfig(
 data class UploadPack(
     val path: File,
     val name: String,
-    val owner: PrimaryKey,
-    val ownerType: ObjectType,
     val size: Long,
+    val fullName: String
+)
+
+data class ProcessedUploadPack(
+    val pack: UploadPack,
     val contentType: String = "",
     val dimension: Dimension? = null
-) {
-    val newFullName = "$owner/$name"
-}
+)
 
 data class CopyPack(val origin: String, val new: String)
 
