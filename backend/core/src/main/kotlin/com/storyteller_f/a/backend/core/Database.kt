@@ -101,7 +101,6 @@ interface UserDatabase {
         privateKey: String,
         user: User
     ): Result<Unit>
-
 }
 
 interface TopicDatabase {
@@ -289,13 +288,13 @@ interface FileDatabase {
         fileRecordList: List<FileRecord>,
         ownerId: PrimaryKey,
         ownerType: ObjectType
-    ) : Result<Unit>
+    ): Result<Unit>
     suspend fun insertUploadRecord(record: UploadRecord): Result<Unit>
     suspend fun deleteUploadRecord(
         id: PrimaryKey,
         quotaInfo: QuotaInfo,
         length: Long
-    ) : Result<Unit>
+    ): Result<Unit>
 }
 
 interface ContainerDatabase {
@@ -331,8 +330,8 @@ interface ContainerDatabase {
         fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<RawUser>>
 
-    suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType) : Result<QuotaInfo?>
-    suspend fun insertQuota(quota: Quota) : Result<Unit>
+    suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType): Result<QuotaInfo?>
+    suspend fun insertQuota(quota: Quota): Result<Unit>
 }
 
 interface CliDatabase {

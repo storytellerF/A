@@ -16,8 +16,8 @@ fun <T> InputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, String) 
         val lengthBytes = ByteArray(3)
         read(lengthBytes)
         val blockLength = ((lengthBytes[0].toInt() and 0xFF) shl 16) or
-                ((lengthBytes[1].toInt() and 0xFF) shl 8) or
-                (lengthBytes[2].toInt() and 0xFF)
+            ((lengthBytes[1].toInt() and 0xFF) shl 8) or
+            (lengthBytes[2].toInt() and 0xFF)
 
         if (blockType == 6) {
             val pictureData = ByteArray(blockLength)
@@ -27,7 +27,7 @@ fun <T> InputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, String) 
 
             fun readInt(): Int =
                 (dataInput.read() shl 24) or (dataInput.read() shl 16) or
-                        (dataInput.read() shl 8) or dataInput.read()
+                    (dataInput.read() shl 8) or dataInput.read()
 
             readInt() // picture type
             val mimeLength = readInt()
@@ -84,9 +84,9 @@ fun <T> InputStream.readMp3AlbumFromAudioStream(
 
         val frameId = String(frameHeader, 0, 4)
         val frameSize = ((frameHeader[4].toInt() and 0xFF) shl 24) or
-                ((frameHeader[5].toInt() and 0xFF) shl 16) or
-                ((frameHeader[6].toInt() and 0xFF) shl 8) or
-                (frameHeader[7].toInt() and 0xFF)
+            ((frameHeader[5].toInt() and 0xFF) shl 16) or
+            ((frameHeader[6].toInt() and 0xFF) shl 8) or
+            (frameHeader[7].toInt() and 0xFF)
 
         totalRead += 10 + frameSize
         if (frameId != "APIC") {
@@ -122,7 +122,7 @@ fun <T> InputStream.readMp3AlbumFromAudioStream(
 
 private fun syncSafeInt(bytes: ByteArray): Int {
     return ((bytes[0].toInt() and 0x7F) shl 21) or
-            ((bytes[1].toInt() and 0x7F) shl 14) or
-            ((bytes[2].toInt() and 0x7F) shl 7) or
-            (bytes[3].toInt() and 0x7F)
+        ((bytes[1].toInt() and 0x7F) shl 14) or
+        ((bytes[2].toInt() and 0x7F) shl 7) or
+        (bytes[3].toInt() and 0x7F)
 }

@@ -572,7 +572,6 @@ private fun InputGroupSuffix(
     CustomAlertDialog(alertDialogController, {
         alertDialogController.close()
     }) {
-
     }
 }
 

@@ -58,7 +58,7 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
     description = "Merge SPI files from dependencies into a single output"
 
     val outputDir = layout.buildDirectory.dir("merged/services").get()
-    val runtimeClasspath = configurations.named("runtimeClasspath").get().files.toList()
+    val runtimeClasspath = configurations.runtimeClasspath.get().files.toList()
     val injected = project.objects.newInstance<Injected>()
 
     inputs.files(runtimeClasspath)
@@ -80,7 +80,9 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
         }
 
         val output = outputDir.asFile
-        output.mkdirs()
+        if (!output.exists() && !output.mkdirs()) {
+            throw Exception("mkdirs falied: $output")
+        }
         runtimeClasspath.flatMap { file ->
             when {
                 !file.isFile || !file.name.endsWith(".jar") -> emptyList()
@@ -115,6 +117,11 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
 }
 
 tasks.processResources.dependsOn(mergeServiceFiles)
+afterEvaluate {
+    mergeServiceFiles.get().mustRunAfter(":shared:jvmJar")
+    mergeServiceFiles.get().mustRunAfter(":backend:core:jar")
+    mergeServiceFiles.get().mustRunAfter(":backend:exposed:jar")
+}
 
 val flavor = project.findProperty("buildkonfig.flavor").toString()
 

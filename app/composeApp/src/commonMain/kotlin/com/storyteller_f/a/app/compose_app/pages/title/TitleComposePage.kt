@@ -249,7 +249,7 @@ private fun TitleScopeEditor(
                     ObjectType.USER -> UserRefCell(it.objectId)
 
                     ObjectType.TITLE -> TODO()
-                    ObjectType.MEDIA -> TODO()
+                    ObjectType.File -> TODO()
                 }
             } else {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -398,7 +398,7 @@ private fun TypeSelector(
                     ObjectType.TOPIC -> Icons.Default.Topic
                     ObjectType.USER -> Icons.Default.AccountBox
                     ObjectType.TITLE -> TODO()
-                    ObjectType.MEDIA -> TODO()
+                    ObjectType.File -> TODO()
                 },
                 "icon"
             )
@@ -450,7 +450,7 @@ fun ObjectList(
             }
 
             ObjectType.TITLE -> TODO()
-            ObjectType.MEDIA -> TODO()
+            ObjectType.File -> TODO()
         }
     }
 }

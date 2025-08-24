@@ -8,14 +8,9 @@ import androidx.compose.material3.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.client.core.ServerErrorException
-import dev.tclement.fonticons.FontIcon
-import dev.tclement.fonticons.ProvideIconParameters
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class DialogSaveState {
@@ -35,6 +30,7 @@ fun DialogContainer(block: @Composable ColumnScope.() -> Unit) {
         }
     }
 }
+
 @Composable
 fun rememberAlertDialogController(): CustomAlertDialogController {
     return remember {

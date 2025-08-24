@@ -6,11 +6,11 @@ import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.cloud.core.service.RootWritePermission
 import com.storyteller_f.a.cloud.core.service.checkRootWritePermission
-import com.storyteller_f.a.cloud.core.service.tryCopyMedia
 import com.storyteller_f.a.cloud.core.service.extractAlbum
-import com.storyteller_f.a.cloud.core.service.getMediaByName
-import com.storyteller_f.a.cloud.core.service.getMediaList
+import com.storyteller_f.a.cloud.core.service.getFileInfoByName
+import com.storyteller_f.a.cloud.core.service.getFileList
 import com.storyteller_f.a.cloud.core.service.newFileName
+import com.storyteller_f.a.cloud.core.service.tryCopyFile
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
@@ -38,41 +38,41 @@ import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 
 fun Route.bindProtectedMediaRoute(backend: Backend) {
-    CustomApi.Medias.get.invoke(RoutingContext::handleResult) {
+    CustomApi.Files.get.invoke(RoutingContext::handleResult) {
         usePrincipal { uid ->
             it.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.getMediaList(uid, it, pagingFetch)
+                backend.getFileList(uid, it, pagingFetch)
             }
         }
     }
 
-    CustomApi.Medias.getByName.invoke(RoutingContext::handleResult) {
+    CustomApi.Files.getByName.invoke(RoutingContext::handleResult) {
         usePrincipal { uid ->
-            backend.getMediaByName(uid, it.objectId ob it.objectType, it.name)
+            backend.getFileInfoByName(uid, it.objectId ob it.objectType, it.name)
         }
     }
 
     val userHome = System.getProperty("user.home")
-    val root = File(userHome, "atemp")
+    val root = File(userHome, "a-temp")
     if (!root.exists() && !root.mkdir()) {
-        error("create atemp failed")
+        error("create a-temp failed")
     }
 
-    CustomApi.Medias.Id.extractAlbum.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Files.Id.extractAlbum.invoke(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.extractAlbum(p.id, root, uid)
         }
     }
 
-    CustomApi.Medias.upload.invoke(RoutingContext::handleResult) { q, api ->
+    CustomApi.Files.upload.invoke(RoutingContext::handleResult) { q, api ->
         usePrincipal { uid ->
             uploadMedia(backend, uid, root, q)
         }
     }
 
-    CustomApi.Medias.Id.copy.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Files.Id.copy.invoke(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
-            backend.tryCopyMedia(p, uid)
+            backend.tryCopyFile(p, uid)
         }
     }
 }
@@ -123,12 +123,14 @@ private suspend fun Backend.processFilePart(
     provider().copyContentAndClose(file.writeChannel(), length)
     try {
         val mediaInfos = tryUploadFiles(
-            permission.objectId, permission.objectType, listOf(
+            permission.objectId,
+            permission.objectType,
+            listOf(
                 UploadPack(
                     file,
                     newSavedName,
                     length,
-                    "${permission.objectId}/${newSavedName}"
+                    "${permission.objectId}/$newSavedName"
                 ),
             )
         ).getOrThrow()

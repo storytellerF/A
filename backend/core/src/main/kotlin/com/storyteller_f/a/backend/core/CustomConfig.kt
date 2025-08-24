@@ -25,7 +25,7 @@ data class ProcessedUploadPack(
     val dimension: Dimension? = null
 )
 
-data class CopyPack(val origin: String, val new: String)
+data class CopyPack(val originFullName: String, val newFullName: String)
 
 sealed interface JoinSearch {
     data class Joined(val uid: PrimaryKey) : JoinSearch

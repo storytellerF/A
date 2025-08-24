@@ -26,7 +26,7 @@ fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, word: Stri
         Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).select(Users.fields + Aids.value)
     }
 
-    if (!(word.isNullOrBlank())) {
+    if (!word.isNullOrBlank()) {
         query.andWhere {
             Users.nickname like "%$word%"
         }

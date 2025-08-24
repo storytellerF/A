@@ -26,7 +26,7 @@ elastic
 !cloud/server/src/test/resources/.env
 deploy/*_data
 deploy/docker-images
-deploy/amedia
+deploy/a_file
 deploy/preset.zip
 node_modules
 bin

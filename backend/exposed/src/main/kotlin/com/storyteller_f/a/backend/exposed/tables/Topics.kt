@@ -7,9 +7,7 @@ import com.storyteller_f.a.backend.exposed.objectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.datetime.datetime
-import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 object Topics : BaseTable() {
@@ -46,4 +44,3 @@ fun Topic.Companion.wrapRow(row: ResultRow): Topic {
 fun Topic.Companion.findById(topicId: PrimaryKey) = Topics.selectAll().where {
     Topics.id eq topicId
 }
-

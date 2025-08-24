@@ -2,7 +2,7 @@ package com.storyteller_f.a.backend.service.object_storage
 
 import com.storyteller_f.a.backend.core.CopyPack
 import com.storyteller_f.a.backend.core.UploadPack
-import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
+import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +56,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
                 val mediaPath = base.resolve("$bucketName/$it")
                 if (mediaPath.exists()) {
                     ObjectStorageRecord(
-                        URIBuilder(url).setPath("amedia/${AMEDIA_DEFAULT_BUCKET}/$it").build()
+                        URIBuilder(url).setPath("a_file/${A_FILE_DEFAULT_BUCKET}/$it").build()
                             .toString(),
                         mediaPath.getLastModifiedTime().toInstant().toKotlinInstant()
                             .toLocalDateTime(TimeZone.UTC),
@@ -100,13 +100,13 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
         return useFileSystem {
             val bucketPath = base.resolve(bucketName)
             copyPacks.map {
-                val p = bucketPath.resolve(it.origin)
+                val p = bucketPath.resolve(it.originFullName)
                 if (!p.exists()) {
-                    throw Exception("${it.origin} not exists")
+                    throw Exception("${it.originFullName} not exists")
                 }
-                val targetFile = bucketPath.resolve(it.new).createParentDirectories()
+                val targetFile = bucketPath.resolve(it.newFullName).createParentDirectories()
                 p.copyTo(targetFile, true)
-                it.new
+                it.newFullName
             }
         }.mapResult {
             get(bucketName, it)

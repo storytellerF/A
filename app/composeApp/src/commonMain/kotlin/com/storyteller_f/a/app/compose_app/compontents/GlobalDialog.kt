@@ -123,8 +123,7 @@ class CustomGlobalDialogController(
         }
     }
 
-    override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
-    }
+    override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) = Unit
 }
 
 @Composable
@@ -196,7 +195,6 @@ private fun GlobalDialogContent(
                     }
                 }
             }
-
         }
     }
 }

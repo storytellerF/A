@@ -12,10 +12,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.AppConfig
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
-import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compose_app.compontents.rememberAlertDialogController
 import com.storyteller_f.a.app.compose_app.model.createUploadViewModel
 import com.storyteller_f.a.client.core.LoadingHandler
@@ -134,6 +132,5 @@ private fun UploadItem(
     CustomAlertDialog(globalDialogController, {
         globalDialogController.close()
     }) {
-
     }
 }

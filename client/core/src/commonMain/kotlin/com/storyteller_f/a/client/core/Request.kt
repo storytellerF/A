@@ -1,8 +1,8 @@
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.api.core.PaginationQuery
-import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.api.core.TopicQuery
 import com.storyteller_f.route4k.ktor.client.invoke
 import com.storyteller_f.shared.SignInPack
@@ -359,8 +359,8 @@ suspend fun SessionManager.getMediaList(
     size: Int
 ) =
     serviceCatching {
-        CustomApi.Medias.get.invoke(
-            CustomApi.Medias.MediaQuery(
+        CustomApi.Files.get.invoke(
+            CustomApi.Files.FileQuery(
                 objectId,
                 objectType,
                 nextId,
@@ -375,8 +375,8 @@ suspend fun SessionManager.getMediaByName(
     objectType: ObjectType
 ) =
     serviceCatching {
-        CustomApi.Medias.getByName.invoke(
-            CustomApi.Medias.MediaSearchQuery(
+        CustomApi.Files.getByName.invoke(
+            CustomApi.Files.MediaSearchQuery(
                 word,
                 objectId,
                 objectType
@@ -391,11 +391,11 @@ suspend fun SessionManager.upload(
     data: UploadData,
     onUpload: (Long, Long?) -> Unit = { _, _ -> },
 ) = serviceCatching {
-    CustomApi.Medias.upload.invoke(objectTuple, Unit) {
+    CustomApi.Files.upload.invoke(objectTuple, Unit) {
         setBody(
             MultiPartFormDataContent(
                 formData {
-                    append("description", "amedia")
+                    append("description", "a_file")
                     appendInput("file", Headers.build {
                         append(HttpHeaders.ContentType, data.contentType)
                         append(HttpHeaders.ContentDisposition, "filename=\"${data.name}\"")
@@ -414,7 +414,7 @@ suspend fun SessionManager.upload(
 
 suspend fun SessionManager.copy(mediaId: PrimaryKey) =
     serviceCatching {
-        CustomApi.Medias.Id.copy.invoke(CommonPath(mediaId), Unit) {
+        CustomApi.Files.Id.copy.invoke(CommonPath(mediaId), Unit) {
         }
     }
 
@@ -536,7 +536,7 @@ suspend fun SessionManager.addDevice(endpointUrl: String) = serviceCatching {
 }
 
 suspend fun SessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatching {
-    CustomApi.Medias.Id.extractAlbum.invoke(CommonPath(mediaId), Unit) {}
+    CustomApi.Files.Id.extractAlbum.invoke(CommonPath(mediaId), Unit) {}
 }
 
 suspend fun SessionManager.addAlternativeAccount() = serviceCatching {

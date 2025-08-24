@@ -85,7 +85,6 @@ kotlin {
             dependsOn(commonTest.get())
         }
         headlessTest.dependencies {
-            implementation(projects.client.kotbase)
         }
         androidMain.dependencies {
             implementation(compose.preview)
@@ -227,12 +226,7 @@ fun getenv(key: String): String? {
     return System.getenv(key) ?: System.getenv(key.uppercase())
 }
 
-val signPath: String? = getenv("storyteller_f_sign_path")
-val signKey: String? = getenv("storyteller_f_sign_key")
-val signAlias: String? = getenv("storyteller_f_sign_alias")
-val signStorePassword: String? = getenv("storyteller_f_sign_store_password")
-val signKeyPassword: String? = getenv("storyteller_f_sign_key_password")
-val generatedJksFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
+
 android {
     namespace = "com.storyteller_f.a.app"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -258,6 +252,13 @@ android {
             isUniversalApk = true
         }
     }
+
+    val signPath: String? = getenv("storyteller_f_sign_path")
+    val signKey: String? = getenv("storyteller_f_sign_key")
+    val signAlias: String? = getenv("storyteller_f_sign_alias")
+    val signStorePassword: String? = getenv("storyteller_f_sign_store_password")
+    val signKeyPassword: String? = getenv("storyteller_f_sign_key_password")
+    val generatedJksFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
 
     signingConfigs {
         val signStorePath = when {
@@ -384,22 +385,23 @@ buildkonfig {
 
 val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
     group = "signing"
+    val signKey = providers.environmentVariable("storyteller_f_sign_key").getOrElse("")
+    val generatedJksFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
+
+    inputs.property("signKey", signKey)
+    outputs.file(generatedJksFile)
     doLast {
-        if (signKey != null) {
+        if (!signKey.isBlank()) {
             // 定义输出文件路径 (如密钥存储文件)
             val outputFile = generatedJksFile
 
             outputFile.parentFile?.let {
-                if (!it.exists()) {
-                    if (!it.mkdirs()) {
-                        throw Exception("mkdirs falied: $it")
-                    }
+                if (!it.exists() && !it.mkdirs()) {
+                    throw Exception("mkdirs failed: $it")
                 }
             }
-            if (!outputFile.exists()) {
-                if (!outputFile.createNewFile()) {
-                    throw Exception("create failed: $outputFile")
-                }
+            if (!outputFile.exists() && !outputFile.createNewFile()) {
+                throw Exception("create failed: $outputFile")
             }
             // 将 Base64 解码为字节
             val decodedBytes = Base64.getDecoder().decode(signKey)

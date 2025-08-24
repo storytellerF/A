@@ -320,7 +320,6 @@ fun TopicSendButton(input: String, updateInput: (String) -> Unit, topic: TopicIn
     CustomAlertDialog(alertDialogController, {
         alertDialogController.close()
     }) {
-
     }
 }
 
