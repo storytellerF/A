@@ -88,7 +88,6 @@ val composeModules = listOf(
     ":shared",
     ":app:composeApp",
     ":client:core",
-    ":client:kotbase",
     ":client:model-storage"
 )
 dependencies {

@@ -62,13 +62,13 @@ class MinIoObjectStorageService(
                 copyObject(
                     CopyObjectArgs.builder()
                         .bucket(bucketName)
-                        .`object`(it.new)
+                        .`object`(it.newFullName)
                         .metadataDirective(Directive.COPY)
                         .taggingDirective(Directive.COPY)
                         .source(
                             CopySource.builder()
                                 .bucket(bucketName)
-                                .`object`(it.origin)
+                                .`object`(it.originFullName)
                                 .build()
                         )
                         .build()

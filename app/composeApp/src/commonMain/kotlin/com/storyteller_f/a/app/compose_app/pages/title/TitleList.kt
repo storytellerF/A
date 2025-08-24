@@ -67,7 +67,7 @@ fun TitleItem(titleInfo: TitleInfo) {
                 ObjectType.TOPIC -> {}
                 ObjectType.USER -> UserIcon(it.receiverInfo)
                 ObjectType.TITLE -> {}
-                ObjectType.MEDIA -> {}
+                ObjectType.File -> {}
             }
         }
     }

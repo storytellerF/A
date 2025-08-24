@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
+import java.lang.Exception
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -123,11 +124,15 @@ android {
         }
     }
 }
-
+interface Injected {
+    @get:Inject
+    val operations: ArchiveOperations
+}
 val extractCouchbaseLibsTask = tasks.register("extractCouchbaseNativeLib") {
     group = "libs"
     val outputDir = layout.buildDirectory.dir("native-libs/couchbase")
-    val runtimeClasspath = configurations.getByName("jvmRuntimeClasspath")
+    val runtimeClasspath = configurations.named("jvmRuntimeClasspath").get().files.toList()
+    val injected = project.objects.newInstance<Injected>()
 
     inputs.files(runtimeClasspath)
     outputs.dir(outputDir)
@@ -136,10 +141,12 @@ val extractCouchbaseLibsTask = tasks.register("extractCouchbaseNativeLib") {
     val arch = System.getProperty("os.arch")
     doLast {
         val output = outputDir.get().asFile
-        output.mkdirs()
+        if (!output.exists() && !output.mkdirs()) {
+            throw Exception("mkdirs failed $output")
+        }
         runtimeClasspath.forEach { jarFile ->
             if (jarFile.path.contains("couchbase-lite-java")) {
-                zipTree(jarFile).forEach { file ->
+                injected.operations.zipTree(jarFile).forEach { file ->
                     val match = if (osName.contains("mac")) {
                         file.path.contains("macos") &&
                                 (file.path.contains("universal") || file.path.contains(arch))

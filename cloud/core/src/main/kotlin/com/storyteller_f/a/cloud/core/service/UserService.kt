@@ -149,7 +149,7 @@ suspend fun Backend.checkIcon(
             when {
                 mediaInfo == null -> MediaCheckResult.NOT_FOUND
                 !mediaInfo.contentType.startsWith("image/") -> MediaCheckResult.CONTENT_TYPE_MISMATCH
-                aspectRatio != null && (dimension == null || !checkMediaDimensionRatioMatch(
+                aspectRatio != null && (dimension == null || !checkMediaFileDimensionRatioMatch(
                     dimension,
                     aspectRatio
                 )) -> MediaCheckResult.DIMENSION_MISMATCH

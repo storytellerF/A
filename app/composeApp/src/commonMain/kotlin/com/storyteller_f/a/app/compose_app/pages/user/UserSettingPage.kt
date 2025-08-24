@@ -31,7 +31,7 @@ import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.model.checkMediaDimensionRatioMatch
+import com.storyteller_f.shared.model.checkMediaFileDimensionRatioMatch
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
@@ -159,7 +159,6 @@ fun ObjectSettingDialog(
     CustomAlertDialog(alertDialogController, {
         alertDialogController.close()
     }) {
-
     }
 }
 
@@ -180,7 +179,7 @@ private fun processSelectedMedia(
     if (dimension == null || !info.contentType.startsWith("image/")) {
         alertDialogController.showTitle("invalid image: ${info.contentType} $dimension")
     } else {
-        if (checkMediaDimensionRatioMatch(
+        if (checkMediaFileDimensionRatioMatch(
                 dimension,
                 Dimension(ratio.x, ratio.y)
             )

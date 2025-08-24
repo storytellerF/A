@@ -204,7 +204,6 @@ fun <T : Any> RefCellStateView(
     CustomAlertDialog(alertDialogController, {
         alertDialogController.close()
     }) {
-
     }
 }
 

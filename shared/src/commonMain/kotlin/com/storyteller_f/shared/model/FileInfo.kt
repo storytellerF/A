@@ -7,7 +7,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
 
-const val AMEDIA_DEFAULT_BUCKET = "default"
+const val A_FILE_DEFAULT_BUCKET = "default"
 
 @Serializable
 data class Dimension(val width: Int, val height: Int)
@@ -26,10 +26,10 @@ data class FileInfo(
     val dimension: Dimension?,
 ) : PrimaryKeyIdentifiable {
     override val objectType: ObjectType
-        get() = ObjectType.MEDIA
+        get() = ObjectType.File
 }
 
-fun checkMediaDimensionRatioMatch(dimension: Dimension, aspectRatio: Dimension): Boolean {
+fun checkMediaFileDimensionRatioMatch(dimension: Dimension, aspectRatio: Dimension): Boolean {
     val aspectHeight = dimension.width.toFloat() * aspectRatio.height / aspectRatio.width
     val abs = abs(aspectHeight - dimension.height)
     Napier.i {

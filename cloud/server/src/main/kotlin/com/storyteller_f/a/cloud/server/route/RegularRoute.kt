@@ -18,7 +18,7 @@ fun Routing.bindUnauthenticatedRoute(backend: Backend) {
         call.respondText("pong")
     }
 
-    get("/amedia/{path...}") {
+    get("/a_file/{path...}") {
         omitPrincipal {
             checkParameter<List<String>, PathResponse>("path") { paths ->
                 getFileSystemDownloadUrl(backend, paths)

@@ -4,9 +4,7 @@ import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.r2dbc.batchInsert
 
 object FileRecords : BaseTable() {
     val name = varchar("name", 200)

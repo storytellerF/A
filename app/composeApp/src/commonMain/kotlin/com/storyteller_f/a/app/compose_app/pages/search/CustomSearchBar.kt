@@ -90,7 +90,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
             ObjectType.TOPIC -> TODO()
             ObjectType.USER -> TODO()
             ObjectType.TITLE -> appNav.gotoTitleCompose()
-            ObjectType.MEDIA -> TODO()
+            ObjectType.File -> TODO()
         }
     }
 }

@@ -71,7 +71,8 @@ fun globalLoader(url: String): ImageRequest {
     val client = LocalClient.current
     val platformContext = LocalPlatformContext.current
     return remember(url) {
-        @Suppress("KotlinConstantConditions") val data =
+        @Suppress("KotlinConstantConditions")
+        val data =
             if (AppConfig.BUILD_TYPE == "prod") url.replace("http://", "https://") else url
         ImageRequest.Builder(platformContext).data(data).crossfade(true).fetcherFactory(
             KtorNetworkFetcherFactory(client)

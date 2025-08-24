@@ -78,7 +78,7 @@ suspend fun Backend.checkRootReadPermission(
             )
         )
 
-        ObjectType.MEDIA -> TODO()
+        ObjectType.File -> TODO()
     }
 }
 
@@ -122,7 +122,7 @@ suspend fun Backend.checkRootWritePermission(
         }
 
         ObjectType.TITLE -> Result.success(RootWritePermission(parentType, parentId, false))
-        ObjectType.MEDIA -> TODO()
+        ObjectType.File -> TODO()
     }
 }
 
@@ -160,6 +160,6 @@ suspend fun Backend.checkRootAdminPermission(
         }
 
         ObjectType.TITLE -> Result.success(RootAdminPermission(parentType, parentId, false))
-        ObjectType.MEDIA -> TODO()
+        ObjectType.File -> TODO()
     }
 }

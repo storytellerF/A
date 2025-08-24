@@ -172,7 +172,6 @@ private suspend fun updateCommunityInfo(
         sessionManager.updateCommunityInfo(communityInfo.id, body)
     }.onSuccess { newInfo ->
         bus.emit(OnCommunityUpdated(newInfo))
-
     }
 }
 

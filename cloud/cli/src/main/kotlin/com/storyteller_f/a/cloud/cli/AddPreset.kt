@@ -9,8 +9,8 @@ import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.getCommunityRoomsTemplateList
 import com.storyteller_f.a.backend.service.index.TopicDocument
+import com.storyteller_f.a.cloud.core.service.getCommunityRoomsTemplateList
 import com.storyteller_f.a.cloud.core.service.getFileInfoList
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
 import com.storyteller_f.shared.calcAddress
@@ -256,7 +256,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }.orEmpty() + userMap["System"]!!.id
         })
         communities.map {
-            combinedDatabase.communityDatabase.createCommunityRooms(getCommunityRoomsTemplateList(it))
+            combinedDatabase.communityDatabase.createCommunityRooms(getCommunityRoomsTemplateList(it)).getOrThrow()
         }
     }
 
@@ -283,12 +283,17 @@ class AddPreset : Subcommand("add", "add entry") {
                 communityMap[addTopic.community]!!
             }
             InsertTopicTuple(
-                addTopic, index,
+                addTopic,
+                index,
                 if (parent == null || parent == 0 || level == null || level == 0) {
                     0
                 } else {
                     level
-                }, id, content, false, rootId
+                },
+                id,
+                content,
+                false,
+                rootId
             )
         }
         combinedDatabase.cliDatabase.batchAddTopics(tuples, userMap, objectType)
@@ -511,12 +516,17 @@ class AddPreset : Subcommand("add", "add entry") {
             val content = tuple.encryptedContent
             val rootId = roomMap[tuple.presetTopic.room]!!.id
             InsertTopicTuple(
-                tuple.presetTopic, index,
+                tuple.presetTopic,
+                index,
                 if (parent == null || parent == 0 || level == null || level == 0) {
                     0
                 } else {
                     level
-                }, id, content, true, rootId
+                },
+                id,
+                content,
+                true,
+                rootId
             )
         }
         combinedDatabase.cliDatabase.batchAddEncryptTopics(tuples, userMap, roomMap, encryptedKeys)
@@ -539,14 +549,16 @@ class AddPreset : Subcommand("add", "add entry") {
     ): FileInfo? {
         if (p.isEmpty()) return null
         return tryUploadFiles(
-            id, type, p.map {
+            id,
+            type,
+            p.map {
                 val path = File(parentDir, it)
                 val name = path.name
                 UploadPack(
                     path,
                     name,
                     path.length(),
-                    "${id}/$name"
+                    "$id/$name"
                 )
             }
         ).getOrThrow().first()

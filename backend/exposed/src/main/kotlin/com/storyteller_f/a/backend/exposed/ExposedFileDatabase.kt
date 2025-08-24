@@ -6,8 +6,8 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
-import com.storyteller_f.a.backend.exposed.tables.FileRefs
 import com.storyteller_f.a.backend.exposed.tables.FileRecords
+import com.storyteller_f.a.backend.exposed.tables.FileRefs
 import com.storyteller_f.a.backend.exposed.tables.Quotas
 import com.storyteller_f.a.backend.exposed.tables.UploadRecords
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
@@ -16,6 +16,7 @@ import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -94,24 +95,28 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<FileRecord>> {
-        return databaseSession.dbSearch {
-            search {
-                FileRecords.selectAll().where {
-                    FileRecords.owner eq uid
-                }.bindPaginationQuery(FileRecords, primaryKeyFetch)
-            }
-            map(FileRecord::wrapRow)
-        }.mapResult { list ->
-            databaseSession.dbSearch {
-                search {
-                    FileRecords.selectAll().where {
-                        FileRecords.owner eq uid
+        return merge(
+            {
+                databaseSession.dbSearch {
+                    search {
+                        FileRecords.selectAll().where {
+                            FileRecords.owner eq uid
+                        }.bindPaginationQuery(FileRecords, primaryKeyFetch)
                     }
+                    map(FileRecord::wrapRow)
                 }
-                count()
-            }.map { count ->
-                PaginationResult(list, count)
+            }, {
+                databaseSession.dbSearch {
+                    search {
+                        FileRecords.selectAll().where {
+                            FileRecords.owner eq uid
+                        }
+                    }
+                    count()
+                }
             }
+        ).map { (list, count) ->
+            PaginationResult(list, count)
         }
     }
 
@@ -173,7 +178,10 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
                 "delete upload record failed"
             }
             check(Quotas.update({
-                Quotas.ownerId eq ownerId and (Quotas.quotaType eq QuotaType.FILE) and (Quotas.locking eq true) and (Quotas.used eq quotaInfo.used)
+                Quotas.ownerId eq ownerId and
+                        (Quotas.quotaType eq QuotaType.FILE) and
+                        (Quotas.locking eq true) and
+                        (Quotas.used eq quotaInfo.used)
             }) {
                 it[Quotas.locking] = false
                 it[Quotas.used] = quotaInfo.used + length
@@ -182,5 +190,4 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
             }
         }
     }
-
 }

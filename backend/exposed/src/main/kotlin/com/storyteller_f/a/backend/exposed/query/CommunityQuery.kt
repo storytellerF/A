@@ -1,7 +1,6 @@
 package com.storyteller_f.a.backend.exposed.query
 
 import com.storyteller_f.a.backend.core.JoinSearch
-import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.MemberJoins
 import com.storyteller_f.shared.model.PosterSearch

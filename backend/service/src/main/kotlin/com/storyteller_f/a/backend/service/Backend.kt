@@ -3,13 +3,11 @@ package com.storyteller_f.a.backend.service
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.*
-import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.RawUser
-import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.toCommunityIfo
 import com.storyteller_f.a.backend.core.types.toFileInfo
@@ -25,8 +23,7 @@ import com.storyteller_f.a.backend.service.object_storage.FileSystemObjectStorag
 import com.storyteller_f.a.backend.service.object_storage.MinIoObjectStorageService
 import com.storyteller_f.a.backend.service.object_storage.ObjectStorageService
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.utils.*
 import io.github.aakira.napier.Napier
 import org.apache.tika.Tika
@@ -110,9 +107,9 @@ fun mediaService(env: MergedEnv): ObjectStorageService {
             val base = env["FILE_SYSTEM_MEDIA_PATH"]
             val p = if (base.isNullOrBlank()) {
                 Napier.i {
-                    "use in-memory amedia"
+                    "use in-memory file"
                 }
-                MemoryFileSystemBuilder.newLinux().build().getPath("/amedia")
+                MemoryFileSystemBuilder.newLinux().build().getPath("/a_file")
             } else {
                 Paths.get(base)
             }
@@ -187,7 +184,7 @@ suspend fun Backend.processRawCommunityToCommunityInfo(
 suspend fun Backend.processFileRecordToFileInfo(
     fileRecords: List<FileRecord>,
 ): Result<List<FileInfo>> {
-    return objectStorageService.get(AMEDIA_DEFAULT_BUCKET, fileRecords.map {
+    return objectStorageService.get(A_FILE_DEFAULT_BUCKET, fileRecords.map {
         it.fullName
     }).map { mediaList ->
         val mediaRecordMap = mediaList.associateBy { it.fullName }
@@ -232,15 +229,14 @@ suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>): Result<List<R
 }
 
 suspend fun <T> Backend.lockQuotaInfo(
-    ownerId: PrimaryKey,
+    objectTuple: ObjectTuple,
     quotaType: QuotaType,
-    ownerType: ObjectType,
     length: Long,
     name: String,
     block: suspend () -> Result<T>
 ): Result<T> {
     try {
-        val quotaInfo = getQuotaInfo(ownerId, quotaType, ownerType).getOrThrow()
+        val quotaInfo = getQuotaInfo(quotaType, objectTuple).getOrThrow()
         if (quotaInfo.locking) {
             throw CustomBadRequestException("quota is locking")
         }
@@ -249,8 +245,8 @@ suspend fun <T> Backend.lockQuotaInfo(
             UploadRecord(
                 id,
                 now(),
-                ownerId,
-                ownerType,
+                objectTuple.objectId,
+                objectTuple.objectType,
                 length,
                 0,
                 name
@@ -265,20 +261,22 @@ suspend fun <T> Backend.lockQuotaInfo(
     }
 }
 
-suspend fun Backend.getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType, ownerType: ObjectType) =
-    combinedDatabase.containerDatabase.getQuotaInfo(ownerId, quotaType).mapResult {
+suspend fun Backend.getQuotaInfo(
+    quotaType: QuotaType, objectTuple: ObjectTuple
+) =
+    combinedDatabase.containerDatabase.getQuotaInfo(objectTuple.objectId, quotaType).mapResult {
         if (it == null) {
-            insertQuotaAndGet(ownerId, ownerType, quotaType)
+            insertQuotaAndGet(quotaType, objectTuple)
         } else {
             Result.success(it)
         }
     }
 
 private suspend fun Backend.insertQuotaAndGet(
-    ownerId: PrimaryKey,
-    ownerType: ObjectType,
-    quotaType: QuotaType
+    quotaType: QuotaType,
+    objectTuple: ObjectTuple
 ): Result<QuotaInfo> {
+    val (ownerId, ownerType) = objectTuple
     val quota = Quota(
         ownerId,
         ownerType,

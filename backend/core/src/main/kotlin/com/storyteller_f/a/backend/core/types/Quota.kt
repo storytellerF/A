@@ -1,7 +1,7 @@
 package com.storyteller_f.a.backend.core.types
 
-import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.QuotaInfo
+import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 

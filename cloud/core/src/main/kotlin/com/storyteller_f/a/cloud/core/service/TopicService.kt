@@ -162,12 +162,14 @@ private suspend fun Backend.createTopicSnapshot(
                 } ?: SnapshotVerify.NoneVerify(pdfFile)
             ).mapResultIfNotNull {
                 tryUploadFiles(
-                    uid, ObjectType.USER, listOf(
+                    uid,
+                    ObjectType.USER,
+                    listOf(
                         UploadPack(
                             pdfFile,
                             "$topicId.pdf",
                             pdfFile.length(),
-                            "${uid}/$topicId.pdf"
+                            "$uid/$topicId.pdf"
                         )
                     )
                 ).map {

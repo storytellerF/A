@@ -84,7 +84,6 @@ import com.storyteller_f.a.app.compose_app.join_community
 import com.storyteller_f.a.app.compose_app.join_community_prompt
 import com.storyteller_f.a.app.compose_app.model.CommunityViewModel
 import com.storyteller_f.a.app.compose_app.model.OnCommunityExited
-import com.storyteller_f.a.app.compose_app.model.OnCommunityJoined
 import com.storyteller_f.a.app.compose_app.model.createCommunityRoomsViewModel
 import com.storyteller_f.a.app.compose_app.model.createCommunityTopicsViewModel
 import com.storyteller_f.a.app.compose_app.model.createCommunityViewModel

@@ -97,11 +97,12 @@ fun main(args: Array<String>) {
     processInitTaskIfNeed(map)
     val serverPort = map["SERVER_PORT"]?.toInt() ?: 80
     val extraArgs = arrayOf("-port=$serverPort")
-    if (map["BUILD_TYPE"] == "prod")
+    if (map["BUILD_TYPE"] == "prod") {
         Sentry.init { options ->
             options.dsn = map["SENTRY_DSN"]
             options.isDebug = false
         }
+    }
     EngineMain.main(args + extraArgs)
 }
 

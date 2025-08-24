@@ -5,7 +5,7 @@ import com.storyteller_f.a.client.core.extractAlbum
 import com.storyteller_f.a.client.core.getMediaList
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.a.cloud.core.service.getExtensionFromMimeType
-import com.storyteller_f.a.cloud.core.service.readFlacAlbumFromAudioStream
+import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.http.*
@@ -38,13 +38,12 @@ class MediaTest {
                         UploadData(
                             5,
                             "hello.txt",
-                            ContentType.defaultForFileExtension("txt"),
-                            {
-                                Buffer().apply {
-                                    writeString("hello")
-                                }
+                            ContentType.defaultForFileExtension("txt")
+                        ) {
+                            Buffer().apply {
+                                writeString("hello")
                             }
-                        )
+                        }
                     ).getOrThrow()
                 assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
                 val mediaList = getMediaList(it.uid, ObjectType.USER, null, 10)
@@ -103,7 +102,7 @@ class MediaTest {
 
     @Test
     fun `test audio album`() = test(
-        mapOf("FILE_SYSTEM_MEDIA_PATH" to "build/test/amedia")
+        mapOf("FILE_SYSTEM_MEDIA_PATH" to "build/test/a_file")
     ) {
         attachSession {
             val name = "I_Don’t_Wanna_Live_Forever.flac"

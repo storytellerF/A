@@ -14,7 +14,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
-
 @Composable
 fun ButtonNav(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
     ButtonNav(IconRes.Vector(icon), title, onClick)

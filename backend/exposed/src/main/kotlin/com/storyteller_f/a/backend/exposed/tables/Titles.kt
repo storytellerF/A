@@ -8,7 +8,6 @@ import com.storyteller_f.a.backend.exposed.titleName
 import com.storyteller_f.shared.model.TitleStatus
 import com.storyteller_f.shared.model.TitleType
 import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.r2dbc.insert
 
 fun Table.titleType(name: String) = enumerationByName<TitleType>(name, 10)
 

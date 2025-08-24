@@ -1,6 +1,6 @@
 package com.storyteller_f.a.cloud.cli
 
-import com.storyteller_f.shared.model.AMEDIA_DEFAULT_BUCKET
+import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ExperimentalCli
 import kotlinx.cli.Subcommand
@@ -14,7 +14,7 @@ class CleanCommand : Subcommand("clean", "clean all data") {
             Napier.i {
                 "database tables delete done"
             }
-            backend.objectStorageService.clean(AMEDIA_DEFAULT_BUCKET).getOrThrow()
+            backend.objectStorageService.clean(A_FILE_DEFAULT_BUCKET).getOrThrow()
             backend.topicSearchService.clean().getOrThrow()
         }
         Napier.i {
