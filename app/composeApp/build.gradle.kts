@@ -423,46 +423,92 @@ afterEvaluate {
 }
 
 aboutLibraries {
-    // - If the automatic registered android tasks are disabled, a similar thing can be achieved manually
-    // - `./gradlew app:exportLibraryDefinitions -PaboutLibraries.exportPath=src/main/res/raw`
-    // - the resulting file can for example be added as part of the SCM
-    registerAndroidTasks = false
-    // Define the output file name. Modifying this will disable the automatic metadata discovery for supported platforms.
-    outputFileName = "aboutlibraries.json"
-    // Define the path configuration files are located in. E.g. additional libraries, licenses to add to the target .json
-    // Warning: Please do not use the parent folder of a module as path, as this can result in issues. More details: https://github.com/mikepenz/AboutLibraries/issues/936
-    configPath = "config"
     // Allow to enable "offline mode", will disable any network check of the plugin (including [fetchRemoteLicense] or pulling spdx license texts)
-    offlineMode = true
-    // Enable fetching of "remote" licenses.  Uses the API of supported source hosts
-    // See https://github.com/mikepenz/AboutLibraries#special-repository-support
-    fetchRemoteLicense = true
-    // Enables fetching of "remote" funding information. Uses the API of supported source hosts
-    // See https://github.com/mikepenz/AboutLibraries#special-repository-support
-    fetchRemoteFunding = true
-    // (Optional) GitHub token to raise API request limit to allow fetching more licenses
-//    gitHubApiToken = getLocalOrGlobalProperty("github.pat")
-    // Full license text for license IDs mentioned here will be included, even if no detected dependency uses them.
-    additionalLicenses = arrayOf("mit", "mpl_2_0")
-    // Allows to exclude some fields from the generated metadata field.
-    // If the class name is specified, the field is only excluded for that class; without a class name, the exclusion is global.
-    excludeFields = arrayOf("developers", "funding")
-    // Enable inclusion of `platform` dependencies in the library report
-    includePlatform = true
-    // Define the strict mode, will fail if the project uses licenses not allowed
-    // - This will only automatically fail for Android projects which have `registerAndroidTasks` enabled
-    // For non Android projects, execute `exportLibraryDefinitions`
-    strictMode = com.mikepenz.aboutlibraries.plugin.StrictMode.FAIL
-    // Allowed set of licenses, this project will be able to use without build failure
-//    allowedLicenses = arrayOf("Apache-2.0", "asdkl", "MIT")
-    // Enable the duplication mode, allows to merge, or link dependencies which relate
-    duplicationMode = com.mikepenz.aboutlibraries.plugin.DuplicateMode.LINK
-    // Configure the duplication rule, to match "duplicates" with
-    duplicationRule = com.mikepenz.aboutlibraries.plugin.DuplicateRule.SIMPLE
-    // Enable pretty printing for the generated JSON file
-    prettyPrint = true
-    // Allows to only collect dependencies of specific variants during the `collectDependencies` step.
-    filterVariants = arrayOf("debug", "release")
+    offlineMode = false
+
+    collect {
+        // Define the path configuration files are located in. E.g. additional libraries, licenses to add to the target .json
+        // Warning: Please do not use the parent folder of a module as path, as this can result in issues. More details: https://github.com/mikepenz/AboutLibraries/issues/936
+        // The path provided is relative to the modules path (not project root)
+        configPath = file("../config")
+
+        // (optional) GitHub token to raise API request limit to allow fetching more licenses
+        gitHubApiToken = if (hasProperty("github.pat")) property("github.pat")?.toString() else null
+
+        // Enable fetching of "remote" licenses.  Uses the API of supported source hosts
+        // See https://github.com/mikepenz/AboutLibraries#special-repository-support
+        // A `gitHubApiToken` is required for this to work as it fetches information from GitHub's API.
+        fetchRemoteLicense = false
+
+        // Enables fetching of "remote" funding information. Uses the API of supported source hosts
+        // See https://github.com/mikepenz/AboutLibraries#special-repository-support
+        // A `gitHubApiToken` is required for this to work as it fetches information from GitHub's API.
+        fetchRemoteFunding = false
+
+        // Allows to only collect dependencies of specific variants during the `collectDependencies` step.
+        // filterVariants.addAll("debug", "release")
+
+        // Enable inclusion of `platform` dependencies in the library report
+        includePlatform = true
+    }
+
+    export {
+        // Define the output path (including fileName). Modifying this will disable the automatic meta data discovery for supported platforms.
+        outputFile = file("src/commonMain/composeResources/files/aboutlibraries.json")
+
+        // The default export variant to use for this module.
+        // variant = "release"
+
+        // Allows to exclude some fields from the generated meta data field.
+        // If the class name is specified, the field is only excluded for that class; without a class name, the exclusion is global.
+        excludeFields.addAll("License.name", "developers", "funding")
+
+        // Enable pretty printing for the generated JSON file
+        prettyPrint = true
+    }
+
+    exports {
+        // Define export configuration per variant.
+        create("jvm") {
+            outputFile = file("files/jvm/aboutlibraries.json")
+        }
+//        create("wasmJs") {
+//            outputFile = file("files/wasmJs/aboutlibraries.json")
+//        }
+    }
+
+    license {
+        // Define the strict mode, will fail if the project uses licenses not allowed
+        // - This will only automatically fail for Android projects using the Android-specific plugin (com.mikepenz.aboutlibraries.plugin.android)
+        // For other projects, execute `exportLibraryDefinitions` manually
+        strictMode = com.mikepenz.aboutlibraries.plugin.StrictMode.WARN
+
+        // Allowed set of licenses, this project will be able to use without build failure
+        allowedLicenses.addAll(
+            "Apache-2.0",
+            "asdkl",
+            "MIT",
+            "BSD-3-Clause",
+            "The BSD License",
+            "The 3-Clause BSD License"
+        )
+
+        // Allowed set of licenses for specific dependencies, this project will be able to use without build failure
+        allowedLicensesMap = mapOf(
+            "asdkl" to listOf("androidx.jetpack.library"),
+            "NOASSERTION" to listOf("org.jetbrains.kotlinx"),
+        )
+
+        // Full license text for license IDs mentioned here will be included, even if no detected dependency uses them.
+        // additionalLicenses.addAll("mit", "mpl_2_0")
+    }
+
+    library {
+        // Enable the duplication mode, allows to merge, or link dependencies which relate
+        duplicationMode = com.mikepenz.aboutlibraries.plugin.DuplicateMode.LINK
+        // Configure the duplication rule, to match "duplicates" with
+        duplicationRule = com.mikepenz.aboutlibraries.plugin.DuplicateRule.SIMPLE
+    }
 }
 
 tasks.withType(KotlinCompile::class.java).configureEach {

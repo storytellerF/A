@@ -15,7 +15,6 @@ import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -105,7 +104,8 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
                     }
                     map(FileRecord::wrapRow)
                 }
-            }, {
+            },
+            {
                 databaseSession.dbSearch {
                     search {
                         FileRecords.selectAll().where {
@@ -179,9 +179,9 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
             }
             check(Quotas.update({
                 Quotas.ownerId eq ownerId and
-                        (Quotas.quotaType eq QuotaType.FILE) and
-                        (Quotas.locking eq true) and
-                        (Quotas.used eq quotaInfo.used)
+                    (Quotas.quotaType eq QuotaType.FILE) and
+                    (Quotas.locking eq true) and
+                    (Quotas.used eq quotaInfo.used)
             }) {
                 it[Quotas.locking] = false
                 it[Quotas.used] = quotaInfo.used + length

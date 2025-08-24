@@ -24,7 +24,7 @@ import java.net.ServerSocket
 
 val ext = if (isWin()) "bat" else "sh"
 private val previousDevices = mutableSetOf<String>()
-const val gitBash = "C:/Program Files/Git/bin/bash.exe"
+const val GIT_BASH = "C:/Program Files/Git/bin/bash.exe"
 fun main() {
     Napier.base(kmpLogger)
     val runPath = File("").canonicalPath
@@ -34,7 +34,7 @@ fun main() {
         if (isNested) "../.." else ".",
         "scripts/android_scripts/forward-android-devices.sh"
     ).canonicalPath.replace("\\", "/")
-    val process = ProcessBuilder(gitBash, "-c", "$forwardScriptPath 8888").start()
+    val process = ProcessBuilder(GIT_BASH, "-c", "$forwardScriptPath 8888").start()
     check(process.waitFor() == 0)
     println(process.inputReader().readText())
     previousDevices.addAll(getConnectedDevices())
@@ -130,7 +130,7 @@ private suspend fun RoutingCall.handleStartRoute(
                     "scripts/android_scripts/forward-special-device.sh"
                 ).canonicalPath.replace("\\", "/")
             withContext(Dispatchers.IO) {
-                val start = ProcessBuilder(gitBash, "-c", "$path $id $port").start()
+                val start = ProcessBuilder(GIT_BASH, "-c", "$path $id $port").start()
                 val serverResult = start.waitFor()
                 if (serverResult != 0) {
                     println("forward $id device failed: ${start.inputReader().readText()}")

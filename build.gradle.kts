@@ -13,9 +13,9 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.kover)
     id("io.gitlab.arturbosch.detekt").version("1.23.7")
-    id("com.mikepenz.aboutlibraries.plugin") version "11.2.3" apply false
+    id("com.mikepenz.aboutlibraries.plugin") version "12.2.4" apply false
     id("com.github.ben-manes.versions") version "0.52.0"
-    id("nl.littlerobots.version-catalog-update") version "0.8.5"
+    id("nl.littlerobots.version-catalog-update") version "1.0.0"
     alias(libs.plugins.kotlin.android) apply false
     id("com.google.devtools.ksp") version "2.2.0-2.0.2" apply false
     id ("androidx.room") version "2.7.2" apply false
