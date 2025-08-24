@@ -1,0 +1,29 @@
+services:
+  test:
+    build:
+      context: ../..
+      dockerfile: ./test.Dockerfile
+      args:
+        - OPENJDK_VERSION=21
+    ports:
+      - "6080:6080" # noVNC web interface
+      - "5901:5901" # VNC direct connection
+      - "5555:5555" # ADB
+    environment:
+      - VNC_PASSWORD=password
+    volumes:
+      - avd_data:/root/.android/avd
+      - ./logs:/var/log/supervisor
+      - sdk_data:/opt/android/sdk
+      - gradle_data:/root/.gradle
+    shm_size: '2gb' # Allocate more shared memory
+    privileged: true # Enable KVM acceleration
+
+volumes:
+  avd_data:
+  sdk_data:
+    name: sdk_data
+    external: true
+  gradle_data:
+    name: gradle_data
+    external: true

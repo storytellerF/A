@@ -3,5 +3,6 @@
 !dev.env
 .git
 android-llama-cpp
-app
-build
+**/build/*
+!deploy/build
+local.properties

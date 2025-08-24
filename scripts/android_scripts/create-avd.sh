@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Set emulator name and device parameters
-AVD_NAME="ATest"
-SYSTEM_IMAGE="system-images;android-30;default;x86_64"
-DEVICE="pixel_4"
+AVD_NAME=$1
+SYSTEM_IMAGE=$2
+DEVICE=$3
 
 # Function to check if a command exists
 command_exists() {
@@ -29,8 +29,7 @@ echo "AVD '$AVD_NAME' does not exist. Checking system image..."
 # Check if the system image is installed
 if ! sdkmanager --list | grep -q "$SYSTEM_IMAGE"; then
     echo "System image '$SYSTEM_IMAGE' is not installed. Downloading..."
-    sdkmanager "$SYSTEM_IMAGE"
-    if [ $? -ne 0 ]; then
+    if sdkmanager "$SYSTEM_IMAGE"; then
         echo "Error: Failed to download system image. Please check your SDK Manager."
         exit 1
     fi
@@ -41,20 +40,8 @@ fi
 
 # Create the new AVD
 echo "Creating AVD '$AVD_NAME'..."
-echo no | avdmanager create avd -n "$AVD_NAME" -k "$SYSTEM_IMAGE" -d "$DEVICE"
-if [ $? -ne 0 ]; then
+if echo no | avdmanager create avd -n "$AVD_NAME" -k "$SYSTEM_IMAGE" -d "$DEVICE"; then
     echo "Error: Failed to create AVD. Please check your SDK configuration."
     exit 1
 fi
 echo "AVD '$AVD_NAME' created successfully!"
-
-# Ask the user whether to start the emulator
-#read -p "Do you want to start the emulator now? (Y/N): " START_AVD
-#if [[ "$START_AVD" =~ ^[Yy]$ ]]; then
-#    echo "Starting AVD '$AVD_NAME'..."
-#    emulator -avd "$AVD_NAME" &
-#else
-#    echo "You can start it later using: emulator -avd $AVD_NAME"
-#fi
-#
-#exit 0
