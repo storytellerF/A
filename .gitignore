@@ -35,3 +35,4 @@ remote.pem
 aboutlibraries.json
 app/composeApp/src/headlessTest/resources/package*
 CouchbaseLiteTemp
+scripts/test_scripts/logs

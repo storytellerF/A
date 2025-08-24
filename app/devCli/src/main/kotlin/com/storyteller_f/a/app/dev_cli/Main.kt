@@ -9,15 +9,15 @@ import java.util.Scanner
 private val previousDevices = mutableSetOf<String>()
 
 fun main() {
+    val gitBash = "C:/Program Files/Git/bin/bash.exe"
     val runPath = File("").canonicalPath
     println("current path: $runPath")
     val isNested = runPath.endsWith("devCli")
-    val ext = if (isWin()) "bat" else "sh"
     val forwardScriptPath = File(
         if (isNested) "../.." else ".",
-        "scripts/android_scripts/forward-android-devices.$ext"
+        "scripts/android_scripts/forward-android-devices.sh"
     ).canonicalPath
-    val process = ProcessBuilder(forwardScriptPath, "9000").start()
+    val process = ProcessBuilder(gitBash, "-c", "$forwardScriptPath 9000").start()
     check(process.waitFor() == 0)
     println(process.inputReader().readText())
     previousDevices.addAll(getConnectedDevices())

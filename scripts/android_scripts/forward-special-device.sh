@@ -26,10 +26,10 @@ fi
 # 遍历所有已连接的设备
 for device in $(adb devices | grep -w 'device' | cut -f1); do
     # 获取当前设备的 android_id
-    device_android_id=$(adb -s $device shell settings get secure android_id)
+    device_android_id=$(adb -s "$device" shell settings get secure android_id)
 
     # 去除空格和换行符
-    device_android_id=$(echo $device_android_id | tr -d '\r\n')
+    device_android_id=$(echo "$device_android_id" | tr -d '\r\n')
 
     # 检查设备的 android_id 是否与输入的匹配
     if [ "$device_android_id" == "$input_android_id" ]; then
@@ -37,7 +37,7 @@ for device in $(adb devices | grep -w 'device' | cut -f1); do
 
         # 设置端口转发
         echo "为设备 $device 设置端口转发: localhost:$input_port -> localhost:$input_port"
-        adb -s $device reverse tcp:$input_port tcp:$input_port
+        adb -s "$device" reverse tcp:"$input_port" tcp:"$input_port"
 
         echo "端口转发已设置成功！"
         exit 0  # 找到匹配设备并设置转发后退出

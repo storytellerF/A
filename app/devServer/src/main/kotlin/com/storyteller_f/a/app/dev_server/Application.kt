@@ -24,7 +24,7 @@ import java.net.ServerSocket
 
 val ext = if (isWin()) "bat" else "sh"
 private val previousDevices = mutableSetOf<String>()
-
+const val gitBash = "C:/Program Files/Git/bin/bash.exe"
 fun main() {
     Napier.base(kmpLogger)
     val runPath = File("").canonicalPath
@@ -32,9 +32,9 @@ fun main() {
     val isNested = runPath.endsWith("devCli")
     val forwardScriptPath = File(
         if (isNested) "../.." else ".",
-        "scripts/android_scripts/forward-android-devices.$ext"
-    ).canonicalPath
-    val process = ProcessBuilder(forwardScriptPath, "8888").start()
+        "scripts/android_scripts/forward-android-devices.sh"
+    ).canonicalPath.replace("\\", "/")
+    val process = ProcessBuilder(gitBash, "-c", "$forwardScriptPath 8888").start()
     check(process.waitFor() == 0)
     println(process.inputReader().readText())
     previousDevices.addAll(getConnectedDevices())
@@ -125,12 +125,15 @@ private suspend fun RoutingCall.handleStartRoute(
         }
         if (name.startsWith("Android", true)) {
             val path =
-                File(if (isNested) ".." else ".", "scripts/android_scripts/forward-special-device.$ext").canonicalPath
+                File(
+                    if (isNested) ".." else ".",
+                    "scripts/android_scripts/forward-special-device.sh"
+                ).canonicalPath.replace("\\", "/")
             withContext(Dispatchers.IO) {
-                val start = ProcessBuilder(path, id, port.toString()).start()
+                val start = ProcessBuilder(gitBash, "-c", "$path $id $port").start()
                 val serverResult = start.waitFor()
                 if (serverResult != 0) {
-                    println(start.inputReader().readText())
+                    println("forward $id device failed: ${start.inputReader().readText()}")
                     System.err.println(start.errorReader().readText())
                 } else {
                     println("forward $id device success")
@@ -160,7 +163,11 @@ fun isPortAvailable(port: Int): Boolean {
 }
 
 // 获取一个未被使用的端口号
-fun findAvailablePort(startingPort: Int = 8080, maxRetries: Int = 100, usable: (Int) -> Boolean): Int {
+fun findAvailablePort(
+    startingPort: Int = 8080,
+    maxRetries: Int = 100,
+    usable: (Int) -> Boolean
+): Int {
     var port = startingPort
     var retries = 0
     while (retries < maxRetries) {
