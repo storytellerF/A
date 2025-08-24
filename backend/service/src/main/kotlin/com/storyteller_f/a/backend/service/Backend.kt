@@ -111,7 +111,11 @@ fun mediaService(env: MergedEnv): ObjectStorageService {
                 }
                 MemoryFileSystemBuilder.newLinux().build().getPath("/a_file")
             } else {
-                Paths.get(base)
+                val path = Paths.get(base)
+                Napier.i {
+                    "use file system oss ${path.toFile().canonicalPath}"
+                }
+                path
             }
             FileSystemObjectStorageService(url, p)
         }
@@ -141,7 +145,11 @@ fun topicDocumentService(
                 }
                 MemoryFileSystemBuilder.newLinux().build().getPath("/documents") to true
             } else {
-                Paths.get(luceneBase) to false
+                val p = Paths.get(luceneBase)
+                Napier.i {
+                    "use file system lucene ${p.toFile().canonicalPath}"
+                }
+                p to false
             }
             LuceneTopicSearchService(path, isInMemory)
         }

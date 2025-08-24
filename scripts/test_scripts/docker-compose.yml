@@ -11,11 +11,15 @@ services:
       - "5555:5555" # ADB
     environment:
       - VNC_PASSWD=password
+      - TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
     volumes:
       - avd_data:/root/.android/avd
       - ./logs:/var/log/supervisor
       - sdk_data:/opt/android/sdk
       - gradle_data:/root/.gradle
+      - /var/run/docker.sock:/var/run/docker.sock  # 宿主机 Docker 套接字
+      - ./reports/backend/service:/app/backend/service/build/reports
+      - ./reports/cloud/server:/app/cloud/server/build/reports
     shm_size: '2gb' # Allocate more shared memory
     privileged: true # Enable KVM acceleration
 

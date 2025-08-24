@@ -23,12 +23,10 @@ while [ $counter -lt 60 ]; do
     if [ "$boot_completed" == "1" ]; then
         echo "AVD '$AVD_NAME' is fully booted!"
         exit 0
-    else
-        echo "Waiting for AVD to finish booting..."
-        sleep 5
-        ((counter++))
     fi
+    echo "Waiting for AVD to finish booting..."
+    sleep 5
+    ((counter++))
 done
 echo "Timeout reached. AVD did not start."
 exit 1
-

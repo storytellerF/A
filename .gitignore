@@ -36,3 +36,4 @@ aboutlibraries.json
 app/composeApp/src/headlessTest/resources/package*
 CouchbaseLiteTemp
 scripts/test_scripts/logs
+scripts/test_scripts/reports
