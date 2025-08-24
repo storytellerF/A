@@ -96,7 +96,7 @@ suspend fun RoutingContext.uploadMedia(
                 is PartData.FileItem -> {
                     val length = part.headers[HttpHeaders.ContentLength]?.toLongOrNull()
                     if (length == null) error("content length not exists")
-                    if (length > 1024 * 1024 * 10) error("file too large")
+                    if (length > 1024 * 1024 * 100) error("file too large")
                     backend.processFilePart(root, it, result, part.originalFileName as String, length) {
                         part.provider()
                     }
@@ -147,7 +147,7 @@ suspend fun ByteReadChannel.copyContentAndClose(channel: ByteWriteChannel, lengt
         while (!isClosedForRead) {
             result += readBuffer.transferTo(channel.writeBuffer)
             if (result > length) {
-                error("File too large")
+                error("File size length")
             }
             channel.flush()
             awaitContent()

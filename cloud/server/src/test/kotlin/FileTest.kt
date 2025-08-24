@@ -72,7 +72,7 @@ class MediaTest {
 
     @Test
     fun `extract audio album`() {
-        ClassLoader.getSystemClassLoader().getResourceAsStream("I_Don’t_Wanna_Live_Forever.flac")
+        ClassLoader.getSystemClassLoader().getResourceAsStream("I_Do_not_Wanna_Live_Forever.flac")
             ?.use {
                 it.readFlacAlbumFromAudioStream { image, mimeType ->
                     val name = "build/test/cover.${getExtensionFromMimeType(mimeType)}"
@@ -105,7 +105,7 @@ class MediaTest {
         mapOf("FILE_SYSTEM_MEDIA_PATH" to "build/test/a_file")
     ) {
         attachSession {
-            val name = "I_Don’t_Wanna_Live_Forever.flac"
+            val name = "I_Do_not_Wanna_Live_Forever.flac"
             val inputStream =
                 ClassLoader.getSystemClassLoader().getResourceAsStream(name)!!
             val bytes = inputStream.readBytes()
