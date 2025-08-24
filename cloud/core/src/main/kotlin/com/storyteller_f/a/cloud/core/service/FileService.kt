@@ -377,5 +377,4 @@ private suspend fun Backend.copyFile(
             ServerResponse(listOf(newFileRecord.toFileInfo(it.url, it.lastModified)), null)
         }
     }
-
 }

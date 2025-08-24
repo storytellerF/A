@@ -1,7 +1,6 @@
 package com.storyteller_f.a.app.dev_cli
 
 import com.storyteller_f.a.app.dev.getConnectedDevices
-import com.storyteller_f.a.app.dev.isWin
 import com.storyteller_f.a.app.dev.startListening
 import java.io.File
 import java.util.Scanner

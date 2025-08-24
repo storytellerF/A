@@ -10,7 +10,7 @@ services:
       - "5901:5901" # VNC direct connection
       - "5555:5555" # ADB
     environment:
-      - VNC_PASSWORD=password
+      - VNC_PASSWD=password
     volumes:
       - avd_data:/root/.android/avd
       - ./logs:/var/log/supervisor

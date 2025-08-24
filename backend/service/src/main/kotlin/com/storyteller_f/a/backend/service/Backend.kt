@@ -262,7 +262,8 @@ suspend fun <T> Backend.lockQuotaInfo(
 }
 
 suspend fun Backend.getQuotaInfo(
-    quotaType: QuotaType, objectTuple: ObjectTuple
+    quotaType: QuotaType,
+    objectTuple: ObjectTuple
 ) =
     combinedDatabase.containerDatabase.getQuotaInfo(objectTuple.objectId, quotaType).mapResult {
         if (it == null) {
