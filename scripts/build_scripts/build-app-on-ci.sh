@@ -39,6 +39,7 @@ done > ./secrets_env.sh
 
 # 然后在 shell 中执行：
 . ./secrets_env.sh
+mkdir -p app/config
 
 case "$TARGET" in
     android)
