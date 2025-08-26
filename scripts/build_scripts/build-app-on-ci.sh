@@ -25,8 +25,6 @@ SERVER_URL=https://${URL}${newline}
 WS_SERVER_URL=wss://${URL}${newline}
 EOF
 
-./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$BUILD_TYPE"
-
 echo "$SECRETS_CONTEXT" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' | while IFS= read -r line; do
     # Ignore empty lines and comments
     [[ -z "$line" || "$line" =~ ^# ]] && continue
@@ -40,6 +38,8 @@ done > ./secrets_env.sh
 # 然后在 shell 中执行：
 . ./secrets_env.sh
 mkdir -p app/config
+
+./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$BUILD_TYPE"
 
 case "$TARGET" in
     android)

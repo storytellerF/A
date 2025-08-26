@@ -258,12 +258,11 @@ android {
     val signAlias: String? = getenv("storyteller_f_sign_alias")
     val signStorePassword: String? = getenv("storyteller_f_sign_store_password")
     val signKeyPassword: String? = getenv("storyteller_f_sign_key_password")
-    val generatedJksFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
 
     signingConfigs {
         val signStorePath = when {
             signPath != null -> File(signPath)
-            signKey != null -> generatedJksFile
+            signKey != null -> layout.buildDirectory.file("signing/signing_key.jks").get().asFile
             else -> null
         }
         if (signStorePath != null && signAlias != null && signStorePassword != null && signKeyPassword != null) {
@@ -385,13 +384,13 @@ buildkonfig {
 
 val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
     group = "signing"
-    val signKey = providers.environmentVariable("storyteller_f_sign_key").getOrElse("")
+    val signKey = getenv("storyteller_f_sign_key")
     val generatedJksFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
 
     inputs.property("signKey", signKey)
     outputs.file(generatedJksFile)
     doLast {
-        if (!signKey.isBlank()) {
+        if (!signKey.isNullOrBlank()) {
             // 定义输出文件路径 (如密钥存储文件)
             val outputFile = generatedJksFile
 
