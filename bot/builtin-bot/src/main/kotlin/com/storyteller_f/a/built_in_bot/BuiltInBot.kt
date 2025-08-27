@@ -38,17 +38,20 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 fun main() {
     Napier.base(kmpLogger)
     loadCryptoLibIfNeed()
-    val botPem = System.getenv("BOT_PEM") ?: throw Exception("BOT_PEM not exists")
+    val base64BotPem = System.getenv("BOT_PEM") ?: throw Exception("BOT_PEM not exists")
     val httpUrl = System.getenv("SERVER_URL") ?: throw Exception("SERVER_URL not exists")
     val wsUrl = System.getenv("WS_SERVER_URL") ?: throw Exception("WS_SERVER_URL not exists")
-    val pem = botPem.decodeBase64String()
+    val pemPrivateKey = base64BotPem.decodeBase64String()
     val sessionManager =
         createUserSessionManager(buildWebSocketUrl(wsUrl), { model, cookieManager ->
             getClient {
@@ -67,7 +70,20 @@ fun main() {
     val client = Client()
     runBlocking {
         val job = launch {
-            processJob(sessionManager, pem, client, commentPrompt, newsPrompt)
+            //确保第一次登录成功
+            while (isActive) {
+                try {
+                    sessionManager.signUpOrInFromPrivateKey(pemPrivateKey, false) {
+                        RawUserPass(it)
+                    }
+                    break
+                } catch (e: Exception) {
+                    Napier.e(e) {
+                        "login failed"
+                    }
+                }
+            }
+            processJob(sessionManager, client, commentPrompt, newsPrompt)
         }
         // 注册 JVM 关闭钩子，捕获 SIGINT / SIGTERM
         Runtime.getRuntime().addShutdownHook(Thread {
@@ -82,47 +98,53 @@ fun main() {
 
 private suspend fun CoroutineScope.processJob(
     sessionManager: UserSessionManager,
-    pem: String,
     client: Client,
     commentPrompt: String,
     newsPrompt: String
 ) {
-    while (isActive) {
-        Napier.i(tag = "task") {
-            "execute ${now()}"
+    val jobs = sessionManager.start()
+    val job1 = launch {
+        loop(1.minutes) {
+            processCommunityTask(sessionManager) { communityInfo ->
+                handleCommunityComment(
+                    sessionManager,
+                    client,
+                    communityInfo,
+                    commentPrompt
+                )
+            }
         }
+    }
+    val job2 = launch {
+        loop(1.hours) {
+            processCommunityTask(sessionManager) { communityInfo ->
+                handleCommunityNews(sessionManager, client, communityInfo, newsPrompt)
+            }
+        }
+    }
+    job1.join()
+    job2.join()
+    jobs.forEach {
+        it.cancel()
+    }
+}
+
+private suspend fun CoroutineScope.loop(duration: Duration, block: suspend () -> Unit) {
+    while (isActive) {
         try {
-            sessionManager.signUpOrInFromPrivateKey(pem, false) {
-                RawUserPass(it)
-            }
-            sessionManager.start {
-                processCommunityTask(sessionManager) { communityInfo ->
-                    handleCommunityComment(
-                        sessionManager,
-                        client,
-                        communityInfo,
-                        commentPrompt
-                    )
-                }
-                processCommunityTask(sessionManager) { communityInfo ->
-                    handleCommunityNews(sessionManager, client, communityInfo, newsPrompt)
-                }
-            }
+            block()
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) {
-                Napier.i {
-                    "bot canceled"
-                }
+                throw e
+            } else if (e.message?.contains("User location is not supported for the API use") == true) {
+                break
             } else {
                 Napier.e(e) {
-                    "process failed"
-                }
-                if (e.message?.contains("User location is not supported for the API use") == true) {
-                    break
+                    "handleCommunityNews failed"
                 }
             }
         }
-        delay(10.seconds)
+        delay(duration)
     }
 }
 
@@ -171,9 +193,9 @@ private suspend fun handleCommunityComment(
             if (isAuthor || topicInfo.hasComment) {
                 Napier.i {
                     "skip topic ${topicInfo.id} " +
-                        "isAuthor: $isAuthor " +
-                        "hasComment: ${topicInfo.hasComment} " +
-                        "createdTime: ${topicInfo.createdTime}"
+                            "isAuthor: $isAuthor " +
+                            "hasComment: ${topicInfo.hasComment} " +
+                            "createdTime: ${topicInfo.createdTime}"
                 }
             } else {
                 Napier.i {
@@ -237,7 +259,7 @@ private suspend fun handleTopic(
     sessionManager.createNewTopic(ObjectType.TOPIC, topicInfo.id, text)
         .onSuccess {
             Napier.i {
-                "createTopic success $text"
+                "createNewTopic success $text"
             }
         }.onFailure {
             Napier.e(it.cause) {
@@ -309,10 +331,6 @@ private suspend fun addTopic(
         val latestDay = start.day
         if (latestDay != previousDay + 1 || latestYear != year || latestMonth != month) {
             createNewsTopic(client, prompt, communityInfo, sessionManager, previousDate)
-            Napier.i {
-                "create topic success"
-            }
-            delay(1.seconds)
         } else {
             Napier.i {
                 "skip create topic"
@@ -323,7 +341,6 @@ private suspend fun addTopic(
             "never created topic"
         }
         createNewsTopic(client, prompt, communityInfo, sessionManager, previousDate)
-        delay(1.seconds)
     }
 }
 
@@ -346,11 +363,12 @@ private suspend fun createNewsTopic(
     val content = response.text()?.take(1000) ?: "😴"
     sessionManager.createNewTopic(ObjectType.COMMUNITY, communityInfo.id, content).onSuccess {
         Napier.i {
-            "create $date new topic success"
+            "create new topic success $date $content"
         }
     }.onFailure {
         Napier.e(it) {
-            "create $date new topic failed"
+            "create new topic failed $date $content"
         }
     }
+    delay(1.seconds)
 }
