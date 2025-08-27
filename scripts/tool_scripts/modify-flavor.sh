@@ -8,9 +8,9 @@ if [ -z "$FLAVOR" ] || [ -z "$BUILD_TYPE" ]; then
 fi
 
 if [ "$(uname)" = "Darwin" ]; then
-    sed -i '' "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
+    sed -i '' "s/app.flavor=.*/app.flavor=${FLAVOR}/" gradle.properties && \
       sed -i '' "s/server.buildType=dev/server.buildType=${BUILD_TYPE}/" gradle.properties
 else
-    sed -i "s/buildkonfig.flavor=.*/buildkonfig.flavor=${FLAVOR}/" gradle.properties && \
+    sed -i "s/app.flavor=.*/app.flavor=${FLAVOR}/" gradle.properties && \
       sed -i "s/server.buildType=dev/server.buildType=${BUILD_TYPE}/" gradle.properties
 fi

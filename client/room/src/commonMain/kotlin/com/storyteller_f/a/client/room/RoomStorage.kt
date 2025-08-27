@@ -48,7 +48,12 @@ class UserRoomInfoStorage(val appDatabase: AppDatabase) : UserInfoStorage {
     ) {
         val data = Json.encodeToString(userInfo)
         val item = CommonEntity(userInfo.id, UserCollection.Users.getName(), data)
-        appDatabase.getCommonDao().insert(item)
+        buildList {
+            add(item)
+            userInfo.aid?.let { add(item.copy(id = it)) }
+        }.forEach {
+            appDatabase.getCommonDao().insert(it)
+        }
         if (collection is UserCollection.SearchUser) {
             appDatabase.getCommonDao().insert(item.copy(collection = collection.getName()))
         }
@@ -82,8 +87,15 @@ class CommunityRoomInfoStorage(val appDatabase: AppDatabase) : CommunityInfoStor
     ) {
         val data = Json.encodeToString(communityInfo)
         val item =
-            CommunityEntity(communityInfo.id, CommunityCollection.Communities.getName(), data, communityInfo.hasPoster)
-        appDatabase.getCommunityDao().insert(item)
+            CommunityEntity(
+                communityInfo.id,
+                CommunityCollection.Communities.getName(),
+                data,
+                communityInfo.hasPoster
+            )
+        listOf(item, item.copy(id = communityInfo.aid)).forEach {
+            appDatabase.getCommunityDao().insert(it)
+        }
         if (collection is CommunityCollection.SearchCommunity) {
             appDatabase.getCommunityDao().insert(item.copy(collection = collection.getName()))
         }
@@ -130,8 +142,14 @@ class TopicRoomInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
         topicInfo: TopicInfo
     ) {
         val data = Json.encodeToString(topicInfo)
-        val item = TopicEntity(topicInfo.id, TopicCollection.Topics.getName(), data, topicInfo.isPin)
-        appDatabase.getTopicDao().insert(item)
+        val item =
+            TopicEntity(topicInfo.id, TopicCollection.Topics.getName(), data, topicInfo.isPin)
+        buildList {
+            add(item)
+            topicInfo.aid?.let { add(item.copy(id = it)) }
+        }.forEach {
+            appDatabase.getTopicDao().insert(it)
+        }
         if (collection is TopicCollection.TopicList ||
             collection is TopicCollection.SearchTopic ||
             collection is TopicCollection.Recommend
@@ -242,10 +260,16 @@ class RoomRoomInfoStorage(val appDatabase: AppDatabase) : RoomInfoStorage {
     ) {
         val data = Json.encodeToString(roomInfo)
         val item = CommonEntity(roomInfo.id, RoomCollection.Rooms.getName(), data)
-        appDatabase.getCommonDao().insert(item)
+        listOf(
+            item,
+            item.copy(id = roomInfo.aid)
+        ).forEach {
+            appDatabase.getCommonDao().insert(it)
+        }
         if (collection is RoomCollection.SearchRoom) {
             appDatabase.getCommonDao().insert(item.copy(collection = collection.getName()))
         }
+
     }
 
     override fun observeData(
@@ -258,7 +282,9 @@ class RoomRoomInfoStorage(val appDatabase: AppDatabase) : RoomInfoStorage {
         return impl.observeDatum(RoomCollection.Rooms.getName(), key)
     }
 
-    override suspend fun clean(collection: RoomCollection) = Unit
+    override suspend fun clean(collection: RoomCollection) {
+        appDatabase.getCommonDao().clean(collection.getName())
+    }
 
     override fun observeDatum(id: PrimaryKey): Flow<RoomInfo?> {
         return observeDatum(id.toString())
@@ -318,7 +344,15 @@ class ReactionRoomInfoStorage(val appDatabase: AppDatabase) : ReactionInfoStorag
         val id = "${reactionInfo.objectId}-${reactionInfo.emoji}"
         val data = Json.encodeToString(reactionInfo)
         appDatabase.getReactionDao()
-            .insert(ReactionEntity(id, collection.getName(), data, reactionInfo.count, reactionInfo.lastReactionId))
+            .insert(
+                ReactionEntity(
+                    id,
+                    collection.getName(),
+                    data,
+                    reactionInfo.count,
+                    reactionInfo.lastReactionId
+                )
+            )
     }
 
     override fun observeData(
@@ -338,7 +372,10 @@ class ReactionRoomInfoStorage(val appDatabase: AppDatabase) : ReactionInfoStorag
 }
 
 class ChildAccountRoomStorage(val appDatabase: AppDatabase) : ChildAccountStorage {
-    override suspend fun save(collection: ChildAccountCollection, childAccountInfo: ChildAccountInfo) {
+    override suspend fun save(
+        collection: ChildAccountCollection,
+        childAccountInfo: ChildAccountInfo
+    ) {
         val data = Json.encodeToString(childAccountInfo)
         appDatabase.getCommonDao().insert(CommonEntity(childAccountInfo.id, collection.NAME, data))
     }
