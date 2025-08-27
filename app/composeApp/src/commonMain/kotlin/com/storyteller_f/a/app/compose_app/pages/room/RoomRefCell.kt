@@ -22,25 +22,25 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun RoomRefCell(roomId: PrimaryKey, onClick: ((RoomInfo) -> Unit)? = null) {
-    val viewModel = com.storyteller_f.a.app.compose_app.model.createRoomViewModel(roomId)
+    val viewModel = createRoomViewModel(roomId)
     RoomRefCellInternal(viewModel, onClick)
 }
 
 @Composable
 fun RoomRefCell(roomAid: String, onClick: ((RoomInfo) -> Unit)? = null) {
-    val viewModel = com.storyteller_f.a.app.compose_app.model.createRoomViewModel(roomAid)
+    val viewModel = createRoomViewModel(roomAid)
     RoomRefCellInternal(viewModel, onClick)
 }
 
 @Composable
 private fun RoomRefCellInternal(
-    viewModel: com.storyteller_f.a.app.compose_app.model.RoomViewModel,
+    viewModel: RoomViewModel,
     onClick: ((RoomInfo) -> Unit)? = null
 ) {
     val roomInfo by viewModel.handler.data.collectAsState()
-    val appNav = com.storyteller_f.a.app.compose_app.LocalAppNav.current
+    val appNav = LocalAppNav.current
     val shape = RoundedCornerShape(10.dp)
-    com.storyteller_f.a.app.compose_app.common.RefCellStateView(
+    RefCellStateView(
         viewModel.handler,
         modifier = Modifier
             .fillMaxWidth()
