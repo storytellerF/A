@@ -269,7 +269,6 @@ class RoomRoomInfoStorage(val appDatabase: AppDatabase) : RoomInfoStorage {
         if (collection is RoomCollection.SearchRoom) {
             appDatabase.getCommonDao().insert(item.copy(collection = collection.getName()))
         }
-
     }
 
     override fun observeData(
