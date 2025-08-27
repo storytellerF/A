@@ -70,7 +70,7 @@ fun main() {
     val client = Client()
     runBlocking {
         val job = launch {
-            //确保第一次登录成功
+            // 确保第一次登录成功
             while (isActive) {
                 try {
                     sessionManager.signUpOrInFromPrivateKey(pemPrivateKey, false) {
@@ -193,9 +193,9 @@ private suspend fun handleCommunityComment(
             if (isAuthor || topicInfo.hasComment) {
                 Napier.i {
                     "skip topic ${topicInfo.id} " +
-                            "isAuthor: $isAuthor " +
-                            "hasComment: ${topicInfo.hasComment} " +
-                            "createdTime: ${topicInfo.createdTime}"
+                        "isAuthor: $isAuthor " +
+                        "hasComment: ${topicInfo.hasComment} " +
+                        "createdTime: ${topicInfo.createdTime}"
                 }
             } else {
                 Napier.i {
