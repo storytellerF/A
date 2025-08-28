@@ -1,5 +1,6 @@
 package com.storyteller_f.a.backend.core
 
+import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.FileRecord
@@ -70,7 +71,6 @@ interface UserDatabase {
     suspend fun createUser(user: User): Result<Unit>
     suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
     suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody): Result<Boolean>
-    suspend fun isUserExistsByUid(id: Long): Result<Boolean>
     suspend fun getUserAuthDataById(id: PrimaryKey): Result<Pair<String, Long>?>
     suspend fun getUserAuthDataByAid(aid: String): Result<Pair<String, Long>?>
     suspend fun getUserAuthDataByAddress(address: String): Result<Pair<String, Long>?>
@@ -82,10 +82,8 @@ interface UserDatabase {
     suspend fun removeDevice(uid: PrimaryKey, endpointUrl: String): Result<Int>
     suspend fun getUserDevices(uid: List<PrimaryKey>): Result<List<UserDevice>>
     suspend fun addAcgForUser(
-        acgList: List<Pair<PrimaryKey, Int>>,
-        userAcgMap: Map<Long, Long>,
-        list: List<Topic>,
-        taskRecordId: PrimaryKey,
+        record: TaskRecord,
+        assetTransactions: List<AssetTransaction>,
     ): Result<Unit>
 
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
@@ -209,7 +207,6 @@ interface TitleDatabase {
 }
 
 interface CommunityDatabase {
-    suspend fun checkCommunityExists(parentId: PrimaryKey): Result<List<Long>>
     suspend fun getRawCommunity(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean? = null,

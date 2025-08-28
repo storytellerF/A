@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.server.auth
 
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.cloud.core.service.addAlternativeAccount
 import com.storyteller_f.a.cloud.core.service.getUserAlternateUserInfoList
@@ -131,7 +132,7 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        combinedDatabase.userDatabase.isUserExistsByUid(id).map {
+        combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(id)).mapIfNotNull {
             CustomPrincipal(id)
         }
     } else {
@@ -243,7 +244,7 @@ fun Route.bindAccountRoute() {
     CustomApi.Accounts.signOut.invoke(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             call.sessions.clear(UserSession::class)
-            Result.success(Unit)
+            UNIT_RESULT
         }
     }
 }

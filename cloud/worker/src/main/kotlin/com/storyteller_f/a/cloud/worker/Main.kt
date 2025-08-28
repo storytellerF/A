@@ -3,6 +3,8 @@ package com.storyteller_f.a.cloud.worker
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.types.AssetTransaction
+import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.MergedEnv
@@ -12,7 +14,9 @@ import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.a.backend.service.readEnv
 import com.storyteller_f.a.backend.service.topicDocumentService
 import com.storyteller_f.shared.kmpLogger
+import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
+import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
@@ -52,7 +56,25 @@ fun main() {
 
 private suspend fun Backend.doAcgTask() {
     getAcgTaskListFromTopics().mapResultIfNotNull { (acgList, userAcgMap, list) ->
-        combinedDatabase.userDatabase.addAcgForUser(acgList, userAcgMap, list, SnowflakeFactory.nextId())
+        combinedDatabase.userDatabase.addAcgForUser(
+            TaskRecord(
+                SnowflakeFactory.nextId(),
+                now(),
+                TaskRecordType.TOPIC_ACG,
+                list.last().id
+            ),
+            acgList.mapNotNull { (id, acg) ->
+                userAcgMap[id]?.let { oldAcgAmount ->
+                    AssetTransaction(
+                        SnowflakeFactory.nextId(),
+                        now(),
+                        AssetType.ACG,
+                        oldAcgAmount,
+                        oldAcgAmount + acg
+                    )
+                }
+            }
+        )
     }.onSuccess {
         delay(1000)
         Napier.i(tag = "task") {
@@ -79,13 +101,12 @@ private suspend fun Backend.getAcgTaskListFromTopics() =
             val uids = acgList.map {
                 it.first
             }
-            combinedDatabase.userDatabase.getUserAcgByIds(ObjectListFetch.IdListFetch(uids)).map { list ->
-                list.associate {
-                    it.first to it.second
+            combinedDatabase.userDatabase.getUserAcgByIds(ObjectListFetch.IdListFetch(uids))
+                .map { list ->
+                    list.associateByPair()
+                }.map { userAcgMap ->
+                    Triple(acgList, userAcgMap, list)
                 }
-            }.map { userAcgMap ->
-                Triple(acgList, userAcgMap, list)
-            }
         } else {
             Result.success(null)
         }

@@ -20,7 +20,13 @@ import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.getDerPrivateKey
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
-import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.model.ChildAccountInfo
+import com.storyteller_f.shared.model.Dimension
+import com.storyteller_f.shared.model.PassType
+import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserLogType
+import com.storyteller_f.shared.model.checkMediaFileDimensionRatioMatch
 import com.storyteller_f.shared.obj.NewDevice
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
@@ -28,10 +34,10 @@ import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
@@ -52,7 +58,7 @@ suspend fun Backend.updateUser(
                 CustomBadRequestException("user nickname must be between in 1 and 20")
             )
 
-            else -> Result.success(Unit)
+            else -> UNIT_RESULT
         }
     }, suspend {
         checkIcon(newUser.avatar).mapResult {
@@ -62,7 +68,7 @@ suspend fun Backend.updateUser(
                     CustomBadRequestException("avatar must be image")
                 )
 
-                else -> Result.success(Unit)
+                else -> UNIT_RESULT
             }
         }
     }).firstNotNullOfOrNull {
@@ -83,14 +89,14 @@ private suspend fun Backend.checkAidModifyTimes(
     newUser: UpdateUserBody,
     id: PrimaryKey,
 ) = if (newUser.aid.isNullOrBlank()) {
-    Result.success(Unit)
+    UNIT_RESULT
 } else {
     // check aid is null
     combinedDatabase.userDatabase.getUserAid(id).mapResult {
         if (it != null) {
             Result.failure(CustomBadRequestException("aid is not null."))
         } else {
-            Result.success(Unit)
+            UNIT_RESULT
         }
     }
 }
@@ -98,14 +104,14 @@ private suspend fun Backend.checkAidModifyTimes(
 fun checkAid(aid: String?, supportEmptyAid: Boolean = false): Result<Unit> {
     return when {
         aid.isNullOrBlank() -> if (supportEmptyAid) {
-            Result.success(Unit)
+            UNIT_RESULT
         } else {
             Result.failure(
                 CustomBadRequestException("aid is empty")
             )
         }
 
-        aid.length in 2..AID_LENGTH -> Result.success(Unit)
+        aid.length in 2..AID_LENGTH -> UNIT_RESULT
         !aid.all {
             it.isLetterOrDigit() || it == '_' || it == '-'
         } -> {
@@ -189,40 +195,32 @@ suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<ChildAccountI
         if (it != null) {
             Result.failure(CustomBadRequestException("alternative account can't create alternative"))
         } else {
-            generateECDSAPemPrivateKey().mapResult { pemPrivateKey ->
-                getDerPublicKeyFromPrivateKey(pemPrivateKey).mapResult { publicKey ->
-                    merge({
-                        getDerPrivateKey(pemPrivateKey)
-                    }, {
-                        calcAddress(publicKey)
-                    }).mapResult { (derPrivateKey, address) ->
-                        val id = SnowflakeFactory.nextId()
-                        val user = User(
-                            null,
-                            publicKey,
-                            address,
-                            null,
-                            nameService.parse(id),
-                            id,
-                            now(),
-                            0,
-                            PassType.RAW,
-                            AlgoType.P256
-                        )
-                        combinedDatabase.userDatabase.createChildAccount(
-                            uid,
-                            derPrivateKey,
-                            user
-                        ).map {
-                            addUserLog(
-                                uid,
-                                UserLogType.ADD_ALTERNATIVE_ACCOUNT,
-                                id ob ObjectType.USER
-                            )
-                            ChildAccountInfo(uid, derPrivateKey, user.toUserInfo())
-                        }
-                    }
-                }
+            runCatching {
+                val pemPrivateKey = generateECDSAPemPrivateKey().getOrThrow()
+                val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
+                val derPrivateKey = getDerPrivateKey(pemPrivateKey).getOrThrow()
+                val address = calcAddress(publicKey).getOrThrow()
+                val id = SnowflakeFactory.nextId()
+                val user = User(
+                    null,
+                    publicKey,
+                    address,
+                    null,
+                    nameService.parse(id),
+                    id,
+                    now(),
+                    0,
+                    PassType.RAW,
+                    AlgoType.P256
+                )
+                combinedDatabase.userDatabase.createChildAccount(uid, derPrivateKey, user)
+                    .getOrThrow()
+                addUserLog(
+                    uid,
+                    UserLogType.ADD_ALTERNATIVE_ACCOUNT,
+                    id ob ObjectType.USER
+                )
+                ChildAccountInfo(uid, derPrivateKey, user.toUserInfo())
             }
         }
     }
@@ -245,7 +243,7 @@ suspend fun addDevice(
 ): Result<Unit> =
     backend.combinedDatabase.userDatabase.addDevice(uid, newDevice.endpointUrl).recoverResult {
         if (it.isDup()) {
-            Result.success(Unit)
+            UNIT_RESULT
         } else {
             Result.failure(it)
         }

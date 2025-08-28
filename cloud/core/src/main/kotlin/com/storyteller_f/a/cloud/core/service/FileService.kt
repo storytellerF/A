@@ -80,9 +80,9 @@ suspend fun Backend.getFileInfoByName(
         parentType,
         parentId,
         uid
-    ).mapResultIfNotNull { (_, objectId, hasWrite) ->
+    ).mapResultIfNotNull { (_, rootId, hasWrite) ->
         if (hasWrite) {
-            combinedDatabase.fileDatabase.getFileRecord(objectId, word)
+            combinedDatabase.fileDatabase.getFileRecord(rootId, word)
                 .mapResultIfNotNull { fileRecord ->
                     processFileRecordToFileInfo(listOf(fileRecord)).map {
                         it.first()
@@ -103,33 +103,35 @@ suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: Prim
                 throw ForbiddenException("no permission")
             }
             if (fileRecord.contentType.startsWith("audio")) {
-                objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, fileRecord.fullName)
-                    .map { input ->
-                        extractAlbumFromStream(input, root, fileRecord)
-                    }.mapResultIfNotNull { (file, contentType) ->
-                        if (file != null) {
-                            val name = newCoverFileName(fileRecord.name, contentType)
-                            tryUploadFiles(
-                                fileRecord.owner,
-                                fileRecord.ownerType,
-                                listOf(
-                                    UploadPack(
-                                        file,
-                                        name,
-                                        fileRecord.size,
-                                        "${fileRecord.owner}/$name"
-                                    )
-                                )
-                            ).map {
-                                ServerResponse(it.filterNotNull())
-                            }
-                        } else {
-                            Result.success(null)
-                        }
-                    }
+                Result.success(fileRecord)
             } else {
                 Result.failure(CustomBadRequestException("not an audio file"))
             }
+        }.mapResultIfNotNull { fileRecord ->
+            objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, fileRecord.fullName)
+                .mapResult { input ->
+                    extractAlbumFromStream(input, root, fileRecord)
+                }.mapResult { (file, contentType) ->
+                    if (file != null) {
+                        val name = newCoverFileName(fileRecord.name, contentType)
+                        tryUploadFiles(
+                            fileRecord.owner,
+                            fileRecord.ownerType,
+                            listOf(
+                                UploadPack(
+                                    file,
+                                    name,
+                                    fileRecord.size,
+                                    "${fileRecord.owner}/$name"
+                                )
+                            )
+                        ).map {
+                            ServerResponse(it.filterNotNull())
+                        }
+                    } else {
+                        Result.success(null)
+                    }
+                }
         }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -137,28 +139,30 @@ private suspend fun extractAlbumFromStream(
     input: InputStream,
     root: File,
     fileRecord: FileRecord
-): Pair<File?, String> = withContext(Dispatchers.IO) {
-    input.use {
-        val saveAlbum = { image: ByteArray, mimeType: String ->
-            val file = File(
-                root,
-                "${Uuid.Companion.random()}.${
-                    getExtensionFromMimeType(
-                        mimeType
-                    )
-                }"
-            )
-            file.writeBytes(image)
-            file
-        }
-        when (fileRecord.contentType) {
-            "audio/mp3" -> it.readMp3AlbumFromAudioStream(saveAlbum)
-            "audio/flac", "audio/x-flac" -> it.readFlacAlbumFromAudioStream(
-                saveAlbum
-            )
+) = runCatching {
+    withContext(Dispatchers.IO) {
+        input.use {
+            val saveAlbum = { image: ByteArray, mimeType: String ->
+                val file = File(
+                    root,
+                    "${Uuid.Companion.random()}.${
+                        getExtensionFromMimeType(
+                            mimeType
+                        )
+                    }"
+                )
+                file.writeBytes(image)
+                file
+            }
+            when (fileRecord.contentType) {
+                "audio/mp3" -> it.readMp3AlbumFromAudioStream(saveAlbum)
+                "audio/flac", "audio/x-flac" -> it.readFlacAlbumFromAudioStream(
+                    saveAlbum
+                )
 
-            else -> throw CustomBadRequestException("unsupported audio type: ${fileRecord.contentType}")
-        } to fileRecord.contentType
+                else -> throw CustomBadRequestException("unsupported audio type: ${fileRecord.contentType}")
+            } to fileRecord.contentType
+        }
     }
 }
 
@@ -325,20 +329,22 @@ suspend fun Backend.tryCopyFile(
                 ).mapResultIfNotNull { permission ->
                     if (permission.hasRead) {
                         // 检查重复媒体
-                        lockQuotaInfo(
-                            ObjectTuple(uid, ObjectType.USER),
-                            QuotaType.FILE,
-                            fileRecord.size,
-                            fileRecord.name
-                        ) {
-                            copyFile(fileRecord, uid)
-                        }
+                        Result.success(fileRecord)
                     } else {
                         Result.failure(ForbiddenException())
                     }
                 }
             } else {
                 Result.success(null)
+            }
+        }.mapResultIfNotNull { fileRecord ->
+            lockQuotaInfo(
+                ObjectTuple(uid, ObjectType.USER),
+                QuotaType.FILE,
+                fileRecord.size,
+                fileRecord.name
+            ) {
+                copyFile(fileRecord, uid)
             }
         }
 

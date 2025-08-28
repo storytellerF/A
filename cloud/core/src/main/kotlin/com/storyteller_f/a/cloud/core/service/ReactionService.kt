@@ -14,6 +14,7 @@ import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.obj.DeleteReaction
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
@@ -103,22 +104,22 @@ suspend fun deleteReaction(
     val emoji = deleteReaction.emoji
     return if (isEmoji(emoji)) {
         backend.combinedDatabase.topicDatabase.deleteReaction(uid, emoji, p.id).mapResult {
-            (if (it) {
+            if (it) {
                 backend.combinedDatabase.topicDatabase.statsReactionRecord(
                     p.id,
                     emoji,
                     ObjectType.TOPIC
                 )
             } else {
-                Result.success(Unit)
-            }).mapResult {
-                backend.combinedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji).map { reactionInfo ->
-                    reactionInfo ?: ReactionInfo(emoji, p.id, 0, false, 0)
-                }
+                UNIT_RESULT
             }
         }
     } else {
         Result.failure(CustomBadRequestException("invalid emoji"))
+    }.mapResult {
+        backend.combinedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji).map { reactionInfo ->
+            reactionInfo ?: ReactionInfo(emoji, p.id, 0, false, 0)
+        }
     }
 }
 

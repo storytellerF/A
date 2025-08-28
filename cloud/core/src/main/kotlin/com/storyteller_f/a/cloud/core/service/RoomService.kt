@@ -55,20 +55,23 @@ suspend fun Backend.joinRoom(
                 roomId
             ).mapResult {
                 if (it.list.firstOrNull() != null) {
-                    directJoinRoom(uid, roomInfo)
+                    UNIT_RESULT
                 } else {
                     Result.failure(ForbiddenException("Join failed."))
                 }
             }
         } else {
-            combinedDatabase.containerDatabase.isMemberJoined(communityId, uid).mapResult { hasJoined ->
-                if (hasJoined) {
-                    directJoinRoom(uid, roomInfo)
-                } else {
-                    Result.failure(ForbiddenException("you should join community first."))
+            combinedDatabase.containerDatabase.isMemberJoined(communityId, uid)
+                .mapResult { hasJoined ->
+                    if (hasJoined) {
+                        UNIT_RESULT
+                    } else {
+                        Result.failure(ForbiddenException("you should join community first."))
+                    }
                 }
-            }
         }
+    }.mapResult {
+        directJoinRoom(uid, roomInfo)
     }
 }
 
@@ -120,7 +123,7 @@ private fun checkRoomName(newRoom: NewRoom): Result<Unit> {
     val nickname = newRoom.name
     return when {
         nickname.isEmpty() -> Result.failure(CustomBadRequestException("room name is empty"))
-        nickname.length in 1..COMMUNITY_NAME_LENGTH -> Result.success(Unit)
+        nickname.length in 1..COMMUNITY_NAME_LENGTH -> UNIT_RESULT
         else -> Result.failure(CustomBadRequestException("room name must be between in 1 and 20"))
     }
 }
@@ -177,7 +180,7 @@ suspend fun Backend.updateRoom(
                         CustomBadRequestException("community name must be between in 1 and 20")
                     )
 
-                    else -> Result.success(Unit)
+                    else -> UNIT_RESULT
                 }
             }, suspend {
                 checkIcon(newRoom.icon, Dimension(1, 1)).mapResult { checkResult ->
@@ -191,7 +194,7 @@ suspend fun Backend.updateRoom(
                             CustomBadRequestException("dimension mismatch")
                         )
 
-                        else -> Result.success(Unit)
+                        else -> UNIT_RESULT
                     }
                 }
             }).firstNotNullOfOrNull {
@@ -202,10 +205,7 @@ suspend fun Backend.updateRoom(
             } else {
                 combinedDatabase.roomData.updateRoom(id, newRoom).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        combinedDatabase.roomData.getRawRoom(ObjectFetch.IdFetch(id), true, uid)
-                            .mapResultIfNotNull {
-                                processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
-                            }
+                        UNIT_RESULT
                     } else {
                         Result.success(null)
                     }
@@ -214,6 +214,11 @@ suspend fun Backend.updateRoom(
         } else {
             Result.failure(CustomBadRequestException("forbid"))
         }
+    }.mapResult {
+        combinedDatabase.roomData.getRawRoom(ObjectFetch.IdFetch(id), true, uid)
+            .mapResultIfNotNull {
+                processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
+            }
     }
 }
 
@@ -238,22 +243,25 @@ suspend fun Backend.addTopicAtRoom(
 ): Result<TopicInfo?> {
     return when (newTopic.parentType) {
         ObjectType.TOPIC -> {
-            combinedDatabase.topicDatabase.getTopicRootTuple(newTopic.parentId).mapResultIfNotNull { (id, type) ->
-                if (type == ObjectType.ROOM) {
-                    addTopicIntoRoom(id, uid, newTopic)
-                } else {
-                    Result.failure(ForbiddenException())
+            combinedDatabase.topicDatabase.getTopicRootTuple(newTopic.parentId)
+                .mapResultIfNotNull { (id, type) ->
+                    if (type == ObjectType.ROOM) {
+                        Result.success(id)
+                    } else {
+                        Result.failure(ForbiddenException())
+                    }
                 }
-            }
         }
 
         ObjectType.ROOM -> {
-            addTopicIntoRoom(newTopic.parentId, uid, newTopic)
+            Result.success(newTopic.parentId)
         }
 
         else -> {
             Result.failure(ForbiddenException())
         }
+    }.mapResultIfNotNull {
+        addTopicIntoRoom(it, uid, newTopic)
     }
 }
 

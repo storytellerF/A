@@ -120,22 +120,22 @@ suspend fun Backend.createTopicSnapshot(
     uid: PrimaryKey,
     topicId: PrimaryKey,
 ): Result<FileInfo?> {
-    return getUserInfo(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { userInfo ->
-        checkRootReadPermission(
-            ObjectType.TOPIC,
-            topicId,
-            uid
-        ).mapResultIfNotNull { (hasRead, _, isPrivate) ->
-            if (hasRead && !isPrivate) {
-                combinedDatabase.topicDatabase.getTopicInfo(
-                    ObjectFetch.IdFetch(topicId),
-                    null
-                ).mapResultIfNotNull { value ->
+    return checkRootReadPermission(
+        ObjectType.TOPIC,
+        topicId,
+        uid
+    ).mapResultIfNotNull { (hasRead, _, isPrivate) ->
+        if (hasRead && !isPrivate) {
+            combinedDatabase.topicDatabase.getTopicInfo(
+                ObjectFetch.IdFetch(topicId),
+                null
+            ).mapResultIfNotNull { value ->
+                getUserInfo(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { userInfo ->
                     createTopicSnapshot(value, userInfo, uid)
                 }
-            } else {
-                Result.failure(ForbiddenException("Permission denied"))
             }
+        } else {
+            Result.failure(ForbiddenException("Permission denied"))
         }
     }
 }
@@ -293,15 +293,15 @@ suspend fun Backend.getTopic(
             combinedDatabase.topicDatabase.getTopicInfo(
                 ObjectFetch.IdFetch(topicId),
                 uid
-            ).mapResultIfNotNull { info ->
-                processTopicAfterGet(listOf(info), uid, true).mapIfNotNull {
-                    it.first()
-                }
-            }.mapIfNotNull { value ->
+            ).mapIfNotNull { value ->
                 value.copy(hasJoined = hasJoined)
             }
         } else {
             Result.failure(ForbiddenException("Permission Denied"))
+        }
+    }.mapResultIfNotNull { info ->
+        processTopicAfterGet(listOf(info), uid, true).mapIfNotNull {
+            it.first()
         }
     }
 }
@@ -320,14 +320,14 @@ suspend fun Backend.getTopicByAid(
                 uid
             ).mapResultIfNotNull { (hasRead, hasJoined) ->
                 if (hasRead) {
-                    processTopicAfterGet(listOf(info), uid, true).mapIfNotNull {
-                        it.first()
-                    }
+                    Result.success(info.copy(hasJoined = hasJoined))
                 } else {
                     Result.failure(ForbiddenException("Permission Denied"))
-                }.mapIfNotNull { value ->
-                    value.copy(hasJoined = hasJoined)
                 }
+            }
+        }.mapResultIfNotNull { info ->
+            processTopicAfterGet(listOf(info), uid, true).mapIfNotNull {
+                it.first()
             }
         }
 }
@@ -349,15 +349,17 @@ suspend fun Backend.getTopLevelTopicsInObject(
         if (isPrivate && !hasRead) {
             Result.failure(ForbiddenException("Permission Denied"))
         } else {
-            combinedDatabase.topicDatabase.getSubTopicInfo(
-                uid,
-                primaryKeyFetch,
-                parentId,
-                pinType
-            ).mapResult { (data, count) ->
-                processTopicAfterGet(data, uid, true).mapIfNotNull {
-                    PaginationResult(it, count)
-                }
+            UNIT_RESULT
+        }
+    }.mapResultIfNotNull {
+        combinedDatabase.topicDatabase.getSubTopicInfo(
+            uid,
+            primaryKeyFetch,
+            parentId,
+            pinType
+        ).mapResult { (data, count) ->
+            processTopicAfterGet(data, uid, true).mapIfNotNull {
+                PaginationResult(it, count)
             }
         }
     }
