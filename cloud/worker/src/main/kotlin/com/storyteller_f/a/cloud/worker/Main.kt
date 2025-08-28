@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 fun main() {
+    SnowflakeFactory.setMachine(1)
     Napier.base(kmpLogger)
     val env = readEnv()
     Napier.i {
