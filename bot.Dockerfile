@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/root/.gradle \
     "./scripts/build_scripts/build-bot.sh"
 
 RUN mkdir -p ./bot/builtin-bot/build/decompressed && \
-    tar -xf ./bot/builtin-bot/build/distributions/builtin-bot.tar -C ./bot/builtin-bot/build/decompressed
+    tar -xf ./deploy/build/builtin-bot.tar -C ./bot/builtin-bot/build/decompressed
 
 FROM eclipse-temurin:21-alpine
 

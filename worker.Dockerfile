@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/root/.gradle \
     "./scripts/build_scripts/build-worker.sh"
 
 RUN mkdir -p ./cloud/worker/build/decompressed && \
-    tar -xf ./cloud/worker/build/distributions/worker.tar -C ./cloud/worker/build/decompressed
+    tar -xf ./deploy/build/worker.tar -C ./cloud/worker/build/decompressed
 
 FROM eclipse-temurin:21-alpine
 
