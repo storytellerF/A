@@ -97,7 +97,7 @@ suspend fun Backend.processTopicAfterCreate(
 ): Result<TopicInfo?> = merge({
     val content = topicInfo.content
     if (content is TopicContent.Plain) {
-        processTopicMedia(
+        processTopicFileObject(
             listOf(topicInfo)
         ).mapIfNotNull {
             it.firstOrNull()
@@ -401,7 +401,7 @@ suspend fun Backend.processTopicAfterGet(
             }
         }
     ).mapResultIfNotNull { (topics, reactionMap) ->
-        processTopicMedia(topics).mapIfNotNull {
+        processTopicFileObject(topics).mapIfNotNull {
             it.map { topic ->
                 topic.copy(extension = topic.extension?.copy(reactions = reactionMap[topic.id]?.toImmutableList()))
             }
@@ -472,36 +472,29 @@ suspend fun Backend.searchPublicTopics(
     }
 }
 
-suspend fun Backend.processTopicMedia(
+suspend fun Backend.processTopicFileObject(
     infos: List<TopicInfo>,
 ): Result<List<TopicInfo>?> {
     // id + mediaLink，此处的mediaLink 应该包含前缀，内部会自动添加前缀
-    val mediaList = documentMediaList(infos).filter {
+    val fileList = documentFileList(infos).filter {
         val temp = File(it.second)
         temp.canonicalPath == temp.absolutePath
     }
     // 所有用到的media
-    val mediaNameList = mediaList.map {
+    val fileNameList = fileList.map {
         it.second
     }.distinct()
     // 根据topicId 保存的mediaName 的map
-    val mediaMap = mediaList.groupBy {
-        it.first
-    }
-    return getFileInfoList(mediaNameList).mapIfNotNull { mediaUrls ->
-        val mediaInfoMap = mediaUrls.filterNotNull().mapIndexed { index, url ->
-            mediaNameList[index] to url
-        }.associate {
-            it.first to it.second
-        }
+    val fileMap = fileList.groupByPair()
+    return getFileInfoList(fileNameList).mapIfNotNull { fileInfos ->
+        val mediaInfoMap = fileInfos.filterNotNull().associateBy { it.fullName }
         infos.map { info ->
             val content = info.content
             if (content is TopicContent.Plain) {
-                val m = mediaMap[info.id]?.mapNotNull {
-                    val mediaName = it.second
-                    mediaInfoMap[mediaName]
+                val list = fileMap[info.id]?.mapNotNull {
+                    mediaInfoMap[it]
                 }.orEmpty()
-                info.copy(content = content.copy(list = m))
+                info.copy(content = content.copy(list = list))
             } else {
                 info
             }
@@ -509,7 +502,7 @@ suspend fun Backend.processTopicMedia(
     }
 }
 
-fun documentMediaList(documentList: List<TopicInfo>): List<Pair<PrimaryKey, String>> {
+fun documentFileList(documentList: List<TopicInfo>): List<Pair<PrimaryKey, String>> {
     return documentList.flatMap { document ->
         val markdownText = document.content
         if (markdownText is TopicContent.Plain) {
