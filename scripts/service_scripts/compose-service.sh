@@ -38,7 +38,7 @@ else
               echo "BUILD_ON must be set."
               exit 1
           fi
-          custom_cmd_parts+=("--build-arg" "BUILD_ON=${BUILD_ON}")
+	  export BUILD_ON=$BUILD_ON
           break
       fi
   done
