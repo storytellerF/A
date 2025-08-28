@@ -10,7 +10,6 @@ import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.RawChildAccount
 import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.TaskRecord
-import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserDevice
 import com.storyteller_f.a.backend.core.types.UserLog
@@ -18,13 +17,11 @@ import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.*
 import com.storyteller_f.a.backend.exposed.tables.AssetTransactions
-import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
@@ -149,17 +146,6 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
             }).all {
                 it()
             }
-        }
-    }
-
-    override suspend fun isUserExistsByUid(id: Long): Result<Boolean> {
-        return exposedDatabaseSession.dbSearch {
-            search {
-                User.find {
-                    Users.id eq id
-                }
-            }
-            isNotEmpty()
         }
     }
 
@@ -306,42 +292,23 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
     }
 
     override suspend fun addAcgForUser(
-        acgList: List<Pair<PrimaryKey, Int>>,
-        userAcgMap: Map<Long, Long>,
-        list: List<Topic>,
-        taskRecordId: PrimaryKey,
+        record: TaskRecord,
+        assetTransactions: List<AssetTransaction>,
     ): Result<Unit> {
         return exposedDatabaseSession.dbQuery {
-            acgList.forEach { (id, acg) ->
-                userAcgMap[id]?.let { oldAcgAmount ->
-                    Users.update({
-                        Users.id eq id
-                    }) {
-                        it[acgAmount] = oldAcgAmount + acg
-                    }
-                    val assetTransaction = AssetTransaction(
-                        AssetType.ACG,
-                        oldAcgAmount,
-                        oldAcgAmount + acg
-                    )
-                    check(AssetTransactions.insert {
-                        it[AssetTransactions.type] = assetTransaction.type
-                        it[AssetTransactions.before] = assetTransaction.before
-                        it[AssetTransactions.after] = assetTransaction.after
-                    }.insertedCount > 0) {
-                        "Insert asset transaction failed"
-                    }
+            assetTransactions.forEach { at ->
+                check(AssetTransactions.insert {
+                    it[AssetTransactions.id] = at.id
+                    it[AssetTransactions.createdTime] = at.createdTime
+                    it[AssetTransactions.type] = at.type
+                    it[AssetTransactions.before] = at.before
+                    it[AssetTransactions.after] = at.after
+                }.insertedCount > 0) {
+                    "Insert asset transaction failed"
                 }
             }
 
-            TaskRecord.addTaskRecord(
-                TaskRecord(
-                    taskRecordId,
-                    now(),
-                    TaskRecordType.TOPIC_ACG,
-                    list.last().id
-                )
-            )
+            TaskRecord.addTaskRecord(record)
         }
     }
 

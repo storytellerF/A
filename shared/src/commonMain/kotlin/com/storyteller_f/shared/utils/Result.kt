@@ -1,5 +1,7 @@
 package com.storyteller_f.shared.utils
 
+val UNIT_RESULT = Result.success(Unit)
+
 suspend fun <T, R> Result<T>.mapResult(block: suspend (T) -> Result<R>): Result<R> {
     return if (isSuccess) {
         try {

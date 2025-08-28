@@ -24,6 +24,7 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -142,7 +143,7 @@ suspend fun Backend.createCommunity(
             )
 
             StringCheckResult.EMPTY -> Result.failure(CustomBadRequestException("community name is empty"))
-            StringCheckResult.SUCCESS -> Result.success(Unit)
+            StringCheckResult.SUCCESS -> UNIT_RESULT
         }
     }).firstNotNullOfOrNull {
         it().exceptionOrNull()
@@ -187,22 +188,24 @@ suspend fun Backend.updateCommunity(
             checkBeforeUpdateCommunity(newCommunity).mapResult {
                 combinedDatabase.communityDatabase.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
                     if (updateSuccess) {
-                        combinedDatabase.communityDatabase.getRawCommunity(
-                            ObjectFetch.IdFetch(id),
-                            true,
-                            uid
-                        ).mapResultIfNotNull { rawResult ->
-                            processRawCommunityToCommunityInfo(
-                                listOf(rawResult)
-                            ).mapIfNotNull(List<CommunityInfo>::first)
-                        }
+                        UNIT_RESULT
                     } else {
-                        Result.success(null)
+                        Result.failure(Exception("update failed"))
                     }
                 }
             }
         } else {
             Result.failure(CustomBadRequestException("forbid"))
+        }
+    }.mapResultIfNotNull {
+        combinedDatabase.communityDatabase.getRawCommunity(
+            ObjectFetch.IdFetch(id),
+            true,
+            uid
+        ).mapResultIfNotNull { rawResult ->
+            processRawCommunityToCommunityInfo(
+                listOf(rawResult)
+            ).mapIfNotNull(List<CommunityInfo>::first)
         }
     }
 }
@@ -216,7 +219,7 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
                 CustomBadRequestException("community name must be between in 1 and 20")
             )
 
-            else -> Result.success(Unit)
+            else -> UNIT_RESULT
         }
     }, suspend {
         checkIcon(newCommunity.icon, Dimension(1, 1)).mapResult { checkResult ->
@@ -230,7 +233,7 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
                     CustomBadRequestException("dimension mismatch")
                 )
 
-                else -> Result.success(Unit)
+                else -> UNIT_RESULT
             }
         }
     }, suspend {
@@ -245,7 +248,7 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
                     CustomBadRequestException("dimension mismatch")
                 )
 
-                else -> Result.success(Unit)
+                else -> UNIT_RESULT
             }
         }
     }).firstNotNullOfOrNull {
@@ -254,7 +257,7 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
     return if (firstError != null) {
         Result.failure(firstError)
     } else {
-        Result.success(Unit)
+        UNIT_RESULT
     }
 }
 

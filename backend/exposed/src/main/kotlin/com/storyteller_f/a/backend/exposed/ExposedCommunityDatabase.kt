@@ -39,20 +39,6 @@ class ExposedCommunityDatabase(
     val exposedDatabaseSession: ExposedDatabaseSession,
     val containerDatabase: ContainerDatabase
 ) : CommunityDatabase {
-    override suspend fun checkCommunityExists(parentId: PrimaryKey): Result<List<Long>> {
-        return exposedDatabaseSession.dbSearch {
-            search {
-                Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-                    .select(Communities.fields + Aids.value)
-                    .where {
-                        Communities.id eq parentId
-                    }
-            }
-            map {
-                it[Communities.id]
-            }
-        }
-    }
 
     override suspend fun getRawCommunity(
         objectFetch: ObjectFetch,

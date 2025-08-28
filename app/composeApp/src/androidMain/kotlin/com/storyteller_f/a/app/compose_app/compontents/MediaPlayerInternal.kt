@@ -195,7 +195,7 @@ private suspend fun startPlay(
             MediaProvider.get(newSession) { player, s ->
                 player.playNewMedia(s.playList, contentType)
             }
-            Result.success(Unit)
+            UNIT_RESULT
         } else {
             Result.failure(Exception("can't play"))
         }

@@ -40,7 +40,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) :
 
     override suspend fun saveDocument(topics: List<TopicDocument>): Result<Unit> {
         return when {
-            topics.isEmpty() -> Result.success(Unit)
+            topics.isEmpty() -> UNIT_RESULT
             topics.size == 1 -> {
                 val topic = topics.first()
                 useElasticClient(connection, sslContext) {

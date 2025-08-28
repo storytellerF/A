@@ -160,35 +160,37 @@ suspend fun Backend.createTitle(
         uid
     ).mapResultIfNotNull { permission ->
         if (permission.hasAdmin) {
-            val title = toTitle(newTitle, uid)
-            val topic = Topic(
-                title.descriptionTopicId,
-                now(),
-                uid,
-                title.id,
-                ObjectType.TITLE,
-                title.id,
-                ObjectType.TITLE,
-                newTitle.description.encodeToByteArray(),
-                isEncrypted = false,
-                isPin = false,
-                lastModifiedTime = null
-            )
-            combinedDatabase.topicDatabase.createTitle(
-                title,
-                topic
-            ).mapResult {
-                val created = title.toTitleInfo()
-                topicSearchService.saveDocument(
-                    listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(newTitle.description)))
-                ).getOrThrow()
-                addUserLog(uid, UserLogType.CREATE, created.tuple())
-                processTitleList(listOf(created), uid).mapIfNotNull {
-                    it.first()
-                }
-            }
+            UNIT_RESULT
         } else {
             Result.failure(ForbiddenException("Permission denied"))
+        }
+    }.mapResultIfNotNull {
+        val title = toTitle(newTitle, uid)
+        val topic = Topic(
+            title.descriptionTopicId,
+            now(),
+            uid,
+            title.id,
+            ObjectType.TITLE,
+            title.id,
+            ObjectType.TITLE,
+            newTitle.description.encodeToByteArray(),
+            isEncrypted = false,
+            isPin = false,
+            lastModifiedTime = null
+        )
+        combinedDatabase.topicDatabase.createTitle(
+            title,
+            topic
+        ).mapResult {
+            val created = title.toTitleInfo()
+            topicSearchService.saveDocument(
+                listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(newTitle.description)))
+            ).getOrThrow()
+            addUserLog(uid, UserLogType.CREATE, created.tuple())
+            processTitleList(listOf(created), uid).mapIfNotNull {
+                it.first()
+            }
         }
     }
 

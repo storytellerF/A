@@ -123,14 +123,14 @@ private suspend fun Backend.processFilePart(
     provider().copyContentAndClose(file.writeChannel(), length)
     try {
         val mediaInfos = tryUploadFiles(
-            permission.objectId,
-            permission.objectType,
+            permission.rootId,
+            permission.rootType,
             listOf(
                 UploadPack(
                     file,
                     newSavedName,
                     length,
-                    "${permission.objectId}/$newSavedName"
+                    "${permission.rootId}/$newSavedName"
                 ),
             )
         ).getOrThrow()

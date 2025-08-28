@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.server.route
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.a.backend.service.Backend
@@ -133,7 +134,7 @@ suspend fun ApplicationCall.checkApiRequest(
     return when {
         !ServerConfig.IS_PROD && credential is CustomCredential.IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            backend.combinedDatabase.userDatabase.isUserExistsByUid(id).mapIfNotNull {
+            backend.combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(id)).mapIfNotNull {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             }

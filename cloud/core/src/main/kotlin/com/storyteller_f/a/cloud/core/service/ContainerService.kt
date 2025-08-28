@@ -17,14 +17,14 @@ data class RootReadPermission(
 )
 
 data class RootWritePermission(
-    val objectType: ObjectType,
-    val objectId: PrimaryKey,
+    val rootType: ObjectType,
+    val rootId: PrimaryKey,
     val hasWrite: Boolean,
 )
 
 data class RootAdminPermission(
-    val objectType: ObjectType,
-    val objectId: PrimaryKey,
+    val rootType: ObjectType,
+    val rootId: PrimaryKey,
     val hasAdmin: Boolean,
 )
 
@@ -59,14 +59,14 @@ suspend fun Backend.checkRootReadPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            combinedDatabase.communityDatabase.checkCommunityExists(parentId).mapResultIfNotNull {
+            combinedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId)).mapResultIfNotNull {
                 combinedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                     RootReadPermission(true, hasJoined, false)
                 }
             }
         }
 
-        ObjectType.USER -> combinedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
+        ObjectType.USER -> combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
             RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         }
 
@@ -104,7 +104,7 @@ suspend fun Backend.checkRootWritePermission(
         }
 
         ObjectType.COMMUNITY -> {
-            combinedDatabase.communityDatabase.checkCommunityExists(parentId).mapResultIfNotNull {
+            combinedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId)).mapResultIfNotNull {
                 combinedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
                     RootWritePermission(parentType, parentId, hasJoined)
                 }
@@ -113,7 +113,7 @@ suspend fun Backend.checkRootWritePermission(
 
         ObjectType.USER -> {
             if (uid == parentId) {
-                combinedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
+                combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
                     RootWritePermission(parentType, parentId, parentId == uid)
                 }
             } else {
@@ -154,7 +154,7 @@ suspend fun Backend.checkRootAdminPermission(
         }
 
         ObjectType.USER -> {
-            combinedDatabase.userDatabase.isUserExistsByUid(parentId).mapIfNotNull {
+            combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
                 RootAdminPermission(parentType, parentId, parentId == uid)
             }
         }
