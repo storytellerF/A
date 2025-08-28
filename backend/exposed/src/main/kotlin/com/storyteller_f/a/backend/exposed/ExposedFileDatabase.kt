@@ -60,14 +60,14 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         }
     }
 
-    override suspend fun getFileRecordByNames(names: List<String?>): Result<List<FileRecord>> {
-        if (names.filterNotNull().isEmpty()) {
+    override suspend fun getFileRecordByNames(names: List<String>): Result<List<FileRecord>> {
+        if (names.isEmpty()) {
             return Result.success(emptyList())
         }
         return databaseSession.dbSearch {
             search {
                 FileRecords.selectAll().where {
-                    FileRecords.fullName inList names.filterNotNull()
+                    FileRecords.fullName inList names
                 }.orderBy(FileRecords.id, SortOrder.DESC)
             }
             map(FileRecord::wrapRow)

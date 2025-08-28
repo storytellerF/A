@@ -272,7 +272,7 @@ interface FileDatabase {
     suspend fun getFileRecord(owner: PrimaryKey, name: String): Result<FileRecord?>
     suspend fun getFileRecordByIds(ids: List<PrimaryKey>): Result<List<FileRecord>>
     suspend fun getFileRecordListByOwner(owner: PrimaryKey): Result<List<FileRecord>>
-    suspend fun getFileRecordByNames(names: List<String?>): Result<List<FileRecord>>
+    suspend fun getFileRecordByNames(names: List<String>): Result<List<FileRecord>>
     suspend fun insertFileRefs(
         objectId: PrimaryKey,
         objectType: ObjectType,
