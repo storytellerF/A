@@ -47,10 +47,10 @@ class CustomAntilog() : Antilog() {
     }
 
     private fun buildLog(tag: String?, message: String?): String {
-        val t = tag ?: Thread.currentThread().stackTrace[CALL_STACK_INDEX].run {
+        val customTag = tag ?: Thread.currentThread().stackTrace[CALL_STACK_INDEX].run {
             "${createStackElementTag(className)}$${methodName}"
         }
-        return "$t - $message - ${Thread.currentThread().stackTrace[CALL_STACK_INDEX]}"
+        return "$customTag - $message - ${Thread.currentThread().stackTrace[CALL_STACK_INDEX]}"
     }
 
     private fun createStackElementTag(className: String): String {

@@ -1,3 +1,5 @@
+package com.storyteller_f.a.cloud.server
+
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.userTitles

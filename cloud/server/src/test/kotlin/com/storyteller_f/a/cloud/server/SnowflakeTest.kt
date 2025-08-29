@@ -1,3 +1,5 @@
+package com.storyteller_f.a.cloud.server
+
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.service.naming.NameService
 import kotlinx.coroutines.runBlocking

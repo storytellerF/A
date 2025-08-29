@@ -1,3 +1,5 @@
+package com.storyteller_f.a.cloud.server
+
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UploadData
@@ -201,13 +203,12 @@ class TopicTest {
                     UploadData(
                         5,
                         "hello.txt",
-                        ContentType.defaultForFileExtension("txt"),
-                        {
-                            Buffer().apply {
-                                writeString("hello")
-                            }
+                        ContentType.defaultForFileExtension("txt")
+                    ) {
+                        Buffer().apply {
+                            writeString("hello")
                         }
-                    )
+                    }
                 )
                     .getOrThrow().data.first()
                 val info =

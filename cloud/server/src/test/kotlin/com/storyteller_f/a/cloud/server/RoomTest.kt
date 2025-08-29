@@ -1,3 +1,5 @@
+package com.storyteller_f.a.cloud.server
+
 import com.storyteller_f.a.client.core.*
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.obj.*

@@ -1,6 +1,7 @@
+package com.storyteller_f.a.cloud.server
+
 import com.storyteller_f.a.cloud.core.service.SnapshotVerify
 import com.storyteller_f.a.cloud.core.service.generateSignedSnapshot
-import com.storyteller_f.a.cloud.server.createKeystore
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo

@@ -1,3 +1,5 @@
+package com.storyteller_f.a.cloud.server
+
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.service.readResourceEnv
@@ -9,7 +11,6 @@ import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
 import com.storyteller_f.a.client.core.start
-import com.storyteller_f.a.cloud.server.module
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -19,9 +20,16 @@ import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.md5
 import io.github.aakira.napier.Napier
-import io.ktor.server.config.*
-import io.ktor.server.testing.*
-import kotlinx.coroutines.*
+import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.testing.ApplicationTestBuilder
+import io.ktor.server.testing.testApplication
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import kotlinx.serialization.json.Json
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.MySQLContainer
@@ -39,19 +47,11 @@ fun test(
     block: suspend ApplicationTestBuilder.() -> Unit
 ) {
     Napier.base(kmpLogger)
-    val freeMemory = Runtime.getRuntime().freeMemory() / (1024 * 1024)
-    Napier.i {
-        "free ${freeMemory}MiB"
-    }
     SnowflakeFactory.setMachine(0)
     loadCryptoLibIfNeed()
-
     startMemoryTest(overrideEnv, block)
-
-    if (freeMemory >= 100) {
-//        startTestContainerTest(receivedFrame, true, block)
-        startTestContainerTest(false, block)
-    }
+//    startTestContainerTest(true, block)
+    startTestContainerTest(false, block)
     Napier.i {
         "test done"
     }
@@ -299,15 +299,6 @@ fun <T> assertListSize(count: Int, result: Result<ServerResponse<T>>) {
 
 fun <T> assertListTotalSize(count: Int, result: Result<ServerResponse<T>>) {
     assertEquals(count.toLong(), result.getOrThrow().pagination?.total)
-}
-
-inline fun <T> assertResponse(
-    count: Int,
-    result: Result<ServerResponse<T>>,
-    block: (ServerResponse<T>) -> Unit
-) {
-    assertListSize(count, result)
-    block(result.getOrThrow())
 }
 
 fun extractTableNames(query: String): List<String> {

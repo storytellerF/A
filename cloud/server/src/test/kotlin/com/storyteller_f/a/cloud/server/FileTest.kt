@@ -1,3 +1,5 @@
+package com.storyteller_f.a.cloud.server
+
 import com.storyteller_f.a.backend.service.object_storage.getImageDimension
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.copy
@@ -114,13 +116,12 @@ class MediaTest {
                 UploadData(
                     bytes.size.toLong(),
                     name,
-                    ContentType.defaultForFileExtension("flac"),
-                    {
-                        Buffer().apply {
-                            write(bytes)
-                        }
+                    ContentType.defaultForFileExtension("flac")
+                ) {
+                    Buffer().apply {
+                        write(bytes)
                     }
-                )
+                }
             ).getOrThrow()
             extractAlbum(response.data.first().id).getOrThrow()
         }

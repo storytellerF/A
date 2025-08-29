@@ -6,7 +6,6 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.cloud.core.service.addAlternativeAccount
 import com.storyteller_f.a.cloud.core.service.getUserAlternateUserInfoList
-import com.storyteller_f.a.cloud.server.ServerConfig
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.a.cloud.server.route.checkApiRequest
@@ -227,8 +226,7 @@ fun Route.bindUnprotectedAccountRoute(
         Result.success(call.getData())
     }
     CustomApi.Accounts.signUp.invoke(RoutingContext::handleResult) {
-        @Suppress("KotlinConstantConditions")
-        if (ServerConfig.IS_PROD) {
+        if (backend.customConfig.buildType == "prod") {
             Result.failure(Exception("not support"))
         } else {
             signUp(backend, it.receiveBody())

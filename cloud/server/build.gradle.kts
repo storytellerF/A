@@ -63,7 +63,6 @@ tasks.withType<JavaExec> {
 }
 
 tasks.withType<Test> {
-    maxParallelForks = 1
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 

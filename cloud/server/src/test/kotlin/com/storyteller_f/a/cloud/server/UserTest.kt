@@ -1,3 +1,5 @@
+package com.storyteller_f.a.cloud.server
+
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.addAlternativeAccount
 import com.storyteller_f.a.client.core.getAlternativeAccounts
@@ -29,9 +31,9 @@ class UserTest {
     fun `test update user nickname and aid`() = test {
         attachSession {
             val updateRow = updateUserInfo(
-                UpdateUserBody(aid = "newaid")
+                UpdateUserBody(aid = "aid")
             ).getOrThrow()
-            assertEquals(updateRow.aid, "newaid")
+            assertEquals(updateRow.aid, "aid")
             updateUserInfo(UpdateUserBody(nickname = "test")).getOrThrow()
             assertEquals("test", getUserInfo(it.uid).getOrThrow().nickname)
         }
@@ -48,13 +50,12 @@ class UserTest {
                     UploadData(
                         bytes.size.toLong(),
                         "avatar1.png",
-                        ContentType.parse("image/png"),
-                        {
-                            Buffer().apply {
-                                write(bytes)
-                            }
+                        ContentType.parse("image/png")
+                    ) {
+                        Buffer().apply {
+                            write(bytes)
                         }
-                    )
+                    }
                 )
                     .getOrThrow().data.first()
             assertEquals(
