@@ -235,10 +235,10 @@ private fun buildLog(
     val httpMethod = call.request.httpMethod.value
     val ipList = call.remoteIp(reader).joinToString(",")
     return """Status: $status, HTTP method: $httpMethod, 
-                |Url: ${call.request.uri},
-                |Query: ${call.request.queryString()}
-                |Headers: ${call.request.headers.toMap()}
-                |Ip：$ipList}""".trimMargin()
+                |    Url: ${call.request.uri},
+                |    Query: ${call.request.queryString()}
+                |    Headers: ${call.request.headers.toMap()}
+                |    Ip：$ipList}""".trimMargin()
 }
 
 fun ApplicationCall.remoteIp(
