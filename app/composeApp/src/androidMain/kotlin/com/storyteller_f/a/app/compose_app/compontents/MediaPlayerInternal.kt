@@ -2,7 +2,6 @@ package com.storyteller_f.a.app.compose_app.compontents
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -11,26 +10,56 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.TapAndPlay
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.media3.common.*
+import androidx.core.net.toUri
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.compose_app.*
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
+import com.storyteller_f.a.app.compose_app.LocalToaster
+import com.storyteller_f.a.app.compose_app.MediaPlaySession
 import com.storyteller_f.a.app.compose_app.MediaProvider
+import com.storyteller_f.a.app.compose_app.Toast
+import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
-import io.ktor.client.*
-import kotlinx.coroutines.*
+import io.ktor.client.HttpClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.schabi.newpipe.ReCaptchaActivity
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.StreamingService
-import org.schabi.newpipe.extractor.StreamingService.LinkType.*
+import org.schabi.newpipe.extractor.StreamingService.LinkType.CHANNEL
+import org.schabi.newpipe.extractor.StreamingService.LinkType.NONE
+import org.schabi.newpipe.extractor.StreamingService.LinkType.PLAYLIST
+import org.schabi.newpipe.extractor.StreamingService.LinkType.STREAM
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
 import org.schabi.newpipe.extractor.playlist.PlaylistInfo
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -357,7 +386,7 @@ private fun MediaController.playNewMedia(
         MediaItem.Builder().setUri(uri)
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setArtworkUri(playItem.icon?.let { Uri.parse(it) })
+                    .setArtworkUri(playItem.icon?.toUri())
                     .setTitle(playItem.title)
                     .build()
             )

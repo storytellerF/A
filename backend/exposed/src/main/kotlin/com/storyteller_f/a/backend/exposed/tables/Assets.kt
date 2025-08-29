@@ -14,6 +14,8 @@ object AssetTransactions : BaseTable() {
 fun AssetTransaction.Companion.wrapRow(row: ResultRow): AssetTransaction {
     return with(AssetTransactions) {
         AssetTransaction(
+            row[id],
+            row[createdTime],
             row[type],
             row[before],
             row[after]
