@@ -30,5 +30,5 @@ fun Query.bindPaginationQuery(
 
         null -> null
     }
-    return orderBy(table.id to (order ?: SortOrder.DESC)).limit(primaryKeyFetch.size)
+    return orderBy(table.id, (order ?: SortOrder.DESC)).limit(primaryKeyFetch.size)
 }

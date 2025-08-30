@@ -1,8 +1,10 @@
 package com.storyteller_f.a.cloud.worker
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
@@ -16,6 +18,7 @@ import com.storyteller_f.a.backend.service.topicDocumentService
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -89,8 +92,10 @@ private suspend fun Backend.doAcgTask() {
 }
 
 private suspend fun Backend.getAcgTaskListFromTopics() =
-    combinedDatabase.userDatabase.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult {
-        combinedDatabase.topicDatabase.getTopicList(it?.processedId ?: 0)
+    combinedDatabase.userDatabase.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult { taskRecord ->
+        combinedDatabase.topicDatabase.getTopicList(PrimaryKeyFetch(taskRecord?.processedId?.let {
+            Cursor.PreCursor(it)
+        }, 10))
     }.mapResult { list ->
         if (list.isNotEmpty()) {
             val acgList = list.groupBy {

@@ -122,7 +122,7 @@ interface TopicDatabase {
     suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted): Result<TopicInfo>
     suspend fun savePlainTopic(topic: Topic, content: TopicContent.Plain): Result<Unit>
     suspend fun updateTopicStatus(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
-    suspend fun getTopicList(firstId: PrimaryKey): Result<List<Topic>>
+    suspend fun getTopicList(primaryKeyFetch: PrimaryKeyFetch): Result<List<Topic>>
     suspend fun getTopicCommentCount(
         topicIdList: List<PrimaryKey>,
     ): Result<List<Pair<Long, Long>>>
