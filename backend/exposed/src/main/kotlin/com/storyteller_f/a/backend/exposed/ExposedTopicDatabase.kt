@@ -24,7 +24,6 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
@@ -223,16 +222,12 @@ class ExposedTopicDatabase(
         }
     }
 
-    override suspend fun getTopicList(firstId: PrimaryKey): Result<List<Topic>> {
+    override suspend fun getTopicList(
+        primaryKeyFetch: PrimaryKeyFetch
+    ): Result<List<Topic>> {
         return exposedDatabaseSession.dbSearch {
             search {
-                val query = Topics.selectAll()
-                if (firstId != DEFAULT_PRIMARY_KEY) {
-                    query.andWhere {
-                        Topics.id less firstId
-                    }
-                }
-                query.orderBy(Topics.id, SortOrder.ASC)
+                Topics.selectAll().bindPaginationQuery(Topics, primaryKeyFetch)
             }
             map(Topic::wrapRow)
         }
@@ -506,8 +501,8 @@ class ExposedTopicDatabase(
             search {
                 ReactionRecords.selectAll().where {
                     (ReactionRecords.objectId eq objectId) and
-                        (ReactionRecords.emoji eq emoji) and
-                        (ReactionRecords.uid eq uid)
+                            (ReactionRecords.emoji eq emoji) and
+                            (ReactionRecords.uid eq uid)
                 }
             }
             isNotEmpty()
@@ -537,8 +532,8 @@ class ExposedTopicDatabase(
             search {
                 ReactionRecords.selectAll().where {
                     (ReactionRecords.objectId eq objectId) and
-                        (ReactionRecords.emoji eq emoji) and
-                        (ReactionRecords.uid eq uid)
+                            (ReactionRecords.emoji eq emoji) and
+                            (ReactionRecords.uid eq uid)
                 }
             }
             first {

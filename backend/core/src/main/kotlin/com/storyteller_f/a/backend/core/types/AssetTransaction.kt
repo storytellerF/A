@@ -6,6 +6,7 @@ import kotlinx.datetime.LocalDateTime
 
 class AssetTransaction(
     val id: PrimaryKey,
+    val uid: PrimaryKey,
     val createdTime: LocalDateTime,
     val type: AssetType,
     val before: Long,

@@ -299,12 +299,20 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
             assetTransactions.forEach { at ->
                 check(AssetTransactions.insert {
                     it[AssetTransactions.id] = at.id
+                    it[AssetTransactions.uid] = at.uid
                     it[AssetTransactions.createdTime] = at.createdTime
                     it[AssetTransactions.type] = at.type
                     it[AssetTransactions.before] = at.before
                     it[AssetTransactions.after] = at.after
                 }.insertedCount > 0) {
                     "Insert asset transaction failed"
+                }
+                check(Users.update({
+                    Users.id eq at.uid and (Users.acgAmount eq at.before)
+                }) {
+                    it[Users.acgAmount] = at.after
+                } > 0) {
+                    "update user acg failed"
                 }
             }
 
