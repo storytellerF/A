@@ -18,7 +18,6 @@ import com.storyteller_f.a.backend.service.topicDocumentService
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -70,6 +69,7 @@ private suspend fun Backend.doAcgTask() {
                 userAcgMap[id]?.let { oldAcgAmount ->
                     AssetTransaction(
                         SnowflakeFactory.nextId(),
+                        id,
                         now(),
                         AssetType.ACG,
                         oldAcgAmount,

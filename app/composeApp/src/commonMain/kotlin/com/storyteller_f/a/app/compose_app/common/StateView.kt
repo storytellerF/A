@@ -1,5 +1,6 @@
 package com.storyteller_f.a.app.compose_app.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
@@ -10,6 +11,7 @@ import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +29,7 @@ import com.storyteller_f.a.app.compose_app.compontents.rememberAlertDialogContro
 import com.storyteller_f.a.app.compose_app.no_content_yet
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -45,7 +48,7 @@ private fun LoadState?.toLoadingState() =
         is LoadState.NotLoading -> LoadingState.Done
     }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun <T : Any> StateView(
     pagingItems: LazyPagingItems<T>,
@@ -70,10 +73,16 @@ fun <T : Any> StateView(
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
         if (pagingItems.itemSnapshotList.isNotEmpty()) {
-            Column {
-                LoadStateAtTop(pagingItems, pullRefreshing)
-                Box(Modifier.weight(1f)) {
-                    content()
+            content()
+            val combinedLoadStates = pagingItems.loadState
+            val refreshState = combinedLoadStates.refresh
+            Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+                if (refreshState is LoadState.Error) {
+                    ExceptionCell(refreshState.error) {
+                        pagingItems.refresh()
+                    }
+                } else if (refreshState is LoadState.Loading && !pullRefreshing) {
+                    RemoteMediatorLoadingView()
                 }
             }
         } else {
@@ -124,41 +133,48 @@ fun <T> StateView(
         if (pullRefreshing && state !is LoadingState.Loading) pullRefreshing = false
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        data.let { safeData ->
-            if (safeData != null) {
-                Column {
-                    when (val capturedState = state) {
-                        is LoadingState.Error -> ExceptionCell(capturedState.e) {
-                            handler.refresh()
-                        }
+        HandlerStateViewInternal(data, state, handler, pullRefreshing, content)
+        PullRefreshIndicator(pullRefreshing, refreshState, Modifier.align(Alignment.TopCenter))
+    }
+}
 
-                        is LoadingState.Done -> {
-                        }
+@OptIn(ExperimentalHazeMaterialsApi::class)
+@Composable
+private fun <T> HandlerStateViewInternal(
+    data: T?,
+    state: LoadingState?,
+    handler: LoadingHandler<T>,
+    pullRefreshing: Boolean,
+    content: @Composable ((T & Any) -> Unit)
+) {
+    if (data != null) {
+        content(data)
+        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+            when (val capturedState = state) {
+                is LoadingState.Error -> ExceptionCell(capturedState.e) {
+                    handler.refresh()
+                }
 
-                        else -> if (!pullRefreshing) RemoteMediatorLoadingView()
-                    }
-                    Box(Modifier.weight(1f)) {
-                        content(safeData)
+                is LoadingState.Done -> {
+                }
+
+                else -> if (!pullRefreshing) RemoteMediatorLoadingView()
+            }
+        }
+    } else {
+        CenterBox {
+            when (val capturedState = state) {
+                is LoadingState.Error -> {
+                    ExceptionCell(capturedState.e) {
+                        handler.refresh()
                     }
                 }
-            } else {
-                CenterBox {
-                    when (val capturedState = state) {
-                        is LoadingState.Error -> {
-                            ExceptionCell(capturedState.e) {
-                                handler.refresh()
-                            }
-                        }
 
-                        else -> {
-                            CircularProgressIndicator()
-                        }
-                    }
+                else -> {
+                    CircularProgressIndicator()
                 }
             }
         }
-
-        PullRefreshIndicator(pullRefreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
 }
 
@@ -212,19 +228,6 @@ fun LazyListScope.topPrepend(combinedLoadStates: CombinedLoadStates) {
         item("prepend") {
             RemoteMediatorLoadingView()
         }
-    }
-}
-
-@Composable
-private fun <T : Any> LoadStateAtTop(pagingItems: LazyPagingItems<T>, pullRefreshing: Boolean) {
-    val combinedLoadStates = pagingItems.loadState
-    val refreshState = combinedLoadStates.refresh
-    if (refreshState is LoadState.Error) {
-        ExceptionCell(refreshState.error) {
-            pagingItems.refresh()
-        }
-    } else if (refreshState is LoadState.Loading && !pullRefreshing) {
-        RemoteMediatorLoadingView()
     }
 }
 

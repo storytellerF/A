@@ -21,8 +21,8 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
+import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
 import com.storyteller_f.a.app.compose_app.model.OnTitleCreated
 import com.storyteller_f.a.app.compose_app.model.createMemberSearchViewModel
@@ -304,7 +304,7 @@ private fun TitleTypeSelector(
     }
 }
 
-private suspend fun createTitle(
+private suspend fun GlobalDialogController.createTitle(
     titleType: TitleType?,
     receiver: PrimaryKey?,
     titleScope: ObjectTuple?,
@@ -324,7 +324,7 @@ private suspend fun createTitle(
     return sessionManager.createTitle(
         NewTitle(name, titleType, receiver, titleScope.objectId, titleScope.objectType, content)
     ).onSuccess { title ->
-        bus.emit(OnTitleCreated(title))
+        emitEvent(OnTitleCreated(title))
     }
 }
 

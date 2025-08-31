@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.model.OnRoomCreated
 import com.storyteller_f.a.app.compose_app.pages.title.CommonComposePage
 import com.storyteller_f.a.client.core.createRoom
@@ -38,7 +37,7 @@ fun RoomComposePage() {
             globalDialogController.useResult {
                 sessionManager.createRoom(NewRoom(name, aid))
             }.onSuccess { roomInfo ->
-                bus.emit(OnRoomCreated(roomInfo))
+                globalDialogController.emitEvent(OnRoomCreated(roomInfo))
                 appNav.back()
             }
         }

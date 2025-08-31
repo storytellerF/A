@@ -69,7 +69,6 @@ import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.add
 import com.storyteller_f.a.app.compose_app.all_members
-import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
 import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
 import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
@@ -535,7 +534,7 @@ private fun CommunityMenus(
                         globalDialogController.useResult {
                             sessionViewModel.exitCommunity(communityId)
                         }.onSuccess { info ->
-                            bus.emit(OnCommunityExited(info))
+                            globalDialogController.emitEvent(OnCommunityExited(info))
                         }
                     }
                 }
@@ -545,7 +544,7 @@ private fun CommunityMenus(
                         globalDialogController.useResult {
                             sessionViewModel.joinCommunity(communityId)
                         }.onSuccess { info ->
-                            bus.emit(OnCommunityExited(info))
+                            globalDialogController.emitEvent(OnCommunityExited(info))
                         }
                     }
                 }

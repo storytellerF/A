@@ -7,7 +7,6 @@ import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.app.compose_app.common.*
 import com.storyteller_f.a.app.compose_app.compontents.DialogSaveState
 import com.storyteller_f.a.app.compose_app.pages.UploadSession
-import com.storyteller_f.a.app.compose_app.pages.topic.upload
 import com.storyteller_f.a.client.core.*
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -40,7 +39,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
@@ -692,19 +690,18 @@ class UploadViewModel(
     }
     val handlers = uploader.list.map { e ->
         SimpleLoadingHandler(viewModelScope) {
-            upload(
-                sessionManager,
+            sessionManager.upload(
                 myUid ob ObjectType.USER,
                 UploadData(
                     e.size,
                     e.name,
-                    e.contentType,
-                    {
-                        e.source()?.buffered() ?: throw Exception("upload failed")
-                    }
-                )
-            ).map {
-                it.first()
+                    e.contentType
+                ) {
+                    e.source()
+                }
+            ) { _, _ ->
+            }.map {
+                it.data.first()
             }
         }
     }

@@ -70,7 +70,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) :
                         }).refresh(Refresh.WaitFor)
                     }.await()
                     Napier.i(tag = "elastic save bulk") {
-                        "errors:${response.errors()} took: ${response.took()}"
+                        "errors:${response.errors()} took: ${response.took()}ms"
                     }
                 }
             }

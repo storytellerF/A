@@ -97,10 +97,10 @@ fun rememberCommonDialogController(): CommonDialogController {
     }
 }
 
-class CommonDialogController(val show: MutableState<Boolean> = mutableStateOf(false)) {
+class CommonDialogController(val shown: MutableState<Boolean> = mutableStateOf(false)) {
 
     fun update(new: Boolean) {
-        show.value = new
+        shown.value = new
     }
 }
 

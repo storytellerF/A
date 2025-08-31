@@ -172,7 +172,7 @@ fun CommunityGrid(communityInfo: CommunityInfo?, padding: Dp, onClick: ((Communi
                 if (communityInfo != null) {
                     val commonDialogController =
                         rememberCommonDialogController()
-                    val shown by commonDialogController.show
+                    val shown by commonDialogController.shown
                     CommunityIcon(
                         communityInfo,
                         shown,
@@ -218,7 +218,7 @@ fun CommunityCell(
     ) {
         val commonDialogController =
             rememberCommonDialogController()
-        val shown by commonDialogController.show
+        val shown by commonDialogController.shown
         CommunityIcon(
             communityInfo,
             shown,

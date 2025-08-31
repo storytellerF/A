@@ -51,14 +51,14 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
-import com.storyteller_f.a.app.compose_app.LocalJson
 import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
 import com.storyteller_f.a.app.compose_app.LocalToaster
-import com.storyteller_f.a.app.compose_app.MediaPlaySession
 import com.storyteller_f.a.app.compose_app.MediaPlayerActivity
+import com.storyteller_f.a.app.compose_app.MultiMediaInfo
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import kotlin.uuid.ExperimentalUuidApi
 
 // Constant for broadcast receiver
@@ -83,7 +83,7 @@ actual fun VideoView(
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 private fun VideoPlayer(
-    playingSession: MediaPlaySession.VideoOrAudio?,
+    playingSession: MultiMediaInfo.Player?,
     currentSession: LocalMediaPlaySession,
     player: MediaController,
     isEmbed: Boolean,
@@ -216,7 +216,7 @@ private fun Modifier.buildPlayerModifier(
 @Composable
 fun VideoOrAudioOpRow(
     localMediaPlaySession: LocalMediaPlaySession,
-    playingSession: MediaPlaySession.VideoOrAudio?,
+    playingSession: MultiMediaInfo.Player?,
     contentType: String,
     showSheet: () -> Unit,
 ) {
@@ -257,11 +257,10 @@ fun VideoOrAudioOpRow(
         }, enabled = isActive) {
             Icon(Icons.Default.PictureInPicture, "pip")
         }
-        val json = LocalJson.current
         IconButton({
             if (localMediaPlaySession.uuid == playingSession?.uuids?.lastOrNull()) {
                 context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
-                    putExtra("json", json.encodeToString<MediaPlaySession>(playingSession))
+                    putExtra("json", Json.encodeToString<MultiMediaInfo>(playingSession))
                 })
             }
         }, enabled = isActive) {

@@ -41,8 +41,8 @@ import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
 import com.storyteller_f.a.app.compose_app.LocalToaster
-import com.storyteller_f.a.app.compose_app.MediaPlaySession
 import com.storyteller_f.a.app.compose_app.MediaProvider
+import com.storyteller_f.a.app.compose_app.MultiMediaInfo
 import com.storyteller_f.a.app.compose_app.Toast
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
@@ -73,7 +73,7 @@ fun MediaPlayerInternal(
     id: String,
     isEmbed: Boolean,
     contentType: String,
-    block: @Composable (MediaController, MediaPlaySession.VideoOrAudio?, LocalMediaPlaySession) -> Unit
+    block: @Composable (MediaController, MultiMediaInfo.Player?, LocalMediaPlaySession) -> Unit
 ) {
     val uuid = rememberSaveable {
         Uuid.random()
@@ -86,7 +86,7 @@ fun MediaPlayerInternal(
         "MediaPlayerInternal $uuid recomposing"
     }
     val player = MediaProvider.controller ?: return
-    val playingSession by currentPlayerSession
+    val playingSession by globalPlayerState
     val isPip = rememberIsInPipMode()
     LaunchedEffect(playingSession, currentSession) {
         log {
@@ -113,11 +113,11 @@ fun MediaPlayerInternal(
 @Composable
 fun MediaPlayerContainer(
     isEmbed: Boolean,
-    playingSession: MediaPlaySession.VideoOrAudio?,
+    playingSession: MultiMediaInfo.Player?,
     player: MediaController,
     currentSession: LocalMediaPlaySession,
     contentType: String,
-    block: @Composable (MediaController, MediaPlaySession.VideoOrAudio?, LocalMediaPlaySession) -> Unit
+    block: @Composable (MediaController, MultiMediaInfo.Player?, LocalMediaPlaySession) -> Unit
 ) {
     var showSheet by remember {
         mutableStateOf(false)
@@ -214,7 +214,7 @@ private suspend fun startPlay(
             else -> listOf(ConstPlayItem(obj.url, title = obj.url))
         }
         if (playList.isNotEmpty()) {
-            val newSession = MediaPlaySession.VideoOrAudio(
+            val newSession = MultiMediaInfo.Player(
                 obj,
                 contentType,
                 playList,

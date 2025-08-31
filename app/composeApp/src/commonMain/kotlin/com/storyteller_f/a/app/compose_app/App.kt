@@ -1,12 +1,24 @@
 package com.storyteller_f.a.app.compose_app
 
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import coil3.ImageLoader
@@ -21,8 +33,15 @@ import com.kdroid.composenotification.builder.ExperimentalNotificationsApi
 import com.kdroid.composenotification.builder.Notification
 import com.kdroid.composenotification.builder.getNotificationProvider
 import com.russhwolf.settings.Settings
-import com.storyteller_f.a.app.compose_app.compontents.*
+import com.storyteller_f.a.app.compose_app.compontents.ConstPlayItem
+import com.storyteller_f.a.app.compose_app.compontents.CustomGlobalDialogController
+import com.storyteller_f.a.app.compose_app.compontents.CustomVideoSize
 import com.storyteller_f.a.app.compose_app.compontents.GlobalDialog
+import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
+import com.storyteller_f.a.app.compose_app.compontents.GlobalTask
+import com.storyteller_f.a.app.compose_app.compontents.RemoteMediaItem
+import com.storyteller_f.a.app.compose_app.compontents.globalPlayerState
+import com.storyteller_f.a.app.compose_app.compontents.rememberIsInPipMode
 import com.storyteller_f.a.app.compose_app.model.DownloadViewModel
 import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.model.getDownloadViewModel
@@ -36,7 +55,19 @@ import com.storyteller_f.a.app.compose_app.utils.createCustomDataStoreManager
 import com.storyteller_f.a.app.compose_app.utils.createSettings
 import com.storyteller_f.a.app.compose_app.utils.platform
 import com.storyteller_f.a.app.compose_app.utils.restoreFromStorage
-import com.storyteller_f.a.client.core.*
+import com.storyteller_f.a.client.core.ClientSessionState
+import com.storyteller_f.a.client.core.RawUserPass
+import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.a.client.core.UserSessionModel
+import com.storyteller_f.a.client.core.WebSocketClient
+import com.storyteller_f.a.client.core.WebSocketClientListener
+import com.storyteller_f.a.client.core.buildWebSocketUrl
+import com.storyteller_f.a.client.core.createUserSessionManager
+import com.storyteller_f.a.client.core.defaultClientConfigure
+import com.storyteller_f.a.client.core.getClient
+import com.storyteller_f.a.client.core.processEncryptedTopic
+import com.storyteller_f.a.client.core.start
 import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomDatabase
 import com.storyteller_f.shared.kmpLogger
@@ -50,12 +81,15 @@ import com.strabled.composepreferences.ProvideDataStoreManager
 import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
-import io.ktor.client.plugins.cookies.*
-import kotlinx.coroutines.*
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.cookies.CookiesStorage
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -88,8 +122,8 @@ val LocalGlobalDialog = compositionLocalOf<GlobalDialogController> {
     error("no default dialog")
 }
 
-val LocalJson = compositionLocalOf<Json> {
-    error("no default json")
+val LocalGlobalTask = compositionLocalOf<GlobalTask> {
+    error("no default task")
 }
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -114,27 +148,27 @@ val LocalAccountSwitcher = compositionLocalOf<AccountSwitcher> {
 }
 
 @Serializable
-sealed interface MediaPlaySession {
+sealed interface MultiMediaInfo {
     @OptIn(ExperimentalUuidApi::class)
     @Serializable
-    @SerialName("video-audio")
-    data class VideoOrAudio(
+    @SerialName("player")
+    data class Player(
         val obj: RemoteMediaItem,
         val contentType: String,
         val playList: List<ConstPlayItem>,
         val uuids: List<Uuid>,
         val videoSize: CustomVideoSize?,
-    ) : MediaPlaySession {
+    ) : MultiMediaInfo {
         val id = obj.url
     }
 
     @Serializable
     @SerialName("image")
-    data class Image(val fileInfo: FileInfo) : MediaPlaySession
+    data class Image(val fileInfo: FileInfo) : MultiMediaInfo
 
     @Serializable
     @SerialName("local-image")
-    data class LocalImage(val url: String) : MediaPlaySession
+    data class LocalImage(val url: String) : MultiMediaInfo
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -151,7 +185,7 @@ fun App() {
 fun AppInternal(httpUrl: String, wsServerUrl: String) {
     CommonEntry(httpUrl, wsServerUrl) {
         StaticObj
-        val playerSession by currentPlayerSession
+        val playerSession by globalPlayerState
         val isPip = rememberIsInPipMode()
 
         MainAppPage(isPip, playerSession)
@@ -161,16 +195,15 @@ fun AppInternal(httpUrl: String, wsServerUrl: String) {
 @Composable
 private fun MainAppPage(
     isPip: Boolean,
-    localSession: MediaPlaySession.VideoOrAudio?,
+    player: MultiMediaInfo.Player?,
 ) {
     val navigator = rememberNavController()
-    val json = LocalJson.current
     val scope = rememberCoroutineScope()
-    if (isPip && localSession != null) {
-        MediaPage(localSession)
+    if (isPip && player != null) {
+        MediaPage(player)
     } else {
         val appNav = remember {
-            newAppNav(navigator, json, scope)
+            newAppNav(navigator, scope)
         }
         ObserveMessage({
             appNav.toRoute<RoomScreen>()?.roomId
@@ -184,7 +217,23 @@ private fun MainAppPage(
             LocalAppNav provides appNav,
             LocalDownloadViewModel provides downloadViewModel
         ) {
-            NavHost(navigator, startDestination = HomeScreen) {
+            NavHost(navigator, startDestination = HomeScreen, enterTransition = {
+                slideInHorizontally {
+                    it
+                }
+            }, exitTransition = {
+                slideOutHorizontally {
+                    -it
+                }
+            }, popEnterTransition = {
+                slideInHorizontally {
+                    -it
+                }
+            }, popExitTransition = {
+                slideOutHorizontally {
+                    it
+                }
+            }) {
                 buildRootNav(navigator)
             }
         }
@@ -201,64 +250,96 @@ fun CommonEntry(
         setSingletonImageLoaderFactory {
             getAsyncImageLoader(it)
         }
-
         val accountSwitcher = remember {
             AccountSwitcher()
         }
-        val mainUserSessionManager = createAppSessionManager("main", wsServerUrl, httpUrl)
         var currentUser by remember {
             mutableStateOf<RawUserPass?>(null)
         }
+        val mainUserSessionManager = createAppSessionManager("main", wsServerUrl, httpUrl)
         val currentUserSessionManager = currentUser?.let {
             val sessionManager = createAppSessionManager("alternative$it", wsServerUrl, httpUrl)
             sessionManager.sessionModel.updateState(ClientSessionState.Success(it))
             sessionManager
         } ?: mainUserSessionManager
-        val address by currentUserSessionManager.address.collectAsState()
-        val json = remember {
-            Json {
-                ignoreUnknownKeys = true
-            }
-        }
-        val database = remember(address) {
-            RoomModelStorage(getRoomDatabase(address ?: "default"))
-        }
 
-        val globalDialogController = remember {
-            CustomGlobalDialogController()
-        }
-        val toasterState = rememberToasterState()
-
-        LaunchedEffect(database) {
-            processEvent(database)
-        }
-        GlobalDialog(globalDialogController)
-        Toaster(toasterState, alignment = Alignment.TopCenter)
         CompositionLocalProvider(
-            LocalClient provides currentUserSessionManager.client,
-            LocalWsClient provides currentUserSessionManager.webSocketClient,
             LocalSessionManager provides currentUserSessionManager,
             LocalMainSessionManager provides mainUserSessionManager,
-            LocalToaster provides Sonner(toasterState),
-            LocalDatabase provides database,
-            LocalJson provides json,
-            LocalGlobalDialog provides globalDialogController,
             LocalAccountSwitcher provides accountSwitcher,
+            LocalClient provides currentUserSessionManager.client,
+            LocalWsClient provides currentUserSessionManager.webSocketClient,
         ) {
-            CommonEntryInternal(content, accountSwitcher, globalDialogController) {
+            val address by currentUserSessionManager.address.collectAsState()
+            CommonEntry(address, content) {
                 currentUser = it
             }
         }
     }
 }
 
+class UIViewModel : ViewModel() {
+    val bus = MutableSharedFlow<Any>()
+    val controller = CustomGlobalDialogController(bus)
+    val task = GlobalTask(viewModelScope, bus)
+}
+
+@Composable
+private fun CommonEntry(
+    address: String?,
+    content: @Composable () -> Unit,
+    update: (RawUserPass) -> Unit,
+) {
+    val database = remember(address) {
+        RoomModelStorage(getRoomDatabase(address ?: "guest"))
+    }
+    val uiViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        key = "ui-$address",
+    ) {
+        UIViewModel()
+    }
+    val currentUserSessionManager = LocalSessionManager.current
+    val listener = remember {
+        object : WebSocketClientListener {
+            override suspend fun onReceived(frame: RoomFrame) {
+                if (frame is RoomFrame.NewTopicInfo) {
+                    uiViewModel.bus.emit(
+                        OnTopicCreated(frame.topicInfo)
+                    )
+                }
+            }
+        }
+    }
+    currentUserSessionManager.webSocketClient.addListener(listener)
+    DisposableEffect(listener) {
+        onDispose {
+            currentUserSessionManager.webSocketClient.removeListener(listener)
+        }
+    }
+    val toasterState = rememberToasterState()
+
+    LaunchedEffect(database) {
+        processEvent(database, uiViewModel.bus)
+    }
+    GlobalDialog(uiViewModel.controller)
+    Toaster(toasterState, alignment = Alignment.TopCenter)
+    CompositionLocalProvider(
+        LocalToaster provides Sonner(toasterState),
+        LocalDatabase provides database,
+        LocalGlobalDialog provides uiViewModel.controller,
+        LocalGlobalTask provides uiViewModel.task
+    ) {
+        CommonEntryInternal(content, update)
+    }
+}
+
 @Composable
 private fun CommonEntryInternal(
     content: @Composable (() -> Unit),
-    accountSwitcher: AccountSwitcher,
-    globalDialogController: CustomGlobalDialogController,
     switch: (RawUserPass) -> Unit
 ) {
+    val globalDialogController = LocalGlobalDialog.current
+    val accountSwitcher = LocalAccountSwitcher.current
     val scope = rememberCoroutineScope()
     ProvideIconParameters(
         iconFont = MaterialSymbolsOutlined.rememberIconFont(),
@@ -274,16 +355,13 @@ private fun CommonEntryInternal(
             }
             content()
             val mainSessionManager = LocalMainSessionManager.current
-            AccountSwitch(
-                accountSwitcher,
-                {
-                    (mainSessionManager.sessionModel.currentUserPass as? RawUserPass)?.let {
-                        switch(
-                            it
-                        )
-                    }
+            AccountSwitch(accountSwitcher, {
+                val rawUserPass =
+                    mainSessionManager.sessionModel.currentUserPass as? RawUserPass
+                rawUserPass?.let {
+                    switch(it)
                 }
-            ) { derPrivateKeyStr ->
+            }) { derPrivateKeyStr ->
                 scope.launch {
                     switchUser(globalDialogController, derPrivateKeyStr, switch)
                 }
@@ -306,15 +384,7 @@ private fun createAppSessionManager(
             { model, cookieManager ->
                 buildHttpClient(httpUrl, cookieManager, model)
             }
-        ) { roomFrame, session ->
-            if (roomFrame is RoomFrame.NewTopicInfo) {
-                bus.emit(
-                    OnTopicCreated(roomFrame.topicInfo)
-                )
-                Napier.v(tag = "pagination") {
-                    "save document ${roomFrame.topicInfo}"
-                }
-            }
+        ) { _, _ ->
         }
     }
     DisposableEffect(sessionManager) {
@@ -402,8 +472,8 @@ private fun ObserveMessage(
             onClickTopic
         )
     }
+    clientWebSocketImpl.addListener(listener)
     DisposableEffect(null) {
-        clientWebSocketImpl.addListener(listener)
         onDispose {
             clientWebSocketImpl.removeListener(listener)
         }

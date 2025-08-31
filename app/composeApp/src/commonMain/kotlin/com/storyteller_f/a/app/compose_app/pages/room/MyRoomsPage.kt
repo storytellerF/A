@@ -89,7 +89,7 @@ fun RoomCell(
     ) {
         val commonDialogController =
             rememberCommonDialogController()
-        val shown by commonDialogController.show
+        val shown by commonDialogController.shown
         RoomIcon(roomInfo, showDialog = shown, onClickIcon = commonDialogController::update)
         Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(roomInfo?.name.orEmpty(), color = MaterialTheme.colorScheme.onSecondaryContainer)

@@ -276,7 +276,7 @@ private fun TopicComposeSubmitButton(
                 globalDialogController.useResult {
                     sessionManager.createNewTopic(objectType, objectId, finalInput)
                 }.onSuccess { info ->
-                    bus.emit(OnTopicCreated(info))
+                    globalDialogController.emitEvent(OnTopicCreated(info))
                     backPrePage()
                 }
             }

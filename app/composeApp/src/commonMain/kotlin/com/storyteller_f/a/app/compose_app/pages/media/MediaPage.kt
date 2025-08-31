@@ -20,7 +20,7 @@ import com.github.panpf.zoomimage.CoilZoomAsyncImage
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
-import com.storyteller_f.a.app.compose_app.MediaPlaySession
+import com.storyteller_f.a.app.compose_app.MultiMediaInfo
 import com.storyteller_f.a.app.compose_app.compontents.AudioView
 import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
 import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
@@ -33,9 +33,9 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MediaPage(session: MediaPlaySession) {
+fun MediaPage(session: MultiMediaInfo) {
     when (session) {
-        is MediaPlaySession.Image -> {
+        is MultiMediaInfo.Image -> {
             Box {
                 var showSheet by remember {
                     mutableStateOf(false)
@@ -55,7 +55,7 @@ fun MediaPage(session: MediaPlaySession) {
             }
         }
 
-        is MediaPlaySession.VideoOrAudio -> {
+        is MultiMediaInfo.Player -> {
             CenterBox {
                 val remoteMediaItem = session.obj
                 if (remoteMediaItem.contentType.startsWith("video")) {
@@ -66,7 +66,7 @@ fun MediaPage(session: MediaPlaySession) {
             }
         }
 
-        is MediaPlaySession.LocalImage -> {
+        is MultiMediaInfo.LocalImage -> {
             Box {
                 CoilZoomAsyncImage(
                     model = session.url,
@@ -81,7 +81,7 @@ fun MediaPage(session: MediaPlaySession) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImageSheet(
-    session: MediaPlaySession.Image,
+    session: MultiMediaInfo.Image,
     showSheet: Boolean,
     sheetState: SheetState,
     hideSheet: () -> Unit,

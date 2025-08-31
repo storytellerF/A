@@ -45,7 +45,6 @@ import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalClient
-import com.storyteller_f.a.app.compose_app.LocalJson
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
 import com.storyteller_f.a.app.compose_app.utils.setText
@@ -71,6 +70,7 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
+import kotlinx.serialization.json.Json
 import net.bjoernpetersen.m3u.M3uParser
 import java.net.URI
 
@@ -95,17 +95,16 @@ fun ObjectBlock(
     modal: MarkdownComponentModel,
     mediaList: Map<String, FileInfo>
 ) {
-    val json = LocalJson.current
     val obj = remember(modal.node, modal.content) {
         val c = readCodeFence(modal.node, modal.content)
-        json.decodeFromString<MarkdownObject>(c)
+        Json.decodeFromString<MarkdownObject>(c)
     }
     when (obj.contentType) {
         YOUTUBE_MIMETYPE -> {
             val coverInfo = mediaList[obj.cover]
             val name = "Youtube:${Uri.parse(obj.url).getQueryParameter("v")}"
             VideoView(
-                RemoteMediaItem(obj.url, YOUTUBE_MIMETYPE, YOUTUBE_MIMETYPE, false, name, coverInfo, obj.title),
+                RemoteMediaItem(obj.url, YOUTUBE_MIMETYPE, false, name, coverInfo, obj.title),
                 true
             )
         }
@@ -116,7 +115,6 @@ fun ObjectBlock(
             AudioView(
                 RemoteMediaItem(
                     obj.url,
-                    SOUND_CLOUD_MIME_TYPE,
                     SOUND_CLOUD_MIME_TYPE,
                     false,
                     name,
@@ -141,7 +139,7 @@ fun ObjectBlock(
                 contentType.startsWith("video/") -> {
                     val coverInfo = mediaList[obj.cover]
                     VideoView(
-                        RemoteMediaItem(url, contentType, obj.contentType, false, obj.name, coverInfo, obj.title),
+                        RemoteMediaItem(url, contentType, false, obj.name, coverInfo, obj.title),
                         true
                     )
                 }
@@ -149,7 +147,7 @@ fun ObjectBlock(
                 contentType.startsWith("audio/") -> {
                     val coverInfo = mediaList[obj.cover]
                     AudioView(
-                        RemoteMediaItem(url, contentType, obj.contentType, false, obj.name, coverInfo, obj.title),
+                        RemoteMediaItem(url, contentType, false, obj.name, coverInfo, obj.title),
                         true
                     )
                 }
@@ -175,7 +173,7 @@ private fun M3UView(
         else -> {
             val coverInfo = mediaList[obj.cover]
             VideoView(
-                RemoteMediaItem(obj.url, M3U8_MIMETYPE, M3U8_MIMETYPE, obj.isPlayList, obj.url, coverInfo, obj.title),
+                RemoteMediaItem(obj.url, M3U8_MIMETYPE, obj.isPlayList, obj.url, coverInfo, obj.title),
                 true
             )
         }
@@ -402,14 +400,6 @@ fun convertPxToSp(px: Int): TextUnit {
 }
 
 fun pxToSp(px: Int, density: Float): TextUnit = (px / density).sp
-
-@Composable
-fun convertDpToPx(dp: Dp): Int {
-    val density = LocalDensity.current.density
-    return dpToPx(dp, density)
-}
-
-fun dpToPx(dp: Dp, density: Float) = (dp.value * density).toInt()
 
 @Composable
 fun ObjectBlock(maxHeight: Dp = 200.dp, block: @Composable ColumnScope.() -> Unit) {

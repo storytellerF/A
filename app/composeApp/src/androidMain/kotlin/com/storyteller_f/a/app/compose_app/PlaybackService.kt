@@ -8,9 +8,9 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.storyteller_f.a.app.compose_app.compontents.CustomVideoSize
-import com.storyteller_f.a.app.compose_app.compontents.currentPlayerSession
+import com.storyteller_f.a.app.compose_app.compontents.currentPlayerState
+import com.storyteller_f.a.app.compose_app.compontents.setCurrentPlayerState
 import io.github.aakira.napier.Napier
-import kotlin.invoke
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
@@ -19,16 +19,16 @@ object MediaProvider {
 
     @Synchronized
     fun get(
-        currentSession: MediaPlaySession.VideoOrAudio,
-        init: (MediaController, MediaPlaySession.VideoOrAudio) -> Unit
+        currentSession: MultiMediaInfo.Player,
+        init: (MediaController, MultiMediaInfo.Player) -> Unit
     ) {
         val c = controller ?: return
-        val session = currentPlayerSession.value
+        val session = currentPlayerState
         if (session?.id == currentSession.id) {
             return
         }
         init(c, currentSession)
-        currentPlayerSession.value = currentSession
+        setCurrentPlayerState(currentSession)
     }
 
     @Synchronized
@@ -36,38 +36,38 @@ object MediaProvider {
         Napier.d {
             "MediaProvider release $currentSession"
         }
-        val session = currentPlayerSession.value ?: return
+        val session = currentPlayerState ?: return
         val u = session.uuids.lastOrNull() ?: return
         if (u == currentSession.uuid) {
             val new = session.uuids.subList(0, session.uuids.size - 1)
             if (new.isEmpty()) {
                 controller?.stop()
-                currentPlayerSession.value = null
+                setCurrentPlayerState(null)
             } else {
-                currentPlayerSession.value = session.copy(uuids = new)
+                setCurrentPlayerState(session.copy(uuids = new))
             }
         }
     }
 
     @Synchronized
     fun switch(currentSession: LocalMediaPlaySession) {
-        val session = currentPlayerSession.value ?: return
+        val session = currentPlayerState ?: return
         val u = session.uuids.lastOrNull() ?: return
         if (session.id == currentSession.id && currentSession.uuid != u) {
             Napier.d {
                 "Video ${currentSession.uuid} switch to ${currentSession.uuid}"
             }
             val new = session.uuids + currentSession.uuid
-            currentPlayerSession.value = session.copy(uuids = new)
+            setCurrentPlayerState(session.copy(uuids = new))
         }
     }
 
     @Synchronized
     fun update(currentSession: LocalMediaPlaySession, size: CustomVideoSize) {
-        val session = currentPlayerSession.value ?: return
+        val session = currentPlayerState ?: return
         val u = session.uuids.lastOrNull() ?: return
         if (session.id == currentSession.id && currentSession.uuid == u) {
-            currentPlayerSession.value = session.copy(videoSize = size)
+            setCurrentPlayerState(session.copy(videoSize = size))
         }
     }
 }

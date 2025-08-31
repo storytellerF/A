@@ -18,7 +18,6 @@ import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.ashampoo.kim.Kim
-import com.ashampoo.kim.common.convertToPhotoMetadata
 import com.mikepenz.markdown.model.ImageData
 import com.storyteller_f.a.app.compose_app.AppConfig
 import com.storyteller_f.a.app.compose_app.LocalClient
@@ -132,13 +131,10 @@ fun getImageDimension(
     }
 
     val metadata = SystemFileSystem.source(Path(value.substring(7))).buffered().use {
-        Kim.readMetadata(it.readByteArray())?.convertToPhotoMetadata()
+        Kim.readMetadata(it.readByteArray())?.imageSize
     } ?: return null
 
-    val widthPx = metadata.widthPx
-    val heightPx = metadata.heightPx
-    if (widthPx == null || heightPx == null) {
-        return null
-    }
+    val widthPx = metadata.width
+    val heightPx = metadata.height
     return Dimension(widthPx, heightPx)
 }

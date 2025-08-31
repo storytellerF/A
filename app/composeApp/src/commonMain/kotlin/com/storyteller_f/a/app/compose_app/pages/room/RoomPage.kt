@@ -3,7 +3,8 @@ package com.storyteller_f.a.app.compose_app.pages.room
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,14 +23,13 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.StateView
-import com.storyteller_f.a.app.compose_app.common.bottomAppending
-import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.*
+import com.storyteller_f.a.app.compose_app.compontents.RoomTopicList
 import com.storyteller_f.a.app.compose_app.model.*
+import com.storyteller_f.a.app.compose_app.model.createRoomTopicsViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
@@ -68,14 +69,7 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
     val snackBarHost = remember {
         SnackbarHostState()
     }
-    val wsClient = LocalWsClient.current
-    LaunchedEffect(wsClient.remoteState) {
-        wsClient.remoteState.collect {
-            if (it is RoomFrame.Error) {
-                snackBarHost.showSnackbar(it.error, withDismissAction = true)
-            }
-        }
-    }
+
     Scaffold(snackbarHost = {
         SnackbarHost(snackBarHost)
     }) {
@@ -91,114 +85,73 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
                 }
             }
             val roomInfo by room.handler.data.collectAsState()
-            CustomSearchBar(
-                SearchScope.RoomTopic(
-                    roomId
-                )
-            ) {
+            CustomSearchBar(SearchScope.RoomTopic(roomId)) {
                 RoomIcon(roomInfo, showDialog = showDialog, size = 40.dp, setClickEvent = true) {
                     showDialog = it
                 }
             }
+            val lazyListState = rememberLazyListState()
             StateView(room.handler, Modifier.weight(1f)) {
-                RoomPageInternal(it) {
+                val roomId = it.id
+                val viewModel = createRoomTopicsViewModel(roomId)
+                val items = viewModel.flow.collectAsLazyPagingItems()
+                Box(Modifier.weight(1f)) {
+                    RoomTopicList(items, lazyListState)
+                    NewTopicView(lazyListState, it, items)
+                }
+            }
+            val scope = rememberCoroutineScope()
+            roomInfo?.let {
+                RoomInputGroup(roomId, it, ObjectTuple(roomId, ObjectType.ROOM), snackBarHost, {
                     showDialog = true
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RoomPageInternal(
-    roomInfo: RoomInfo,
-    updateDialog: (Boolean) -> Unit,
-) {
-    val roomId = roomInfo.id
-    val lazyListState = rememberLazyListState()
-    val viewModel = createRoomTopicsViewModel(roomId)
-    val items = viewModel.flow.collectAsLazyPagingItems()
-    Column {
-        Box(Modifier.weight(1f)) {
-            RoomMessageList(items, lazyListState)
-            val firstVisibleItemScrollOffset by remember {
-                derivedStateOf {
-                    lazyListState.firstVisibleItemScrollOffset
-                }
-            }
-            val firstVisibleItemIndex by remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }
-            val sessionManager = LocalSessionManager.current
-            LaunchedEffect(firstVisibleItemIndex, roomInfo) {
-                delay(1000)
-                try {
-                    val info = items[firstVisibleItemIndex]
-                    if (info != null) {
-                        sessionManager.addReadLog(UpdateUserRead(roomInfo.tuple(), info.id))
-                            .getOrThrow()
-                    }
-                } catch (e: Exception) {
-                    Napier.e(e) {
-                        "add read log failed"
-                    }
-                }
-            }
-            if (firstVisibleItemScrollOffset != 0 || firstVisibleItemIndex != 0) {
-                val scope = rememberCoroutineScope()
-                IconButton({
+                }) {
                     scope.launch {
-                        lazyListState.animateScrollToItem(0, 0)
+                        lazyListState.animateScrollToItem(0)
                     }
-                }, modifier = Modifier.align(Alignment.BottomStart)) {
-                    Icon(
-                        Icons.Default.ArrowCircleDown,
-                        "move to newer topic",
-                    )
                 }
-            }
-        }
-        val scope = rememberCoroutineScope()
-        RoomInputGroup(roomId, roomInfo, ObjectTuple(roomId, ObjectType.ROOM), {
-            updateDialog(true)
-        }) {
-            scope.launch {
-                lazyListState.animateScrollToItem(0)
             }
         }
     }
 }
 
 @Composable
-private fun RoomMessageList(
-    items: LazyPagingItems<TopicInfo>,
+private fun BoxScope.NewTopicView(
     lazyListState: LazyListState,
+    roomInfo: RoomInfo,
+    items: LazyPagingItems<TopicInfo>
 ) {
-    val debounced = items.loadState
-    StateView(items) {
-        LazyColumn(
-            state = lazyListState,
-            modifier = Modifier.padding(top = 10.dp),
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
-            reverseLayout = true,
-        ) {
-            bottomAppending(debounced)
-            items(
-                count = items.itemSnapshotList.size,
-                key = items.itemKey { topicInfo ->
-                    topicInfo.id.toString()
-                },
-            ) { index ->
-                val next = if (index + 1 < items.itemSnapshotList.size) {
-                    items[index + 1]
-                } else {
-                    null
-                }
-                val info = items[index]
-                TopicCell(
-                    info,
-                    info != null && next?.author != info.author
-                )
+    val firstVisibleItemScrollOffset by remember {
+        derivedStateOf {
+            lazyListState.firstVisibleItemScrollOffset
+        }
+    }
+    val firstVisibleItemIndex by remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }
+    val sessionManager = LocalSessionManager.current
+    LaunchedEffect(firstVisibleItemIndex, roomInfo) {
+        delay(1000)
+        try {
+            val info = items[firstVisibleItemIndex]
+            if (info != null) {
+                sessionManager.addReadLog(UpdateUserRead(roomInfo.tuple(), info.id))
+                    .getOrThrow()
             }
-            topPrepend(debounced)
+        } catch (e: Exception) {
+            Napier.e(e) {
+                "add read log failed"
+            }
+        }
+    }
+    if (firstVisibleItemScrollOffset != 0 || firstVisibleItemIndex != 0) {
+        val scope = rememberCoroutineScope()
+        IconButton({
+            scope.launch {
+                lazyListState.animateScrollToItem(0, 0)
+            }
+        }, modifier = Modifier.align(Alignment.BottomStart)) {
+            Icon(
+                Icons.Default.ArrowCircleDown,
+                "move to newer topic",
+            )
         }
     }
 }
@@ -208,8 +161,9 @@ fun RoomInputGroup(
     roomId: PrimaryKey,
     roomInfo: RoomInfo?,
     parentTarget: ObjectTuple,
+    snackBarHost: SnackbarHostState,
     startJoinRoom: () -> Unit,
-    scrollToNew: () -> Unit,
+    scrollToNew: () -> Unit
 ) {
     val appNav = LocalAppNav.current
     var input by remember {
@@ -232,6 +186,13 @@ fun RoomInputGroup(
     DisposableEffect(null) {
         onDispose {
             wsClient.removeListener(listener)
+        }
+    }
+    LaunchedEffect(wsClient.remoteState) {
+        wsClient.remoteState.collect {
+            if (it is RoomFrame.Error) {
+                snackBarHost.showSnackbar(it.error, withDismissAction = true)
+            }
         }
     }
     if (roomInfo != null) {
@@ -361,30 +322,30 @@ private fun sendRoomTopic(
     val handler = keysViewModel.handler
     val keyState = handler.state.value
     val keyData = handler.data.value
-    if (roomInfo.isJoined) {
-        if (!checkContent(input)) {
-            toasterState.showMessage("invalid")
-            return
-        }
-        if ((keyState !is LoadingState.Done || keyData == null) && roomInfo.isPrivate) {
-            scope.launch {
-                toasterState.showMessage(
-                    getString(Res.string.private_room_pub_key_loading),
-                )
-            }
-            return
-        }
-        wsClient.useWebSocket {
-            sendMessage(parentTarget, roomInfo.isPrivate, input, keyData.orEmpty())
-            delay(500)
-            scrollToNew()
-        }
-    } else {
+    if (!roomInfo.isJoined) {
         scope.launch {
             val title = getString(Res.string.permission_denied)
             val message = getString(Res.string.join_room_prompt)
             alertDialogState.showMessage(title, message)
         }
+        return
+    }
+    if (!checkContent(input)) {
+        toasterState.showMessage("invalid")
+        return
+    }
+    if ((keyState !is LoadingState.Done || keyData == null) && roomInfo.isPrivate) {
+        scope.launch {
+            toasterState.showMessage(
+                getString(Res.string.private_room_pub_key_loading),
+            )
+        }
+        return
+    }
+    wsClient.useWebSocket {
+        sendMessage(parentTarget, roomInfo.isPrivate, input, keyData.orEmpty())
+        delay(500)
+        scrollToNew()
     }
 }
 
@@ -587,7 +548,7 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
         ) {
             val commonDialogController =
                 rememberCommonDialogController()
-            val shown by commonDialogController.show
+            val shown by commonDialogController.shown
             RoomIcon(
                 roomInfo,
                 showDialog = shown,
@@ -679,7 +640,7 @@ private suspend fun joinRoom(
             sessionManager.joinRoom(roomInfo.id).getOrThrow()
         }
     }.onSuccess { info ->
-        bus.emit(OnRoomJoined(info))
+        globalDialogController.emitEvent(OnRoomJoined(info))
         onSuccess()
     }
 }
@@ -693,7 +654,7 @@ private suspend fun exitRoom(
     globalDialogController.useResult {
         sessionManager.exitRoom(roomInfo.id)
     }.onSuccess { info ->
-        bus.emit(OnRoomExited(info))
+        globalDialogController.emitEvent(OnRoomExited(info))
         onSuccess()
     }
 }

@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 
 val bus = MutableSharedFlow<Any>()
 
-suspend fun processEvent(database: ModelStorage) {
+suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
     bus.collect { event ->
         when (event) {
             is OnAddReaction -> processOnAddReaction(database, event)

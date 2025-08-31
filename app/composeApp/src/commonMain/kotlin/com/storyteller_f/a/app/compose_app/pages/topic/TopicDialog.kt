@@ -6,15 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -37,18 +34,14 @@ import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.Res
-import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
 import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
-import com.storyteller_f.a.app.compose_app.compontents.CustomIcon
 import com.storyteller_f.a.app.compose_app.compontents.DialogContainer
 import com.storyteller_f.a.app.compose_app.compontents.ExceptionView
 import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
-import com.storyteller_f.a.app.compose_app.compontents.IconRes
 import com.storyteller_f.a.app.compose_app.compontents.SheetContainer
 import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
 import com.storyteller_f.a.app.compose_app.copy
-import com.storyteller_f.a.app.compose_app.model.OnTopicChanged
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.room.RoomRefCell
 import com.storyteller_f.a.app.compose_app.service.GPTOutput
@@ -208,57 +201,23 @@ private fun TopicMenuList(
         if (topicInfo.isPin) "Unpin" else "Pin"
     ) {
         scope.launch {
-            pinOrUnpinTopic(topicInfo, userSessionManager, globalDialogController).onSuccess {
+            globalDialogController.pinOrUnpinTopic(topicInfo, userSessionManager).onSuccess {
                 dismissDialog()
             }
         }
     }
 }
 
-suspend fun pinOrUnpinTopic(
+suspend fun GlobalDialogController.pinOrUnpinTopic(
     topicInfo: TopicInfo,
     sessionManager: SessionManager,
-    globalDialogController: GlobalDialogController,
 ): Result<TopicInfo> {
-    return globalDialogController.useResult {
+    return useResult {
         if (topicInfo.isPin) {
             sessionManager.unpinTopic(topicInfo.id)
         } else {
             sessionManager.pinTopic(topicInfo.id)
         }
-    }
-}
-
-@Composable
-fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest: () -> Unit) {
-    val scope = rememberCoroutineScope()
-    val sessionManager = LocalSessionManager.current
-    val globalDialogController = LocalGlobalDialog.current
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = onDismissRequest
-    ) {
-        val title = if (topicInfo.isPin) "Unpin" else "Pin"
-        DropdownMenuItem(
-            leadingIcon = {
-                val char = when {
-                    topicInfo.isPin -> MaterialSymbolsOutlined.KeepOff
-                    else -> MaterialSymbolsOutlined.Keep
-                }
-                Box(modifier = Modifier.size(20.dp)) {
-                    CustomIcon(IconRes.Font(char))
-                }
-            },
-            text = { Text(title) },
-            onClick = {
-                scope.launch {
-                    pinOrUnpinTopic(topicInfo, sessionManager, globalDialogController).onSuccess {
-                        onDismissRequest()
-                        bus.emit(OnTopicChanged(it))
-                    }
-                }
-            }
-        )
     }
 }
 

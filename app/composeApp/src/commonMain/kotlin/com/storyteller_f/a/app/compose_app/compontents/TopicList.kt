@@ -3,7 +3,9 @@ package com.storyteller_f.a.app.compose_app.compontents
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -42,6 +44,41 @@ fun TopicList(
                 }
             }
             bottomAppending(items.loadState)
+        }
+    }
+}
+
+@Composable
+fun RoomTopicList(
+    items: LazyPagingItems<TopicInfo>,
+    lazyListState: LazyListState,
+) {
+    StateView(items) {
+        LazyColumn(
+            state = lazyListState,
+            modifier = Modifier.padding(top = 10.dp),
+            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+            reverseLayout = true,
+        ) {
+            bottomAppending(items.loadState)
+            items(
+                count = items.itemSnapshotList.size,
+                key = items.itemKey { topicInfo ->
+                    topicInfo.id.toString()
+                },
+            ) { index ->
+                val next = if (index + 1 < items.itemSnapshotList.size) {
+                    items[index + 1]
+                } else {
+                    null
+                }
+                val info = items[index]
+                RoomTopicCell(
+                    info,
+                    info != null && next?.author != info.author
+                )
+            }
+            topPrepend(items.loadState)
         }
     }
 }
