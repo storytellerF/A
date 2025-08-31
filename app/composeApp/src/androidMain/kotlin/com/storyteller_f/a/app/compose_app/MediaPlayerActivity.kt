@@ -21,7 +21,7 @@ class MediaPlayerActivity : ComponentActivity() {
             } else {
                 val httpUrl = AppConfig.SERVER_URL
                 val wsServerUrl = AppConfig.WS_SERVER_URL
-                val session = Json.decodeFromString<MediaPlaySession>(json)
+                val session = Json.decodeFromString<MultiMediaInfo>(json)
                 CommonEntry(httpUrl, wsServerUrl, {
                     MediaPage(session)
                 })

@@ -55,8 +55,9 @@ class ClipFile(
     override val id: String
         get() = itemAt.uri.toString()
 
-    override fun source(): Source? {
-        return contentResolver.openInputStream(itemAt.uri)?.asSource()?.buffered()
+    override fun source(): Source {
+        val stream = contentResolver.openInputStream(itemAt.uri) ?: throw Exception("get stream failed")
+        return stream.asSource().buffered()
     }
 }
 

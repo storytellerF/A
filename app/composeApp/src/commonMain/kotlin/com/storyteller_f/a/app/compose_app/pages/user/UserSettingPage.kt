@@ -17,7 +17,6 @@ import com.attafitamim.krop.ui.ImageCropperDialog
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
-import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.compontents.*
 import com.storyteller_f.a.app.compose_app.model.OnUserUpdated
 import com.storyteller_f.a.app.compose_app.pages.topic.MediaPicker
@@ -271,7 +270,7 @@ private fun UserSettingInternal(
                             val body = UpdateUserBody(avatar = 0)
                             sessionManager.updateUserInfo(body)
                         }.onSuccess { newInfo ->
-                            bus.emit(OnUserUpdated(newInfo))
+                            globalDialogController.emitEvent(OnUserUpdated(newInfo))
                         }
                     }
                 } else {
@@ -322,7 +321,7 @@ private suspend fun updateUser(
         sessionManager.updateUserInfo(body)
     }.onSuccess { newInfo ->
         sessionManager.sessionModel.updateUser(newInfo)
-        bus.emit(OnUserUpdated(newInfo))
+        globalDialogController.emitEvent(OnUserUpdated(newInfo))
         closeDialog()
     }
 }

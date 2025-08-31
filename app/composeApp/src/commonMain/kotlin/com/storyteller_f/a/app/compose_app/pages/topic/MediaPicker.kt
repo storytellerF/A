@@ -26,7 +26,6 @@ import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.common.StateView
 import com.storyteller_f.a.app.compose_app.common.bottomAppending
 import com.storyteller_f.a.app.compose_app.common.topPrepend
@@ -340,7 +339,7 @@ suspend fun GlobalDialogController.uploadPath(
     }
 }
 
-suspend fun upload(
+suspend fun GlobalDialogController.upload(
     sessionManager: SessionManager,
     mediaTarget: ObjectTuple,
     uploadData: UploadData,
@@ -351,8 +350,9 @@ suspend fun upload(
     }
 
     return sessionManager.upload(mediaTarget, uploadData, onUpload).map {
-        bus.emit(OnMediaUploaded(it.data))
         it.data
+    }.onSuccess {
+        emitEvent(OnMediaUploaded(it))
     }
 }
 

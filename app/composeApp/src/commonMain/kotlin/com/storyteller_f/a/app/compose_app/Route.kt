@@ -172,7 +172,7 @@ interface AppNav {
     fun gotoReactionListPage(topicId: PrimaryKey)
 }
 
-fun newAppNav(navigator: NavHostController, json: Json, scope: CoroutineScope) = object : AppNav {
+fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : AppNav {
     override val currentDestination: NavBackStackEntry?
         get() = navigator.currentBackStackEntry
     override val currentDestinationFlow: StateFlow<NavBackStackEntry?>
@@ -244,12 +244,12 @@ fun newAppNav(navigator: NavHostController, json: Json, scope: CoroutineScope) =
     }
 
     override fun gotoMedia(info: FileInfo) {
-        val route = MediaScreen(json.encodeToString<MediaPlaySession>(MediaPlaySession.Image(info)))
+        val route = MediaScreen(Json.encodeToString<MultiMediaInfo>(MultiMediaInfo.Image(info)))
         navigator.navigate(route)
     }
 
     override fun gotoLocalImage(url: String) {
-        val route = MediaScreen(json.encodeToString<MediaPlaySession>(MediaPlaySession.LocalImage(url)))
+        val route = MediaScreen(Json.encodeToString<MultiMediaInfo>(MultiMediaInfo.LocalImage(url)))
         navigator.navigate(route)
     }
 
@@ -296,9 +296,8 @@ fun NavGraphBuilder.buildRootNav(
         }
     }
     composable<MediaScreen> {
-        val json = LocalJson.current
         val route = it.toRoute<MediaScreen>()
-        val pack = json.decodeFromString<MediaPlaySession>(route.json)
+        val pack = Json.decodeFromString<MultiMediaInfo>(route.json)
         MediaPage(pack)
     }
     buildComposeScreen(navigator)

@@ -12,16 +12,11 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.bus
-import com.storyteller_f.a.app.compose_app.model.OnAddReaction
-import com.storyteller_f.a.app.compose_app.model.OnRemoveReaction
-import com.storyteller_f.a.client.core.addReaction
-import com.storyteller_f.a.client.core.deleteReaction
+import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
-import kotlinx.coroutines.launch
 
 @Composable
 fun InteractionRow(
@@ -29,20 +24,13 @@ fun InteractionRow(
     startAddReaction: () -> Unit,
     startAddComment: () -> Unit
 ) {
-    val userSessionViewModel = LocalSessionManager.current
     val reactions = topicInfo.extension?.reactions
-    val appNav = LocalAppNav.current
     InteractionRowInternal(
         reactions.orEmpty(),
         topicInfo,
-        startAddComment
-    ) {
-        if (userSessionViewModel.currentIsAlreadySignUp) {
-            startAddReaction()
-        } else {
-            appNav.gotoLogin()
-        }
-    }
+        startAddComment,
+        startAddReaction
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +44,7 @@ fun InteractionRowInternal(
     val appNav = LocalAppNav.current
     val hasComment = topicInfo.hasComment
     val commentCount = topicInfo.commentCount
+    val userSessionViewModel = LocalSessionManager.current
     EmojiRow(
         data,
         {
@@ -65,7 +54,11 @@ fun InteractionRowInternal(
                 }
             }
             Pill(icon = Icons.Outlined.AddReaction) {
-                startAddReaction()
+                if (userSessionViewModel.currentIsAlreadySignUp) {
+                    startAddReaction()
+                } else {
+                    appNav.gotoLogin()
+                }
             }
         },
         { index ->
@@ -209,10 +202,10 @@ private fun SubcomposeMeasureScope.measureFirstStage(
     if (currentRow.isNotEmpty()) {
         rows.add(currentRow)
     }
-    val lastRowWidth = rows.last().let {
-        it.sumOf {
+    val lastRowWidth = rows.last().let { list ->
+        list.sumOf {
             it.width
-        } + (it.size - 1).coerceAtLeast(0) * horizontalPx.roundToPx()
+        } + (list.size - 1).coerceAtLeast(0) * horizontalPx.roundToPx()
     }
     return Triple(rows, lastRowWidth, emojiUsedCount)
 }
@@ -223,30 +216,41 @@ private fun EmojiCell(
     topicInfo: TopicInfo
 ) {
     val topicId = topicInfo.id
-    val scope = rememberCoroutineScope()
     val emoji = info.emoji
     val hasReacted = info.hasReacted
     val sessionManager = LocalSessionManager.current
-    val globalDialogController = LocalGlobalDialog.current
+    val globalTask = LocalGlobalTask.current
+    val key = "$topicId $emoji"
+    val loadingState = globalTask.stateMap[key]
+
     Pill(
-        info.count.toString(),
+        "${info.count} ${
+            if (loadingState is LoadingState.Loading) {
+                "*"
+            } else {
+                ""
+            }
+        }",
         emoji = emoji,
         selected = hasReacted
     ) {
-        if (hasReacted) {
-            scope.launch {
-                globalDialogController.useResult {
-                    sessionManager.deleteReaction(emoji, topicId)
-                }.onSuccess {
-                    bus.emit(OnRemoveReaction(it, topicInfo))
-                }
-            }
-        } else {
-            scope.launch {
-                globalDialogController.useResult {
-                    sessionManager.addReaction(topicId, emoji)
-                }.onSuccess {
-                    bus.emit(OnAddReaction(it, topicInfo))
+        globalTask.use(key) { state, bus ->
+            state.use {
+                if (hasReacted) {
+                    com.storyteller_f.a.app.compose_app.pages.topic.deleteReaction(
+                        topicInfo,
+                        emoji,
+                        info,
+                        bus,
+                        sessionManager
+                    )
+                } else {
+                    com.storyteller_f.a.app.compose_app.pages.topic.addReaction(
+                        topicInfo,
+                        emoji,
+                        bus,
+                        sessionManager
+                    )
                 }
             }
         }

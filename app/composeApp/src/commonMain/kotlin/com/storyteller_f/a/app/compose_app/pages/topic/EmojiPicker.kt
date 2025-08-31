@@ -16,15 +16,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
 import com.storyteller_f.a.app.compose_app.compontents.SheetContainer
+import com.storyteller_f.a.app.compose_app.compontents.use
 import com.storyteller_f.a.app.compose_app.model.OnAddReaction
+import com.storyteller_f.a.app.compose_app.model.OnRemoveReaction
+import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.addReaction
+import com.storyteller_f.a.client.core.deleteReaction
+import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.list
 
@@ -40,7 +44,7 @@ fun EmojiPicker(
         mutableStateOf("")
     }
     BaseSheet(showSheet, sheetState, hideSheet) {
-        EmojiPickerInternal(query, topic, sheetState, hideSheet) {
+        EmojiPickerInternal(query, topic, hideSheet) {
             query = it
         }
     }
@@ -51,7 +55,6 @@ fun EmojiPicker(
 private fun EmojiPickerInternal(
     query: String,
     topic: TopicInfo,
-    sheetState: SheetState,
     hideSheet: () -> Unit,
     updateQuery: (String) -> Unit,
 ) {
@@ -64,7 +67,8 @@ private fun EmojiPickerInternal(
             suffix = {
                 Icon(Icons.Default.Clear, "clear reaction query")
             },
-            modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth().padding(horizontal = 20.dp),
+            modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth()
+                .padding(horizontal = 20.dp),
             shape = RoundedCornerShape(10.dp),
             colors = TextFieldDefaults.colors(
                 focusedIndicatorColor = Color.Transparent,
@@ -98,7 +102,7 @@ private fun EmojiPickerInternal(
                 items(emojiList, key = {
                     it.toString()
                 }) {
-                    EmojiItem(emojiSize, topic, it, sheetState, hideSheet)
+                    EmojiItem(emojiSize, topic, it, hideSheet)
                 }
             }
         }
@@ -111,28 +115,59 @@ private fun EmojiItem(
     emojiSize: Dp,
     topic: TopicInfo,
     emoji: Emoji,
-    sheetState: SheetState,
     hideSheet: () -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
     val sessionManager = LocalSessionManager.current
-    val globalDialogController = LocalGlobalDialog.current
+    val globalTask = LocalGlobalTask.current
+    val emojiText = emoji.details.string
     Box(modifier = Modifier.size(emojiSize).clickable {
-        scope.launch {
-            globalDialogController.useResult {
-                sessionManager.addReaction(topic.id, emoji.details.string).onSuccess {
-                    bus.emit(
-                        OnAddReaction(it, topic)
-                    )
-                    sheetState.hide()
-                }
-            }
-        }.invokeOnCompletion {
-            if (!sheetState.isVisible) {
-                hideSheet()
+        hideSheet()
+        globalTask.use("${topic.id} $emojiText") { state, bus ->
+            state.use {
+                addReaction(topic, emojiText, bus, sessionManager)
             }
         }
     }, contentAlignment = Alignment.Center) {
-        Text(emoji.details.string, fontSize = 25.sp)
+        Text(emojiText, fontSize = 25.sp)
+    }
+}
+
+suspend fun addReaction(
+    topic: TopicInfo,
+    emojiText: String,
+    bus: MutableSharedFlow<Any>,
+    sessionManager: SessionManager,
+): Result<ReactionInfo> {
+    val existing = topic.extension?.reactions?.firstOrNull {
+        it.emoji == emojiText
+    }
+    val fakeInfo = existing?.copy(count = existing.count + 1) ?: ReactionInfo(
+        emojiText,
+        topic.id,
+        1,
+        true,
+        Long.MAX_VALUE
+    )
+    bus.emit(OnAddReaction(fakeInfo, topic))
+    return sessionManager.addReaction(topic.id, emojiText).onSuccess {
+        bus.emit(OnAddReaction(it, topic))
+    }.onFailure {
+        bus.emit(OnRemoveReaction(fakeInfo.copy(count = fakeInfo.count - 1), topic))
+    }
+}
+
+suspend fun deleteReaction(
+    topic: TopicInfo,
+    emojiText: String,
+    existing: ReactionInfo,
+    bus: MutableSharedFlow<Any>,
+    sessionManager: SessionManager,
+): Result<ReactionInfo> {
+    val fakeInfo = existing.copy(count = existing.count - 1)
+    bus.emit(OnRemoveReaction(fakeInfo, topic))
+    return sessionManager.deleteReaction(emojiText, topic.id).onSuccess {
+        bus.emit(OnRemoveReaction(it, topic))
+    }.onFailure {
+        bus.emit(OnRemoveReaction(existing, topic))
     }
 }

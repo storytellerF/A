@@ -53,12 +53,12 @@ fun WebRtcPage() {
     val scope = rememberCoroutineScope()
     val (localStream, setLocalStream) = remember { mutableStateOf<MediaStream?>(null) }
     val (remoteVideoTrack, setRemoteVideoTrack) = remember {
-        mutableStateOf<VideoStreamTrack?>(
+        mutableStateOf<VideoTrack?>(
             null
         )
     }
     val (remoteAudioTrack, setRemoteAudioTrack) = remember {
-        mutableStateOf<AudioStreamTrack?>(
+        mutableStateOf<AudioTrack?>(
             null
         )
     }
@@ -159,8 +159,8 @@ fun hangup(peerConnections: Pair<PeerConnection, PeerConnection>?) {
 suspend fun makeCall(
     peerConnections: Pair<PeerConnection, PeerConnection>,
     localStream: MediaStream,
-    onRemoteVideoTrack: (VideoStreamTrack) -> Unit,
-    onRemoteAudioTrack: (AudioStreamTrack) -> Unit = {},
+    onRemoteVideoTrack: (VideoTrack) -> Unit,
+    onRemoteAudioTrack: (AudioTrack) -> Unit = {},
 ): Nothing = coroutineScope {
     val (pc1, pc2) = peerConnections
     localStream.tracks.forEach { pc1.addTrack(it) }
@@ -225,9 +225,9 @@ suspend fun makeCall(
         .filterNotNull()
         .onEach {
             if (it.kind == MediaStreamTrackKind.Audio) {
-                onRemoteAudioTrack(it as AudioStreamTrack)
+                onRemoteAudioTrack(it as AudioTrack)
             } else if (it.kind == MediaStreamTrackKind.Video) {
-                onRemoteVideoTrack(it as VideoStreamTrack)
+                onRemoteVideoTrack(it as VideoTrack)
             }
         }
         .launchIn(this)
@@ -290,7 +290,7 @@ private fun Context.navigateToAppSettings() {
 }
 
 @Composable
-fun Video(videoTrack: VideoStreamTrack, modifier: Modifier, audioTrack: AudioStreamTrack? = null) {
+fun Video(videoTrack: VideoTrack, modifier: Modifier, audioTrack: AudioTrack? = null) {
     var renderer by remember { mutableStateOf<SurfaceViewRenderer?>(null) }
 
     val lifecycleEventObserver = remember(renderer, videoTrack) {
@@ -340,12 +340,12 @@ fun Video(videoTrack: VideoStreamTrack, modifier: Modifier, audioTrack: AudioStr
     )
 }
 
-private fun VideoStreamTrack.addSinkCatching(sink: VideoSink) {
+private fun VideoTrack.addSinkCatching(sink: VideoSink) {
     // runCatching as track may be disposed while activity was in pause
     runCatching { addSink(sink) }
 }
 
-private fun VideoStreamTrack.removeSinkCatching(sink: VideoSink) {
+private fun VideoTrack.removeSinkCatching(sink: VideoSink) {
     // runCatching as track may be disposed while activity was in pause
     runCatching { removeSink(sink) }
 }

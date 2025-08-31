@@ -27,10 +27,10 @@ inline fun <reified VM : ViewModel> viewModel(
         "viewModel ${VM::class.simpleName}$keys composable"
     }
     val address by sessionManager.address.collectAsState()
-    return viewModel(key = "$address:${keys?.joinToString()}", initializer = {
+    return viewModel(key = "$address:${keys?.joinToString()}") {
         Napier.i {
             "viewModel ${VM::class.simpleName}$keys build"
         }
         factory(sessionManager, databaseSource)
-    })
+    }
 }

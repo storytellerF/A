@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
-import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compose_app.compontents.CommunityPoster
 import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
@@ -77,7 +76,7 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
                             }
                         sessionManager.updateCommunityInfo(communityId, body)
                     }.onSuccess { newInfo ->
-                        bus.emit(OnCommunityUpdated(newInfo))
+                        globalDialogController.emitEvent(OnCommunityUpdated(newInfo))
                         closeDialog()
                     }
                 }
@@ -171,7 +170,7 @@ private suspend fun updateCommunityInfo(
         val body = UpdateCommunityBody(icon = 0)
         sessionManager.updateCommunityInfo(communityInfo.id, body)
     }.onSuccess { newInfo ->
-        bus.emit(OnCommunityUpdated(newInfo))
+        globalDialogController.emitEvent(OnCommunityUpdated(newInfo))
     }
 }
 
@@ -195,7 +194,7 @@ private suspend fun updateCommunity(
     globalDialogController.useResult {
         client.updateCommunityInfo(communityId, body)
     }.onSuccess { newInfo ->
-        bus.emit(OnCommunityUpdated(newInfo))
+        globalDialogController.emitEvent(OnCommunityUpdated(newInfo))
         closeDialog()
     }
 }

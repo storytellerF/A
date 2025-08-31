@@ -31,7 +31,7 @@ interface ClientFile {
     val size: Long
     val id: String
 
-    fun source(): Source?
+    fun source(): Source
 }
 
 class UploadSession(val name: String, val list: List<ClientFile>) {

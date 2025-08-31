@@ -14,6 +14,7 @@ import androidx.compose.ui.window.DialogProperties
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.uuid.ExperimentalUuidApi
@@ -42,6 +43,8 @@ interface GlobalDialogController {
     ): Result<T>
 
     fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading)
+
+    suspend fun emitEvent(any: Any)
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -83,11 +86,16 @@ class NestedGlobalDialogController(
         }
         state.value = value.set(level - 1, block(last))
     }
+
+    override suspend fun emitEvent(any: Any) {
+        customGlobalDialogController.bus.emit(any)
+    }
 }
 
 class CustomGlobalDialogContent(val content: @Composable () -> Unit)
 
 class CustomGlobalDialogController(
+    val bus: MutableSharedFlow<Any>,
     override val state: MutableState<PersistentList<GlobalDialogState>> = mutableStateOf(
         persistentListOf()
     ),
@@ -124,6 +132,9 @@ class CustomGlobalDialogController(
     }
 
     override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) = Unit
+    override suspend fun emitEvent(any: Any) {
+        bus.emit(any)
+    }
 }
 
 @Composable

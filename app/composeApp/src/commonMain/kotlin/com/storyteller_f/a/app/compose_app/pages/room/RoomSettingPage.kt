@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
-import com.storyteller_f.a.app.compose_app.bus
 import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.compontents.SettingOptionResettableView
 import com.storyteller_f.a.app.compose_app.compontents.SettingOptionView
@@ -66,18 +65,17 @@ fun RoomSettingPage(roomId: PrimaryKey) {
                         val body = UpdateRoomBody(icon = it.id)
                         sessionManager.updateRoomInfo(roomId, body)
                     }.onSuccess { newInfo ->
-                        bus.emit(OnRoomUpdated(newInfo))
+                        globalDialogController.emitEvent(OnRoomUpdated(newInfo))
                     }
                 }
             },
             {
                 scope.launch {
-                    updateRoom(
+                    globalDialogController.updateRoom(
                         roomId,
                         sessionManager,
                         it,
                         currentOption,
-                        globalDialogController,
                         closeDialog
                     )
                 }
@@ -107,7 +105,7 @@ private fun RoomSettingInternal(
                             val body = UpdateRoomBody(icon = 0)
                             sessionManager.updateRoomInfo(roomInfo.id, body)
                         }.onSuccess { newInfo ->
-                            bus.emit(OnRoomUpdated(newInfo))
+                            globalDialogController.emitEvent(OnRoomUpdated(newInfo))
                         }
                     }
                 } else {
@@ -138,12 +136,11 @@ private fun RoomSettingInternal(
     }
 }
 
-private suspend fun updateRoom(
+private suspend fun GlobalDialogController.updateRoom(
     roomId: PrimaryKey,
     sessionManager: SessionManager,
     string: String,
     showInputDialog: SettingOption?,
-    globalDialogController: GlobalDialogController,
     closeDialog: () -> Unit,
 ) {
     val body = when (showInputDialog) {
@@ -155,10 +152,10 @@ private suspend fun updateRoom(
             null
         }
     } ?: return
-    globalDialogController.useResult {
+    useResult {
         sessionManager.updateRoomInfo(roomId, body)
     }.onSuccess { newInfo ->
-        bus.emit(OnRoomUpdated(newInfo))
+        emitEvent(OnRoomUpdated(newInfo))
         closeDialog()
     }
 }

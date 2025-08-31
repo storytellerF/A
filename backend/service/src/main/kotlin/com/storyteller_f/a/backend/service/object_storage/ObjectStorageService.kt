@@ -31,12 +31,15 @@ interface ObjectStorageService {
     suspend fun getInputStream(bucketName: String, name: String): Result<InputStream>
 }
 
-// 在windows 中安装的libavif 名称不符合条件，需要手动改名
+/**
+ * 安装教程 https://github.com/AOMediaCodec/libavif
+ * 在Windows 上安装后的文件名需要手动重命名为libavif.dll
+ */
 fun loadAvif() {
     val osName = System.getProperty("os.name")
     when {
         osName.contains("mac", true) -> System.setProperty("jna.library.path", "/opt/homebrew/lib")
-        osName.contains("win", true) -> System.setProperty("jna.library.path", "C:\\msys64\\mingw64\\bin")
+        osName.contains("win", true) -> System.setProperty("jna.library.path", "C:\\msys64\\ucrt64\\bin")
         else -> System.setProperty("jna.library.path", "/usr/local/lib")
     }
 }

@@ -2,11 +2,11 @@ package com.storyteller_f.a.app.compose_app.compontents
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.storyteller_f.a.app.compose_app.MultiMediaInfo
 import com.storyteller_f.shared.model.FileInfo
 import kotlinx.serialization.Serializable
 
@@ -21,14 +22,19 @@ const val M3U8_MIMETYPE = "application/vnd.apple.mpegurl"
 const val YOUTUBE_MIMETYPE = "video/youtube"
 const val SOUND_CLOUD_MIME_TYPE = "audio/sound.cloud"
 
-val currentPlayerSession: MutableState<com.storyteller_f.a.app.compose_app.MediaPlaySession.VideoOrAudio?> =
+val globalPlayerState: MutableState<MultiMediaInfo.Player?> =
     mutableStateOf(null)
+
+val currentPlayerState get() = globalPlayerState.value
+
+fun setCurrentPlayerState(player: MultiMediaInfo.Player?) {
+    globalPlayerState.value = player
+}
 
 @Serializable
 data class RemoteMediaItem(
     val url: String,
     val contentType: String,
-    val userInputContentType: String,
     val isM3U8PlayList: Boolean,
     val name: String,
     val cover: FileInfo? = null,
@@ -36,10 +42,7 @@ data class RemoteMediaItem(
 )
 
 @Composable
-expect fun VideoView(
-    obj: RemoteMediaItem,
-    isEmbed: Boolean
-)
+expect fun VideoView(obj: RemoteMediaItem, isEmbed: Boolean)
 
 @Composable
 expect fun rememberIsInPipMode(): Boolean
