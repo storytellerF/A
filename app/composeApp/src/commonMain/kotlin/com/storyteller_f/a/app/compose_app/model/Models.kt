@@ -6,11 +6,9 @@ import androidx.paging.*
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.app.compose_app.common.*
 import com.storyteller_f.a.app.compose_app.compontents.DialogSaveState
-import com.storyteller_f.a.app.compose_app.pages.UploadSession
 import com.storyteller_f.a.client.core.*
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -111,7 +109,7 @@ class CommunitiesViewModel(
     joinStatusSearch: JoinStatusSearch,
     word: String = "",
     target: PrimaryKey? = null,
-) : PagingViewModel<SectionLoadParams, CommunityInfo>() {
+) : PagingViewModel<CommunityInfo>() {
     private val modelCollection =
         CommunityCollection.SearchCommunity(joinStatusSearch, word, target)
 
@@ -170,7 +168,7 @@ class RoomsViewModel(
     joinStatusSearch: JoinStatusSearch,
     word: String = "",
     val community: PrimaryKey? = null,
-) : PagingViewModel<PrimaryKey, RoomInfo>() {
+) : PagingViewModel<RoomInfo>() {
     private val modelCollection = RoomCollection.SearchRoom(word, community)
 
     override val flow: Flow<PagingData<RoomInfo>> = Pager(
@@ -204,7 +202,7 @@ class WorldViewModel(
     val sessionManager: SessionManager,
     modelStorage: ModelStorage,
 ) :
-    PagingViewModel<SectionLoadParams, TopicInfo>() {
+    PagingViewModel<TopicInfo>() {
     private val modelCollection = TopicCollection.Recommend
 
     @OptIn(FlowPreview::class)
@@ -250,7 +248,7 @@ class TopicsViewModel(
     id: PrimaryKey,
     type: ObjectType,
 ) :
-    PagingViewModel<SectionLoadParams, TopicInfo>() {
+    PagingViewModel<TopicInfo>() {
     private val modelCollection = TopicCollection.TopicList(id)
 
     @OptIn(FlowPreview::class)
@@ -390,7 +388,7 @@ class TopicSearchViewModel(
     parentId: PrimaryKey?,
     parentType: ObjectType?,
 ) :
-    PagingViewModel<PrimaryKey, TopicInfo>() {
+    PagingViewModel<TopicInfo>() {
     private val modelCollection = TopicCollection.SearchTopic(word, parentId)
 
     override val flow: Flow<PagingData<TopicInfo>> = Pager(
@@ -425,7 +423,7 @@ class MediaListViewModel(
     objectId: PrimaryKey,
     objectType: ObjectType,
 ) :
-    PagingViewModel<PrimaryKey, FileInfo>() {
+    PagingViewModel<FileInfo>() {
     private val modelCollection = MediasCollection(objectId)
 
     @OptIn(ExperimentalPagingApi::class)
@@ -503,7 +501,7 @@ class MemberViewModel(
     word: String,
     objectType: ObjectType,
 ) :
-    PagingViewModel<PrimaryKey, UserInfo>() {
+    PagingViewModel<UserInfo>() {
     private val modelCollection = UserCollection.Members(word, objectId)
 
     override val flow: Flow<PagingData<UserInfo>> = Pager(
@@ -540,7 +538,7 @@ class ReactionsViewModel(
     sessionManager: SessionManager,
     objectId: PrimaryKey,
     modelStorage: ModelStorage,
-) : PagingViewModel<String, ReactionInfo>() {
+) : PagingViewModel<ReactionInfo>() {
     val modelCollection = ReactionCollection.ReactionList(objectId)
 
     @OptIn(ExperimentalPagingApi::class)
@@ -650,7 +648,7 @@ class TitlesViewModel(
     status: TitleStatus? = null,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
-) : PagingViewModel<PrimaryKey, TitleInfo>() {
+) : PagingViewModel<TitleInfo>() {
     private val modelCollection =
         TitleCollection.SearchTitle(uid, searchType, status, type, scopeId)
 
@@ -680,50 +678,32 @@ class TitlesViewModel(
     }.flow.cachedIn(viewModelScope)
 }
 
-class UploadViewModel(
-    sessionManager: SessionManager,
-    uploader: UploadSession,
-    myUid: PrimaryKey,
-) :
-    ViewModel() {
-    private val queue = Channel<Int> {
-    }
-    val handlers = uploader.list.map { e ->
-        SimpleLoadingHandler(viewModelScope) {
-            sessionManager.upload(
-                myUid ob ObjectType.USER,
-                UploadData(
-                    e.size,
-                    e.name,
-                    e.contentType
-                ) {
-                    e.source()
-                }
-            ) { _, _ ->
-            }.map {
-                it.data.first()
-            }
-        }
-    }
+class UploadHandler(
+    private val scope: CoroutineScope,
+    private val load: suspend UploadHandler.() -> Unit
+) {
+    val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
 
     init {
-        viewModelScope.launch {
-            for (e in queue) {
-                handlers[e].refresh()
-            }
-        }
-        viewModelScope.launch {
-            uploader.list.forEachIndexed { i, _ ->
-                queue.send(i)
-            }
-        }
+        refresh()
     }
 
-    fun retry(index: Int) {
-        viewModelScope.launch {
-            queue.send(index)
+    fun refresh() {
+        scope.launch {
+            load()
         }
     }
+}
+
+class UploadViewModel(
+    myUid: PrimaryKey,
+    modelStorage: ModelStorage,
+) : PagingViewModel<UploadInfo>() {
+    override val flow = Pager(PagingConfig(10)) {
+        modelStorage.uploadInfoStorage.observeData(
+            UploadCollection(myUid)
+        )
+    }.flow.cachedIn(viewModelScope)
 }
 
 class DownloadHandler<T>(
@@ -768,7 +748,7 @@ class DownloadViewModel(
                     ),
                     viewModelScope,
                 ) {
-                    this.downloadFile(path, fileInfo)
+                    downloadFile(path, fileInfo)
                 }
             }
         }
@@ -935,7 +915,7 @@ class ChildAccountsViewModel(
     modelStorage: ModelStorage,
     sessionManager: SessionManager,
 ) :
-    PagingViewModel<PrimaryKey, ChildAccountInfo>() {
+    PagingViewModel<ChildAccountInfo>() {
     val modelCollection = ChildAccountCollection
 
     @OptIn(ExperimentalPagingApi::class)

@@ -32,6 +32,9 @@ import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TitleInfoStorage
 import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.TopicInfoStorage
+import com.storyteller_f.storage.UploadCollection
+import com.storyteller_f.storage.UploadInfo
+import com.storyteller_f.storage.UploadInfoStorage
 import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.UserInfoStorage
 import com.storyteller_f.storage.WrappedPagingSource
@@ -440,6 +443,44 @@ class DownloadInfoRoomStorage(val appDatabase: AppDatabase) : DownloadInfoStorag
     }
 }
 
+class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
+    override suspend fun save(collection: UploadCollection, uploadInfo: UploadInfo) {
+        val data = Json.encodeToString(uploadInfo)
+        appDatabase.getUploadDao()
+            .insert(
+                UploadEntity(
+                    uploadInfo.id.toString(),
+                    collection.getName(),
+                    data,
+                    uploadInfo.pathHash
+                )
+            )
+    }
+
+    override fun observeDatum(pathHash: String): Flow<UploadInfo?> {
+        return appDatabase.getUploadDao()
+            .getAsFlow(DownloadCollection.NAME, pathHash).map {
+                it?.data?.let { string -> Json.decodeFromString(string) }
+            }
+    }
+
+    override suspend fun getDocument(collection: UploadCollection, pathHash: String): UploadInfo? {
+        return appDatabase.getUploadDao().get(collection.getName(), pathHash)?.let {
+            Json.decodeFromString(it.data)
+        }
+    }
+
+    override fun observeData(collection: UploadCollection): PagingSource<Int, UploadInfo> {
+        return WrappedPagingSource(
+            appDatabase.getUploadDao().getAsSource(collection.getName())
+        ) { list ->
+            list.map {
+                Json.decodeFromString(it.data)
+            }
+        }
+    }
+}
+
 class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val userInfoStorage: UserInfoStorage = UserRoomInfoStorage(appDatabase)
     override val communityInfoStorage: CommunityInfoStorage = CommunityRoomInfoStorage(appDatabase)
@@ -451,4 +492,5 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val childAccountStorage: ChildAccountStorage = ChildAccountRoomStorage(appDatabase)
     override val fileInfoStorage: FileInfoStorage = FileInfoRoomStorage(appDatabase)
     override val downloadInfoStorage: DownloadInfoStorage = DownloadInfoRoomStorage(appDatabase)
+    override val uploadInfoStorage: UploadInfoStorage = UploadInfoRoomStorage(appDatabase)
 }

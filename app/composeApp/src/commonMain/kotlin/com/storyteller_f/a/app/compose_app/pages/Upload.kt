@@ -11,17 +11,20 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.AppConfig
+import com.storyteller_f.a.app.compose_app.CommonEntry
+import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compose_app.compontents.rememberAlertDialogController
 import com.storyteller_f.a.app.compose_app.model.createUploadViewModel
-import com.storyteller_f.a.client.core.LoadingHandler
-import com.storyteller_f.a.client.core.LoadingState
-import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.storage.UploadInfo
+import com.storyteller_f.storage.UploadStatus
 import io.ktor.http.*
-import kotlinx.coroutines.launch
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.io.Source
 
 @Stable
@@ -30,11 +33,13 @@ interface ClientFile {
     val contentType: ContentType
     val size: Long
     val id: String
+    val path: String
 
     fun source(): Source
 }
 
-class UploadSession(val name: String, val list: List<ClientFile>) {
+@Stable
+class UploadSession(val name: String, val list: ImmutableList<ClientFile>) {
     override fun equals(other: Any?): Boolean {
         return (other as? UploadSession)?.name == name
     }
@@ -44,35 +49,33 @@ class UploadSession(val name: String, val list: List<ClientFile>) {
     }
 }
 
-class Uploader(val session: MutableState<UploadSession?>)
-
 @Composable
-fun UploadPage(uploader: Uploader) {
+fun UploadPage() {
     val httpUrl = AppConfig.SERVER_URL
     val wsServerUrl = AppConfig.WS_SERVER_URL
-    _root_ide_package_.com.storyteller_f.a.app.compose_app.CommonEntry(httpUrl, wsServerUrl, {
+    CommonEntry(httpUrl, wsServerUrl, {
         val userSessionManager =
-            _root_ide_package_.com.storyteller_f.a.app.compose_app.LocalSessionManager.current
+            LocalSessionManager.current
         val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
         val my = myInfo
-        val session by uploader.session
-        session?.let { UploadInternal(my, it) }
+        UploadInternal(my)
     })
 }
 
 @Composable
-fun UploadInternal(my: UserInfo?, session: UploadSession) {
+fun UploadInternal(my: UserInfo?) {
     if (my != null) {
         val viewModel =
-            createUploadViewModel(my.id, session)
+            createUploadViewModel(my.id)
+        val pagingItems = viewModel.flow.collectAsLazyPagingItems()
         Scaffold { paddingValues ->
             Column(modifier = Modifier.padding(top = paddingValues.calculateTopPadding())) {
                 LazyColumn(contentPadding = PaddingValues(20.dp)) {
-                    items(session.list.size) {
-                        val file = session.list[it]
-                        UploadItem(viewModel.handlers[it], file) {
-                            viewModel.retry(it)
-                        }
+                    items(pagingItems.itemSnapshotList.size, key = pagingItems.itemKey {
+                        it.id
+                    }) {
+                        val file = pagingItems[it]
+                        UploadItem(file)
                     }
                 }
             }
@@ -85,42 +88,33 @@ fun UploadInternal(my: UserInfo?, session: UploadSession) {
 }
 
 @Composable
-fun UploadItem(p: LoadingHandler<FileInfo>, file: ClientFile, refresh: () -> Unit) {
-    val handler = p
-    val data by handler.data.collectAsState()
-    val state by handler.state.collectAsState()
-    UploadItem(file, data, state, refresh)
-}
-
-@Composable
 private fun UploadItem(
-    file: ClientFile,
-    data: FileInfo?,
-    state: LoadingState?,
-    refresh: () -> Unit
+    file: UploadInfo?,
 ) {
+    file ?: return
     val globalDialogController = rememberAlertDialogController()
-    val scope = rememberCoroutineScope()
     Row(modifier = Modifier.padding(20.dp)) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(file.name)
-            data?.let {
-                Text(it.fullName)
+            Text(file.path)
+            Text(file.message)
+            file.total?.let {
+                LinearProgressIndicator(
+                    progress = { file.progress.toFloat() / it },
+                    color = ProgressIndicatorDefaults.linearColor,
+                    trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                    strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                )
             }
         }
 
-        when (state) {
-            LoadingState.Done -> Icon(Icons.Default.Done, "done")
-            is LoadingState.Error -> {
+        when (file.status) {
+            UploadStatus.SUCCESS -> Icon(Icons.Default.Done, "done")
+            UploadStatus.FAILED -> {
                 IconButton({
-                    scope.launch {
-                        globalDialogController.showErrorMessage(state.e)
-                    }
                 }) {
                     Icon(Icons.Default.Error, "error")
                 }
                 IconButton({
-                    refresh()
                 }) {
                     Icon(Icons.Default.Refresh, "retry")
                 }

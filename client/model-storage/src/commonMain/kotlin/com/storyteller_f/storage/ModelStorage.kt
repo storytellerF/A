@@ -70,6 +70,9 @@ sealed interface ReactionCollection {
 data object DownloadCollection {
     const val NAME = "download"
 }
+data class UploadCollection(val objectId: PrimaryKey) {
+    fun getName() = "upload_$objectId"
+}
 data class MediasCollection(val objectId: PrimaryKey) {
     fun getName() = "medias_$objectId"
 }
@@ -136,6 +139,7 @@ interface ModelStorage {
     val childAccountStorage: ChildAccountStorage
     val fileInfoStorage: FileInfoStorage
     val downloadInfoStorage: DownloadInfoStorage
+    val uploadInfoStorage: UploadInfoStorage
 }
 
 interface UserInfoStorage {
@@ -201,6 +205,13 @@ interface DownloadInfoStorage {
     suspend fun save(collection: DownloadCollection, downloadInfo: DownloadInfo)
     fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?>
     suspend fun getDocument(collection: DownloadCollection, id: PrimaryKey): DownloadInfo?
+}
+
+interface UploadInfoStorage {
+    suspend fun save(collection: UploadCollection, uploadInfo: UploadInfo)
+    fun observeDatum(pathHash: String): Flow<UploadInfo?>
+    suspend fun getDocument(collection: UploadCollection, pathHash: String): UploadInfo?
+    fun observeData(collection: UploadCollection): PagingSource<Int, UploadInfo>
 }
 
 interface RemoteKeyStorage {

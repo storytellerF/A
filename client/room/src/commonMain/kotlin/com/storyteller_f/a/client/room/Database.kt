@@ -14,7 +14,11 @@ import androidx.room.RoomDatabaseConstructor
 import kotlinx.coroutines.flow.Flow
 
 @Database(
-    entities = [CommonEntity::class, CommunityEntity::class, TopicEntity::class, ReactionEntity::class],
+    entities = [CommonEntity::class,
+        CommunityEntity::class,
+        TopicEntity::class,
+        ReactionEntity::class,
+        UploadEntity::class],
     version = 1
 )
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -23,6 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun getCommunityDao(): CommunityDao
     abstract fun getTopicDao(): TopicDao
     abstract fun getReactionDao(): ReactionDao
+    abstract fun getUploadDao(): UploadDao
 }
 
 // The Room compiler generates the `actual` implementations.
@@ -161,4 +166,34 @@ data class ReactionEntity(
     val data: String,
     val count: Long,
     val lastReactionId: Long
+)
+
+@Dao
+interface UploadDao {
+
+    @Insert(onConflict = REPLACE)
+    suspend fun insert(item: UploadEntity)
+
+    @Query("select * from UploadEntity where collection = :collection and pathHash = :pathHash")
+    suspend fun get(collection: String, pathHash: String): UploadEntity?
+
+    @Query("select * from UploadEntity where collection = :collection order by id desc")
+    fun getAsSource(collection: String): PagingSource<Int, UploadEntity>
+
+    @Query("select * from UploadEntity where collection = :collection and id = :id")
+    fun getAsFlow(collection: String, id: String): Flow<UploadEntity?>
+
+    @Query("delete from UploadEntity where collection = :collection")
+    suspend fun clean(collection: String)
+}
+
+@Entity(
+    primaryKeys = ["collection", "id"],
+    indices = [Index("collection", "pathHash", unique = true)]
+)
+data class UploadEntity(
+    val id: String,
+    val collection: String,
+    val data: String,
+    val pathHash: String,
 )

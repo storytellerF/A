@@ -10,7 +10,7 @@ import com.storyteller_f.shared.obj.ServerResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
-abstract class PagingViewModel<K : Any, V : Any> : ViewModel() {
+abstract class PagingViewModel<V : Any> : ViewModel() {
     abstract val flow: Flow<PagingData<V>>
 }
 

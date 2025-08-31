@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 
     <application
             android:name=".compose_app.AApplication"
@@ -81,6 +82,11 @@
             <intent-filter>
                 <action android:name="org.unifiedpush.android.connector.PUSH_EVENT"/>
             </intent-filter>
+        </service>
+        <service android:name=".compose_app.FileService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false">
+
         </service>
     </application>
 
