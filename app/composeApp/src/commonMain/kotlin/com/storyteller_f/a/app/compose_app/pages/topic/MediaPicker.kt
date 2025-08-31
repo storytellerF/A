@@ -298,10 +298,7 @@ private suspend fun GlobalDialogController.selectFileAndUpload(
             ) { p, t ->
                 emitProgress {
                     GlobalDialogState.Loading(
-                        progress = GlobalDialogStateProgress(
-                            p.toFloat(),
-                            t?.toFloat()
-                        )
+                        progress = GlobalDialogStateProgress(p, t)
                     )
                 }
             }
@@ -329,10 +326,7 @@ suspend fun GlobalDialogController.uploadPath(
         ) { p, t ->
             emitProgress {
                 GlobalDialogState.Loading(
-                    progress = GlobalDialogStateProgress(
-                        p.toFloat(),
-                        t?.toFloat()
-                    )
+                    progress = GlobalDialogStateProgress(p, t)
                 )
             }
         }

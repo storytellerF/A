@@ -389,7 +389,7 @@ class UploadData(val size: Long, val name: String, val contentType: ContentType,
 suspend fun SessionManager.upload(
     objectTuple: ObjectTuple,
     data: UploadData,
-    onUpload: (Long, Long?) -> Unit = { _, _ -> },
+    onUpload: suspend (Long, Long?) -> Unit = { _, _ -> },
 ) = serviceCatching {
     CustomApi.Files.upload.invoke(objectTuple, Unit) {
         setBody(

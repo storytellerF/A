@@ -2,7 +2,6 @@ package com.storyteller_f.a.app.compose_app.model
 
 import androidx.compose.runtime.Composable
 import com.storyteller_f.a.app.compose_app.common.viewModel
-import com.storyteller_f.a.app.compose_app.pages.UploadSession
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -82,7 +81,12 @@ fun createCommunityRoomsViewModel(communityId: PrimaryKey) =
             communityId
         )
     ) { client, databaseSource ->
-        RoomsViewModel(client, databaseSource, JoinStatusSearch.UNSPECIFIED, community = communityId)
+        RoomsViewModel(
+            client,
+            databaseSource,
+            JoinStatusSearch.UNSPECIFIED,
+            community = communityId
+        )
     }
 
 @Composable
@@ -426,14 +430,13 @@ fun createUserTitlesViewModel(
 }
 
 @Composable
-fun createUploadViewModel(myUid: PrimaryKey, uploadSession: UploadSession) =
+fun createUploadViewModel(myUid: PrimaryKey) =
     viewModel(
         keys = listOf(
             "upload",
-            uploadSession.name
         )
-    ) { client, _ ->
-        UploadViewModel(client, uploadSession, myUid)
+    ) { client, model ->
+        UploadViewModel(myUid, model)
     }
 
 @Composable

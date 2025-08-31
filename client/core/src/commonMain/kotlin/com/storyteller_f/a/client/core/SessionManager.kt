@@ -8,7 +8,6 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.signature
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkTsIsValid
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.merge
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
@@ -45,17 +44,16 @@ interface SessionManager {
         userHandler.request({
             userHandler.done(it)
         }) {
-            merge({
-                getData()
-            }, {
-                userPass.address()
-            }).mapResult { (data, address) ->
-                userPass.signature(finalData(data)).mapResult { signature ->
-                    signIn(address, signature).map {
-                        sessionModel.updateSignature(data, signature)
-                        it
-                    }
-                }
+            runCatching {
+                val (data, address) = merge({
+                    getData()
+                }, {
+                    userPass.address()
+                }).getOrThrow()
+                val signature = userPass.signature(finalData(data)).getOrThrow()
+                val userInfo = signIn(address, signature).getOrThrow()
+                sessionModel.updateSignature(data, signature)
+                userInfo
             }
         }
     }
@@ -152,6 +150,16 @@ suspend fun SessionManager.signUpOrInFromPrivateKey(
     }.getOrThrow()
     sessionModel.updateUser(u)
     sessionModel.updateSignature(data, sig)
-    sessionModel.updateState(ClientSessionState.Success(buildUserPass(RawUserPassInfo(pemPrivateKey, publicKey, ad))))
+    sessionModel.updateState(
+        ClientSessionState.Success(
+            buildUserPass(
+                RawUserPassInfo(
+                    pemPrivateKey,
+                    publicKey,
+                    ad
+                )
+            )
+        )
+    )
     return u
 }

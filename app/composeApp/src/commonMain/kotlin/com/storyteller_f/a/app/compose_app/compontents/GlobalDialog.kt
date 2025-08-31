@@ -33,7 +33,7 @@ sealed interface GlobalDialogState {
 
 private val mutex = Mutex()
 
-data class GlobalDialogStateProgress(val value: Float, val total: Float?)
+data class GlobalDialogStateProgress(val value: Long, val total: Long?)
 
 interface GlobalDialogController {
     val state: MutableState<PersistentList<GlobalDialogState>>
@@ -225,7 +225,7 @@ private fun LoadingGlobalDialogContent(
                 }
                 if (loading.progress != null && loading.progress.total != null) {
                     LinearProgressIndicator(
-                        progress = { loading.progress.value / loading.progress.total },
+                        progress = { loading.progress.value.toFloat() / loading.progress.total },
                         color = ProgressIndicatorDefaults.linearColor,
                         trackColor = ProgressIndicatorDefaults.linearTrackColor,
                         strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
