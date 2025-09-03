@@ -3,6 +3,9 @@ package com.storyteller_f.a.app.compose_app.utils
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.awtClipboard
+import com.storyteller_f.a.app.compose_app.UIViewModel
+import com.storyteller_f.a.app.compose_app.pages.ClientFile
+import com.storyteller_f.a.app.compose_app.uiViewModel
 import dev.jordond.connectivity.Connectivity
 import java.awt.datatransfer.StringSelection
 
@@ -24,4 +27,12 @@ actual fun createConnectivity(): Connectivity {
         pollingIntervalMs = 10.minutes
         timeoutMs = 5.seconds
     }
+}
+
+actual fun getUiViewModel(): UIViewModel {
+    return uiViewModel
+}
+
+actual fun getClientFile(path: String): ClientFile? {
+    TODO("Not yet implemented")
 }

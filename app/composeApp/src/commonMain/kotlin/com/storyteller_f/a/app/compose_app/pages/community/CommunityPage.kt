@@ -31,6 +31,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
@@ -42,11 +43,10 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -63,7 +63,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.AppNav
 import com.storyteller_f.a.app.compose_app.CommunityScreen
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.LocalDownloadViewModel
+import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
@@ -82,10 +82,12 @@ import com.storyteller_f.a.app.compose_app.hasRouteFlow
 import com.storyteller_f.a.app.compose_app.join_community
 import com.storyteller_f.a.app.compose_app.join_community_prompt
 import com.storyteller_f.a.app.compose_app.model.CommunityViewModel
+import com.storyteller_f.a.app.compose_app.model.DownloadViewModel
 import com.storyteller_f.a.app.compose_app.model.OnCommunityExited
 import com.storyteller_f.a.app.compose_app.model.createCommunityRoomsViewModel
 import com.storyteller_f.a.app.compose_app.model.createCommunityTopicsViewModel
 import com.storyteller_f.a.app.compose_app.model.createCommunityViewModel
+import com.storyteller_f.a.app.compose_app.model.getDownloadViewModel
 import com.storyteller_f.a.app.compose_app.pages.CustomBottomNav
 import com.storyteller_f.a.app.compose_app.pages.CustomRailNav
 import com.storyteller_f.a.app.compose_app.pages.NavRoute
@@ -97,9 +99,6 @@ import com.storyteller_f.a.app.compose_app.rooms
 import com.storyteller_f.a.app.compose_app.topics
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
-import com.storyteller_f.a.app.compose_app.utils.loadFontFromLocal
-import com.storyteller_f.a.client.core.LoadingHandler
-import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
@@ -109,11 +108,14 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
 import dev.tclement.fonticons.FontIcon
-import io.github.aakira.napier.Napier
 import io.github.windedge.table.DataTable
 import kotlinx.coroutines.launch
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemTemporaryDirectory
 import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.pow
+import kotlin.math.round
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
@@ -142,35 +144,20 @@ fun CommunityPage(
 fun getCommunityFont(communityId: PrimaryKey): Typography {
     val model = createCommunityViewModel(communityId)
     val community by model.handler.data.collectAsState()
-    val downloadViewModel = LocalDownloadViewModel.current
-    val loadingHandler by produceState<LoadingHandler<DownloadInfo>?>(
-        null,
-        community?.font?.id
-    ) {
-        value = downloadViewModel.download(community?.font)
-    }
-    val fontFamily by remember {
-        derivedStateOf {
-            community?.font?.let { font ->
-                loadingHandler?.let { handler ->
-                    val state = handler.state.value
-                    val data = handler.data.value
-                    Napier.i {
-                        "CommunityPage state:$state data:$data"
-                    }
-                    if (state is LoadingState.Done && data?.status == DownloadStatus.DOWNLOADED) {
-                        loadFontFromLocal(data.path + ".extracted")
-                    } else {
-                        null
-                    }
-                }
-            }
+    val downloadViewModel = getDownloadViewModel(community?.font?.id)
+    val provider = LocalClientFileProvider.current
+    SideEffect {
+        val font = community?.font
+        if (font != null) {
+            val path = Path(SystemTemporaryDirectory, "downloads", font.id.toString(), font.name)
+            provider.getDownloader()?.download(font, path)
         }
     }
+    val fontFamily by downloadViewModel.fontFamily.collectAsState()
     val typography = MaterialTheme.typography
     return typography.copy(
         bodyLarge =
-        typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
+            typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
         bodyMedium = typography.bodyMedium.copy(
             fontFamily = fontFamily ?: typography.bodyMedium.fontFamily
         ),
@@ -446,14 +433,6 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun FontView(info: FileInfo) {
-    val downloadViewModel =
-        LocalDownloadViewModel.current
-    val loadingHandler by produceState<LoadingHandler<DownloadInfo>?>(
-        null,
-        info.id
-    ) {
-        value = downloadViewModel.download(info)
-    }
     var showSheet by remember {
         mutableStateOf(false)
     }
@@ -468,11 +447,8 @@ private fun FontView(info: FileInfo) {
         FontIcon(MaterialSymbolsOutlined.FontDownload, "font")
         val scrollState = rememberScrollState()
         Text(info.name, modifier = Modifier.weight(1f).horizontalScroll(scrollState))
-        loadingHandler?.let { handler ->
-            val state by handler.state.collectAsState()
-            val data by handler.data.collectAsState()
-            DownloadStatusView(state, data)
-        }
+        val downloadViewModel = getDownloadViewModel(info.id)
+        DownloadStatusView(downloadViewModel)
     }
     DownloadInfoPage(info, showSheet, sheetState) {
         showSheet = false
@@ -480,33 +456,24 @@ private fun FontView(info: FileInfo) {
 }
 
 @Composable
-private fun DownloadStatusView(
-    state: LoadingState?,
-    data: DownloadInfo?,
-) {
-    Napier.i {
-        "DownloadStatusView state:$state data:$data"
-    }
+private fun DownloadStatusView(downloadViewModel1: DownloadViewModel) {
+    val data by downloadViewModel1.data.collectAsState(null)
+    val downloadStatus = data?.status
     when {
-        state is LoadingState.Done && data != null -> {
-            when (data.status) {
-                DownloadStatus.NOT_DOWNLOADED, DownloadStatus.DOWNLOADING -> CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp
-                )
-
-                DownloadStatus.DOWNLOADED -> FontIcon(MaterialSymbolsOutlined.DownloadDone, "download done")
-                DownloadStatus.FAILED -> FontIcon(MaterialSymbolsOutlined.Error, "error")
-            }
-        }
-
-        state is LoadingState.Error -> Text(state.e.localizedMessage?.take(10) ?: "!")
-        state == null || state is LoadingState.Loading -> CircularProgressIndicator(
+        data == null || downloadStatus == DownloadStatus.NOT_DOWNLOADED || downloadStatus == DownloadStatus.DOWNLOADING -> CircularProgressIndicator(
             modifier = Modifier.size(20.dp),
             strokeWidth = 2.dp
         )
 
-        else -> FontIcon(MaterialSymbolsOutlined.Info, "warning")
+        downloadStatus == DownloadStatus.DOWNLOADED -> FontIcon(
+            MaterialSymbolsOutlined.DownloadDone,
+            "download done"
+        )
+
+        downloadStatus == DownloadStatus.DOWNLOAD_FAILED -> FontIcon(
+            MaterialSymbolsOutlined.Error,
+            "error"
+        )
     }
 }
 
@@ -579,46 +546,54 @@ private fun DownloadInfoPage(
     sheetState: SheetState,
     hideSheet: () -> Unit,
 ) {
-    val downloadViewModel =
-        LocalDownloadViewModel.current
-    val loadingHandler by produceState<LoadingHandler<DownloadInfo>?>(
-        null,
-        fileInfo.id
-    ) {
-        value = downloadViewModel.download(fileInfo)
-    }
-    loadingHandler?.let { handler ->
-        BaseSheet(showSheet, sheetState, hideSheet) {
-            SheetContainer {
-                Column(
-                    modifier = Modifier.heightIn(200.dp, 600.dp).padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    val data by handler.data.collectAsState()
-
-                    DownloadInfoTitle(fileInfo, data, handler)
-
-                    DownloadInfoTable(data, fileInfo)
-                }
+    BaseSheet(showSheet, sheetState, hideSheet) {
+        SheetContainer {
+            Column(
+                modifier = Modifier.heightIn(200.dp, 600.dp).padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                val downloadViewModel = getDownloadViewModel(fileInfo.id)
+                DownloadInfoPageInternal(downloadViewModel, fileInfo)
             }
         }
     }
 }
 
 @Composable
+private fun DownloadInfoPageInternal(
+    downloadViewModel: DownloadViewModel,
+    fileInfo: FileInfo
+) {
+    val downloadInfo by downloadViewModel.data.collectAsState(null)
+    DownloadInfoTitle(fileInfo, downloadInfo)
+    downloadInfo?.let {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            LinearProgressIndicator(progress = {
+                it.progress.toFloat() / it.total
+            })
+            Text("${(it.progress.toFloat() * 100 / it.total).roundToDecimalPlaces(2)} %")
+        }
+    }
+    DownloadInfoTable(downloadInfo, fileInfo)
+}
+
+@Composable
 private fun DownloadInfoTitle(
     it: FileInfo,
     data: DownloadInfo?,
-    handler: LoadingHandler<DownloadInfo>
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        val provider = LocalClientFileProvider.current
         Text(it.name, modifier = Modifier.weight(1f))
-        if (data?.status == DownloadStatus.FAILED) {
+        if (data != null && data.status != DownloadStatus.PROCESSED) {
             Button({
-                handler.refresh()
+                provider.getDownloader()?.resume(it)
             }) {
                 Text("Retry")
             }
@@ -636,7 +611,7 @@ private fun DownloadInfoTable(
             put("Path", downloadInfo?.path)
             put("Size", HumanReadable.fileSize(fileInfo.size))
             put("Status", downloadInfo?.status?.name)
-            if (downloadInfo?.status == DownloadStatus.FAILED) {
+            if (downloadInfo?.status == DownloadStatus.DOWNLOAD_FAILED) {
                 put("Error", downloadInfo.message)
             }
             put("Message", downloadInfo?.message)
@@ -666,4 +641,9 @@ private fun DownloadInfoTable(
             }
         }
     }
+}
+
+fun Float.roundToDecimalPlaces(decimals: Int): Float {
+    val multiplier = 10.0f.pow(decimals)
+    return round(this * multiplier) / multiplier
 }

@@ -11,7 +11,7 @@ import com.storyteller_f.a.client.core.UserPass
 import kotlinx.serialization.ExperimentalSerializationApi
 
 interface LoginUserSessionManager {
-    fun savedSession(): SavedSession
+    fun getSavedSession(): SavedSession
 
     suspend fun addSession(session: RawUserPassInfo): UserPass
 
@@ -22,7 +22,7 @@ interface LoginUserSessionManager {
 
 class DefaultLoginUserSessionManager(val defaultSettings: Settings) : LoginUserSessionManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override fun savedSession(): SavedSession {
+    override fun getSavedSession(): SavedSession {
         val rawUserPass = defaultSettings.decodeValueOrNull<RawUserPassInfo>("login_user")
         return if (rawUserPass != null) {
             val loginHistory = defaultSettings.decodeValueOrNull<LoginHistory>("login_history")

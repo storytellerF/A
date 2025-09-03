@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.storyteller_f.a.app.compose_app.AppConfig
 import com.storyteller_f.a.app.compose_app.CommonEntry
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
@@ -32,7 +31,6 @@ interface ClientFile {
     val name: String
     val contentType: ContentType
     val size: Long
-    val id: String
     val path: String
 
     fun source(): Source
@@ -51,14 +49,11 @@ class UploadSession(val name: String, val list: ImmutableList<ClientFile>) {
 
 @Composable
 fun UploadPage() {
-    val httpUrl = AppConfig.SERVER_URL
-    val wsServerUrl = AppConfig.WS_SERVER_URL
-    CommonEntry(httpUrl, wsServerUrl, {
+    CommonEntry({
         val userSessionManager =
             LocalSessionManager.current
         val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
-        val my = myInfo
-        UploadInternal(my)
+        UploadInternal(myInfo)
     })
 }
 
@@ -97,14 +92,9 @@ private fun UploadItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(file.path)
             Text(file.message)
-            file.total?.let {
-                LinearProgressIndicator(
-                    progress = { file.progress.toFloat() / it },
-                    color = ProgressIndicatorDefaults.linearColor,
-                    trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                    strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
-                )
-            }
+            LinearProgressIndicator(
+                progress = { file.progress.toFloat() / file.total },
+            )
         }
 
         when (file.status) {

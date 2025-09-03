@@ -226,9 +226,6 @@ private fun LoadingGlobalDialogContent(
                 if (loading.progress != null && loading.progress.total != null) {
                     LinearProgressIndicator(
                         progress = { loading.progress.value.toFloat() / loading.progress.total },
-                        color = ProgressIndicatorDefaults.linearColor,
-                        trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                        strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
                     )
                 } else {
                     Box(modifier = Modifier, contentAlignment = Alignment.Center) {

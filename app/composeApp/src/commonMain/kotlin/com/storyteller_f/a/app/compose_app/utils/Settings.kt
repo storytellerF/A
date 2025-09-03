@@ -17,7 +17,7 @@ data class LoginHistory(val last: String? = null, val current: String? = null)
 
 fun UserSessionManager.restoreFromStorage(settings: Settings) {
     val sessionFactory = buildLoginUserSessionFactory(settings)
-    val (list, _, current) = sessionFactory.savedSession()
+    val (list, _, current) = sessionFactory.getSavedSession()
     if (current != null && list.contains(current)) {
         val session = sessionFactory.buildSession(current)
         if (session != null) {

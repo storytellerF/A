@@ -1,13 +1,14 @@
 package com.storyteller_f.a.app.compose_app
 
-import android.content.ClipData
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.net.toUri
 import com.storyteller_f.a.app.compose_app.pages.ClientFile
 import com.storyteller_f.a.app.compose_app.pages.UploadPage
 import io.ktor.http.*
@@ -17,15 +18,14 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.io.Source
 import kotlinx.io.asSource
 import kotlinx.io.buffered
-import java.lang.ref.WeakReference
 import kotlin.uuid.ExperimentalUuidApi
 
-fun getClipFile(itemAt: ClipData.Item, context: Context): ClipFile? {
+fun getClipFile(context: Context, uri: Uri): ClipFile? {
     val contentResolver: ContentResolver = context.contentResolver
 
     val query =
         contentResolver.query(
-            itemAt.uri,
+            uri,
             arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE),
             null,
             null,
@@ -33,25 +33,29 @@ fun getClipFile(itemAt: ClipData.Item, context: Context): ClipFile? {
         )
     if (query == null) {
         return null
-    } else {
-        return query.use { cursor ->
-            if (cursor.moveToFirst()) {
-                val name =
-                    cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
-                val size = cursor.getLong(cursor.getColumnIndexOrThrow(OpenableColumns.SIZE))
-                name to size
-            } else {
-                null
-            }
-        }?.let { (name, size) ->
-            val type = contentResolver.getType(itemAt.uri) ?: "*/*"
-            ClipFile(itemAt, context, name, ContentType.parse(type), size, itemAt.uri.toString())
-        }
     }
+    val (name, size) = query.use { cursor ->
+        if (cursor.moveToFirst()) {
+            val name =
+                cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+            val size = cursor.getLong(cursor.getColumnIndexOrThrow(OpenableColumns.SIZE))
+            name to size
+        } else {
+            null
+        }
+    } ?: return null
+    val type = contentResolver.getType(uri) ?: "*/*"
+    return ClipFile(
+        context,
+        name,
+        ContentType.parse(type),
+        size,
+        uri.toString()
+    )
+
 }
 
 class ClipFile(
-    private val itemAt: ClipData.Item,
     context: Context,
     override val name: String,
     override val contentType: ContentType,
@@ -60,18 +64,15 @@ class ClipFile(
 ) : ClientFile {
     private val contentResolver: ContentResolver = context.contentResolver
 
-    override val id: String
-        get() = itemAt.uri.toString()
-
     override fun source(): Source {
         val stream =
-            contentResolver.openInputStream(itemAt.uri) ?: throw Exception("get stream failed")
+            contentResolver.openInputStream(path.toUri()) ?: throw Exception("get stream failed")
         return stream.asSource().buffered()
     }
 }
 
-class UploadActivity : ComponentActivity() {
-    var binder: FileBinder? = null
+class UploadActivity : ComponentActivity(), ClientFileServiceReceiver {
+    override var binder: FileBinder? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         commonForActivity()
@@ -85,7 +86,7 @@ class UploadActivity : ComponentActivity() {
         val clipData = intent.clipData
         return if (clipData != null) {
             List(clipData.itemCount) {
-                getClipFile(clipData.getItemAt(it), this)
+                getClipFile(this, clipData.getItemAt(it).uri)
             }.filterNotNull().toImmutableList()
         } else {
             persistentListOf()
@@ -102,11 +103,10 @@ class UploadActivity : ComponentActivity() {
         val clipData = getClipData()
         val fileBinder = binder
         if (fileBinder == null) {
-            val intent1 = Intent(this, FileService::class.java)
-            val connection = FileConnection(WeakReference(this), clipData)
-            bindService(intent1, connection, BIND_AUTO_CREATE)
+            bindFileService(clipData)
             return
         }
         fileBinder.upload(clipData)
     }
 }
+

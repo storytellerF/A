@@ -1,7 +1,7 @@
 package com.storyteller_f.a.app.compose_app.service
 
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
-import com.storyteller_f.shared.contextRef
+import com.storyteller_f.shared.appContextRef
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +47,7 @@ class AndroidEdgeGPT : GPT {
     }
 
     private fun buildMediaPipe(path: String, prompt: String): Flow<GPTOutput> {
-        val context = contextRef.get() ?: throw Exception("context is nil")
+        val context = appContextRef.get() ?: throw Exception("context is nil")
         Napier.i(tag = "gpt") {
             "load $path done"
         }

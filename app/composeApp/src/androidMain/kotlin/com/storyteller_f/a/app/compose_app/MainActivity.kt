@@ -1,6 +1,5 @@
 package com.storyteller_f.a.app.compose_app
 
-import android.R
 import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
@@ -10,6 +9,7 @@ import android.view.ViewTreeObserver
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.session.MediaController
@@ -24,10 +24,11 @@ import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
+import kotlinx.collections.immutable.persistentListOf
 import org.unifiedpush.android.connector.UnifiedPush
 import java.util.concurrent.Future
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), ClientFileServiceReceiver {
     private var controllerFuture: Future<MediaController>? = null
 
     override fun onStart() {
@@ -35,7 +36,10 @@ class MainActivity : ComponentActivity() {
         val sessionToken =
             SessionToken(this, ComponentName(this, PlaybackService::class.java))
         val listener = object : MediaController.Listener {
-            override fun onAvailableSessionCommandsChanged(controller: MediaController, commands: SessionCommands) {
+            override fun onAvailableSessionCommandsChanged(
+                controller: MediaController,
+                commands: SessionCommands
+            ) {
                 super.onAvailableSessionCommandsChanged(controller, commands)
                 Napier.d {
                     "MediaController onAvailableSessionCommandsChanged"
@@ -50,7 +54,8 @@ class MainActivity : ComponentActivity() {
             }
         }
         if (!isRunningOnRobolectric) {
-            val future = MediaController.Builder(this, sessionToken).setListener(listener).buildAsync()
+            val future =
+                MediaController.Builder(this, sessionToken).setListener(listener).buildAsync()
             controllerFuture = future
             future.addListener({
                 MediaProvider.controller = future.get()
@@ -64,15 +69,23 @@ class MainActivity : ComponentActivity() {
         FileKit.init(this)
         commonForActivity()
         initEnvironment(this)
+        registerDevice(this)
+        bindFileService(persistentListOf())
+        val receiver = CustomClientFileProvider(this)
         setContent {
-            App()
+            CompositionLocalProvider(
+                LocalClientFileProvider provides receiver
+            ) {
+                App()
+            }
         }
     }
 
     private fun setupForSplash() {
         installSplashScreen()
+        @Suppress("KotlinConstantConditions")
         if (AppConfig.ENABLE_LOGIN_CHECK) {
-            val content = findViewById<View>(R.id.content)
+            val content = findViewById<View>(android.R.id.content)
             content.viewTreeObserver.addOnPreDrawListener(
                 object : ViewTreeObserver.OnPreDrawListener {
                     override fun onPreDraw(): Boolean {
@@ -90,6 +103,8 @@ class MainActivity : ComponentActivity() {
         unbindActivity()
         controllerFuture?.let { MediaController.releaseFuture(it) }
     }
+
+    override var binder: FileBinder? = null
 }
 
 fun ComponentActivity.initFromContext() {
@@ -100,7 +115,7 @@ fun ComponentActivity.initFromContext() {
             channelName = "Regular",
             channelDescription = "Regular",
             channelImportance = NotificationManager.IMPORTANCE_DEFAULT,
-            smallIcon = R.drawable.ic_notification_overlay
+            smallIcon = com.storyteller_f.a.app.R.drawable.ic_notify
         )
     )
 }

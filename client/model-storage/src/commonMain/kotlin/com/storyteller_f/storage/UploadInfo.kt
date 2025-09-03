@@ -15,7 +15,9 @@ data class UploadInfo(
     val pathHash: String,
     val path: String,
     val progress: Long,
-    val total: Long?,
+    val total: Long,
     val status: UploadStatus,
     val message: String,
+    val name: String,
+    val contentType: String
 )
