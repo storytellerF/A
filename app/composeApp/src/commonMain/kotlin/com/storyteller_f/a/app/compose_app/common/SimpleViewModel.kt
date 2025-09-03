@@ -1,6 +1,7 @@
 package com.storyteller_f.a.app.compose_app.common
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
@@ -23,8 +24,10 @@ inline fun <reified VM : ViewModel> viewModel(
 ): VM {
     val sessionManager = LocalSessionManager.current
     val databaseSource = LocalDatabase.current
-    Napier.i {
-        "viewModel ${VM::class.simpleName}$keys composable"
+    SideEffect {
+        Napier.i {
+            "viewModel ${VM::class.simpleName}$keys composable"
+        }
     }
     val address by sessionManager.address.collectAsState()
     return viewModel(key = "$address:${keys?.joinToString()}") {

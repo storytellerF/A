@@ -10,7 +10,7 @@ import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.calcAddress
-import com.storyteller_f.shared.contextRef
+import com.storyteller_f.shared.appContextRef
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -132,7 +132,7 @@ class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
 @Suppress("SameParameterValue")
 class AndroidKeyStoreLoginUserSessionManager(val defaultSettings: Settings) : LoginUserSessionManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override fun savedSession(): SavedSession {
+    override fun getSavedSession(): SavedSession {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
 
@@ -199,6 +199,6 @@ class AndroidKeyStoreLoginUserSessionManager(val defaultSettings: Settings) : Lo
 }
 
 actual fun unregisterPushService() {
-    val context = contextRef.get() ?: return
+    val context = appContextRef.get() ?: return
     UnifiedPush.unregister(context, "A")
 }

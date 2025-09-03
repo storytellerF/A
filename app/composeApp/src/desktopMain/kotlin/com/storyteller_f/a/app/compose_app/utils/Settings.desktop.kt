@@ -19,7 +19,7 @@ private val store by lazy {
     DataStoreManager(
         PreferenceDataStoreFactory.createWithPath(
             produceFile = {
-                val pb = Path(SystemTemporaryDirectory, "main.preferences_pb")
+                val pb = Path(SystemTemporaryDirectory, "com.storyteller_f.a.app.compose_app.main.preferences_pb")
                 val file = pb.toFile()
                 if (!file.exists() && !file.createNewFile()) {
                     Napier.e {

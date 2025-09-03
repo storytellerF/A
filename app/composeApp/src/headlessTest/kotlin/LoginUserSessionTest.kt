@@ -14,12 +14,12 @@ class LoginUserSessionTest : UsingContextTest() {
         val settings = createSettings("settings-test")
         settings.clear()
         val sessionFactory = buildLoginUserSessionFactory(settings)
-        assertEquals(0, sessionFactory.savedSession().list.size)
+        assertEquals(0, sessionFactory.getSavedSession().list.size)
         val privateKey = generateECDSAPemPrivateKey().getOrThrow()
         val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
         val ad = calcAddress(publicKey).getOrThrow()
         val addSession = sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
-        assertEquals(1, sessionFactory.savedSession().list.size)
+        assertEquals(1, sessionFactory.getSavedSession().list.size)
         val signature = addSession.signature("test").getOrThrow()
         assertTrue(addSession.verify(signature, "test").getOrThrow())
         val encrypt = encryptData("hello").getOrThrow()
@@ -27,6 +27,6 @@ class LoginUserSessionTest : UsingContextTest() {
         assertEquals("hello", addSession.decrypt(encrypt.first, encryptAesKey).getOrThrow())
         sessionFactory.buildSession("default")
         sessionFactory.removeSession("default")
-        assertEquals(0, sessionFactory.savedSession().list.size)
+        assertEquals(0, sessionFactory.getSavedSession().list.size)
     }
 }

@@ -2,8 +2,10 @@ package com.storyteller_f.a.app.compose_app
 
 import android.app.Application
 import android.os.StrictMode
-import com.storyteller_f.shared.contextRef
+import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.loadCryptoLibIfNeed
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import org.schabi.newpipe.DownloaderImpl
 import org.schabi.newpipe.ReCaptchaActivity
 import org.schabi.newpipe.extractor.NewPipe
@@ -12,14 +14,21 @@ import org.schabi.newpipe.extractor.localization.Localization
 import java.lang.ref.WeakReference
 
 class AApplication : Application() {
+    @OptIn(DelicateCoroutinesApi::class)
+    val uiViewModel by lazy {
+        UIViewModel(GlobalScope, AppConfig.WS_SERVER_URL, AppConfig.SERVER_URL)
+    }
+
     override fun onCreate() {
         super.onCreate()
+
         StrictMode.setVmPolicy(
             StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
                 .detectLeakedClosableObjects()
                 .build()
         )
-        contextRef = WeakReference(this)
+        appContextRef = WeakReference(this)
+        uiViewModel
         loadCryptoLibIfNeed()
         setCookiesToDownloader(DownloaderImpl)
         NewPipe.init(DownloaderImpl, Localization.DEFAULT, ContentCountry.DEFAULT)

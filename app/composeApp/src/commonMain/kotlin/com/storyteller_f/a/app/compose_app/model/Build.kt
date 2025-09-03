@@ -453,17 +453,15 @@ fun getMarkdownMediasViewModel(
 }
 
 @Composable
-fun getDownloadViewModel(): DownloadViewModel =
-    viewModel(
-        listOf("download")
-    ) { sessionManager, storageSource ->
-        DownloadViewModel(sessionManager, storageSource)
-    }
+fun getDownloadViewModel(fileId: PrimaryKey?): DownloadViewModel = viewModel(
+    listOf("download", fileId)
+) { sessionManager, storageSource ->
+    DownloadViewModel(storageSource, fileId)
+}
 
 @Composable
-fun getAlternativeAccountsViewModel(): ChildAccountsViewModel =
-    viewModel(
-        listOf("alternative")
-    ) { sessionManager, storageSource ->
-        ChildAccountsViewModel(storageSource, sessionManager)
-    }
+fun getAlternativeAccountsViewModel(): ChildAccountsViewModel = viewModel(
+    listOf("alternative")
+) { sessionManager, storageSource ->
+    ChildAccountsViewModel(storageSource, sessionManager)
+}

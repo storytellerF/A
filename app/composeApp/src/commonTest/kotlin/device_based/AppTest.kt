@@ -10,7 +10,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import coil3.compose.LocalPlatformContext
-import com.storyteller_f.a.app.compose_app.AppInternal
+import com.storyteller_f.a.app.compose_app.CommonEntry
+import com.storyteller_f.a.app.compose_app.MainAppPage
+import com.storyteller_f.a.app.compose_app.StaticObj
+import com.storyteller_f.a.app.compose_app.compontents.globalPlayerState
+import com.storyteller_f.a.app.compose_app.compontents.rememberIsInPipMode
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.shared.getPlatform
@@ -41,7 +45,13 @@ class AppTest {
                         initDone = true
                     }
                     if (initDone) {
-                        AppInternal(it, it.replace("http", "ws"))
+                        CommonEntry() {
+                            StaticObj
+                            val playerSession by globalPlayerState
+                            val isPip = rememberIsInPipMode()
+
+                            MainAppPage(isPip, playerSession)
+                        }
                     }
                 }
 
