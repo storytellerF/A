@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.CommunityScreen
 import com.storyteller_f.a.app.compose_app.LocalAppNav
@@ -29,6 +28,7 @@ import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compose_app.compontents.CommunityPoster
 import com.storyteller_f.a.app.compose_app.compontents.rememberCommonDialogController
+import com.storyteller_f.a.app.compose_app.model.CommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.model.createJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.toRoute
 import com.storyteller_f.a.app.compose_app.utils.lcm
@@ -42,14 +42,12 @@ import dev.chrisbanes.haze.rememberHazeState
 @Composable
 fun MyCommunitiesPage() {
     val viewModel = createJoinedCommunitiesViewModel()
-    val items = viewModel.flow.collectAsLazyPagingItems()
-    CommunityList(items)
+    CommunityList(viewModel)
 }
 
 @Composable
-fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInfo) -> Unit)? = null) {
-    val debounced = items.loadState
-    StateView(items, modifier = Modifier.fillMaxSize()) {
+fun CommunityList(communitiesViewModel: CommunitiesViewModel, onClick: ((CommunityInfo) -> Unit)? = null) {
+    StateView(communitiesViewModel, modifier = Modifier.fillMaxSize()) { items ->
         BoxWithConstraints {
             val gridCount = (this.maxWidth / 128.dp).toInt()
             val itemCount = (this.maxWidth / 160.dp).toInt()
@@ -62,7 +60,7 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                topPrepend(lcm, debounced)
+                topPrepend(lcm, items.loadState)
                 items(
                     count = items.itemSnapshotList.size,
                     key = items.itemKey {
@@ -91,7 +89,7 @@ fun CommunityList(items: LazyPagingItems<CommunityInfo>, onClick: ((CommunityInf
                         else -> CommunityCell(communityInfo, false, onClick)
                     }
                 }
-                bottomAppending(lcm, debounced)
+                bottomAppending(lcm, items.loadState)
             }
         }
     }

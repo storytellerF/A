@@ -9,28 +9,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.common.StateView
 import com.storyteller_f.a.app.compose_app.common.bottomAppending
 import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compose_app.compontents.UserIcon
+import com.storyteller_f.a.app.compose_app.model.TitlesViewModel
 import com.storyteller_f.a.app.compose_app.pages.room.RoomIcon
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.ObjectType
 
 @Composable
-fun TitleList(pagingItems: LazyPagingItems<TitleInfo>) {
-    val debounced = pagingItems.loadState
-    StateView(pagingItems) {
+fun TitleList(titlesViewModel: TitlesViewModel) {
+    StateView(titlesViewModel) { pagingItems ->
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            topPrepend(debounced)
+            topPrepend(pagingItems.loadState)
             items(
                 count = pagingItems.itemSnapshotList.size,
                 key = pagingItems.itemKey {
@@ -42,7 +41,7 @@ fun TitleList(pagingItems: LazyPagingItems<TitleInfo>) {
                     TitleItem(it)
                 }
             }
-            bottomAppending(debounced)
+            bottomAppending(pagingItems.loadState)
         }
     }
 }

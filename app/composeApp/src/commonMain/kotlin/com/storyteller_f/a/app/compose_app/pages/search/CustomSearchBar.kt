@@ -11,7 +11,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.AppNav
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
@@ -239,8 +238,7 @@ fun UserCommunitySearchContent(current: String, scope: SearchScope.UserCommuniti
                 scope.userId,
                 current
             )
-        val pagingItems = communitiesViewModel.flow.collectAsLazyPagingItems()
-        CommunityList(pagingItems)
+        CommunityList(communitiesViewModel)
     }
 }
 
@@ -250,7 +248,7 @@ private fun MemberSearchContent(current: String) {
         val viewModel =
             createMemberSearchViewModel(current)
         MemberList(
-            viewModel.flow.collectAsLazyPagingItems()
+            viewModel
         )
     }
 }
@@ -263,7 +261,7 @@ private fun RoomMemberSearchContent(current: String, scope: SearchScope.RoomMemb
             current
         )
         MemberList(
-            viewModel.flow.collectAsLazyPagingItems()
+            viewModel
         )
     }
 }
@@ -277,7 +275,7 @@ private fun CommunityMemberSearchContent(current: String, scope: SearchScope.Com
                 current
             )
         MemberList(
-            viewModel.flow.collectAsLazyPagingItems()
+            viewModel
         )
     }
 }
@@ -289,8 +287,7 @@ private fun TopicTopicSearchContent(current: String, scope: SearchScope.TopicTop
             scope,
             current
         )
-        val topics = viewModel.flow.collectAsLazyPagingItems()
-        TopicList(topics)
+        TopicList(viewModel)
     }
 }
 
@@ -301,8 +298,7 @@ private fun UserTopicSearchContent(current: String, scope: SearchScope.UserTopic
             scope,
             current
         )
-        val topics = viewModel.flow.collectAsLazyPagingItems()
-        TopicList(topics)
+        TopicList(viewModel)
     }
 }
 
@@ -313,8 +309,7 @@ private fun RoomTopicSearchContent(current: String, scope: SearchScope.RoomTopic
             scope,
             current
         )
-        val topics = viewModel.flow.collectAsLazyPagingItems()
-        TopicList(topics)
+        TopicList(viewModel)
     }
 }
 
@@ -326,8 +321,7 @@ private fun CommunityRoomSearchContent(current: String, scope: SearchScope.Commu
                 scope,
                 current
             )
-        val items = viewModel.flow.collectAsLazyPagingItems()
-        RoomList(items)
+        RoomList(viewModel)
     }
 }
 
@@ -339,8 +333,7 @@ private fun CommunityTopicSearchContent(current: String, scope: SearchScope.Comm
                 scope,
                 current
             )
-        val topics = viewModel.flow.collectAsLazyPagingItems()
-        TopicList(topics)
+        TopicList(viewModel)
     }
 }
 
@@ -374,8 +367,7 @@ private fun MyRoomSearchContent(current: String) {
                 finalOption,
                 current
             )
-            val items = viewModel.flow.collectAsLazyPagingItems()
-            RoomList(items)
+            RoomList(viewModel)
         }
     }
 }
@@ -413,8 +405,7 @@ private fun MyCommunitySearchContent(query: String) {
                     finalOption,
                     query
                 )
-            val items = viewModel.flow.collectAsLazyPagingItems()
-            CommunityList(items)
+            CommunityList(viewModel)
         }
     }
 }
@@ -447,13 +438,12 @@ private fun WorldSearchContent(current: String) {
             if (it == 0) {
                 val viewModel =
                     createTopicSearchViewModel(current)
-                val topics = viewModel.flow.collectAsLazyPagingItems()
-                TopicList(topics)
+                TopicList(viewModel)
             } else {
                 val viewModel =
                     createMemberSearchViewModel(current)
                 MemberList(
-                    viewModel.flow.collectAsLazyPagingItems()
+                    viewModel
                 )
             }
         }

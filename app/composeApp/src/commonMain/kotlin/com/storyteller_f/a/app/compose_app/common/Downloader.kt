@@ -31,7 +31,6 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlin.use
 
-
 interface Downloader {
     fun download(fileInfo: FileInfo, path: Path)
 
@@ -114,7 +113,9 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
             modelStorage.downloadInfoStorage.getDocument(DownloadCollection, id) ?: return
         if (downloadInfo.status == DownloadStatus.PROCESSED) return
         val isNeedDownload =
-            if (downloadInfo.status == DownloadStatus.DOWNLOADED || downloadInfo.status == DownloadStatus.PROCESS_FAILED) {
+            if (downloadInfo.status == DownloadStatus.DOWNLOADED ||
+                downloadInfo.status == DownloadStatus.PROCESS_FAILED
+            ) {
                 val isFileExists = SystemFileSystem.exists(path)
                 val isMediaSizeMatch = SystemFileSystem.metadataOrNull(path)?.size == fileInfo.size
                 !isFileExists || !isMediaSizeMatch
@@ -122,48 +123,70 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
                 true
             }
         if (isNeedDownload) {
-            if (downloadInfo.status != DownloadStatus.DOWNLOADING)
-                updateDownloadInfo(modelStorage, DownloadCollection, id) {
-                    it.copy(status = DownloadStatus.DOWNLOADING)
-                }
-            try {
-                userSession.serviceCatching {
-                    segmentedDownload(modelStorage, fileInfo, path)
-                }.getOrThrow()
-            } catch (throwable: Exception) {
-                Napier.e(throwable) {
-                    "download failed ${fileInfo.fullName}"
-                }
-                updateDownloadInfo(modelStorage, DownloadCollection, id) {
-                    it.copy(
-                        status = DownloadStatus.DOWNLOAD_FAILED,
-                        message = throwable.message.toString()
-                    )
-                }
-                return
-            }
-            updateDownloadInfo(modelStorage, DownloadCollection, id) {
-                it.copy(
-                    status = DownloadStatus.DOWNLOADED,
-                    message = "download success ${now()}"
-                )
-            }
+            if (downloadFile(downloadInfo, modelStorage, id, userSession, fileInfo, path)) return
         }
         if (path.toString().endsWith(".zip")) {
-            try {
-                Zip.open(path).use { zip ->
-                    zip.extractTo(Path(path.parent!!, "${path.name}.extracted"))
-                }
-            } catch (e: Exception) {
-                updateDownloadInfo(modelStorage, DownloadCollection, id) {
-                    it.copy(status = DownloadStatus.PROCESS_FAILED, message = e.message.toString())
-                }
-                return
-            }
+            if (extractFile(path, modelStorage, id)) return
         }
         updateDownloadInfo(modelStorage, DownloadCollection, id) {
             it.copy(status = DownloadStatus.PROCESSED)
         }
+    }
+
+    private suspend fun extractFile(
+        path: Path,
+        modelStorage: ModelStorage,
+        id: PrimaryKey
+    ): Boolean {
+        try {
+            Zip.open(path).use { zip ->
+                zip.extractTo(Path(path.parent!!, "${path.name}.extracted"))
+            }
+        } catch (e: Exception) {
+            updateDownloadInfo(modelStorage, DownloadCollection, id) {
+                it.copy(status = DownloadStatus.PROCESS_FAILED, message = e.message.toString())
+            }
+            return true
+        }
+        return false
+    }
+
+    private suspend fun downloadFile(
+        downloadInfo: DownloadInfo,
+        modelStorage: ModelStorage,
+        id: PrimaryKey,
+        userSession: CustomSessionManager,
+        fileInfo: FileInfo,
+        path: Path
+    ): Boolean {
+        if (downloadInfo.status != DownloadStatus.DOWNLOADING) {
+            updateDownloadInfo(modelStorage, DownloadCollection, id) {
+                it.copy(status = DownloadStatus.DOWNLOADING)
+            }
+        }
+        try {
+            userSession.serviceCatching {
+                segmentedDownload(modelStorage, fileInfo, path)
+            }.getOrThrow()
+        } catch (throwable: Exception) {
+            Napier.e(throwable) {
+                "download failed ${fileInfo.fullName}"
+            }
+            updateDownloadInfo(modelStorage, DownloadCollection, id) {
+                it.copy(
+                    status = DownloadStatus.DOWNLOAD_FAILED,
+                    message = throwable.message.toString()
+                )
+            }
+            return true
+        }
+        updateDownloadInfo(modelStorage, DownloadCollection, id) {
+            it.copy(
+                status = DownloadStatus.DOWNLOADED,
+                message = "download success ${now()}"
+            )
+        }
+        return false
     }
 
     suspend fun HttpClient.segmentedDownload(
@@ -232,5 +255,4 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
             }
         }
     }
-
 }

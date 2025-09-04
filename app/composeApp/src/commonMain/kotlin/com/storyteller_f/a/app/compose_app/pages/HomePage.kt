@@ -28,7 +28,6 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalMainSessionManager
 import com.storyteller_f.a.app.compose_app.Res
@@ -292,6 +291,5 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
 @Composable
 fun WorldPage() {
     val viewModel = createWorldViewModel()
-    val items = viewModel.flow.collectAsLazyPagingItems()
-    TopicList(items)
+    TopicList(viewModel)
 }

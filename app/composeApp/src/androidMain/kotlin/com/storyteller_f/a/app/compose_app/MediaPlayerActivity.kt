@@ -19,8 +19,6 @@ class MediaPlayerActivity : ComponentActivity() {
                     Text("invalid")
                 }
             } else {
-                val httpUrl = AppConfig.SERVER_URL
-                val wsServerUrl = AppConfig.WS_SERVER_URL
                 val session = Json.decodeFromString<MultiMediaInfo>(json)
                 CommonEntry({
                     MediaPage(session)

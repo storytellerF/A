@@ -9,7 +9,6 @@ import androidx.lifecycle.Lifecycle
 import com.storyteller_f.a.app.BuildConfig
 import com.storyteller_f.a.app.compose_app.AApplication
 import com.storyteller_f.a.app.compose_app.UIViewModel
-import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.compontents.mainAppRef
 import com.storyteller_f.a.app.compose_app.getClipFile
 import com.storyteller_f.a.app.compose_app.initFromContext

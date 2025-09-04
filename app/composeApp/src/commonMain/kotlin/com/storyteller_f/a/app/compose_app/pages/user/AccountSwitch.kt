@@ -60,12 +60,12 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switchToMain: () -> Unit, sw
             val globalDialogController = LocalGlobalDialog.current
             CompositionLocalProvider(LocalSessionManager provides mainSessionManager) {
                 val viewModel = getAlternativeAccountsViewModel()
-                val pagingItems = viewModel.flow.collectAsLazyPagingItems()
                 if (isSwitched) {
                     ButtonNav(MaterialSymbolsOutlined.ArrowBack, "Back to main account") {
                         switchToMain()
                     }
                 } else {
+                    val pagingItems = viewModel.flow.collectAsLazyPagingItems()
                     ButtonNav(Icons.Default.Add, "Add alternative Account") {
                         scope.launch {
                             globalDialogController.useResult {
@@ -76,8 +76,7 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switchToMain: () -> Unit, sw
                         }
                     }
                 }
-                println("alternatives ${pagingItems.itemSnapshotList.size}")
-                StateView(pagingItems, modifier = Modifier.height(300.dp)) {
+                StateView(viewModel, modifier = Modifier.height(300.dp)) { pagingItems ->
                     LazyColumn(
                         contentPadding = PaddingValues(10.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)

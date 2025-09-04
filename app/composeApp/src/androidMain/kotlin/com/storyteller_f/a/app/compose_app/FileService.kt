@@ -38,7 +38,6 @@ class FileService : LifecycleService() {
     }
 }
 
-
 class FileBinder(
     val downloader: Downloader,
     val uploader: Uploader
@@ -77,5 +76,4 @@ class CustomClientFileProvider(val service: ClientFileServiceReceiver) : ClientF
     override fun getUploader(): Uploader? {
         return service.binder?.uploader
     }
-
 }

@@ -21,7 +21,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
@@ -200,11 +199,9 @@ private fun MediaListView(
                 Icon(Icons.Default.CloudUpload, "upload file")
             }
         }
-        val pagingItems = viewModel.flow.collectAsLazyPagingItems()
-        val debounced = pagingItems.loadState
-        StateView(pagingItems, modifier = Modifier.weight(1f)) {
+        StateView(viewModel, modifier = Modifier.weight(1f)) { pagingItems ->
             LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
-                topPrepend(debounced)
+                topPrepend(pagingItems.loadState)
                 items(pagingItems.itemSnapshotList.size, key = pagingItems.itemKey {
                     it.id
                 }) {
@@ -213,7 +210,7 @@ private fun MediaListView(
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }
-                bottomAppending(debounced)
+                bottomAppending(pagingItems.loadState)
             }
         }
     }
@@ -377,12 +374,11 @@ fun insertContent(
 @Composable
 fun ReactionListPage(topicId: PrimaryKey) {
     val viewModel = createReactionsViewModel(topicId)
-    val pagingItems = viewModel.flow.collectAsLazyPagingItems()
     Scaffold { paddingValues ->
         StateView(
-            pagingItems,
+            viewModel,
             modifier = Modifier.padding(paddingValues)
-        ) {
+        ) { pagingItems ->
             LazyColumn(
                 contentPadding = PaddingValues(20.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)

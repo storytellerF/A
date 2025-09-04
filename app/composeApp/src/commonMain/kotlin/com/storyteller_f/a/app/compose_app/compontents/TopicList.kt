@@ -12,17 +12,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
+import com.storyteller_f.a.app.compose_app.common.PagingViewModel
 import com.storyteller_f.a.app.compose_app.common.StateView
 import com.storyteller_f.a.app.compose_app.common.bottomAppending
 import com.storyteller_f.a.app.compose_app.common.topPrepend
+import com.storyteller_f.a.app.compose_app.model.TopicsViewModel
 import com.storyteller_f.shared.model.TopicInfo
 
 @Composable
 fun TopicList(
-    items: LazyPagingItems<TopicInfo>,
+    topicsViewModel: PagingViewModel<TopicInfo>,
     showAvatar: Boolean = true,
 ) {
-    StateView(items) {
+    StateView(topicsViewModel) { items ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
@@ -51,9 +53,10 @@ fun TopicList(
 @Composable
 fun RoomTopicList(
     items: LazyPagingItems<TopicInfo>,
+    topicsViewModel: TopicsViewModel,
     lazyListState: LazyListState,
 ) {
-    StateView(items) {
+    StateView(topicsViewModel) {
         LazyColumn(
             state = lazyListState,
             modifier = Modifier.padding(top = 10.dp),

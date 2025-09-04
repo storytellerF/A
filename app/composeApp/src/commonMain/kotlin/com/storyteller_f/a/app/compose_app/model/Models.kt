@@ -15,12 +15,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
-import com.storyteller_f.shared.utils.now
 import com.storyteller_f.storage.*
-import de.jonasbroeckmann.kzip.Zip
-import de.jonasbroeckmann.kzip.extractTo
-import de.jonasbroeckmann.kzip.open
-import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -29,7 +24,6 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,11 +31,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.files.SystemTemporaryDirectory
 
 data class OnTopicChanged(val topicInfo: TopicInfo)
 data class OnTopicCreated(val topicInfo: TopicInfo)
@@ -738,7 +727,7 @@ class DownloadViewModel(
 
     val fontFamily = data.distinctUntilChanged { t1, t2 ->
         t1?.status == t2?.status
-    } .map {
+    }.map {
         if (it?.status == DownloadStatus.PROCESSED) {
             loadFontFromLocal(it.path + ".extracted")
         } else {

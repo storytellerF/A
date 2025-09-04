@@ -96,7 +96,7 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
                 val viewModel = createRoomTopicsViewModel(roomId)
                 val items = viewModel.flow.collectAsLazyPagingItems()
                 Box(Modifier.weight(1f)) {
-                    RoomTopicList(items, lazyListState)
+                    RoomTopicList(items, viewModel, lazyListState)
                     NewTopicView(lazyListState, it, items)
                 }
             }
@@ -486,7 +486,6 @@ private fun InputGroupSuffix(
     var showSheet by remember {
         mutableStateOf(false)
     }
-    val scope = rememberCoroutineScope()
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
