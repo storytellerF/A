@@ -2,7 +2,6 @@ package com.storyteller_f.shared
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import java.lang.ref.WeakReference

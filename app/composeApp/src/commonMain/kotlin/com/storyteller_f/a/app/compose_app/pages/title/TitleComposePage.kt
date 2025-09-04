@@ -17,7 +17,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
@@ -433,20 +432,20 @@ fun ObjectList(
                 val communitiesViewModel =
                     createSearchCommunitiesViewModel(JoinStatusSearch.JOINED, input)
                 CommunityList(
-                    communitiesViewModel.flow.collectAsLazyPagingItems(),
+                    communitiesViewModel,
                     onClickCommunity
                 )
             }
 
             ObjectType.ROOM -> {
                 val roomsViewModel = createRoomSearchViewModel(JoinStatusSearch.JOINED, input)
-                RoomList(roomsViewModel.flow.collectAsLazyPagingItems(), onClickRoom)
+                RoomList(roomsViewModel, onClickRoom)
             }
 
             ObjectType.TOPIC -> TODO()
             ObjectType.USER -> {
                 val membersViewModel = createMemberSearchViewModel(input)
-                MemberList(membersViewModel.flow.collectAsLazyPagingItems(), onClickUser)
+                MemberList(membersViewModel, onClickUser)
             }
 
             ObjectType.TITLE -> TODO()

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
@@ -51,10 +52,11 @@ private fun LoadState?.toLoadingState() =
 @OptIn(ExperimentalMaterialApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun <T : Any> StateView(
-    pagingItems: LazyPagingItems<T>,
+    pagingViewModel: PagingViewModel<T>,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
+    content: @Composable (LazyPagingItems<T>) -> Unit,
 ) {
+    val pagingItems = pagingViewModel.flow.collectAsLazyPagingItems()
     var pullRefreshing by remember { mutableStateOf(false) }
     val refreshState = rememberPullRefreshState(refreshing = pullRefreshing, onRefresh = {
         pullRefreshing = true
@@ -73,7 +75,7 @@ fun <T : Any> StateView(
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
         if (pagingItems.itemSnapshotList.isNotEmpty()) {
-            content()
+            content(pagingItems)
             val combinedLoadStates = pagingItems.loadState
             val refreshState = combinedLoadStates.refresh
             Box(Modifier.background(MaterialTheme.colorScheme.background)) {

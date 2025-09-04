@@ -59,7 +59,6 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.AppNav
 import com.storyteller_f.a.app.compose_app.CommunityScreen
 import com.storyteller_f.a.app.compose_app.LocalAppNav
@@ -157,7 +156,7 @@ fun getCommunityFont(communityId: PrimaryKey): Typography {
     val typography = MaterialTheme.typography
     return typography.copy(
         bodyLarge =
-            typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
+        typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
         bodyMedium = typography.bodyMedium.copy(
             fontFamily = fontFamily ?: typography.bodyMedium.fontFamily
         ),
@@ -230,16 +229,14 @@ private fun CommunityNonCompatPageInternal(
                             createCommunityTopicsViewModel(
                                 communityId
                             )
-                        val items = viewModel.flow.collectAsLazyPagingItems()
-                        TopicList(items)
+                        TopicList(viewModel)
                     }
                     composable("/rooms") {
                         val viewModel =
                             createCommunityRoomsViewModel(
                                 communityId
                             )
-                        val items = viewModel.flow.collectAsLazyPagingItems()
-                        RoomList(items)
+                        RoomList(viewModel)
                     }
                 }
             }
@@ -350,8 +347,7 @@ private fun CommunityPageInternal(
                     createCommunityTopicsViewModel(
                         communityId
                     )
-                val items = viewModel.flow.collectAsLazyPagingItems()
-                TopicList(items)
+                TopicList(viewModel)
             }
 
             else -> {
@@ -359,8 +355,7 @@ private fun CommunityPageInternal(
                     createCommunityRoomsViewModel(
                         communityId
                     )
-                val items = viewModel.flow.collectAsLazyPagingItems()
-                RoomList(items)
+                RoomList(viewModel)
             }
         }
     }
@@ -456,11 +451,13 @@ private fun FontView(info: FileInfo) {
 }
 
 @Composable
-private fun DownloadStatusView(downloadViewModel1: DownloadViewModel) {
-    val data by downloadViewModel1.data.collectAsState(null)
+private fun DownloadStatusView(downloadViewModel: DownloadViewModel) {
+    val data by downloadViewModel.data.collectAsState(null)
     val downloadStatus = data?.status
     when {
-        data == null || downloadStatus == DownloadStatus.NOT_DOWNLOADED || downloadStatus == DownloadStatus.DOWNLOADING -> CircularProgressIndicator(
+        data == null ||
+            downloadStatus == DownloadStatus.NOT_DOWNLOADED ||
+            downloadStatus == DownloadStatus.DOWNLOADING -> CircularProgressIndicator(
             modifier = Modifier.size(20.dp),
             strokeWidth = 2.dp
         )

@@ -66,7 +66,6 @@ fun main() {
         override fun getDownloader() = downloader
 
         override fun getUploader() = uploader
-
     }
     loadCryptoLibIfNeed()
     application {

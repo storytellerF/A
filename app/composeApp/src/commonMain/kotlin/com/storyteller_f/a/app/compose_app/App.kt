@@ -106,8 +106,8 @@ fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
 
 interface ClientFileProvider {
-    fun getDownloader() : Downloader?
-    fun getUploader() : Uploader?
+    fun getDownloader(): Downloader?
+    fun getUploader(): Uploader?
 }
 
 val LocalAppNav = compositionLocalOf<AppNav> {
@@ -270,7 +270,7 @@ fun CommonEntry(content: @Composable () -> Unit) {
             LocalGlobalDialog provides controller,
             LocalGlobalTask provides task
         ) {
-            CommonEntryInternal(content)  {
+            CommonEntryInternal(content) {
                 uiViewModel.childAccount.value = it
             }
         }
@@ -323,6 +323,16 @@ class UIViewModel(viewModelScope: CoroutineScope, wsServerUrl: String, httpUrl: 
             AccountInstance(viewModelScope, address, wsServerUrl, httpUrl)
         } ?: mainInstance
     }.stateIn(viewModelScope, SharingStarted.Eagerly, mainInstance)
+
+    init {
+        viewModelScope.launch {
+            instance.collectLatest {
+                it.manager.manager.start().forEach { job ->
+                    job.join()
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -360,34 +370,6 @@ private fun CommonEntryInternal(
             }
         }
     }
-}
-
-@Composable
-private fun createAppSessionManager(
-    settingName: String,
-    wsServerUrl: String,
-    httpUrl: String,
-): CustomSessionManager {
-    val scope = rememberCoroutineScope()
-    val sessionManager = remember(settingName) {
-        createCustomUserSessionManager(
-            settingName,
-            buildWebSocketUrl(wsServerUrl),
-            { model, cookieManager ->
-                buildHttpClient(httpUrl, cookieManager, model)
-            }
-        ) { _, _ ->
-        }
-    }
-    DisposableEffect(sessionManager) {
-        val job = scope.launch {
-            sessionManager.manager.start()
-        }
-        onDispose {
-            job.cancel()
-        }
-    }
-    return sessionManager
 }
 
 fun buildHttpClient(

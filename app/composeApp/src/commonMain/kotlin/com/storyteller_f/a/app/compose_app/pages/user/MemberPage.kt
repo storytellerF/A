@@ -8,13 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.common.StateView
 import com.storyteller_f.a.app.compose_app.common.bottomAppending
 import com.storyteller_f.a.app.compose_app.common.topPrepend
+import com.storyteller_f.a.app.compose_app.model.MemberViewModel
 import com.storyteller_f.a.app.compose_app.model.createMemberViewModel
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
@@ -43,21 +42,20 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
             }
             val viewModel =
                 createMemberViewModel(objectId, objectType)
-            MemberList(viewModel.flow.collectAsLazyPagingItems())
+            MemberList(viewModel)
         }
     }
 }
 
 @Composable
-fun MemberList(items: LazyPagingItems<UserInfo>, onClick: ((UserInfo) -> Unit)? = null) {
-    val debounced = items.loadState
+fun MemberList(memberViewModel: MemberViewModel, onClick: ((UserInfo) -> Unit)? = null) {
     val appNav = LocalAppNav.current
-    StateView(items) {
+    StateView(memberViewModel) { items ->
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            topPrepend(debounced)
+            topPrepend(items.loadState)
             items(
                 count = items.itemSnapshotList.size,
                 key = items.itemKey {
@@ -72,7 +70,7 @@ fun MemberList(items: LazyPagingItems<UserInfo>, onClick: ((UserInfo) -> Unit)? 
                     HorizontalDivider()
                 }
             }
-            bottomAppending(debounced)
+            bottomAppending(items.loadState)
         }
     }
 }

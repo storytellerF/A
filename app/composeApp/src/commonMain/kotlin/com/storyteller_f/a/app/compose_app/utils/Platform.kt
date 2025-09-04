@@ -2,8 +2,6 @@ package com.storyteller_f.a.app.compose_app.utils
 
 import androidx.compose.ui.platform.Clipboard
 import com.storyteller_f.a.app.compose_app.UIViewModel
-import com.storyteller_f.a.app.compose_app.common.Downloader
-import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.pages.ClientFile
 import dev.jordond.connectivity.Connectivity
 

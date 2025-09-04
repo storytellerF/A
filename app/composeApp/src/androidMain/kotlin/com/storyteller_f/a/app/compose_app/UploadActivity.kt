@@ -52,7 +52,6 @@ fun getClipFile(context: Context, uri: Uri): ClipFile? {
         size,
         uri.toString()
     )
-
 }
 
 class ClipFile(
@@ -109,4 +108,3 @@ class UploadActivity : ComponentActivity(), ClientFileServiceReceiver {
         fileBinder.upload(clipData)
     }
 }
-

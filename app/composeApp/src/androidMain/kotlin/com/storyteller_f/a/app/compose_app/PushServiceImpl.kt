@@ -12,8 +12,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.coroutineScope
 import com.storyteller_f.a.client.core.addDevice
-import com.storyteller_f.a.client.core.buildWebSocketUrl
-import com.storyteller_f.a.client.core.start
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
 import org.unifiedpush.android.connector.FailedReason
@@ -23,19 +21,10 @@ import org.unifiedpush.android.connector.data.PushEndpoint
 import org.unifiedpush.android.connector.data.PushMessage
 
 class PushServiceImpl : PushService(), LifecycleOwner {
-    val userSession =
-        createCustomUserSessionManager("main", buildWebSocketUrl(AppConfig.WS_SERVER_URL), { model, cookie ->
-            buildHttpClient(AppConfig.SERVER_URL, cookie, model)
-        }, { _, _ -> })
 
     override fun onCreate() {
         super.onCreate()
         registry.currentState = Lifecycle.State.STARTED
-        lifecycle.coroutineScope.launch {
-            userSession.manager.start().forEach {
-                it.join()
-            }
-        }
     }
 
     override fun onMessage(message: PushMessage, instance: String) {
@@ -60,8 +49,10 @@ class PushServiceImpl : PushService(), LifecycleOwner {
         Napier.i(tag = "push") {
             "receive endpoint $endpoint"
         }
+        val uiViewModel = (application as AApplication).uiViewModel
+        val accountInstance = uiViewModel.instance.value
         lifecycle.coroutineScope.launch {
-            userSession.addDevice(endpoint.url)
+            accountInstance.manager.addDevice(endpoint.url)
         }
     }
 

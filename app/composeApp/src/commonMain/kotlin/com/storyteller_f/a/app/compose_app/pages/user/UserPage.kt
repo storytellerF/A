@@ -23,7 +23,6 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.compontents.TopicList
@@ -108,18 +107,15 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
                 NavHost(navigator, "/topics") {
                     composable("/topics") {
                         val topicsViewModel = createUserTopicsViewModel(uid)
-                        val pagingItems = topicsViewModel.flow.collectAsLazyPagingItems()
-                        TopicList(pagingItems, showAvatar = false)
+                        TopicList(topicsViewModel, showAvatar = false)
                     }
                     composable("/communities") {
                         val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid)
-                        val pagingItems = communitiesViewModel.flow.collectAsLazyPagingItems()
-                        CommunityList(pagingItems)
+                        CommunityList(communitiesViewModel)
                     }
                     composable("/titles") {
                         val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
-                        val pagingItems = titlesViewModel.flow.collectAsLazyPagingItems()
-                        TitleList(pagingItems)
+                        TitleList(titlesViewModel)
                     }
                 }
             }
@@ -157,9 +153,8 @@ private fun UserCompatInternal(
                     0 -> {
                         val topicsViewModel =
                             createUserTopicsViewModel(uid)
-                        val pagingItems = topicsViewModel.flow.collectAsLazyPagingItems()
                         TopicList(
-                            pagingItems,
+                            topicsViewModel,
                             showAvatar = false
                         )
                     }
@@ -169,9 +164,8 @@ private fun UserCompatInternal(
                             createTargetUserJoinedCommunitiesViewModel(
                                 uid
                             )
-                        val pagingItems = communitiesViewModel.flow.collectAsLazyPagingItems()
                         CommunityList(
-                            pagingItems
+                            communitiesViewModel
                         )
                     }
 
@@ -181,8 +175,7 @@ private fun UserCompatInternal(
                                 uid,
                                 TitleSearchType.RECEIVER
                             )
-                        val pagingItems = titlesViewModel.flow.collectAsLazyPagingItems()
-                        TitleList(pagingItems)
+                        TitleList(titlesViewModel)
                     }
                 }
             }

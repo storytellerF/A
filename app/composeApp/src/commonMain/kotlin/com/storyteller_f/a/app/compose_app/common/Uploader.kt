@@ -25,7 +25,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlin.time.ExperimentalTime
 
-
 interface Uploader {
     fun upload(clipData: ImmutableList<ClientFile>)
 
@@ -157,9 +156,7 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
                 runningSet.remove(pathHash)
             }
         }
-
     }
-
 
     suspend fun updateUploadInfo(
         modelStorage: ModelStorage,
@@ -170,5 +167,4 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         val uploadInfo = modelStorage.uploadInfoStorage.getDocument(collection, pathHash) ?: return
         modelStorage.uploadInfoStorage.save(collection, block(uploadInfo))
     }
-
 }
