@@ -667,7 +667,10 @@ private suspend fun Backend.processTopicsDocument(
         return Result.success(emptyList())
     }
     return combinedDatabase.topicDatabase.getTopicInfoListByIds(uid, ids).mapResult { infos ->
-        processTopicAfterGet(infos, uid, addLatestSubTopic = true)
+        val groupBy = infos.associateBy { it.id }
+        processTopicAfterGet(ids.mapNotNull {
+            groupBy[it]
+        }, uid, addLatestSubTopic = true)
     }
 }
 
