@@ -184,7 +184,7 @@ private suspend fun receiveExplainResult(
                 yield()
                 serverSocket.accept().use { socket ->
                     socket.getInputStream().bufferedReader().use {
-                        val explainResult = json.decodeFromString<ExplainResult>(it.readText())
+                        val explainResult = commonJson.decodeFromString<ExplainResult>(it.readText())
                         saveDatabaseExplainResult(explainResult)
                     }
                 }

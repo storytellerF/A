@@ -1,8 +1,16 @@
 package com.storyteller_f.a.app.compose_app.common
 
-import androidx.paging.*
-import com.storyteller_f.a.client.core.*
-import com.storyteller_f.storage.*
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.LoadType
+import androidx.paging.PagingSource
+import androidx.paging.PagingState
+import androidx.paging.RemoteMediator
+import com.storyteller_f.a.client.core.LoadingHandler
+import com.storyteller_f.a.client.core.LoadingState
+import com.storyteller_f.a.client.core.request
+import com.storyteller_f.shared.commonJson
+import com.storyteller_f.storage.ModelStorage
+import com.storyteller_f.storage.RemoteKeys
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -12,7 +20,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 
@@ -142,14 +149,14 @@ class IntermediatePagingSource<Key : Any, T : Any>(
         val loadParams: LoadParams<Key> = when (params) {
             is LoadParams.Append<*> -> {
                 val key = params.key.let {
-                    Json.decodeFromString(serializer, it)
+                    commonJson.decodeFromString(serializer, it)
                 }
                 LoadParams.Append(key, params.loadSize, params.placeholdersEnabled)
             }
 
             is LoadParams.Prepend<*> -> {
                 val key = params.key.let {
-                    Json.decodeFromString(serializer, it)
+                    commonJson.decodeFromString(serializer, it)
                 }
                 LoadParams.Prepend(key, params.loadSize, params.placeholdersEnabled)
             }
@@ -165,8 +172,8 @@ class IntermediatePagingSource<Key : Any, T : Any>(
             is LoadResult.Error<Key, T> -> LoadResult.Error(load.throwable)
             is LoadResult.Invalid<Key, T> -> LoadResult.Invalid()
             is LoadResult.Page<Key, T> -> {
-                val preKey = load.prevKey?.let { Json.encodeToString(serializer, it) }
-                val nextKey = load.nextKey?.let { Json.encodeToString(serializer, it) }
+                val preKey = load.prevKey?.let { commonJson.encodeToString(serializer, it) }
+                val nextKey = load.nextKey?.let { commonJson.encodeToString(serializer, it) }
                 LoadResult.Page(load.data, preKey, nextKey)
             }
         }

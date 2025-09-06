@@ -1,6 +1,7 @@
 package com.storyteller_f.a.client.room
 
 import androidx.paging.PagingSource
+import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
@@ -41,7 +42,6 @@ import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.json.Json
 
 class UserRoomInfoStorage(val appDatabase: AppDatabase) : UserInfoStorage {
     val impl = CommonStorageImpl(appDatabase)
@@ -49,7 +49,7 @@ class UserRoomInfoStorage(val appDatabase: AppDatabase) : UserInfoStorage {
         collection: UserCollection,
         userInfo: UserInfo
     ) {
-        val data = Json.encodeToString(userInfo)
+        val data = commonJson.encodeToString(userInfo)
         val item = CommonEntity(userInfo.id, UserCollection.Users.getName(), data)
         buildList {
             add(item)
@@ -88,7 +88,7 @@ class CommunityRoomInfoStorage(val appDatabase: AppDatabase) : CommunityInfoStor
         collection: CommunityCollection,
         communityInfo: CommunityInfo
     ) {
-        val data = Json.encodeToString(communityInfo)
+        val data = commonJson.encodeToString(communityInfo)
         val item =
             CommunityEntity(
                 communityInfo.id,
@@ -110,7 +110,7 @@ class CommunityRoomInfoStorage(val appDatabase: AppDatabase) : CommunityInfoStor
         val source = appDatabase.getCommunityDao().getAsSource(collection.getName())
         return WrappedPagingSource(source) { list ->
             list.map {
-                Json.decodeFromString(it.data)
+                commonJson.decodeFromString(it.data)
             }
         }
     }
@@ -118,7 +118,7 @@ class CommunityRoomInfoStorage(val appDatabase: AppDatabase) : CommunityInfoStor
     override fun observeDatum(key: String): Flow<CommunityInfo?> {
         val scope = CommunityCollection.Communities.getName()
         return appDatabase.getCommunityDao().getAsFlow(scope, key).map {
-            it?.let { it1 -> Json.decodeFromString(it1.data) }
+            it?.let { it1 -> commonJson.decodeFromString(it1.data) }
         }
     }
 
@@ -131,7 +131,7 @@ class CommunityRoomInfoStorage(val appDatabase: AppDatabase) : CommunityInfoStor
         id: PrimaryKey
     ): CommunityInfo? {
         val entity = appDatabase.getCommunityDao().get(collection.getName(), id.toString())
-        return entity?.data?.let { Json.decodeFromString(it) }
+        return entity?.data?.let { commonJson.decodeFromString(it) }
     }
 
     override suspend fun clean(collection: CommunityCollection) {
@@ -144,7 +144,7 @@ class TopicRoomInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
         collection: TopicCollection,
         topicInfo: TopicInfo
     ) {
-        val data = Json.encodeToString(topicInfo)
+        val data = commonJson.encodeToString(topicInfo)
         val item =
             TopicEntity(topicInfo.id, TopicCollection.Topics.getName(), data, topicInfo.isPin)
         buildList {
@@ -167,7 +167,7 @@ class TopicRoomInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
         val source = appDatabase.getTopicDao().getAsSource(collection.getName())
         return WrappedPagingSource(source) { list ->
             list.map {
-                Json.decodeFromString(it.data)
+                commonJson.decodeFromString(it.data)
             }
         }
     }
@@ -175,7 +175,7 @@ class TopicRoomInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
     override fun observeDatum(key: String): Flow<TopicInfo?> {
         val scope = TopicCollection.Topics.getName()
         return appDatabase.getTopicDao().getAsFlow(scope, key).map {
-            it?.data?.let { string -> Json.decodeFromString(string) }
+            it?.data?.let { string -> commonJson.decodeFromString(string) }
         }
     }
 
@@ -188,7 +188,7 @@ class TopicRoomInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
         id: PrimaryKey
     ): TopicInfo? {
         val entity = appDatabase.getTopicDao().get(collection.getName(), id.toString())
-        return entity?.data?.let { Json.decodeFromString(it) }
+        return entity?.data?.let { commonJson.decodeFromString(it) }
     }
 
     override suspend fun clean(collection: TopicCollection) {
@@ -201,7 +201,7 @@ class TitleRoomInfoStorage(val appDatabase: AppDatabase) : TitleInfoStorage {
         collection: TitleCollection,
         titleInfo: TitleInfo
     ) {
-        val data = Json.encodeToString(titleInfo)
+        val data = commonJson.encodeToString(titleInfo)
         val item = CommonEntity(titleInfo.id, TitleCollection.Titles.getName(), data)
         appDatabase.getCommonDao().insert(item)
         if (collection is TitleCollection.SearchTitle) {
@@ -215,7 +215,7 @@ class TitleRoomInfoStorage(val appDatabase: AppDatabase) : TitleInfoStorage {
         val source = appDatabase.getCommonDao().getAsSource(collection.getName())
         return WrappedPagingSource(source) { list ->
             list.map {
-                Json.decodeFromString(it.data)
+                commonJson.decodeFromString(it.data)
             }
         }
     }
@@ -227,7 +227,7 @@ class TitleRoomInfoStorage(val appDatabase: AppDatabase) : TitleInfoStorage {
     override fun observeDatum(id: PrimaryKey): Flow<TitleInfo?> {
         val scope = TitleCollection.Titles.getName()
         return appDatabase.getTopicDao().getAsFlow(scope, id.toString()).map {
-            it?.data?.let { string -> Json.decodeFromString(string) }
+            it?.data?.let { string -> commonJson.decodeFromString(string) }
         }
     }
 }
@@ -239,7 +239,7 @@ class CommonStorageImpl(val appDatabase: AppDatabase) {
         val source = appDatabase.getCommonDao().getAsSource(collection)
         return WrappedPagingSource(source) { list ->
             list.map {
-                Json.decodeFromString(it.data)
+                commonJson.decodeFromString(it.data)
             }
         }
     }
@@ -250,7 +250,7 @@ class CommonStorageImpl(val appDatabase: AppDatabase) {
     ): Flow<T?> {
         val source = appDatabase.getCommonDao().getAsFlow(collection, id)
         return source.map {
-            it?.data?.let { string -> Json.decodeFromString(string) }
+            it?.data?.let { string -> commonJson.decodeFromString(string) }
         }
     }
 }
@@ -261,7 +261,7 @@ class RoomRoomInfoStorage(val appDatabase: AppDatabase) : RoomInfoStorage {
         collection: RoomCollection,
         roomInfo: RoomInfo
     ) {
-        val data = Json.encodeToString(roomInfo)
+        val data = commonJson.encodeToString(roomInfo)
         val item = CommonEntity(roomInfo.id, RoomCollection.Rooms.getName(), data)
         listOf(
             item,
@@ -297,13 +297,13 @@ class RemoteKeyRoomStorage(val appDatabase: AppDatabase) : RemoteKeyStorage {
 
     override suspend fun getPreRemoteKey(collection: String): RemoteKeys? {
         return appDatabase.getCommonDao().get(PRE_COLLECTION, collection)?.let {
-            Json.decodeFromString(it.data)
+            commonJson.decodeFromString(it.data)
         }
     }
 
     override suspend fun getNextRemoteKey(collection: String): RemoteKeys? {
         return appDatabase.getCommonDao().get(NEXT_COLLECTION, collection)?.let {
-            Json.decodeFromString(it.data)
+            commonJson.decodeFromString(it.data)
         }
     }
 
@@ -313,7 +313,7 @@ class RemoteKeyRoomStorage(val appDatabase: AppDatabase) : RemoteKeyStorage {
                 CommonEntity(
                     remoteKeys.collectionName,
                     PRE_COLLECTION,
-                    Json.encodeToString(remoteKeys)
+                    commonJson.encodeToString(remoteKeys)
                 )
             )
     }
@@ -324,7 +324,7 @@ class RemoteKeyRoomStorage(val appDatabase: AppDatabase) : RemoteKeyStorage {
                 CommonEntity(
                     remoteKeys.collectionName,
                     NEXT_COLLECTION,
-                    Json.encodeToString(remoteKeys)
+                    commonJson.encodeToString(remoteKeys)
                 )
             )
     }
@@ -344,7 +344,7 @@ class ReactionRoomInfoStorage(val appDatabase: AppDatabase) : ReactionInfoStorag
         reactionInfo: ReactionInfo
     ) {
         val id = "${reactionInfo.objectId}-${reactionInfo.emoji}"
-        val data = Json.encodeToString(reactionInfo)
+        val data = commonJson.encodeToString(reactionInfo)
         appDatabase.getReactionDao()
             .insert(
                 ReactionEntity(
@@ -363,7 +363,7 @@ class ReactionRoomInfoStorage(val appDatabase: AppDatabase) : ReactionInfoStorag
         val raw = appDatabase.getReactionDao().getAsSource(collection.getName())
         return WrappedPagingSource(raw) { list ->
             list.map {
-                Json.decodeFromString(it.data)
+                commonJson.decodeFromString(it.data)
             }
         }
     }
@@ -378,7 +378,7 @@ class ChildAccountRoomStorage(val appDatabase: AppDatabase) : ChildAccountStorag
         collection: ChildAccountCollection,
         childAccountInfo: ChildAccountInfo
     ) {
-        val data = Json.encodeToString(childAccountInfo)
+        val data = commonJson.encodeToString(childAccountInfo)
         appDatabase.getCommonDao().insert(CommonEntity(childAccountInfo.id, collection.NAME, data))
     }
 
@@ -386,7 +386,7 @@ class ChildAccountRoomStorage(val appDatabase: AppDatabase) : ChildAccountStorag
         val raw = appDatabase.getCommonDao().getAsSource(collection.NAME)
         return WrappedPagingSource(raw) { list ->
             list.map {
-                Json.decodeFromString(it.data)
+                commonJson.decodeFromString(it.data)
             }
         }
     }
@@ -401,7 +401,7 @@ class FileInfoRoomStorage(val appDatabase: AppDatabase) : FileInfoStorage {
         collection: MediasCollection,
         fileInfo: FileInfo
     ) {
-        val data = Json.encodeToString(fileInfo)
+        val data = commonJson.encodeToString(fileInfo)
         appDatabase.getCommonDao().insert(CommonEntity(fileInfo.id, collection.getName(), data))
     }
 
@@ -409,7 +409,7 @@ class FileInfoRoomStorage(val appDatabase: AppDatabase) : FileInfoStorage {
         val raw = appDatabase.getCommonDao().getAsSource(collection.getName())
         return WrappedPagingSource(raw) { list ->
             list.map {
-                Json.decodeFromString(it.data)
+                commonJson.decodeFromString(it.data)
             }
         }
     }
@@ -421,7 +421,7 @@ class FileInfoRoomStorage(val appDatabase: AppDatabase) : FileInfoStorage {
 
 class DownloadInfoRoomStorage(val appDatabase: AppDatabase) : DownloadInfoStorage {
     override suspend fun save(collection: DownloadCollection, downloadInfo: DownloadInfo) {
-        val data = Json.encodeToString(downloadInfo)
+        val data = commonJson.encodeToString(downloadInfo)
         appDatabase.getCommonDao()
             .insert(CommonEntity(downloadInfo.fileInfo.id, collection.NAME, data))
     }
@@ -429,7 +429,7 @@ class DownloadInfoRoomStorage(val appDatabase: AppDatabase) : DownloadInfoStorag
     override fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?> {
         return appDatabase.getCommonDao()
             .getAsFlow(DownloadCollection.NAME, id.toString()).map {
-                it?.data?.let { string -> Json.decodeFromString(string) }
+                it?.data?.let { string -> commonJson.decodeFromString(string) }
             }
     }
 
@@ -438,14 +438,14 @@ class DownloadInfoRoomStorage(val appDatabase: AppDatabase) : DownloadInfoStorag
         id: PrimaryKey
     ): DownloadInfo? {
         return appDatabase.getCommonDao().get(collection.NAME, id.toString())?.let {
-            Json.decodeFromString(it.data)
+            commonJson.decodeFromString(it.data)
         }
     }
 }
 
 class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
     override suspend fun save(collection: UploadCollection, uploadInfo: UploadInfo) {
-        val data = Json.encodeToString(uploadInfo)
+        val data = commonJson.encodeToString(uploadInfo)
         appDatabase.getUploadDao()
             .insert(
                 UploadEntity(
@@ -460,13 +460,13 @@ class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
     override fun observeDatum(pathHash: String): Flow<UploadInfo?> {
         return appDatabase.getUploadDao()
             .getAsFlow(DownloadCollection.NAME, pathHash).map {
-                it?.data?.let { string -> Json.decodeFromString(string) }
+                it?.data?.let { string -> commonJson.decodeFromString(string) }
             }
     }
 
     override suspend fun getDocument(collection: UploadCollection, pathHash: String): UploadInfo? {
         return appDatabase.getUploadDao().get(collection.getName(), pathHash)?.let {
-            Json.decodeFromString(it.data)
+            commonJson.decodeFromString(it.data)
         }
     }
 
@@ -475,7 +475,7 @@ class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
             appDatabase.getUploadDao().getAsSource(collection.getName())
         ) { list ->
             list.map {
-                Json.decodeFromString(it.data)
+                commonJson.decodeFromString(it.data)
             }
         }
     }

@@ -7,6 +7,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.obj.Pagination
@@ -15,9 +16,8 @@ import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapCatchingNotNull
 import com.storyteller_f.shared.utils.mapResult
-import io.ktor.server.routing.*
-import io.ktor.util.converters.*
-import kotlinx.serialization.json.Json
+import io.ktor.server.routing.RoutingContext
+import io.ktor.util.converters.DefaultConversionService
 import kotlin.reflect.KClass
 
 interface PagingGenerator<in T, F : Any> {
@@ -125,13 +125,13 @@ class ReactionPaginationGenerator(val backend: Backend) : PagingGenerator<Reacti
         return ReactionFetch(
             when {
                 !nextPageToken.isNullOrBlank() -> Cursor.NextCursor(
-                    Json.decodeFromString<ReactionCursorKey>(
+                    commonJson.decodeFromString<ReactionCursorKey>(
                         nextPageToken
                     )
                 )
 
                 !prePageToken.isNullOrBlank() -> Cursor.PreCursor(
-                    Json.decodeFromString<ReactionCursorKey>(
+                    commonJson.decodeFromString<ReactionCursorKey>(
                         prePageToken
                     )
                 )
@@ -145,13 +145,13 @@ class ReactionPaginationGenerator(val backend: Backend) : PagingGenerator<Reacti
     override fun generate(list: List<ReactionInfo>, size: Int): Pair<String?, String?> {
         val next = if (size <= list.size) {
             val last = list.last()
-            Json.encodeToString(ReactionCursorKey(last.count, last.lastReactionId))
+            commonJson.encodeToString(ReactionCursorKey(last.count, last.lastReactionId))
         } else {
             null
         }
         val pre = if (list.isNotEmpty()) {
             val first = list.first()
-            Json.encodeToString(ReactionCursorKey(first.count, first.lastReactionId))
+            commonJson.encodeToString(ReactionCursorKey(first.count, first.lastReactionId))
         } else {
             null
         }

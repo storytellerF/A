@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
 import com.storyteller_f.a.app.compose_app.pages.media.MediaPage
-import kotlinx.serialization.json.Json
+import com.storyteller_f.shared.commonJson
 
 class MediaPlayerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,7 +19,7 @@ class MediaPlayerActivity : ComponentActivity() {
                     Text("invalid")
                 }
             } else {
-                val session = Json.decodeFromString<MultiMediaInfo>(json)
+                val session = commonJson.decodeFromString<MultiMediaInfo>(json)
                 CommonEntry({
                     MediaPage(session)
                 })

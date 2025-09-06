@@ -1,7 +1,7 @@
 package com.storyteller_f.shared.utils
 
+import com.storyteller_f.shared.commonJson
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
@@ -164,7 +164,7 @@ fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
                     val lang = getLang(node, markdownText)
                     if (lang == "object") {
                         val content = readCodeFence(node, markdownText)
-                        val obj = Json.decodeFromString<MarkdownObject>(content)
+                        val obj = commonJson.decodeFromString<MarkdownObject>(content)
                         if (obj.name.isNotBlank() && obj.url.isBlank()) {
                             list.add(obj.name)
                         }

@@ -62,7 +62,7 @@ class CustomKotbaseCollection<T : Any>(
 ) {
     suspend fun saveDocument(id: String, t: T) {
         withContext(Dispatchers.IO) {
-            collection.save(MutableDocument(id, Json.encodeToString(serializer, t)))
+            collection.save(MutableDocument(id, commonJson.encodeToString(serializer, t)))
         }
     }
 
@@ -75,7 +75,7 @@ class CustomKotbaseCollection<T : Any>(
             }
 
             it.results?.toObjects { jsonStr: String ->
-                Json.decodeFromString(serializer, jsonStr)
+                commonJson.decodeFromString(serializer, jsonStr)
             }?.firstOrNull()
         }
     }
@@ -84,7 +84,7 @@ class CustomKotbaseCollection<T : Any>(
         return withContext(Dispatchers.IO) {
             select(all()).from(collection)
                 .where(function).execute().toObjects { jsonStr: String ->
-                    Json.decodeFromString(serializer, jsonStr)
+                    commonJson.decodeFromString(serializer, jsonStr)
                 }.firstOrNull()
         }
     }
@@ -92,7 +92,7 @@ class CustomKotbaseCollection<T : Any>(
     suspend fun getDocument(id: String): T? {
         return withContext(Dispatchers.IO) {
             collection.getDocument(id)?.toJSON()?.let {
-                Json.decodeFromString(serializer, it)
+                commonJson.decodeFromString(serializer, it)
             }
         }
     }
@@ -115,7 +115,7 @@ class CustomKotbaseCollection<T : Any>(
 
     fun getSource(queryProvider: From.() -> LimitRouter): PagingSource<Int, T> {
         val mapper = { json: String ->
-            Json.decodeFromString(serializer, json)
+            commonJson.decodeFromString(serializer, json)
         }
         return QueryPagingSource(
             Dispatchers.IO,
