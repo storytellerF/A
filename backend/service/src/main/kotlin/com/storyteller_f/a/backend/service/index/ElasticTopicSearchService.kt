@@ -147,7 +147,7 @@ class ElasticTopicSearchService(private val connection: ElasticConnection) :
                         } ?: SortOrder.Desc
                         f.field("id").order(sortOrder)
                     }
-                }.trackScores(true)
+                }
         }
         Napier.i {
             "elastic search query $request"
@@ -281,7 +281,7 @@ private suspend fun <T> useElasticClient(
             when {
                 e is ConnectException || e is ConnectionClosedException -> Exception("elastic service unavailable", e)
                 e is ElasticsearchException && e.status() == 400 ->
-                    Exception("index not found")
+                    Exception("index not found", e)
 
                 else -> {
                     point.initCause(e)
