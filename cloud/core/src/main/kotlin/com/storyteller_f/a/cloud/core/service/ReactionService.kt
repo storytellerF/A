@@ -3,7 +3,6 @@ package com.storyteller_f.a.cloud.core.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.backend.core.CustomBadRequestException
-import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
@@ -27,14 +26,21 @@ suspend fun Backend.addReaction(
     topicId: PrimaryKey,
     emojiText: String
 ) = checkRootWritePermission(ObjectType.TOPIC, topicId, userId).mapResultIfNotNull {
-    if (it.hasWrite) {
-        val newId = SnowflakeFactory.nextId()
-        combinedDatabase.topicDatabase.getReactionInfo(userId, topicId, emojiText).mapResult { oldReaction ->
+    combinedDatabase.topicDatabase.getReactionInfo(userId, topicId, emojiText)
+        .mapResult { oldReaction ->
             if (oldReaction != null && oldReaction.hasReacted) {
                 Result.success(oldReaction)
             } else {
+                val newId = SnowflakeFactory.nextId()
                 val reactionRecord =
                     ReactionRecord(userId, topicId, ObjectType.TOPIC, emojiText, newId, now())
+                val reactionInfo = ReactionInfo(
+                    reactionRecord.emoji,
+                    reactionRecord.objectId,
+                    (oldReaction?.count ?: 0) + 1,
+                    true,
+                    reactionRecord.id
+                )
                 combinedDatabase.topicDatabase.insertReaction(reactionRecord).map {
                     combinedDatabase.topicDatabase.statsReactionRecord(
                         reactionRecord.objectId,
@@ -45,33 +51,16 @@ suspend fun Backend.addReaction(
                             "addReaction"
                         }
                     }
-                    ReactionInfo(
-                        reactionRecord.emoji,
-                        reactionRecord.objectId,
-                        (oldReaction?.count ?: 0) + 1,
-                        true,
-                        reactionRecord.id
-                    )
+                    reactionInfo
                 }.recoverResult { throwable ->
                     if (throwable.isDup()) {
-                        Result.success(
-                            ReactionInfo(
-                                reactionRecord.emoji,
-                                reactionRecord.objectId,
-                                (oldReaction?.count ?: 0) + 1,
-                                true,
-                                reactionRecord.id
-                            )
-                        )
+                        Result.success(reactionInfo)
                     } else {
                         Result.failure(throwable)
                     }
                 }
             }
         }
-    } else {
-        Result.failure(ForbiddenException("permission denied"))
-    }
 }
 
 suspend fun Backend.reactionList(
@@ -81,7 +70,11 @@ suspend fun Backend.reactionList(
     reactionFetch: ReactionFetch,
 ): Result<PaginationResult<ReactionInfo>> {
     if (fillHasReacted == true && uid == null) return Result.failure(UnauthorizedException())
-    return combinedDatabase.topicDatabase.getReactionInfoPaginationResult(listOf(objectId), uid, reactionFetch)
+    return combinedDatabase.topicDatabase.getReactionInfoPaginationResult(
+        listOf(objectId),
+        uid,
+        reactionFetch
+    )
 }
 
 suspend fun addReaction(
@@ -117,9 +110,10 @@ suspend fun deleteReaction(
     } else {
         Result.failure(CustomBadRequestException("invalid emoji"))
     }.mapResult {
-        backend.combinedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji).map { reactionInfo ->
-            reactionInfo ?: ReactionInfo(emoji, p.id, 0, false, 0)
-        }
+        backend.combinedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji)
+            .map { reactionInfo ->
+                reactionInfo ?: ReactionInfo(emoji, p.id, 0, false, 0)
+            }
     }
 }
 

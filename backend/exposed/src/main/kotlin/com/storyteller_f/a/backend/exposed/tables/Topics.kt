@@ -4,11 +4,9 @@ import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.objectType
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.datetime.datetime
-import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 object Topics : BaseTable() {
     val author = customPrimaryKey("author").index()
@@ -20,6 +18,7 @@ object Topics : BaseTable() {
     val lastModifiedTime = datetime("last_modified_time").nullable()
     val content = blob("content")
     val isEncrypted = bool("is_encrypted")
+    val level = integer("level")
 }
 
 fun Topic.Companion.wrapRow(row: ResultRow): Topic {
@@ -34,13 +33,10 @@ fun Topic.Companion.wrapRow(row: ResultRow): Topic {
             row[rootType],
             row[content].bytes,
             row[isEncrypted],
+            row[level],
             row[pinned],
             row[lastModifiedTime],
             row.getOrNull(Aids.value),
         )
     }
-}
-
-fun Topic.Companion.findById(topicId: PrimaryKey) = Topics.selectAll().where {
-    Topics.id eq topicId
 }

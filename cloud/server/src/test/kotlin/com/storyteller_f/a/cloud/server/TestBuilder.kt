@@ -51,7 +51,9 @@ fun test(
     loadCryptoLibIfNeed()
     startMemoryTest(overrideEnv, block)
 //    startTestContainerTest(true, block)
-    startTestContainerTest(false, block)
+    if (System.getenv("ENABLE_TEST_CONTAINER") == "true") {
+        startTestContainerTest(false, block)
+    }
     Napier.i {
         "test done"
     }

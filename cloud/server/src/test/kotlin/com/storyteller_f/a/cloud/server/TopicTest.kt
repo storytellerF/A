@@ -6,9 +6,9 @@ import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.addReadLog
 import com.storyteller_f.a.client.core.createCommunity
-import com.storyteller_f.a.client.core.createNewTopic
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTitle
+import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.deleteReaction
 import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getCommunityTopics
@@ -60,10 +60,10 @@ class TopicTest {
             attachSession {
                 val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
                 val lastTopic =
-                    createNewTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
-                createNewTopic(ObjectType.COMMUNITY, communityId, "sysroot").getOrThrow()
+                    createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
+                createTopic(ObjectType.COMMUNITY, communityId, "sysroot").getOrThrow()
                 val firstTopic =
-                    createNewTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
+                    createTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
                 val topics = searchTopics(1, listOf("world")).getOrThrow()
                 assertEquals(2, topics.pagination?.total)
                 assertEquals(1, topics.data.size)
@@ -83,8 +83,8 @@ class TopicTest {
         test {
             attachSession {
                 val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
-                createNewTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
-                createNewTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
+                createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
+                createTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
                 searchTopics(10, listOf("world")).getOrThrow().data.forEach {
                     assertNotNull(it.extension?.authorInfo)
                 }
@@ -104,8 +104,8 @@ class TopicTest {
             attachSession {
                 val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
                 val topicId =
-                    createNewTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow().id
-                createNewTopic(ObjectType.TOPIC, topicId, "best world").getOrThrow()
+                    createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow().id
+                createTopic(ObjectType.TOPIC, topicId, "best world").getOrThrow()
                 searchTopics(10, listOf("world")).getOrThrow().data.forEach {
                     assertNotNull(it.hasComment)
                     assertEquals(1, it.commentCount)
@@ -126,7 +126,7 @@ class TopicTest {
         test {
             attachSession {
                 val newId = createCommunity(NewCommunity("name", "aid")).getOrThrow().id
-                val topicInfo = createNewTopic(ObjectType.COMMUNITY, newId, "hello").getOrThrow()
+                val topicInfo = createTopic(ObjectType.COMMUNITY, newId, "hello").getOrThrow()
                 getTopicSnapshot(topicInfo.id)
             }
         }
@@ -138,7 +138,7 @@ class TopicTest {
             val emoji = "\uD83D\uDE00"
             attachSession {
                 val c = createCommunity(NewCommunity("name", "aid")).getOrThrow()
-                val topicInfo = createNewTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
+                val topicInfo = createTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
                 // 测试并发
                 repeat(4) {
                     val reactionInfo = addReaction(topicInfo.id, emoji).getOrThrow()
@@ -158,7 +158,7 @@ class TopicTest {
             val emoji = "\uD83D\uDE00"
             attachSession {
                 val c = createCommunity(NewCommunity("name", "aid")).getOrThrow()
-                val topicInfo = createNewTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
+                val topicInfo = createTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
                 // 测试幂等
                 val old = addReaction(topicInfo.id, emoji).getOrThrow()
                 assertEquals(1, old.count)
@@ -179,7 +179,7 @@ class TopicTest {
             val session = attachSession {
                 val communityInfo = createCommunity(NewCommunity("name", "aid")).getOrThrow()
                 val topicInfo =
-                    createNewTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
+                    createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
                 addReaction(topicInfo.id, emoji).getOrThrow()
                 topicInfo
             }
@@ -212,7 +212,7 @@ class TopicTest {
                 )
                     .getOrThrow().data.first()
                 val info =
-                    createNewTopic(
+                    createTopic(
                         ObjectType.USER,
                         it.uid,
                         "![hello.txt](${media.name})"
@@ -232,7 +232,7 @@ class TopicTest {
     fun `test create user topic`() {
         test {
             attachSession {
-                createNewTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+                createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
                 // 查询单个topic
                 assertListSize(
                     1,
@@ -241,7 +241,7 @@ class TopicTest {
                         paginationQuery = PaginationQuery(null, null, size = 10)
                     )
                 )
-                createNewTopic(ObjectType.USER, it.uid, "test").getOrThrow()
+                createTopic(ObjectType.USER, it.uid, "test").getOrThrow()
                 // 查询多个topic
                 assertListSize(
                     2,
@@ -268,7 +268,7 @@ class TopicTest {
                 joinCommunity(communityId).getOrThrow()
                 joinRoom(publicRoomId).getOrThrow()
                 assertFails {
-                    createNewTopic(
+                    createTopic(
                         ObjectType.ROOM,
                         publicRoomId,
                         "forbid use api add topic to room"
@@ -406,7 +406,7 @@ class TopicTest {
     fun `test create in user`() {
         test {
             attachSession {
-                createNewTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+                createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
             }
         }
     }
@@ -417,18 +417,18 @@ class TopicTest {
             attachSession {
                 val id = createCommunity(NewCommunity("c1", "c1")).getOrThrow().id
                 repeat(4) {
-                    createNewTopic(ObjectType.COMMUNITY, id, "hello $it").getOrThrow()
+                    createTopic(ObjectType.COMMUNITY, id, "hello $it").getOrThrow()
                 }
                 id
             }.custom
             val custom2 = attachSession {
                 val id = createCommunity(NewCommunity("c2", "c2")).getOrThrow().id
-                createNewTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
+                createTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
                 id
             }.custom
             attachSession {
                 joinCommunity(custom2).getOrThrow()
-                createNewTopic(ObjectType.COMMUNITY, custom2, "only").getOrThrow()
+                createTopic(ObjectType.COMMUNITY, custom2, "only").getOrThrow()
                 assertListSize(1, getRecommendTopics(PaginationQuery(null, size = 10)))
             }
         }
@@ -440,12 +440,12 @@ class TopicTest {
             attachSession {
                 val id = createCommunity(NewCommunity("c1", "c1")).getOrThrow().id
                 repeat(4) {
-                    createNewTopic(ObjectType.COMMUNITY, id, "hello $it").getOrThrow()
+                    createTopic(ObjectType.COMMUNITY, id, "hello $it").getOrThrow()
                 }
             }
             attachSession {
                 val id = createCommunity(NewCommunity("c2", "c2")).getOrThrow().id
-                createNewTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
+                createTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
                 id
             }
             noneSession {
@@ -492,7 +492,7 @@ class TopicTest {
             attachSession {
                 val communityInfo = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
                 val topic =
-                    createNewTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
+                    createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
                 addReadLog(
                     UpdateUserRead(
                         communityInfo.tuple(),
@@ -500,7 +500,7 @@ class TopicTest {
                     )
                 ).getOrThrow()
                 assertEquals(topic.id, getCommunityInfo(communityInfo.id).getOrThrow().lastRead)
-                val subTopic = createNewTopic(ObjectType.TOPIC, topic.id, "world").getOrThrow()
+                val subTopic = createTopic(ObjectType.TOPIC, topic.id, "world").getOrThrow()
                 addReadLog(UpdateUserRead(topic.tuple(), subTopic.id)).getOrThrow()
                 assertEquals(subTopic.id, getTopicInfo(topic.id).getOrThrow().lastRead)
             }
@@ -513,16 +513,26 @@ class TopicTest {
             attachSession {
                 val communityInfo = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
                 val topic =
-                    createNewTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
+                    createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
                 val pinned = pinTopic(topic.id).getOrThrow()
                 assertTrue(pinned.isPin)
                 val unpinned = unpinTopic(topic.id).getOrThrow()
                 assertFalse(unpinned.isPin)
-                val userTopic = createNewTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+                val userTopic = createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
                 val userPinned = pinTopic(userTopic.id).getOrThrow()
                 assertTrue(userPinned.isPin)
                 val userUnpinned = unpinTopic(userTopic.id).getOrThrow()
                 assertFalse(userUnpinned.isPin)
+            }
+        }
+    }
+
+    @Test
+    fun `test topic level`() {
+        test {
+            attachSession {
+                val topicInfo = createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+                assertEquals(1, topicInfo.level)
             }
         }
     }

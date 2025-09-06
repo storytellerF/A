@@ -74,7 +74,7 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         get() = ExposedTitleDatabase(databaseSession)
     override val communityDatabase: CommunityDatabase
         get() = ExposedCommunityDatabase(databaseSession, containerDatabase)
-    override val roomData: RoomDatabase
+    override val roomDatabase: RoomDatabase
         get() = ExposedRoomDatabase(databaseSession, containerDatabase)
     override val fileDatabase: FileDatabase
         get() = ExposedFileDatabase(databaseSession)

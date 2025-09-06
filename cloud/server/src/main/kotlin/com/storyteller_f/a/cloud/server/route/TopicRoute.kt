@@ -4,7 +4,7 @@ import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.cloud.core.service.addReaction
-import com.storyteller_f.a.cloud.core.service.createPublicTopic
+import com.storyteller_f.a.cloud.core.service.createPlainTopic
 import com.storyteller_f.a.cloud.core.service.createTopicSnapshot
 import com.storyteller_f.a.cloud.core.service.deleteReaction
 import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
@@ -91,7 +91,7 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
 
     CustomApi.Topics.add.invoke(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
-            backend.createPublicTopic(uid, api.receiveBody())
+            backend.createPlainTopic(uid, api.receiveBody())
         }
     }
 

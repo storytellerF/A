@@ -57,12 +57,8 @@ suspend fun Backend.getFileList(
         parentType,
         parentId,
         uid
-    ).mapResultIfNotNull { (_, _, hasWrite) ->
-        if (hasWrite) {
-            getFileInfoPaginationResult(parentId, primaryKeyFetch)
-        } else {
-            Result.failure(ForbiddenException("no permission"))
-        }
+    ).mapResultIfNotNull {
+        getFileInfoPaginationResult(parentId, primaryKeyFetch)
     }
 }
 
@@ -80,17 +76,13 @@ suspend fun Backend.getFileInfoByName(
         parentType,
         parentId,
         uid
-    ).mapResultIfNotNull { (_, rootId, hasWrite) ->
-        if (hasWrite) {
-            combinedDatabase.fileDatabase.getFileRecord(rootId, word)
-                .mapResultIfNotNull { fileRecord ->
-                    processFileRecordToFileInfo(listOf(fileRecord)).map {
-                        it.first()
-                    }
+    ).mapResultIfNotNull { (_, rootId) ->
+        combinedDatabase.fileDatabase.getFileRecord(rootId, word)
+            .mapResultIfNotNull { fileRecord ->
+                processFileRecordToFileInfo(listOf(fileRecord)).map {
+                    it.first()
                 }
-        } else {
-            Result.failure(ForbiddenException("no permission"))
-        }
+            }
     }
 }
 

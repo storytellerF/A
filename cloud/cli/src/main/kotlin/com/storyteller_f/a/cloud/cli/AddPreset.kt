@@ -7,6 +7,8 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.UploadPack
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Room
+import com.storyteller_f.a.backend.core.types.Title
+import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.index.TopicDocument
@@ -21,7 +23,9 @@ import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.PassType
+import com.storyteller_f.shared.model.TitleStatus
 import com.storyteller_f.shared.obj.PresetRoom
+import com.storyteller_f.shared.obj.PresetTitle
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetUser
 import com.storyteller_f.shared.obj.PresetValue
@@ -92,6 +96,7 @@ class AddPreset : Subcommand("add", "add entry") {
                     "topic" -> connected.addTopics(presetValue, parentDir)
                     "room" -> connected.addRooms(presetValue, parentDir)
                     "file" -> connected.addFiles(presetValue, parentDir)
+                    "title" -> connected.addTitles(presetValue)
                     else -> {
                         println("unrecognized type $type")
                         exitProcess(2)
@@ -105,6 +110,92 @@ class AddPreset : Subcommand("add", "add entry") {
                     "exception when add"
                 }
             }
+        }
+    }
+
+    private suspend fun Backend.addTitles(
+        presetValue: PresetValue,
+    ) {
+        val titles = presetValue.titleData ?: return
+        Napier.i {
+            "titles count ${presetValue.titleData?.size}"
+        }
+        val userMap =
+            combinedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(titles.flatMap {
+                buildList {
+                    addAll(listOf(it.creator, it.uid))
+                    if (it.scopeType == ObjectType.USER) {
+                        add(it.scope)
+                    }
+                }
+            }.distinct())).getOrThrow().associate {
+                it.user.aid!! to it.user
+            }
+        val communityMap = combinedDatabase.communityDatabase.getRawCommunities(
+            ObjectListFetch.AidListFetch(
+                titles.filter {
+                    it.scopeType == ObjectType.COMMUNITY
+                }.map {
+                    it.scope
+                }.distinct()
+            )
+        ).getOrThrow().associate {
+            it.community.aid to it.community
+        }
+        val roomMap = combinedDatabase.roomDatabase.getRawRooms(
+            ObjectListFetch.AidListFetch(
+                titles.filter {
+                    it.scopeType == ObjectType.ROOM
+                }.map {
+                    it.scope
+                }.distinct()
+            )
+        ).getOrThrow().associate {
+            it.room.aid to it.room
+        }
+        batchAddTitle(titles, userMap, communityMap, roomMap)
+    }
+
+    private suspend fun Backend.batchAddTitle(
+        titles: List<PresetTitle>,
+        userMap: Map<String, User>,
+        communityMap: Map<String, Community>,
+        roomMap: Map<String, Room>
+    ) {
+        titles.forEach {
+            val titleId = SnowflakeFactory.nextId()
+            val topicId = SnowflakeFactory.nextId()
+            val creatorUid = userMap[it.creator]!!.id
+            val receiverUid = userMap[it.uid]!!.id
+            val scopeId = when (it.scopeType) {
+                ObjectType.USER -> {
+                    userMap[it.scope]!!.id
+                }
+
+                ObjectType.COMMUNITY -> {
+                    communityMap[it.scope]!!.id
+                }
+
+                ObjectType.ROOM -> roomMap[it.scope]!!.id
+                else -> throw Exception("not support")
+            }
+            val title = Title(
+                titleId, now(), it.name, creatorUid, receiverUid, it.type, scopeId, it.scopeType,
+                TitleStatus.OK, titleId
+            )
+            val topic = Topic(
+                topicId,
+                now(),
+                creatorUid,
+                titleId,
+                ObjectType.TITLE,
+                titleId,
+                ObjectType.TITLE,
+                it.description.encodeToByteArray(),
+                false,
+                1
+            )
+            combinedDatabase.topicDatabase.createTitle(title, topic).getOrThrow()
         }
     }
 
@@ -256,7 +347,8 @@ class AddPreset : Subcommand("add", "add entry") {
             }.orEmpty() + userMap["System"]!!.id
         })
         communities.map {
-            combinedDatabase.communityDatabase.createCommunityRooms(getCommunityRoomsTemplateList(it)).getOrThrow()
+            combinedDatabase.communityDatabase.createCommunityRooms(getCommunityRoomsTemplateList(it))
+                .getOrThrow()
         }
     }
 
@@ -408,7 +500,7 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File,
     ) {
         val roomMap =
-            combinedDatabase.roomData.getRoomList(ObjectListFetch.AidListFetch(list.mapNotNull {
+            combinedDatabase.roomDatabase.getRoomList(ObjectListFetch.AidListFetch(list.mapNotNull {
                 it.room
             })).getOrThrow().associateBy { it.aid }
         insertEncryptedTopicToRoom(parentDir, roomMap, list.filter {
@@ -515,28 +607,26 @@ class AddPreset : Subcommand("add", "add entry") {
             val parent = tuple.presetTopic.parent
             val content = tuple.encryptedContent
             val rootId = roomMap[tuple.presetTopic.room]!!.id
-            InsertTopicTuple(
-                tuple.presetTopic,
-                index,
-                if (parent == null || parent == 0 || level == null || level == 0) {
-                    0
-                } else {
-                    level
-                },
-                id,
-                content,
-                true,
-                rootId
-            )
+            val level1 = if (parent == null || parent == 0 || level == null || level == 0) {
+                0
+            } else {
+                level
+            }
+            InsertTopicTuple(tuple.presetTopic, index, level1, id, content, true, rootId)
         }
         combinedDatabase.cliDatabase.batchAddEncryptTopics(tuples, userMap, roomMap, encryptedKeys)
         privateRoomList.forEach { topic ->
             val room = roomMap[topic.room]
             if (room != null) {
                 val content = getTopicContent(topic, parentDir)
-                uploadFile(room.id, ObjectType.ROOM, parentDir, extractMarkdownMediaLink(content).map {
-                    "medias/topics/$it"
-                })
+                uploadFile(
+                    room.id,
+                    ObjectType.ROOM,
+                    parentDir,
+                    extractMarkdownMediaLink(content).map {
+                        "medias/topics/$it"
+                    }
+                )
             }
         }
     }

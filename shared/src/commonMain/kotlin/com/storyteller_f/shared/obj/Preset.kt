@@ -1,5 +1,7 @@
 package com.storyteller_f.shared.obj
 
+import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.serialization.Serializable
 
@@ -55,6 +57,17 @@ data class PresetFile(
 )
 
 @Serializable
+data class PresetTitle(
+    val creator: String,
+    val uid: String,
+    val name: String,
+    val scope: String,
+    val scopeType: ObjectType,
+    val type: TitleType,
+    val description: String,
+)
+
+@Serializable
 data class PresetValue(
     val type: String,
     val communityData: List<PresetCommunity>? = null,
@@ -62,4 +75,5 @@ data class PresetValue(
     val topicData: List<PresetTopic>? = null,
     val roomData: List<PresetRoom>? = null,
     val fileData: List<PresetFile>? = null,
+    val titleData: List<PresetTitle>? = null
 )

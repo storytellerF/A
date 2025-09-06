@@ -24,6 +24,7 @@ data class TopicInfo(
     val reactionCount: Long,
     val hasComment: Boolean,
     val isEncrypted: Boolean,
+    val level: Int,
     val isPin: Boolean,
     val lastModifiedTime: LocalDateTime?,
     val extension: Extension?,
@@ -48,6 +49,7 @@ data class TopicInfo(
             reactionCount = 0,
             hasComment = false,
             isEncrypted = false,
+            level = 0,
             isPin = false,
             lastModifiedTime = now(),
             extension = Extension(UserInfo.EMPTY)

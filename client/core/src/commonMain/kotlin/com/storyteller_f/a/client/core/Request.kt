@@ -256,7 +256,7 @@ suspend fun SessionManager.searchRooms(
     )
 }
 
-suspend fun SessionManager.createNewTopic(
+suspend fun SessionManager.createTopic(
     objectType: ObjectType,
     objectId: PrimaryKey,
     input: String,
