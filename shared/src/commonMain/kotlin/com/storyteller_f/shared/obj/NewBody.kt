@@ -35,7 +35,11 @@ data class NewTitle(
 )
 
 @Serializable
-data class NewTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: String)
+data class NewTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: String) {
+    val tuple = ObjectTuple(parentId, parentType)
+}
 
 @Serializable
-data class NewRoomTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: TopicContent)
+data class NewRoomTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: TopicContent) {
+    val tuple = ObjectTuple(parentId, parentType)
+}

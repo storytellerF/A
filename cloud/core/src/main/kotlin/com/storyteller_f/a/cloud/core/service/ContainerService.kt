@@ -4,6 +4,7 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
@@ -19,13 +20,14 @@ data class RootReadPermission(
 data class RootWritePermission(
     val rootType: ObjectType,
     val rootId: PrimaryKey,
-    val hasWrite: Boolean,
-)
+    val level: Int = 0,
+) {
+    val tuple = ObjectTuple(rootId, rootType)
+}
 
 data class RootAdminPermission(
     val rootType: ObjectType,
     val rootId: PrimaryKey,
-    val hasAdmin: Boolean,
 )
 
 suspend fun Backend.checkRootReadPermission(
@@ -42,7 +44,7 @@ suspend fun Backend.checkRootReadPermission(
         }
 
         ObjectType.ROOM -> {
-            combinedDatabase.roomData.getRoomCommunityId(parentId).mapResult { communityId ->
+            combinedDatabase.roomDatabase.getRoomCommunityId(parentId).mapResult { communityId ->
                 if (communityId == null && uid == null) {
                     Result.failure(UnauthorizedException())
                 } else {
@@ -59,16 +61,19 @@ suspend fun Backend.checkRootReadPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            combinedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId)).mapResultIfNotNull {
-                combinedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
-                    RootReadPermission(true, hasJoined, false)
+            combinedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId))
+                .mapResultIfNotNull {
+                    combinedDatabase.containerDatabase.isMemberJoined(parentId, uid)
+                        .map { hasJoined ->
+                            RootReadPermission(true, hasJoined, false)
+                        }
                 }
-            }
         }
 
-        ObjectType.USER -> combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
-            RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
-        }
+        ObjectType.USER -> combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId))
+            .mapIfNotNull {
+                RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
+            }
 
         ObjectType.TITLE -> Result.success(
             RootReadPermission(
@@ -78,7 +83,7 @@ suspend fun Backend.checkRootReadPermission(
             )
         )
 
-        ObjectType.File -> TODO()
+        ObjectType.File -> Result.failure(ForbiddenException())
     }
 }
 
@@ -89,40 +94,58 @@ suspend fun Backend.checkRootWritePermission(
 ): Result<RootWritePermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            combinedDatabase.topicDatabase.getTopicRootTuple(parentId)
-                .mapResultIfNotNull { (rootId, rootType) ->
-                    checkRootWritePermission(rootType, rootId, uid)
+            combinedDatabase.topicDatabase.getTopicInfo(ObjectFetch.IdFetch(parentId), null)
+                .mapResultIfNotNull { topicInfo ->
+                    checkRootWritePermission(
+                        topicInfo.rootType,
+                        topicInfo.rootId,
+                        uid
+                    ).mapIfNotNull {
+                        it.copy(level = topicInfo.level)
+                    }
                 }
         }
 
         ObjectType.ROOM -> {
-            combinedDatabase.roomData.getRoomCommunityId(parentId).mapResult {
-                combinedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
-                    RootWritePermission(parentType, parentId, hasJoined)
-                }
+            combinedDatabase.roomDatabase.getRoomCommunityId(parentId).mapResult {
+                combinedDatabase.containerDatabase.isMemberJoined(parentId, uid)
+                    .mapResult { hasJoined ->
+                        if (hasJoined) {
+                            Result.success(RootWritePermission(parentType, parentId))
+                        } else {
+                            Result.failure(ForbiddenException())
+                        }
+                    }
             }
         }
 
         ObjectType.COMMUNITY -> {
-            combinedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId)).mapResultIfNotNull {
-                combinedDatabase.containerDatabase.isMemberJoined(parentId, uid).map { hasJoined ->
-                    RootWritePermission(parentType, parentId, hasJoined)
+            combinedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId))
+                .mapResultIfNotNull {
+                    combinedDatabase.containerDatabase.isMemberJoined(parentId, uid)
+                        .mapResult { hasJoined ->
+                            if (hasJoined) {
+                                Result.success(RootWritePermission(parentType, parentId))
+                            } else {
+                                Result.failure(ForbiddenException())
+                            }
+                        }
                 }
-            }
         }
 
         ObjectType.USER -> {
             if (uid == parentId) {
-                combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
-                    RootWritePermission(parentType, parentId, parentId == uid)
-                }
+                combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId))
+                    .mapIfNotNull {
+                        RootWritePermission(parentType, parentId)
+                    }
             } else {
-                Result.failure(ForbiddenException("Permission denied"))
+                Result.failure(ForbiddenException())
             }
         }
 
-        ObjectType.TITLE -> Result.success(RootWritePermission(parentType, parentId, false))
-        ObjectType.File -> TODO()
+        ObjectType.TITLE -> Result.failure(ForbiddenException())
+        ObjectType.File -> Result.failure(ForbiddenException())
     }
 }
 
@@ -140,26 +163,49 @@ suspend fun Backend.checkRootAdminPermission(
         }
 
         ObjectType.ROOM -> {
-            combinedDatabase.roomData.getRawRoom(ObjectFetch.IdFetch(parentId), true, uid)
-                .mapIfNotNull {
-                    RootAdminPermission(parentType, parentId, it.room.creator == uid)
+            combinedDatabase.roomDatabase.getRawRoom(ObjectFetch.IdFetch(parentId), true, uid)
+                .mapResultIfNotNull {
+                    if (it.room.creator == uid) {
+                        Result.success(
+                            RootAdminPermission(
+                                parentType,
+                                parentId
+                            )
+                        )
+                    } else {
+                        Result.failure(ForbiddenException())
+                    }
                 }
         }
 
         ObjectType.COMMUNITY -> {
             combinedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId))
-                .mapIfNotNull {
-                    RootAdminPermission(parentType, parentId, it.community.owner == uid)
+                .mapResultIfNotNull {
+                    if (it.community.owner == uid) {
+                        Result.success(
+                            RootAdminPermission(
+                                parentType,
+                                parentId
+                            )
+                        )
+                    } else {
+                        Result.failure(ForbiddenException())
+                    }
                 }
         }
 
         ObjectType.USER -> {
-            combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId)).mapIfNotNull {
-                RootAdminPermission(parentType, parentId, parentId == uid)
+            if (parentId == uid) {
+                combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId))
+                    .mapIfNotNull {
+                        RootAdminPermission(parentType, parentId)
+                    }
+            } else {
+                Result.failure(ForbiddenException())
             }
         }
 
-        ObjectType.TITLE -> Result.success(RootAdminPermission(parentType, parentId, false))
-        ObjectType.File -> TODO()
+        ObjectType.TITLE -> Result.success(RootAdminPermission(parentType, parentId))
+        ObjectType.File -> Result.failure(ForbiddenException())
     }
 }

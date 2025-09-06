@@ -164,6 +164,7 @@ class ExposedCliDatabase(val databaseSession: ExposedDatabaseSession) : CliDatab
             this[Topics.parentType] = if (level == 0) rootType else ObjectType.TOPIC
             this[Topics.content] = ExposedBlob(it.content)
             this[Topics.isEncrypted] = it.isEncrypted
+            this[Topics.level] = level + 1
         }
         Aids.batchInsert(topicTuples.filter {
             !it.topic.aid.isNullOrBlank()

@@ -3,16 +3,25 @@ package com.storyteller_f.a.cloud.core.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.*
+import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.toTopicInfo
 import com.storyteller_f.a.backend.service.*
 import com.storyteller_f.a.backend.service.index.DocumentSearch
 import com.storyteller_f.a.backend.service.index.TopicDocument
 import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.NewTopic
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.shared.utils.now
+import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.toImmutableList
 import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -27,7 +36,7 @@ import java.security.KeyStore
 import kotlin.collections.map
 import kotlin.collections.sumOf
 
-suspend fun Backend.createPublicTopic(
+suspend fun Backend.createPlainTopic(
     uid: PrimaryKey,
     newTopic: NewTopic,
 ): Result<TopicInfo?> {
@@ -51,50 +60,155 @@ suspend fun Backend.createPublicTopic(
         newTopic.parentType,
         newTopic.parentId,
         uid
-    ).mapResultIfNotNull { (rootType, rootId, hasWrite) ->
-        when {
-            rootType == ObjectType.ROOM -> {
-                Result.failure(ForbiddenException("can't use api to add topic in room"))
-            }
-
-            hasWrite -> {
-                val newId = SnowflakeFactory.nextId()
-                val topic = Topic(
-                    id = newId,
-                    createdTime = now(),
-                    author = uid,
-                    parentId = newTopic.parentId,
-                    parentType = newTopic.parentType,
-                    rootId = rootId,
-                    rootType = rootType,
-                    content.encodeToByteArray(),
-                    false,
-                    lastModifiedTime = null,
-                )
-                val plain = TopicContent.Plain(content)
-
-                topicSearchService.saveDocument(
-                    listOf(TopicDocument.Companion.fromTopic(topic, plain))
-                ).getOrThrow()
-                combinedDatabase.topicDatabase.savePlainTopic(topic, plain).map {
-                    topic.toTopicInfo(content = plain)
-                }.mapResult { topicInfo ->
-                    addUserLog(uid, UserLogType.CREATE, topicInfo.tuple())
-                    processTopicAfterCreate(topicInfo, uid)
-                }
-            }
-
-            else -> {
-                Result.failure(ForbiddenException("Permission denied."))
-            }
+    ).mapResultIfNotNull { (rootType, rootId, level) ->
+        if (level >= 10) {
+            Result.failure(CustomBadRequestException("not support"))
+        } else if (rootType == ObjectType.ROOM) {
+            Result.failure(ForbiddenException("can't use api to add topic in room"))
+        } else {
+            val parentTuple = ObjectTuple(newTopic.parentId, newTopic.parentType)
+            val rootTuple = ObjectTuple(rootId, rootType)
+            savePlainTopic(uid, content, level, parentTuple, rootTuple)
         }
     }
+}
+
+private suspend fun Backend.savePlainTopic(
+    uid: PrimaryKey,
+    content: String,
+    level: Int,
+    parentTuple: ObjectTuple,
+    rootTuple: ObjectTuple
+): Result<TopicInfo?> {
+    val newId = SnowflakeFactory.nextId()
+    val topic = Topic(
+        id = newId,
+        createdTime = now(),
+        author = uid,
+        parentId = parentTuple.objectId,
+        parentType = parentTuple.objectType,
+        rootId = rootTuple.objectId,
+        rootType = rootTuple.objectType,
+        content.encodeToByteArray(),
+        false,
+        level + 1,
+        lastModifiedTime = null,
+    )
+    val plain = TopicContent.Plain(content)
+    val topicInfo = topic.toTopicInfo(content = plain)
+
+    val documentFileList = documentFileList(listOf(topicInfo)).map {
+        it.second
+    }
+    objectStorageService.get(A_FILE_DEFAULT_BUCKET, documentFileList).map { list ->
+        list.map {
+            it.fullName
+        }
+    }.onSuccess { fileList ->
+        val notExistsFileList = documentFileList.filter {
+            !fileList.contains(it)
+        }
+        if (notExistsFileList.isNotEmpty()) {
+            return Result.failure(CustomBadRequestException("${notExistsFileList.joinToString()} not exists"))
+        }
+    }.onFailure {
+        return Result.failure(it)
+    }
+
+    topicSearchService.saveDocument(
+        listOf(TopicDocument.fromTopic(topic, plain))
+    ).onFailure {
+        Napier.e(it) {
+            "save plain topic document failed"
+        }
+    }
+    return combinedDatabase.topicDatabase.savePlainTopic(topic, plain).mapResult {
+        addUserLog(uid, UserLogType.CREATE, topicInfo.tuple())
+        processTopicAfterCreate(topicInfo, uid)
+    }
+}
+
+suspend fun Backend.addTopicAtRoom(
+    newTopic: NewRoomTopic,
+    uid: PrimaryKey,
+): Result<TopicInfo?> {
+    if (newTopic.parentType != ObjectType.TOPIC && newTopic.parentType != ObjectType.ROOM) {
+        return Result.failure(
+            ForbiddenException()
+        )
+    }
+    return checkRootWritePermission(
+        newTopic.parentType,
+        newTopic.parentId,
+        uid
+    ).mapResultIfNotNull {
+        if (it.level >= 10) {
+            Result.failure(CustomBadRequestException("not support"))
+        } else {
+            combinedDatabase.roomDatabase.checkRoomIsPrivate(it.rootId)
+                .mapResultIfNotNull { isPrivate ->
+                    createTopicAtRoom(uid, it, newTopic, isPrivate, newTopic.content)
+                }
+        }
+    }
+}
+
+private suspend fun Backend.createTopicAtRoom(
+    uid: PrimaryKey,
+    permission: RootWritePermission,
+    newTopic: NewRoomTopic,
+    isPrivate: Boolean,
+    content: TopicContent
+) = if (isPrivate) {
+    if (content is TopicContent.Encrypted) {
+        saveEncryptedTopic(permission, content, uid, permission.tuple, newTopic.tuple)
+    } else {
+        Result.failure(ForbiddenException("Private room only accept encrypted content."))
+    }
+} else {
+    if (content is TopicContent.Plain) {
+        savePlainTopic(uid, content.plain, permission.level, newTopic.tuple, permission.tuple)
+    } else {
+        Result.failure(ForbiddenException("Public room only accept unencrypted content."))
+    }
+}
+
+private suspend fun Backend.saveEncryptedTopic(
+    permission: RootWritePermission,
+    content: TopicContent.Encrypted,
+    uid: PrimaryKey,
+    rootTuple: ObjectTuple,
+    parentTuple: ObjectTuple,
+) = isKeyVerified(permission.rootId, content.encryptedKey).mapResult {
+    if (it) {
+        val newId = SnowflakeFactory.nextId()
+        val bytes = content.bytes
+        val topic = Topic(
+            newId,
+            now(),
+            uid,
+            parentTuple.objectId,
+            parentTuple.objectType,
+            rootTuple.objectId,
+            rootTuple.objectType,
+            bytes,
+            true,
+            permission.level + 1,
+            false,
+            null
+        )
+        combinedDatabase.topicDatabase.saveEncryptedTopic(topic, content)
+    } else {
+        Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
+    }
+}.mapResultIfNotNull { topicInfo ->
+    processTopicAfterCreate(topicInfo, uid)
 }
 
 suspend fun Backend.processTopicAfterCreate(
     topicInfo: TopicInfo,
     uid: PrimaryKey
-): Result<TopicInfo?> = merge({
+) = merge({
     val content = topicInfo.content
     if (content is TopicContent.Plain) {
         processTopicFileObject(
@@ -593,25 +707,21 @@ suspend fun Backend.updateTopicPin(
     newValue: Boolean,
 ) =
     checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
-        if (it.hasAdmin) {
-            combinedDatabase.topicDatabase.getTopicInfo(
-                ObjectFetch.IdFetch(topicId),
-                uid
-            ).mapResultIfNotNull { info ->
-                if (info.isPin == newValue) {
-                    Result.success(info)
-                } else {
-                    combinedDatabase.topicDatabase.updateTopicStatus(topicId, newValue)
-                        .map { isSuccess ->
-                            if (isSuccess) {
-                                info.copy(isPin = newValue)
-                            } else {
-                                info
-                            }
-                        }
-                }
-            }
+        combinedDatabase.topicDatabase.getTopicInfo(
+            ObjectFetch.IdFetch(topicId),
+            uid
+        )
+    }.mapResultIfNotNull { info ->
+        if (info.isPin == newValue) {
+            Result.success(info)
         } else {
-            Result.failure(CustomBadRequestException("Permission Denied"))
+            combinedDatabase.topicDatabase.updateTopicStatus(topicId, newValue)
+                .map { isSuccess ->
+                    if (isSuccess) {
+                        info.copy(isPin = newValue)
+                    } else {
+                        info
+                    }
+                }
         }
     }

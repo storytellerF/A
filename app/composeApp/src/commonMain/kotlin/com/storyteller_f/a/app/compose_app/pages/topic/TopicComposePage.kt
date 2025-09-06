@@ -29,7 +29,7 @@ import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.model.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.getCommunityFont
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
-import com.storyteller_f.a.client.core.createNewTopic
+import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -274,7 +274,7 @@ private fun TopicComposeSubmitButton(
         if (finalInput.isNotEmpty()) {
             scope.launch {
                 globalDialogController.useResult {
-                    sessionManager.createNewTopic(objectType, objectId, finalInput)
+                    sessionManager.createTopic(objectType, objectId, finalInput)
                 }.onSuccess { info ->
                     globalDialogController.emitEvent(OnTopicCreated(info))
                     backPrePage()

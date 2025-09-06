@@ -97,7 +97,13 @@ suspend fun RoutingContext.uploadMedia(
                     val length = part.headers[HttpHeaders.ContentLength]?.toLongOrNull()
                     if (length == null) error("content length not exists")
                     if (length > 1024 * 1024 * 100) error("file too large")
-                    backend.processFilePart(root, it, result, part.originalFileName as String, length) {
+                    backend.processFilePart(
+                        root,
+                        it,
+                        result,
+                        part.originalFileName as String,
+                        length
+                    ) {
                         part.provider()
                     }
                 }

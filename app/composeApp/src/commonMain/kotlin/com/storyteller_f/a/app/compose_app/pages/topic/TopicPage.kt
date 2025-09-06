@@ -24,6 +24,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -66,7 +67,7 @@ import com.storyteller_f.a.app.compose_app.pages.room.RoomInputGroup
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.client.core.LoadingState
-import com.storyteller_f.a.client.core.createNewTopic
+import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
@@ -91,11 +92,24 @@ fun TopicPage(topicId: PrimaryKey) {
         TopicPageInternal(topicId, viewModel, snackBarHost) {
             showBottomSheet = true
         }
-        val topic by viewModel.handler.data.collectAsState()
-        topic?.let {
-            EmojiPicker(sheetState, showBottomSheet, it) {
-                showBottomSheet = false
-            }
+        TopicEmojiPicker(viewModel, sheetState, showBottomSheet) {
+            showBottomSheet = false
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopicEmojiPicker(
+    viewModel: TopicViewModel,
+    sheetState: SheetState,
+    showBottomSheet: Boolean,
+    close: () -> Unit
+) {
+    val topic by viewModel.handler.data.collectAsState()
+    topic?.let {
+        EmojiPicker(sheetState, showBottomSheet, it) {
+            close()
         }
     }
 }
@@ -112,11 +126,7 @@ private fun TopicPageInternal(
         var showDialog by remember {
             mutableStateOf(false)
         }
-        CustomSearchBar(
-            SearchScope.TopicTopic(
-                topicId
-            )
-        ) {
+        CustomSearchBar(SearchScope.TopicTopic(topicId)) {
             Row(
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -312,7 +322,7 @@ fun TopicSendButton(
         if (checkContent(input)) {
             globalTask.use(key) { state, bus ->
                 state.use {
-                    sessionManager.createNewTopic(ObjectType.TOPIC, topic.id, input).onSuccess {
+                    sessionManager.createTopic(ObjectType.TOPIC, topic.id, input).onSuccess {
                         bus.emit(OnTopicCreated(it))
                         updateInput("")
                         focusManager.clearFocus()

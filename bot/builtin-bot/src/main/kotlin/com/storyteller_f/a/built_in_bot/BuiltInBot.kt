@@ -9,7 +9,7 @@ import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.buildWebSocketUrl
-import com.storyteller_f.a.client.core.createNewTopic
+import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
@@ -256,7 +256,7 @@ private suspend fun handleTopic(
         )
         response.text()?.take(1000)
     } ?: "👍"
-    sessionManager.createNewTopic(ObjectType.TOPIC, topicInfo.id, text)
+    sessionManager.createTopic(ObjectType.TOPIC, topicInfo.id, text)
         .onSuccess {
             Napier.i {
                 "createNewTopic success $text"
@@ -361,7 +361,7 @@ private suspend fun createNewsTopic(
             .build()
     )
     val content = response.text()?.take(1000) ?: "😴"
-    sessionManager.createNewTopic(ObjectType.COMMUNITY, communityInfo.id, content).onSuccess {
+    sessionManager.createTopic(ObjectType.COMMUNITY, communityInfo.id, content).onSuccess {
         Napier.i {
             "create new topic success $date $content"
         }

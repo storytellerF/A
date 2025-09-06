@@ -18,6 +18,7 @@ import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildReactionInfoQuery
 import com.storyteller_f.a.backend.exposed.tables.*
 import com.storyteller_f.a.backend.exposed.tables.Titles
+import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -51,7 +52,9 @@ class ExposedTopicDatabase(
     ): Result<ObjectTuple?> {
         return exposedDatabaseSession.dbSearch {
             search {
-                Topic.findById(parentId)
+                Topics.selectAll().where {
+                    Topics.id eq parentId
+                }
             }
             first {
                 val topic = Topic.wrapRow(it)
@@ -636,7 +639,7 @@ class ExposedTopicDatabase(
         }
     }
 
-    suspend fun Topic.Companion.new(info: Topic) {
+    private suspend fun Topic.Companion.new(info: Topic) {
         return check(Topics.insert {
             it[id] = info.id
             it[author] = info.author
@@ -647,6 +650,7 @@ class ExposedTopicDatabase(
             it[rootType] = info.rootType
             it[content] = ExposedBlob(info.content)
             it[isEncrypted] = info.isEncrypted
+            it[level] = info.level
         }.insertedCount > 0) {
             "insert topic failed"
         }

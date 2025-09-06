@@ -3,7 +3,7 @@ package com.storyteller_f.a.cloud.server
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.createCommunity
-import com.storyteller_f.a.client.core.createNewTopic
+import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getCommunityInfoByAid
@@ -42,7 +42,7 @@ class CommunityTest {
         attachSession {
             // insert community
             assertFails {
-                createNewTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
+                createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
             }
             // 加入社区
             joinCommunity(communityId).getOrThrow()
@@ -50,7 +50,7 @@ class CommunityTest {
             // 验证加入成功
             assertTrue(communityInfo.isJoined)
             // 再次发起创建话题
-            createNewTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
+            createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
             assertListSize(
                 1,
                 searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY)
@@ -70,7 +70,7 @@ class CommunityTest {
             kotlin.run {
                 val topicId = searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY)
                     .getOrThrow().data.first().id
-                val new = createNewTopic(ObjectType.TOPIC, topicId, "test").getOrThrow()
+                val new = createTopic(ObjectType.TOPIC, topicId, "test").getOrThrow()
                 assertEquals(ObjectType.COMMUNITY, new.rootType)
                 assertEquals(communityId, new.rootId)
                 val newInfo = getTopicInfo(topicId).getOrThrow()

@@ -55,7 +55,7 @@ interface CombinedDatabase {
     val topicDatabase: TopicDatabase
     val titleDatabase: TitleDatabase
     val communityDatabase: CommunityDatabase
-    val roomData: RoomDatabase
+    val roomDatabase: RoomDatabase
     val fileDatabase: FileDatabase
     val containerDatabase: ContainerDatabase
     val cliDatabase: CliDatabase

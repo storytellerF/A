@@ -57,7 +57,12 @@ suspend fun Backend.doUserJoinCommunity(
         Result.success(community)
     } else {
         val time = now()
-        combinedDatabase.containerDatabase.joinContainer(communityId, uid, time, ObjectType.COMMUNITY).mapResult {
+        combinedDatabase.containerDatabase.joinContainer(
+            communityId,
+            uid,
+            time,
+            ObjectType.COMMUNITY
+        ).mapResult {
             addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
             Result.success(community.copy(joinedTime = time))
         }.recoverResult {
@@ -122,12 +127,13 @@ private suspend fun Backend.processUserJoinedTimeReplace(
     val communityIds = value.map {
         it.id
     }
-    return combinedDatabase.communityDatabase.getCommunityJoinedTimeByIds(uid, communityIds).map { joinedTimeList ->
-        val map = joinedTimeList.associate { it }
-        PaginationResult(value.map {
-            it.copy(joinedTime = map[it.id], extension = CommunityInfo.Extension(it.joinedTime))
-        }, count)
-    }
+    return combinedDatabase.communityDatabase.getCommunityJoinedTimeByIds(uid, communityIds)
+        .map { joinedTimeList ->
+            val map = joinedTimeList.associate { it }
+            PaginationResult(value.map {
+                it.copy(joinedTime = map[it.id], extension = CommunityInfo.Extension(it.joinedTime))
+            }, count)
+        }
 }
 
 suspend fun Backend.createCommunity(
@@ -160,7 +166,11 @@ suspend fun Backend.createCommunity(
         null
     )
     return combinedDatabase.communityDatabase.createCommunity(community).mapResult {
-        combinedDatabase.communityDatabase.createCommunityRooms(getCommunityRoomsTemplateList(community))
+        combinedDatabase.communityDatabase.createCommunityRooms(
+            getCommunityRoomsTemplateList(
+                community
+            )
+        )
         addUserLog(uid, UserLogType.CREATE, community.toCommunityIfo().tuple())
         processRawCommunityToCommunityInfo(
             listOf(
@@ -183,19 +193,20 @@ suspend fun Backend.updateCommunity(
     uid: PrimaryKey
 ): Result<CommunityInfo?> {
     val newCommunity = old.copy(name = old.name?.trim(), icon = old.icon, poster = old.poster)
-    return checkRootAdminPermission(ObjectType.COMMUNITY, id, uid).mapResultIfNotNull { permission ->
-        if (permission.hasAdmin) {
-            checkBeforeUpdateCommunity(newCommunity).mapResult {
-                combinedDatabase.communityDatabase.updateCommunity(id, newCommunity).mapResult { updateSuccess ->
+    return checkRootAdminPermission(
+        ObjectType.COMMUNITY,
+        id,
+        uid
+    ).mapResultIfNotNull { permission ->
+        checkBeforeUpdateCommunity(newCommunity).mapResult {
+            combinedDatabase.communityDatabase.updateCommunity(id, newCommunity)
+                .mapResult { updateSuccess ->
                     if (updateSuccess) {
                         UNIT_RESULT
                     } else {
                         Result.failure(Exception("update failed"))
                     }
                 }
-            }
-        } else {
-            Result.failure(CustomBadRequestException("forbid"))
         }
     }.mapResultIfNotNull {
         combinedDatabase.communityDatabase.getRawCommunity(

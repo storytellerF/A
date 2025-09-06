@@ -94,7 +94,7 @@ private suspend fun Backend.getRelatedObject(
         }
     }, {
         if (roomIdList.isNotEmpty()) {
-            combinedDatabase.roomData.getRawRooms(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
+            combinedDatabase.roomDatabase.getRawRooms(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
                 processRawRoomToRoomInfo(it)
             }
         } else {
@@ -158,13 +158,7 @@ suspend fun Backend.createTitle(
         newTitle.scopeType,
         newTitle.scopeId,
         uid
-    ).mapResultIfNotNull { permission ->
-        if (permission.hasAdmin) {
-            UNIT_RESULT
-        } else {
-            Result.failure(ForbiddenException("Permission denied"))
-        }
-    }.mapResultIfNotNull {
+    ).mapResultIfNotNull {
         val title = toTitle(newTitle, uid)
         val topic = Topic(
             title.descriptionTopicId,
@@ -176,6 +170,7 @@ suspend fun Backend.createTitle(
             ObjectType.TITLE,
             newTitle.description.encodeToByteArray(),
             isEncrypted = false,
+            level = 1,
             isPin = false,
             lastModifiedTime = null
         )
