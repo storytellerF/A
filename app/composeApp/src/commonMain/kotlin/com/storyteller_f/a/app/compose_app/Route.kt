@@ -32,6 +32,7 @@ import com.storyteller_f.a.app.compose_app.pages.user.LoginPage
 import com.storyteller_f.a.app.compose_app.pages.user.MemberPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserSettingPage
+import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -43,7 +44,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.reflect.KClass
 
@@ -244,12 +244,12 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
     }
 
     override fun gotoMedia(info: FileInfo) {
-        val route = MediaScreen(Json.encodeToString<MultiMediaInfo>(MultiMediaInfo.Image(info)))
+        val route = MediaScreen(commonJson.encodeToString<MultiMediaInfo>(MultiMediaInfo.Image(info)))
         navigator.navigate(route)
     }
 
     override fun gotoLocalImage(url: String) {
-        val route = MediaScreen(Json.encodeToString<MultiMediaInfo>(MultiMediaInfo.LocalImage(url)))
+        val route = MediaScreen(commonJson.encodeToString<MultiMediaInfo>(MultiMediaInfo.LocalImage(url)))
         navigator.navigate(route)
     }
 
@@ -297,7 +297,7 @@ fun NavGraphBuilder.buildRootNav(
     }
     composable<MediaScreen> {
         val route = it.toRoute<MediaScreen>()
-        val pack = Json.decodeFromString<MultiMediaInfo>(route.json)
+        val pack = commonJson.decodeFromString<MultiMediaInfo>(route.json)
         MediaPage(pack)
     }
     buildComposeScreen(navigator)

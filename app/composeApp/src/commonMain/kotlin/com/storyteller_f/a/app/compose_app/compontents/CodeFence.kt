@@ -48,6 +48,7 @@ import com.storyteller_f.a.app.compose_app.LocalClient
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
 import com.storyteller_f.a.app.compose_app.utils.setText
+import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.MarkdownObject
 import com.storyteller_f.shared.utils.getLang
@@ -58,10 +59,10 @@ import dev.snipme.highlights.model.SyntaxThemes
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.Url
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,7 +71,6 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
-import kotlinx.serialization.json.Json
 import net.bjoernpetersen.m3u.M3uParser
 import java.net.URI
 
@@ -97,7 +97,7 @@ fun ObjectBlock(
 ) {
     val obj = remember(modal.node, modal.content) {
         val c = readCodeFence(modal.node, modal.content)
-        Json.decodeFromString<MarkdownObject>(c)
+        commonJson.decodeFromString<MarkdownObject>(c)
     }
     when (obj.contentType) {
         YOUTUBE_MIMETYPE -> {

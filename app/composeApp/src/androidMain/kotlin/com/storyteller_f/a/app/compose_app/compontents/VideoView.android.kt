@@ -55,10 +55,10 @@ import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.MediaPlayerActivity
 import com.storyteller_f.a.app.compose_app.MultiMediaInfo
+import com.storyteller_f.shared.commonJson
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import kotlin.uuid.ExperimentalUuidApi
 
 // Constant for broadcast receiver
@@ -260,7 +260,7 @@ fun VideoOrAudioOpRow(
         IconButton({
             if (localMediaPlaySession.uuid == playingSession?.uuids?.lastOrNull()) {
                 context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
-                    putExtra("json", Json.encodeToString<MultiMediaInfo>(playingSession))
+                    putExtra("json", commonJson.encodeToString<MultiMediaInfo>(playingSession))
                 })
             }
         }, enabled = isActive) {

@@ -22,6 +22,7 @@ import com.storyteller_f.a.backend.exposed.tables.UserDevices
 import com.storyteller_f.a.backend.exposed.tables.UserLogs
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
+import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.utils.transformThrowable
 import io.github.aakira.napier.Napier
@@ -31,7 +32,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.slf4j.MDCContext
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
@@ -177,7 +177,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
             Socket("localhost", port).use { socket ->
                 socket.getOutputStream().use {
                     PrintWriter(it, true).use { writer ->
-                        writer.println(Json.encodeToString(result))
+                        writer.println(commonJson.encodeToString(result))
                     }
                 }
             }

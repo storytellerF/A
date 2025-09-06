@@ -13,8 +13,8 @@ class RoomFrameTest {
     @Test
     fun testSerialization() {
         val message: RoomFrame = RoomFrame.Message(NewRoomTopic(ObjectType.ROOM, DEFAULT_PRIMARY_KEY, TopicContent.Plain("test")))
-        val string = Json.encodeToString(message)
-        val obj = Json.decodeFromString<RoomFrame>(string)
+        val string = commonJson.encodeToString(message)
+        val obj = commonJson.decodeFromString<RoomFrame>(string)
         assertEquals(message, obj)
     }
 }
