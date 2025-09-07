@@ -1,7 +1,7 @@
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.service.index.ElasticTopicSearchService
-import com.storyteller_f.a.backend.service.index.LuceneTopicSearchService
+import com.storyteller_f.a.backend.service.index.lucene.LuceneTopicSearchService
 import com.storyteller_f.a.backend.service.index.TopicDocument
 import com.storyteller_f.a.backend.service.index.TopicSearchService
 import kotlinx.coroutines.runBlocking

@@ -4,6 +4,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.Community
@@ -15,6 +16,8 @@ import com.storyteller_f.a.backend.exposed.isDup
 import com.storyteller_f.a.backend.exposed.toJoinSearch
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.processRawCommunityToCommunityInfo
+import com.storyteller_f.a.backend.service.search.CommunityDocument
+import com.storyteller_f.a.backend.service.search.CommunityDocumentSearch
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserLogType
@@ -28,8 +31,10 @@ import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverResult
+import io.github.aakira.napier.Napier
 
 suspend fun Backend.getCommunity(
     objectFetch: ObjectFetch,
@@ -98,23 +103,40 @@ suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
     search: CustomApi.Communities.CommunitySearchQuery,
     primaryKeyFetch: PrimaryKeyFetch
-) = combinedDatabase.communityDatabase.getCommunityPaginationResult(
-    search.word,
-    search.hasPoster,
-    primaryKeyFetch,
-    (if (search.target != null) {
-        JoinStatusSearch.JOINED.toJoinSearch(search.target)
+): Result<PaginationResult<CommunityInfo>?> {
+    val word = search.word
+    return if (word.isNullOrBlank()) {
+        combinedDatabase.communityDatabase.getCommunityPaginationResult(
+            word,
+            search.hasPoster,
+            primaryKeyFetch,
+            (if (search.target != null) {
+                JoinStatusSearch.JOINED.toJoinSearch(search.target)
+            } else {
+                search.joinStatus.toJoinSearch(uid)
+            })
+        )
     } else {
-        search.joinStatus.toJoinSearch(uid)
-    })
-).mapResultIfNotNull { (list, count) ->
-    processRawCommunityToCommunityInfo(list).mapResultIfNotNull { value ->
-        when {
-            search.target == null -> Result.success(PaginationResult(value, count))
-            uid != null -> processUserJoinedTimeReplace(value, uid, count)
-            else -> Result.success(PaginationResult(value.map {
-                it.copy(joinedTime = null, extension = CommunityInfo.Extension(it.joinedTime))
-            }, count))
+        communitySearchService.searchDocument(CommunityDocumentSearch.Keyword(listOf(word)), primaryKeyFetch)
+            .mapResult { (list, total) ->
+                combinedDatabase.communityDatabase.getRawCommunities(
+                    ObjectListFetch.IdListFetch(
+                        list.map {
+                            it.id
+                        })
+                ).map {
+                    PaginationResult(it, total)
+                }
+            }
+    }.mapResultIfNotNull { (list, count) ->
+        processRawCommunityToCommunityInfo(list).mapResultIfNotNull { value ->
+            when {
+                search.target == null -> Result.success(PaginationResult(value, count))
+                uid != null -> processUserJoinedTimeReplace(value, uid, count)
+                else -> Result.success(PaginationResult(value.map {
+                    it.copy(joinedTime = null, extension = CommunityInfo.Extension(it.joinedTime))
+                }, count))
+            }
         }
     }
 }
@@ -140,9 +162,9 @@ suspend fun Backend.createCommunity(
     newCommunity: NewCommunity,
     uid: PrimaryKey
 ): Result<CommunityInfo?> {
-    val firstError = listOf(suspend {
+    return merge({
         checkAid(newCommunity.aid)
-    }, suspend {
+    }, {
         when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
             StringCheckResult.RANGE_MISMATCH -> Result.failure(
                 CustomBadRequestException("community name must be between in 1 and 20")
@@ -151,25 +173,29 @@ suspend fun Backend.createCommunity(
             StringCheckResult.EMPTY -> Result.failure(CustomBadRequestException("community name is empty"))
             StringCheckResult.SUCCESS -> UNIT_RESULT
         }
-    }).firstNotNullOfOrNull {
-        it().exceptionOrNull()
-    }
-    if (firstError != null) return Result.failure(firstError)
-    val id = SnowflakeFactory.nextId()
-    val community = Community(
-        id,
-        now(),
-        newCommunity.aid,
-        newCommunity.name,
-        uid,
-        newCommunity.icon,
-        null
-    )
-    return combinedDatabase.communityDatabase.createCommunity(community).mapResult {
+    }).mapResult {
+        val id = SnowflakeFactory.nextId()
+        val community = Community(
+            id,
+            now(),
+            newCommunity.aid,
+            newCommunity.name,
+            uid,
+            newCommunity.icon,
+            null
+        )
+        combinedDatabase.communityDatabase.createCommunity(community).map {
+            communitySearchService.saveDocument(listOf(CommunityDocument.fromCommunity(community)))
+                .onFailure {
+                    Napier.e(it) {
+                        "save community document failed"
+                    }
+                }
+            community
+        }
+    }.mapResult { community ->
         combinedDatabase.communityDatabase.createCommunityRooms(
-            getCommunityRoomsTemplateList(
-                community
-            )
+            getCommunityRoomsTemplateList(community)
         )
         addUserLog(uid, UserLogType.CREATE, community.toCommunityIfo().tuple())
         processRawCommunityToCommunityInfo(
@@ -185,6 +211,8 @@ suspend fun Backend.createCommunity(
             it.first()
         }
     }
+
+
 }
 
 suspend fun Backend.updateCommunity(

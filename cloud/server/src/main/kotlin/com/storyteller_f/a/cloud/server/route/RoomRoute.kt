@@ -2,7 +2,6 @@ package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.exposed.toJoinSearch
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.cloud.core.service.createRoom
 import com.storyteller_f.a.cloud.core.service.exitRoom
@@ -29,7 +28,8 @@ fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.search.invoke(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
-                backend.searchRoomPaginationResult(uid, it.word, it.community, f, it.joinStatus.toJoinSearch(uid))
+                backend.searchRoomPaginationResult(uid,
+                    f, it)
             }
         }
     }
