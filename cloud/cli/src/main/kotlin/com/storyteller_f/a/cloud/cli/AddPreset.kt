@@ -11,7 +11,10 @@ import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.index.TopicDocument
+import com.storyteller_f.a.backend.service.search.CommunityDocument
+import com.storyteller_f.a.backend.service.search.RoomDocument
+import com.storyteller_f.a.backend.service.search.TopicDocument
+import com.storyteller_f.a.backend.service.search.UserDocument
 import com.storyteller_f.a.cloud.core.service.getCommunityRoomsTemplateList
 import com.storyteller_f.a.cloud.core.service.getFileInfoList
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
@@ -266,6 +269,9 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val (roomList, membersList) = getRoomsData(l, parentDir)
         combinedDatabase.cliDatabase.batchAddRooms(roomList, membersList)
+        roomSearchService.saveDocument(roomList.map {
+            RoomDocument.fromRoom(it)
+        })
     }
 
     private suspend fun Backend.addTopics(presetValue: PresetValue, parentDir: File) {
@@ -301,6 +307,9 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val users = getUserData(userList, parentDir)
         combinedDatabase.cliDatabase.batchAddUser(users)
+        userSearchService.saveDocument(users.map {
+            UserDocument.fromUser(it)
+        })
     }
 
     private suspend fun Backend.addCommunities(presetValue: PresetValue, parentDir: File) {
@@ -345,6 +354,9 @@ class AddPreset : Subcommand("add", "add entry") {
             it.id to it.community.users?.map { s ->
                 userMap[s]!!.id
             }.orEmpty() + userMap["System"]!!.id
+        })
+        communitySearchService.saveDocument(communities.map {
+            CommunityDocument.fromCommunity(it)
         })
         communities.map {
             combinedDatabase.communityDatabase.createCommunityRooms(getCommunityRoomsTemplateList(it))

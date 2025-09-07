@@ -120,7 +120,9 @@ class LuceneTopicSearchService(path: Path, isInMemory: Boolean = false) :
                     addMatchQuery(analyzer, topicDocumentSearch.word, "content")
                 }
 
-                is TopicDocumentSearch.All -> {}
+                is TopicDocumentSearch.All -> {
+                    addMatchQuery(analyzer, topicDocumentSearch.word, "content")
+                }
             }
         }
     }

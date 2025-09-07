@@ -194,7 +194,7 @@ fun App() {
 }
 
 @Composable
-private fun MainAppPage(
+fun MainAppPage(
     isPip: Boolean,
     player: MultiMediaInfo.Player?,
 ) {

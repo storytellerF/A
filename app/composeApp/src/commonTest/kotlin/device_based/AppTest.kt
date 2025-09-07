@@ -45,7 +45,7 @@ class AppTest {
                         initDone = true
                     }
                     if (initDone) {
-                        CommonEntry() {
+                        CommonEntry {
                             StaticObj
                             val playerSession by globalPlayerState
                             val isPip = rememberIsInPipMode()

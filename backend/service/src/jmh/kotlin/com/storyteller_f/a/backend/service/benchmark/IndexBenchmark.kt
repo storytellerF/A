@@ -2,8 +2,8 @@ package com.storyteller_f.a.backend.service.benchmark
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.ElasticConnection
-import com.storyteller_f.a.backend.service.index.ElasticTopicSearchService
-import com.storyteller_f.a.backend.service.index.TopicDocument
+import com.storyteller_f.a.backend.service.search.TopicDocument
+import com.storyteller_f.a.backend.service.search.elastic.ElasticTopicSearchService
 import kotlinx.coroutines.runBlocking
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole

@@ -1,9 +1,9 @@
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.storyteller_f.a.backend.core.ElasticConnection
-import com.storyteller_f.a.backend.service.index.ElasticTopicSearchService
-import com.storyteller_f.a.backend.service.index.TopicDocument
-import com.storyteller_f.a.backend.service.index.TopicSearchService
-import com.storyteller_f.a.backend.service.index.lucene.LuceneTopicSearchService
+import com.storyteller_f.a.backend.service.search.TopicDocument
+import com.storyteller_f.a.backend.service.search.TopicSearchService
+import com.storyteller_f.a.backend.service.search.elastic.ElasticTopicSearchService
+import com.storyteller_f.a.backend.service.search.lucene.LuceneTopicSearchService
 import kotlinx.coroutines.runBlocking
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 import kotlin.test.Test
@@ -40,6 +40,11 @@ fun testIndex(block: suspend (TopicSearchService) -> Unit) {
                 val service = ElasticTopicSearchService(connection)
                 block(service)
             }
-        block(LuceneTopicSearchService(MemoryFileSystemBuilder.newLinux().build().getPath("/documents"), true))
+        block(
+            LuceneTopicSearchService(
+                MemoryFileSystemBuilder.newLinux().build().getPath("/documents"),
+                true
+            )
+        )
     }
 }
