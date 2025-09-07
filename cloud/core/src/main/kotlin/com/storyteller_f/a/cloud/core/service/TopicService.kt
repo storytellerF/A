@@ -574,7 +574,7 @@ suspend fun Backend.searchPublicTopics(
             }
         }
     } else {
-        Result.success(TopicDocumentSearch.CommunityRoot(null))
+        Result.success(TopicDocumentSearch.CommunityRoot(word))
     }.mapResultIfNotNull { documentSearch ->
         topicSearchService.searchDocument(
             topicDocumentSearch = documentSearch,

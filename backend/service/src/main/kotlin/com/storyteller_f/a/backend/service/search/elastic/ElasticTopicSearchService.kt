@@ -106,7 +106,9 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
                     addMatchQuery(topicDocumentSearch.word, "content")
                 }
 
-                is TopicDocumentSearch.All -> {}
+                is TopicDocumentSearch.All -> {
+                    addMatchQuery(topicDocumentSearch.word, "content")
+                }
             }
         }
     }
