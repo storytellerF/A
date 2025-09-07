@@ -52,7 +52,6 @@ abstract class Lucene(private val path: Path, private val isInMemory: Boolean = 
         }
 }
 
-
 fun FSDirectory.cleanAll(
     analyzer: StandardAnalyzer
 ) {
@@ -157,7 +156,6 @@ fun buildPrimaryKeyLuceneSearchQuery(
         build
     }
 }
-
 
 interface LuceneDocument {
     fun save(): Document

@@ -76,9 +76,7 @@ abstract class Elastic(private val connection: ElasticConnection) {
             )
         }
     }
-
 }
-
 
 suspend fun ElasticsearchAsyncClient.cleanAll(indexName: String) {
     if (indices().exists {
@@ -98,7 +96,9 @@ suspend fun ElasticsearchAsyncClient.cleanAll(indexName: String) {
 }
 
 suspend fun <T> ElasticsearchAsyncClient.getDocumentList(
-    idList: List<PrimaryKey>, indexName: String, clazz: Class<T>
+    idList: List<PrimaryKey>,
+    indexName: String,
+    clazz: Class<T>
 ): List<T?> {
     return if (idList.size == 1) {
         idList.map { id ->
@@ -116,7 +116,8 @@ suspend fun <T> ElasticsearchAsyncClient.getDocumentList(
 }
 
 suspend fun <T : PrimaryKeyIdentifiable> ElasticsearchAsyncClient.saveDocumentList(
-    documents: List<T>, indexName: String
+    documents: List<T>,
+    indexName: String
 ) {
     if (documents.size == 1) {
         val topic = documents.first()
@@ -147,7 +148,6 @@ suspend fun <T : PrimaryKeyIdentifiable> ElasticsearchAsyncClient.saveDocumentLi
     }
 }
 
-
 fun getSslContext(elasticConnection: ElasticConnection): SSLContext? {
     val certFile = elasticConnection.certFile
     Napier.i(message = "cert path ${File(certFile).canonicalPath}")
@@ -159,7 +159,6 @@ fun getSslContext(elasticConnection: ElasticConnection): SSLContext? {
         null
     }
 }
-
 
 suspend fun <T> ElasticsearchAsyncClient.searchDocumentList(
     request: SearchRequest?,
@@ -238,7 +237,6 @@ fun MutableList<Pair<Query, Boolean>>.addTermQuery(
         t.field(fieldName).value(termValue)
     }._toQuery() to false)
 }
-
 
 fun preprocessUserInputKeyword(words: List<String>?): String? = words?.let {
     it.filter { w -> w.isNotBlank() }.takeIf { list -> list.isNotEmpty() }?.joinToString(" ")

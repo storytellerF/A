@@ -123,7 +123,8 @@ suspend fun Backend.searchCommunities(
                     ObjectListFetch.IdListFetch(
                         list.map {
                             it.id
-                        })
+                        }
+                    )
                 ).map {
                     PaginationResult(it, total)
                 }
@@ -211,8 +212,6 @@ suspend fun Backend.createCommunity(
             it.first()
         }
     }
-
-
 }
 
 suspend fun Backend.updateCommunity(

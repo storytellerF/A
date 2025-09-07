@@ -10,13 +10,13 @@ import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.MergedEnv
 import com.storyteller_f.a.backend.service.buildCommunitySearchService
 import com.storyteller_f.a.backend.service.buildRoomSearchService
+import com.storyteller_f.a.backend.service.buildTopicSearchService
+import com.storyteller_f.a.backend.service.buildUserSearchService
 import com.storyteller_f.a.backend.service.databaseConnection
 import com.storyteller_f.a.backend.service.mediaService
 import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.a.backend.service.object_storage.loadAvif
 import com.storyteller_f.a.backend.service.readEnv
-import com.storyteller_f.a.backend.service.buildTopicSearchService
-import com.storyteller_f.a.backend.service.buildUserSearchService
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.configureAuth
 import com.storyteller_f.a.cloud.server.auth.getRateLimitKey

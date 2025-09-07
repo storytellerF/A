@@ -33,7 +33,7 @@ data class PrimaryKeyFetch(override val cursor: Cursor<PrimaryKey>?, override va
 data class ReactionFetch(override val cursor: Cursor<ReactionCursorKey>?, override val size: Int) :
     GenericFetch<ReactionCursorKey>
 
-fun<T: PrimaryKeyIdentifiable> fixedSort(
+fun<T : PrimaryKeyIdentifiable> fixedSort(
     infos: List<T>,
     ids: List<PrimaryKey>
 ): List<T> {

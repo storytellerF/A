@@ -68,7 +68,6 @@ class LuceneTopicSearchService(path: Path, isInMemory: Boolean = false) :
                 emptyList()
             }
         }
-
     }
 
     override suspend fun clean(): Result<Unit> {
@@ -134,7 +133,8 @@ class LuceneTopicSearchService(path: Path, isInMemory: Boolean = false) :
     }
 
     private fun BooleanQuery.Builder.addLongQuery(
-        fieldName: String, termValue: PrimaryKey
+        fieldName: String,
+        termValue: PrimaryKey
     ) {
         add(
             LongPoint.newExactQuery(fieldName, termValue),
@@ -143,7 +143,8 @@ class LuceneTopicSearchService(path: Path, isInMemory: Boolean = false) :
     }
 
     private fun BooleanQuery.Builder.addMustLongQuery(
-        fieldName: String, termValue: PrimaryKey
+        fieldName: String,
+        termValue: PrimaryKey
     ) {
         add(
             LongPoint.newExactQuery(fieldName, termValue),

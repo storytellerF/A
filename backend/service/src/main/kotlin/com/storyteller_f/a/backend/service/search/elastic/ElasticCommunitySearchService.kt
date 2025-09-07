@@ -20,13 +20,11 @@ import com.storyteller_f.a.backend.service.search.searchDocumentList
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.future.await
 
 class ElasticCommunitySearchService(connection: ElasticConnection) :
     Elastic(connection), CommunitySearchService {
     companion object {
         private const val INDEX_NAME = "topics"
-
     }
 
     override suspend fun saveDocument(documents: List<CommunityDocument>): Result<Unit> {

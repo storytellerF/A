@@ -35,9 +35,7 @@ data class UserDocument(override val id: PrimaryKey, val nickname: String, val a
         fun fromUser(user: User): UserDocument {
             return UserDocument(user.id, user.nickname, user.aid)
         }
-
     }
-
 }
 
 sealed interface UserDocumentSearch {

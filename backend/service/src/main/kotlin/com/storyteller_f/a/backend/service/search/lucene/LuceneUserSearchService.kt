@@ -4,7 +4,6 @@ import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.service.search.Lucene
-import com.storyteller_f.a.backend.service.search.TopicDocument
 import com.storyteller_f.a.backend.service.search.UserDocument
 import com.storyteller_f.a.backend.service.search.UserDocumentSearch
 import com.storyteller_f.a.backend.service.search.UserSearchService
@@ -60,7 +59,7 @@ class LuceneUserSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
         userDocumentSearch: UserDocumentSearch
     ): Query {
         return buildPrimaryKeyLuceneSearchQuery(primaryKeyFetch) {
-            when(userDocumentSearch) {
+            when (userDocumentSearch) {
                 is UserDocumentSearch.Keyword -> {
                     preprocessUserInputKeyword(userDocumentSearch.word)?.let {
                         add(BooleanQuery.Builder().apply {

@@ -9,12 +9,9 @@ import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.service.search.Elastic
-import com.storyteller_f.a.backend.service.search.TopicDocumentSearch
 import com.storyteller_f.a.backend.service.search.UserDocument
 import com.storyteller_f.a.backend.service.search.UserDocumentSearch
 import com.storyteller_f.a.backend.service.search.UserSearchService
-import com.storyteller_f.a.backend.service.search.addMatchQuery
-import com.storyteller_f.a.backend.service.search.addTermQuery
 import com.storyteller_f.a.backend.service.search.buildPrimaryKeyElasticSearchQuery
 import com.storyteller_f.a.backend.service.search.cleanAll
 import com.storyteller_f.a.backend.service.search.preprocessUserInputKeyword

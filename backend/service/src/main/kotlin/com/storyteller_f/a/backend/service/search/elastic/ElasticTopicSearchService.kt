@@ -24,7 +24,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
 
-
 class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connection),
     TopicSearchService {
 
@@ -112,7 +111,6 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
         }
     }
 
-
     private fun MutableList<Pair<Query, Boolean>>.addParentIdListTermSearch(
         longs: List<PrimaryKey>
     ) {
@@ -131,4 +129,3 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
         }._toQuery() to true)
     }
 }
-

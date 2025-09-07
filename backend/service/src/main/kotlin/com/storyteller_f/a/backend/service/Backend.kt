@@ -137,7 +137,6 @@ fun mediaService(env: MergedEnv): ObjectStorageService {
     }
 }
 
-
 fun buildTopicSearchService(env: MergedEnv): TopicSearchService = buildSearchService(env, {
     ElasticTopicSearchService(it)
 }) { path, isInMemory ->
@@ -161,7 +160,6 @@ fun buildCommunitySearchService(env: MergedEnv): CommunitySearchService = buildS
 }) { path, isInMemory ->
     LuceneCommunitySearchService(path, isInMemory)
 }
-
 
 fun<T> buildSearchService(
     env: MergedEnv,
