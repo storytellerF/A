@@ -35,10 +35,7 @@ data class RoomDocument(override val id: PrimaryKey, val name: String, val aid: 
         fun fromRoom(room: Room): RoomDocument {
             return RoomDocument(room.id, room.name, room.aid)
         }
-
     }
-
-
 }
 
 sealed interface RoomDocumentSearch {

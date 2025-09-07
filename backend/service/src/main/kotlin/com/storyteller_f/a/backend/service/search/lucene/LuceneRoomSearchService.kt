@@ -7,7 +7,6 @@ import com.storyteller_f.a.backend.service.search.Lucene
 import com.storyteller_f.a.backend.service.search.RoomDocument
 import com.storyteller_f.a.backend.service.search.RoomDocumentSearch
 import com.storyteller_f.a.backend.service.search.RoomSearchService
-import com.storyteller_f.a.backend.service.search.TopicDocument
 import com.storyteller_f.a.backend.service.search.buildPrimaryKeyLuceneSearchQuery
 import com.storyteller_f.a.backend.service.search.cleanAll
 import com.storyteller_f.a.backend.service.search.preprocessUserInputKeyword
@@ -61,7 +60,7 @@ class LuceneRoomSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
         roomDocumentSearch: RoomDocumentSearch
     ): Query {
         return buildPrimaryKeyLuceneSearchQuery(primaryKeyFetch) {
-            when(roomDocumentSearch) {
+            when (roomDocumentSearch) {
                 is RoomDocumentSearch.Keyword -> {
                     preprocessUserInputKeyword(roomDocumentSearch.words)?.let {
                         add(BooleanQuery.Builder().apply {

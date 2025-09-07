@@ -28,8 +28,11 @@ fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.search.invoke(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
-                backend.searchRoomPaginationResult(uid,
-                    f, it)
+                backend.searchRoomPaginationResult(
+                    uid,
+                    f,
+                    it
+                )
             }
         }
     }

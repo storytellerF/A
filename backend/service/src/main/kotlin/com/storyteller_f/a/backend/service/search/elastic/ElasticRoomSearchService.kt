@@ -12,9 +12,6 @@ import com.storyteller_f.a.backend.service.search.Elastic
 import com.storyteller_f.a.backend.service.search.RoomDocument
 import com.storyteller_f.a.backend.service.search.RoomDocumentSearch
 import com.storyteller_f.a.backend.service.search.RoomSearchService
-import com.storyteller_f.a.backend.service.search.TopicDocumentSearch
-import com.storyteller_f.a.backend.service.search.addMatchQuery
-import com.storyteller_f.a.backend.service.search.addTermQuery
 import com.storyteller_f.a.backend.service.search.buildPrimaryKeyElasticSearchQuery
 import com.storyteller_f.a.backend.service.search.cleanAll
 import com.storyteller_f.a.backend.service.search.preprocessUserInputKeyword
