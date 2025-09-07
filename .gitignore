@@ -19,7 +19,6 @@ captures
 **/xcshareddata/WorkspaceSettings.xcsettings
 databases
 deploy/es_ca
-elastic
 *.env
 !dev.win.env
 !dev.env

@@ -8,12 +8,15 @@ import com.storyteller_f.a.backend.core.CustomKeyStore
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.MergedEnv
+import com.storyteller_f.a.backend.service.buildCommunitySearchService
+import com.storyteller_f.a.backend.service.buildRoomSearchService
 import com.storyteller_f.a.backend.service.databaseConnection
 import com.storyteller_f.a.backend.service.mediaService
 import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.a.backend.service.object_storage.loadAvif
 import com.storyteller_f.a.backend.service.readEnv
-import com.storyteller_f.a.backend.service.topicDocumentService
+import com.storyteller_f.a.backend.service.buildTopicSearchService
+import com.storyteller_f.a.backend.service.buildUserSearchService
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.configureAuth
 import com.storyteller_f.a.cloud.server.auth.getRateLimitKey
@@ -238,7 +241,7 @@ private fun buildLog(
                 |    Url: ${call.request.uri},
                 |    Query: ${call.request.queryString()}
                 |    Headers: ${call.request.headers.toMap()}
-                |    Ip：$ipList}""".trimMargin()
+                |    Ip：$ipList""".trimMargin()
 }
 
 fun ApplicationCall.remoteIp(
@@ -359,7 +362,10 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val buildType = env["BUILD_TYPE"] ?: "prod"
     val flavor = env["FLAVOR"] ?: throw Exception("FLAVOR is empty")
 
-    val topicDocumentService = topicDocumentService(env)
+    val topicSearchService = buildTopicSearchService(env)
+    val userSearchService = buildUserSearchService(env)
+    val roomSearchService = buildRoomSearchService(env)
+    val communitySearchService = buildCommunitySearchService(env)
     val mediaService = mediaService(env)
 
     val snapshotKeyStorePath = env["SNAPSHOT_KEYSTORE_PATH"]
@@ -377,7 +383,10 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 
     return Backend(
         customConfig,
-        topicDocumentService,
+        topicSearchService,
+        roomSearchService,
+        communitySearchService,
+        userSearchService,
         mediaService,
         NameService(),
         buildExposedDatabase(databaseConnection)

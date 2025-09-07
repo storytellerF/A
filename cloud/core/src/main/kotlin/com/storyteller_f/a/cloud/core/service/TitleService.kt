@@ -9,7 +9,7 @@ import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.toTitleInfo
 import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.index.TopicDocument
+import com.storyteller_f.a.backend.service.search.TopicDocument
 import com.storyteller_f.a.backend.service.processRawCommunityToCommunityInfo
 import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
 import com.storyteller_f.shared.model.*

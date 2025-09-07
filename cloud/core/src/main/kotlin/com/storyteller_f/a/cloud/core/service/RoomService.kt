@@ -5,8 +5,8 @@ import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
-import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
@@ -14,13 +14,17 @@ import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.isDup
+import com.storyteller_f.a.backend.exposed.toJoinSearch
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
+import com.storyteller_f.a.backend.service.search.RoomDocument
+import com.storyteller_f.a.backend.service.search.RoomDocumentSearch
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
+import io.github.aakira.napier.Napier
 
 suspend fun Backend.getRoomPubKeys(
     roomId: PrimaryKey,
@@ -111,9 +115,10 @@ suspend fun Backend.getRoomInfo(
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?,
 ): Result<RoomInfo?> {
-    return combinedDatabase.roomDatabase.getRawRoom(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
-        processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
-    }
+    return combinedDatabase.roomDatabase.getRawRoom(objectFetch, fillJoinInfo, uid)
+        .mapResultIfNotNull {
+            processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
+        }
 }
 
 private fun checkRoomName(newRoom: NewRoom): Result<Unit> {
@@ -146,15 +151,21 @@ suspend fun Backend.createRoom(
         val roomId = SnowflakeFactory.nextId()
         val room =
             Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
-        combinedDatabase.roomDatabase.createRoom(room)
-            .mapResult {
-                processRawRoomToRoomInfo(
-                    listOf(
-                        RawRoom(room, room.createdTime, null, 0)
-                    )
-                ).mapIfNotNull(List<RoomInfo>::first)
+        combinedDatabase.roomDatabase.createRoom(room).map {
+            roomSearchService.saveDocument(listOf(RoomDocument.fromRoom(room))).onFailure {
+                Napier.e(it) {
+                    "save room document failed"
+                }
             }
-    }
+            room
+        }
+    }.mapResultIfNotNull { room ->
+        processRawRoomToRoomInfo(
+            listOf(
+                RawRoom(room, room.createdTime, null, 0)
+            )
+        )
+    }.mapIfNotNull(List<RoomInfo>::first)
 }
 
 suspend fun Backend.updateRoom(
@@ -218,18 +229,30 @@ suspend fun searchRoomMembers(
 
 suspend fun Backend.searchRoomPaginationResult(
     uid: PrimaryKey?,
-    word: String?,
-    community: PrimaryKey?,
     primaryKeyFetch: PrimaryKeyFetch,
-    search: JoinSearch,
+    query: CustomApi.Rooms.RoomSearchQuery,
 ): Result<PaginationResult<RoomInfo>?> {
-    return combinedDatabase.roomDatabase.getRoomPaginationResult(
-        uid,
-        word,
-        community,
-        primaryKeyFetch,
-        search
-    ).mapResult { (list, count) ->
+    val word = query.word
+    val search = query.joinStatus.toJoinSearch(uid)
+    val community = query.community
+    return if (word.isNullOrBlank()) {
+        combinedDatabase.roomDatabase.getRoomPaginationResult(
+            uid,
+            word,
+            community,
+            primaryKeyFetch,
+            search
+        )
+    } else {
+        roomSearchService.searchDocument(RoomDocumentSearch.Keyword(listOf(word)), primaryKeyFetch)
+            .mapResult { (list, total) ->
+                combinedDatabase.roomDatabase.getRawRooms(ObjectListFetch.IdListFetch(list.map {
+                    it.id
+                })).map {
+                    PaginationResult(it, total)
+                }
+            }
+    }.mapResult { (list, count) ->
         processRawRoomToRoomInfo(list).mapIfNotNull { value ->
             PaginationResult(value, count)
         }

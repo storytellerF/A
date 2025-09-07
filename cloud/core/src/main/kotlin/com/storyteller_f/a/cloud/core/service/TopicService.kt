@@ -8,8 +8,8 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.toTopicInfo
 import com.storyteller_f.a.backend.service.*
-import com.storyteller_f.a.backend.service.index.DocumentSearch
-import com.storyteller_f.a.backend.service.index.TopicDocument
+import com.storyteller_f.a.backend.service.search.TopicDocument
+import com.storyteller_f.a.backend.service.search.TopicDocumentSearch
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.NewRoomTopic
@@ -570,15 +570,14 @@ suspend fun Backend.searchPublicTopics(
             if (it.isPrivate) {
                 Result.failure(CustomBadRequestException("can't search in private chat"))
             } else {
-                Result.success(DocumentSearch.Topics(parentId))
+                Result.success(TopicDocumentSearch.Topics(parentId, word))
             }
         }
     } else {
-        Result.success(DocumentSearch.CommunityRoot)
+        Result.success(TopicDocumentSearch.CommunityRoot(null))
     }.mapResultIfNotNull { documentSearch ->
         topicSearchService.searchDocument(
-            word,
-            documentSearch = documentSearch,
+            topicDocumentSearch = documentSearch,
             primaryKeyFetch
         ).mapResult { (list, total) ->
             processTopicsDocument(uid, list).mapIfNotNull {
@@ -640,13 +639,13 @@ suspend fun Backend.recommendTopics(
     return if (uid != null) {
         combinedDatabase.communityDatabase.getJoinedCommunityIds(uid).mapResult {
             topicSearchService.searchDocument(
-                documentSearch = DocumentSearch.Recommend(uid, it),
+                topicDocumentSearch = TopicDocumentSearch.Recommend(uid, it),
                 primaryKeyFetch = primaryKeyFetch
             )
         }
     } else {
         topicSearchService.searchDocument(
-            documentSearch = DocumentSearch.RecommendNotLogin,
+            topicDocumentSearch = TopicDocumentSearch.RecommendNotLogin,
             primaryKeyFetch = primaryKeyFetch
         )
     }.mapResult { (list, total) ->
@@ -667,10 +666,8 @@ private suspend fun Backend.processTopicsDocument(
         return Result.success(emptyList())
     }
     return combinedDatabase.topicDatabase.getTopicInfoListByIds(uid, ids).mapResult { infos ->
-        val groupBy = infos.associateBy { it.id }
-        processTopicAfterGet(ids.mapNotNull {
-            groupBy[it]
-        }, uid, addLatestSubTopic = true)
+        val processedTopics = fixedSort(infos, ids)
+        processTopicAfterGet(processedTopics, uid, addLatestSubTopic = true)
     }
 }
 

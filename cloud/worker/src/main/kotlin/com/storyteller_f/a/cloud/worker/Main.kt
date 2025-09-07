@@ -10,11 +10,14 @@ import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.MergedEnv
+import com.storyteller_f.a.backend.service.buildCommunitySearchService
+import com.storyteller_f.a.backend.service.buildRoomSearchService
+import com.storyteller_f.a.backend.service.buildTopicSearchService
+import com.storyteller_f.a.backend.service.buildUserSearchService
 import com.storyteller_f.a.backend.service.databaseConnection
 import com.storyteller_f.a.backend.service.mediaService
 import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.a.backend.service.readEnv
-import com.storyteller_f.a.backend.service.topicDocumentService
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
@@ -127,12 +130,18 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 
     val customConfig = CustomConfig(buildType, flavor, null)
 
-    val topicDocumentService = topicDocumentService(env)
+    val topicSearchService = buildTopicSearchService(env)
+    val userSearchService = buildUserSearchService(env)
+    val roomSearchService = buildRoomSearchService(env)
+    val communitySearchService = buildCommunitySearchService(env)
     val mediaService = mediaService(env)
 
     return Backend(
         customConfig,
-        topicDocumentService,
+        topicSearchService,
+        roomSearchService,
+        communitySearchService,
+        userSearchService,
         mediaService,
         NameService(),
         buildExposedDatabase(databaseConnection)

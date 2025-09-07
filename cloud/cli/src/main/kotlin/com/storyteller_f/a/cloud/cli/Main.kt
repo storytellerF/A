@@ -5,12 +5,15 @@ import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.MergedEnv
+import com.storyteller_f.a.backend.service.buildCommunitySearchService
+import com.storyteller_f.a.backend.service.buildRoomSearchService
 import com.storyteller_f.a.backend.service.databaseConnection
 import com.storyteller_f.a.backend.service.mediaService
 import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.a.backend.service.object_storage.loadAvif
 import com.storyteller_f.a.backend.service.readEnv
-import com.storyteller_f.a.backend.service.topicDocumentService
+import com.storyteller_f.a.backend.service.buildTopicSearchService
+import com.storyteller_f.a.backend.service.buildUserSearchService
 import com.storyteller_f.shared.kmpLogger
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ArgParser
@@ -42,13 +45,19 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 
     val customConfig = CustomConfig(buildType, flavor, null)
 
-    val topicDocumentService = topicDocumentService(env)
+    val topicSearchService = buildTopicSearchService(env)
+    val userSearchService = buildUserSearchService(env)
+    val roomSearchService = buildRoomSearchService(env)
+    val communitySearchService = buildCommunitySearchService(env)
     val mediaService = mediaService(env)
 
     val exposedDatabase = buildExposedDatabase(databaseConnection)
     return Backend(
         customConfig,
-        topicDocumentService,
+        topicSearchService,
+        roomSearchService,
+        communitySearchService,
+        userSearchService,
         mediaService,
         NameService(),
         exposedDatabase

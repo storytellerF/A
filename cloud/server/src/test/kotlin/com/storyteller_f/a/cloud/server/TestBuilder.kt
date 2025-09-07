@@ -11,6 +11,7 @@ import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
 import com.storyteller_f.a.client.core.start
+import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -30,7 +31,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
-import kotlinx.serialization.json.Json
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.containers.PostgreSQLContainer
@@ -172,11 +172,8 @@ private suspend fun receiveExplainResult(
     task: CompletableDeferred<Unit>,
     port: Int,
 ) {
-    val json = Json {
-        ignoreUnknownKeys = true
-    }
     ServerSocket(port).apply {
-        soTimeout = 1000 // 5秒超时
+        soTimeout = 1000
     }.use { serverSocket ->
         task.complete(Unit)
         while (true) {
@@ -189,12 +186,14 @@ private suspend fun receiveExplainResult(
                     }
                 }
             } catch (_: SocketTimeoutException) {
+                break
             } catch (_: CancellationException) {
                 break
             } catch (e: Exception) {
                 Napier.e(throwable = e) {
                     "server socket error"
                 }
+                break
             }
         }
         Napier.i {

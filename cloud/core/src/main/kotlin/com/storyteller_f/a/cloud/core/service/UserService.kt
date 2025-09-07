@@ -16,6 +16,8 @@ import com.storyteller_f.a.backend.exposed.USER_NICKNAME
 import com.storyteller_f.a.backend.exposed.isDup
 import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.processRawUserToUserInfo
+import com.storyteller_f.a.backend.service.search.UserDocument
+import com.storyteller_f.a.backend.service.search.UserDocumentSearch
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.getDerPrivateKey
@@ -215,6 +217,12 @@ suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<ChildAccountI
                 )
                 combinedDatabase.userDatabase.createChildAccount(uid, derPrivateKey, user)
                     .getOrThrow()
+                userSearchService.saveDocument(listOf(UserDocument.fromUser(user)))
+                    .onFailure { throwable ->
+                        Napier.e(throwable) {
+                            "save user document failed"
+                        }
+                    }
                 addUserLog(
                     uid,
                     UserLogType.ADD_ALTERNATIVE_ACCOUNT,
@@ -290,16 +298,26 @@ suspend fun Backend.searchMembers(
     word: String?,
     primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<UserInfo>?> {
-    return combinedDatabase.containerDatabase.getMemberPaginationResult(
-        objectId,
-        word,
-        primaryKeyFetch
-    )
-        .mapResult { (pairs, count) ->
-            processRawUserToUserInfo(pairs).mapIfNotNull {
-                PaginationResult(it, count)
+    return if (word.isNullOrBlank()) {
+        combinedDatabase.containerDatabase.getMemberPaginationResult(
+            objectId,
+            word,
+            primaryKeyFetch
+        )
+    } else {
+        userSearchService.searchDocument(UserDocumentSearch.Keyword(listOf(word)), primaryKeyFetch)
+            .mapResult { (list, total) ->
+                combinedDatabase.userDatabase.getRawUsers(ObjectListFetch.IdListFetch(list.map {
+                    it.id
+                })).map {
+                    PaginationResult(it, total)
+                }
             }
+    }.mapResult { (rawUsers, count) ->
+        processRawUserToUserInfo(rawUsers).map {
+            PaginationResult(it, count)
         }
+    }
 }
 
 suspend fun Backend.getUserInfoList(

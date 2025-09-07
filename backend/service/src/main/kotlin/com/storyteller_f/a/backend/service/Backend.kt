@@ -15,13 +15,22 @@ import com.storyteller_f.a.backend.core.types.toQuotaInfo
 import com.storyteller_f.a.backend.core.types.toRoomInfo
 import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.a.backend.exposed.isDup
-import com.storyteller_f.a.backend.service.index.ElasticTopicSearchService
-import com.storyteller_f.a.backend.service.index.LuceneTopicSearchService
-import com.storyteller_f.a.backend.service.index.TopicSearchService
 import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.a.backend.service.object_storage.FileSystemObjectStorageService
 import com.storyteller_f.a.backend.service.object_storage.MinIoObjectStorageService
 import com.storyteller_f.a.backend.service.object_storage.ObjectStorageService
+import com.storyteller_f.a.backend.service.search.CommunitySearchService
+import com.storyteller_f.a.backend.service.search.RoomSearchService
+import com.storyteller_f.a.backend.service.search.TopicSearchService
+import com.storyteller_f.a.backend.service.search.UserSearchService
+import com.storyteller_f.a.backend.service.search.elastic.ElasticCommunitySearchService
+import com.storyteller_f.a.backend.service.search.elastic.ElasticRoomSearchService
+import com.storyteller_f.a.backend.service.search.elastic.ElasticTopicSearchService
+import com.storyteller_f.a.backend.service.search.elastic.ElasticUserSearchService
+import com.storyteller_f.a.backend.service.search.lucene.LuceneCommunitySearchService
+import com.storyteller_f.a.backend.service.search.lucene.LuceneRoomSearchService
+import com.storyteller_f.a.backend.service.search.lucene.LuceneTopicSearchService
+import com.storyteller_f.a.backend.service.search.lucene.LuceneUserSearchService
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.utils.*
@@ -29,12 +38,16 @@ import io.github.aakira.napier.Napier
 import org.apache.tika.Tika
 import java.io.File
 import java.io.FileInputStream
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
 class Backend(
     val customConfig: CustomConfig,
     val topicSearchService: TopicSearchService,
+    val roomSearchService: RoomSearchService,
+    val communitySearchService: CommunitySearchService,
+    val userSearchService: UserSearchService,
     val objectStorageService: ObjectStorageService,
     val nameService: NameService,
     val combinedDatabase: CombinedDatabase,
@@ -124,9 +137,37 @@ fun mediaService(env: MergedEnv): ObjectStorageService {
     }
 }
 
-fun topicDocumentService(
+
+fun buildTopicSearchService(env: MergedEnv): TopicSearchService = buildSearchService(env, {
+    ElasticTopicSearchService(it)
+}) { path, isInMemory ->
+    LuceneTopicSearchService(path, isInMemory)
+}
+
+fun buildUserSearchService(env: MergedEnv): UserSearchService = buildSearchService(env, {
+    ElasticUserSearchService(it)
+}) { path, isInMemory ->
+    LuceneUserSearchService(path, isInMemory)
+}
+
+fun buildRoomSearchService(env: MergedEnv): RoomSearchService = buildSearchService(env, {
+    ElasticRoomSearchService(it)
+}) { path, isInMemory ->
+    LuceneRoomSearchService(path, isInMemory)
+}
+
+fun buildCommunitySearchService(env: MergedEnv): CommunitySearchService = buildSearchService(env, {
+    ElasticCommunitySearchService(it)
+}) { path, isInMemory ->
+    LuceneCommunitySearchService(path, isInMemory)
+}
+
+
+fun<T> buildSearchService(
     env: MergedEnv,
-): TopicSearchService {
+    buildElasticService: (ElasticConnection) -> T,
+    buildLuceneService: (Path, Boolean) -> T
+): T {
     return when (val type = env["SEARCH_SERVICE"]) {
         "elastic" -> {
             val certFile = env["ELASTIC_CERT_FILE"] ?: throw Exception("ELASTIC_CERT_FILE is empty")
@@ -134,7 +175,7 @@ fun topicDocumentService(
             val name = env["ELASTIC_NAME"] ?: throw Exception("ELASTIC_NAME is empty")
             val pass = env["ELASTIC_PASSWORD"] ?: throw Exception("ELASTIC_PASSWORD is empty")
             val connection = ElasticConnection(url, certFile, name, pass)
-            ElasticTopicSearchService(connection)
+            buildElasticService(connection)
         }
 
         "lucene" -> {
@@ -151,7 +192,7 @@ fun topicDocumentService(
                 }
                 p to false
             }
-            LuceneTopicSearchService(path, isInMemory)
+            buildLuceneService(path, isInMemory)
         }
 
         else -> throw UnsupportedOperationException("unsupported search service type [$type]")
