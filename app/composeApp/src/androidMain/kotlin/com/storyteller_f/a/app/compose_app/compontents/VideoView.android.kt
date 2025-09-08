@@ -51,11 +51,12 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
+import com.storyteller_f.a.app.compose_app.FileViewInfo
 import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.MediaPlayerActivity
-import com.storyteller_f.a.app.compose_app.MultiMediaInfo
 import com.storyteller_f.shared.commonJson
+import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
 import kotlinx.coroutines.launch
@@ -83,7 +84,7 @@ actual fun VideoView(
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 private fun VideoPlayer(
-    playingSession: MultiMediaInfo.Player?,
+    playingSession: FileViewInfo.Player?,
     currentSession: LocalMediaPlaySession,
     player: MediaController,
     isEmbed: Boolean,
@@ -137,7 +138,7 @@ private fun BoxScope.VideoPlayerInternal(
             }
             it.player = player
         }
-        if (currentIsLoading && contentType != M3U8_MIMETYPE) {
+        if (currentIsLoading && contentType != FileInfo.M3U8_MIMETYPE) {
             CircularProgressIndicator(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -216,7 +217,7 @@ private fun Modifier.buildPlayerModifier(
 @Composable
 fun VideoOrAudioOpRow(
     localMediaPlaySession: LocalMediaPlaySession,
-    playingSession: MultiMediaInfo.Player?,
+    playingSession: FileViewInfo.Player?,
     contentType: String,
     showSheet: () -> Unit,
 ) {
@@ -238,7 +239,7 @@ fun VideoOrAudioOpRow(
         }) {
             Icon(Icons.Default.ContentCopy, "copy list")
         }
-        if (contentType != M3U8_MIMETYPE) {
+        if (contentType != FileInfo.M3U8_MIMETYPE) {
             val uriHandler = LocalUriHandler.current
             IconButton({
                 uriHandler.openUri(localMediaPlaySession.id)
@@ -260,7 +261,7 @@ fun VideoOrAudioOpRow(
         IconButton({
             if (localMediaPlaySession.uuid == playingSession?.uuids?.lastOrNull()) {
                 context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
-                    putExtra("json", commonJson.encodeToString<MultiMediaInfo>(playingSession))
+                    putExtra("json", commonJson.encodeToString<FileViewInfo>(playingSession))
                 })
             }
         }, enabled = isActive) {

@@ -40,7 +40,7 @@ import com.storyteller_f.a.app.compose_app.compontents.RemoteMediaItem
 import com.storyteller_f.a.app.compose_app.compontents.globalPlayerState
 import com.storyteller_f.a.app.compose_app.compontents.rememberIsInPipMode
 import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
-import com.storyteller_f.a.app.compose_app.pages.media.MediaPage
+import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
 import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitch
 import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitcher
 import com.storyteller_f.a.app.compose_app.pages.user.switchUser
@@ -156,7 +156,7 @@ val LocalClientFileProvider = compositionLocalOf<ClientFileProvider> {
 }
 
 @Serializable
-sealed interface MultiMediaInfo {
+sealed interface FileViewInfo {
     @OptIn(ExperimentalUuidApi::class)
     @Serializable
     @SerialName("player")
@@ -166,17 +166,17 @@ sealed interface MultiMediaInfo {
         val playList: List<ConstPlayItem>,
         val uuids: List<Uuid>,
         val videoSize: CustomVideoSize?,
-    ) : MultiMediaInfo {
+    ) : FileViewInfo {
         val id = obj.url
     }
 
     @Serializable
-    @SerialName("image")
-    data class Image(val fileInfo: FileInfo) : MultiMediaInfo
+    @SerialName("regular")
+    data class Regular(val fileInfo: FileInfo) : FileViewInfo
 
     @Serializable
     @SerialName("local-image")
-    data class LocalImage(val url: String) : MultiMediaInfo
+    data class LocalImage(val url: String) : FileViewInfo
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -196,12 +196,12 @@ fun App() {
 @Composable
 fun MainAppPage(
     isPip: Boolean,
-    player: MultiMediaInfo.Player?,
+    player: FileViewInfo.Player?,
 ) {
     val navigator = rememberNavController()
     val scope = rememberCoroutineScope()
     if (isPip && player != null) {
-        MediaPage(player)
+        FileViewPage(player)
     } else {
         val appNav = remember {
             newAppNav(navigator, scope)

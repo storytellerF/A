@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
-import com.storyteller_f.a.app.compose_app.pages.media.MediaPage
+import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
 import com.storyteller_f.shared.commonJson
 
 class MediaPlayerActivity : ComponentActivity() {
@@ -19,9 +19,9 @@ class MediaPlayerActivity : ComponentActivity() {
                     Text("invalid")
                 }
             } else {
-                val session = commonJson.decodeFromString<MultiMediaInfo>(json)
+                val session = commonJson.decodeFromString<FileViewInfo>(json)
                 CommonEntry({
-                    MediaPage(session)
+                    FileViewPage(session)
                 })
             }
         }

@@ -18,7 +18,7 @@ fun extractMarkdownHeadline(markdownText: String): String {
     val parsedTree = astNode(markdownText)
 
     val paragraphs = StringBuilder()
-    var headline = ""
+    var headline: CharSequence = ""
     var captureContent = false
 
     val typeList = markdownElementTypes()
@@ -30,12 +30,12 @@ fun extractMarkdownHeadline(markdownText: String): String {
                 type == MarkdownElementTypes.MARKDOWN_FILE -> captureContent = true
                 type == MarkdownElementTypes.ATX_1 -> {
                     // Extract the first level header content
-                    headline = markdownText.substring(node.startOffset, node.endOffset).trim().take(50)
+                    headline = node.getTextInNode(markdownText).trim().take(50)
                 }
 
                 type == MarkdownElementTypes.PARAGRAPH -> {
                     if (captureContent) {
-                        val content = markdownText.substring(node.startOffset, node.endOffset).trim()
+                        val content = node.getTextInNode(markdownText).trim()
                         if (content.isNotEmpty()) {
                             paragraphs.appendLine(content)
                         }
@@ -77,7 +77,7 @@ fun extractHeadParagraph(
                 type == MarkdownElementTypes.MARKDOWN_FILE -> captureContent = true
                 type == MarkdownElementTypes.PARAGRAPH -> {
                     if (captureContent) {
-                        val content = markdownText.substring(node.startOffset, node.endOffset).trim()
+                        val content = node.getTextInNode(markdownText).trim()
                         if (content.isNotEmpty()) {
                             if (children.size == 1 && children.first().type == MarkdownElementTypes.IMAGE) {
                                 paragraphs.appendLine(content)
@@ -93,7 +93,7 @@ fun extractHeadParagraph(
                     it.name == type.name
                 } -> {
                     if (paragraphs.length <= 100) {
-                        val content = markdownText.substring(node.startOffset, node.endOffset).trim()
+                        val content = node.getTextInNode(markdownText).trim()
                         paragraphs.appendLine(content)
                     }
                     captureContent = false
@@ -180,7 +180,7 @@ fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
 
 fun extractImageUrl(node: ASTNode, markdownText: String): String? {
     // Extract the first level header content
-    val markdownImage = markdownText.substring(node.startOffset, node.endOffset)
+    val markdownImage = node.getTextInNode(markdownText)
 
     // 正则表达式匹配 ![alt text](image path "title")
     val regex = Regex("""!\[([^]]*)]\(([^ )]+)(?:\s+"([^"]*)")?\)""")

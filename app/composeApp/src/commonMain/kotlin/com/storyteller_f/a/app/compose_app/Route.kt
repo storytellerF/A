@@ -20,7 +20,7 @@ import com.storyteller_f.a.app.compose_app.pages.PreferencePage
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityComposePage
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityPage
 import com.storyteller_f.a.app.compose_app.pages.community.CommunitySettingPage
-import com.storyteller_f.a.app.compose_app.pages.media.MediaPage
+import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomComposePage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomPage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomSettingPage
@@ -244,12 +244,12 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
     }
 
     override fun gotoMedia(info: FileInfo) {
-        val route = MediaScreen(commonJson.encodeToString<MultiMediaInfo>(MultiMediaInfo.Image(info)))
+        val route = MediaScreen(commonJson.encodeToString<FileViewInfo>(FileViewInfo.Regular(info)))
         navigator.navigate(route)
     }
 
     override fun gotoLocalImage(url: String) {
-        val route = MediaScreen(commonJson.encodeToString<MultiMediaInfo>(MultiMediaInfo.LocalImage(url)))
+        val route = MediaScreen(commonJson.encodeToString<FileViewInfo>(FileViewInfo.LocalImage(url)))
         navigator.navigate(route)
     }
 
@@ -297,8 +297,8 @@ fun NavGraphBuilder.buildRootNav(
     }
     composable<MediaScreen> {
         val route = it.toRoute<MediaScreen>()
-        val pack = commonJson.decodeFromString<MultiMediaInfo>(route.json)
-        MediaPage(pack)
+        val pack = commonJson.decodeFromString<FileViewInfo>(route.json)
+        FileViewPage(pack)
     }
     buildComposeScreen(navigator)
 }

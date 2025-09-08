@@ -27,6 +27,13 @@ data class FileInfo(
 ) : PrimaryKeyIdentifiable {
     override val objectType: ObjectType
         get() = ObjectType.File
+
+    companion object {
+        const val PDF_CONTENT_TYPE = "application/pdf"
+        const val M3U8_MIMETYPE = "application/vnd.apple.mpegurl"
+        const val YOUTUBE_MIMETYPE = "video/youtube"
+        const val SOUND_CLOUD_MIME_TYPE = "audio/sound.cloud"
+    }
 }
 
 fun checkMediaFileDimensionRatioMatch(dimension: Dimension, aspectRatio: Dimension): Boolean {

@@ -3,6 +3,7 @@ package com.storyteller_f.a.app.compose_app.pages.topic
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -14,15 +15,18 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
+import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.StateView
@@ -31,14 +35,12 @@ import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.*
 import com.storyteller_f.a.app.compose_app.model.OnMediaUploaded
 import com.storyteller_f.a.app.compose_app.model.createMediaListViewModel
-import com.storyteller_f.a.app.compose_app.model.createReactionsViewModel
 import com.storyteller_f.a.app.compose_app.utils.Recorder
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.formatTime
 import com.storyteller_f.shared.utils.mapIfNotNull
 import io.github.aakira.napier.Napier
@@ -54,7 +56,7 @@ import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MediaPicker(
+fun FilePicker(
     showSheet: Boolean,
     sheetState: SheetState,
     mediaTarget: ObjectTuple,
@@ -94,7 +96,7 @@ fun MediaPicker(
         }
         HorizontalPager(pagerState, modifier = Modifier.height(300.dp)) {
             if (tabs[it].second == "files") {
-                MediaListView(mediaTarget, onClickItems)
+                FileListView(mediaTarget, onClickItems)
             } else {
                 AudioRecorder(mediaTarget, onClickItems)
             }
@@ -123,7 +125,7 @@ fun AudioRecorder(
                         Permission.Audio
                     )
                 }, modifier = Modifier.align(Alignment.Center)) {
-                    Text(("Provide permission"))
+                    Text("Provide permission")
                 }
             }
         }
@@ -178,7 +180,7 @@ private fun BoxScope.RecorderButton(
 }
 
 @Composable
-private fun MediaListView(
+private fun FileListView(
     mediaTarget: ObjectTuple,
     clickItem: (List<FileInfo>) -> Unit,
 ) {
@@ -206,7 +208,7 @@ private fun MediaListView(
                     it.id
                 }) {
                     val item = pagingItems[it]
-                    MediaCell(item, clickItem)
+                    FileCell(item, clickItem)
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }
@@ -218,38 +220,60 @@ private fun MediaListView(
 
 @OptIn(ExperimentalTime::class)
 @Composable
-private fun MediaCell(
-    item: com.storyteller_f.shared.model.FileInfo?,
-    clickItem: (kotlin.collections.List<com.storyteller_f.shared.model.FileInfo>) -> kotlin.Unit
+private fun FileCell(
+    fileInfo: FileInfo?,
+    clickItem: (kotlin.collections.List<FileInfo>) -> Unit
 ) {
-    if (item != null) {
-        Row(modifier = Modifier.fillMaxWidth().clickable {
-            clickItem(listOf(item))
+    if (fileInfo != null) {
+        var expanded by remember { mutableStateOf(false) }
+
+        Row(modifier = Modifier.fillMaxWidth().combinedClickable(onLongClick = {
+            expanded = true
         }) {
-            FileIcon(item)
+            clickItem(listOf(fileInfo))
+        }) {
+            FileIcon(fileInfo)
             Spacer(modifier = Modifier.width(20.dp))
             Column {
-                Text(item.name, style = MaterialTheme.typography.labelMedium)
+                Text(fileInfo.name, style = MaterialTheme.typography.labelMedium)
                 Spacer(modifier = Modifier.height(10.dp))
                 Row {
                     Text(
-                        item.lastModified.formatTime(),
+                        fileInfo.lastModified.formatTime(),
                         style = MaterialTheme.typography.labelSmall
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        HumanReadable.fileSize(item.size),
+                        HumanReadable.fileSize(fileInfo.size),
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
                 Spacer(modifier = Modifier.height(5.dp))
-                item.dimension?.let {
+                fileInfo.dimension?.let {
                     Text(
                         "w${it.width}·h${it.height}",
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
             }
+        }
+        val appNav = LocalAppNav.current
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+            }
+        ) {
+            DropdownMenuItem(
+                leadingIcon = {
+                    CustomIcon(IconRes.Vector(Icons.Default.Fullscreen))
+                },
+                text = { Text("View") },
+                onClick = {
+                    expanded = false
+                    appNav.gotoMedia(fileInfo)
+                }
+            )
         }
     }
 }
@@ -368,37 +392,5 @@ fun insertContent(
 }
 ```"""
         )
-    }
-}
-
-@Composable
-fun ReactionListPage(topicId: PrimaryKey) {
-    val viewModel = createReactionsViewModel(topicId)
-    Scaffold { paddingValues ->
-        StateView(
-            viewModel,
-            modifier = Modifier.padding(paddingValues)
-        ) { pagingItems ->
-            LazyColumn(
-                contentPadding = PaddingValues(20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(pagingItems.itemSnapshotList.size, pagingItems.itemKey {
-                    it.emoji
-                }) {
-                    val info = pagingItems[it]
-                    if (info != null) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(info.emoji, fontSize = 25.sp)
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(info.count.toString())
-                        }
-                    }
-                }
-            }
-        }
     }
 }

@@ -227,7 +227,7 @@ private fun Application.buildBackend(): Backend {
 }
 
 private fun buildDatabaseReader() = DatabaseReader.Builder(
-    ClassLoader.getSystemClassLoader().getResourceAsStream("GeoLite2-Country.mmdb")
+    ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb")
 ).build()
 
 private fun buildLog(

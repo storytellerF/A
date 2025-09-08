@@ -16,12 +16,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.storage.*
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.utils.io.*
-import io.ktor.utils.io.core.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -303,7 +297,7 @@ private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
         it.copy(
             content = TopicContent.Extracted(
                 extractMarkdownHeadline(content.plain),
-                content.list,
+                content.fileInfos,
                 content.plain
             )
         )

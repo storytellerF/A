@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.pages.media
+package com.storyteller_f.a.app.compose_app.pages.file
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,45 +17,40 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.panpf.zoomimage.CoilZoomAsyncImage
+import com.storyteller_f.a.app.compose_app.FileViewInfo
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
-import com.storyteller_f.a.app.compose_app.MultiMediaInfo
 import com.storyteller_f.a.app.compose_app.compontents.AudioView
 import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
 import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
 import com.storyteller_f.a.app.compose_app.compontents.CenterBox
+import com.storyteller_f.a.app.compose_app.compontents.PdfView
 import com.storyteller_f.a.app.compose_app.compontents.VideoView
 import com.storyteller_f.a.app.compose_app.compontents.globalLoader
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.client.core.copy
+import com.storyteller_f.shared.model.FileInfo
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MediaPage(session: MultiMediaInfo) {
+fun FileViewPage(session: FileViewInfo) {
     when (session) {
-        is MultiMediaInfo.Image -> {
-            Box {
-                var showSheet by remember {
-                    mutableStateOf(false)
+        is FileViewInfo.Regular -> {
+            when {
+                session.fileInfo.contentType.startsWith("image") -> {
+                    ZoomImage(session)
                 }
-                val sheetState = rememberModalBottomSheetState()
-                CoilZoomAsyncImage(
-                    model = globalLoader(session.fileInfo.url),
-                    contentDescription = "view image",
-                    modifier = Modifier.fillMaxSize(),
-                    onLongPress = {
-                        showSheet = true
+                session.fileInfo.contentType == FileInfo.PDF_CONTENT_TYPE -> {
+                    Column {
+                        PdfView(session.fileInfo.url)
                     }
-                )
-                ImageSheet(session, showSheet, sheetState) {
-                    showSheet = false
                 }
             }
         }
 
-        is MultiMediaInfo.Player -> {
+        is FileViewInfo.Player -> {
             CenterBox {
                 val remoteMediaItem = session.obj
                 if (remoteMediaItem.contentType.startsWith("video")) {
@@ -66,7 +61,7 @@ fun MediaPage(session: MultiMediaInfo) {
             }
         }
 
-        is MultiMediaInfo.LocalImage -> {
+        is FileViewInfo.LocalImage -> {
             Box {
                 CoilZoomAsyncImage(
                     model = session.url,
@@ -78,10 +73,32 @@ fun MediaPage(session: MultiMediaInfo) {
     }
 }
 
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun ZoomImage(session: FileViewInfo.Regular) {
+    Box {
+        var showSheet by remember {
+            mutableStateOf(false)
+        }
+        val sheetState = rememberModalBottomSheetState()
+        CoilZoomAsyncImage(
+            model = globalLoader(session.fileInfo.url),
+            contentDescription = "view image",
+            modifier = Modifier.fillMaxSize(),
+            onLongPress = {
+                showSheet = true
+            }
+        )
+        ImageSheet(session, showSheet, sheetState) {
+            showSheet = false
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImageSheet(
-    session: MultiMediaInfo.Image,
+    session: FileViewInfo.Regular,
     showSheet: Boolean,
     sheetState: SheetState,
     hideSheet: () -> Unit,

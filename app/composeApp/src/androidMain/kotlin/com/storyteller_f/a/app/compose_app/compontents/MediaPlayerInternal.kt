@@ -38,12 +38,13 @@ import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
+import com.storyteller_f.a.app.compose_app.FileViewInfo
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.MediaProvider
-import com.storyteller_f.a.app.compose_app.MultiMediaInfo
 import com.storyteller_f.a.app.compose_app.Toast
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.log
@@ -73,7 +74,7 @@ fun MediaPlayerInternal(
     id: String,
     isEmbed: Boolean,
     contentType: String,
-    block: @Composable (MediaController, MultiMediaInfo.Player?, LocalMediaPlaySession) -> Unit
+    block: @Composable (MediaController, FileViewInfo.Player?, LocalMediaPlaySession) -> Unit
 ) {
     val uuid = rememberSaveable {
         Uuid.random()
@@ -113,11 +114,11 @@ fun MediaPlayerInternal(
 @Composable
 fun MediaPlayerContainer(
     isEmbed: Boolean,
-    playingSession: MultiMediaInfo.Player?,
+    playingSession: FileViewInfo.Player?,
     player: MediaController,
     currentSession: LocalMediaPlaySession,
     contentType: String,
-    block: @Composable (MediaController, MultiMediaInfo.Player?, LocalMediaPlaySession) -> Unit
+    block: @Composable (MediaController, FileViewInfo.Player?, LocalMediaPlaySession) -> Unit
 ) {
     var showSheet by remember {
         mutableStateOf(false)
@@ -179,7 +180,7 @@ fun BoxScope.PlayerWaiting(
     }, modifier = Modifier.Companion.align(Alignment.Center)) {
         Icon(Icons.Default.PlayArrow, "play")
     }
-    if (obj.contentType == M3U8_MIMETYPE || obj.contentType == YOUTUBE_MIMETYPE) {
+    if (obj.contentType == FileInfo.M3U8_MIMETYPE || obj.contentType == FileInfo.YOUTUBE_MIMETYPE) {
         Text(
             obj.title ?: obj.url,
             modifier = Modifier
@@ -209,12 +210,12 @@ private suspend fun startPlay(
     val contentType = obj.contentType
     globalDialogController.useResult {
         val playList = when (contentType) {
-            M3U8_MIMETYPE -> parseM3UPlayList(obj, client)
-            YOUTUBE_MIMETYPE, SOUND_CLOUD_MIME_TYPE -> getPlaylistFromNewPipe(obj, context)
+            FileInfo.M3U8_MIMETYPE -> parseM3UPlayList(obj, client)
+            FileInfo.YOUTUBE_MIMETYPE, FileInfo.SOUND_CLOUD_MIME_TYPE -> getPlaylistFromNewPipe(obj, context)
             else -> listOf(ConstPlayItem(obj.url, title = obj.url))
         }
         if (playList.isNotEmpty()) {
-            val newSession = MultiMediaInfo.Player(
+            val newSession = FileViewInfo.Player(
                 obj,
                 contentType,
                 playList,
@@ -234,8 +235,8 @@ private suspend fun startPlay(
 suspend fun getPlaylistFromNewPipe(obj: RemoteMediaItem, context: Context): List<ConstPlayItem> {
     val s = NewPipe.getServiceByUrl(obj.url)
     val name = when (obj.contentType) {
-        YOUTUBE_MIMETYPE -> "YouTube"
-        SOUND_CLOUD_MIME_TYPE -> "SoundCloud"
+        FileInfo.YOUTUBE_MIMETYPE -> "YouTube"
+        FileInfo.SOUND_CLOUD_MIME_TYPE -> "SoundCloud"
         else -> null
     } ?: return emptyList()
     if (s.serviceInfo.name != name) {
@@ -391,7 +392,7 @@ private fun MediaController.playNewMedia(
                     .build()
             )
             .apply {
-                if (contentType == M3U8_MIMETYPE && !uri.endsWith(".m3u8")) {
+                if (contentType == FileInfo.M3U8_MIMETYPE && !uri.endsWith(".m3u8")) {
                     setMimeType(MimeTypes.APPLICATION_M3U8)
                 }
             }.build()

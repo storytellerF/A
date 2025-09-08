@@ -27,6 +27,7 @@ dependencies {
     implementation(libs.bcpkix.jdk18on)
     implementation(projects.shared)
     implementation(projects.api)
+    implementation(projects.cloud.openpdf)
     implementation(libs.route4k.common)
     implementation(libs.route4k.ktor.server)
     implementation(projects.backend.core)
@@ -56,6 +57,7 @@ dependencies {
     testImplementation(libs.testcontainers.mysql)
     testImplementation(libs.sql.formatter)
     testImplementation(libs.javacv.platform)
+    testImplementation(projects.cloud.pdfbox)
 }
 
 tasks.withType<JavaExec> {

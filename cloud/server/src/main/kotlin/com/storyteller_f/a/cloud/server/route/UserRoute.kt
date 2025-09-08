@@ -34,7 +34,7 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
     CustomApi.Users.Devices.add.invoke(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
             val newDevice = api.receiveBody()
-            addDevice(backend, uid, newDevice)
+            backend.addDevice(uid, newDevice)
         }
     }
 }
