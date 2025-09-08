@@ -42,7 +42,7 @@ class UserTest {
     @Test
     fun `test update user avatar`() = test {
         attachSession {
-            val stream = ClassLoader.getSystemClassLoader().getResourceAsStream("avatar1.png")!!
+            val stream = ClassLoader.getSystemResourceAsStream("avatar1.png")!!
             val bytes = stream.readBytes()
             val info =
                 upload(

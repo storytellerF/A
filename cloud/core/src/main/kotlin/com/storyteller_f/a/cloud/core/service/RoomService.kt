@@ -5,6 +5,7 @@ import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
@@ -235,7 +236,7 @@ suspend fun Backend.searchRoomPaginationResult(
     val word = query.word
     val search = query.joinStatus.toJoinSearch(uid)
     val community = query.community
-    return if (word.isNullOrBlank()) {
+    return if (word.isNullOrBlank() || search !is JoinSearch.Unspecified) {
         combinedDatabase.roomDatabase.getRoomPaginationResult(
             uid,
             word,

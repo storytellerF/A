@@ -10,7 +10,7 @@ class NameService {
     private val countList = mutableListOf<Int>()
 
     init {
-        this::class.java.classLoader.getResourceAsStream("charset")!!.bufferedReader().use { reader ->
+        ClassLoader.getSystemResourceAsStream("charset")!!.bufferedReader().use { reader ->
             reader.readText().split("\n").filter { element ->
                 !element.startsWith("//")
             }.map {

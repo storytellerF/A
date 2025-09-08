@@ -2,39 +2,50 @@ package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.backend.core.*
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.ReactionFetch
+import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.UploadPack
+import com.storyteller_f.a.backend.core.fixedSort
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.toTopicInfo
-import com.storyteller_f.a.backend.service.*
+import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.backend.service.search.TopicDocument
 import com.storyteller_f.a.backend.service.search.TopicDocumentSearch
-import com.storyteller_f.shared.model.*
+import com.storyteller_f.a.cloud.core.pdf.PdfService
+import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
+import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicPinSearch
+import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.*
+import com.storyteller_f.shared.utils.UNIT_RESULT
+import com.storyteller_f.shared.utils.checkContent
+import com.storyteller_f.shared.utils.extractMarkdownMediaLink
+import com.storyteller_f.shared.utils.groupByPair
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.toImmutableList
-import org.apache.pdfbox.examples.signature.CreateSignature
-import org.apache.pdfbox.pdmodel.PDDocument
-import org.apache.pdfbox.pdmodel.font.FontMappers
-import org.apache.pdfbox.pdmodel.font.PDType0Font
-import rst.pdfbox.layout.elements.Document
-import rst.pdfbox.layout.elements.Paragraph
-import java.awt.GraphicsEnvironment
 import java.io.File
-import java.io.FileInputStream
-import java.security.KeyStore
-import kotlin.collections.map
-import kotlin.collections.sumOf
+import java.util.ServiceLoader
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 suspend fun Backend.createPlainTopic(
     uid: PrimaryKey,
@@ -243,13 +254,17 @@ suspend fun Backend.createTopicSnapshot(
             combinedDatabase.topicDatabase.getTopicInfo(
                 ObjectFetch.IdFetch(topicId),
                 null
-            ).mapResultIfNotNull { value ->
-                getUserInfo(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { userInfo ->
-                    createTopicSnapshot(value, userInfo, uid)
-                }
-            }
+            )
         } else {
             Result.failure(ForbiddenException("Permission denied"))
+        }
+    }.mapResultIfNotNull {
+        processTopicAfterGet(listOf(it), uid, false).map { list ->
+            list?.firstOrNull()
+        }
+    }.mapResultIfNotNull { topicInfo ->
+        getUserInfo(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { userInfo ->
+            createTopicSnapshot(topicInfo, userInfo, uid)
         }
     }
 }
@@ -260,12 +275,12 @@ private suspend fun Backend.createTopicSnapshot(
     uid: PrimaryKey,
 ): Result<FileInfo?> {
     val topicId = topicInfo.id
+    val name = "$uid/$topicId.pdf"
+    val pdfFile = File("/tmp/$name")
+    val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
     return getUserInfo(
         ObjectFetch.IdFetch(topicInfo.author)
     ).mapResultIfNotNull { userInfo ->
-        val name = "$uid/$topicId.pdf"
-        val pdfFile = File("/tmp/$name")
-        val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
         try {
             generateSignedSnapshot(
                 userInfo,
@@ -274,26 +289,26 @@ private suspend fun Backend.createTopicSnapshot(
                 customConfig.snapshotKeyStore?.let {
                     SnapshotVerify.KeyStoreVerify(it.path, it.pass, pdfFile, signedFile)
                 } ?: SnapshotVerify.NoneVerify(pdfFile)
-            ).mapResultIfNotNull {
-                tryUploadFiles(
-                    uid,
-                    ObjectType.USER,
-                    listOf(
-                        UploadPack(
-                            pdfFile,
-                            "$topicId.pdf",
-                            pdfFile.length(),
-                            "$uid/$topicId.pdf"
-                        )
-                    )
-                ).map {
-                    it.firstOrNull()
-                }
-            }
+            )
         } finally {
             pdfFile.delete()
             signedFile.delete()
         }
+    }.mapResultIfNotNull {
+        tryUploadFiles(
+            uid,
+            ObjectType.USER,
+            listOf(
+                UploadPack(
+                    pdfFile,
+                    "$topicId.pdf",
+                    pdfFile.length(),
+                    "$uid/$topicId.pdf"
+                )
+            )
+        )
+    }.mapIfNotNull {
+        it.firstOrNull()
     }
 }
 
@@ -308,7 +323,8 @@ sealed class SnapshotVerify(open val path: File) {
     class NoneVerify(override val path: File) : SnapshotVerify(path)
 }
 
-fun generateSignedSnapshot(
+@OptIn(ExperimentalUuidApi::class)
+suspend fun Backend.generateSignedSnapshot(
     authorInfo: UserInfo,
     creatorInfo: UserInfo,
     topicInfo: TopicInfo,
@@ -322,74 +338,39 @@ fun generateSignedSnapshot(
     val parent = saveToFile.parentFile
     if (parent == null) return Result.success(null)
     if (!parent.exists() && !parent.mkdirs()) return Result.failure(Exception("failed"))
-    return runCatching {
-        generateSnapshot(authorInfo, creatorInfo, topicInfo, saveToFile, content.plain)
-    }.map {
-        when (snapshotVerify) {
-            is SnapshotVerify.KeyStoreVerify -> {
-                val password = snapshotVerify.password
-                val store = KeyStore.getInstance("PKCS12").apply {
-                    load(FileInputStream(snapshotVerify.keyStorePath), password.toCharArray())
+    val plainContent = content.plain
+    val map = mutableMapOf<String, File>()
+    val userHome = System.getProperty("user.home")
+    val pdfService =
+        ServiceLoader.load(PdfService::class.java).firstOrNull() ?: return Result.failure(
+            Exception("not register pdf service")
+        )
+    return try {
+        content.fileInfos.forEach {
+            val targetFile = File(userHome, "a-temp/${Uuid.random()}")
+            map.put(it.name, targetFile)
+            objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, it.fullName).getOrThrow()
+                .buffered().use { input ->
+                    targetFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
                 }
-                CreateSignature(store, password.toCharArray())
-                    .signDetached(saveToFile, snapshotVerify.signedFile, "https://freetsa.org/tsr")
-            }
-
-            is SnapshotVerify.NoneVerify -> Unit
+        }
+        pdfService.generateSignedSnapshot(
+            creatorInfo,
+            authorInfo,
+            plainContent,
+            topicInfo,
+            map,
+            snapshotVerify
+        )
+    } catch (e: Exception) {
+        Result.failure(e)
+    } finally {
+        map.forEach {
+            it.value.delete()
         }
     }
-}
-
-private fun generateSnapshot(
-    authorInfo: UserInfo,
-    creatorInfo: UserInfo,
-    topicInfo: TopicInfo,
-    saveToFile: File,
-    content: String,
-) {
-    Document().apply {
-        val font = loadSystemFont(pdDocument, content)
-        add(Paragraph().apply {
-            addText(
-                "pub by ${if (authorInfo.aid == null) authorInfo.address else authorInfo.aid}",
-                14f,
-                font
-            )
-        })
-        add(Paragraph().apply {
-            addText("pub at ${topicInfo.createdTime}", 14f, font)
-        })
-        add(Paragraph().apply {
-            addText(
-                "capture by ${if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid}",
-                14f,
-                font
-            )
-        })
-        add(Paragraph().apply {
-            addText("capture at ${now()}", 14f, font)
-        })
-        add(Paragraph().apply {
-            addText(content, 14f, font)
-        })
-        save(saveToFile)
-    }
-}
-
-private fun loadSystemFont(
-    document: PDDocument,
-    content: String,
-): PDType0Font? {
-    val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
-    val font = graphicsEnvironment.allFonts.firstOrNull {
-        it.canDisplayUpTo(content) == -1
-    }
-    // 使用 PDFBox 加载字体
-    return PDType0Font.load(
-        document,
-        FontMappers.instance().getTrueTypeFont(font?.name, null).font,
-        true
-    )
 }
 
 suspend fun Backend.getTopic(
@@ -609,7 +590,7 @@ suspend fun Backend.processTopicFileObject(
                 val list = fileMap[info.id]?.mapNotNull {
                     mediaInfoMap[it]
                 }.orEmpty()
-                info.copy(content = content.copy(list = list))
+                info.copy(content = content.copy(fileInfos = list))
             } else {
                 info
             }

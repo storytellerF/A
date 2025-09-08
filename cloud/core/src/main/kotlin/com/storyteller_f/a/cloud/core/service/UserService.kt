@@ -244,12 +244,11 @@ suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: 
     }
 }
 
-suspend fun addDevice(
-    backend: Backend,
+suspend fun Backend.addDevice(
     uid: PrimaryKey,
     newDevice: NewDevice
 ): Result<Unit> =
-    backend.combinedDatabase.userDatabase.addDevice(uid, newDevice.endpointUrl).recoverResult {
+    combinedDatabase.userDatabase.addDevice(uid, newDevice.endpointUrl).recoverResult {
         if (it.isDup()) {
             UNIT_RESULT
         } else {

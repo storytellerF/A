@@ -53,6 +53,8 @@ include(":cloud:server")
 include(":cloud:cli")
 include(":cloud:worker")
 include(":cloud:core")
+include(":cloud:pdfbox")
+include(":cloud:openpdf")
 
 include(":backend:service")
 include(":backend:exposed")

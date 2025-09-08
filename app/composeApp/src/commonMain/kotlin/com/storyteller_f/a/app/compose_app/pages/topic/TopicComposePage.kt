@@ -125,7 +125,7 @@ private fun TopicComposeScaffold(
         }
     }
     val sheetState = rememberModalBottomSheetState()
-    MediaPicker(showSheet, sheetState, mediaTarget, onClickItems = { info ->
+    FilePicker(showSheet, sheetState, mediaTarget, onClickItems = { info ->
         insertContent(info.first(), {
             input = it
         }, input)

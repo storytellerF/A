@@ -79,7 +79,7 @@ fun readResourceEnv(resName: String): Map<String, String>? {
     Napier.i {
         "read env from resource: $resName"
     }
-    return ClassLoader.getSystemClassLoader().getResourceAsStream(resName)?.use {
+    return ClassLoader.getSystemResourceAsStream(resName)?.use {
         Properties().apply {
             load(it)
         }

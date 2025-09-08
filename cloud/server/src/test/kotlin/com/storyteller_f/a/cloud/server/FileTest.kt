@@ -64,7 +64,7 @@ class MediaTest {
     fun `get png size`() {
         runTest {
             val dimension = getImageDimension("avatar1.png", "image/png") {
-                ClassLoader.getSystemClassLoader().getResourceAsStream("avatar1.png")!!
+                ClassLoader.getSystemResourceAsStream("avatar1.png")!!
             }
             assertNotNull(dimension)
             assertEquals(dimension.width, 420)
@@ -74,7 +74,7 @@ class MediaTest {
 
     @Test
     fun `extract audio album`() {
-        ClassLoader.getSystemClassLoader().getResourceAsStream("I_Do_not_Wanna_Live_Forever.flac")
+        ClassLoader.getSystemResourceAsStream("I_Do_not_Wanna_Live_Forever.flac")
             ?.use {
                 it.readFlacAlbumFromAudioStream { image, mimeType ->
                     val name = "build/test/cover.${getExtensionFromMimeType(mimeType)}"
@@ -83,7 +83,7 @@ class MediaTest {
                     }
                 }
             } ?: throw Exception("flac is not exists")
-        ClassLoader.getSystemClassLoader().getResourceAsStream("cover.jpg")?.use {
+        ClassLoader.getSystemResourceAsStream("cover.jpg")?.use {
             Files.copy(it, Path("build/test/cover_origin.jpg"), StandardCopyOption.REPLACE_EXISTING)
         } ?: throw Exception("cover is not exists")
         val img1 = opencv_imgcodecs.imread("build/test/cover.jpg")
@@ -109,7 +109,7 @@ class MediaTest {
         attachSession {
             val name = "I_Do_not_Wanna_Live_Forever.flac"
             val inputStream =
-                ClassLoader.getSystemClassLoader().getResourceAsStream(name)!!
+                ClassLoader.getSystemResourceAsStream(name)!!
             val bytes = inputStream.readBytes()
             val response = upload(
                 ObjectTuple(it.uid, ObjectType.USER),

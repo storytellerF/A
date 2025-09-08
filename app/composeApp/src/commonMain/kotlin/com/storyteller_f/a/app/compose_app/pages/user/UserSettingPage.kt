@@ -19,7 +19,7 @@ import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.compontents.*
 import com.storyteller_f.a.app.compose_app.model.OnUserUpdated
-import com.storyteller_f.a.app.compose_app.pages.topic.MediaPicker
+import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.uploadPath
 import com.storyteller_f.a.app.compose_app.utils.ImageFormat
 import com.storyteller_f.a.app.compose_app.utils.androidAllowHardware
@@ -127,7 +127,7 @@ fun ObjectSettingDialog(
     val mediaTarget = ObjectTuple(my?.id ?: 0, ObjectType.USER)
     val globalDialogController = LocalGlobalDialog.current
     val alertDialogController = rememberAlertDialogController()
-    MediaPicker(
+    FilePicker(
         currentOption is SettingOption.Icon || currentOption is SettingOption.Poster,
         sheetState,
         mediaTarget,

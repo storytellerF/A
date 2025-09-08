@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.server
 
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.service.object_storage.loadAvif
 import com.storyteller_f.a.backend.service.readResourceEnv
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.SessionManager
@@ -49,9 +50,10 @@ fun test(
     Napier.base(kmpLogger)
     SnowflakeFactory.setMachine(0)
     loadCryptoLibIfNeed()
-    startMemoryTest(overrideEnv, block)
-//    startTestContainerTest(true, block)
+    loadAvif()
+    startMemoryTest(overrideEnv + mapOf("SERVER_URL" to "http://localhost"), block)
     if (System.getenv("ENABLE_TEST_CONTAINER") == "true") {
+//        startTestContainerTest(true, block)
         startTestContainerTest(false, block)
     }
     Napier.i {
@@ -181,7 +183,8 @@ private suspend fun receiveExplainResult(
                 yield()
                 serverSocket.accept().use { socket ->
                     socket.getInputStream().bufferedReader().use {
-                        val explainResult = commonJson.decodeFromString<ExplainResult>(it.readText())
+                        val explainResult =
+                            commonJson.decodeFromString<ExplainResult>(it.readText())
                         saveDatabaseExplainResult(explainResult)
                     }
                 }

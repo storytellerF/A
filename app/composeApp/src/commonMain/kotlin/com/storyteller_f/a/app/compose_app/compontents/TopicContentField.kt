@@ -32,7 +32,7 @@ fun TopicContentField(
 ) {
     when (val content = topicInfo.content) {
         is TopicContent.Plain -> {
-            TopicContentFieldInternal(content.list.toImmutableList(), content.plain, isEmbed)
+            TopicContentFieldInternal(content.fileInfos.toImmutableList(), content.plain, isEmbed)
         }
 
         is TopicContent.Extracted -> {

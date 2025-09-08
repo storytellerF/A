@@ -36,20 +36,27 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.ObjectType
+import io.ktor.client.call.body
+import io.ktor.client.plugins.onDownload
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
+import io.ktor.client.request.get
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFileExtension
+import io.ktor.utils.io.streams.asInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.io.Buffer
 import kotlinx.io.writeString
 import org.junit.jupiter.api.assertNotNull
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Suppress("LongMethod")
 class TopicTest {
@@ -121,13 +128,46 @@ class TopicTest {
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     @Test
     fun `test topic snapshot`() {
         test {
             attachSession {
-                val newId = createCommunity(NewCommunity("name", "aid")).getOrThrow().id
-                val topicInfo = createTopic(ObjectType.COMMUNITY, newId, "hello").getOrThrow()
-                getTopicSnapshot(topicInfo.id)
+                val bytes =
+                    ClassLoader.getSystemResourceAsStream("avatar1.png")!!.buffered().readBytes()
+                val tmpFile = File("build/test/tmp/avatar1.png")
+                tmpFile.writeBytes(bytes)
+                val size = tmpFile.length()
+                val info = upload(
+                    ObjectTuple(it.uid, ObjectType.USER),
+                    UploadData(
+                        size,
+                        "avatar1.png",
+                        ContentType.defaultForFileExtension("png")
+                    ) {
+                        tmpFile.inputStream().asInput()
+                    }
+                ).getOrThrow().data.first()
+                val communityId = createCommunity(NewCommunity("name", "aid")).getOrThrow().id
+                val topicInfo = createTopic(
+                    ObjectType.COMMUNITY,
+                    communityId,
+                    """hello
+                    |
+                    |![png](${info.name})
+                    """.trimMargin()
+                ).getOrThrow()
+                val fileInfo = getTopicSnapshot(topicInfo.id).getOrThrow()
+                val url = fileInfo.url
+                val file = File("build/test/tmp/${Uuid.random()}.pdf")
+                file.parentFile!!.mkdirs()
+                val httpResponse = client.get(url) {
+                    onDownload { bytesSentTotal, contentLength ->
+                        println("Received $bytesSentTotal bytes from $contentLength")
+                    }
+                }
+                val responseBody: ByteArray = httpResponse.body()
+                file.writeBytes(responseBody)
             }
         }
     }
@@ -198,31 +238,31 @@ class TopicTest {
     fun `test file in user topic`() {
         test {
             attachSession {
-                val media = upload(
+                val string = "hello"
+                val fileInfo = upload(
                     ObjectTuple(it.uid, ObjectType.USER),
                     UploadData(
-                        5,
+                        string.length.toLong(),
                         "hello.txt",
                         ContentType.defaultForFileExtension("txt")
                     ) {
                         Buffer().apply {
-                            writeString("hello")
+                            writeString(string)
                         }
                     }
-                )
-                    .getOrThrow().data.first()
+                ).getOrThrow().data.first()
                 val info =
                     createTopic(
                         ObjectType.USER,
                         it.uid,
-                        "![hello.txt](${media.name})"
+                        "![hello.txt](${fileInfo.name})"
                     ).getOrThrow()
                 val plain = info.content as TopicContent.Plain
-                assertEquals(media.fullName, plain.list.first().fullName)
+                assertEquals(fileInfo.fullName, plain.fileInfos.first().fullName)
                 val topicInfo = getTopicInfo(info.id).getOrThrow()
                 assertEquals(
-                    media.fullName,
-                    (topicInfo.content as TopicContent.Plain).list.first().fullName
+                    fileInfo.fullName,
+                    (topicInfo.content as TopicContent.Plain).fileInfos.first().fullName
                 )
             }
         }

@@ -33,7 +33,7 @@ import com.storyteller_f.a.app.compose_app.model.createRoomTopicsViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
-import com.storyteller_f.a.app.compose_app.pages.topic.MediaPicker
+import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.insertContent
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.SessionManager
@@ -515,7 +515,7 @@ private fun InputGroupSuffix(
         })
     }
     val sheetState = rememberModalBottomSheetState()
-    MediaPicker(
+    FilePicker(
         showSheet,
         sheetState,
         mediaTarget,

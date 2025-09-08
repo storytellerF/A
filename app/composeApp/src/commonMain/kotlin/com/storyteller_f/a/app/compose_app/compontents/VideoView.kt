@@ -14,20 +14,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.compose_app.MultiMediaInfo
+import com.storyteller_f.a.app.compose_app.FileViewInfo
 import com.storyteller_f.shared.model.FileInfo
 import kotlinx.serialization.Serializable
 
-const val M3U8_MIMETYPE = "application/vnd.apple.mpegurl"
-const val YOUTUBE_MIMETYPE = "video/youtube"
-const val SOUND_CLOUD_MIME_TYPE = "audio/sound.cloud"
-
-val globalPlayerState: MutableState<MultiMediaInfo.Player?> =
+val globalPlayerState: MutableState<FileViewInfo.Player?> =
     mutableStateOf(null)
 
 val currentPlayerState get() = globalPlayerState.value
 
-fun setCurrentPlayerState(player: MultiMediaInfo.Player?) {
+fun setCurrentPlayerState(player: FileViewInfo.Player?) {
     globalPlayerState.value = player
 }
 

@@ -3,6 +3,7 @@ package com.storyteller_f.a.cloud.core.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
@@ -105,19 +106,23 @@ suspend fun Backend.searchCommunities(
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<CommunityInfo>?> {
     val word = search.word
-    return if (word.isNullOrBlank()) {
+    val joinSearch = if (search.target != null) {
+        JoinStatusSearch.JOINED.toJoinSearch(search.target)
+    } else {
+        search.joinStatus.toJoinSearch(uid)
+    }
+    return if (word.isNullOrBlank() || joinSearch !is JoinSearch.Unspecified) {
         combinedDatabase.communityDatabase.getCommunityPaginationResult(
             word,
             search.hasPoster,
             primaryKeyFetch,
-            (if (search.target != null) {
-                JoinStatusSearch.JOINED.toJoinSearch(search.target)
-            } else {
-                search.joinStatus.toJoinSearch(uid)
-            })
+            joinSearch
         )
     } else {
-        communitySearchService.searchDocument(CommunityDocumentSearch.Keyword(listOf(word)), primaryKeyFetch)
+        communitySearchService.searchDocument(
+            CommunityDocumentSearch.Keyword(listOf(word)),
+            primaryKeyFetch
+        )
             .mapResult { (list, total) ->
                 combinedDatabase.communityDatabase.getRawCommunities(
                     ObjectListFetch.IdListFetch(

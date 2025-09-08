@@ -424,7 +424,7 @@ afterEvaluate {
 
 aboutLibraries {
     // Allow to enable "offline mode", will disable any network check of the plugin (including [fetchRemoteLicense] or pulling spdx license texts)
-    offlineMode = false
+    offlineMode = true
 
     collect {
         // Define the path configuration files are located in. E.g. additional libraries, licenses to add to the target .json

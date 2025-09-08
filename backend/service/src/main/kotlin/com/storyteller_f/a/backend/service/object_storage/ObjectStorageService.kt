@@ -39,7 +39,14 @@ fun loadAvif() {
     val osName = System.getProperty("os.name")
     when {
         osName.contains("mac", true) -> System.setProperty("jna.library.path", "/opt/homebrew/lib")
-        osName.contains("win", true) -> System.setProperty("jna.library.path", "C:\\msys64\\ucrt64\\bin")
+        osName.contains("win", true) -> {
+//            val vcpkgRoot = System.getenv("VCPKG_ROOT")
+//            if (vcpkgRoot.isNullOrBlank()) {
+            System.setProperty("jna.library.path", "C:\\msys64\\ucrt64\\bin")
+//            } else {
+//                System.setProperty("jna.library.path", "${vcpkgRoot}\\packages\\libavif_x64-windows\\bin")
+//            }
+        }
         else -> System.setProperty("jna.library.path", "/usr/local/lib")
     }
 }

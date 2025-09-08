@@ -64,9 +64,8 @@ fun main() {
             }
         }) { r, t ->
         }
-    val classLoader = ClassLoader.getSystemClassLoader()
-    val commentPrompt = readResource(classLoader, "comment.prompt")
-    val newsPrompt = readResource(classLoader, "news.prompt")
+    val commentPrompt = readResource("comment.prompt")
+    val newsPrompt = readResource("news.prompt")
     val client = Client()
     runBlocking {
         val job = launch {
@@ -148,8 +147,8 @@ private suspend fun CoroutineScope.loop(duration: Duration, block: suspend () ->
     }
 }
 
-private fun readResource(classLoader: ClassLoader?, name: String): String =
-    classLoader!!.getResourceAsStream(name)!!.bufferedReader().readText()
+private fun readResource(name: String): String =
+    ClassLoader.getSystemResourceAsStream(name)!!.bufferedReader().readText()
 
 private suspend fun processCommunityTask(
     sessionManager: UserSessionManager,

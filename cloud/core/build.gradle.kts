@@ -1,17 +1,12 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.serialization)
-    application
     alias(libs.plugins.kotlinBuildConfig)
     id("io.sentry.jvm.gradle") version ("5.8.0")
 }
 
 group = "com.storyteller_f.a.cloud"
 version = "1.0.0"
-application {
-    mainClass.set("com.storyteller_f.a.cloud.server.ApplicationKt")
-    applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
-}
 
 kotlin {
     jvmToolchain(21)
@@ -29,17 +24,17 @@ dependencies {
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
     implementation(projects.backend.service)
-    implementation(libs.pdfbox)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.coroutines.core)
 
+    implementation(libs.markdown)
     implementation(libs.geoip2)
     implementation(libs.tika.core)
     implementation(libs.pdfbox.layout)
+    implementation(libs.pdfbox)
+    implementation(libs.openpdf)
 }
-
-
 
 tasks.withType<JavaExec> {
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
@@ -60,28 +55,6 @@ buildConfig {
     buildConfigField<String>("FLAVOR", flavor)
 }
 
-tasks.withType<Tar> {
-    filesMatching("vavi-commons-1.1.10.jar") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
-    }
-}
-
-tasks.withType<Zip> {
-    filesMatching("vavi-commons-1.1.10.jar") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
-    }
-}
-tasks.withType<Tar> {
-    filesMatching("core.jar") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
-    }
-}
-
-tasks.withType<Zip> {
-    filesMatching("core.jar") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
-    }
-}
 sentry {
     org = "acommunity"
     projectName = "kotlin"
