@@ -18,7 +18,6 @@ kotlin {
 dependencies {
     implementation(libs.napier)
     implementation(libs.cryptography.provider.jdk)
-    implementation(libs.bcpkix.jdk18on)
     implementation(projects.shared)
     implementation(projects.api)
     implementation(projects.backend.core)

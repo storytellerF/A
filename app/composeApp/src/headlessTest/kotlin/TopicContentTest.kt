@@ -2,7 +2,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import com.storyteller_f.a.app.compose_app.buildHttpClient
 import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createUserSessionManager
-import com.storyteller_f.a.client.core.start
+import com.storyteller_f.a.client.core.startBackgroundTask
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlin.test.Ignore
@@ -20,7 +20,7 @@ class TopicContentTest : UsingContextTest() {
             val manager = createUserSessionManager(webSocketUrl, { model, cookie ->
                 buildHttpClient(it, cookie, model)
             }, { _, _ -> })
-            manager.start().forEach(Job::cancel)
+            manager.startBackgroundTask().forEach(Job::cancel)
         }
 
     }

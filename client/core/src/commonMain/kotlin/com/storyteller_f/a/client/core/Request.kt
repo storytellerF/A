@@ -433,14 +433,14 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
     } else {
         TopicContent.Plain(input)
     }
-    val message: RoomFrame = RoomFrame.Message(
+    val message = RoomFrame.Message(
         NewRoomTopic(
             parentTarget.objectType,
             parentTarget.objectId,
             content
         )
     )
-    sendSerialized(message)
+    sendFrame(message)
 }
 
 suspend fun SessionManager.userTitles(

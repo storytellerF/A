@@ -16,7 +16,7 @@ import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getTopicList
 import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
-import com.storyteller_f.a.client.core.start
+import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.CommunityInfo
@@ -101,7 +101,7 @@ private suspend fun CoroutineScope.processJob(
     commentPrompt: String,
     newsPrompt: String
 ) {
-    val jobs = sessionManager.start()
+    val jobs = sessionManager.startBackgroundTask()
     val job1 = launch {
         loop(1.minutes) {
             processCommunityTask(sessionManager) { communityInfo ->

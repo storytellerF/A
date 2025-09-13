@@ -11,7 +11,7 @@ import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
-import com.storyteller_f.a.client.core.start
+import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.kmpLogger
@@ -22,6 +22,7 @@ import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.md5
 import io.github.aakira.napier.Napier
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
@@ -29,8 +30,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.MySQLContainer
@@ -140,7 +143,7 @@ private fun startTestContainerTest(
 
 private fun doTest(
     env: Map<String, String>,
-    block: suspend (ApplicationTestBuilder) -> Unit
+    block: suspend ApplicationTestBuilder.() -> Unit
 ) {
     testApplication {
         environment {
@@ -161,10 +164,10 @@ private fun doTest(
                     receiveExplainResult(task, port)
                 }
                 task.await()
-                block(this@testApplication)
+                block()
                 job.cancel()
             } else {
-                block(this@testApplication)
+                block()
             }
         }
     }
@@ -237,12 +240,12 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
     block: suspend SessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
     return coroutineScope {
-        val sessionManager = createUserSessionManager("link", { model, client ->
+        val sessionManager = createUserSessionManager("link", { model, cookiesStorage ->
             createClient {
-                defaultClientConfigure(client, model)
+                defaultClientConfigure(cookiesStorage, model)
             }
         }, onReceive)
-        sessionManager.start {
+        sessionManager.startBackgroundTask {
             val sessionModel = sessionModel
             val priKey = generateECDSAPemPrivateKey().getOrThrow()
             val userInfo = signUpOrInFromPrivateKey(priKey, true) {
@@ -267,7 +270,7 @@ suspend fun <R1, R2> ApplicationTestBuilder.loginSession(
                 defaultClientConfigure(client, model)
             }
         }, onReceive)
-        sessionManager.start {
+        sessionManager.startBackgroundTask {
             val (privateKey) = session
             val sessionModel = sessionModel
             val userInfo = signUpOrInFromPrivateKey(privateKey, false) {
@@ -291,7 +294,7 @@ suspend fun <R2> ApplicationTestBuilder.noneSession(
                 defaultClientConfigure(client, model)
             }
         }) { _, _ -> }
-        sessionManager.start {
+        sessionManager.startBackgroundTask {
             block()
         }
     }
@@ -309,4 +312,16 @@ fun extractTableNames(query: String): List<String> {
     val regex = Regex("(?i)\\bFROM\\s+([a-zA-Z0-9_.]+)|\\bJOIN\\s+([a-zA-Z0-9_.]+)")
     return regex.findAll(query)
         .flatMap { it.groupValues.drop(1).filter { name -> name.isNotEmpty() } }.toList()
+}
+
+suspend fun SessionManager.sendAndWait(block: suspend DefaultClientWebSocketSession.() -> Unit) {
+    while (true) {
+        if (webSocketClient.connectionHandler.data.value != null) {
+            break
+        }
+        withContext(Dispatchers.IO) {
+            delay(100)
+        }
+    }
+    webSocketClient.useWebSocket(block)?.join()
 }

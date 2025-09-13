@@ -64,7 +64,7 @@ import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.processEncryptedTopic
-import com.storyteller_f.a.client.core.start
+import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomDatabase
 import com.storyteller_f.shared.kmpLogger
@@ -309,7 +309,7 @@ class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, 
             }
         }
         scope.launch {
-            manager.manager.start()
+            manager.manager.startBackgroundTask()
         }
     }
 }
@@ -327,7 +327,7 @@ class UIViewModel(viewModelScope: CoroutineScope, wsServerUrl: String, httpUrl: 
     init {
         viewModelScope.launch {
             instance.collectLatest {
-                it.manager.manager.start().forEach { job ->
+                it.manager.manager.startBackgroundTask().forEach { job ->
                     job.join()
                 }
             }

@@ -1,6 +1,7 @@
 package com.storyteller_f.a.client.core
 
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.CustomAnswer
 import com.storyteller_f.shared.obj.CustomOffer
 import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
@@ -33,7 +34,7 @@ class WebSocketClientImpl(
     override val remoteState = MutableSharedFlow<RoomFrame>()
     private val listeners = mutableListOf<WebSocketClientListener>()
 
-    suspend fun start() {
+    suspend fun connectWebSocket() {
         combine(sessionModel.state, sessionModel.userHandler.data) { t1, t2 ->
             t1 to t2
         }.distinctUntilChanged().collect { (state, userInfo) ->
@@ -53,14 +54,17 @@ class WebSocketClientImpl(
         return if (old != null && old.isActive) {
             old.launch {
                 localState.value = LoadingState.Loading
-                try {
+                localState.value = try {
                     old.block()
-                    localState.value = LoadingState.Done
+                    LoadingState.Done
                 } catch (e: Exception) {
-                    localState.value = LoadingState.Error(e)
+                    LoadingState.Error(e)
                 }
             }
         } else {
+            Napier.i {
+                "useWebSocket failed"
+            }
             null
         }
     }
@@ -80,7 +84,7 @@ class WebSocketClientImpl(
         connectionHandler.state.markLoading()
         try {
             val session = buildConnection(userInfo, sig)
-            startListenerWebSocket(session)
+            startListenerWebSocket(session, userInfo)
             connectionHandler.done(session)
             connectionHandler.state.markDone()
         } catch (e: Exception) {
@@ -88,13 +92,13 @@ class WebSocketClientImpl(
         }
     }
 
-    private fun startListenerWebSocket(session: DefaultClientWebSocketSession) {
+    private fun startListenerWebSocket(session: DefaultClientWebSocketSession, userInfo: UserInfo) {
         session.launch {
-            while (session.isActive) {
+            while (isActive) {
                 try {
                     val frame = session.receiveDeserialized<RoomFrame>()
                     Napier.i(tag = "ClientWebSocket") {
-                        "client receive $frame"
+                        "client ${userInfo.id} receive $frame"
                     }
                     onMessage(frame)
                     when (frame) {
@@ -109,11 +113,23 @@ class WebSocketClientImpl(
                         }
 
                         is RoomFrame.CreateOffer -> {
-                            session.sendSerialized(
+                            session.sendFrame(
                                 RoomFrame.SendOffer(
                                     CustomOffer(
                                         "offer",
                                         frame.roomId,
+                                        frame.targetUid
+                                    )
+                                )
+                            )
+                        }
+
+                        is RoomFrame.CreateAnswer -> {
+                            session.sendFrame(
+                                RoomFrame.SendAnswer(
+                                    CustomAnswer(
+                                        "answer",
+                                        frame.offer.roomId,
                                         frame.targetUid
                                     )
                                 )
@@ -129,11 +145,14 @@ class WebSocketClientImpl(
                         }
                     } else {
                         Napier.e(e, tag = "ClientWebSocket") {
-                            "Listener WebSocket failed: ${session.isActive}"
+                            "Listener WebSocket failed"
                         }
                     }
                     break
                 }
+            }
+            Napier.i {
+                "web socket unactive"
             }
             connectionHandler.data.value = null
             connectionHandler.state.value = null
@@ -147,4 +166,8 @@ class WebSocketClientImpl(
     override fun removeListener(listener: WebSocketClientListener) {
         listeners.remove(listener)
     }
+}
+
+suspend fun DefaultClientWebSocketSession.sendFrame(roomFrame: RoomFrame) {
+    sendSerialized(roomFrame)
 }

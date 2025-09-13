@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 context(c: CoroutineScope)
-fun UserSessionManager.start(): List<Job> {
+fun UserSessionManager.startBackgroundTask(): List<Job> {
     return listOf(c.launch {
         val model = sessionModel
         combine(model.state, model.userHandler.data) { t1, t2 ->
@@ -25,13 +25,13 @@ fun UserSessionManager.start(): List<Job> {
             isAlreadySignUp.value = it is ClientSessionState.Success
         }
     }, c.launch {
-        webSocketClient.start()
+        webSocketClient.connectWebSocket()
     })
 }
 
 context(c: CoroutineScope)
-inline fun <R> UserSessionManager.start(block: UserSessionManager.() -> R): R {
-    val jobs = start()
+inline fun <R> UserSessionManager.startBackgroundTask(block: UserSessionManager.() -> R): R {
+    val jobs = startBackgroundTask()
     val result = block()
     jobs.forEach(Job::cancel)
     return result

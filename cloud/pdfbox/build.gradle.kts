@@ -14,6 +14,8 @@ kotlin {
 }
 
 dependencies {
+    implementation(libs.bcpkix.jdk18on)
+    implementation(libs.napier)
     implementation(projects.shared)
     implementation(libs.kotlinx.datetime)
     implementation(projects.cloud.core)
