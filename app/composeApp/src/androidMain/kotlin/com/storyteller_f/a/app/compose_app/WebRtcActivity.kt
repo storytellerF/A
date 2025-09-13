@@ -87,7 +87,7 @@ fun WebRtcPage() {
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            androidx.compose.material.Text("Local video")
+            Text("Local video")
         }
 
         remoteVideoTrack?.let {
@@ -104,7 +104,7 @@ fun WebRtcPage() {
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            androidx.compose.material.Text("Remote video")
+            Text("Remote video")
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

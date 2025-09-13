@@ -19,7 +19,10 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.websocket.*
+import io.ktor.server.websocket.receiveDeserialized
 import io.ktor.util.logging.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,7 +32,21 @@ import kotlinx.serialization.Serializable
 
 val messageResponseFlow = MutableSharedFlow<RoomFrame.NewTopicInfo>()
 val sharedFlow = messageResponseFlow.asSharedFlow()
-val userWebSocketSessionMap = mutableMapOf<PrimaryKey, List<DefaultWebSocketServerSession>>()
+val userWebSocketSessionMap =
+    mutableMapOf<PrimaryKey, PersistentList<DefaultWebSocketServerSession>>()
+
+suspend fun DefaultWebSocketServerSession.useWebSocket(uid: PrimaryKey, block: suspend () -> Unit) {
+    userWebSocketSessionMap[uid] =
+        userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).add(this)
+    while (true) {
+        try {
+            block()
+        } finally {
+            userWebSocketSessionMap[uid] =
+                userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).remove(this)
+        }
+    }
+}
 
 @Serializable
 data class Notification(val title: String, val message: String)
@@ -41,7 +58,7 @@ interface NotificationDispatcher {
 class WebsocketDispatcher(val session: DefaultWebSocketServerSession) : NotificationDispatcher {
     override suspend fun dispatch(frame: RoomFrame.NewTopicInfo): Result<Unit> {
         return runCatching {
-            session.sendSerialized<RoomFrame>(frame)
+            session.sendFrame(frame)
         }
     }
 }
@@ -66,15 +83,15 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(
     backend: Backend,
 ) {
     usePrincipal { uid ->
-        userWebSocketSessionMap[uid] = userWebSocketSessionMap.getOrDefault(uid, emptyList()) + this
-        while (true) {
-            try {
-                val frame = receiveDeserialized<RoomFrame>()
-                processUserMessage(backend, frame, uid)
-            } catch (e: Exception) {
-                printWsError(e, reader)
-                userWebSocketSessionMap[uid] = userWebSocketSessionMap.getOrDefault(uid, emptyList()) - this
-                return
+        useWebSocket(uid) {
+            while (true) {
+                try {
+                    val frame = receiveDeserialized<RoomFrame>()
+                    processUserMessage(backend, frame, uid)
+                } catch (e: Exception) {
+                    printWsError(e, reader)
+                    break
+                }
             }
         }
     }
@@ -103,7 +120,7 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
         if (frame is RoomFrame.Message) {
             processNewMessage(backend, frame, uid)
         } else {
-            rtcChannel.send(RtcFrame(frame, uid))
+            rtcChannel.send(RtcFrame(frame, uid, this))
         }
     } catch (e: Exception) {
         call.application.log.error("Catch exception in ws", e)
@@ -120,42 +137,42 @@ suspend fun DefaultWebSocketServerSession.processNewMessage(
     when (content) {
         is TopicContent.Plain -> {
             if (content.plain.isBlank()) {
-                sendSerialized(RoomFrame.Error("plain is empty") as RoomFrame)
+                sendFrame(RoomFrame.Error("plain is empty"))
                 return
             }
             if (content.plain.length > 1000) {
-                sendSerialized(RoomFrame.Error("plain is too long") as RoomFrame)
+                sendFrame(RoomFrame.Error("plain is too long"))
             }
         }
 
         is TopicContent.Encrypted -> {
             if (content.encrypted.isBlank()) {
-                sendSerialized(RoomFrame.Error("message is empty") as RoomFrame)
+                sendFrame(RoomFrame.Error("message is empty"))
                 return
             }
             if (content.encrypted.length > 1000) {
-                sendSerialized(RoomFrame.Error("message is too long") as RoomFrame)
+                sendFrame(RoomFrame.Error("message is too long"))
             }
         }
 
         else -> {
-            sendSerialized(RoomFrame.Error("not support message type") as RoomFrame)
+            sendFrame(RoomFrame.Error("not support message type"))
             return
         }
     }
     backend.addTopicAtRoom(newTopic, uid).onSuccess {
         if (it == null) {
-            sendSerialized(RoomFrame.Error("not found") as RoomFrame)
+            sendFrame(RoomFrame.Error("not found"))
         } else {
             backend.addUserLog(uid, UserLogType.CREATE, it.tuple())
             val raw = RoomFrame.NewTopicInfo(it)
-            sendSerialized(raw as RoomFrame)
+            sendFrame(raw)
             messageResponseFlow.emit(raw)
         }
     }.onFailure {
         val message = it.message ?: "unknown error"
         call.application.log.error(it)
-        sendSerialized(RoomFrame.Error(message) as RoomFrame)
+        sendFrame(RoomFrame.Error(message))
     }
 }
 
@@ -164,35 +181,36 @@ private suspend fun dispatchNewMessage(
     httpClient: HttpClient,
 ): Nothing {
     sharedFlow.collect { frame ->
-        backend.combinedDatabase.containerDatabase.getJoinedUserList(frame.topicInfo.rootId).mapResult { list ->
-            val memberJoins = list.filter {
-                it.uid != frame.topicInfo.author
-            }
-            val dispatchers = memberJoins.mapNotNull {
-                userWebSocketSessionMap[it.uid]
-            }.flatten().map {
-                WebsocketDispatcher(it)
-            }
-            backend.combinedDatabase.userDatabase.getUserDevices(memberJoins.map {
-                it.uid
-            }).map { list ->
-                list.map {
-                    ExternalDispatcher(httpClient, it.endpointUrl)
-                } + dispatchers
-            }
-        }.onSuccess {
-            it.forEach { dispatcher ->
-                dispatcher.dispatch(frame).onFailure { throwable ->
-                    Napier.e(throwable = throwable) {
-                        "send topic to room members failed: ${throwable.message}"
+        backend.combinedDatabase.containerDatabase.getJoinedUserList(frame.topicInfo.rootId)
+            .mapResult { list ->
+                val memberJoins = list.filter {
+                    it.uid != frame.topicInfo.author
+                }
+                val dispatchers = memberJoins.mapNotNull {
+                    userWebSocketSessionMap[it.uid]
+                }.flatten().map {
+                    WebsocketDispatcher(it)
+                }
+                backend.combinedDatabase.userDatabase.getUserDevices(memberJoins.map {
+                    it.uid
+                }).map { list ->
+                    list.map {
+                        ExternalDispatcher(httpClient, it.endpointUrl)
+                    } + dispatchers
+                }
+            }.onSuccess {
+                it.forEach { dispatcher ->
+                    dispatcher.dispatch(frame).onFailure { throwable ->
+                        Napier.e(throwable = throwable) {
+                            "send topic to room members failed: ${throwable.message}"
+                        }
                     }
                 }
+            }.onFailure {
+                Napier.e(throwable = it) {
+                    "send topic to room members failed: ${it.message}"
+                }
             }
-        }.onFailure {
-            Napier.e(throwable = it) {
-                "send topic to room members failed: ${it.message}"
-            }
-        }
     }
 }
 
