@@ -16,7 +16,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 
-class RtcFrame(val frame: RoomFrame, val uid: PrimaryKey, val session: DefaultWebSocketServerSession)
+class RtcFrame(
+    val frame: RoomFrame,
+    val uid: PrimaryKey,
+    val session: DefaultWebSocketServerSession
+)
 
 class RtcUser(val uid: PrimaryKey, val session: DefaultWebSocketServerSession)
 
@@ -125,54 +129,70 @@ suspend fun listenerRoomRtc() {
         rtcSession.forEach { (roomId, it) ->
             it.uidList.forEachIndexed { frontUserIndex, frontRtcUser ->
                 val frontSocket = frontRtcUser.session
-                if (frontSocket.isActive) {
-                    it.uidList.forEachIndexed { backUserIndex, backRtcUser ->
-                        if (frontUserIndex < backUserIndex) {
-                            val backSocket = backRtcUser.session
-                            if (backSocket.isActive) {
-                                val offer = it.offerList.getOrPut(frontRtcUser.uid) { mutableMapOf() }[backRtcUser.uid]
-                                Napier.i {
-                                    "listenerRoomRtc $frontUserIndex ${frontRtcUser.uid} $backUserIndex ${backRtcUser.uid} $offer"
-                                }
-                                if (offer == null) {
-                                    try {
-                                        frontSocket.sendFrame(
-                                            RoomFrame.CreateOffer(
-                                                backRtcUser.uid,
-                                                roomId
-                                            ) as RoomFrame
-                                        )
-                                    } catch (e: Exception) {
-                                        Napier.e(e) {
-                                            "send CreateOffer"
-                                        }
-                                    }
-                                } else {
-                                    val answer =
-                                        it.answerList.getOrPut(frontRtcUser.uid) { mutableMapOf() }[backRtcUser.uid]
-                                    if (answer == null) {
-                                        try {
-                                            backSocket.sendFrame(
-                                                RoomFrame.CreateAnswer(
-                                                    frontRtcUser.uid,
-                                                    offer
-                                                ) as RoomFrame
-                                            )
-                                        } catch (e: Exception) {
-                                            Napier.e(e) {
-                                                "send CreateAnswer"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                if (!(frontSocket.isActive)) return@forEachIndexed
+                it.uidList.forEachIndexed { backUserIndex, backRtcUser ->
+                    processRTCSession(
+                        frontUserIndex,
+                        backUserIndex,
+                        backRtcUser,
+                        it,
+                        frontRtcUser,
+                        frontSocket,
+                        roomId
+                    )
                 }
             }
         }
         withContext(Dispatchers.IO) {
             delay(1000)
+        }
+    }
+}
+
+private suspend fun processRTCSession(
+    frontUserIndex: Int,
+    backUserIndex: Int,
+    backRtcUser: RtcUser,
+    session: RtcSession,
+    frontRtcUser: RtcUser,
+    frontSocket: DefaultWebSocketServerSession,
+    roomId: PrimaryKey
+) {
+    if (frontUserIndex >= backUserIndex) return
+    val backSocket = backRtcUser.session
+    if (!backSocket.isActive) return
+    val offer = session.offerList.getOrPut(frontRtcUser.uid) { mutableMapOf() }[backRtcUser.uid]
+    Napier.i {
+        "processRTCSession $frontUserIndex ${frontRtcUser.uid} $backUserIndex ${backRtcUser.uid} $offer"
+    }
+    if (offer != null) {
+        val answer =
+            session.answerList.getOrPut(frontRtcUser.uid) { mutableMapOf() }[backRtcUser.uid]
+        if (answer != null) return
+        try {
+            backSocket.sendFrame(
+                RoomFrame.CreateAnswer(
+                    frontRtcUser.uid,
+                    offer
+                ) as RoomFrame
+            )
+        } catch (e: Exception) {
+            Napier.e(e) {
+                "send CreateAnswer"
+            }
+        }
+        return
+    }
+    try {
+        frontSocket.sendFrame(
+            RoomFrame.CreateOffer(
+                backRtcUser.uid,
+                roomId
+            ) as RoomFrame
+        )
+    } catch (e: Exception) {
+        Napier.e(e) {
+            "send CreateOffer"
         }
     }
 }

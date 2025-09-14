@@ -101,43 +101,7 @@ class WebSocketClientImpl(
                         "client ${userInfo.id} receive $frame"
                     }
                     onMessage(frame)
-                    when (frame) {
-                        is RoomFrame.Error -> {
-                            remoteState.emit(frame)
-                        }
-
-                        is RoomFrame.NewTopicInfo -> {
-                            listeners.forEach {
-                                it.onReceived(frame)
-                            }
-                        }
-
-                        is RoomFrame.CreateOffer -> {
-                            session.sendFrame(
-                                RoomFrame.SendOffer(
-                                    CustomOffer(
-                                        "offer",
-                                        frame.roomId,
-                                        frame.targetUid
-                                    )
-                                )
-                            )
-                        }
-
-                        is RoomFrame.CreateAnswer -> {
-                            session.sendFrame(
-                                RoomFrame.SendAnswer(
-                                    CustomAnswer(
-                                        "answer",
-                                        frame.offer.roomId,
-                                        frame.targetUid
-                                    )
-                                )
-                            )
-                        }
-
-                        else -> {}
-                    }
+                    processFrame(frame, session)
                 } catch (e: Exception) {
                     if (e is ClosedReceiveChannelException) {
                         Napier.e {
@@ -152,10 +116,53 @@ class WebSocketClientImpl(
                 }
             }
             Napier.i {
-                "web socket unactive"
+                "Client WebSocket disconnected"
             }
             connectionHandler.data.value = null
             connectionHandler.state.value = null
+        }
+    }
+
+    private suspend fun processFrame(
+        frame: RoomFrame,
+        session: DefaultClientWebSocketSession
+    ) {
+        when (frame) {
+            is RoomFrame.Error -> {
+                remoteState.emit(frame)
+            }
+
+            is RoomFrame.NewTopicInfo -> {
+                listeners.forEach {
+                    it.onReceived(frame)
+                }
+            }
+
+            is RoomFrame.CreateOffer -> {
+                session.sendFrame(
+                    RoomFrame.SendOffer(
+                        CustomOffer(
+                            "offer",
+                            frame.roomId,
+                            frame.targetUid
+                        )
+                    )
+                )
+            }
+
+            is RoomFrame.CreateAnswer -> {
+                session.sendFrame(
+                    RoomFrame.SendAnswer(
+                        CustomAnswer(
+                            "answer",
+                            frame.offer.roomId,
+                            frame.targetUid
+                        )
+                    )
+                )
+            }
+
+            else -> {}
         }
     }
 

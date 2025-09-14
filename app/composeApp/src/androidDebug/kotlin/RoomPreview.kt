@@ -6,7 +6,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.storyteller_f.a.app.compose_app.pages.room.InputGroupInternal
 import com.storyteller_f.a.app.compose_app.pages.room.RoomCell
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 
@@ -26,7 +25,7 @@ private fun PreviewRooms(@PreviewParameter(RoomsProvider::class) roomInfo: RoomI
 @Preview
 @Composable
 private fun PreviewInputGroup() {
-    InputGroupInternal("", Color.Black, {}, {
+    InputGroupInternal(ObjectTuple(0, ObjectType.USER), Color.Black, "", {}, {
 
-    }, ObjectTuple(0, ObjectType.USER)) { }
+    }, sendButton = { })
 }

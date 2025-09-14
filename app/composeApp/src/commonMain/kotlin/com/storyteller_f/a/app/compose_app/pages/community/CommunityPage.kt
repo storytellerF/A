@@ -44,6 +44,7 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
@@ -66,6 +68,7 @@ import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.TopicComposeData
 import com.storyteller_f.a.app.compose_app.add
 import com.storyteller_f.a.app.compose_app.all_members
 import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
@@ -102,6 +105,7 @@ import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.DownloadInfo
@@ -141,18 +145,7 @@ fun CommunityPage(
 
 @Composable
 fun getCommunityFont(communityId: PrimaryKey): Typography {
-    val model = createCommunityViewModel(communityId)
-    val community by model.handler.data.collectAsState()
-    val downloadViewModel = getDownloadViewModel(community?.font?.id)
-    val provider = LocalClientFileProvider.current
-    SideEffect {
-        val font = community?.font
-        if (font != null) {
-            val path = Path(SystemTemporaryDirectory, "downloads", font.id.toString(), font.name)
-            provider.getDownloader()?.download(font, path)
-        }
-    }
-    val fontFamily by downloadViewModel.fontFamily.collectAsState()
+    val fontFamily by getFontFamily(communityId)
     val typography = MaterialTheme.typography
     return typography.copy(
         bodyLarge =
@@ -164,6 +157,22 @@ fun getCommunityFont(communityId: PrimaryKey): Typography {
             fontFamily = fontFamily ?: typography.bodySmall.fontFamily
         )
     )
+}
+
+@Composable
+fun getFontFamily(communityId: PrimaryKey): State<FontFamily?> {
+    val model = createCommunityViewModel(communityId)
+    val community by model.handler.data.collectAsState()
+    val downloadViewModel = getDownloadViewModel(community?.font?.id)
+    val provider = LocalClientFileProvider.current
+    SideEffect {
+        val font = community?.font
+        if (font != null) {
+            val path = Path(SystemTemporaryDirectory, "downloads", font.id.toString(), font.name)
+            provider.getDownloader()?.download(font, path)
+        }
+    }
+    return downloadViewModel.fontFamily.collectAsState()
 }
 
 private fun buildSearchScope(
@@ -305,7 +314,12 @@ private fun CommunityFloatingButton(
     val message = stringResource(Res.string.join_community_prompt)
     FloatingActionButton(onClick = {
         if (community?.isJoined == true) {
-            appNav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, false, null, communityId)
+            appNav.gotoTopicCompose(
+                TopicComposeData.Community(
+                    communityId,
+                    communityId ob ObjectType.COMMUNITY
+                )
+            )
         } else {
             alertDialogState.showMessage(title, message)
         }
@@ -515,7 +529,12 @@ private fun CommunityMenus(
             }
             ButtonNav(Icons.Default.Add, "Add") {
                 dismiss()
-                nav.gotoTopicCompose(ObjectType.COMMUNITY, communityId, true, null, communityId)
+                nav.gotoTopicCompose(
+                    TopicComposeData.Community(
+                        communityId,
+                        communityId ob ObjectType.COMMUNITY
+                    )
+                )
             }
             val userSessionManager = LocalSessionManager.current
             val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()

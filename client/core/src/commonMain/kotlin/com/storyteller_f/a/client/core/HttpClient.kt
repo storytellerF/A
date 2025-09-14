@@ -3,32 +3,44 @@ package com.storyteller_f.a.client.core
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.utils.checkContent
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.auth.*
-import io.ktor.client.plugins.callid.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.cookies.*
-import io.ktor.client.plugins.logging.*
-import io.ktor.client.plugins.websocket.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.ResponseException
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.callid.CallId
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.cookies.CookiesStorage
+import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.plugins.websocket.pingInterval
+import io.ktor.client.request.header
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.appendPathSegments
+import io.ktor.http.buildUrl
+import io.ktor.http.takeFrom
+import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-class ServerErrorException(val status: HttpStatusCode, val text: String, cause: Exception) : Exception(
-    "$status, $text",
-    cause
-)
+class ServerErrorException(val status: HttpStatusCode, val text: String, cause: Exception) :
+    Exception(
+        "$status, $text",
+        cause
+    )
 
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
@@ -86,7 +98,11 @@ fun HttpClientConfig<*>.defaultClientConfigure(
             if (exception is ResponseException) {
                 val exceptionResponse = exception.response
                 val exceptionResponseText = exceptionResponse.bodyAsText()
-                throw ServerErrorException(exceptionResponse.status, exceptionResponseText, exception)
+                throw ServerErrorException(
+                    exceptionResponse.status,
+                    exceptionResponseText,
+                    exception
+                )
             }
         }
     }
@@ -129,7 +145,10 @@ private fun CustomClientAuthProvider.CustomAuthConfig.configClientAuth(manager: 
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-suspend fun processEncryptedTopic(topicInfos: List<TopicInfo>, manager: SessionManager): List<TopicInfo> {
+suspend fun processEncryptedTopic(
+    topicInfos: List<TopicInfo>,
+    manager: SessionManager
+): List<TopicInfo> {
     val model = manager.sessionModel
     val uid = model.uid
     val key = model.currentUserPass
@@ -146,14 +165,10 @@ suspend fun processEncryptedTopic(topicInfos: List<TopicInfo>, manager: SessionM
                     content.encrypted.hexToByteArray(),
                     s.hexToByteArray()
                 ).fold(onSuccess = {
-                    if (checkContent(it)) {
-                        val mediaInfos = extractMarkdownMediaLink(it).mapNotNull {
-                            manager.getMediaByName(it, topicInfo.rootId, topicInfo.rootType).getOrNull()
-                        }
-                        TopicContent.Plain(it, mediaInfos)
-                    } else {
-                        TopicContent.Invalid
+                    val mediaInfos = extractMarkdownMediaLink(it).mapNotNull { mediaName ->
+                        manager.getMediaByName(mediaName, topicInfo.rootId, topicInfo.rootType).getOrNull()
                     }
+                    TopicContent.Plain(it, mediaInfos)
                 }, onFailure = {
                     TopicContent.DecryptFailed(it.message.toString())
                 })
