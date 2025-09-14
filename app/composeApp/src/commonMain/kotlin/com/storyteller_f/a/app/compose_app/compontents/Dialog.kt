@@ -62,14 +62,14 @@ class CustomAlertDialogState(val title: String?, val message: String)
 fun CustomAlertDialog(controller: CustomAlertDialogController, dismiss: () -> Unit, onClickOk: () -> Unit) {
     val state by controller.state
     state?.let { it1 ->
-        CustomAlertDialogInternal(dismiss, it1, onClickOk)
+        CustomAlertDialogInternal(it1, dismiss, onClickOk)
     }
 }
 
 @Composable
 fun CustomAlertDialogInternal(
-    dismiss: () -> Unit,
     dialogState: CustomAlertDialogState,
+    dismiss: () -> Unit,
     onClickOk: () -> Unit,
 ) {
     AlertDialog({

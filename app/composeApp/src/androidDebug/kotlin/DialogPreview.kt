@@ -4,7 +4,6 @@ import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogInternal
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogState
 import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogInternal
 import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogState
-import kotlinx.collections.immutable.persistentListOf
 
 @Preview(showSystemUi = true)
 @Composable
@@ -23,7 +22,7 @@ private fun PreviewError() {
 @Preview
 @Composable
 private fun PreviewCustomDialog() {
-    CustomAlertDialogInternal({
-    }, CustomAlertDialogState(null, "test")) {
+    CustomAlertDialogInternal(CustomAlertDialogState(null, "test"), {
+    }) {
     }
 }

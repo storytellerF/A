@@ -38,18 +38,22 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.storyteller_f.a.app.compose_app.CustomSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.StateView
 import com.storyteller_f.a.app.compose_app.common.bottomAppending
 import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
+import com.storyteller_f.a.app.compose_app.compontents.GlobalTask
 import com.storyteller_f.a.app.compose_app.compontents.InteractionRow
 import com.storyteller_f.a.app.compose_app.compontents.TopicCell
 import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
@@ -73,6 +77,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkContent
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -228,7 +233,7 @@ private fun ColumnScope.TopicPageContent(
 private fun TopicPageInputGroup(
     topic: TopicInfo,
     snackBarHostState: SnackbarHostState,
-    scrollTo: () -> Unit,
+    scrollToNew: () -> Unit,
 ) {
     val alertDialogState = remember {
         CustomAlertDialogController()
@@ -243,10 +248,10 @@ private fun TopicPageInputGroup(
             ObjectTuple(topic.id, ObjectType.TOPIC),
             snackBarHostState,
             {},
-            scrollTo
+            scrollToNew
         )
     } else {
-        TopicInputGroup(scrollTo, topic, snackBarHostState)
+        TopicInputGroup(scrollToNew, topic, snackBarHostState)
     }
 
     val appNav = LocalAppNav.current
@@ -271,20 +276,6 @@ private fun TopicInputGroup(
     val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
     val my = myInfo
     InputGroupInternal(
-        input,
-        MaterialTheme.colorScheme.secondaryContainer,
-        {
-            input = it
-        },
-        {
-            appNav.gotoTopicCompose(
-                ObjectType.TOPIC,
-                topic.id,
-                false,
-                topic.rootId.takeIf { topic.isEncrypted },
-                null
-            )
-        },
         if (topic.isEncrypted) {
             ObjectTuple(topic.rootId, topic.rootType)
         } else {
@@ -292,20 +283,46 @@ private fun TopicInputGroup(
                 my?.id ?: 0,
                 ObjectType.USER
             )
-        }
-    ) {
-        TopicSendButton(input, {
+        },
+        MaterialTheme.colorScheme.secondaryContainer,
+        input,
+        {
             input = it
-        }, topic, scrollTo, snackBarHostState)
-    }
+        },
+        {
+            val parentTuple = topic.tuple()
+            val data = when (topic.rootType) {
+                ObjectType.ROOM -> {
+                    val roomInfo = topic.extension?.roomInfo ?: return@InputGroupInternal
+                    roomInfo.communityId?.let {
+                        TopicComposeData.PublicRoom(topic.rootId, it, parentTuple)
+                    } ?: TopicComposeData.PrivateRoom(topic.rootId, parentTuple)
+                }
+
+                ObjectType.COMMUNITY -> {
+                    TopicComposeData.Community(topic.rootId, parentTuple)
+                }
+
+                else -> {
+                    TopicComposeData.User(topic.rootId, parentTuple)
+                }
+            }
+            appNav.gotoTopicCompose(data)
+        },
+        sendButton = {
+            TopicSendButton(topic, input, {
+                input = it
+            }, scrollTo, snackBarHostState)
+        }
+    )
 }
 
 @Composable
 fun TopicSendButton(
+    topic: TopicInfo,
     input: String,
     updateInput: (String) -> Unit,
-    topic: TopicInfo,
-    scrollTo: () -> Unit,
+    scrollToNew: () -> Unit,
     snackBarHostState: SnackbarHostState
 ) {
     val focusManager = LocalFocusManager.current
@@ -319,23 +336,49 @@ fun TopicSendButton(
         input,
         isSending
     ) {
-        if (checkContent(input)) {
-            globalTask.use(key) { state, bus ->
-                state.use {
-                    sessionManager.createTopic(ObjectType.TOPIC, topic.id, input).onSuccess {
-                        bus.emit(OnTopicCreated(it))
-                        updateInput("")
-                        focusManager.clearFocus()
-                        scrollTo()
-                    }.onFailure {
-                        snackBarHostState
-                            .showSnackbar(it.message.toString())
-                    }
-                }
-            }
-        } else {
-            scope.launch {
-                snackBarHostState.showSnackbar("invalid")
+        sendTopicInTopicPage(
+            input,
+            scope,
+            snackBarHostState,
+            globalTask,
+            key,
+            sessionManager,
+            topic,
+            updateInput,
+            focusManager,
+            scrollToNew
+        )
+    }
+}
+
+private fun sendTopicInTopicPage(
+    input: String,
+    scope: CoroutineScope,
+    snackBarHostState: SnackbarHostState,
+    globalTask: GlobalTask,
+    key: String,
+    sessionManager: CustomSessionManager,
+    topic: TopicInfo,
+    updateInput: (String) -> Unit,
+    focusManager: FocusManager,
+    scrollToNew: () -> Unit
+) {
+    checkContent(input).exceptionOrNull()?.let {
+        scope.launch {
+            snackBarHostState.showSnackbar(it.message.toString())
+        }
+        return
+    }
+    globalTask.use(key) { state, bus ->
+        state.use {
+            sessionManager.createTopic(ObjectType.TOPIC, topic.id, input).onSuccess {
+                bus.emit(OnTopicCreated(it))
+                updateInput("")
+                focusManager.clearFocus()
+                scrollToNew()
+            }.onFailure {
+                snackBarHostState
+                    .showSnackbar(it.message.toString())
             }
         }
     }

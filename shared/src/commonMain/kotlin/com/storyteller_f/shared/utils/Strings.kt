@@ -7,7 +7,7 @@ package com.storyteller_f.shared.utils
  * N: any kind of numeric character in any script.
  * S: math symbols, currency signs, dingbats, box-drawing characters, etc.
  */
-expect fun checkContent(text: String): Boolean
+expect fun checkContent(text: String): Result<Unit>
 
 expect fun safeFirstUnicode(text: String): String?
 

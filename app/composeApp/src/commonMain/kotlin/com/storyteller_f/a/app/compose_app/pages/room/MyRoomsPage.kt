@@ -89,7 +89,7 @@ fun RoomCell(
         val commonDialogController =
             rememberCommonDialogController()
         val shown by commonDialogController.shown
-        RoomIcon(roomInfo, showDialog = shown, onClickIcon = commonDialogController::update)
+        RoomIcon(roomInfo, showDialog = shown, updateDialog = commonDialogController::update)
         Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(roomInfo?.name.orEmpty(), color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
@@ -124,7 +124,7 @@ fun RoomIcon(
     showDialog: Boolean,
     size: Dp = 50.dp,
     setClickEvent: Boolean = false,
-    onClickIcon: (Boolean) -> Unit,
+    updateDialog: (Boolean) -> Unit,
 ) {
     val iconUrl = roomInfo?.icon?.url
     val radius = 8.dp
@@ -136,7 +136,7 @@ fun RoomIcon(
             modifier = Modifier.size(size).clip(shape).let {
                 if (setClickEvent) {
                     it.clickable {
-                        onClickIcon(true)
+                        updateDialog(true)
                     }
                 } else {
                     it
@@ -151,7 +151,7 @@ fun RoomIcon(
                 .let {
                     if (setClickEvent) {
                         it.clickable {
-                            onClickIcon(true)
+                            updateDialog(true)
                         }
                     } else {
                         it
@@ -163,6 +163,6 @@ fun RoomIcon(
         }
     }
     RoomDialog(showDialog, roomInfo) {
-        onClickIcon(false)
+        updateDialog(false)
     }
 }

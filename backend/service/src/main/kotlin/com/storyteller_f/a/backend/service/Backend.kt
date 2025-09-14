@@ -256,10 +256,10 @@ suspend fun Backend.processRawUserToUserInfo(
     }
 }
 
-suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>): Result<List<RoomInfo>?> {
-    return combinedDatabase.fileDatabase.getFileRecordByIds(list.mapNotNull {
+suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>) =
+    combinedDatabase.fileDatabase.getFileRecordByIds(list.mapNotNull {
         it.room.icon
-    }).mapResultIfNotNull { medias ->
+    }).mapResult { medias ->
         processFileRecordToFileInfo(medias).map { mediaList ->
             val mediaInfoMap = mediaList.associateBy { it.id }
             list.map { rawRoom ->
@@ -273,7 +273,6 @@ suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>): Result<List<R
             }
         }
     }
-}
 
 suspend fun <T> Backend.lockQuotaInfo(
     objectTuple: ObjectTuple,

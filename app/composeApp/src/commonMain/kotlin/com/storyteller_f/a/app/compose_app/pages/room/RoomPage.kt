@@ -49,7 +49,6 @@ import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
@@ -199,7 +198,7 @@ fun RoomInputGroup(
         val localState by wsClient.localState.collectAsState()
         val isSending = localState is LoadingState.Loading
 
-        RoomInputGroupInternal(roomId, roomInfo, parentTarget, input, scrollToNew) {
+        RoomInputGroupInternal(roomId, roomInfo, parentTarget, controller, input, scrollToNew) {
             if (!isSending) {
                 input = it
             }
@@ -218,6 +217,7 @@ private fun RoomInputGroupInternal(
     roomId: PrimaryKey,
     roomInfo: RoomInfo,
     parentTarget: ObjectTuple,
+    controller: CustomAlertDialogController,
     input: String,
     scrollToNew: () -> Unit,
     updateInput: (String) -> Unit,
@@ -229,44 +229,37 @@ private fun RoomInputGroupInternal(
     } else {
         ObjectTuple(myInfo?.id ?: 0, ObjectType.USER)
     }
-    val controller = remember {
-        CustomAlertDialogController()
-    }
-    val keysViewModel =
-        createRoomKeysViewModel(roomId, roomInfo)
-    val keysData by keysViewModel.handler.data.collectAsState()
-    val keysState by keysViewModel.handler.state.collectAsState()
+
     val appNav = LocalAppNav.current
     InputGroupInternal(
-        input,
+        mediaTarget,
         MaterialTheme.colorScheme.tertiaryContainer,
+        input,
         updateInput,
         {
             appNav.gotoTopicCompose(
-                parentTarget.objectType,
-                parentTarget.objectId,
-                false,
-                roomId.takeIf {
-                    roomInfo.isPrivate
-                },
-                null
+                roomInfo.communityId?.let {
+                    TopicComposeData.PublicRoom(roomId, it, parentTarget)
+                } ?: TopicComposeData.PrivateRoom(roomId, parentTarget)
             )
         },
-        mediaTarget,
         {
-            RoomInputTopContent(roomInfo, keysState, keysData)
+            RoomInputTopContent(roomInfo)
+        },
+        {
+            RoomSendButton(input, roomInfo, parentTarget, controller, scrollToNew)
         }
-    ) {
-        RoomSendButton(input = input, roomInfo, scrollToNew, controller, parentTarget)
-    }
+    )
 }
 
 @Composable
 private fun RoomInputTopContent(
     roomInfo: RoomInfo,
-    keysState: LoadingState?,
-    keysData: List<UserPubKeyInfo>?
 ) {
+    val keysViewModel =
+        createRoomKeysViewModel(roomInfo.id, roomInfo)
+    val keysData by keysViewModel.handler.data.collectAsState()
+    val keysState by keysViewModel.handler.state.collectAsState()
     if (roomInfo.isPrivate) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             when (val ks = keysState) {
@@ -314,7 +307,6 @@ private fun sendRoomTopic(
     scrollToNew: () -> Unit,
     scope: CoroutineScope,
     toasterState: Toast,
-    alertDialogState: CustomAlertDialogController,
     keysViewModel: RoomKeysViewModel,
     wsClient: WebSocketClient,
     parentTarget: ObjectTuple,
@@ -322,16 +314,8 @@ private fun sendRoomTopic(
     val handler = keysViewModel.handler
     val keyState = handler.state.value
     val keyData = handler.data.value
-    if (!roomInfo.isJoined) {
-        scope.launch {
-            val title = getString(Res.string.permission_denied)
-            val message = getString(Res.string.join_room_prompt)
-            alertDialogState.showMessage(title, message)
-        }
-        return
-    }
-    if (!checkContent(input)) {
-        toasterState.showMessage("invalid")
+    checkContent(input).exceptionOrNull()?.let {
+        toasterState.showMessage(it.message.toString())
         return
     }
     if ((keyState !is LoadingState.Done || keyData == null) && roomInfo.isPrivate) {
@@ -371,9 +355,9 @@ private fun checkRoomRouteAndAlert(
 fun RoomSendButton(
     input: String,
     roomInfo: RoomInfo,
-    scrollToNew: () -> Unit,
-    alertDialogState: CustomAlertDialogController,
     parentTarget: ObjectTuple,
+    controller: CustomAlertDialogController,
+    scrollToNew: () -> Unit,
 ) {
     val toasterState = LocalToaster.current
     val scope = rememberCoroutineScope()
@@ -384,17 +368,24 @@ fun RoomSendButton(
     val keysViewModel =
         createRoomKeysViewModel(roomInfo.id, roomInfo)
     CommonInputButton(state, input, isSending) {
-        sendRoomTopic(
-            roomInfo,
-            input,
-            scrollToNew,
-            scope,
-            toasterState,
-            alertDialogState,
-            keysViewModel,
-            wsClient,
-            parentTarget
-        )
+        if (roomInfo.isJoined) {
+            sendRoomTopic(
+                roomInfo,
+                input,
+                scrollToNew,
+                scope,
+                toasterState,
+                keysViewModel,
+                wsClient,
+                parentTarget
+            )
+        } else {
+            scope.launch {
+                val title = getString(Res.string.permission_denied)
+                val message = getString(Res.string.join_room_prompt)
+                controller.showMessage(title, message)
+            }
+        }
     }
 }
 
@@ -438,11 +429,11 @@ fun CommonInputButton(
 
 @Composable
 fun InputGroupInternal(
-    input: String,
+    mediaTarget: ObjectTuple,
     backgroundColor: Color,
+    input: String,
     updateInput: (String) -> Unit,
     gotoCompose: () -> Unit,
-    mediaTarget: ObjectTuple,
     topContent: @Composable () -> Unit = {},
     sendButton: @Composable () -> Unit,
 ) {
@@ -551,7 +542,7 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
             RoomIcon(
                 roomInfo,
                 showDialog = shown,
-                onClickIcon = commonDialogController::update,
+                updateDialog = commonDialogController::update,
             )
             Column {
                 Text(roomInfo.name)

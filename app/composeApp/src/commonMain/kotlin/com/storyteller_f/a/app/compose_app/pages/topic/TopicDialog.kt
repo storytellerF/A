@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.BasicAlertDialog
@@ -154,7 +153,6 @@ private fun TopicMenuList(
     val clipboardManager = LocalClipboard.current
     val userSessionManager = LocalSessionManager.current
     val alreadyLoginIn by userSessionManager.isAlreadySignUp.collectAsState()
-    val appNav = LocalAppNav.current
     val scope = rememberCoroutineScope()
     ButtonNav(
         Icons.Default.ContentCopy,
@@ -182,16 +180,6 @@ private fun TopicMenuList(
                     toast.showMessage(getString(Res.string.success))
                 }
             }
-        }
-        ButtonNav(Icons.Default.Add, "Add") {
-            dismissDialog()
-            appNav.gotoTopicCompose(
-                ObjectType.TOPIC,
-                topicInfo.id,
-                true,
-                topicInfo.rootId.takeIf { topicInfo.rootType == ObjectType.ROOM && topicInfo.isEncrypted },
-                null
-            )
         }
     }
 

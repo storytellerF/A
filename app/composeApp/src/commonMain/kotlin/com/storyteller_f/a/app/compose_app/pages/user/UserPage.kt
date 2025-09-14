@@ -40,7 +40,6 @@ import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.title.TitleList
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -191,7 +190,7 @@ private fun UserComposeButton(
 ) {
     if (user != null && my?.id == user.id) {
         FloatingActionButton({
-            appNav.gotoTopicCompose(ObjectType.USER, user.id, false, null, null)
+            appNav.gotoTopicCompose(TopicComposeData.User(user.id, user.tuple()))
         }) {
             Icon(Icons.Default.Add, "add topic")
         }

@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -28,13 +30,14 @@ import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
 import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.model.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.getCommunityFont
+import com.storyteller_f.a.app.compose_app.pages.community.getFontFamily
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
@@ -42,18 +45,10 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TopicComposePage(
-    objectType: ObjectType,
-    objectId: PrimaryKey,
-    enableExperimental: Boolean,
-    privateRoomId: PrimaryKey?,
-    communityId: PrimaryKey?,
+    data: TopicComposeData,
     backPrePage: () -> Unit
 ) {
-    val typography = communityId?.let {
-        getCommunityFont(
-            it
-        )
-    }
+    val typography = getTypography(data)
     AppTheme(
         typography = typography ?: MaterialTheme.typography
     ) {
@@ -62,31 +57,26 @@ fun TopicComposePage(
         val user = myInfo
         user?.let {
             TopicComposeScaffold(
-                objectType,
-                objectId,
-                if (privateRoomId != null) {
-                    ObjectTuple(privateRoomId, ObjectType.ROOM)
-                } else {
-                    ObjectTuple(
-                        it.id,
-                        ObjectType.USER
-                    )
-                },
+                data,
+                data.getMediaTarget() ?: (it.id ob ObjectType.USER),
                 backPrePage,
-                enableExperimental
             )
         }
     }
 }
 
 @Composable
+private fun getTypography(data: TopicComposeData): Typography? =
+    (data as? TopicComposeData.PublicRoom)?.communityId?.let {
+        getCommunityFont(it)
+    }
+
+@Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun TopicComposeScaffold(
-    objectType: ObjectType,
-    objectId: PrimaryKey,
+    data: TopicComposeData,
     mediaTarget: ObjectTuple,
     backPrePage: () -> Unit,
-    enableExperimental: Boolean
 ) {
     var input by remember {
         mutableStateOf("")
@@ -97,15 +87,13 @@ private fun TopicComposeScaffold(
     Scaffold(topBar = {
         TopAppBar({
         }, navigationIcon = {
-            if (enableExperimental) {
-                IconButton(onClick = {
-                    showSheet = true
-                }) {
-                    Icon(Icons.Filled.PermMedia, contentDescription = null)
-                }
+            IconButton(onClick = {
+                showSheet = true
+            }) {
+                Icon(Icons.Filled.PermMedia, contentDescription = null)
             }
         }, actions = {
-            TopicComposeSubmitButton(input, objectType, objectId) {
+            TopicComposeSubmitButton(input, data) {
                 input = ""
                 backPrePage()
             }
@@ -119,7 +107,7 @@ private fun TopicComposeScaffold(
                 end = paddingValues.calculateRightPadding(direction)
             )
         ) {
-            TopicComposeInternal(input, enableExperimental, mediaTarget) {
+            TopicComposeInternal(input, mediaTarget, data) {
                 input = it
             }
         }
@@ -138,8 +126,8 @@ private fun TopicComposeScaffold(
 @Composable
 private fun TopicComposeInternal(
     input: String,
-    enableExperimental: Boolean,
     mediaTarget: ObjectTuple,
+    data: TopicComposeData,
     updateInput: (String) -> Unit
 ) {
     val pagerState = rememberPagerState {
@@ -166,10 +154,10 @@ private fun TopicComposeInternal(
         }
     }
     HorizontalPager(pagerState, key = tabs::get) { index ->
-        when {
-            index == 0 && !enableExperimental -> RichEditTopicPage(input, state, updateInput)
-            index == 1 -> PreviewTopicPage(input, mediaTarget)
-            else -> EditTopicPage(input) {
+        when (index) {
+            0 -> RichEditTopicPage(input, state, data, updateInput)
+            1 -> PreviewTopicPage(input, mediaTarget)
+            else -> EditTopicPage(input, data) {
                 Napier.i {
                     "markdown update1 $it"
                 }
@@ -181,7 +169,12 @@ private fun TopicComposeInternal(
 }
 
 @Composable
-fun RichEditTopicPage(input: String, state: RichTextState, updateInput: (String) -> Unit) {
+fun RichEditTopicPage(
+    input: String,
+    state: RichTextState,
+    data: TopicComposeData,
+    updateInput: (String) -> Unit
+) {
     LaunchedEffect(state.annotatedString) {
         val markdown = state.toMarkdown()
         Napier.i {
@@ -203,11 +196,13 @@ fun RichEditTopicPage(input: String, state: RichTextState, updateInput: (String)
         }
     }
     val currentSpanStyle = state.currentSpanStyle
+    val fontFamily = getFontFamily(data)
     Column(modifier = Modifier.navigationBarsPadding()) {
         TopicComposeToolbar(currentSpanStyle, state)
         BasicRichTextEditor(
             state = state,
             modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp),
+            textStyle = TextStyle(fontFamily = fontFamily)
         )
     }
 }
@@ -262,10 +257,10 @@ private fun TopicComposeToolbar(
 @Composable
 private fun TopicComposeSubmitButton(
     input: String,
-    objectType: ObjectType,
-    objectId: PrimaryKey,
+    data: TopicComposeData,
     backPrePage: () -> Unit
 ) {
+    val (objectId, objectType) = data.getParent()
     val scope = rememberCoroutineScope()
     val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
@@ -291,18 +286,41 @@ fun PreviewTopicPage(input: String, objectTuple: ObjectTuple) {
     val markdownMediasViewModel =
         getMarkdownMediasViewModel(input, objectTuple)
     val list by markdownMediasViewModel.handler.data.collectAsState()
-    LazyColumn(modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)
+    ) {
         item {
             TopicContentField(
-                TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, list.orEmpty().toImmutableList())),
+                TopicInfo.EMPTY.copy(
+                    content = TopicContent.Plain(
+                        input,
+                        list.orEmpty().toImmutableList()
+                    )
+                ),
             )
         }
     }
 }
 
 @Composable
-fun EditTopicPage(input: String, updateInput: (String) -> Unit) {
+fun EditTopicPage(input: String, data: TopicComposeData, updateInput: (String) -> Unit) {
     Box(modifier = Modifier.navigationBarsPadding()) {
-        BasicTextField(input, updateInput, modifier = Modifier.fillMaxSize().padding(20.dp))
+        val fontFamily = getFontFamily(data)
+
+        BasicTextField(
+            input,
+            updateInput,
+            modifier = Modifier.fillMaxSize().padding(20.dp),
+            textStyle = TextStyle(fontFamily = fontFamily)
+        )
+    }
+}
+
+@Composable
+private fun getFontFamily(data: TopicComposeData): FontFamily? {
+    return (data as? TopicComposeData.PublicRoom)?.communityId?.let {
+        getFontFamily(
+            it
+        ).value
     }
 }

@@ -15,12 +15,14 @@ import com.storyteller_f.a.backend.core.fixedSort
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.toTopicInfo
 import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
 import com.storyteller_f.a.backend.service.search.TopicDocument
 import com.storyteller_f.a.backend.service.search.TopicDocumentSearch
 import com.storyteller_f.a.cloud.core.pdf.PdfService
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.TopicPinSearch
@@ -60,8 +62,8 @@ suspend fun Backend.createPlainTopic(
     if (content.isEmpty()) {
         return Result.failure(CustomBadRequestException("content is empty"))
     }
-    if (!checkContent(content)) {
-        return Result.failure(CustomBadRequestException("invalid"))
+    checkContent(content).exceptionOrNull()?.let {
+        return Result.failure(it)
     }
     if (content.length > 1000) {
         return Result.failure(CustomBadRequestException("too long"))
@@ -447,89 +449,87 @@ suspend fun Backend.getTopLevelTopicsInObject(
             UNIT_RESULT
         }
     }.mapResultIfNotNull {
-        combinedDatabase.topicDatabase.getSubTopicInfo(
-            uid,
-            primaryKeyFetch,
-            parentId,
-            pinType
-        ).mapResult { (data, count) ->
-            processTopicAfterGet(data, uid, true).mapIfNotNull {
-                PaginationResult(it, count)
-            }
+        combinedDatabase.topicDatabase.getSubTopicInfo(uid, primaryKeyFetch, parentId, pinType)
+    }.mapResultIfNotNull { (data, count) ->
+        processTopicAfterGet(data, uid, true).mapIfNotNull {
+            PaginationResult(it, count)
         }
     }
 }
 
 suspend fun Backend.processTopicAfterGet(
-    processedTopics: List<TopicInfo>,
+    topics: List<TopicInfo>,
     uid: PrimaryKey?,
     addLatestSubTopic: Boolean,
 ): Result<List<TopicInfo>?> {
-    return merge(
-        {
-            (if (addLatestSubTopic) {
-                Result.success(processedTopics.flatMap { t ->
-                    combinedDatabase.topicDatabase.getLatestTopicInfo(uid, t.id).getOrThrow()
-                }.groupBy {
-                    it.parentId
-                })
-            } else {
-                Result.success(emptyMap())
-            }).mapResult { subTopicsMap ->
-                val uidList = processedTopics.map {
-                    it.author
-                } + subTopicsMap.flatMap {
-                    it.value
-                }.map {
-                    it.author
-                }.distinct()
-                getUserInfoList(ObjectListFetch.IdListFetch(uidList)).map { users ->
-                    mergeAuthorInfoAndSubTopics(users, processedTopics, subTopicsMap)
-                }
+    return runCatching {
+        val rooms = getRoomMapByTopics(topics)
+        val subTopicsMap = if (addLatestSubTopic) {
+            topics.flatMap { t ->
+                combinedDatabase.topicDatabase.getLatestTopicInfo(uid, t.id).getOrThrow()
+            }.groupBy {
+                it.parentId
             }
-        },
-        {
-            combinedDatabase.topicDatabase.getReactionInfoPaginationResult(processedTopics.map {
+        } else {
+            emptyMap()
+        }
+
+        val uidList = topics.map {
+            it.author
+        } + subTopicsMap.flatMap {
+            it.value
+        }.map {
+            it.author
+        }.distinct()
+        val userMap =
+            getUserInfoList(ObjectListFetch.IdListFetch(uidList)).getOrThrow().associateBy { it.id }
+        val processedSubTopic = subTopicsMap.mapValues {
+            it.value.map { subTopic ->
+                subTopic.copy(
+                    extension = TopicInfo.Extension(
+                        authorInfo = userMap[subTopic.author]
+                    )
+                )
+            }
+        }
+        val reactionMap =
+            combinedDatabase.topicDatabase.getReactionInfoPaginationResult(topics.map {
                 it.id
             }, uid, ReactionFetch(null, 20)).map {
                 it.list
             }.map {
                 it.groupBy(ReactionInfo::objectId)
-            }
+            }.getOrThrow()
+        topics.map {
+            it.copy(
+                extension = TopicInfo.Extension(
+                    userMap[it.author],
+                    subTopics = processedSubTopic[it.id]?.toImmutableList(),
+                    reactions = reactionMap[it.id]?.toImmutableList(),
+                    roomInfo = if (it.rootType == ObjectType.ROOM) rooms[it.rootId] else null
+                )
+            )
         }
-    ).mapResultIfNotNull { (topics, reactionMap) ->
-        processTopicFileObject(topics).mapIfNotNull {
-            it.map { topic ->
-                topic.copy(extension = topic.extension?.copy(reactions = reactionMap[topic.id]?.toImmutableList()))
-            }
-        }
+    }.mapResultIfNotNull {
+        processTopicFileObject(it)
     }
 }
 
-private fun mergeAuthorInfoAndSubTopics(
-    users: List<UserInfo>,
-    processedTopics: List<TopicInfo>,
-    subTopicsMap: Map<PrimaryKey, List<TopicInfo>>
-): List<TopicInfo> {
-    val userMap = users.associateBy { it.id }
-    return processedTopics.map {
-        val authorInfo =
-            userMap[it.author] ?: throw CustomBadRequestException("author is null")
-        val processedSubTopics = subTopicsMap[it.id]?.map { subTopic ->
-            subTopic.copy(
-                extension = TopicInfo.Extension(
-                    authorInfo = userMap[subTopic.author]
-                        ?: throw CustomBadRequestException("author is null")
-                )
-            )
-        }?.toImmutableList()
-        it.copy(
-            extension = TopicInfo.Extension(
-                authorInfo,
-                subTopics = processedSubTopics
-            )
-        )
+private suspend fun Backend.getRoomMapByTopics(topics: List<TopicInfo>): Map<PrimaryKey, RoomInfo> {
+    val roomIds = topics.mapNotNull {
+        if (it.rootType == ObjectType.ROOM) {
+            it.rootId
+        } else {
+            null
+        }
     }
+    val rooms = processRawRoomToRoomInfo(
+        combinedDatabase.roomDatabase.getRawRooms(ObjectListFetch.IdListFetch(roomIds))
+            .getOrThrow()
+    ).getOrThrow().associateBy {
+        it.id
+    }
+    return rooms
 }
 
 suspend fun Backend.searchPublicTopics(
@@ -560,10 +560,10 @@ suspend fun Backend.searchPublicTopics(
         topicSearchService.searchDocument(
             topicDocumentSearch = documentSearch,
             primaryKeyFetch
-        ).mapResult { (list, total) ->
-            processTopicsDocument(uid, list).mapIfNotNull {
-                PaginationResult(it, total)
-            }
+        )
+    }.mapResultIfNotNull { (list, total) ->
+        processTopicsDocument(uid, list).mapIfNotNull {
+            PaginationResult(it, total)
         }
     }
 }

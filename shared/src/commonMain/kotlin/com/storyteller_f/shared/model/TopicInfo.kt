@@ -52,15 +52,16 @@ data class TopicInfo(
             level = 0,
             isPin = false,
             lastModifiedTime = now(),
-            extension = Extension(UserInfo.EMPTY)
+            extension = Extension()
         )
     }
 
     @Serializable
     data class Extension(
-        val authorInfo: UserInfo,
+        val authorInfo: UserInfo? = null,
         val subTopics: CustomImmutableList<TopicInfo>? = null,
-        val reactions: CustomImmutableList<ReactionInfo>? = null
+        val reactions: CustomImmutableList<ReactionInfo>? = null,
+        val roomInfo: RoomInfo? = null,
     )
 }
 
