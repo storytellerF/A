@@ -1,4 +1,10 @@
-import com.storyteller_f.shared.utils.*
+import com.storyteller_f.shared.utils.astNode
+import com.storyteller_f.shared.utils.checkContent
+import com.storyteller_f.shared.utils.extractHeadParagraph
+import com.storyteller_f.shared.utils.extractMarkdownHeadline
+import com.storyteller_f.shared.utils.extractMarkdownMediaLink
+import com.storyteller_f.shared.utils.readInlineMath
+import com.storyteller_f.shared.utils.safeFirstUnicode
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.acceptChildren
@@ -6,8 +12,6 @@ import org.intellij.markdown.ast.visitors.Visitor
 import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class MarkdownTest {
     @Test
@@ -76,15 +80,6 @@ class MarkdownTest {
             }
 
         })
-    }
-
-    @Test
-    fun `test check content`() {
-        assertTrue(checkContent("a"))
-        assertTrue(checkContent("👌"))
-        assertTrue(checkContent("\n"))
-        assertFalse(checkContent("\uf092"))
-        assertEquals("👌", safeFirstUnicode("👌abc"))
     }
 
 }

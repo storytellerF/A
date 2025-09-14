@@ -17,3 +17,12 @@ class AndroidPlatform : Platform {
 }
 
 actual fun getPlatform(): Platform = AndroidPlatform()
+
+val isRunningOnRobolectric: Boolean
+    get() = try {
+        Class.forName("org.robolectric.Robolectric")
+        true
+    } catch (e: Exception) {
+        e
+        false
+    }
