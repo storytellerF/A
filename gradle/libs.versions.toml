@@ -12,6 +12,7 @@ bcprovJdk18on = "1.81"
 buildconfig = "0.17.1"
 coil = "3.3.0"
 googleGenai = "1.15.0"
+icu4j = "77.1"
 openpdf = "3.0.0"
 roomRuntime = "2.7.2"
 route4k-common = "1.0.0"
@@ -130,6 +131,7 @@ coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.re
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 couchbase-lite-paging = { module = "dev.kotbase:couchbase-lite-paging", version.ref = "couchbaseLite" }
 google-genai = { module = "com.google.genai:google-genai", version.ref = "googleGenai" }
+icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 openpdf = { module = "com.github.librepdf:openpdf", version.ref = "openpdf" }
 route4k-common = { module = "com.github.storytellerF.route4k:common", version.ref = "route4k-common" }
 route4k-ktor-client = { module = "com.github.storytellerF.route4k:ktor-client", version.ref = "route4k-common" }

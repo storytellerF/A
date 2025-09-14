@@ -125,14 +125,6 @@ fun ComponentActivity.commonForActivity() {
     WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
 }
 
-val isRunningOnRobolectric: Boolean
-    get() = try {
-        Class.forName("org.robolectric.Robolectric")
-        true
-    } catch (_: Exception) {
-        false
-    }
-
 fun registerDevice(context: Context) {
     try {
         val distributor = UnifiedPush.getAckDistributor(context)

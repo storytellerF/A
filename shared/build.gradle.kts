@@ -52,6 +52,11 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
+        val headlessTest by creating {
+            dependsOn(commonTest.get())
+        }
+        headlessTest.dependencies {
+        }
         val generalJvmMain by creating {
             dependencies {
                 implementation(libs.bcprov.jdk18on)
@@ -69,6 +74,12 @@ kotlin {
             dependsOn(generalJvmMain)
             dependsOn(noSpecialJvmMain)
         }
+        androidUnitTest.dependencies {
+            implementation(libs.robolectric)
+        }
+        androidUnitTest {
+            dependsOn(headlessTest)
+        }
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.cryptography.core)
@@ -84,9 +95,13 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.cryptography.provider.jdk)
             implementation(libs.logback)
+            implementation(libs.icu4j)
         }
         jvmMain {
             dependsOn(generalJvmMain)
+        }
+        jvmTest {
+            dependsOn(headlessTest)
         }
         if (buildIosTarget) {
             iosMain.dependencies {
@@ -109,6 +124,9 @@ kotlin {
             }
         }
     }
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
+    }
 }
 
 android {
@@ -120,5 +138,13 @@ android {
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.systemProperty("robolectric.logging.enabled", true)
+            }
+        }
     }
 }
