@@ -200,12 +200,12 @@ fun MainAppPage(
 ) {
     val navigator = rememberNavController()
     val scope = rememberCoroutineScope()
+    val appNav = remember {
+        newAppNav(navigator, scope)
+    }
     if (isPip && player != null) {
         FileViewPage(player)
     } else {
-        val appNav = remember {
-            newAppNav(navigator, scope)
-        }
         ObserveMessage({
             appNav.toRoute<RoomScreen>()?.roomId
         }, {
