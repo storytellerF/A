@@ -157,6 +157,7 @@ kotlin {
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.paging.common)
+            implementation(libs.androidx.paging.compose)
             implementation(libs.bundles.coil)
             implementation(libs.bundles.markdown.render)
             implementation(libs.sonner)

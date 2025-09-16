@@ -79,7 +79,7 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
                 ButtonNav(MaterialSymbolsOutlined.Money, "ACG ${userInfo?.acg ?: 0}")
                 UserDialogMenuList(dismiss, clickCreate, appNav, controller)
             }
-            ButtonNav(Icons.Default.Settings, "Preference") {
+            ButtonNav(MaterialSymbolsOutlined.Settings, "Preference") {
                 dismiss()
                 appNav.gotoPreference()
             }
