@@ -72,9 +72,7 @@ data object AboutScreen
 data class UserScreen(val uid: PrimaryKey)
 
 @Serializable
-data class TopicComposeScreen(
-    val json: String
-)
+data class TopicComposeScreen(val json: String)
 
 @Serializable
 sealed interface TopicComposeData {
@@ -325,6 +323,7 @@ fun NavGraphBuilder.buildRootNav(
     navigator: NavHostController,
 ) {
     buildMainScreen()
+    buildComposeScreen(navigator)
     composable<AboutScreen> {
         val libraries by rememberLibraries {
             Res.readBytes("files/aboutlibraries.json").decodeToString()
@@ -342,7 +341,6 @@ fun NavGraphBuilder.buildRootNav(
         val pack = commonJson.decodeFromString<FileViewInfo>(route.json)
         FileViewPage(pack)
     }
-    buildComposeScreen(navigator)
 }
 
 private fun NavGraphBuilder.buildMainScreen() {
