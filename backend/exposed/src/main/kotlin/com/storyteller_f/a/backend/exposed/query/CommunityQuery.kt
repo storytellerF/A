@@ -6,7 +6,11 @@ import com.storyteller_f.a.backend.exposed.tables.MemberJoins
 import com.storyteller_f.shared.model.PosterSearch
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
-import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.isNull
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.like
+import org.jetbrains.exposed.v1.core.notInSubQuery
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.select

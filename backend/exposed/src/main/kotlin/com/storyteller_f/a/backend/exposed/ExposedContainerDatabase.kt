@@ -19,9 +19,10 @@ import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.merge
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select

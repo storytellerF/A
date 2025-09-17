@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.roomName
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 object Rooms : BaseTable() {

@@ -20,6 +20,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import org.jetbrains.exposed.v1.r2dbc.select

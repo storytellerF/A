@@ -27,10 +27,8 @@ import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.utils.transformThrowable
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.slf4j.MDCContext
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.r2dbc.Query
@@ -115,7 +113,8 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
     suspend fun <T> dbQuery(block: suspend R2dbcTransaction.() -> T): Result<T> {
         val anchor = Exception("dbQuery")
         return runCatching {
-            suspendTransaction(Dispatchers.IO + MDCContext(), db = database) {
+            // MDCContext()
+            suspendTransaction(db = database) {
                 maxAttempts = 1
                 block()
             }
@@ -130,7 +129,8 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
         val anchor = Exception()
         port?.let { explainQuery(it, query) }
         return runCatching {
-            suspendTransaction(Dispatchers.IO + MDCContext(), db = database) {
+            // MDCContext()
+            suspendTransaction(db = database) {
                 maxAttempts = 1
                 val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
                 databaseSearchConfig.apply(query).let {
@@ -148,7 +148,8 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
     ) {
         val anchor = Exception()
         try {
-            val explainResult = suspendTransaction(Dispatchers.IO + MDCContext(), db = database) {
+            // MDCContext()
+            val explainResult = suspendTransaction(db = database) {
                 explainQuery {
                     val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
                     databaseSearchConfig.apply(query).searchFunc()
@@ -244,7 +245,7 @@ object ExposedDatabaseFactory {
         Napier.i(tag = "database") {
             "init"
         }
-        suspendTransaction(Dispatchers.IO, db = database) {
+        suspendTransaction(db = database) {
             Napier.i(tag = "database") {
                 "create tables"
             }
@@ -256,7 +257,7 @@ object ExposedDatabaseFactory {
         Napier.i(tag = "database") {
             "clean"
         }
-        suspendTransaction(Dispatchers.IO, db = database) {
+        suspendTransaction(db = database) {
             Napier.i(tag = "database") {
                 "drop tables"
             }

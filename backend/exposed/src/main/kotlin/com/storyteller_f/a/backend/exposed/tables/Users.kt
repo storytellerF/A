@@ -42,7 +42,7 @@ fun User.Companion.wrapRow(row: ResultRow): User {
     }
 }
 
-fun User.Companion.find(function: SqlExpressionBuilder.() -> Op<Boolean>): Query {
+fun User.Companion.find(function: () -> Op<Boolean>): Query {
     return Users.selectAll().where(function)
 }
 

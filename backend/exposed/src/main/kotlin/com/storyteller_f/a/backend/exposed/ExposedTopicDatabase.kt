@@ -29,7 +29,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
@@ -557,10 +556,8 @@ class ExposedTopicDatabase(
         reactionId: PrimaryKey,
     ): Result<Boolean> {
         return exposedDatabaseSession.dbQuery {
-            ReactionRecords.deleteWhere { builder ->
-                with(builder) {
-                    ReactionRecords.id eq reactionId
-                }
+            ReactionRecords.deleteWhere {
+                ReactionRecords.id eq reactionId
             }
         }.map { value ->
             value > 0
