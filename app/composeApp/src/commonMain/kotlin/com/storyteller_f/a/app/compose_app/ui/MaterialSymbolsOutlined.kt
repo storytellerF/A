@@ -21,8 +21,8 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 object MaterialSymbolsOutlined {
     const val version: String = "2.791"
 
-    @OptIn(ExperimentalResourceApi::class)
     @Composable
+    @OptIn(ExperimentalResourceApi::class)
     fun rememberIconFont(fill: Boolean = false, grade: Int = 0, fontFeatureSettings: String? = null): VariableIconFont =
         rememberVariableIconFont(
             fontResource = Res.font.material_symbols_outlined,

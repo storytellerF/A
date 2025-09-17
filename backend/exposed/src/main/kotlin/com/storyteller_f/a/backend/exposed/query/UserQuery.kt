@@ -5,6 +5,8 @@ import com.storyteller_f.a.backend.exposed.tables.MemberJoins
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.select

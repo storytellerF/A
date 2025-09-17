@@ -11,14 +11,14 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
+    alias(libs.plugins.aboutlibrary)
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.room) apply false
     alias(libs.plugins.kover)
-    id("io.gitlab.arturbosch.detekt") version("1.23.7")
-    id("com.mikepenz.aboutlibraries.plugin") version "12.2.4" apply false
+    alias(libs.plugins.detekt)
     id("com.github.ben-manes.versions") version "0.52.0"
     id("nl.littlerobots.version-catalog-update") version "1.0.0"
-    alias(libs.plugins.kotlin.android) apply false
-    id("com.google.devtools.ksp") version "2.2.10-2.0.2" apply false
-    id ("androidx.room") version "2.7.2" apply false
 }
 
 val detektReportMergeSarif by tasks.registering(ReportMergeTask::class) {

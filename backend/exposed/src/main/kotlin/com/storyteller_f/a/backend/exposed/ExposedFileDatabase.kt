@@ -19,7 +19,8 @@ import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
-import org.jetbrains.exposed.v1.core.statements.UpsertSqlExpressionBuilder.eq
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert

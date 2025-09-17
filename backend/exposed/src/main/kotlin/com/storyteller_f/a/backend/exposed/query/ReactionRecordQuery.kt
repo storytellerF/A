@@ -6,6 +6,11 @@ import com.storyteller_f.a.backend.exposed.tables.Reactions
 import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.greaterEq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.selectAll

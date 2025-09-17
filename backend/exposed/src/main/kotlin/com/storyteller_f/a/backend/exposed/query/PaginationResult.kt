@@ -5,6 +5,8 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
 

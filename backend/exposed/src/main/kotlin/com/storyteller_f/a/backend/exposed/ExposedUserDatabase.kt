@@ -23,7 +23,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
@@ -150,7 +149,7 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
     }
 
     suspend fun getUserAuthDataByAid(
-        predicate: SqlExpressionBuilder.() -> Op<Boolean>,
+        predicate: () -> Op<Boolean>,
     ): Result<Pair<String, Long>?> {
         return exposedDatabaseSession.dbSearch {
             search {
@@ -165,7 +164,7 @@ class ExposedUserDatabase(private val exposedDatabaseSession: ExposedDatabaseSes
     }
 
     suspend fun getUserAuthDataBy(
-        predicate: SqlExpressionBuilder.() -> Op<Boolean>,
+        predicate: () -> Op<Boolean>,
     ): Result<Pair<String, Long>?> {
         return exposedDatabaseSession.dbSearch {
             search {
