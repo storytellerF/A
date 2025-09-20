@@ -1,3 +1,3 @@
 #!/bin/sh
-adb reverse tcp:9000 tcp:9000
-adb reverse tcp:8811 tcp:8811
+./scripts/android_scripts/forward-android-devices.sh 9000
+./scripts/android_scripts/forward-android-devices.sh 8811

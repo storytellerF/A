@@ -73,7 +73,7 @@ fun ObjectBlock(
         val c = readCodeFence(modal.node, modal.content)
         commonJson.decodeFromString<MarkdownObject>(c)
     }
-    if (obj.contentType.isBlank()) {
+    if (obj.contentType.isNullOrBlank()) {
         FileObjectBlock(obj, modal, mediaList)
     } else {
         CustomObjectBlock(obj, modal, mediaList)
@@ -84,9 +84,9 @@ fun ObjectBlock(
 private fun FileObjectBlock(
     obj: MarkdownObject,
     modal: MarkdownComponentModel,
-    mediaList: Map<String, FileInfo>
+    mediaMap: Map<String, FileInfo>
 ) {
-    val mediaInfo = mediaList[obj.name]
+    val mediaInfo = mediaMap[obj.name]
     val url = mediaInfo?.url
     val contentType = mediaInfo?.contentType
     when {
@@ -95,14 +95,14 @@ private fun FileObjectBlock(
         contentType == FileInfo.PDF_CONTENT_TYPE -> PdfViewBlock(url)
 
         contentType.startsWith("video/") -> {
-            val coverInfo = mediaList[obj.cover]
+            val coverInfo = mediaMap[obj.cover]
             val obj1 =
                 RemoteMediaItem(url, contentType, false, obj.name, coverInfo, obj.title)
             VideoView(obj1, true)
         }
 
         contentType.startsWith("audio/") -> {
-            val coverInfo = mediaList[obj.cover]
+            val coverInfo = mediaMap[obj.cover]
             val obj1 =
                 RemoteMediaItem(url, contentType, false, obj.name, coverInfo, obj.title)
             AudioView(obj1, true)
@@ -187,7 +187,7 @@ private fun LatexBlock(
 ) {
     val paintState = rememberGeneratedLatexImage(modal)
     if (paintState.isSuccess) {
-        val path = paintState.getOrThrow()
+        val path = paintState.getOrNull()
         if (path != null) {
             AsyncImage(
                 model = path.toString(),

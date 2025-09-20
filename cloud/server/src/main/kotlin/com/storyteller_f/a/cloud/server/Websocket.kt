@@ -38,13 +38,11 @@ val userWebSocketSessionMap =
 suspend fun DefaultWebSocketServerSession.useWebSocket(uid: PrimaryKey, block: suspend () -> Unit) {
     userWebSocketSessionMap[uid] =
         userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).add(this)
-    while (true) {
-        try {
-            block()
-        } finally {
-            userWebSocketSessionMap[uid] =
-                userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).remove(this)
-        }
+    try {
+        block()
+    } finally {
+        userWebSocketSessionMap[uid] =
+            userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).remove(this)
     }
 }
 

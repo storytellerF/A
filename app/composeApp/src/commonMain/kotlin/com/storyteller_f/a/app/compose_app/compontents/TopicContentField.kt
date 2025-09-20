@@ -36,7 +36,7 @@ fun TopicContentField(
         }
 
         is TopicContent.Extracted -> {
-            TopicContentFieldInternal(content.list.toImmutableList(), content.plain, isEmbed)
+            TopicContentFieldInternal(content.fileInfos.toImmutableList(), content.plain, isEmbed)
         }
 
         is TopicContent.Encrypted, is TopicContent.DecryptFailed, is TopicContent.Invalid -> {
