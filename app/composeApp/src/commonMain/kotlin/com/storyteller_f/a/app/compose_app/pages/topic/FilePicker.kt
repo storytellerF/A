@@ -49,6 +49,7 @@ import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.ktor.http.*
 import kotlinx.coroutines.launch
 import kotlinx.io.buffered
+import kotlinx.io.files.FileMetadata
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import nl.jacobras.humanreadable.HumanReadable
@@ -309,13 +310,7 @@ private suspend fun GlobalDialogController.selectFileAndUpload(
             upload(
                 sessionManager,
                 mediaTarget,
-                UploadData(
-                    f.size(),
-                    f.name,
-                    ContentType.defaultForFileExtension(f.extension)
-                ) {
-                    f.source().buffered()
-                }
+                getUploadDataFromPlatformFile(f)
             ) { p, t ->
                 emitProgress {
                     GlobalDialogState.Loading(
@@ -331,6 +326,14 @@ private suspend fun GlobalDialogController.selectFileAndUpload(
     }
 }
 
+private fun getUploadDataFromPlatformFile(f: PlatformFile) = UploadData(
+    f.size(),
+    f.name,
+    ContentType.defaultForFileExtension(f.extension)
+) {
+    f.source().buffered()
+}
+
 suspend fun GlobalDialogController.uploadPath(
     path: Path,
     sessionManager: SessionManager,
@@ -341,9 +344,7 @@ suspend fun GlobalDialogController.uploadPath(
         upload(
             sessionManager,
             mediaTarget,
-            UploadData(meta.size, path.name, ContentType.defaultForFileExtension(path.toString())) {
-                SystemFileSystem.source(path).buffered()
-            }
+            getUploadDataFromPath(meta, path)
         ) { p, t ->
             emitProgress {
                 GlobalDialogState.Loading(
@@ -352,6 +353,13 @@ suspend fun GlobalDialogController.uploadPath(
             }
         }
     }
+}
+
+private fun getUploadDataFromPath(
+    meta: FileMetadata,
+    path: Path
+) = UploadData(meta.size, path.name, ContentType.defaultForFileExtension(path.toString())) {
+    SystemFileSystem.source(path).buffered()
 }
 
 suspend fun GlobalDialogController.upload(

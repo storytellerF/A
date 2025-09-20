@@ -3,6 +3,7 @@ package com.storyteller_f.a.app.compose_app.common
 import com.storyteller_f.a.app.compose_app.CustomSessionManager
 import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.pages.ClientFile
+import com.storyteller_f.a.app.compose_app.pages.getUploadDataFromClipFile
 import com.storyteller_f.a.app.compose_app.utils.getClientFile
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.upload
@@ -131,13 +132,7 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         try {
             userSession.upload(
                 myUid ob ObjectType.USER,
-                UploadData(
-                    clipFile.size,
-                    clipFile.name,
-                    clipFile.contentType
-                ) {
-                    clipFile.source()
-                }
+                clipFile.getUploadDataFromClipFile()
             ) { p, t ->
                 updateUploadInfo(modelStorage, collection, pathHash) {
                     it.copy(progress = p)
