@@ -73,7 +73,11 @@ sealed interface TopicContent {
 
     @Serializable
     @SerialName("extracted")
-    data class Extracted(val plain: String, val fileInfos: List<FileInfo> = emptyList(), val origin: String) : TopicContent
+    data class Extracted(
+        val plain: String,
+        val fileInfos: List<FileInfo> = emptyList(),
+        val origin: String
+    ) : TopicContent
 
     @Serializable
     @SerialName("plain")

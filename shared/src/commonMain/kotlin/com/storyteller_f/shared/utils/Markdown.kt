@@ -1,7 +1,6 @@
 package com.storyteller_f.shared.utils
 
 import com.storyteller_f.shared.commonJson
-import io.github.aakira.napier.Napier
 import kotlinx.serialization.Serializable
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
@@ -170,8 +169,7 @@ fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
                             if (obj.name.isNotBlank() && obj.url.isBlank()) {
                                 list.add(obj.name)
                             }
-                        } catch (_ : Exception) {
-
+                        } catch (_: Exception) {
                         }
                     }
                 }
