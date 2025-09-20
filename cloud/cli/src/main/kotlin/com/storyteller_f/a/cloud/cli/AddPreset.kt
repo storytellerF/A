@@ -109,7 +109,7 @@ class AddPreset : Subcommand("add", "add entry") {
                     "add done $jsonFilePath."
                 }
             } catch (e: Exception) {
-                Napier.i(e) {
+                Napier.e(e) {
                     "exception when add"
                 }
             }

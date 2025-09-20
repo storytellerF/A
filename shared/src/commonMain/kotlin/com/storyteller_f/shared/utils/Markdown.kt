@@ -1,6 +1,7 @@
 package com.storyteller_f.shared.utils
 
 import com.storyteller_f.shared.commonJson
+import io.github.aakira.napier.Napier
 import kotlinx.serialization.Serializable
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
@@ -163,10 +164,14 @@ fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
                 MarkdownElementTypes.CODE_FENCE -> {
                     val lang = getLang(node, markdownText)
                     if (lang == "object") {
-                        val content = readCodeFence(node, markdownText)
-                        val obj = commonJson.decodeFromString<MarkdownObject>(content)
-                        if (obj.name.isNotBlank() && obj.url.isBlank()) {
-                            list.add(obj.name)
+                        try {
+                            val content = readCodeFence(node, markdownText)
+                            val obj = commonJson.decodeFromString<MarkdownObject>(content)
+                            if (obj.name.isNotBlank() && obj.url.isBlank()) {
+                                list.add(obj.name)
+                            }
+                        } catch (_ : Exception) {
+
                         }
                     }
                 }
@@ -235,10 +240,10 @@ fun getLang(node: ASTNode, content: String): String {
 
 @Serializable
 data class MarkdownObject(
-    val contentType: String,
     val name: String = "",
     val url: String = "",
-    val isPlayList: Boolean = false,
-    val cover: String = "",
+    val isPlayList: Boolean? = null,
+    val contentType: String? = null,
+    val cover: String? = null,
     val title: String? = null,
 )

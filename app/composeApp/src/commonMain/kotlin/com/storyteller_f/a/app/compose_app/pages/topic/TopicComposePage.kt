@@ -27,6 +27,7 @@ import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
+import com.storyteller_f.a.app.compose_app.model.MarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.model.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.getCommunityFont
@@ -285,19 +286,26 @@ private fun TopicComposeSubmitButton(
 fun PreviewTopicPage(input: String, objectTuple: ObjectTuple) {
     val markdownMediasViewModel =
         getMarkdownMediasViewModel(input, objectTuple)
+    PreviewTopicInternal(markdownMediasViewModel, input)
+}
+
+@Composable
+private fun PreviewTopicInternal(
+    markdownMediasViewModel: MarkdownMediasViewModel,
+    input: String
+) {
     val list by markdownMediasViewModel.handler.data.collectAsState()
+    val topicInfo = TopicInfo.EMPTY.copy(
+        content = TopicContent.Plain(
+            input,
+            list.orEmpty().toImmutableList()
+        )
+    )
     LazyColumn(
         modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)
     ) {
         item {
-            TopicContentField(
-                TopicInfo.EMPTY.copy(
-                    content = TopicContent.Plain(
-                        input,
-                        list.orEmpty().toImmutableList()
-                    )
-                ),
-            )
+            TopicContentField(topicInfo)
         }
     }
 }
