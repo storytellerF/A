@@ -140,13 +140,7 @@ class TopicTest {
                 val size = tmpFile.length()
                 val info = upload(
                     ObjectTuple(it.uid, ObjectType.USER),
-                    UploadData(
-                        size,
-                        "avatar1.png",
-                        ContentType.defaultForFileExtension("png")
-                    ) {
-                        tmpFile.inputStream().asInput()
-                    }
+                    getUploadDataFromStream(size, tmpFile)
                 ).getOrThrow().data.first()
                 val communityId = createCommunity(NewCommunity("name", "aid")).getOrThrow().id
                 val topicInfo = createTopic(
@@ -241,15 +235,7 @@ class TopicTest {
                 val string = "hello"
                 val fileInfo = upload(
                     ObjectTuple(it.uid, ObjectType.USER),
-                    UploadData(
-                        string.length.toLong(),
-                        "hello.txt",
-                        ContentType.defaultForFileExtension("txt")
-                    ) {
-                        Buffer().apply {
-                            writeString(string)
-                        }
-                    }
+                    getUploadDataFromText(string)
                 ).getOrThrow().data.first()
                 val info =
                     createTopic(
@@ -575,5 +561,26 @@ class TopicTest {
                 assertEquals(1, topicInfo.level)
             }
         }
+    }
+}
+
+private fun getUploadDataFromStream(
+    size: Long,
+    tmpFile: File
+) = UploadData(
+    size,
+    "avatar1.png",
+    ContentType.defaultForFileExtension("png")
+) {
+    tmpFile.inputStream().asInput()
+}
+
+fun getUploadDataFromText(string: String) = UploadData(
+    string.length.toLong(),
+    "hello.txt",
+    ContentType.defaultForFileExtension("txt")
+) {
+    Buffer().apply {
+        writeString(string)
     }
 }

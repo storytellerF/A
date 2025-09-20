@@ -10,10 +10,10 @@ import com.storyteller_f.a.cloud.core.service.getExtensionFromMimeType
 import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
-import io.ktor.http.*
+import io.ktor.http.ContentType
+import io.ktor.http.defaultForFileExtension
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.Buffer
-import kotlinx.io.writeString
 import org.bytedeco.opencv.global.opencv_core
 import org.bytedeco.opencv.global.opencv_imgcodecs
 import org.bytedeco.opencv.global.opencv_imgproc
@@ -37,15 +37,7 @@ class MediaTest {
                 val response =
                     upload(
                         ObjectTuple(it.uid, ObjectType.USER),
-                        UploadData(
-                            5,
-                            "hello.txt",
-                            ContentType.defaultForFileExtension("txt")
-                        ) {
-                            Buffer().apply {
-                                writeString("hello")
-                            }
-                        }
+                        getUploadDataFromText("hello")
                     ).getOrThrow()
                 assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
                 val mediaList = getMediaList(it.uid, ObjectType.USER, null, 10)
@@ -74,6 +66,14 @@ class MediaTest {
 
     @Test
     fun `extract audio album`() {
+        val vendor = System.getProperty("java.vendor")      // 厂商
+        val version = System.getProperty("java.version")    // 版本
+        val runtime = System.getProperty("java.runtime.name")
+
+        println("当前JDK: vendor=$vendor, version=$version, runtime=$runtime")
+        if (vendor.contains("OpenJDK", ignoreCase = true)) {
+            error("❌ 不允许使用 OpenJDK")
+        }
         ClassLoader.getSystemResourceAsStream("I_Do_not_Wanna_Live_Forever.flac")
             ?.use {
                 it.readFlacAlbumFromAudioStream { image, mimeType ->
@@ -108,24 +108,30 @@ class MediaTest {
     ) {
         attachSession {
             val name = "I_Do_not_Wanna_Live_Forever.flac"
-            val inputStream =
-                ClassLoader.getSystemResourceAsStream(name)!!
-            val bytes = inputStream.readBytes()
+            val data = getUploadDataFromResources(name)
             val response = upload(
                 ObjectTuple(it.uid, ObjectType.USER),
-                UploadData(
-                    bytes.size.toLong(),
-                    name,
-                    ContentType.defaultForFileExtension("flac")
-                ) {
-                    Buffer().apply {
-                        write(bytes)
-                    }
-                }
+                data
             ).getOrThrow()
             extractAlbum(response.data.first().id).getOrThrow()
         }
     }
+}
+
+private fun getUploadDataFromResources(name: String): UploadData {
+    val inputStream =
+        ClassLoader.getSystemResourceAsStream(name)!!
+    val bytes = inputStream.readBytes()
+    val data = UploadData(
+        bytes.size.toLong(),
+        name,
+        ContentType.defaultForFileExtension("flac")
+    ) {
+        Buffer().apply {
+            write(bytes)
+        }
+    }
+    return data
 }
 
 private fun getPSNR(mat1: Mat, mat2: Mat): Double {

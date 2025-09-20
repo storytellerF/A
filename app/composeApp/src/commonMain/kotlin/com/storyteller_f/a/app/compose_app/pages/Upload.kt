@@ -19,6 +19,7 @@ import com.storyteller_f.a.app.compose_app.compontents.CenterBox
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compose_app.compontents.rememberAlertDialogController
 import com.storyteller_f.a.app.compose_app.model.createUploadViewModel
+import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UploadStatus
@@ -117,4 +118,12 @@ private fun UploadItem(
         globalDialogController.close()
     }) {
     }
+}
+
+fun ClientFile.getUploadDataFromClipFile() = UploadData(
+    size,
+    name,
+    contentType
+) {
+    source()
 }

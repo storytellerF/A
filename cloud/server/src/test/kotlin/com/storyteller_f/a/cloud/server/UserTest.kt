@@ -47,15 +47,7 @@ class UserTest {
             val info =
                 upload(
                     ObjectTuple(it.uid, ObjectType.USER),
-                    UploadData(
-                        bytes.size.toLong(),
-                        "avatar1.png",
-                        ContentType.parse("image/png")
-                    ) {
-                        Buffer().apply {
-                            write(bytes)
-                        }
-                    }
+                    getUploadDataFromBytes(bytes)
                 )
                     .getOrThrow().data.first()
             assertEquals(
@@ -84,5 +76,15 @@ class UserTest {
             assertEquals(1, response.pagination?.total)
             assertEquals(alternativeAccountInfo.id, response.data.first().id)
         }
+    }
+}
+
+fun getUploadDataFromBytes(bytes: ByteArray) = UploadData(
+    bytes.size.toLong(),
+    "avatar1.png",
+    ContentType.parse("image/png")
+) {
+    Buffer().apply {
+        write(bytes)
     }
 }
