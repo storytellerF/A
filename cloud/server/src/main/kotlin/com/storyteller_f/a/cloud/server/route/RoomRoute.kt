@@ -25,7 +25,7 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 
 fun Route.bindRoomRoute(backend: Backend) {
-    CustomApi.Rooms.search.invoke(RoutingContext::handleResult) {
+    CustomApi.Rooms.search(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchRoomPaginationResult(
@@ -37,26 +37,26 @@ fun Route.bindRoomRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Rooms.Id.Members.get.invoke(RoutingContext::handleResult) { q, p ->
+    CustomApi.Rooms.Id.Members.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 searchRoomMembers(backend, p, uid, q, f)
             }
         }
     }
-    CustomApi.Rooms.Aid.get.invoke(RoutingContext::handleResult) {
+    CustomApi.Rooms.Aid.get(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             backend.getRoomInfo(ObjectFetch.AidFetch(it.aid), uid, it.fillJoinInfo)
         }
     }
 
-    CustomApi.Rooms.Id.get.invoke(RoutingContext::handleResult) { q, p ->
+    CustomApi.Rooms.Id.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             backend.getRoomInfo(ObjectFetch.IdFetch(p.id), uid, q.fillJoinInfo)
         }
     }
 
-    CustomApi.Rooms.Id.Topics.get.invoke(RoutingContext::handleResult) { q, p ->
+    CustomApi.Rooms.Id.Topics.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
@@ -73,30 +73,30 @@ fun Route.bindRoomRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedRoomRoute(backend: Backend) {
-    CustomApi.Rooms.Id.Members.join.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Rooms.Id.Members.join(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.joinRoom(p.id, uid)
         }
     }
-    CustomApi.Rooms.Id.Members.leave.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Rooms.Id.Members.leave(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.exitRoom(p.id, uid)
         }
     }
-    CustomApi.Rooms.Id.Members.publicKeys.invoke(RoutingContext::handleResult) { q, p ->
+    CustomApi.Rooms.Id.Members.publicKeys(RoutingContext::handleResult) { q, p ->
         usePrincipal { uid ->
             pagination(object : PrimaryKeyPagingGenerator<UserPubKeyInfo>(UserPubKeyInfo::id) {}) { f ->
                 backend.getRoomPubKeys(p.id, uid, f)
             }
         }
     }
-    CustomApi.Rooms.add.invoke(RoutingContext::handleResult) { api ->
+    CustomApi.Rooms.add(RoutingContext::handleResult) { api ->
         val newRoom = api.receiveBody()
         usePrincipal { uid ->
             backend.createRoom(newRoom, uid)
         }
     }
-    CustomApi.Rooms.Id.update.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Rooms.Id.update(RoutingContext::handleResult) { p, api ->
         val newRoom = api.receiveBody()
         usePrincipal { uid ->
             backend.updateRoom(p.id, newRoom, uid)

@@ -1,8 +1,6 @@
 package com.storyteller_f.a.client.core
 
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.obj.CustomAnswer
-import com.storyteller_f.shared.obj.CustomOffer
 import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.websocket.*
@@ -11,7 +9,7 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.*
 
 interface WebSocketClientListener {
-    suspend fun onReceived(frame: RoomFrame)
+    suspend fun onReceived(frame: RoomFrame, session: DefaultClientWebSocketSession)
 }
 
 interface WebSocketClient {
@@ -101,7 +99,12 @@ class WebSocketClientImpl(
                         "client ${userInfo.id} receive $frame"
                     }
                     onMessage(frame)
-                    processFrame(frame, session)
+                    if (frame is RoomFrame.Error) {
+                        remoteState.emit(frame)
+                    }
+                    listeners.forEach {
+                        it.onReceived(frame, session)
+                    }
                 } catch (e: Exception) {
                     if (e is ClosedReceiveChannelException) {
                         Napier.e {
@@ -120,49 +123,6 @@ class WebSocketClientImpl(
             }
             connectionHandler.data.value = null
             connectionHandler.state.value = null
-        }
-    }
-
-    private suspend fun processFrame(
-        frame: RoomFrame,
-        session: DefaultClientWebSocketSession
-    ) {
-        when (frame) {
-            is RoomFrame.Error -> {
-                remoteState.emit(frame)
-            }
-
-            is RoomFrame.NewTopicInfo -> {
-                listeners.forEach {
-                    it.onReceived(frame)
-                }
-            }
-
-            is RoomFrame.CreateOffer -> {
-                session.sendFrame(
-                    RoomFrame.SendOffer(
-                        CustomOffer(
-                            "offer",
-                            frame.roomId,
-                            frame.targetUid
-                        )
-                    )
-                )
-            }
-
-            is RoomFrame.CreateAnswer -> {
-                session.sendFrame(
-                    RoomFrame.SendAnswer(
-                        CustomAnswer(
-                            "answer",
-                            frame.offer.roomId,
-                            frame.targetUid
-                        )
-                    )
-                )
-            }
-
-            else -> {}
         }
     }
 

@@ -46,10 +46,10 @@ import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitcher
 import com.storyteller_f.a.app.compose_app.pages.user.switchUser
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
+import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.compose_app.utils.createCustomDataStoreManager
 import com.storyteller_f.a.app.compose_app.utils.createSettings
 import com.storyteller_f.a.app.compose_app.utils.getUiViewModel
-import com.storyteller_f.a.app.compose_app.utils.platform
 import com.storyteller_f.a.app.compose_app.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.RawUserPass
@@ -80,6 +80,7 @@ import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.cookies.CookiesStorage
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -184,11 +185,10 @@ data class LocalMediaPlaySession(val id: String, val uuid: Uuid)
 
 @Composable
 fun App() {
+    StaticObj
     CommonEntry {
-        StaticObj
         val playerSession by globalPlayerState
         val isPip = rememberIsInPipMode()
-
         MainAppPage(isPip, playerSession)
     }
 }
@@ -392,7 +392,7 @@ private fun buildWsListener(
     sessionManager: SessionManager,
     onClickTopic: (TopicInfo) -> Unit,
 ) = object : WebSocketClientListener {
-    override suspend fun onReceived(frame: RoomFrame) {
+    override suspend fun onReceived(frame: RoomFrame, session: DefaultClientWebSocketSession) {
         if (frame is RoomFrame.NewTopicInfo) {
             val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
                 val topicInfo =
@@ -405,9 +405,9 @@ private fun buildWsListener(
             val message = topicInfo.content
             if (message is TopicContent.Plain) {
                 Napier.i(tag = "WebSocket") {
-                    "ws listener ${platform.isActive} $hasPermission"
+                    "ws listener ${appPlatform.isActive} $hasPermission"
                 }
-                if (platform.isActive) {
+                if (appPlatform.isActive) {
                     val roomId = roomScreenId()
                     val topicId = topicScreenId()
                     if (roomId != topicInfo.parentId &&
@@ -436,8 +436,8 @@ private fun ObserveMessage(
     Toaster(messageToasterState, alignment = Alignment.TopCenter)
     val notificationProvider = getNotificationProvider()
     val hasPermission by notificationProvider.hasPermissionState
-    val listener = remember(hasPermission) {
-        buildWsListener(
+    DisposableEffect(hasPermission, sessionManager) {
+        val listener = buildWsListener(
             messageToasterState,
             hasPermission,
             roomScreenId,
@@ -445,9 +445,7 @@ private fun ObserveMessage(
             sessionManager,
             onClickTopic
         )
-    }
-    clientWebSocketImpl.addListener(listener)
-    DisposableEffect(null) {
+        clientWebSocketImpl.addListener(listener)
         onDispose {
             clientWebSocketImpl.removeListener(listener)
         }

@@ -222,10 +222,10 @@ fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
 fun Route.bindUnprotectedAccountRoute(
     backend: Backend
 ) {
-    CustomApi.Accounts.getData.invoke(RoutingContext::handleResult) {
+    CustomApi.Accounts.getData(RoutingContext::handleResult) {
         Result.success(call.getData())
     }
-    CustomApi.Accounts.signUp.invoke(RoutingContext::handleResult) {
+    CustomApi.Accounts.signUp(RoutingContext::handleResult) {
         if (backend.customConfig.buildType == "prod") {
             Result.failure(Exception("not support"))
         } else {
@@ -233,13 +233,13 @@ fun Route.bindUnprotectedAccountRoute(
         }
     }
 
-    CustomApi.Accounts.signIn.invoke(RoutingContext::handleResult) {
+    CustomApi.Accounts.signIn(RoutingContext::handleResult) {
         signIn(backend, it.receiveBody(), call.getData())
     }
 }
 
 fun Route.bindAccountRoute() {
-    CustomApi.Accounts.signOut.invoke(RoutingContext::handleResult) {
+    CustomApi.Accounts.signOut(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             call.sessions.clear(UserSession::class)
             UNIT_RESULT
@@ -248,12 +248,12 @@ fun Route.bindAccountRoute() {
 }
 
 fun Route.bindProtectedAccountRoute(backend: Backend) {
-    CustomApi.Accounts.ChildAccounts.add.invoke(RoutingContext::handleResult) {
+    CustomApi.Accounts.ChildAccounts.add(RoutingContext::handleResult) {
         usePrincipal { uid ->
             backend.addAlternativeAccount(uid)
         }
     }
-    CustomApi.Accounts.ChildAccounts.get.invoke(RoutingContext::handleResult) {
+    CustomApi.Accounts.ChildAccounts.get(RoutingContext::handleResult) {
         usePrincipal { uid ->
             pagination(IdentifiablePagingGenerator) {
                 backend.getUserAlternateUserInfoList(uid, it)

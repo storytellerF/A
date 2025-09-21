@@ -38,23 +38,62 @@ sealed interface RoomFrame {
 
     @Serializable
     @SerialName("send-offer")
-    data class SendOffer(val offer: CustomOffer) : RoomFrame
+    data class SendOffer(
+        val offer: CustomOffer,
+        val roomId: PrimaryKey,
+        val targetUid: PrimaryKey
+    ) : RoomFrame
 
     @Serializable
     @SerialName("create-answer")
-    data class CreateAnswer(val targetUid: PrimaryKey, val offer: CustomOffer) : RoomFrame
+    data class CreateAnswer(
+        val targetUid: PrimaryKey,
+        val offer: CustomOffer,
+        val roomId: PrimaryKey
+    ) : RoomFrame
 
     @Serializable
     @SerialName("send-answer")
-    data class SendAnswer(val answer: CustomAnswer) : RoomFrame
+    data class SendAnswer(
+        val answer: CustomAnswer,
+        val roomId: PrimaryKey,
+        val targetUid: PrimaryKey
+    ) : RoomFrame
 
     @Serializable
     @SerialName("respond-answer")
-    data class RespondAnswer(val answer: CustomAnswer) : RoomFrame
+    data class RespondAnswer(
+        val answer: CustomAnswer,
+        val roomId: PrimaryKey,
+        val targetUid: PrimaryKey
+    ) : RoomFrame
+
+    @Serializable
+    @SerialName("send-candidate")
+    data class SendCandidate(
+        val candidate: CustomCandidate,
+        val roomId: PrimaryKey,
+        val targetUid: PrimaryKey
+    ) : RoomFrame
+
+    @Serializable
+    @SerialName("receive-candidate")
+    data class ReceiveCandidate(
+        val candidate: CustomCandidate,
+        val roomId: PrimaryKey,
+        val uid: PrimaryKey
+    ) : RoomFrame
 }
 
 @Serializable
-data class CustomOffer(val offer: String, val roomId: PrimaryKey, val targetUid: PrimaryKey)
+data class CustomCandidate(
+    val sdpMid: String,
+    val sdpMLineIndex: Int,
+    val candidate: String,
+)
 
 @Serializable
-data class CustomAnswer(val answer: String, val roomId: PrimaryKey, val targetUid: PrimaryKey)
+data class CustomOffer(val sdp: String)
+
+@Serializable
+data class CustomAnswer(val sdp: String)

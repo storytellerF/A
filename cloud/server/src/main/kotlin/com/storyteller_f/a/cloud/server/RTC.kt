@@ -75,7 +75,7 @@ private suspend fun processStartCall(
             val list = rtcSession.getOrPut(roomId) {
                 RtcSession(roomId)
             }
-            if (list.uidList.firstOrNull {
+            if (list.uidList.size < 2 && list.uidList.firstOrNull {
                     it.uid == uid
                 } == null) {
                 list.uidList.add(RtcUser(uid, session1))
@@ -124,7 +124,7 @@ private suspend fun processSendOffer(
     }
 }
 
-suspend fun listenerRoomRtc() {
+suspend fun listenerRoomRTC() {
     while (true) {
         rtcSession.forEach { (roomId, it) ->
             it.uidList.forEachIndexed { frontUserIndex, frontRtcUser ->
@@ -170,12 +170,8 @@ private suspend fun processRTCSession(
             session.answerList.getOrPut(frontRtcUser.uid) { mutableMapOf() }[backRtcUser.uid]
         if (answer != null) return
         try {
-            backSocket.sendFrame(
-                RoomFrame.CreateAnswer(
-                    frontRtcUser.uid,
-                    offer
-                ) as RoomFrame
-            )
+            val frame = RoomFrame.CreateAnswer(frontRtcUser.uid, offer)
+            backSocket.sendFrame(frame)
         } catch (e: Exception) {
             Napier.e(e) {
                 "send CreateAnswer"
@@ -184,12 +180,8 @@ private suspend fun processRTCSession(
         return
     }
     try {
-        frontSocket.sendFrame(
-            RoomFrame.CreateOffer(
-                backRtcUser.uid,
-                roomId
-            ) as RoomFrame
-        )
+        val frame = RoomFrame.CreateOffer(backRtcUser.uid, roomId)
+        frontSocket.sendFrame(frame)
     } catch (e: Exception) {
         Napier.e(e) {
             "send CreateOffer"
@@ -222,6 +214,10 @@ suspend fun listenerRtcChannel(backend: Backend) {
                     processStopCall(frame, uid)
                 }
 
+                is RoomFrame.SendCandidate -> {
+                    processSendCandidate(frame, uid)
+                }
+
                 else -> {
                 }
             }
@@ -231,6 +227,20 @@ suspend fun listenerRtcChannel(backend: Backend) {
             }
         }
     }
+}
+
+suspend fun processSendCandidate(
+    frame: RoomFrame.SendCandidate,
+    uid: PrimaryKey
+) {
+    val session = rtcSession[frame.roomId] ?: return
+    val targetSession = session.socketMap[frame.targetUid] ?: return
+    val f = RoomFrame.ReceiveCandidate(
+        frame.candidate,
+        frame.roomId,
+        uid
+    )
+    targetSession.sendFrame(f)
 }
 
 suspend fun DefaultWebSocketServerSession.sendFrame(frame: RoomFrame) {

@@ -1,6 +1,8 @@
 package com.storyteller_f.a.app.compose_app.utils
 
 import android.content.ClipData
+import android.content.Intent
+import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
@@ -8,20 +10,22 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import com.storyteller_f.a.app.BuildConfig
 import com.storyteller_f.a.app.compose_app.AApplication
+import com.storyteller_f.a.app.compose_app.RTCActivity
 import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.compontents.mainAppRef
 import com.storyteller_f.a.app.compose_app.getClipFile
 import com.storyteller_f.a.app.compose_app.initFromContext
 import com.storyteller_f.a.app.compose_app.pages.ClientFile
 import com.storyteller_f.shared.appContextRef
+import com.storyteller_f.shared.type.PrimaryKey
 import dev.jordond.connectivity.Connectivity
 
-actual val platform: Platform
+actual val appPlatform: AppPlatform
     get() {
         val activity = mainAppRef?.get()
         val currentState = activity?.lifecycle?.currentState
         val isActive = currentState?.isAtLeast(Lifecycle.State.RESUMED) == true
-        return Platform(true, isActive, BuildConfig.DEBUG)
+        return AppPlatform(true, isActive, BuildConfig.DEBUG)
     }
 
 actual fun initEnvironment(context: Any) {
@@ -46,4 +50,15 @@ actual fun getUiViewModel(): UIViewModel {
 
 actual fun getClientFile(path: String): ClientFile? {
     return getClipFile(appContextRef.get()!!, path.toUri())
+}
+
+actual fun startCall(roomId: PrimaryKey) {
+    val application = appContextRef.get() ?: return
+    val intent = Intent(application, RTCActivity::class.java).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+    }
+    application.startActivity(intent, Bundle().apply {
+        putLong("roomId", roomId)
+    })
 }

@@ -224,6 +224,7 @@ object CustomApi {
 
             val update = mutationApiWithPath<RoomInfo, UpdateRoomBody, CommonPath>("rooms/{id}/update")
             val startCall = mutationApiWithPath<RoomInfo, Unit, CommonPath>("rooms/{id}/start-call")
+            val endCall = mutationApiWithPath<RoomInfo, Unit, CommonPath>("rooms/{id}/end-call")
         }
 
         object Aid {

@@ -29,7 +29,7 @@ import kotlinx.collections.immutable.persistentListOf
 import org.unifiedpush.android.connector.UnifiedPush
 import java.util.concurrent.Future
 
-class MainActivity : ComponentActivity(), ClientFileServiceReceiver {
+class MainActivity : ComponentActivity(), ClientFileServiceContainer {
     private var controllerFuture: Future<MediaController>? = null
 
     override fun onStart() {

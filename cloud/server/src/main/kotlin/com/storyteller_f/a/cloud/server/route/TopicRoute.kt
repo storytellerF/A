@@ -27,7 +27,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 
 fun Route.bindTopicRoute(backend: Backend) {
-    CustomApi.Topics.search.invoke(RoutingContext::handleResult) {
+    CustomApi.Topics.search(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             it.pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchPublicTopics(it, f, uid)
@@ -35,7 +35,7 @@ fun Route.bindTopicRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Topics.recommend.invoke(RoutingContext::handleResult) {
+    CustomApi.Topics.recommend(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             pagination(IdentifiablePagingGenerator) { f ->
                 if (uid == null && it.fillHasCommented == true) {
@@ -47,19 +47,19 @@ fun Route.bindTopicRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Topics.Id.get.invoke(RoutingContext::handleResult) { q, p ->
+    CustomApi.Topics.Id.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             backend.getTopic(p.id, uid, q.fillHasCommented)
         }
     }
 
-    CustomApi.Topics.Aid.get.invoke(RoutingContext::handleResult) {
+    CustomApi.Topics.Aid.get(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             backend.getTopicByAid(it.aid, uid, it.fillHasCommented)
         }
     }
 
-    CustomApi.Topics.Id.Topics.get.invoke(RoutingContext::handleResult) { q, p ->
+    CustomApi.Topics.Id.Topics.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
@@ -73,7 +73,7 @@ fun Route.bindTopicRoute(backend: Backend) {
             }
         }
     }
-    CustomApi.Topics.Id.Reactions.get.invoke(RoutingContext::handleResult) { q, p ->
+    CustomApi.Topics.Id.Reactions.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(ReactionPaginationGenerator(backend)) { fetch ->
                 backend.reactionList(p.id, uid, q.fillHasReacted, fetch)
@@ -83,38 +83,38 @@ fun Route.bindTopicRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedTopicRoute(backend: Backend) {
-    CustomApi.Topics.Id.createSnapshot.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Topics.Id.createSnapshot(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.createTopicSnapshot(uid, p.id)
         }
     }
 
-    CustomApi.Topics.add.invoke(RoutingContext::handleResult) { api ->
+    CustomApi.Topics.add(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
             backend.createPlainTopic(uid, api.receiveBody())
         }
     }
 
-    CustomApi.Topics.Id.Reactions.add.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Topics.Id.Reactions.add(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             val emoji = api.receiveBody().emoji
             addReaction(emoji, backend, uid, p)
         }
     }
-    CustomApi.Topics.Id.Reactions.delete.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Topics.Id.Reactions.delete(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             val deleteReaction = api.receiveBody()
             deleteReaction(deleteReaction, backend, uid, p)
         }
     }
 
-    CustomApi.Topics.Id.pin.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Topics.Id.pin(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.updateTopicPin(uid, p.id, true)
         }
     }
 
-    CustomApi.Topics.Id.unpin.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Topics.Id.unpin(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.updateTopicPin(uid, p.id, false)
         }

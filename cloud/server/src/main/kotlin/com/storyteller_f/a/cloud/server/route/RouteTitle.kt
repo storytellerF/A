@@ -11,7 +11,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 
 fun Route.bindProtectedTitleRoute(backend: Backend) {
-    CustomApi.Titles.add.invoke(RoutingContext::handleResult) {
+    CustomApi.Titles.add(RoutingContext::handleResult) {
         usePrincipal { uid ->
             val title = it.receiveBody()
             createTitle(title, backend, uid)

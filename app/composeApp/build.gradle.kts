@@ -207,6 +207,7 @@ kotlin {
             implementation(libs.androidx.datastore.preferences.core)
             implementation(libs.connectivity.http)
             implementation(libs.connectivity.compose.http)
+            implementation(libs.tika.core)
         }
         desktopTest.dependencies {
             implementation(compose.desktop.currentOs)

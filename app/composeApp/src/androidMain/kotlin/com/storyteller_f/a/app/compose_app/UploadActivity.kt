@@ -11,7 +11,6 @@ import androidx.activity.compose.setContent
 import androidx.core.net.toUri
 import com.storyteller_f.a.app.compose_app.pages.ClientFile
 import com.storyteller_f.a.app.compose_app.pages.UploadPage
-import com.storyteller_f.a.client.core.UploadData
 import io.ktor.http.*
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -71,7 +70,7 @@ class ClipFile(
     }
 }
 
-class UploadActivity : ComponentActivity(), ClientFileServiceReceiver {
+class UploadActivity : ComponentActivity(), ClientFileServiceContainer {
     override var binder: FileBinder? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

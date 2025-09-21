@@ -163,15 +163,12 @@ class RoomTest {
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     @Test
     fun `test rtc`() {
-        suspend fun waitAnswer(list: MutableList<RoomFrame>) {
+        fun waitAnswer(list: MutableList<RoomFrame>) {
             while (true) {
                 if (list.firstOrNull {
                         it is RoomFrame.RespondAnswer
                     } != null) {
                     break
-                }
-                withContext(Dispatchers.IO) {
-                    delay(100)
                 }
             }
         }

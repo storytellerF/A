@@ -38,7 +38,7 @@ import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 
 fun Route.bindProtectedMediaRoute(backend: Backend) {
-    CustomApi.Files.get.invoke(RoutingContext::handleResult) {
+    CustomApi.Files.get(RoutingContext::handleResult) {
         usePrincipal { uid ->
             it.pagination(IdentifiablePagingGenerator) { pagingFetch ->
                 backend.getFileList(uid, it, pagingFetch)
@@ -46,7 +46,7 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Files.getByName.invoke(RoutingContext::handleResult) {
+    CustomApi.Files.getByName(RoutingContext::handleResult) {
         usePrincipal { uid ->
             backend.getFileInfoByName(uid, it.objectId ob it.objectType, it.name)
         }
@@ -58,19 +58,19 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
         error("create a-temp failed")
     }
 
-    CustomApi.Files.Id.extractAlbum.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Files.Id.extractAlbum(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.extractAlbum(p.id, root, uid)
         }
     }
 
-    CustomApi.Files.upload.invoke(RoutingContext::handleResult) { q, api ->
+    CustomApi.Files.upload(RoutingContext::handleResult) { q, api ->
         usePrincipal { uid ->
             uploadMedia(backend, uid, root, q)
         }
     }
 
-    CustomApi.Files.Id.copy.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Files.Id.copy(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.tryCopyFile(p, uid)
         }

@@ -5,7 +5,6 @@ import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.pages.ClientFile
 import com.storyteller_f.a.app.compose_app.pages.getUploadDataFromClipFile
 import com.storyteller_f.a.app.compose_app.utils.getClientFile
-import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
