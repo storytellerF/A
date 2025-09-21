@@ -224,7 +224,7 @@ fun Application.startNewMessageTask(backend: Backend) {
         dispatchNewMessage(backend, httpClient)
     }
     val rtcJob = launch {
-        listenerRoomRtc()
+        listenerRoomRTC()
     }
     val rtcChannelJob = launch {
         listenerRtcChannel(backend)

@@ -22,7 +22,7 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 
 fun Route.bindCommunityRoute(backend: Backend) {
-    CustomApi.Communities.search.invoke(RoutingContext::handleResult) {
+    CustomApi.Communities.search(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
             it.pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchCommunities(uid, it, f)
@@ -63,25 +63,25 @@ fun Route.bindCommunityRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedCommunityRoute(backend: Backend) {
-    CustomApi.Communities.Id.Members.join.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Communities.Id.Members.join(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.doUserJoinCommunity(uid, p.id)
         }
     }
 
-    CustomApi.Communities.Id.Members.leave.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Communities.Id.Members.leave(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
             backend.exitCommunity(p.id, uid)
         }
     }
-    CustomApi.Communities.add.invoke(RoutingContext::handleResult) { api ->
+    CustomApi.Communities.add(RoutingContext::handleResult) { api ->
         val newCommunity = api.receiveBody()
         usePrincipal { uid ->
             backend.createCommunity(newCommunity, uid)
         }
     }
 
-    CustomApi.Communities.Id.update.invoke(RoutingContext::handleResult) { p, api ->
+    CustomApi.Communities.Id.update(RoutingContext::handleResult) { p, api ->
         val newCommunity = api.receiveBody()
         usePrincipal { uid ->
             backend.updateCommunity(p.id, newCommunity, uid)

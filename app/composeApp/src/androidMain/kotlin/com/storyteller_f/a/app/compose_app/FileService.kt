@@ -43,12 +43,12 @@ class FileBinder(
     val uploader: Uploader
 ) : Binder(), Downloader by downloader, Uploader by uploader
 
-interface ClientFileServiceReceiver {
+interface ClientFileServiceContainer {
     var binder: FileBinder?
 }
 
 class FileConnection(
-    val context: WeakReference<ClientFileServiceReceiver>,
+    val context: WeakReference<ClientFileServiceContainer>,
     val clipData: ImmutableList<ClipFile>
 ) : ServiceConnection {
     override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
@@ -62,13 +62,13 @@ class FileConnection(
     }
 }
 
-fun <T> T.bindFileService(clipData: ImmutableList<ClipFile>) where T : Context, T : ClientFileServiceReceiver {
+fun <T> T.bindFileService(clipData: ImmutableList<ClipFile>) where T : Context, T : ClientFileServiceContainer {
     val serviceIntent = Intent(this, FileService::class.java)
     val connection = FileConnection(WeakReference(this), clipData)
     bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
 }
 
-class CustomClientFileProvider(val service: ClientFileServiceReceiver) : ClientFileProvider {
+class CustomClientFileProvider(val service: ClientFileServiceContainer) : ClientFileProvider {
     override fun getDownloader(): Downloader? {
         return service.binder?.downloader
     }

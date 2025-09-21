@@ -35,6 +35,7 @@ import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.insertContent
+import com.storyteller_f.a.app.compose_app.utils.startCall
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.WebSocketClient
@@ -56,6 +57,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkContent
 import io.github.aakira.napier.Napier
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -129,10 +131,12 @@ private fun BoxScope.NewTopicView(
     LaunchedEffect(firstVisibleItemIndex, roomInfo) {
         delay(1000)
         try {
-            val info = items[firstVisibleItemIndex]
-            if (info != null) {
-                sessionManager.addReadLog(UpdateUserRead(roomInfo.tuple(), info.id))
-                    .getOrThrow()
+            if (items.itemCount > 0) {
+                val info = items[firstVisibleItemIndex]
+                if (info != null) {
+                    sessionManager.addReadLog(UpdateUserRead(roomInfo.tuple(), info.id))
+                        .getOrThrow()
+                }
             }
         } catch (e: Exception) {
             Napier.e(e) {
@@ -176,13 +180,13 @@ fun RoomInputGroup(
     }
     val sessionManager = LocalSessionManager.current
     val wsClient = LocalWsClient.current
-    val listener = remember(input, myInfo) {
-        buildInputBoxContentListener(input, myInfo, sessionManager) {
+    DisposableEffect(myInfo) {
+        val listener = buildInputBoxContentListener({
+            input
+        }, myInfo, sessionManager) {
             input = ""
         }
-    }
-    wsClient.addListener(listener)
-    DisposableEffect(null) {
+        wsClient.addListener(listener)
         onDispose {
             wsClient.removeListener(listener)
         }
@@ -276,13 +280,13 @@ private fun RoomInputTopContent(
 }
 
 private fun buildInputBoxContentListener(
-    input: String,
+    getInput: () -> String,
     userInfo: UserInfo?,
     sessionManager: SessionManager,
     updateInput: (String) -> Unit,
 ): WebSocketClientListener {
     return object : WebSocketClientListener {
-        override suspend fun onReceived(frame: RoomFrame) {
+        override suspend fun onReceived(frame: RoomFrame, session: DefaultClientWebSocketSession) {
             if (frame is RoomFrame.NewTopicInfo) {
                 val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
                     val topicInfo =
@@ -293,7 +297,7 @@ private fun buildInputBoxContentListener(
                 }
                 val topicInfo = plainFrame.topicInfo
                 val content = topicInfo.content
-                if (content is TopicContent.Plain && userInfo?.id == topicInfo.author && content.plain == input) {
+                if (content is TopicContent.Plain && userInfo?.id == topicInfo.author && content.plain == getInput()) {
                     updateInput("")
                 }
             }
@@ -577,8 +581,8 @@ private fun RoomDialogButtons(
             dismiss()
             appNav.gotoMemberPage(roomInfo.id, ObjectType.ROOM)
         }
-        val isCommunityPage by appNav.hasRouteFlow<RoomScreen>().collectAsState(false)
-        if (isCommunityPage) {
+        val isRoomPage by appNav.hasRouteFlow<RoomScreen>().collectAsState(false)
+        if (isRoomPage) {
             val scope = rememberCoroutineScope()
             val toasterState = LocalToaster.current
             if (roomInfo.isJoined) {
@@ -595,12 +599,15 @@ private fun RoomDialogButtons(
                 ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_room)) {
                     scope.launch {
                         joinRoom(roomInfo, sessionManager, globalDialogController) {
-                            toasterState.showMessage(
-                                getString(Res.string.success),
-                            )
+                            val message = getString(Res.string.success)
+                            toasterState.showMessage(message)
                         }
                     }
                 }
+            }
+
+            ButtonNav(Icons.Default.Call, "Start Call") {
+                startCall(roomInfo.id)
             }
 
             if (roomInfo.creator == me?.id) {

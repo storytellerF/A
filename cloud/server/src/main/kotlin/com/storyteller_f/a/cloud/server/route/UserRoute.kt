@@ -21,17 +21,17 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 
 fun Route.bindProtectedUserRoute(backend: Backend) {
-    CustomApi.Users.update.invoke(RoutingContext::handleResult) { api ->
+    CustomApi.Users.update(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
             backend.updateUser(uid, api.receiveBody())
         }
     }
-    CustomApi.Users.Read.add.invoke(RoutingContext::handleResult) { api ->
+    CustomApi.Users.Read.add(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
             backend.addReadLog(uid, api.receiveBody())
         }
     }
-    CustomApi.Users.Devices.add.invoke(RoutingContext::handleResult) { api ->
+    CustomApi.Users.Devices.add(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
             val newDevice = api.receiveBody()
             backend.addDevice(uid, newDevice)
@@ -40,14 +40,14 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
 }
 
 fun Route.bindUserRoute(backend: Backend) {
-    CustomApi.Users.Aid.get.invoke(RoutingContext::handleResult) {
+    CustomApi.Users.Aid.get(RoutingContext::handleResult) {
         backend.getUserInfo(ObjectFetch.AidFetch(it.aid))
     }
-    CustomApi.Users.Id.get.invoke(RoutingContext::handleResult) {
+    CustomApi.Users.Id.get(RoutingContext::handleResult) {
         backend.getUserInfo(ObjectFetch.IdFetch(it.id))
     }
 
-    CustomApi.Users.Id.Topics.get.invoke(RoutingContext::handleResult) { q, p ->
+    CustomApi.Users.Id.Topics.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
@@ -62,13 +62,13 @@ fun Route.bindUserRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Users.Id.Titles.get.invoke(RoutingContext::handleResult) { q, p ->
+    CustomApi.Users.Id.Titles.get(RoutingContext::handleResult) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
             backend.getUserTitles(p.id, q.searchType, q.type, q.scopeId, f)
         }
     }
 
-    CustomApi.Users.search.invoke(RoutingContext::handleResult) {
+    CustomApi.Users.search(RoutingContext::handleResult) {
         it.pagination(IdentifiablePagingGenerator) { f ->
             backend.searchMembers(null, it.word, f)
         }

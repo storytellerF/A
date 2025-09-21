@@ -53,8 +53,8 @@ import com.storyteller_f.a.app.compose_app.sign_in
 import com.storyteller_f.a.app.compose_app.sign_up
 import com.storyteller_f.a.app.compose_app.start_sign_in
 import com.storyteller_f.a.app.compose_app.start_sign_up
+import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.compose_app.utils.buildLoginUserSessionFactory
-import com.storyteller_f.a.app.compose_app.utils.platform
 import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.model.UserInfo
@@ -74,7 +74,7 @@ fun LoginPage() {
     val appNav = LocalAppNav.current
     Surface {
         Column {
-            if (!platform.hasNativeBack) {
+            if (!appPlatform.hasNativeBack) {
                 IconButton({
                     if (!navigator.popBackStack()) {
                         appNav.back()

@@ -29,7 +29,7 @@ import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.title.ComposeMenu
 import com.storyteller_f.a.app.compose_app.pages.user.MemberList
-import com.storyteller_f.a.app.compose_app.utils.platform
+import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -152,7 +152,7 @@ private fun MergedLeadingIcon(
     appNav: AppNav
 ) {
     var active1 = active
-    if (platform.hasNativeBack) {
+    if (appPlatform.hasNativeBack) {
         leadingIcon()
     } else {
         Row(verticalAlignment = Alignment.CenterVertically) {

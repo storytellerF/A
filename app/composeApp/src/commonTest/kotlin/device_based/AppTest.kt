@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import coil3.compose.LocalPlatformContext
+import com.storyteller_f.a.app.compose_app.App
 import com.storyteller_f.a.app.compose_app.CommonEntry
 import com.storyteller_f.a.app.compose_app.MainAppPage
 import com.storyteller_f.a.app.compose_app.StaticObj
@@ -33,6 +34,7 @@ class AppTest {
     @OptIn(ExperimentalTestApi::class)
     @Test
     fun myTest() {
+        StaticObj
         runServer {
             runComposeUiTest {
                 setContent {
@@ -45,13 +47,7 @@ class AppTest {
                         initDone = true
                     }
                     if (initDone) {
-                        CommonEntry {
-                            StaticObj
-                            val playerSession by globalPlayerState
-                            val isPip = rememberIsInPipMode()
-
-                            MainAppPage(isPip, playerSession)
-                        }
+                        App()
                     }
                 }
 

@@ -66,11 +66,12 @@ class MediaTest {
 
     @Test
     fun `extract audio album`() {
-        val vendor = System.getProperty("java.vendor")      // 厂商
-        val version = System.getProperty("java.version")    // 版本
+        val vendor = System.getProperty("java.vendor") // 厂商
+        val version = System.getProperty("java.version") // 版本
         val runtime = System.getProperty("java.runtime.name")
 
         println("当前JDK: vendor=$vendor, version=$version, runtime=$runtime")
+        // https://github.com/bytedeco/javacpp-presets/issues/1649
         if (vendor.contains("OpenJDK", ignoreCase = true)) {
             error("❌ 不允许使用 OpenJDK")
         }
