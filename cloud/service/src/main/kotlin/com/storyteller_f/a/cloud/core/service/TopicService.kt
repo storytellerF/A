@@ -278,8 +278,8 @@ private suspend fun Backend.createTopicSnapshot(
 ): Result<FileInfo?> {
     val topicId = topicInfo.id
     val name = "$uid/$topicId.pdf"
-    val pdfFile = File("/tmp/$name")
-    val signedFile = File("/tmp/${pdfFile.nameWithoutExtension}_signed.pdf")
+    val pdfFile = File(System.getProperty("java.io.tmpdir"), name)
+    val signedFile = File(System.getProperty("java.io.tmpdir"), "${pdfFile.nameWithoutExtension}_signed.pdf")
     return getUserInfo(
         ObjectFetch.IdFetch(topicInfo.author)
     ).mapResultIfNotNull { userInfo ->
@@ -312,17 +312,6 @@ private suspend fun Backend.createTopicSnapshot(
     }.mapIfNotNull {
         it.firstOrNull()
     }
-}
-
-sealed class SnapshotVerify(open val path: File) {
-    class KeyStoreVerify(
-        val keyStorePath: String,
-        val password: String,
-        override val path: File,
-        val signedFile: File,
-    ) : SnapshotVerify(path)
-
-    class NoneVerify(override val path: File) : SnapshotVerify(path)
 }
 
 @OptIn(ExperimentalUuidApi::class)

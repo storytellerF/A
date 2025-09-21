@@ -95,11 +95,17 @@ private suspend fun processSendAnswer(
     uid: PrimaryKey,
 ) {
     val answer = frame.answer
-    val session = rtcSession[answer.roomId]
+    val session = rtcSession[frame.roomId]
     if (session != null) {
-        session.socketMap[answer.targetUid]?.sendFrame(RoomFrame.RespondAnswer(answer))
+        session.socketMap[frame.targetUid]?.sendFrame(
+            RoomFrame.RespondAnswer(
+                answer,
+                frame.roomId,
+                frame.targetUid
+            )
+        )
         session.answerList[uid]?.let {
-            it[answer.targetUid] = answer
+            it[frame.targetUid] = answer
         }
     }
 }
@@ -112,14 +118,20 @@ private suspend fun processSendOffer(
     uid: PrimaryKey,
 ) {
     val offer = frame.offer
-    val session = rtcSession[offer.roomId]
+    val session = rtcSession[frame.roomId]
     Napier.i {
-        "processSendOffer $frame ${session?.socketMap[offer.targetUid]}"
+        "processSendOffer $frame ${session?.socketMap[frame.targetUid]}"
     }
     if (session != null) {
-        session.socketMap[offer.targetUid]?.sendFrame(RoomFrame.CreateAnswer(uid, offer))
+        session.socketMap[frame.targetUid]?.sendFrame(
+            RoomFrame.CreateAnswer(
+                uid,
+                offer,
+                frame.roomId
+            )
+        )
         session.offerList[uid]?.let {
-            it[offer.targetUid] = offer
+            it[frame.targetUid] = offer
         }
     }
 }
@@ -170,7 +182,7 @@ private suspend fun processRTCSession(
             session.answerList.getOrPut(frontRtcUser.uid) { mutableMapOf() }[backRtcUser.uid]
         if (answer != null) return
         try {
-            val frame = RoomFrame.CreateAnswer(frontRtcUser.uid, offer)
+            val frame = RoomFrame.CreateAnswer(frontRtcUser.uid, offer, session.roomId)
             backSocket.sendFrame(frame)
         } catch (e: Exception) {
             Napier.e(e) {

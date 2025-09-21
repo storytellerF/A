@@ -1,14 +1,21 @@
-package com.storyteller_f.a.cloud.core.pdf
+package com.storyteller_f.a.cloud.pdf
 
-import com.storyteller_f.a.cloud.core.service.SnapshotVerify
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import org.apache.pdfbox.pdmodel.PDDocument
-import org.apache.pdfbox.pdmodel.font.FontMappers
-import org.apache.pdfbox.pdmodel.font.PDType0Font
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.io.File
+
+sealed class SnapshotVerify(open val path: File) {
+    class KeyStoreVerify(
+        val keyStorePath: String,
+        val password: String,
+        override val path: File,
+        val signedFile: File,
+    ) : SnapshotVerify(path)
+
+    class NoneVerify(override val path: File) : SnapshotVerify(path)
+}
 
 interface PdfService {
     fun generateSignedSnapshot(
@@ -19,19 +26,6 @@ interface PdfService {
         map: Map<String, File>,
         snapshotVerify: SnapshotVerify
     ): Result<Unit>
-}
-
-fun loadSystemFont(
-    document: PDDocument,
-    content: String,
-): PDType0Font? {
-    val font = getFont(content)
-    // 使用 PDFBox 加载字体
-    return PDType0Font.load(
-        document,
-        FontMappers.instance().getTrueTypeFont(font?.name, null).font,
-        true
-    )
 }
 
 fun getFont(content: String): Font? {

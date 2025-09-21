@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.openpdf
 
-import com.storyteller_f.a.cloud.core.pdf.PdfService
-import com.storyteller_f.a.cloud.core.pdf.getFont
-import com.storyteller_f.a.cloud.core.service.SnapshotVerify
+import com.storyteller_f.a.cloud.pdf.PdfService
+import com.storyteller_f.a.cloud.pdf.SnapshotVerify
+import com.storyteller_f.a.cloud.pdf.getFont
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT

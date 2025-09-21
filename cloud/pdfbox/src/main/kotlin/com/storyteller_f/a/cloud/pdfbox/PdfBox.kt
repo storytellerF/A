@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.pdfbox
 
-import com.storyteller_f.a.cloud.core.pdf.PdfService
-import com.storyteller_f.a.cloud.core.pdf.loadSystemFont
-import com.storyteller_f.a.cloud.core.service.SnapshotVerify
+import com.storyteller_f.a.cloud.pdf.PdfService
+import com.storyteller_f.a.cloud.pdf.SnapshotVerify
+import com.storyteller_f.a.cloud.pdf.getFont
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
@@ -10,6 +10,9 @@ import com.storyteller_f.shared.utils.astNode
 import com.storyteller_f.shared.utils.extractImageUrl
 import com.storyteller_f.shared.utils.now
 import org.apache.pdfbox.examples.signature.CreateSignature
+import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.pdmodel.font.FontMappers
+import org.apache.pdfbox.pdmodel.font.PDType0Font
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
@@ -93,4 +96,17 @@ class PdfBox : PdfService {
         }
         return UNIT_RESULT
     }
+}
+
+fun loadSystemFont(
+    document: PDDocument,
+    content: String,
+): PDType0Font? {
+    val font = getFont(content)
+    // 使用 PDFBox 加载字体
+    return PDType0Font.load(
+        document,
+        FontMappers.instance().getTrueTypeFont(font?.name, null).font,
+        true
+    )
 }

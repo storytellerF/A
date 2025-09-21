@@ -10,7 +10,6 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.RawCommunity
-import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.toCommunityIfo
 import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.isDup
@@ -301,23 +300,5 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
         Result.failure(firstError)
     } else {
         UNIT_RESULT
-    }
-}
-
-suspend fun getCommunityRoomsTemplateList(community: Community): List<Room> {
-    val communityAid = community.aid
-    return listOf(
-        "${communityAid}_general" to "General",
-        "${communityAid}_lobby" to "Lobby",
-        "${communityAid}_support" to "Support"
-    ).mapIndexed { i, pair ->
-        Room(
-            SnowflakeFactory.nextId(),
-            now(),
-            pair.first,
-            pair.second,
-            community.owner,
-            communityId = community.id
-        )
     }
 }
