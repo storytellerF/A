@@ -17,6 +17,7 @@ import com.storyteller_f.a.backend.service.mediaService
 import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.a.backend.service.object_storage.loadAvif
 import com.storyteller_f.a.backend.service.readEnv
+import com.storyteller_f.a.backend.setLogPath
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.configureAuth
 import com.storyteller_f.a.cloud.server.auth.getRateLimitKey
@@ -88,6 +89,7 @@ import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
+    setLogPath("A")
     Napier.base(kmpLogger)
     loadCryptoLibIfNeed()
     loadAvif()

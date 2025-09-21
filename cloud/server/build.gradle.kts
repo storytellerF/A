@@ -1,3 +1,4 @@
+import org.gradle.internal.os.OperatingSystem
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.ktor)
@@ -33,7 +34,7 @@ dependencies {
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
     implementation(projects.backend.service)
-    implementation(projects.cloud.core)
+    implementation(projects.cloud.service)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.server.client)
     implementation(libs.kotlinx.collections.immutable)

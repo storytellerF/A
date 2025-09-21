@@ -18,6 +18,7 @@ import com.storyteller_f.a.backend.service.databaseConnection
 import com.storyteller_f.a.backend.service.mediaService
 import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.a.backend.service.readEnv
+import com.storyteller_f.a.backend.setLogPath
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
@@ -32,6 +33,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 fun main() {
+    setLogPath("A")
     SnowflakeFactory.setMachine(1)
     Napier.base(kmpLogger)
     val env = readEnv()

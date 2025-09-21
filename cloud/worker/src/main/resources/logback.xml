@@ -34,9 +34,26 @@
             <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
+    <!-- 定义日志文件路径 -->
+    <property name="LOG_PATH" value="${LOG_PATH}" />
+    <property name="APP_NAME" value="A_worker" />
+    <!-- 文件输出，按天滚动 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${APP_NAME}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 按天生成日志文件 -->
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 保留 30 天 -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
     <root level="INFO">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="STDERR" />
+        <appender-ref ref="FILE" />
     </root>
     <logger name="org.eclipse.jetty" level="INFO" />
     <logger name="io.netty" level="INFO" />

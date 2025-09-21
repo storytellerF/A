@@ -11,13 +11,13 @@ import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.getCommunityRoomsTemplateList
+import com.storyteller_f.a.backend.service.getFileInfoList
 import com.storyteller_f.a.backend.service.search.CommunityDocument
 import com.storyteller_f.a.backend.service.search.RoomDocument
 import com.storyteller_f.a.backend.service.search.TopicDocument
 import com.storyteller_f.a.backend.service.search.UserDocument
-import com.storyteller_f.a.cloud.core.service.getCommunityRoomsTemplateList
-import com.storyteller_f.a.cloud.core.service.getFileInfoList
-import com.storyteller_f.a.cloud.core.service.tryUploadFiles
+import com.storyteller_f.a.backend.service.tryUploadFiles
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.eciesEncrypt
 import com.storyteller_f.shared.encryptData

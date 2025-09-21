@@ -3,7 +3,6 @@ package com.storyteller_f.a.app.compose_app.utils
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.awtClipboard
-import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.pages.ClientFile
 import com.storyteller_f.a.app.compose_app.uiViewModel
 import com.storyteller_f.shared.type.PrimaryKey
@@ -38,9 +37,7 @@ actual fun createConnectivity(): Connectivity {
     }
 }
 
-actual fun getUiViewModel(): UIViewModel {
-    return uiViewModel
-}
+actual fun getUiViewModel() = uiViewModel
 
 actual fun getClientFile(path: String): ClientFile? {
     val file = File(path)

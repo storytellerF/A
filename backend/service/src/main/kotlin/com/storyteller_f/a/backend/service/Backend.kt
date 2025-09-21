@@ -3,11 +3,13 @@ package com.storyteller_f.a.backend.service
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.*
+import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.RawUser
+import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.toCommunityIfo
 import com.storyteller_f.a.backend.core.types.toFileInfo
@@ -19,6 +21,7 @@ import com.storyteller_f.a.backend.service.naming.NameService
 import com.storyteller_f.a.backend.service.object_storage.FileSystemObjectStorageService
 import com.storyteller_f.a.backend.service.object_storage.MinIoObjectStorageService
 import com.storyteller_f.a.backend.service.object_storage.ObjectStorageService
+import com.storyteller_f.a.backend.service.object_storage.getImageDimension
 import com.storyteller_f.a.backend.service.search.CommunitySearchService
 import com.storyteller_f.a.backend.service.search.RoomSearchService
 import com.storyteller_f.a.backend.service.search.TopicSearchService
@@ -33,6 +36,8 @@ import com.storyteller_f.a.backend.service.search.lucene.LuceneTopicSearchServic
 import com.storyteller_f.a.backend.service.search.lucene.LuceneUserSearchService
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
 import io.github.aakira.napier.Napier
 import org.apache.tika.Tika
@@ -41,6 +46,8 @@ import java.io.FileInputStream
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class Backend(
     val customConfig: CustomConfig,
@@ -228,6 +235,12 @@ suspend fun Backend.processRawCommunityToCommunityInfo(
     }
 }
 
+suspend fun Backend.getFileInfoList(names: List<String>): Result<List<FileInfo?>?> {
+    return combinedDatabase.fileDatabase.getFileRecordByNames(names).mapResult { fileRecords ->
+        processFileRecordToFileInfo(fileRecords)
+    }
+}
+
 suspend fun Backend.processFileRecordToFileInfo(
     fileRecords: List<FileRecord>,
 ): Result<List<FileInfo>> {
@@ -346,6 +359,89 @@ private suspend fun Backend.insertQuotaAndGet(
                 }
         } else {
             Result.failure(throwable)
+        }
+    }
+}
+
+suspend fun getCommunityRoomsTemplateList(community: Community): List<Room> {
+    val communityAid = community.aid
+    return listOf(
+        "${communityAid}_general" to "General",
+        "${communityAid}_lobby" to "Lobby",
+        "${communityAid}_support" to "Support"
+    ).mapIndexed { i, pair ->
+        Room(
+            SnowflakeFactory.nextId(),
+            now(),
+            pair.first,
+            pair.second,
+            community.owner,
+            communityId = community.id
+        )
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+suspend fun Backend.tryUploadFiles(
+    ownerId: PrimaryKey,
+    ownerType: ObjectType,
+    files: List<UploadPack>
+): Result<List<FileInfo?>> {
+    val totalLength = files.sumOf {
+        it.size
+    }
+    return lockQuotaInfo(
+        ObjectTuple(ownerId, ownerType),
+        QuotaType.FILE,
+        totalLength,
+        Uuid.random().toHexString()
+    ) {
+        uploadFiles(ownerId, ownerType, files.map {
+            val detectedType = tika.detect(it.path)
+            val dimension = if (detectedType.startsWith("image")) {
+                getImageDimension(it.path.absolutePath, detectedType) {
+                    it.path.inputStream()
+                }
+            } else {
+                null
+            }
+            ProcessedUploadPack(it, detectedType, dimension)
+        })
+    }
+}
+
+private suspend fun Backend.uploadFiles(
+    ownerId: PrimaryKey,
+    ownerType: ObjectType,
+    uploadPacks: List<ProcessedUploadPack>
+): Result<List<FileInfo?>> {
+    val data = uploadPacks.map { p ->
+        val uploadPack = p.pack
+        val nextId = SnowflakeFactory.nextId()
+        val dimension = p.dimension
+        FileRecord(
+            nextId,
+            now(),
+            uploadPack.name,
+            0,
+            dimension?.width ?: 0,
+            dimension?.height ?: 0,
+            ownerId,
+            ownerType,
+            p.contentType,
+            uploadPack.size,
+            uploadPack.fullName
+        )
+    }
+    return merge({
+        objectStorageService.upload(A_FILE_DEFAULT_BUCKET, uploadPacks.map {
+            it.pack
+        })
+    }, {
+        combinedDatabase.fileDatabase.insertFileRecord(data, ownerId, ownerType)
+    }).map { (records) ->
+        records.mapIndexed { i, e ->
+            data[i].toFileInfo(e.url, e.lastModified)
         }
     }
 }

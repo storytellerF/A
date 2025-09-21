@@ -28,3 +28,6 @@ services:
   pg-exporter:
     networks:
       - bw-services
+  loki:
+    networks:
+      - bw-services

@@ -18,7 +18,7 @@ dependencies {
     implementation(libs.napier)
     implementation(projects.shared)
     implementation(libs.kotlinx.datetime)
-    implementation(projects.cloud.core)
+    implementation(projects.cloud.pdf)
     implementation(libs.markdown)
     implementation(libs.pdfbox.layout)
     implementation(libs.pdfbox)
