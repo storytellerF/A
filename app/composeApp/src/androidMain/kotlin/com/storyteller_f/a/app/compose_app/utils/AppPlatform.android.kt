@@ -58,7 +58,6 @@ actual fun startCall(roomId: PrimaryKey) {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
     }
-    application.startActivity(intent, Bundle().apply {
-        putLong("roomId", roomId)
-    })
+    intent.putExtra("roomId", roomId)
+    application.startActivity(intent)
 }
