@@ -6,7 +6,10 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Binder
 import android.os.IBinder
+import androidx.activity.ComponentActivity
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.storyteller_f.a.app.compose_app.common.Downloader
@@ -62,10 +65,16 @@ class FileConnection(
     }
 }
 
-fun <T> T.bindFileService(clipData: ImmutableList<ClipFile>) where T : Context, T : ClientFileServiceContainer {
+fun <T> T.bindFileService(clipData: ImmutableList<ClipFile>) where T : ComponentActivity, T : ClientFileServiceContainer {
     val serviceIntent = Intent(this, FileService::class.java)
     val connection = FileConnection(WeakReference(this), clipData)
     bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
+    lifecycle.addObserver(object : DefaultLifecycleObserver{
+        override fun onDestroy(owner: LifecycleOwner) {
+            super.onDestroy(owner)
+            unbindService(connection)
+        }
+    })
 }
 
 class CustomClientFileProvider(val service: ClientFileServiceContainer) : ClientFileProvider {

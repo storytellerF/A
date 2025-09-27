@@ -21,8 +21,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.edit
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -42,6 +44,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -67,8 +70,18 @@ class RTCActivity : ComponentActivity(), RTCContainer {
     override val callingRoomFlow: StateFlow<Long?> = binder.filterNotNull().flatMapLatest {
         it.callingRoom
     }.stateIn(lifecycleScope, SharingStarted.Lazily, null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val remoteStream: StateFlow<Pair<AudioTrack?, VideoTrack?>?> =
+        combine(binder.filterNotNull().flatMapLatest {
+            it.remoteAudioStream
+        }, binder.filterNotNull().flatMapLatest {
+            it.remoteVideoStream
+        }) { audioTrack, videoTrack ->
+            Pair(audioTrack, videoTrack)
+        }.stateIn(lifecycleScope, SharingStarted.Lazily, null)
+
     val roomId = MutableStateFlow<PrimaryKey?>(null)
-    val connection = RTCServiceConnection(WeakReference(this))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,7 +89,14 @@ class RTCActivity : ComponentActivity(), RTCContainer {
         val roomId = intent.getLongExtra("roomId", 0)
         this.roomId.value = roomId
         val intent1 = Intent(this, RTCService::class.java)
+        val connection = RTCServiceConnection(WeakReference(this))
         bindService(intent1, connection, BIND_AUTO_CREATE)
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onDestroy(owner: LifecycleOwner) {
+                super.onDestroy(owner)
+                unbindService(connection)
+            }
+        })
         setContent {
             CommonEntry {
                 val roomId by this.roomId.collectAsState()
@@ -92,12 +112,6 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
     val scope = rememberCoroutineScope()
     val localStream by rtcContainer.streamFlow.collectAsState()
     val callingRoom by rtcContainer.callingRoomFlow.collectAsState()
-    val (remoteVideoTrack, setRemoteVideoTrack) = remember {
-        mutableStateOf<VideoTrack?>(null)
-    }
-    val (remoteAudioTrack, setRemoteAudioTrack) = remember {
-        mutableStateOf<AudioTrack?>(null)
-    }
 
     Scaffold { padding ->
         Column(
@@ -123,23 +137,7 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
             ) {
                 Text("Local video")
             }
-
-            remoteVideoTrack?.let {
-                Video(
-                    videoTrack = it,
-                    audioTrack = remoteAudioTrack,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                )
-            } ?: Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("Remote video")
-            }
+            RemoteStreamView(rtcContainer)
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (localStream == null) {
@@ -155,8 +153,6 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
                             it.hangup()
                             it.releaseStream()
                         }
-                        setRemoteVideoTrack(null)
-                        setRemoteAudioTrack(null)
                     }
 
                     SwitchCameraButton {
@@ -170,12 +166,31 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
                 } else {
                     HangupButton {
                         rtcContainer.binder.value?.hangup()
-                        setRemoteVideoTrack(null)
-                        setRemoteAudioTrack(null)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ColumnScope.RemoteStreamView(rtcContainer: RTCContainer) {
+    val remoteStream by rtcContainer.remoteStream.collectAsState()
+    remoteStream?.second?.let {
+        Video(
+            videoTrack = it,
+            audioTrack = remoteStream?.first,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+        )
+    } ?: Box(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("Remote video")
     }
 }
 
@@ -240,8 +255,19 @@ suspend fun makeCallByOffer(
         signalingChannel.map {
             it as? RoomFrame.RespondAnswer
         }.filterNotNull().onEach {
-            val answer = SessionDescription(SessionDescriptionType.Answer, it.answer.sdp)
-            pc.setRemoteDescription(answer)
+            Napier.i {
+                "respond answer ${pc.signalingState}"
+            }
+            when (pc.signalingState) {
+                SignalingState.HaveLocalOffer -> {
+                    val answer = SessionDescription(SessionDescriptionType.Answer, it.answer.sdp)
+                    pc.setRemoteDescription(answer)
+                }
+
+                else -> {
+
+                }
+            }
         }.launchIn(this)
 
         signalingChannel.map {
@@ -322,9 +348,9 @@ suspend fun makeCallByAnswer(
         pc.onConnectionStateChange
             .onEach { Napier.d(tag = "web_rtc") { "PC1 onConnectionStateChange: $it" } }
             .launchIn(this)
+        pc.setRemoteDescription(SessionDescription(SessionDescriptionType.Offer, customOffer.sdp))
         val answer = pc.createAnswer(options = OfferAnswerOptions())
         pc.setLocalDescription(answer)
-        pc.setRemoteDescription(SessionDescription(SessionDescriptionType.Offer, customOffer.sdp))
         val f = RoomFrame.SendAnswer(CustomAnswer(answer.sdp), roomId, targetUid)
         instance.sessionManager.webSocketClient.useWebSocket {
             sendFrame(f)
@@ -392,8 +418,8 @@ private fun Context.navigateToAppSettings() {
         addCategory(Intent.CATEGORY_DEFAULT)
         addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_NO_HISTORY or
-                Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                    Intent.FLAG_ACTIVITY_NO_HISTORY or
+                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
         )
     }
     startActivity(intent)

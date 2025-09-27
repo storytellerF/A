@@ -75,7 +75,8 @@ class UploadActivity : ComponentActivity(), ClientFileServiceContainer {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         commonForActivity()
-        uploadFromIntent()
+        val clipData = getClipData()
+        bindFileService(clipData)
         setContent {
             UploadPage()
         }
@@ -94,17 +95,8 @@ class UploadActivity : ComponentActivity(), ClientFileServiceContainer {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        uploadFromIntent()
-    }
-
-    @OptIn(ExperimentalUuidApi::class)
-    private fun uploadFromIntent() {
         val clipData = getClipData()
         val fileBinder = binder
-        if (fileBinder == null) {
-            bindFileService(clipData)
-            return
-        }
-        fileBinder.upload(clipData)
+        fileBinder?.upload(clipData)
     }
 }

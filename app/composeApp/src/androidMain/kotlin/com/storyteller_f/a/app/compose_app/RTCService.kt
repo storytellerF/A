@@ -9,11 +9,14 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.coroutineScope
+import com.shepeliev.webrtckmp.AudioTrack
 import com.shepeliev.webrtckmp.MediaStream
+import com.shepeliev.webrtckmp.VideoTrack
 import com.shepeliev.webrtckmp.videoTracks
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +50,8 @@ class RTCService : LifecycleService() {
 interface RTCHandle {
     val stream: StateFlow<MediaStream?>
     val callingRoom: StateFlow<PrimaryKey?>
+    val remoteAudioStream: StateFlow<AudioTrack?>
+    val remoteVideoStream: StateFlow<VideoTrack?>
     var job: Job?
     fun startCall(roomId: PrimaryKey)
     fun setLocalStream(stream: MediaStream)
@@ -59,10 +64,11 @@ interface RTCHandle {
 class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) : RTCHandle {
     override val callingRoom = MutableStateFlow<PrimaryKey?>(null)
     override var stream = MutableStateFlow<MediaStream?>(null)
+    override val remoteAudioStream = MutableStateFlow<AudioTrack?>(null)
+    override val remoteVideoStream = MutableStateFlow<VideoTrack?>(null)
     override var job: Job? = null
 
     init {
-
         lifecycle.coroutineScope.launch {
             combine(callingRoom, uiViewModel.instance, uiViewModel.instance.flatMapLatest {
                 it.sessionManager.webSocketClient.frameFlow
@@ -103,6 +109,8 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
     override fun hangup() {
         job?.cancel()
         callingRoom.value = null
+        remoteVideoStream.value = null
+        remoteAudioStream.value = null
     }
 
     override fun startCall(roomId: PrimaryKey) {
@@ -121,7 +129,14 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         val localStream = stream.value ?: return
         val signalingChannel = instance.sessionManager.webSocketClient.frameFlow
         job = lifecycle.coroutineScope.launch {
-            makeCallByAnswer(frame, localStream, {}, {}, signalingChannel, instance)
+            makeCallByAnswer(
+                frame,
+                localStream,
+                ::setRemoteVideoTrack,
+                ::setRemoteAudioTrack,
+                signalingChannel,
+                instance
+            )
         }
     }
 
@@ -132,8 +147,29 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         val localStream = stream.value ?: return
         val signalingChannel = instance.sessionManager.webSocketClient.frameFlow
         job = lifecycle.coroutineScope.launch {
-            makeCallByOffer(frame, localStream, {}, {}, signalingChannel, instance)
+            makeCallByOffer(
+                frame,
+                localStream,
+                ::setRemoteVideoTrack,
+                ::setRemoteAudioTrack,
+                signalingChannel,
+                instance
+            )
         }
+    }
+
+    private fun setRemoteAudioTrack(audioTrack: AudioTrack) {
+        Napier.i {
+            "setRemoteAudioTrack"
+        }
+        remoteAudioStream.value = audioTrack
+    }
+
+    private fun setRemoteVideoTrack(videoTrack: VideoTrack) {
+        Napier.i {
+            "setRemoteVideoTrack"
+        }
+        remoteVideoStream.value = videoTrack
     }
 }
 
@@ -156,4 +192,5 @@ interface RTCContainer {
     val binder: MutableStateFlow<RTCHandle?>
     val streamFlow: StateFlow<MediaStream?>
     val callingRoomFlow: StateFlow<Long?>
+    val remoteStream: StateFlow<Pair<AudioTrack?, VideoTrack?>?>
 }
