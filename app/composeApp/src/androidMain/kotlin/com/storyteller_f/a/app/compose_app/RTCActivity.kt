@@ -462,7 +462,7 @@ private fun VideoTrack.removeSinkCatching(sink: VideoSink) {
 
 @Composable
 private fun CallButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
-    androidx.compose.material.Button(onClick, modifier = modifier) {
+    Button(onClick, modifier = modifier) {
         Text("Call")
     }
 }

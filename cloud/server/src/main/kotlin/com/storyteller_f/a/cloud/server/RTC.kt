@@ -61,7 +61,7 @@ private suspend fun processStartCall(
     frame: RoomFrame.StartCall,
     backend: Backend,
     uid: PrimaryKey,
-    session1: DefaultWebSocketServerSession,
+    session: DefaultWebSocketServerSession,
 ) {
     Napier.i {
         "processStartCall $uid"
@@ -70,7 +70,7 @@ private suspend fun processStartCall(
     val roomId = frame.roomId
     backend.checkRootReadPermission(ObjectType.ROOM, roomId, uid).onSuccess { permission ->
         if (permission == null) {
-            session1.sendFrame(RoomFrame.Error("no permission"))
+            session.sendFrame(RoomFrame.Error("no permission"))
         } else {
             val list = rtcSession.getOrPut(roomId) {
                 RtcSession(roomId)
@@ -78,12 +78,12 @@ private suspend fun processStartCall(
             if (list.uidList.size < 2 && list.uidList.firstOrNull {
                     it.uid == uid
                 } == null) {
-                list.uidList.add(RtcUser(uid, session1))
-                list.socketMap[uid] = session1
+                list.uidList.add(RtcUser(uid, session))
+                list.socketMap[uid] = session
             }
         }
     }.onFailure {
-        session1.sendFrame(RoomFrame.Error(it.message.toString()))
+        session.sendFrame(RoomFrame.Error(it.message.toString()))
     }
 }
 

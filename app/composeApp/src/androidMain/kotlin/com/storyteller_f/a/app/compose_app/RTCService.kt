@@ -102,6 +102,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
 
     override fun hangup() {
         job?.cancel()
+        callingRoom.value = null
     }
 
     override fun startCall(roomId: PrimaryKey) {
@@ -110,6 +111,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
             val f = RoomFrame.StartCall(roomId)
             sendFrame(f)
         }
+        callingRoom.value = roomId
     }
 
     private fun processCreateAnswer(
