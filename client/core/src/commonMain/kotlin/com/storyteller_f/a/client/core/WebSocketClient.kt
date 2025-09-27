@@ -15,22 +15,19 @@ interface WebSocketClientListener {
 interface WebSocketClient {
     val connectionHandler: LoadingHandler<DefaultClientWebSocketSession>
     val localState: StateFlow<LoadingState?>
-    val remoteState: SharedFlow<RoomFrame>
+    val frameFlow: SharedFlow<RoomFrame>
     fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job?
-    fun addListener(listener: WebSocketClientListener)
-    fun removeListener(listener: WebSocketClientListener)
 }
 
 @OptIn(DelicateCoroutinesApi::class)
 class WebSocketClientImpl(
     val sessionModel: SessionModel,
     val buildConnection: suspend (UserInfo, String) -> DefaultClientWebSocketSession,
-    val onMessage: suspend (RoomFrame) -> Unit,
+    val onMessage: suspend (RoomFrame, DefaultClientWebSocketSession) -> Unit,
 ) : WebSocketClient {
     override val connectionHandler = FixedLoadingHandler<DefaultClientWebSocketSession>()
     override val localState = MutableStateFlow<LoadingState?>(null)
-    override val remoteState = MutableSharedFlow<RoomFrame>()
-    private val listeners = mutableListOf<WebSocketClientListener>()
+    override val frameFlow = MutableSharedFlow<RoomFrame>()
 
     suspend fun connectWebSocket() {
         combine(sessionModel.state, sessionModel.userHandler.data) { t1, t2 ->
@@ -98,40 +95,27 @@ class WebSocketClientImpl(
                     Napier.i(tag = "ClientWebSocket") {
                         "client ${userInfo.id} receive $frame"
                     }
-                    onMessage(frame)
-                    if (frame is RoomFrame.Error) {
-                        remoteState.emit(frame)
-                    }
-                    listeners.forEach {
-                        it.onReceived(frame, session)
-                    }
+                    onMessage(frame, session)
+                    frameFlow.emit(frame)
                 } catch (e: Exception) {
                     if (e is ClosedReceiveChannelException) {
                         Napier.e {
-                            "Listener WebSocket failed: ${e.message}"
+                            "WebSocket closed ${userInfo.id}"
                         }
                     } else {
                         Napier.e(e, tag = "ClientWebSocket") {
-                            "Listener WebSocket failed"
+                            "WebSocket failed: ${e.message} ${userInfo.id}"
                         }
                     }
                     break
                 }
             }
             Napier.i {
-                "Client WebSocket disconnected"
+                "Client WebSocket disconnected ${userInfo.id}"
             }
             connectionHandler.data.value = null
             connectionHandler.state.value = null
         }
-    }
-
-    override fun addListener(listener: WebSocketClientListener) {
-        listeners.add(listener)
-    }
-
-    override fun removeListener(listener: WebSocketClientListener) {
-        listeners.remove(listener)
     }
 }
 

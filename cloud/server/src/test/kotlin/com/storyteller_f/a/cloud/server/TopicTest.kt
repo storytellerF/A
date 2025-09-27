@@ -289,8 +289,7 @@ class TopicTest {
                     createRoom(NewRoom("room1", "room1", communityId = communityId)).getOrThrow().id
                 communityId to publicRoomId
             }.custom
-            attachSession({ roomFrame, model ->
-            }) {
+            attachSession {
                 joinCommunity(communityId).getOrThrow()
                 joinRoom(publicRoomId).getOrThrow()
                 assertFails {
@@ -314,7 +313,7 @@ class TopicTest {
                 communityId to publicRoomId
             }.custom
             val receivedFrame = mutableListOf<RoomFrame>()
-            attachSession({ roomFrame, model ->
+            attachSession({ roomFrame, model, session ->
                 receivedFrame.add(roomFrame)
             }) {
                 val roomInfo = getRoomInfo(publicRoomId).getOrThrow()
@@ -379,7 +378,7 @@ class TopicTest {
             }
             val privateRoomId = user1.custom
             val receivedFrame = mutableListOf<RoomFrame>()
-            loginSession(user2, { roomFrame, model ->
+            loginSession(user2, { roomFrame, model, session ->
                 receivedFrame.add(roomFrame)
             }) {
                 joinRoom(privateRoomId).getOrThrow()
@@ -421,7 +420,7 @@ class TopicTest {
                     NewTitle("join", TitleType.JOIN, user2.uid, privateRoomId, ObjectType.ROOM, "")
                 )
             }
-            loginSession(user2, { roomFrame, model ->
+            loginSession(user2, { roomFrame, model, session ->
             }) {
                 joinRoom(privateRoomId).getOrThrow()
             }
@@ -487,7 +486,7 @@ class TopicTest {
     fun `test room last read`() {
         val receivedFrame = mutableListOf<RoomFrame>()
         test {
-            attachSession({ roomFrame, model ->
+            attachSession({ roomFrame, model, session ->
                 receivedFrame.add(roomFrame)
             }) {
                 val roomInfo = createRoom(NewRoom("r1", "r1")).getOrThrow()

@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.server
 
-import com.storyteller_f.a.cloud.core.service.SnapshotVerify
 import com.storyteller_f.a.cloud.openpdf.OpenPdf
+import com.storyteller_f.a.cloud.pdf.SnapshotVerify
 import com.storyteller_f.a.cloud.pdfbox.PdfBox
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -25,10 +25,10 @@ class SnapshotTest {
             val pdfFile = File("build/tmp/.pdf")
             val signedFile = File("build/tmp/signed.pdf")
             PdfBox().generateSignedSnapshot(
-                UserInfo.EMPTY,
-                UserInfo.EMPTY,
+                UserInfo.Companion.EMPTY,
+                UserInfo.Companion.EMPTY,
                 "hello world",
-                TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello world")),
+                TopicInfo.Companion.EMPTY.copy(content = TopicContent.Plain("hello world")),
                 emptyMap(),
                 //            SnapshotVerify.KeyStoreVerify(path, password, pdfFile, signedFile)
                 SnapshotVerify.NoneVerify(pdfFile)
@@ -49,10 +49,10 @@ class SnapshotTest {
             Security.addProvider(SecurityProvider.getProvider())
             val pdfFile = File("build/tmp/.pdf")
             OpenPdf().generateSignedSnapshot(
-                UserInfo.EMPTY,
-                UserInfo.EMPTY,
+                UserInfo.Companion.EMPTY,
+                UserInfo.Companion.EMPTY,
                 "hello world",
-                TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello world")),
+                TopicInfo.Companion.EMPTY.copy(content = TopicContent.Plain("hello world")),
                 emptyMap(),
                 //            SnapshotVerify.KeyStoreVerify(path, password, pdfFile, signedFile)
                 SnapshotVerify.NoneVerify(pdfFile)

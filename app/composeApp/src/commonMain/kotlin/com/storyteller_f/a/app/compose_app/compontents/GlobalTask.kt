@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-class GlobalTask(val scope: CoroutineScope, val bus: MutableSharedFlow<Any>) {
+class GlobalTask(val scope: CoroutineScope, val events: MutableSharedFlow<Any>) {
     val mutex = Mutex()
     val stateMap = mutableStateMapOf<String, LoadingState?>()
 
@@ -51,7 +51,7 @@ class GlobalTask(val scope: CoroutineScope, val bus: MutableSharedFlow<Any>) {
                 }
             }
             try {
-                block(newFlow, bus)
+                block(newFlow, events)
             } catch (_: Exception) {
             } finally {
                 job.cancel()

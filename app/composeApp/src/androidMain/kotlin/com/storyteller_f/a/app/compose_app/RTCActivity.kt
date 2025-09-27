@@ -24,6 +24,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.shepeliev.webrtckmp.*
@@ -37,14 +38,17 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.webrtc.RendererCommon
 import org.webrtc.SurfaceViewRenderer
@@ -53,6 +57,16 @@ import java.lang.ref.WeakReference
 
 class RTCActivity : ComponentActivity(), RTCContainer {
     override var binder = MutableStateFlow<RTCHandle?>(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val streamFlow = binder.filterNotNull().flatMapLatest {
+        it.stream
+    }.stateIn(lifecycleScope, SharingStarted.Lazily, null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val callingRoomFlow: StateFlow<Long?> = binder.filterNotNull().flatMapLatest {
+        it.callingRoom
+    }.stateIn(lifecycleScope, SharingStarted.Lazily, null)
     val roomId = MutableStateFlow<PrimaryKey?>(null)
     val connection = RTCServiceConnection(WeakReference(this))
 
@@ -76,12 +90,8 @@ class RTCActivity : ComponentActivity(), RTCContainer {
 @Composable
 fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
     val scope = rememberCoroutineScope()
-    val localStream by rtcContainer.binder.filterNotNull().flatMapLatest {
-        it.stream
-    }.collectAsState(null)
-    val callingRoom by rtcContainer.binder.filterNotNull().flatMapLatest {
-        it.callingRoom
-    }.collectAsState(null)
+    val localStream by rtcContainer.streamFlow.collectAsState()
+    val callingRoom by rtcContainer.callingRoomFlow.collectAsState()
     val (remoteVideoTrack, setRemoteVideoTrack) = remember {
         mutableStateOf<VideoTrack?>(null)
     }
@@ -168,12 +178,13 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
         }
     }
 }
+
 suspend fun makeCallByOffer(
     createOffer: RoomFrame.CreateOffer,
     localStream: MediaStream,
     onRemoteVideoTrack: (VideoTrack) -> Unit,
     onRemoteAudioTrack: (AudioTrack) -> Unit = {},
-    signalingChannel: MutableSharedFlow<RoomFrame>,
+    signalingChannel: SharedFlow<RoomFrame>,
     instance: AccountInstance,
 ) {
     val roomId = createOffer.roomId
@@ -186,7 +197,7 @@ suspend fun makeCallByOffer(
         pc.onIceCandidate
             .onEach { candidate ->
                 Napier.d(tag = "web_rtc") { "Caller onIceCandidate: $candidate" }
-                instance.manager.webSocketClient.useWebSocket {
+                instance.sessionManager.webSocketClient.useWebSocket {
                     val customCandidate = CustomCandidate(
                         candidate.sdpMid,
                         candidate.sdpMLineIndex,
@@ -222,7 +233,7 @@ suspend fun makeCallByOffer(
 
         // 通过信令发送给 Callee
         val f = RoomFrame.SendOffer(CustomOffer(offer.sdp), roomId, targetUid)
-        instance.manager.webSocketClient.useWebSocket {
+        instance.sessionManager.webSocketClient.useWebSocket {
             sendFrame(f)
         }?.join()
 
@@ -261,7 +272,7 @@ suspend fun makeCallByAnswer(
     localStream: MediaStream,
     onRemoteVideoTrack: (VideoTrack) -> Unit,
     onRemoteAudioTrack: (AudioTrack) -> Unit = {},
-    signalingChannel: MutableSharedFlow<RoomFrame>,
+    signalingChannel: SharedFlow<RoomFrame>,
     instance: AccountInstance,
 ) {
     val roomId = createAnswer.roomId
@@ -276,7 +287,7 @@ suspend fun makeCallByAnswer(
             .onEach { candidate ->
                 Napier.d(tag = "web_rtc") { "Callee onIceCandidate: $candidate" }
                 candidate
-                instance.manager.webSocketClient.useWebSocket {
+                instance.sessionManager.webSocketClient.useWebSocket {
                     val customCandidate = CustomCandidate(
                         candidate.sdpMid,
                         candidate.sdpMLineIndex,
@@ -315,7 +326,7 @@ suspend fun makeCallByAnswer(
         pc.setLocalDescription(answer)
         pc.setRemoteDescription(SessionDescription(SessionDescriptionType.Offer, customOffer.sdp))
         val f = RoomFrame.SendAnswer(CustomAnswer(answer.sdp), roomId, targetUid)
-        instance.manager.webSocketClient.useWebSocket {
+        instance.sessionManager.webSocketClient.useWebSocket {
             sendFrame(f)
         }?.join()
         signalingChannel.map {

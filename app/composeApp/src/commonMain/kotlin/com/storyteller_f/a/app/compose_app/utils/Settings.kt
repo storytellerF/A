@@ -21,7 +21,7 @@ fun UserSessionManager.restoreFromStorage(settings: Settings) {
     if (current != null && list.contains(current)) {
         val session = sessionFactory.buildSession(current)
         if (session != null) {
-            sessionModel.updateState(ClientSessionState.Success(session))
+            model.updateState(ClientSessionState.Success(session))
         }
     }
 }

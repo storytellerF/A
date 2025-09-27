@@ -19,7 +19,7 @@ class TopicContentTest : UsingContextTest() {
             val webSocketUrl = buildWebSocketUrl(it.replace("http", "ws"))
             val manager = createUserSessionManager(webSocketUrl, { model, cookie ->
                 buildHttpClient(it, cookie, model)
-            }, { _, _ -> })
+            }, { _, _, _ -> })
             manager.startBackgroundTask().forEach(Job::cancel)
         }
 

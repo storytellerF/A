@@ -537,7 +537,7 @@ private fun CommunityMenus(
                 )
             }
             val userSessionManager = LocalSessionManager.current
-            val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+            val myInfo by userSessionManager.model.userHandler.data.collectAsState()
             val my = myInfo
             if (my?.id == communityInfo.owner) {
                 ButtonNav(Icons.Default.Title, "Add Title") {

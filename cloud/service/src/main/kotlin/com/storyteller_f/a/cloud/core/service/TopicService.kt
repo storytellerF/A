@@ -15,10 +15,13 @@ import com.storyteller_f.a.backend.core.fixedSort
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.toTopicInfo
 import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.getFileInfoList
 import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
 import com.storyteller_f.a.backend.service.search.TopicDocument
 import com.storyteller_f.a.backend.service.search.TopicDocumentSearch
-import com.storyteller_f.a.cloud.core.pdf.PdfService
+import com.storyteller_f.a.backend.service.tryUploadFiles
+import com.storyteller_f.a.cloud.pdf.PdfService
+import com.storyteller_f.a.cloud.pdf.SnapshotVerify
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.ReactionInfo
@@ -279,11 +282,12 @@ private suspend fun Backend.createTopicSnapshot(
     val topicId = topicInfo.id
     val name = "$uid/$topicId.pdf"
     val pdfFile = File(System.getProperty("java.io.tmpdir"), name)
-    val signedFile = File(System.getProperty("java.io.tmpdir"), "${pdfFile.nameWithoutExtension}_signed.pdf")
-    return getUserInfo(
-        ObjectFetch.IdFetch(topicInfo.author)
-    ).mapResultIfNotNull { userInfo ->
-        try {
+    val signedFile =
+        File(System.getProperty("java.io.tmpdir"), "${pdfFile.nameWithoutExtension}_signed.pdf")
+    return try {
+        getUserInfo(
+            ObjectFetch.IdFetch(topicInfo.author)
+        ).mapResultIfNotNull { userInfo ->
             generateSignedSnapshot(
                 userInfo,
                 creatorInfo,
@@ -292,25 +296,25 @@ private suspend fun Backend.createTopicSnapshot(
                     SnapshotVerify.KeyStoreVerify(it.path, it.pass, pdfFile, signedFile)
                 } ?: SnapshotVerify.NoneVerify(pdfFile)
             )
-        } finally {
-            pdfFile.delete()
-            signedFile.delete()
-        }
-    }.mapResultIfNotNull {
-        tryUploadFiles(
-            uid,
-            ObjectType.USER,
-            listOf(
-                UploadPack(
-                    pdfFile,
-                    "$topicId.pdf",
-                    pdfFile.length(),
-                    "$uid/$topicId.pdf"
+        }.mapResultIfNotNull {
+            tryUploadFiles(
+                uid,
+                ObjectType.USER,
+                listOf(
+                    UploadPack(
+                        pdfFile,
+                        "$topicId.pdf",
+                        pdfFile.length(),
+                        "$uid/$topicId.pdf"
+                    )
                 )
             )
-        )
-    }.mapIfNotNull {
-        it.firstOrNull()
+        }.mapIfNotNull {
+            it.firstOrNull()
+        }
+    } finally {
+        pdfFile.delete()
+        signedFile.delete()
     }
 }
 
