@@ -62,7 +62,7 @@ fun main() {
                     logLevel = LogLevel.INFO
                 )
             }
-        }) { r, t ->
+        }) { r, t, _ ->
         }
     val commentPrompt = readResource("comment.prompt")
     val newsPrompt = readResource("news.prompt")
@@ -188,7 +188,7 @@ private suspend fun handleCommunityComment(
         ).getOrThrow()
         delay(1.seconds)
         resp.data.forEach { topicInfo ->
-            val isAuthor = topicInfo.author == sessionManager.sessionModel.uid
+            val isAuthor = topicInfo.author == sessionManager.model.uid
             if (isAuthor || topicInfo.hasComment) {
                 Napier.i {
                     "skip topic ${topicInfo.id} " +
@@ -290,7 +290,7 @@ private suspend fun handleCommunityNews(
         ).getOrThrow()
         delay(1.seconds)
         for (topicInfo in resp.data) {
-            if (topicInfo.author == sessionManager.sessionModel.uid) {
+            if (topicInfo.author == sessionManager.model.uid) {
                 latestTopic = topicInfo
                 break
             }

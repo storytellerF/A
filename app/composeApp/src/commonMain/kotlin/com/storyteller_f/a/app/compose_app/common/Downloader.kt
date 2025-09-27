@@ -48,7 +48,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
         path.parent?.let { SystemFileSystem.createDirectories(it) }
         val instance = uiViewModel.instance.value
         val modelStorage = instance.database.value
-        val userSession = instance.manager
+        val userSession = instance.sessionManager
         lifecycleScope.launch {
             downloadIfNeed(userSession, path, fileInfo, modelStorage)
         }
@@ -60,7 +60,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
         }
         val instance = uiViewModel.instance.value
         val modelStorage = instance.database.value
-        val userSession = instance.manager
+        val userSession = instance.sessionManager
         lifecycleScope.launch {
             resumeIfNeed(fileInfo, modelStorage, userSession)
         }

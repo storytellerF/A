@@ -49,7 +49,7 @@ fun UserPage(uid: PrimaryKey) {
     val userViewModel = createUserViewModel(uid)
     val user by userViewModel.handler.data.collectAsState()
     val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
     val my = myInfo
     UserPageInternal(user, my, uid)
 }
@@ -95,7 +95,7 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
                     else -> SearchScope.UserCommunities(uid)
                 }
                 val userSessionManager = LocalSessionManager.current
-                val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+                val myInfo by userSessionManager.model.userHandler.data.collectAsState()
                 val my = myInfo
                 CustomSearchBar(searchScope) {
                     if (uid != my?.id) {

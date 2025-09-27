@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 context(c: CoroutineScope)
 fun UserSessionManager.startBackgroundTask(): List<Job> {
     return listOf(c.launch {
-        val model = sessionModel
+        val model = model
         combine(model.state, model.userHandler.data) { t1, t2 ->
             t1 to t2
         }.distinctUntilChanged().collect { (state, userInfo) ->
@@ -20,7 +20,7 @@ fun UserSessionManager.startBackgroundTask(): List<Job> {
             }
         }
     }, c.launch {
-        sessionModel.state.collect {
+        model.state.collect {
             address.value = (it as? ClientSessionState.Success)?.session?.address()?.getOrNull()
             isAlreadySignUp.value = it is ClientSessionState.Success
         }

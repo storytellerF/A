@@ -6,6 +6,7 @@ import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -163,13 +164,38 @@ class RoomTest {
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     @Test
     fun `test rtc`() {
-        fun waitAnswer(list: MutableList<RoomFrame>) {
-            while (true) {
+        suspend fun waitAnswer(list: MutableList<RoomFrame>) {
+            var i = 0
+            while (i < 10) {
+                i++
                 if (list.firstOrNull {
                         it is RoomFrame.RespondAnswer
                     } != null) {
                     break
                 }
+                withContext(Dispatchers.IO) {
+                    delay(1000)
+                }
+            }
+        }
+
+        suspend fun process(frame: RoomFrame, session: DefaultClientWebSocketSession) {
+            if (frame is RoomFrame.CreateOffer) {
+                session.sendFrame(
+                    RoomFrame.SendOffer(
+                        CustomOffer("offer"),
+                        frame.roomId,
+                        frame.targetUid
+                    )
+                )
+            } else if (frame is RoomFrame.CreateAnswer) {
+                session.sendFrame(
+                    RoomFrame.SendAnswer(
+                        CustomAnswer("answer"),
+                        frame.roomId,
+                        frame.targetUid
+                    )
+                )
             }
         }
 
@@ -196,20 +222,22 @@ class RoomTest {
             val list = mutableListOf<RoomFrame>()
             coroutineScope {
                 launch {
-                    loginSession(secondUser, { frame, model ->
+                    loginSession(secondUser, { frame, model, session ->
                         list.add(frame)
+                        process(frame, session)
                     }) {
-                        sendAndWait {
+                        waitAndSend {
                             sendFrame(RoomFrame.StartCall(secondUser.custom.id))
                         }
                         waitAnswer(list)
                     }
                 }
                 launch {
-                    loginSession(firstUser, { frame, model ->
+                    loginSession(firstUser, { frame, model, session ->
                         list.add(frame)
+                        process(frame, session)
                     }) {
-                        sendAndWait {
+                        waitAndSend {
                             sendFrame(RoomFrame.StartCall(secondUser.custom.id))
                         }
                         waitAnswer(list)

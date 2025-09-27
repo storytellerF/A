@@ -52,7 +52,7 @@ class PushServiceImpl : PushService(), LifecycleOwner {
         val uiViewModel = (application as AApplication).uiViewModel
         val accountInstance = uiViewModel.instance.value
         lifecycle.coroutineScope.launch {
-            accountInstance.manager.addDevice(endpoint.url)
+            accountInstance.sessionManager.addDevice(endpoint.url)
         }
     }
 

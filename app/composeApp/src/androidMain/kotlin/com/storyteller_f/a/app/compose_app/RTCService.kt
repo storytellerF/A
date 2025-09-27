@@ -11,18 +11,16 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.coroutineScope
 import com.shepeliev.webrtckmp.MediaStream
 import com.shepeliev.webrtckmp.videoTracks
-import com.storyteller_f.a.client.core.WebSocketClientListener
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
-import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
@@ -57,49 +55,30 @@ interface RTCHandle {
     fun hangup()
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) : RTCHandle {
     override val callingRoom = MutableStateFlow<PrimaryKey?>(null)
     override var stream = MutableStateFlow<MediaStream?>(null)
     override var job: Job? = null
 
-    val signalingChannel = MutableSharedFlow<RoomFrame>()
-
     init {
+
         lifecycle.coroutineScope.launch {
-            combine(callingRoom, uiViewModel.instance) { r, i ->
-                r to i
-            }.collectLatest { (room, instance) ->
-                val listener = object : WebSocketClientListener {
-                    override suspend fun onReceived(
-                        frame: RoomFrame,
-                        session: DefaultClientWebSocketSession
-                    ) {
-                        when (frame) {
-                            is RoomFrame.CreateOffer -> {
-                                processCreateOffer(frame, instance)
-                            }
-
-                            is RoomFrame.CreateAnswer -> {
-                                processCreateAnswer(frame, instance)
-                            }
-
-                            is RoomFrame.RespondAnswer -> {
-                                signalingChannel.emit(frame)
-                            }
-
-                            is RoomFrame.ReceiveCandidate -> {
-                                signalingChannel.emit(frame)
-                            }
-
-                            else -> {}
-                        }
+            combine(callingRoom, uiViewModel.instance, uiViewModel.instance.flatMapLatest {
+                it.sessionManager.webSocketClient.frameFlow
+            }) { r, i, f ->
+                Triple(r, i, f)
+            }.collectLatest { (room, instance, frame) ->
+                when (frame) {
+                    is RoomFrame.CreateOffer -> {
+                        processCreateOffer(frame, instance)
                     }
-                }
-                instance.manager.webSocketClient.addListener(listener)
-                try {
-                    awaitCancellation()
-                } finally {
-                    instance.manager.webSocketClient.removeListener(listener)
+
+                    is RoomFrame.CreateAnswer -> {
+                        processCreateAnswer(frame, instance)
+                    }
+
+                    else -> {}
                 }
             }
         }
@@ -126,8 +105,8 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
     }
 
     override fun startCall(roomId: PrimaryKey) {
-        val session = uiViewModel.instance.value.manager
-        session.manager.webSocketClient.useWebSocket {
+        val session = uiViewModel.instance.value.sessionManager
+        session.proxy.webSocketClient.useWebSocket {
             val f = RoomFrame.StartCall(roomId)
             sendFrame(f)
         }
@@ -138,6 +117,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         instance: AccountInstance,
     ) {
         val localStream = stream.value ?: return
+        val signalingChannel = instance.sessionManager.webSocketClient.frameFlow
         job = lifecycle.coroutineScope.launch {
             makeCallByAnswer(frame, localStream, {}, {}, signalingChannel, instance)
         }
@@ -148,6 +128,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         instance: AccountInstance
     ) {
         val localStream = stream.value ?: return
+        val signalingChannel = instance.sessionManager.webSocketClient.frameFlow
         job = lifecycle.coroutineScope.launch {
             makeCallByOffer(frame, localStream, {}, {}, signalingChannel, instance)
         }
@@ -171,4 +152,6 @@ class RTCServiceConnection(val rtcActivity: WeakReference<RTCContainer>) : Servi
 
 interface RTCContainer {
     val binder: MutableStateFlow<RTCHandle?>
+    val streamFlow: StateFlow<MediaStream?>
+    val callingRoomFlow: StateFlow<Long?>
 }

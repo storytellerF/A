@@ -39,7 +39,6 @@ import com.storyteller_f.a.app.compose_app.utils.startCall
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.WebSocketClient
-import com.storyteller_f.a.client.core.WebSocketClientListener
 import com.storyteller_f.a.client.core.addReadLog
 import com.storyteller_f.a.client.core.exitRoom
 import com.storyteller_f.a.client.core.getCommunityInfo
@@ -49,7 +48,6 @@ import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
@@ -57,7 +55,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkContent
 import io.github.aakira.napier.Napier
-import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -173,28 +170,30 @@ fun RoomInputGroup(
         mutableStateOf("")
     }
     val userSessionManager = LocalSessionManager.current
-    val myInfo1 by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val myInfo1 by userSessionManager.model.userHandler.data.collectAsState()
     val myInfo = myInfo1
     val controller = remember {
         CustomAlertDialogController()
     }
     val sessionManager = LocalSessionManager.current
     val wsClient = LocalWsClient.current
-    DisposableEffect(myInfo) {
-        val listener = buildInputBoxContentListener({
-            input
-        }, myInfo, sessionManager) {
-            input = ""
-        }
-        wsClient.addListener(listener)
-        onDispose {
-            wsClient.removeListener(listener)
-        }
-    }
-    LaunchedEffect(wsClient.remoteState) {
-        wsClient.remoteState.collect {
-            if (it is RoomFrame.Error) {
-                snackBarHost.showSnackbar(it.error, withDismissAction = true)
+    LaunchedEffect(wsClient.frameFlow) {
+        wsClient.frameFlow.collect { frame ->
+            if (frame is RoomFrame.Error) {
+                snackBarHost.showSnackbar(frame.error, withDismissAction = true)
+            } else if (frame is RoomFrame.NewTopicInfo) {
+                val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
+                    val topicInfo =
+                        processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
+                    RoomFrame.NewTopicInfo(topicInfo)
+                } else {
+                    frame
+                }
+                val topicInfo = plainFrame.topicInfo
+                val content = topicInfo.content
+                if (content is TopicContent.Plain && myInfo?.id == topicInfo.author && content.plain == input) {
+                    input = ""
+                }
             }
         }
     }
@@ -227,7 +226,7 @@ private fun RoomInputGroupInternal(
     updateInput: (String) -> Unit,
 ) {
     val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
     val mediaTarget = if (roomInfo.isPrivate) {
         ObjectTuple(roomInfo.id, ObjectType.ROOM)
     } else {
@@ -275,32 +274,6 @@ private fun RoomInputTopContent(
                 )
             }
             Text("${keysData?.size ?: 0}/${roomInfo.memberCount}")
-        }
-    }
-}
-
-private fun buildInputBoxContentListener(
-    getInput: () -> String,
-    userInfo: UserInfo?,
-    sessionManager: SessionManager,
-    updateInput: (String) -> Unit,
-): WebSocketClientListener {
-    return object : WebSocketClientListener {
-        override suspend fun onReceived(frame: RoomFrame, session: DefaultClientWebSocketSession) {
-            if (frame is RoomFrame.NewTopicInfo) {
-                val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
-                    val topicInfo =
-                        processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
-                    RoomFrame.NewTopicInfo(topicInfo)
-                } else {
-                    frame
-                }
-                val topicInfo = plainFrame.topicInfo
-                val content = topicInfo.content
-                if (content is TopicContent.Plain && userInfo?.id == topicInfo.author && content.plain == getInput()) {
-                    updateInput("")
-                }
-            }
         }
     }
 }
@@ -572,7 +545,7 @@ private fun RoomDialogButtons(
     roomInfo: RoomInfo,
 ) {
     val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
     val me = myInfo
     val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current

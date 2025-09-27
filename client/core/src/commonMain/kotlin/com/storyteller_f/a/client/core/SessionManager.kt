@@ -32,15 +32,15 @@ interface SessionModel {
 interface SessionManager {
     val client: HttpClient
     val webSocketClient: WebSocketClient
-    val sessionModel: SessionModel
+    val model: SessionModel
     val isAlreadySignUp: StateFlow<Boolean>
     val address: StateFlow<String?>
 
     val currentIsAlreadySignUp: Boolean get() = isAlreadySignUp.value
 
     suspend fun login() {
-        val userPass = sessionModel.currentUserPass ?: return
-        val userHandler = sessionModel.userHandler
+        val userPass = model.currentUserPass ?: return
+        val userHandler = model.userHandler
         userHandler.request({
             userHandler.done(it)
         }) {
@@ -52,7 +52,7 @@ interface SessionManager {
                 }).getOrThrow()
                 val signature = userPass.signature(finalData(data)).getOrThrow()
                 val userInfo = signIn(address, signature).getOrThrow()
-                sessionModel.updateSignature(data, signature)
+                model.updateSignature(data, signature)
                 userInfo
             }
         }
@@ -62,7 +62,7 @@ interface SessionManager {
 class UserSessionManager(
     override val client: HttpClient,
     override val webSocketClient: WebSocketClientImpl,
-    override val sessionModel: SessionModel,
+    override val model: SessionModel,
 ) : SessionManager {
     override val isAlreadySignUp = MutableStateFlow(false)
     override val address = MutableStateFlow<String?>(null)
@@ -71,7 +71,7 @@ class UserSessionManager(
 fun createUserSessionManager(
     webSocketUrl: String,
     createClient: (UserSessionModel, CookiesStorage) -> HttpClient,
-    onReceiveFrame: suspend (RoomFrame, UserSessionModel) -> Unit,
+    onReceiveFrame: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
 ): UserSessionManager {
     val cookieManager = AcceptAllCookiesStorage()
     val model = UserSessionModel()
@@ -83,8 +83,8 @@ fun createUserSessionManager(
                 addRequestHeaders(userInfo, sig)
             }
         },
-    ) {
-        onReceiveFrame(it, model)
+    ) { frame, session ->
+        onReceiveFrame(frame, model, session)
     }
     return UserSessionManager(client, webSocketClient, model)
 }
@@ -148,9 +148,9 @@ suspend fun SessionManager.signUpOrInFromPrivateKey(
         isSignUp -> signUp(publicKey, sig)
         else -> signIn(ad, sig)
     }.getOrThrow()
-    sessionModel.updateUser(u)
-    sessionModel.updateSignature(data, sig)
-    sessionModel.updateState(
+    model.updateUser(u)
+    model.updateSignature(data, sig)
+    model.updateState(
         ClientSessionState.Success(
             buildUserPass(
                 RawUserPassInfo(

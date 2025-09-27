@@ -15,6 +15,7 @@ import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.isDup
 import com.storyteller_f.a.backend.exposed.toJoinSearch
 import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.service.getCommunityRoomsTemplateList
 import com.storyteller_f.a.backend.service.processRawCommunityToCommunityInfo
 import com.storyteller_f.a.backend.service.search.CommunityDocument
 import com.storyteller_f.a.backend.service.search.CommunityDocumentSearch

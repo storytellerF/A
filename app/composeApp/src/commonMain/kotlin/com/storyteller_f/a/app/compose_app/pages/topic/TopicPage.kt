@@ -273,7 +273,7 @@ private fun TopicInputGroup(
     }
     val appNav = LocalAppNav.current
     val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
     val my = myInfo
     InputGroupInternal(
         if (topic.isEncrypted) {

@@ -54,7 +54,7 @@ fun TopicComposePage(
         typography = typography ?: MaterialTheme.typography
     ) {
         val userSessionManager = LocalSessionManager.current
-        val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+        val myInfo by userSessionManager.model.userHandler.data.collectAsState()
         val user = myInfo
         user?.let {
             TopicComposeScaffold(

@@ -23,16 +23,10 @@ dependencies {
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
     implementation(projects.backend.service)
+    implementation(projects.cloud.pdf)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.coroutines.core)
-
-    implementation(libs.markdown)
-    implementation(libs.geoip2)
-    implementation(libs.tika.core)
-    implementation(libs.pdfbox.layout)
-    implementation(libs.pdfbox)
-    implementation(libs.openpdf)
 }
 
 tasks.withType<JavaExec> {

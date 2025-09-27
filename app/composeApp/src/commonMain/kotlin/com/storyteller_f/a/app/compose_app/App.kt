@@ -5,7 +5,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -22,7 +22,6 @@ import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.dokar.sonner.Toaster
-import com.dokar.sonner.ToasterState
 import com.dokar.sonner.rememberToasterState
 import com.kdroid.composenotification.builder.ExperimentalNotificationsApi
 import com.kdroid.composenotification.builder.Notification
@@ -58,7 +57,6 @@ import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.UserSessionModel
 import com.storyteller_f.a.client.core.WebSocketClient
-import com.storyteller_f.a.client.core.WebSocketClientListener
 import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
@@ -84,6 +82,7 @@ import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -249,9 +248,9 @@ fun CommonEntry(content: @Composable () -> Unit) {
             AccountSwitcher()
         }
         val uiViewModel = getUiViewModel()
-        val mainUserSessionManager = uiViewModel.mainInstance.manager
+        val mainUserSessionManager = uiViewModel.mainInstance.sessionManager
         val instance by uiViewModel.instance.collectAsState()
-        val currentUserSessionManager = instance.manager
+        val currentUserSessionManager = instance.sessionManager
         val database by instance.database.collectAsState()
         val task = instance.task
         val controller = instance.controller
@@ -278,22 +277,22 @@ fun CommonEntry(content: @Composable () -> Unit) {
 }
 
 class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, httpUrl: String) {
-    val bus = MutableSharedFlow<Any>()
-    val controller = CustomGlobalDialogController(bus)
-    val task = GlobalTask(scope, bus)
-    val manager = createCustomUserSessionManager(
+    val events = MutableSharedFlow<Any>()
+    val controller = CustomGlobalDialogController(events)
+    val task = GlobalTask(scope, events)
+    val sessionManager = createCustomUserSessionManager(
         name,
         buildWebSocketUrl(wsServerUrl),
         { model, cookieManager ->
             buildHttpClient(httpUrl, cookieManager, model)
         }
-    ) { frame, _ ->
+    ) { frame, _, _ ->
         if (frame is RoomFrame.NewTopicInfo) {
-            bus.emit(OnTopicCreated(frame.topicInfo))
+            events.emit(OnTopicCreated(frame.topicInfo))
         }
     }
     val guestDatabase = RoomModelStorage(getRoomDatabase("guest"))
-    val database = manager.sessionModel.state.map {
+    val database = sessionManager.model.state.map {
         if (it is ClientSessionState.Success) {
             val address = it.session.address().getOrThrow()
             RoomModelStorage(getRoomDatabase(address))
@@ -305,11 +304,18 @@ class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, 
     init {
         scope.launch {
             database.collectLatest {
-                processEvent(it, bus)
+                processEvent(it, events)
             }
         }
         scope.launch {
-            manager.manager.startBackgroundTask()
+            val jobs = sessionManager.proxy.startBackgroundTask()
+            try {
+                awaitCancellation()
+            } finally {
+                jobs.forEach {
+                    it.cancel()
+                }
+            }
         }
     }
 }
@@ -327,7 +333,7 @@ class UIViewModel(viewModelScope: CoroutineScope, wsServerUrl: String, httpUrl: 
     init {
         viewModelScope.launch {
             instance.collectLatest {
-                it.manager.manager.startBackgroundTask().forEach { job ->
+                it.sessionManager.proxy.startBackgroundTask().forEach { job ->
                     job.join()
                 }
             }
@@ -359,7 +365,7 @@ private fun CommonEntryInternal(
             val mainSessionManager = LocalMainSessionManager.current
             AccountSwitch(accountSwitcher, {
                 val rawUserPass =
-                    mainSessionManager.sessionModel.currentUserPass as? RawUserPass
+                    mainSessionManager.model.currentUserPass as? RawUserPass
                 rawUserPass?.let {
                     switch(it)
                 }
@@ -384,46 +390,6 @@ fun buildHttpClient(
     }
 }
 
-private fun buildWsListener(
-    messageToasterState: ToasterState,
-    hasPermission: Boolean,
-    roomScreenId: () -> PrimaryKey?,
-    topicScreenId: () -> PrimaryKey?,
-    sessionManager: SessionManager,
-    onClickTopic: (TopicInfo) -> Unit,
-) = object : WebSocketClientListener {
-    override suspend fun onReceived(frame: RoomFrame, session: DefaultClientWebSocketSession) {
-        if (frame is RoomFrame.NewTopicInfo) {
-            val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
-                val topicInfo =
-                    processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
-                RoomFrame.NewTopicInfo(topicInfo)
-            } else {
-                frame
-            }
-            val topicInfo = plainFrame.topicInfo
-            val message = topicInfo.content
-            if (message is TopicContent.Plain) {
-                Napier.i(tag = "WebSocket") {
-                    "ws listener ${appPlatform.isActive} $hasPermission"
-                }
-                if (appPlatform.isActive) {
-                    val roomId = roomScreenId()
-                    val topicId = topicScreenId()
-                    if (roomId != topicInfo.parentId &&
-                        topicId != topicInfo.parentId
-                    ) {
-                        val nickname = topicInfo.extension?.authorInfo?.nickname
-                        messageToasterState.show("$nickname: ${message.plain}")
-                    }
-                } else if (hasPermission) {
-                    sendTopicNotification(message, topicInfo, onClickTopic)
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun ObserveMessage(
     roomScreenId: () -> PrimaryKey?,
@@ -431,23 +397,40 @@ private fun ObserveMessage(
     onClickTopic: (TopicInfo) -> Unit = {},
 ) {
     val sessionManager = LocalSessionManager.current
-    val clientWebSocketImpl = sessionManager.webSocketClient
     val messageToasterState = rememberToasterState()
     Toaster(messageToasterState, alignment = Alignment.TopCenter)
     val notificationProvider = getNotificationProvider()
     val hasPermission by notificationProvider.hasPermissionState
-    DisposableEffect(hasPermission, sessionManager) {
-        val listener = buildWsListener(
-            messageToasterState,
-            hasPermission,
-            roomScreenId,
-            topicScreenId,
-            sessionManager,
-            onClickTopic
-        )
-        clientWebSocketImpl.addListener(listener)
-        onDispose {
-            clientWebSocketImpl.removeListener(listener)
+    LaunchedEffect(sessionManager) {
+        sessionManager.webSocketClient.frameFlow.collect { frame ->
+            if (frame is RoomFrame.NewTopicInfo) {
+                val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
+                    val topicInfo =
+                        processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
+                    RoomFrame.NewTopicInfo(topicInfo)
+                } else {
+                    frame
+                }
+                val topicInfo = plainFrame.topicInfo
+                val message = topicInfo.content
+                if (message is TopicContent.Plain) {
+                    Napier.i(tag = "WebSocket") {
+                        "ws listener ${appPlatform.isActive} $hasPermission"
+                    }
+                    if (appPlatform.isActive) {
+                        val roomId = roomScreenId()
+                        val topicId = topicScreenId()
+                        if (roomId != topicInfo.parentId &&
+                            topicId != topicInfo.parentId
+                        ) {
+                            val nickname = topicInfo.extension?.authorInfo?.nickname
+                            messageToasterState.show("$nickname: ${message.plain}")
+                        }
+                    } else if (hasPermission) {
+                        sendTopicNotification(message, topicInfo, onClickTopic)
+                    }
+                }
+            }
         }
     }
 }
@@ -487,15 +470,15 @@ private suspend fun sendTopicNotification(
 }
 
 class CustomSessionManager(
-    val manager: UserSessionManager,
+    val proxy: UserSessionManager,
     val settings: Settings,
-) : SessionManager by manager
+) : SessionManager by proxy
 
 fun createCustomUserSessionManager(
     settingsName: String,
     webSocketUrl: String,
     createClient: (UserSessionModel, CookiesStorage) -> HttpClient,
-    onReceiveFrame: suspend (RoomFrame, UserSessionModel) -> Unit,
+    onReceiveFrame: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
 ): CustomSessionManager {
     val settings = createSettings(settingsName)
     val customSessionManager = createUserSessionManager(webSocketUrl, createClient, onReceiveFrame)

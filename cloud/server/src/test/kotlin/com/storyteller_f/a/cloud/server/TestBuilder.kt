@@ -46,10 +46,13 @@ import kotlin.test.assertEquals
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 fun test(
     overrideEnv: Map<String, String> = emptyMap(),
     block: suspend ApplicationTestBuilder.() -> Unit
 ) {
+    val logPath = File("build/test/logs", Uuid.random().toHexString()).canonicalPath
+    System.setProperty("LOG_PATH", logPath)
     Napier.base(kmpLogger)
     SnowflakeFactory.setMachine(0)
     loadCryptoLibIfNeed()
@@ -69,10 +72,16 @@ private fun startMemoryTest(
     overrideEnv: Map<String, String>,
     block: suspend (ApplicationTestBuilder) -> Unit
 ) {
+    val h2File = File("./build/test/h2/${Uuid.random().toHexString()}")
+    h2File.parentFile?.let {
+        if (!it.exists() && !it.mkdirs()) {
+            throw Exception("mkdirs failed ${it.canonicalPath}")
+        }
+    }
     val env = readResourceEnv(".env")!! + mapOf(
         Pair(
             "DATABASE_URI",
-            "r2dbc:h2:mem:///${Uuid.random().toHexString()};DB_CLOSE_DELAY=-1;"
+            "r2dbc:h2:file:///${h2File.path.replace("\\", "/")}"
         ),
         "DATABASE_DRIVER" to "h2"
     ) + overrideEnv
@@ -236,7 +245,7 @@ data class SessionOuterTuple<T>(
 )
 
 suspend fun <R> ApplicationTestBuilder.attachSession(
-    onReceive: suspend (RoomFrame, SessionModel) -> Unit = { _, _ -> },
+    onReceive: suspend (RoomFrame, SessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
     block: suspend SessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
     return coroutineScope {
@@ -246,7 +255,7 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
             }
         }, onReceive)
         sessionManager.startBackgroundTask {
-            val sessionModel = sessionModel
+            val sessionModel = model
             val priKey = generateECDSAPemPrivateKey().getOrThrow()
             val userInfo = signUpOrInFromPrivateKey(priKey, true) {
                 RawUserPass(it)
@@ -261,7 +270,7 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
 
 suspend fun <R1, R2> ApplicationTestBuilder.loginSession(
     session: SessionOuterTuple<R1>,
-    onReceive: suspend (RoomFrame, SessionModel) -> Unit = { _, _ -> },
+    onReceive: suspend (RoomFrame, SessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
     block: suspend SessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
     return coroutineScope {
@@ -272,7 +281,7 @@ suspend fun <R1, R2> ApplicationTestBuilder.loginSession(
         }, onReceive)
         sessionManager.startBackgroundTask {
             val (privateKey) = session
-            val sessionModel = sessionModel
+            val sessionModel = model
             val userInfo = signUpOrInFromPrivateKey(privateKey, false) {
                 RawUserPass(it)
             }
@@ -293,7 +302,7 @@ suspend fun <R2> ApplicationTestBuilder.noneSession(
             createClient {
                 defaultClientConfigure(client, model)
             }
-        }) { _, _ -> }
+        }) { _, _, _ -> }
         sessionManager.startBackgroundTask {
             block()
         }
@@ -314,7 +323,7 @@ fun extractTableNames(query: String): List<String> {
         .flatMap { it.groupValues.drop(1).filter { name -> name.isNotEmpty() } }.toList()
 }
 
-suspend fun SessionManager.sendAndWait(block: suspend DefaultClientWebSocketSession.() -> Unit) {
+suspend fun SessionManager.waitAndSend(block: suspend DefaultClientWebSocketSession.() -> Unit) {
     while (true) {
         if (webSocketClient.connectionHandler.data.value != null) {
             break

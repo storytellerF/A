@@ -43,9 +43,9 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
             }"
         }
         val instance = uiViewModel.instance.value
-        val myUid = instance.manager.sessionModel.uid ?: return
+        val myUid = instance.sessionManager.model.uid ?: return
         val modelStorage = instance.database.value
-        val userSession = instance.manager
+        val userSession = instance.sessionManager
         lifecycleScope.launch {
             clipData.forEach {
                 uploadIfNeed(userSession, myUid, it, modelStorage, UploadCollection(myUid))
@@ -58,9 +58,9 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
             "resume upload $pathHash"
         }
         val instance = uiViewModel.instance.value
-        val myUid = instance.manager.sessionModel.uid ?: return
+        val myUid = instance.sessionManager.model.uid ?: return
         val modelStorage = instance.database.value
-        val userSession = instance.manager
+        val userSession = instance.sessionManager
         lifecycleScope.launch {
             resumeIfNeed(modelStorage, myUid, pathHash, userSession, UploadCollection(myUid))
         }

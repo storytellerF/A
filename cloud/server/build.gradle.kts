@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.bcpkix.jdk18on)
     implementation(projects.shared)
     implementation(projects.api)
+    implementation(projects.cloud.pdf)
     implementation(projects.cloud.openpdf)
     implementation(libs.route4k.common)
     implementation(libs.route4k.ktor.server)

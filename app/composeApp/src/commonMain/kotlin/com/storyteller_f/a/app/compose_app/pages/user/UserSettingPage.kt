@@ -54,7 +54,7 @@ fun UserSettingPage() {
     }
     val sheetState = rememberModalBottomSheetState()
     val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
     val my = myInfo
     val showDialog = { option: SettingOption ->
         currentOption = option
@@ -73,7 +73,7 @@ fun UserSettingPage() {
                     globalDialogController.useResult {
                         sessionManager.updateUserInfo(UpdateUserBody(avatar = it.id))
                     }.onSuccess { newInfo ->
-                        sessionManager.sessionModel.updateUser(newInfo)
+                        sessionManager.model.updateUser(newInfo)
                         closeDialog()
                     }
                 }
@@ -122,7 +122,7 @@ fun ObjectSettingDialog(
     }
 
     val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.sessionModel.userHandler.data.collectAsState()
+    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
     val my = myInfo
     val mediaTarget = ObjectTuple(my?.id ?: 0, ObjectType.USER)
     val globalDialogController = LocalGlobalDialog.current
@@ -320,7 +320,7 @@ private suspend fun updateUser(
     globalDialogController.useResult {
         sessionManager.updateUserInfo(body)
     }.onSuccess { newInfo ->
-        sessionManager.sessionModel.updateUser(newInfo)
+        sessionManager.model.updateUser(newInfo)
         globalDialogController.emitEvent(OnUserUpdated(newInfo))
         closeDialog()
     }

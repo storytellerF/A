@@ -88,14 +88,14 @@ class NestedGlobalDialogController(
     }
 
     override suspend fun emitEvent(any: Any) {
-        customGlobalDialogController.bus.emit(any)
+        customGlobalDialogController.events.emit(any)
     }
 }
 
 class CustomGlobalDialogContent(val content: @Composable () -> Unit)
 
 class CustomGlobalDialogController(
-    val bus: MutableSharedFlow<Any>,
+    val events: MutableSharedFlow<Any>,
     override val state: MutableState<PersistentList<GlobalDialogState>> = mutableStateOf(
         persistentListOf()
     ),
@@ -133,7 +133,7 @@ class CustomGlobalDialogController(
 
     override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) = Unit
     override suspend fun emitEvent(any: Any) {
-        bus.emit(any)
+        events.emit(any)
     }
 }
 

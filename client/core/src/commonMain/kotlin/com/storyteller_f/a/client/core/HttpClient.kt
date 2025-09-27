@@ -149,7 +149,7 @@ suspend fun processEncryptedTopic(
     topicInfos: List<TopicInfo>,
     manager: SessionManager
 ): List<TopicInfo> {
-    val model = manager.sessionModel
+    val model = manager.model
     val uid = model.uid
     val key = model.currentUserPass
     return topicInfos.map { topicInfo ->

@@ -161,7 +161,7 @@ suspend fun signOut(
     globalDialogController.useResult {
         sessionManager.signOut()
     }.onSuccess {
-        sessionManager.sessionModel.clear()
+        sessionManager.model.clear()
         clearStorage(settings)
         unregisterPushService()
     }
@@ -171,7 +171,7 @@ suspend fun signOut(
 private fun refreshMyInfo(my: UserInfo?, sessionManager: SessionManager) {
     GlobalScope.launch {
         try {
-            val sessionModel = sessionManager.sessionModel
+            val sessionModel = sessionManager.model
             if (my == null) {
                 val value = sessionModel.state.value
                 if (value is ClientSessionState.Success) {
