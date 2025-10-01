@@ -9,6 +9,7 @@ import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.a.cloud.core.service.getExtensionFromMimeType
 import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFileExtension
@@ -115,6 +116,18 @@ class MediaTest {
                 data
             ).getOrThrow()
             extractAlbum(response.data.first().id).getOrThrow()
+        }
+    }
+
+    @Test
+    fun `test remove image info`() {
+        test {
+            attachSession {
+                upload(
+                    it.uid ob ObjectType.USER,
+                    getUploadDataFromResources("cover.jpg")
+                ).getOrThrow()
+            }
         }
     }
 }

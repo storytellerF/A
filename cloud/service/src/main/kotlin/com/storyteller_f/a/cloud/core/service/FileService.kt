@@ -32,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
+import java.nio.file.Files
 import kotlin.io.path.exists
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -319,8 +320,8 @@ suspend fun Backend.tryUploadFiles(
         totalLength,
         Uuid.random().toHexString()
     ) {
-        uploadFiles(ownerId, ownerType, files.map {
-            val detectedType = Backend.tika.detect(it.path)
+        val uploadPacks = files.map {
+            val detectedType = Backend.tika.detect(it.path) ?: error("delete content type failed")
             val dimension = if (detectedType.startsWith("image")) {
                 getImageDimension(it.path.absolutePath, detectedType) {
                     it.path.inputStream()
@@ -329,7 +330,27 @@ suspend fun Backend.tryUploadFiles(
                 null
             }
             ProcessedUploadPack(it, detectedType, dimension)
-        })
+        }
+        val f = mutableListOf<File>()
+        try {
+            uploadPacks.filter {
+                it.contentType.startsWith("image")
+            }.map {
+                val target =
+                    File(
+                        System.getProperty("java.io.tmpdir"),
+                        Uuid.random().toHexString() + it.pack.name
+                    )
+                Files.copy(it.pack.path.toPath(), target.toPath())
+                f.add(target)
+                it.copy(pack = it.pack.copy(path = target))
+            }
+            uploadFiles(ownerId, ownerType, uploadPacks)
+        } finally {
+            f.forEach {
+                it.delete()
+            }
+        }
     }
 }
 

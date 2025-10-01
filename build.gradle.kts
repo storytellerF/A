@@ -17,8 +17,8 @@ plugins {
     alias(libs.plugins.room) apply false
     alias(libs.plugins.kover)
     alias(libs.plugins.detekt)
-    id("com.github.ben-manes.versions") version "0.52.0"
-    id("nl.littlerobots.version-catalog-update") version "1.0.0"
+    id("com.github.ben-manes.versions") version "0.53.0"
+    id("nl.littlerobots.version-catalog-update") version "1.0.1"
 }
 
 val detektReportMergeSarif by tasks.registering(ReportMergeTask::class) {
@@ -80,15 +80,25 @@ subprojects {
 val jvmLibModules = listOf(
     ":cloud:service",
     ":cloud:server",
+    ":cloud:pdf",
+    ":cloud:pdfbox",
+    ":cloud:openpdf",
     ":api",
     ":backend:core",
-    ":backend:exposed"
+    ":backend:exposed",
+    ":backend:simple",
+    ":backend:redis",
+    ":backend:minio",
+    ":backend:lucene",
+    ":backend:filesystem",
+    ":backend:elastic",
 )
 val composeModules = listOf(
     ":shared",
     ":app:composeApp",
     ":client:core",
-    ":client:model-storage"
+    ":client:model-storage",
+    ":client:room"
 )
 dependencies {
     (composeModules + jvmLibModules).forEach {
