@@ -24,8 +24,6 @@ import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.*
-import com.storyteller_f.shared.type.JoinStatusSearch.JOINED
-import com.storyteller_f.shared.type.JoinStatusSearch.NOT_JOINED
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import kotlinx.datetime.LocalDateTime
@@ -248,21 +246,5 @@ class ExposedCommunityDatabase(
                 it()
             }
         }
-    }
-}
-
-fun JoinStatusSearch?.toJoinSearch(uid: PrimaryKey?): JoinSearch {
-    when (this) {
-        JOINED -> {
-            if (uid == null) throw UnauthorizedException()
-            return JoinSearch.Joined(uid)
-        }
-
-        NOT_JOINED -> {
-            if (uid == null) throw UnauthorizedException()
-            return JoinSearch.NotJoined(uid)
-        }
-
-        else -> return JoinSearch.Unspecified(uid)
     }
 }

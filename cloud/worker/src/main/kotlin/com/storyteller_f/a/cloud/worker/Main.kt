@@ -1,24 +1,31 @@
 package com.storyteller_f.a.cloud.worker
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.CustomConfig
+import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.buildCommunitySearchService
+import com.storyteller_f.a.backend.core.buildNameService
+import com.storyteller_f.a.backend.core.buildRoomSearchService
+import com.storyteller_f.a.backend.core.buildTopicSearchService
+import com.storyteller_f.a.backend.core.buildUserSearchService
+import com.storyteller_f.a.backend.core.databaseConnection
+import com.storyteller_f.a.backend.core.mediaService
+import com.storyteller_f.a.backend.core.readEnv
+import com.storyteller_f.a.backend.core.service.CommunitySearchService
+import com.storyteller_f.a.backend.core.service.NameService
+import com.storyteller_f.a.backend.core.service.ObjectStorageService
+import com.storyteller_f.a.backend.core.service.RoomSearchService
+import com.storyteller_f.a.backend.core.service.TopicSearchService
+import com.storyteller_f.a.backend.core.service.UserSearchService
+import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.MergedEnv
-import com.storyteller_f.a.backend.service.buildCommunitySearchService
-import com.storyteller_f.a.backend.service.buildRoomSearchService
-import com.storyteller_f.a.backend.service.buildTopicSearchService
-import com.storyteller_f.a.backend.service.buildUserSearchService
-import com.storyteller_f.a.backend.service.databaseConnection
-import com.storyteller_f.a.backend.service.mediaService
-import com.storyteller_f.a.backend.service.naming.NameService
-import com.storyteller_f.a.backend.service.readEnv
-import com.storyteller_f.a.backend.setLogPath
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
@@ -122,6 +129,17 @@ private suspend fun Backend.getAcgTaskListFromTopics() =
         }
     }
 
+class WorkerBackend(
+    override val customConfig: CustomConfig,
+    override val topicSearchService: TopicSearchService,
+    override val roomSearchService: RoomSearchService,
+    override val communitySearchService: CommunitySearchService,
+    override val userSearchService: UserSearchService,
+    override val objectStorageService: ObjectStorageService,
+    override val nameService: NameService,
+    override val combinedDatabase: CombinedDatabase
+) : Backend
+
 fun buildBackendFromEnv(env: MergedEnv): Backend {
     Napier.i("load env: ${env["COMPOSE_PROJECT_NAME"]}")
 
@@ -138,14 +156,14 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val communitySearchService = buildCommunitySearchService(env)
     val mediaService = mediaService(env)
 
-    return Backend(
+    return WorkerBackend(
         customConfig,
         topicSearchService,
         roomSearchService,
         communitySearchService,
         userSearchService,
         mediaService,
-        NameService(),
+        buildNameService(env),
         buildExposedDatabase(databaseConnection)
     )
 }

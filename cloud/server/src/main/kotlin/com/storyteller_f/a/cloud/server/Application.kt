@@ -2,22 +2,29 @@ package com.storyteller_f.a.cloud.server
 
 import com.maxmind.geoip2.DatabaseReader
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.CustomKeyStore
+import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.buildCommunitySearchService
+import com.storyteller_f.a.backend.core.buildNameService
+import com.storyteller_f.a.backend.core.buildRoomSearchService
+import com.storyteller_f.a.backend.core.buildTopicSearchService
+import com.storyteller_f.a.backend.core.buildUserSearchService
+import com.storyteller_f.a.backend.core.databaseConnection
+import com.storyteller_f.a.backend.core.loadAvif
+import com.storyteller_f.a.backend.core.mediaService
+import com.storyteller_f.a.backend.core.readEnv
+import com.storyteller_f.a.backend.core.service.CommunitySearchService
+import com.storyteller_f.a.backend.core.service.NameService
+import com.storyteller_f.a.backend.core.service.ObjectStorageService
+import com.storyteller_f.a.backend.core.service.RoomSearchService
+import com.storyteller_f.a.backend.core.service.TopicSearchService
+import com.storyteller_f.a.backend.core.service.UserSearchService
+import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.MergedEnv
-import com.storyteller_f.a.backend.service.buildCommunitySearchService
-import com.storyteller_f.a.backend.service.buildRoomSearchService
-import com.storyteller_f.a.backend.service.buildTopicSearchService
-import com.storyteller_f.a.backend.service.buildUserSearchService
-import com.storyteller_f.a.backend.service.databaseConnection
-import com.storyteller_f.a.backend.service.mediaService
-import com.storyteller_f.a.backend.service.naming.NameService
-import com.storyteller_f.a.backend.service.object_storage.loadAvif
-import com.storyteller_f.a.backend.service.readEnv
-import com.storyteller_f.a.backend.setLogPath
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.configureAuth
 import com.storyteller_f.a.cloud.server.auth.getRateLimitKey
@@ -356,6 +363,17 @@ private fun executeScriptInThread(
     }
 }
 
+class ServerBackend(
+    override val customConfig: CustomConfig,
+    override val topicSearchService: TopicSearchService,
+    override val roomSearchService: RoomSearchService,
+    override val communitySearchService: CommunitySearchService,
+    override val userSearchService: UserSearchService,
+    override val objectStorageService: ObjectStorageService,
+    override val nameService: NameService,
+    override val combinedDatabase: CombinedDatabase
+) : Backend
+
 fun buildBackendFromEnv(env: MergedEnv): Backend {
     Napier.i("load env: ${env["COMPOSE_PROJECT_NAME"]}")
 
@@ -383,14 +401,14 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         }
     val customConfig = CustomConfig(buildType, flavor, snapshotKeyStore)
 
-    return Backend(
+    return ServerBackend(
         customConfig,
         topicSearchService,
         roomSearchService,
         communitySearchService,
         userSearchService,
         mediaService,
-        NameService(),
+        buildNameService(env),
         buildExposedDatabase(databaseConnection)
     )
 }

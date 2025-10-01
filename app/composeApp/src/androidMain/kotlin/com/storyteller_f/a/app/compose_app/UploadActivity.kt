@@ -18,7 +18,6 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.io.Source
 import kotlinx.io.asSource
 import kotlinx.io.buffered
-import kotlin.uuid.ExperimentalUuidApi
 
 fun getClipFile(context: Context, uri: Uri): ClipFile? {
     val contentResolver: ContentResolver = context.contentResolver

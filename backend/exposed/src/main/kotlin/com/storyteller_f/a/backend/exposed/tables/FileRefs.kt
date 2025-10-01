@@ -1,7 +1,7 @@
 package com.storyteller_f.a.backend.exposed.tables
 
+import com.storyteller_f.a.backend.core.MEDIA_NAME_LENGTH
 import com.storyteller_f.a.backend.core.types.FileRef
-import com.storyteller_f.a.backend.exposed.MEDIA_NAME_LENGTH
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.objectType
 import org.jetbrains.exposed.v1.core.ResultRow

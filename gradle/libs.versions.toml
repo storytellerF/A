@@ -97,6 +97,7 @@ tikaCore = "3.2.3"
 uiTestJunit4Android = "1.9.2"
 uiToolingPreview = "1.9.2"
 uriKmp = "0.0.20"
+urlbuilder = "2.0.9"
 vaviImageAvif = "0.0.7"
 vlcj = "4.11.0"
 webrtcKmp = "0.125.11"
@@ -273,6 +274,7 @@ testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "tes
 tika-core = { module = "org.apache.tika:tika-core", version.ref = "tikaCore" }
 krop-ui = { module = "com.attafitamim.krop:ui", version.ref = "krop-ui" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
+urlbuilder = { module = "io.mikael:urlbuilder", version.ref = "urlbuilder" }
 vavi-image-avif = { module = "com.github.umjammer:vavi-image-avif", version.ref = "vaviImageAvif" }
 vlcj = { module = "uk.co.caprica:vlcj", version.ref = "vlcj" }
 webrtc-kmp = { module = "com.shepeliev:webrtc-kmp", version.ref = "webrtcKmp" }

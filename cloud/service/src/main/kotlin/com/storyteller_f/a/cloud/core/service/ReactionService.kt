@@ -2,13 +2,12 @@ package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CommonPath
+import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.types.ReactionRecord
-import com.storyteller_f.a.backend.exposed.isDup
-import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.obj.DeleteReaction
 import com.storyteller_f.shared.type.ObjectType
@@ -53,7 +52,7 @@ suspend fun Backend.addReaction(
                     }
                     reactionInfo
                 }.recoverResult { throwable ->
-                    if (throwable.isDup()) {
+                    if (combinedDatabase.isDup(throwable)) {
                         Result.success(reactionInfo)
                     } else {
                         Result.failure(throwable)

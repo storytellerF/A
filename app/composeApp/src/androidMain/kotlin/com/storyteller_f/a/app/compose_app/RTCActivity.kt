@@ -258,15 +258,9 @@ suspend fun makeCallByOffer(
             Napier.i {
                 "respond answer ${pc.signalingState}"
             }
-            when (pc.signalingState) {
-                SignalingState.HaveLocalOffer -> {
-                    val answer = SessionDescription(SessionDescriptionType.Answer, it.answer.sdp)
-                    pc.setRemoteDescription(answer)
-                }
-
-                else -> {
-
-                }
+            if (pc.signalingState == SignalingState.HaveLocalOffer) {
+                val answer = SessionDescription(SessionDescriptionType.Answer, it.answer.sdp)
+                pc.setRemoteDescription(answer)
             }
         }.launchIn(this)
 
@@ -418,8 +412,8 @@ private fun Context.navigateToAppSettings() {
         addCategory(Intent.CATEGORY_DEFAULT)
         addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_NO_HISTORY or
-                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                Intent.FLAG_ACTIVITY_NO_HISTORY or
+                Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
         )
     }
     startActivity(intent)

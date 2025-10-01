@@ -13,7 +13,7 @@ dependencies {
     implementation(projects.shared)
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
-    implementation(projects.backend.service)
+    implementation(projects.cloud.service)
     implementation(libs.napier)
     implementation(libs.kotlinx.cli)
     implementation(libs.cryptography.provider.jdk)

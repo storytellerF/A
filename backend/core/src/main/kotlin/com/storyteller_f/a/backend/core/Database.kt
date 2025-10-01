@@ -33,6 +33,12 @@ import kotlinx.datetime.LocalDateTime
 
 data class PaginationResult<T>(val list: List<T>, val total: Long)
 
+sealed interface JoinSearch {
+    data class Joined(val uid: PrimaryKey) : JoinSearch
+    data class NotJoined(val uid: PrimaryKey) : JoinSearch
+    data class Unspecified(val uid: PrimaryKey?) : JoinSearch
+}
+
 class InsertTopicTuple(
     val topic: PresetTopic,
     val originalIndex: Int,
@@ -62,6 +68,8 @@ interface CombinedDatabase {
 
     suspend fun init()
     suspend fun clean()
+
+    fun isDup(throwable: Throwable): Boolean
 }
 
 interface UserDatabase {
@@ -354,3 +362,13 @@ interface CliDatabase {
         objectType: ObjectType
     )
 }
+
+const val PUBLIC_KEY_LENGTH = 512
+const val ADDRESS_LENGTH = 100
+const val USER_NICKNAME = 20
+const val COMMUNITY_NAME_LENGTH = 10
+const val AID_LENGTH = 20
+const val ROOM_NAME_LENGTH = 10
+
+// 最长60，如果超过60 会进行裁切然后在后面添加uuid，保存时预留一部分空间
+const val MEDIA_NAME_LENGTH = 120

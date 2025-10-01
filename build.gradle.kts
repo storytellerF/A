@@ -78,10 +78,10 @@ subprojects {
     }
 }
 val jvmLibModules = listOf(
+    ":cloud:service",
     ":cloud:server",
     ":api",
     ":backend:core",
-    ":backend:service",
     ":backend:exposed"
 )
 val composeModules = listOf(
