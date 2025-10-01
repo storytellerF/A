@@ -3,6 +3,8 @@ package com.storyteller_f.a.cloud.core.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.JoinSearch
@@ -11,15 +13,12 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.service.RoomDocument
+import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
+import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.Room
-import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
-import com.storyteller_f.a.backend.exposed.isDup
-import com.storyteller_f.a.backend.exposed.toJoinSearch
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.processRawRoomToRoomInfo
-import com.storyteller_f.a.backend.service.search.RoomDocument
-import com.storyteller_f.a.backend.service.search.RoomDocumentSearch
+import com.storyteller_f.a.backend.core.types.toRoomInfo
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.ObjectType
@@ -91,7 +90,7 @@ private suspend fun Backend.directJoinRoom(
         addUserLog(uid, UserLogType.JOIN, roomInfo.tuple())
         Result.success(roomInfo.copy(joinedTime = time))
     }.recoverResult { exception ->
-        if (exception.isDup()) {
+        if (combinedDatabase.isDup(exception)) {
             getRoomInfo(ObjectFetch.IdFetch(roomInfo.id), uid, true)
         } else {
             Result.failure(exception)
@@ -257,5 +256,41 @@ suspend fun Backend.searchRoomPaginationResult(
         processRawRoomToRoomInfo(list).mapIfNotNull { value ->
             PaginationResult(value, count)
         }
+    }
+}
+
+suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>) =
+    combinedDatabase.fileDatabase.getFileRecordByIds(list.mapNotNull {
+        it.room.icon
+    }).mapResult { medias ->
+        processFileRecordToFileInfo(medias).map { mediaList ->
+            val mediaInfoMap = mediaList.associateBy { it.id }
+            list.map { rawRoom ->
+                rawRoom.room.toRoomInfo()
+                    .copy(
+                        icon = rawRoom.room.icon?.let { mediaInfoMap[it] },
+                        joinedTime = rawRoom.joinedTime,
+                        lastRead = rawRoom.topicId,
+                        memberCount = rawRoom.memberCount
+                    )
+            }
+        }
+    }
+
+suspend fun getCommunityRoomsTemplateList(community: Community): List<Room> {
+    val communityAid = community.aid
+    return listOf(
+        "${communityAid}_general" to "General",
+        "${communityAid}_lobby" to "Lobby",
+        "${communityAid}_support" to "Support"
+    ).mapIndexed { i, pair ->
+        Room(
+            SnowflakeFactory.nextId(),
+            now(),
+            pair.first,
+            pair.second,
+            community.owner,
+            communityId = community.id
+        )
     }
 }

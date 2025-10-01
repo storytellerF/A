@@ -38,6 +38,7 @@ import org.jetbrains.exposed.v1.r2dbc.SchemaUtils
 import org.jetbrains.exposed.v1.r2dbc.explain
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import java.io.PrintWriter
+import java.net.ConnectException
 import java.net.Socket
 import kotlin.concurrent.thread
 import kotlin.coroutines.resume
@@ -98,7 +99,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
             return e
         }
         val dialectName = database.dialect.name
-        val isConnectFailed = isConnectFailed(e)
+        val isConnectFailed = e is ConnectException
         anchor.initCause(e)
         return Exception(
             if (isConnectFailed) {

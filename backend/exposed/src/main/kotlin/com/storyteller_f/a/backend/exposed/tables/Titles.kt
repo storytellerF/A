@@ -4,7 +4,6 @@ import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.objectType
-import com.storyteller_f.a.backend.exposed.titleName
 import com.storyteller_f.shared.model.TitleStatus
 import com.storyteller_f.shared.model.TitleType
 import org.jetbrains.exposed.v1.core.*
@@ -20,7 +19,7 @@ object Titles : BaseTable() {
     val scopeId = customPrimaryKey("scope_id").index()
     val scopeType = objectType("scope_type")
     val status = titleStatus("title_status")
-    val name = titleName().index()
+    val name = varchar("name", 20).index()
     val descriptionTopicId = customPrimaryKey("description_topic_id")
 
     init {

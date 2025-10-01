@@ -10,7 +10,7 @@ dependencies {
     implementation(libs.napier)
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
-    implementation(projects.backend.service)
+    implementation(projects.cloud.service)
     implementation(projects.shared)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.core)

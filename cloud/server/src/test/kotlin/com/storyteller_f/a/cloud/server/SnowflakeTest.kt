@@ -1,7 +1,8 @@
 package com.storyteller_f.a.cloud.server
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.backend.service.naming.NameService
+import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.buildNameService
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.nio.file.Paths
@@ -12,7 +13,8 @@ class SnowflakeTest {
     fun `test name`() {
         runBlocking {
             SnowflakeFactory.setMachine(0)
-            println(NameService().parse(SnowflakeFactory.nextId()))
+            val nameService = buildNameService(MergedEnv(emptyList()))
+            println(nameService.parse(SnowflakeFactory.nextId()))
         }
     }
 

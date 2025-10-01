@@ -15,7 +15,6 @@ import io.github.aakira.napier.Napier
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.datetime
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
-import java.net.ConnectException
 import java.sql.SQLIntegrityConstraintViolationException
 
 abstract class BaseTable : Table() {
@@ -24,16 +23,6 @@ abstract class BaseTable : Table() {
 
     override val primaryKey = PrimaryKey(id)
 }
-
-const val PUBLIC_KEY_LENGTH = 512
-const val ADDRESS_LENGTH = 100
-const val USER_NICKNAME = 20
-const val COMMUNITY_NAME_LENGTH = 10
-const val AID_LENGTH = 20
-const val ROOM_NAME_LENGTH = 10
-
-// 最长60，如果超过60 会进行裁切然后在后面添加uuid，保存时预留一部分空间
-const val MEDIA_NAME_LENGTH = 120
 
 fun Throwable.isDup(): Boolean {
     if (this is SQLIntegrityConstraintViolationException) return true
@@ -46,24 +35,11 @@ fun Throwable.isDup(): Boolean {
     return false
 }
 
-fun isConnectFailed(e: Throwable): Boolean = e is ConnectException
-
 fun Table.customPrimaryKey(name: String) = long(name)
 
 fun Table.objectType(name: String) = enumerationByName<ObjectType>(name, 10)
 
-fun Table.userPublicKey() = varchar("public_key", PUBLIC_KEY_LENGTH).uniqueIndex()
-fun Table.userPrivateKey() = varchar("private_key", PUBLIC_KEY_LENGTH).uniqueIndex()
-fun Table.userAddress() = varchar("address", ADDRESS_LENGTH).uniqueIndex()
-fun Table.userName() = varchar("nickname", USER_NICKNAME).index()
-
-fun Table.roomName() = varchar("name", ROOM_NAME_LENGTH).index()
-
 fun <T : Table> T.emoji() = varchar("emoji", 20)
-
-fun Table.communityName() = varchar("name", COMMUNITY_NAME_LENGTH).index()
-
-fun Table.titleName() = varchar("name", 20)
 
 class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDatabase {
     override val userDatabase: UserDatabase
@@ -89,6 +65,10 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
 
     override suspend fun clean() {
         ExposedDatabaseFactory.clean(databaseSession.database)
+    }
+
+    override fun isDup(throwable: Throwable): Boolean {
+        return throwable.isDup()
     }
 }
 

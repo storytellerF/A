@@ -2,7 +2,6 @@ package com.storyteller_f.a.app.compose_app.utils
 
 import android.content.ClipData
 import android.content.Intent
-import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard

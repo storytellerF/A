@@ -1,6 +1,6 @@
 package com.storyteller_f.a.cloud.server
 
-import com.storyteller_f.a.backend.service.object_storage.getImageDimension
+import com.storyteller_f.a.backend.core.getImageDimension
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.copy
 import com.storyteller_f.a.client.core.extractAlbum

@@ -1,23 +1,22 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.AID_LENGTH
+import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.USER_NICKNAME
+import com.storyteller_f.a.backend.core.service.UserDocument
+import com.storyteller_f.a.backend.core.service.UserDocumentSearch
+import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.core.types.toUserInfo
-import com.storyteller_f.a.backend.exposed.AID_LENGTH
-import com.storyteller_f.a.backend.exposed.USER_NICKNAME
-import com.storyteller_f.a.backend.exposed.isDup
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.processRawUserToUserInfo
-import com.storyteller_f.a.backend.service.search.UserDocument
-import com.storyteller_f.a.backend.service.search.UserDocumentSearch
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.getDerPrivateKey
@@ -249,7 +248,7 @@ suspend fun Backend.addDevice(
     newDevice: NewDevice
 ): Result<Unit> =
     combinedDatabase.userDatabase.addDevice(uid, newDevice.endpointUrl).recoverResult {
-        if (it.isDup()) {
+        if (combinedDatabase.isDup(it)) {
             UNIT_RESULT
         } else {
             Result.failure(it)
@@ -332,5 +331,18 @@ suspend fun Backend.getUserInfo(
 ): Result<UserInfo?> {
     return combinedDatabase.userDatabase.getRawUser(fetch).mapResultIfNotNull {
         processRawUserToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
+    }
+}
+
+suspend fun Backend.processRawUserToUserInfo(
+    rawResults: List<RawUser>,
+) = combinedDatabase.fileDatabase.getFileRecordByIds(rawResults.mapNotNull {
+    it.user.icon
+}).mapResult { medias ->
+    processFileRecordToFileInfo(medias).map { list ->
+        val mediaInfoMap = list.associateBy { it.id }
+        rawResults.map { pair ->
+            pair.user.toUserInfo().copy(avatar = pair.user.icon?.let { mediaInfoMap[it] })
+        }
     }
 }

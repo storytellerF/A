@@ -65,11 +65,12 @@ class FileConnection(
     }
 }
 
-fun <T> T.bindFileService(clipData: ImmutableList<ClipFile>) where T : ComponentActivity, T : ClientFileServiceContainer {
+fun <T> T.bindFileService(clipData: ImmutableList<ClipFile>)
+    where T : ComponentActivity, T : ClientFileServiceContainer {
     val serviceIntent = Intent(this, FileService::class.java)
     val connection = FileConnection(WeakReference(this), clipData)
     bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
-    lifecycle.addObserver(object : DefaultLifecycleObserver{
+    lifecycle.addObserver(object : DefaultLifecycleObserver {
         override fun onDestroy(owner: LifecycleOwner) {
             super.onDestroy(owner)
             unbindService(connection)

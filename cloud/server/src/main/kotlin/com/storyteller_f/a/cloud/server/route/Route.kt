@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.maxmind.geoip2.DatabaseReader
-import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.server.auth.bindAccountRoute
 import com.storyteller_f.a.cloud.server.auth.bindProtectedAccountRoute
 import com.storyteller_f.a.cloud.server.auth.bindUnprotectedAccountRoute

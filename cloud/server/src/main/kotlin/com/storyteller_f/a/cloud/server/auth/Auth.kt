@@ -2,8 +2,8 @@ package com.storyteller_f.a.cloud.server.auth
 
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.cloud.core.service.addAlternativeAccount
 import com.storyteller_f.a.cloud.core.service.getUserAlternateUserInfoList
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator

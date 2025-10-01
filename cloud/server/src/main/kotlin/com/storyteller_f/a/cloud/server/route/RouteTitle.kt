@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.createTitle
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal

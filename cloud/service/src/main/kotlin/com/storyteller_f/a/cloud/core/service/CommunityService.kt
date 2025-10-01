@@ -2,23 +2,20 @@ package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.service.CommunityDocument
+import com.storyteller_f.a.backend.core.service.CommunityDocumentSearch
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.toCommunityIfo
-import com.storyteller_f.a.backend.exposed.COMMUNITY_NAME_LENGTH
-import com.storyteller_f.a.backend.exposed.isDup
-import com.storyteller_f.a.backend.exposed.toJoinSearch
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.getCommunityRoomsTemplateList
-import com.storyteller_f.a.backend.service.processRawCommunityToCommunityInfo
-import com.storyteller_f.a.backend.service.search.CommunityDocument
-import com.storyteller_f.a.backend.service.search.CommunityDocumentSearch
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserLogType
@@ -72,7 +69,7 @@ suspend fun Backend.doUserJoinCommunity(
             addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
             Result.success(community.copy(joinedTime = time))
         }.recoverResult {
-            if (it.isDup()) {
+            if (combinedDatabase.isDup(it)) {
                 getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
             } else {
                 Result.failure(it)
@@ -191,13 +188,14 @@ suspend fun Backend.createCommunity(
             null
         )
         combinedDatabase.communityDatabase.createCommunity(community).map {
+            community
+        }.onSuccess {
             communitySearchService.saveDocument(listOf(CommunityDocument.fromCommunity(community)))
                 .onFailure {
                     Napier.e(it) {
                         "save community document failed"
                     }
                 }
-            community
         }
     }.mapResult { community ->
         combinedDatabase.communityDatabase.createCommunityRooms(
@@ -301,5 +299,44 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
         Result.failure(firstError)
     } else {
         UNIT_RESULT
+    }
+}
+
+suspend fun Backend.processRawCommunityToCommunityInfo(
+    list: List<RawCommunity>,
+): Result<List<CommunityInfo>?> {
+    return combinedDatabase.fileDatabase.getFileRecordByIds(list.flatMap { (community) ->
+        listOf(community.iconId, community.posterId, community.fontId)
+    }.filterNotNull()).mapResultIfNotNull { medias ->
+        processFileRecordToFileInfo(medias).map { mediaList ->
+            val map = mediaList.associateBy { it.id }
+            list.mapIndexed { i, rawResult ->
+                rawResult.community.toCommunityIfo().copy(
+                    memberCount = rawResult.memberCount,
+                    icon = rawResult.community.iconId?.let { map[it] },
+                    poster = rawResult.community.posterId?.let { map[it] },
+                    hasPoster = rawResult.community.posterId != null,
+                    joinedTime = rawResult.joinedTime,
+                    lastRead = rawResult.lastRead,
+                    font = rawResult.community.fontId?.let { map[it] }
+                )
+            }
+        }
+    }
+}
+
+fun JoinStatusSearch?.toJoinSearch(uid: PrimaryKey?): JoinSearch {
+    when (this) {
+        JoinStatusSearch.JOINED -> {
+            if (uid == null) throw UnauthorizedException()
+            return JoinSearch.Joined(uid)
+        }
+
+        JoinStatusSearch.NOT_JOINED -> {
+            if (uid == null) throw UnauthorizedException()
+            return JoinSearch.NotJoined(uid)
+        }
+
+        else -> return JoinSearch.Unspecified(uid)
     }
 }

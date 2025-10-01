@@ -34,7 +34,7 @@ dependencies {
     implementation(libs.route4k.ktor.server)
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
-    implementation(projects.backend.service)
+    implementation(projects.cloud.service)
     implementation(projects.cloud.service)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.server.client)

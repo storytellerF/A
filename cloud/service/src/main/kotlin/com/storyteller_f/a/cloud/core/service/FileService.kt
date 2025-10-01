@@ -3,19 +3,18 @@ package com.storyteller_f.a.cloud.core.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.backend.core.CopyPack
+import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.core.UploadPack
+import com.storyteller_f.a.backend.core.getImageDimension
+import com.storyteller_f.a.backend.core.service.CopyPack
+import com.storyteller_f.a.backend.core.service.ProcessedUploadPack
+import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.toFileInfo
-import com.storyteller_f.a.backend.service.Backend
-import com.storyteller_f.a.backend.service.lockQuotaInfo
-import com.storyteller_f.a.backend.service.object_storage.FileSystemObjectStorageService
-import com.storyteller_f.a.backend.service.processFileRecordToFileInfo
-import com.storyteller_f.a.backend.service.tryUploadFiles
+import com.storyteller_f.a.backend.filesystem.FileSystemObjectStorageService
 import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
 import com.storyteller_f.a.cloud.core.utils.readMp3AlbumFromAudioStream
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
@@ -28,6 +27,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.merge
+import com.storyteller_f.shared.utils.now
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -300,6 +300,92 @@ private suspend fun Backend.copyFile(
             )
         }).map { (it) ->
             ServerResponse(listOf(newFileRecord.toFileInfo(it.url, it.lastModified)), null)
+        }
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+suspend fun Backend.tryUploadFiles(
+    ownerId: PrimaryKey,
+    ownerType: ObjectType,
+    files: List<UploadPack>
+): Result<List<FileInfo?>> {
+    val totalLength = files.sumOf {
+        it.size
+    }
+    return lockQuotaInfo(
+        ObjectTuple(ownerId, ownerType),
+        QuotaType.FILE,
+        totalLength,
+        Uuid.random().toHexString()
+    ) {
+        uploadFiles(ownerId, ownerType, files.map {
+            val detectedType = Backend.tika.detect(it.path)
+            val dimension = if (detectedType.startsWith("image")) {
+                getImageDimension(it.path.absolutePath, detectedType) {
+                    it.path.inputStream()
+                }
+            } else {
+                null
+            }
+            ProcessedUploadPack(it, detectedType, dimension)
+        })
+    }
+}
+
+private suspend fun Backend.uploadFiles(
+    ownerId: PrimaryKey,
+    ownerType: ObjectType,
+    uploadPacks: List<ProcessedUploadPack>
+): Result<List<FileInfo?>> {
+    val data = uploadPacks.map { p ->
+        val uploadPack = p.pack
+        val nextId = SnowflakeFactory.nextId()
+        val dimension = p.dimension
+        FileRecord(
+            nextId,
+            now(),
+            uploadPack.name,
+            0,
+            dimension?.width ?: 0,
+            dimension?.height ?: 0,
+            ownerId,
+            ownerType,
+            p.contentType,
+            uploadPack.size,
+            uploadPack.fullName
+        )
+    }
+    return merge({
+        objectStorageService.upload(A_FILE_DEFAULT_BUCKET, uploadPacks.map {
+            it.pack
+        })
+    }, {
+        combinedDatabase.fileDatabase.insertFileRecord(data, ownerId, ownerType)
+    }).map { (records) ->
+        records.mapIndexed { i, e ->
+            data[i].toFileInfo(e.url, e.lastModified)
+        }
+    }
+}
+
+suspend fun Backend.getFileInfoList(names: List<String>): Result<List<FileInfo?>?> {
+    return combinedDatabase.fileDatabase.getFileRecordByNames(names).mapResult { fileRecords ->
+        processFileRecordToFileInfo(fileRecords)
+    }
+}
+
+suspend fun Backend.processFileRecordToFileInfo(
+    fileRecords: List<FileRecord>,
+): Result<List<FileInfo>> {
+    return objectStorageService.get(A_FILE_DEFAULT_BUCKET, fileRecords.map {
+        it.fullName
+    }).map { mediaList ->
+        val mediaRecordMap = mediaList.associateBy { it.fullName }
+        fileRecords.map { media ->
+            mediaRecordMap[media.fullName]!!.let {
+                media.toFileInfo(it.url, it.lastModified)
+            }
         }
     }
 }

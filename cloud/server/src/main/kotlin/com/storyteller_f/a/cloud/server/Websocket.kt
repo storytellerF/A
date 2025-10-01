@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.server
 
 import com.maxmind.geoip2.DatabaseReader
-import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.addTopicAtRoom
 import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.server.auth.usePrincipal

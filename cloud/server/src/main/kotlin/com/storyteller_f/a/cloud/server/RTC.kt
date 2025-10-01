@@ -1,6 +1,6 @@
 package com.storyteller_f.a.cloud.server
 
-import com.storyteller_f.a.backend.service.Backend
+import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.checkRootReadPermission
 import com.storyteller_f.shared.obj.CustomAnswer
 import com.storyteller_f.shared.obj.CustomOffer

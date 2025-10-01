@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.service.Backend
 import com.storyteller_f.a.cloud.core.service.createCommunity
 import com.storyteller_f.a.cloud.core.service.doUserJoinCommunity
 import com.storyteller_f.a.cloud.core.service.exitCommunity
