@@ -32,7 +32,9 @@ class MinIoObjectStorageService(
     private val minioHost: String?
 ) : ObjectStorageService {
     val cache =
-        ServiceLoader.load(CacheServiceFactory::class.java).first().build<String, String>(
+        ServiceLoader.load(CacheServiceFactory::class.java).first {
+            it.match(MergedEnv(emptyList()))
+        }.build<String, String>(
             MergedEnv(emptyList()),
             String::class
         )
