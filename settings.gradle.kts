@@ -56,6 +56,7 @@ include(":cloud:service")
 include(":cloud:pdfbox")
 include(":cloud:openpdf")
 include(":cloud:pdf")
+include(":panel:composeApp")
 
 include(":backend:exposed")
 include(":backend:core")

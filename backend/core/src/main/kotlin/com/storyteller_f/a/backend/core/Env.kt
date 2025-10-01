@@ -13,6 +13,7 @@ class MergedEnv(val list: List<Map<String, String>>) {
         }
     }
 }
+
 fun readEnv(envMap: Map<String, String>? = null) = MergedEnv(
     listOfNotNull(
         envMap, // 测试时手动传递
@@ -24,10 +25,15 @@ fun readEnv(envMap: Map<String, String>? = null) = MergedEnv(
 )
 
 fun readResourceEnv(resName: String): Map<String, String>? {
+    val stream = ClassLoader.getSystemResourceAsStream(resName)
     Napier.i {
-        "read env from resource: $resName"
+        if (stream == null) {
+            "resource env file $resName not exists"
+        } else {
+            "read env from resource: $resName"
+        }
     }
-    return ClassLoader.getSystemResourceAsStream(resName)?.use {
+    return stream?.use {
         Properties().apply {
             load(it)
         }
@@ -39,7 +45,11 @@ fun readResourceEnv(resName: String): Map<String, String>? {
 fun readFileEnv(resName: String): Map<String, String>? {
     val file = File(resName)
     Napier.i {
-        "read env from file: ${file.canonicalPath}"
+        if (file.exists()) {
+            "read env from file: ${file.canonicalPath}"
+        } else {
+            "env file ${file.canonicalPath} not exists"
+        }
     }
     return if (file.exists()) {
         FileInputStream(resName).use {
