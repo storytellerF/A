@@ -17,7 +17,7 @@ data class UploadPack(
 
 data class ProcessedUploadPack(
     val pack: UploadPack,
-    val contentType: String = "",
+    val contentType: String,
     val dimension: Dimension? = null
 )
 
