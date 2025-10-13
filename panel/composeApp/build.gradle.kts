@@ -1,6 +1,8 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
+import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -16,7 +18,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
-    
+
 //    listOf(
 //        iosArm64(),
 //        iosSimulatorArm64()
@@ -26,9 +28,9 @@ kotlin {
 //            isStatic = true
 //        }
 //    }
-    
+
     jvm()
-    
+
     js {
         browser()
         binaries.executable()
@@ -39,7 +41,7 @@ kotlin {
         browser()
         binaries.executable()
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -108,9 +110,19 @@ compose.desktop {
     }
 }
 
-
 compose.resources {
     publicResClass = false
     packageOfResClass = "com.storyteller_f.a.cloud.panel"
     generateResClass = auto
+}
+
+rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
+    rootProject.the<WasmYarnRootExtension>().run {
+        lockFileDirectory = project.rootDir.resolve("panel/kotlin-js-store/wasm")
+        lockFileName = "panel-yarn.lock"
+    }
+    rootProject.the<YarnRootExtension>().run {
+        lockFileDirectory = project.rootDir.resolve("panel/kotlin-js-store")
+        lockFileName = "panel-yarn.lock"
+    }
 }
