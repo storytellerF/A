@@ -113,7 +113,7 @@ afterEvaluate {
     mergeServiceFiles.get().mustRunAfter(":backend:exposed:jar")
 }
 
-val flavor = project.findProperty("app.flavor").toString()
+val flavor = project.findProperty("server.flavor").toString()
 
 buildConfig {
     className = "BackendConfig"
