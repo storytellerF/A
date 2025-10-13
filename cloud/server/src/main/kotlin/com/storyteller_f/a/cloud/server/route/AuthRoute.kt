@@ -1,63 +1,89 @@
 package com.storyteller_f.a.cloud.server.route
 
-import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.Backend
-import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.core.types.User
-import com.storyteller_f.a.backend.core.types.toUserInfo
+import com.storyteller_f.a.cloud.core.service.addAlternativeAccount
 import com.storyteller_f.a.cloud.core.service.addUserLog
-import com.storyteller_f.a.cloud.core.service.processRawUserToUserInfo
+import com.storyteller_f.a.cloud.core.service.getUserAlternateUserInfoList
+import com.storyteller_f.a.cloud.core.service.signIn
+import com.storyteller_f.a.cloud.core.service.signUp
 import com.storyteller_f.a.cloud.server.ServerConfig
 import com.storyteller_f.a.cloud.server.auth.CustomCredential
 import com.storyteller_f.a.cloud.server.auth.CustomPrincipal
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.getSession
+import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.saveSuccessSession
-import com.storyteller_f.shared.SignInPack
-import com.storyteller_f.shared.SignUpPack
-import com.storyteller_f.shared.calcAddress
+import com.storyteller_f.a.cloud.server.auth.usePrincipal
+import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
+import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
+import com.storyteller_f.a.cloud.server.common.pagination
+import com.storyteller_f.route4k.ktor.server.invoke
+import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.finalData
-import com.storyteller_f.shared.model.AlgoType
-import com.storyteller_f.shared.model.PassType
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.filterNotNull
+import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.verify
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
+import io.ktor.server.sessions.clear
+import io.ktor.server.sessions.sessions
 
-suspend fun RoutingContext.signIn(
-    backend: Backend,
-    pack: SignInPack,
-    data: String
-): Result<UserInfo?> {
-    val f = finalData(data)
-    return backend.combinedDatabase.userDatabase.getRawUserAndPublicKeyByAddress(pack.ad).filterNotNull {
-        CustomBadRequestException("user not found")
-    }.mapResult { (rawUser, publicKey) ->
-        verify(publicKey, pack.sig, f).mapResult { isVerified ->
-            if (isVerified) {
-                val id = rawUser.user.id
-                backend.addUserLog(id, UserLogType.SIGN_IN, id ob ObjectType.USER)
-                backend.processRawUserToUserInfo(listOf(rawUser)).mapIfNotNull {
-                    it.first()
-                }.mapIfNotNull { value ->
-                    val id = value.id
-                    saveSuccessSessionOnFirst(id)
-                    value
-                }
-            } else {
-                Result.failure(BadRequestException("Verify failed"))
+fun Route.bindUnprotectedAccountRoute(
+    backend: Backend
+) {
+    CustomApi.Accounts.getData(RoutingContext::handleResult) {
+        Result.success(call.getData())
+    }
+    CustomApi.Accounts.signUp(RoutingContext::handleResult) { api ->
+        if (backend.customConfig.buildType == "prod") {
+            Result.failure(Exception("not support"))
+        } else {
+            val data = call.getData()
+            val mapResult = backend.signUp(data, api.receiveBody())
+            mapResult.onSuccess {
+                val newId = it.id
+                backend.addUserLog(newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
+                saveSuccessSessionOnFirst(newId)
+            }
+        }
+    }
+
+    CustomApi.Accounts.signIn(RoutingContext::handleResult) { api ->
+        val mapResult = backend.signIn(call.getData(), api.receiveBody())
+        mapResult.onSuccess {
+            it?.id?.let { id -> saveSuccessSessionOnFirst(id) }
+        }
+    }
+}
+
+fun Route.bindAccountRoute() {
+    CustomApi.Accounts.signOut(RoutingContext::handleResult) {
+        usePrincipalOrNull { uid ->
+            call.sessions.clear(UserSession::class)
+            UNIT_RESULT
+        }
+    }
+}
+
+fun Route.bindProtectedAccountRoute(backend: Backend) {
+    CustomApi.Accounts.ChildAccounts.add(RoutingContext::handleResult) {
+        usePrincipal { uid ->
+            backend.addAlternativeAccount(uid)
+        }
+    }
+    CustomApi.Accounts.ChildAccounts.get(RoutingContext::handleResult) {
+        usePrincipal { uid ->
+            pagination(IdentifiablePagingGenerator) {
+                backend.getUserAlternateUserInfoList(uid, it)
             }
         }
     }
@@ -67,47 +93,6 @@ fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
     call.getSession().first.let { session ->
         if (session is UserSession.Pending) {
             call.saveSuccessSession(session, id)
-        }
-    }
-}
-
-suspend fun RoutingContext.signUp(
-    backend: Backend,
-    pack: SignUpPack
-): Result<UserInfo?> {
-    val data = call.getData()
-    val f = finalData(data)
-    return verify(pack.pk, pack.sig, f).mapResult {
-        if (it) {
-            backend.combinedDatabase.userDatabase.isUserNotExistsByPublicKey(pack.pk).mapResult { userNotExists ->
-                if (userNotExists) {
-                    calcAddress(pack.pk).mapResult { ad ->
-                        val newId = SnowflakeFactory.nextId()
-                        val name = backend.nameService.parse(newId)
-                        val user = User(
-                            null,
-                            pack.pk,
-                            ad,
-                            null,
-                            name,
-                            newId,
-                            now(),
-                            0,
-                            PassType.RAW,
-                            AlgoType.P256
-                        )
-                        backend.combinedDatabase.userDatabase.createUser(user).map {
-                            backend.addUserLog(newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
-                            saveSuccessSessionOnFirst(newId)
-                            user.toUserInfo()
-                        }
-                    }
-                } else {
-                    Result.failure(BadRequestException("User exists"))
-                }
-            }
-        } else {
-            Result.failure(CustomBadRequestException("Verify failed"))
         }
     }
 }

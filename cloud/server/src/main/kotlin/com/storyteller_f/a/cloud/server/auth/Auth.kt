@@ -1,18 +1,9 @@
 package com.storyteller_f.a.cloud.server.auth
 
 import com.maxmind.geoip2.DatabaseReader
-import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.cloud.core.service.addAlternativeAccount
-import com.storyteller_f.a.cloud.core.service.getUserAlternateUserInfoList
-import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
-import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.a.cloud.server.route.checkApiRequest
-import com.storyteller_f.a.cloud.server.route.signIn
-import com.storyteller_f.a.cloud.server.route.signUp
-import com.storyteller_f.route4k.ktor.server.invoke
-import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.*
@@ -23,7 +14,6 @@ import io.ktor.server.auth.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
-import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -214,49 +204,6 @@ fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
             }
             challenge { _, call ->
                 call.respondUnauthorizedResponse()
-            }
-        }
-    }
-}
-
-fun Route.bindUnprotectedAccountRoute(
-    backend: Backend
-) {
-    CustomApi.Accounts.getData(RoutingContext::handleResult) {
-        Result.success(call.getData())
-    }
-    CustomApi.Accounts.signUp(RoutingContext::handleResult) {
-        if (backend.customConfig.buildType == "prod") {
-            Result.failure(Exception("not support"))
-        } else {
-            signUp(backend, it.receiveBody())
-        }
-    }
-
-    CustomApi.Accounts.signIn(RoutingContext::handleResult) {
-        signIn(backend, it.receiveBody(), call.getData())
-    }
-}
-
-fun Route.bindAccountRoute() {
-    CustomApi.Accounts.signOut(RoutingContext::handleResult) {
-        usePrincipalOrNull { uid ->
-            call.sessions.clear(UserSession::class)
-            UNIT_RESULT
-        }
-    }
-}
-
-fun Route.bindProtectedAccountRoute(backend: Backend) {
-    CustomApi.Accounts.ChildAccounts.add(RoutingContext::handleResult) {
-        usePrincipal { uid ->
-            backend.addAlternativeAccount(uid)
-        }
-    }
-    CustomApi.Accounts.ChildAccounts.get(RoutingContext::handleResult) {
-        usePrincipal { uid ->
-            pagination(IdentifiablePagingGenerator) {
-                backend.getUserAlternateUserInfoList(uid, it)
             }
         }
     }
