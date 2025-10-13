@@ -144,41 +144,6 @@ private fun CustomClientAuthProvider.CustomAuthConfig.configClientAuth(manager: 
     }
 }
 
-@OptIn(ExperimentalStdlibApi::class)
-suspend fun processEncryptedTopic(
-    topicInfos: List<TopicInfo>,
-    manager: SessionManager
-): List<TopicInfo> {
-    val model = manager.model
-    val uid = model.uid
-    val key = model.currentUserPass
-    return topicInfos.map { topicInfo ->
-        val content = topicInfo.content
-        if (content !is TopicContent.Encrypted) {
-            topicInfo
-        } else if (uid == null || key == null) {
-            topicInfo.copy(content = TopicContent.Invalid)
-        } else {
-            val s = content.encryptedKey[uid]
-            if (s != null) {
-                val topicContent = key.decrypt(
-                    content.encrypted.hexToByteArray(),
-                    s.hexToByteArray()
-                ).fold(onSuccess = {
-                    val mediaInfos = extractMarkdownMediaLink(it).mapNotNull { mediaName ->
-                        manager.getMediaByName(mediaName, topicInfo.rootId, topicInfo.rootType).getOrNull()
-                    }
-                    TopicContent.Plain(it, mediaInfos)
-                }, onFailure = {
-                    TopicContent.DecryptFailed(it.message.toString())
-                })
-                topicInfo.copy(content = topicContent)
-            } else {
-                topicInfo.copy(content = TopicContent.DecryptFailed("auth failed"))
-            }
-        }
-    }
-}
 
 fun buildWebSocketUrl(wsServerUrl: String): String = buildUrl {
     takeFrom(wsServerUrl)
