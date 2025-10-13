@@ -8,10 +8,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.*
 
-interface WebSocketClientListener {
-    suspend fun onReceived(frame: RoomFrame, session: DefaultClientWebSocketSession)
-}
-
 interface WebSocketClient {
     val connectionHandler: LoadingHandler<DefaultClientWebSocketSession>
     val localState: StateFlow<LoadingState?>

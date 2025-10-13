@@ -3,11 +3,14 @@ package com.storyteller_f.a.client.core
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.signature
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkTsIsValid
+import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.merge
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
@@ -162,4 +165,41 @@ suspend fun SessionManager.signUpOrInFromPrivateKey(
         )
     )
     return u
+}
+
+
+@OptIn(ExperimentalStdlibApi::class)
+suspend fun processEncryptedTopic(
+    topicInfos: List<TopicInfo>,
+    manager: SessionManager
+): List<TopicInfo> {
+    val model = manager.model
+    val uid = model.uid
+    val key = model.currentUserPass
+    return topicInfos.map { topicInfo ->
+        val content = topicInfo.content
+        if (content !is TopicContent.Encrypted) {
+            topicInfo
+        } else if (uid == null || key == null) {
+            topicInfo.copy(content = TopicContent.Invalid)
+        } else {
+            val s = content.encryptedKey[uid]
+            if (s != null) {
+                val topicContent = key.decrypt(
+                    content.encrypted.hexToByteArray(),
+                    s.hexToByteArray()
+                ).fold(onSuccess = {
+                    val mediaInfos = extractMarkdownMediaLink(it).mapNotNull { mediaName ->
+                        manager.getMediaByName(mediaName, topicInfo.rootId, topicInfo.rootType).getOrNull()
+                    }
+                    TopicContent.Plain(it, mediaInfos)
+                }, onFailure = {
+                    TopicContent.DecryptFailed(it.message.toString())
+                })
+                topicInfo.copy(content = topicContent)
+            } else {
+                topicInfo.copy(content = TopicContent.DecryptFailed("auth failed"))
+            }
+        }
+    }
 }
