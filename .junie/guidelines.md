@@ -21,7 +21,7 @@ Scope
 
 1.3 Key Gradle properties (gradle.properties)
 - server.buildType: dev | prod, etc. Defaults to dev.
-- app.flavor: flavor name (e.g., dev.win), used by app/composeApp to load ../{flavor}.env and populate BuildKonfig.
+- server.flavor: flavor name (e.g., dev.win), used by app/composeApp to load ../{flavor}.env and populate BuildKonfig.
 - target.ios: false by default. Set to true to include iOS targets.
 - target.wasm: false by default. Set to true to include Wasm target (with browser/Karma test wiring in some modules).
 - llama.enable: false by default. When true, includes :android-llama-cpp module and extra dependencies.
@@ -29,15 +29,15 @@ Scope
 - org.gradle.daemon=false is set; prefer explicit Gradle invocations.
 
 You can override properties per-invocation, e.g.:
-- gradlew :app:composeApp:tasks -Papp.flavor=dev.win -Pserver.buildType=dev
+- gradlew :app:composeApp:tasks -Pserver.flavor=dev.win -Pserver.buildType=dev
 - gradlew build -Ptarget.ios=true -Ptarget.wasm=true
 
 1.4 Environment and secrets
-- The Android Compose app reads environment variables from app/composeApp/../../{flavor}.env at configuration time via BuildKonfig and injects into AppConfig constants:
+- The Android Compose app reads environment variables from {flavor}.env at configuration time via BuildKonfig and injects into AppConfig constants:
   - SERVER_URL, WS_SERVER_URL
   - BUILD_TYPE, FLAVOR
 - Android signing: The composeApp module defines a decodeBase64ToStoreFile task (group: signing). If the env var storyteller_f_sign_key is present (base64), it will generate build/signing/signing_key.jks and wire packageRelease to depend on it.
-- Provided env files at repo root: dev.env, dev.win.env, alpha.env, prod.env, koyeb.env (and .filter). Ensure the selected -Papp.flavor matches an existing {flavor}.env.
+- Provided env files at repo root: dev.env, dev.win.env, alpha.env, prod.env, koyeb.env (and .filter). Ensure the selected -Pserver.flavor matches an existing {flavor}.env.
 
 1.5 Module map (partial)
 - UI/Client: :app:composeApp (Android + Desktop), :app:cliApp, :client:core, :client:model-storage, :client:room, :client:ascii-parser
@@ -45,16 +45,17 @@ You can override properties per-invocation, e.g.:
 - Backend/Cloud: :backend:* and :cloud:* (server, worker, pdf tooling)
 - Bots: :bot:builtin-bot
 - Conditional: :android-llama-cpp when -Pllama.enable=true
+- Panel: :panel:composeApp, :panel:iosApp
 
 1.6 Typical build targets
 - Compose Desktop run (dev):
-  - gradlew :app:composeApp:run -Papp.flavor=dev.win -Pserver.buildType=dev
+  - gradlew :app:composeApp:run -Pserver.flavor=dev.win -Pserver.buildType=dev
 - Compose Desktop package (Dev MSI/Deb/Dmg disabled proguard obfuscation turned on):
-  - gradlew :app:composeApp:packageRelease -Papp.flavor=dev.win -Pserver.buildType=dev
+  - gradlew :app:composeApp:packageRelease -Pserver.flavor=dev.win -Pserver.buildType=dev
 - Android assemble debug:
-  - gradlew :app:composeApp:assembleDebug -Papp.flavor=dev.win -Pserver.buildType=dev
-- Backend service (example):
-  - gradlew :backend:service:build
+  - gradlew :app:composeApp:assembleDebug -Pserver.flavor=dev.win -Pserver.buildType=dev
+- Backend service:
+  - gradlew :cloud:server:run -Pserver.flavor=dev.win -Pserver.buildType=dev
 
 2) Testing
 
@@ -75,7 +76,7 @@ You can override properties per-invocation, e.g.:
   - gradlew :app:composeApp:testDebugUnitTest
 Notes:
 - Robolectric logging is enabled in :shared testOptions. Ensure JDK 21.
-- Some tests may rely on flavors/env; pass -Papp.flavor and -Pserver.buildType as needed for the app module.
+- Some tests may rely on flavors/env; pass -Pserver.flavor and -Pserver.buildType as needed for the app module.
 
 2.3 Running tests (Wasm, optional)
 - Enable wasm at build time: -Ptarget.wasm=true
@@ -116,7 +117,7 @@ Prereqs:
 
 3.3 BuildKonfig and flavors
 - app/composeApp uses BuildKonfig to inject SERVER_URL / WS_SERVER_URL and metadata (BUILD_TYPE, FLAVOR). Values are read from ../../{flavor}.env relative to the module (i.e., at repo root). If missing, blank strings are used for URLs.
-- Always ensure -Papp.flavor matches an env file present in the repo root to avoid empty endpoints at runtime.
+- Always ensure -Pserver.flavor matches an env file present in the repo root to avoid empty endpoints at runtime.
 
 3.4 iOS/Wasm target gating
 - iOS targets (iosX64/Arm64/SimulatorArm64) and Wasm are opt-in. Pass -Ptarget.ios=true and/or -Ptarget.wasm=true. iOS frameworks are static and named ComposeApp when enabled.
@@ -136,7 +137,7 @@ Appendix — Handy commands
 - List tasks for a module: gradlew :app:composeApp:tasks --all
 - Clean: gradlew clean
 - Full build (common modules): gradlew build
-- Run Desktop app: gradlew :app:composeApp:run -Papp.flavor=dev.win -Pserver.buildType=dev
+- Run Desktop app: gradlew :app:composeApp:run -Pserver.flavor=dev.win -Pserver.buildType=dev
 - JVM tests for shared: gradlew :shared:jvmTest
 - Desktop tests for app: gradlew :app:composeApp:desktopTest
 - Android unit tests: gradlew :app:composeApp:testDebugUnitTest

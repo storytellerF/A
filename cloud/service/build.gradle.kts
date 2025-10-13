@@ -50,7 +50,7 @@ tasks.withType<Test> {
 }
 
 val buildType = project.findProperty("server.buildType") as String
-val flavor = project.findProperty("app.flavor").toString()
+val flavor = project.findProperty("server.flavor").toString()
 
 buildConfig {
     className = "ServerConfig"
