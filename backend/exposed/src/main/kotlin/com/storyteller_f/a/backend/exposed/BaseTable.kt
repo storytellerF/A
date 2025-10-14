@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.core.CommunityDatabase
 import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.DatabaseConnection
 import com.storyteller_f.a.backend.core.FileDatabase
+import com.storyteller_f.a.backend.core.PanelAccountDatabase
 import com.storyteller_f.a.backend.core.RoomDatabase
 import com.storyteller_f.a.backend.core.TitleDatabase
 import com.storyteller_f.a.backend.core.TopicDatabase
@@ -58,6 +59,8 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         get() = ExposedContainerDatabase(databaseSession)
     override val cliDatabase: CliDatabase
         get() = ExposedCliDatabase(databaseSession)
+    override val panelAccountDatabase: PanelAccountDatabase
+        get() = ExposedPanelAccountDatabase(databaseSession)
 
     override suspend fun init() {
         ExposedDatabaseFactory.init(databaseSession.database)

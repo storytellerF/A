@@ -68,6 +68,9 @@ data class PresetTitle(
 )
 
 @Serializable
+data class PresetPanelAccount(val name: String)
+
+@Serializable
 data class PresetValue(
     val type: String,
     val communityData: List<PresetCommunity>? = null,
@@ -75,5 +78,6 @@ data class PresetValue(
     val topicData: List<PresetTopic>? = null,
     val roomData: List<PresetRoom>? = null,
     val fileData: List<PresetFile>? = null,
-    val titleData: List<PresetTitle>? = null
+    val titleData: List<PresetTitle>? = null,
+    val panelAccountData: List<PresetPanelAccount>? = null,
 )

@@ -6,5 +6,6 @@ enum class ObjectType {
     TOPIC,
     USER,
     TITLE,
-    File
+    File,
+    PANEL_ACCOUNT
 }

@@ -4,7 +4,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
-import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.ObjectFetch.*
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.UploadRecord
@@ -71,7 +71,7 @@ suspend fun Backend.checkRootReadPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            combinedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId))
+            combinedDatabase.communityDatabase.getRawCommunity(IdFetch(parentId))
                 .mapResultIfNotNull {
                     combinedDatabase.containerDatabase.isMemberJoined(parentId, uid)
                         .map { hasJoined ->
@@ -80,7 +80,7 @@ suspend fun Backend.checkRootReadPermission(
                 }
         }
 
-        ObjectType.USER -> combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId))
+        ObjectType.USER -> combinedDatabase.userDatabase.getRawUser(IdFetch(parentId))
             .mapIfNotNull {
                 RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
             }
@@ -94,6 +94,7 @@ suspend fun Backend.checkRootReadPermission(
         )
 
         ObjectType.File -> Result.failure(ForbiddenException())
+        ObjectType.PANEL_ACCOUNT -> Result.failure(ForbiddenException())
     }
 }
 
@@ -104,7 +105,7 @@ suspend fun Backend.checkRootWritePermission(
 ): Result<RootWritePermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            combinedDatabase.topicDatabase.getTopicInfo(ObjectFetch.IdFetch(parentId), null)
+            combinedDatabase.topicDatabase.getTopicInfo(IdFetch(parentId), null)
                 .mapResultIfNotNull { topicInfo ->
                     checkRootWritePermission(
                         topicInfo.rootType,
@@ -130,7 +131,7 @@ suspend fun Backend.checkRootWritePermission(
         }
 
         ObjectType.COMMUNITY -> {
-            combinedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId))
+            combinedDatabase.communityDatabase.getRawCommunity(IdFetch(parentId))
                 .mapResultIfNotNull {
                     combinedDatabase.containerDatabase.isMemberJoined(parentId, uid)
                         .mapResult { hasJoined ->
@@ -145,7 +146,7 @@ suspend fun Backend.checkRootWritePermission(
 
         ObjectType.USER -> {
             if (uid == parentId) {
-                combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId))
+                combinedDatabase.userDatabase.getRawUser(IdFetch(parentId))
                     .mapIfNotNull {
                         RootWritePermission(parentType, parentId)
                     }
@@ -156,6 +157,7 @@ suspend fun Backend.checkRootWritePermission(
 
         ObjectType.TITLE -> Result.failure(ForbiddenException())
         ObjectType.File -> Result.failure(ForbiddenException())
+        ObjectType.PANEL_ACCOUNT -> Result.failure(ForbiddenException())
     }
 }
 
@@ -173,7 +175,7 @@ suspend fun Backend.checkRootAdminPermission(
         }
 
         ObjectType.ROOM -> {
-            combinedDatabase.roomDatabase.getRawRoom(ObjectFetch.IdFetch(parentId), true, uid)
+            combinedDatabase.roomDatabase.getRawRoom(IdFetch(parentId), true, uid)
                 .mapResultIfNotNull {
                     if (it.room.creator == uid) {
                         Result.success(
@@ -189,7 +191,7 @@ suspend fun Backend.checkRootAdminPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            combinedDatabase.communityDatabase.getRawCommunity(ObjectFetch.IdFetch(parentId))
+            combinedDatabase.communityDatabase.getRawCommunity(IdFetch(parentId))
                 .mapResultIfNotNull {
                     if (it.community.owner == uid) {
                         Result.success(
@@ -206,7 +208,7 @@ suspend fun Backend.checkRootAdminPermission(
 
         ObjectType.USER -> {
             if (parentId == uid) {
-                combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(parentId))
+                combinedDatabase.userDatabase.getRawUser(IdFetch(parentId))
                     .mapIfNotNull {
                         RootAdminPermission(parentType, parentId)
                     }
@@ -217,6 +219,7 @@ suspend fun Backend.checkRootAdminPermission(
 
         ObjectType.TITLE -> Result.success(RootAdminPermission(parentType, parentId))
         ObjectType.File -> Result.failure(ForbiddenException())
+        ObjectType.PANEL_ACCOUNT -> Result.failure(ForbiddenException())
     }
 }
 

@@ -11,6 +11,7 @@ import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.types.Community
+import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
@@ -100,6 +101,7 @@ class AddPreset : Subcommand("add", "add entry") {
                     "room" -> connected.addRooms(presetValue, parentDir)
                     "file" -> connected.addFiles(presetValue, parentDir)
                     "title" -> connected.addTitles(presetValue)
+                    "panelAccount" -> connected.addPanels(presetValue)
                     else -> {
                         println("unrecognized type $type")
                         exitProcess(2)
@@ -113,6 +115,16 @@ class AddPreset : Subcommand("add", "add entry") {
                     "exception when add"
                 }
             }
+        }
+    }
+
+    private suspend fun Backend.addPanels(presetValue: PresetValue) {
+        val accounts = presetValue.panelAccountData ?: return
+        accounts.forEach {
+            val id = SnowflakeFactory.nextId()
+            combinedDatabase.panelAccountDatabase.addPanelAccount(
+                PanelAccount(id, it.name)
+            ).getOrThrow()
         }
     }
 
