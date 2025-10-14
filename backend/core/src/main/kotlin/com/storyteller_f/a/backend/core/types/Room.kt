@@ -23,7 +23,7 @@ data class RawRoom(
     val memberCount: Long
 )
 
-fun Room.toRoomInfo(memberCount: Long = 0, joinedTime: LocalDateTime? = null, topicId: Long? = null) = RoomInfo(
+fun Room.toRoomInfo(memberCount: Long = 0, joinedTime: LocalDateTime? = null, topicId: PrimaryKey? = null) = RoomInfo(
     id,
     createdTime,
     name,

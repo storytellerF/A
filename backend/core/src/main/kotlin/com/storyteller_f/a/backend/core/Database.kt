@@ -5,6 +5,7 @@ import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.MemberJoin
+import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.RawChildAccount
 import com.storyteller_f.a.backend.core.types.RawCommunity
@@ -65,6 +66,7 @@ interface CombinedDatabase {
     val fileDatabase: FileDatabase
     val containerDatabase: ContainerDatabase
     val cliDatabase: CliDatabase
+    val panelAccountDatabase: PanelAccountDatabase
 
     suspend fun init()
     suspend fun clean()
@@ -361,6 +363,11 @@ interface CliDatabase {
         userMap: Map<String, User>,
         objectType: ObjectType
     )
+}
+
+interface PanelAccountDatabase {
+    suspend fun getPanelAccount(id: PrimaryKey): Result<PanelAccount?>
+    suspend fun addPanelAccount(panelAccount: PanelAccount): Result<Unit>
 }
 
 const val PUBLIC_KEY_LENGTH = 512
