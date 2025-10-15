@@ -142,7 +142,7 @@ fun Application.module() {
     }
     startNewMessageTask(backend)
     configurePlugin(reader, backend)
-    configureAuth(reader, backend)
+    configureAuth(backend)
     configureRoute(reader, backend)
 }
 

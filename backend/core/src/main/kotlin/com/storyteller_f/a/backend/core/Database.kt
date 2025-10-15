@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.RawChildAccount
 import com.storyteller_f.a.backend.core.types.RawCommunity
+import com.storyteller_f.a.backend.core.types.RawPanelAccount
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.ReactionRecord
@@ -109,6 +110,7 @@ interface UserDatabase {
         privateKey: String,
         user: User
     ): Result<Unit>
+    suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch) : Result<PaginationResult<RawUser>>
 }
 
 interface TopicDatabase {
@@ -138,6 +140,7 @@ interface TopicDatabase {
     ): Result<List<Pair<Long, Long>>>
 
     suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
+    //TODO 改为私有，并且返回RawTopic
     suspend fun processTopicToTopicInfo(
         uid: PrimaryKey?,
         topics: List<Topic>
@@ -368,6 +371,11 @@ interface CliDatabase {
 interface PanelAccountDatabase {
     suspend fun getPanelAccount(id: PrimaryKey): Result<PanelAccount?>
     suspend fun addPanelAccount(panelAccount: PanelAccount): Result<Unit>
+    suspend fun getUserAuthDataById(id: PrimaryKey): Result<Pair<String, Long>?>
+    suspend fun getUserAuthDataByAddress(address: String): Result<Pair<String, Long>?>
+    suspend fun getRawUserAndPublicKeyByAddress(ad: String): Result<Pair<RawPanelAccount, String>?>
+    suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
+
 }
 
 const val PUBLIC_KEY_LENGTH = 512

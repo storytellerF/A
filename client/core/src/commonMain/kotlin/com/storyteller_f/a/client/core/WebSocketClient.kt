@@ -17,7 +17,7 @@ interface WebSocketClient {
 
 @OptIn(DelicateCoroutinesApi::class)
 class WebSocketClientImpl(
-    val sessionModel: SessionModel,
+    val sessionModel: UserSessionModel,
     val buildConnection: suspend (UserInfo, String) -> DefaultClientWebSocketSession,
     val onMessage: suspend (RoomFrame, DefaultClientWebSocketSession) -> Unit,
 ) : WebSocketClient {

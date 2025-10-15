@@ -27,7 +27,7 @@ import io.ktor.server.routing.*
 fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.search(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
-            pagination(IdentifiablePagingGenerator) { f ->
+            it.pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchRoomPaginationResult(
                     uid,
                     f,
@@ -39,7 +39,7 @@ fun Route.bindRoomRoute(backend: Backend) {
 
     CustomApi.Rooms.Id.Members.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
-            pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
                 searchRoomMembers(backend, p, uid, q, f)
             }
         }
@@ -58,7 +58,7 @@ fun Route.bindRoomRoute(backend: Backend) {
 
     CustomApi.Rooms.Id.Topics.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
-            pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopLevelTopicsInObject(
                     p.id,
                     ObjectType.ROOM,

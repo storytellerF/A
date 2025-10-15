@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.common
+package com.storyteller_f.a.app.core.common
 
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
@@ -135,7 +135,7 @@ class CustomRemoteMediator<Datum : Any>(
 }
 
 class IntermediatePagingSource<Key : Any, T : Any>(
-    val sectionPagingSource: PagingSource<Key, T>,
+    val pagingSource: PagingSource<Key, T>,
     val clazz: KClass<Key>
 ) : PagingSource<String, T>() {
 
@@ -167,7 +167,7 @@ class IntermediatePagingSource<Key : Any, T : Any>(
                 params.placeholdersEnabled
             )
         }
-        val load = sectionPagingSource.load(loadParams)
+        val load = pagingSource.load(loadParams)
         return when (load) {
             is LoadResult.Error<Key, T> -> LoadResult.Error(load.throwable)
             is LoadResult.Invalid<Key, T> -> LoadResult.Invalid()

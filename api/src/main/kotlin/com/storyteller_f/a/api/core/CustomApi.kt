@@ -10,12 +10,23 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.serialization.Serializable
 
+const val DEFAULT_PAGE_SIZE = 10
+
 interface PageableQuery {
-    val pagination: PaginationQuery
+    val size: Int
+    val nextPageToken: String?
+    val prePageToken: String?
 }
 
 @Serializable
-class PaginationQuery(val nextPageToken: String? = null, val prePageToken: String? = null, val size: Int)
+class PaginationQuery(
+    override val nextPageToken: String? = null,
+    override val prePageToken: String? = null,
+    override val size: Int = DEFAULT_PAGE_SIZE
+) : PageableQuery
+
+@Serializable
+class CommonPath(val id: PrimaryKey)
 
 object CustomApi {
     object Topics {
@@ -31,32 +42,24 @@ object CustomApi {
             val word: List<String>? = null,
             val parentId: PrimaryKey? = null,
             val parentType: ObjectType? = null,
-            val nextPageToken: String? = null,
-            val size: Int = 10,
+            override val nextPageToken: String? = null,
+            override val prePageToken: String? = null,
+            override val size: Int = DEFAULT_PAGE_SIZE,
             val fillHasCommented: Boolean? = null
-        ) : PageableQuery {
-
-            override val pagination: PaginationQuery
-                get() = PaginationQuery(nextPageToken, size = size)
-        }
+        ) : PageableQuery
 
         val search = safeApiWithQuery<ServerResponse<TopicInfo>, TopicSearchQuery>("topics/search")
 
         @Serializable
         class RecommendQuery(
             val fillHasCommented: Boolean? = null,
-            val nextPageToken: String? = null,
-            val size: Int = 10,
-        ) : PageableQuery {
-            override val pagination: PaginationQuery
-                get() = PaginationQuery(nextPageToken, size = size)
-            constructor(
-                fillHasCommented: Boolean?,
-                paginationQuery: PaginationQuery
-            ) : this(fillHasCommented, paginationQuery.nextPageToken, paginationQuery.size)
-        }
+            override val nextPageToken: String? = null,
+            override val size: Int = DEFAULT_PAGE_SIZE,
+            override val prePageToken: String? = null,
+        ) : PageableQuery
 
-        val recommend = safeApiWithQuery<ServerResponse<TopicInfo>, RecommendQuery>("topics/recommend")
+        val recommend =
+            safeApiWithQuery<ServerResponse<TopicInfo>, RecommendQuery>("topics/recommend")
 
         object Id {
             @Serializable
@@ -73,18 +76,17 @@ object CustomApi {
                 @Serializable
                 class ReactionQuery(
                     val fillHasReacted: Boolean? = null,
-                    val nextPageToken: String? = null,
-                    val size: Int = 10,
-                ) : PageableQuery {
-                    override val pagination: PaginationQuery
-                        get() = PaginationQuery(nextPageToken, size = size)
-                }
+                    override val nextPageToken: String? = null,
+                    override val size: Int = DEFAULT_PAGE_SIZE,
+                    override val prePageToken: String? = null,
+                ) : PageableQuery
 
                 val get =
                     safeApiWithQueryAndPath<ServerResponse<ReactionInfo>, ReactionQuery, CommonPath>(
                         "topics/{id}/reactions"
                     )
-                val add = mutationApiWithPath<ReactionInfo, NewReaction, CommonPath>("topics/{id}/reactions")
+                val add =
+                    mutationApiWithPath<ReactionInfo, NewReaction, CommonPath>("topics/{id}/reactions")
                 val delete =
                     mutationApiWithPath<ReactionInfo, DeleteReaction, CommonPath>(
                         "topics/{id}/reactions",
@@ -98,7 +100,8 @@ object CustomApi {
                     "topics/{id}/pin",
                     methodType = MutationMethodType.DELETE
                 )
-            val createSnapshot = mutationApiWithPath<FileInfo, Unit, CommonPath>("topics/{id}/create-snapshot")
+            val createSnapshot =
+                mutationApiWithPath<FileInfo, Unit, CommonPath>("topics/{id}/create-snapshot")
         }
 
         val add = mutationApi<TopicInfo, NewTopic>("topics")
@@ -115,14 +118,13 @@ object CustomApi {
             val word: String? = null,
             val target: PrimaryKey? = null,
             val hasPoster: PosterSearch? = null,
-            val nextPageToken: String? = null,
-            val size: Int = 10,
-        ) : PageableQuery {
-            override val pagination: PaginationQuery
-                get() = PaginationQuery(nextPageToken, size = size)
-        }
+            override val nextPageToken: String? = null,
+            override val size: Int = DEFAULT_PAGE_SIZE,
+            override val prePageToken: String? = null,
+        ) : PageableQuery
 
-        val search = safeApiWithQuery<ServerResponse<CommunityInfo>, CommunitySearchQuery>("communities/search")
+        val search =
+            safeApiWithQuery<ServerResponse<CommunityInfo>, CommunitySearchQuery>("communities/search")
 
         object Aid {
             @Serializable
@@ -135,21 +137,24 @@ object CustomApi {
             @Serializable
             class CommunityIdQuery(val fillJoinInfo: Boolean = false)
 
-            val get = safeApiWithQueryAndPath<CommunityInfo, CommunityIdQuery, CommonPath>("communities/{id}")
+            val get =
+                safeApiWithQueryAndPath<CommunityInfo, CommunityIdQuery, CommonPath>("communities/{id}")
 
             object Members {
                 @Serializable
                 class CommunityMemberQuery(
                     val word: String? = null,
-                    val nextPageToken: String? = null,
-                    val size: Int = 10,
-                )
+                    override val nextPageToken: String? = null,
+                    override val size: Int = DEFAULT_PAGE_SIZE,
+                    override val prePageToken: String? = null,
+                ) : PageableQuery
 
                 val get =
                     safeApiWithQueryAndPath<ServerResponse<UserInfo>, CommunityMemberQuery, CommonPath>(
                         "communities/{id}/members"
                     )
-                val join = mutationApiWithPath<CommunityInfo, Unit, CommonPath>("communities/{id}/members")
+                val join =
+                    mutationApiWithPath<CommunityInfo, Unit, CommonPath>("communities/{id}/members")
                 val leave =
                     mutationApiWithPath<CommunityInfo, Unit, CommonPath>(
                         "communities/{id}/members",
@@ -164,7 +169,8 @@ object CustomApi {
                     )
             }
 
-            val update = mutationApiWithPath<CommunityInfo, UpdateCommunityBody, CommonPath>("communities/{id}")
+            val update =
+                mutationApiWithPath<CommunityInfo, UpdateCommunityBody, CommonPath>("communities/{id}")
         }
 
         val add = mutationApi<CommunityInfo, NewCommunity>("communities")
@@ -176,12 +182,10 @@ object CustomApi {
             val joinStatus: JoinStatusSearch? = null,
             val word: String? = null,
             val community: PrimaryKey? = null,
-            val nextPageToken: String? = null,
-            val size: Int = 10,
-        ) : PageableQuery {
-            override val pagination: PaginationQuery
-                get() = PaginationQuery(nextPageToken, size = size)
-        }
+            override val nextPageToken: String? = null,
+            override val size: Int = DEFAULT_PAGE_SIZE,
+            override val prePageToken: String? = null,
+        ) : PageableQuery
 
         val search = safeApiWithQuery<ServerResponse<RoomInfo>, RoomSearchQuery>("rooms/search")
 
@@ -193,11 +197,13 @@ object CustomApi {
 
             object Members {
                 @Serializable
-                class MemberQuery(val word: String? = null, val nextPageToken: String? = null, val size: Int = 10) :
-                    PageableQuery {
-                    override val pagination: PaginationQuery
-                        get() = PaginationQuery(nextPageToken, size = size)
-                }
+                class MemberQuery(
+                    val word: String? = null,
+                    override val nextPageToken: String? = null,
+                    override val size: Int = DEFAULT_PAGE_SIZE,
+                    override val prePageToken: String? = null
+                ) :
+                    PageableQuery
 
                 val get =
                     safeApiWithQueryAndPath<ServerResponse<UserInfo>, MemberQuery, CommonPath>("rooms/{id}/members")
@@ -222,9 +228,8 @@ object CustomApi {
                     safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("rooms/{id}/topics")
             }
 
-            val update = mutationApiWithPath<RoomInfo, UpdateRoomBody, CommonPath>("rooms/{id}/update")
-            val startCall = mutationApiWithPath<RoomInfo, Unit, CommonPath>("rooms/{id}/start-call")
-            val endCall = mutationApiWithPath<RoomInfo, Unit, CommonPath>("rooms/{id}/end-call")
+            val update =
+                mutationApiWithPath<RoomInfo, UpdateRoomBody, CommonPath>("rooms/{id}/update")
         }
 
         object Aid {
@@ -260,12 +265,10 @@ object CustomApi {
                     val type: TitleType? = null,
                     val scopeId: PrimaryKey? = null,
                     val status: TitleStatus? = null,
-                    val nextPageToken: String? = null,
-                    val size: Int = 10,
-                ) : PageableQuery {
-                    override val pagination: PaginationQuery
-                        get() = PaginationQuery(nextPageToken, size = size)
-                }
+                    override val nextPageToken: String? = null,
+                    override val size: Int = DEFAULT_PAGE_SIZE,
+                    override val prePageToken: String? = null,
+                ) : PageableQuery
 
                 val get =
                     safeApiWithQueryAndPath<ServerResponse<TitleInfo>, TitleQuery, CommonPath>("users/{id}/titles")
@@ -275,12 +278,10 @@ object CustomApi {
         @Serializable
         class UserSearchQuery(
             val word: String? = null,
-            val nextPageToken: String? = null,
-            val size: Int = 10,
-        ) : PageableQuery {
-            override val pagination: PaginationQuery
-                get() = PaginationQuery(nextPageToken, size = size)
-        }
+            override val nextPageToken: String? = null,
+            override val size: Int = DEFAULT_PAGE_SIZE,
+            override val prePageToken: String? = null,
+        ) : PageableQuery
 
         val search = safeApiWithQuery<ServerResponse<UserInfo>, UserSearchQuery>("users/search")
 
@@ -300,25 +301,23 @@ object CustomApi {
         class FileQuery(
             val objectId: PrimaryKey? = null,
             val objectType: ObjectType? = null,
-            val nextPageToken: String? = null,
-            val size: Int = 10,
-        ) : PageableQuery {
-            override val pagination: PaginationQuery
-                get() = PaginationQuery(nextPageToken, size = size)
-        }
+            override val nextPageToken: String? = null,
+            override val size: Int = DEFAULT_PAGE_SIZE,
+            override val prePageToken: String? = null,
+        ) : PageableQuery
 
         val get = safeApiWithQuery<ServerResponse<FileInfo>, FileQuery>("medias")
 
         object Id {
-            val copy = mutationApiWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("medias/{id}/copy")
+            val copy =
+                mutationApiWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("medias/{id}/copy")
             val get = safeApiWithPath<FileInfo, CommonPath>("medias/{id}")
-            val delete =
-                mutationApiWithPath<Boolean, Unit, CommonPath>("medias/{id}", methodType = MutationMethodType.DELETE)
             val extractAlbum =
                 mutationApiWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("medias/{id}/extract-album")
         }
 
-        val upload = mutationApiWithQuery<ServerResponse<FileInfo>, Unit, ObjectTuple>("medias/upload")
+        val upload =
+            mutationApiWithQuery<ServerResponse<FileInfo>, Unit, ObjectTuple>("medias/upload")
 
         @Serializable
         class MediaSearchQuery(
@@ -335,45 +334,46 @@ object CustomApi {
     }
 
     object Accounts {
-        val signIn = mutationApi<UserInfo, SignInPack>("/accounts/sign_in")
-        val signOut = mutationApi<Unit, Unit>("/accounts/sign_out")
-        val signUp = mutationApi<UserInfo, SignUpPack>("/accounts/sign_up")
-        val getData = safeApi<String>("/accounts/get_data")
+        val signIn = mutationApi<UserInfo, SignInPack>("/accounts/sign-in")
+        val signOut = mutationApi<Unit, Unit>("/accounts/sign-out")
+        val signUp = mutationApi<UserInfo, SignUpPack>("/accounts/sign-up")
+        val getData = safeApi<String>("/accounts/get-data")
 
         object ChildAccounts {
             @Serializable
             class ChildAccountQuery(
-                val nextPageToken: String? = null,
-                val size: Int = 10,
-            ) : PageableQuery {
-                override val pagination: PaginationQuery
-                    get() = PaginationQuery(nextPageToken, size = size)
-            }
+                override val nextPageToken: String? = null,
+                override val size: Int = DEFAULT_PAGE_SIZE,
+                override val prePageToken: String? = null,
+            ) : PageableQuery
 
             val get =
                 safeApiWithQuery<ServerResponse<ChildAccountInfo>, ChildAccountQuery>(
                     "/accounts/child-accounts"
                 )
             val add = mutationApi<ChildAccountInfo, Unit>("/accounts/child-accounts")
-            val delete = mutationApi<Unit, Unit>("/accounts/child-accounts")
         }
     }
 }
 
-@Serializable
-class CommonPath(val id: PrimaryKey)
+object AdminApi {
+    object Users {
+        val get = safeApiWithQuery<ServerResponse<UserInfo>, PaginationQuery>("/admin/users")
+    }
+    val signIn = mutationApi<PanelAccountInfo, SignInPack>("/admin/sign-in")
+    val signOut = mutationApi<Unit, Unit>("/admin/sign-out")
+    val signUp = mutationApi<PanelAccountInfo, SignUpPack>("/admin/sign-up")
+    val getData = safeApi<String>("/admin/get-data")
+}
 
 @Serializable
 class TopicQuery(
     val pinType: TopicPinSearch? = null,
     val fillHasCommented: Boolean? = null,
-    val prePageToken: String? = null,
-    val nextPageToken: String? = null,
-    val size: Int = 10,
+    override val prePageToken: String? = null,
+    override val nextPageToken: String? = null,
+    override val size: Int = DEFAULT_PAGE_SIZE,
 ) : PageableQuery {
-    override val pagination: PaginationQuery
-        get() = PaginationQuery(nextPageToken, prePageToken, size)
-
     constructor(
         pinType: TopicPinSearch? = null,
         fillHasCommented: Boolean? = null,

@@ -85,7 +85,7 @@ class RoomTest {
         }
     }
 
-    private suspend fun SessionManager.testSearchRoom(
+    private suspend fun UserSessionManager.testSearchRoom(
         expected: Int,
         size: Int,
         nextRoomId: String?,

@@ -1,8 +1,12 @@
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.shared.SignInPack
+import com.storyteller_f.shared.SignUpPack
 import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
+import com.storyteller_f.shared.model.PanelAccountInfo
+import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
@@ -11,7 +15,6 @@ import com.storyteller_f.shared.signature
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
-import com.storyteller_f.shared.utils.merge
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.websocket.*
@@ -19,80 +22,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.time.ExperimentalTime
 
-interface SessionModel {
+interface SessionModel<U> {
     val uid: PrimaryKey?
     val dataAndSignature: Pair<String, String?>?
     val currentUserPass: UserPass?
     val state: StateFlow<ClientSessionState>
-    val userHandler: FixedLoadingHandler<UserInfo?>
+    val userHandler: FixedLoadingHandler<U?>
     fun updateSignature(data: String, signature: String?)
     fun generateData(): String
-    suspend fun clear()
+    fun clear()
     fun updateState(newState: ClientSessionState)
-    suspend fun updateUser(new: UserInfo)
+    fun updateUser(new: U)
 }
 
-interface SessionManager {
-    val client: HttpClient
-    val webSocketClient: WebSocketClient
-    val model: SessionModel
-    val isAlreadySignUp: StateFlow<Boolean>
-    val address: StateFlow<String?>
-
-    val currentIsAlreadySignUp: Boolean get() = isAlreadySignUp.value
-
-    suspend fun login() {
-        val userPass = model.currentUserPass ?: return
-        val userHandler = model.userHandler
-        userHandler.request({
-            userHandler.done(it)
-        }) {
-            runCatching {
-                val (data, address) = merge({
-                    getData()
-                }, {
-                    userPass.address()
-                }).getOrThrow()
-                val signature = userPass.signature(finalData(data)).getOrThrow()
-                val userInfo = signIn(address, signature).getOrThrow()
-                model.updateSignature(data, signature)
-                userInfo
-            }
-        }
-    }
-}
-
-class UserSessionManager(
-    override val client: HttpClient,
-    override val webSocketClient: WebSocketClientImpl,
-    override val model: SessionModel,
-) : SessionManager {
-    override val isAlreadySignUp = MutableStateFlow(false)
-    override val address = MutableStateFlow<String?>(null)
-}
-
-fun createUserSessionManager(
-    webSocketUrl: String,
-    createClient: (UserSessionModel, CookiesStorage) -> HttpClient,
-    onReceiveFrame: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
-): UserSessionManager {
-    val cookieManager = AcceptAllCookiesStorage()
-    val model = UserSessionModel()
-    val client = createClient(model, cookieManager)
-    val webSocketClient = WebSocketClientImpl(
-        model,
-        { userInfo, sig ->
-            client.webSocketSession(webSocketUrl) {
-                addRequestHeaders(userInfo, sig)
-            }
-        },
-    ) { frame, session ->
-        onReceiveFrame(frame, model, session)
-    }
-    return UserSessionManager(client, webSocketClient, model)
-}
-
-class UserSessionModel : SessionModel {
+class SimpleSessionModel<U : PrimaryKeyIdentifiable> : SessionModel<U> {
     override val state = MutableStateFlow<ClientSessionState>(ClientSessionState.None)
 
     // 用于header 和server 协商被签名的数据
@@ -104,7 +47,7 @@ class UserSessionModel : SessionModel {
     override var dataAndSignature: Pair<String, String?>? = null
     override val currentUserPass: UserPass?
         get() = (state.value as? ClientSessionState.Success)?.session
-    override val userHandler = FixedLoadingHandler<UserInfo?>()
+    override val userHandler = FixedLoadingHandler<U?>()
 
     @OptIn(ExperimentalTime::class)
     override fun generateData(): String {
@@ -122,7 +65,7 @@ class UserSessionModel : SessionModel {
         dataAndSignature = data to signature
     }
 
-    override suspend fun updateUser(new: UserInfo) {
+    override fun updateUser(new: U) {
         userHandler.done(new)
     }
 
@@ -130,27 +73,154 @@ class UserSessionModel : SessionModel {
         state.value = newState
     }
 
-    override suspend fun clear() {
+    override fun clear() {
         state.value = ClientSessionState.None
         userHandler.done(null)
         dataAndSignature = null
     }
 }
 
-suspend fun SessionManager.signUpOrInFromPrivateKey(
+class UserSessionModel(val simpleSessionModel: SimpleSessionModel<UserInfo> = SimpleSessionModel()) :
+    SessionModel<UserInfo> by simpleSessionModel
+
+class PanelSessionModel(val simpleSessionModel: SimpleSessionModel<PanelAccountInfo> = SimpleSessionModel()) :
+    SessionModel<PanelAccountInfo> by simpleSessionModel
+
+interface SessionManager<U> {
+    val client: HttpClient
+    val model: SessionModel<U>
+    val isAlreadySignUp: StateFlow<Boolean>
+    val address: StateFlow<String?>
+
+    val currentIsAlreadySignUp: Boolean get() = isAlreadySignUp.value
+
+    suspend fun updateAddress(clientSessionState: ClientSessionState)
+}
+
+interface UserSessionManager : SessionManager<UserInfo> {
+    val webSocketClient: WebSocketClientImpl
+}
+
+class SimpleUserSessionManager(
+    override val client: HttpClient,
+    override val webSocketClient: WebSocketClientImpl,
+    override val model: SessionModel<UserInfo>,
+) : UserSessionManager {
+    override val isAlreadySignUp = MutableStateFlow(false)
+    override val address = MutableStateFlow<String?>(null)
+    override suspend fun updateAddress(clientSessionState: ClientSessionState) {
+        address.value =
+            (clientSessionState as? ClientSessionState.Success)?.session?.address()?.getOrNull()
+        isAlreadySignUp.value = clientSessionState is ClientSessionState.Success
+    }
+}
+
+interface PanelSessionManager : SessionManager<PanelAccountInfo>
+
+
+class SimplePanelSessionManager(
+    override val client: HttpClient,
+    override val model: SessionModel<PanelAccountInfo>
+) : PanelSessionManager {
+    override val isAlreadySignUp = MutableStateFlow(false)
+    override val address = MutableStateFlow<String?>(null)
+
+    override suspend fun updateAddress(clientSessionState: ClientSessionState) {
+        address.value =
+            (clientSessionState as? ClientSessionState.Success)?.session?.address()?.getOrNull()
+        isAlreadySignUp.value = clientSessionState is ClientSessionState.Success
+    }
+}
+
+fun createUserSessionManager(
+    webSocketUrl: String,
+    createClient: (UserSessionModel, CookiesStorage) -> HttpClient,
+    onReceiveFrame: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
+): SimpleUserSessionManager {
+    val cookieManager = AcceptAllCookiesStorage()
+    val model = UserSessionModel()
+    val client = createClient(model, cookieManager)
+    val webSocketClient = WebSocketClientImpl(
+        model,
+        { userInfo, sig ->
+            client.webSocketSession(webSocketUrl) {
+                addRequestHeadersFromInfo(userInfo, sig)
+            }
+        },
+    ) { frame, session ->
+        onReceiveFrame(frame, model, session)
+    }
+    return SimpleUserSessionManager(client, webSocketClient, model)
+}
+
+fun createPanelSessionManager(
+    createClient: (PanelSessionModel, CookiesStorage) -> HttpClient,
+): SimplePanelSessionManager {
+    val cookieManager = AcceptAllCookiesStorage()
+    val model = PanelSessionModel()
+    val client = createClient(model, cookieManager)
+    return SimplePanelSessionManager(client, model)
+}
+
+suspend fun UserSessionManager.login() {
+    val userPass = model.currentUserPass ?: return
+    val userHandler = model.userHandler
+    userHandler.request({
+        userHandler.done(it)
+    }) {
+        runCatching {
+            val data = getData().getOrThrow()
+            val address = userPass.address().getOrThrow()
+            val signature = userPass.signature(finalData(data)).getOrThrow()
+            val userInfo = signIn(SignInPack(address, signature)).getOrThrow()
+            model.updateSignature(data, signature)
+            userInfo
+        }
+    }
+}
+
+suspend fun UserSessionManager.getUserInfo(
     pemPrivateKey: String,
     isSignUp: Boolean,
     buildUserPass: suspend (RawUserPassInfo) -> UserPass
 ): UserInfo {
+    return signUpOrInFromPrivateKey(pemPrivateKey, {
+        getData()
+    }, { publicKey, sig, ad ->
+        when {
+            isSignUp -> signUp(SignUpPack(publicKey, sig))
+            else -> signIn(SignInPack(ad, sig))
+        }
+    }, buildUserPass)
+}
+
+suspend fun PanelSessionManager.getPanelAccountInfo(
+    pemPrivateKey: String,
+    isSignUp: Boolean,
+    buildUserPass: suspend (RawUserPassInfo) -> UserPass
+): PanelAccountInfo {
+    return signUpOrInFromPrivateKey(pemPrivateKey, {
+        getData()
+    }, { publicKey, sig, ad ->
+        when {
+            isSignUp -> signUp(SignUpPack(publicKey, sig))
+            else -> signIn(SignInPack(ad, sig))
+        }
+    }, buildUserPass)
+}
+
+suspend fun <U> SessionManager<U>.signUpOrInFromPrivateKey(
+    pemPrivateKey: String,
+    getData: suspend () -> Result<String>,
+    getUserInfo: suspend (String, String, String) -> Result<U>,
+    buildUserPass: suspend (RawUserPassInfo) -> UserPass
+): U {
     val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
     val data = getData().getOrThrow()
     val f = finalData(data)
     val sig = signature(pemPrivateKey, f).getOrThrow()
     val ad = calcAddress(publicKey).getOrThrow()
-    val u = when {
-        isSignUp -> signUp(publicKey, sig)
-        else -> signIn(ad, sig)
-    }.getOrThrow()
+    val u = getUserInfo(publicKey, sig, ad).getOrThrow()
     model.updateUser(u)
     model.updateSignature(data, sig)
     model.updateState(
@@ -167,11 +237,10 @@ suspend fun SessionManager.signUpOrInFromPrivateKey(
     return u
 }
 
-
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun processEncryptedTopic(
     topicInfos: List<TopicInfo>,
-    manager: SessionManager
+    manager: UserSessionManager
 ): List<TopicInfo> {
     val model = manager.model
     val uid = model.uid
@@ -190,7 +259,8 @@ suspend fun processEncryptedTopic(
                     s.hexToByteArray()
                 ).fold(onSuccess = {
                     val mediaInfos = extractMarkdownMediaLink(it).mapNotNull { mediaName ->
-                        manager.getMediaByName(mediaName, topicInfo.rootId, topicInfo.rootType).getOrNull()
+                        manager.getMediaByName(mediaName, topicInfo.rootId, topicInfo.rootType)
+                            .getOrNull()
                     }
                     TopicContent.Plain(it, mediaInfos)
                 }, onFailure = {

@@ -37,7 +37,7 @@ fun Route.bindTopicRoute(backend: Backend) {
 
     CustomApi.Topics.recommend(RoutingContext::handleResult) {
         usePrincipalOrNull { uid ->
-            pagination(IdentifiablePagingGenerator) { f ->
+            it.pagination(IdentifiablePagingGenerator) { f ->
                 if (uid == null && it.fillHasCommented == true) {
                     Result.failure(UnauthorizedException())
                 } else {

@@ -3,6 +3,7 @@ package com.storyteller_f.a.cloud.server
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UploadData
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.addReadLog
 import com.storyteller_f.a.client.core.createCommunity
@@ -348,7 +349,7 @@ class TopicTest {
         }
     }
 
-    private suspend fun SessionManager.createTopicInRoomAndWait(
+    private suspend fun UserSessionManager.createTopicInRoomAndWait(
         receivedFrame: MutableList<RoomFrame>,
         block: suspend DefaultClientWebSocketSession.() -> Unit
     ) {

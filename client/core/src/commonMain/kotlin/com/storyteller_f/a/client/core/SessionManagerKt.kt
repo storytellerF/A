@@ -21,8 +21,7 @@ fun UserSessionManager.startBackgroundTask(): List<Job> {
         }
     }, c.launch {
         model.state.collect {
-            address.value = (it as? ClientSessionState.Success)?.session?.address()?.getOrNull()
-            isAlreadySignUp.value = it is ClientSessionState.Success
+            updateAddress(it)
         }
     }, c.launch {
         webSocketClient.connectWebSocket()
@@ -30,7 +29,7 @@ fun UserSessionManager.startBackgroundTask(): List<Job> {
 }
 
 context(c: CoroutineScope)
-inline fun <R> UserSessionManager.startBackgroundTask(block: UserSessionManager.() -> R): R {
+inline fun <R> SimpleUserSessionManager.startBackgroundTask(block: SimpleUserSessionManager.() -> R): R {
     val jobs = startBackgroundTask()
     val result = block()
     jobs.forEach(Job::cancel)

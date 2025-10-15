@@ -29,10 +29,10 @@ import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.common.StateView
-import com.storyteller_f.a.app.compose_app.common.bottomAppending
-import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.*
+import com.storyteller_f.a.app.compose_app.compontents.StateView
+import com.storyteller_f.a.app.compose_app.compontents.bottomAppending
+import com.storyteller_f.a.app.compose_app.compontents.topPrepend
 import com.storyteller_f.a.app.compose_app.model.OnMediaUploaded
 import com.storyteller_f.a.app.compose_app.model.createMediaListViewModel
 import com.storyteller_f.a.app.compose_app.utils.Recorder

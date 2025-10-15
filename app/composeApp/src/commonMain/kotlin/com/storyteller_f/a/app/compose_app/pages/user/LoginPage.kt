@@ -55,7 +55,7 @@ import com.storyteller_f.a.app.compose_app.start_sign_in
 import com.storyteller_f.a.app.compose_app.start_sign_up
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.compose_app.utils.buildLoginUserSessionFactory
-import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
+import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
 import com.storyteller_f.shared.model.UserInfo
 import io.github.vinceglb.filekit.FileKit
@@ -329,7 +329,7 @@ suspend fun GlobalDialogController.signUpOrSignIn(
 ): Result<UserInfo> {
     return useResult {
         runCatching {
-            sessionManager.signUpOrInFromPrivateKey(privateKey, isSignUp) {
+            sessionManager.getUserInfo(privateKey, isSignUp) {
                 buildLoginUserSessionFactory(sessionManager.settings).addSession(it)
             }
         }

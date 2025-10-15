@@ -1,8 +1,16 @@
 package com.storyteller_f.a.app.compose_app.model
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.storyteller_f.a.app.compose_app.LocalDatabase
+import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.viewModel
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleStatus
@@ -12,6 +20,8 @@ import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.md5
+import com.storyteller_f.storage.ModelStorage
+import io.github.aakira.napier.Napier
 
 @Composable
 fun createSearchCommunitiesViewModel(
@@ -464,4 +474,25 @@ fun getAlternativeAccountsViewModel(): ChildAccountsViewModel = viewModel(
     listOf("alternative")
 ) { sessionManager, storageSource ->
     ChildAccountsViewModel(storageSource, sessionManager)
+}
+
+@Composable
+inline fun <reified VM : ViewModel> viewModel(
+    keys: List<Comparable<*>?>? = null,
+    crossinline factory: (UserSessionManager, ModelStorage) -> VM
+): VM {
+    val sessionManager = LocalSessionManager.current
+    val databaseSource = LocalDatabase.current
+    SideEffect {
+        Napier.i {
+            "viewModel ${VM::class.simpleName}$keys composable"
+        }
+    }
+    val address by sessionManager.address.collectAsState()
+    return viewModel(key = "$address:${keys?.joinToString()}") {
+        Napier.i {
+            "viewModel ${VM::class.simpleName}$keys build"
+        }
+        factory(sessionManager, databaseSource)
+    }
 }

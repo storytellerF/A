@@ -1,9 +1,22 @@
-package com.storyteller_f.a.app.compose_app.model
+package com.storyteller_f.a.app.core.common
 
 import androidx.paging.PagingSource
-import androidx.paging.PagingSource.LoadParams
-import androidx.paging.PagingSource.LoadResult
 import androidx.paging.PagingState
+
+interface CompatKeyConverter<F, T> {
+    fun from(f: F): T
+    fun to(t: T): F
+}
+
+object IntKeyConverter : CompatKeyConverter<Int, String> {
+    override fun from(f: Int): String {
+        return f.toString()
+    }
+
+    override fun to(t: String): Int {
+        return t.toInt()
+    }
+}
 
 class CompatPagingSource<OK : Any, TK : Any, T : Any>(
     val rawSource: PagingSource<OK, T>,

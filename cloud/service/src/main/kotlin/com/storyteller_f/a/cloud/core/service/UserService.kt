@@ -346,3 +346,10 @@ suspend fun Backend.processRawUserToUserInfo(
         }
     }
 }
+
+suspend fun Backend.getAllUsers(primaryKeyFetch: PrimaryKeyFetch) =
+    combinedDatabase.userDatabase.getAllUsers(primaryKeyFetch).mapResult { result ->
+        processRawUserToUserInfo(result.list).map {
+            PaginationResult(it, result.total)
+        }
+    }

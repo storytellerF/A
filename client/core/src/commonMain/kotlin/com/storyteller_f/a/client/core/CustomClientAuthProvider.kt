@@ -1,5 +1,6 @@
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.UserInfo
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.auth.*
@@ -18,15 +19,20 @@ class CustomClientAuthProvider(val config: CustomAuthConfig) : AuthProvider {
         fun addRequestHeaders(block: suspend (String, HttpRequestBuilder) -> Unit) {
             addRequestHeaders = block
         }
+
         fun updateDataIfNeed(block: (String) -> Unit) {
             updateDataIfNeed = block
         }
+
         fun refreshSignature(block: suspend (HttpResponse) -> Boolean) {
             refreshSignature = block
         }
     }
 
-    override suspend fun addRequestHeaders(request: HttpRequestBuilder, authHeader: HttpAuthHeader?) {
+    override suspend fun addRequestHeaders(
+        request: HttpRequestBuilder,
+        authHeader: HttpAuthHeader?
+    ) {
         if (authHeader is HttpAuthHeader.Single) {
             config.addRequestHeaders(authHeader.blob, request)
         }
@@ -58,10 +64,13 @@ class CustomClientAuthProvider(val config: CustomAuthConfig) : AuthProvider {
     }
 }
 
-suspend fun HttpRequestBuilder.addRequestHeaders(sessionManager: SessionModel) {
-    val passSession = sessionManager.currentUserPass
-    val session = sessionManager.dataAndSignature
-    val userInfo = sessionManager.userHandler.data.value
+suspend fun <U> HttpRequestBuilder.addRequestHeaders(
+    sessionModel: SessionModel<U>,
+    addRequestHeader: HttpRequestBuilder.(U, String) -> Unit
+) {
+    val passSession = sessionModel.currentUserPass
+    val session = sessionModel.dataAndSignature
+    val userInfo = sessionModel.userHandler.data.value
     Napier.i(tag = "ClientAuth") {
         "addRequestHeaders $session"
     }
@@ -73,15 +82,16 @@ suspend fun HttpRequestBuilder.addRequestHeaders(sessionManager: SessionModel) {
             }
             if (userInfo == null) {
                 val address = passSession.address().getOrThrow()
-                headers[HttpHeaders.Authorization] = """Custom ad="$address", sig="$localSignature""""
+                headers[HttpHeaders.Authorization] =
+                    """Custom ad="$address", sig="$localSignature""""
             } else {
-                addRequestHeaders(userInfo, localSignature)
+                addRequestHeader(userInfo, localSignature)
             }
         }
     }
 }
 
-fun HttpRequestBuilder.addRequestHeaders(userInfo: UserInfo, sig: String) {
+fun HttpRequestBuilder.addRequestHeadersFromInfo(userInfo: UserInfo, sig: String) {
     if (userInfo.aid.isNullOrBlank()) {
         val userId = userInfo.id
         headers[HttpHeaders.Authorization] =
@@ -92,6 +102,16 @@ fun HttpRequestBuilder.addRequestHeaders(userInfo: UserInfo, sig: String) {
     }
 }
 
+fun HttpRequestBuilder.addRequestHeadersFromInfo(userInfo: PanelAccountInfo, sig: String) {
+    val userId = userInfo.id
+    headers[HttpHeaders.Authorization] =
+        """Custom id="$userId", sig="$sig""""
+}
+
 fun AuthConfig.custom(block: CustomClientAuthProvider.CustomAuthConfig.() -> Unit) {
-    providers.add(CustomClientAuthProvider(CustomClientAuthProvider.CustomAuthConfig().apply(block)))
+    providers.add(
+        CustomClientAuthProvider(
+            CustomClientAuthProvider.CustomAuthConfig().apply(block)
+        )
+    )
 }

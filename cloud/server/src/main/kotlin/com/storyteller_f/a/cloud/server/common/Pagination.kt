@@ -93,13 +93,12 @@ suspend fun <T, F : Fetch> PageableQuery.pagination(
     block: suspend (F) -> Result<PaginationResult<T>?>
 ): Result<ServerResponse<T>?> {
     return runCatching {
-        val paginationQuery = pagination
-        val size = paginationQuery.size
+        val size = size
         require(size > 0) {
             "Invalid query size"
         }
-        val nextPageToken = paginationQuery.nextPageToken
-        val prePageToken = paginationQuery.prePageToken
+        val nextPageToken = nextPageToken
+        val prePageToken = prePageToken
 
         require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) {
             "Invalid query"

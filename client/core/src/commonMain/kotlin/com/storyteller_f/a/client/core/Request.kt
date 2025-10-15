@@ -25,7 +25,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
 
-suspend fun <R> SessionManager.serviceCatching(block: suspend HttpClient.() -> R): Result<R> {
+suspend fun <R, U> SessionManager<U>.serviceCatching(block: suspend HttpClient.() -> R): Result<R> {
     val point = Exception()
     return try {
         val value = client.block()
@@ -39,15 +39,15 @@ suspend fun <R> SessionManager.serviceCatching(block: suspend HttpClient.() -> R
     }
 }
 
-suspend fun SessionManager.getRoomInfo(id: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.getRoomInfo(id: PrimaryKey) = serviceCatching {
     CustomApi.Rooms.Id.get(CustomApi.Rooms.Id.RoomIdQuery(currentIsAlreadySignUp), CommonPath(id))
 }
 
-suspend fun SessionManager.getRoomInfoByAid(aid: String) = serviceCatching {
+suspend fun UserSessionManager.getRoomInfoByAid(aid: String) = serviceCatching {
     CustomApi.Rooms.Aid.get(CustomApi.Rooms.Aid.RoomAidQuery(aid, currentIsAlreadySignUp))
 }
 
-suspend fun SessionManager.getRoomMembersPublicKeys(
+suspend fun UserSessionManager.getRoomMembersPublicKeys(
     id: PrimaryKey,
     paginationQuery: PaginationQuery
 ) =
@@ -55,17 +55,17 @@ suspend fun SessionManager.getRoomMembersPublicKeys(
         CustomApi.Rooms.Id.Members.publicKeys(paginationQuery, CommonPath(id))
     }
 
-suspend fun SessionManager.joinRoom(id: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.joinRoom(id: PrimaryKey) = serviceCatching {
     CustomApi.Rooms.Id.Members.join(CommonPath(id), Unit) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun SessionManager.joinCommunity(id: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.joinCommunity(id: PrimaryKey) = serviceCatching {
     CustomApi.Communities.Id.Members.join(CommonPath(id), Unit) {}
 }
 
-suspend fun SessionManager.getRoomTopics(
+suspend fun UserSessionManager.getRoomTopics(
     roomId: PrimaryKey,
     pinType: TopicPinSearch? = null,
     paginationQuery: PaginationQuery,
@@ -80,7 +80,7 @@ suspend fun SessionManager.getRoomTopics(
     )
 }
 
-suspend fun SessionManager.getCommunityTopics(
+suspend fun UserSessionManager.getCommunityTopics(
     communityId: PrimaryKey,
     pinType: TopicPinSearch? = null,
     paginationQuery: PaginationQuery,
@@ -95,7 +95,7 @@ suspend fun SessionManager.getCommunityTopics(
     )
 }
 
-suspend fun SessionManager.getUserTopics(
+suspend fun UserSessionManager.getUserTopics(
     userId: PrimaryKey,
     pinType: TopicPinSearch? = null,
     paginationQuery: PaginationQuery,
@@ -110,7 +110,7 @@ suspend fun SessionManager.getUserTopics(
     )
 }
 
-suspend fun SessionManager.getCommunityInfo(id: PrimaryKey) =
+suspend fun UserSessionManager.getCommunityInfo(id: PrimaryKey) =
     serviceCatching {
         CustomApi.Communities.Id.get(
             CustomApi.Communities.Id.CommunityIdQuery(
@@ -120,7 +120,7 @@ suspend fun SessionManager.getCommunityInfo(id: PrimaryKey) =
         )
     }
 
-suspend fun SessionManager.getCommunityInfoByAid(aid: String) = serviceCatching {
+suspend fun UserSessionManager.getCommunityInfoByAid(aid: String) = serviceCatching {
     CustomApi.Communities.Aid.get(
         CustomApi.Communities.Aid.CommunityAidQuery(
             aid,
@@ -129,7 +129,7 @@ suspend fun SessionManager.getCommunityInfoByAid(aid: String) = serviceCatching 
     )
 }
 
-suspend fun SessionManager.searchCommunity(
+suspend fun UserSessionManager.searchCommunity(
     size: Int,
     joinStatusSearch: JoinStatusSearch,
     word: String? = null,
@@ -144,12 +144,12 @@ suspend fun SessionManager.searchCommunity(
             target,
             hasPosterSearch,
             nextCommunityId,
-            size
+            size,
         )
     )
 }
 
-suspend fun SessionManager.searchCommunityMembers(
+suspend fun UserSessionManager.searchCommunityMembers(
     communityId: PrimaryKey,
     nextCommunityId: String?,
     size: Int,
@@ -161,7 +161,7 @@ suspend fun SessionManager.searchCommunityMembers(
     )
 }
 
-suspend fun SessionManager.searchAllMembers(
+suspend fun UserSessionManager.searchAllMembers(
     nextUserId: String?,
     size: Int,
     word: String?,
@@ -169,7 +169,7 @@ suspend fun SessionManager.searchAllMembers(
     CustomApi.Users.search(CustomApi.Users.UserSearchQuery(word, nextUserId, size))
 }
 
-suspend fun SessionManager.searchRoomMembers(
+suspend fun UserSessionManager.searchRoomMembers(
     roomId: PrimaryKey,
     nextCommunityId: String?,
     size: Int,
@@ -185,33 +185,35 @@ suspend fun SessionManager.searchRoomMembers(
     )
 }
 
-suspend fun SessionManager.getRecommendTopics(
+suspend fun UserSessionManager.getRecommendTopics(
     paginationQuery: PaginationQuery
 ) =
     serviceCatching {
         CustomApi.Topics.recommend(
             CustomApi.Topics.RecommendQuery(
                 currentIsAlreadySignUp,
-                paginationQuery
+                paginationQuery.nextPageToken,
+                paginationQuery.size,
+                paginationQuery.prePageToken
             )
         )
     }
 
-suspend fun SessionManager.getUserInfo(id: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.getUserInfo(id: PrimaryKey) = serviceCatching {
     CustomApi.Users.Id.get(CommonPath(id))
 }
 
-suspend fun SessionManager.updateUserInfo(newInfo: UpdateUserBody) = serviceCatching {
+suspend fun UserSessionManager.updateUserInfo(newInfo: UpdateUserBody) = serviceCatching {
     CustomApi.Users.update(newInfo) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun SessionManager.getUserInfoByAid(aid: String) = serviceCatching {
+suspend fun UserSessionManager.getUserInfoByAid(aid: String) = serviceCatching {
     CustomApi.Users.Aid.get(CustomApi.Users.Aid.UserAidQuery(aid))
 }
 
-suspend fun SessionManager.getTopicTopics(
+suspend fun UserSessionManager.getTopicTopics(
     topicId: PrimaryKey,
     pinType: TopicPinSearch,
     paginationQuery: PaginationQuery,
@@ -227,18 +229,18 @@ suspend fun SessionManager.getTopicTopics(
         )
     }
 
-suspend fun SessionManager.getTopicInfo(id: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.getTopicInfo(id: PrimaryKey) = serviceCatching {
     CustomApi.Topics.Id.get(
         CustomApi.Topics.Id.TopicIdQuery(currentIsAlreadySignUp),
         CommonPath(id)
     )
 }
 
-suspend fun SessionManager.getTopicInfoByAid(aid: String) = serviceCatching {
+suspend fun UserSessionManager.getTopicInfoByAid(aid: String) = serviceCatching {
     CustomApi.Topics.Aid.get(CustomApi.Topics.Aid.TopicAidQuery(aid, currentIsAlreadySignUp))
 }
 
-suspend fun SessionManager.searchRooms(
+suspend fun UserSessionManager.searchRooms(
     size: Int,
     nextRoomId: String?,
     joinStatusSearch: JoinStatusSearch,
@@ -256,7 +258,7 @@ suspend fun SessionManager.searchRooms(
     )
 }
 
-suspend fun SessionManager.createTopic(
+suspend fun UserSessionManager.createTopic(
     objectType: ObjectType,
     objectId: PrimaryKey,
     input: String,
@@ -266,34 +268,32 @@ suspend fun SessionManager.createTopic(
     }
 }
 
-suspend fun SessionManager.signUp(
-    publicKey: String,
-    signature: String,
+suspend fun UserSessionManager.signUp(
+    pack: SignUpPack,
 ) = serviceCatching {
-    CustomApi.Accounts.signUp(SignUpPack(publicKey, signature)) {
+    CustomApi.Accounts.signUp(pack) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun SessionManager.signIn(
-    address: String,
-    signature: String,
+suspend fun UserSessionManager.signIn(
+    pack: SignInPack,
 ) = serviceCatching {
-    CustomApi.Accounts.signIn(SignInPack(address, signature)) {
+    CustomApi.Accounts.signIn(pack) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun SessionManager.getData() = serviceCatching {
-    client.get("accounts/get_data").bodyAsText()
+suspend fun UserSessionManager.getData() = serviceCatching {
+    CustomApi.Accounts.getData.invoke()
 }
 
-suspend fun SessionManager.getTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.getTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
     CustomApi.Topics.Id.createSnapshot(CommonPath(topicId), Unit) {
     }
 }
 
-suspend fun SessionManager.searchTopics(
+suspend fun UserSessionManager.searchTopics(
     size: Int,
     word: List<String>,
     parentId: PrimaryKey? = null,
@@ -306,33 +306,34 @@ suspend fun SessionManager.searchTopics(
             parentId,
             parentType,
             nextTopicId,
+            null,
             size,
             currentIsAlreadySignUp
         )
     )
 }
 
-suspend fun SessionManager.exitRoom(roomId: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.exitRoom(roomId: PrimaryKey) = serviceCatching {
     CustomApi.Rooms.Id.Members.leave(CommonPath(roomId), Unit) {}
 }
 
-suspend fun SessionManager.exitCommunity(communityId: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.exitCommunity(communityId: PrimaryKey) = serviceCatching {
     CustomApi.Communities.Id.Members.leave(CommonPath(communityId), Unit) {}
 }
 
-suspend fun SessionManager.addReaction(topicId: PrimaryKey, emoji: String) = serviceCatching {
+suspend fun UserSessionManager.addReaction(topicId: PrimaryKey, emoji: String) = serviceCatching {
     CustomApi.Topics.Id.Reactions.add(CommonPath(topicId), NewReaction(emoji)) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun SessionManager.deleteReaction(emoji: String, objectId: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.deleteReaction(emoji: String, objectId: PrimaryKey) = serviceCatching {
     CustomApi.Topics.Id.Reactions.delete(CommonPath(objectId), DeleteReaction(emoji)) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun SessionManager.getReactions(
+suspend fun UserSessionManager.getReactions(
     topicId: PrimaryKey,
     size: Int,
     nextCursor: String? = null
@@ -348,11 +349,11 @@ suspend fun SessionManager.getReactions(
         )
     }
 
-suspend fun SessionManager.signOut() = serviceCatching {
+suspend fun UserSessionManager.signOut() = serviceCatching {
     CustomApi.Accounts.signOut(Unit) {}
 }
 
-suspend fun SessionManager.getMediaList(
+suspend fun UserSessionManager.getMediaList(
     objectId: PrimaryKey,
     objectType: ObjectType,
     nextId: String?,
@@ -369,7 +370,7 @@ suspend fun SessionManager.getMediaList(
         )
     }
 
-suspend fun SessionManager.getMediaByName(
+suspend fun UserSessionManager.getMediaByName(
     word: String,
     objectId: PrimaryKey,
     objectType: ObjectType
@@ -386,7 +387,7 @@ suspend fun SessionManager.getMediaByName(
 
 class UploadData(val size: Long, val name: String, val contentType: ContentType, val block: () -> Input)
 
-suspend fun SessionManager.upload(
+suspend fun UserSessionManager.upload(
     objectTuple: ObjectTuple,
     data: UploadData,
     onUpload: suspend (Long, Long?) -> Unit = { _, _ -> },
@@ -412,7 +413,7 @@ suspend fun SessionManager.upload(
     }
 }
 
-suspend fun SessionManager.copy(mediaId: PrimaryKey) =
+suspend fun UserSessionManager.copy(mediaId: PrimaryKey) =
     serviceCatching {
         CustomApi.Files.Id.copy(CommonPath(mediaId), Unit) {
         }
@@ -443,7 +444,7 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
     sendFrame(message)
 }
 
-suspend fun SessionManager.userTitles(
+suspend fun UserSessionManager.userTitles(
     uid: PrimaryKey,
     nextId: String?,
     size: Int,
@@ -465,50 +466,50 @@ suspend fun SessionManager.userTitles(
     )
 }
 
-suspend fun SessionManager.createTitle(newTitle: NewTitle) = serviceCatching {
+suspend fun UserSessionManager.createTitle(newTitle: NewTitle) = serviceCatching {
     CustomApi.Titles.add(newTitle) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun SessionManager.createCommunity(newCommunity: NewCommunity) = serviceCatching {
+suspend fun UserSessionManager.createCommunity(newCommunity: NewCommunity) = serviceCatching {
     CustomApi.Communities.add(newCommunity) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun SessionManager.createRoom(newRoom: NewRoom) = serviceCatching {
+suspend fun UserSessionManager.createRoom(newRoom: NewRoom) = serviceCatching {
     CustomApi.Rooms.add(newRoom) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun SessionManager.pinTopic(topicId: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.pinTopic(topicId: PrimaryKey) = serviceCatching {
     CustomApi.Topics.Id.pin(CommonPath(topicId), Unit) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun SessionManager.unpinTopic(topicId: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.unpinTopic(topicId: PrimaryKey) = serviceCatching {
     CustomApi.Topics.Id.unpin.invoke(CommonPath(topicId), Unit) {
     }
 }
 
-suspend fun SessionManager.updateCommunityInfo(id: PrimaryKey, newInfo: UpdateCommunityBody) =
+suspend fun UserSessionManager.updateCommunityInfo(id: PrimaryKey, newInfo: UpdateCommunityBody) =
     serviceCatching {
         CustomApi.Communities.Id.update.invoke(CommonPath(id), newInfo) {
             contentType(ContentType.Application.Json)
         }
     }
 
-suspend fun SessionManager.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBody) =
+suspend fun UserSessionManager.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBody) =
     serviceCatching {
         CustomApi.Rooms.Id.update.invoke(CommonPath(id), newInfo) {
             contentType(ContentType.Application.Json)
         }
     }
 
-suspend fun SessionManager.getTopicList(
+suspend fun UserSessionManager.getTopicList(
     type: ObjectType,
     id: PrimaryKey,
     pinSearch: TopicPinSearch,
@@ -521,7 +522,7 @@ suspend fun SessionManager.getTopicList(
     else -> Result.failure(IllegalArgumentException("unrecognized $type"))
 }
 
-suspend fun SessionManager.addReadLog(info: UpdateUserRead): Result<Unit> {
+suspend fun UserSessionManager.addReadLog(info: UpdateUserRead): Result<Unit> {
     return serviceCatching {
         CustomApi.Users.Read.add.invoke(info) {
             contentType(ContentType.Application.Json)
@@ -529,21 +530,21 @@ suspend fun SessionManager.addReadLog(info: UpdateUserRead): Result<Unit> {
     }
 }
 
-suspend fun SessionManager.addDevice(endpointUrl: String) = serviceCatching {
+suspend fun UserSessionManager.addDevice(endpointUrl: String) = serviceCatching {
     CustomApi.Users.Devices.add.invoke(NewDevice(endpointUrl)) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun SessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatching {
     CustomApi.Files.Id.extractAlbum.invoke(CommonPath(mediaId), Unit) {}
 }
 
-suspend fun SessionManager.addAlternativeAccount() = serviceCatching {
+suspend fun UserSessionManager.addAlternativeAccount() = serviceCatching {
     CustomApi.Accounts.ChildAccounts.add.invoke(Unit) {}
 }
 
-suspend fun SessionManager.getAlternativeAccounts(nextId: String?, size: Int) = serviceCatching {
+suspend fun UserSessionManager.getAlternativeAccounts(nextId: String?, size: Int) = serviceCatching {
     CustomApi.Accounts.ChildAccounts.get.invoke(
         CustomApi.Accounts.ChildAccounts.ChildAccountQuery(
             nextId,
