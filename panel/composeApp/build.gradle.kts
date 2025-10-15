@@ -56,6 +56,13 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+
+            implementation(projects.shared)
+            implementation(projects.client.core)
+            implementation(projects.api)
+            implementation(projects.client.modelStorage)
+            implementation(projects.client.room)
+            implementation(projects.app.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -89,8 +96,9 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        val javaVersion = JavaVersion.forClassVersion(libs.versions.jdk.get().toInt())
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
     }
 }
 

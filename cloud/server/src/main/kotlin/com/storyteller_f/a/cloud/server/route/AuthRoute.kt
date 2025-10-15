@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.addAlternativeAccount
 import com.storyteller_f.a.cloud.core.service.addUserLog
@@ -22,7 +23,9 @@ import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.route4k.ktor.server.invoke
 import com.storyteller_f.route4k.ktor.server.receiveBody
+import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.finalData
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
@@ -58,16 +61,15 @@ fun Route.bindUnprotectedAccountRoute(
     }
 
     CustomApi.Accounts.signIn(RoutingContext::handleResult) { api ->
-        val mapResult = backend.signIn(call.getData(), api.receiveBody())
-        mapResult.onSuccess {
-            it?.id?.let { id -> saveSuccessSessionOnFirst(id) }
+        backend.signIn(call.getData(), api.receiveBody<UserInfo, SignInPack>()).onSuccess {
+            saveSuccessSessionOnFirst(it.id)
         }
     }
 }
 
 fun Route.bindAccountRoute() {
     CustomApi.Accounts.signOut(RoutingContext::handleResult) {
-        usePrincipalOrNull { uid ->
+        usePrincipalOrNull {
             call.sessions.clear(UserSession::class)
             UNIT_RESULT
         }
@@ -82,7 +84,7 @@ fun Route.bindProtectedAccountRoute(backend: Backend) {
     }
     CustomApi.Accounts.ChildAccounts.get(RoutingContext::handleResult) {
         usePrincipal { uid ->
-            pagination(IdentifiablePagingGenerator) {
+            it.pagination(IdentifiablePagingGenerator) {
                 backend.getUserAlternateUserInfoList(uid, it)
             }
         }
@@ -90,10 +92,9 @@ fun Route.bindProtectedAccountRoute(backend: Backend) {
 }
 
 fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
-    call.getSession().first.let { session ->
-        if (session is UserSession.Pending) {
-            call.saveSuccessSession(session, id)
-        }
+    val session = call.getSession()
+    if (session is UserSession.Pending) {
+        call.saveSuccessSession(session, id)
     }
 }
 
@@ -101,11 +102,17 @@ suspend fun Backend.getUserAuthData(
     credential: CustomCredential
 ): Result<Pair<String, Long>?> {
     return when (credential) {
-        is CustomCredential.AidCredential -> combinedDatabase.userDatabase.getUserAuthDataByAid(credential.aid)
+        is CustomCredential.AidCredential -> combinedDatabase.userDatabase.getUserAuthDataByAid(
+            credential.aid
+        )
 
-        is CustomCredential.IdCredential -> combinedDatabase.userDatabase.getUserAuthDataById(credential.id)
+        is CustomCredential.IdCredential -> combinedDatabase.userDatabase.getUserAuthDataById(
+            credential.id
+        )
 
-        is CustomCredential.AddressCredential -> combinedDatabase.userDatabase.getUserAuthDataByAddress(credential.ad)
+        is CustomCredential.AddressCredential -> combinedDatabase.userDatabase.getUserAuthDataByAddress(
+            credential.ad
+        )
     }
 }
 
@@ -114,6 +121,7 @@ suspend fun ApplicationCall.checkApiRequest(
     credential: CustomCredential,
     session: UserSession.Pending
 ): Result<CustomPrincipal?> {
+    if (session.label != "user") return Result.success(null)
     val sig = credential.sig
     @Suppress("SimplifyBooleanWithConstants", "KotlinConstantConditions")
     return when {
@@ -140,6 +148,44 @@ suspend fun ApplicationCall.checkApiRequest(
 
         else -> {
             Result.success(null)
+        }
+    }
+}
+
+suspend fun Backend.getAdminAuthData(
+    credential: CustomCredential
+): Result<Pair<String, Long>?> {
+    return when (credential) {
+        is CustomCredential.IdCredential -> combinedDatabase.panelAccountDatabase.getUserAuthDataById(
+            credential.id
+        )
+
+        is CustomCredential.AddressCredential -> combinedDatabase.panelAccountDatabase.getUserAuthDataByAddress(
+            credential.ad
+        )
+
+        else -> Result.failure(ForbiddenException())
+    }
+}
+
+suspend fun ApplicationCall.checkAdminApiRequest(
+    backend: Backend,
+    credential: CustomCredential,
+    session: UserSession.Pending
+): Result<CustomPrincipal?> {
+    if (session.label != "panel") return Result.success(null)
+    val sig = credential.sig
+    if (!sig.isNotBlank() || !session.data.isNotBlank()) {
+        return Result.success(null)
+    }
+    return backend.getAdminAuthData(credential).mapResultIfNotNull { (pubKey, id) ->
+        verify(
+            pubKey,
+            sig,
+            finalData(session.data)
+        ).mapIfNotNull {
+            saveSuccessSession(session, id)
+            CustomPrincipal(id)
         }
     }
 }

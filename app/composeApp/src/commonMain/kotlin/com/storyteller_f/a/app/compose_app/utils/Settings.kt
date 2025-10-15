@@ -3,7 +3,7 @@ package com.storyteller_f.a.app.compose_app.utils
 import androidx.compose.runtime.Composable
 import com.russhwolf.settings.Settings
 import com.storyteller_f.a.client.core.ClientSessionState
-import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.strabled.composepreferences.utilis.DataStoreManager
 import kotlinx.serialization.Serializable
 
@@ -15,7 +15,7 @@ expect fun createCustomDataStoreManager(): DataStoreManager
 @Serializable
 data class LoginHistory(val last: String? = null, val current: String? = null)
 
-fun UserSessionManager.restoreFromStorage(settings: Settings) {
+fun SimpleUserSessionManager.restoreFromStorage(settings: Settings) {
     val sessionFactory = buildLoginUserSessionFactory(settings)
     val (list, _, current) = sessionFactory.getSavedSession()
     if (current != null && list.contains(current)) {

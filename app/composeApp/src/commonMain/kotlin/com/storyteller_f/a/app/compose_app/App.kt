@@ -52,7 +52,6 @@ import com.storyteller_f.a.app.compose_app.utils.getUiViewModel
 import com.storyteller_f.a.app.compose_app.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.RawUserPass
-import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.UserSessionModel
@@ -472,7 +471,7 @@ private suspend fun sendTopicNotification(
 class CustomSessionManager(
     val proxy: UserSessionManager,
     val settings: Settings,
-) : SessionManager by proxy
+) : UserSessionManager by proxy
 
 fun createCustomUserSessionManager(
     settingsName: String,

@@ -6,14 +6,22 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed interface UserSession {
+    val data: String
+
     @Serializable
     @SerialName("pending")
     data class Pending(
-        val data: String,
+        override val data: String,
         val remote: String,
+        val label: String,
     ) : UserSession
 
     @Serializable
     @SerialName("success")
-    data class Success(val data: String, val remote: String, val id: PrimaryKey) : UserSession
+    data class Success(
+        override val data: String,
+        val remote: String,
+        val id: PrimaryKey,
+        val label: String
+    ) : UserSession
 }

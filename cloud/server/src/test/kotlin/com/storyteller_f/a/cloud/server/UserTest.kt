@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.addAlternativeAccount
+import com.storyteller_f.a.client.core.getAllUsers
 import com.storyteller_f.a.client.core.getAlternativeAccounts
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.updateUserInfo
@@ -75,6 +76,21 @@ class UserTest {
             val response = getAlternativeAccounts(null, 10).getOrThrow()
             assertEquals(1, response.pagination?.total)
             assertEquals(alternativeAccountInfo.id, response.data.first().id)
+        }
+    }
+
+    @Test
+    fun `test panel login`() {
+        test {
+            val panelTuple = attachPanelSession {
+                assertListSize(0, getAllUsers())
+            }
+            attachSession {
+
+            }
+            loginPanelSession(panelTuple) {
+                assertListSize(1, getAllUsers())
+            }
         }
     }
 }

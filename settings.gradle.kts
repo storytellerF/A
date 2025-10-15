@@ -48,6 +48,7 @@ include(":app:cliApp")
 include(":app:dev")
 include(":app:devCli")
 include(":app:devServer")
+include(":app:core")
 
 include(":cloud:server")
 include(":cloud:cli")

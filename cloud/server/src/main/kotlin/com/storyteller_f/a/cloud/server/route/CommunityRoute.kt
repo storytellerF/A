@@ -31,7 +31,7 @@ fun Route.bindCommunityRoute(backend: Backend) {
     }
 
     CustomApi.Communities.Id.Members.get(RoutingContext::handleResult) { q, p ->
-        pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
             backend.searchMembers(p.id, q.word, f)
         }
     }

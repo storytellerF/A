@@ -6,7 +6,7 @@ import com.google.genai.types.GoogleSearch
 import com.google.genai.types.Tool
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.client.core.RawUserPass
-import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createTopic
@@ -15,7 +15,7 @@ import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getTopicList
 import com.storyteller_f.a.client.core.searchCommunity
-import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
+import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -72,7 +72,7 @@ fun main() {
             // 确保第一次登录成功
             while (isActive) {
                 try {
-                    sessionManager.signUpOrInFromPrivateKey(pemPrivateKey, false) {
+                    sessionManager.getUserInfo(pemPrivateKey, false) {
                         RawUserPass(it)
                     }
                     break
@@ -96,7 +96,7 @@ fun main() {
 }
 
 private suspend fun CoroutineScope.processJob(
-    sessionManager: UserSessionManager,
+    sessionManager: SimpleUserSessionManager,
     client: Client,
     commentPrompt: String,
     newsPrompt: String
@@ -151,7 +151,7 @@ private fun readResource(name: String): String =
     ClassLoader.getSystemResourceAsStream(name)!!.bufferedReader().readText()
 
 private suspend fun processCommunityTask(
-    sessionManager: UserSessionManager,
+    sessionManager: SimpleUserSessionManager,
     extracted: suspend (CommunityInfo) -> Unit
 ) {
     var next: String? = null
@@ -170,7 +170,7 @@ private suspend fun processCommunityTask(
 }
 
 private suspend fun handleCommunityComment(
-    sessionManager: UserSessionManager,
+    sessionManager: SimpleUserSessionManager,
     client: Client,
     info: CommunityInfo,
     prompt: String
@@ -209,7 +209,7 @@ private suspend fun handleCommunityComment(
 }
 
 private suspend fun getLatestHasCommentedTopic(
-    sessionManager: UserSessionManager,
+    sessionManager: SimpleUserSessionManager,
     info: CommunityInfo
 ): Long {
     var next: String? = null
@@ -241,7 +241,7 @@ private suspend fun getLatestHasCommentedTopic(
 private suspend fun handleTopic(
     topicInfo: TopicInfo,
     client: Client,
-    sessionManager: UserSessionManager,
+    sessionManager: SimpleUserSessionManager,
     prompt: String
 ) {
     val plain = (topicInfo.content as TopicContent.Plain).plain
@@ -270,7 +270,7 @@ private suspend fun handleTopic(
 
 @OptIn(ExperimentalTime::class)
 private suspend fun handleCommunityNews(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     client: Client,
     communityInfo: CommunityInfo,
     prompt: String
@@ -310,7 +310,7 @@ private suspend fun addTopic(
     client: Client,
     prompt: String,
     communityInfo: CommunityInfo,
-    sessionManager: SessionManager
+    sessionManager: UserSessionManager
 ) {
     val now = now()
     val previousDate = now.toInstant(TimeZone.UTC).minus(1.days).toLocalDateTime(TimeZone.UTC)
@@ -347,7 +347,7 @@ private suspend fun createNewsTopic(
     client: Client,
     newPrompt: String,
     communityInfo: CommunityInfo,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     date: LocalDateTime
 ) {
     val year = date.year

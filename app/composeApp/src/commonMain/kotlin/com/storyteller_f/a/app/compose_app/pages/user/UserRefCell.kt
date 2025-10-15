@@ -15,7 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.common.RefCellStateView
+import com.storyteller_f.a.app.compose_app.compontents.RefCellStateView
 import com.storyteller_f.a.app.compose_app.compontents.UserIcon
 import com.storyteller_f.a.app.compose_app.model.UserViewModel
 import com.storyteller_f.a.app.compose_app.model.createUserViewModel

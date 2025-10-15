@@ -81,18 +81,7 @@ buildConfig {
     buildConfigField<String>("FLAVOR", flavor)
 }
 
-tasks.withType<Tar> {
-    filesMatching("vavi-commons-1.1.10.jar") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
-    }
-}
-
-tasks.withType<Zip> {
-    filesMatching("vavi-commons-1.1.10.jar") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
-    }
-}
-tasks.withType<Tar> {
+fun AbstractCopyTask.handleDupJar() {
     eachFile {
         if (sourceName == "core.jar") {
             val filePath = file.path
@@ -103,19 +92,17 @@ tasks.withType<Tar> {
             }
         }
     }
+    filesMatching("vavi-commons-1.1.10.jar") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
+    }
+}
+
+tasks.withType<Tar> {
+    handleDupJar()
 }
 
 tasks.withType<Zip> {
-    eachFile {
-        if (sourceName == "core.jar") {
-            val filePath = file.path
-            when {
-                filePath.contains("api") -> name = "api-core.jar"
-                filePath.contains("backend") -> name = "backend-core.jar"
-                filePath.contains("cloud") -> name = "cloud-core.jar"
-            }
-        }
-    }
+    handleDupJar()
 }
 sentry {
     org = "acommunity"

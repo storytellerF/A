@@ -87,8 +87,9 @@ android {
     namespace = "com.storyteller_f.a.client.room"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        val javaVersion = JavaVersion.forClassVersion(libs.versions.jdk.get().toInt())
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()

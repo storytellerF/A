@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.compose.itemKey
-import com.storyteller_f.a.app.compose_app.common.StateView
+import com.storyteller_f.a.app.compose_app.compontents.StateView
 import com.storyteller_f.a.app.compose_app.model.createReactionsViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 

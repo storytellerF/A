@@ -150,11 +150,18 @@ kotlin {
             implementation(projects.api)
             implementation(projects.client.modelStorage)
             implementation(projects.client.room)
+            implementation(projects.app.core)
 
+            //no ui
             implementation(libs.napier)
             implementation(libs.kotlinx.datetime)
             implementation(libs.bundles.ktor.client)
             implementation(libs.tasks.genai)
+            implementation(libs.kim)
+            implementation(libs.uri.kmp)
+            implementation(libs.m3u.parser)
+            implementation(libs.human.readable)
+            implementation(libs.kfswatch)
             //ui
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -185,11 +192,7 @@ kotlin {
             implementation(libs.connectivity.compose)
             implementation(libs.connectivity.core)
 
-            implementation(libs.kim)
-            implementation(libs.uri.kmp)
-            implementation(libs.m3u.parser)
-            implementation(libs.human.readable)
-            implementation(libs.kfswatch)
+
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -313,8 +316,9 @@ android {
     }
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        val javaVersion = JavaVersion.forClassVersion(libs.versions.jdk.get().toInt())
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
     }
     buildFeatures {
         compose = true

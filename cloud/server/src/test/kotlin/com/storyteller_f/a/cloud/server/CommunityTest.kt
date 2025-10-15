@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.exitCommunity
@@ -130,7 +131,7 @@ class CommunityTest {
         }
     }
 
-    private suspend fun SessionManager.testSearchCommunityCount(
+    private suspend fun UserSessionManager.testSearchCommunityCount(
         expectedCount: Int,
         nextCommunityId: String?,
         size: Int,

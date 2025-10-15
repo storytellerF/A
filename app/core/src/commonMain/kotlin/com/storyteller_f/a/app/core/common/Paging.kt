@@ -1,10 +1,10 @@
-package com.storyteller_f.a.app.compose_app.common
+package com.storyteller_f.a.app.core.common
 
 import androidx.lifecycle.ViewModel
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
 import kotlinx.coroutines.flow.Flow
@@ -125,8 +125,8 @@ class SectionPagingSource<DATUM : Any>(
 }
 
 class RegularPagingSource<DATUM : Any>(
-    val sessionManager: SessionManager,
-    val service: suspend SessionManager.(String?, Int) -> Result<ServerResponse<DATUM>>
+    val sessionManager: UserSessionManager,
+    val service: suspend UserSessionManager.(String?, Int) -> Result<ServerResponse<DATUM>>
 ) : PagingSource<String, DATUM>() {
     override suspend fun load(params: LoadParams<String>): LoadResult<String, DATUM> {
         return sessionManager.service(params.key, params.loadSize).map {

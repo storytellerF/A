@@ -68,7 +68,7 @@ data class PresetTitle(
 )
 
 @Serializable
-data class PresetPanelAccount(val name: String)
+data class PresetPanelAccount(val name: String, val privateKey: String)
 
 @Serializable
 data class PresetValue(

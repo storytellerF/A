@@ -16,12 +16,12 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.common.StateView
-import com.storyteller_f.a.app.compose_app.common.bottomAppending
-import com.storyteller_f.a.app.compose_app.common.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.CommonImage
 import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
+import com.storyteller_f.a.app.compose_app.compontents.StateView
+import com.storyteller_f.a.app.compose_app.compontents.bottomAppending
 import com.storyteller_f.a.app.compose_app.compontents.rememberCommonDialogController
+import com.storyteller_f.a.app.compose_app.compontents.topPrepend
 import com.storyteller_f.a.app.compose_app.model.RoomsViewModel
 import com.storyteller_f.a.app.compose_app.model.createCommunityViewModel
 import com.storyteller_f.a.app.compose_app.model.createJoinedRoomsViewModel

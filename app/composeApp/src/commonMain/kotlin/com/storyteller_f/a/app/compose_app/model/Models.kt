@@ -4,9 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.*
 import com.storyteller_f.a.api.core.PaginationQuery
-import com.storyteller_f.a.app.compose_app.common.*
 import com.storyteller_f.a.app.compose_app.compontents.DialogSaveState
 import com.storyteller_f.a.app.compose_app.utils.loadFontFromLocal
+import com.storyteller_f.a.app.core.common.CachedLoadingHandler
+import com.storyteller_f.a.app.core.common.CompatPagingSource
+import com.storyteller_f.a.app.core.common.CustomRemoteMediator
+import com.storyteller_f.a.app.core.common.IntKeyConverter
+import com.storyteller_f.a.app.core.common.IntermediatePagingSource
+import com.storyteller_f.a.app.core.common.PagingViewModel
+import com.storyteller_f.a.app.core.common.RegularPagingSource
+import com.storyteller_f.a.app.core.common.SectionLoadParams
+import com.storyteller_f.a.app.core.common.SectionPagingSource
+import com.storyteller_f.a.app.core.common.SimpleViewModel
 import com.storyteller_f.a.client.core.*
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -54,7 +63,7 @@ abstract class CommunityViewModel :
 }
 
 class IdCommunityViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     communityId: PrimaryKey,
 ) :
@@ -71,7 +80,7 @@ class IdCommunityViewModel(
 }
 
 class AidCommunityViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     aid: String,
 ) :
@@ -89,7 +98,7 @@ class AidCommunityViewModel(
 
 @OptIn(ExperimentalPagingApi::class)
 class CommunitiesViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     joinStatusSearch: JoinStatusSearch,
     word: String = "",
@@ -148,7 +157,7 @@ class CommunitiesViewModel(
 
 @OptIn(ExperimentalPagingApi::class)
 class RoomsViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     joinStatusSearch: JoinStatusSearch,
     word: String = "",
@@ -184,7 +193,7 @@ class RoomsViewModel(
 
 @OptIn(ExperimentalPagingApi::class)
 class WorldViewModel(
-    val sessionManager: SessionManager,
+    val sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
 ) :
     PagingViewModel<TopicInfo>() {
@@ -228,12 +237,11 @@ class WorldViewModel(
 
 @OptIn(ExperimentalPagingApi::class)
 class TopicsViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     id: PrimaryKey,
     type: ObjectType,
-) :
-    PagingViewModel<TopicInfo>() {
+) : PagingViewModel<TopicInfo>() {
     private val modelCollection = TopicCollection.TopicList(id)
 
     @OptIn(FlowPreview::class)
@@ -312,7 +320,7 @@ abstract class RoomViewModel :
 }
 
 class IdRoomViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     communityId: PrimaryKey,
 ) :
@@ -333,7 +341,7 @@ class IdRoomViewModel(
 }
 
 class AidRoomViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     aid: String,
 ) : RoomViewModel() {
@@ -350,24 +358,9 @@ class AidRoomViewModel(
         }
 }
 
-interface CompatKeyConverter<F, T> {
-    fun from(f: F): T
-    fun to(t: T): F
-}
-
-object IntKeyConverter : CompatKeyConverter<Int, String> {
-    override fun from(f: Int): String {
-        return f.toString()
-    }
-
-    override fun to(t: String): Int {
-        return t.toInt()
-    }
-}
-
 @OptIn(ExperimentalPagingApi::class)
 class TopicSearchViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     word: List<String>,
     parentId: PrimaryKey?,
@@ -403,7 +396,7 @@ class TopicSearchViewModel(
 }
 
 class MediaListViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     objectId: PrimaryKey,
     objectType: ObjectType,
@@ -442,7 +435,7 @@ abstract class UserViewModel :
     SimpleViewModel<UserInfo>()
 
 class IdUserViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     id: PrimaryKey,
 ) :
@@ -461,7 +454,7 @@ class IdUserViewModel(
 }
 
 class AidUserViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     aid: String,
 ) : UserViewModel() {
@@ -480,7 +473,7 @@ class AidUserViewModel(
 
 @OptIn(ExperimentalPagingApi::class)
 class MemberViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     objectId: PrimaryKey,
     word: String,
@@ -520,7 +513,7 @@ class MemberViewModel(
 }
 
 class ReactionsViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     objectId: PrimaryKey,
     modelStorage: ModelStorage,
 ) : PagingViewModel<ReactionInfo>() {
@@ -557,7 +550,7 @@ abstract class TopicViewModel :
     SimpleViewModel<TopicInfo>()
 
 class IdTopicViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     topicId: PrimaryKey,
 ) :
@@ -578,7 +571,7 @@ class IdTopicViewModel(
 }
 
 class AidTopicViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     aid: String,
 ) :
@@ -597,7 +590,7 @@ class AidTopicViewModel(
 }
 
 class RoomKeysViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     private val id: PrimaryKey,
     val private: Boolean,
 ) :
@@ -626,7 +619,7 @@ class RoomKeysViewModel(
 
 @OptIn(ExperimentalPagingApi::class)
 class TitlesViewModel(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     uid: PrimaryKey,
     searchType: TitleSearchType,
@@ -731,7 +724,7 @@ class DownloadViewModel(
 }
 
 class MarkdownMediasViewModel(
-    val sessionManager: SessionManager,
+    val sessionManager: UserSessionManager,
     private val content: String,
     private val objectTuple: ObjectTuple,
 ) :
@@ -748,7 +741,7 @@ class MarkdownMediasViewModel(
 
 class ChildAccountsViewModel(
     modelStorage: ModelStorage,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
 ) :
     PagingViewModel<ChildAccountInfo>() {
     val modelCollection = ChildAccountCollection

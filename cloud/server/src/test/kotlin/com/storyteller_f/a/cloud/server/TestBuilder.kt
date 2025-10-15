@@ -4,13 +4,17 @@ import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.loadAvif
 import com.storyteller_f.a.backend.core.readResourceEnv
+import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.RawUserPass
-import com.storyteller_f.a.client.core.SessionManager
-import com.storyteller_f.a.client.core.SessionModel
+import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.a.client.core.UserSessionModel
+import com.storyteller_f.a.client.core.createPanelSessionManager
 import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
+import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
+import com.storyteller_f.a.client.core.getPanelAccountInfo
 import com.storyteller_f.a.client.core.signOut
-import com.storyteller_f.a.client.core.signUpOrInFromPrivateKey
+import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
@@ -245,8 +249,18 @@ data class SessionOuterTuple<T>(
 )
 
 suspend fun <R> ApplicationTestBuilder.attachSession(
-    onReceive: suspend (RoomFrame, SessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
-    block: suspend SessionManager.(SessionTuple) -> R
+    onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
+    block: suspend UserSessionManager.(SessionTuple) -> R
+): SessionOuterTuple<R> {
+    val priKey = generateECDSAPemPrivateKey().getOrThrow()
+    return getAppSession(onReceive, priKey, block, true)
+}
+
+private suspend fun <R> ApplicationTestBuilder.getAppSession(
+    onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
+    priKey: String,
+    block: suspend UserSessionManager.(SessionTuple) -> R,
+    isSignUp: Boolean
 ): SessionOuterTuple<R> {
     return coroutineScope {
         val sessionManager = createUserSessionManager("link", { model, cookiesStorage ->
@@ -256,8 +270,7 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
         }, onReceive)
         sessionManager.startBackgroundTask {
             val sessionModel = model
-            val priKey = generateECDSAPemPrivateKey().getOrThrow()
-            val userInfo = signUpOrInFromPrivateKey(priKey, true) {
+            val userInfo = getUserInfo(priKey, isSignUp) {
                 RawUserPass(it)
             }
             val custom = block(SessionTuple(priKey, userInfo.id))
@@ -269,38 +282,20 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
 }
 
 suspend fun <R1, R2> ApplicationTestBuilder.loginSession(
-    session: SessionOuterTuple<R1>,
-    onReceive: suspend (RoomFrame, SessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
-    block: suspend SessionManager.(SessionTuple) -> R2
+    tuple: SessionOuterTuple<R1>,
+    onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
+    block: suspend UserSessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
-    return coroutineScope {
-        val sessionManager = createUserSessionManager("link", { model, client ->
-            createClient {
-                defaultClientConfigure(client, model)
-            }
-        }, onReceive)
-        sessionManager.startBackgroundTask {
-            val (privateKey) = session
-            val sessionModel = model
-            val userInfo = signUpOrInFromPrivateKey(privateKey, false) {
-                RawUserPass(it)
-            }
-            assertEquals(session.uid, userInfo.id)
-            val custom = block(SessionTuple(session.privateKey, session.uid))
-            signOut().getOrThrow()
-            sessionModel.clear()
-            SessionOuterTuple(privateKey, userInfo.id, custom)
-        }
-    }
+    return getAppSession(onReceive, tuple.privateKey, block, true)
 }
 
 suspend fun <R2> ApplicationTestBuilder.noneSession(
-    block: suspend SessionManager.() -> R2
+    block: suspend UserSessionManager.() -> R2
 ): R2 {
     return coroutineScope {
-        val sessionManager = createUserSessionManager("link", { model, client ->
+        val sessionManager = createUserSessionManager("link", { model, cookiesStorage ->
             createClient {
-                defaultClientConfigure(client, model)
+                defaultClientConfigure(cookiesStorage, model)
             }
         }) { _, _, _ -> }
         sessionManager.startBackgroundTask {
@@ -323,7 +318,7 @@ fun extractTableNames(query: String): List<String> {
         .flatMap { it.groupValues.drop(1).filter { name -> name.isNotEmpty() } }.toList()
 }
 
-suspend fun SessionManager.waitAndSend(block: suspend DefaultClientWebSocketSession.() -> Unit) {
+suspend fun UserSessionManager.waitAndSend(block: suspend DefaultClientWebSocketSession.() -> Unit) {
     while (true) {
         if (webSocketClient.connectionHandler.data.value != null) {
             break
@@ -333,4 +328,40 @@ suspend fun SessionManager.waitAndSend(block: suspend DefaultClientWebSocketSess
         }
     }
     webSocketClient.useWebSocket(block)?.join()
+}
+
+suspend fun <R> ApplicationTestBuilder.attachPanelSession(
+    block: suspend PanelSessionManager.(SessionTuple) -> R
+): SessionOuterTuple<R> {
+    val priKey = generateECDSAPemPrivateKey().getOrThrow()
+    return getPanelSession(priKey, block, true)
+}
+
+private suspend fun <R> ApplicationTestBuilder.getPanelSession(
+    priKey: String,
+    block: suspend PanelSessionManager.(SessionTuple) -> R,
+    isSignUp: Boolean
+): SessionOuterTuple<R> {
+    return coroutineScope {
+        val sessionManager = createPanelSessionManager({ model, cookiesStorage ->
+            createClient {
+                defaultClientConfigureForPanel(cookiesStorage, model)
+            }
+        })
+        val sessionModel = sessionManager.model
+        val userInfo = sessionManager.getPanelAccountInfo(priKey, isSignUp) {
+            RawUserPass(it)
+        }
+        val custom = sessionManager.block(SessionTuple(priKey, userInfo.id))
+        sessionManager.signOut().getOrThrow()
+        sessionModel.clear()
+        SessionOuterTuple(priKey, userInfo.id, custom)
+    }
+}
+
+suspend fun <R1, R2> ApplicationTestBuilder.loginPanelSession(
+    tuple: SessionOuterTuple<R1>,
+    block: suspend PanelSessionManager.(SessionTuple) -> R2
+): SessionOuterTuple<R2> {
+    return getPanelSession(tuple.privateKey, block, false)
 }

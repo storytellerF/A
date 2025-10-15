@@ -118,12 +118,13 @@ class AddPreset : Subcommand("add", "add entry") {
         }
     }
 
-    private suspend fun Backend.addPanels(presetValue: PresetValue) {
+    private suspend fun Backend.addPanels(presetValue: PresetValue, parentDir: File) {
         val accounts = presetValue.panelAccountData ?: return
         accounts.forEach {
             val id = SnowflakeFactory.nextId()
+            val (derPublicKey, ad) = getPubKeyAndAddress(parentDir, it.privateKey)
             combinedDatabase.panelAccountDatabase.addPanelAccount(
-                PanelAccount(id, it.name)
+                PanelAccount(id, it.name, PassType.RAW, AlgoType.P256, derPublicKey, ad)
             ).getOrThrow()
         }
     }
@@ -444,11 +445,7 @@ class AddPreset : Subcommand("add", "add entry") {
     ): List<User> {
         return userList.map {
             val id = it.id ?: SnowflakeFactory.nextId()
-            val derPublicKey =
-                getDerPublicKeyFromPrivateKey(
-                    File(parentDir, it.privateKey).readText().replace("\r\n", "\n")
-                ).getOrThrow()
-            val ad = calcAddress(derPublicKey).getOrThrow()
+            val (derPublicKey, ad) = getPubKeyAndAddress(parentDir, it.privateKey)
             val icon = it.icon
             val p = if (icon == null) {
                 null
@@ -470,6 +467,18 @@ class AddPreset : Subcommand("add", "add entry") {
                 AlgoType.P256
             )
         }
+    }
+
+    private suspend fun getPubKeyAndAddress(
+        parentDir: File,
+        privatePath: String
+    ): Pair<String, String> {
+        val derPublicKey =
+            getDerPublicKeyFromPrivateKey(
+                File(parentDir, privatePath).readText().replace("\r\n", "\n")
+            ).getOrThrow()
+        val ad = calcAddress(derPublicKey).getOrThrow()
+        return Pair(derPublicKey, ad)
     }
 
     private suspend fun Backend.getRoomsData(

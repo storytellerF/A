@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.server.auth
 
-import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.cloud.server.route.checkAdminApiRequest
 import com.storyteller_f.a.cloud.server.route.checkApiRequest
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
@@ -57,7 +57,6 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
 
     class Config(name: String?) : AuthenticationProvider.Config(name) {
 
-        lateinit var databaseReader: DatabaseReader
         lateinit var validateFunction: CustomValidator
         lateinit var challengeFunction: CustomChallenge
 
@@ -72,7 +71,7 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
 
     override suspend fun onAuthenticate(context: AuthenticationContext) {
         val call = context.call
-        val (session) = call.getSession()
+        val session = call.getSession()
         val credential = call.customCredential()
         val principal = config.validateFunction(session, call, credential).getOrNull()
         if (principal != null) {
@@ -114,7 +113,7 @@ fun ApplicationCall.saveSuccessSession(
     session: UserSession.Pending,
     id: PrimaryKey
 ) {
-    sessions.set<UserSession>(UserSession.Success(session.data, session.remote, id))
+    sessions.set<UserSession>(UserSession.Success(session.data, session.remote, id, session.label))
 }
 
 private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<CustomPrincipal?> {
@@ -130,43 +129,41 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
 }
 
 fun ApplicationCall.getData(): String {
-    val (_, data) = getSession()
-    return data
+    return getSession().data
 }
-
-fun ApplicationCall.getSession(): Pair<UserSession, String> {
+fun ApplicationCall.getSession(): UserSession {
     val remote = request.origin.remoteAddress
     return when (val session = sessions.get(UserSession::class)) {
         null -> {
-            val (data, newSession) = createPendingSession(remote)
+            val newSession = createPendingSession(remote)
             sessions.set<UserSession>(newSession)
-            newSession to data
+            newSession
         }
 
         is UserSession.Pending -> {
             if (remote == session.remote) {
-                session to session.data
+                session
             } else {
-                val (data, value) = createPendingSession(remote)
+                val value = createPendingSession(remote)
                 sessions.set<UserSession>(value)
-                value to data
+                value
             }
         }
 
         is UserSession.Success -> {
             if (remote == session.remote) {
-                session to session.data
+                session
             } else {
-                val (data, value) = createPendingSession(remote)
+                val value = createPendingSession(remote)
                 sessions.set<UserSession>(value)
-                value to data
+                value
             }
         }
     }
 }
 
 @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
-private fun ApplicationCall.createPendingSession(remote: String): Pair<String, UserSession.Pending> {
+private fun ApplicationCall.createPendingSession(remote: String): UserSession.Pending {
     Napier.i {
         "pending session $remote"
     }
@@ -175,21 +172,21 @@ private fun ApplicationCall.createPendingSession(remote: String): Pair<String, U
         aTs != null && checkTsIsValid(aTs, 60 * 5).second -> aTs.toString()
         else -> Uuid.random().toString()
     }
-    val value = UserSession.Pending(data, remote)
-    return Pair(data, value)
+    val type = if (request.path().startsWith("/admin")) "panel" else "user"
+    val value = UserSession.Pending(data, remote, type)
+    return value
 }
 
 fun ApplicationCall.getRateLimitKey(): Comparable<*> {
-    return when (val session = getSession().first) {
+    return when (val session = getSession()) {
         is UserSession.Success -> session.id
         is UserSession.Pending -> session.remote
     }
 }
 
-fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
+fun Application.configureAuth(backend: Backend) {
     install(Authentication) {
-        custom {
-            databaseReader = reader
+        custom("user") {
             validate { session, call, credential ->
                 when (session) {
                     is UserSession.Success -> Result.success(CustomPrincipal(session.id))
@@ -199,6 +196,21 @@ fun Application.configureAuth(reader: DatabaseReader, backend: Backend) {
                             backend.customConfig.buildType == "prod" -> Result.success(null)
                             else -> backend.checkDevWsLink(call)
                         }
+                    }
+                }
+            }
+            challenge { _, call ->
+                call.respondUnauthorizedResponse()
+            }
+        }
+        custom("admin") {
+            validate { session, call, credential ->
+                when (session) {
+                    is UserSession.Success -> Result.success(CustomPrincipal(session.id))
+                    is UserSession.Pending -> {
+                        if (credential != null)
+                            call.checkAdminApiRequest(backend, credential, session)
+                        else Result.success(null)
                     }
                 }
             }
