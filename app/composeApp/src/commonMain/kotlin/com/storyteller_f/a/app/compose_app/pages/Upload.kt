@@ -27,15 +27,6 @@ import io.ktor.http.*
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.io.Source
 
-@Stable
-interface ClientFile {
-    val name: String
-    val contentType: ContentType
-    val size: Long
-    val path: String
-
-    fun source(): Source
-}
 
 @Stable
 class UploadSession(val name: String, val list: ImmutableList<ClientFile>) {

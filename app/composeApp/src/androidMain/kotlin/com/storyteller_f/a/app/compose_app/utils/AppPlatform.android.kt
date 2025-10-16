@@ -3,9 +3,11 @@ package com.storyteller_f.a.app.compose_app.utils
 import android.content.ClipData
 import android.content.Intent
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.core.net.toUri
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.Lifecycle
 import com.storyteller_f.a.app.BuildConfig
 import com.storyteller_f.a.app.compose_app.AApplication
@@ -14,10 +16,12 @@ import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.compontents.mainAppRef
 import com.storyteller_f.a.app.compose_app.getClipFile
 import com.storyteller_f.a.app.compose_app.initFromContext
-import com.storyteller_f.a.app.compose_app.pages.ClientFile
 import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.type.PrimaryKey
+import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
+import okio.Path.Companion.toOkioPath
+import org.unifiedpush.android.connector.UnifiedPush
 
 actual val appPlatform: AppPlatform
     get() {
@@ -59,4 +63,25 @@ actual fun startCall(roomId: PrimaryKey) {
     }
     intent.putExtra("roomId", roomId)
     application.startActivity(intent)
+}
+
+private val store by lazy {
+    val context = appContextRef.get()!!
+    DataStoreManager(
+        PreferenceDataStoreFactory.createWithPath(
+            produceFile = {
+                context.filesDir.resolve("main.preferences_pb").toOkioPath()
+            }
+        )
+    )
+}
+
+@Composable
+actual fun createCustomDataStoreManager(): DataStoreManager {
+    return store
+}
+
+actual fun unregisterPushService() {
+    val context = appContextRef.get() ?: return
+    UnifiedPush.unregister(context, "A")
 }

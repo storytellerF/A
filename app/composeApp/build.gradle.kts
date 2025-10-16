@@ -104,7 +104,6 @@ kotlin {
             implementation(libs.androidx.media3.session)
             implementation(libs.lifecycle.service)
 
-            implementation(libs.record.core)
             implementation(libs.compose.webview)
             implementation(libs.connectivity.device)
             implementation(libs.connectivity.compose.device)
@@ -162,6 +161,7 @@ kotlin {
             implementation(libs.m3u.parser)
             implementation(libs.human.readable)
             implementation(libs.kfswatch)
+            implementation(libs.kodio.core)
             //ui
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
