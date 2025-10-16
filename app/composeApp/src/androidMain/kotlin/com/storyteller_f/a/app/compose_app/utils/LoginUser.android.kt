@@ -9,12 +9,10 @@ import com.russhwolf.settings.serialization.encodeValue
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.CryptoJvm
-import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.calcAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
-import org.unifiedpush.android.connector.UnifiedPush
 import java.security.KeyFactory
 import java.security.KeyStore
 import java.security.PrivateKey
@@ -25,7 +23,7 @@ import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-actual fun buildLoginUserSessionFactory(settings: Settings): LoginUserSessionManager {
+actual fun buildLoginHistoryFactory(settings: Settings): LoginHistoryManager {
     if (runCatching {
             Cipher.getInstance("ECIES", "AndroidKeyStore")
         }.isSuccess && runCatching {
@@ -34,11 +32,11 @@ actual fun buildLoginUserSessionFactory(settings: Settings): LoginUserSessionMan
         try {
             val keyStore = KeyStore.getInstance("AndroidKeyStore")
             keyStore.load(null)
-            return AndroidKeyStoreLoginUserSessionManager(settings)
+            return AndroidKeyStoreLoginHistoryManager(settings)
         } catch (_: Exception) {
         }
     }
-    return DefaultLoginUserSessionManager(settings)
+    return DefaultLoginHistoryManager(settings)
 }
 
 class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
@@ -130,7 +128,7 @@ class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
 }
 
 @Suppress("SameParameterValue")
-class AndroidKeyStoreLoginUserSessionManager(val defaultSettings: Settings) : LoginUserSessionManager {
+class AndroidKeyStoreLoginHistoryManager(val defaultSettings: Settings) : LoginHistoryManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun getSavedSession(): SavedSession {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
