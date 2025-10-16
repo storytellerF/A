@@ -176,7 +176,7 @@ fun RoomInputGroup(
         CustomAlertDialogController()
     }
     val sessionManager = LocalSessionManager.current
-    val wsClient = LocalWsClient.current
+    val wsClient = sessionManager.webSocketClient
     LaunchedEffect(wsClient.frameFlow) {
         wsClient.frameFlow.collect { frame ->
             if (frame is RoomFrame.Error) {

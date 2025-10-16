@@ -157,7 +157,7 @@ suspend fun signOut(
     sessionManager: SessionManager,
     globalDialogController: GlobalDialogController,
 ) {
-    val settings = (sessionManager as CustomSessionManager).settings
+    val settings = (sessionManager as CustomUserSessionManager).settings
     globalDialogController.useResult {
         sessionManager.signOut()
     }.onSuccess {

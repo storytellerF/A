@@ -36,7 +36,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.compose_app.AppNav
-import com.storyteller_f.a.app.compose_app.CustomSessionManager
+import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
@@ -248,7 +248,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
                 if (isSignUp) {
                     Button({
                         scope.launch {
-                            privateKey = (generateECDSAPemPrivateKey().getOrThrow())
+                            privateKey = generateECDSAPemPrivateKey().getOrThrow()
                         }
                     }) {
                         Text(stringResource(Res.string.auto_generate))
@@ -294,7 +294,7 @@ private fun PrivateKeyInput(privateKey: String, isSignUp: Boolean, update: (Stri
 
 private suspend fun startSignFromFile(
     appNav: AppNav,
-    sessionManager: CustomSessionManager,
+    sessionManager: CustomUserSessionManager,
     isSignUp: Boolean,
     globalDialogController: GlobalDialogController,
 ) {
@@ -311,7 +311,7 @@ private suspend fun startSignFromFile(
 
 private suspend fun GlobalDialogController.startSign(
     appNav: AppNav,
-    sessionManager: CustomSessionManager,
+    sessionManager: CustomUserSessionManager,
     privateKey: String,
     isSignUp: Boolean,
 ) {
@@ -324,7 +324,7 @@ private suspend fun GlobalDialogController.startSign(
 
 suspend fun GlobalDialogController.signUpOrSignIn(
     privateKey: String,
-    sessionManager: CustomSessionManager,
+    sessionManager: CustomUserSessionManager,
     isSignUp: Boolean,
 ): Result<UserInfo> {
     return useResult {
