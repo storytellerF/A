@@ -8,12 +8,16 @@ import java.lang.ref.WeakReference
 
 lateinit var appContextRef: WeakReference<Application>
 
+fun getAppContextRefValue(): Application? {
+    return appContextRef.get()
+}
+
 class AndroidPlatform : Platform {
     override val name: String = "Android ${Build.VERSION.SDK_INT}"
 
     @get:SuppressLint("HardwareIds")
     override val id: String
-        get() = Settings.Secure.getString(appContextRef.get()!!.contentResolver, Settings.Secure.ANDROID_ID)
+        get() = Settings.Secure.getString(getAppContextRefValue()!!.contentResolver, Settings.Secure.ANDROID_ID)
 }
 
 actual fun getPlatform(): Platform = AndroidPlatform()

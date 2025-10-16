@@ -47,8 +47,8 @@ import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.compose_app.utils.createCustomDataStoreManager
-import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.compose_app.utils.getUiViewModel
+import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.RawUserPass
@@ -64,7 +64,6 @@ import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomDatabase
-import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo

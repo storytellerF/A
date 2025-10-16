@@ -11,8 +11,8 @@ import com.russhwolf.settings.serialization.encodeValue
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.CryptoJvm
-import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.calcAddress
+import com.storyteller_f.shared.getAppContextRefValue
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -151,7 +151,8 @@ class AndroidKeyStoreLoginHistoryManager(val settings: Settings) : LoginHistoryM
         val current = "default"
         importEcdsaPrivateKey(current, session.pemPrivateKey)
         settings.encodeValue(
-            LoginHistory.serializer(), "login_history",
+            LoginHistory.serializer(),
+            "login_history",
             LoginHistory(current, current)
         )
         return AndroidKeyStoreUserPass(current)
@@ -207,7 +208,6 @@ class AndroidKeyStoreLoginHistoryManager(val settings: Settings) : LoginHistoryM
 }
 
 actual fun createSettings(name: String): Settings {
-    val context = appContextRef.get()!!
+    val context = getAppContextRefValue()!!
     return SharedPreferencesSettings(context.getSharedPreferences(name, Context.MODE_PRIVATE))
 }
-

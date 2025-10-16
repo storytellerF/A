@@ -14,7 +14,7 @@ import kotlin.uuid.Uuid
 object Recorder {
     var recording: AudioRecordingSession? = null
     suspend fun startRecord() {
-        if (isRecording.value){
+        if (isRecording.value) {
             return
         }
         isRecording.value = true
@@ -22,9 +22,10 @@ object Recorder {
         recording = session
         session.start()
     }
+
     @OptIn(ExperimentalUuidApi::class)
     suspend fun stopRecord(): Path? {
-        if (!isRecording.value){
+        if (!isRecording.value) {
             return null
         }
         val session = recording ?: return null

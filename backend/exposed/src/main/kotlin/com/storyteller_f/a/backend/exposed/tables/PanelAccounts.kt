@@ -2,10 +2,8 @@ package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.ADDRESS_LENGTH
 import com.storyteller_f.a.backend.core.PUBLIC_KEY_LENGTH
-import com.storyteller_f.a.backend.core.USER_NICKNAME
 import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.exposed.BaseTable
-import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
 import org.jetbrains.exposed.v1.core.ResultRow

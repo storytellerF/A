@@ -167,7 +167,6 @@ fun HttpClientConfig<*>.defaultClientConfigureForPanel(
     }
 }
 
-
 private fun <U> CustomClientAuthProvider.CustomAuthConfig.configClientAuth(
     manager: SessionModel<U>,
     addRequestHeader: HttpRequestBuilder.(U, String) -> Unit

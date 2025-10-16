@@ -110,7 +110,7 @@ interface UserDatabase {
         privateKey: String,
         user: User
     ): Result<Unit>
-    suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch) : Result<PaginationResult<RawUser>>
+    suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
 }
 
 interface TopicDatabase {
@@ -140,7 +140,8 @@ interface TopicDatabase {
     ): Result<List<Pair<Long, Long>>>
 
     suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
-    //TODO 改为私有，并且返回RawTopic
+
+    // TODO 改为私有，并且返回RawTopic
     suspend fun processTopicToTopicInfo(
         uid: PrimaryKey?,
         topics: List<Topic>
@@ -375,7 +376,6 @@ interface PanelAccountDatabase {
     suspend fun getUserAuthDataByAddress(address: String): Result<Pair<String, Long>?>
     suspend fun getRawUserAndPublicKeyByAddress(ad: String): Result<Pair<RawPanelAccount, String>?>
     suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
-
 }
 
 const val PUBLIC_KEY_LENGTH = 512

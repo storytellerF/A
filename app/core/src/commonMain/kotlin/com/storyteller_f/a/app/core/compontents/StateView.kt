@@ -198,7 +198,6 @@ fun <T : Any> RefCellStateView(
 ) {
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
-    val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
         data.let {
             if (it != null) {
@@ -207,7 +206,7 @@ fun <T : Any> RefCellStateView(
                 when (val localState = state) {
                     is LoadingState.Error -> Box(
                         modifier = Modifier.fillMaxSize().clickable {
-                            //TODO show message
+                            // TODO show message
                         }.padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {

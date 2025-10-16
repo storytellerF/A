@@ -4,13 +4,13 @@ import android.content.Context
 import androidx.room.ExperimentalRoomApi
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.storyteller_f.shared.appContextRef
+import com.storyteller_f.shared.getAppContextRefValue
 import kotlinx.coroutines.Dispatchers
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalRoomApi::class)
 actual fun getRoomDatabase(scope: String): AppDatabase {
-    val ctx = appContextRef.get()!!
+    val ctx = getAppContextRefValue()!!
     val builder = getDatabaseBuilder(ctx, scope)
     return builder
         .fallbackToDestructiveMigrationOnDowngrade(false)

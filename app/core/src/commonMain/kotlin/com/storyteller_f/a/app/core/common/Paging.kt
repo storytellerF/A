@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
 import kotlinx.coroutines.flow.Flow

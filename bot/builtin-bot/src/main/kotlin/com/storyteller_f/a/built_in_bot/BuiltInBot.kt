@@ -14,8 +14,8 @@ import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getTopicList
-import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.getUserInfo
+import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadCryptoLibIfNeed

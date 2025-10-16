@@ -15,10 +15,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.core.compontents.RefCellStateView
 import com.storyteller_f.a.app.compose_app.compontents.UserIcon
 import com.storyteller_f.a.app.compose_app.model.UserViewModel
 import com.storyteller_f.a.app.compose_app.model.createUserViewModel
+import com.storyteller_f.a.app.core.compontents.RefCellStateView
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 

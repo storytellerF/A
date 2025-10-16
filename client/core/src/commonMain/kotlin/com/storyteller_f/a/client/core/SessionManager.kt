@@ -117,7 +117,6 @@ class SimpleUserSessionManager(
 
 interface PanelSessionManager : SessionManager<PanelAccountInfo>
 
-
 class SimplePanelSessionManager(
     override val client: HttpClient,
     override val model: SessionModel<PanelAccountInfo>

@@ -1,6 +1,5 @@
 package com.storyteller_f.a.app.compose_app.compontents
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,7 +9,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.client.core.ServerErrorException
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class DialogSaveState {
@@ -19,7 +17,6 @@ class DialogSaveState {
         dialogShown.value = true
     }
 }
-
 
 @Composable
 fun DialogContainer(block: @Composable ColumnScope.() -> Unit) {

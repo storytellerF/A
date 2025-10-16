@@ -18,9 +18,9 @@ import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.compontents.*
 import com.storyteller_f.a.app.compose_app.pages.LoginButton
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
-import com.storyteller_f.a.app.core.utils.clearStorage
 import com.storyteller_f.a.app.compose_app.utils.createConnectivity
 import com.storyteller_f.a.app.compose_app.utils.unregisterPushService
+import com.storyteller_f.a.app.core.utils.clearStorage
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.getData

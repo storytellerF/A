@@ -86,7 +86,6 @@ class UserTest {
                 assertListSize(0, getAllUsers(PaginationQuery()))
             }
             attachSession {
-
             }
             loginPanelSession(panelTuple) {
                 assertListSize(1, getAllUsers(PaginationQuery()))

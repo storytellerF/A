@@ -208,9 +208,11 @@ fun Application.configureAuth(backend: Backend) {
                 when (session) {
                     is UserSession.Success -> Result.success(CustomPrincipal(session.id))
                     is UserSession.Pending -> {
-                        if (credential != null)
+                        if (credential != null) {
                             call.checkAdminApiRequest(backend, credential, session)
-                        else Result.success(null)
+                        } else {
+                            Result.success(null)
+                        }
                     }
                 }
             }

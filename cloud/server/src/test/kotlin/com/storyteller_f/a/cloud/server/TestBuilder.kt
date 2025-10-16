@@ -13,8 +13,8 @@ import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getPanelAccountInfo
-import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.a.client.core.getUserInfo
+import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.generateECDSAPemPrivateKey

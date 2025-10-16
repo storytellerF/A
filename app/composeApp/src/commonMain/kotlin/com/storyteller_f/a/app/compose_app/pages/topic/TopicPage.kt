@@ -52,12 +52,9 @@ import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compose_app.compontents.GlobalTask
 import com.storyteller_f.a.app.compose_app.compontents.InteractionRow
-import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.compose_app.compontents.TopicCell
 import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
 import com.storyteller_f.a.app.compose_app.compontents.UserIcon
-import com.storyteller_f.a.app.core.compontents.bottomAppending
-import com.storyteller_f.a.app.core.compontents.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.use
 import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.model.TopicViewModel
@@ -70,6 +67,9 @@ import com.storyteller_f.a.app.compose_app.pages.room.InputGroupInternal
 import com.storyteller_f.a.app.compose_app.pages.room.RoomInputGroup
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
+import com.storyteller_f.a.app.core.compontents.StateView
+import com.storyteller_f.a.app.core.compontents.bottomAppending
+import com.storyteller_f.a.app.core.compontents.topPrepend
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicInfo

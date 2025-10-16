@@ -16,7 +16,7 @@ import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.compontents.mainAppRef
 import com.storyteller_f.a.app.compose_app.getClipFile
 import com.storyteller_f.a.app.compose_app.initFromContext
-import com.storyteller_f.shared.appContextRef
+import com.storyteller_f.shared.getAppContextRefValue
 import com.storyteller_f.shared.type.PrimaryKey
 import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
@@ -48,15 +48,15 @@ actual fun createConnectivity(): Connectivity {
 }
 
 actual fun getUiViewModel(): UIViewModel {
-    return (appContextRef.get() as AApplication).uiViewModel
+    return (getAppContextRefValue() as AApplication).uiViewModel
 }
 
 actual fun getClientFile(path: String): ClientFile? {
-    return getClipFile(appContextRef.get()!!, path.toUri())
+    return getClipFile(getAppContextRefValue()!!, path.toUri())
 }
 
 actual fun startCall(roomId: PrimaryKey) {
-    val application = appContextRef.get() ?: return
+    val application = getAppContextRefValue() ?: return
     val intent = Intent(application, RTCActivity::class.java).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
@@ -66,7 +66,7 @@ actual fun startCall(roomId: PrimaryKey) {
 }
 
 private val store by lazy {
-    val context = appContextRef.get()!!
+    val context = getAppContextRefValue()!!
     DataStoreManager(
         PreferenceDataStoreFactory.createWithPath(
             produceFile = {
@@ -82,6 +82,6 @@ actual fun createCustomDataStoreManager(): DataStoreManager {
 }
 
 actual fun unregisterPushService() {
-    val context = appContextRef.get() ?: return
+    val context = getAppContextRefValue() ?: return
     UnifiedPush.unregister(context, "A")
 }

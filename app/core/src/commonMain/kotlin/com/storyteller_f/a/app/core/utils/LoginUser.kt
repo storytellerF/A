@@ -29,7 +29,7 @@ data class LoginHistory(val last: String? = null, val current: String? = null)
 class DefaultLoginHistoryManager(val defaultSettings: Settings) : LoginHistoryManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun getSavedSession(): SavedSession {
-        //TODO 返回所有记录
+        // TODO 返回所有记录
         val rawUserPass = defaultSettings.decodeValueOrNull<RawUserPassInfo>("login_user")
         return if (rawUserPass != null) {
             val loginHistory = defaultSettings.decodeValueOrNull<LoginHistory>("login_history")

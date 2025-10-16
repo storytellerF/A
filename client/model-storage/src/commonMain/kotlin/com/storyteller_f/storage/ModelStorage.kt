@@ -86,6 +86,7 @@ fun UserCollection.getName(): String {
         is UserCollection.SearchUser -> "users_$word"
         UserCollection.Users -> "users"
         is UserCollection.Members -> "members_${objectId}_$word"
+        UserCollection.AllUsers -> "all_users"
     }
 }
 
