@@ -10,7 +10,7 @@ import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.UserPass
 import kotlinx.serialization.ExperimentalSerializationApi
 
-interface LoginUserSessionManager {
+interface LoginHistoryManager {
     fun getSavedSession(): SavedSession
 
     suspend fun addSession(session: RawUserPassInfo): UserPass
@@ -20,9 +20,10 @@ interface LoginUserSessionManager {
     fun removeSession(session: String)
 }
 
-class DefaultLoginUserSessionManager(val defaultSettings: Settings) : LoginUserSessionManager {
+class DefaultLoginHistoryManager(val defaultSettings: Settings) : LoginHistoryManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun getSavedSession(): SavedSession {
+        //TODO 返回所有记录
         val rawUserPass = defaultSettings.decodeValueOrNull<RawUserPassInfo>("login_user")
         return if (rawUserPass != null) {
             val loginHistory = defaultSettings.decodeValueOrNull<LoginHistory>("login_history")
@@ -54,5 +55,5 @@ class DefaultLoginUserSessionManager(val defaultSettings: Settings) : LoginUserS
 
 data class SavedSession(val list: List<String>, val last: String? = null, val current: String? = null)
 
-expect fun buildLoginUserSessionFactory(settings: Settings): LoginUserSessionManager
+expect fun buildLoginHistoryFactory(settings: Settings): LoginHistoryManager
 
