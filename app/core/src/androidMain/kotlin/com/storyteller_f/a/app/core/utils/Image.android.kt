@@ -9,7 +9,6 @@ import coil3.Image
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
-import com.storyteller_f.a.app.compose_app.compontents.sink
 import kotlinx.io.asOutputStream
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -27,7 +26,7 @@ actual fun saveImageBitmap(
 ): Result<Path> {
     return runCatching {
         val path = Path(SystemTemporaryDirectory, "tmpImage/$name-cropped.png")
-        path.sink().buffered().asOutputStream().use {
+        path.safeSink().buffered().asOutputStream().use {
             imageBitmap.asAndroidBitmap().compress(
                 when (format) {
                     ImageFormat.PNG -> Bitmap.CompressFormat.PNG

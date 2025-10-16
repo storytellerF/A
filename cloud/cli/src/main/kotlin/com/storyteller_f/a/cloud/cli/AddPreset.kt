@@ -101,7 +101,7 @@ class AddPreset : Subcommand("add", "add entry") {
                     "room" -> connected.addRooms(presetValue, parentDir)
                     "file" -> connected.addFiles(presetValue, parentDir)
                     "title" -> connected.addTitles(presetValue)
-                    "panelAccount" -> connected.addPanels(presetValue)
+                    "panelAccount" -> connected.addPanels(presetValue, parentDir)
                     else -> {
                         println("unrecognized type $type")
                         exitProcess(2)

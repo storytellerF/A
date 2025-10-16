@@ -57,7 +57,7 @@ class UserRoomInfoStorage(val appDatabase: AppDatabase) : UserInfoStorage {
         }.forEach {
             appDatabase.getCommonDao().insert(it)
         }
-        if (collection is UserCollection.SearchUser) {
+        if (collection is UserCollection.SearchUser || collection is UserCollection.AllUsers) {
             appDatabase.getCommonDao().insert(item.copy(collection = collection.getName()))
         }
     }

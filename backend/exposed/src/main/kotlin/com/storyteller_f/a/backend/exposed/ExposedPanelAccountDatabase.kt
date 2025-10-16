@@ -3,16 +3,10 @@ package com.storyteller_f.a.backend.exposed
 import com.storyteller_f.a.backend.core.PanelAccountDatabase
 import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.core.types.RawPanelAccount
-import com.storyteller_f.a.backend.core.types.RawUser
-import com.storyteller_f.a.backend.core.types.User
-import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.PanelAccounts
-import com.storyteller_f.a.backend.exposed.tables.Users
-import com.storyteller_f.a.backend.exposed.tables.find
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
-import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.insert
@@ -97,5 +91,4 @@ class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) :
             isEmpty()
         }
     }
-
 }

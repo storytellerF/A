@@ -36,7 +36,6 @@ import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.auto_generate
-import com.storyteller_f.a.app.core.compontents.CenterBox
 import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.go_to_sign_in
 import com.storyteller_f.a.app.compose_app.go_to_sign_up
@@ -46,6 +45,7 @@ import com.storyteller_f.a.app.compose_app.sign_up
 import com.storyteller_f.a.app.compose_app.start_sign_in
 import com.storyteller_f.a.app.compose_app.start_sign_up
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
+import com.storyteller_f.a.app.core.compontents.CenterBox
 import com.storyteller_f.a.app.core.compontents.PrivateKeyInput
 import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.client.core.getUserInfo
@@ -211,7 +211,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     val appNav = LocalAppNav.current
     val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
-    val startSign : () -> Unit = {
+    val startSign: () -> Unit = {
         scope.launch {
             globalDialogController.startSign(
                 appNav,
@@ -223,7 +223,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     }
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
-            PrivateKeyInput(privateKey, isSignUp, {
+            PrivateKeyInput(privateKey, {
                 privateKey = it
             }, startSign)
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -260,10 +260,11 @@ private suspend fun startSignFromFile(
 ) {
     val f = FileKit.openFilePicker()
     if (f != null) {
+        val privateKey = String(f.readBytes()).replace("\r\n", "\n")
         globalDialogController.startSign(
             appNav,
             sessionManager,
-            String(f.readBytes()).replace("\r\n", "\n"),
+            privateKey,
             isSignUp
         )
     }

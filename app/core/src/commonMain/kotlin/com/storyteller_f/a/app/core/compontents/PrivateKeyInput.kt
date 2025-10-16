@@ -11,11 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
 
 @Composable
-fun PrivateKeyInput(privateKey: String, isSignUp: Boolean, update: (String) -> Unit, startSign: () -> Unit) {
+fun PrivateKeyInput(privateKey: String, update: (String) -> Unit, startSign: () -> Unit) {
     MeasureTextLineCount(privateKey, LocalTextStyle.current, 32.dp) { lineCount, _ ->
         OutlinedTextField(
             privateKey,

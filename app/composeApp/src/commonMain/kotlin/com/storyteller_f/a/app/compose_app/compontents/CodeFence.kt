@@ -30,8 +30,9 @@ import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.LocalClient
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
+import com.storyteller_f.a.app.core.common.LocalClient
+import com.storyteller_f.a.app.core.utils.safeSink
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.MarkdownObject
@@ -42,7 +43,6 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
-import kotlinx.io.RawSink
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -238,7 +238,7 @@ fun generateLatexImage(
         if (SystemFileSystem.exists(output)) {
             output
         } else {
-            output.sink().buffered().use {
+            output.safeSink().buffered().use {
                 if (saveLatexToImage(tex, backgroundColor, textColor, size, it)) {
                     output
                 } else {
@@ -247,15 +247,6 @@ fun generateLatexImage(
             }
         }
     }
-}
-
-fun Path.sink(): RawSink {
-    parent?.let {
-        if (!SystemFileSystem.exists(it)) {
-            SystemFileSystem.createDirectories(it)
-        }
-    }
-    return SystemFileSystem.sink(this)
 }
 
 @Composable

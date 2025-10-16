@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.*
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.app.compose_app.compontents.DialogSaveState
-import com.storyteller_f.a.app.core.utils.loadFontFromLocal
 import com.storyteller_f.a.app.core.common.CachedLoadingHandler
 import com.storyteller_f.a.app.core.common.CompatPagingSource
 import com.storyteller_f.a.app.core.common.CustomRemoteMediator
@@ -16,6 +15,7 @@ import com.storyteller_f.a.app.core.common.RegularPagingSource
 import com.storyteller_f.a.app.core.common.SectionLoadParams
 import com.storyteller_f.a.app.core.common.SectionPagingSource
 import com.storyteller_f.a.app.core.common.SimpleViewModel
+import com.storyteller_f.a.app.core.utils.loadFontFromLocal
 import com.storyteller_f.a.client.core.*
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.ObjectTuple
