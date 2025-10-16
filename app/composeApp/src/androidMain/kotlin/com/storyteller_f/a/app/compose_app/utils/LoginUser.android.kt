@@ -1,14 +1,17 @@
 package com.storyteller_f.a.app.compose_app.utils
 
+import android.content.Context
 import android.security.keystore.KeyProperties
 import android.security.keystore.KeyProtection
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.Settings
+import com.russhwolf.settings.SharedPreferencesSettings
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.CryptoJvm
+import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.calcAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -194,5 +197,10 @@ class AndroidKeyStoreLoginHistoryManager(val defaultSettings: Settings) : LoginH
         keyStore.load(null)
         keyStore.deleteEntry(session)
     }
+}
+
+actual fun createSettings(name: String): Settings {
+    val context = appContextRef.get()!!
+    return SharedPreferencesSettings(context.getSharedPreferences(name, Context.MODE_PRIVATE))
 }
 

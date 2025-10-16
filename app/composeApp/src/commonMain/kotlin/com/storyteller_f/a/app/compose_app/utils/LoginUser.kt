@@ -5,10 +5,13 @@ import com.russhwolf.settings.Settings
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.russhwolf.settings.serialization.removeValue
+import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.RawUserPassInfo
+import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UserPass
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
 
 interface LoginHistoryManager {
     fun getSavedSession(): SavedSession
@@ -19,6 +22,9 @@ interface LoginHistoryManager {
 
     fun removeSession(session: String)
 }
+
+@Serializable
+data class LoginHistory(val last: String? = null, val current: String? = null)
 
 class DefaultLoginHistoryManager(val defaultSettings: Settings) : LoginHistoryManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
@@ -57,3 +63,20 @@ data class SavedSession(val list: List<String>, val last: String? = null, val cu
 
 expect fun buildLoginHistoryFactory(settings: Settings): LoginHistoryManager
 
+expect fun createSettings(name: String = "a-default"): Settings
+
+fun<U> SessionManager<U>.restoreFromStorage(settings: Settings) {
+    val sessionFactory = buildLoginHistoryFactory(settings)
+    val (list, _, current) = sessionFactory.getSavedSession()
+    if (current != null && list.contains(current)) {
+        val session = sessionFactory.buildSession(current)
+        if (session != null) {
+            model.updateState(ClientSessionState.Success(session))
+        }
+    }
+}
+
+fun clearStorage(settings: Settings) {
+    val sessionFactory = buildLoginHistoryFactory(settings)
+    sessionFactory.removeSession("default")
+}
