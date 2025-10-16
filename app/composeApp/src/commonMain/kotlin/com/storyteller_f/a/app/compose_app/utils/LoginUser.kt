@@ -56,4 +56,3 @@ data class SavedSession(val list: List<String>, val last: String? = null, val cu
 
 expect fun buildLoginUserSessionFactory(settings: Settings): LoginUserSessionManager
 
-expect fun unregisterPushService()

@@ -1,16 +1,23 @@
 package com.storyteller_f.a.app.compose_app.utils
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.awtClipboard
-import com.storyteller_f.a.app.compose_app.pages.ClientFile
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.storyteller_f.a.app.compose_app.uiViewModel
 import com.storyteller_f.shared.type.PrimaryKey
+import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
+import io.github.aakira.napier.Napier
+import io.github.vinceglb.filekit.utils.toFile
 import io.ktor.http.ContentType
 import kotlinx.io.Source
 import kotlinx.io.asSource
 import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemTemporaryDirectory
+import okio.Path.Companion.toOkioPath
 import org.apache.tika.Tika
 import java.awt.datatransfer.StringSelection
 import java.io.File
@@ -56,3 +63,27 @@ class RegularClientFile(val file: File) : ClientFile {
         return file.inputStream().asSource().buffered()
     }
 }
+
+private val store by lazy {
+    DataStoreManager(
+        PreferenceDataStoreFactory.createWithPath(
+            produceFile = {
+                val pb = Path(SystemTemporaryDirectory, "com.storyteller_f.a.app.compose_app.main.preferences_pb")
+                val file = pb.toFile()
+                if (!file.exists() && !file.createNewFile()) {
+                    Napier.e {
+                        "$file create failed"
+                    }
+                }
+                file.toOkioPath()
+            }
+        )
+    )
+}
+
+@Composable
+actual fun createCustomDataStoreManager(): DataStoreManager {
+    return store
+}
+
+actual fun unregisterPushService() = Unit

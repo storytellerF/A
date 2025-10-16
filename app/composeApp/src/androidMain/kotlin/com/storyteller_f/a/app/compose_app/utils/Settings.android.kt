@@ -14,18 +14,3 @@ actual fun createSettings(name: String): Settings {
     return SharedPreferencesSettings(context.getSharedPreferences(name, Context.MODE_PRIVATE))
 }
 
-private val store by lazy {
-    val context = appContextRef.get()!!
-    DataStoreManager(
-        PreferenceDataStoreFactory.createWithPath(
-            produceFile = {
-                context.filesDir.resolve("main.preferences_pb").toOkioPath()
-            }
-        )
-    )
-}
-
-@Composable
-actual fun createCustomDataStoreManager(): DataStoreManager {
-    return store
-}

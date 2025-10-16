@@ -9,9 +9,6 @@ import kotlinx.serialization.Serializable
 
 expect fun createSettings(name: String = "a-default"): Settings
 
-@Composable
-expect fun createCustomDataStoreManager(): DataStoreManager
-
 @Serializable
 data class LoginHistory(val last: String? = null, val current: String? = null)
 

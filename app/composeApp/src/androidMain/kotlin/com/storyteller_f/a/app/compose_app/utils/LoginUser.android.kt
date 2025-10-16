@@ -198,7 +198,3 @@ class AndroidKeyStoreLoginUserSessionManager(val defaultSettings: Settings) : Lo
     }
 }
 
-actual fun unregisterPushService() {
-    val context = appContextRef.get() ?: return
-    UnifiedPush.unregister(context, "A")
-}

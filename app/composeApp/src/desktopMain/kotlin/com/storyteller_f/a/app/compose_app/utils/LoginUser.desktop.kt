@@ -6,4 +6,3 @@ actual fun buildLoginUserSessionFactory(settings: Settings): LoginUserSessionMan
     return DefaultLoginUserSessionManager(settings)
 }
 
-actual fun unregisterPushService() = Unit
