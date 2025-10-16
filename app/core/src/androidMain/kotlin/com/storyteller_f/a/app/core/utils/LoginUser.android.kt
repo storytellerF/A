@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.utils
+package com.storyteller_f.a.app.core.utils
 
 import android.content.Context
 import android.security.keystore.KeyProperties
@@ -13,6 +13,7 @@ import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.calcAddress
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -21,10 +22,10 @@ import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
-import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import kotlin.io.encoding.Base64
 
 actual fun buildLoginHistoryFactory(settings: Settings): LoginHistoryManager {
     if (runCatching {
@@ -36,7 +37,10 @@ actual fun buildLoginHistoryFactory(settings: Settings): LoginHistoryManager {
             val keyStore = KeyStore.getInstance("AndroidKeyStore")
             keyStore.load(null)
             return AndroidKeyStoreLoginHistoryManager(settings)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Napier.e(e) {
+                "AndroidKeyStoreLoginHistoryManager failed"
+            }
         }
     }
     return DefaultLoginHistoryManager(settings)
@@ -131,13 +135,13 @@ class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
 }
 
 @Suppress("SameParameterValue")
-class AndroidKeyStoreLoginHistoryManager(val defaultSettings: Settings) : LoginHistoryManager {
+class AndroidKeyStoreLoginHistoryManager(val settings: Settings) : LoginHistoryManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun getSavedSession(): SavedSession {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
 
-        val loginHistory = defaultSettings.decodeValueOrNull(LoginHistory.serializer(), "login_history")
+        val loginHistory = settings.decodeValueOrNull(LoginHistory.serializer(), "login_history")
         val list = keyStore.aliases().toList()
         return SavedSession(list, loginHistory?.last, loginHistory?.current)
     }
@@ -146,7 +150,10 @@ class AndroidKeyStoreLoginHistoryManager(val defaultSettings: Settings) : LoginH
     override suspend fun addSession(session: RawUserPassInfo): UserPass {
         val current = "default"
         importEcdsaPrivateKey(current, session.pemPrivateKey)
-        defaultSettings.encodeValue(LoginHistory.serializer(), "login_history", LoginHistory(current, current))
+        settings.encodeValue(
+            LoginHistory.serializer(), "login_history",
+            LoginHistory(current, current)
+        )
         return AndroidKeyStoreUserPass(current)
     }
 
@@ -167,7 +174,7 @@ class AndroidKeyStoreLoginHistoryManager(val defaultSettings: Settings) : LoginH
             .replace("\\s".toRegex(), "") // 移除所有空白字符
 
         // 解码 Base64 编码的私钥
-        val privateKeyBytes = Base64.getDecoder().decode(privateKeyPem)
+        val privateKeyBytes = Base64.decode(privateKeyPem, 0, privateKeyPem.length)
 
         // 创建 PKCS8EncodedKeySpec
         val keySpec = PKCS8EncodedKeySpec(privateKeyBytes)
