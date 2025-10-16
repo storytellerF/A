@@ -14,6 +14,20 @@ plugins {
 val buildIosTarget = project.findProperty("target.ios") == "true"
 val buildWasmTarget = project.findProperty("target.wasm") == "true"
 kotlin {
+   androidTarget {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+        }
+    }
+
+    if (buildIosTarget) {
+        iosX64()
+        iosArm64()
+        iosSimulatorArm64()
+    }
+
+    jvm()
+
     if (buildWasmTarget) {
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
@@ -35,27 +49,12 @@ kotlin {
         }
     }
 
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
-    }
-
-    if (buildIosTarget) {
-        iosX64()
-        iosArm64()
-        iosSimulatorArm64()
-    }
-
-    jvm()
-
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     applyDefaultHierarchyTemplate()
 
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
-
             implementation(libs.androidx.activity.compose)
 
             implementation(libs.jlatexmath.android)
@@ -153,9 +152,9 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.swing)
 
             implementation(libs.jlatexmath)
-            implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.vlcj)
             implementation(libs.jlayer)
             implementation(libs.llama)

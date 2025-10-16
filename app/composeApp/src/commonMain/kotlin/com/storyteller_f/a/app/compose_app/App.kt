@@ -95,12 +95,6 @@ import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-object StaticObj {
-    init {
-        Napier.base(kmpLogger)
-    }
-}
-
 fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
 
@@ -138,11 +132,11 @@ val LocalDatabase = compositionLocalOf<ModelStorage> {
     error("No database")
 }
 
-val LocalSessionManager = compositionLocalOf<CustomSessionManager> {
+val LocalSessionManager = compositionLocalOf<CustomUserSessionManager> {
     error("No user session")
 }
 
-val LocalMainSessionManager = compositionLocalOf<CustomSessionManager> {
+val LocalMainSessionManager = compositionLocalOf<CustomUserSessionManager> {
     error("No main user session")
 }
 
@@ -183,7 +177,6 @@ data class LocalMediaPlaySession(val id: String, val uuid: Uuid)
 
 @Composable
 fun App() {
-    StaticObj
     CommonEntry {
         val playerSession by globalPlayerState
         val isPip = rememberIsInPipMode()
@@ -467,7 +460,7 @@ private suspend fun sendTopicNotification(
     }
 }
 
-class CustomSessionManager(
+class CustomUserSessionManager(
     val proxy: UserSessionManager,
     val settings: Settings,
 ) : UserSessionManager by proxy
@@ -477,9 +470,9 @@ fun createCustomUserSessionManager(
     webSocketUrl: String,
     createClient: (UserSessionModel, CookiesStorage) -> HttpClient,
     onReceiveFrame: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
-): CustomSessionManager {
+): CustomUserSessionManager {
     val settings = createSettings(settingsName)
     val customSessionManager = createUserSessionManager(webSocketUrl, createClient, onReceiveFrame)
     customSessionManager.restoreFromStorage(settings)
-    return CustomSessionManager(customSessionManager, settings)
+    return CustomUserSessionManager(customSessionManager, settings)
 }

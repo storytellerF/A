@@ -35,6 +35,29 @@ val buildType = project.findProperty("server.buildType") as String
 val isLlamaEnable = project.findProperty("llama.enable") == "true"
 
 kotlin {
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+        }
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
+    }
+
+    if (buildIosTarget) {
+        listOf(
+            iosX64(),
+            iosArm64(),
+            iosSimulatorArm64()
+        ).forEach { iosTarget ->
+            iosTarget.binaries.framework {
+                baseName = "ComposeApp"
+                isStatic = true
+            }
+        }
+    }
+
+    jvm("desktop")
+
     if (buildWasmTarget) {
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
@@ -54,29 +77,6 @@ kotlin {
         }
     }
 
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
-    }
-
-    jvm("desktop")
-
-    if (buildIosTarget) {
-        listOf(
-            iosX64(),
-            iosArm64(),
-            iosSimulatorArm64()
-        ).forEach { iosTarget ->
-            iosTarget.binaries.framework {
-                baseName = "ComposeApp"
-                isStatic = true
-            }
-        }
-    }
-
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     applyDefaultHierarchyTemplate()
 
@@ -86,11 +86,8 @@ kotlin {
         val headlessTest by creating {
             dependsOn(commonTest.get())
         }
-        headlessTest.dependencies {
-        }
         androidMain.dependencies {
             implementation(compose.preview)
-
             implementation(libs.androidx.activity.compose)
 
             implementation(libs.jlatexmath.android)
@@ -142,6 +139,7 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
+            implementation(compose.components.uiToolingPreview)
             implementation(libs.navigation.compose)
 
             implementation(projects.shared)
@@ -191,8 +189,6 @@ kotlin {
             implementation(libs.emoji.compose.m3)
             implementation(libs.connectivity.compose)
             implementation(libs.connectivity.core)
-
-
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -203,9 +199,9 @@ kotlin {
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.swing)
 
             implementation(libs.jlatexmath)
-            implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.vlcj)
             implementation(libs.jlayer)
             implementation(libs.llama)
@@ -230,9 +226,6 @@ composeCompiler {
     stabilityConfigurationFiles.addAll(rootProject.layout.projectDirectory.file("stability_config.conf"))
 }
 
-fun getenv(key: String): String? {
-    return System.getenv(key) ?: System.getenv(key.uppercase())
-}
 
 
 android {
@@ -322,8 +315,6 @@ android {
     }
     buildFeatures {
         compose = true
-    }
-    buildFeatures {
         buildConfig = true
     }
     dependencies {
@@ -564,4 +555,8 @@ private fun KotlinDependencyHandler.implementation(
     configure: ExternalModuleDependency.() -> Unit
 ) {
     implementation(dependencyNotation.get().toString(), configure)
+}
+
+fun getenv(key: String): String? {
+    return System.getenv(key) ?: System.getenv(key.uppercase())
 }

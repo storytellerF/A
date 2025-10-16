@@ -7,7 +7,9 @@ import com.kdroid.composenotification.builder.AppConfig
 import com.kdroid.composenotification.builder.NotificationInitializer
 import com.storyteller_f.a.app.compose_app.common.DownloaderImpl
 import com.storyteller_f.a.app.compose_app.common.UploaderImpl
+import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadCryptoLibIfNeed
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import java.awt.BorderLayout
@@ -28,6 +30,7 @@ val uiViewModel = UIViewModel(
 
 @OptIn(DelicateCoroutinesApi::class)
 fun main() {
+    Napier.base(kmpLogger)
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
         Dialog(Frame(), e.message ?: "Error").apply {
             layout = BorderLayout()

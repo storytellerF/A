@@ -1,6 +1,6 @@
 package com.storyteller_f.a.app.compose_app.common
 
-import com.storyteller_f.a.app.compose_app.CustomSessionManager
+import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.pages.ClientFile
 import com.storyteller_f.a.app.compose_app.pages.getUploadDataFromClipFile
@@ -70,7 +70,7 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         modelStorage: ModelStorage,
         myUid: PrimaryKey,
         pathHash: String,
-        userSession: CustomSessionManager,
+        userSession: CustomUserSessionManager,
         collection: UploadCollection
     ) {
         val uploadInfo =
@@ -83,7 +83,7 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
 
     @OptIn(ExperimentalTime::class)
     private suspend fun uploadIfNeed(
-        userSession: CustomSessionManager,
+        userSession: CustomUserSessionManager,
         myUid: PrimaryKey,
         clipFile: ClientFile,
         modelStorage: ModelStorage,
@@ -115,7 +115,7 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
     }
 
     private suspend fun upload(
-        userSession: CustomSessionManager,
+        userSession: CustomUserSessionManager,
         myUid: PrimaryKey,
         clipFile: ClientFile,
         modelStorage: ModelStorage,

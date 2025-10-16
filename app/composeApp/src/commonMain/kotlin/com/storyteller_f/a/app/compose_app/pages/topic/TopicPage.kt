@@ -43,7 +43,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.storyteller_f.a.app.compose_app.CustomSessionManager
+import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
@@ -357,7 +357,7 @@ private fun sendTopicInTopicPage(
     snackBarHostState: SnackbarHostState,
     globalTask: GlobalTask,
     key: String,
-    sessionManager: CustomSessionManager,
+    sessionManager: CustomUserSessionManager,
     topic: TopicInfo,
     updateInput: (String) -> Unit,
     focusManager: FocusManager,

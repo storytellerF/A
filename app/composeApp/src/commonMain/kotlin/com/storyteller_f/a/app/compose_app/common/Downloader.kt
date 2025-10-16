@@ -1,6 +1,6 @@
 package com.storyteller_f.a.app.compose_app.common
 
-import com.storyteller_f.a.app.compose_app.CustomSessionManager
+import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.client.core.serviceCatching
 import com.storyteller_f.shared.model.FileInfo
@@ -69,7 +69,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
     private suspend fun resumeIfNeed(
         fileInfo: FileInfo,
         modelStorage: ModelStorage,
-        userSession: CustomSessionManager
+        userSession: CustomUserSessionManager
     ) {
         val document =
             modelStorage.downloadInfoStorage.getDocument(DownloadCollection, fileInfo.id) ?: return
@@ -77,7 +77,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
     }
 
     private suspend fun downloadIfNeed(
-        userSession: CustomSessionManager,
+        userSession: CustomUserSessionManager,
         path: Path,
         fileInfo: FileInfo,
         modelStorage: ModelStorage,
@@ -103,7 +103,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
     }
 
     private suspend fun download(
-        userSession: CustomSessionManager,
+        userSession: CustomUserSessionManager,
         modelStorage: ModelStorage,
         fileInfo: FileInfo,
         path: Path,
@@ -155,7 +155,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
         downloadInfo: DownloadInfo,
         modelStorage: ModelStorage,
         id: PrimaryKey,
-        userSession: CustomSessionManager,
+        userSession: CustomUserSessionManager,
         fileInfo: FileInfo,
         path: Path
     ): Boolean {

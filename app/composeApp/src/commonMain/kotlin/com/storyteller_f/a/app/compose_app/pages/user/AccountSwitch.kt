@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.storyteller_f.a.app.compose_app.CustomSessionManager
+import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalMainSessionManager
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
@@ -102,7 +102,7 @@ fun AccountSwitch(accountSwitcher: AccountSwitcher, switchToMain: () -> Unit, sw
 }
 
 @Composable
-fun isSwitched(): Pair<CustomSessionManager, Boolean> {
+fun isSwitched(): Pair<CustomUserSessionManager, Boolean> {
     val currentUserSessionManager = LocalSessionManager.current
     val mainSessionManager = LocalMainSessionManager.current
     val currentAddress by currentUserSessionManager.address.collectAsState()
