@@ -47,9 +47,9 @@ import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.compose_app.utils.createCustomDataStoreManager
-import com.storyteller_f.a.app.compose_app.utils.createSettings
+import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.compose_app.utils.getUiViewModel
-import com.storyteller_f.a.app.compose_app.utils.restoreFromStorage
+import com.storyteller_f.a.app.core.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.UserPass
@@ -354,8 +354,7 @@ private fun CommonEntryInternal(
         tintProvider = LocalContentColor,
         weight = FontWeight.Normal
     ) {
-        val dataStoreManager =
-            createCustomDataStoreManager()
+        val dataStoreManager = createCustomDataStoreManager()
         ProvideDataStoreManager(dataStoreManager) {
             setPreferences {
                 "gpt_model" defaultValue ""
