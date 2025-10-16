@@ -21,10 +21,10 @@ import com.storyteller_f.a.app.compose_app.compontents.*
 import com.storyteller_f.a.app.compose_app.model.OnUserUpdated
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.uploadPath
-import com.storyteller_f.a.app.compose_app.utils.ImageFormat
-import com.storyteller_f.a.app.compose_app.utils.androidAllowHardware
-import com.storyteller_f.a.app.compose_app.utils.coilImageToImageBitmap
-import com.storyteller_f.a.app.compose_app.utils.saveImageBitmap
+import com.storyteller_f.a.app.core.utils.ImageFormat
+import com.storyteller_f.a.app.core.utils.androidAllowHardware
+import com.storyteller_f.a.app.core.utils.coilImageToImageBitmap
+import com.storyteller_f.a.app.core.utils.saveImageBitmap
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.shared.model.Dimension

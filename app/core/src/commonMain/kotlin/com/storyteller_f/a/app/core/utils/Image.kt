@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.utils
+package com.storyteller_f.a.app.core.utils
 
 import androidx.compose.ui.graphics.ImageBitmap
 import coil3.Image

@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.utils
+package com.storyteller_f.a.app.core.utils
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asComposeImageBitmap
@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.asSkiaBitmap
 import coil3.Image
 import coil3.request.ImageRequest
 import coil3.toBitmap
-import com.storyteller_f.a.app.compose_app.utils.ImageFormat.*
+import com.storyteller_f.a.app.core.utils.ImageFormat.*
 import kotlinx.io.files.Path
 import org.jetbrains.skia.EncodedImageFormat
 

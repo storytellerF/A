@@ -49,7 +49,7 @@ import com.storyteller_f.a.app.compose_app.service.buildTranslatePrompt
 import com.storyteller_f.a.app.compose_app.snapshot
 import com.storyteller_f.a.app.compose_app.success
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
-import com.storyteller_f.a.app.compose_app.utils.getCurrentLanguage
+import com.storyteller_f.a.app.core.utils.getCurrentLanguage
 import com.storyteller_f.a.app.compose_app.utils.setText
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.getTopicSnapshot

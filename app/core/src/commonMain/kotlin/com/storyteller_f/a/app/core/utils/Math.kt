@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.utils
+package com.storyteller_f.a.app.core.utils
 
 fun gcd(a: Int, b: Int): Int {
     return if (b == 0) a else gcd(b, a % b)

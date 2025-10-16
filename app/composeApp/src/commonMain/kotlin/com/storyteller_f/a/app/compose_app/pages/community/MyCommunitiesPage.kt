@@ -31,7 +31,7 @@ import com.storyteller_f.a.app.compose_app.compontents.topPrepend
 import com.storyteller_f.a.app.compose_app.model.CommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.model.createJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.toRoute
-import com.storyteller_f.a.app.compose_app.utils.lcm
+import com.storyteller_f.a.app.core.utils.lcm
 import com.storyteller_f.shared.model.CommunityInfo
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
