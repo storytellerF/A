@@ -24,10 +24,10 @@ import com.storyteller_f.a.app.compose_app.CommunityScreen
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
 import com.storyteller_f.a.app.compose_app.compontents.CommunityPoster
-import com.storyteller_f.a.app.compose_app.compontents.StateView
-import com.storyteller_f.a.app.compose_app.compontents.bottomAppending
+import com.storyteller_f.a.app.core.compontents.StateView
+import com.storyteller_f.a.app.core.compontents.bottomAppending
 import com.storyteller_f.a.app.compose_app.compontents.rememberCommonDialogController
-import com.storyteller_f.a.app.compose_app.compontents.topPrepend
+import com.storyteller_f.a.app.core.compontents.topPrepend
 import com.storyteller_f.a.app.compose_app.model.CommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.model.createJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.toRoute

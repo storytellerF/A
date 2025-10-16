@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.compontents
+package com.storyteller_f.a.app.core.compontents
 
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.runtime.Composable

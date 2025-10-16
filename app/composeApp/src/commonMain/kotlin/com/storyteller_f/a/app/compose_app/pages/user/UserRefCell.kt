@@ -15,7 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.compontents.RefCellStateView
+import com.storyteller_f.a.app.core.compontents.RefCellStateView
 import com.storyteller_f.a.app.compose_app.compontents.UserIcon
 import com.storyteller_f.a.app.compose_app.model.UserViewModel
 import com.storyteller_f.a.app.compose_app.model.createUserViewModel
@@ -71,7 +71,7 @@ fun UserCell(
     hideBackground: Boolean,
     iconClickable: Boolean = true,
     cellClickable: Boolean = true,
-    size: Dp = 40.dp,
+    iconSize: Dp = 40.dp,
     onClickCell: (UserInfo) -> Unit
 ) {
     val shape = RoundedCornerShape(8.dp)
@@ -94,7 +94,7 @@ fun UserCell(
         UserIcon(
             userInfo,
             setClickEvent = iconClickable,
-            size = size
+            size = iconSize
         )
         if (userInfo != null) {
             Column {

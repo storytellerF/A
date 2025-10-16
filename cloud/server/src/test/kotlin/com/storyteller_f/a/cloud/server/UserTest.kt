@@ -83,13 +83,13 @@ class UserTest {
     fun `test panel login`() {
         test {
             val panelTuple = attachPanelSession {
-                assertListSize(0, getAllUsers())
+                assertListSize(0, getAllUsers(PaginationQuery()))
             }
             attachSession {
 
             }
             loginPanelSession(panelTuple) {
-                assertListSize(1, getAllUsers())
+                assertListSize(1, getAllUsers(PaginationQuery()))
             }
         }
     }

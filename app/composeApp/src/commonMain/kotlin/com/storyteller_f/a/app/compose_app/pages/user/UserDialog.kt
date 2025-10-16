@@ -22,12 +22,13 @@ import com.storyteller_f.a.app.core.utils.clearStorage
 import com.storyteller_f.a.app.compose_app.utils.createConnectivity
 import com.storyteller_f.a.app.compose_app.utils.unregisterPushService
 import com.storyteller_f.a.client.core.ClientSessionState
-import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.getData
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.getUserInfoByAid
 import com.storyteller_f.a.client.core.signIn
 import com.storyteller_f.a.client.core.signOut
+import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.UserInfo
 import dev.jordond.connectivity.Connectivity
@@ -68,7 +69,7 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
                 false,
                 iconClickable = false,
                 cellClickable = !isUserPage,
-                size = 60.dp
+                iconSize = 60.dp
             ) {
                 dismiss()
                 appNav.gotoUser(it.id)
@@ -154,7 +155,7 @@ private fun UserDialogMenuList(
 }
 
 suspend fun signOut(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     globalDialogController: GlobalDialogController,
 ) {
     val settings = (sessionManager as CustomUserSessionManager).settings
@@ -168,7 +169,7 @@ suspend fun signOut(
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-private fun refreshMyInfo(my: UserInfo?, sessionManager: SessionManager) {
+private fun refreshMyInfo(my: UserInfo?, sessionManager: UserSessionManager) {
     GlobalScope.launch {
         try {
             val sessionModel = sessionManager.model

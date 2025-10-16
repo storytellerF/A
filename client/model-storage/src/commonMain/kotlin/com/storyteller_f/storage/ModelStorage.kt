@@ -22,6 +22,7 @@ sealed interface UserCollection {
     data object Users : UserCollection
     data class SearchUser(val word: String) : UserCollection
     data class Members(val word: String, val objectId: PrimaryKey) : UserCollection
+    data object AllUsers : UserCollection
 }
 
 sealed interface TopicCollection {

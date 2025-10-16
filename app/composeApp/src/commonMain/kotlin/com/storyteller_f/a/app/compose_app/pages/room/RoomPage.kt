@@ -27,7 +27,7 @@ import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.compontents.*
 import com.storyteller_f.a.app.compose_app.compontents.RoomTopicList
-import com.storyteller_f.a.app.compose_app.compontents.StateView
+import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.compose_app.model.*
 import com.storyteller_f.a.app.compose_app.model.createRoomTopicsViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell

@@ -34,6 +34,8 @@ import com.mikepenz.markdown.compose.extendedspans.ExtendedSpans
 import com.mikepenz.markdown.compose.extendedspans.drawBehind
 import com.mikepenz.markdown.model.ImageTransformer
 import com.mikepenz.markdown.utils.getUnescapedTextInNode
+import com.storyteller_f.a.app.core.compontents.CustomMarkdownImage
+import com.storyteller_f.a.app.core.compontents.getImageDimension
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.readInlineMath
 import kotlinx.collections.immutable.ImmutableMap

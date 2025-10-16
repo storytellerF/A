@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.compontents
+package com.storyteller_f.a.app.core.compontents
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,11 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichText
-import com.storyteller_f.a.app.compose_app.Res
-import com.storyteller_f.a.app.compose_app.refresh
 import com.storyteller_f.a.client.core.ServerErrorException
 import io.ktor.client.network.sockets.*
-import org.jetbrains.compose.resources.stringResource
+
+fun ServerErrorException.isHtmlContent(): Boolean = text.startsWith("<html") || text.startsWith("<!DOCTYPE html")
 
 @Composable
 fun ExceptionView(throwable: Throwable, modifier: Modifier = Modifier) {
@@ -58,7 +57,7 @@ fun ExceptionCell(
         Button({
             extraRefresh()
         }, modifier = Modifier) {
-            Text(stringResource(Res.string.refresh))
+            Text("Refresh")
         }
     }
 }

@@ -11,10 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
-import com.storyteller_f.a.app.compose_app.compontents.StateView
+import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.compose_app.compontents.UserIcon
-import com.storyteller_f.a.app.compose_app.compontents.bottomAppending
-import com.storyteller_f.a.app.compose_app.compontents.topPrepend
+import com.storyteller_f.a.app.core.compontents.bottomAppending
+import com.storyteller_f.a.app.core.compontents.topPrepend
 import com.storyteller_f.a.app.compose_app.model.TitlesViewModel
 import com.storyteller_f.a.app.compose_app.pages.room.RoomIcon
 import com.storyteller_f.shared.model.TitleInfo

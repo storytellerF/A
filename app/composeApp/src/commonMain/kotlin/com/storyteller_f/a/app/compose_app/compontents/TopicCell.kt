@@ -24,6 +24,8 @@ import com.storyteller_f.a.app.compose_app.pages.topic.EmojiPicker
 import com.storyteller_f.a.app.compose_app.pages.topic.pinOrUnpinTopic
 import com.storyteller_f.a.app.compose_app.pages.user.UserCell
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
+import com.storyteller_f.a.app.core.compontents.CustomIcon
+import com.storyteller_f.a.app.core.compontents.IconRes
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import dev.tclement.fonticons.FontIcon

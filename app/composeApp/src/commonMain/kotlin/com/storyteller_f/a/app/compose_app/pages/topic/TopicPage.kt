@@ -52,12 +52,12 @@ import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.compose_app.compontents.GlobalTask
 import com.storyteller_f.a.app.compose_app.compontents.InteractionRow
-import com.storyteller_f.a.app.compose_app.compontents.StateView
+import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.compose_app.compontents.TopicCell
 import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
 import com.storyteller_f.a.app.compose_app.compontents.UserIcon
-import com.storyteller_f.a.app.compose_app.compontents.bottomAppending
-import com.storyteller_f.a.app.compose_app.compontents.topPrepend
+import com.storyteller_f.a.app.core.compontents.bottomAppending
+import com.storyteller_f.a.app.core.compontents.topPrepend
 import com.storyteller_f.a.app.compose_app.compontents.use
 import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.model.TopicViewModel

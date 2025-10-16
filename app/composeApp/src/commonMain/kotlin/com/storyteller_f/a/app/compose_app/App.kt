@@ -86,6 +86,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -105,10 +106,6 @@ interface ClientFileProvider {
 
 val LocalAppNav = compositionLocalOf<AppNav> {
     error("no app nav")
-}
-
-val LocalClient = compositionLocalOf {
-    HttpClient()
 }
 
 val LocalWsClient = compositionLocalOf<WebSocketClient> {
@@ -284,7 +281,9 @@ class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, 
         }
     }
     val guestDatabase = RoomModelStorage(getRoomDatabase("guest"))
-    val database = sessionManager.model.state.map {
+    val database = sessionManager.model.state.distinctUntilChangedBy {
+        it
+    }.map {
         if (it is ClientSessionState.Success) {
             val address = it.session.address().getOrThrow()
             RoomModelStorage(getRoomDatabase(address))

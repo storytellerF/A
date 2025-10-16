@@ -20,7 +20,6 @@ class DialogSaveState {
     }
 }
 
-fun ServerErrorException.isHtmlContent(): Boolean = text.startsWith("<html") || text.startsWith("<!DOCTYPE html")
 
 @Composable
 fun DialogContainer(block: @Composable ColumnScope.() -> Unit) {
@@ -102,13 +101,4 @@ class CommonDialogController(val shown: MutableState<Boolean> = mutableStateOf(f
     fun update(new: Boolean) {
         shown.value = new
     }
-}
-
-fun Modifier.clickableIfNeed(onClick: (() -> Unit)?): Modifier {
-    if (onClick != null) {
-        return clickable {
-            onClick.invoke()
-        }
-    }
-    return this
 }

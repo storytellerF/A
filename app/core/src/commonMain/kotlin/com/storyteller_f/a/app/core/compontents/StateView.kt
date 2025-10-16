@@ -1,8 +1,9 @@
-package com.storyteller_f.a.app.compose_app.compontents
+package com.storyteller_f.a.app.core.compontents
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
@@ -21,16 +22,13 @@ import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.storyteller_f.a.app.compose_app.Res
-import com.storyteller_f.a.app.compose_app.no_content_yet
+import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.core.common.PagingViewModel
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
 
 const val REFRESH_AFTER = 300L
 
@@ -91,7 +89,7 @@ fun <T : Any> StateView(
                     }
 
                     is LoadingState.Done ->
-                        Text(text = stringResource(Res.string.no_content_yet))
+                        Text(text = "No content yet")
 
                     else -> CircularProgressIndicator()
                 }
@@ -99,6 +97,22 @@ fun <T : Any> StateView(
         }
         PullRefreshIndicator(pullRefreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
+}
+
+fun <T : Any> LazyListScope.pagingItems(
+    lazyPagingItems: LazyPagingItems<T>,
+    key: ((it: T) -> Any)? = null,
+    contentType: (index: Int) -> Any? = { null },
+    itemContent: @Composable LazyItemScope.(index: Int) -> Unit,
+) {
+    val k = if (key != null) {
+        lazyPagingItems.itemKey {
+            key(it)
+        }
+    } else {
+        null
+    }
+    items(lazyPagingItems.itemSnapshotList.size, k, contentType, itemContent)
 }
 
 @Composable
@@ -184,7 +198,6 @@ fun <T : Any> RefCellStateView(
 ) {
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
-    val alertDialogController = rememberAlertDialogController()
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
         data.let {
@@ -194,9 +207,7 @@ fun <T : Any> RefCellStateView(
                 when (val localState = state) {
                     is LoadingState.Error -> Box(
                         modifier = Modifier.fillMaxSize().clickable {
-                            scope.launch {
-                                alertDialogController.showErrorMessage(localState.e)
-                            }
+                            //TODO show message
                         }.padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -214,10 +225,6 @@ fun <T : Any> RefCellStateView(
                 }
             }
         }
-    }
-    CustomAlertDialog(alertDialogController, {
-        alertDialogController.close()
-    }) {
     }
 }
 
