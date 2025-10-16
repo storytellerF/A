@@ -46,7 +46,7 @@ actual fun buildLoginHistoryFactory(settings: Settings): LoginHistoryManager {
     return DefaultLoginHistoryManager(settings)
 }
 
-class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
+data class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
     @OptIn(ExperimentalStdlibApi::class)
     override suspend fun signature(data: String): Result<String> {
         return runCatching {

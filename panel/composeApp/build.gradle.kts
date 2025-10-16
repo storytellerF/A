@@ -324,18 +324,16 @@ compose.desktop {
 }
 
 buildkonfig {
-    packageName = "com.storyteller_f.a.app.compose_app"
-    objectName = "AppConfig"
+    packageName = "com.storyteller_f.a.app.core"
+    objectName = "PanelConfig"
     val properties = Properties().apply {
         val file = layout.projectDirectory.file("../../${flavorStr}.env").asFile
         if (file.exists())
             load(FileInputStream(file))
     }
     val serverUrl = properties["SERVER_URL"] as? String
-    val wsServerUrl = properties["WS_SERVER_URL"] as? String
     defaultConfigs {
         buildConfigField(STRING, "SERVER_URL", serverUrl ?: "", const = true)
-        buildConfigField(STRING, "WS_SERVER_URL", wsServerUrl ?: "", const = true)
         buildConfigField(STRING, "BUILD_TYPE", buildType, const = true)
         buildConfigField(STRING, "FLAVOR", flavorStr, const = true)
         buildConfigField(BOOLEAN, "ENABLE_LOGIN_CHECK", "false", const = true)

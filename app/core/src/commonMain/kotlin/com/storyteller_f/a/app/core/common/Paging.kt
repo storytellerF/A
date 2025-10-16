@@ -125,11 +125,10 @@ class SectionPagingSource<DATUM : Any>(
 }
 
 class RegularPagingSource<DATUM : Any>(
-    val sessionManager: UserSessionManager,
-    val service: suspend UserSessionManager.(String?, Int) -> Result<ServerResponse<DATUM>>
+    val service: suspend (String?, Int) -> Result<ServerResponse<DATUM>>
 ) : PagingSource<String, DATUM>() {
     override suspend fun load(params: LoadParams<String>): LoadResult<String, DATUM> {
-        return sessionManager.service(params.key, params.loadSize).map {
+        return service(params.key, params.loadSize).map {
             val pagination = it.pagination
             APagingData(
                 it.data,

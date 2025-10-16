@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.pages.community.CommunityDialog
+import com.storyteller_f.a.app.core.compontents.CommonImage
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.utils.safeFirstUnicode
 

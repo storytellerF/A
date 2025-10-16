@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.storyteller_f.a.app.core.compontents.ExceptionView
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf

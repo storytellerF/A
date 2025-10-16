@@ -115,7 +115,7 @@ class CommunitiesViewModel(
             IntermediatePagingSource(
                 SectionPagingSource(
                     listOf(
-                        RegularPagingSource(sessionManager) { key, size ->
+                        RegularPagingSource { key, size ->
                             sessionManager.searchCommunity(
                                 size,
                                 joinStatusSearch,
@@ -125,7 +125,7 @@ class CommunitiesViewModel(
                                 PosterSearch.HAS_POSTER
                             )
                         },
-                        RegularPagingSource(sessionManager) { key, size ->
+                        RegularPagingSource { key, size ->
                             sessionManager.searchCommunity(
                                 size,
                                 joinStatusSearch,
@@ -170,10 +170,8 @@ class RoomsViewModel(
         remoteMediator = CustomRemoteMediator(
             modelStorage,
             modelCollection.getName(),
-            RegularPagingSource(
-                sessionManager
-            ) { key, size ->
-                searchRooms(size, key, joinStatusSearch, word, community)
+            RegularPagingSource { key, size ->
+                sessionManager.searchRooms(size, key, joinStatusSearch, word, community)
             },
         ) { data, clean ->
             if (clean) {
@@ -208,8 +206,8 @@ class WorldViewModel(
             IntermediatePagingSource(
                 SectionPagingSource(
                     listOf(
-                        RegularPagingSource(sessionManager) { loadKey, size ->
-                            getRecommendTopics(PaginationQuery(loadKey, size = size))
+                        RegularPagingSource { loadKey, size ->
+                            sessionManager.getRecommendTopics(PaginationQuery(loadKey, size = size))
                         }
                     )
                 ),
@@ -253,20 +251,16 @@ class TopicsViewModel(
             IntermediatePagingSource(
                 SectionPagingSource(
                     listOf(
-                        RegularPagingSource(
-                            sessionManager
-                        ) { loadKey, size ->
-                            getTopicList(
+                        RegularPagingSource { loadKey, size ->
+                            sessionManager.getTopicList(
                                 type,
                                 id,
                                 TopicPinSearch.PINNED,
                                 PaginationQuery(loadKey, null, size = size)
                             )
                         },
-                        RegularPagingSource(
-                            sessionManager
-                        ) { loadKey, size ->
-                            getTopicList(
+                        RegularPagingSource { loadKey, size ->
+                            sessionManager.getTopicList(
                                 type,
                                 id,
                                 TopicPinSearch.UNPINNED,
@@ -374,9 +368,7 @@ class TopicSearchViewModel(
         remoteMediator = CustomRemoteMediator(
             modelStorage,
             modelCollection.getName(),
-            RegularPagingSource(
-                sessionManager
-            ) { key, size ->
+            RegularPagingSource { key, size ->
                 sessionManager.searchTopics(size, word, parentId, parentType, key)
             },
         ) { data, clean ->
@@ -410,9 +402,7 @@ class MediaListViewModel(
         remoteMediator = CustomRemoteMediator(
             modelStorage,
             modelCollection.getName(),
-            RegularPagingSource(
-                sessionManager
-            ) { key, size ->
+            RegularPagingSource { key, size ->
                 sessionManager.getMediaList(objectId, objectType, key, size)
             },
         ) { data, clean ->
@@ -487,13 +477,13 @@ class MemberViewModel(
         remoteMediator = CustomRemoteMediator(
             modelStorage,
             modelCollection.getName(),
-            RegularPagingSource(
-                sessionManager
-            ) { key, size ->
-                when (objectType) {
-                    ObjectType.COMMUNITY -> searchCommunityMembers(objectId, key, size, word)
-                    ObjectType.ROOM -> searchRoomMembers(objectId, key, size, word)
-                    else -> searchAllMembers(key, size, word)
+            RegularPagingSource { key, size ->
+                sessionManager.run {
+                    when (objectType) {
+                        ObjectType.COMMUNITY -> searchCommunityMembers(objectId, key, size, word)
+                        ObjectType.ROOM -> searchRoomMembers(objectId, key, size, word)
+                        else -> searchAllMembers(key, size, word)
+                    }
                 }
             },
         ) { data, clean ->
@@ -525,9 +515,7 @@ class ReactionsViewModel(
         remoteMediator = CustomRemoteMediator(
             modelStorage,
             modelCollection.getName(),
-            RegularPagingSource(
-                sessionManager
-            ) { key, size ->
+            RegularPagingSource { key, size ->
                 sessionManager.getReactions(objectId, size, key)
             },
         ) { data, clean ->
@@ -635,9 +623,7 @@ class TitlesViewModel(
         remoteMediator = CustomRemoteMediator(
             modelStorage,
             modelCollection.getName(),
-            RegularPagingSource(
-                sessionManager
-            ) { key, size ->
+            RegularPagingSource { key, size ->
                 sessionManager.userTitles(uid, key, size, searchType, status, type, scopeId)
             },
         ) { data, clean ->
@@ -752,9 +738,7 @@ class ChildAccountsViewModel(
         remoteMediator = CustomRemoteMediator(
             modelStorage,
             modelCollection.NAME,
-            RegularPagingSource(
-                sessionManager
-            ) { key, size ->
+            RegularPagingSource { key, size ->
                 sessionManager.getAlternativeAccounts(key, size)
             },
         ) { data, clean ->

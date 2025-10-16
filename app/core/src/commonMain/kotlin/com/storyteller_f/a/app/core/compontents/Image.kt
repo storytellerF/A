@@ -1,8 +1,10 @@
-package com.storyteller_f.a.app.compose_app.compontents
+package com.storyteller_f.a.app.core.compontents
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -19,9 +21,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.ashampoo.kim.Kim
 import com.mikepenz.markdown.model.ImageData
-import com.storyteller_f.a.app.compose_app.AppConfig
-import com.storyteller_f.a.app.compose_app.LocalClient
-import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
+import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
@@ -55,7 +55,7 @@ fun CommonImage(
 
 @Composable
 fun ImageError() {
-    CustomIcon(IconRes.Font(MaterialSymbolsOutlined.Error))
+    CustomIcon(IconRes.Vector(Icons.Default.Error))
 }
 
 @Composable
@@ -70,9 +70,7 @@ fun globalLoader(url: String): ImageRequest {
     val client = LocalClient.current
     val platformContext = LocalPlatformContext.current
     return remember(url) {
-        @Suppress("KotlinConstantConditions")
-        val data =
-            if (AppConfig.BUILD_TYPE == "prod") url.replace("http://", "https://") else url
+        val data = url
         ImageRequest.Builder(platformContext).data(data).crossfade(true).fetcherFactory(
             KtorNetworkFetcherFactory(client)
         ).build()

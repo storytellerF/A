@@ -36,7 +36,7 @@ import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
 import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
 import com.storyteller_f.a.app.compose_app.compontents.DialogContainer
-import com.storyteller_f.a.app.compose_app.compontents.ExceptionView
+import com.storyteller_f.a.app.core.compontents.ExceptionView
 import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.compontents.SheetContainer
 import com.storyteller_f.a.app.compose_app.compontents.TopicContentField

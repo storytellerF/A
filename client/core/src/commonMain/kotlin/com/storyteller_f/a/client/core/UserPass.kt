@@ -28,7 +28,7 @@ data class RawUserPassInfo(
     val address: String,
 )
 
-class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
+data class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
     override suspend fun signature(data: String): Result<String> {
         return com.storyteller_f.shared.signature(rawUSerPass.pemPrivateKey, data)
     }

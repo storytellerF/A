@@ -8,8 +8,8 @@ import com.storyteller_f.shared.SignUpPack
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
-suspend fun PanelSessionManager.getAllUsers() = serviceCatching {
-    AdminApi.Users.get.invoke(PaginationQuery())
+suspend fun PanelSessionManager.getAllUsers(query: PaginationQuery) = serviceCatching {
+    AdminApi.Users.get.invoke(query)
 }
 
 suspend fun PanelSessionManager.signUp(signUpPack: SignUpPack) = serviceCatching {

@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.core.compontents.CustomIcon
+import com.storyteller_f.a.app.core.compontents.IconRes
 
 @Composable
 fun ButtonNav(icon: ImageVector, title: String, onClick: () -> Unit = {}) {

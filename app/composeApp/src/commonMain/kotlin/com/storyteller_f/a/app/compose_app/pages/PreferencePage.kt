@@ -2,10 +2,8 @@ package com.storyteller_f.a.app.compose_app.pages
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import com.storyteller_f.a.app.compose_app.compontents.CustomIcon
-import com.storyteller_f.a.app.compose_app.compontents.IconRes
-import com.storyteller_f.a.app.compose_app.pages.topic.TopicTranslateSheet
-import com.storyteller_f.a.app.compose_app.service.buildGPT
+import com.storyteller_f.a.app.core.compontents.CustomIcon
+import com.storyteller_f.a.app.core.compontents.IconRes
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -41,9 +39,9 @@ fun PreferencePage() {
                     }
                 },
                 leadingIcon = {
-                    com.storyteller_f.a.app.compose_app.compontents.CustomIcon(
-                        com.storyteller_f.a.app.compose_app.compontents.IconRes.Font(
-                            com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined.Translate
+                    CustomIcon(
+                        IconRes.Font(
+                            MaterialSymbolsOutlined.Translate
                         )
                     )
                 },

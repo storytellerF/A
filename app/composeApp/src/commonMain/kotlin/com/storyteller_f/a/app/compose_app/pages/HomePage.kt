@@ -32,7 +32,7 @@ import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalMainSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
-import com.storyteller_f.a.app.compose_app.compontents.CenterBox
+import com.storyteller_f.a.app.core.compontents.CenterBox
 import com.storyteller_f.a.app.compose_app.compontents.TopicList
 import com.storyteller_f.a.app.compose_app.design_spec
 import com.storyteller_f.a.app.compose_app.model.createWorldViewModel

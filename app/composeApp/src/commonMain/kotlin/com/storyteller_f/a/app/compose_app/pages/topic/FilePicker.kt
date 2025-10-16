@@ -30,12 +30,14 @@ import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.compontents.*
-import com.storyteller_f.a.app.compose_app.compontents.StateView
-import com.storyteller_f.a.app.compose_app.compontents.bottomAppending
-import com.storyteller_f.a.app.compose_app.compontents.topPrepend
+import com.storyteller_f.a.app.core.compontents.StateView
+import com.storyteller_f.a.app.core.compontents.bottomAppending
+import com.storyteller_f.a.app.core.compontents.topPrepend
 import com.storyteller_f.a.app.compose_app.model.OnMediaUploaded
 import com.storyteller_f.a.app.compose_app.model.createMediaListViewModel
 import com.storyteller_f.a.app.compose_app.utils.Recorder
+import com.storyteller_f.a.app.core.compontents.CustomIcon
+import com.storyteller_f.a.app.core.compontents.IconRes
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.upload

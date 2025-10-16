@@ -4,20 +4,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +23,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -42,18 +36,17 @@ import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.auto_generate
-import com.storyteller_f.a.app.compose_app.compontents.CenterBox
+import com.storyteller_f.a.app.core.compontents.CenterBox
 import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
-import com.storyteller_f.a.app.compose_app.compontents.MeasureTextLineCount
 import com.storyteller_f.a.app.compose_app.go_to_sign_in
 import com.storyteller_f.a.app.compose_app.go_to_sign_up
-import com.storyteller_f.a.app.compose_app.input_private_key
 import com.storyteller_f.a.app.compose_app.private_key
 import com.storyteller_f.a.app.compose_app.sign_in
 import com.storyteller_f.a.app.compose_app.sign_up
 import com.storyteller_f.a.app.compose_app.start_sign_in
 import com.storyteller_f.a.app.compose_app.start_sign_up
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
+import com.storyteller_f.a.app.core.compontents.PrivateKeyInput
 import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.shared.generateECDSAPemPrivateKey
@@ -63,7 +56,6 @@ import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.max
 
 @Composable
 fun LoginPage() {
@@ -219,22 +211,23 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     val appNav = LocalAppNav.current
     val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
+    val startSign : () -> Unit = {
+        scope.launch {
+            globalDialogController.startSign(
+                appNav,
+                sessionManager,
+                privateKey,
+                isSignUp
+            )
+        }
+    }
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
-            PrivateKeyInput(privateKey, isSignUp) {
+            PrivateKeyInput(privateKey, isSignUp, {
                 privateKey = it
-            }
+            }, startSign)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Button({
-                    scope.launch {
-                        globalDialogController.startSign(
-                            appNav,
-                            sessionManager,
-                            privateKey,
-                            isSignUp
-                        )
-                    }
-                }) {
+                Button(startSign) {
                     Text(
                         stringResource(
                             if (isSignUp) {
@@ -256,39 +249,6 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun PrivateKeyInput(privateKey: String, isSignUp: Boolean, update: (String) -> Unit) {
-    val scope = rememberCoroutineScope()
-    val appNav = LocalAppNav.current
-    val sessionManager = LocalSessionManager.current
-    val globalDialogController = LocalGlobalDialog.current
-    MeasureTextLineCount(privateKey, LocalTextStyle.current, 32.dp) { lineCount, _ ->
-        OutlinedTextField(
-            privateKey,
-            onValueChange = {
-                update(it)
-            },
-            modifier = Modifier.padding(top = 10.dp).fillMaxWidth(),
-            maxLines = max(lineCount, 2),
-            minLines = max(lineCount, 2),
-            label = {
-                Text(stringResource(Res.string.input_private_key))
-            },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-            keyboardActions = KeyboardActions(onGo = {
-                scope.launch {
-                    globalDialogController.startSign(
-                        appNav,
-                        sessionManager,
-                        privateKey,
-                        isSignUp
-                    )
-                }
-            })
-        )
     }
 }
 
