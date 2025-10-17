@@ -20,20 +20,20 @@ import androidx.compose.ui.unit.sp
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
-import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
-import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
-import com.storyteller_f.a.app.compose_app.model.OnTitleCreated
-import com.storyteller_f.a.app.compose_app.model.createMemberSearchViewModel
-import com.storyteller_f.a.app.compose_app.model.createRoomSearchViewModel
-import com.storyteller_f.a.app.compose_app.model.createSearchCommunitiesViewModel
+import com.storyteller_f.a.app.compose_app.common.OnTitleCreated
+import com.storyteller_f.a.app.compose_app.common.createMemberSearchViewModel
+import com.storyteller_f.a.app.compose_app.common.createRoomSearchViewModel
+import com.storyteller_f.a.app.compose_app.common.createSearchCommunitiesViewModel
+import com.storyteller_f.a.app.compose_app.components.BaseSheet
+import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
+import com.storyteller_f.a.app.compose_app.components.TopicContentField
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.room.RoomRefCell
 import com.storyteller_f.a.app.compose_app.pages.user.MemberList
 import com.storyteller_f.a.app.compose_app.pages.user.UserRefCell
-import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
@@ -249,6 +249,7 @@ private fun TitleScopeEditor(
 
                     ObjectType.TITLE -> TODO()
                     ObjectType.File -> TODO()
+                    ObjectType.PANEL_ACCOUNT -> TODO()
                 }
             } else {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -307,7 +308,7 @@ private suspend fun GlobalDialogController.createTitle(
     titleType: TitleType?,
     receiver: PrimaryKey?,
     titleScope: ObjectTuple?,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     name: String,
     content: String,
 ): Result<TitleInfo> {
@@ -398,6 +399,7 @@ private fun TypeSelector(
                     ObjectType.USER -> Icons.Default.AccountBox
                     ObjectType.TITLE -> TODO()
                     ObjectType.File -> TODO()
+                    ObjectType.PANEL_ACCOUNT -> TODO()
                 },
                 "icon"
             )
@@ -450,6 +452,7 @@ fun ObjectList(
 
             ObjectType.TITLE -> TODO()
             ObjectType.File -> TODO()
+            ObjectType.PANEL_ACCOUNT -> TODO()
         }
     }
 }

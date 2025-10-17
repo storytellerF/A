@@ -6,10 +6,10 @@ import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.adminSignIn
 import com.storyteller_f.a.cloud.core.service.adminSignUp
 import com.storyteller_f.a.cloud.core.service.getAllUsers
+import com.storyteller_f.a.cloud.core.service.getOverview
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.handleResult
-import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.a.cloud.server.webSocketContent
@@ -46,29 +46,38 @@ fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
         }
         bindUnprotectedAccountRoute(backend)
         bindUnauthenticatedRoute(backend)
-        authenticate("admin") {
-            AdminApi.Users.get.invoke(RoutingContext::handleResult) {
-                it.pagination(IdentifiablePagingGenerator) { fetch ->
-                    backend.getAllUsers(fetch)
-                }
-            }
-            AdminApi.signOut(RoutingContext::handleResult) {
-                usePrincipalOrNull { uid ->
-                    call.sessions.clear(UserSession::class)
-                    UNIT_RESULT
-                }
-            }
-        }
-        AdminApi.signIn.invoke(RoutingContext::handleResult) { api ->
-            backend.adminSignIn(call.getData(), api.receiveBody()).onSuccess {
-                saveSuccessSessionOnFirst(it.id)
+        bindProtectedAdminRoute(backend)
+        bindUnauthenticatedPanelRoute(backend)
+    }
+}
+
+private fun Routing.bindProtectedAdminRoute(backend: Backend) {
+    authenticate("admin") {
+        AdminApi.Users.get.invoke(RoutingContext::handleResult) {
+            it.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getAllUsers(fetch)
             }
         }
-        AdminApi.signUp.invoke(RoutingContext::handleResult) {
-            backend.adminSignUp(call.getData(), it.receiveBody())
+        AdminApi.signOut(RoutingContext::handleResult) {
+            call.sessions.clear(UserSession::class)
+            UNIT_RESULT
         }
-        AdminApi.getData.invoke(RoutingContext::handleResult) {
-            Result.success(call.getData())
+        AdminApi.overview(RoutingContext::handleResult) {
+            backend.getOverview()
         }
+    }
+}
+
+private fun Routing.bindUnauthenticatedPanelRoute(backend: Backend) {
+    AdminApi.signIn.invoke(RoutingContext::handleResult) { api ->
+        backend.adminSignIn(call.getData(), api.receiveBody()).onSuccess {
+            saveSuccessSessionOnFirst(it.id)
+        }
+    }
+    AdminApi.signUp.invoke(RoutingContext::handleResult) {
+        backend.adminSignUp(call.getData(), it.receiveBody())
+    }
+    AdminApi.getData.invoke(RoutingContext::handleResult) {
+        Result.success(call.getData())
     }
 }

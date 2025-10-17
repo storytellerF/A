@@ -33,12 +33,12 @@ import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.Res
-import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
-import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
-import com.storyteller_f.a.app.compose_app.compontents.DialogContainer
-import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
-import com.storyteller_f.a.app.compose_app.compontents.SheetContainer
-import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
+import com.storyteller_f.a.app.compose_app.components.BaseSheet
+import com.storyteller_f.a.app.compose_app.components.ButtonNav
+import com.storyteller_f.a.app.compose_app.components.DialogContainer
+import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
+import com.storyteller_f.a.app.compose_app.components.SheetContainer
+import com.storyteller_f.a.app.compose_app.components.TopicContentField
 import com.storyteller_f.a.app.compose_app.copy
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.room.RoomRefCell
@@ -51,7 +51,7 @@ import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.utils.setText
 import com.storyteller_f.a.app.core.compontents.ExceptionView
 import com.storyteller_f.a.app.core.utils.getCurrentLanguage
-import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.getTopicSnapshot
 import com.storyteller_f.a.client.core.pinTopic
 import com.storyteller_f.a.client.core.unpinTopic
@@ -198,7 +198,7 @@ private fun TopicMenuList(
 
 suspend fun GlobalDialogController.pinOrUnpinTopic(
     topicInfo: TopicInfo,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
 ): Result<TopicInfo> {
     return useResult {
         if (topicInfo.isPin) {

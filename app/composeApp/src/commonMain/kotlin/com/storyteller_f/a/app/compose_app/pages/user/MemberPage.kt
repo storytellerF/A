@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.model.MemberViewModel
-import com.storyteller_f.a.app.compose_app.model.createMemberViewModel
+import com.storyteller_f.a.app.compose_app.common.MemberViewModel
+import com.storyteller_f.a.app.compose_app.common.createMemberViewModel
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.core.compontents.StateView

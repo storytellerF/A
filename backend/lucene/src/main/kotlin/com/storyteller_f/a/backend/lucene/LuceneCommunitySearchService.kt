@@ -9,8 +9,6 @@ import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.CommunityDocumentSearch
 import com.storyteller_f.a.backend.core.service.CommunitySearchService
 import com.storyteller_f.a.backend.core.service.CommunitySearchServiceFactory
-import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import io.github.aakira.napier.Napier
@@ -27,11 +25,9 @@ import org.apache.lucene.search.Sort
 import org.apache.lucene.search.SortField
 import java.nio.file.Path
 
-class LuceneCommunityDocument(val communityDocument: CommunityDocument) : PrimaryKeyIdentifiable, LuceneDocument {
-    override val id: PrimaryKey
-        get() = communityDocument.id
-    override val objectType: ObjectType = communityDocument.objectType
+class LuceneCommunityDocument(val communityDocument: CommunityDocument) : LuceneDocument {
     override fun save(): Document {
+        val id = communityDocument.id
         return Document().apply {
             add(LongField("id1", id, Field.Store.YES))
             add(NumericDocValuesField("id2", id))

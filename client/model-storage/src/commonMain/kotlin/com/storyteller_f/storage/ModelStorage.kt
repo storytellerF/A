@@ -5,6 +5,7 @@ import androidx.paging.PagingState
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
@@ -81,6 +82,10 @@ data object ChildAccountCollection {
     const val NAME = "child_accounts"
 }
 
+data object OverviewCollection {
+    const val NAME = "overview"
+}
+
 fun UserCollection.getName(): String {
     return when (this) {
         is UserCollection.SearchUser -> "users_$word"
@@ -142,6 +147,7 @@ interface ModelStorage {
     val fileInfoStorage: FileInfoStorage
     val downloadInfoStorage: DownloadInfoStorage
     val uploadInfoStorage: UploadInfoStorage
+    val overviewStorage: OverviewStorage
 }
 
 interface UserInfoStorage {
@@ -214,6 +220,11 @@ interface UploadInfoStorage {
     fun observeDatum(pathHash: String): Flow<UploadInfo?>
     suspend fun getDocument(collection: UploadCollection, pathHash: String): UploadInfo?
     fun observeData(collection: UploadCollection): PagingSource<Int, UploadInfo>
+}
+
+interface OverviewStorage {
+    suspend fun save(collection: OverviewCollection, overviewInfo: PanelOverview)
+    fun observeDatum(): Flow<PanelOverview?>
 }
 
 interface RemoteKeyStorage {

@@ -18,12 +18,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
-import com.storyteller_f.a.app.compose_app.compontents.SheetContainer
-import com.storyteller_f.a.app.compose_app.compontents.use
-import com.storyteller_f.a.app.compose_app.model.OnAddReaction
-import com.storyteller_f.a.app.compose_app.model.OnRemoveReaction
-import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.app.compose_app.common.OnAddReaction
+import com.storyteller_f.a.app.compose_app.common.OnRemoveReaction
+import com.storyteller_f.a.app.compose_app.components.BaseSheet
+import com.storyteller_f.a.app.compose_app.components.SheetContainer
+import com.storyteller_f.a.app.compose_app.components.use
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.deleteReaction
 import com.storyteller_f.shared.model.ReactionInfo
@@ -136,7 +136,7 @@ suspend fun addReaction(
     topic: TopicInfo,
     emojiText: String,
     bus: MutableSharedFlow<Any>,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
 ): Result<ReactionInfo> {
     val existing = topic.extension?.reactions?.firstOrNull {
         it.emoji == emojiText
@@ -161,7 +161,7 @@ suspend fun deleteReaction(
     emojiText: String,
     existing: ReactionInfo,
     bus: MutableSharedFlow<Any>,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
 ): Result<ReactionInfo> {
     val fakeInfo = existing.copy(count = existing.count - 1)
     bus.emit(OnRemoveReaction(fakeInfo, topic))

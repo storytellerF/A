@@ -23,16 +23,15 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
-import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
-import com.storyteller_f.a.app.compose_app.compontents.CommunityPoster
-import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
-import com.storyteller_f.a.app.compose_app.compontents.SettingOptionResettableView
-import com.storyteller_f.a.app.compose_app.compontents.SettingOptionView
-import com.storyteller_f.a.app.compose_app.model.OnCommunityUpdated
-import com.storyteller_f.a.app.compose_app.model.createCommunityViewModel
+import com.storyteller_f.a.app.compose_app.common.OnCommunityUpdated
+import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
+import com.storyteller_f.a.app.compose_app.components.CommunityPoster
+import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
+import com.storyteller_f.a.app.compose_app.components.SettingOptionResettableView
+import com.storyteller_f.a.app.compose_app.components.SettingOptionView
 import com.storyteller_f.a.app.compose_app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.compose_app.pages.user.SettingOption
-import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.updateCommunityInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody
@@ -121,7 +120,7 @@ private fun CommunitySettingInternal(
                 }
             },
             {
-                CommunityIcon(
+                CommunityIconWithDialog(
                     communityInfo,
                     showDialog = false,
                     setClickEvent = false
@@ -163,7 +162,7 @@ private fun CommunitySettingInternal(
 
 private suspend fun updateCommunityInfo(
     globalDialogController: GlobalDialogController,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     communityInfo: CommunityInfo,
 ) {
     globalDialogController.useResult {
@@ -176,7 +175,7 @@ private suspend fun updateCommunityInfo(
 
 private suspend fun updateCommunity(
     communityId: PrimaryKey,
-    client: SessionManager,
+    client: UserSessionManager,
     string: String,
     showInputDialog: SettingOption?,
     globalDialogController: GlobalDialogController,

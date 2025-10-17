@@ -8,7 +8,6 @@ import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
 import com.storyteller_f.a.backend.core.service.TopicSearchService
 import com.storyteller_f.a.backend.core.service.TopicSearchServiceFactory
-import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
@@ -34,12 +33,10 @@ import java.nio.file.Path
 
 data class LuceneTopicDocument(
     val topicDocument: TopicDocument
-) : PrimaryKeyIdentifiable, LuceneDocument {
-    override val id: PrimaryKey
-        get() = topicDocument.id
-    override val objectType = topicDocument.objectType
+) : LuceneDocument {
 
     override fun save(): Document {
+        val id = topicDocument.id
         return Document().apply {
             add(LongField("id1", id, Field.Store.YES))
             add(NumericDocValuesField("id2", id))

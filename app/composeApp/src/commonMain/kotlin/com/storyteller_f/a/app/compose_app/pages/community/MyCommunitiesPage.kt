@@ -20,14 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
-import com.storyteller_f.a.app.compose_app.CommunityScreen
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
-import com.storyteller_f.a.app.compose_app.compontents.CommunityPoster
-import com.storyteller_f.a.app.compose_app.compontents.rememberCommonDialogController
-import com.storyteller_f.a.app.compose_app.model.CommunitiesViewModel
-import com.storyteller_f.a.app.compose_app.model.createJoinedCommunitiesViewModel
-import com.storyteller_f.a.app.compose_app.toRoute
+import com.storyteller_f.a.app.compose_app.common.CommunitiesViewModel
+import com.storyteller_f.a.app.compose_app.common.CommunityScreen
+import com.storyteller_f.a.app.compose_app.common.createJoinedCommunitiesViewModel
+import com.storyteller_f.a.app.compose_app.common.toRoute
+import com.storyteller_f.a.app.compose_app.components.CommunityPoster
+import com.storyteller_f.a.app.compose_app.components.rememberCommonDialogController
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
 import com.storyteller_f.a.app.core.compontents.topPrepend
@@ -171,7 +170,7 @@ fun CommunityGrid(communityInfo: CommunityInfo?, padding: Dp, onClick: ((Communi
                     val commonDialogController =
                         rememberCommonDialogController()
                     val shown by commonDialogController.shown
-                    CommunityIcon(
+                    CommunityIconWithDialog(
                         communityInfo,
                         shown,
                         30.dp,
@@ -217,7 +216,7 @@ fun CommunityCell(
         val commonDialogController =
             rememberCommonDialogController()
         val shown by commonDialogController.shown
-        CommunityIcon(
+        CommunityIconWithDialog(
             communityInfo,
             shown,
             50.dp,

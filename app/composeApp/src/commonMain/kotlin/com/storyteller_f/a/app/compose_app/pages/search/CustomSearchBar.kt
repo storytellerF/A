@@ -11,12 +11,23 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.AppNav
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
-import com.storyteller_f.a.app.compose_app.compontents.TopicList
-import com.storyteller_f.a.app.compose_app.compontents.UserIcon
+import com.storyteller_f.a.app.compose_app.common.AppNav
+import com.storyteller_f.a.app.compose_app.common.createMemberSearchInCommunityViewModel
+import com.storyteller_f.a.app.compose_app.common.createMemberSearchViewModel
+import com.storyteller_f.a.app.compose_app.common.createRoomSearchInCommunityViewModel
+import com.storyteller_f.a.app.compose_app.common.createRoomSearchViewModel
+import com.storyteller_f.a.app.compose_app.common.createSearchCommunitiesViewModel
+import com.storyteller_f.a.app.compose_app.common.createSearchMemberInRoomViewModel
+import com.storyteller_f.a.app.compose_app.common.createTargetUserJoinedCommunitiesViewModel
+import com.storyteller_f.a.app.compose_app.common.createTopicSearchInCommunityViewModel
+import com.storyteller_f.a.app.compose_app.common.createTopicSearchInRoomViewModel
+import com.storyteller_f.a.app.compose_app.common.createTopicSearchInTopicViewModel
+import com.storyteller_f.a.app.compose_app.common.createTopicSearchInUserViewModel
+import com.storyteller_f.a.app.compose_app.common.createTopicSearchViewModel
+import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.input_search_community
 import com.storyteller_f.a.app.compose_app.input_search_members
 import com.storyteller_f.a.app.compose_app.input_search_room
@@ -24,11 +35,11 @@ import com.storyteller_f.a.app.compose_app.input_search_topics
 import com.storyteller_f.a.app.compose_app.input_search_topics_and_users
 import com.storyteller_f.a.app.compose_app.input_search_user_created_titles
 import com.storyteller_f.a.app.compose_app.input_search_user_received_titles
-import com.storyteller_f.a.app.compose_app.model.*
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.title.ComposeMenu
 import com.storyteller_f.a.app.compose_app.pages.user.MemberList
+import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
@@ -90,6 +101,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
             ObjectType.USER -> TODO()
             ObjectType.TITLE -> appNav.gotoTitleCompose()
             ObjectType.File -> TODO()
+            ObjectType.PANEL_ACCOUNT -> TODO()
         }
     }
 }
@@ -124,7 +136,7 @@ private fun CustomSearchBarInternal(
                         val userSessionManager = LocalSessionManager.current
                         val myInfo by userSessionManager.model.userHandler.data.collectAsState()
                         val userInfo = myInfo
-                        UserIcon(
+                        UserIconWithDialog(
                             userInfo,
                             true,
                             onClickCreate = clickCreate

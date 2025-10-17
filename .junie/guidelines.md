@@ -145,3 +145,68 @@ Appendix — Handy commands
 
 Notes
 - This document intentionally focuses on project-specific wiring (flavors via BuildKonfig, headlessTest mapping, Compose Desktop packaging, and Detekt/Kover setup). Standard Android/iOS/Compose setup steps are intentionally omitted.
+
+4) 功能实现细节 — 数据操作接口与实现
+
+4.1 数据接口定义（API 层）
+- 位置：api/src/main/kotlin/com/storyteller_f/a/api/core/CustomApi.kt
+  - CustomApi：定义客户端可调用的 REST API 端点与查询/路径模型（如 TopicQuery、PaginationQuery、CommonPath 等）。
+  - AdminApi：定义管理后台相关端点（/admin/*），例如：
+    - Users.get: 分页获取用户列表
+    - signIn/signOut/signUp/getData/overview
+  - 使用方式：依赖 route4k 的 invoke 扩展，示例：CustomApi.Rooms.Id.get(query, CommonPath(id)) 或 AdminApi.Users.get.invoke(query)。
+
+4.2 客户端会话与请求封装（网络层）
+- 位置：client/core/src/commonMain/kotlin/com/storyteller_f/a/client/core
+  - SessionManager.kt：
+    - 定义 SessionManager、UserSessionManager、PanelSessionManager 以及对应的 Simple* 实现。
+    - 提供 createPanelSessionManager/createUserSessionManager 工厂函数，以及基于私钥的一键登录/注册流程：signUpOrInFromPrivateKey(...)、getPanelAccountInfo(...) 等。
+  - Request.kt：
+    - 定义 serviceCatching(...) 统一异常捕获与 Napier 打点；所有网络请求通过 HttpClient 执行并返回 Result<T>。
+    - 封装业务请求（用户端）：如 getRoomInfo、searchCommunity、signIn/signUp、getData、getMediaList 等，内部调用 CustomApi.* 并传入必要的查询对象与 Path。
+  - PanelRequest.kt：
+    - 封装管理后台请求（面板端）：getAllUsers、signUp、signIn、signOut、getData，内部调用 AdminApi.*。示例：
+      - suspend fun PanelSessionManager.getAllUsers(query: PaginationQuery) = serviceCatching { AdminApi.Users.get.invoke(query) }
+
+4.3 本地数据存储接口定义（存储抽象层）
+- 位置：client/model-storage/src/commonMain/kotlin/com/storyteller_f/storage/ModelStorage.kt
+  - 定义各类集合标识与工具：UserCollection/TopicCollection/TitleCollection/RoomCollection/CommunityCollection/ReactionCollection、UploadCollection、MediasCollection 等，以及 getName() 辅助方法。
+  - 定义存储接口（仅抽象，不含具体实现）：
+    - UserInfoStorage/CommunityInfoStorage/TopicInfoStorage/TitleInfoStorage/RoomInfoStorage/ReactionInfoStorage
+    - ChildAccountStorage/FileInfoStorage/DownloadInfoStorage/UploadInfoStorage
+    - RemoteKeyStorage（分页游标存取：getPreRemoteKey/savePreRemoteKey/deletePreRemoteKey 等）
+  - 其它：提供 WrappedPagingSource 与 update(...) 等工具，便于将底层数据源包装为 PagingSource 并做二次处理。
+
+4.4 本地数据存储实现（Room/本地实现层）
+- 位置：client/room/src/commonMain/kotlin/com/storyteller_f/a/client/room/RoomStorage.kt
+  - 针对上述抽象接口提供基于 Room 的实现类：
+    - UserRoomInfoStorage、CommunityRoomInfoStorage、TopicRoomInfoStorage、TitleRoomInfoStorage、RoomRoomInfoStorage、ReactionRoomInfoStorage
+    - ChildAccountRoomStorage、FileInfoRoomStorage、DownloadInfoRoomStorage、UploadInfoRoomStorage
+    - RemoteKeyRoomStorage：实现 RemoteKeyStorage，用于分页游标的保存/读取/删除（PRE_COLLECTION/NEXT_COLLECTION）。
+  - RoomModelStorage：聚合实现，作为对外的 ModelStorage 组合入口（便于依赖注入）。
+  - 实现细节：实现类普遍提供 save(...)/observeData(...)/observeDatum(...)/clean(...) 等方法，并通过 shared.commonJson 进行序列化持久化，或将底层数据转换为对应的模型对象。
+
+4.5 端到端调用链（从 UI 到存储/网络）
+- UI（示例：panel/composeApp/src/commonMain/kotlin/org/storyteller_f/a/cloud/panel/PanelApp.kt）
+  - 通过 createCustomPanelSessionManager 或 createPanelSessionManager 创建 PanelSessionManager；在 ViewModel 中使用 Pager + PagingSource/RemoteMediator 驱动分页。
+  - 业务请求调用 PanelSessionManager 上的扩展函数（如 getAllUsers(...)），内部进入 client/core 的 PanelRequest.kt。
+- 请求封装层（client/core）
+  - 执行 serviceCatching { HttpClient 调用 }，转调到 api/core 的 CustomApi 或 AdminApi 端点（route4k invoke）。
+- 数据模型（shared）
+  - DTO/模型位于 shared/src/commonMain/kotlin/com/storyteller_f/shared/model（例如 PanelOverview、PanelAccountInfo、UserInfo 等）。
+- 存储层（可选）
+  - 若使用本地缓存/分页，UI 或 UseCase 侧通过 ModelStorage 接口访问数据；实际读写由 client/room 的实现完成。
+
+4.6 快速定位与开发建议
+- 想加一个新 API：在 api/core/CustomApi.kt 下对应对象中添加 safeApi*/mutationApi* 定义；若是管理员接口则放在 AdminApi。
+- 想加一个新请求方法（用户端/面板端）：
+  - 用户端：在 client/core/Request.kt 中添加 UserSessionManager 扩展函数，内部使用 CustomApi。
+  - 面板端：在 client/core/PanelRequest.kt 中添加 PanelSessionManager 扩展函数，内部使用 AdminApi。
+- 想接入/扩展本地存储：
+  - 在 client/model-storage 定义新的 Storage 接口或集合标识；
+  - 在 client/room 中实现具体的 Room 存取类，并在 RoomModelStorage 中进行聚合。
+- 问题排查：
+  - 网络异常：查看 Request.kt 的 serviceCatching Napier 日志；
+  - 接口路径/参数：查看 api/core/CustomApi.kt 或 AdminApi 的定义；
+  - 分页游标问题：排查 RemoteKeyStorage/RemoteKeyRoomStorage 的保存与读取逻辑；
+  - 数据没落地：检查对应 *RoomStorage.save/observeData 实现与 commonJson 序列化。

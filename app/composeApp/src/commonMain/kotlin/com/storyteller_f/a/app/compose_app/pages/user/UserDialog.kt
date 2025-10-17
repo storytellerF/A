@@ -12,14 +12,19 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.kdroid.composenotification.builder.getNotificationProvider
 import com.storyteller_f.a.app.compose_app.*
-import com.storyteller_f.a.app.compose_app.compontents.*
+import com.storyteller_f.a.app.compose_app.common.AppNav
+import com.storyteller_f.a.app.compose_app.common.UserScreen
+import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
+import com.storyteller_f.a.app.compose_app.components.*
 import com.storyteller_f.a.app.compose_app.pages.LoginButton
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.utils.createConnectivity
 import com.storyteller_f.a.app.compose_app.utils.unregisterPushService
+import com.storyteller_f.a.app.core.compontents.UserIcon
 import com.storyteller_f.a.app.core.utils.clearStorage
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.UserSessionManager
@@ -58,6 +63,7 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth()) {
                 LoginButton {
                     dismiss()
+                    appNav.gotoLogin()
                 }
             }
         } else {
@@ -215,5 +221,30 @@ fun UserDialog(
         }) {
             UserDialogInternal(isMe, userInfo, clickCreate, dismiss)
         }
+    }
+}
+
+@Composable
+fun UserIconWithDialog(
+    userInfo: UserInfo?,
+    isMe: Boolean = false,
+    setClickEvent: Boolean = true,
+    size: Dp = 40.dp,
+    onClickCreate: () -> Unit = {},
+) {
+    var showUserDialog by remember {
+        mutableStateOf(false)
+    }
+    val url = userInfo?.avatar?.url
+    UserIcon(isMe, setClickEvent, url, size = size) {
+        showUserDialog = true
+    }
+    UserDialog(
+        isMe,
+        userInfo,
+        showUserDialog,
+        onClickCreate
+    ) {
+        showUserDialog = false
     }
 }

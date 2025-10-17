@@ -9,8 +9,6 @@ import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchServiceFactory
-import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import org.apache.lucene.document.Document
@@ -27,11 +25,9 @@ import org.apache.lucene.search.SortField
 import java.nio.file.Path
 
 data class LuceneUserDocument(val userDocument: UserDocument) :
-    PrimaryKeyIdentifiable, LuceneDocument {
-    override val id: PrimaryKey
-        get() = userDocument.id
-    override val objectType: ObjectType = userDocument.objectType
+    LuceneDocument {
     override fun save(): Document {
+        val id = userDocument.id
         return Document().apply {
             add(LongField("id1", id, Field.Store.YES))
             add(NumericDocValuesField("id2", id))

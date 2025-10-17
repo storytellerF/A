@@ -25,10 +25,19 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.compontents.*
-import com.storyteller_f.a.app.compose_app.compontents.RoomTopicList
-import com.storyteller_f.a.app.compose_app.model.*
-import com.storyteller_f.a.app.compose_app.model.createRoomTopicsViewModel
+import com.storyteller_f.a.app.compose_app.common.AppNav
+import com.storyteller_f.a.app.compose_app.common.OnRoomExited
+import com.storyteller_f.a.app.compose_app.common.OnRoomJoined
+import com.storyteller_f.a.app.compose_app.common.RoomKeysViewModel
+import com.storyteller_f.a.app.compose_app.common.RoomScreen
+import com.storyteller_f.a.app.compose_app.common.Toast
+import com.storyteller_f.a.app.compose_app.common.TopicComposeData
+import com.storyteller_f.a.app.compose_app.common.createRoomKeysViewModel
+import com.storyteller_f.a.app.compose_app.common.createRoomTopicsViewModel
+import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
+import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
+import com.storyteller_f.a.app.compose_app.components.*
+import com.storyteller_f.a.app.compose_app.components.RoomTopicList
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
@@ -37,7 +46,7 @@ import com.storyteller_f.a.app.compose_app.pages.topic.insertContent
 import com.storyteller_f.a.app.compose_app.utils.startCall
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.client.core.LoadingState
-import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.WebSocketClient
 import com.storyteller_f.a.client.core.addReadLog
 import com.storyteller_f.a.client.core.exitRoom
@@ -595,7 +604,7 @@ private fun RoomDialogButtons(
 
 private suspend fun joinRoom(
     roomInfo: RoomInfo,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     globalDialogController: GlobalDialogController,
     onSuccess: suspend () -> Unit,
 ) {
@@ -617,7 +626,7 @@ private suspend fun joinRoom(
 
 private suspend fun exitRoom(
     roomInfo: RoomInfo,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     globalDialogController: GlobalDialogController,
     onSuccess: suspend () -> Unit,
 ) {

@@ -19,7 +19,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/App"
-        tools:targetApi="tiramisu">
+        tools:targetApi="33">
         <activity
             android:name=".compose_app.RTCActivity"
             android:exported="false"

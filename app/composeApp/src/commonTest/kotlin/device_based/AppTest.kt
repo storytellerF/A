@@ -11,11 +11,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import coil3.compose.LocalPlatformContext
 import com.storyteller_f.a.app.compose_app.App
-import com.storyteller_f.a.app.compose_app.CommonEntry
-import com.storyteller_f.a.app.compose_app.MainAppPage
 import com.storyteller_f.a.app.compose_app.StaticObj
-import com.storyteller_f.a.app.compose_app.compontents.globalPlayerState
-import com.storyteller_f.a.app.compose_app.compontents.rememberIsInPipMode
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.shared.getPlatform

@@ -18,8 +18,7 @@ data class TopicDocument(
     val parentType: String,
     val author: PrimaryKey
 ) : PrimaryKeyIdentifiable {
-    override val objectType: ObjectType
-        get() = ObjectType.TOPIC
+    override val objectType: ObjectType = ObjectType.TOPIC
 
     companion object {
         fun fromTopic(topic: Topic, content: TopicContent.Plain): TopicDocument {

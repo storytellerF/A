@@ -10,8 +10,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 data class UserDocument(override val id: PrimaryKey, val nickname: String, val aid: String?) :
     PrimaryKeyIdentifiable {
-    override val objectType: ObjectType
-        get() = ObjectType.USER
+    override val objectType: ObjectType = ObjectType.USER
 
     companion object {
         fun fromUser(user: User): UserDocument {

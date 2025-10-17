@@ -25,12 +25,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.compontents.TopicList
-import com.storyteller_f.a.app.compose_app.compontents.UserIcon
-import com.storyteller_f.a.app.compose_app.model.createTargetUserJoinedCommunitiesViewModel
-import com.storyteller_f.a.app.compose_app.model.createUserTitlesViewModel
-import com.storyteller_f.a.app.compose_app.model.createUserTopicsViewModel
-import com.storyteller_f.a.app.compose_app.model.createUserViewModel
+import com.storyteller_f.a.app.compose_app.common.AppNav
+import com.storyteller_f.a.app.compose_app.common.TopicComposeData
+import com.storyteller_f.a.app.compose_app.common.createTargetUserJoinedCommunitiesViewModel
+import com.storyteller_f.a.app.compose_app.common.createUserTitlesViewModel
+import com.storyteller_f.a.app.compose_app.common.createUserTopicsViewModel
+import com.storyteller_f.a.app.compose_app.common.createUserViewModel
+import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.pages.CustomBottomNav
 import com.storyteller_f.a.app.compose_app.pages.CustomRailNav
 import com.storyteller_f.a.app.compose_app.pages.NavRoute
@@ -99,7 +100,7 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
                 val my = myInfo
                 CustomSearchBar(searchScope) {
                     if (uid != my?.id) {
-                        UserIcon(user)
+                        UserIconWithDialog(user)
                     }
                 }
 
@@ -144,7 +145,7 @@ private fun UserCompatInternal(
                 )
             ) {
                 if (uid != my?.id) {
-                    UserIcon(user)
+                    UserIconWithDialog(user)
                 }
             }
             HorizontalPager(pagerState) { pageIndex ->

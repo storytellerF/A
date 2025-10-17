@@ -26,10 +26,11 @@ import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
-import com.storyteller_f.a.app.compose_app.model.MarkdownMediasViewModel
-import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
-import com.storyteller_f.a.app.compose_app.model.getMarkdownMediasViewModel
+import com.storyteller_f.a.app.compose_app.common.MarkdownMediasViewModel
+import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
+import com.storyteller_f.a.app.compose_app.common.TopicComposeData
+import com.storyteller_f.a.app.compose_app.common.getMarkdownMediasViewModel
+import com.storyteller_f.a.app.compose_app.components.TopicContentField
 import com.storyteller_f.a.app.compose_app.pages.community.getCommunityFont
 import com.storyteller_f.a.app.compose_app.pages.community.getFontFamily
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme

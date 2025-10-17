@@ -10,10 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.itemKey
-import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
-import com.storyteller_f.a.app.compose_app.compontents.UserIcon
-import com.storyteller_f.a.app.compose_app.model.TitlesViewModel
+import com.storyteller_f.a.app.compose_app.common.TitlesViewModel
+import com.storyteller_f.a.app.compose_app.pages.community.CommunityIconWithDialog
 import com.storyteller_f.a.app.compose_app.pages.room.RoomIcon
+import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
 import com.storyteller_f.a.app.core.compontents.topPrepend
@@ -52,21 +52,22 @@ fun TitleItem(titleInfo: TitleInfo) {
         Text(titleInfo.name)
 
         titleInfo.extension?.let {
-            UserIcon(it.creatorInfo)
+            UserIconWithDialog(it.creatorInfo)
             Text("->")
-            UserIcon(it.receiverInfo)
+            UserIconWithDialog(it.receiverInfo)
             when (titleInfo.type) {
                 TitleType.REGULAR -> Text("regular")
                 TitleType.JOIN -> Text("join")
             }
             Text("in")
             when (titleInfo.scopeType) {
-                ObjectType.COMMUNITY -> CommunityIcon(it.communityInfo, showDialog = false) { }
+                ObjectType.COMMUNITY -> CommunityIconWithDialog(it.communityInfo, showDialog = false) { }
                 ObjectType.ROOM -> RoomIcon(it.roomInfo, showDialog = false) { }
                 ObjectType.TOPIC -> {}
-                ObjectType.USER -> UserIcon(it.receiverInfo)
+                ObjectType.USER -> UserIconWithDialog(it.receiverInfo)
                 ObjectType.TITLE -> {}
                 ObjectType.File -> {}
+                ObjectType.PANEL_ACCOUNT -> {}
             }
         }
     }

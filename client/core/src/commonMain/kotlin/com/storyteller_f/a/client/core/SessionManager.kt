@@ -178,6 +178,23 @@ suspend fun UserSessionManager.login() {
     }
 }
 
+suspend fun PanelSessionManager.login() {
+    val userPass = model.currentUserPass ?: return
+    val userHandler = model.userHandler
+    userHandler.request({
+        userHandler.done(it)
+    }) {
+        runCatching {
+            val data = getData().getOrThrow()
+            val address = userPass.address().getOrThrow()
+            val signature = userPass.signature(finalData(data)).getOrThrow()
+            val userInfo = signIn(SignInPack(address, signature)).getOrThrow()
+            model.updateSignature(data, signature)
+            userInfo
+        }
+    }
+}
+
 suspend fun UserSessionManager.getUserInfo(
     pemPrivateKey: String,
     isSignUp: Boolean,
@@ -222,17 +239,8 @@ suspend fun <U> SessionManager<U>.signUpOrInFromPrivateKey(
     val u = getUserInfo(publicKey, sig, ad).getOrThrow()
     model.updateUser(u)
     model.updateSignature(data, sig)
-    model.updateState(
-        ClientSessionState.Success(
-            buildUserPass(
-                RawUserPassInfo(
-                    pemPrivateKey,
-                    publicKey,
-                    ad
-                )
-            )
-        )
-    )
+    val p1 = RawUserPassInfo(pemPrivateKey, publicKey, ad)
+    model.updateState(ClientSessionState.Success(buildUserPass(p1)))
     return u
 }
 

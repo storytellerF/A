@@ -21,11 +21,11 @@ import com.storyteller_f.a.app.compose_app.FileViewInfo
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
-import com.storyteller_f.a.app.compose_app.compontents.AudioView
-import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
-import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
-import com.storyteller_f.a.app.compose_app.compontents.PdfView
-import com.storyteller_f.a.app.compose_app.compontents.VideoView
+import com.storyteller_f.a.app.compose_app.components.AudioView
+import com.storyteller_f.a.app.compose_app.components.BaseSheet
+import com.storyteller_f.a.app.compose_app.components.ButtonNav
+import com.storyteller_f.a.app.compose_app.components.PdfView
+import com.storyteller_f.a.app.compose_app.components.VideoView
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.core.compontents.CenterBox
 import com.storyteller_f.a.app.core.compontents.globalLoader

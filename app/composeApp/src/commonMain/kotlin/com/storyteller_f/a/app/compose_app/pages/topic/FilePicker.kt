@@ -29,17 +29,17 @@ import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.compontents.*
-import com.storyteller_f.a.app.compose_app.model.OnMediaUploaded
-import com.storyteller_f.a.app.compose_app.model.createMediaListViewModel
+import com.storyteller_f.a.app.compose_app.common.OnMediaUploaded
+import com.storyteller_f.a.app.compose_app.common.createMediaListViewModel
+import com.storyteller_f.a.app.compose_app.components.*
 import com.storyteller_f.a.app.compose_app.utils.Recorder
 import com.storyteller_f.a.app.core.compontents.CustomIcon
 import com.storyteller_f.a.app.core.compontents.IconRes
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
 import com.storyteller_f.a.app.core.compontents.topPrepend
-import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UploadData
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -158,10 +158,12 @@ private fun BoxScope.RecorderButton(
                             Napier.i {
                                 "save to $path"
                             }
-                            globalDialogController.uploadPath(path, sessionManager, mediaTarget)
-                                .mapIfNotNull {
-                                    uploadSuccess(it)
-                                }
+                            if (path != null) {
+                                globalDialogController.uploadPath(path, sessionManager, mediaTarget)
+                                    .mapIfNotNull {
+                                        uploadSuccess(it)
+                                    }
+                            }
                         } else {
                             globalDialogController.useResult {
                                 runCatching {
@@ -303,7 +305,7 @@ private fun FileIcon(it: FileInfo) {
 
 private suspend fun GlobalDialogController.selectFileAndUpload(
     mediaTarget: ObjectTuple,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     uploadSuccess: (List<FileInfo>) -> Unit,
 ) {
     useResult {
@@ -338,7 +340,7 @@ private fun getUploadDataFromPlatformFile(f: PlatformFile) = UploadData(
 
 suspend fun GlobalDialogController.uploadPath(
     path: Path,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     mediaTarget: ObjectTuple,
 ): Result<List<FileInfo>?> {
     val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
@@ -365,7 +367,7 @@ private fun getUploadDataFromPath(
 }
 
 suspend fun GlobalDialogController.upload(
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     mediaTarget: ObjectTuple,
     uploadData: UploadData,
     onUpload: (Long, Long?) -> Unit = { _, _ -> },

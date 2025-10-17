@@ -41,7 +41,8 @@ class RTCService : LifecycleService() {
 
     override fun onBind(intent: Intent): IBinder? {
         super.onBind(intent)
-        val uiViewModel = (application as AApplication).uiViewModel
+        (application as AApplication)
+        val uiViewModel = uiViewModel
         val rtcHandle = DefaultRTCHandle(uiViewModel, lifecycle)
         return RTCBinder(rtcHandle)
     }
