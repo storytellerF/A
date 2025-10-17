@@ -29,7 +29,6 @@ import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.merge
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
@@ -397,8 +396,8 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
     }
 
     override suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>> {
-        return merge({
-            databaseSession.dbSearch {
+        return runCatching {
+            val r1 = databaseSession.dbSearch {
                 search {
                     Users
                         .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -406,16 +405,14 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
                         .bindPaginationQuery(Users, primaryKeyFetch)
                 }
                 map(::mapUserInfo)
-            }
-        }, {
-            databaseSession.dbSearch {
+            }.getOrThrow()
+            val r2 = databaseSession.dbSearch {
                 search {
                     Users.selectAll()
                 }
                 count()
-            }
-        }).map {
-            PaginationResult(it.first, it.second)
+            }.getOrThrow()
+            PaginationResult(r1, r2)
         }
     }
 

@@ -26,10 +26,10 @@ import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
+import com.storyteller_f.shared.utils.errorIfFalse
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
@@ -165,9 +165,8 @@ suspend fun Backend.createCommunity(
     newCommunity: NewCommunity,
     uid: PrimaryKey
 ): Result<CommunityInfo?> {
-    return merge({
-        checkAid(newCommunity.aid)
-    }, {
+    return runCatching {
+        checkAid(newCommunity.aid).getOrThrow()
         when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
             StringCheckResult.RANGE_MISMATCH -> Result.failure(
                 CustomBadRequestException("community name must be between in 1 and 20")
@@ -175,8 +174,8 @@ suspend fun Backend.createCommunity(
 
             StringCheckResult.EMPTY -> Result.failure(CustomBadRequestException("community name is empty"))
             StringCheckResult.SUCCESS -> UNIT_RESULT
-        }
-    }).mapResult {
+        }.getOrThrow()
+    }.mapResult {
         val id = SnowflakeFactory.nextId()
         val community = Community(
             id,
@@ -227,16 +226,11 @@ suspend fun Backend.updateCommunity(
         ObjectType.COMMUNITY,
         id,
         uid
-    ).mapResultIfNotNull { permission ->
-        checkBeforeUpdateCommunity(newCommunity).mapResult {
-            combinedDatabase.communityDatabase.updateCommunity(id, newCommunity)
-                .mapResult { updateSuccess ->
-                    if (updateSuccess) {
-                        UNIT_RESULT
-                    } else {
-                        Result.failure(Exception("update failed"))
-                    }
-                }
+    ).mapResultIfNotNull {
+        checkBeforeUpdateCommunity(newCommunity)
+    }.mapResultIfNotNull {
+        combinedDatabase.communityDatabase.updateCommunity(id, newCommunity).errorIfFalse {
+            CustomBadRequestException("update failed")
         }
     }.mapResultIfNotNull {
         combinedDatabase.communityDatabase.getRawCommunity(

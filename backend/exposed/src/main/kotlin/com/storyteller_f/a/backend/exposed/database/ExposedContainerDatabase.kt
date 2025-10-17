@@ -22,7 +22,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.merge
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
@@ -118,8 +117,8 @@ class ExposedContainerDatabase(val exposedDatabaseSession: ExposedDatabaseSessio
         parentIds: List<PrimaryKey>,
         uid: PrimaryKey?,
     ): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>> {
-        return merge({
-            if (uid != null && parentIds.isNotEmpty()) {
+        return runCatching {
+            val r1 = if (uid != null && parentIds.isNotEmpty()) {
                 getUserJoinedTime(parentIds, uid).map {
                     it.associateBy { memberJoin ->
                         memberJoin.objectId
@@ -127,9 +126,8 @@ class ExposedContainerDatabase(val exposedDatabaseSession: ExposedDatabaseSessio
                 }
             } else {
                 Result.success(emptyMap())
-            }
-        }, {
-            if (uid != null && parentIds.isNotEmpty()) {
+            }.getOrThrow()
+            val r2 = if (uid != null && parentIds.isNotEmpty()) {
                 getTopicReadList(parentIds, uid).map {
                     it.associateBy { userTopicRead ->
                         userTopicRead.objectId
@@ -137,16 +135,16 @@ class ExposedContainerDatabase(val exposedDatabaseSession: ExposedDatabaseSessio
                 }
             } else {
                 Result.success(emptyMap())
-            }
-        }, {
-            if (parentIds.isNotEmpty()) {
+            }.getOrThrow()
+            val r3 = if (parentIds.isNotEmpty()) {
                 getMemberCount(parentIds).map {
                     it.associateByPair()
                 }
             } else {
                 Result.success(emptyMap())
-            }
-        })
+            }.getOrThrow()
+            Triple(r1, r2, r3)
+        }
     }
 
     override suspend fun getTopicReadList(

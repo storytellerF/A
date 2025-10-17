@@ -62,14 +62,9 @@ suspend fun Backend.joinRoom(
                 }
             }
         } else {
-            combinedDatabase.containerDatabase.isMemberJoined(communityId, uid)
-                .mapResult { hasJoined ->
-                    if (hasJoined) {
-                        UNIT_RESULT
-                    } else {
-                        Result.failure(ForbiddenException("you should join community first."))
-                    }
-                }
+            combinedDatabase.containerDatabase.isMemberJoined(communityId, uid).errorIfFalse {
+                ForbiddenException("you should join community first.")
+            }
         }
     }.mapResult {
         directJoinRoom(uid, roomInfo)
@@ -175,33 +170,29 @@ suspend fun Backend.updateRoom(
 ): Result<RoomInfo?> {
     val newRoom = old.copy(name = old.name?.trim(), icon = old.icon)
     return checkRootAdminPermission(ObjectType.ROOM, id, uid).mapResultIfNotNull { permission ->
-        merge(
-            {
-                when (checkNickname(newRoom.name, 1..COMMUNITY_NAME_LENGTH)) {
-                    StringCheckResult.RANGE_MISMATCH -> Result.failure(
-                        CustomBadRequestException("community name must be between in 1 and 20")
+        runCatching {
+            when (checkNickname(newRoom.name, 1..COMMUNITY_NAME_LENGTH)) {
+                StringCheckResult.RANGE_MISMATCH -> Result.failure(
+                    CustomBadRequestException("community name must be between in 1 and 20")
+                )
+
+                else -> UNIT_RESULT
+            }.getOrThrow()
+            checkIcon(newRoom.icon, Dimension(1, 1)).mapResult { checkResult ->
+                when (checkResult) {
+                    MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
+                    MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
+                        CustomBadRequestException("only support image")
+                    )
+
+                    MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
+                        CustomBadRequestException("dimension mismatch")
                     )
 
                     else -> UNIT_RESULT
                 }
-            },
-            {
-                checkIcon(newRoom.icon, Dimension(1, 1)).mapResult { checkResult ->
-                    when (checkResult) {
-                        MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
-                        MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
-                            CustomBadRequestException("only support image")
-                        )
-
-                        MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
-                            CustomBadRequestException("dimension mismatch")
-                        )
-
-                        else -> UNIT_RESULT
-                    }
-                }
-            }
-        )
+            }.getOrThrow()
+        }
     }.mapResultIfNotNull {
         combinedDatabase.roomDatabase.updateRoom(id, newRoom)
     }.mapResultIfNotNull {

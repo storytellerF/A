@@ -84,22 +84,21 @@ private suspend fun Backend.getRelatedObject(
     communityIdList: List<PrimaryKey>,
     roomIdList: List<PrimaryKey>
 ): Result<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>> {
-    return merge({
-        if (uidList.isNotEmpty()) {
+    return runCatching {
+        val r1 = if (uidList.isNotEmpty()) {
             getUserInfoList(ObjectListFetch.IdListFetch(uidList))
         } else {
             Result.success(emptyList())
-        }
-    }, {
-        if (roomIdList.isNotEmpty()) {
-            combinedDatabase.roomDatabase.getRawRooms(ObjectListFetch.IdListFetch(roomIdList)).mapResult {
-                processRawRoomToRoomInfo(it)
-            }
+        }.getOrThrow()
+        val r2 = if (roomIdList.isNotEmpty()) {
+            combinedDatabase.roomDatabase.getRawRooms(ObjectListFetch.IdListFetch(roomIdList))
+                .mapResult {
+                    processRawRoomToRoomInfo(it)
+                }
         } else {
             Result.success(emptyList())
-        }
-    }, {
-        if (communityIdList.isNotEmpty()) {
+        }.getOrThrow()
+        val r3 = if (communityIdList.isNotEmpty()) {
             combinedDatabase.communityDatabase.getRawCommunities(
                 ObjectListFetch.IdListFetch(communityIdList)
             ).mapResult {
@@ -107,8 +106,9 @@ private suspend fun Backend.getRelatedObject(
             }
         } else {
             Result.success(emptyList())
-        }
-    })
+        }.getOrThrow()
+        Triple(r1, r2, r3)
+    }
 }
 
 private fun processTitleList(
