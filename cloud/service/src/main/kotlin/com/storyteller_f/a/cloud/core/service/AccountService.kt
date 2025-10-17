@@ -17,7 +17,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.utils.UNIT_RESULT
+import com.storyteller_f.shared.utils.errorIfFalse
 import com.storyteller_f.shared.utils.filterNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
@@ -28,40 +28,31 @@ suspend fun Backend.signUp(
     pack: SignUpPack
 ): Result<UserInfo> {
     val f = finalData(data)
-    return verify(pack.pk, pack.sig, f).mapResult {
-        if (it) {
-            UNIT_RESULT
-        } else {
-            Result.failure(CustomBadRequestException("Verify failed"))
-        }.mapResult {
-            combinedDatabase.userDatabase.isUserNotExistsByPublicKey(pack.pk)
-                .mapResult { userNotExists ->
-                    if (userNotExists) {
-                        UNIT_RESULT
-                    } else {
-                        Result.failure(CustomBadRequestException("User exists"))
-                    }
-                }
-        }.mapResult {
-            calcAddress(pack.pk)
-        }.mapResult { ad ->
-            val newId = SnowflakeFactory.nextId()
-            val name = nameService.parse(newId)
-            val user = User(
-                null,
-                pack.pk,
-                ad,
-                null,
-                name,
-                newId,
-                now(),
-                0,
-                PassType.RAW,
-                AlgoType.P256
-            )
-            combinedDatabase.userDatabase.createUser(user).map {
-                user.toUserInfo()
-            }
+    return verify(pack.pk, pack.sig, f).errorIfFalse {
+        CustomBadRequestException("Verify failed")
+    }.mapResult {
+        combinedDatabase.userDatabase.isUserNotExistsByPublicKey(pack.pk).errorIfFalse {
+            CustomBadRequestException("User exists")
+        }
+    }.mapResult {
+        calcAddress(pack.pk)
+    }.mapResult { ad ->
+        val newId = SnowflakeFactory.nextId()
+        val name = nameService.parse(newId)
+        val user = User(
+            null,
+            pack.pk,
+            ad,
+            null,
+            name,
+            newId,
+            now(),
+            0,
+            PassType.RAW,
+            AlgoType.P256
+        )
+        combinedDatabase.userDatabase.createUser(user).map {
+            user.toUserInfo()
         }
     }
 }
@@ -115,36 +106,27 @@ suspend fun Backend.adminSignUp(
     pack: SignUpPack
 ): Result<PanelAccountInfo> {
     val f = finalData(data)
-    return verify(pack.pk, pack.sig, f).mapResult {
-        if (it) {
-            UNIT_RESULT
-        } else {
-            Result.failure(CustomBadRequestException("Verify failed"))
-        }.mapResult {
-            combinedDatabase.panelAccountDatabase.isUserNotExistsByPublicKey(pack.pk)
-                .mapResult { notExists ->
-                    if (notExists) {
-                        UNIT_RESULT
-                    } else {
-                        Result.failure(CustomBadRequestException("User exists"))
-                    }
-                }
-        }.mapResult {
-            calcAddress(pack.pk)
-        }.mapResult { ad ->
-            val newId = SnowflakeFactory.nextId()
-            val name = nameService.parse(newId)
-            val user = PanelAccount(
-                newId,
-                name,
-                PassType.RAW,
-                AlgoType.P256,
-                pack.pk,
-                ad,
-            )
-            combinedDatabase.panelAccountDatabase.addPanelAccount(user).map {
-                PanelAccountInfo(newId, name)
-            }
+    return verify(pack.pk, pack.sig, f).errorIfFalse {
+        CustomBadRequestException("Verify failed")
+    }.mapResult {
+        combinedDatabase.panelAccountDatabase.isUserNotExistsByPublicKey(pack.pk).errorIfFalse {
+            CustomBadRequestException("User exists")
+        }
+    }.mapResult {
+        calcAddress(pack.pk)
+    }.mapResult { ad ->
+        val newId = SnowflakeFactory.nextId()
+        val name = nameService.parse(newId)
+        val user = PanelAccount(
+            newId,
+            name,
+            PassType.RAW,
+            AlgoType.P256,
+            pack.pk,
+            ad,
+        )
+        combinedDatabase.panelAccountDatabase.addPanelAccount(user).map {
+            PanelAccountInfo(newId, name)
         }
     }
 }

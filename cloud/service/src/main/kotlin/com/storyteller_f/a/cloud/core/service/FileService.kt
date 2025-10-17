@@ -26,7 +26,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -286,21 +285,19 @@ private suspend fun Backend.copyFile(
             name = newName,
             fullName = "$newOwner/$newName"
         )
-        merge({
-            objectStorageService.copy(
+        runCatching {
+            val r1 = objectStorageService.copy(
                 A_FILE_DEFAULT_BUCKET,
                 listOf(CopyPack(fileRecord.fullName, newFileRecord.fullName))
             ).map {
                 it.first()
-            }
-        }, {
+            }.getOrThrow()
             combinedDatabase.fileDatabase.insertFileRecord(
                 listOf(newFileRecord),
                 newOwner,
                 ObjectType.USER
-            )
-        }).map { (it) ->
-            ServerResponse(listOf(newFileRecord.toFileInfo(it.url, it.lastModified)), null)
+            ).getOrThrow()
+            ServerResponse(listOf(newFileRecord.toFileInfo(r1.url, r1.lastModified)), null)
         }
     }
 }
@@ -377,14 +374,12 @@ private suspend fun Backend.uploadFiles(
             uploadPack.fullName
         )
     }
-    return merge({
-        objectStorageService.upload(A_FILE_DEFAULT_BUCKET, uploadPacks.map {
+    return runCatching {
+        val r1 = objectStorageService.upload(A_FILE_DEFAULT_BUCKET, uploadPacks.map {
             it.pack
-        })
-    }, {
-        combinedDatabase.fileDatabase.insertFileRecord(data, ownerId, ownerType)
-    }).map { (records) ->
-        records.mapIndexed { i, e ->
+        }).getOrThrow()
+        combinedDatabase.fileDatabase.insertFileRecord(data, ownerId, ownerType).getOrThrow()
+        r1.mapIndexed { i, e ->
             data[i].toFileInfo(e.url, e.lastModified)
         }
     }

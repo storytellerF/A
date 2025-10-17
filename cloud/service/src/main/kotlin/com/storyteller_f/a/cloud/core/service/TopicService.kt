@@ -40,7 +40,6 @@ import com.storyteller_f.shared.utils.groupByPair
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.toImmutableList
@@ -221,9 +220,9 @@ private suspend fun Backend.saveEncryptedTopic(
 suspend fun Backend.processTopicAfterCreate(
     topicInfo: TopicInfo,
     uid: PrimaryKey
-) = merge({
-    val content = topicInfo.content
-    if (content is TopicContent.Plain) {
+) = runCatching {
+    val content1 = topicInfo.content
+    val r1 = if (content1 is TopicContent.Plain) {
         processTopicFileObject(
             listOf(topicInfo)
         ).mapIfNotNull {
@@ -231,15 +230,12 @@ suspend fun Backend.processTopicAfterCreate(
         }
     } else {
         Result.success(topicInfo)
-    }
-}, {
-    getUserInfo(ObjectFetch.IdFetch(uid))
-}).map {
-    val authorInfo = it.second
-    if (authorInfo != null) {
-        it.first?.copy(extension = TopicInfo.Extension(authorInfo = authorInfo))
+    }.getOrThrow()
+    val r2 = getUserInfo(ObjectFetch.IdFetch(uid)).getOrThrow()
+    if (r2 != null) {
+        r1?.copy(extension = TopicInfo.Extension(authorInfo = r2))
     } else {
-        it.first
+        r1
     }
 }
 

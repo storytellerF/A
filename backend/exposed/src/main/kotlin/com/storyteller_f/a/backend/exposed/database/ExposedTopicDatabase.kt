@@ -21,9 +21,13 @@ import com.storyteller_f.a.backend.exposed.isNotEmpty
 import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildReactionInfoQuery
-import com.storyteller_f.a.backend.exposed.tables.*
+import com.storyteller_f.a.backend.exposed.tables.Aids
+import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
+import com.storyteller_f.a.backend.exposed.tables.ReactionRecords
+import com.storyteller_f.a.backend.exposed.tables.Reactions
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.Topics
+import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -32,8 +36,19 @@ import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.*
-import org.jetbrains.exposed.v1.core.*
+import com.storyteller_f.shared.utils.associateByPair
+import com.storyteller_f.shared.utils.extractMarkdownMediaLink
+import com.storyteller_f.shared.utils.groupByPair
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.shared.utils.now
+import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.countDistinct
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
@@ -124,21 +139,19 @@ class ExposedTopicDatabase(
         primaryKeyFetch: PrimaryKeyFetch,
         extraQuery: Query.() -> Query,
     ): Result<PaginationResult<TopicInfo>> {
-        return merge({
-            getTopicInfoListByPredicate(uid) {
+        return runCatching {
+            val r1 = getTopicInfoListByPredicate(uid) {
                 extraQuery().bindPaginationQuery(Topics, primaryKeyFetch)
-            }
-        }, {
-            databaseSession.dbSearch {
+            }.getOrThrow()
+            val r2 = databaseSession.dbSearch {
                 search {
                     Topics
                         .selectAll()
                         .extraQuery()
                 }
                 count()
-            }
-        }).map {
-            PaginationResult(it.first, it.second)
+            }.getOrThrow()
+            PaginationResult(r1, r2)
         }
     }
 
@@ -281,35 +294,36 @@ class ExposedTopicDatabase(
         val topicIds = topics.map {
             it.id
         }
-        return merge({
-            if (uid != null) {
+        return runCatching {
+            val commented = if (uid != null) {
                 isUserCommented(uid, topicIds).map {
                     it.toSet()
                 }
             } else {
                 Result.success(emptySet())
-            }
-        }, {
-            getTopicCommentCount(topicIds).map {
-                it.associateByPair()
-            }
-        }, {
-            getReactionCount(topicIds).map {
-                it.associateByPair()
-            }
-        }, {
-            if (uid != null) {
-                containerDatabase.getTopicReadList(topicIds, uid).map {
-                    it.associateBy { userTopicRead ->
-                        userTopicRead.objectId
+            }.getOrThrow()
+            val commentCountMap =
+                getTopicCommentCount(topicIds).map {
+                    it.associateByPair()
+                }.getOrThrow()
+            val reactionCountMap =
+                getReactionCount(topicIds).map {
+                    it.associateByPair()
+                }.getOrThrow()
+            val lastReadMap = if (uid != null) {
+                containerDatabase.getTopicReadList(topicIds, uid)
+                    .map {
+                        it.associateBy { userTopicRead ->
+                            userTopicRead.objectId
+                        }
                     }
-                }
             } else {
                 Result.success(emptyMap())
-            }
-        }, {
-            processByteArrayToTopicContent(topics, uid)
-        }).map { (commented, commentCountMap, reactionCountMap, lastReadMap, contentMap) ->
+            }.getOrThrow()
+            val contentMap = processByteArrayToTopicContent(
+                topics,
+                uid
+            ).getOrThrow<Map<PrimaryKey, TopicContent>>()
             topics.map { topic ->
                 val id = topic.id
                 topic.toTopicInfo(

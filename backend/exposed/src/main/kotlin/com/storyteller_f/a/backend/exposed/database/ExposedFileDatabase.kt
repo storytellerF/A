@@ -20,7 +20,6 @@ import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.merge
 import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -102,29 +101,24 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<FileRecord>> {
-        return merge(
-            {
-                databaseSession.dbSearch {
-                    search {
-                        FileRecords.selectAll().where {
-                            FileRecords.owner eq uid
-                        }.bindPaginationQuery(FileRecords, primaryKeyFetch)
-                    }
-                    map(FileRecord::wrapRow)
+        return runCatching {
+            val r1 = databaseSession.dbSearch {
+                search {
+                    FileRecords.selectAll().where {
+                        FileRecords.owner eq uid
+                    }.bindPaginationQuery(FileRecords, primaryKeyFetch)
                 }
-            },
-            {
-                databaseSession.dbSearch {
-                    search {
-                        FileRecords.selectAll().where {
-                            FileRecords.owner eq uid
-                        }
+                map(FileRecord::wrapRow)
+            }.getOrThrow()
+            val r2 = databaseSession.dbSearch {
+                search {
+                    FileRecords.selectAll().where {
+                        FileRecords.owner eq uid
                     }
-                    count()
                 }
-            }
-        ).map { (list, count) ->
-            PaginationResult(list, count)
+                count()
+            }.getOrThrow()
+            PaginationResult(r1, r2)
         }
     }
 
