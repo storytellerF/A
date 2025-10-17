@@ -9,8 +9,6 @@ import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
 import com.storyteller_f.a.backend.core.service.RoomSearchService
 import com.storyteller_f.a.backend.core.service.RoomSearchServiceFactory
-import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import org.apache.lucene.document.Document
@@ -27,11 +25,9 @@ import org.apache.lucene.search.SortField
 import java.nio.file.Path
 
 data class LuceneRoomDocument(val roomDocument: RoomDocument) :
-    PrimaryKeyIdentifiable, LuceneDocument {
-    override val id: PrimaryKey
-        get() = roomDocument.id
-    override val objectType: ObjectType = roomDocument.objectType
+    LuceneDocument {
     override fun save(): Document {
+        val id = roomDocument.id
         return Document().apply {
             add(LongField("id1", id, Field.Store.YES))
             add(NumericDocValuesField("id2", id))

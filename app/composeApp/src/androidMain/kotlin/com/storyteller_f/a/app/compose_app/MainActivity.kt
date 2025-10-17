@@ -11,15 +11,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.kdroid.composenotification.builder.AndroidChannelConfig
 import com.kdroid.composenotification.builder.NotificationInitializer.notificationInitializer
-import com.storyteller_f.a.app.compose_app.compontents.bindActivity
-import com.storyteller_f.a.app.compose_app.compontents.unbindActivity
+import com.storyteller_f.a.app.compose_app.components.bindActivity
+import com.storyteller_f.a.app.compose_app.components.unbindActivity
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import com.storyteller_f.shared.isRunningOnRobolectric
 import io.github.aakira.napier.Napier
@@ -123,7 +122,6 @@ fun ComponentActivity.initFromContext() {
 
 fun ComponentActivity.commonForActivity() {
     enableEdgeToEdge()
-    WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
 }
 
 fun registerDevice(context: Context) {

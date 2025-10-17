@@ -5,6 +5,7 @@ import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
@@ -21,6 +22,8 @@ import com.storyteller_f.storage.DownloadInfoStorage
 import com.storyteller_f.storage.FileInfoStorage
 import com.storyteller_f.storage.MediasCollection
 import com.storyteller_f.storage.ModelStorage
+import com.storyteller_f.storage.OverviewCollection
+import com.storyteller_f.storage.OverviewStorage
 import com.storyteller_f.storage.ReactionCollection
 import com.storyteller_f.storage.ReactionInfoStorage
 import com.storyteller_f.storage.RemoteKeyStorage
@@ -345,16 +348,15 @@ class ReactionRoomInfoStorage(val appDatabase: AppDatabase) : ReactionInfoStorag
     ) {
         val id = "${reactionInfo.objectId}-${reactionInfo.emoji}"
         val data = commonJson.encodeToString(reactionInfo)
-        appDatabase.getReactionDao()
-            .insert(
-                ReactionEntity(
-                    id,
-                    collection.getName(),
-                    data,
-                    reactionInfo.count,
-                    reactionInfo.lastReactionId
-                )
+        appDatabase.getReactionDao().insert(
+            ReactionEntity(
+                id,
+                collection.getName(),
+                data,
+                reactionInfo.count,
+                reactionInfo.lastReactionId
             )
+        )
     }
 
     override fun observeData(
@@ -481,6 +483,21 @@ class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
     }
 }
 
+class OverviewRoomStorage(val appDatabase: AppDatabase) : OverviewStorage {
+    val impl = CommonStorageImpl(appDatabase)
+    override suspend fun save(
+        collection: OverviewCollection,
+        overviewInfo: PanelOverview
+    ) {
+        val data = commonJson.encodeToString(overviewInfo)
+        appDatabase.getCommonDao().insert(CommonEntity("overview", collection.NAME, data))
+    }
+
+    override fun observeDatum(): Flow<PanelOverview?> {
+        return impl.observeDatum(OverviewCollection.NAME, "overview")
+    }
+}
+
 class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val userInfoStorage: UserInfoStorage = UserRoomInfoStorage(appDatabase)
     override val communityInfoStorage: CommunityInfoStorage = CommunityRoomInfoStorage(appDatabase)
@@ -493,4 +510,5 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val fileInfoStorage: FileInfoStorage = FileInfoRoomStorage(appDatabase)
     override val downloadInfoStorage: DownloadInfoStorage = DownloadInfoRoomStorage(appDatabase)
     override val uploadInfoStorage: UploadInfoStorage = UploadInfoRoomStorage(appDatabase)
+    override val overviewStorage: OverviewStorage = OverviewRoomStorage(appDatabase)
 }

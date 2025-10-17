@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -13,53 +12,33 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.paging.ExperimentalPagingApi
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.PagingData
-import androidx.paging.cachedIn
 import com.russhwolf.settings.Settings
-import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.app.core.PanelConfig
-import com.storyteller_f.a.app.core.common.CompatPagingSource
-import com.storyteller_f.a.app.core.common.CustomRemoteMediator
-import com.storyteller_f.a.app.core.common.IntKeyConverter
 import com.storyteller_f.a.app.core.common.LocalClient
-import com.storyteller_f.a.app.core.common.PagingViewModel
-import com.storyteller_f.a.app.core.common.RegularPagingSource
 import com.storyteller_f.a.app.core.compontents.CenterBox
+import com.storyteller_f.a.app.core.compontents.LoginButton
 import com.storyteller_f.a.app.core.compontents.PrivateKeyInput
-import com.storyteller_f.a.app.core.compontents.StateView
-import com.storyteller_f.a.app.core.compontents.UserIconInternal
-import com.storyteller_f.a.app.core.compontents.pagingItems
+import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.PanelSessionModel
-import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.createPanelSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
-import com.storyteller_f.a.client.core.getAllUsers
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getPanelAccountInfo
+import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomDatabase
-import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.storage.ModelStorage
-import com.storyteller_f.storage.UserCollection
-import com.storyteller_f.storage.getName
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
@@ -68,33 +47,81 @@ import io.ktor.client.plugins.cookies.CookiesStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.storyteller_f.a.cloud.panel.pages.AllUsersPage
+import org.storyteller_f.a.cloud.panel.pages.OverviewPage
 
 @OptIn(DelicateCoroutinesApi::class)
 val panelAccountInstance = PanelAccountInstance(GlobalScope)
+
+interface PanelNav {
+    fun gotoLogin()
+    fun gotoOverview()
+    fun gotoAllUsers()
+}
+
+class Nav2PanelNav(val navigator: NavHostController) : PanelNav {
+    override fun gotoLogin() {
+        navigator.navigate("login")
+    }
+
+    override fun gotoOverview() {
+        navigator.navigate("overview")
+    }
+
+    override fun gotoAllUsers() {
+        navigator.navigate("all-users")
+    }
+}
+
+val LocalNav = compositionLocalOf<PanelNav> { error("no nav") }
 
 @Composable
 fun App() {
     val sessionManager = panelAccountInstance.sessionManager
     val client = sessionManager.client
-    CompositionLocalProvider(LocalClient provides client) {
+    val navigator = rememberNavController()
+    val nav = remember { Nav2PanelNav(navigator) }
+    CompositionLocalProvider(
+        LocalClient provides client,
+        LocalNav provides nav
+    ) {
         MaterialTheme {
-            val navigator = rememberNavController()
-            NavHost(navigator, "login") {
+            NavHost(navigator, "overview") {
                 composable("login") {
                     PanelLoginPage {
                         navigator.popBackStack()
-                        navigator.navigate("all-users")
+                        nav.gotoOverview()
                     }
                 }
                 composable("all-users") {
                     AllUsersPage()
                 }
+                composable("overview") {
+                    PanelHost {
+                        OverviewPage()
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PanelHost(content: @Composable () -> Unit) {
+    val nav = LocalNav.current
+    val session = panelAccountInstance.sessionManager
+    val user by session.isAlreadySignUp.collectAsState()
+    if (user) {
+        content()
+    } else {
+        CenterBox {
+            LoginButton {
+                nav.gotoLogin()
             }
         }
     }
@@ -120,17 +147,18 @@ fun PanelLoginPage(back: () -> Unit) {
 
 @Composable
 private fun PanelInputPage(back: () -> Unit) {
+    val sessionManager = panelAccountInstance.sessionManager
     CenterBox {
         val scope = rememberCoroutineScope()
         var privateKey by remember { mutableStateOf("") }
         val startSign: () -> Unit = {
             scope.launch {
                 try {
-                    panelAccountInstance.sessionManager.getPanelAccountInfo(
+                    sessionManager.getPanelAccountInfo(
                         privateKey,
                         false
                     ) {
-                        RawUserPass(it)
+                        buildLoginHistoryFactory(sessionManager.settings).addSession(it)
                     }
                     back()
                 } catch (e: Exception) {
@@ -153,6 +181,7 @@ private fun PanelInputPage(back: () -> Unit) {
 
 @Composable
 private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit) {
+    val panelSessionManager = panelAccountInstance.sessionManager
     CenterBox {
         Column(
             verticalArrangement = Arrangement.spacedBy(40.dp),
@@ -178,11 +207,13 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
                             val f = FileKit.openFilePicker()
                             if (f != null) {
                                 val privateKey = String(f.readBytes()).replace("\r\n", "\n")
-                                panelAccountInstance.sessionManager.getPanelAccountInfo(
+                                panelSessionManager.getPanelAccountInfo(
                                     privateKey,
                                     false
                                 ) {
-                                    RawUserPass(it)
+                                    buildLoginHistoryFactory(panelSessionManager.settings).addSession(
+                                        it
+                                    )
                                 }
                                 back()
                             }
@@ -192,97 +223,6 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
                     }
                 }) {
                     Text("Select File")
-                }
-            }
-        }
-    }
-}
-
-class AllUsersViewModel(
-    sessionManager: PanelSessionManager,
-    modelStorage: ModelStorage,
-) : PagingViewModel<UserInfo>() {
-    val modelCollection = UserCollection.AllUsers
-
-    @OptIn(ExperimentalPagingApi::class)
-    override val flow: Flow<PagingData<UserInfo>> = Pager(
-        PagingConfig(pageSize = 20),
-        remoteMediator = CustomRemoteMediator(
-            modelStorage,
-            modelCollection.getName(),
-            RegularPagingSource { key, size ->
-                sessionManager.getAllUsers(PaginationQuery(key, size = size))
-            },
-        ) { data, clean ->
-            if (clean) {
-                modelStorage.userInfoStorage.clean(modelCollection)
-            }
-            data.forEach {
-                modelStorage.userInfoStorage.save(modelCollection, it)
-            }
-        },
-    ) {
-        CompatPagingSource(
-            modelStorage.userInfoStorage.observeData(modelCollection),
-            IntKeyConverter
-        )
-    }.flow.cachedIn(viewModelScope)
-}
-
-@Composable
-fun AllUsersPage() {
-    val modelStorage by panelAccountInstance.database.collectAsState()
-    val viewModel = viewModel {
-        AllUsersViewModel(panelAccountInstance.sessionManager, modelStorage)
-    }
-    AllUsersPageInternal(viewModel)
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AllUsersPageInternal(viewModel: AllUsersViewModel) {
-    Scaffold(
-        topBar = {
-            TopAppBar(title = {
-                Text("Home")
-            })
-        }
-    ) {
-        Box(Modifier.padding(top = it.calculateTopPadding())) {
-            StateView(viewModel) { items ->
-                LazyColumn {
-                    pagingItems(items, key = {
-                        it.id
-                    }) {
-                        UserCell(items.get(it))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun UserCell(userInfo: UserInfo?) {
-    Row(
-        modifier = Modifier.padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        UserIconInternal(
-            isMe = false,
-            setClickEvent = true,
-            avatarUrl = userInfo?.avatar?.url,
-        ) {
-        }
-        if (userInfo != null) {
-            Column {
-                Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)
-                val aid = userInfo.aid
-                if (aid != null) {
-                    Text("aid: $aid", style = MaterialTheme.typography.labelSmall)
-                } else {
-                    Text("ad: ${userInfo.address}", style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -310,6 +250,12 @@ class PanelAccountInstance(scope: CoroutineScope) {
             guestDatabase
         }
     }.stateIn(scope, SharingStarted.Eagerly, guestDatabase)
+
+    init {
+        scope.launch {
+            sessionManager.startBackgroundTask()
+        }
+    }
 }
 
 class CustomPanelSessionManager(

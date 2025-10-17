@@ -47,26 +47,26 @@ import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.TopicComposeData
-import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
-import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
-import com.storyteller_f.a.app.compose_app.compontents.GlobalTask
-import com.storyteller_f.a.app.compose_app.compontents.InteractionRow
-import com.storyteller_f.a.app.compose_app.compontents.TopicCell
-import com.storyteller_f.a.app.compose_app.compontents.TopicContentField
-import com.storyteller_f.a.app.compose_app.compontents.UserIcon
-import com.storyteller_f.a.app.compose_app.compontents.use
-import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
-import com.storyteller_f.a.app.compose_app.model.TopicViewModel
-import com.storyteller_f.a.app.compose_app.model.createRoomViewModel
-import com.storyteller_f.a.app.compose_app.model.createTopicViewModel
-import com.storyteller_f.a.app.compose_app.model.createTopicsInTopicViewModel
-import com.storyteller_f.a.app.compose_app.model.createUserViewModel
+import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
+import com.storyteller_f.a.app.compose_app.common.TopicComposeData
+import com.storyteller_f.a.app.compose_app.common.TopicViewModel
+import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
+import com.storyteller_f.a.app.compose_app.common.createTopicViewModel
+import com.storyteller_f.a.app.compose_app.common.createTopicsInTopicViewModel
+import com.storyteller_f.a.app.compose_app.common.createUserViewModel
+import com.storyteller_f.a.app.compose_app.components.CustomAlertDialog
+import com.storyteller_f.a.app.compose_app.components.CustomAlertDialogController
+import com.storyteller_f.a.app.compose_app.components.GlobalTask
+import com.storyteller_f.a.app.compose_app.components.InteractionRow
+import com.storyteller_f.a.app.compose_app.components.TopicCell
+import com.storyteller_f.a.app.compose_app.components.TopicContentField
+import com.storyteller_f.a.app.compose_app.components.use
 import com.storyteller_f.a.app.compose_app.pages.room.CommonInputButton
 import com.storyteller_f.a.app.compose_app.pages.room.InputGroupInternal
 import com.storyteller_f.a.app.compose_app.pages.room.RoomInputGroup
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
+import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
 import com.storyteller_f.a.app.core.compontents.topPrepend
@@ -141,7 +141,7 @@ private fun TopicPageInternal(
                     val authorViewModel =
                         createUserViewModel(author)
                     val authorInfo by authorViewModel.handler.data.collectAsState()
-                    UserIcon(authorInfo)
+                    UserIconWithDialog(authorInfo)
                 }
                 Icon(
                     Icons.Default.Topic,

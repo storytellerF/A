@@ -14,9 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.compontents.UserIcon
-import com.storyteller_f.a.app.compose_app.model.TopicViewModel
-import com.storyteller_f.a.app.compose_app.model.createTopicViewModel
+import com.storyteller_f.a.app.compose_app.common.TopicViewModel
+import com.storyteller_f.a.app.compose_app.common.createTopicViewModel
+import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.compontents.RefCellStateView
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -66,7 +66,7 @@ private fun TopicRefCellContent(
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        UserIcon(authorInfo)
+        UserIconWithDialog(authorInfo)
         val text = (it.content as? TopicContent.Plain)?.plain.toString()
         val plain = remember {
             extractMarkdownHeadline(text)

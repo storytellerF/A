@@ -182,3 +182,10 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
 }
+
+
+compose.resources {
+    publicResClass = false
+    packageOfResClass = "com.storyteller_f.a.app.core"
+    generateResClass = auto
+}

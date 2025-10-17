@@ -33,3 +33,7 @@ suspend fun PanelSessionManager.signOut() = serviceCatching {
 suspend fun PanelSessionManager.getData() = serviceCatching {
     AdminApi.getData.invoke()
 }
+
+suspend fun PanelSessionManager.overview() = serviceCatching {
+    AdminApi.overview.invoke()
+}

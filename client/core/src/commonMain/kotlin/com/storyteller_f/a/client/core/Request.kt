@@ -295,7 +295,7 @@ suspend fun UserSessionManager.getTopicSnapshot(topicId: PrimaryKey) = serviceCa
 
 suspend fun UserSessionManager.searchTopics(
     size: Int,
-    word: List<String>,
+    word: List<String>? = null,
     parentId: PrimaryKey? = null,
     parentType: ObjectType? = null,
     nextTopicId: String? = null,

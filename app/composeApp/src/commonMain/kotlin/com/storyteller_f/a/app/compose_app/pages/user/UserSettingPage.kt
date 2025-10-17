@@ -17,15 +17,15 @@ import com.attafitamim.krop.ui.ImageCropperDialog
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
-import com.storyteller_f.a.app.compose_app.compontents.*
-import com.storyteller_f.a.app.compose_app.model.OnUserUpdated
+import com.storyteller_f.a.app.compose_app.common.OnUserUpdated
+import com.storyteller_f.a.app.compose_app.components.*
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.uploadPath
 import com.storyteller_f.a.app.core.utils.ImageFormat
 import com.storyteller_f.a.app.core.utils.androidAllowHardware
 import com.storyteller_f.a.app.core.utils.coilImageToImageBitmap
 import com.storyteller_f.a.app.core.utils.saveImageBitmap
-import com.storyteller_f.a.client.core.SessionManager
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
@@ -165,7 +165,7 @@ private fun processSelectedMedia(
     mediaList: List<FileInfo>,
     scope: CoroutineScope,
     context: PlatformContext,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     imageCropper: ImageCropper,
     ratio: AspectRatio,
     mediaTarget: ObjectTuple,
@@ -206,7 +206,7 @@ private fun processSelectedMedia(
 
 private suspend fun GlobalDialogController.cropImage(
     context: PlatformContext,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     info: FileInfo,
     imageCropper: ImageCropper,
     mediaTarget: ObjectTuple,
@@ -278,7 +278,7 @@ private fun UserSettingInternal(
                 }
             },
             {
-                UserIcon(m, setClickEvent = false)
+                UserIconWithDialog(m, setClickEvent = false)
             }
         )
         SettingOptionView("Name", {
@@ -305,7 +305,7 @@ private fun UserSettingInternal(
 
 private suspend fun updateUser(
     showInputDialog: SettingOption?,
-    sessionManager: SessionManager,
+    sessionManager: UserSessionManager,
     string: String,
     globalDialogController: GlobalDialogController,
     closeDialog: () -> Unit,

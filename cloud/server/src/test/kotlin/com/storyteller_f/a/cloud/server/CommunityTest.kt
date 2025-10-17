@@ -35,49 +35,66 @@ class CommunityTest {
     }
 
     @Test
+    fun `test join community`() {
+        test {
+            val communityId = attachSession {
+                createCommunity(NewCommunity("c1", "aid")).getOrThrow().id
+            }.custom
+            attachSession {
+                assertFalse(getCommunityInfo(communityId).getOrThrow().isJoined)
+                assertFails {
+                    createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
+                }
+                joinCommunity(communityId).getOrThrow()
+                assertTrue(getCommunityInfo(communityId).getOrThrow().isJoined)
+                // 测试退出社区
+                exitCommunity(communityId)
+                assertFalse(getCommunityInfo(communityId).getOrThrow().isJoined)
+            }
+        }
+    }
+
+    @Test
     fun `test create topic in community`() = test {
         val communityId = attachSession {
             createCommunity(NewCommunity("c1", "aid")).getOrThrow().id
         }.custom
         attachSession {
-            // insert community
-            assertFails {
-                createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
-            }
-            // 加入社区
             joinCommunity(communityId).getOrThrow()
-            val communityInfo = getCommunityInfo(communityId).getOrThrow()
-            // 验证加入成功
-            assertTrue(communityInfo.isJoined)
-            // 再次发起创建话题
             createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
             assertListSize(
                 1,
-                searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY)
+                searchTopics(10, parentId = communityId, parentType = ObjectType.COMMUNITY)
             )
-            assertListSize(1, getCommunityTopics(
-                communityId,
-                paginationQuery = PaginationQuery(null, null, size = 10)
-            ))
-            // 测试上传加密话题
-            assertFails {
-                client.post("/topics") {
-                    contentType(ContentType.Application.Json)
-                    setBody(NewTopic(ObjectType.COMMUNITY, communityId, ""))
+            assertListSize(
+                1,
+                getCommunityTopics(
+                    communityId,
+                    paginationQuery = PaginationQuery(size = 10)
+                )
+            )
+            val topicId = searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY)
+                .getOrThrow().data.first().id
+            val new = createTopic(ObjectType.TOPIC, topicId, "test").getOrThrow()
+            assertEquals(ObjectType.COMMUNITY, new.rootType)
+            assertEquals(communityId, new.rootId)
+            val newInfo = getTopicInfo(topicId).getOrThrow()
+            assertTrue(newInfo.hasComment)
+        }
+    }
+
+    @Test
+    fun `test create empty topic in community`() {
+        test {
+            attachSession {
+                val communityId = createCommunity(NewCommunity("c1", "aid")).getOrThrow().id
+                assertFails {
+                    client.post("/topics") {
+                        contentType(ContentType.Application.Json)
+                        setBody(NewTopic(ObjectType.COMMUNITY, communityId, ""))
+                    }
                 }
             }
-            // 添加话题到子话题
-            kotlin.run {
-                val topicId = searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY)
-                    .getOrThrow().data.first().id
-                val new = createTopic(ObjectType.TOPIC, topicId, "test").getOrThrow()
-                assertEquals(ObjectType.COMMUNITY, new.rootType)
-                assertEquals(communityId, new.rootId)
-                val newInfo = getTopicInfo(topicId).getOrThrow()
-                assertTrue(newInfo.hasComment)
-            }
-            // 测试退出社区
-            exitCommunity(communityId)
         }
     }
 
@@ -98,7 +115,12 @@ class CommunityTest {
                 var lastCommunityId: String? = null
                 var sum = 0L
                 while (true) {
-                    val res = searchCommunity(3, JoinStatusSearch.JOINED, "", nextCommunityId = lastCommunityId)
+                    val res = searchCommunity(
+                        3,
+                        JoinStatusSearch.JOINED,
+                        "",
+                        nextCommunityId = lastCommunityId
+                    )
                         .getOrThrow()
                     val pagination = res.pagination!!
                     lastCommunityId = pagination.nextPageToken
@@ -172,7 +194,8 @@ class CommunityTest {
                 }
             }
             noneSession {
-                val response = searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
+                val response =
+                    searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
                 assertEquals(10, response.data.size)
                 response.data.forEach {
                     assertFalse(it.isJoined)
@@ -180,12 +203,14 @@ class CommunityTest {
                 }
             }
             attachSession {
-                val response = searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
+                val response =
+                    searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
                 assertEquals(10, response.data.size)
                 response.data.forEach {
                     joinCommunity(it.id).getOrThrow()
                 }
-                val response2 = searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
+                val response2 =
+                    searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
                 response2.data.forEach {
                     assertTrue(it.isJoined)
                     assertNotNull(it.extension?.targetUserJoinedTime)

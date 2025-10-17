@@ -16,11 +16,11 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
-import com.storyteller_f.a.app.compose_app.compontents.rememberCommonDialogController
-import com.storyteller_f.a.app.compose_app.model.RoomsViewModel
-import com.storyteller_f.a.app.compose_app.model.createCommunityViewModel
-import com.storyteller_f.a.app.compose_app.model.createJoinedRoomsViewModel
+import com.storyteller_f.a.app.compose_app.common.RoomsViewModel
+import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
+import com.storyteller_f.a.app.compose_app.common.createJoinedRoomsViewModel
+import com.storyteller_f.a.app.compose_app.components.rememberCommonDialogController
+import com.storyteller_f.a.app.compose_app.pages.community.CommunityIconWithDialog
 import com.storyteller_f.a.app.core.compontents.CommonImage
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
@@ -103,7 +103,7 @@ fun RoomCell(
                 mutableStateOf(false)
             }
             Spacer(modifier = Modifier.weight(1f))
-            CommunityIcon(
+            CommunityIconWithDialog(
                 communityInfo,
                 showDialog = showCommunityDialog
             ) {

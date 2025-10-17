@@ -28,6 +28,7 @@ import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.utils.transformThrowable
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -63,6 +64,13 @@ fun <R> DatabaseSearchConfig<R?, Query>.first(block: suspend (ResultRow) -> R) {
         firstOrNull()?.let {
             block(it)
         }
+    }
+    transformFunc = function
+}
+
+fun <R> DatabaseSearchConfig<R, Query>.firstNotNull(block: suspend (ResultRow) -> R) {
+    val function: suspend Query.() -> R = {
+        block(first())
     }
     transformFunc = function
 }

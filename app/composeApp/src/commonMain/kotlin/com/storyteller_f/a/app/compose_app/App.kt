@@ -27,18 +27,28 @@ import com.kdroid.composenotification.builder.ExperimentalNotificationsApi
 import com.kdroid.composenotification.builder.Notification
 import com.kdroid.composenotification.builder.getNotificationProvider
 import com.russhwolf.settings.Settings
+import com.storyteller_f.a.app.compose_app.common.AppNav
 import com.storyteller_f.a.app.compose_app.common.Downloader
+import com.storyteller_f.a.app.compose_app.common.HomeScreen
+import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
+import com.storyteller_f.a.app.compose_app.common.RoomScreen
+import com.storyteller_f.a.app.compose_app.common.Sonner
+import com.storyteller_f.a.app.compose_app.common.Toast
+import com.storyteller_f.a.app.compose_app.common.TopicScreen
 import com.storyteller_f.a.app.compose_app.common.Uploader
-import com.storyteller_f.a.app.compose_app.compontents.ConstPlayItem
-import com.storyteller_f.a.app.compose_app.compontents.CustomGlobalDialogController
-import com.storyteller_f.a.app.compose_app.compontents.CustomVideoSize
-import com.storyteller_f.a.app.compose_app.compontents.GlobalDialog
-import com.storyteller_f.a.app.compose_app.compontents.GlobalDialogController
-import com.storyteller_f.a.app.compose_app.compontents.GlobalTask
-import com.storyteller_f.a.app.compose_app.compontents.RemoteMediaItem
-import com.storyteller_f.a.app.compose_app.compontents.globalPlayerState
-import com.storyteller_f.a.app.compose_app.compontents.rememberIsInPipMode
-import com.storyteller_f.a.app.compose_app.model.OnTopicCreated
+import com.storyteller_f.a.app.compose_app.common.buildRootNav
+import com.storyteller_f.a.app.compose_app.common.newAppNav
+import com.storyteller_f.a.app.compose_app.common.processEvent
+import com.storyteller_f.a.app.compose_app.common.toRoute
+import com.storyteller_f.a.app.compose_app.components.ConstPlayItem
+import com.storyteller_f.a.app.compose_app.components.CustomGlobalDialogController
+import com.storyteller_f.a.app.compose_app.components.CustomVideoSize
+import com.storyteller_f.a.app.compose_app.components.GlobalDialog
+import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
+import com.storyteller_f.a.app.compose_app.components.GlobalTask
+import com.storyteller_f.a.app.compose_app.components.RemoteMediaItem
+import com.storyteller_f.a.app.compose_app.components.globalPlayerState
+import com.storyteller_f.a.app.compose_app.components.rememberIsInPipMode
 import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
 import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitch
 import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitcher
@@ -48,6 +58,7 @@ import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.compose_app.utils.createCustomDataStoreManager
 import com.storyteller_f.a.app.compose_app.utils.getUiViewModel
+import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
@@ -80,6 +91,7 @@ import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -170,6 +182,11 @@ sealed interface FileViewInfo {
 
 @OptIn(ExperimentalUuidApi::class)
 data class LocalMediaPlaySession(val id: String, val uuid: Uuid)
+
+@OptIn(DelicateCoroutinesApi::class)
+val uiViewModel by lazy {
+    UIViewModel(GlobalScope, AppConfig.WS_SERVER_URL, AppConfig.SERVER_URL)
+}
 
 @Composable
 fun App() {

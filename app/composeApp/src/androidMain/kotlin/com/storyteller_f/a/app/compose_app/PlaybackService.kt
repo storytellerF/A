@@ -7,9 +7,9 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.storyteller_f.a.app.compose_app.compontents.CustomVideoSize
-import com.storyteller_f.a.app.compose_app.compontents.currentPlayerState
-import com.storyteller_f.a.app.compose_app.compontents.setCurrentPlayerState
+import com.storyteller_f.a.app.compose_app.components.CustomVideoSize
+import com.storyteller_f.a.app.compose_app.components.currentPlayerState
+import com.storyteller_f.a.app.compose_app.components.setCurrentPlayerState
 import io.github.aakira.napier.Napier
 import kotlin.uuid.ExperimentalUuidApi
 

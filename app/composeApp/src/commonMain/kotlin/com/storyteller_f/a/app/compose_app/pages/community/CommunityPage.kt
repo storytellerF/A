@@ -56,40 +56,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.storyteller_f.a.app.compose_app.AppNav
-import com.storyteller_f.a.app.compose_app.CommunityScreen
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
-import com.storyteller_f.a.app.compose_app.TopicComposeData
 import com.storyteller_f.a.app.compose_app.add
 import com.storyteller_f.a.app.compose_app.all_members
-import com.storyteller_f.a.app.compose_app.compontents.BaseSheet
-import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
-import com.storyteller_f.a.app.compose_app.compontents.CommunityIcon
-import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialog
-import com.storyteller_f.a.app.compose_app.compontents.CustomAlertDialogController
-import com.storyteller_f.a.app.compose_app.compontents.DialogContainer
-import com.storyteller_f.a.app.compose_app.compontents.SheetContainer
-import com.storyteller_f.a.app.compose_app.compontents.TopicList
+import com.storyteller_f.a.app.compose_app.common.AppNav
+import com.storyteller_f.a.app.compose_app.common.CommunityScreen
+import com.storyteller_f.a.app.compose_app.common.CommunityViewModel
+import com.storyteller_f.a.app.compose_app.common.DownloadViewModel
+import com.storyteller_f.a.app.compose_app.common.OnCommunityExited
+import com.storyteller_f.a.app.compose_app.common.TopicComposeData
+import com.storyteller_f.a.app.compose_app.common.createCommunityRoomsViewModel
+import com.storyteller_f.a.app.compose_app.common.createCommunityTopicsViewModel
+import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
+import com.storyteller_f.a.app.compose_app.common.getDownloadViewModel
+import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
+import com.storyteller_f.a.app.compose_app.components.BaseSheet
+import com.storyteller_f.a.app.compose_app.components.ButtonNav
+import com.storyteller_f.a.app.compose_app.components.CommunityIcon
+import com.storyteller_f.a.app.compose_app.components.CustomAlertDialog
+import com.storyteller_f.a.app.compose_app.components.CustomAlertDialogController
+import com.storyteller_f.a.app.compose_app.components.DialogContainer
+import com.storyteller_f.a.app.compose_app.components.SheetContainer
+import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.exit_community
-import com.storyteller_f.a.app.compose_app.hasRouteFlow
 import com.storyteller_f.a.app.compose_app.join_community
 import com.storyteller_f.a.app.compose_app.join_community_prompt
-import com.storyteller_f.a.app.compose_app.model.CommunityViewModel
-import com.storyteller_f.a.app.compose_app.model.DownloadViewModel
-import com.storyteller_f.a.app.compose_app.model.OnCommunityExited
-import com.storyteller_f.a.app.compose_app.model.createCommunityRoomsViewModel
-import com.storyteller_f.a.app.compose_app.model.createCommunityTopicsViewModel
-import com.storyteller_f.a.app.compose_app.model.createCommunityViewModel
-import com.storyteller_f.a.app.compose_app.model.getDownloadViewModel
 import com.storyteller_f.a.app.compose_app.pages.CustomBottomNav
 import com.storyteller_f.a.app.compose_app.pages.CustomRailNav
 import com.storyteller_f.a.app.compose_app.pages.NavRoute
@@ -224,7 +225,7 @@ private fun CommunityNonCompatPageInternal(
                             showDialog = true
                         }
                     }
-                    CommunityIcon(
+                    CommunityIconWithDialog(
                         community,
                         showDialog
                     ) {
@@ -287,7 +288,7 @@ private fun CommunityCompatPageInternal(
                         showDialog = true
                     }
                 }
-                CommunityIcon(
+                CommunityIconWithDialog(
                     community,
                     showDialog
                 ) {
@@ -422,7 +423,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                 .padding(8.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            CommunityIcon(
+            CommunityIconWithDialog(
                 communityInfo,
                 showDialog = false,
                 50.dp,
@@ -662,4 +663,18 @@ private fun DownloadInfoTable(
 fun Float.roundToDecimalPlaces(decimals: Int): Float {
     val multiplier = 10.0f.pow(decimals)
     return round(this * multiplier) / multiplier
+}
+
+@Composable
+fun CommunityIconWithDialog(
+    communityInfo: CommunityInfo?,
+    showDialog: Boolean,
+    iconSize: Dp = 40.dp,
+    setClickEvent: Boolean = true,
+    onClickIcon: (Boolean) -> Unit,
+) {
+    CommunityIcon(communityInfo, iconSize, setClickEvent, onClickIcon)
+    CommunityDialog(communityInfo, showDialog) {
+        onClickIcon(false)
+    }
 }

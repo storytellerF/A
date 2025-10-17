@@ -13,9 +13,10 @@ import com.storyteller_f.a.app.BuildConfig
 import com.storyteller_f.a.app.compose_app.AApplication
 import com.storyteller_f.a.app.compose_app.RTCActivity
 import com.storyteller_f.a.app.compose_app.UIViewModel
-import com.storyteller_f.a.app.compose_app.compontents.mainAppRef
+import com.storyteller_f.a.app.compose_app.components.mainAppRef
 import com.storyteller_f.a.app.compose_app.getClipFile
 import com.storyteller_f.a.app.compose_app.initFromContext
+import com.storyteller_f.a.app.compose_app.uiViewModel
 import com.storyteller_f.shared.getAppContextRefValue
 import com.storyteller_f.shared.type.PrimaryKey
 import com.strabled.composepreferences.utilis.DataStoreManager
@@ -48,7 +49,8 @@ actual fun createConnectivity(): Connectivity {
 }
 
 actual fun getUiViewModel(): UIViewModel {
-    return (getAppContextRefValue() as AApplication).uiViewModel
+    (getAppContextRefValue() as AApplication)
+    return uiViewModel
 }
 
 actual fun getClientFile(path: String): ClientFile? {

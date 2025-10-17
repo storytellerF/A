@@ -22,13 +22,6 @@ import kotlin.math.ceil
 import kotlin.system.exitProcess
 
 @OptIn(DelicateCoroutinesApi::class)
-val uiViewModel = UIViewModel(
-    GlobalScope,
-    com.storyteller_f.a.app.compose_app.AppConfig.WS_SERVER_URL,
-    com.storyteller_f.a.app.compose_app.AppConfig.SERVER_URL
-)
-
-@OptIn(DelicateCoroutinesApi::class)
 fun main() {
     Napier.base(kmpLogger)
     Thread.setDefaultUncaughtExceptionHandler { _, e ->

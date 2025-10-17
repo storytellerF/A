@@ -111,6 +111,7 @@ interface UserDatabase {
         user: User
     ): Result<Unit>
     suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
+    suspend fun getUserCount(): Result<Long>
 }
 
 interface TopicDatabase {
@@ -208,6 +209,7 @@ interface TopicDatabase {
     ): Result<List<Triple<Long, Long, PrimaryKey?>>>
 
     suspend fun createTitle(title: Title, topic: Topic): Result<Unit>
+    suspend fun getTopicCount(): Result<Long>
 }
 
 interface TitleDatabase {
@@ -244,6 +246,7 @@ interface CommunityDatabase {
 
     suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>>
     suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody): Result<Boolean>
+    suspend fun getCommunityCount(): Result<Long>
 }
 
 interface RoomDatabase {
@@ -277,6 +280,8 @@ interface RoomDatabase {
     suspend fun getRawRooms(objectListFetch: ObjectListFetch): Result<List<RawRoom>>
     suspend fun getRoomList(objectListFetch: ObjectListFetch): Result<List<Room>>
     suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): Result<Boolean>
+    suspend fun getPrivateRoomCount(): Result<Long>
+    suspend fun getPublicRoomCount(): Result<Long>
 }
 
 interface FileDatabase {
@@ -306,6 +311,8 @@ interface FileDatabase {
         quotaInfo: QuotaInfo,
         length: Long
     ): Result<Unit>
+    suspend fun getFileCount(): Result<Long>
+    suspend fun getFileVolume(): Result<Long>
 }
 
 interface ContainerDatabase {

@@ -11,6 +11,15 @@ import com.storyteller_f.a.backend.core.RoomDatabase
 import com.storyteller_f.a.backend.core.TitleDatabase
 import com.storyteller_f.a.backend.core.TopicDatabase
 import com.storyteller_f.a.backend.core.UserDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedCliDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedCommunityDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedContainerDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedFileDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedPanelAccountDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedRoomDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedTitleDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase
 import com.storyteller_f.shared.type.ObjectType
 import io.github.aakira.napier.Napier
 import org.jetbrains.exposed.v1.core.Table

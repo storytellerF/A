@@ -14,8 +14,7 @@ data class CommunityDocument(
     val aid: String,
     val owner: PrimaryKey,
 ) : PrimaryKeyIdentifiable {
-    override val objectType: ObjectType
-        get() = ObjectType.COMMUNITY
+    override val objectType: ObjectType = ObjectType.COMMUNITY
     companion object {
         fun fromCommunity(community: Community): CommunityDocument {
             return CommunityDocument(community.id, community.name, community.aid, community.owner)

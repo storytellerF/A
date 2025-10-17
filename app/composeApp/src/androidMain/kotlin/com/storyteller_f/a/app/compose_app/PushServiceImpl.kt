@@ -49,7 +49,8 @@ class PushServiceImpl : PushService(), LifecycleOwner {
         Napier.i(tag = "push") {
             "receive endpoint $endpoint"
         }
-        val uiViewModel = (application as AApplication).uiViewModel
+        (application as AApplication)
+        val uiViewModel = uiViewModel
         val accountInstance = uiViewModel.instance.value
         lifecycle.coroutineScope.launch {
             accountInstance.sessionManager.addDevice(endpoint.url)

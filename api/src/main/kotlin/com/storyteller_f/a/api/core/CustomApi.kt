@@ -364,6 +364,7 @@ object AdminApi {
     val signOut = mutationApi<Unit, Unit>("/admin/sign-out")
     val signUp = mutationApi<PanelAccountInfo, SignUpPack>("/admin/sign-up")
     val getData = safeApi<String>("/admin/get-data")
+    val overview = safeApi<PanelOverview>("/admin/overview")
 }
 
 @Serializable

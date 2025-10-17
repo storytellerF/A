@@ -10,7 +10,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
@@ -31,15 +30,14 @@ import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.LocalMainSessionManager
 import com.storyteller_f.a.app.compose_app.Res
-import com.storyteller_f.a.app.compose_app.compontents.ButtonNav
-import com.storyteller_f.a.app.compose_app.compontents.TopicList
+import com.storyteller_f.a.app.compose_app.common.createWorldViewModel
+import com.storyteller_f.a.app.compose_app.components.ButtonNav
+import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.design_spec
-import com.storyteller_f.a.app.compose_app.model.createWorldViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.MyCommunitiesPage
 import com.storyteller_f.a.app.compose_app.pages.room.MyRoomsPage
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
-import com.storyteller_f.a.app.compose_app.sign_in
 import com.storyteller_f.a.app.core.compontents.CenterBox
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -228,29 +226,16 @@ private fun HomePager(
 @Composable
 private fun UserHost(content: @Composable () -> Unit) {
     val session = LocalMainSessionManager.current
+    val appNav = LocalAppNav.current
     val user by session.isAlreadySignUp.collectAsState()
     if (user) {
         content()
     } else {
         CenterBox {
-            LoginButton()
+            LoginButton {
+                appNav.gotoLogin()
+            }
         }
-    }
-}
-
-@Composable
-fun LoginButton(extra: () -> Unit = {}) {
-    val appNav = LocalAppNav.current
-    Button({
-        extra()
-        appNav.gotoLogin()
-    }) {
-        Icon(
-            Icons.AutoMirrored.Default.Login,
-            stringResource(Res.string.sign_in)
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(stringResource(Res.string.sign_in))
     }
 }
 
