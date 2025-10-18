@@ -21,7 +21,7 @@ import com.storyteller_f.a.backend.core.service.RoomSearchService
 import com.storyteller_f.a.backend.core.service.TopicSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
-import com.storyteller_f.shared.kmpLogger
+import com.storyteller_f.shared.setupKmpLogger
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ExperimentalCli
@@ -30,7 +30,7 @@ lateinit var backend: Backend
 
 @OptIn(ExperimentalCli::class)
 fun main(args: Array<String>) {
-    Napier.base(kmpLogger)
+    setupKmpLogger()
     Napier.i(tag = "cli") {
         "args: ${args.contentToString()}"
     }

@@ -1,8 +1,6 @@
 package com.storyteller_f.a.client.core
 
-import com.storyteller_f.shared.calcAddress
-import com.storyteller_f.shared.decryptMessage
-import com.storyteller_f.shared.getDerPrivateKey
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.utils.mapResult
 import kotlinx.serialization.Serializable
 
@@ -30,24 +28,22 @@ data class RawUserPassInfo(
 
 data class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
     override suspend fun signature(data: String): Result<String> {
-        return com.storyteller_f.shared.signature(rawUSerPass.pemPrivateKey, data)
+        return getAlgo().signature(rawUSerPass.pemPrivateKey, data)
     }
 
     override suspend fun verify(signature: String, data: String): Result<Boolean> {
-        return com.storyteller_f.shared.verify(rawUSerPass.derPublicKey, signature, data)
+        return getAlgo().verify(rawUSerPass.derPublicKey, signature, data)
     }
 
     override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String> {
-        return getDerPrivateKey(rawUSerPass.pemPrivateKey).mapResult { derPrivateKeyStr ->
-            decryptMessage(
-                derPrivateKeyStr,
-                encrypted,
-                encryptedAesKey
-            )
+        return getAlgo().run {
+            getDerPrivateKey(rawUSerPass.pemPrivateKey).mapResult { derPrivateKeyStr ->
+                decryptMessage(derPrivateKeyStr, encrypted, encryptedAesKey)
+            }
         }
     }
 
     override suspend fun address(): Result<String> {
-        return calcAddress(rawUSerPass.derPublicKey)
+        return getAlgo().calcAddress(rawUSerPass.derPublicKey)
     }
 }

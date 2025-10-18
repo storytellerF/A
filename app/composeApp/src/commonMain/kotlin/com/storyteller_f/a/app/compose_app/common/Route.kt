@@ -14,7 +14,7 @@ import androidx.navigation.toRoute
 import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
-import com.mikepenz.aboutlibraries.ui.compose.rememberLibraries
+import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
 import com.storyteller_f.a.app.compose_app.FileViewInfo
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.pages.HomePage
@@ -327,7 +327,7 @@ fun NavGraphBuilder.buildRootNav(
     buildMainScreen()
     buildComposeScreen(navigator)
     composable<AboutScreen> {
-        val libraries by rememberLibraries {
+        val libraries by produceLibraries {
             Res.readBytes("files/aboutlibraries.json").decodeToString()
         }
         Surface {

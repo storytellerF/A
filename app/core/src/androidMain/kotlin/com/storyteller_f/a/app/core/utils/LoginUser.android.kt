@@ -11,7 +11,7 @@ import com.russhwolf.settings.serialization.encodeValue
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.CryptoJvm
-import com.storyteller_f.shared.calcAddress
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.getAppContextRefValue
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
@@ -130,7 +130,7 @@ data class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
 
         val derPublicKeyStr = keyStore.getCertificate("default").publicKey.encoded.toHexString()
         println("public $derPublicKeyStr")
-        return calcAddress(derPublicKeyStr)
+        return getAlgo().calcAddress(derPublicKeyStr)
     }
 }
 

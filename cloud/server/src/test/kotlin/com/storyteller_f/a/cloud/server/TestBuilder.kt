@@ -17,12 +17,12 @@ import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.shared.commonJson
-import com.storyteller_f.shared.generateECDSAPemPrivateKey
-import com.storyteller_f.shared.kmpLogger
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.md5
 import io.github.aakira.napier.Napier
@@ -57,17 +57,27 @@ fun test(
 ) {
     val logPath = File("build/test/logs", Uuid.random().toHexString()).canonicalPath
     System.setProperty("LOG_PATH", logPath)
-    Napier.base(kmpLogger)
+    setupKmpLogger()
     SnowflakeFactory.setMachine(0)
     loadCryptoLibIfNeed()
     loadAvif()
-    startMemoryTest(overrideEnv + mapOf("SERVER_URL" to "http://localhost"), block)
+    val methodName = Exception().stackTrace[2].methodName
+    Napier.i {
+        "start test `$methodName`"
+    }
+    startMemoryTest(
+        overrideEnv + mapOf(
+            "SERVER_URL" to "http://localhost",
+            "METHOD_NAME" to methodName
+        ),
+        block
+    )
     if (System.getenv("ENABLE_TEST_CONTAINER") == "true") {
 //        startTestContainerTest(true, block)
-        startTestContainerTest(false, block)
+        startTestContainerTest(overrideEnv + mapOf("METHOD_NAME" to methodName), false, block)
     }
     Napier.i {
-        "test done"
+        "test done `$methodName`"
     }
 }
 
@@ -77,7 +87,7 @@ private fun startMemoryTest(
     block: suspend (ApplicationTestBuilder) -> Unit
 ) {
     val h2File = File("./build/test/h2/${Uuid.random().toHexString()}")
-    h2File.parentFile?.let {
+    h2File.parentFile!!.let {
         if (!it.exists() && !it.mkdirs()) {
             throw Exception("mkdirs failed ${it.canonicalPath}")
         }
@@ -93,65 +103,92 @@ private fun startMemoryTest(
 }
 
 private fun startTestContainerTest(
+    overrideEnv: Map<String, String>,
     @Suppress("SameParameterValue") databaseTypeIsMysql: Boolean,
     block: suspend ApplicationTestBuilder.() -> Unit
 ) {
     runBlocking {
         val env = readResourceEnv(".env")!!.toMutableMap()
-        ElasticsearchContainer(
-            "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
-        )
-            // disable SSL
-            .withEnv("xpack.security.transport.ssl.enabled", "false")
-            .withEnv("xpack.security.http.ssl.enabled", "false").use { elasticClient ->
-                elasticClient.start()
-                env["SEARCH_SERVICE"] = "elastic"
-                env["ELASTIC_NAME"] = "elastic"
-                env["ELASTIC_PASSWORD"] = "changeme"
-                env["ELASTIC_URL"] = "http://${elasticClient.httpHostAddress}"
-                MinIOContainer(
-                    "minio/minio:RELEASE.2024-12-18T13-15-44Z"
-                )
-                    .use { minioContainer ->
-                        minioContainer.start()
-                        env["MEDIA_SERVICE"] = "minio"
-                        env["MINIO_URL"] = minioContainer.s3URL
-                        env["MINIO_NAME"] = minioContainer.userName
-                        env["MINIO_PASS"] = minioContainer.password
-                        if (databaseTypeIsMysql) {
-                            MySQLContainer(
-                                "mysql:8.0"
-                            ).withUrlParam("characterEncoding", "utf8")
-                                .withUrlParam("useUnicode", "true")
-                                .withUrlParam("connectionCollation", "utf8mb4_unicode_ci")
-                                .use { mySQLContainer ->
-                                    mySQLContainer.start()
-                                    println("jdbc: ${mySQLContainer.jdbcUrl}")
-                                    env["DATABASE_URI"] = mySQLContainer.jdbcUrl
-                                    env["DATABASE_DRIVER"] = mySQLContainer.driverClassName
-                                    env["DATABASE_USER"] = mySQLContainer.username
-                                    env["DATABASE_PASS"] = mySQLContainer.password
-                                    env["DATABASE_DB"] = mySQLContainer.databaseName
-                                    doTest(env, block)
-                                }
-                        } else {
-                            PostgreSQLContainer(
-                                "pgvector/pgvector:pg16"
-                            ).use { postgreSQLContainer ->
-                                postgreSQLContainer.start()
-                                Napier.i("jdbc: ${postgreSQLContainer.jdbcUrl}")
-                                env["DATABASE_URI"] =
-                                    postgreSQLContainer.jdbcUrl.replace("jdbc", "r2dbc")
-                                env["DATABASE_DRIVER"] = "postgresql"
-                                env["DATABASE_USER"] = postgreSQLContainer.username
-                                env["DATABASE_PASS"] = postgreSQLContainer.password
-                                env["DATABASE_DB"] = postgreSQLContainer.databaseName
-                                doTest(env, block)
-                            }
-                        }
-                    }
+        useElasticTestContainer(env) {
+            useMinioTestContainer(env) {
+                useDatabaseContainer(databaseTypeIsMysql, env) {
+                    doTest(overrideEnv + env, block)
+                }
             }
+        }
     }
+}
+
+private suspend fun useDatabaseContainer(
+    databaseTypeIsMysql: Boolean,
+    env: MutableMap<String, String>,
+    block: suspend () -> Unit
+) {
+    if (databaseTypeIsMysql) {
+        MySQLContainer(
+            "mysql:8.0"
+        ).withUrlParam("characterEncoding", "utf8")
+            .withUrlParam("useUnicode", "true")
+            .withUrlParam("connectionCollation", "utf8mb4_unicode_ci")
+            .use { mySQLContainer ->
+                mySQLContainer.start()
+                println("jdbc: ${mySQLContainer.jdbcUrl}")
+                env["DATABASE_URI"] = mySQLContainer.jdbcUrl
+                env["DATABASE_DRIVER"] = mySQLContainer.driverClassName
+                env["DATABASE_USER"] = mySQLContainer.username
+                env["DATABASE_PASS"] = mySQLContainer.password
+                env["DATABASE_DB"] = mySQLContainer.databaseName
+                block()
+            }
+    } else {
+        PostgreSQLContainer(
+            "pgvector/pgvector:pg16"
+        ).use { postgreSQLContainer ->
+            postgreSQLContainer.start()
+            Napier.i("jdbc: ${postgreSQLContainer.jdbcUrl}")
+            env["DATABASE_URI"] =
+                postgreSQLContainer.jdbcUrl.replace("jdbc", "r2dbc")
+            env["DATABASE_DRIVER"] = "postgresql"
+            env["DATABASE_USER"] = postgreSQLContainer.username
+            env["DATABASE_PASS"] = postgreSQLContainer.password
+            env["DATABASE_DB"] = postgreSQLContainer.databaseName
+            block()
+        }
+    }
+}
+
+private suspend fun useMinioTestContainer(
+    env: MutableMap<String, String>,
+    block: suspend () -> Unit
+) {
+    MinIOContainer(
+        "minio/minio:RELEASE.2024-12-18T13-15-44Z"
+    )
+        .use { minioContainer ->
+            minioContainer.start()
+            env["MEDIA_SERVICE"] = "minio"
+            env["MINIO_URL"] = minioContainer.s3URL
+            env["MINIO_NAME"] = minioContainer.userName
+            env["MINIO_PASS"] = minioContainer.password
+            block()
+        }
+}
+
+private suspend fun useElasticTestContainer(
+    env: MutableMap<String, String>,
+    block: suspend () -> Unit
+) {
+    ElasticsearchContainer(
+        "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
+    ).withEnv("xpack.security.transport.ssl.enabled", "false")
+        .withEnv("xpack.security.http.ssl.enabled", "false").use { elasticClient ->
+            elasticClient.start()
+            env["SEARCH_SERVICE"] = "elastic"
+            env["ELASTIC_NAME"] = "elastic"
+            env["ELASTIC_PASSWORD"] = "changeme"
+            env["ELASTIC_URL"] = "http://${elasticClient.httpHostAddress}"
+            block()
+        }
 }
 
 private fun doTest(
@@ -226,9 +263,9 @@ fun saveDatabaseExplainResult(explainResult: ExplainResult) {
     val file = File(
         "./build/test/$dialect/${extractTableNames(statements).joinToString("/")}/${md5(statements)}.explain"
     )
-    file.parentFile?.let {
-        if (!it.exists()) {
-            it.mkdirs()
+    file.parentFile!!.let {
+        if (!it.exists() && !it.mkdirs()) {
+            throw Exception("mkdirs failed ${it.canonicalPath}")
         }
     }
     val newText = "${SqlFormatter.format(statements)}\n\n$result\n\n$stackTraceString"
@@ -252,7 +289,7 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
     block: suspend UserSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
-    val priKey = generateECDSAPemPrivateKey().getOrThrow()
+    val priKey = getAlgo().generateECDSAPemPrivateKey().getOrThrow()
     return getAppSession(onReceive, priKey, block, true)
 }
 
@@ -286,7 +323,7 @@ suspend fun <R1, R2> ApplicationTestBuilder.loginSession(
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
     block: suspend UserSessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
-    return getAppSession(onReceive, tuple.privateKey, block, true)
+    return getAppSession(onReceive, tuple.privateKey, block, false)
 }
 
 suspend fun <R2> ApplicationTestBuilder.noneSession(
@@ -333,7 +370,7 @@ suspend fun UserSessionManager.waitAndSend(block: suspend DefaultClientWebSocket
 suspend fun <R> ApplicationTestBuilder.attachPanelSession(
     block: suspend PanelSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
-    val priKey = generateECDSAPemPrivateKey().getOrThrow()
+    val priKey = getAlgo().generateECDSAPemPrivateKey().getOrThrow()
     return getPanelSession(priKey, block, true)
 }
 

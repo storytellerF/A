@@ -3,6 +3,7 @@ package com.storyteller_f.a.cloud.server
 import com.storyteller_f.a.cloud.openpdf.OpenPdf
 import com.storyteller_f.a.cloud.pdf.SnapshotVerify
 import com.storyteller_f.a.cloud.pdfbox.PdfBox
+import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
@@ -20,7 +21,7 @@ class SnapshotTest {
         runTest {
             val password = "123456"
             val path = "build/test/keystore2.p12"
-            createKeystore(password.toCharArray(), path)
+            CryptoJvm.createKeystore(password.toCharArray(), path)
             Security.addProvider(SecurityProvider.getProvider())
             val pdfFile = File("build/tmp/.pdf")
             val signedFile = File("build/tmp/signed.pdf")
@@ -45,7 +46,7 @@ class SnapshotTest {
         runTest {
             val password = "123456"
             val path = "build/test/keystore2.p12"
-            createKeystore(password.toCharArray(), path)
+            CryptoJvm.createKeystore(password.toCharArray(), path)
             Security.addProvider(SecurityProvider.getProvider())
             val pdfFile = File("build/tmp/.pdf")
             OpenPdf().generateSignedSnapshot(

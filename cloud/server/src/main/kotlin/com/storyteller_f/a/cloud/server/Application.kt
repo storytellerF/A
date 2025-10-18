@@ -29,8 +29,9 @@ import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.configureAuth
 import com.storyteller_f.a.cloud.server.auth.getRateLimitKey
 import com.storyteller_f.a.cloud.server.route.configureRoute
-import com.storyteller_f.shared.kmpLogger
+import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.loadCryptoLibIfNeed
+import com.storyteller_f.shared.setupKmpLogger
 import io.github.aakira.napier.Napier
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -38,6 +39,8 @@ import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.ApplicationStarted
+import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.callid.CallId
@@ -69,25 +72,11 @@ import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
-import org.bouncycastle.asn1.x500.X500Name
-import org.bouncycastle.cert.X509v3CertificateBuilder
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
-import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.slf4j.event.Level
 import java.io.File
-import java.io.FileOutputStream
 import java.io.OutputStreamWriter
-import java.math.BigInteger
 import java.net.InetAddress
-import java.security.KeyPair
-import java.security.KeyPairGenerator
-import java.security.KeyStore
 import java.security.SecureRandom
-import java.security.Security
-import java.security.cert.X509Certificate
-import java.util.Date
 import kotlin.concurrent.thread
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -97,7 +86,7 @@ import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
     setLogPath("A")
-    Napier.base(kmpLogger)
+    setupKmpLogger()
     loadCryptoLibIfNeed()
     loadAvif()
     Napier.i {
@@ -119,6 +108,15 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+    monitor.subscribe(ApplicationStarted) { application ->
+        application.environment.log.info("Server is started")
+    }
+    monitor.subscribe(ApplicationStopped) { application ->
+        application.environment.log.info("Server is stopped")
+        // Release resources and unsubscribe from events
+        monitor.unsubscribe(ApplicationStarted) {}
+        monitor.unsubscribe(ApplicationStopped) {}
+    }
     val backend = try {
         buildBackend()
     } catch (e: Exception) {
@@ -230,7 +228,11 @@ private fun Application.buildBackend(): Backend {
     }.associate { it }
     val env = readEnv(associate)
     Napier.i {
-        "start server at ${env["SERVER_PORT"]}"
+        if (env["BUILD_TYPE"] == "test") {
+            "start server in `${env["METHOD_NAME"]}`"
+        } else {
+            "start server at ${env["SERVER_PORT"]}"
+        }
     }
     return buildBackendFromEnv(env)
 }
@@ -393,7 +395,10 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val snapshotKeyStore =
         if (!snapshotKeyStorePath.isNullOrBlank() && !snapshotKeyStorePassword.isNullOrBlank()) {
             if (!File(snapshotKeyStorePath).exists()) {
-                createKeystore(snapshotKeyStorePassword.toCharArray(), snapshotKeyStorePath)
+                CryptoJvm.createKeystore(
+                    snapshotKeyStorePassword.toCharArray(),
+                    snapshotKeyStorePath
+                )
             }
             CustomKeyStore(snapshotKeyStorePath, snapshotKeyStorePassword)
         } else {
@@ -411,57 +416,6 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         buildNameService(env),
         buildExposedDatabase(databaseConnection)
     )
-}
-
-fun createKeystore(keystorePassword: CharArray, path: String) {
-    val file = File(path)
-    if (!file.parentFile.exists() && !file.parentFile.mkdirs()) {
-        throw Exception("can not create parent file $path")
-    }
-    val alias = "snapshot"
-    val validityDays = 365L
-
-    // 注册 BouncyCastle 提供者（如未自动加载）
-    Security.addProvider(BouncyCastleProvider())
-
-    // 1. 生成密钥对
-    val keyPairGen = KeyPairGenerator.getInstance("RSA", "BC")
-    keyPairGen.initialize(2048, SecureRandom())
-    val keyPair: KeyPair = keyPairGen.generateKeyPair()
-
-    // 2. 证书信息
-    val issuer = X500Name("CN=Example, OU=Org, O=Company, L=City, ST=State, C=US")
-    val subject = issuer // 自签名
-    val serial = BigInteger(160, SecureRandom())
-    val notBefore = Date(System.currentTimeMillis())
-    val notAfter = Date(System.currentTimeMillis() + validityDays * 24 * 60 * 60 * 1000)
-
-    // 3. 构建 X509 证书
-    val certBuilder: X509v3CertificateBuilder = JcaX509v3CertificateBuilder(
-        issuer,
-        serial,
-        notBefore,
-        notAfter,
-        subject,
-        keyPair.public
-    )
-
-    // 4. 生成签名
-    val signer = JcaContentSignerBuilder("SHA256withRSA").build(keyPair.private)
-    val certHolder = certBuilder.build(signer)
-    val cert: X509Certificate = JcaX509CertificateConverter()
-        .setProvider("BC")
-        .getCertificate(certHolder)
-
-    // 5. 创建 PKCS12 keystore 并存储证书和私钥
-    val ks = KeyStore.getInstance("PKCS12")
-    ks.load(null, null)
-    ks.setKeyEntry(alias, keyPair.private, keystorePassword, arrayOf(cert))
-
-    // 6. 保存 keystore 到文件
-    FileOutputStream(file).use { fos ->
-        ks.store(fos, keystorePassword)
-    }
 }
 
 @Suppress("ThrowsCount", "unused")

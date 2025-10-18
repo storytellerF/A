@@ -3,9 +3,8 @@ package com.storyteller_f.a.app.compose_app
 import android.app.Application
 import android.os.StrictMode
 import com.storyteller_f.shared.appContextRef
-import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadCryptoLibIfNeed
-import io.github.aakira.napier.Napier
+import com.storyteller_f.shared.setupKmpLogger
 import org.schabi.newpipe.DownloaderImpl
 import org.schabi.newpipe.ReCaptchaActivity
 import org.schabi.newpipe.extractor.NewPipe
@@ -16,7 +15,7 @@ import java.lang.ref.WeakReference
 class AApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        Napier.base(kmpLogger)
+        setupKmpLogger()
         StrictMode.setVmPolicy(
             StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
                 .detectLeakedClosableObjects()

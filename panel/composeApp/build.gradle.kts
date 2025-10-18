@@ -353,7 +353,7 @@ val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
             // 定义输出文件路径 (如密钥存储文件)
             val outputFile = generatedJksFile
 
-            outputFile.parentFile?.let {
+            outputFile.parentFile!!.let {
                 if (!it.exists() && !it.mkdirs()) {
                     throw Exception("mkdirs failed: $it")
                 }

@@ -45,7 +45,10 @@ fun MyCommunitiesPage() {
 }
 
 @Composable
-fun CommunityList(communitiesViewModel: CommunitiesViewModel, onClick: ((CommunityInfo) -> Unit)? = null) {
+fun CommunityList(
+    communitiesViewModel: CommunitiesViewModel,
+    onClick: ((CommunityInfo) -> Unit)? = null
+) {
     StateView(communitiesViewModel, modifier = Modifier.fillMaxSize()) { items ->
         BoxWithConstraints {
             val gridCount = (this.maxWidth / 128.dp).toInt()
@@ -141,7 +144,11 @@ private fun getCommunityGridSpan(
 
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
-fun CommunityGrid(communityInfo: CommunityInfo?, padding: Dp, onClick: ((CommunityInfo) -> Unit)? = null) {
+fun CommunityGrid(
+    communityInfo: CommunityInfo?,
+    padding: Dp,
+    onClick: ((CommunityInfo) -> Unit)? = null
+) {
     val appNav = LocalAppNav.current
     val hazeState = rememberHazeState()
     Box(modifier = Modifier.fillMaxWidth().padding(end = padding)) {
@@ -179,8 +186,8 @@ fun CommunityGrid(communityInfo: CommunityInfo?, padding: Dp, onClick: ((Communi
                     Text(
                         communityInfo.name,
                         Modifier.fillMaxWidth(),
-                        MaterialTheme.colorScheme.onSecondaryContainer,
-                        MaterialTheme.typography.labelSmall.fontSize
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize
                     )
                 }
             }
@@ -206,7 +213,12 @@ fun CommunityCell(
                     .background(MaterialTheme.colorScheme.secondaryContainer, shape)
                     .clip(shape)
                     .clickable(!isCommunityPage) {
-                        communityInfo?.let { onClick?.invoke(it) ?: appNav.gotoCommunity(it.id, false) }
+                        communityInfo?.let {
+                            onClick?.invoke(it) ?: appNav.gotoCommunity(
+                                it.id,
+                                false
+                            )
+                        }
                     }
                     .padding(10.dp)
             }

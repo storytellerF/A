@@ -17,10 +17,7 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.core.types.toUserInfo
-import com.storyteller_f.shared.calcAddress
-import com.storyteller_f.shared.generateECDSAPemPrivateKey
-import com.storyteller_f.shared.getDerPrivateKey
-import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.Dimension
@@ -197,10 +194,13 @@ suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<ChildAccountI
             Result.failure(CustomBadRequestException("alternative account can't create alternative"))
         } else {
             runCatching {
-                val pemPrivateKey = generateECDSAPemPrivateKey().getOrThrow()
-                val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
-                val derPrivateKey = getDerPrivateKey(pemPrivateKey).getOrThrow()
-                val address = calcAddress(publicKey).getOrThrow()
+                val (publicKey, address, derPrivateKey) = getAlgo().run {
+                    val pemPrivateKey = generateECDSAPemPrivateKey().getOrThrow()
+                    val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
+                    val derPrivateKey = getDerPrivateKey(pemPrivateKey).getOrThrow()
+                    val address = calcAddress(publicKey).getOrThrow()
+                    Triple(publicKey, address, derPrivateKey)
+                }
                 val id = SnowflakeFactory.nextId()
                 val user = User(
                     null,

@@ -14,16 +14,22 @@ import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
+import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider
 import org.bouncycastle.util.encoders.Hex.decode
 import org.bouncycastle.util.encoders.Hex.toHexString
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.StringReader
 import java.math.BigInteger
 import java.security.KeyFactory
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.PublicKey
-import java.security.Security.addProvider
-import java.security.Security.removeProvider
+import java.security.SecureRandom
+import java.security.Security
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
@@ -34,7 +40,7 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 @OptIn(ExperimentalStdlibApi::class)
-actual suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result<String> {
+actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): Result<String> {
     return CryptoJvm.readPrivateKeyFromPEMString(pemPrivateKeyStr).mapResult {
         CryptoJvm.getPublicKeyFromPrivateKey(it).map { pubKey ->
             pubKey.encoded.toHexString()
@@ -43,7 +49,7 @@ actual suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Resu
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-actual suspend fun calcAddress(derPublicKeyStr: String): Result<String> {
+actual suspend fun calcAddressP256(derPublicKeyStr: String): Result<String> {
     return runCatching {
         val decode = decode(derPublicKeyStr)
         val digest256 = Keccak.Digest256()
@@ -98,7 +104,8 @@ object CryptoJvm {
                 val subject = X500Name("CN=MyCertificate, O=MyCompany, C=US") // 证书主体（自签名）
                 val serialNumber = BigInteger.valueOf(System.currentTimeMillis()) // 唯一序列号
                 val notBefore = Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24) // 生效时间
-                val notAfter = Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10) // 过期时间 (10 年)
+                val notAfter =
+                    Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10) // 过期时间 (10 年)
 
                 // 3️⃣ 创建 X509v3 证书
                 val certBuilder: X509v3CertificateBuilder = JcaX509v3CertificateBuilder(
@@ -153,7 +160,11 @@ object CryptoJvm {
 
     @Suppress("DeprecatedProvider")
     @OptIn(ExperimentalStdlibApi::class)
-    fun decrypt(derPrivateKeyStr: String, encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String> {
+    fun decrypt(
+        derPrivateKeyStr: String,
+        encrypted: ByteArray,
+        encryptedAesKey: ByteArray
+    ): Result<String> {
         return runCatching {
             val privateKeyBytes = derPrivateKeyStr.hexToByteArray()
 
@@ -195,13 +206,127 @@ object CryptoJvm {
             rsaCipher.doFinal(aesKey)
         }
     }
+
+
+    fun createKeystore(keystorePassword: CharArray, path: String) {
+        val file = File(path)
+        file.parentFile!!.let {
+            if (!it.exists() && !it.mkdirs()) {
+                throw Exception("can not create parent file $path")
+            }
+        }
+        val alias = "snapshot"
+        val validityDays = 365L
+
+        // 注册 BouncyCastle 提供者（如未自动加载）
+        Security.addProvider(BouncyCastleProvider())
+
+        // 1. 生成密钥对
+        val keyPairGen = KeyPairGenerator.getInstance("RSA", "BC")
+        keyPairGen.initialize(2048, SecureRandom())
+        val keyPair: KeyPair = keyPairGen.generateKeyPair()
+
+        // 2. 证书信息
+        val issuer = X500Name("CN=Example, OU=Org, O=Company, L=City, ST=State, C=US")
+        val subject = issuer // 自签名
+        val serial = BigInteger(160, SecureRandom())
+        val notBefore = Date(System.currentTimeMillis())
+        val notAfter = Date(System.currentTimeMillis() + validityDays * 24 * 60 * 60 * 1000)
+
+        // 3. 构建 X509 证书
+        val certBuilder: X509v3CertificateBuilder = JcaX509v3CertificateBuilder(
+            issuer,
+            serial,
+            notBefore,
+            notAfter,
+            subject,
+            keyPair.public
+        )
+
+        // 4. 生成签名
+        val signer = JcaContentSignerBuilder("SHA256withRSA").build(keyPair.private)
+        val certHolder = certBuilder.build(signer)
+        val cert: X509Certificate = JcaX509CertificateConverter()
+            .setProvider("BC")
+            .getCertificate(certHolder)
+
+        // 5. 创建 PKCS12 keystore 并存储证书和私钥
+        val ks = KeyStore.getInstance("PKCS12")
+        ks.load(null, null)
+        ks.setKeyEntry(alias, keyPair.private, keystorePassword, arrayOf(cert))
+
+        // 6. 保存 keystore 到文件
+        FileOutputStream(file).use { fos ->
+            ks.store(fos, keystorePassword)
+        }
+    }
 }
 
 actual fun loadCryptoLibIfNeed() {
     if (getPlatform().name.startsWith("android", true)) {
-        removeProvider("BC")
-        addProvider(BouncyCastleProvider())
-    } else {
-        addProvider(BouncyCastleProvider())
+        Security.removeProvider("BC")
     }
+    Security.addProvider(BouncyCastlePQCProvider())
+    Security.addProvider(BouncyCastleProvider())
+}
+
+
+actual val AlgoDilithium: Algo = object : Algo {
+    override suspend fun verify(
+        derPublicKey: String,
+        derSignature: String,
+        data: String
+    ): Result<Boolean> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun signature(
+        pemPrivateKey: String,
+        data: String
+    ): Result<String> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getDerPrivateKey(pemPrivateKey: String): Result<String> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getPemPrivateKeyFromDer(derPrivateKey: String): Result<String> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun decryptMessage(
+        derPrivateKey: String,
+        encrypted: ByteArray,
+        encryptedAesKey: ByteArray
+    ): Result<String> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun eciesEncrypt(
+        derPublicKeyStr: String,
+        data: ByteArray
+    ): Result<ByteArray> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun eciesDecrypt(
+        derPrivateKeyStr: String,
+        encrypted: ByteArray
+    ): Result<ByteArray> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result<String> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun calcAddress(derPublicKeyStr: String): Result<String> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun generateECDSAPemPrivateKey(): Result<String> {
+        TODO("Not yet implemented")
+    }
+
 }

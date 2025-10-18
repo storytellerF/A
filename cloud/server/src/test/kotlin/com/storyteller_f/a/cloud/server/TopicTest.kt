@@ -62,26 +62,24 @@ import kotlin.uuid.Uuid
 class TopicTest {
 
     @Test
-    fun `test community topic search and pagination`() {
-        test {
-            attachSession {
-                val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
-                val lastTopic =
-                    createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
-                createTopic(ObjectType.COMMUNITY, communityId, "sysroot").getOrThrow()
-                val firstTopic =
-                    createTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
-                val topics = searchTopics(1, listOf("world")).getOrThrow()
-                assertEquals(2, topics.pagination?.total)
-                assertEquals(1, topics.data.size)
-                assertEquals(firstTopic.id, topics.data.first().id)
-                val topics2 = searchTopics(
-                    1,
-                    listOf("world"),
-                    nextTopicId = topics.data.first().id.toString()
-                ).getOrThrow()
-                assertEquals(lastTopic.id, topics2.data.first().id)
-            }
+    fun `test community topic search and pagination`() = test {
+        attachSession {
+            val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
+            val lastTopic =
+                createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
+            createTopic(ObjectType.COMMUNITY, communityId, "sysroot").getOrThrow()
+            val firstTopic =
+                createTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
+            val topics = searchTopics(1, listOf("world")).getOrThrow()
+            assertEquals(2, topics.pagination?.total)
+            assertEquals(1, topics.data.size)
+            assertEquals(firstTopic.id, topics.data.first().id)
+            val topics2 = searchTopics(
+                1,
+                listOf("world"),
+                nextTopicId = topics.data.first().id.toString()
+            ).getOrThrow()
+            assertEquals(lastTopic.id, topics2.data.first().id)
         }
     }
 

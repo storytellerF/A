@@ -2,12 +2,10 @@ package com.storyteller_f.a.app.dev_server
 
 import com.storyteller_f.a.app.dev.forceStop
 import com.storyteller_f.a.app.dev.getConnectedDevices
-import com.storyteller_f.a.app.dev.isWin
 import com.storyteller_f.a.app.dev.startListening
 import com.storyteller_f.a.app.dev.startServerByRun
 import com.storyteller_f.a.app.dev.stopServer
-import com.storyteller_f.shared.kmpLogger
-import io.github.aakira.napier.Napier
+import com.storyteller_f.shared.setupKmpLogger
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
@@ -22,11 +20,10 @@ import kotlinx.io.IOException
 import java.io.File
 import java.net.ServerSocket
 
-val ext = if (isWin()) "bat" else "sh"
 private val previousDevices = mutableSetOf<String>()
 const val GIT_BASH = "C:/Program Files/Git/bin/bash.exe"
 fun main() {
-    Napier.base(kmpLogger)
+    setupKmpLogger()
     val runPath = File("").canonicalPath
     println("current path: $runPath")
     val isNested = runPath.endsWith("devCli")
