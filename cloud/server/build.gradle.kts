@@ -1,4 +1,3 @@
-import org.gradle.internal.os.OperatingSystem
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.ktor)
@@ -25,7 +24,6 @@ kotlin {
 dependencies {
     implementation(libs.napier)
     implementation(libs.cryptography.provider.jdk)
-    implementation(libs.bcpkix.jdk18on)
     implementation(projects.shared)
     implementation(projects.api)
     implementation(projects.cloud.pdf)
@@ -51,7 +49,7 @@ dependencies {
     testImplementation(libs.mysql.connector.java)
     testImplementation(projects.client.core)
     testImplementation(libs.ktor.server.test.host)
-    testImplementation(libs.kotlin.test)
+    testImplementation(kotlin("test"))
     @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")
     testImplementation(libs.testcontainers.elasticsearch)
     testImplementation(libs.testcontainers.minio)
@@ -60,6 +58,18 @@ dependencies {
     testImplementation(libs.sql.formatter)
     testImplementation(libs.javacv.platform)
     testImplementation(projects.cloud.pdfbox)
+}
+
+tasks.test {
+    useJUnitPlatform()
+    // 设置测试 JVM 的最大堆内存为 1024MB
+    maxHeapSize = "1024m"
+
+    // 设置初始堆内存
+    minHeapSize = "256m"
+
+    // 传递额外的 JVM 参数
+    jvmArgs("-XX:MaxMetaspaceSize=512m")
 }
 
 tasks.withType<JavaExec> {

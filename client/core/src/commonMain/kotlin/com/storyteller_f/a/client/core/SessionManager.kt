@@ -2,16 +2,14 @@ package com.storyteller_f.a.client.core
 
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
-import com.storyteller_f.shared.calcAddress
 import com.storyteller_f.shared.finalData
-import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
-import com.storyteller_f.shared.signature
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
@@ -231,17 +229,19 @@ suspend fun <U> SessionManager<U>.signUpOrInFromPrivateKey(
     getUserInfo: suspend (String, String, String) -> Result<U>,
     buildUserPass: suspend (RawUserPassInfo) -> UserPass
 ): U {
-    val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
-    val data = getData().getOrThrow()
-    val f = finalData(data)
-    val sig = signature(pemPrivateKey, f).getOrThrow()
-    val ad = calcAddress(publicKey).getOrThrow()
-    val u = getUserInfo(publicKey, sig, ad).getOrThrow()
-    model.updateUser(u)
-    model.updateSignature(data, sig)
-    val p1 = RawUserPassInfo(pemPrivateKey, publicKey, ad)
-    model.updateState(ClientSessionState.Success(buildUserPass(p1)))
-    return u
+    getAlgo().run {
+        val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
+        val data = getData().getOrThrow()
+        val f = finalData(data)
+        val sig = signature(pemPrivateKey, f).getOrThrow()
+        val ad = calcAddress(publicKey).getOrThrow()
+        val u = getUserInfo(publicKey, sig, ad).getOrThrow()
+        model.updateUser(u)
+        model.updateSignature(data, sig)
+        val p1 = RawUserPassInfo(pemPrivateKey, publicKey, ad)
+        model.updateState(ClientSessionState.Success(buildUserPass(p1)))
+        return u
+    }
 }
 
 @OptIn(ExperimentalStdlibApi::class)

@@ -25,6 +25,7 @@ import com.storyteller_f.route4k.ktor.server.invoke
 import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.finalData
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ob
@@ -33,7 +34,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import com.storyteller_f.shared.verify
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
@@ -135,7 +135,7 @@ suspend fun ApplicationCall.checkApiRequest(
 
         sig.isNotBlank() && session.data.isNotBlank() -> {
             backend.getUserAuthData(credential).mapResultIfNotNull { (pubKey, id) ->
-                verify(
+                getAlgo().verify(
                     pubKey,
                     sig,
                     finalData(session.data)
@@ -179,7 +179,7 @@ suspend fun ApplicationCall.checkAdminApiRequest(
         return Result.success(null)
     }
     return backend.getAdminAuthData(credential).mapResultIfNotNull { (pubKey, id) ->
-        verify(
+        getAlgo().verify(
             pubKey,
             sig,
             finalData(session.data)

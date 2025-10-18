@@ -22,10 +22,13 @@ class SignatureTest {
         runTest {
             val data = "hello"
             presetValue.userData!!.forEach {
-                val privateKeyStr = File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
-                val s = signature(privateKeyStr, data).getOrThrow()
-                val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr).getOrThrow()
-                assertTrue(verify(derPublicKeyStr, s, data).getOrThrow(), "check failed")
+                val privateKeyStr =
+                    File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
+                getAlgo().run {
+                    val s = signature(privateKeyStr, data).getOrThrow()
+                    val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr).getOrThrow()
+                    assertTrue(verify(derPublicKeyStr, s, data).getOrThrow(), "check failed")
+                }
             }
         }
     }
@@ -43,24 +46,33 @@ class SignatureTest {
         runTest {
             val data = "hello"
             presetValue.userData!!.forEach {
-                val privateKeyStr = File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
-                val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr).getOrThrow()
-                val (encrypted, aes) = encryptData(data).getOrThrow()
-                val encryptedAes = eciesEncrypt(derPublicKeyStr, aes).getOrThrow()
-                val decrypted =
-                    decryptMessage(getDerPrivateKey(privateKeyStr).getOrThrow(), encrypted, encryptedAes).getOrThrow()
-                assertEquals(data, decrypted)
+                val privateKeyStr =
+                    File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
+                getAlgo().run {
+                    val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr).getOrThrow()
+                    val (encrypted, aes) = encryptDataByAES(data).getOrThrow()
+                    val encryptedAes = eciesEncrypt(derPublicKeyStr, aes).getOrThrow()
+                    val decrypted =
+                        decryptMessage(
+                            getDerPrivateKey(privateKeyStr).getOrThrow(),
+                            encrypted,
+                            encryptedAes
+                        ).getOrThrow()
+                    assertEquals(data, decrypted)
 
-                // 确保手动实现的算法和bc 提供的一致
-                val (encrypted1, aes1) = CryptoJvm.encrypt(data).getOrThrow()
-                assertContentEquals(encrypted, encrypted1)
-                assertContentEquals(aes, aes1)
-                val encryptedAes1 = CryptoJvm.encryptAesKey(derPublicKeyStr, aes1).getOrThrow()
-                assertContentEquals(encryptedAes, encryptedAes1)
-                val decrypted1 =
-                    CryptoJvm.decrypt(getDerPrivateKey(privateKeyStr).getOrThrow(), encrypted1, encryptedAes1)
-                        .getOrThrow()
-                assertEquals(decrypted, decrypted1)
+                    // 确保手动实现的算法和bc 提供的一致
+                    val (encrypted1, aes1) = CryptoJvm.encrypt(data).getOrThrow()
+                    assertContentEquals(encrypted, encrypted1)
+                    assertContentEquals(aes, aes1)
+                    val encryptedAes1 = CryptoJvm.encryptAesKey(derPublicKeyStr, aes1).getOrThrow()
+                    assertContentEquals(encryptedAes, encryptedAes1)
+                    val decrypted1 = CryptoJvm.decrypt(
+                        getDerPrivateKey(privateKeyStr).getOrThrow(),
+                        encrypted1,
+                        encryptedAes1
+                    ).getOrThrow()
+                    assertEquals(decrypted, decrypted1)
+                }
             }
         }
     }

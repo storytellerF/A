@@ -21,6 +21,7 @@ import org.bytedeco.opencv.global.opencv_imgproc
 import org.bytedeco.opencv.opencv_core.Mat
 import org.bytedeco.opencv.opencv_core.Scalar
 import org.bytedeco.opencv.opencv_core.Size
+import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -29,6 +30,8 @@ import kotlin.math.log10
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class MediaTest {
     @Test
@@ -104,18 +107,23 @@ class MediaTest {
         assertEquals(0.999999, mssim.get(2), 0.00001)
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     @Test
-    fun `test audio album`() = test(
-        mapOf("FILE_SYSTEM_MEDIA_PATH" to "build/test/a_file")
-    ) {
-        attachSession {
-            val name = "I_Do_not_Wanna_Live_Forever.flac"
-            val data = getUploadDataFromResources(name)
-            val response = upload(
-                ObjectTuple(it.uid, ObjectType.USER),
-                data
-            ).getOrThrow()
-            extractAlbum(response.data.first().id).getOrThrow()
+    fun `test audio album`() {
+        val path = "build/test/a_file/${Uuid.random().toHexString()}"
+        File(path).parentFile!!.deleteRecursively()
+        test(
+            mapOf("FILE_SYSTEM_MEDIA_PATH" to path)
+        ) {
+            attachSession {
+                val name = "I_Do_not_Wanna_Live_Forever.flac"
+                val data = getUploadDataFromResources(name)
+                val response = upload(
+                    ObjectTuple(it.uid, ObjectType.USER),
+                    data
+                ).getOrThrow()
+                extractAlbum(response.data.first().id).getOrThrow()
+            }
         }
     }
 

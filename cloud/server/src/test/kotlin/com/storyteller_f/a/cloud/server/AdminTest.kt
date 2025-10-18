@@ -86,10 +86,10 @@ class AdminTest {
         attachSession {
             val communityInfo = createCommunity(NewCommunity("test", "test")).getOrThrow()
             val communityId = communityInfo.id
-            createRoom(NewRoom("test", "test", communityId = communityId)).getOrThrow()
+            createRoom(NewRoom("test", "test1", communityId = communityId)).getOrThrow()
         }
         loginPanelSession(outerTuple) {
-            assertEquals(1, overview().getOrThrow().communityRoomCount)
+            assertEquals(4, overview().getOrThrow().communityRoomCount)
         }
     }
 

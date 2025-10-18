@@ -26,9 +26,9 @@ import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
-import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
+import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -42,7 +42,7 @@ import kotlinx.coroutines.runBlocking
 fun main() {
     setLogPath("A")
     SnowflakeFactory.setMachine(1)
-    Napier.base(kmpLogger)
+    setupKmpLogger()
     val env = readEnv()
     Napier.i {
         "start worker"

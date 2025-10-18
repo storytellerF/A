@@ -19,10 +19,8 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.cloud.core.service.getCommunityRoomsTemplateList
 import com.storyteller_f.a.cloud.core.service.getFileInfoList
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
-import com.storyteller_f.shared.calcAddress
-import com.storyteller_f.shared.eciesEncrypt
-import com.storyteller_f.shared.encryptData
-import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
+import com.storyteller_f.shared.encryptDataByAES
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.FileInfo
@@ -473,12 +471,14 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File,
         privatePath: String
     ): Pair<String, String> {
-        val derPublicKey =
-            getDerPublicKeyFromPrivateKey(
-                File(parentDir, privatePath).readText().replace("\r\n", "\n")
-            ).getOrThrow()
-        val ad = calcAddress(derPublicKey).getOrThrow()
-        return Pair(derPublicKey, ad)
+        return getAlgo().run {
+            val derPublicKey =
+                getDerPublicKeyFromPrivateKey(
+                    File(parentDir, privatePath).readText().replace("\r\n", "\n")
+                ).getOrThrow()
+            val ad = calcAddress(derPublicKey).getOrThrow()
+            Pair(derPublicKey, ad)
+        }
     }
 
     private suspend fun Backend.getRoomsData(
@@ -618,7 +618,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 it.third
             }
         val encryptedContents = privateRoomList.map {
-            val (encryptedContent, aesBytes) = encryptData(
+            val (encryptedContent, aesBytes) = encryptDataByAES(
                 getTopicContent(
                     it,
                     parentDir
@@ -631,7 +631,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val id = it.id
             val aesBytes = it.aesKey
             roomMembers[topic.room]!!.map { (derPublicKey, uid) ->
-                Triple(id, eciesEncrypt(derPublicKey, aesBytes).getOrThrow(), uid)
+                Triple(id, getAlgo().eciesEncrypt(derPublicKey, aesBytes).getOrThrow(), uid)
             }
         }
         val tuples = encryptedContents.mapIndexed { index, tuple ->
@@ -715,7 +715,7 @@ suspend fun downloadWithResume(
 
     val body = response.bodyAsChannel()
 
-    file.parentFile?.mkdirs()
+    file.parentFile!!.mkdirs()
 
     RandomAccessFile(file, "rw").use { raf ->
         raf.seek(downloadedSize)

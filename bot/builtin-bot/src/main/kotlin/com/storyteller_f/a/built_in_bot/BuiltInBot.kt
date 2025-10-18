@@ -17,12 +17,12 @@ import com.storyteller_f.a.client.core.getTopicList
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.startBackgroundTask
-import com.storyteller_f.shared.kmpLogger
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.TopicPinSearch
+import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
@@ -46,7 +46,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 fun main() {
-    Napier.base(kmpLogger)
+    setupKmpLogger()
     loadCryptoLibIfNeed()
     val base64BotPem = System.getenv("BOT_PEM") ?: throw Exception("BOT_PEM not exists")
     val httpUrl = System.getenv("SERVER_URL") ?: throw Exception("SERVER_URL not exists")

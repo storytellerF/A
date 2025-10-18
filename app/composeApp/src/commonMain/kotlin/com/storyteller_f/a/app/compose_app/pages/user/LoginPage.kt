@@ -49,7 +49,7 @@ import com.storyteller_f.a.app.core.compontents.CenterBox
 import com.storyteller_f.a.app.core.compontents.PrivateKeyInput
 import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.client.core.getUserInfo
-import com.storyteller_f.shared.generateECDSAPemPrivateKey
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.UserInfo
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
@@ -241,7 +241,9 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
                 if (isSignUp) {
                     Button({
                         scope.launch {
-                            privateKey = generateECDSAPemPrivateKey().getOrThrow()
+                            privateKey = getAlgo().run {
+                                generateECDSAPemPrivateKey().getOrThrow()
+                            }
                         }
                     }) {
                         Text(stringResource(Res.string.auto_generate))

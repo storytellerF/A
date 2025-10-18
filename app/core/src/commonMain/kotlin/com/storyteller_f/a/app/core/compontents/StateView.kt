@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridItemScope
+import androidx.compose.foundation.lazy.grid.LazyGridItemSpanScope
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
@@ -22,6 +24,7 @@ import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.core.common.PagingViewModel
 import com.storyteller_f.a.client.core.LoadingHandler
@@ -113,6 +116,33 @@ fun <T : Any> LazyListScope.pagingItems(
         null
     }
     items(lazyPagingItems.itemSnapshotList.size, k, contentType, itemContent)
+}
+
+fun <T : Any> LazyGridScope.pagingItems(
+    lazyPagingItems: LazyPagingItems<T>,
+    key: ((index: T) -> Any)? = null,
+    span: (LazyGridItemSpanScope.(index: T) -> GridItemSpan)? = null,
+    contentType: (index: T) -> Any? = { null },
+    itemContent: @Composable LazyGridItemScope.(index: Int) -> Unit,
+) {
+    val k = if (key != null) {
+        lazyPagingItems.itemKey {
+            key(it)
+        }
+    } else {
+        null
+    }
+    val c = lazyPagingItems.itemContentType {
+        contentType(it)
+    }
+    val s: (LazyGridItemSpanScope.(Int) -> GridItemSpan)? = if (span != null) {
+        {
+            span(lazyPagingItems[it]!!)
+        }
+    } else {
+        null
+    }
+    items(lazyPagingItems.itemCount, k, s, c, itemContent)
 }
 
 @Composable

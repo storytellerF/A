@@ -41,7 +41,8 @@ data class UserLogInfo(
 data class UserPubKeyInfo(val id: PrimaryKey, val pubKey: String)
 
 enum class AlgoType {
-    P256
+    P256,
+    DILITHIUM
 }
 
 enum class PassType {

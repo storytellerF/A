@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import com.google.common.base.CaseFormat
@@ -325,12 +327,6 @@ android {
     }
 }
 
-//https://developer.android.com/develop/ui/compose/testing#setup
-dependencies {
-    androidTestImplementation(libs.androidx.ui.test.junit4.android)
-    debugImplementation(libs.androidx.ui.test.manifest)
-}
-
 easylauncher {
     iconNames.addAll("@mipmap/ic_launcher", "@mipmap/ic_launcher_round")
     buildTypes {
@@ -394,7 +390,7 @@ val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
             // 定义输出文件路径 (如密钥存储文件)
             val outputFile = generatedJksFile
 
-            outputFile.parentFile?.let {
+            outputFile.parentFile!!.let {
                 if (!it.exists() && !it.mkdirs()) {
                     throw Exception("mkdirs failed: $it")
                 }

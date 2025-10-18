@@ -11,10 +11,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import coil3.compose.LocalPlatformContext
 import com.storyteller_f.a.app.compose_app.App
-import com.storyteller_f.a.app.compose_app.StaticObj
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.shared.getPlatform
+import com.storyteller_f.shared.setupKmpLogger
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
@@ -30,7 +30,6 @@ class AppTest {
     @OptIn(ExperimentalTestApi::class)
     @Test
     fun myTest() {
-        StaticObj
         runServer {
             runComposeUiTest {
                 setContent {
@@ -54,6 +53,7 @@ class AppTest {
     }
 
     private fun runServer(block: (String) -> Unit) {
+        setupKmpLogger()
         val ip = "localhost"
         runBlocking {
             val testClient = getClient {

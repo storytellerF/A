@@ -7,8 +7,8 @@ import com.storyteller_f.a.api.core.TopicQuery
 import com.storyteller_f.route4k.ktor.client.invoke
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
-import com.storyteller_f.shared.eciesEncrypt
-import com.storyteller_f.shared.encryptData
+import com.storyteller_f.shared.encryptDataByAES
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.*
 import com.storyteller_f.shared.type.JoinStatusSearch
@@ -21,7 +21,6 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
 
@@ -427,9 +426,9 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
     keyData: List<UserPubKeyInfo>,
 ) {
     val content = if (isPrivate) {
-        val (encrypted, aes) = encryptData(input).getOrThrow()
+        val (encrypted, aes) = encryptDataByAES(input).getOrThrow()
         TopicContent.Encrypted(encrypted.toHexString(), keyData.associate {
-            it.id to eciesEncrypt(it.pubKey, aes).getOrThrow().toHexString()
+            it.id to getAlgo().eciesEncrypt(it.pubKey, aes).getOrThrow().toHexString()
         })
     } else {
         TopicContent.Plain(input)

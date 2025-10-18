@@ -34,10 +34,7 @@ import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.addAlternativeAccount
-import com.storyteller_f.shared.calcAddress
-import com.storyteller_f.shared.getDerPublicKeyFromPrivateKey
-import com.storyteller_f.shared.getPemPrivateKeyFromDer
-import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.algoRunCatching
 import kotlinx.coroutines.launch
 
 class AccountSwitcher(val state: MutableState<Boolean> = mutableStateOf(false)) {
@@ -48,7 +45,11 @@ class AccountSwitcher(val state: MutableState<Boolean> = mutableStateOf(false)) 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountSwitch(accountSwitcher: AccountSwitcher, switchToMain: () -> Unit, switch: (String) -> Unit) {
+fun AccountSwitch(
+    accountSwitcher: AccountSwitcher,
+    switchToMain: () -> Unit,
+    switch: (String) -> Unit
+) {
     var expand by accountSwitcher.state
     val sheetState = rememberModalBottomSheetState()
     BaseSheet(expand, sheetState, {
@@ -117,12 +118,11 @@ suspend fun switchUser(
     switch: (RawUserPass) -> Unit,
 ) {
     globalDialogController.useResult {
-        getPemPrivateKeyFromDer(derPrivateKeyStr).mapResult { pemPrivateKey ->
-            getDerPublicKeyFromPrivateKey(pemPrivateKey).mapResult { publicKey ->
-                calcAddress(publicKey).map { address ->
-                    RawUserPass(RawUserPassInfo(pemPrivateKey, publicKey, address))
-                }
-            }
+        algoRunCatching {
+            val pemPrivateKey = getPemPrivateKeyFromDer(derPrivateKeyStr).getOrThrow()
+            val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
+            val address = calcAddress(publicKey).getOrThrow()
+            RawUserPass(RawUserPassInfo(pemPrivateKey, publicKey, address))
         }
     }.getOrNull()?.let {
         switch(it)
