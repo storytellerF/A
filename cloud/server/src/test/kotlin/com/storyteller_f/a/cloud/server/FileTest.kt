@@ -35,37 +35,33 @@ import kotlin.uuid.Uuid
 
 class MediaTest {
     @Test
-    fun `test upload media`() {
-        test {
-            val firstTuple = attachSession {
-                val response =
-                    upload(
-                        ObjectTuple(it.uid, ObjectType.USER),
-                        getUploadDataFromText("hello")
-                    ).getOrThrow()
-                assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
-                val mediaList = getMediaList(it.uid, ObjectType.USER, null, 10)
-                assertListSize(1, mediaList)
-                mediaList.getOrThrow().data.first()
-            }
-            attachSession {
-                val response = copy(firstTuple.custom.id).getOrThrow()
-                assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
-                assertListSize(1, getMediaList(it.uid, ObjectType.USER, null, 10))
-            }
+    fun `test upload media`() = test {
+        val firstTuple = attachSession {
+            val response =
+                upload(
+                    ObjectTuple(it.uid, ObjectType.USER),
+                    getUploadDataFromText("hello")
+                ).getOrThrow()
+            assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
+            val mediaList = getMediaList(it.uid, ObjectType.USER, null, 10)
+            assertListSize(1, mediaList)
+            mediaList.getOrThrow().data.first()
+        }
+        attachSession {
+            val response = copy(firstTuple.custom.id).getOrThrow()
+            assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
+            assertListSize(1, getMediaList(it.uid, ObjectType.USER, null, 10))
         }
     }
 
     @Test
-    fun `get png size`() {
-        runTest {
-            val dimension = getImageDimension("avatar1.png", "image/png") {
-                ClassLoader.getSystemResourceAsStream("avatar1.png")!!
-            }
-            assertNotNull(dimension)
-            assertEquals(dimension.width, 420)
-            assertEquals(dimension.height, 420)
+    fun `get png size`() = runTest {
+        val dimension = getImageDimension("avatar1.png", "image/png") {
+            ClassLoader.getSystemResourceAsStream("avatar1.png")!!
         }
+        assertNotNull(dimension)
+        assertEquals(dimension.width, 420)
+        assertEquals(dimension.height, 420)
     }
 
     @Test
@@ -128,14 +124,12 @@ class MediaTest {
     }
 
     @Test
-    fun `test remove image info`() {
-        test {
-            attachSession {
-                upload(
-                    it.uid ob ObjectType.USER,
-                    getUploadDataFromResources("cover.jpg")
-                ).getOrThrow()
-            }
+    fun `test remove image info`() = test {
+        attachSession {
+            upload(
+                it.uid ob ObjectType.USER,
+                getUploadDataFromResources("cover.jpg")
+            ).getOrThrow()
         }
     }
 }

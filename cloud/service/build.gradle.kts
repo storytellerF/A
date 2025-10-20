@@ -35,6 +35,8 @@ dependencies {
     implementation(projects.backend.minio)
     implementation(projects.backend.redis)
     implementation(projects.backend.simple)
+    runtimeOnly(libs.h2)
+    runtimeOnly(libs.postgresql)
 
     testImplementation(libs.commons.logging)
     testImplementation(kotlin("test"))
@@ -70,7 +72,6 @@ jmh {
     iterations = 2
     fork = 2
 }
-
 
 sourceSets {
     main {
@@ -118,6 +119,7 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
             throw Exception("mkdirs falied: $output")
         }
         runtimeClasspath.flatMap { file ->
+            println(file.name)
             when {
                 !file.isFile || !file.name.endsWith(".jar") -> emptyList()
                 file.canonicalPath.contains("backend") -> extractServiceContent(
@@ -134,7 +136,6 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
                     file,
                     "io.r2dbc.spi.ConnectionFactoryProvider"
                 )
-
 
                 else -> emptyList()
             }
