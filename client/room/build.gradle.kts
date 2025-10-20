@@ -53,10 +53,6 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        androidMain.dependencies {
-        }
-        androidMain {
-        }
         commonMain.dependencies {
             implementation(projects.shared)
             implementation(libs.kotlinx.datetime)
@@ -66,16 +62,6 @@ kotlin {
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.room.paging)
             implementation(libs.androidx.sqlite.bundled)
-        }
-        jvmMain.dependencies {
-        }
-        jvmMain {
-        }
-        if (buildIosTarget) {
-            iosMain.dependencies {
-            }
-            iosMain {
-            }
         }
     }
     compilerOptions {

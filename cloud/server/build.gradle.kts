@@ -5,6 +5,7 @@ plugins {
     application
     alias(libs.plugins.kotlinBuildConfig)
     id("io.sentry.jvm.gradle") version ("5.8.0")
+    id("cloud")
 }
 
 group = "com.storyteller_f.a.cloud"
@@ -72,14 +73,6 @@ tasks.test {
     jvmArgs("-XX:MaxMetaspaceSize=512m")
 }
 
-tasks.withType<JavaExec> {
-    jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
-}
-
-tasks.withType<Test> {
-    jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
-}
-
 val buildType = project.findProperty("server.buildType") as String
 val flavor = project.findProperty("server.flavor").toString()
 
@@ -91,29 +84,7 @@ buildConfig {
     buildConfigField<String>("FLAVOR", flavor)
 }
 
-fun AbstractCopyTask.handleDupJar() {
-    eachFile {
-        if (sourceName == "core.jar") {
-            val filePath = file.path
-            when {
-                filePath.contains("api") -> name = "api-core.jar"
-                filePath.contains("backend") -> name = "backend-core.jar"
-                filePath.contains("cloud") -> name = "cloud-core.jar"
-            }
-        }
-    }
-    filesMatching("vavi-commons-1.1.10.jar") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
-    }
-}
 
-tasks.withType<Tar> {
-    handleDupJar()
-}
-
-tasks.withType<Zip> {
-    handleDupJar()
-}
 sentry {
     org = "acommunity"
     projectName = "kotlin"

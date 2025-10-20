@@ -43,8 +43,6 @@ kotlin {
     jvm()
 
     sourceSets {
-        androidMain.dependencies {
-        }
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.cryptography.core)
@@ -52,8 +50,6 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
-        }
-        jvmMain.dependencies {
         }
     }
 }

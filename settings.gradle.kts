@@ -25,6 +25,7 @@ plugins {
 }
 
 dependencyResolutionManagement {
+    includeBuild("bgscripts")
     repositories {
         mavenLocal()
         google {
