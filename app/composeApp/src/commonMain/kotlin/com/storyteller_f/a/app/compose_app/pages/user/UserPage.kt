@@ -107,14 +107,15 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
                 NavHost(navigator, "/topics") {
                     composable("/topics") {
                         val topicsViewModel = createUserTopicsViewModel(uid)
-                        TopicList(topicsViewModel, showAvatar = false)
+                        TopicList(topicsViewModel, showAvatar = false, supportPin = true)
                     }
                     composable("/communities") {
                         val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid)
                         CommunityList(communitiesViewModel)
                     }
                     composable("/titles") {
-                        val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
+                        val titlesViewModel =
+                            createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
                         TitleList(titlesViewModel)
                     }
                 }

@@ -23,6 +23,7 @@ import com.storyteller_f.shared.model.TopicInfo
 fun TopicList(
     topicsViewModel: PagingViewModel<TopicInfo>,
     showAvatar: Boolean = true,
+    supportPin: Boolean = false,
 ) {
     StateView(topicsViewModel) { items ->
         LazyColumn(
@@ -39,7 +40,8 @@ fun TopicList(
             ) {
                 TopicCell(
                     items[it],
-                    showAvatar = showAvatar
+                    showAvatar = showAvatar,
+                    supportPin
                 )
                 if (it != items.itemSnapshotList.size - 1) {
                     HorizontalDivider()
