@@ -43,10 +43,6 @@ dependencies {
     testImplementation(libs.testcontainers.elasticsearch)
 }
 
-tasks.withType<JavaExec> {
-    jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
-}
-
 tasks.withType<Test> {
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
@@ -119,7 +115,6 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
             throw Exception("mkdirs falied: $output")
         }
         runtimeClasspath.flatMap { file ->
-            println(file.name)
             when {
                 !file.isFile || !file.name.endsWith(".jar") -> emptyList()
                 file.canonicalPath.contains("backend") -> extractServiceContent(
@@ -127,7 +122,7 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
                     "com.storyteller_f.a.backend.core.service"
                 )
 
-                file.name.startsWith("lucene") -> extractServiceContent(
+                file.name.startsWith("lucene-") -> extractServiceContent(
                     file,
                     "org.apache.lucene.codecs"
                 )

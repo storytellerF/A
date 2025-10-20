@@ -51,25 +51,11 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        androidMain.dependencies {
-        }
-        androidMain {
-        }
         commonMain.dependencies {
             implementation(projects.shared)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.androidx.paging.common)
-        }
-        jvmMain.dependencies {
-        }
-        jvmMain {
-        }
-        if (buildIosTarget) {
-            iosMain.dependencies {
-            }
-            iosMain {
-            }
         }
     }
     compilerOptions {

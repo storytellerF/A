@@ -1,9 +1,7 @@
-import com.android.build.gradle.internal.tasks.factory.dependsOn
 
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinBuildConfig)
-    id("me.champeau.jmh") version "0.7.3"
 }
 
 group = "com.storyteller_f.a.backend"
