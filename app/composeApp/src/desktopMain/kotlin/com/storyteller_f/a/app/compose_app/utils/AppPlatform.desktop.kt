@@ -5,7 +5,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.awtClipboard
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.storyteller_f.a.app.compose_app.uiViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
@@ -43,8 +42,6 @@ actual fun createConnectivity(): Connectivity {
         timeoutMs = 5.seconds
     }
 }
-
-actual fun getUiViewModel() = uiViewModel
 
 actual fun getClientFile(path: String): ClientFile? {
     val file = File(path)

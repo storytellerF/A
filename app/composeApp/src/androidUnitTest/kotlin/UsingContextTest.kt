@@ -1,15 +1,10 @@
 import android.content.ContentProvider
-import android.os.Looper
-import androidx.lifecycle.Lifecycle
-import androidx.test.core.app.ActivityScenario
 import com.storyteller_f.a.app.compose_app.AApplication
-import com.storyteller_f.a.app.compose_app.MainActivity
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -41,22 +36,5 @@ actual abstract class UsingContextTest {
             // ClassNotFoundException. Skip configuring the provider for them.
             null
         }
-    }
-
-    actual fun onActivity(block: () -> Unit) {
-        // GIVEN
-        val scenario = ActivityScenario.launch(MainActivity::class.java)
-
-        // WHEN
-        scenario.moveToState(Lifecycle.State.CREATED)
-
-        // THEN
-        scenario.onActivity {
-            block()
-        }
-    }
-
-    actual fun executeIfNeed() {
-        Shadows.shadowOf(Looper.getMainLooper()).idle()
     }
 }

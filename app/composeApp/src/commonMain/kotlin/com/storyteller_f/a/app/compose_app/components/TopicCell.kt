@@ -85,8 +85,9 @@ fun TopicCellInternal(
     Box {
         Column(
             modifier = Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {
-                if (supportPin)
+                if (supportPin) {
                     expanded = true
+                }
             }, onLongClickLabel = "topic menu") {
                 appNav.gotoTopic(topicId)
             }
