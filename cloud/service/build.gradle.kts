@@ -99,16 +99,16 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
     outputs.dir(outputDir)
     doLast {
         fun extractServiceContent(
-            file: File,
-            servicePrefixName: String,
-            classPrefixName: String
+            jarFile: File,
+            servicePrefixName: String
         ): List<Pair<String?, List<String>>> {
-            return injected.operations.zipTree(file).filter {
+            return injected.operations.zipTree(jarFile).filter {
                 it.name.startsWith(servicePrefixName)
             }.map { serviceFile ->
                 val serviceName = serviceFile.name
-                val serviceContent =
-                    serviceFile.readText().lines().filter { it.startsWith(classPrefixName) }
+                val serviceContent = serviceFile.readText().lines().filter {
+                    it.isNotEmpty() && !it.startsWith("#")
+                }
                 serviceName to serviceContent
             }
         }
@@ -120,18 +120,21 @@ val mergeServiceFiles = tasks.register("mergeServiceFiles") {
         runtimeClasspath.flatMap { file ->
             when {
                 !file.isFile || !file.name.endsWith(".jar") -> emptyList()
+                file.canonicalPath.contains("backend") -> extractServiceContent(
+                    file,
+                    "com.storyteller_f.a.backend.core.service"
+                )
 
                 file.name.startsWith("lucene") -> extractServiceContent(
                     file,
-                    "org.apache.lucene.codecs",
-                    "org.apache.lucene"
+                    "org.apache.lucene.codecs"
                 )
 
                 file.name.startsWith("r2dbc") -> extractServiceContent(
                     file,
-                    "io.r2dbc.spi.ConnectionFactoryProvider",
-                    "io.r2dbc"
+                    "io.r2dbc.spi.ConnectionFactoryProvider"
                 )
+
 
                 else -> emptyList()
             }
