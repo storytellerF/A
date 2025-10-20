@@ -192,7 +192,7 @@ private fun WebSockets.WebSocketOptions.setupWebSockets() {
 private fun Application.setupRateLimit() {
     install(RateLimit) {
         global {
-            rateLimiter(limit = 10, refillPeriod = 1.seconds)
+            rateLimiter(limit = 50, refillPeriod = 10.seconds)
             requestKey { call ->
                 call.getRateLimitKey()
             }

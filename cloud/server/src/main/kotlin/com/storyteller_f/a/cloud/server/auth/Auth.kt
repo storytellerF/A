@@ -165,7 +165,7 @@ fun ApplicationCall.getSession(): UserSession {
 @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 private fun ApplicationCall.createPendingSession(remote: String): UserSession.Pending {
     Napier.i {
-        "pending session $remote"
+        "pending session $remote ${request.uri}"
     }
     val aTs = request.header("a-ts")?.toLongOrNull()
     val data = when {
@@ -178,6 +178,7 @@ private fun ApplicationCall.createPendingSession(remote: String): UserSession.Pe
 }
 
 fun ApplicationCall.getRateLimitKey(): Comparable<*> {
+    if (request.uri == "/metrics") return "metrics"
     return when (val session = getSession()) {
         is UserSession.Success -> session.id
         is UserSession.Pending -> session.remote

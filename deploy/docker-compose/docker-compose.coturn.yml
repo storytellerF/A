@@ -3,5 +3,14 @@ services:
     image: coturn/coturn
     restart: unless-stopped
     network_mode: host
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "5349:5349"
+      - "5349:5349/udp"
+      - "49152-65535:49152-65535/udp"
+    environment:
+      DETECT_EXTERNAL_IP: yes
+      DETECT_RELAY_IP: yes
     volumes:
       - ../turnserver.conf:/etc/coturn/turnserver.conf

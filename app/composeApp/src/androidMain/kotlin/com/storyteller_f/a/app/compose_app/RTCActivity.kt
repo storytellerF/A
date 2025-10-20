@@ -204,7 +204,7 @@ suspend fun makeCallByOffer(
 ) {
     val roomId = createOffer.roomId
     val targetUid = createOffer.targetUid
-    val pc = PeerConnection()
+    val pc = createRTCPeerConnection()
     // 本地流加到 PeerConnection
     localStream.tracks.forEach { pc.addTrack(it) }
     coroutineScope {
@@ -299,7 +299,7 @@ suspend fun makeCallByAnswer(
     val targetUid = createAnswer.targetUid
     val customOffer = createAnswer.offer
     coroutineScope {
-        val pc = PeerConnection()
+        val pc = createRTCPeerConnection()
         // 本地流加到 PeerConnection（如果需要推流）
         localStream.tracks.forEach { pc.addTrack(it) }
         // 收集 Candidate 并通过信令发送给 Caller
@@ -371,6 +371,17 @@ suspend fun makeCallByAnswer(
     }
 }
 
+private fun createRTCPeerConnection(): PeerConnection {
+    val urls = listOf(
+        "stun.l.google.com:19302",
+        "stun1.l.google.com:19302",
+        "stun2.l.google.com:19302",
+        "stun3.l.google.com:19302",
+        "stun4.l.google.com:19302",
+    )
+    return PeerConnection(RtcConfiguration(iceServers = listOf(IceServer(urls))))
+}
+
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun StartButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
@@ -412,8 +423,8 @@ private fun Context.navigateToAppSettings() {
         addCategory(Intent.CATEGORY_DEFAULT)
         addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_NO_HISTORY or
-                Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                    Intent.FLAG_ACTIVITY_NO_HISTORY or
+                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
         )
     }
     startActivity(intent)

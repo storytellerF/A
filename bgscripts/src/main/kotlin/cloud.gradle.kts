@@ -8,16 +8,6 @@ tasks.withType<Test> {
 }
 
 fun AbstractCopyTask.handleDupJar() {
-    eachFile {
-        if (sourceName == "core.jar") {
-            val filePath = file.path
-            when {
-                filePath.contains("api") -> name = "api-core.jar"
-                filePath.contains("backend") -> name = "backend-core.jar"
-                filePath.contains("cloud") -> name = "cloud-core.jar"
-            }
-        }
-    }
     filesMatching("vavi-commons-1.1.10.jar") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE // 排除重复项
     }
