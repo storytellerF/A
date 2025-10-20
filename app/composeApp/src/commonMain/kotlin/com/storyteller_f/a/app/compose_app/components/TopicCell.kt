@@ -36,11 +36,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun TopicCell(
     info: TopicInfo?,
-    showAvatar: Boolean = true
+    showAvatar: Boolean = true,
+    supportPin: Boolean = false,
 ) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    TopicCellInternal(info, showAvatar) {
+    TopicCellInternal(info, showAvatar, supportPin) {
         showBottomSheet = true
     }
     info?.let {
@@ -73,6 +74,7 @@ fun RoomTopicCell(
 fun TopicCellInternal(
     topicInfo: TopicInfo?,
     showAvatar: Boolean,
+    supportPin: Boolean,
     startAddReaction: () -> Unit
 ) {
     topicInfo ?: return
@@ -83,10 +85,11 @@ fun TopicCellInternal(
     Box {
         Column(
             modifier = Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {
-                expanded = true
+                if (supportPin)
+                    expanded = true
             }, onLongClickLabel = "topic menu") {
                 appNav.gotoTopic(topicId)
-            }.padding(8.dp)
+            }
         ) {
             if (showAvatar) {
                 UserCell(authorInfo) {
@@ -94,6 +97,7 @@ fun TopicCellInternal(
                 }
             }
             Column(
+                Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TopicContentField(topicInfo, true)
@@ -178,7 +182,7 @@ private fun SubTopics(topicInfo: TopicInfo) {
                     MaterialTheme.colorScheme.surfaceContainerHigh,
                     RoundedCornerShape(10.dp)
                 )
-                .padding(8.dp)
+                .padding(horizontal = 8.dp)
         ) {
             repeat(topics.size) {
                 val info = topics[it]
@@ -242,7 +246,11 @@ fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest:
 }
 
 @Composable
-fun RoomTopicDropdownMenu(expanded: Boolean, startAddReaction: () -> Unit, onDismissRequest: () -> Unit) {
+fun RoomTopicDropdownMenu(
+    expanded: Boolean,
+    startAddReaction: () -> Unit,
+    onDismissRequest: () -> Unit
+) {
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest
