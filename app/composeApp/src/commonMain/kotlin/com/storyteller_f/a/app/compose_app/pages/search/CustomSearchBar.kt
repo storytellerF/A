@@ -358,7 +358,7 @@ private fun MyRoomSearchContent(current: String) {
         }
 
         val userSessionManager = LocalSessionManager.current
-        val isAlreadySignUp by userSessionManager.isAlreadySignUp.collectAsState()
+        val isAlreadySignUp by userSessionManager.isAlreadySignIn.collectAsState()
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
             val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
@@ -392,7 +392,7 @@ private fun MyCommunitySearchContent(query: String) {
             mutableStateOf(JoinStatusSearch.JOINED)
         }
         val userSessionManager = LocalSessionManager.current
-        val isAlreadySignUp by userSessionManager.isAlreadySignUp.collectAsState()
+        val isAlreadySignUp by userSessionManager.isAlreadySignIn.collectAsState()
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
             val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)

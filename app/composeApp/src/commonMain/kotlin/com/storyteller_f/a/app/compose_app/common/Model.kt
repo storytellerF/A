@@ -272,6 +272,9 @@ class TopicsViewModel(
                 SectionLoadParams::class
             ),
         ) { data, refresh ->
+            if (refresh) {
+                modelStorage.topicInfoStorage.clean(modelCollection)
+            }
             data.forEach {
                 modelStorage.topicInfoStorage.save(modelCollection, it)
             }
@@ -739,7 +742,7 @@ class ChildAccountsViewModel(
             modelStorage,
             modelCollection.NAME,
             RegularPagingSource { key, size ->
-                sessionManager.getAlternativeAccounts(key, size)
+                sessionManager.getChildAccounts(key, size)
             },
         ) { data, clean ->
             if (clean) {

@@ -4,7 +4,7 @@ import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.cloud.core.service.addAlternativeAccount
+import com.storyteller_f.a.cloud.core.service.addChildAccount
 import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.core.service.getUserAlternateUserInfoList
 import com.storyteller_f.a.cloud.core.service.signIn
@@ -79,7 +79,7 @@ fun Route.bindAccountRoute() {
 fun Route.bindProtectedAccountRoute(backend: Backend) {
     CustomApi.Accounts.ChildAccounts.add(RoutingContext::handleResult) {
         usePrincipal { uid ->
-            backend.addAlternativeAccount(uid)
+            backend.addChildAccount(uid)
         }
     }
     CustomApi.Accounts.ChildAccounts.get(RoutingContext::handleResult) {
@@ -101,18 +101,13 @@ fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
 suspend fun Backend.getUserAuthData(
     credential: CustomCredential
 ): Result<Pair<String, Long>?> {
+    val userDatabase = combinedDatabase.userDatabase
     return when (credential) {
-        is CustomCredential.AidCredential -> combinedDatabase.userDatabase.getUserAuthDataByAid(
-            credential.aid
-        )
+        is CustomCredential.AidCredential -> userDatabase.getUserAuthDataByAid(credential.aid)
 
-        is CustomCredential.IdCredential -> combinedDatabase.userDatabase.getUserAuthDataById(
-            credential.id
-        )
+        is CustomCredential.IdCredential -> userDatabase.getUserAuthDataById(credential.id)
 
-        is CustomCredential.AddressCredential -> combinedDatabase.userDatabase.getUserAuthDataByAddress(
-            credential.ad
-        )
+        is CustomCredential.AddressCredential -> userDatabase.getUserAuthDataByAddress(credential.ad)
     }
 }
 

@@ -15,6 +15,9 @@ fun now(): LocalDateTime {
     return Clock.System.now().toLocalDateTime(TimeZone.UTC)
 }
 
+@OptIn(ExperimentalTime::class)
+fun nowInstance() = Clock.System.now()
+
 @ExperimentalTime
 fun LocalDateTime.formatTime(): String {
     val toLocalDateTime = toInstant(TimeZone.UTC)

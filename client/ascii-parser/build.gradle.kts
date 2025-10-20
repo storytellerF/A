@@ -62,8 +62,10 @@ kotlin {
         commonMain.dependencies {
             compileOnly(libs.javet)
         }
-        androidUnitTest.dependencies {
+        androidInstrumentedTest.dependencies {
             implementation(libs.androidx.ui.test.junit4.android)
+        }
+        androidUnitTest.dependencies {
             implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
 

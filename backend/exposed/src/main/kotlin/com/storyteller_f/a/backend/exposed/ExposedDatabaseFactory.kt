@@ -45,6 +45,7 @@ import java.net.Socket
 import kotlin.concurrent.thread
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.time.ExperimentalTime
 
 class DatabaseSearchConfig<R, Q> {
     lateinit var searchFunc: () -> Q
@@ -133,6 +134,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     suspend fun <R> dbSearch(
         query: DatabaseSearchConfig<R, Query>.() -> Unit,
     ): Result<R> {

@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
@@ -33,6 +34,7 @@ import com.storyteller_f.a.app.compose_app.common.OnMediaUploaded
 import com.storyteller_f.a.app.compose_app.common.createMediaListViewModel
 import com.storyteller_f.a.app.compose_app.components.*
 import com.storyteller_f.a.app.compose_app.utils.Recorder
+import com.storyteller_f.a.app.compose_app.utils.setText
 import com.storyteller_f.a.app.core.compontents.CustomIcon
 import com.storyteller_f.a.app.core.compontents.IconRes
 import com.storyteller_f.a.app.core.compontents.StateView
@@ -262,24 +264,45 @@ private fun FileCell(
                 }
             }
         }
-        val appNav = LocalAppNav.current
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = {
-                expanded = false
-            }
-        ) {
-            DropdownMenuItem(
-                leadingIcon = {
-                    CustomIcon(IconRes.Vector(Icons.Default.Fullscreen))
-                },
-                text = { Text("View") },
-                onClick = {
-                    expanded = false
-                    appNav.gotoMedia(fileInfo)
-                }
-            )
+        FileCellMenu(expanded, {
+            expanded = it
+        }, fileInfo)
+    }
+}
+
+@Composable
+fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo: FileInfo) {
+    val appNav = LocalAppNav.current
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = {
+            updateExpanded(false)
         }
+    ) {
+        DropdownMenuItem(
+            leadingIcon = {
+                CustomIcon(IconRes.Vector(Icons.Default.Fullscreen))
+            },
+            text = { Text("View") },
+            onClick = {
+                updateExpanded(false)
+                appNav.gotoMedia(fileInfo)
+            }
+        )
+        val clipboardManager = LocalClipboard.current
+        val scope = rememberCoroutineScope()
+        DropdownMenuItem(
+            leadingIcon = {
+                CustomIcon(IconRes.Vector(Icons.Default.Fullscreen))
+            },
+            text = { Text("Copy name") },
+            onClick = {
+                updateExpanded(false)
+                scope.launch {
+                    clipboardManager.setText(fileInfo.name)
+                }
+            }
+        )
     }
 }
 

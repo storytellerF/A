@@ -82,8 +82,10 @@ kotlin {
             implementation(libs.androidx.ui.tooling.preview)
             implementation(libs.okhttp)
         }
-        androidUnitTest.dependencies {
+        androidInstrumentedTest.dependencies {
             implementation(libs.androidx.ui.test.junit4.android)
+        }
+        androidUnitTest.dependencies {
             implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
         }

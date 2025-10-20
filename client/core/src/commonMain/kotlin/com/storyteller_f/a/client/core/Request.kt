@@ -539,11 +539,11 @@ suspend fun UserSessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatchi
     CustomApi.Files.Id.extractAlbum.invoke(CommonPath(mediaId), Unit) {}
 }
 
-suspend fun UserSessionManager.addAlternativeAccount() = serviceCatching {
+suspend fun UserSessionManager.addChildAccount() = serviceCatching {
     CustomApi.Accounts.ChildAccounts.add.invoke(Unit) {}
 }
 
-suspend fun UserSessionManager.getAlternativeAccounts(nextId: String?, size: Int) = serviceCatching {
+suspend fun UserSessionManager.getChildAccounts(nextId: String?, size: Int) = serviceCatching {
     CustomApi.Accounts.ChildAccounts.get.invoke(
         CustomApi.Accounts.ChildAccounts.ChildAccountQuery(
             nextId,

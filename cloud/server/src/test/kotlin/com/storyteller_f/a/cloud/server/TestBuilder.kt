@@ -72,10 +72,7 @@ fun test(
         ),
         block
     )
-    if (System.getenv("ENABLE_TEST_CONTAINER") == "true") {
-//        startTestContainerTest(true, block)
-        startTestContainerTest(overrideEnv + mapOf("METHOD_NAME" to methodName), false, block)
-    }
+    startTestContainerTest(overrideEnv + mapOf("METHOD_NAME" to methodName), false, block)
     Napier.i {
         "test done `$methodName`"
     }

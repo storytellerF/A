@@ -60,33 +60,27 @@ private fun UserRefCellInternal(
                 }
             }
     ) { info ->
-        UserCell(info, hideBackground = true, onClickCell = onClick)
+        UserCell(info, onClickCell = onClick)
     }
 }
 
 @Composable
 fun UserCell(
     userInfo: UserInfo?,
-    hideBackground: Boolean,
     iconClickable: Boolean = true,
     cellClickable: Boolean = true,
     iconSize: Dp = 40.dp,
     onClickCell: (UserInfo) -> Unit
 ) {
     val shape = RoundedCornerShape(8.dp)
-    val baseModifier = Modifier.fillMaxWidth()
-    val modifier = if (hideBackground) {
-        baseModifier
-    } else {
-        baseModifier.background(MaterialTheme.colorScheme.surfaceDim, shape)
-    }.clip(shape)
-        .clickable(userInfo != null && cellClickable) {
-            userInfo?.let {
-                onClickCell.invoke(it)
-            }
-        }
     Row(
-        modifier = modifier.padding(8.dp),
+        modifier = Modifier.fillMaxWidth()
+            .clip(shape)
+            .clickable(userInfo != null && cellClickable) {
+                userInfo?.let {
+                    onClickCell.invoke(it)
+                }
+            }.padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {

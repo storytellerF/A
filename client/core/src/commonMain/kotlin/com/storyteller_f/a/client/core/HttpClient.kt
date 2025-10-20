@@ -172,14 +172,14 @@ private fun <U> CustomClientAuthProvider.CustomAuthConfig.configClientAuth(
     addRequestHeader: HttpRequestBuilder.(U, String) -> Unit
 ) {
     addRequestHeaders { data, request ->
-        Napier.v("addRequestHeaders $data ${request.url}", tag = "ClientAuth")
+        Napier.v("addRequestHeaders data: $data url: ${request.url}", tag = "ClientAuth")
         if (data == manager.dataAndSignature?.first) {
             request.addRequestHeaders(manager, addRequestHeader)
         }
     }
     updateDataIfNeed { data ->
         val localData = manager.dataAndSignature?.first
-        Napier.v("updateDataIfNeed $data $localData", tag = "ClientAuth")
+        Napier.v("updateDataIfNeed new: $data old: $localData", tag = "ClientAuth")
         if (data != localData) {
             manager.updateSignature(data, null)
         }

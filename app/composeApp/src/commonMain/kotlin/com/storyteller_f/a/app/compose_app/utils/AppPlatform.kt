@@ -3,7 +3,6 @@ package com.storyteller_f.a.app.compose_app.utils
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.platform.Clipboard
-import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
@@ -33,8 +32,6 @@ expect fun getClientFile(path: String): ClientFile?
 expect fun startCall(roomId: PrimaryKey)
 
 expect fun createConnectivity(): Connectivity
-
-expect fun getUiViewModel(): UIViewModel
 
 @Composable
 expect fun createCustomDataStoreManager(): DataStoreManager
