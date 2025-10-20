@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
-import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileInputStream
@@ -113,7 +112,6 @@ kotlin {
             implementation(libs.androidx.core.splashscreen)
             implementation(libs.androidx.datastore.preferences.core)
 
-            implementation(libs.androidx.ui.tooling.preview)
             if (isLlamaEnable)
                 implementation(":android-llama-cpp")
 
@@ -122,8 +120,10 @@ kotlin {
             }
             implementation(libs.okhttp)
         }
-        androidUnitTest.dependencies {
+        androidInstrumentedTest.dependencies {
             implementation(libs.androidx.ui.test.junit4.android)
+        }
+        androidUnitTest.dependencies {
             implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
         }
@@ -220,6 +220,10 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
     }
+}
+
+dependencies {
+    debugImplementation(compose.uiTooling)
 }
 
 composeCompiler {

@@ -62,7 +62,7 @@ fun MemberList(memberViewModel: MemberViewModel, onClick: ((UserInfo) -> Unit)? 
                     it.id
                 },
             ) { index ->
-                UserCell(items[index], true, onClickCell = {
+                UserCell(items[index], onClickCell = {
                     onClick?.invoke(it) ?: appNav.gotoUser(it.id)
                 })
                 Spacer(modifier = Modifier.height(20.dp))

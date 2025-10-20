@@ -152,7 +152,7 @@ private fun TopicMenuList(
     val toast = LocalToaster.current
     val clipboardManager = LocalClipboard.current
     val userSessionManager = LocalSessionManager.current
-    val alreadyLoginIn by userSessionManager.isAlreadySignUp.collectAsState()
+    val alreadyLoginIn by userSessionManager.isAlreadySignIn.collectAsState()
     val scope = rememberCoroutineScope()
     ButtonNav(
         Icons.Default.ContentCopy,

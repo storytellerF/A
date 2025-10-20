@@ -228,7 +228,7 @@ private fun HomePager(
 private fun UserHost(content: @Composable () -> Unit) {
     val session = LocalMainSessionManager.current
     val appNav = LocalAppNav.current
-    val user by session.isAlreadySignUp.collectAsState()
+    val user by session.isAlreadySignIn.collectAsState()
     if (user) {
         content()
     } else {

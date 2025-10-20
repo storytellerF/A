@@ -459,7 +459,7 @@ private fun InputGroupSuffix(
 ) {
     val userSessionManager = LocalSessionManager.current
     val alertDialogController = rememberAlertDialogController()
-    val alreadyLoginIn by userSessionManager.isAlreadySignUp.collectAsState(false)
+    val alreadyLoginIn by userSessionManager.isAlreadySignIn.collectAsState(false)
     var showSheet by remember {
         mutableStateOf(false)
     }

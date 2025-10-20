@@ -72,7 +72,7 @@ suspend fun <U> HttpRequestBuilder.addRequestHeaders(
     val session = sessionModel.dataAndSignature
     val userInfo = sessionModel.userHandler.data.value
     Napier.i(tag = "ClientAuth") {
-        "addRequestHeaders $session"
+        "addRequestHeaders session: $session"
     }
     if (session != null && passSession != null) {
         val (localData, localSignature) = session
@@ -110,8 +110,6 @@ fun HttpRequestBuilder.addRequestHeadersFromInfo(userInfo: PanelAccountInfo, sig
 
 fun AuthConfig.custom(block: CustomClientAuthProvider.CustomAuthConfig.() -> Unit) {
     providers.add(
-        CustomClientAuthProvider(
-            CustomClientAuthProvider.CustomAuthConfig().apply(block)
-        )
+        CustomClientAuthProvider(CustomClientAuthProvider.CustomAuthConfig().apply(block))
     )
 }

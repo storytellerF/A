@@ -91,16 +91,15 @@ kotlin {
             implementation(libs.github.newpipeextractor)
             implementation(libs.androidx.core.splashscreen)
             implementation(libs.androidx.datastore.preferences.core)
-
-            implementation(libs.androidx.ui.tooling.preview)
-
             implementation(libs.connector) {
                 exclude(group = "com.google.protobuf", module = "protobuf-java")
             }
             implementation(libs.okhttp)
         }
-        androidUnitTest.dependencies {
+        androidInstrumentedTest.dependencies {
             implementation(libs.androidx.ui.test.junit4.android)
+        }
+        androidUnitTest.dependencies {
             implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
         }

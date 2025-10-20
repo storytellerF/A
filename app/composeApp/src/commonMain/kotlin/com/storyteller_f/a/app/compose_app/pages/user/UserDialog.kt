@@ -1,14 +1,17 @@
 package com.storyteller_f.a.app.compose_app.pages.user
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +48,12 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Unit, dismiss: () -> Unit = {}) {
+fun UserDialogInternal(
+    isMe: Boolean,
+    userInfo: UserInfo?,
+    clickCreate: () -> Unit,
+    dismiss: () -> Unit = {}
+) {
     val controller = remember {
         CustomAlertDialogController()
     }
@@ -57,29 +65,20 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
         }
     }
     val scope = rememberCoroutineScope()
-    val isSignIn by sessionManager.isAlreadySignUp.collectAsState()
+    val isSignIn by sessionManager.isAlreadySignIn.collectAsState()
     DialogContainer {
         if (!isSignIn && isMe) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth()) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth()
+            ) {
                 LoginButton {
                     dismiss()
                     appNav.gotoLogin()
                 }
             }
         } else {
-            val isUserPage by appNav.hasRouteFlow<UserScreen> {
-                it.uid == userInfo?.id
-            }.collectAsState(false)
-            UserCell(
-                userInfo,
-                false,
-                iconClickable = false,
-                cellClickable = !isUserPage,
-                iconSize = 60.dp
-            ) {
-                dismiss()
-                appNav.gotoUser(it.id)
-            }
+            UserDialogTopCell(appNav, userInfo, dismiss)
         }
         Column {
             if (isMe && isSignIn) {
@@ -98,6 +97,29 @@ fun UserDialogInternal(isMe: Boolean, userInfo: UserInfo?, clickCreate: () -> Un
     }) {
         scope.launch {
             signOut(sessionManager, globalDialogController)
+        }
+    }
+}
+
+@Composable
+private fun UserDialogTopCell(
+    appNav: AppNav,
+    userInfo: UserInfo?,
+    dismiss: () -> Unit
+) {
+    val shape = RoundedCornerShape(8.dp)
+    Box(modifier = Modifier.background(MaterialTheme.colorScheme.surfaceDim, shape)) {
+        val isUserPage by appNav.hasRouteFlow<UserScreen> {
+            it.uid == userInfo?.id
+        }.collectAsState(false)
+        UserCell(
+            userInfo,
+            iconClickable = false,
+            cellClickable = !isUserPage,
+            iconSize = 60.dp
+        ) {
+            dismiss()
+            appNav.gotoUser(it.id)
         }
     }
 }
@@ -140,7 +162,10 @@ private fun UserDialogMenuList(
     val connectivityState = rememberConnectivityState(connectivity, scope)
     when (val s = connectivityState.status) {
         is Connectivity.Status.Connected -> {
-            ButtonNav(if (s.metered) Icons.Default.SignalCellularAlt else Icons.Default.Wifi, "Connected")
+            ButtonNav(
+                if (s.metered) Icons.Default.SignalCellularAlt else Icons.Default.Wifi,
+                "Connected"
+            )
         }
 
         else -> {
@@ -185,7 +210,8 @@ private fun refreshMyInfo(my: UserInfo?, sessionManager: UserSessionManager) {
                     val data = sessionManager.getData().getOrThrow()
                     val address = value.session.address().getOrThrow()
                     val signature = value.session.signature(finalData(data)).getOrThrow()
-                    val userInfo = sessionManager.signIn(SignInPack(address, signature)).getOrThrow()
+                    val userInfo =
+                        sessionManager.signIn(SignInPack(address, signature)).getOrThrow()
                     sessionModel.updateUser(userInfo)
                     sessionModel.updateSignature(data, signature)
                 }

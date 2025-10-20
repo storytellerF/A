@@ -115,7 +115,7 @@ fun App() {
 private fun PanelHost(content: @Composable () -> Unit) {
     val nav = LocalNav.current
     val session = panelAccountInstance.sessionManager
-    val user by session.isAlreadySignUp.collectAsState()
+    val user by session.isAlreadySignIn.collectAsState()
     if (user) {
         content()
     } else {

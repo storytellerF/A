@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.client.core.UploadData
-import com.storyteller_f.a.client.core.addAlternativeAccount
-import com.storyteller_f.a.client.core.getAlternativeAccounts
+import com.storyteller_f.a.client.core.addChildAccount
+import com.storyteller_f.a.client.core.getChildAccounts
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.a.client.core.upload
@@ -69,12 +69,12 @@ class UserTest {
     @Test
     fun `test add alternative account`() = test {
         attachSession {
-            val alternativeAccountInfo = addAlternativeAccount().getOrThrow()
-            alternativeAccountInfo
-            assertEquals(it.uid, alternativeAccountInfo.hostId)
-            val response = getAlternativeAccounts(null, 10).getOrThrow()
+            val childAccountInfo = addChildAccount().getOrThrow()
+            childAccountInfo
+            assertEquals(it.uid, childAccountInfo.hostId)
+            val response = getChildAccounts(null, 10).getOrThrow()
             assertEquals(1, response.pagination?.total)
-            assertEquals(alternativeAccountInfo.id, response.data.first().id)
+            assertEquals(childAccountInfo.id, response.data.first().id)
         }
     }
 }

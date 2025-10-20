@@ -104,6 +104,9 @@ fun main(args: Array<String>) {
             options.isDebug = false
         }
     }
+    Runtime.getRuntime().addShutdownHook(Thread({
+        Napier.i("程序即将退出，执行清理操作...")
+    }))
     EngineMain.main(args + extraArgs)
 }
 

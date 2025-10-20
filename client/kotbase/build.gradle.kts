@@ -71,8 +71,10 @@ kotlin {
             implementation(libs.couchbase.lite.ktx)
             implementation(libs.couchbase.lite.paging)
         }
-        androidUnitTest.dependencies {
+        androidInstrumentedTest.dependencies {
             implementation(libs.androidx.ui.test.junit4.android)
+        }
+        androidUnitTest.dependencies {
             implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
         }

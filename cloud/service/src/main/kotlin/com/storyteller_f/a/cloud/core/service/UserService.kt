@@ -188,10 +188,10 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
     }
 }
 
-suspend fun Backend.addAlternativeAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
+suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
     return combinedDatabase.userDatabase.getRawChildAccount(uid).mapResult {
         if (it != null) {
-            Result.failure(CustomBadRequestException("alternative account can't create alternative"))
+            Result.failure(CustomBadRequestException("child account can't create child account"))
         } else {
             runCatching {
                 val (publicKey, address, derPrivateKey) = getAlgo().run {

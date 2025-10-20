@@ -52,17 +52,14 @@ import com.storyteller_f.a.app.compose_app.components.rememberIsInPipMode
 import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
 import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitch
 import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitcher
-import com.storyteller_f.a.app.compose_app.pages.user.switchUser
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.compose_app.utils.createCustomDataStoreManager
-import com.storyteller_f.a.app.compose_app.utils.getUiViewModel
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
-import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.UserSessionModel
@@ -252,7 +249,6 @@ fun CommonEntry(content: @Composable () -> Unit) {
         val accountSwitcher = remember {
             AccountSwitcher()
         }
-        val uiViewModel = getUiViewModel()
         val mainUserSessionManager = uiViewModel.mainInstance.sessionManager
         val instance by uiViewModel.instance.collectAsState()
         val currentUserSessionManager = instance.sessionManager
@@ -274,9 +270,7 @@ fun CommonEntry(content: @Composable () -> Unit) {
             LocalGlobalDialog provides controller,
             LocalGlobalTask provides task
         ) {
-            CommonEntryInternal(content) {
-                uiViewModel.childAccount.value = it
-            }
+            CommonEntryInternal(content)
         }
     }
 }
@@ -333,7 +327,9 @@ class UIViewModel(viewModelScope: CoroutineScope, wsServerUrl: String, httpUrl: 
     val childAccount = MutableStateFlow<UserPass?>(null)
     val instance = childAccount.map {
         it?.address()?.getOrNull()?.let { address ->
-            AccountInstance(viewModelScope, address, wsServerUrl, httpUrl)
+            AccountInstance(viewModelScope, address, wsServerUrl, httpUrl).apply {
+                sessionManager.model.updateState(ClientSessionState.Success(it))
+            }
         } ?: mainInstance
     }.stateIn(viewModelScope, SharingStarted.Eagerly, mainInstance)
 
@@ -350,12 +346,9 @@ class UIViewModel(viewModelScope: CoroutineScope, wsServerUrl: String, httpUrl: 
 
 @Composable
 private fun CommonEntryInternal(
-    content: @Composable (() -> Unit),
-    switch: (RawUserPass) -> Unit
+    content: @Composable (() -> Unit)
 ) {
-    val globalDialogController = LocalGlobalDialog.current
     val accountSwitcher = LocalAccountSwitcher.current
-    val scope = rememberCoroutineScope()
     ProvideIconParameters(
         iconFont = MaterialSymbolsOutlined.rememberIconFont(),
         size = 20.dp,
@@ -368,18 +361,7 @@ private fun CommonEntryInternal(
                 "gpt_model" defaultValue ""
             }
             content()
-            val mainSessionManager = LocalMainSessionManager.current
-            AccountSwitch(accountSwitcher, {
-                val rawUserPass =
-                    mainSessionManager.model.currentUserPass as? RawUserPass
-                rawUserPass?.let {
-                    switch(it)
-                }
-            }) { derPrivateKeyStr ->
-                scope.launch {
-                    switchUser(globalDialogController, derPrivateKeyStr, switch)
-                }
-            }
+            AccountSwitch(accountSwitcher)
         }
     }
 }

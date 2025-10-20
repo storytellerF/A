@@ -87,10 +87,10 @@ class PanelSessionModel(val simpleSessionModel: SimpleSessionModel<PanelAccountI
 interface SessionManager<U> {
     val client: HttpClient
     val model: SessionModel<U>
-    val isAlreadySignUp: StateFlow<Boolean>
+    val isAlreadySignIn: StateFlow<Boolean>
     val address: StateFlow<String?>
 
-    val currentIsAlreadySignUp: Boolean get() = isAlreadySignUp.value
+    val currentIsAlreadySignUp: Boolean get() = isAlreadySignIn.value
 
     suspend fun updateAddress(clientSessionState: ClientSessionState)
 }
@@ -104,12 +104,12 @@ class SimpleUserSessionManager(
     override val webSocketClient: WebSocketClientImpl,
     override val model: SessionModel<UserInfo>,
 ) : UserSessionManager {
-    override val isAlreadySignUp = MutableStateFlow(false)
+    override val isAlreadySignIn = MutableStateFlow(false)
     override val address = MutableStateFlow<String?>(null)
     override suspend fun updateAddress(clientSessionState: ClientSessionState) {
         address.value =
             (clientSessionState as? ClientSessionState.Success)?.session?.address()?.getOrNull()
-        isAlreadySignUp.value = clientSessionState is ClientSessionState.Success
+        isAlreadySignIn.value = clientSessionState is ClientSessionState.Success
     }
 }
 
@@ -119,13 +119,13 @@ class SimplePanelSessionManager(
     override val client: HttpClient,
     override val model: SessionModel<PanelAccountInfo>
 ) : PanelSessionManager {
-    override val isAlreadySignUp = MutableStateFlow(false)
+    override val isAlreadySignIn = MutableStateFlow(false)
     override val address = MutableStateFlow<String?>(null)
 
     override suspend fun updateAddress(clientSessionState: ClientSessionState) {
         address.value =
             (clientSessionState as? ClientSessionState.Success)?.session?.address()?.getOrNull()
-        isAlreadySignUp.value = clientSessionState is ClientSessionState.Success
+        isAlreadySignIn.value = clientSessionState is ClientSessionState.Success
     }
 }
 

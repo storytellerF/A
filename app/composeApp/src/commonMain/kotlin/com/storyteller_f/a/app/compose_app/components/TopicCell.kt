@@ -89,12 +89,11 @@ fun TopicCellInternal(
             }.padding(8.dp)
         ) {
             if (showAvatar) {
-                UserCell(authorInfo, true) {
+                UserCell(authorInfo) {
                     appNav.gotoUser(it.id)
                 }
             }
             Column(
-                Modifier.padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TopicContentField(topicInfo, true)
@@ -139,7 +138,7 @@ fun RoomTopicCellInternal(
             }.padding(8.dp)
         ) {
             if (showAvatar) {
-                UserCell(authorInfo, true) {
+                UserCell(authorInfo) {
                     appNav.gotoUser(it.id)
                 }
             }

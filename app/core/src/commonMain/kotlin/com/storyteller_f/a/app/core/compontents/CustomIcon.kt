@@ -44,3 +44,8 @@ fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
         }
     }
 }
+
+@Composable
+fun CustomIcon(vector: ImageVector, onClick: (() -> Unit)? = null) {
+    CustomIcon(IconRes.Vector(vector), onClick)
+}
