@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlinBuildConfig)
     id("io.sentry.jvm.gradle") version ("5.8.0")
     id("me.champeau.jmh") version "0.7.3"
+    id("merge-services")
 }
 
 group = "com.storyteller_f.a.cloud"
@@ -72,85 +73,14 @@ jmh {
 sourceSets {
     main {
         resources {
-            srcDirs(
-                layout.buildDirectory.dir("merged/services")
-            )
+            srcDirs(layout.buildDirectory.dir("merged/services"))
         }
     }
 }
 
-interface Injected {
-    @get:Inject
-    val operations: ArchiveOperations
-}
-
-val mergeServiceFiles = tasks.register("mergeServiceFiles") {
-    group = "build"
-    description = "Merge SPI files from dependencies into a single output"
-
-    val outputDir = layout.buildDirectory.dir("merged/services").get()
-    val runtimeClasspath = configurations.runtimeClasspath.get().files.toList()
-    val injected = project.objects.newInstance<Injected>()
-
-    inputs.files(runtimeClasspath)
-    outputs.dir(outputDir)
-    doLast {
-        fun extractServiceContent(
-            jarFile: File,
-            servicePrefixName: String
-        ): List<Pair<String?, List<String>>> {
-            return injected.operations.zipTree(jarFile).filter {
-                it.name.startsWith(servicePrefixName)
-            }.map { serviceFile ->
-                val serviceName = serviceFile.name
-                val serviceContent = serviceFile.readText().lines().filter {
-                    it.isNotEmpty() && !it.startsWith("#")
-                }
-                serviceName to serviceContent
-            }
-        }
-
-        val output = outputDir.asFile
-        if (!output.exists() && !output.mkdirs()) {
-            throw Exception("mkdirs falied: $output")
-        }
-        runtimeClasspath.flatMap { file ->
-            when {
-                !file.isFile || !file.name.endsWith(".jar") -> emptyList()
-                file.canonicalPath.contains("backend") -> extractServiceContent(
-                    file,
-                    "com.storyteller_f.a.backend.core.service"
-                )
-
-                file.name.startsWith("lucene-") -> extractServiceContent(
-                    file,
-                    "org.apache.lucene.codecs"
-                )
-
-                file.name.startsWith("r2dbc") -> extractServiceContent(
-                    file,
-                    "io.r2dbc.spi.ConnectionFactoryProvider"
-                )
-
-                else -> emptyList()
-            }
-        }.groupBy {
-            it.first
-        }.forEach { (serviceName, fragments) ->
-            val outputFile = output.resolve("META-INF/services/${serviceName}")
-            outputFile.parentFile.mkdirs()
-
-            val newContent = fragments.flatMap { it.second }.joinToString("\n")
-
-            if (!outputFile.exists() || outputFile.readText() != newContent) {
-                outputFile.writeText(newContent)
-            }
-        }
-    }
-}
-
-tasks.processResources.dependsOn(mergeServiceFiles)
 afterEvaluate {
+    val mergeServiceFiles = tasks.named("mergeServiceFiles")
+    tasks.processResources.dependsOn(mergeServiceFiles)
     mergeServiceFiles.get().mustRunAfter(":api:jar")
     mergeServiceFiles.get().mustRunAfter(":shared:jvmJar")
     mergeServiceFiles.get().mustRunAfter(":backend:core:jar")
