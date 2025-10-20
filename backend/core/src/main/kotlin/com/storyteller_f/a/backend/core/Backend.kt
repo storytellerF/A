@@ -45,29 +45,28 @@ fun mediaService(env: MergedEnv): ObjectStorageService {
 fun buildTopicSearchService(env: MergedEnv): TopicSearchService {
     val factory = ServiceLoader.load(TopicSearchServiceFactory::class.java).firstOrNull {
         it.match(env)
-    } ?: throw Exception("unsupported topic search service type ${env["TOPIC_SEARCH_SERVICE"]}")
+    } ?: throw Exception("unsupported topic search service type ${env["SEARCH_SERVICE"]}")
     return factory.build(env)
 }
 
 fun buildUserSearchService(env: MergedEnv): UserSearchService {
     val factory = ServiceLoader.load(UserSearchServiceFactory::class.java).firstOrNull {
         it.match(env)
-    } ?: throw Exception("unsupported user search service type ${env["USER_SEARCH_SERVICE"]}")
+    } ?: throw Exception("unsupported user search service type ${env["SEARCH_SERVICE"]}")
     return factory.build(env)
 }
 
 fun buildRoomSearchService(env: MergedEnv): RoomSearchService {
     val factory = ServiceLoader.load(RoomSearchServiceFactory::class.java).firstOrNull {
         it.match(env)
-    } ?: throw Exception("unsupported room search service type ${env["ROOM_SEARCH_SERVICE"]}")
+    } ?: throw Exception("unsupported room search service type ${env["SEARCH_SERVICE"]}")
     return factory.build(env)
 }
 
 fun buildCommunitySearchService(env: MergedEnv): CommunitySearchService {
     val factory = ServiceLoader.load(CommunitySearchServiceFactory::class.java).firstOrNull {
         it.match(env)
-    }
-        ?: throw Exception("unsupported community search service type ${env["COMMUNITY_SEARCH_SERVICE"]}")
+    } ?: throw Exception("unsupported community search service type ${env["SEARCH_SERVICE"]}")
     return factory.build(env)
 }
 
