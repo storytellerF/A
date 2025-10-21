@@ -35,16 +35,14 @@ dependencies {
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
     implementation(projects.cloud.service)
-    implementation(projects.cloud.service)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.server.client)
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)
+    implementation(libs.bundles.exposed)
 
     implementation(libs.geoip2)
     implementation(libs.tika.core)
-    implementation(libs.pdfbox)
-    implementation(libs.pdfbox.layout)
     implementation(libs.micrometer.registry.prometheus)
 
     @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")
