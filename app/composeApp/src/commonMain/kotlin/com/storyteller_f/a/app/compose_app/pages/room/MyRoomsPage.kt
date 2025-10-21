@@ -72,13 +72,15 @@ fun PrimaryRoomCell(
     val appNav = LocalAppNav.current
     val shape = RoundedCornerShape(10.dp)
     RoomCellInternal(
-        roomInfo, Modifier.fillMaxWidth()
+        roomInfo,
+        Modifier.fillMaxWidth()
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
             .clip(shape)
             .clickable {
                 roomInfo?.let { onClick ?: appNav.gotoRoom(it.id, false) }
             }
-            .padding(10.dp))
+            .padding(10.dp)
+    )
 }
 
 @Preview(widthDp = 300)
@@ -97,7 +99,6 @@ class RoomCellPreviewProvider : PreviewParameterProvider<RoomInfo> {
                 lastRead = 0
             )
         )
-
 }
 
 @Composable

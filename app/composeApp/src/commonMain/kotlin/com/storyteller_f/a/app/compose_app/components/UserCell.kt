@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.shared.model.UserInfo
 
-
 @Composable
 fun UserCell(
     userInfo: UserInfo?,

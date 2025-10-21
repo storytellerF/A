@@ -17,9 +17,6 @@ import com.storyteller_f.a.app.core.compontents.CommonImage
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.utils.safeFirstUnicode
 
-
-
-
 @Composable
 fun RoomIcon(
     roomInfo: RoomInfo?,

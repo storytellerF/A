@@ -6,7 +6,6 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.MemberJoin
 import com.storyteller_f.a.backend.core.types.Quota
-import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.core.types.toQuotaInfo
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
@@ -17,14 +16,12 @@ import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildSearchMembersQuery
 import com.storyteller_f.a.backend.exposed.tables.*
-import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
 import org.jetbrains.exposed.v1.core.eq

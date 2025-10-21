@@ -168,9 +168,9 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         }
         check(Quotas.update({
             Quotas.ownerId eq quotaInfo.ownerId and
-                    (Quotas.quotaType eq QuotaType.FILE) and
-                    (Quotas.locking eq true) and
-                    (Quotas.used eq quotaInfo.used)
+                (Quotas.quotaType eq QuotaType.FILE) and
+                (Quotas.locking eq true) and
+                (Quotas.used eq quotaInfo.used)
         }) {
             it[Quotas.locking] = false
             it[Quotas.used] = quotaInfo.used + length
