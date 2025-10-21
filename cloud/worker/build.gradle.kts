@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm")
     application
     id("cloud")
+    id("merge-services")
 }
 
 group = "com.storyteller_f.a.cloud"

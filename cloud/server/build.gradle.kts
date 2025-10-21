@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlinBuildConfig)
     id("io.sentry.jvm.gradle") version ("5.8.0")
     id("cloud")
+    id("merge-services")
 }
 
 group = "com.storyteller_f.a.cloud"
