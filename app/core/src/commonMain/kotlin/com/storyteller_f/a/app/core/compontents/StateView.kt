@@ -41,7 +41,6 @@ import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 
 const val REFRESH_AFTER = 300L
 
-
 @OptIn(ExperimentalMaterialApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun <T : Any> StateView(
@@ -87,7 +86,6 @@ fun <T : Any> StateView(
         PullRefreshIndicator(pullRefreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
 }
-
 
 @OptIn(ExperimentalMaterialApi::class, FlowPreview::class)
 @Composable
@@ -180,7 +178,6 @@ class LoadingStatePreviewProvider : PreviewParameterProvider<LoadingState> {
             LoadingState.Done,
             LoadingState.Error(Exception())
         )
-
 }
 
 @Preview
@@ -302,7 +299,6 @@ fun LazyGridScope.bottomAppending(
     }
 }
 
-
 fun <T : Any> LazyListScope.pagingItems(
     lazyPagingItems: LazyPagingItems<T>,
     key: ((it: T) -> Any)? = null,
@@ -345,7 +341,6 @@ fun <T : Any> LazyGridScope.pagingItems(
     }
     items(lazyPagingItems.itemCount, k, s, c, itemContent)
 }
-
 
 private fun LoadState?.toLoadingState() =
     when (this) {

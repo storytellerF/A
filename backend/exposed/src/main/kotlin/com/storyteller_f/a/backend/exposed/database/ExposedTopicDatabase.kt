@@ -494,8 +494,8 @@ class ExposedTopicDatabase(
         search {
             ReactionRecords.selectAll().where {
                 (ReactionRecords.objectId eq objectId) and
-                        (ReactionRecords.emoji eq emoji) and
-                        (ReactionRecords.uid eq uid)
+                    (ReactionRecords.emoji eq emoji) and
+                    (ReactionRecords.uid eq uid)
             }
         }
         isNotEmpty()
@@ -521,8 +521,8 @@ class ExposedTopicDatabase(
         search {
             ReactionRecords.selectAll().where {
                 (ReactionRecords.objectId eq objectId) and
-                        (ReactionRecords.emoji eq emoji) and
-                        (ReactionRecords.uid eq uid)
+                    (ReactionRecords.emoji eq emoji) and
+                    (ReactionRecords.uid eq uid)
             }
         }
         first {

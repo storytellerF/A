@@ -11,7 +11,6 @@ import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildTitleSearchQuery
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
-import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.PrimaryKey
