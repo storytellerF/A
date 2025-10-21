@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.kotlinBuildConfig)
     id("io.sentry.jvm.gradle") version ("5.8.0")
     id("me.champeau.jmh") version "0.7.3"
-    id("merge-services")
 }
 
 group = "com.storyteller_f.a.cloud"
@@ -68,28 +67,4 @@ jmh {
     warmupIterations = 2
     iterations = 2
     fork = 2
-}
-
-sourceSets {
-    main {
-        resources {
-            srcDirs(layout.buildDirectory.dir("merged/services"))
-        }
-    }
-}
-
-afterEvaluate {
-    val mergeServiceFiles = tasks.named("mergeServiceFiles")
-    tasks.processResources.dependsOn(mergeServiceFiles)
-    mergeServiceFiles.get().mustRunAfter(":api:jar")
-    mergeServiceFiles.get().mustRunAfter(":shared:jvmJar")
-    mergeServiceFiles.get().mustRunAfter(":backend:core:jar")
-    mergeServiceFiles.get().mustRunAfter(":backend:elastic:jar")
-    mergeServiceFiles.get().mustRunAfter(":backend:exposed:jar")
-    mergeServiceFiles.get().mustRunAfter(":backend:filesystem:jar")
-    mergeServiceFiles.get().mustRunAfter(":backend:lucene:jar")
-    mergeServiceFiles.get().mustRunAfter(":backend:minio:jar")
-    mergeServiceFiles.get().mustRunAfter(":backend:redis:jar")
-    mergeServiceFiles.get().mustRunAfter(":backend:simple:jar")
-    mergeServiceFiles.get().mustRunAfter(":cloud:pdf:jar")
 }

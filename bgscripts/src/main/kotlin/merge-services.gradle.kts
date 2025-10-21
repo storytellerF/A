@@ -1,7 +1,4 @@
-
-import org.gradle.api.file.ArchiveOperations
-import org.gradle.kotlin.dsl.register
-import javax.inject.Inject
+import org.gradle.kotlin.dsl.invoke
 
 abstract class MergeServicesTask : DefaultTask() {
 
@@ -79,3 +76,47 @@ tasks.register<MergeServicesTask>("mergeServiceFiles") {
     output = project.layout.buildDirectory.dir("merged/services").get().asFile
     runtimeClasspath = project.configurations.getByName("runtimeClasspath").files.toList()
 }
+
+sourceSets {
+    main {
+        resources {
+            srcDirs(layout.buildDirectory.dir("merged/services"))
+        }
+    }
+}
+
+afterEvaluate {
+    val mergeServiceFiles = tasks.named("mergeServiceFiles")
+    tasks.processResources.configure {
+        dependsOn(mergeServiceFiles)
+    }
+    listOf(
+        ":api:jar",
+        ":shared:jvmJar",
+        ":backend:core:jar",
+        ":backend:elastic:jar",
+        ":backend:exposed:jar",
+        ":backend:filesystem:jar",
+        ":backend:lucene:jar",
+        ":backend:minio:jar",
+        ":backend:redis:jar",
+        ":backend:simple:jar",
+        ":cloud:pdf:jar",
+        ":cloud:openpdf:jar"
+    ).forEach { path ->
+        mergeServiceFiles.configure {
+            dependsOn(path)
+        }
+    }
+}
+
+
+fun Project.sourceSets(configure: Action<SourceSetContainer>) {
+    extensions.configure("sourceSets", configure)
+}
+
+val SourceSetContainer.main: NamedDomainObjectProvider<SourceSet>
+    get() = named<SourceSet>("main")
+
+val TaskContainer.processResources: TaskProvider<ProcessResources>
+    get() = named<ProcessResources>("processResources")
