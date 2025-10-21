@@ -7,7 +7,6 @@ import com.storyteller_f.a.cloud.server.route.checkApiRequest
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.*
-import io.github.aakira.napier.Napier
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -73,16 +72,19 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
         val call = context.call
         val session = call.getSession()
         val credential = call.customCredential()
-        val principal = config.validateFunction(session, call, credential).getOrNull()
+        val result = config.validateFunction(session, call, credential)
+        val principal = result.getOrNull()
+        val err = result.exceptionOrNull()
         if (principal != null) {
             context.principal(name, principal)
         } else {
-            val cause =
-                if (credential == null) {
-                    AuthenticationFailedCause.NoCredentials
-                } else {
-                    AuthenticationFailedCause.InvalidCredentials
-                }
+            val cause = if (credential == null) {
+                AuthenticationFailedCause.NoCredentials
+            } else if (err != null) {
+                AuthenticationFailedCause.Error(err.message.toString())
+            } else {
+                AuthenticationFailedCause.InvalidCredentials
+            }
 
             @Suppress("NAME_SHADOWING")
             context.challenge("CustomChallengeKey", cause) { challenge, call ->
@@ -131,6 +133,7 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
 fun ApplicationCall.getData(): String {
     return getSession().data
 }
+
 fun ApplicationCall.getSession(): UserSession {
     val remote = request.origin.remoteAddress
     return when (val session = sessions.get(UserSession::class)) {

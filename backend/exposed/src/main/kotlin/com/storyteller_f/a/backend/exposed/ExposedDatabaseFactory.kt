@@ -28,14 +28,14 @@ import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.utils.transformThrowable
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Slf4jSqlDebugLogger
-import org.jetbrains.exposed.v1.core.StdOutSqlLogger
-import org.jetbrains.exposed.v1.core.exposedLogger
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
@@ -63,24 +63,22 @@ class DatabaseSearchConfig<R, Q> {
     }
 }
 
-fun <R> DatabaseSearchConfig<R?, Query>.first(block: suspend (ResultRow) -> R) {
-    val function: suspend Query.() -> R? = {
+fun <R> DatabaseSearchConfig<R?, Query>.first(block: (ResultRow) -> R) {
+    transformFunc = {
         firstOrNull()?.let {
             block(it)
         }
     }
-    transformFunc = function
 }
 
-fun <R> DatabaseSearchConfig<R, Query>.firstNotNull(block: suspend (ResultRow) -> R) {
-    val function: suspend Query.() -> R = {
+fun <R> DatabaseSearchConfig<R, Query>.firstNotNull(block: (ResultRow) -> R) {
+    transform {
         block(first())
     }
-    transformFunc = function
 }
 
 fun <T> DatabaseSearchConfig<List<T>, Query>.map(block: (ResultRow) -> T) {
-    transformFunc = {
+    transform {
         toList().map {
             block(it)
         }.toList()
@@ -88,19 +86,19 @@ fun <T> DatabaseSearchConfig<List<T>, Query>.map(block: (ResultRow) -> T) {
 }
 
 fun DatabaseSearchConfig<Long, Query>.count() {
-    transformFunc = {
+    transform {
         count()
     }
 }
 
 fun DatabaseSearchConfig<Boolean, Query>.isEmpty() {
-    transformFunc = {
+    transform {
         count() == 0L
     }
 }
 
 fun DatabaseSearchConfig<Boolean, Query>.isNotEmpty() {
-    transformFunc = {
+    transform {
         count() != 0L
     }
 }
@@ -127,10 +125,11 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
     suspend fun <T> dbQuery(block: suspend R2dbcTransaction.() -> T): Result<T> {
         val anchor = Exception("dbQuery")
         return runCatching {
-            // MDCContext()
-            suspendTransaction(db = database) {
-                maxAttempts = 1
-                block()
+            withContext(Dispatchers.IO) {
+                suspendTransaction(db = database) {
+                    maxAttempts = 1
+                    block()
+                }
             }
         }.transformThrowable {
             handleDatabaseException(it, anchor)
@@ -139,17 +138,18 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
 
     @OptIn(ExperimentalTime::class)
     suspend fun <R> dbSearch(
-        query: DatabaseSearchConfig<R, Query>.() -> Unit,
+        block: DatabaseSearchConfig<R, Query>.() -> Unit,
     ): Result<R> {
         val anchor = Exception()
-        port?.let { explainQuery(it, query) }
+        port?.let { explainQuery(it, block) }
         return runCatching {
-            // MDCContext()
-            suspendTransaction(db = database) {
-                maxAttempts = 1
-                val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
-                databaseSearchConfig.apply(query).let {
-                    it.transformFunc(it.searchFunc())
+            withContext(Dispatchers.IO) {
+                suspendTransaction(db = database) {
+                    maxAttempts = 1
+                    val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
+                    databaseSearchConfig.apply(block).let {
+                        it.transformFunc(it.searchFunc())
+                    }
                 }
             }
         }.transformThrowable {
@@ -163,11 +163,12 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
     ) {
         val anchor = Exception()
         try {
-            // MDCContext()
-            val explainResult = suspendTransaction(db = database) {
-                explainQuery {
-                    val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
-                    databaseSearchConfig.apply(query).searchFunc()
+            val explainResult = withContext(Dispatchers.IO) {
+                suspendTransaction(db = database) {
+                    explainQuery {
+                        val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
+                        databaseSearchConfig.apply(query).searchFunc()
+                    }
                 }
             }
             if (explainResult != null) {

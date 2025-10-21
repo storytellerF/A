@@ -64,11 +64,8 @@ class ExposedTopicDatabase(
     val databaseSession: ExposedDatabaseSession,
     val containerDatabase: ContainerDatabase,
     val fileDatabase: FileDatabase
-) :
-    TopicDatabase {
-    override suspend fun getTopicRootTuple(
-        parentId: PrimaryKey,
-    ) = databaseSession.dbSearch {
+) : TopicDatabase {
+    override suspend fun getTopicRootTuple(parentId: PrimaryKey) = databaseSession.dbSearch {
         search {
             Topics.selectAll().where {
                 Topics.id eq parentId

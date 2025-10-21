@@ -9,7 +9,6 @@ dependencies {
     implementation(libs.napier)
     implementation(libs.bundles.exposed)
 
-    implementation(libs.kotlinx.coroutines.slf4j)
     implementation(projects.backend.core)
     implementation(projects.shared)
     testImplementation(kotlin("test"))

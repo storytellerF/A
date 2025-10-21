@@ -25,7 +25,6 @@ plugins {
 }
 
 dependencyResolutionManagement {
-    includeBuild("bgscripts")
     repositories {
         mavenLocal()
         google {
@@ -81,3 +80,5 @@ include(":api")
 include(":bot:builtin-bot")
 if (isLlamaEnable)
 include(":android-llama-cpp")
+
+includeBuild("bgscripts")
