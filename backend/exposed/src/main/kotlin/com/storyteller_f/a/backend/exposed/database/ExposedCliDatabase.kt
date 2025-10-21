@@ -105,19 +105,17 @@ class ExposedCliDatabase(val databaseSession: ExposedDatabaseSession) : CliDatab
         }.getOrThrow()
     }
 
-    override suspend fun getAllMembers(distinct: List<String>): Result<List<Triple<String, Long, String>>> {
-        return databaseSession.dbQuery {
-            MemberJoins
-                .join(Rooms, JoinType.INNER, objectId, Rooms.id)
-                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                .join(Users, JoinType.INNER, uid, Users.id)
-                .select(Users.fields + Aids.value)
-                .where {
-                    Aids.value inList distinct
-                }.toList().map {
-                    Triple(it[Users.publicKey], it[Users.id], it[Aids.value])
-                }
-        }
+    override suspend fun getAllMembers(distinct: List<String>) = databaseSession.dbQuery {
+        MemberJoins
+            .join(Rooms, JoinType.INNER, objectId, Rooms.id)
+            .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+            .join(Users, JoinType.INNER, uid, Users.id)
+            .select(Users.fields + Aids.value)
+            .where {
+                Aids.value inList distinct
+            }.toList().map {
+                Triple(it[Users.publicKey], it[Users.id], it[Aids.value])
+            }
     }
 
     override suspend fun batchAddEncryptTopics(

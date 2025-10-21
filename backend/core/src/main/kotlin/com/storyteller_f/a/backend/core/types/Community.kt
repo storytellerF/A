@@ -36,5 +36,6 @@ data class RawCommunity(
     val community: Community,
     val joinedTime: LocalDateTime?,
     val lastRead: Long?,
-    val memberCount: Long
+    val memberCount: Long? = null,
+    val latestTopic: PrimaryKey? = null
 )

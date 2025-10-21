@@ -109,11 +109,8 @@ suspend fun Backend.getRoomInfo(
     objectFetch: ObjectFetch,
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?,
-): Result<RoomInfo?> {
-    return combinedDatabase.roomDatabase.getRawRoom(objectFetch, fillJoinInfo, uid)
-        .mapResultIfNotNull {
-            processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
-        }
+) = combinedDatabase.roomDatabase.getRawRoom(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
+    processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
 }
 
 private fun checkRoomName(newRoom: NewRoom): Result<Unit> {
@@ -157,7 +154,7 @@ suspend fun Backend.createRoom(
     }.mapResultIfNotNull { room ->
         processRawRoomToRoomInfo(
             listOf(
-                RawRoom(room, room.createdTime, null, 0)
+                RawRoom(room, room.createdTime)
             )
         )
     }.mapIfNotNull(List<RoomInfo>::first)
@@ -196,10 +193,7 @@ suspend fun Backend.updateRoom(
     }.mapResultIfNotNull {
         combinedDatabase.roomDatabase.updateRoom(id, newRoom)
     }.mapResultIfNotNull {
-        combinedDatabase.roomDatabase.getRawRoom(ObjectFetch.IdFetch(id), true, uid)
-            .mapResultIfNotNull {
-                processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
-            }
+        getRoomInfo(ObjectFetch.IdFetch(id), uid, true)
     }
 }
 
@@ -261,8 +255,9 @@ suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>) =
                     .copy(
                         icon = rawRoom.room.icon?.let { mediaInfoMap[it] },
                         joinedTime = rawRoom.joinedTime,
-                        lastRead = rawRoom.topicId,
-                        memberCount = rawRoom.memberCount
+                        lastRead = rawRoom.lastRead,
+                        memberCount = rawRoom.memberCount ?: 0,
+                        latestTopic = rawRoom.latestTopic
                     )
             }
         }
@@ -285,3 +280,8 @@ suspend fun getCommunityRoomsTemplateList(community: Community): List<Room> {
         )
     }
 }
+
+suspend fun Backend.getRoomInfoList(listFetch: ObjectListFetch.IdListFetch): Result<List<RoomInfo>> =
+    combinedDatabase.roomDatabase.getRawRooms(listFetch).mapResult {
+        processRawRoomToRoomInfo(it)
+    }

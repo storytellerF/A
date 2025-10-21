@@ -25,28 +25,26 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         searchType: TitleSearchType,
         type: TitleType?,
         scopeId: PrimaryKey?
-    ): Result<PaginationResult<TitleInfo>> {
-        return exposedDatabaseSession.dbSearch {
+    ) = exposedDatabaseSession.dbSearch {
+        search {
+            buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(
+                Titles,
+                primaryKeyFetch
+            )
+        }
+        transform {
+            toList().map {
+                Title.wrapRow(it)
+            }.map { it.toTitleInfo() }
+        }
+    }.mapResult { list ->
+        exposedDatabaseSession.dbSearch {
             search {
-                buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(
-                    Titles,
-                    primaryKeyFetch
-                )
+                buildTitleSearchQuery(searchType, uid, type, scopeId)
             }
-            transform {
-                toList().map {
-                    Title.wrapRow(it)
-                }.map { it.toTitleInfo() }
-            }
-        }.mapResult { list ->
-            exposedDatabaseSession.dbSearch {
-                search {
-                    buildTitleSearchQuery(searchType, uid, type, scopeId)
-                }
-                count()
-            }.map { count ->
-                PaginationResult(list, count)
-            }
+            count()
+        }.map { count ->
+            PaginationResult(list, count)
         }
     }
 }

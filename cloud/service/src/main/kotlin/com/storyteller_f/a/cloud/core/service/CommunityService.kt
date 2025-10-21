@@ -306,12 +306,13 @@ suspend fun Backend.processRawCommunityToCommunityInfo(
             val map = mediaList.associateBy { it.id }
             list.mapIndexed { i, rawResult ->
                 rawResult.community.toCommunityIfo().copy(
-                    memberCount = rawResult.memberCount,
+                    memberCount = rawResult.memberCount ?: 0,
                     icon = rawResult.community.iconId?.let { map[it] },
                     poster = rawResult.community.posterId?.let { map[it] },
                     hasPoster = rawResult.community.posterId != null,
                     joinedTime = rawResult.joinedTime,
                     lastRead = rawResult.lastRead,
+                    latestTopic = rawResult.latestTopic,
                     font = rawResult.community.fontId?.let { map[it] }
                 )
             }

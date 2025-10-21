@@ -97,6 +97,7 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
+            implementation(compose.components.uiToolingPreview)
             implementation(libs.navigation.compose)
 
             implementation(projects.shared)
@@ -171,6 +172,9 @@ kotlin {
     }
 }
 
+dependencies {
+    debugImplementation(compose.uiTooling)
+}
 
 android {
     namespace = "com.storyteller_f.a.app.core"

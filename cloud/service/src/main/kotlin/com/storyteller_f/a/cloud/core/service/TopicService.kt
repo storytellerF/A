@@ -509,10 +509,7 @@ private suspend fun Backend.getRoomMapByTopics(topics: List<TopicInfo>): Map<Pri
             null
         }
     }
-    val rooms = processRawRoomToRoomInfo(
-        combinedDatabase.roomDatabase.getRawRooms(ObjectListFetch.IdListFetch(roomIds))
-            .getOrThrow()
-    ).getOrThrow().associateBy {
+    val rooms = getRoomInfoList(ObjectListFetch.IdListFetch(roomIds)).getOrThrow().associateBy {
         it.id
     }
     return rooms

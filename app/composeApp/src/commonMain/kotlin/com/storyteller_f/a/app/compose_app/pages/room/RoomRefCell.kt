@@ -49,11 +49,11 @@ private fun RoomRefCellInternal(
             .clip(shape)
             .clickable {
                 roomInfo?.let {
-                    appNav.gotoRoom(it.id, false)
+                    onClick?.invoke(it) ?: appNav.gotoRoom(it.id, false)
                 }
             }
             .padding(10.dp)
     ) {
-        RoomCell(it, true, onClick)
+        UnboundedRoomCell(it)
     }
 }

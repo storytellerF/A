@@ -67,12 +67,13 @@
 
     <logger name="io.r2dbc.postgresql.client" level="INFO" />
     <logger name="io.r2dbc.postgresql.util" level="INFO" />
-<!--    <logger name="io.r2dbc.postgresql.QUERY" level="INFO" />-->
-<!--    <logger name="io.r2dbc.postgresql.PARAM" level="INFO" />-->
+    <logger name="io.r2dbc.postgresql.QUERY" level="INFO" />
+    <logger name="io.r2dbc.postgresql.PARAM" level="INFO" />
     <logger name="io.r2dbc.h2.client" level="INFO" />
     <logger name="reactor.netty.tcp.TcpResources" level="INFO" />
     <logger name="reactor.netty.ReactorNetty" level="INFO" />
     <logger name="reactor.netty.transport" level="INFO" />
     <logger name="reactor.netty.channel" level="INFO" />
     <logger name="reactor.netty.resources" level="INFO" />
+    <logger name="Exposed" level="DEBUG" />
 </configuration>

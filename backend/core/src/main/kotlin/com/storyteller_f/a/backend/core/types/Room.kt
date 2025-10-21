@@ -18,12 +18,17 @@ class Room(
 
 data class RawRoom(
     val room: Room,
-    val joinedTime: LocalDateTime?,
-    val topicId: Long?,
-    val memberCount: Long
+    val joinedTime: LocalDateTime? = null,
+    val lastRead: PrimaryKey? = null,
+    val memberCount: Long? = null,
+    val latestTopic: PrimaryKey? = null,
 )
 
-fun Room.toRoomInfo(memberCount: Long = 0, joinedTime: LocalDateTime? = null, topicId: PrimaryKey? = null) = RoomInfo(
+fun Room.toRoomInfo(
+    memberCount: Long = 0,
+    joinedTime: LocalDateTime? = null,
+    topicId: PrimaryKey? = null
+) = RoomInfo(
     id,
     createdTime,
     name,

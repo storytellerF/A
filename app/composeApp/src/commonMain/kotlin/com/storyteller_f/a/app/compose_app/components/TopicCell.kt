@@ -22,7 +22,6 @@ import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnTopicChanged
 import com.storyteller_f.a.app.compose_app.pages.topic.EmojiPicker
 import com.storyteller_f.a.app.compose_app.pages.topic.pinOrUnpinTopic
-import com.storyteller_f.a.app.compose_app.pages.user.UserCell
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.core.compontents.CustomIcon

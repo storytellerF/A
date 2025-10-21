@@ -31,6 +31,7 @@ actual fun checkContent(text: String): Result<Unit> {
 }
 
 actual fun safeFirstUnicode(text: String): String? {
+    if (text.isEmpty()) return null
     val breakIterator = BreakIterator.getCharacterInstance().apply {
         setText(text)
     }

@@ -33,6 +33,9 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.Slf4jSqlDebugLogger
+import org.jetbrains.exposed.v1.core.StdOutSqlLogger
+import org.jetbrains.exposed.v1.core.exposedLogger
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
@@ -262,6 +265,7 @@ object ExposedDatabaseFactory {
             Napier.i(tag = "database") {
                 "create tables"
             }
+            addLogger(Slf4jSqlDebugLogger)
             SchemaUtils.create(*tables)
         }
     }

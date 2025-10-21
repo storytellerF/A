@@ -5,33 +5,36 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.common.IdCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.RoomsViewModel
 import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.createJoinedRoomsViewModel
+import com.storyteller_f.a.app.compose_app.components.RoomIcon
 import com.storyteller_f.a.app.compose_app.components.rememberCommonDialogController
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityIconWithDialog
-import com.storyteller_f.a.app.core.compontents.CommonImage
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
 import com.storyteller_f.a.app.core.compontents.topPrepend
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.utils.safeFirstUnicode
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 
 @Composable
 fun MyRoomsPage() {
     val viewModel = createJoinedRoomsViewModel()
-    val items = viewModel.flow.collectAsLazyPagingItems()
     RoomList(viewModel)
 }
 
@@ -53,115 +56,113 @@ fun RoomList(
                     it.id.toString()
                 },
             ) { index ->
-                RoomCell(items[index], false, onClick)
+                PrimaryRoomCell(items[index], onClick)
             }
             bottomAppending(items.loadState)
         }
     }
 }
 
+@Preview(widthDp = 300)
 @Composable
-fun RoomCell(
-    roomInfo: RoomInfo?,
-    customBackground: Boolean = false,
-    onClick: ((RoomInfo) -> Unit)? = null,
+fun PrimaryRoomCell(
+    @PreviewParameter(RoomCellPreviewProvider::class) roomInfo: RoomInfo?,
+    onClick: ((RoomInfo) -> Unit)? = null
 ) {
     val appNav = LocalAppNav.current
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
-    Row(
-        modifier = when {
-            customBackground -> Modifier
+    val shape = RoundedCornerShape(10.dp)
+    RoomCellInternal(
+        roomInfo, Modifier.fillMaxWidth()
+            .background(MaterialTheme.colorScheme.secondaryContainer, shape)
+            .clip(shape)
+            .clickable {
+                roomInfo?.let { onClick ?: appNav.gotoRoom(it.id, false) }
+            }
+            .padding(10.dp))
+}
 
-            else -> {
-                val shape = RoundedCornerShape(10.dp)
-                Modifier.fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.secondaryContainer, shape)
-                    .clip(shape)
-                    .clickable {
-                        roomInfo?.let { onClick ?: appNav.gotoRoom(it.id, false) }
-                    }
-                    .padding(10.dp)
-            }
-        }
-    ) {
-        val commonDialogController =
-            rememberCommonDialogController()
-        val shown by commonDialogController.shown
-        RoomIcon(roomInfo, showDialog = shown, updateDialog = commonDialogController::update)
-        Column(modifier = Modifier.padding(start = 8.dp)) {
-            Text(roomInfo?.name.orEmpty(), color = MaterialTheme.colorScheme.onSecondaryContainer)
-        }
+@Preview(widthDp = 300)
+@Composable
+fun UnboundedRoomCell(@PreviewParameter(RoomCellPreviewProvider::class) roomInfo: RoomInfo?) {
+    val modifier = Modifier.fillMaxWidth().padding(10.dp)
+    RoomCellInternal(roomInfo, modifier)
+}
 
-        val communityId = roomInfo?.communityId
-        if (communityId != null) {
-            val model =
-                createCommunityViewModel(communityId)
-            val communityInfo by model.handler.data.collectAsState()
-            var showCommunityDialog by remember {
-                mutableStateOf(false)
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            CommunityIconWithDialog(
-                communityInfo,
-                showDialog = showCommunityDialog
-            ) {
-                showCommunityDialog = it
-            }
+class RoomCellPreviewProvider : PreviewParameterProvider<RoomInfo> {
+    override val values: Sequence<RoomInfo>
+        get() = sequenceOf(
+            RoomInfo.EMPTY.copy(
+                name = "Room Name",
+                latestTopic = 1,
+                lastRead = 0
+            )
+        )
+
+}
+
+@Composable
+private fun RoomCellInternal(
+    roomInfo: RoomInfo?,
+    modifier: Modifier = Modifier
+) {
+    BadgedBox(badge = {
+        if (roomInfo != null && roomInfo.hasUnread) {
+            Badge(containerColor = Color.Red)
         }
-    }
-    if (roomInfo != null) {
-        RoomDialog(showDialog, roomInfo) {
-            showDialog = false
+    }) {
+        Row(modifier = modifier) {
+            val dialogController = rememberCommonDialogController()
+            val shown by dialogController.shown
+            RoomIconWithDialog(
+                roomInfo,
+                showDialog = shown,
+                updateDialog = dialogController::update
+            )
+            Column(modifier = Modifier.padding(start = 8.dp)) {
+                Text(
+                    roomInfo?.name.orEmpty(),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+            CommunityIconInRoomCell(roomInfo)
         }
     }
 }
 
 @Composable
-fun RoomIcon(
+private fun RowScope.CommunityIconInRoomCell(roomInfo: RoomInfo?) {
+    val communityId = roomInfo?.communityId
+    if (communityId != null) {
+        val model =
+            createCommunityViewModel(communityId)
+        CommunityIconInRoomCellInternal(model)
+    }
+}
+
+@Composable
+private fun RowScope.CommunityIconInRoomCellInternal(model: IdCommunityViewModel) {
+    val communityInfo by model.handler.data.collectAsState()
+    var showCommunityDialog by remember {
+        mutableStateOf(false)
+    }
+    Spacer(modifier = Modifier.weight(1f))
+    CommunityIconWithDialog(
+        communityInfo,
+        showDialog = showCommunityDialog
+    ) {
+        showCommunityDialog = it
+    }
+}
+
+@Composable
+fun RoomIconWithDialog(
     roomInfo: RoomInfo?,
     showDialog: Boolean,
     size: Dp = 50.dp,
     setClickEvent: Boolean = false,
     updateDialog: (Boolean) -> Unit,
 ) {
-    val iconUrl = roomInfo?.icon?.url
-    val radius = 8.dp
-    val shape = RoundedCornerShape(radius)
-    if (iconUrl != null) {
-        CommonImage(
-            iconUrl,
-            contentDescription = "${roomInfo.name}'s icon",
-            modifier = Modifier.size(size).clip(shape).let {
-                if (setClickEvent) {
-                    it.clickable {
-                        updateDialog(true)
-                    }
-                } else {
-                    it
-                }
-            }
-        )
-    } else {
-        Box(
-            modifier = Modifier.size(size)
-                .background(MaterialTheme.colorScheme.tertiaryContainer, shape)
-                .clip(shape)
-                .let {
-                    if (setClickEvent) {
-                        it.clickable {
-                            updateDialog(true)
-                        }
-                    } else {
-                        it
-                    }
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(roomInfo?.name?.let { safeFirstUnicode(it) } ?: "")
-        }
-    }
+    RoomIcon(roomInfo, size, setClickEvent, updateDialog)
     RoomDialog(showDialog, roomInfo) {
         updateDialog(false)
     }

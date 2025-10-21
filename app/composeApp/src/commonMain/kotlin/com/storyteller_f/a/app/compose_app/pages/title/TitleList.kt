@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.common.TitlesViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityIconWithDialog
-import com.storyteller_f.a.app.compose_app.pages.room.RoomIcon
+import com.storyteller_f.a.app.compose_app.pages.room.RoomIconWithDialog
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
@@ -62,7 +62,7 @@ fun TitleItem(titleInfo: TitleInfo) {
             Text("in")
             when (titleInfo.scopeType) {
                 ObjectType.COMMUNITY -> CommunityIconWithDialog(it.communityInfo, showDialog = false) { }
-                ObjectType.ROOM -> RoomIcon(it.roomInfo, showDialog = false) { }
+                ObjectType.ROOM -> RoomIconWithDialog(it.roomInfo, showDialog = false) { }
                 ObjectType.TOPIC -> {}
                 ObjectType.USER -> UserIconWithDialog(it.receiverInfo)
                 ObjectType.TITLE -> {}
