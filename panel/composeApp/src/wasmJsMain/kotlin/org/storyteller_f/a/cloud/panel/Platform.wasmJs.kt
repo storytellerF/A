@@ -1,7 +1,0 @@
-package org.storyteller_f.a.cloud.panel
-
-class WasmPlatform : Platform {
-    override val name: String = "Web with Kotlin/Wasm"
-}
-
-actual fun getPlatform(): Platform = WasmPlatform()
