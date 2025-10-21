@@ -135,6 +135,7 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
+gradle = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kodio-core = { module = "space.kodio:core", version.ref = "kodio-core" }
 couchbase-lite-paging = { module = "dev.kotbase:couchbase-lite-paging", version.ref = "couchbaseLite" }
 google-genai = { module = "com.google.genai:google-genai", version.ref = "googleGenai" }

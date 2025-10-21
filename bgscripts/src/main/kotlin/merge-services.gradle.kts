@@ -102,7 +102,8 @@ afterEvaluate {
         ":backend:redis:jar",
         ":backend:simple:jar",
         ":cloud:pdf:jar",
-        ":cloud:openpdf:jar"
+        ":cloud:openpdf:jar",
+        ":cloud:service:jar"
     ).forEach { path ->
         mergeServiceFiles.configure {
             dependsOn(path)
