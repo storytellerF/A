@@ -164,9 +164,6 @@ fun ApplicationCall.getSession(): UserSession {
 
 @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 private fun ApplicationCall.createPendingSession(remote: String): UserSession.Pending {
-    Napier.i {
-        "pending session $remote ${request.uri}"
-    }
     val aTs = request.header("a-ts")?.toLongOrNull()
     val data = when {
         aTs != null && checkTsIsValid(aTs, 60 * 5).second -> aTs.toString()

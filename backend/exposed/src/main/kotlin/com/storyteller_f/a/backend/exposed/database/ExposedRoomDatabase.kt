@@ -32,14 +32,12 @@ class ExposedRoomDatabase(
     val databaseSession: ExposedDatabaseSession,
     val containerDatabase: ContainerDatabase,
 ) : RoomDatabase {
-    override suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?> {
-        return databaseSession.dbSearch {
-            search {
-                Room.Companion.findRoomById(roomId)
-            }
-            first {
-                it[Rooms.communityId] == null
-            }
+    override suspend fun checkRoomIsPrivate(roomId: PrimaryKey) = databaseSession.dbSearch {
+        search {
+            Room.Companion.findRoomById(roomId)
+        }
+        first {
+            it[Rooms.communityId] == null
         }
     }
 
@@ -49,62 +47,56 @@ class ExposedRoomDatabase(
         community: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
-    ): Result<PaginationResult<RawRoom>> {
-        return databaseSession.dbSearch {
+    ) = databaseSession.dbSearch {
+        search {
+            Rooms
+                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                .select(Rooms.fields + Aids.value)
+                .buildRoomSearchWhereQuery(joinSearch, community, word)
+                .bindPaginationQuery(Rooms, primaryKeyFetch)
+        }
+        map(Room::wrapRow)
+    }.mapResult {
+        databaseSession.dbSearch {
             search {
-                Rooms
-                    .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                    .select(Rooms.fields + Aids.value)
+                Rooms.select(Rooms.id)
                     .buildRoomSearchWhereQuery(joinSearch, community, word)
-                    .bindPaginationQuery(Rooms, primaryKeyFetch)
             }
-            map(Room::wrapRow)
-        }.mapResult {
-            processRoomListToRawRoom(uid, it).mapResult { list ->
-                databaseSession.dbSearch {
-                    search {
-                        Rooms.select(Rooms.id)
-                            .buildRoomSearchWhereQuery(joinSearch, community, word)
-                    }
-                    count()
-                }.map { count ->
-                    PaginationResult(list, count)
-                }
+            count()
+        }.mapResult { count ->
+            processRoomListToRawRoom(uid, it).map { list ->
+                PaginationResult(list, count)
             }
         }
     }
 
-    override suspend fun getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?> {
-        return databaseSession.dbSearch {
-            search {
-                Room.Companion.findRoomById(parentId)
-            }
-            first {
-                it[Rooms.communityId]
-            }
+    override suspend fun getRoomCommunityId(parentId: PrimaryKey) = databaseSession.dbSearch {
+        search {
+            Room.Companion.findRoomById(parentId)
+        }
+        first {
+            it[Rooms.communityId]
         }
     }
 
     override suspend fun getRoomPubKeyPaginationResult(
         roomId: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<UserPubKeyInfo>> {
-        return databaseSession.dbSearch {
+    ) = databaseSession.dbSearch {
+        search {
+            buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, primaryKeyFetch)
+        }
+        map {
+            UserPubKeyInfo(it[Users.id], it[Users.publicKey])
+        }
+    }.mapResult { data ->
+        databaseSession.dbSearch {
             search {
-                buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, primaryKeyFetch)
+                buildRoomPubKeyQuery(roomId, true)
             }
-            map {
-                UserPubKeyInfo(it[Users.id], it[Users.publicKey])
-            }
-        }.mapResult { data ->
-            databaseSession.dbSearch {
-                search {
-                    buildRoomPubKeyQuery(roomId, true)
-                }
-                count()
-            }.map { value ->
-                PaginationResult(data, value)
-            }
+            count()
+        }.map { value ->
+            PaginationResult(data, value)
         }
     }
 
@@ -134,135 +126,121 @@ class ExposedRoomDatabase(
         }
     }
 
-    override suspend fun processRoomListToRawRoom(
+    suspend fun processRoomListToRawRoom(
         uid: PrimaryKey?,
         rooms: List<Room>,
     ): Result<List<RawRoom>> = containerDatabase.getContainerInfo(rooms.map {
         it.id
-    }, uid).map { (joinedTimeMap, lastReadMap, memberCountMap) ->
+    }, uid).map { map ->
         rooms.map { room ->
+            val containerInfo = map[room.id]
             RawRoom(
                 room,
-                joinedTimeMap[room.id]?.joinedTime,
-                lastReadMap[room.id]?.topicId,
-                memberCountMap[room.id] ?: 0,
+                containerInfo?.memberJoin?.joinedTime,
+                containerInfo?.userTopicRead?.topicId,
+                containerInfo?.memberCount,
+                containerInfo?.latestTopicId,
             )
         }
     }
 
-    override suspend fun createRoom(room: Room): Result<Unit> {
-        return databaseSession.dbQuery {
-            check(Rooms.insert { statement ->
-                statement[Rooms.id] = room.id
-                statement[Rooms.createdTime] = room.createdTime
-                statement[Rooms.name] = room.name
-                statement[Rooms.icon] = room.icon
-                statement[Rooms.creator] = room.creator
-                statement[Rooms.communityId] = room.communityId
-            }.insertedCount > 0) {
-                "create room failed"
-            }
-            check(Aids.insert {
-                it[value] = room.aid
-                it[objectId] = room.id
-                it[objectType] = ObjectType.ROOM
-            }.insertedCount > 0) {
-                "create aid failed"
-            }
-            MemberJoin.addJoinRaw(room.creator, room.id, room.createdTime, ObjectType.ROOM)
+    override suspend fun createRoom(room: Room) = databaseSession.dbQuery {
+        check(Rooms.insert { statement ->
+            statement[Rooms.id] = room.id
+            statement[Rooms.createdTime] = room.createdTime
+            statement[Rooms.name] = room.name
+            statement[Rooms.icon] = room.icon
+            statement[Rooms.creator] = room.creator
+            statement[Rooms.communityId] = room.communityId
+        }.insertedCount > 0) {
+            "create room failed"
+        }
+        check(Aids.insert {
+            it[value] = room.aid
+            it[objectId] = room.id
+            it[objectType] = ObjectType.ROOM
+        }.insertedCount > 0) {
+            "create aid failed"
+        }
+        MemberJoin.addJoinRaw(room.creator, room.id, room.createdTime, ObjectType.ROOM)
+    }
+
+    override suspend fun getRawRooms(objectListFetch: ObjectListFetch) = databaseSession.dbSearch {
+        search {
+            Rooms
+                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                .select(Rooms.fields + Aids.value).where {
+                    when (objectListFetch) {
+                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                        is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
+                    }
+                }
+        }
+        map {
+            val joinedTime = it.getOrNull(MemberJoins.joinedTime)
+            val topicId = it.getOrNull(UserTopicReads.topicId)
+            val room = Room.wrapRow(it)
+            RawRoom(room, joinedTime, topicId)
         }
     }
 
-    override suspend fun getRawRooms(
-        objectListFetch: ObjectListFetch,
-    ): Result<List<RawRoom>> {
-        return databaseSession.dbSearch {
-            search {
-                Rooms
-                    .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                    .select(Rooms.fields + Aids.value).where {
-                        when (objectListFetch) {
-                            is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                            is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
-                        }
+    override suspend fun getRoomList(objectListFetch: ObjectListFetch) = databaseSession.dbSearch {
+        search {
+            Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                .select(Rooms.fields + Aids.value)
+                .where {
+                    when (objectListFetch) {
+                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                        is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
                     }
-            }
-            map {
-                val joinedTime = it.getOrNull(MemberJoins.joinedTime)
-                val topicId = it.getOrNull(UserTopicReads.topicId)
-                val room = Room.wrapRow(it)
-                RawRoom(room, joinedTime, topicId, 0)
-            }
+                }
         }
-    }
-
-    override suspend fun getRoomList(
-        objectListFetch: ObjectListFetch,
-    ): Result<List<Room>> {
-        return databaseSession.dbSearch {
-            search {
-                Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                    .select(Rooms.fields + Aids.value)
-                    .where {
-                        when (objectListFetch) {
-                            is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                            is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
-                        }
-                    }
-            }
-            map {
-                Room.wrapRow(it)
-            }
+        map {
+            Room.wrapRow(it)
         }
     }
 
     override suspend fun updateRoom(
         id: PrimaryKey,
         body: UpdateRoomBody,
-    ): Result<Boolean> {
-        return databaseSession.dbQuery {
-            listOf(suspend {
-                val newIcon = body.icon
-                val newName = body.name
-                if (!newName.isNullOrBlank() || newIcon != null) {
-                    Rooms.update({
-                        Rooms.id eq id
-                    }) {
-                        if (!newName.isNullOrBlank()) {
-                            it[Rooms.name] = newName
-                        }
-                        if (newIcon != null) {
-                            it[Rooms.icon] = newIcon
-                        }
-                    } > 0
-                } else {
-                    true
-                }
-            }).all {
-                it()
+    ) = databaseSession.dbQuery {
+        listOf(suspend {
+            val newIcon = body.icon
+            val newName = body.name
+            if (!newName.isNullOrBlank() || newIcon != null) {
+                Rooms.update({
+                    Rooms.id eq id
+                }) {
+                    if (!newName.isNullOrBlank()) {
+                        it[Rooms.name] = newName
+                    }
+                    if (newIcon != null) {
+                        it[Rooms.icon] = newIcon
+                    }
+                } > 0
+            } else {
+                true
             }
+        }).all {
+            it()
         }
     }
 
-    override suspend fun getPrivateRoomCount(): Result<Long> {
-        return databaseSession.dbSearch {
-            search {
-                Rooms.selectAll().where {
-                    Rooms.communityId.isNull()
-                }
+    override suspend fun getPrivateRoomCount() = databaseSession.dbSearch {
+        search {
+            Rooms.selectAll().where {
+                Rooms.communityId.isNull()
             }
-            count()
         }
+        count()
     }
 
-    override suspend fun getPublicRoomCount(): Result<Long> {
-        return databaseSession.dbSearch {
-            search {
-                Rooms.selectAll().where {
-                    Rooms.communityId.isNotNull()
-                }
+    override suspend fun getPublicRoomCount() = databaseSession.dbSearch {
+        search {
+            Rooms.selectAll().where {
+                Rooms.communityId.isNotNull()
             }
-            count()
         }
+        count()
     }
 }

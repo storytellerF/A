@@ -93,7 +93,7 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
             }
             val roomInfo by room.handler.data.collectAsState()
             CustomSearchBar(SearchScope.RoomTopic(roomId)) {
-                RoomIcon(roomInfo, showDialog = showDialog, size = 40.dp, setClickEvent = true) {
+                RoomIconWithDialog(roomInfo, showDialog = showDialog, size = 40.dp, setClickEvent = true) {
                     showDialog = it
                 }
             }
@@ -525,7 +525,7 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
             val commonDialogController =
                 rememberCommonDialogController()
             val shown by commonDialogController.shown
-            RoomIcon(
+            RoomIconWithDialog(
                 roomInfo,
                 showDialog = shown,
                 updateDialog = commonDialogController::update,

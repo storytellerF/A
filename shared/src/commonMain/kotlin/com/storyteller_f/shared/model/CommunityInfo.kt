@@ -20,6 +20,7 @@ data class CommunityInfo(
     val joinedTime: LocalDateTime? = null,
     val extension: Extension? = null,
     val lastRead: PrimaryKey? = null,
+    val latestTopic: PrimaryKey? = null,
     val hasPoster: Boolean = poster != null,
     val font: FileInfo? = null,
 ) : PrimaryKeyIdentifiable {

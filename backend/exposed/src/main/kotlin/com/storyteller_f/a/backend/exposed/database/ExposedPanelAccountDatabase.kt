@@ -16,82 +16,72 @@ import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
-class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) : PanelAccountDatabase {
-    override suspend fun getPanelAccount(id: PrimaryKey): Result<PanelAccount?> {
-        return databaseSession.dbSearch {
-            search {
-                PanelAccounts.selectAll().where {
-                    PanelAccounts.id eq id
-                }
+class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) :
+    PanelAccountDatabase {
+    override suspend fun getPanelAccount(id: PrimaryKey) = databaseSession.dbSearch {
+        search {
+            PanelAccounts.selectAll().where {
+                PanelAccounts.id eq id
             }
-            first(PanelAccount::wrapRow)
         }
+        first(PanelAccount::wrapRow)
     }
 
-    override suspend fun addPanelAccount(panelAccount: PanelAccount): Result<Unit> {
-        return databaseSession.dbQuery {
-            PanelAccounts.insert {
-                it[id] = panelAccount.id
-                it[name] = panelAccount.name
-                it[createdTime] = now()
-                it[passType] = panelAccount.passType
-                it[algoType] = panelAccount.algoType
-                it[publicKey] = panelAccount.publicKey
-                it[address] = panelAccount.address
-            }
+    override suspend fun addPanelAccount(panelAccount: PanelAccount) = databaseSession.dbQuery {
+        check(PanelAccounts.insert {
+            it[id] = panelAccount.id
+            it[name] = panelAccount.name
+            it[createdTime] = now()
+            it[passType] = panelAccount.passType
+            it[algoType] = panelAccount.algoType
+            it[publicKey] = panelAccount.publicKey
+            it[address] = panelAccount.address
+        }.insertedCount > 0) {
+            "Failed to add panel account"
         }
     }
 
     private suspend fun getUserAuthDataBy(
         predicate: () -> Op<Boolean>,
-    ): Result<Pair<String, Long>?> {
-        return databaseSession.dbSearch {
-            search {
-                PanelAccounts.select(listOf(PanelAccounts.publicKey, PanelAccounts.id)).where(predicate)
-            }
-            first {
-                it[PanelAccounts.publicKey] to it[PanelAccounts.id]
-            }
+    ) = databaseSession.dbSearch {
+        search {
+            PanelAccounts.select(listOf(PanelAccounts.publicKey, PanelAccounts.id)).where(predicate)
+        }
+        first {
+            it[PanelAccounts.publicKey] to it[PanelAccounts.id]
         }
     }
 
-    override suspend fun getUserAuthDataById(id: PrimaryKey): Result<Pair<String, Long>?> {
-        return getUserAuthDataBy {
-            PanelAccounts.id eq id
-        }
+    override suspend fun getUserAuthDataById(id: PrimaryKey) = getUserAuthDataBy {
+        PanelAccounts.id eq id
     }
 
-    override suspend fun getUserAuthDataByAddress(address: String): Result<Pair<String, Long>?> {
-        return getUserAuthDataBy {
-            PanelAccounts.address eq address
-        }
+    override suspend fun getUserAuthDataByAddress(address: String) = getUserAuthDataBy {
+        PanelAccounts.address eq address
     }
 
     override suspend fun getRawUserAndPublicKeyByAddress(
         ad: String,
-    ): Result<Pair<RawPanelAccount, String>?> {
-        return databaseSession.dbSearch {
-            search {
-                PanelAccounts
-                    .selectAll()
-                    .where {
-                        PanelAccounts.address eq ad
-                    }
-            }
-            first {
-                val value = PanelAccount.wrapRow(it)
-                Pair(RawPanelAccount(value.id, value.name), value.publicKey)
-            }
+    ) = databaseSession.dbSearch {
+        search {
+            PanelAccounts
+                .selectAll()
+                .where {
+                    PanelAccounts.address eq ad
+                }
+        }
+        first {
+            val value = PanelAccount.wrapRow(it)
+            Pair(RawPanelAccount(value.id, value.name), value.publicKey)
         }
     }
-    override suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean> {
-        return databaseSession.dbSearch {
-            search {
-                PanelAccounts.selectAll().where {
-                    PanelAccounts.publicKey eq pk
-                }
+
+    override suspend fun isUserNotExistsByPublicKey(pk: String) = databaseSession.dbSearch {
+        search {
+            PanelAccounts.selectAll().where {
+                PanelAccounts.publicKey eq pk
             }
-            isEmpty()
         }
+        isEmpty()
     }
 }

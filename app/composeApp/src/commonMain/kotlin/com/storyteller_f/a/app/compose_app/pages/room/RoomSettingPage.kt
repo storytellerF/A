@@ -117,7 +117,7 @@ private fun RoomSettingInternal(
                 }
             },
             {
-                RoomIcon(roomInfo, showDialog = false, setClickEvent = false) {}
+                RoomIconWithDialog(roomInfo, showDialog = false, setClickEvent = false) {}
             }
         )
         SettingOptionView("Name", {

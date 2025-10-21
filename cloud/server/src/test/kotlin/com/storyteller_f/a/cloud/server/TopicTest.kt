@@ -523,6 +523,17 @@ class TopicTest {
             assertEquals(1, topicInfo.level)
         }
     }
+
+    @Test
+    fun `test community topic latest topic`() = test {
+        attachSession {
+            val communityInfo = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
+            val topic =
+                createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
+            val info = getCommunityInfo(communityInfo.id).getOrThrow()
+            assertEquals(topic.id, info.latestTopic)
+        }
+    }
 }
 
 private fun getUploadDataFromStream(

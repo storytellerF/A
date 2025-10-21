@@ -74,7 +74,13 @@ private suspend fun Backend.processTitleList(
         roomIdList
     ).mapResult { (userList, roomList, communityList) ->
         getTopicByIds(topicIdList, uid).mapIfNotNull { topicList ->
-            processTitleList(userList.orEmpty(), communityList.orEmpty(), roomList.orEmpty(), list, topicList)
+            processTitleList(
+                userList.orEmpty(),
+                communityList.orEmpty(),
+                roomList.orEmpty(),
+                list,
+                topicList
+            )
         }
     }
 }
@@ -91,10 +97,7 @@ private suspend fun Backend.getRelatedObject(
             Result.success(emptyList())
         }.getOrThrow()
         val r2 = if (roomIdList.isNotEmpty()) {
-            combinedDatabase.roomDatabase.getRawRooms(ObjectListFetch.IdListFetch(roomIdList))
-                .mapResult {
-                    processRawRoomToRoomInfo(it)
-                }
+            getRoomInfoList(ObjectListFetch.IdListFetch(roomIdList))
         } else {
             Result.success(emptyList())
         }.getOrThrow()

@@ -12,6 +12,7 @@ import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNav
 import com.storyteller_f.a.app.compose_app.common.MemberViewModel
 import com.storyteller_f.a.app.compose_app.common.createMemberViewModel
+import com.storyteller_f.a.app.compose_app.components.UserCell
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.core.compontents.StateView

@@ -112,8 +112,8 @@ interface ClientFileProvider {
     fun getUploader(): Uploader?
 }
 
-val LocalAppNav = compositionLocalOf<AppNav> {
-    error("no app nav")
+val LocalAppNav = compositionLocalOf {
+    AppNav.EMPTY
 }
 
 val LocalWsClient = compositionLocalOf<WebSocketClient> {

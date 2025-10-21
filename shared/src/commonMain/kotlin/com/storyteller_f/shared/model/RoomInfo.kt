@@ -19,9 +19,11 @@ data class RoomInfo(
     val joinedTime: LocalDateTime? = null,
     val communityId: PrimaryKey? = null,
     val lastRead: PrimaryKey? = null,
+    val latestTopic: PrimaryKey? = null,
 ) : PrimaryKeyIdentifiable {
     val isPrivate get() = communityId == null
     val isJoined get() = joinedTime != null
+    val hasUnread get() = latestTopic != null && (lastRead != null && lastRead < latestTopic || lastRead == null)
     override val objectType: ObjectType
         get() = ObjectType.ROOM
 

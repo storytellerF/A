@@ -35,6 +35,13 @@ import kotlinx.datetime.LocalDateTime
 
 data class PaginationResult<T>(val list: List<T>, val total: Long)
 
+data class ContainerInfo(
+    val memberJoin: MemberJoin?,
+    val userTopicRead: UserTopicRead?,
+    val memberCount: Long?,
+    val latestTopicId: PrimaryKey?,
+)
+
 sealed interface JoinSearch {
     data class Joined(val uid: PrimaryKey) : JoinSearch
     data class NotJoined(val uid: PrimaryKey) : JoinSearch
@@ -110,6 +117,7 @@ interface UserDatabase {
         privateKey: String,
         user: User
     ): Result<Unit>
+
     suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
     suspend fun getUserCount(): Result<Long>
 }
@@ -271,11 +279,6 @@ interface RoomDatabase {
         uid: PrimaryKey? = null,
     ): Result<RawRoom?>
 
-    suspend fun processRoomListToRawRoom(
-        uid: PrimaryKey?,
-        rooms: List<Room>,
-    ): Result<List<RawRoom>>
-
     suspend fun createRoom(room: Room): Result<Unit>
     suspend fun getRawRooms(objectListFetch: ObjectListFetch): Result<List<RawRoom>>
     suspend fun getRoomList(objectListFetch: ObjectListFetch): Result<List<Room>>
@@ -305,12 +308,14 @@ interface FileDatabase {
         ownerId: PrimaryKey,
         ownerType: ObjectType
     ): Result<Unit>
+
     suspend fun insertUploadRecord(record: UploadRecord): Result<Unit>
     suspend fun deleteUploadRecord(
         id: PrimaryKey,
         quotaInfo: QuotaInfo,
         length: Long
     ): Result<Unit>
+
     suspend fun getFileCount(): Result<Long>
     suspend fun getFileVolume(): Result<Long>
 }
@@ -335,7 +340,7 @@ interface ContainerDatabase {
     suspend fun getContainerInfo(
         parentIds: List<PrimaryKey>,
         uid: PrimaryKey?,
-    ): Result<Triple<Map<PrimaryKey, MemberJoin>, Map<PrimaryKey, UserTopicRead>, Map<Long, Long>>>
+    ): Result<Map<PrimaryKey, ContainerInfo>>
 
     suspend fun getTopicReadList(
         parentIds: List<PrimaryKey>,
@@ -350,6 +355,11 @@ interface ContainerDatabase {
 
     suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType): Result<QuotaInfo?>
     suspend fun insertQuota(quota: Quota): Result<Unit>
+
+    suspend fun getLatestTopicInContainer(
+        parentIds: List<PrimaryKey>,
+        uid: PrimaryKey?
+    ): Result<Map<PrimaryKey, PrimaryKey?>>
 }
 
 interface CliDatabase {
@@ -358,10 +368,12 @@ interface CliDatabase {
         communities: List<Community>,
         memberList: List<Pair<PrimaryKey, List<PrimaryKey>>>,
     )
+
     suspend fun batchAddRooms(
         roomList: List<Room>,
         membersList: List<Pair<List<PrimaryKey>, PrimaryKey>>
     )
+
     suspend fun getAllMembers(distinct: List<String>): Result<List<Triple<String, Long, String>>>
     suspend fun batchAddEncryptTopics(
         tuples: List<InsertTopicTuple>,
@@ -369,6 +381,7 @@ interface CliDatabase {
         roomMap: Map<String, Room>,
         encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>
     )
+
     suspend fun batchAddTopics(
         tuples: List<InsertTopicTuple>,
         userMap: Map<String, User>,

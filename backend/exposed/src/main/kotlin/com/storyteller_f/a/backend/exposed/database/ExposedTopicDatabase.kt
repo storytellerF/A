@@ -68,69 +68,61 @@ class ExposedTopicDatabase(
     TopicDatabase {
     override suspend fun getTopicRootTuple(
         parentId: PrimaryKey,
-    ): Result<ObjectTuple?> {
-        return databaseSession.dbSearch {
-            search {
-                Topics.selectAll().where {
-                    Topics.id eq parentId
-                }
+    ) = databaseSession.dbSearch {
+        search {
+            Topics.selectAll().where {
+                Topics.id eq parentId
             }
-            first {
-                val topic = Topic.wrapRow(it)
-                ObjectTuple(
-                    topic.rootId,
-                    topic.rootType,
-                )
-            }
+        }
+        first {
+            val topic = Topic.wrapRow(it)
+            ObjectTuple(
+                topic.rootId,
+                topic.rootType,
+            )
         }
     }
 
     override suspend fun getTopicInfo(
         fetch: ObjectFetch,
         uid: PrimaryKey?,
-    ): Result<TopicInfo?> {
-        return databaseSession.dbSearch {
-            search {
-                Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-                    .select(Topics.fields + Aids.value).where {
-                        when (fetch) {
-                            is ObjectFetch.IdFetch -> Topics.id eq fetch.id
-                            is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
-                        }
+    ) = databaseSession.dbSearch {
+        search {
+            Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+                .select(Topics.fields + Aids.value).where {
+                    when (fetch) {
+                        is ObjectFetch.IdFetch -> Topics.id eq fetch.id
+                        is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
                     }
-            }
-            first(Topic::wrapRow)
-        }.mapResultIfNotNull { topic ->
-            processTopicToTopicInfo(uid, listOf(topic)).map {
-                it.first()
-            }
+                }
+        }
+        first(Topic::wrapRow)
+    }.mapResultIfNotNull { topic ->
+        processTopicToTopicInfo(uid, listOf(topic)).map {
+            it.first()
         }
     }
 
     suspend fun getTopicInfoListByPredicate(
         uid: PrimaryKey?,
         queryBuilder: Query.() -> Query,
-    ): Result<List<TopicInfo>> {
-        return databaseSession.dbSearch {
-            search {
-                Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-                    .select(Topics.fields + Aids.value)
-                    .queryBuilder()
-            }
-            map(Topic::wrapRow)
-        }.mapResult {
-            processTopicToTopicInfo(uid, it)
+    ) = databaseSession.dbSearch {
+        search {
+            Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+                .select(Topics.fields + Aids.value)
+                .queryBuilder()
         }
+        map(Topic::wrapRow)
+    }.mapResult {
+        processTopicToTopicInfo(uid, it)
     }
 
     override suspend fun getTopicInfoListByIds(
         uid: PrimaryKey?,
         ids: List<PrimaryKey>
-    ): Result<List<TopicInfo>> {
-        return getTopicInfoListByPredicate(uid) {
-            where {
-                Topics.id inList ids
-            }
+    ) = getTopicInfoListByPredicate(uid) {
+        where {
+            Topics.id inList ids
         }
     }
 
@@ -138,21 +130,19 @@ class ExposedTopicDatabase(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         extraQuery: Query.() -> Query,
-    ): Result<PaginationResult<TopicInfo>> {
-        return runCatching {
-            val r1 = getTopicInfoListByPredicate(uid) {
-                extraQuery().bindPaginationQuery(Topics, primaryKeyFetch)
-            }.getOrThrow()
-            val r2 = databaseSession.dbSearch {
-                search {
-                    Topics
-                        .selectAll()
-                        .extraQuery()
-                }
-                count()
-            }.getOrThrow()
-            PaginationResult(r1, r2)
-        }
+    ) = runCatching {
+        val r1 = getTopicInfoListByPredicate(uid) {
+            extraQuery().bindPaginationQuery(Topics, primaryKeyFetch)
+        }.getOrThrow()
+        val r2 = databaseSession.dbSearch {
+            search {
+                Topics
+                    .selectAll()
+                    .extraQuery()
+            }
+            count()
+        }.getOrThrow()
+        PaginationResult(r1, r2)
     }
 
     override suspend fun getSubTopicInfo(
@@ -160,26 +150,24 @@ class ExposedTopicDatabase(
         primaryKeyFetch: PrimaryKeyFetch,
         parentId: PrimaryKey,
         pinType: TopicPinSearch?
-    ): Result<PaginationResult<TopicInfo>> {
-        return getTopicInfoPaginationByPredicate(
-            uid,
-            primaryKeyFetch
-        ) { ->
-            where {
-                Topics.parentId eq parentId
+    ) = getTopicInfoPaginationByPredicate(
+        uid,
+        primaryKeyFetch
+    ) { ->
+        where {
+            Topics.parentId eq parentId
+        }
+        when (pinType) {
+            TopicPinSearch.PINNED -> andWhere {
+                Topics.pinned eq true
             }
-            when (pinType) {
-                TopicPinSearch.PINNED -> andWhere {
-                    Topics.pinned eq true
-                }
 
-                TopicPinSearch.UNPINNED -> andWhere {
-                    Topics.pinned eq false
-                }
+            TopicPinSearch.UNPINNED -> andWhere {
+                Topics.pinned eq false
+            }
 
-                else -> {
-                    orderBy(Topics.pinned to SortOrder.DESC)
-                }
+            else -> {
+                orderBy(Topics.pinned to SortOrder.DESC)
             }
         }
     }
@@ -187,70 +175,60 @@ class ExposedTopicDatabase(
     override suspend fun getLatestTopicInfo(
         uid: PrimaryKey?,
         parentId: PrimaryKey
-    ): Result<List<TopicInfo>> {
-        return getTopicInfoListByPredicate(uid) {
-            where {
-                Topics.parentId eq parentId
-            }.orderBy(Topics.pinned to SortOrder.DESC)
-                .bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
-        }
+    ) = getTopicInfoListByPredicate(uid) {
+        where {
+            Topics.parentId eq parentId
+        }.orderBy(Topics.pinned to SortOrder.DESC)
+            .bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
     }
 
     @OptIn(ExperimentalStdlibApi::class)
     override suspend fun saveEncryptedTopic(
         topic: Topic,
         content: TopicContent.Encrypted,
-    ): Result<TopicInfo> {
-        return databaseSession.dbQuery {
-            Topic.new(topic)
-            EncryptedKeys.batchInsert(content.encryptedKey.keys) {
-                this[EncryptedKeys.topicId] = topic.id
-                this[EncryptedKeys.uid] = it
-                this[EncryptedKeys.encryptedAes] =
-                    ExposedBlob(content.encryptedKey[it]!!.hexToByteArray())
-            }
-            topic.toTopicInfo(content = content)
+    ) = databaseSession.dbQuery {
+        Topic.new(topic)
+        EncryptedKeys.batchInsert(content.encryptedKey.keys) {
+            this[EncryptedKeys.topicId] = topic.id
+            this[EncryptedKeys.uid] = it
+            this[EncryptedKeys.encryptedAes] =
+                ExposedBlob(content.encryptedKey[it]!!.hexToByteArray())
         }
+        topic.toTopicInfo(content = content)
     }
 
     override suspend fun savePlainTopic(
         topic: Topic,
         content: TopicContent.Plain
-    ): Result<Unit> {
-        return databaseSession.dbQuery {
-            Topic.new(topic)
-            fileDatabase.insertFileRefs(
-                topic.id,
-                ObjectType.TOPIC,
-                extractMarkdownMediaLink(content.plain).map {
-                    topic.author to it
-                }
-            ).getOrThrow()
-        }
+    ) = databaseSession.dbQuery {
+        Topic.new(topic)
+        fileDatabase.insertFileRefs(
+            topic.id,
+            ObjectType.TOPIC,
+            extractMarkdownMediaLink(content.plain).map {
+                topic.author to it
+            }
+        ).getOrThrow()
     }
 
     override suspend fun updateTopicStatus(
         topicId: PrimaryKey,
         newValue: Boolean,
-    ): Result<Boolean> {
-        return databaseSession.dbQuery {
-            Topics.update({
-                Topics.id eq topicId
-            }) {
-                it[Topics.pinned] = newValue
-            } > 0
-        }
+    ) = databaseSession.dbQuery {
+        Topics.update({
+            Topics.id eq topicId
+        }) {
+            it[Topics.pinned] = newValue
+        } > 0
     }
 
     override suspend fun getTopicList(
         primaryKeyFetch: PrimaryKeyFetch
-    ): Result<List<Topic>> {
-        return databaseSession.dbSearch {
-            search {
-                Topics.selectAll().bindPaginationQuery(Topics, primaryKeyFetch)
-            }
-            map(Topic::wrapRow)
+    ) = databaseSession.dbSearch {
+        search {
+            Topics.selectAll().bindPaginationQuery(Topics, primaryKeyFetch)
         }
+        map(Topic::wrapRow)
     }
 
     override suspend fun getTopicCommentCount(
@@ -323,7 +301,7 @@ class ExposedTopicDatabase(
             val contentMap = processByteArrayToTopicContent(
                 topics,
                 uid
-            ).getOrThrow<Map<PrimaryKey, TopicContent>>()
+            ).getOrThrow()
             topics.map { topic ->
                 val id = topic.id
                 topic.toTopicInfo(
@@ -399,30 +377,25 @@ class ExposedTopicDatabase(
         objectId: PrimaryKey,
         emoji: String,
         objectType: ObjectType,
-    ): Result<Unit> {
-        return getReactionCountForEmoji(
-            listOf(objectId),
-            emoji
-        ).mapResult { reactionCountList ->
-            val triple = reactionCountList.firstOrNull()
-            if (triple == null) {
-                databaseSession.dbQuery {
-                    Reactions.deleteWhere {
-                        Reactions.objectId eq objectId and (Reactions.emoji eq emoji)
-                    }
-                    Unit
+    ) = getReactionCountForEmoji(listOf(objectId), emoji).mapResult { reactionCountList ->
+        val triple = reactionCountList.firstOrNull()
+        if (triple == null) {
+            databaseSession.dbQuery {
+                Reactions.deleteWhere {
+                    Reactions.objectId eq objectId and (Reactions.emoji eq emoji)
                 }
-            } else {
-                databaseSession.dbQuery {
-                    check(Reactions.upsert(Reactions.objectId, Reactions.emoji) {
-                        it[Reactions.objectId] = objectId
-                        it[Reactions.emoji] = emoji
-                        it[Reactions.count] = triple.second
-                        it[Reactions.objectType] = objectType
-                        it[Reactions.lastReactionId] = triple.third
-                    }.insertedCount > 0) {
-                        "insert reaction failed"
-                    }
+                Unit
+            }
+        } else {
+            databaseSession.dbQuery {
+                check(Reactions.upsert(Reactions.objectId, Reactions.emoji) {
+                    it[Reactions.objectId] = objectId
+                    it[Reactions.emoji] = emoji
+                    it[Reactions.count] = triple.second
+                    it[Reactions.objectType] = objectType
+                    it[Reactions.lastReactionId] = triple.third
+                }.insertedCount > 0) {
+                    "insert reaction failed"
                 }
             }
         }
@@ -432,46 +405,51 @@ class ExposedTopicDatabase(
         objectId: List<PrimaryKey>,
         uid: PrimaryKey?,
         reactionFetch: ReactionFetch,
-    ): Result<PaginationResult<ReactionInfo>> {
-        return databaseSession.dbSearch {
+    ) = databaseSession.dbSearch {
+        search {
+            buildReactionInfoQuery(objectId, reactionFetch).limit(reactionFetch.size)
+                .orderBy(
+                    Reactions.count to SortOrder.DESC,
+                    Reactions.lastReactionId to SortOrder.ASC
+                )
+        }
+        map(Reaction::wrapRow)
+    }.mapResult { list ->
+        databaseSession.dbSearch {
             search {
-                buildReactionInfoQuery(objectId, reactionFetch).limit(reactionFetch.size)
-                    .orderBy(
-                        Reactions.count to SortOrder.DESC,
-                        Reactions.lastReactionId to SortOrder.ASC
-                    )
+                buildReactionInfoQuery(objectId, reactionFetch)
             }
-            map(Reaction::wrapRow)
-        }.mapResult { list ->
-            databaseSession.dbSearch {
-                search {
-                    buildReactionInfoQuery(objectId, reactionFetch)
-                }
-                count()
-            }.mapResult { count ->
-                (if (uid == null) {
-                    Result.success(emptyMap())
-                } else {
-                    val objectIdList = list.map {
-                        it.objectId
-                    }.distinct()
-                    hasReactedEmoji(objectIdList, uid).map {
-                        it.groupByPair().mapValues { v ->
-                            v.value.toSet()
-                        }
-                    }
-                }).map { reactedMap ->
-                    PaginationResult(list.map {
-                        ReactionInfo(
-                            it.emoji,
-                            it.objectId,
-                            it.count,
-                            reactedMap[it.objectId]?.contains(it.emoji) == true,
-                            it.lastReactionId
-                        )
-                    }, count)
-                }
+            count()
+        }.mapResult { count ->
+            processReactionToReactionInfo(uid, list).map { reactionInfos ->
+                PaginationResult(reactionInfos, count)
             }
+        }
+    }
+
+    private suspend fun processReactionToReactionInfo(
+        uid: PrimaryKey?,
+        list: List<Reaction>
+    ) = (if (uid == null) {
+        Result.success(emptyMap())
+    } else {
+        val objectIdList = list.map {
+            it.objectId
+        }.distinct()
+        hasReactedEmoji(objectIdList, uid).map {
+            it.groupByPair().mapValues { v ->
+                v.value.toSet()
+            }
+        }
+    }).map { reactedMap ->
+        list.map {
+            ReactionInfo(
+                it.emoji,
+                it.objectId,
+                it.count,
+                reactedMap[it.objectId]?.contains(it.emoji) == true,
+                it.lastReactionId
+            )
         }
     }
 
@@ -496,20 +474,18 @@ class ExposedTopicDatabase(
         uid: PrimaryKey,
         objectId: PrimaryKey,
         emojiText: String,
-    ): Result<ReactionInfo?> {
-        return databaseSession.dbSearch {
-            search {
-                Reactions.selectAll().where {
-                    Reactions.objectId eq objectId and (Reactions.emoji eq emojiText)
-                }
+    ) = databaseSession.dbSearch {
+        search {
+            Reactions.selectAll().where {
+                Reactions.objectId eq objectId and (Reactions.emoji eq emojiText)
             }
-            first {
-                Reaction.wrapRow(it)
-            }
-        }.mapResultIfNotNull {
-            hasReactedForEmoji(objectId, uid, emojiText).map { hasReacted ->
-                ReactionInfo(it.emoji, it.objectId, it.count, hasReacted, it.lastReactionId)
-            }
+        }
+        first {
+            Reaction.wrapRow(it)
+        }
+    }.mapResultIfNotNull {
+        hasReactedForEmoji(objectId, uid, emojiText).map { hasReacted ->
+            ReactionInfo(it.emoji, it.objectId, it.count, hasReacted, it.lastReactionId)
         }
     }
 
@@ -517,30 +493,26 @@ class ExposedTopicDatabase(
         objectId: PrimaryKey,
         uid: PrimaryKey,
         emoji: String,
-    ): Result<Boolean> {
-        return databaseSession.dbSearch {
-            search {
-                ReactionRecords.selectAll().where {
-                    (ReactionRecords.objectId eq objectId) and
+    ) = databaseSession.dbSearch {
+        search {
+            ReactionRecords.selectAll().where {
+                (ReactionRecords.objectId eq objectId) and
                         (ReactionRecords.emoji eq emoji) and
                         (ReactionRecords.uid eq uid)
-                }
             }
-            isNotEmpty()
         }
+        isNotEmpty()
     }
 
     override suspend fun deleteReaction(
         uid: PrimaryKey,
         emoji: String,
         objectId: PrimaryKey,
-    ): Result<Boolean> {
-        return getReactionRecordInfo(uid, emoji, objectId).mapResult { recordInfo ->
-            if (recordInfo == null) {
-                Result.success(true)
-            } else {
-                deleteReaction(recordInfo.id)
-            }
+    ) = getReactionRecordInfo(uid, emoji, objectId).mapResult { recordInfo ->
+        if (recordInfo == null) {
+            Result.success(true)
+        } else {
+            deleteReaction(recordInfo.id)
         }
     }
 
@@ -548,55 +520,49 @@ class ExposedTopicDatabase(
         uid: PrimaryKey,
         emoji: String,
         objectId: PrimaryKey,
-    ): Result<ReactionRecordInfo?> {
-        return databaseSession.dbSearch {
-            search {
-                ReactionRecords.selectAll().where {
-                    (ReactionRecords.objectId eq objectId) and
+    ) = databaseSession.dbSearch {
+        search {
+            ReactionRecords.selectAll().where {
+                (ReactionRecords.objectId eq objectId) and
                         (ReactionRecords.emoji eq emoji) and
                         (ReactionRecords.uid eq uid)
-                }
             }
-            first {
-                val reactionRecord = ReactionRecord.wrapRow(it)
-                ReactionRecordInfo(
-                    reactionRecord.id,
-                    emoji,
-                    reactionRecord.objectId,
-                    reactionRecord.objectType,
-                    reactionRecord.createdTime,
-                    uid
-                )
-            }
+        }
+        first {
+            val reactionRecord = ReactionRecord.wrapRow(it)
+            ReactionRecordInfo(
+                reactionRecord.id,
+                emoji,
+                reactionRecord.objectId,
+                reactionRecord.objectType,
+                reactionRecord.createdTime,
+                uid
+            )
         }
     }
 
     override suspend fun deleteReaction(
         reactionId: PrimaryKey,
-    ): Result<Boolean> {
-        return databaseSession.dbQuery {
-            ReactionRecords.deleteWhere {
-                ReactionRecords.id eq reactionId
-            }
-        }.map { value ->
-            value > 0
+    ) = databaseSession.dbQuery {
+        ReactionRecords.deleteWhere {
+            ReactionRecords.id eq reactionId
         }
+    }.map { value ->
+        value > 0
     }
 
     override suspend fun insertReaction(
         reactionRecord: ReactionRecord,
-    ): Result<Unit> {
-        return databaseSession.dbQuery {
-            check(ReactionRecords.insert { statement ->
-                statement[ReactionRecords.id] = reactionRecord.id
-                statement[ReactionRecords.uid] = reactionRecord.uid
-                statement[ReactionRecords.objectId] = reactionRecord.objectId
-                statement[ReactionRecords.objectType] = reactionRecord.objectType
-                statement[ReactionRecords.emoji] = reactionRecord.emoji
-                statement[ReactionRecords.createdTime] = reactionRecord.createdTime
-            }.insertedCount > 0) {
-                "insert reaction failed"
-            }
+    ) = databaseSession.dbQuery {
+        check(ReactionRecords.insert { statement ->
+            statement[ReactionRecords.id] = reactionRecord.id
+            statement[ReactionRecords.uid] = reactionRecord.uid
+            statement[ReactionRecords.objectId] = reactionRecord.objectId
+            statement[ReactionRecords.objectType] = reactionRecord.objectType
+            statement[ReactionRecords.emoji] = reactionRecord.emoji
+            statement[ReactionRecords.createdTime] = reactionRecord.createdTime
+        }.insertedCount > 0) {
+            "insert reaction failed"
         }
     }
 
@@ -617,67 +583,59 @@ class ExposedTopicDatabase(
     override suspend fun getReactionCountForEmoji(
         objectId: List<PrimaryKey>,
         emoji: String,
-    ): Result<List<Triple<Long, Long, PrimaryKey>>> {
-        return databaseSession.dbSearch {
-            val column = ReactionRecords.emoji.countDistinct()
-            val lastReactionId = ReactionRecords.id.max()
-            search {
-                ReactionRecords.select(ReactionRecords.objectId, column, lastReactionId).where {
-                    (ReactionRecords.objectId inList objectId) and (ReactionRecords.emoji eq emoji)
-                }.groupBy(ReactionRecords.objectId)
-            }
-            map {
-                Triple(it[ReactionRecords.objectId], it[column], it[lastReactionId] ?: 0)
-            }
+    ) = databaseSession.dbSearch {
+        val column = ReactionRecords.emoji.countDistinct()
+        val lastReactionId = ReactionRecords.id.max()
+        search {
+            ReactionRecords.select(ReactionRecords.objectId, column, lastReactionId).where {
+                (ReactionRecords.objectId inList objectId) and (ReactionRecords.emoji eq emoji)
+            }.groupBy(ReactionRecords.objectId)
+        }
+        map {
+            Triple(it[ReactionRecords.objectId], it[column], it[lastReactionId] ?: 0)
         }
     }
 
     override suspend fun createTitle(
         title: Title,
         topic: Topic
-    ): Result<Unit> {
-        return databaseSession.dbQuery {
-            check(Titles.insert {
-                it[Titles.id] = title.id
-                it[Titles.createdTime] = title.createdTime
-                it[Titles.name] = title.name
-                it[Titles.creator] = title.creator
-                it[Titles.receiver] = title.receiver
-                it[Titles.type] = title.type
-                it[Titles.scopeId] = title.scopeId
-                it[Titles.scopeType] = title.scopeType
-                it[Titles.status] = title.status
-                it[Titles.descriptionTopicId] = title.descriptionTopicId
-            }.insertedCount > 0) {
-                "insert title failed"
-            }
-            Topic.new(topic)
-        }
-    }
-
-    override suspend fun getTopicCount(): Result<Long> {
-        return databaseSession.dbSearch {
-            search {
-                Topics.selectAll()
-            }
-            count()
-        }
-    }
-
-    private suspend fun Topic.Companion.new(info: Topic) {
-        return check(Topics.insert {
-            it[id] = info.id
-            it[author] = info.author
-            it[createdTime] = now()
-            it[parentType] = info.parentType
-            it[parentId] = info.parentId
-            it[rootId] = info.rootId
-            it[rootType] = info.rootType
-            it[content] = ExposedBlob(info.content)
-            it[isEncrypted] = info.isEncrypted
-            it[level] = info.level
+    ) = databaseSession.dbQuery {
+        check(Titles.insert {
+            it[Titles.id] = title.id
+            it[Titles.createdTime] = title.createdTime
+            it[Titles.name] = title.name
+            it[Titles.creator] = title.creator
+            it[Titles.receiver] = title.receiver
+            it[Titles.type] = title.type
+            it[Titles.scopeId] = title.scopeId
+            it[Titles.scopeType] = title.scopeType
+            it[Titles.status] = title.status
+            it[Titles.descriptionTopicId] = title.descriptionTopicId
         }.insertedCount > 0) {
-            "insert topic failed"
+            "insert title failed"
         }
+        Topic.new(topic)
+    }
+
+    override suspend fun getTopicCount() = databaseSession.dbSearch {
+        search {
+            Topics.selectAll()
+        }
+        count()
+    }
+
+    private suspend fun Topic.Companion.new(info: Topic) = check(Topics.insert {
+        it[id] = info.id
+        it[author] = info.author
+        it[createdTime] = now()
+        it[parentType] = info.parentType
+        it[parentId] = info.parentId
+        it[rootId] = info.rootId
+        it[rootType] = info.rootType
+        it[content] = ExposedBlob(info.content)
+        it[isEncrypted] = info.isEncrypted
+        it[level] = info.level
+    }.insertedCount > 0) {
+        "insert topic failed"
     }
 }

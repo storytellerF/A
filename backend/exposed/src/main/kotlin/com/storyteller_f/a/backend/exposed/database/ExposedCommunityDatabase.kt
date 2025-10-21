@@ -71,17 +71,15 @@ class ExposedCommunityDatabase(
         }
     }
 
-    override suspend fun getJoinedCommunityIds(uid: PrimaryKey): Result<List<Long>> {
-        return databaseSession.dbSearch {
-            search {
-                Communities
-                    .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-                        MemberJoins.uid eq uid
-                    }.select(Communities.id)
-            }
-            map {
-                it[Communities.id]
-            }
+    override suspend fun getJoinedCommunityIds(uid: PrimaryKey) = databaseSession.dbSearch {
+        search {
+            Communities
+                .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
+                    MemberJoins.uid eq uid
+                }.select(Communities.id)
+        }
+        map {
+            it[Communities.id]
         }
     }
 
@@ -90,31 +88,29 @@ class ExposedCommunityDatabase(
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch
-    ): Result<PaginationResult<RawCommunity>?> {
-        return databaseSession.dbSearch {
+    ) = databaseSession.dbSearch {
+        search {
+            Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                .select(Communities.fields + Aids.value)
+                .buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
+                .bindPaginationQuery(Communities, primaryKeyFetch)
+        }
+        map(Community::wrapRow)
+    }.mapResultIfNotNull { list ->
+        databaseSession.dbSearch {
             search {
-                Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-                    .select(Communities.fields + Aids.value)
+                Communities.select(Communities.id)
                     .buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
-                    .bindPaginationQuery(Communities, primaryKeyFetch)
             }
-            map(Community::wrapRow)
-        }.mapResultIfNotNull { list ->
-            databaseSession.dbSearch {
-                search {
-                    Communities.select(Communities.id)
-                        .buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
-                }
-                count()
-            }.mapResult { count ->
-                val uid = when (joinSearch) {
-                    is JoinSearch.Joined -> joinSearch.uid
-                    is JoinSearch.NotJoined -> joinSearch.uid
-                    is JoinSearch.Unspecified -> joinSearch.uid
-                }
-                processCommunityToRawCommunity(uid, list).map { list ->
-                    PaginationResult(list, count)
-                }
+            count()
+        }.mapResult { count ->
+            val uid = when (joinSearch) {
+                is JoinSearch.Joined -> joinSearch.uid
+                is JoinSearch.NotJoined -> joinSearch.uid
+                is JoinSearch.Unspecified -> joinSearch.uid
+            }
+            processCommunityToRawCommunity(uid, list).map { list ->
+                PaginationResult(list, count)
             }
         }
     }
@@ -122,142 +118,124 @@ class ExposedCommunityDatabase(
     suspend fun processCommunityToRawCommunity(
         uid: PrimaryKey?,
         communities: List<Community>
-    ): Result<List<RawCommunity>> {
-        return containerDatabase.getContainerInfo(communities.map { it.id }, uid)
-            .map { (joinedTimeMap, lastReadMap, memberCountMap) ->
-                communities.map {
-                    RawCommunity(
-                        it,
-                        joinedTimeMap[it.id]?.joinedTime,
-                        lastReadMap[it.id]?.topicId,
-                        memberCountMap[it.id] ?: 0
-                    )
-                }
-            }
-    }
-
-    override suspend fun createCommunity(community: Community): Result<Unit> {
-        return databaseSession.dbQuery {
-            check(Communities.insert {
-                it[Communities.id] = community.id
-                it[Communities.name] = community.name
-                it[Communities.owner] = community.owner
-                it[Communities.createdTime] = community.createdTime
-            }.insertedCount > 0) {
-                "insert community failed"
-            }
-            check(Aids.insert {
-                it[value] = community.aid
-                it[objectId] = community.id
-                it[objectType] = ObjectType.COMMUNITY
-            }.insertedCount > 0) {
-                "insert aid failed"
-            }
-            MemberJoin.addJoinRaw(
-                community.owner,
-                community.id,
-                community.createdTime,
-                ObjectType.COMMUNITY
+    ) = containerDatabase.getContainerInfo(communities.map { it.id }, uid).map { map ->
+        communities.map {
+            val containerInfo = map[it.id]
+            RawCommunity(
+                it,
+                containerInfo?.memberJoin?.joinedTime,
+                containerInfo?.userTopicRead?.topicId,
+                containerInfo?.memberCount,
+                containerInfo?.latestTopicId
             )
         }
     }
 
-    override suspend fun createCommunityRooms(rooms: List<Room>): Result<Unit> {
-        return databaseSession.dbQuery {
-            batchCreateCommunityRooms(rooms)
+    override suspend fun createCommunity(community: Community) = databaseSession.dbQuery {
+        check(Communities.insert {
+            it[Communities.id] = community.id
+            it[Communities.name] = community.name
+            it[Communities.owner] = community.owner
+            it[Communities.createdTime] = community.createdTime
+        }.insertedCount > 0) {
+            "insert community failed"
         }
+        check(Aids.insert {
+            it[value] = community.aid
+            it[objectId] = community.id
+            it[objectType] = ObjectType.COMMUNITY
+        }.insertedCount > 0) {
+            "insert aid failed"
+        }
+        MemberJoin.addJoinRaw(
+            community.owner,
+            community.id,
+            community.createdTime,
+            ObjectType.COMMUNITY
+        )
+    }
+
+    override suspend fun createCommunityRooms(rooms: List<Room>) = databaseSession.dbQuery {
+        batchCreateCommunityRooms(rooms)
     }
 
     override suspend fun getCommunityJoinedTimeByIds(
         uid: PrimaryKey,
         communityIds: List<PrimaryKey>
-    ): Result<List<Pair<Long, LocalDateTime>>> {
-        return databaseSession.dbSearch {
-            search {
-                Communities.join(
-                    MemberJoins,
-                    JoinType.INNER,
-                    Communities.id,
-                    MemberJoins.objectId
-                ) {
-                    MemberJoins.uid eq uid
-                }.select(Communities.id, MemberJoins.joinedTime)
-                    .where {
-                        Communities.id.inList(communityIds)
-                    }
-            }
-            map {
-                it[Communities.id] to it[MemberJoins.joinedTime]
-            }
+    ) = databaseSession.dbSearch {
+        search {
+            Communities.join(
+                MemberJoins,
+                JoinType.INNER,
+                Communities.id,
+                MemberJoins.objectId
+            ) {
+                MemberJoins.uid eq uid
+            }.select(Communities.id, MemberJoins.joinedTime)
+                .where {
+                    Communities.id.inList(communityIds)
+                }
+        }
+        map {
+            it[Communities.id] to it[MemberJoins.joinedTime]
         }
     }
 
     override suspend fun getRawCommunities(
         objectListFetch: ObjectListFetch
-    ): Result<List<RawCommunity>> {
-        return databaseSession.dbSearch {
-            search {
-                Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-                    .selectAll().where {
-                        when (objectListFetch) {
-                            is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                            is ObjectListFetch.IdListFetch -> Communities.id inList objectListFetch.idList
-                        }
+    ) = databaseSession.dbSearch {
+        search {
+            Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                .selectAll().where {
+                    when (objectListFetch) {
+                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                        is ObjectListFetch.IdListFetch -> Communities.id inList objectListFetch.idList
                     }
-            }
-            map {
-                val community = Community.wrapRow(it)
-                val joinedTime = it.getOrNull(MemberJoins.joinedTime)
-                val lastRead = it.getOrNull(UserTopicReads.topicId)
-                val communityInfo = community
-                RawCommunity(
-                    communityInfo,
-                    joinedTime,
-                    lastRead,
-                    0
-                )
-            }
+                }
+        }
+        map {
+            val community = Community.wrapRow(it)
+            val joinedTime = it.getOrNull(MemberJoins.joinedTime)
+            val lastRead = it.getOrNull(UserTopicReads.topicId)
+            val communityInfo = community
+            RawCommunity(communityInfo, joinedTime, lastRead)
         }
     }
 
     override suspend fun updateCommunity(
         id: PrimaryKey,
         body: UpdateCommunityBody
-    ): Result<Boolean> {
-        return databaseSession.dbQuery {
-            listOf(suspend {
-                val newIcon = body.icon
-                val newName = body.name
-                val newPoster = body.poster
-                if (!newName.isNullOrBlank() || newIcon != null || newPoster != null) {
-                    Communities.update({
-                        Communities.id eq id
-                    }) {
-                        if (!newName.isNullOrBlank()) {
-                            it[Communities.name] = newName
-                        }
-                        if (newIcon != null) {
-                            it[Communities.icon] = newIcon
-                        }
-                        if (newPoster != null) {
-                            it[Communities.poster] = newPoster
-                        }
-                    } > 0
-                } else {
-                    true
-                }
-            }).all {
-                it()
+    ) = databaseSession.dbQuery {
+        listOf(suspend {
+            val newIcon = body.icon
+            val newName = body.name
+            val newPoster = body.poster
+            if (!newName.isNullOrBlank() || newIcon != null || newPoster != null) {
+                Communities.update({
+                    Communities.id eq id
+                }) {
+                    if (!newName.isNullOrBlank()) {
+                        it[Communities.name] = newName
+                    }
+                    if (newIcon != null) {
+                        it[Communities.icon] = newIcon
+                    }
+                    if (newPoster != null) {
+                        it[Communities.poster] = newPoster
+                    }
+                } > 0
+            } else {
+                true
             }
+        }).all {
+            it()
         }
     }
 
-    override suspend fun getCommunityCount(): Result<Long> {
-        return databaseSession.dbSearch {
-            search {
-                Communities.selectAll()
-            }
-            count()
+    override suspend fun getCommunityCount() = databaseSession.dbSearch {
+        search {
+            Communities.selectAll()
         }
+        count()
     }
 }
