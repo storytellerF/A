@@ -54,6 +54,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.napier)
             implementation(projects.shared)
             implementation(libs.kotlinx.datetime)
             implementation(projects.client.modelStorage)

@@ -72,6 +72,7 @@ import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomDatabase
+import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -290,13 +291,13 @@ class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, 
             events.emit(OnTopicCreated(frame.topicInfo))
         }
     }
-    val guestDatabase = RoomModelStorage(getRoomDatabase("guest"))
+    val guestDatabase = getRoomModelStorage("guest")
     val database = sessionManager.model.state.distinctUntilChangedBy {
         it
     }.map {
         if (it is ClientSessionState.Success) {
             val address = it.session.address().getOrThrow()
-            RoomModelStorage(getRoomDatabase(address))
+            getRoomModelStorage(address)
         } else {
             guestDatabase
         }
