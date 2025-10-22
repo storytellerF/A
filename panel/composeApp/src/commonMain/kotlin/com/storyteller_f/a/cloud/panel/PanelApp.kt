@@ -32,8 +32,8 @@ import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.core.PanelConfig
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.compontents.CenterBox
-import com.storyteller_f.a.app.core.compontents.LoginButton
 import com.storyteller_f.a.app.core.compontents.PrivateKeyInput
+import com.storyteller_f.a.app.core.compontents.SignInButton
 import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
@@ -127,7 +127,7 @@ private fun PanelHost(content: @Composable () -> Unit) {
         content()
     } else {
         CenterBox {
-            LoginButton {
+            SignInButton {
                 nav.gotoLogin()
             }
         }

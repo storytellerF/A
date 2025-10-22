@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
@@ -39,7 +40,7 @@ import com.storyteller_f.a.app.compose_app.pages.room.MyRoomsPage
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.core.compontents.CenterBox
-import com.storyteller_f.a.app.core.compontents.LoginButton
+import com.storyteller_f.a.app.core.compontents.SignInButton
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -52,53 +53,77 @@ fun HomePage() {
         NavRoute("/communities", Icons.Default.Diversity3, "communities"),
         NavRoute("/rooms", Icons.Default.ChatBubble, "rooms"),
     )
+    val modifier = Modifier.testTag("home")
     when (size.widthSizeClass) {
         WindowWidthSizeClass.Compact -> {
-            val pagerState = rememberPagerState {
-                3
-            }
-            Scaffold(bottomBar = {
-                val scope = rememberCoroutineScope()
-                CustomBottomNav(homeNavRoutes[pagerState.currentPage].path, homeNavRoutes) { path ->
-                    scope.launch {
-                        pagerState.animateScrollToPage(homeNavRoutes.indexOfFirst {
-                            it.path == path
-                        })
-                    }
-                }
-            }) {
-                Column(
-                    Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    val scope = when (pagerState.currentPage) {
-                        1 -> SearchScope.MyCommunity
-                        2 -> SearchScope.MyRoom
-                        else -> SearchScope.World
-                    }
-                    CustomSearchBar(scope) {
-                        ProjectIcon()
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    HomePager(Modifier.weight(1f).padding(bottom = it.calculateBottomPadding()), pagerState)
-                }
-            }
+            CompatHomePage(homeNavRoutes, modifier)
         }
 
         else -> {
-            Scaffold { paddingValues ->
-                Row(Modifier) {
-                    val navigator = rememberNavController()
-                    val currentEntry by navigator.currentBackStackEntryFlow.collectAsState(null)
-                    CustomRailNav(currentEntry?.destination?.route, homeNavRoutes) {
-                        navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
-                    }
-                    HomeNavHost(
-                        navigator,
-                        modifier = Modifier.weight(1f).padding(bottom = paddingValues.calculateBottomPadding())
-                    )
-                }
+            ExpandHomePage(modifier, homeNavRoutes)
+        }
+    }
+}
+
+@Composable
+private fun ExpandHomePage(
+    modifier: Modifier,
+    homeNavRoutes: List<NavRoute>
+) {
+    Scaffold(modifier = modifier) { paddingValues ->
+        Row(Modifier) {
+            val navigator = rememberNavController()
+            val currentEntry by navigator.currentBackStackEntryFlow.collectAsState(null)
+            CustomRailNav(currentEntry?.destination?.route, homeNavRoutes) {
+                navigator.navigate(
+                    it,
+                    NavOptions.Builder().setLaunchSingleTop(true).build()
+                )
             }
+            HomeNavHost(
+                navigator,
+                modifier = Modifier.weight(1f)
+                    .padding(bottom = paddingValues.calculateBottomPadding())
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompatHomePage(
+    homeNavRoutes: List<NavRoute>,
+    modifier: Modifier
+) {
+    val pagerState = rememberPagerState {
+        3
+    }
+    Scaffold(bottomBar = {
+        val scope = rememberCoroutineScope()
+        CustomBottomNav(homeNavRoutes[pagerState.currentPage].path, homeNavRoutes) { path ->
+            scope.launch {
+                pagerState.animateScrollToPage(homeNavRoutes.indexOfFirst {
+                    it.path == path
+                })
+            }
+        }
+    }, modifier = modifier) {
+        Column(
+            Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val scope = when (pagerState.currentPage) {
+                1 -> SearchScope.MyCommunity
+                2 -> SearchScope.MyRoom
+                else -> SearchScope.World
+            }
+            CustomSearchBar(scope) {
+                ProjectIcon()
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            HomePager(
+                Modifier.weight(1f).padding(bottom = it.calculateBottomPadding()),
+                pagerState
+            )
         }
     }
 }
@@ -154,7 +179,7 @@ fun CustomRailNav(
 
 @Composable
 fun CustomBottomNav(
-    path: String?,
+    path: String,
     navRoutes: List<NavRoute>,
     navigate: (String) -> Unit = { }
 ) {
@@ -166,7 +191,7 @@ fun CustomBottomNav(
                 Icon(imageVector = it.icon, it.label)
             }, label = {
                 Text(it.label)
-            })
+            }, modifier = Modifier.testTag(it.label))
         }
     }
 }
@@ -233,7 +258,7 @@ private fun UserHost(content: @Composable () -> Unit) {
         content()
     } else {
         CenterBox {
-            LoginButton {
+            SignInButton {
                 appNav.gotoLogin()
             }
         }
@@ -244,7 +269,10 @@ private fun UserHost(content: @Composable () -> Unit) {
 private fun ProjectDialogInternal(dismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     Surface(shape = RoundedCornerShape(8.dp)) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             val appNav = LocalAppNav.current
             Column {
                 ButtonNav(

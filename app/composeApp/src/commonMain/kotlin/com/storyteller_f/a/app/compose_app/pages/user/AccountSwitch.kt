@@ -34,12 +34,13 @@ import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalMainSessionManager
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalUiViewModel
+import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.common.ChildAccountsViewModel
 import com.storyteller_f.a.app.compose_app.common.getChildAccountsViewModel
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.components.SheetContainer
-import com.storyteller_f.a.app.compose_app.uiViewModel
 import com.storyteller_f.a.app.core.compontents.CustomIcon
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.UserIcon
@@ -81,6 +82,7 @@ fun AccountSwitch(
 
 @Composable
 private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
+    val uiViewModel = LocalUiViewModel.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     StateView(viewModel, modifier = Modifier.height(300.dp)) { pagingItems ->
@@ -98,7 +100,10 @@ private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
                 childAccountInfo?.let {
                     ChildAccountCell(it.userInfo) {
                         scope.launch {
-                            globalDialogController.switchUser(childAccountInfo.privateKey)
+                            globalDialogController.switchUser(
+                                childAccountInfo.privateKey,
+                                uiViewModel
+                            )
                         }
                     }
                 }
@@ -112,6 +117,7 @@ private fun AccountSwitchMenu(
     isSwitched: Boolean,
     viewModel: ChildAccountsViewModel
 ) {
+    val uiViewModel = LocalUiViewModel.current
     val mainSessionManager = LocalMainSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     val scope = rememberCoroutineScope()
@@ -180,6 +186,7 @@ fun isSwitched(): Pair<CustomUserSessionManager, Boolean> {
 
 suspend fun GlobalDialogController.switchUser(
     derPrivateKeyStr: String,
+    uiViewModel: UIViewModel
 ) {
     useResult {
         algoRunCatching {

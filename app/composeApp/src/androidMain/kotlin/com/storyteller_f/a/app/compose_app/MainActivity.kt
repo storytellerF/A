@@ -74,7 +74,8 @@ class MainActivity : ComponentActivity(), ClientFileServiceContainer {
         val receiver = CustomClientFileProvider(this)
         setContent {
             CompositionLocalProvider(
-                LocalClientFileProvider provides receiver
+                LocalClientFileProvider provides receiver,
+                LocalUiViewModel provides uiViewModel
             ) {
                 App()
             }

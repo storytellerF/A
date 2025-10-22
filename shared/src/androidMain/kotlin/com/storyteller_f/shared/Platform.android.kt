@@ -31,7 +31,6 @@ class AndroidPlatform : Platform {
             file.writeText(currentId)
             return currentId
         }
-
 }
 
 actual fun getPlatform(): Platform = AndroidPlatform()

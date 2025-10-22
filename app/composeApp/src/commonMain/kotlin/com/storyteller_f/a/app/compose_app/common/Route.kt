@@ -62,7 +62,7 @@ data class CommunityScreen(val communityId: PrimaryKey, val showDialog: Boolean)
 data class RoomScreen(val roomId: PrimaryKey, val showDialog: Boolean)
 
 @Serializable
-data object LoginScreen
+data object SignSessionScreen
 
 @Serializable
 data class TopicScreen(val topicId: PrimaryKey)
@@ -328,7 +328,7 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
         get() = navigator.currentBackStackEntryFlow.stateIn(scope, SharingStarted.Eagerly, null)
 
     override fun gotoLogin() {
-        navigator.navigate(route = LoginScreen)
+        navigator.navigate(route = SignSessionScreen)
     }
 
     override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) {
@@ -446,7 +446,7 @@ private fun NavGraphBuilder.buildMainScreen() {
     composable<HomeScreen> {
         HomePage()
     }
-    composable<LoginScreen> {
+    composable<SignSessionScreen> {
         LoginPage()
     }
     composable<CommunityScreen> {
