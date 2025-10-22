@@ -58,23 +58,13 @@ kotlin {
         }
     }
 
-    jvm("desktop")
+    jvm()
 
     if (buildWasmTarget) {
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
             outputModuleName = "composeApp"
-            browser {
-                commonWebpackConfig {
-                    outputFileName = "composeApp.js"
-                    devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
-                        static = (static ?: mutableListOf()).apply {
-                            // Serve sources to debug inside browser
-                            add(project.projectDir.path)
-                        }
-                    }
-                }
-            }
+            browser()
             binaries.executable()
         }
     }
@@ -83,8 +73,6 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val desktopMain by getting
-        val desktopTest by getting
         val headlessTest by creating {
             dependsOn(commonTest.get())
         }
@@ -200,7 +188,7 @@ kotlin {
             implementation(compose.uiTest)
             implementation(projects.app.dev)
         }
-        desktopMain.dependencies {
+        jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
 
@@ -213,10 +201,12 @@ kotlin {
             implementation(libs.connectivity.compose.http)
             implementation(libs.tika.core)
         }
-        desktopTest.dependencies {
+        jvmTest.dependencies {
             implementation(compose.desktop.currentOs)
         }
-        desktopTest.dependsOn(headlessTest)
+        jvmTest {
+            dependsOn(headlessTest)
+        }
     }
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
@@ -395,7 +385,7 @@ tasks.withType<Test> {
             exclude("**/device_based/*")
         }
 
-        "desktopTest" -> {
+        "jvmTest" -> {
             exclude("**/device_based/*")
         }
     }

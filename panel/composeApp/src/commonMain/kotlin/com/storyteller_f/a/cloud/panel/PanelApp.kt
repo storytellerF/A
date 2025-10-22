@@ -12,7 +12,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -37,8 +45,7 @@ import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getPanelAccountInfo
 import com.storyteller_f.a.client.core.startBackgroundTask
-import com.storyteller_f.a.client.room.RoomModelStorage
-import com.storyteller_f.a.client.room.getRoomDatabase
+import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.a.cloud.panel.pages.AllUsersPage
 import com.storyteller_f.a.cloud.panel.pages.OverviewPage
 import io.github.vinceglb.filekit.FileKit
@@ -239,13 +246,13 @@ class PanelAccountInstance(scope: CoroutineScope) {
             )
         }
     }
-    val guestDatabase = RoomModelStorage(getRoomDatabase("guest"))
+    val guestDatabase = getRoomModelStorage("guest")
     val database = sessionManager.model.state.distinctUntilChangedBy {
         it
     }.map {
         if (it is ClientSessionState.Success) {
             val address = it.session.address().getOrThrow()
-            RoomModelStorage(getRoomDatabase(address))
+            getRoomModelStorage(address)
         } else {
             guestDatabase
         }

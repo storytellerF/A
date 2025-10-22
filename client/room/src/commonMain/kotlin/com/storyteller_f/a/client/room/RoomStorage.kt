@@ -512,3 +512,5 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val uploadInfoStorage: UploadInfoStorage = UploadInfoRoomStorage(appDatabase)
     override val overviewStorage: OverviewStorage = OverviewRoomStorage(appDatabase)
 }
+
+fun getRoomModelStorage(name: String) = RoomModelStorage(getRoomDatabase(name))
