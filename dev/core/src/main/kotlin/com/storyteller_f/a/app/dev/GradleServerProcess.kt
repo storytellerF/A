@@ -72,7 +72,7 @@ private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process) 
                     println(line)
                     if (line.contains("Responding at")) {
                         task.complete(line)
-                    } else if (line.contains("Execution failed for task ':server:")) {
+                    } else if (line.contains("Execution failed for task")) {
                         task.completeExceptionally(RuntimeException(line))
                     }
                 }

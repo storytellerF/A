@@ -15,7 +15,6 @@ import coil3.compose.LocalPlatformContext
 import com.storyteller_f.a.app.compose_app.App
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.UIViewModel
-import com.storyteller_f.a.app.compose_app.pages.user.signOut
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.shared.getPlatform
@@ -61,9 +60,7 @@ class AppTest {
                 onNodeWithTag("auto_generate").performClick()
                 onNodeWithTag("start_sign").performClick()
                 waitUntil(timeoutMillis = 15000) {
-                    val displayed = onNodeWithTag("home").isDisplayed()
-                    println(displayed)
-                    displayed
+                    onNodeWithTag("home").isDisplayed()
                 }
 
             }
