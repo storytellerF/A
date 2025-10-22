@@ -97,11 +97,7 @@ kotlin {
             }
             implementation(libs.okhttp)
         }
-        androidInstrumentedTest.dependencies {
-            implementation(libs.androidx.ui.test.junit4.android)
-        }
         androidUnitTest.dependencies {
-            implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
         }
         androidUnitTest {
@@ -174,7 +170,7 @@ kotlin {
 
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(compose.uiTest)
-            implementation(projects.app.dev)
+            implementation(projects.dev.core)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -218,6 +214,8 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    androidTestImplementation(libs.androidx.ui.test.junit4.android)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
 
 easylauncher {

@@ -45,9 +45,8 @@ include(":shared")
 
 include(":app:composeApp")
 include(":app:cliApp")
-include(":app:dev")
-include(":app:devCli")
-include(":app:devServer")
+include(":dev:core")
+include(":dev:server")
 include(":app:core")
 
 include(":cloud:server")

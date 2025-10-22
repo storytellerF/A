@@ -5,6 +5,9 @@ import kotlinx.coroutines.*
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+import kotlin.collections.mapOf
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 fun isWin(): Boolean {
     val property = System.getProperty("os.name").orEmpty()
@@ -12,7 +15,11 @@ fun isWin(): Boolean {
 }
 
 fun forceStop(port: Int) {
+    Napier.i {
+        "forceStop $port"
+    }
     if (isWin()) {
+        //for /f "tokens=5" %a in ('netstat -ano ^| findstr :8080') do taskkill /PID %a /F
         Runtime.getRuntime()
             .exec(
                 arrayOf(
@@ -22,7 +29,8 @@ fun forceStop(port: Int) {
                 )
             )
     } else {
-        Runtime.getRuntime().exec(arrayOf("/bin/sh", "-c", "pid=$(lsof -t -i :8080) && kill -9 \$pid"))
+        Runtime.getRuntime()
+            .exec(arrayOf("/bin/sh", "-c", "pid=$(lsof -t -i :8080) && kill -9 \$pid"))
     }
 }
 
@@ -31,16 +39,17 @@ fun stopServer(serverProcess: Process, port: Int) {
     forceStop(port)
 }
 
+@OptIn(ExperimentalUuidApi::class)
 suspend fun CoroutineScope.startServerByRun(envFilePath: String, port: Int): Process? {
-    val envFile = File(envFilePath, "server/src/test/resources/.env")
-    if (!envFile.exists()) {
-        println("${envFile.canonicalPath} not exists")
+    val testEnvFile = File(envFilePath, "cloud/server/src/test/resources/.env")
+    if (!testEnvFile.exists()) {
+        println("${testEnvFile.canonicalPath} not exists")
         return null
     }
-    val file = File(envFilePath) // 确保这个路径正确，指向包含 gradlew.bat 的父目录
+    val projectRoot = File(envFilePath) // 确保这个路径正确，指向包含 gradlew.bat 的父目录
     val gradleCommand = if (isWin()) {
         // Windows
-        File(file, "gradlew.bat").absolutePath
+        File(projectRoot, "gradlew.bat").absolutePath
     } else {
         // Linux/MacOS
         "./gradlew"
@@ -48,12 +57,12 @@ suspend fun CoroutineScope.startServerByRun(envFilePath: String, port: Int): Pro
 
     val builder = ProcessBuilder(
         gradleCommand,
-        "cloud:server:runShadow",
+        "cloud:server:run",
         "-Dorg.gradle.logging.level=quiet",
         "--quiet",
-    )
-        .directory(file.canonicalFile)
-    val pairs = envFile.readLines().filter {
+        "--no-daemon"
+    ).directory(projectRoot.canonicalFile).redirectErrorStream(true)
+    val envList = testEnvFile.readLines().filter {
         it.isNotBlank()
     }.map {
         val list = it.split("=", limit = 2)
@@ -61,8 +70,15 @@ suspend fun CoroutineScope.startServerByRun(envFilePath: String, port: Int): Pro
             ""
         }
     }
+    val url = "r2dbc:h2:mem:///${Uuid.random().toHexString()}"
     val environment = builder.environment()
-    environment.putAll(pairs)
+    environment.putAll(envList)
+    environment.putAll(
+        mapOf(
+            "DATABASE_URI" to url,
+            "DATABASE_DRIVER" to "h2"
+        )
+    )
     environment["SERVER_PORT"] = port.toString()
     val serverProcess = builder.start()
     waitRunServerProcess(serverProcess)
@@ -72,27 +88,22 @@ suspend fun CoroutineScope.startServerByRun(envFilePath: String, port: Int): Pro
 private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process) {
     val task = CompletableDeferred<String>()
     launch {
-        serverProcess.inputStream.bufferedReader().use {
-            while (serverProcess.isRunning()) {
-                val line = it.readLine() ?: break
-                if (line.contains("Application started")) {
-                    task.complete(line)
+        withContext(Dispatchers.IO) {
+            serverProcess.inputStream.bufferedReader().use {
+                while (serverProcess.isRunning()) {
+                    val line = it.readLine() ?: break
+                    if (line.contains("Responding at")) {
+                        task.complete(line)
+                    } else if (line.contains("Execution failed for task ':server:")) {
+                        task.completeExceptionally(RuntimeException(line))
+                    }
                 }
             }
         }
     }
-    launch {
-        serverProcess.errorStream.bufferedReader().use {
-            while (serverProcess.isRunning()) {
-                val line = it.readLine() ?: break
-                if (line.contains("Execution failed for task ':server:")) {
-                    task.completeExceptionally(RuntimeException(line))
-                }
-            }
-        }
-    }
-    withTimeout(10000) {
-        task.await()
+    task.await()
+    Napier.i {
+        "server started"
     }
 }
 
@@ -208,7 +219,14 @@ fun startListening(port: Int, previousDevices: MutableSet<String>): Job {
                 currentDevices.forEach { device ->
                     if (device !in previousDevices) {
                         val code =
-                            ProcessBuilder("adb", "-s", device, "reverse", "tcp:$port", "tcp:$port").start().waitFor()
+                            ProcessBuilder(
+                                "adb",
+                                "-s",
+                                device,
+                                "reverse",
+                                "tcp:$port",
+                                "tcp:$port"
+                            ).start().waitFor()
                         println("New device connected: $device exitCode: $code")
                     }
                 }
@@ -244,7 +262,7 @@ fun getConnectedDevices(): Set<String> {
         process.waitFor()
     } catch (e: Exception) {
         Napier.e(e) {
-            "com.storyteller_f.a.client.dev.getConnectedDevices failed"
+            "getConnectedDevices failed"
         }
     }
     return devices

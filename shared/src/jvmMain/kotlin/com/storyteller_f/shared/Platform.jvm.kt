@@ -2,7 +2,6 @@ package com.storyteller_f.shared
 
 import io.github.aakira.napier.Antilog
 import io.github.aakira.napier.LogLevel
-import io.github.aakira.napier.Napier
 import org.slf4j.LoggerFactory
 import java.util.regex.Pattern
 

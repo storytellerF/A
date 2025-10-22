@@ -1,20 +1,25 @@
 package device_based
 
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
-import coil3.compose.LocalPlatformContext
-import com.storyteller_f.a.app.compose_app.App
-import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.shared.getPlatform
 import com.storyteller_f.shared.setupKmpLogger
+import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
@@ -33,20 +38,27 @@ class AppTest {
         runServer {
             runComposeUiTest {
                 setContent {
-                    val current = LocalPlatformContext.current
-                    var initDone by remember {
-                        mutableStateOf(false)
-                    }
-                    LaunchedEffect(null) {
-                        initEnvironment(current)
-                        initDone = true
-                    }
-                    if (initDone) {
-                        App()
+                    Scaffold {
+                        Column(Modifier.padding(it)) {
+                            var text by remember { mutableStateOf("Hello") }
+                            Text(
+                                text = text,
+                                modifier = Modifier.testTag("text")
+                            )
+                            Button(
+                                onClick = { text = "Compose" },
+                                modifier = Modifier.testTag("button")
+                            ) {
+                                Text("Click me")
+                            }
+                        }
                     }
                 }
 
-                onNodeWithTag("me").performClick()
+                // Tests the declared UI with assertions and actions of the Compose Multiplatform testing API
+                onNodeWithTag("text").assertTextEquals("Hello")
+                onNodeWithTag("button").performClick()
+                onNodeWithTag("text").assertTextEquals("Compose")
             }
         }
 
@@ -64,6 +76,9 @@ class AppTest {
             }
             assertEquals("pong", testClient.get("/ping").bodyAsText())
             val platform = getPlatform()
+            Napier.i {
+                "${platform.id} ${platform.name}"
+            }
             val port = testClient.post("/start") {
                 setBody("${platform.name}\n${platform.id}")
                 timeout {

@@ -14,14 +14,19 @@ class MergedEnv(val list: List<Map<String, String>>) {
     }
 }
 
-fun readEnv(envMap: Map<String, String>? = null) = MergedEnv(
-    listOfNotNull(
-        envMap, // 测试时手动传递
-        System.getenv(), // 正式部署
-        readFileEnv("../../${BackendConfig.FLAVOR}.env"), // 本地开发
-        readFileEnv(".env"), // koyeb 部署
-        readResourceEnv(".env"), // 测试
-    )
+fun readEnv(envMap: Map<String, String>? = null, flavorFilePath: String? = null) = MergedEnv(
+    buildList {
+        addAll(
+            listOfNotNull(
+                envMap, // 测试时手动传递
+                System.getenv(), // 正式部署
+                readResourceEnv(".env"), // 测试
+            )
+        )
+        if (flavorFilePath != null) {
+            readFileEnv(flavorFilePath)?.let { add(it) } // 本地开发
+        }
+    }
 )
 
 fun readResourceEnv(resName: String): Map<String, String>? {
@@ -42,8 +47,8 @@ fun readResourceEnv(resName: String): Map<String, String>? {
     }?.associate { it }
 }
 
-fun readFileEnv(resName: String): Map<String, String>? {
-    val file = File(resName)
+fun readFileEnv(path: String): Map<String, String>? {
+    val file = File(path)
     Napier.i {
         if (file.exists()) {
             "read env from file: ${file.canonicalPath}"
@@ -52,7 +57,7 @@ fun readFileEnv(resName: String): Map<String, String>? {
         }
     }
     return if (file.exists()) {
-        FileInputStream(resName).use {
+        FileInputStream(path).use {
             Properties().apply {
                 load(it)
             }

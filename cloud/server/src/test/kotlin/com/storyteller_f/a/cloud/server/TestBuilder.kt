@@ -85,17 +85,16 @@ private fun startMemoryTest(
     overrideEnv: Map<String, String>,
     block: suspend (ApplicationTestBuilder) -> Unit
 ) {
-    val h2File = File("./build/test/h2/${Uuid.random().toHexString()}")
-    h2File.parentFile!!.let {
-        if (!it.exists() && !it.mkdirs()) {
-            throw Exception("mkdirs failed ${it.canonicalPath}")
-        }
-    }
-    val env = readResourceEnv(".env")!! + mapOf(
-        Pair(
-            "DATABASE_URI",
-            "r2dbc:h2:file:///${h2File.path.replace("\\", "/")}"
-        ),
+//    val h2File = File("./build/test/h2/${Uuid.random().toHexString()}")
+//    h2File.parentFile!!.let {
+//        if (!it.exists() && !it.mkdirs()) {
+//            throw Exception("mkdirs failed ${it.canonicalPath}")
+//        }
+//    }
+//    val url = "r2dbc:h2:file:///${h2File.path.replace("\\", "/")}"
+    val url = "r2dbc:h2:mem:///${Uuid.random().toHexString()}"
+    val env = mapOf(
+        "DATABASE_URI" to url,
         "DATABASE_DRIVER" to "h2"
     ) + overrideEnv
     doTest(env, block)
@@ -107,11 +106,11 @@ private fun startTestContainerTest(
     block: suspend ApplicationTestBuilder.() -> Unit
 ) {
     runBlocking {
-        val env = readResourceEnv(".env")!!.toMutableMap()
+        val env = mutableMapOf<String, String>()
         useElasticTestContainer(env) {
             useMinioTestContainer(env) {
                 useDatabaseContainer(databaseTypeIsMysql, env) {
-                    doTest(overrideEnv + env, block)
+                    doTest(env + overrideEnv, block)
                 }
             }
         }

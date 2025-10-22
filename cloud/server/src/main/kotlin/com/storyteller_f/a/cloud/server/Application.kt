@@ -94,7 +94,7 @@ fun main(args: Array<String>) {
     }
     SnowflakeFactory.setMachine(0)
 
-    val map = readEnv()
+    val map = readEnv(flavorFilePath = getFlavorFilePath())
     processInitTaskIfNeed(map)
     val serverPort = map["SERVER_PORT"]?.toInt() ?: 80
     val extraArgs = arrayOf("-port=$serverPort")
@@ -224,12 +224,12 @@ private fun SessionsConfig.setupSessions() {
 }
 
 private fun Application.buildBackend(): Backend {
-    val associate = engine.environment.config.toMap().mapNotNull {
+    val injectedEnv = engine.environment.config.toMap().mapNotNull {
         (it.value as? String)?.let { v ->
             it.key to v
         }
     }.associate { it }
-    val env = readEnv(associate)
+    val env = readEnv(injectedEnv, getFlavorFilePath())
     Napier.i {
         if (env["BUILD_TYPE"] == "test") {
             "start server in `${env["METHOD_NAME"]}`"
@@ -239,6 +239,8 @@ private fun Application.buildBackend(): Backend {
     }
     return buildBackendFromEnv(env)
 }
+
+private fun getFlavorFilePath() = File("../../${ServerConfig.FLAVOR}.env").canonicalPath
 
 private fun buildDatabaseReader() = DatabaseReader.Builder(
     ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb")

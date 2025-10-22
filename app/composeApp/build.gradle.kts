@@ -9,12 +9,9 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.util.Base64
 import java.util.Properties
 
 plugins {
@@ -109,11 +106,7 @@ kotlin {
             }
             implementation(libs.okhttp)
         }
-        androidInstrumentedTest.dependencies {
-            implementation(libs.androidx.ui.test.junit4.android)
-        }
         androidUnitTest.dependencies {
-            implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
         }
         androidUnitTest {
@@ -186,7 +179,7 @@ kotlin {
 
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(compose.uiTest)
-            implementation(projects.app.dev)
+            implementation(projects.dev.core)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -215,6 +208,8 @@ kotlin {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    androidTestImplementation(libs.androidx.ui.test.junit4.android)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
 
 composeCompiler {
