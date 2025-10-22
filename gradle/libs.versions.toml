@@ -6,6 +6,7 @@ agp = "8.13.0"
 android-compileSdk = "36"
 android-minSdk = "26"
 android-targetSdk = "36"
+javaClient = "10.0.0"
 kodio-core = "0.0.6"
 jdk = "65"
 androidx-activityCompose = "1.11.0"
@@ -136,6 +137,7 @@ coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 gradle = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+java-client = { module = "io.appium:java-client", version.ref = "javaClient" }
 kodio-core = { module = "space.kodio:core", version.ref = "kodio-core" }
 couchbase-lite-paging = { module = "dev.kotbase:couchbase-lite-paging", version.ref = "couchbaseLite" }
 google-genai = { module = "com.google.genai:google-genai", version.ref = "googleGenai" }
