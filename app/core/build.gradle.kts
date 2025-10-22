@@ -31,21 +31,7 @@ kotlin {
     if (buildWasmTarget) {
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
-            browser {
-                commonWebpackConfig {
-                    devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
-                        static = (static ?: mutableListOf()).apply {
-                            // Serve sources to debug inside the browser
-                            add(project.projectDir.path)
-                        }
-                    }
-                }
-                testTask {
-                    useKarma {
-                        useChrome()
-                    }
-                }
-            }
+            browser()
         }
     }
 
@@ -82,11 +68,7 @@ kotlin {
             implementation(libs.androidx.ui.tooling.preview)
             implementation(libs.okhttp)
         }
-        androidInstrumentedTest.dependencies {
-            implementation(libs.androidx.ui.test.junit4.android)
-        }
         androidUnitTest.dependencies {
-            implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
         }
         commonMain.dependencies {
@@ -151,7 +133,6 @@ kotlin {
 
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(compose.uiTest)
-            implementation(projects.app.dev)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -174,6 +155,8 @@ kotlin {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    androidTestImplementation(libs.androidx.ui.test.junit4.android)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
 
 android {

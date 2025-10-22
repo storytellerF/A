@@ -38,12 +38,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.io.File
 
 fun main() {
     setLogPath("A")
     SnowflakeFactory.setMachine(1)
     setupKmpLogger()
-    val env = readEnv()
+    val flavorFilePath = File("../../${BackendConfig.FLAVOR}.env").canonicalPath
+    val env = readEnv(flavorFilePath = flavorFilePath)
     Napier.i {
         "start worker"
     }

@@ -15,21 +15,7 @@ kotlin {
     if (buildWasmTarget) {
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
-            browser {
-                commonWebpackConfig {
-                    devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
-                        static = (static ?: mutableListOf()).apply {
-                            // Serve sources to debug inside the browser
-                            add(project.projectDir.path)
-                        }
-                    }
-                }
-                testTask {
-                    useKarma {
-                        useChrome()
-                    }
-                }
-            }
+            browser()
         }
     }
 
@@ -62,11 +48,7 @@ kotlin {
         commonMain.dependencies {
             compileOnly(libs.javet)
         }
-        androidInstrumentedTest.dependencies {
-            implementation(libs.androidx.ui.test.junit4.android)
-        }
         androidUnitTest.dependencies {
-            implementation(libs.androidx.ui.test.manifest)
             implementation(libs.robolectric)
 
             implementation(libs.javet.node.linux.arm64)
@@ -105,6 +87,11 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xcontext-parameters", "-Xexpect-actual-classes")
     }
+}
+
+dependencies {
+    androidTestImplementation(libs.androidx.ui.test.junit4.android)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
 
 android {

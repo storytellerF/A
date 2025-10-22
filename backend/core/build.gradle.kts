@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
-    alias(libs.plugins.kotlinBuildConfig)
 }
 
 group = "com.storyteller_f.a.backend"
@@ -22,9 +21,3 @@ kotlin {
     jvmToolchain(21)
 }
 
-val flavor = project.findProperty("server.flavor").toString()
-
-buildConfig {
-    className = "BackendConfig"
-    buildConfigField<String>("FLAVOR", flavor)
-}

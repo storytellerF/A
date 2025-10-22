@@ -34,7 +34,7 @@ fi
 found=false
 for device in $(adb devices | grep -w 'device' | cut -f1); do
     # 获取当前设备的 android_id
-    device_android_id=$(adb -s "$device" shell settings get secure android_id | tr -d '\r\n')
+    device_android_id=$(adb -s "$device" shell 'cat /data/local/tmp/a/id')
 
     # 检查设备的 android_id 是否与输入的匹配
     if [ "$device_android_id" == "$input_android_id" ]; then

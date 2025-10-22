@@ -10,7 +10,7 @@ group = "com.storyteller_f.a.app"
 version = "1.0.0"
 
 application {
-    mainClass.set("com.storyteller_f.a.test_server.TestServerApplicationKt")
+    mainClass.set("com.storyteller_f.a.app.dev_server.DevServerApplicationKt")
     applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 
@@ -25,7 +25,7 @@ dependencies {
     implementation(projects.shared)
     implementation(libs.bundles.ktor.server)
 
-    implementation(projects.app.dev)
+    implementation(projects.dev.core)
 }
 
 val buildType = project.findProperty("server.buildType") as String

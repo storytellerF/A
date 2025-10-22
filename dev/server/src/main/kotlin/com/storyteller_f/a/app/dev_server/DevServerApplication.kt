@@ -12,6 +12,7 @@ import io.ktor.server.netty.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.util.logging.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -20,20 +21,14 @@ import kotlinx.io.IOException
 import java.io.File
 import java.net.ServerSocket
 
+
 private val previousDevices = mutableSetOf<String>()
 const val GIT_BASH = "C:/Program Files/Git/bin/bash.exe"
 fun main() {
     setupKmpLogger()
-    val runPath = File("").canonicalPath
-    println("current path: $runPath")
-    val isNested = runPath.endsWith("devCli")
-    val forwardScriptPath = File(
-        if (isNested) "../.." else ".",
-        "scripts/android_scripts/forward-android-devices.sh"
-    ).canonicalPath.replace("\\", "/")
-    val process = ProcessBuilder(GIT_BASH, "-c", "$forwardScriptPath 8888").start()
-    check(process.waitFor() == 0)
-    println(process.inputReader().readText())
+    val currentPath = File("").canonicalPath
+    println("current path: $currentPath")
+    forwardAllDevices(currentPath.endsWith("dev-server"))
     previousDevices.addAll(getConnectedDevices())
     forceStop(8888)
     EngineMain.main(emptyArray())
@@ -45,7 +40,7 @@ fun Application.module() {
     val processLock = Mutex()
     val job = startListening(8888, previousDevices)
     monitor.subscribe(ApplicationStopped) { application ->
-        application.log.info("Server is stopped")
+        application.log.info("Dev Server is stopped")
         job.cancel()
         processMap.forEach {
             application.log.info("stop :${it.key}")
@@ -76,22 +71,22 @@ private suspend fun RoutingCall.handleStopRoute(
 ) {
     val application = application
     val port = receiveText().toIntOrNull()
-    if (port != null) {
-        val server = processLock.withLock {
-            processMap.remove(port)
-        }
-        if (server != null) {
-            application.log.info("stop $port server success")
-            stopServer(server, port)
-            respond(HttpStatusCode.OK)
-        } else {
-            application.log.info("stop $port server not found process")
-            respond(HttpStatusCode.NotFound)
-        }
-    } else {
+    if (port == null) {
         application.log.info("stop port server not found")
         respond(HttpStatusCode.NotFound)
+        return
     }
+    val server = processLock.withLock {
+        processMap.remove(port)
+    }
+    if (server == null) {
+        application.log.info("stop $port server not found process")
+        respond(HttpStatusCode.NotFound)
+        return
+    }
+    application.log.info("stop $port server success")
+    stopServer(server, port)
+    respond(HttpStatusCode.OK)
 }
 
 private suspend fun RoutingCall.handleStartRoute(
@@ -104,7 +99,7 @@ private suspend fun RoutingCall.handleStartRoute(
         respond(HttpStatusCode.BadRequest)
         return
     }
-    val isNested = File("").canonicalPath.endsWith("test-server")
+    val isNested = File("").canonicalPath.endsWith("dev-server")
     val (name, id) = platformInfo
     val port = processLock.withLock {
         val port = findAvailablePort {
@@ -114,38 +109,55 @@ private suspend fun RoutingCall.handleStartRoute(
         port
     }
 
-    val server = startServerByRun(if (isNested) ".." else ".", port)
-    if (server != null) {
-        application.log.info("start $port server success")
-        processLock.withLock {
-            processMap[port] = server
-        }
-        if (name.startsWith("Android", true)) {
-            val path =
-                File(
-                    if (isNested) ".." else ".",
-                    "scripts/android_scripts/forward-special-device.sh"
-                ).canonicalPath.replace("\\", "/")
-            withContext(Dispatchers.IO) {
-                val start = ProcessBuilder(GIT_BASH, "-c", "$path $id $port").start()
-                val serverResult = start.waitFor()
-                if (serverResult != 0) {
-                    println("forward $id device failed: ${start.inputReader().readText()}")
-                    System.err.println(start.errorReader().readText())
-                } else {
-                    println("forward $id device success")
-                }
+    if (name.startsWith("Android", true)) {
+        if (!forwardSpecialAndroidDevice(isNested, id, port, application.log)) {
+            processLock.withLock {
+                processMap.remove(port)
             }
+            application.log.info("forward devices failed, release port $port")
+            respond(HttpStatusCode.BadRequest, "forward devices failed")
+            return
         }
-        respondText {
-            port.toString()
-        }
-    } else {
+    }
+    val server = startServerByRun(if (isNested) "../.." else ".", port)
+    if (server == null) {
         processLock.withLock {
             processMap.remove(port)
         }
         application.log.info("start $port server failed")
         respond(HttpStatusCode.InternalServerError)
+    }
+    application.log.info("start $port server success")
+    processLock.withLock {
+        processMap[port] = server
+    }
+    respondText {
+        port.toString()
+    }
+}
+
+private suspend fun forwardSpecialAndroidDevice(
+    isNested: Boolean,
+    id: String,
+    port: Int,
+    log: Logger
+): Boolean {
+    log.info("forward $id device to $port")
+    val path = File(
+        if (isNested) "../.." else ".",
+        "scripts/android_scripts/forward-special-device.sh"
+    ).canonicalPath.replace("\\", "/")
+    val processBuilder = ProcessBuilder(GIT_BASH, "-c", "$path $id $port").redirectErrorStream(true)
+    return withContext(Dispatchers.IO) {
+        val process = processBuilder.start()
+        val serverResult = process.waitFor()
+        val input = process.inputReader().readText()
+        if (serverResult != 0) {
+            log.error("forward $id device failed: $input")
+        } else {
+            log.info("forward $id device success $input")
+        }
+        serverResult == 0
     }
 }
 
@@ -175,4 +187,18 @@ fun findAvailablePort(
         retries++
     }
     throw Exception("No available port found after $maxRetries retries")
+}
+
+
+private fun forwardAllDevices(isNested: Boolean) {
+    val forwardScriptPath = File(
+        if (isNested) "../.." else ".",
+        "scripts/android_scripts/forward-android-devices.sh"
+    ).canonicalPath.replace("\\", "/")
+    val process = ProcessBuilder(GIT_BASH, "-c", "$forwardScriptPath 8888")
+        .redirectErrorStream(true)
+        .start()
+    val message = process.inputReader().readText()
+    println(message)
+    check(process.waitFor() == 0)
 }
