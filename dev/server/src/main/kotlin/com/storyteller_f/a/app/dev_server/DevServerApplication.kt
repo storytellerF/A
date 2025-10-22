@@ -21,17 +21,20 @@ import kotlinx.io.IOException
 import java.io.File
 import java.net.ServerSocket
 
-
 private val previousDevices = mutableSetOf<String>()
 const val GIT_BASH = "C:/Program Files/Git/bin/bash.exe"
 fun main() {
     setupKmpLogger()
-    val currentPath = File("").canonicalPath
-    println("current path: $currentPath")
-    forwardAllDevices(currentPath.endsWith("dev-server"))
+    forwardAllDevices(isNestedPath())
     previousDevices.addAll(getConnectedDevices())
     forceStop(8888)
     EngineMain.main(emptyArray())
+}
+
+private fun isNestedPath(): Boolean {
+    val currentPath = File("").canonicalPath
+    println("current path: $currentPath")
+    return currentPath.endsWith("dev\\server") || currentPath.endsWith("dev/server")
 }
 
 @Suppress("unused")
@@ -84,8 +87,8 @@ private suspend fun RoutingCall.handleStopRoute(
         respond(HttpStatusCode.NotFound)
         return
     }
-    application.log.info("stop $port server success")
     stopServer(server, port)
+    application.log.info("stop $port server success")
     respond(HttpStatusCode.OK)
 }
 
@@ -99,7 +102,7 @@ private suspend fun RoutingCall.handleStartRoute(
         respond(HttpStatusCode.BadRequest)
         return
     }
-    val isNested = File("").canonicalPath.endsWith("dev-server")
+    val isNested = isNestedPath()
     val (name, id) = platformInfo
     val port = processLock.withLock {
         val port = findAvailablePort {
@@ -108,17 +111,6 @@ private suspend fun RoutingCall.handleStartRoute(
         processMap[port] = null
         port
     }
-
-    if (name.startsWith("Android", true)) {
-        if (!forwardSpecialAndroidDevice(isNested, id, port, application.log)) {
-            processLock.withLock {
-                processMap.remove(port)
-            }
-            application.log.info("forward devices failed, release port $port")
-            respond(HttpStatusCode.BadRequest, "forward devices failed")
-            return
-        }
-    }
     val server = startServerByRun(if (isNested) "../.." else ".", port)
     if (server == null) {
         processLock.withLock {
@@ -126,6 +118,17 @@ private suspend fun RoutingCall.handleStartRoute(
         }
         application.log.info("start $port server failed")
         respond(HttpStatusCode.InternalServerError)
+        return
+    }
+    if (name.startsWith("Android", true) &&
+        !forwardSpecialAndroidDevice(isNested, id, port, application.log)
+    ) {
+        processLock.withLock {
+            processMap.remove(port)
+        }
+        application.log.info("forward devices failed, release port $port")
+        respond(HttpStatusCode.BadRequest, "forward devices failed")
+        return
     }
     application.log.info("start $port server success")
     processLock.withLock {
@@ -188,7 +191,6 @@ fun findAvailablePort(
     }
     throw Exception("No available port found after $maxRetries retries")
 }
-
 
 private fun forwardAllDevices(isNested: Boolean) {
     val forwardScriptPath = File(

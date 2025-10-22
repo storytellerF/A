@@ -59,7 +59,9 @@ var mainAppRef: WeakReference<ComponentActivity>? = null
 fun bindActivity(activity: ComponentActivity) {
     mainAppRef = WeakReference(activity)
     val currentState = activity.lifecycle.currentState
-    if (currentState.isAtLeast(Lifecycle.State.CREATED) && !currentState.isAtLeast(Lifecycle.State.DESTROYED)) {
+    if (currentState.isAtLeast(Lifecycle.State.CREATED) &&
+        !currentState.isAtLeast(Lifecycle.State.DESTROYED)
+    ) {
         val launcher = activity.registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted: Boolean ->

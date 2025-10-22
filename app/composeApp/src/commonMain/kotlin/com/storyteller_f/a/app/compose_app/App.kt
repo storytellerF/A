@@ -70,8 +70,6 @@ import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.startBackgroundTask
-import com.storyteller_f.a.client.room.RoomModelStorage
-import com.storyteller_f.a.client.room.getRoomDatabase
 import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -89,7 +87,6 @@ import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -154,6 +151,10 @@ val LocalClientFileProvider = compositionLocalOf<ClientFileProvider> {
     error("no file provider")
 }
 
+val LocalUiViewModel = compositionLocalOf<UIViewModel> {
+    error("no ui view model")
+}
+
 @Serializable
 sealed interface FileViewInfo {
     @OptIn(ExperimentalUuidApi::class)
@@ -180,11 +181,6 @@ sealed interface FileViewInfo {
 
 @OptIn(ExperimentalUuidApi::class)
 data class LocalMediaPlaySession(val id: String, val uuid: Uuid)
-
-@OptIn(DelicateCoroutinesApi::class)
-val uiViewModel by lazy {
-    UIViewModel(GlobalScope, AppConfig.WS_SERVER_URL, AppConfig.SERVER_URL)
-}
 
 @Composable
 fun App() {
@@ -250,6 +246,7 @@ fun CommonEntry(content: @Composable () -> Unit) {
         val accountSwitcher = remember {
             AccountSwitcher()
         }
+        val uiViewModel = LocalUiViewModel.current
         val mainUserSessionManager = uiViewModel.mainInstance.sessionManager
         val instance by uiViewModel.instance.collectAsState()
         val currentUserSessionManager = instance.sessionManager

@@ -23,6 +23,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -50,7 +51,6 @@ import com.storyteller_f.a.app.core.compontents.PrivateKeyInput
 import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.model.UserInfo
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
@@ -96,12 +96,12 @@ fun LoginPage() {
 private fun buildLoginNav(navigator: NavHostController) = object : LoginNav {
     override fun gotoPrivateKey(isSignUp: Boolean) {
         if (isSignUp) {
-            if (!navigator.popBackStack("/signIn_input_private_key", false)) {
-                navigator.navigate("/signIn_input_private_key")
-            }
-        } else {
             if (!navigator.popBackStack("/signUp_input_private_key", false)) {
                 navigator.navigate("/signUp_input_private_key")
+            }
+        } else {
+            if (!navigator.popBackStack("/signIn_input_private_key", false)) {
+                navigator.navigate("/signIn_input_private_key")
             }
         }
     }
@@ -134,16 +134,20 @@ fun SelectSignInPage(loginNav: LoginNav) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                OutlinedButton({
-                    loginNav.gotoPrivateKey(false)
-                }, shape = ButtonDefaults.outlinedShape) {
+                OutlinedButton(
+                    {
+                        loginNav.gotoPrivateKey(false)
+                    },
+                    shape = ButtonDefaults.outlinedShape,
+                    modifier = Modifier.testTag("private_key")
+                ) {
                     Text(stringResource(Res.string.private_key))
                 }
                 SelectFile(false)
             }
             Text(stringResource(Res.string.go_to_sign_up), modifier = Modifier.clickable {
                 loginNav.gotoSignUp()
-            }, textDecoration = TextDecoration.Underline)
+            }.testTag("goto_sign_up"), textDecoration = TextDecoration.Underline)
         }
     }
 }
@@ -165,7 +169,7 @@ fun SelectSignUpPage(loginNav: LoginNav) {
             ) {
                 Button({
                     loginNav.gotoPrivateKey(true)
-                }) {
+                }, modifier = Modifier.testTag("private_key")) {
                     Text(stringResource(Res.string.private_key))
                 }
                 SelectFile(true)
@@ -227,7 +231,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
                 privateKey = it
             }, startSign)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Button(startSign) {
+                Button(startSign, modifier = Modifier.testTag("start_sign")) {
                     Text(
                         stringResource(
                             if (isSignUp) {
@@ -245,7 +249,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
                                 generateECDSAPemPrivateKey().getOrThrow()
                             }
                         }
-                    }) {
+                    }, modifier = Modifier.testTag("auto_generate")) {
                         Text(stringResource(Res.string.auto_generate))
                     }
                 }
@@ -278,24 +282,16 @@ private suspend fun GlobalDialogController.startSign(
     privateKey: String,
     isSignUp: Boolean,
 ) {
-    if (privateKey.isNotBlank()) {
-        if (signUpOrSignIn(privateKey, sessionManager, isSignUp).isSuccess) {
-            appNav.gotoHome()
-        }
-    }
-}
+    if (privateKey.isBlank()) return
 
-suspend fun GlobalDialogController.signUpOrSignIn(
-    privateKey: String,
-    sessionManager: CustomUserSessionManager,
-    isSignUp: Boolean,
-): Result<UserInfo> {
-    return useResult {
+    useResult {
         runCatching {
             sessionManager.getUserInfo(privateKey, isSignUp) {
                 buildLoginHistoryFactory(sessionManager.settings).addSession(it)
             }
         }
+    }.onSuccess {
+        appNav.gotoHome()
     }
 }
 

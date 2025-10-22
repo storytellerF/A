@@ -21,6 +21,15 @@ import kotlin.math.ceil
 import kotlin.system.exitProcess
 
 @OptIn(DelicateCoroutinesApi::class)
+val uiViewModel by lazy {
+    UIViewModel(
+        GlobalScope,
+        com.storyteller_f.a.app.compose_app.AppConfig.WS_SERVER_URL,
+        com.storyteller_f.a.app.compose_app.AppConfig.SERVER_URL
+    )
+}
+
+@OptIn(DelicateCoroutinesApi::class)
 fun main() {
     setupKmpLogger()
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
@@ -55,6 +64,7 @@ fun main() {
             appName = "My awesome app",
         )
     )
+
     val downloader = DownloaderImpl(GlobalScope, uiViewModel)
     val uploader = UploaderImpl(GlobalScope, uiViewModel)
     val provider = object : ClientFileProvider {
@@ -68,7 +78,10 @@ fun main() {
             onCloseRequest = ::exitApplication,
             title = "A",
         ) {
-            CompositionLocalProvider(LocalClientFileProvider provides provider) {
+            CompositionLocalProvider(
+                LocalClientFileProvider provides provider,
+                LocalUiViewModel provides uiViewModel
+            ) {
                 App()
             }
         }

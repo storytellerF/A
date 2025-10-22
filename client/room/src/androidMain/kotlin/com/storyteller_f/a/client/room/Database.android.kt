@@ -6,9 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.storyteller_f.shared.getAppContextRefValue
-import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
-import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalRoomApi::class)
 actual fun getRoomDatabase(scope: String): AppDatabase {

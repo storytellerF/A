@@ -6,6 +6,7 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 import kotlin.collections.mapOf
+import kotlin.collections.putAll
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -19,7 +20,7 @@ fun forceStop(port: Int) {
         "forceStop $port"
     }
     if (isWin()) {
-        //for /f "tokens=5" %a in ('netstat -ano ^| findstr :8080') do taskkill /PID %a /F
+        // for /f "tokens=5" %a in ('netstat -ano ^| findstr :8080') do taskkill /PID %a /F
         Runtime.getRuntime()
             .exec(
                 arrayOf(
@@ -46,40 +47,16 @@ suspend fun CoroutineScope.startServerByRun(envFilePath: String, port: Int): Pro
         println("${testEnvFile.canonicalPath} not exists")
         return null
     }
-    val projectRoot = File(envFilePath) // 确保这个路径正确，指向包含 gradlew.bat 的父目录
-    val gradleCommand = if (isWin()) {
-        // Windows
-        File(projectRoot, "gradlew.bat").absolutePath
-    } else {
-        // Linux/MacOS
-        "./gradlew"
-    }
-
-    val builder = ProcessBuilder(
-        gradleCommand,
-        "cloud:server:run",
-        "-Dorg.gradle.logging.level=quiet",
-        "--quiet",
-        "--no-daemon"
-    ).directory(projectRoot.canonicalFile).redirectErrorStream(true)
-    val envList = testEnvFile.readLines().filter {
-        it.isNotBlank()
-    }.map {
-        val list = it.split("=", limit = 2)
-        list[0] to list.getOrElse(1) {
-            ""
-        }
-    }
-    val url = "r2dbc:h2:mem:///${Uuid.random().toHexString()}"
-    val environment = builder.environment()
-    environment.putAll(envList)
-    environment.putAll(
-        mapOf(
-            "DATABASE_URI" to url,
-            "DATABASE_DRIVER" to "h2"
+    val builder = getGradleProcessBuilder(
+        File(envFilePath),
+        arrayOf(
+            "cloud:server:run",
+            "-Dorg.gradle.logging.level=quiet",
+            "--quiet",
+            "--no-daemon"
         )
     )
-    environment["SERVER_PORT"] = port.toString()
+    bindGradleProcessEnv(testEnvFile, builder, port)
     val serverProcess = builder.start()
     waitRunServerProcess(serverProcess)
     return serverProcess
@@ -92,6 +69,7 @@ private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process) 
             serverProcess.inputStream.bufferedReader().use {
                 while (serverProcess.isRunning()) {
                     val line = it.readLine() ?: break
+                    println(line)
                     if (line.contains("Responding at")) {
                         task.complete(line)
                     } else if (line.contains("Execution failed for task ':server:")) {
@@ -107,37 +85,38 @@ private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process) 
     }
 }
 
-suspend fun CoroutineScope.startServerByJar(envFilePath: String, port: Int): Process? {
+suspend fun CoroutineScope.startServerByJar(rootPath: String, port: Int): Process? {
     forceStop(port)
-    val envFile = File(envFilePath, "server/src/test/resources/.env")
+    val envFile = File(rootPath, "cloud/server/src/test/resources/.env")
     if (!envFile.exists()) {
         println("${envFile.canonicalPath} not exists")
         return null
     }
-    val file = File(envFilePath) // 确保这个路径正确，指向包含 gradlew.bat 的父目录
-
-    val gradleCommand = if (isWin()) {
-        // Windows
-        File(file, "gradlew.bat").absolutePath
-    } else {
-        // Linux/MacOS
-        "./gradlew"
-    }
-    val buildBuilder = ProcessBuilder(
-        gradleCommand,
-        "cloud:server:buildFatJar",
-        "-Dorg.gradle.logging.level=quiet",
-        "--quiet",
-    ).directory(file.canonicalFile)
+    val projectRoot = File(rootPath) // 确保这个路径正确，指向包含 gradlew.bat 的父目录
+    val buildBuilder = getGradleProcessBuilder(
+        projectRoot,
+        arrayOf(
+            "cloud:server:buildFatJar",
+            "-Dorg.gradle.logging.level=quiet",
+            "--quiet",
+        )
+    )
     val buildProcess = buildBuilder.start()
     waitBuildProcess(buildProcess)
-
     val builder = ProcessBuilder(
         "java",
         "-jar",
-        File(file, "cloud/server/build/libs/server-all.jar").absolutePath,
-    ).directory(file.canonicalFile)
-    val pairs = envFile.readLines().filter {
+        File(projectRoot, "cloud/server/build/libs/server-all.jar").absolutePath,
+    ).directory(projectRoot.canonicalFile)
+    bindGradleProcessEnv(envFile, builder, port)
+    val serverProcess = builder.start()
+    waitJarServerProcess(serverProcess)
+    return serverProcess
+}
+
+@OptIn(ExperimentalUuidApi::class)
+private fun bindGradleProcessEnv(envFile: File, builder: ProcessBuilder, port: Int) {
+    val envList = envFile.readLines().filter {
         it.isNotBlank()
     }.map {
         val list = it.split("=", limit = 2)
@@ -145,65 +124,73 @@ suspend fun CoroutineScope.startServerByJar(envFilePath: String, port: Int): Pro
             ""
         }
     }
+    val url = "r2dbc:h2:file:///./${Uuid.random().toHexString()}"
     val environment = builder.environment()
-    environment.putAll(pairs)
+    environment.putAll(envList)
+    environment.putAll(
+        mapOf(
+            "DATABASE_URI" to url,
+            "DATABASE_DRIVER" to "h2"
+        )
+    )
     environment["SERVER_PORT"] = port.toString()
-    val serverProcess = builder.start()
-    waitJarServerProcess(serverProcess)
-    return serverProcess
+}
+
+private fun getGradleProcessBuilder(
+    file: File,
+    args: Array<String>
+): ProcessBuilder {
+    val gradleCommand = if (isWin()) {
+        // Windows
+        File(file, "gradlew.bat").absolutePath
+    } else {
+        // Linux/MacOS
+        "./gradlew"
+    }
+    return ProcessBuilder(
+        gradleCommand,
+        *args
+    ).directory(file.canonicalFile).redirectErrorStream(true)
 }
 
 private suspend fun CoroutineScope.waitJarServerProcess(serverProcess: Process) {
     val task = CompletableDeferred<String>()
     launch {
-        serverProcess.inputStream.bufferedReader().use {
-            while (serverProcess.isRunning()) {
-                val line = it.readLine() ?: break
-                if (line.contains("Application started")) {
-                    task.complete(line)
+        withContext(Dispatchers.IO) {
+            serverProcess.inputStream.bufferedReader().use {
+                while (serverProcess.isRunning()) {
+                    val line = it.readLine() ?: break
+                    if (line.contains("Application started")) {
+                        task.complete(line)
+                    } else if (line.contains("Execution failed for task ':server:")) {
+                        task.completeExceptionally(RuntimeException(line))
+                    }
                 }
             }
         }
     }
-    launch {
-        serverProcess.errorStream.bufferedReader().use {
-            while (serverProcess.isRunning()) {
-                val line = it.readLine() ?: break
-                if (line.contains("Execution failed for task ':server:")) {
-                    task.completeExceptionally(RuntimeException(line))
-                }
-            }
-        }
-    }
-    withTimeout(10000) {
-        task.await()
-    }
+    task.await()
 }
 
 private suspend fun CoroutineScope.waitBuildProcess(buildProcess: Process) {
     val buildTask = CompletableDeferred<String>()
     launch {
-        buildProcess.inputStream.bufferedReader().use {
-            while (buildProcess.isRunning()) {
-                val line = it.readLine() ?: break
-                if (line.contains("BUILD SUCCESSFUL")) {
-                    buildTask.complete(line)
+        withContext(Dispatchers.IO) {
+            buildProcess.inputStream.bufferedReader().use {
+                while (buildProcess.isRunning()) {
+                    val line = it.readLine() ?: break
+                    if (line.contains("BUILD SUCCESSFUL")) {
+                        buildTask.complete(line)
+                    } else if (line.contains("BUILD FAILED")) {
+                        buildTask.completeExceptionally(RuntimeException(line))
+                    }
                 }
             }
         }
     }
-    launch {
-        buildProcess.errorStream.bufferedReader().use {
-            while (buildProcess.isRunning()) {
-                val line = it.readLine() ?: break
-                if (line.contains("BUILD FAILED")) {
-                    buildTask.completeExceptionally(RuntimeException(line))
-                }
-            }
-        }
-    }
-    withTimeout(10000) {
-        buildTask.await()
+    buildTask.await()
+    Napier.i {
+        "build success"
     }
 }
 

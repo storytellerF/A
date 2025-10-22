@@ -26,7 +26,7 @@ import com.storyteller_f.a.app.compose_app.components.*
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.utils.createConnectivity
 import com.storyteller_f.a.app.compose_app.utils.unregisterPushService
-import com.storyteller_f.a.app.core.compontents.LoginButton
+import com.storyteller_f.a.app.core.compontents.SignInButton
 import com.storyteller_f.a.app.core.compontents.UserIcon
 import com.storyteller_f.a.app.core.utils.clearStorage
 import com.storyteller_f.a.client.core.ClientSessionState
@@ -72,7 +72,7 @@ fun UserDialogInternal(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth()
             ) {
-                LoginButton {
+                SignInButton {
                     dismiss()
                     appNav.gotoLogin()
                 }
