@@ -10,7 +10,7 @@ ARG BUILD_TYPE
 ARG FLAVOR
 ARG BUILD_ON
 
-RUN find . -type f -name "*.sh" -exec dos2unix {} +
+RUN ./scripts/tool_scripts/shell-crlf.sh
 
 RUN --mount=type=cache,target=/root/.gradle \
     ./scripts/build_scripts/build-on-condition.sh ${FLAVOR} ${BUILD_TYPE} ${BUILD_ON} \

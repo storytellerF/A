@@ -15,7 +15,7 @@ ARG FLAVOR
 ARG BUILD_ON
 #endif
 
-RUN find . -type f -name "*.sh" -exec dos2unix {} +
+RUN ./scripts/tool_scripts/shell-crlf.sh
 
 RUN ./scripts/download_scripts/download-preset-data.sh
 

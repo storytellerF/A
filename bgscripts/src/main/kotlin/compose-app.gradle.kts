@@ -105,7 +105,7 @@ val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
     val signKey = getenv("storyteller_f_sign_key")
     val generatedJksFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
 
-    inputs.property("signKey", signKey)
+    inputs.property("signKey", signKey ?: "")
     outputs.file(generatedJksFile)
     doLast {
         if (!signKey.isNullOrBlank()) {

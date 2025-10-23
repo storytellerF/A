@@ -12,7 +12,7 @@ WORKDIR /app
 COPY deploy .
 ENV HOST_TYPE=local
 
-RUN find . -type f -name "*.sh" -exec dos2unix {} +
+RUN ./scripts/tool_scripts/shell-crlf.sh
 
 RUN ./scripts/download_scripts/manual-download-docker-image.sh
 

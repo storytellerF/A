@@ -4,8 +4,13 @@
 .git
 android-llama-cpp
 **/build/**
+deploy
 !deploy/build/**
 local.properties
-.gradle/**
+.gradle
 **/iosApp/**
 .kotlin
+.idea
+*.hprof
+dev/logs
+dev/reports
