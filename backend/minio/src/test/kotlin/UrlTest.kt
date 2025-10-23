@@ -12,10 +12,18 @@ class UrlTest {
     }
 
     @Test
-    fun `test url replace 80`() {
+    fun `test url replace 443`() {
         val host = "https://test.com"
         val url = "http://test.com:909/test?a=1&b=2"
         val newUrl = replaceUrl(host, url)
-        assertEquals("https://test.com:80/test?a=1&b=2", newUrl)
+        assertEquals("https://test.com:443/test?a=1&b=2", newUrl)
+    }
+
+    @Test
+    fun `test url replace 80`() {
+        val host = "http://test.com"
+        val url = "http://test.com:909/test?a=1&b=2"
+        val newUrl = replaceUrl(host, url)
+        assertEquals("http://test.com:80/test?a=1&b=2", newUrl)
     }
 }

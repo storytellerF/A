@@ -1,5 +1,6 @@
 package com.storyteller_f.a.app.dev_server
 
+import com.storyteller_f.a.app.dev.GIT_BASH
 import com.storyteller_f.a.app.dev.forceStop
 import com.storyteller_f.a.app.dev.startServerByRun
 import com.storyteller_f.a.app.dev.stopServer
@@ -26,7 +27,6 @@ import java.io.InputStreamReader
 import java.net.ServerSocket
 
 private val previousDevices = mutableSetOf<String>()
-const val GIT_BASH = "C:/Program Files/Git/bin/bash.exe"
 fun main() {
     forceStop(8888)
     EngineMain.main(emptyArray())
@@ -48,7 +48,7 @@ fun Application.module() {
         job.cancel()
         processMap.forEach {
             application.log.info("stop :${it.key}")
-            it.value?.let { process -> stopServer(process, it.key) }
+            it.value?.let { process -> stopServer(process) }
         }
         // Release resources and unsubscribe from events
         monitor.unsubscribe(ApplicationStarted) {}
@@ -96,7 +96,7 @@ private suspend fun RoutingCall.handleStopRoute(
         respond(HttpStatusCode.NotFound)
         return
     }
-    stopServer(server, port)
+    stopServer(server)
     application.log.info("stop $port server success")
     respond(HttpStatusCode.OK)
 }
