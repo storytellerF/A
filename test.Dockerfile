@@ -9,7 +9,6 @@ RUN chmod +x /usr/local/bin/start-android.sh
 
 WORKDIR /app
 COPY . .
-RUN find scripts/ -type f \( -name "*.sh" -o -name "*.js" \) -exec sed -i 's/\r$//' {} + && \
-    sed -i 's/\r$//' gradlew
+RUN find . -type f -name "*.sh" -exec dos2unix {} +
 
 CMD ["./scripts/test_scripts/test-entry.sh"]

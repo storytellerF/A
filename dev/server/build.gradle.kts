@@ -21,10 +21,7 @@ kotlin {
 dependencies {
     implementation(libs.logback)
     implementation(libs.napier)
-
-    implementation(projects.shared)
     implementation(libs.bundles.ktor.server)
-
     implementation(projects.dev.core)
 }
 

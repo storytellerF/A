@@ -47,7 +47,7 @@ class SignatureTest {
             val data = "hello"
             presetValue.userData!!.forEach {
                 val privateKeyStr =
-                    File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
+                    File(jsonFile.parentFile, it.privateKey).readText().replaceCrlf()
                 getAlgo().run {
                     val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr).getOrThrow()
                     val (encrypted, aes) = encryptDataByAES(data).getOrThrow()

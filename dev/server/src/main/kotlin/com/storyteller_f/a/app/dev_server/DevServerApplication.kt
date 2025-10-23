@@ -1,32 +1,33 @@
 package com.storyteller_f.a.app.dev_server
 
 import com.storyteller_f.a.app.dev.forceStop
-import com.storyteller_f.a.app.dev.getConnectedDevices
-import com.storyteller_f.a.app.dev.startListening
 import com.storyteller_f.a.app.dev.startServerByRun
 import com.storyteller_f.a.app.dev.stopServer
-import com.storyteller_f.shared.setupKmpLogger
+import io.github.aakira.napier.Napier
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.logging.Logger
-import kotlinx.coroutines.Dispatchers
+import io.ktor.util.encodeBase64
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import kotlinx.io.IOException
+import java.io.BufferedReader
 import java.io.File
+import java.io.InputStreamReader
 import java.net.ServerSocket
 
 private val previousDevices = mutableSetOf<String>()
 const val GIT_BASH = "C:/Program Files/Git/bin/bash.exe"
 fun main() {
-    setupKmpLogger()
-    forwardAllDevices(isNestedPath())
-    previousDevices.addAll(getConnectedDevices())
     forceStop(8888)
     EngineMain.main(emptyArray())
 }
@@ -65,6 +66,14 @@ fun Application.module() {
         post("/stop") {
             call.handleStopRoute(processMap, processLock)
         }
+        get("/ecdsa") {
+            val file = File(if (isNestedPath()) "../.." else "..", "AData/data/ecdsa")
+            println(file.canonicalPath)
+            val map = file.listFiles()?.joinToString("\n") {
+                "${it.name}\t${it.readText().replace("\r\n", "\n").encodeBase64()}"
+            } ?: ""
+            call.respondText(map)
+        }
     }
 }
 
@@ -97,13 +106,12 @@ private suspend fun RoutingCall.handleStartRoute(
     processLock: Mutex,
 ) {
     val application = application
-    val platformInfo = receiveText().split("\n")
-    if (platformInfo.size < 2) {
+    val name = receiveText()
+    if (name.isEmpty()) {
         respond(HttpStatusCode.BadRequest)
         return
     }
     val isNested = isNestedPath()
-    val (name, id) = platformInfo
     val port = processLock.withLock {
         val port = findAvailablePort {
             !processMap.containsKey(it)
@@ -121,7 +129,7 @@ private suspend fun RoutingCall.handleStartRoute(
         return
     }
     if (name.startsWith("Android", true) &&
-        !forwardSpecialAndroidDevice(isNested, id, port, application.log)
+        !forwardAllDevices(isNestedPath(), port.toString())
     ) {
         processLock.withLock {
             processMap.remove(port)
@@ -136,31 +144,6 @@ private suspend fun RoutingCall.handleStartRoute(
     }
     respondText {
         port.toString()
-    }
-}
-
-private suspend fun forwardSpecialAndroidDevice(
-    isNested: Boolean,
-    id: String,
-    port: Int,
-    log: Logger
-): Boolean {
-    log.info("forward $id device to $port")
-    val path = File(
-        if (isNested) "../.." else ".",
-        "scripts/android_scripts/forward-special-device.sh"
-    ).canonicalPath.replace("\\", "/")
-    val processBuilder = ProcessBuilder(GIT_BASH, "-c", "$path $id $port").redirectErrorStream(true)
-    return withContext(Dispatchers.IO) {
-        val process = processBuilder.start()
-        val serverResult = process.waitFor()
-        val input = process.inputReader().readText()
-        if (serverResult != 0) {
-            log.error("forward $id device failed: $input")
-        } else {
-            log.info("forward $id device success $input")
-        }
-        serverResult == 0
     }
 }
 
@@ -192,15 +175,69 @@ fun findAvailablePort(
     throw Exception("No available port found after $maxRetries retries")
 }
 
-private fun forwardAllDevices(isNested: Boolean) {
+private fun forwardAllDevices(isNested: Boolean, port: String): Boolean {
     val forwardScriptPath = File(
         if (isNested) "../.." else ".",
         "scripts/android_scripts/forward-android-devices.sh"
     ).canonicalPath.replace("\\", "/")
-    val process = ProcessBuilder(GIT_BASH, "-c", "$forwardScriptPath 8888")
+    val process = ProcessBuilder(GIT_BASH, "-c", "$forwardScriptPath $port")
         .redirectErrorStream(true)
         .start()
     val message = process.inputReader().readText()
     println(message)
-    check(process.waitFor() == 0)
+    if (process.waitFor() != 0) return false
+    previousDevices.addAll(getConnectedDevices())
+    return true
+}
+
+
+// 启动协程监听 ADB 设备连接
+@OptIn(DelicateCoroutinesApi::class)
+fun startListening(port: Int, previousDevices: MutableSet<String>): Job {
+    return GlobalScope.launch {
+        while (isActive) { // 持续监听直到协程被取消
+            val currentDevices = getConnectedDevices()
+            if (currentDevices != previousDevices) {
+                currentDevices.forEach { device ->
+                    if (device !in previousDevices) {
+                        val code = forwardAllDevices(isNestedPath(), port.toString())
+                        println("New device connected: $device result: $code")
+                    }
+                }
+                previousDevices.forEach { device ->
+                    if (device !in currentDevices) {
+                        println("Device disconnected: $device")
+                    }
+                }
+                previousDevices.clear()
+                previousDevices.addAll(currentDevices)
+            }
+
+            // 每 5 秒检查一次
+            delay(5000)
+        }
+    }
+}
+
+// 获取当前连接的设备列表
+fun getConnectedDevices(): Set<String> {
+    val devices = mutableSetOf<String>()
+    try {
+        val process = ProcessBuilder("adb", "devices").start()
+        val reader = BufferedReader(InputStreamReader(process.inputStream))
+        var line: String? = reader.readLine()
+        while (line != null) {
+            if (line.contains("\tdevice")) {
+                val device = line.split("\t")[0].trim()
+                devices.add(device)
+            }
+            line = reader.readLine()
+        }
+        process.waitFor()
+    } catch (e: Exception) {
+        Napier.e(e) {
+            "getConnectedDevices failed"
+        }
+    }
+    return devices
 }

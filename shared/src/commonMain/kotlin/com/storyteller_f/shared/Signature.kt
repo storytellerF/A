@@ -229,3 +229,7 @@ expect suspend fun calcAddressP256(derPublicKeyStr: String): Result<String>
 expect fun loadCryptoLibIfNeed()
 
 expect val AlgoDilithium: Algo
+
+fun String.replaceCrlf(): String {
+    return replace("\r\n", "\n")
+}

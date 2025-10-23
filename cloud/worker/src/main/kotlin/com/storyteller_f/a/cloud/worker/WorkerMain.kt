@@ -93,12 +93,12 @@ private suspend fun Backend.doAcgTask() {
             }
         )
     }.onSuccess {
-        delay(1000)
+        delay(10000)
         Napier.i(tag = "task") {
             "task success $it"
         }
     }.onFailure {
-        delay(1000)
+        delay(10000)
         Napier.i(tag = "task", throwable = it) {
             "task failed"
         }

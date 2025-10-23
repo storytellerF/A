@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,6 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.AppNav
+import com.storyteller_f.a.app.compose_app.common.IdUserViewModel
 import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.createTargetUserJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserTitlesViewModel
@@ -48,20 +50,18 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun UserPage(uid: PrimaryKey) {
     val userViewModel = createUserViewModel(uid)
-    val user by userViewModel.handler.data.collectAsState()
-    val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
-    val my = myInfo
-    UserPageInternal(user, my, uid)
+    UserPageInternal(uid, userViewModel)
 }
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 private fun UserPageInternal(
-    user: UserInfo?,
-    my: UserInfo?,
     uid: PrimaryKey,
+    userViewModel: IdUserViewModel,
 ) {
+    val user by userViewModel.handler.data.collectAsState()
+    val userSessionManager = LocalSessionManager.current
+    val my by userSessionManager.model.userHandler.data.collectAsState()
     val pagerState = rememberPagerState {
         3
     }
@@ -83,7 +83,7 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
         )
     val navigator = rememberNavController()
     val current by navigator.currentBackStackEntryFlow.collectAsState(null)
-    Scaffold {
+    Scaffold(modifier = Modifier.testTag("user-page")) {
         Row {
             val currentEntry = current?.destination?.route
             CustomRailNav(currentEntry, navRoutes) {
@@ -136,7 +136,7 @@ private fun UserCompatInternal(
         UserComposeButton(user, my, appNav)
     }, bottomBar = {
         UserPageBottomNavBar(pagerState)
-    }) {
+    }, modifier = Modifier.testTag("user-page")) {
         Column(
             modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
         ) {

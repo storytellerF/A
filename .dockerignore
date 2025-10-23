@@ -3,6 +3,9 @@
 !dev.env
 .git
 android-llama-cpp
-**/build
-!deploy/build
+**/build/**
+!deploy/build/**
 local.properties
+.gradle/**
+**/iosApp/**
+.kotlin

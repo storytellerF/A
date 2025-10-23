@@ -5,14 +5,14 @@ RUN apt-get install -y --no-install-recommends \
     openjdk-21-jdk \
     curl \
     unzip \
-    jq
+    jq \
+    dos2unix
 
 WORKDIR /app
 COPY deploy .
 ENV HOST_TYPE=local
 
-RUN find scripts/ -type f -name "*.sh" -exec sed -i 's/\r$//' {} + && \
-    sed -i 's/\r$//' gradlew
+RUN find . -type f -name "*.sh" -exec dos2unix {} +
 
 RUN ./scripts/download_scripts/manual-download-docker-image.sh
 

@@ -9,7 +9,8 @@ fi
 
 echo "build on local"
 # 在本地构建，本地启动
-./scripts/build_scripts/build-cloud.sh "$FLAVOR" prod
+./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$BUILD_TYPE"
+./scripts/build_scripts/build-cloud.sh
 ./scripts/build_scripts/build-worker.sh
 export BUILD_ON=local
 ./scripts/service_scripts/compose-service.sh "$FLAVOR" false 'up -d --build'

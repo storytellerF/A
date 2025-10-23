@@ -33,7 +33,6 @@ if [ "$USE_PREBUILD" = "true" ]; then
 else
   for p in "${COMPOSE_FILE_LIST[@]}"; do
       if [[ "$p" == "server" ]]; then
-          echo "包含 server"
           if [ -z "$BUILD_ON" ]; then
               echo "BUILD_ON must be set."
               exit 1

@@ -1,6 +1,6 @@
 FROM eclipse-temurin:21-alpine AS builder
 
-RUN apk add bash curl unzip
+RUN apk add bash curl dos2unix
 
 WORKDIR /app
 COPY . .
@@ -10,8 +10,7 @@ ARG BUILD_TYPE
 ARG FLAVOR
 ARG BUILD_ON
 
-RUN find scripts/ -type f \( -name "*.sh" -o -name "*.js" \) -exec sed -i 's/\r$//' {} + && \
-    sed -i 's/\r$//' gradlew
+RUN find . -type f -name "*.sh" -exec dos2unix {} +
 
 RUN --mount=type=cache,target=/root/.gradle \
     ./scripts/build_scripts/build-on-condition.sh ${FLAVOR} ${BUILD_TYPE} ${BUILD_ON} \
