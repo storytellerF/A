@@ -12,7 +12,6 @@ import java.time.Duration
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-
 class AppiumTest {
     @Test
     fun `test sign in`() {

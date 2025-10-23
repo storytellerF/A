@@ -24,7 +24,7 @@ fun PrivateKeyInput(privateKey: String, update: (String) -> Unit, startSign: () 
             onValueChange = {
                 update(it)
             },
-            modifier = Modifier.padding(top = 10.dp).fillMaxWidth().semantics{
+            modifier = Modifier.padding(top = 10.dp).fillMaxWidth().semantics {
                 contentDescription = "Private Key Input"
             }.testTag("privateKeyInput"),
             maxLines = max(lineCount, 2),
