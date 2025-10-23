@@ -84,14 +84,13 @@ private fun startMemoryTest(
     overrideEnv: Map<String, String>,
     block: suspend (ApplicationTestBuilder) -> Unit
 ) {
-//    val h2File = File("./build/test/h2/${Uuid.random().toHexString()}")
-//    h2File.parentFile!!.let {
-//        if (!it.exists() && !it.mkdirs()) {
-//            throw Exception("mkdirs failed ${it.canonicalPath}")
-//        }
-//    }
-//    val url = "r2dbc:h2:file:///${h2File.path.replace("\\", "/")}"
-    val url = "r2dbc:h2:mem:///${Uuid.random().toHexString()}"
+    val h2File = File("./build/test/h2/${Uuid.random().toHexString()}")
+    h2File.parentFile!!.let {
+        if (!it.exists() && !it.mkdirs()) {
+            throw Exception("mkdirs failed ${it.canonicalPath}")
+        }
+    }
+    val url = "r2dbc:h2:file:///${h2File.path.replace("\\", "/")}"
     val env = mapOf(
         "DATABASE_URI" to url,
         "DATABASE_DRIVER" to "h2"

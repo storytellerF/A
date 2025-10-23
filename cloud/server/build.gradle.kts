@@ -59,6 +59,7 @@ dependencies {
     testImplementation(libs.sql.formatter)
     testImplementation(libs.javacv.platform)
     testImplementation(projects.cloud.pdfbox)
+    testImplementation(libs.pdfbox)
 }
 
 tasks.test {

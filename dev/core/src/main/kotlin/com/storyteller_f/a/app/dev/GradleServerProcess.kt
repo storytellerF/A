@@ -8,6 +8,8 @@ import kotlin.collections.putAll
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+const val GIT_BASH = "C:/Program Files/Git/bin/bash.exe"
+
 fun isWin(): Boolean {
     val property = System.getProperty("os.name").orEmpty()
     return property.lowercase().contains("win")
@@ -33,31 +35,51 @@ fun forceStop(port: Int) {
     }
 }
 
-fun stopServer(serverProcess: Process, port: Int) {
+fun stopServer(serverProcess: Process) {
     serverProcess.destroy()
-    forceStop(port)
 }
 
 @OptIn(ExperimentalUuidApi::class)
-suspend fun CoroutineScope.startServerByRun(envFilePath: String, port: Int): Process? {
-    val testEnvFile = File(envFilePath, "cloud/server/src/test/resources/.env")
+suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): Process? {
+    val testEnvFile = File(projectRoot, "cloud/server/src/test/resources/.env")
     if (!testEnvFile.exists()) {
         println("${testEnvFile.canonicalPath} not exists")
         return null
     }
-    val builder = getGradleProcessBuilder(
-        File(envFilePath),
-        arrayOf(
-            "cloud:server:run",
-            "-Dorg.gradle.logging.level=quiet",
-            "--quiet",
-            "--no-daemon"
-        )
-    )
-    bindGradleProcessEnv(testEnvFile, builder, port)
-    val serverProcess = builder.start()
+    install(projectRoot)
+    val serverProcess =
+        ProcessBuilder(GIT_BASH, "-c", "cloud/server/build/install/server/bin/server")
+            .redirectErrorStream(true)
+            .directory(File(projectRoot))
+            .bindGradleProcessEnv(testEnvFile, port)
+            .start()
     waitRunServerProcess(serverProcess)
     return serverProcess
+}
+
+private suspend fun CoroutineScope.install(projectRoot: String) {
+    val installDistProcess = getGradleProcessBuilder(
+        File(projectRoot),
+        arrayOf(
+            "cloud:server:installDist"
+        )
+    ).start()
+    launch {
+        withContext(Dispatchers.IO) {
+            installDistProcess.inputStream.bufferedReader().use {
+                while (installDistProcess.isRunning()) {
+                    val line = it.readLine() ?: break
+                    println(line)
+                }
+            }
+        }
+    }
+    val result = withContext(Dispatchers.IO) {
+        installDistProcess.waitFor()
+    }
+    check(result == 0) {
+        "install failed"
+    }
 }
 
 private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process) {
@@ -83,37 +105,8 @@ private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process) 
     }
 }
 
-suspend fun CoroutineScope.startServerByJar(rootPath: String, port: Int): Process? {
-    forceStop(port)
-    val envFile = File(rootPath, "cloud/server/src/test/resources/.env")
-    if (!envFile.exists()) {
-        println("${envFile.canonicalPath} not exists")
-        return null
-    }
-    val projectRoot = File(rootPath) // 确保这个路径正确，指向包含 gradlew.bat 的父目录
-    val buildBuilder = getGradleProcessBuilder(
-        projectRoot,
-        arrayOf(
-            "cloud:server:buildFatJar",
-            "-Dorg.gradle.logging.level=quiet",
-            "--quiet",
-        )
-    )
-    val buildProcess = buildBuilder.start()
-    waitBuildProcess(buildProcess)
-    val builder = ProcessBuilder(
-        "java",
-        "-jar",
-        File(projectRoot, "cloud/server/build/libs/server-all.jar").absolutePath,
-    ).directory(projectRoot.canonicalFile)
-    bindGradleProcessEnv(envFile, builder, port)
-    val serverProcess = builder.start()
-    waitJarServerProcess(serverProcess)
-    return serverProcess
-}
-
 @OptIn(ExperimentalUuidApi::class)
-private fun bindGradleProcessEnv(envFile: File, builder: ProcessBuilder, port: Int) {
+private fun ProcessBuilder.bindGradleProcessEnv(envFile: File, port: Int): ProcessBuilder {
     val envList = envFile.readLines().filter {
         it.isNotBlank()
     }.map {
@@ -122,8 +115,8 @@ private fun bindGradleProcessEnv(envFile: File, builder: ProcessBuilder, port: I
             ""
         }
     }
-    val url = "r2dbc:h2:file:///./${Uuid.random().toHexString()}"
-    val environment = builder.environment()
+    val url = "r2dbc:h2:file:///./build/test/process/h2/${Uuid.random().toHexString()}"
+    val environment = environment()
     environment.putAll(envList)
     environment.putAll(
         mapOf(
@@ -132,6 +125,7 @@ private fun bindGradleProcessEnv(envFile: File, builder: ProcessBuilder, port: I
         )
     )
     environment["SERVER_PORT"] = port.toString()
+    return this
 }
 
 private fun getGradleProcessBuilder(
@@ -149,47 +143,6 @@ private fun getGradleProcessBuilder(
         gradleCommand,
         *args
     ).directory(file.canonicalFile).redirectErrorStream(true)
-}
-
-private suspend fun CoroutineScope.waitJarServerProcess(serverProcess: Process) {
-    val task = CompletableDeferred<String>()
-    launch {
-        withContext(Dispatchers.IO) {
-            serverProcess.inputStream.bufferedReader().use {
-                while (serverProcess.isRunning()) {
-                    val line = it.readLine() ?: break
-                    if (line.contains("Application started")) {
-                        task.complete(line)
-                    } else if (line.contains("Execution failed for task ':server:")) {
-                        task.completeExceptionally(RuntimeException(line))
-                    }
-                }
-            }
-        }
-    }
-    task.await()
-}
-
-private suspend fun CoroutineScope.waitBuildProcess(buildProcess: Process) {
-    val buildTask = CompletableDeferred<String>()
-    launch {
-        withContext(Dispatchers.IO) {
-            buildProcess.inputStream.bufferedReader().use {
-                while (buildProcess.isRunning()) {
-                    val line = it.readLine() ?: break
-                    if (line.contains("BUILD SUCCESSFUL")) {
-                        buildTask.complete(line)
-                    } else if (line.contains("BUILD FAILED")) {
-                        buildTask.completeExceptionally(RuntimeException(line))
-                    }
-                }
-            }
-        }
-    }
-    buildTask.await()
-    Napier.i {
-        "build success"
-    }
 }
 
 private fun Process.isRunning() = runCatching { this@isRunning.exitValue() }.getOrNull() == null
