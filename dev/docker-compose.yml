@@ -1,14 +1,15 @@
 services:
   test:
     build:
-      context: ../..
+      context: ../
       dockerfile: ./test.Dockerfile
       args:
         - OPENJDK_VERSION=21
     ports:
-      - "6080:6080" # noVNC web interface
-      - "5901:5901" # VNC direct connection
-      - "5555:5555" # ADB
+      - "6081:6080" # noVNC web interface
+      - "5902:5901" # VNC direct connection
+      - "5556:5555" # ADB
+      - "4724:4723" # Appium
     environment:
       - VNC_PASSWD=password
       - TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
@@ -18,7 +19,7 @@ services:
       - sdk_data:/opt/android/sdk
       - gradle_data:/root/.gradle
       - /var/run/docker.sock:/var/run/docker.sock  # 宿主机 Docker 套接字
-      - ./reports/backend/service:/app/backend/service/build/reports
+      - ./reports/cloud/service:/app/cloud/service/build/reports
       - ./reports/cloud/server:/app/cloud/server/build/reports
     shm_size: '2gb' # Allocate more shared memory
     privileged: true # Enable KVM acceleration

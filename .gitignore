@@ -18,14 +18,13 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 databases
-deploy/es_ca
 *.env
 !dev.win.env
 !dev.env
 !cloud/server/src/test/resources/.env
+deploy/es_ca
 deploy/*_data
 deploy/docker-images
-deploy/a_file
 deploy/preset.zip
 node_modules
 bin
@@ -34,6 +33,6 @@ remote.pem
 aboutlibraries.json
 app/composeApp/src/headlessTest/resources/package*
 CouchbaseLiteTemp
-scripts/test_scripts/logs
-scripts/test_scripts/reports
+dev/logs
+dev/reports
 *.hprof

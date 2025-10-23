@@ -15,9 +15,9 @@ check_scripts() {
 }
 
 # 使用管道将find结果传递给while循环
-if ! find "$SCRIPTS_DIR" -type f \( -name "*.sh" -o -name "*.js" \) -print | check_scripts; then
+if ! find "$SCRIPTS_DIR" -type f -name "*.sh" -print | check_scripts; then
     echo "Error: Some scripts are missing shebang lines" >&2
     exit 1
 fi
 
-find "$SCRIPTS_DIR" -type f \( -name "*.sh" -o -name "*.js" \) -exec chmod +x {} +
+find "$SCRIPTS_DIR" -type f -name "*.sh" -exec chmod +x {} +
