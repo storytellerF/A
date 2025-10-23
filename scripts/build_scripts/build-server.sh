@@ -1,5 +1,5 @@
 #!/bin/sh
 set -e
 mkdir -p deploy/build
-./gradlew cloud:server:buildFatJar --no-daemon
-cp cloud/server/build/libs/* deploy/build
+./gradlew cloud:server:distTar cloud:server:distZip --no-daemon
+cp cloud/server/build/distributions/* deploy/build

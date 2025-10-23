@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 set -e
-./gradlew app:devCli:run &
+./gradlew dev:server:installDist
+./dev/server/build/install/server/bin/server &
 echo "Waiting for port 8888 to become available..."
 counter=0
 max_retries=60  # 最多尝试 60 次（5 分钟）

@@ -6,10 +6,6 @@ if [ -z "$FLAVOR" ]; then
   exit 1
 fi
 cd "a-server/$FLAVOR" || exit
-mkdir -p server-all
-tar -xf server-cli.tar
-tar -xf server.tar -C server-all
-jar cf server-all.jar -C server-all/ .
 cd ../..
 cd ./Projects/AData && git pull
 cd ./Projects/A && git pull

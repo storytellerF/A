@@ -9,6 +9,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
@@ -21,7 +24,9 @@ fun PrivateKeyInput(privateKey: String, update: (String) -> Unit, startSign: () 
             onValueChange = {
                 update(it)
             },
-            modifier = Modifier.padding(top = 10.dp).fillMaxWidth(),
+            modifier = Modifier.padding(top = 10.dp).fillMaxWidth().semantics{
+                contentDescription = "Private Key Input"
+            }.testTag("privateKeyInput"),
             maxLines = max(lineCount, 2),
             minLines = max(lineCount, 2),
             label = {

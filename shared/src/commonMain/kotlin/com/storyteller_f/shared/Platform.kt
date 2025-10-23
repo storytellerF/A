@@ -6,7 +6,6 @@ import kotlinx.serialization.json.Json
 
 interface Platform {
     val name: String
-    val id: String
 }
 
 expect fun getPlatform(): Platform

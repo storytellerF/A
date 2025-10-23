@@ -15,7 +15,7 @@ if [ -z "$FLAVOR" ] || [ -z "$BUILD_ON" ]; then
   exit 1
 fi
 
-if [ -z "$REMOTE_URI"] || [ -z "$REMOTE_COMMAND"]; then
+if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_COMMAND" ]; then
   echo "FLAVOR and BUILD_ON must be set"
     exit 1
 fi

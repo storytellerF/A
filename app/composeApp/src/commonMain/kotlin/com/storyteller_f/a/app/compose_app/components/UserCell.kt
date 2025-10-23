@@ -45,7 +45,7 @@ fun UnboundedUserCell(
 ) = UserCellInternal(Modifier.fillMaxWidth().padding(8.dp), userInfo, iconClickable, iconSize)
 
 @Composable
-private fun UserCellInternal(
+fun UserCellInternal(
     modifier: Modifier,
     userInfo: UserInfo?,
     iconClickable: Boolean,

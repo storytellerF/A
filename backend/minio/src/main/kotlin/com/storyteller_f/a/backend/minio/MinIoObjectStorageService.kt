@@ -160,7 +160,7 @@ fun replaceUrl(minioHost: String, minioObjectUrl: String?): String {
     val host = URI.create(minioHost)
     return UrlBuilder.fromString(minioObjectUrl)
         .withHost(host.host)
-        .withPort(host.port.takeIf { it > 0 } ?: if (host.host == "https") 443 else 80)
+        .withPort(host.port.takeIf { it > 0 } ?: if (host.scheme == "https") 443 else 80)
         .withScheme(host.scheme)
         .toString()
 }

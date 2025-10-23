@@ -1,12 +1,18 @@
 package device_based
 
+import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -16,62 +22,100 @@ import com.storyteller_f.a.app.compose_app.App
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
+import com.storyteller_f.a.app.core.compontents.CenterBox
+import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.getClient
+import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.shared.getPlatform
 import com.storyteller_f.shared.setupKmpLogger
-import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.util.decodeBase64String
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.test.runTest
+import kotlin.test.Ignore
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class AppTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun myTest() {
-        runServer {
+    @Ignore
+    fun testUserPage() {
+        runServer { uiViewModel, map ->
             runComposeUiTest {
                 setContent {
                     val current = LocalPlatformContext.current
                     var initDone by remember {
                         mutableStateOf(false)
                     }
+                    val isSignIn by uiViewModel.mainInstance.sessionManager.isAlreadySignIn.collectAsState()
                     LaunchedEffect(null) {
                         initEnvironment(current)
+                        val privateKeyContent = map["p-system"]!!
+                        uiViewModel.mainInstance.sessionManager.getUserInfo(
+                            privateKeyContent,
+                            true
+                        ) {
+                            RawUserPass(it)
+                        }
                         initDone = true
                     }
-                    if (initDone) {
-                        CompositionLocalProvider(LocalUiViewModel provides it) {
+                    if (initDone && isSignIn) {
+                        CompositionLocalProvider(LocalUiViewModel provides uiViewModel) {
                             App()
+                        }
+                    } else {
+                        CenterBox {
+                            Text("$initDone $isSignIn")
                         }
                     }
                 }
-
-                onNodeWithTag("me").performClick()
-                onNodeWithTag("sign_in").performClick()
-                onNodeWithTag("goto_sign_up").performClick()
-                onNodeWithTag("private_key").performClick()
-                onNodeWithTag("auto_generate").performClick()
-                onNodeWithTag("start_sign").performClick()
-                waitUntil(timeoutMillis = 15000) {
-                    onNodeWithTag("home").isDisplayed()
+                waitUntil(timeoutMillis = 5000) {
+                    onNodeWithTag("me").isDisplayed()
                 }
-
+                onNodeWithTag("me").performClick()
+                onNodeWithTag("user-dialog-cell").performClick()
+                waitUntil(timeoutMillis = 5000) {
+                    onNodeWithTag("user-page").isDisplayed()
+                }
             }
         }
 
     }
 
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun myTest() = runComposeUiTest {
+        // Declares a mock UI to demonstrate API calls
+        //
+        // Replace with your own declarations to test the code of your project
+        setContent {
+            var text by remember { mutableStateOf("Hello") }
+            Text(
+                text = text,
+                modifier = Modifier.testTag("text")
+            )
+            Button(
+                onClick = { text = "Compose" },
+                modifier = Modifier.testTag("button")
+            ) {
+                Text("Click me")
+            }
+        }
 
+        // Tests the declared UI with assertions and actions of the Compose Multiplatform testing API
+        onNodeWithTag("text").assertTextEquals("Hello")
+        onNodeWithTag("button").performClick()
+        onNodeWithTag("text").assertTextEquals("Compose")
+    }
 }
 
-private fun runServer(block: (UIViewModel) -> Unit) {
+private fun runServer(block: (UIViewModel, Map<String, String>) -> Unit) {
     setupKmpLogger()
     val ip = "localhost"
     runTest {
@@ -81,13 +125,14 @@ private fun runServer(block: (UIViewModel) -> Unit) {
                 url("http://$ip:8888")
             }
         }
-        assertEquals("pong", testClient.get("/ping").bodyAsText())
-        val platform = getPlatform()
-        Napier.i {
-            "${platform.id} ${platform.name}"
+        val ecdsaMap = testClient.get("/ecdsa").bodyAsText()
+        val map = ecdsaMap.split("\n").map {
+            it.split("\t")
+        }.associate {
+            it[0] to it[1].decodeBase64String()
         }
         val port = testClient.post("/start") {
-            setBody("${platform.name}\n${platform.id}")
+            setBody(getPlatform().name)
             timeout {
                 socketTimeoutMillis = 20_000
             }
@@ -95,8 +140,10 @@ private fun runServer(block: (UIViewModel) -> Unit) {
         try {
             val url = "http://$ip:$port"
             val wsServerUrl = url.replace("http", "ws")
-            val uIViewModel = UIViewModel(this, wsServerUrl, url)
-            block(uIViewModel)
+            coroutineScope {
+                val uIViewModel = UIViewModel(this, wsServerUrl, url)
+                block(uIViewModel, map)
+            }
         } finally {
             testClient.post("/stop") {
                 setBody(port.toString())

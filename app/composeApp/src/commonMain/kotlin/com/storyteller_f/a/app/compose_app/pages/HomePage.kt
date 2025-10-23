@@ -56,17 +56,17 @@ fun HomePage() {
     val modifier = Modifier.testTag("home")
     when (size.widthSizeClass) {
         WindowWidthSizeClass.Compact -> {
-            CompatHomePage(homeNavRoutes, modifier)
+            HomeCompatPage(homeNavRoutes, modifier)
         }
 
         else -> {
-            ExpandHomePage(modifier, homeNavRoutes)
+            HomeNonCompatPage(modifier, homeNavRoutes)
         }
     }
 }
 
 @Composable
-private fun ExpandHomePage(
+private fun HomeNonCompatPage(
     modifier: Modifier,
     homeNavRoutes: List<NavRoute>
 ) {
@@ -90,7 +90,7 @@ private fun ExpandHomePage(
 }
 
 @Composable
-private fun CompatHomePage(
+private fun HomeCompatPage(
     homeNavRoutes: List<NavRoute>,
     modifier: Modifier
 ) {

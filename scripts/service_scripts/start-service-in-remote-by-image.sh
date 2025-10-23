@@ -22,7 +22,9 @@ if [ -z "$REMOTE_URI" ] || [ -z "$REMOTE_CERT_FILE" ] || [ -z "$REMOTE_COMMAND" 
   exit 1
 fi
 
-./scripts/build_scripts/build-cloud.sh "$FLAVOR" prod local
+./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$BUILD_TYPE"
+
+./scripts/build_scripts/build-cloud.sh
 ./scripts/build_scripts/build-server-image.sh "$FLAVOR" prod local
 ./scripts/push_scripts/push-image-to-remote.sh "$REMOTE_URI"
 ./scripts/service_scripts/start-service-at-remote-by-image.sh

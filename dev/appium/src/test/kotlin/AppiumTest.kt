@@ -15,12 +15,16 @@ import kotlin.test.assertTrue
 
 class AppiumTest {
     @Test
-    fun `test sign up`() {
+    fun `test sign in`() {
         val url = "http://127.0.0.1:4723"
         val storageClient = StorageClient(URI(url).toURL())
+        ProcessBuilder("")
         storageClient.reset()
         val file =
-            File("../../app/composeApp/build//outputs/apk/release/composeApp-universal-release.apk")
+            File("../../app/composeApp/build/outputs/apk/release/composeApp-universal-release.apk")
+        val privateKeyContent = File("../../../AData/data/ecdsa/p-system")
+            .readText()
+            .replace("\r\n", "\n")
         println("apk path ${file.canonicalPath}")
         storageClient.add(file)
         val path = storageClient.list().first().path
@@ -32,11 +36,10 @@ class AppiumTest {
         try {
             clickElement(driver, """new UiSelector().description("avatar")""")
             clickElement(driver, """new UiSelector().text("Sign in")""")
-            clickElement(driver, """new UiSelector().text("Go to sign up")""")
             clickElement(driver, """new UiSelector().text("Private Key")""")
-            clickElement(driver, """new UiSelector().text("Auto generate")""")
-            clickElement(driver, """new UiSelector().text("Start sign up")""")
-            assertElementVisible(driver, """new UiSelector().text("500")""")
+            inputElement(driver, """new UiSelector().className("android.widget.EditText")""", privateKeyContent)
+            clickElement(driver, """new UiSelector().text("Start sign in")""")
+            assertElementVisible(driver, """new UiSelector().description("avatar")""")
         } finally {
             driver.quit()
         }
@@ -55,4 +58,12 @@ private fun clickElement(
     selector: String
 ) {
     driver.findElement(AppiumBy.androidUIAutomator(selector)).click()
+}
+
+private fun inputElement(
+    driver: AndroidDriver,
+    selector: String,
+    input: String
+) {
+    driver.findElement(AppiumBy.androidUIAutomator(selector)).sendKeys(input)
 }
