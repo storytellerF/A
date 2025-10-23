@@ -190,7 +190,6 @@ private fun forwardAllDevices(isNested: Boolean, port: String): Boolean {
     return true
 }
 
-
 // 启动协程监听 ADB 设备连接
 @OptIn(DelicateCoroutinesApi::class)
 fun startListening(port: Int, previousDevices: MutableSet<String>): Job {
