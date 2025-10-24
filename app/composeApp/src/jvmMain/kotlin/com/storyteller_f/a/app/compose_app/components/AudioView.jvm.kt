@@ -24,9 +24,9 @@ import javazoom.jl.player.JavaSoundAudioDeviceFactory
 import javazoom.jl.player.jlp
 
 @Composable
-actual fun AudioView(obj: RemoteMediaItem, isEmbed: Boolean) {
+actual fun AudioView(obj: RemoteMediaItem, isFilled: Boolean) {
     val url = obj.url
-    log {
+    Napier.i(tag = "MediaPlayer") {
         "AudioView $url"
     }
 

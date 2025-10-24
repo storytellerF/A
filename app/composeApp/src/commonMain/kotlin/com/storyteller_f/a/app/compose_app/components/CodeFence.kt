@@ -98,14 +98,14 @@ private fun FileObjectBlock(
             val coverInfo = mediaMap[obj.cover]
             val obj1 =
                 RemoteMediaItem(url, contentType, false, obj.name, coverInfo, obj.title)
-            VideoView(obj1, true)
+            VideoView(obj1, false)
         }
 
         contentType.startsWith("audio/") -> {
             val coverInfo = mediaMap[obj.cover]
             val obj1 =
                 RemoteMediaItem(url, contentType, false, obj.name, coverInfo, obj.title)
-            AudioView(obj1, true)
+            AudioView(obj1, false)
         }
 
         else -> HighlightCodeBlock(modal)
@@ -146,15 +146,15 @@ private fun CustomObjectBlock(
     )
     when (obj.contentType) {
         FileInfo.YOUTUBE_MIMETYPE -> {
-            VideoView(obj1, true)
+            VideoView(obj1, false)
         }
 
         FileInfo.SOUND_CLOUD_MIME_TYPE -> {
-            AudioView(obj1, true)
+            AudioView(obj1, false)
         }
 
         FileInfo.M3U8_MIMETYPE -> {
-            VideoView(obj1, true)
+            VideoView(obj1, false)
         }
     }
 }

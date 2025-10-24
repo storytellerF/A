@@ -19,6 +19,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +48,6 @@ import com.storyteller_f.a.app.compose_app.common.Toast
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
-import io.github.aakira.napier.log
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,8 +72,8 @@ import kotlin.uuid.Uuid
 @Composable
 fun MediaPlayerInternal(
     id: String,
-    isEmbed: Boolean,
     contentType: String,
+    isFilled: Boolean,
     block: @Composable (MediaController, FileViewInfo.Player?, LocalMediaPlaySession) -> Unit
 ) {
     val uuid = rememberSaveable {
@@ -83,47 +83,58 @@ fun MediaPlayerInternal(
         LocalMediaPlaySession(id, uuid)
     }
 
-    log {
+    Napier.i(tag = "MediaPlayer") {
         "MediaPlayerInternal $uuid recomposing"
     }
     val player = MediaProvider.controller ?: return
     val playingSession by globalPlayerState
-    val isPip = rememberIsInPipMode()
     LaunchedEffect(playingSession, currentSession) {
-        log {
-            "MediaPlayerInternal $uuid check switch ${playingSession?.uuids} ${currentSession.uuid}"
+        Napier.i(tag = "MediaPlayer") {
+            "MediaPlayerInternal $uuid switch uuids: ${playingSession?.uuids} current: ${currentSession.uuid}"
         }
-        playingSession?.let {
-            if (it.uuids.lastOrNull() == null && it.id == currentSession.id || !isEmbed) {
-                MediaProvider.switch(currentSession)
-            }
-        }
+        switchSessionIfNeed(playingSession, currentSession, isFilled)
     }
+    val context = LocalContext.current.findActivity()
     DisposableEffect(null) {
         onDispose {
-            Napier.d {
-                "MediaPlayerInternal $uuid dispose $isPip"
+            val isPip = context.isInPictureInPictureMode
+            Napier.d(tag = "MediaPlayer") {
+                "MediaPlayerInternal $uuid dispose isPip: $isPip isEmbed: $isFilled"
             }
-            MediaProvider.release(currentSession)
+            MediaProvider.release(currentSession, isPip || isFilled)
         }
     }
-    MediaPlayerContainer(isEmbed, playingSession, player, currentSession, contentType, block)
+    MediaPlayerContainer(playingSession, player, currentSession, contentType, block, isFilled)
+}
+
+@OptIn(ExperimentalUuidApi::class)
+private fun switchSessionIfNeed(
+    playingSession: FileViewInfo.Player?,
+    currentSession: LocalMediaPlaySession,
+    isFilled: Boolean
+) {
+    if (playingSession == null) return
+    if (playingSession.id == currentSession.id && (playingSession.lastUuid == null || isFilled)) {
+        MediaProvider.switch(currentSession)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
 fun MediaPlayerContainer(
-    isEmbed: Boolean,
     playingSession: FileViewInfo.Player?,
     player: MediaController,
     currentSession: LocalMediaPlaySession,
     contentType: String,
-    block: @Composable (MediaController, FileViewInfo.Player?, LocalMediaPlaySession) -> Unit
+    block: @Composable (MediaController, FileViewInfo.Player?, LocalMediaPlaySession) -> Unit,
+    isFilled: Boolean
 ) {
     var showSheet by remember {
         mutableStateOf(false)
     }
-    if (isEmbed) {
+    if (isFilled) {
+        block(player, playingSession, currentSession)
+    } else {
         ObjectBlock {
             Box(modifier = Modifier.weight(1f)) {
                 block(player, playingSession, currentSession)
@@ -132,18 +143,22 @@ fun MediaPlayerContainer(
                 showSheet = true
             }
         }
-    } else {
-        block(player, playingSession, currentSession)
     }
     val sheetState = rememberModalBottomSheetState()
-    if (playingSession?.uuids?.lastOrNull() == currentSession.uuid) {
+    if (playingSession?.lastUuid == currentSession.uuid) {
         VideoPlaylistPicker(showSheet, sheetState, {
             showSheet = false
         }, playingSession.playList) { _, i ->
-            player.seekTo(i, 0)
-            player.play()
+            switchPlaylist(i)
         }
     }
+}
+
+private fun switchPlaylist(i: Int) {
+    val player = MediaProvider.controller ?: return
+
+    player.seekTo(i, 0)
+    player.play()
 }
 
 @Composable
@@ -165,7 +180,11 @@ fun BoxScope.PlayerWaiting(
         val request = imageRequestInMarkdown(coverMediaInfo)
         AsyncImage(request, contentDescription = "cover", modifier = Modifier.fillMaxSize())
     } else {
-        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh).fillMaxSize())
+        Box(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .fillMaxSize()
+        )
     }
     val scope = rememberCoroutineScope()
     val client = remember {
@@ -211,7 +230,11 @@ private suspend fun startPlay(
     globalDialogController.useResult {
         val playList = when (contentType) {
             FileInfo.M3U8_MIMETYPE -> parseM3UPlayList(obj, client)
-            FileInfo.YOUTUBE_MIMETYPE, FileInfo.SOUND_CLOUD_MIME_TYPE -> getPlaylistFromNewPipe(obj, context)
+            FileInfo.YOUTUBE_MIMETYPE, FileInfo.SOUND_CLOUD_MIME_TYPE -> getPlaylistFromNewPipe(
+                obj,
+                context
+            )
+
             else -> listOf(ConstPlayItem(obj.url, title = obj.url))
         }
         if (playList.isNotEmpty()) {
@@ -299,7 +322,13 @@ private fun getPlayItemFromStreamInfo(info: StreamInfo): List<ConstPlayItem> {
     return when (val streamType = info.streamType) {
         StreamType.VIDEO_STREAM -> {
             val firstOrNull = info.videoStreams.firstOrNull()
-            firstOrNull?.let { it1 -> ConstPlayItem(it1.content, info.thumbnails.firstOrNull()?.url, info.name) }
+            firstOrNull?.let { it1 ->
+                ConstPlayItem(
+                    it1.content,
+                    info.thumbnails.firstOrNull()?.url,
+                    info.name
+                )
+            }
                 ?.let {
                     listOf(it)
                 } ?: emptyList()
@@ -307,7 +336,13 @@ private fun getPlayItemFromStreamInfo(info: StreamInfo): List<ConstPlayItem> {
 
         StreamType.AUDIO_STREAM -> {
             val firstOrNull = info.audioStreams.firstOrNull()
-            firstOrNull?.let { it1 -> ConstPlayItem(it1.content, info.thumbnails.firstOrNull()?.url, info.name) }
+            firstOrNull?.let { it1 ->
+                ConstPlayItem(
+                    it1.content,
+                    info.thumbnails.firstOrNull()?.url,
+                    info.name
+                )
+            }
                 ?.let {
                     listOf(it)
                 } ?: emptyList()
@@ -325,7 +360,7 @@ data class MediaPlayerState(
 
 @OptIn(ExperimentalUuidApi::class)
 @Composable
-fun listenPlayerState(
+fun rememberPlayerState(
     player: MediaController,
     currentSession: LocalMediaPlaySession
 ): MediaPlayerState {
@@ -341,30 +376,31 @@ fun listenPlayerState(
     val toasterState = LocalToaster.current
     val scope = rememberCoroutineScope()
     DisposableEffect(currentSession, player) {
-        val customListener = buildListener(player, currentSession.id, toasterState, scope, object : VideoListener {
-            override fun onPlayStateChange(isPlaying: Boolean) {
-                currentIsPlaying = isPlaying
-            }
-
-            override fun onUpdateSize(size: CustomVideoSize) {
-                Napier.d {
-                    "Video ${currentSession.uuid} updateSize $size"
+        val customListener =
+            buildListener(player, currentSession.id, toasterState, scope, object : VideoListener {
+                override fun onPlayStateChange(isPlaying: Boolean) {
+                    currentIsPlaying = isPlaying
                 }
-                MediaProvider.update(currentSession, size)
-            }
 
-            override fun onUpdateLoading(isLoading: Boolean) {
-                currentLoading = isLoading
-            }
-
-            override fun onMediaItemChanged(mediaId: String?, currentMediaItemIndex: Int) {
-                currentPlaying = if (currentMediaItemIndex < player.mediaItemCount) {
-                    player.getMediaItemAt(currentMediaItemIndex)
-                } else {
-                    null
+                override fun onUpdateSize(size: CustomVideoSize) {
+                    Napier.d {
+                        "Video ${currentSession.uuid} updateSize $size"
+                    }
+                    MediaProvider.update(currentSession, size)
                 }
-            }
-        })
+
+                override fun onUpdateLoading(isLoading: Boolean) {
+                    currentLoading = isLoading
+                }
+
+                override fun onMediaItemChanged(mediaId: String?, currentMediaItemIndex: Int) {
+                    currentPlaying = if (currentMediaItemIndex < player.mediaItemCount) {
+                        player.getMediaItemAt(currentMediaItemIndex)
+                    } else {
+                        null
+                    }
+                }
+            })
         player.addListener(customListener)
         onDispose {
             Napier.d {
@@ -373,7 +409,12 @@ fun listenPlayerState(
             player.removeListener(customListener)
         }
     }
-    return MediaPlayerState(currentLoading, currentIsPlaying, currentPlaying)
+    val newState by remember {
+        derivedStateOf {
+            MediaPlayerState(currentLoading, currentIsPlaying, currentPlaying)
+        }
+    }
+    return newState
 }
 
 private fun MediaController.playNewMedia(

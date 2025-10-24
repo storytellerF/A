@@ -23,10 +23,10 @@ import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
 import kotlin.uuid.ExperimentalUuidApi
 
 @Composable
-actual fun AudioView(obj: RemoteMediaItem, isEmbed: Boolean) {
-    MediaPlayerInternal(obj.url, isEmbed, obj.contentType) { player, playingSession, currentSession ->
+actual fun AudioView(obj: RemoteMediaItem, isFilled: Boolean) {
+    MediaPlayerInternal(obj.url, obj.contentType, isFilled, { player, playingSession, currentSession ->
         AudioPlayer(playingSession, currentSession, obj, player)
-    }
+    })
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -40,7 +40,7 @@ private fun AudioPlayer(
     Box(modifier = Modifier.aspectRatio(16f / 9)) {
         when {
             playingSession == null -> PlayerWaiting(currentSession, obj)
-            playingSession.uuids.lastOrNull() == currentSession.uuid -> AudioPlayer(
+            playingSession.lastUuid == currentSession.uuid -> AudioPlayer(
                 player,
                 currentSession,
                 obj,

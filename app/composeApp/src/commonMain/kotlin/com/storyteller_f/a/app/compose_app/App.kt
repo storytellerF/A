@@ -168,6 +168,15 @@ sealed interface FileViewInfo {
         val videoSize: CustomVideoSize?,
     ) : FileViewInfo {
         val id = obj.url
+
+        val lastUuid get() = uuids.lastOrNull()
+
+        @OptIn(ExperimentalUuidApi::class)
+        fun appendUuid(
+            uuid: Uuid
+        ) = copy(uuids = uuids + uuid)
+
+        val uuidCount get() = uuids.size
     }
 
     @Serializable
