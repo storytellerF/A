@@ -58,7 +58,6 @@ import com.storyteller_f.a.app.compose_app.MediaPlayerActivity
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
-import io.github.aakira.napier.log
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -73,12 +72,12 @@ const val EXTRA_CONTROL_PAUSE = 2
 @Composable
 actual fun VideoView(
     obj: RemoteMediaItem,
-    isEmbed: Boolean,
+    isFilled: Boolean,
 ) {
     val contentType = obj.contentType
-    MediaPlayerInternal(obj.url, isEmbed, contentType) { player, playingSession, currentSession ->
-        VideoPlayer(playingSession, currentSession, player, isEmbed, obj)
-    }
+    MediaPlayerInternal(obj.url, contentType, isFilled, { player, playingSession, currentSession ->
+        VideoPlayer(playingSession, currentSession, player, obj, isFilled)
+    })
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -87,24 +86,27 @@ private fun VideoPlayer(
     playingSession: FileViewInfo.Player?,
     currentSession: LocalMediaPlaySession,
     player: MediaController,
-    isEmbed: Boolean,
     obj: RemoteMediaItem,
+    isFilled: Boolean,
 ) {
     val contentType = obj.contentType
-    val ratio = remember(playingSession, currentSession, isEmbed) {
-        if (playingSession?.videoSize != null && playingSession.uuids.lastOrNull() == currentSession.uuid && !isEmbed) {
+    val ratio = remember(playingSession, currentSession, isFilled) {
+        if (playingSession?.videoSize != null &&
+            playingSession.lastUuid == currentSession.uuid &&
+            isFilled
+        ) {
             playingSession.videoSize.width.toFloat() / playingSession.videoSize.height
         } else {
             16f / 9
         }
     }
     Napier.d {
-        "Video ${currentSession.uuid} ratio $ratio ${playingSession?.uuids} ${playingSession?.videoSize} $isEmbed"
+        "Video ${currentSession.uuid} ratio $ratio ${playingSession?.uuids} ${playingSession?.videoSize} $isFilled"
     }
     Box(modifier = Modifier.aspectRatio(ratio)) {
         when {
             playingSession == null -> PlayerWaiting(currentSession, obj)
-            playingSession.uuids.lastOrNull() == currentSession.uuid -> VideoPlayerInternal(
+            playingSession.lastUuid == currentSession.uuid -> VideoPlayerInternal(
                 currentSession,
                 player,
                 contentType
@@ -133,7 +135,7 @@ private fun BoxScope.VideoPlayerInternal(
             },
             modifier = pipModifier.fillMaxSize()
         ) {
-            log {
+            Napier.i {
                 "Video ${currentSession.uuid} update"
             }
             it.player = player
@@ -155,8 +157,8 @@ fun BoxScope.AndroidPlayerContainer(
     player: MediaController,
     block: @Composable BoxScope.(Modifier, MediaPlayerState) -> Unit,
 ) {
-    val playerState = listenPlayerState(player, currentSession)
-    val pipModifier = Modifier.buildPlayerModifier(playerState.currentIsPlaying, player)
+    val playerState = rememberPlayerState(player, currentSession)
+    val pipModifier = Modifier.enablePictureInPicture(playerState.currentIsPlaying, player)
     block(pipModifier, playerState)
     CheckEnterPipPre31(playerState.currentIsPlaying)
     PlayerBroadcastReceiver(player)
@@ -165,9 +167,7 @@ fun BoxScope.AndroidPlayerContainer(
 @Composable
 private fun CheckEnterPipPre31(currentIsPlaying: Boolean) {
     val context = LocalContext.current
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.S
-    ) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
         DisposableEffect(context) {
             val onUserLeaveBehavior = Runnable {
                 if (currentIsPlaying) {
@@ -184,15 +184,11 @@ private fun CheckEnterPipPre31(currentIsPlaying: Boolean) {
 }
 
 @Composable
-private fun Modifier.buildPlayerModifier(
+private fun Modifier.enablePictureInPicture(
     currentIsPlaying: Boolean,
     player: MediaController,
 ): Modifier {
-    log {
-        "Video buildPlayerModifier $currentIsPlaying"
-    }
     val context = LocalContext.current
-
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
         return this
     }
@@ -226,14 +222,21 @@ fun VideoOrAudioOpRow(
     val toasterState = LocalToaster.current
     FlowRow {
         val clipboardManager = LocalClipboard.current
-        val isActive = localMediaPlaySession.uuid == playingSession?.uuids?.lastOrNull()
+        val isActive = localMediaPlaySession.uuid == playingSession?.lastUuid
 
         IconButton(showSheet, enabled = isActive) {
             Icon(Icons.AutoMirrored.Default.List, "playlist")
         }
         IconButton({
             scope.launch {
-                clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", localMediaPlaySession.id)))
+                clipboardManager.setClipEntry(
+                    ClipEntry(
+                        ClipData.newPlainText(
+                            "text",
+                            localMediaPlaySession.id
+                        )
+                    )
+                )
                 toasterState.showMessage("copied")
             }
         }) {
@@ -248,18 +251,14 @@ fun VideoOrAudioOpRow(
             }
         }
         IconButton({
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.findActivity().enterPictureInPictureMode(
-                    PictureInPictureParams.Builder().build()
-                )
-            } else {
-                toasterState.showMessage("not support")
-            }
+            context.findActivity().enterPictureInPictureMode(
+                PictureInPictureParams.Builder().build()
+            )
         }, enabled = isActive) {
             Icon(Icons.Default.PictureInPicture, "pip")
         }
         IconButton({
-            if (localMediaPlaySession.uuid == playingSession?.uuids?.lastOrNull()) {
+            if (localMediaPlaySession.uuid == playingSession?.lastUuid) {
                 context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
                     putExtra("json", commonJson.encodeToString<FileViewInfo>(playingSession))
                 })
@@ -281,52 +280,45 @@ internal fun Context.findActivity(): ComponentActivity {
 
 @Composable
 actual fun rememberIsInPipMode(): Boolean {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val activity = LocalContext.current.findActivity()
-        var pipMode by remember { mutableStateOf(activity.isInPictureInPictureMode) }
-        DisposableEffect(activity) {
-            val observer = Consumer<PictureInPictureModeChangedInfo> { info ->
-                pipMode = info.isInPictureInPictureMode
-            }
-            activity.addOnPictureInPictureModeChangedListener(observer)
-            onDispose { activity.removeOnPictureInPictureModeChangedListener(observer) }
+    val activity = LocalContext.current.findActivity()
+    var pipMode by remember { mutableStateOf(activity.isInPictureInPictureMode) }
+    DisposableEffect(activity) {
+        val observer = Consumer<PictureInPictureModeChangedInfo> { info ->
+            pipMode = info.isInPictureInPictureMode
         }
-        return pipMode
-    } else {
-        return false
+        activity.addOnPictureInPictureModeChangedListener(observer)
+        onDispose { activity.removeOnPictureInPictureModeChangedListener(observer) }
     }
+    return pipMode
 }
 
 @Composable
 fun PlayerBroadcastReceiver(player: Player) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val isInPipMode = rememberIsInPipMode()
-        if (isInPipMode) {
-            val context = LocalContext.current
+    val isInPipMode = rememberIsInPipMode()
+    if (!isInPipMode) return
+    val context = LocalContext.current
 
-            DisposableEffect(player) {
-                val broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-                    override fun onReceive(context: Context?, intent: Intent?) {
-                        if ((intent == null) || (intent.action != ACTION_BROADCAST_CONTROL)) {
-                            return
-                        }
-
-                        when (intent.getIntExtra(EXTRA_CONTROL_TYPE, 0)) {
-                            EXTRA_CONTROL_PAUSE -> player.pause()
-                            EXTRA_CONTROL_PLAY -> player.play()
-                        }
-                    }
+    DisposableEffect(player) {
+        val broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if ((intent == null) || (intent.action != ACTION_BROADCAST_CONTROL)) {
+                    return
                 }
-                ContextCompat.registerReceiver(
-                    context,
-                    broadcastReceiver,
-                    IntentFilter(ACTION_BROADCAST_CONTROL),
-                    ContextCompat.RECEIVER_NOT_EXPORTED
-                )
-                onDispose {
-                    context.unregisterReceiver(broadcastReceiver)
+
+                when (intent.getIntExtra(EXTRA_CONTROL_TYPE, 0)) {
+                    EXTRA_CONTROL_PAUSE -> player.pause()
+                    EXTRA_CONTROL_PLAY -> player.play()
                 }
             }
+        }
+        ContextCompat.registerReceiver(
+            context,
+            broadcastReceiver,
+            IntentFilter(ACTION_BROADCAST_CONTROL),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        onDispose {
+            context.unregisterReceiver(broadcastReceiver)
         }
     }
 }

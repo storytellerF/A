@@ -54,9 +54,9 @@ fun FileViewPage(session: FileViewInfo) {
             CenterBox {
                 val remoteMediaItem = session.obj
                 if (remoteMediaItem.contentType.startsWith("video")) {
-                    VideoView(remoteMediaItem, false)
+                    VideoView(remoteMediaItem, true)
                 } else {
-                    AudioView(remoteMediaItem, false)
+                    AudioView(remoteMediaItem, true)
                 }
             }
         }

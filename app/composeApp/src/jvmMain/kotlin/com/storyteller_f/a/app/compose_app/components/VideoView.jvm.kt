@@ -27,7 +27,7 @@ import java.util.*
 @Composable
 actual fun VideoView(
     obj: RemoteMediaItem,
-    isEmbed: Boolean
+    isFilled: Boolean
 ) {
     val id = obj.url
     var isPlaying by remember {

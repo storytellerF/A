@@ -38,7 +38,7 @@ data class RemoteMediaItem(
 )
 
 @Composable
-expect fun VideoView(obj: RemoteMediaItem, isEmbed: Boolean)
+expect fun VideoView(obj: RemoteMediaItem, isFilled: Boolean)
 
 @Composable
 expect fun rememberIsInPipMode(): Boolean
