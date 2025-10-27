@@ -1,21 +1,30 @@
 package com.storyteller_f.a.app.compose_app.pages.user
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,8 +32,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -37,6 +48,9 @@ import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.auto_generate
 import com.storyteller_f.a.app.compose_app.common.AppNav
+import com.storyteller_f.a.app.compose_app.common.LoginHistoryViewModel
+import com.storyteller_f.a.app.compose_app.common.getLoginHistoryViewModel
+import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.go_to_sign_in
 import com.storyteller_f.a.app.compose_app.go_to_sign_up
@@ -48,6 +62,7 @@ import com.storyteller_f.a.app.compose_app.start_sign_up
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.core.compontents.CenterBox
 import com.storyteller_f.a.app.core.compontents.PrivateKeyInput
+import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.shared.getAlgo
@@ -56,6 +71,9 @@ import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 
 @Composable
 fun LoginPage() {
@@ -119,6 +137,7 @@ private fun buildLoginNav(navigator: NavHostController) = object : LoginNav {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectSignInPage(loginNav: LoginNav) {
     CenterBox {
@@ -144,10 +163,103 @@ fun SelectSignInPage(loginNav: LoginNav) {
                     Text(stringResource(Res.string.private_key))
                 }
                 SelectFile(false)
+                SelectFromHistory()
             }
             Text(stringResource(Res.string.go_to_sign_up), modifier = Modifier.clickable {
                 loginNav.gotoSignUp()
             }.testTag("goto_sign_up"), textDecoration = TextDecoration.Underline)
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun SelectFromHistory() {
+    val viewModel = getLoginHistoryViewModel()
+    SelectFromHistoryInternal(viewModel)
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun SelectFromHistoryInternal(viewModel: LoginHistoryViewModel) {
+    var showSheet by remember {
+        mutableStateOf(false)
+    }
+    val sheetState = rememberModalBottomSheetState()
+    OutlinedButton({
+        showSheet = true
+    }) {
+        Text("Last Used")
+    }
+    BaseSheet(showSheet, sheetState, {
+        showSheet = false
+    }) {
+        val data by viewModel.handler.data.collectAsState()
+        val last = data?.history?.last
+        val scope = rememberCoroutineScope()
+        val appNav = LocalAppNav.current
+        StateView(viewModel.handler, modifier = Modifier.height(200.dp)) {
+            LazyColumn {
+                items(it.list) { alias ->
+                    LoginHistoryCell(alias, last, {
+                        scope.launch {
+                            if (viewModel.getSession(alias)) {
+                                showSheet = false
+                                appNav.gotoHome()
+                            }
+                        }
+                    }, {
+                        viewModel.deleteSession(alias)
+                    })
+                }
+            }
+        }
+    }
+}
+
+class PrivateParameterProvider : PreviewParameterProvider<String> {
+    override val values: Sequence<String>
+        get() = sequence {
+            yield(buildString {
+                repeat(50) {
+                    append("a")
+                }
+            })
+        }
+}
+
+@Preview
+@Composable
+private fun LoginHistoryCell(
+    @PreviewParameter(PrivateParameterProvider::class) address: String,
+    last: String? = "hello",
+    onSelect: () -> Unit = {},
+    onDelete: () -> Unit = {}
+) {
+    Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).clickable {
+        onSelect()
+    }, verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            address,
+            maxLines = 1,
+            overflow = TextOverflow.MiddleEllipsis,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleMedium
+        )
+        val shape = RoundedCornerShape(10.dp)
+        if (address == last) {
+            Text(
+                "上次登录",
+                modifier = Modifier.clip(shape)
+                    .background(MaterialTheme.colorScheme.primaryContainer, shape)
+                    .padding(8.dp),
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        IconButton({
+            onDelete()
+        }) {
+            Icon(Icons.Default.Delete, "delete")
         }
     }
 }

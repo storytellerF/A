@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-anroid:
+  build-android:
     runs-on: ubuntu-latest
     env:
       # this will take the entire vars context configured in the repository > environments

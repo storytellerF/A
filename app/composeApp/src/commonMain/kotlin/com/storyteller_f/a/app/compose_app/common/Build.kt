@@ -6,10 +6,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalDatabase
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
-import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleStatus
@@ -476,9 +476,14 @@ fun getChildAccountsViewModel(): ChildAccountsViewModel = customViewModel(
 }
 
 @Composable
+fun getLoginHistoryViewModel() = customViewModel(listOf("login-history")) { sessionManager, _ ->
+    LoginHistoryViewModel(sessionManager)
+}
+
+@Composable
 inline fun <reified VM : ViewModel> customViewModel(
     keys: List<Comparable<*>?>? = null,
-    crossinline factory: (UserSessionManager, ModelStorage) -> VM
+    crossinline factory: (CustomUserSessionManager, ModelStorage) -> VM
 ): VM {
     val sessionManager = LocalSessionManager.current
     val databaseSource = LocalDatabase.current

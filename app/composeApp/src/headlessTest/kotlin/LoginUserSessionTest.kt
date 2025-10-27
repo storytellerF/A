@@ -1,15 +1,72 @@
+import com.storyteller_f.a.app.core.utils.LoginHistoryManager
 import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.client.core.RawUserPassInfo
-import com.storyteller_f.shared.*
+import com.storyteller_f.shared.encryptDataByAES
+import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class LoginUserSessionTest : UsingContextTest() {
     @Test
-    fun testSession() = runTest {
+    fun testSession() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
+        val addSession = sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
+        assertEquals(1, sessionFactory.getSavedSession().list.size)
+        // 签名/验证
+        val signature = addSession.signature("test").getOrThrow()
+        assertTrue(addSession.verify(signature, "test").getOrThrow())
+        // 加密测试
+        val encrypt = encryptDataByAES("hello").getOrThrow()
+        getAlgo().run {
+            val encryptAesKey = eciesEncrypt(publicKey, encrypt.second).getOrThrow()
+            assertEquals("hello", addSession.decrypt(encrypt.first, encryptAesKey).getOrThrow())
+        }
+    }
+
+
+    @Test
+    fun `test exit session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
+        sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
+        val session = sessionFactory.getSavedSession()
+        assertEquals(ad, session.history?.current)
+        assertEquals(ad, session.history?.last)
+        sessionFactory.exitSession(ad)
+        val session1 = sessionFactory.getSavedSession()
+        assertNull(session1.history?.current)
+        assertEquals(ad, session1.history?.last)
+    }
+
+    @Test
+    fun `test remove session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
+        sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
+        val session = sessionFactory.getSavedSession()
+        assertEquals(ad, session.history?.current)
+        assertEquals(ad, session.history?.last)
+        sessionFactory.removeSession(ad)
+        val session1 = sessionFactory.getSavedSession()
+        assertNull(session1.history?.current)
+        assertNull(session1.history?.last)
+        assertEquals(0, session1.list.size)
+    }
+
+    @Test
+    fun `test build session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
+        sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
+        val session = sessionFactory.getSavedSession()
+        val alias = session.history?.last
+        assertNotNull(alias)
+        val userPass = sessionFactory.buildSession(alias)
+        assertEquals(ad, userPass?.address()?.getOrThrow())
+    }
+}
+
+fun loginSessionTest(block: suspend (String, String, String, LoginHistoryManager) -> Unit) {
+    runTest {
         loadCryptoLibIfNeed()
         val settings = createSettings("settings-test")
         settings.clear()
@@ -19,16 +76,7 @@ class LoginUserSessionTest : UsingContextTest() {
             val privateKey = generateECDSAPemPrivateKey().getOrThrow()
             val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
             val ad = calcAddress(publicKey).getOrThrow()
-            val addSession = sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
-            assertEquals(1, sessionFactory.getSavedSession().list.size)
-            val signature = addSession.signature("test").getOrThrow()
-            assertTrue(addSession.verify(signature, "test").getOrThrow())
-            val encrypt = encryptDataByAES("hello").getOrThrow()
-            val encryptAesKey = eciesEncrypt(publicKey, encrypt.second).getOrThrow()
-            assertEquals("hello", addSession.decrypt(encrypt.first, encryptAesKey).getOrThrow())
-            sessionFactory.buildSession("default")
-            sessionFactory.removeSession("default")
-            assertEquals(0, sessionFactory.getSavedSession().list.size)
+            block(privateKey, publicKey, ad, sessionFactory)
         }
     }
 }

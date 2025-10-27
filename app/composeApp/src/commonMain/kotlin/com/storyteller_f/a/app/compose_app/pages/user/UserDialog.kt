@@ -195,8 +195,8 @@ suspend fun signOut(
     globalDialogController.useResult {
         sessionManager.signOut()
     }.onSuccess {
+        sessionManager.clearStorage(settings)
         sessionManager.model.clear()
-        clearStorage(settings)
         unregisterPushService()
     }
 }
