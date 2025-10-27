@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.*
 import com.storyteller_f.a.api.core.PaginationQuery
+import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.components.DialogSaveState
 import com.storyteller_f.a.app.core.common.CachedLoadingHandler
 import com.storyteller_f.a.app.core.common.CompatPagingSource
@@ -15,6 +16,8 @@ import com.storyteller_f.a.app.core.common.RegularPagingSource
 import com.storyteller_f.a.app.core.common.SectionLoadParams
 import com.storyteller_f.a.app.core.common.SectionPagingSource
 import com.storyteller_f.a.app.core.common.SimpleViewModel
+import com.storyteller_f.a.app.core.utils.SavedSession
+import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.app.core.utils.loadFontFromLocal
 import com.storyteller_f.a.client.core.*
 import com.storyteller_f.shared.model.*
@@ -758,4 +761,26 @@ class ChildAccountsViewModel(
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
+}
+
+class LoginHistoryViewModel(val sessionManager: CustomUserSessionManager) : SimpleViewModel<SavedSession>() {
+
+    val manager = buildLoginHistoryFactory(sessionManager.settings)
+    override val handler: LoadingHandler<SavedSession>
+        get() = SimpleLoadingHandler(viewModelScope) {
+            runCatching {
+                manager.getSavedSession()
+            }
+        }
+
+    fun deleteSession(alias: String) {
+        manager.removeSession(alias)
+    }
+
+    fun getSession(alias: String): Boolean {
+        val userPass = manager.buildSession(alias) ?: return false
+        sessionManager.model.updateState(ClientSessionState.Success(userPass))
+        manager.logSession(alias)
+        return true
+    }
 }

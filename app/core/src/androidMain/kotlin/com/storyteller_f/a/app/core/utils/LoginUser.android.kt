@@ -143,7 +143,7 @@ class AndroidKeyStoreLoginHistoryManager(val settings: Settings) : LoginHistoryM
 
         val loginHistory = settings.decodeValueOrNull(LoginHistory.serializer(), "login_history")
         val list = keyStore.aliases().toList()
-        return SavedSession(list, loginHistory?.last, loginHistory?.current)
+        return SavedSession(list, loginHistory)
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
@@ -153,7 +153,7 @@ class AndroidKeyStoreLoginHistoryManager(val settings: Settings) : LoginHistoryM
         settings.encodeValue(
             LoginHistory.serializer(),
             "login_history",
-            LoginHistory(current, current)
+            LoginHistory(current)
         )
         return AndroidKeyStoreUserPass(current)
     }
@@ -205,6 +205,10 @@ class AndroidKeyStoreLoginHistoryManager(val settings: Settings) : LoginHistoryM
         keyStore.load(null)
         keyStore.deleteEntry(session)
     }
+
+    override fun exitSession(alias: String) = Unit
+
+    override fun logSession(alias: String) = Unit
 }
 
 actual fun createSettings(name: String): Settings {
