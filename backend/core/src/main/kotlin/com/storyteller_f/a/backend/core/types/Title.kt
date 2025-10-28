@@ -21,6 +21,8 @@ class Title(
 ) {
     companion object
 }
-fun Title.toTitleInfo(): TitleInfo {
-    return TitleInfo(id, createdTime, type, creator, receiver, scopeId, scopeType, name, descriptionTopicId, null)
+fun Title.toTitleInfo(extensions: TitleInfo.Extension? = null): TitleInfo {
+    return TitleInfo(id, createdTime, type, creator, receiver, scopeId, scopeType, name, descriptionTopicId, extensions)
 }
+
+data class RawTitle(val title: Title)

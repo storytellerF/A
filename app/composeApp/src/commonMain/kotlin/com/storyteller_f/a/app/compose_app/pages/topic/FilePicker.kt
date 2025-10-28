@@ -27,7 +27,7 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnMediaUploaded
@@ -272,7 +272,7 @@ private fun FileCell(
 
 @Composable
 fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo: FileInfo) {
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = {
@@ -286,7 +286,7 @@ fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo:
             text = { Text("View") },
             onClick = {
                 updateExpanded(false)
-                appNav.gotoMedia(fileInfo)
+                appNavFactory.newAppNav().gotoMedia(fileInfo)
             }
         )
         val clipboardManager = LocalClipboard.current

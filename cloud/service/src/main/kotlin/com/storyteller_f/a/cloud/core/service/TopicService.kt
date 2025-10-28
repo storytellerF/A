@@ -15,6 +15,7 @@ import com.storyteller_f.a.backend.core.fixedSort
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
 import com.storyteller_f.a.backend.core.service.UploadPack
+import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.toTopicInfo
 import com.storyteller_f.a.cloud.pdf.PdfService
@@ -107,7 +108,7 @@ private suspend fun Backend.savePlainTopic(
         lastModifiedTime = null,
     )
     val plain = TopicContent.Plain(content)
-    val topicInfo = topic.toTopicInfo(content = plain)
+    val topicInfo = RawTopic(topic, plain).toTopicInfo()
 
     val documentFileList = documentFileList(listOf(topicInfo)).map {
         it.second
@@ -209,7 +210,9 @@ private suspend fun Backend.saveEncryptedTopic(
             false,
             null
         )
-        combinedDatabase.topicDatabase.saveEncryptedTopic(topic, content)
+        combinedDatabase.topicDatabase.saveEncryptedTopic(topic, content).map {
+            RawTopic(topic, content).toTopicInfo()
+        }
     } else {
         Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
     }
@@ -249,7 +252,7 @@ suspend fun Backend.createTopicSnapshot(
         uid
     ).mapResultIfNotNull { (hasRead, _, isPrivate) ->
         if (hasRead && !isPrivate) {
-            combinedDatabase.topicDatabase.getTopicInfo(
+            combinedDatabase.topicDatabase.getRawTopic(
                 ObjectFetch.IdFetch(topicId),
                 null
             )
@@ -257,7 +260,7 @@ suspend fun Backend.createTopicSnapshot(
             Result.failure(ForbiddenException("Permission denied"))
         }
     }.mapResultIfNotNull {
-        processTopicAfterGet(listOf(it), uid, false).map { list ->
+        processRawTopicToTopicInfo(listOf(it), uid, false).map { list ->
             list?.firstOrNull()
         }
     }.mapResultIfNotNull { topicInfo ->
@@ -367,23 +370,19 @@ suspend fun Backend.getTopic(
     fillHasCommented: Boolean?,
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return checkRootReadPermission(
-        ObjectType.TOPIC,
-        topicId,
-        uid
-    ).mapResultIfNotNull { (hasRead, hasJoined) ->
-        if (hasRead) {
-            combinedDatabase.topicDatabase.getTopicInfo(
+    return checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
+        if (it.hasRead) {
+            combinedDatabase.topicDatabase.getRawTopic(
                 ObjectFetch.IdFetch(topicId),
                 uid
             ).mapIfNotNull { value ->
-                value.copy(hasJoined = hasJoined)
+                value.copy(hasJoined = it.hasJoined)
             }
         } else {
             Result.failure(ForbiddenException("Permission Denied"))
         }
     }.mapResultIfNotNull { info ->
-        processTopicAfterGet(listOf(info), uid, true).mapIfNotNull {
+        processRawTopicToTopicInfo(listOf(info), uid, true).mapIfNotNull {
             it.first()
         }
     }
@@ -395,11 +394,11 @@ suspend fun Backend.getTopicByAid(
     fillHasCommented: Boolean?,
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return combinedDatabase.topicDatabase.getTopicInfo(ObjectFetch.AidFetch(aid), uid)
+    return combinedDatabase.topicDatabase.getRawTopic(ObjectFetch.AidFetch(aid), uid)
         .mapResultIfNotNull { info ->
             checkRootReadPermission(
                 ObjectType.TOPIC,
-                info.id,
+                info.topic.id,
                 uid
             ).mapResultIfNotNull { (hasRead, hasJoined) ->
                 if (hasRead) {
@@ -409,7 +408,7 @@ suspend fun Backend.getTopicByAid(
                 }
             }
         }.mapResultIfNotNull { info ->
-            processTopicAfterGet(listOf(info), uid, true).mapIfNotNull {
+            processRawTopicToTopicInfo(listOf(info), uid, true).mapIfNotNull {
                 it.first()
             }
         }
@@ -435,16 +434,16 @@ suspend fun Backend.getTopLevelTopicsInObject(
             UNIT_RESULT
         }
     }.mapResultIfNotNull {
-        combinedDatabase.topicDatabase.getSubTopicInfo(uid, primaryKeyFetch, parentId, pinType)
+        combinedDatabase.topicDatabase.getSubRawTopic(uid, primaryKeyFetch, parentId, pinType)
     }.mapResultIfNotNull { (data, count) ->
-        processTopicAfterGet(data, uid, true).mapIfNotNull {
+        processRawTopicToTopicInfo(data, uid, true).mapIfNotNull {
             PaginationResult(it, count)
         }
     }
 }
 
-suspend fun Backend.processTopicAfterGet(
-    topics: List<TopicInfo>,
+suspend fun Backend.processRawTopicToTopicInfo(
+    topics: List<RawTopic>,
     uid: PrimaryKey?,
     addLatestSubTopic: Boolean,
 ): Result<List<TopicInfo>?> {
@@ -452,47 +451,36 @@ suspend fun Backend.processTopicAfterGet(
         val rooms = getRoomMapByTopics(topics)
         val subTopicsMap = if (addLatestSubTopic) {
             topics.flatMap { t ->
-                combinedDatabase.topicDatabase.getLatestTopicInfo(uid, t.id).getOrThrow()
+                combinedDatabase.topicDatabase.getLatestRawTopic(uid, t.topic.id).getOrThrow()
             }.groupBy {
-                it.parentId
+                it.topic.parentId
             }
         } else {
             emptyMap()
         }
 
         val uidList = topics.map {
-            it.author
+            it.topic.author
         } + subTopicsMap.flatMap {
             it.value
         }.map {
-            it.author
+            it.topic.author
         }.distinct()
         val userMap =
             getUserInfoList(ObjectListFetch.IdListFetch(uidList)).getOrThrow().associateBy { it.id }
         val processedSubTopic = subTopicsMap.mapValues {
             it.value.map { subTopic ->
-                subTopic.copy(
-                    extension = TopicInfo.Extension(
-                        authorInfo = userMap[subTopic.author]
-                    )
-                )
+                subTopic.toTopicInfo(TopicInfo.Extension(authorInfo = userMap[subTopic.topic.author]))
             }
         }
-        val reactionMap =
-            combinedDatabase.topicDatabase.getReactionInfoPaginationResult(topics.map {
-                it.id
-            }, uid, ReactionFetch(null, 20)).map {
-                it.list
-            }.map {
-                it.groupBy(ReactionInfo::objectId)
-            }.getOrThrow()
+        val reactionMap = getReactionMap(topics, uid)
         topics.map {
-            it.copy(
-                extension = TopicInfo.Extension(
-                    userMap[it.author],
-                    subTopics = processedSubTopic[it.id]?.toImmutableList(),
-                    reactions = reactionMap[it.id]?.toImmutableList(),
-                    roomInfo = if (it.rootType == ObjectType.ROOM) rooms[it.rootId] else null
+            it.toTopicInfo(
+                TopicInfo.Extension(
+                    userMap[it.topic.author],
+                    subTopics = processedSubTopic[it.topic.id]?.toImmutableList(),
+                    reactions = reactionMap[it.topic.id]?.toImmutableList(),
+                    roomInfo = if (it.topic.rootType == ObjectType.ROOM) rooms[it.topic.rootId] else null
                 )
             )
         }
@@ -501,10 +489,22 @@ suspend fun Backend.processTopicAfterGet(
     }
 }
 
-private suspend fun Backend.getRoomMapByTopics(topics: List<TopicInfo>): Map<PrimaryKey, RoomInfo> {
+private suspend fun Backend.getReactionMap(
+    topics: List<RawTopic>,
+    uid: PrimaryKey?
+): Map<PrimaryKey, List<ReactionInfo>> =
+    combinedDatabase.topicDatabase.getReactionInfoPaginationResult(topics.map {
+        it.topic.id
+    }, uid, ReactionFetch(null, 20)).map {
+        it.list
+    }.map {
+        it.groupBy(ReactionInfo::objectId)
+    }.getOrThrow()
+
+private suspend fun Backend.getRoomMapByTopics(topics: List<RawTopic>): Map<PrimaryKey, RoomInfo> {
     val roomIds = topics.mapNotNull {
-        if (it.rootType == ObjectType.ROOM) {
-            it.rootId
+        if (it.topic.rootType == ObjectType.ROOM) {
+            it.topic.rootId
         } else {
             null
         }
@@ -629,9 +629,11 @@ private suspend fun Backend.processTopicsDocument(
     if (ids.isEmpty()) {
         return Result.success(emptyList())
     }
-    return combinedDatabase.topicDatabase.getTopicInfoListByIds(uid, ids).mapResult { infos ->
-        val processedTopics = fixedSort(infos, ids)
-        processTopicAfterGet(processedTopics, uid, addLatestSubTopic = true)
+    return combinedDatabase.topicDatabase.getRawTopicListByIds(uid, ids).mapResult { infos ->
+        val processedTopics = fixedSort(infos, ids) {
+            it.topic.id
+        }
+        processRawTopicToTopicInfo(processedTopics, uid, addLatestSubTopic = true)
     }
 }
 
@@ -660,8 +662,8 @@ suspend fun Backend.getTopicByIds(
             }
         }
     }
-    return combinedDatabase.topicDatabase.getTopicInfoListByIds(uid, ids).mapResult { infos ->
-        processTopicAfterGet(infos, uid, true)
+    return combinedDatabase.topicDatabase.getRawTopicListByIds(uid, ids).mapResult { infos ->
+        processRawTopicToTopicInfo(infos, uid, true)
     }
 }
 
@@ -669,23 +671,19 @@ suspend fun Backend.updateTopicPin(
     uid: PrimaryKey,
     topicId: PrimaryKey,
     newValue: Boolean,
-) =
-    checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
-        combinedDatabase.topicDatabase.getTopicInfo(
-            ObjectFetch.IdFetch(topicId),
-            uid
-        )
-    }.mapResultIfNotNull { info ->
-        if (info.isPin == newValue) {
-            Result.success(info)
-        } else {
-            combinedDatabase.topicDatabase.updateTopicStatus(topicId, newValue)
-                .map { isSuccess ->
-                    if (isSuccess) {
-                        info.copy(isPin = newValue)
-                    } else {
-                        info
-                    }
-                }
+) = checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
+    combinedDatabase.topicDatabase.getRawTopic(ObjectFetch.IdFetch(topicId), uid)
+}.mapResultIfNotNull { rawTopic ->
+    val topicInfo = rawTopic.toTopicInfo()
+    if (rawTopic.topic.isPin == newValue) {
+        Result.success(topicInfo)
+    } else {
+        combinedDatabase.topicDatabase.updateTopicStatus(topicId, newValue).map { isSuccess ->
+            if (isSuccess) {
+                topicInfo.copy(isPin = newValue)
+            } else {
+                topicInfo
+            }
         }
     }
+}

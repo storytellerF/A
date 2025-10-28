@@ -42,13 +42,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.auto_generate
-import com.storyteller_f.a.app.compose_app.common.AppNav
-import com.storyteller_f.a.app.compose_app.common.LoginHistoryViewModel
+import com.storyteller_f.a.app.compose_app.common.AppNavFactory
+import com.storyteller_f.a.app.compose_app.common.SessionHistoryViewModel
 import com.storyteller_f.a.app.compose_app.common.getLoginHistoryViewModel
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
@@ -63,7 +63,6 @@ import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.core.compontents.CenterBox
 import com.storyteller_f.a.app.core.compontents.PrivateKeyInput
 import com.storyteller_f.a.app.core.compontents.StateView
-import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.shared.getAlgo
 import io.github.vinceglb.filekit.FileKit
@@ -81,13 +80,13 @@ fun LoginPage() {
     val nav = remember {
         buildLoginNav(navigator)
     }
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     Surface {
         Column {
             if (!appPlatform.hasNativeBack) {
                 IconButton({
                     if (!navigator.popBackStack()) {
-                        appNav.back()
+                        appNavFactory.newAppNav().back()
                     }
                 }) {
                     Icon(Icons.AutoMirrored.Default.ArrowBack, "back to pre page")
@@ -181,7 +180,7 @@ private fun SelectFromHistory() {
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun SelectFromHistoryInternal(viewModel: LoginHistoryViewModel) {
+private fun SelectFromHistoryInternal(viewModel: SessionHistoryViewModel) {
     var showSheet by remember {
         mutableStateOf(false)
     }
@@ -197,15 +196,15 @@ private fun SelectFromHistoryInternal(viewModel: LoginHistoryViewModel) {
         val data by viewModel.handler.data.collectAsState()
         val last = data?.history?.last
         val scope = rememberCoroutineScope()
-        val appNav = LocalAppNav.current
+        val appNavFactory = LocalAppNavFactory.current
         StateView(viewModel.handler, modifier = Modifier.height(200.dp)) {
             LazyColumn {
-                items(it.list) { alias ->
+                items(it.alias) { alias ->
                     LoginHistoryCell(alias, last, {
                         scope.launch {
                             if (viewModel.getSession(alias)) {
                                 showSheet = false
-                                appNav.gotoHome()
+                                appNavFactory.newAppNav().gotoHome()
                             }
                         }
                     }, {
@@ -296,13 +295,13 @@ fun SelectSignUpPage(loginNav: LoginNav) {
 @Composable
 fun SelectFile(isSignUp: Boolean) {
     val scope = rememberCoroutineScope()
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     if (isSignUp) {
         Button({
             scope.launch {
-                startSignFromFile(appNav, sessionManager, true, globalDialogController)
+                startSignFromFile(appNavFactory, sessionManager, true, globalDialogController)
             }
         }) {
             Text("Select File")
@@ -310,7 +309,7 @@ fun SelectFile(isSignUp: Boolean) {
     } else {
         OutlinedButton({
             scope.launch {
-                startSignFromFile(appNav, sessionManager, false, globalDialogController)
+                startSignFromFile(appNavFactory, sessionManager, false, globalDialogController)
             }
         }) {
             Text("Select File")
@@ -324,13 +323,13 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
         mutableStateOf("")
     }
     val scope = rememberCoroutineScope()
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     val startSign: () -> Unit = {
         scope.launch {
             globalDialogController.startSign(
-                appNav,
+                appNavFactory,
                 sessionManager,
                 privateKey,
                 isSignUp
@@ -371,7 +370,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
 }
 
 private suspend fun startSignFromFile(
-    appNav: AppNav,
+    appNav: AppNavFactory,
     sessionManager: CustomUserSessionManager,
     isSignUp: Boolean,
     globalDialogController: GlobalDialogController,
@@ -389,7 +388,7 @@ private suspend fun startSignFromFile(
 }
 
 private suspend fun GlobalDialogController.startSign(
-    appNav: AppNav,
+    appNav: AppNavFactory,
     sessionManager: CustomUserSessionManager,
     privateKey: String,
     isSignUp: Boolean,
@@ -399,11 +398,11 @@ private suspend fun GlobalDialogController.startSign(
     useResult {
         runCatching {
             sessionManager.getUserInfo(privateKey, isSignUp) {
-                buildLoginHistoryFactory(sessionManager.settings).addSession(it)
+                sessionManager.sessionHistoryManager.addSession(it)
             }
         }
     }.onSuccess {
-        appNav.gotoHome()
+        appNav.newAppNav().gotoHome()
     }
 }
 

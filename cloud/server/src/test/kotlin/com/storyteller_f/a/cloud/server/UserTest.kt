@@ -1,15 +1,22 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.addChildAccount
+import com.storyteller_f.a.client.core.addFavorite
+import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getChildAccounts
+import com.storyteller_f.a.client.core.getFavorites
+import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getUserInfo
+import com.storyteller_f.a.client.core.removeFavorite
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.a.client.core.upload
+import com.storyteller_f.shared.obj.NewFavorite
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
-import io.ktor.http.*
+import io.ktor.http.ContentType
 import kotlinx.io.Buffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,12 +51,10 @@ class UserTest {
         attachSession {
             val stream = ClassLoader.getSystemResourceAsStream("avatar1.png")!!
             val bytes = stream.readBytes()
-            val info =
-                upload(
-                    ObjectTuple(it.uid, ObjectType.USER),
-                    getUploadDataFromBytes(bytes)
-                )
-                    .getOrThrow().data.first()
+            val info = upload(
+                ObjectTuple(it.uid, ObjectType.USER),
+                getUploadDataFromBytes(bytes)
+            ).getOrThrow().data.first()
             assertEquals(
                 "avatar1.png",
                 updateUserInfo(UpdateUserBody(avatar = info.id)).getOrThrow().avatar!!.name
@@ -75,6 +80,27 @@ class UserTest {
             val response = getChildAccounts(null, 10).getOrThrow()
             assertEquals(1, response.pagination?.total)
             assertEquals(childAccountInfo.id, response.data.first().id)
+        }
+    }
+
+    @Test
+    fun `test add favorite`() = test {
+        val outerTuple = attachSession {
+            createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+        }
+        attachSession {
+            val topicId = outerTuple.custom.id
+            val userFavoriteInfo =
+                addFavorite(NewFavorite(ObjectType.TOPIC, topicId)).getOrThrow()
+            assertEquals(topicId, userFavoriteInfo.objectId)
+            assertNotNull(userFavoriteInfo.extensions?.topicInfo)
+
+            val topicInfo = getTopicInfo(topicId).getOrThrow()
+            assertEquals(true, topicInfo.hasFavorite)
+
+            removeFavorite(userFavoriteInfo.id).getOrThrow()
+
+            assertListTotalSize(0, getFavorites(PaginationQuery()))
         }
     }
 }

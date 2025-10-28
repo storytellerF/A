@@ -7,11 +7,13 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.service.TopicDocument
+import com.storyteller_f.a.backend.core.types.RawTitle
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.toTitleInfo
 import com.storyteller_f.shared.model.*
 import com.storyteller_f.shared.obj.NewTitle
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.*
@@ -35,37 +37,41 @@ suspend fun Backend.getUserTitles(
 }
 
 private suspend fun Backend.processTitleList(
-    list: List<TitleInfo>,
+    list: List<RawTitle>,
     uid: PrimaryKey?
 ): Result<List<TitleInfo>?> {
     val uidList = list.flatMap {
-        val listOf = listOf(it.receiver, it.creator)
-        if (it.scopeType == ObjectType.USER) {
-            listOf + it.scopeId
+        val title = it.title
+        val listOf = listOf(title.receiver, title.creator)
+        if (title.scopeType == ObjectType.USER) {
+            listOf + title.scopeId
         } else {
             listOf
         }
     }.distinct()
     val communityIdList = list.mapNotNull {
-        if (it.scopeType == ObjectType.COMMUNITY) {
-            it.scopeId
+        val title = it.title
+        if (title.scopeType == ObjectType.COMMUNITY) {
+            title.scopeId
         } else {
             null
         }
     }.distinct()
     val roomIdList = list.mapNotNull {
-        if (it.scopeType == ObjectType.ROOM) {
-            it.scopeId
+        val title = it.title
+        if (title.scopeType == ObjectType.ROOM) {
+            title.scopeId
         } else {
             null
         }
     }.distinct()
     val topicIdList = list.flatMap {
+        val title = it.title
         buildList {
-            if (it.scopeType == ObjectType.TOPIC) {
-                add(it.scopeId)
+            if (title.scopeType == ObjectType.TOPIC) {
+                add(title.scopeId)
             }
-            add(it.descriptionTopicId)
+            add(title.descriptionTopicId)
         }
     }.distinct()
     return getRelatedObject(
@@ -118,7 +124,7 @@ private fun processTitleList(
     userList: List<UserInfo>,
     communityList: List<CommunityInfo>,
     roomList: List<RoomInfo>,
-    list: List<TitleInfo>,
+    list: List<RawTitle>,
     topicList: List<TopicInfo>,
 ): List<TitleInfo> {
     val userMap = userList.associateBy { it.id }
@@ -126,28 +132,29 @@ private fun processTitleList(
     val roomMap = roomList.associateBy { it.id }
     val topicMap = topicList.associateBy { it.id }
     return list.map {
+        val title = it.title
         val extension = TitleInfo.Extension(
-            userMap[it.creator]!!,
-            userMap[it.receiver]!!,
-            topicMap[it.descriptionTopicId]!!,
-            when (it.scopeType) {
-                ObjectType.COMMUNITY -> communityMap[it.scopeId]
+            userMap[title.creator]!!,
+            userMap[title.receiver]!!,
+            topicMap[title.descriptionTopicId]!!,
+            when (title.scopeType) {
+                ObjectType.COMMUNITY -> communityMap[title.scopeId]
                 else -> null
             },
-            when (it.scopeType) {
-                ObjectType.ROOM -> roomMap[it.scopeId]
+            when (title.scopeType) {
+                ObjectType.ROOM -> roomMap[title.scopeId]
                 else -> null
             },
-            when (it.scopeType) {
-                ObjectType.USER -> userMap[it.scopeId]
+            when (title.scopeType) {
+                ObjectType.USER -> userMap[title.scopeId]
                 else -> null
             },
-            when (it.scopeType) {
-                ObjectType.TOPIC -> topicMap[it.scopeId]
+            when (title.scopeType) {
+                ObjectType.TOPIC -> topicMap[title.scopeId]
                 else -> null
             }
         )
-        it.copy(extension = extension)
+        title.toTitleInfo(extension)
     }
 }
 
@@ -179,12 +186,11 @@ suspend fun Backend.createTitle(
             title,
             topic
         ).mapResult {
-            val created = title.toTitleInfo()
             topicSearchService.saveDocument(
                 listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(newTitle.description)))
             ).getOrThrow()
-            addUserLog(uid, UserLogType.CREATE, created.tuple())
-            processTitleList(listOf(created), uid).mapIfNotNull {
+            addUserLog(uid, UserLogType.CREATE, ObjectTuple(title.id, ObjectType.TITLE))
+            processTitleList(listOf(RawTitle(title)), uid).mapIfNotNull {
                 it.first()
             }
         }

@@ -16,7 +16,7 @@ interface UserPass {
 
 sealed interface ClientSessionState {
     data object None : ClientSessionState
-    data class Success(val session: UserPass) : ClientSessionState
+    data class Success(val userPass: UserPass) : ClientSessionState
 }
 
 @Serializable

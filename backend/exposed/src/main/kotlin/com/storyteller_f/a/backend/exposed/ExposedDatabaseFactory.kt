@@ -20,6 +20,7 @@ import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.UploadRecords
 import com.storyteller_f.a.backend.exposed.tables.UserDevices
+import com.storyteller_f.a.backend.exposed.tables.UserFavorites
 import com.storyteller_f.a.backend.exposed.tables.UserLogs
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
@@ -36,6 +37,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Slf4jSqlDebugLogger
+import org.jetbrains.exposed.v1.migration.r2dbc.MigrationUtils
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
@@ -244,6 +246,7 @@ object ExposedDatabaseFactory {
         UserLogs,
         UserDevices,
         UserTopicReads,
+        UserFavorites,
         TaskRecords,
         Quotas,
         UploadRecords,
@@ -280,6 +283,15 @@ object ExposedDatabaseFactory {
                 "drop tables"
             }
             SchemaUtils.drop(*tables)
+        }
+    }
+
+    suspend fun migration(database: R2dbcDatabase) {
+        Napier.i(tag = "database") {
+            "migration"
+        }
+        suspendTransaction(database) {
+            MigrationUtils.statementsRequiredForDatabaseMigration(*tables)
         }
     }
 }

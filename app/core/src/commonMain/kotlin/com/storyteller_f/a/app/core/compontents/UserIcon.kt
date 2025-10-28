@@ -13,24 +13,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun UserIcon(
-    isMe: Boolean,
     setClickEvent: Boolean,
     avatarUrl: String?,
     size: Dp = 40.dp,
     onClick: () -> Unit
 ) {
-    val modifier = if (isMe) Modifier.testTag("me") else Modifier
     if (avatarUrl != null) {
         CommonImage(
             avatarUrl,
             contentDescription = "avatar",
-            modifier = modifier.size(size).clip(CircleShape).let {
+            modifier = Modifier.size(size).clip(CircleShape).let {
                 if (setClickEvent) {
                     it.clickable(onClick = onClick)
                 } else {
@@ -43,7 +40,7 @@ fun UserIcon(
         Image(
             Icons.Default.AccountCircle,
             contentDescription = "avatar",
-            modifier = modifier.size(size)
+            modifier = Modifier.size(size)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
                 .let {

@@ -9,20 +9,50 @@ import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
 import com.storyteller_f.shared.encryptDataByAES
 import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.*
+import com.storyteller_f.shared.model.PosterSearch
+import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleSearchType
+import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicPinSearch
+import com.storyteller_f.shared.model.UserPubKeyInfo
+import com.storyteller_f.shared.obj.DeleteReaction
+import com.storyteller_f.shared.obj.NewCommunity
+import com.storyteller_f.shared.obj.NewDevice
+import com.storyteller_f.shared.obj.NewFavorite
+import com.storyteller_f.shared.obj.NewReaction
+import com.storyteller_f.shared.obj.NewRoom
+import com.storyteller_f.shared.obj.NewRoomTopic
+import com.storyteller_f.shared.obj.NewTitle
+import com.storyteller_f.shared.obj.NewTopic
+import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.RoomFrame
+import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.UpdateCommunityBody
+import com.storyteller_f.shared.obj.UpdateRoomBody
+import com.storyteller_f.shared.obj.UpdateUserBody
+import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.ObjectType.*
+import com.storyteller_f.shared.type.ObjectType.COMMUNITY
+import com.storyteller_f.shared.type.ObjectType.ROOM
+import com.storyteller_f.shared.type.ObjectType.TOPIC
+import com.storyteller_f.shared.type.ObjectType.USER
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.websocket.*
-import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.http.*
-import io.ktor.utils.io.core.*
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.onUpload
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
+import io.ktor.http.append
+import io.ktor.http.contentType
+import io.ktor.utils.io.core.Input
 
 suspend fun <R, U> SessionManager<U>.serviceCatching(block: suspend HttpClient.() -> R): Result<R> {
     val point = Exception()
@@ -49,10 +79,9 @@ suspend fun UserSessionManager.getRoomInfoByAid(aid: String) = serviceCatching {
 suspend fun UserSessionManager.getRoomMembersPublicKeys(
     id: PrimaryKey,
     paginationQuery: PaginationQuery
-) =
-    serviceCatching {
-        CustomApi.Rooms.Id.Members.publicKeys(paginationQuery, CommonPath(id))
-    }
+) = serviceCatching {
+    CustomApi.Rooms.Id.Members.publicKeys(paginationQuery, CommonPath(id))
+}
 
 suspend fun UserSessionManager.joinRoom(id: PrimaryKey) = serviceCatching {
     CustomApi.Rooms.Id.Members.join(CommonPath(id), Unit) {
@@ -109,15 +138,14 @@ suspend fun UserSessionManager.getUserTopics(
     )
 }
 
-suspend fun UserSessionManager.getCommunityInfo(id: PrimaryKey) =
-    serviceCatching {
-        CustomApi.Communities.Id.get(
-            CustomApi.Communities.Id.CommunityIdQuery(
-                currentIsAlreadySignUp
-            ),
-            CommonPath(id)
-        )
-    }
+suspend fun UserSessionManager.getCommunityInfo(id: PrimaryKey) = serviceCatching {
+    CustomApi.Communities.Id.get(
+        CustomApi.Communities.Id.CommunityIdQuery(
+            currentIsAlreadySignUp
+        ),
+        CommonPath(id)
+    )
+}
 
 suspend fun UserSessionManager.getCommunityInfoByAid(aid: String) = serviceCatching {
     CustomApi.Communities.Aid.get(
@@ -186,17 +214,16 @@ suspend fun UserSessionManager.searchRoomMembers(
 
 suspend fun UserSessionManager.getRecommendTopics(
     paginationQuery: PaginationQuery
-) =
-    serviceCatching {
-        CustomApi.Topics.recommend(
-            CustomApi.Topics.RecommendQuery(
-                currentIsAlreadySignUp,
-                paginationQuery.nextPageToken,
-                paginationQuery.size,
-                paginationQuery.prePageToken
-            )
+) = serviceCatching {
+    CustomApi.Topics.recommend(
+        CustomApi.Topics.RecommendQuery(
+            currentIsAlreadySignUp,
+            paginationQuery.nextPageToken,
+            paginationQuery.size,
+            paginationQuery.prePageToken
         )
-    }
+    )
+}
 
 suspend fun UserSessionManager.getUserInfo(id: PrimaryKey) = serviceCatching {
     CustomApi.Users.Id.get(CommonPath(id))
@@ -216,17 +243,16 @@ suspend fun UserSessionManager.getTopicTopics(
     topicId: PrimaryKey,
     pinType: TopicPinSearch,
     paginationQuery: PaginationQuery,
-) =
-    serviceCatching {
-        CustomApi.Topics.Id.Topics.get(
-            TopicQuery(
-                pinType,
-                currentIsAlreadySignUp,
-                paginationQuery
-            ),
-            CommonPath(topicId)
-        )
-    }
+) = serviceCatching {
+    CustomApi.Topics.Id.Topics.get(
+        TopicQuery(
+            pinType,
+            currentIsAlreadySignUp,
+            paginationQuery
+        ),
+        CommonPath(topicId)
+    )
+}
 
 suspend fun UserSessionManager.getTopicInfo(id: PrimaryKey) = serviceCatching {
     CustomApi.Topics.Id.get(
@@ -326,27 +352,27 @@ suspend fun UserSessionManager.addReaction(topicId: PrimaryKey, emoji: String) =
     }
 }
 
-suspend fun UserSessionManager.deleteReaction(emoji: String, objectId: PrimaryKey) = serviceCatching {
-    CustomApi.Topics.Id.Reactions.delete(CommonPath(objectId), DeleteReaction(emoji)) {
-        contentType(ContentType.Application.Json)
+suspend fun UserSessionManager.deleteReaction(emoji: String, objectId: PrimaryKey) =
+    serviceCatching {
+        CustomApi.Topics.Id.Reactions.delete(CommonPath(objectId), DeleteReaction(emoji)) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.getReactions(
     topicId: PrimaryKey,
     size: Int,
     nextCursor: String? = null
-) =
-    serviceCatching {
-        CustomApi.Topics.Id.Reactions.get(
-            CustomApi.Topics.Id.Reactions.ReactionQuery(
-                currentIsAlreadySignUp,
-                nextCursor,
-                size = size
-            ),
-            CommonPath(topicId),
-        )
-    }
+) = serviceCatching {
+    CustomApi.Topics.Id.Reactions.get(
+        CustomApi.Topics.Id.Reactions.ReactionQuery(
+            currentIsAlreadySignUp,
+            nextCursor,
+            size = size
+        ),
+        CommonPath(topicId),
+    )
+}
 
 suspend fun UserSessionManager.signOut() = serviceCatching {
     CustomApi.Accounts.signOut(Unit) {}
@@ -357,34 +383,37 @@ suspend fun UserSessionManager.getMediaList(
     objectType: ObjectType,
     nextId: String?,
     size: Int
-) =
-    serviceCatching {
-        CustomApi.Files.get(
-            CustomApi.Files.FileQuery(
-                objectId,
-                objectType,
-                nextId,
-                size = size
-            )
+) = serviceCatching {
+    CustomApi.Files.get(
+        CustomApi.Files.FileQuery(
+            objectId,
+            objectType,
+            nextId,
+            size = size
         )
-    }
+    )
+}
 
 suspend fun UserSessionManager.getMediaByName(
     word: String,
     objectId: PrimaryKey,
     objectType: ObjectType
-) =
-    serviceCatching {
-        CustomApi.Files.getByName(
-            CustomApi.Files.MediaSearchQuery(
-                word,
-                objectId,
-                objectType
-            )
+) = serviceCatching {
+    CustomApi.Files.getByName(
+        CustomApi.Files.MediaSearchQuery(
+            word,
+            objectId,
+            objectType
         )
-    }
+    )
+}
 
-class UploadData(val size: Long, val name: String, val contentType: ContentType, val block: () -> Input)
+class UploadData(
+    val size: Long,
+    val name: String,
+    val contentType: ContentType,
+    val block: () -> Input
+)
 
 suspend fun UserSessionManager.upload(
     objectTuple: ObjectTuple,
@@ -445,13 +474,13 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
 
 suspend fun UserSessionManager.userTitles(
     uid: PrimaryKey,
-    nextId: String?,
     size: Int,
     searchType: TitleSearchType,
+    nextId: String? = null,
     status: TitleStatus? = null,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
-) = serviceCatching {
+): Result<ServerResponse<TitleInfo>> = serviceCatching {
     CustomApi.Users.Id.Titles.get(
         CustomApi.Users.Id.Titles.TitleQuery(
             searchType,
@@ -550,4 +579,19 @@ suspend fun UserSessionManager.getChildAccounts(nextId: String?, size: Int) = se
             size
         )
     )
+}
+
+suspend fun UserSessionManager.addFavorite(newFavorite: NewFavorite) = serviceCatching {
+    CustomApi.Favorites.add.invoke(newFavorite) {
+        contentType(ContentType.Application.Json)
+    }
+}
+
+suspend fun UserSessionManager.removeFavorite(favoriteId: PrimaryKey) = serviceCatching {
+    CustomApi.Favorites.delete.invoke(CommonPath(favoriteId), Unit) {
+    }
+}
+
+suspend fun UserSessionManager.getFavorites(paginationQuery: PaginationQuery) = serviceCatching {
+    CustomApi.Favorites.get.invoke(paginationQuery)
 }

@@ -1,4 +1,4 @@
-import com.storyteller_f.a.app.core.utils.LoginHistoryManager
+import com.storyteller_f.a.app.core.utils.SessionHistoryManager
 import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.client.core.RawUserPassInfo
@@ -16,7 +16,7 @@ class LoginUserSessionTest : UsingContextTest() {
     @Test
     fun testSession() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
         val addSession = sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
-        assertEquals(1, sessionFactory.getSavedSession().list.size)
+        assertEquals(1, sessionFactory.getSavedSession().alias.size)
         // 签名/验证
         val signature = addSession.signature("test").getOrThrow()
         assertTrue(addSession.verify(signature, "test").getOrThrow())
@@ -51,7 +51,7 @@ class LoginUserSessionTest : UsingContextTest() {
         val session1 = sessionFactory.getSavedSession()
         assertNull(session1.history?.current)
         assertNull(session1.history?.last)
-        assertEquals(0, session1.list.size)
+        assertEquals(0, session1.alias.size)
     }
 
     @Test
@@ -65,13 +65,13 @@ class LoginUserSessionTest : UsingContextTest() {
     }
 }
 
-fun loginSessionTest(block: suspend (String, String, String, LoginHistoryManager) -> Unit) {
+fun loginSessionTest(block: suspend (String, String, String, SessionHistoryManager) -> Unit) {
     runTest {
         loadCryptoLibIfNeed()
         val settings = createSettings("settings-test")
         settings.clear()
         val sessionFactory = buildLoginHistoryFactory(settings)
-        assertEquals(0, sessionFactory.getSavedSession().list.size)
+        assertEquals(0, sessionFactory.getSavedSession().alias.size)
         getAlgo().run {
             val privateKey = generateECDSAPemPrivateKey().getOrThrow()
             val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()

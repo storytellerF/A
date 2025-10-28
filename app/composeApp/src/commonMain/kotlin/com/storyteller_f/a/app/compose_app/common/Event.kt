@@ -1,6 +1,8 @@
 package com.storyteller_f.a.app.compose_app.common
 
-import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.MediasCollection
 import com.storyteller_f.storage.ModelStorage
@@ -53,6 +55,21 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
                     database.fileInfoStorage.save(MediasCollection(it.owner), it)
                 }
             }
+
+            is OnAddFavorite -> {
+                if (event.info.objectType == ObjectType.TOPIC) {
+                    database.topicInfoStorage.update(TopicCollection.Topics, event.info.objectId) {
+                        it.copy(favoriteId = event.info.id)
+                    }
+                }
+            }
+            is OnRemoveFavorite -> {
+                if (event.objectTuple.objectType == ObjectType.TOPIC) {
+                    database.topicInfoStorage.update(TopicCollection.Topics, event.objectTuple.objectId) {
+                        it.copy(favoriteId = null)
+                    }
+                }
+            }
         }
     }
 }
@@ -71,7 +88,11 @@ private suspend fun processTopicChanged(
 ) {
     val topicInfo = event.topicInfo
     database.topicInfoStorage.save(TopicCollection.TopicList(topicInfo.parentId), topicInfo)
-    if (database.topicInfoStorage.getDocument(TopicCollection.Recommend, event.topicInfo.id) != null) {
+    if (database.topicInfoStorage.getDocument(
+            TopicCollection.Recommend,
+            event.topicInfo.id
+        ) != null
+    ) {
         database.topicInfoStorage.save(TopicCollection.Recommend, topicInfo)
     }
 }

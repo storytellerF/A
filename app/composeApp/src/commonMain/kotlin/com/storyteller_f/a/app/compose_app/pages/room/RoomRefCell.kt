@@ -13,7 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.RoomViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
 import com.storyteller_f.a.app.core.compontents.RefCellStateView
@@ -38,7 +38,7 @@ private fun RoomRefCellInternal(
     onClick: ((RoomInfo) -> Unit)? = null
 ) {
     val roomInfo by viewModel.handler.data.collectAsState()
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val shape = RoundedCornerShape(10.dp)
     RefCellStateView(
         viewModel.handler,
@@ -49,7 +49,7 @@ private fun RoomRefCellInternal(
             .clip(shape)
             .clickable {
                 roomInfo?.let {
-                    onClick?.invoke(it) ?: appNav.gotoRoom(it.id, false)
+                    onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoRoom(it.id, false)
                 }
             }
             .padding(10.dp)

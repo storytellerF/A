@@ -11,6 +11,8 @@ import com.storyteller_f.a.backend.core.types.RawChildAccount
 import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.RawPanelAccount
 import com.storyteller_f.a.backend.core.types.RawRoom
+import com.storyteller_f.a.backend.core.types.RawTitle
+import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.ReactionRecord
 import com.storyteller_f.a.backend.core.types.Room
@@ -20,9 +22,20 @@ import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserDevice
+import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserTopicRead
-import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.model.PosterSearch
+import com.storyteller_f.shared.model.QuotaInfo
+import com.storyteller_f.shared.model.QuotaType
+import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.model.ReactionRecordInfo
+import com.storyteller_f.shared.model.TaskRecordType
+import com.storyteller_f.shared.model.TitleSearchType
+import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicPinSearch
+import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetTopic
@@ -78,6 +91,7 @@ interface CombinedDatabase {
 
     suspend fun init()
     suspend fun clean()
+    suspend fun migration()
 
     fun isDup(throwable: Throwable): Boolean
 }
@@ -120,27 +134,35 @@ interface UserDatabase {
 
     suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
     suspend fun getUserCount(): Result<Long>
+    suspend fun getUserFavorites(
+        uid: PrimaryKey,
+        fetch: PrimaryKeyFetch
+    ): Result<PaginationResult<UserFavorite>>
+
+    suspend fun addFavorite(userFavorite: UserFavorite): Result<Unit>
+    suspend fun removeFavorite(id: PrimaryKey): Result<Int>
+    suspend fun getFavorite(id: PrimaryKey): Result<UserFavorite?>
 }
 
 interface TopicDatabase {
     suspend fun getTopicRootTuple(parentId: PrimaryKey): Result<ObjectTuple?>
-    suspend fun getTopicInfo(fetch: ObjectFetch, uid: PrimaryKey?): Result<TopicInfo?>
-    suspend fun getTopicInfoListByIds(
+    suspend fun getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?): Result<RawTopic?>
+    suspend fun getRawTopicListByIds(
         uid: PrimaryKey?,
         ids: List<PrimaryKey>
-    ): Result<List<TopicInfo>>
+    ): Result<List<RawTopic>>
 
-    suspend fun getSubTopicInfo(
+    suspend fun getSubRawTopic(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         parentId: PrimaryKey,
         pinType: TopicPinSearch?
-    ): Result<PaginationResult<TopicInfo>>
+    ): Result<PaginationResult<RawTopic>>
 
-    suspend fun getLatestTopicInfo(uid: PrimaryKey?, parentId: PrimaryKey): Result<List<TopicInfo>>
+    suspend fun getLatestRawTopic(uid: PrimaryKey?, parentId: PrimaryKey): Result<List<RawTopic>>
 
     @OptIn(ExperimentalStdlibApi::class)
-    suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted): Result<TopicInfo>
+    suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted): Result<Unit>
     suspend fun savePlainTopic(topic: Topic, content: TopicContent.Plain): Result<Unit>
     suspend fun updateTopicStatus(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
     suspend fun getTopicList(primaryKeyFetch: PrimaryKeyFetch): Result<List<Topic>>
@@ -149,12 +171,6 @@ interface TopicDatabase {
     ): Result<List<Pair<Long, Long>>>
 
     suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
-
-    // TODO 改为私有，并且返回RawTopic
-    suspend fun processTopicToTopicInfo(
-        uid: PrimaryKey?,
-        topics: List<Topic>
-    ): Result<List<TopicInfo>>
 
     suspend fun processByteArrayToTopicContent(
         topics: List<Topic>,
@@ -227,7 +243,7 @@ interface TitleDatabase {
         searchType: TitleSearchType,
         type: TitleType? = null,
         scopeId: PrimaryKey? = null,
-    ): Result<PaginationResult<TitleInfo>>
+    ): Result<PaginationResult<RawTitle>>
 }
 
 interface CommunityDatabase {
@@ -350,10 +366,10 @@ interface ContainerDatabase {
     suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,
         word: String?,
-        fetch: PrimaryKeyFetch,
+        fetch: PrimaryKeyFetch
     ): Result<PaginationResult<RawUser>>
 
-    suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType): Result<QuotaInfo?>
+    suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType): Result<Quota?>
     suspend fun insertQuota(quota: Quota): Result<Unit>
 
     suspend fun getLatestTopicInContainer(

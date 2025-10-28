@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnTitleCreated
@@ -72,7 +72,7 @@ fun TitleComposeInternal() {
     var receiver by remember {
         mutableStateOf<PrimaryKey?>(null)
     }
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val sessionManager = LocalSessionManager.current
     val content by remember {
         mutableStateOf("")
@@ -84,7 +84,7 @@ fun TitleComposeInternal() {
             globalDialogController.useResult {
                 createTitle(titleType, receiver, titleScope, sessionManager, name, content)
             }.onSuccess {
-                appNav.back()
+                appNavFactory.newAppNav().back()
             }
         }
     }) {

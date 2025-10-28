@@ -6,6 +6,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 
+// TODO 增加aid
 class Topic(
     val id: PrimaryKey,
     val createdTime: LocalDateTime,
@@ -23,33 +24,37 @@ class Topic(
 ) {
     companion object
 }
-fun Topic.toTopicInfo(
-    commentCount: Long = 0,
-    hasComment: Boolean = false,
-    reactionCount: Long = 0,
-    aidValue: String? = null,
-    lastRead: PrimaryKey? = null,
-    content: TopicContent,
-): TopicInfo {
-    return TopicInfo(
-        id = id,
-        content = content,
-        author = author,
-        rootId = rootId,
-        rootType = rootType,
-        parentId = parentId,
-        parentType = parentType,
-        hasJoined = false,
-        createdTime = createdTime,
-        commentCount = commentCount,
-        reactionCount = reactionCount,
-        hasComment = hasComment,
-        isEncrypted = isEncrypted,
-        level = level,
-        isPin = isPin,
-        lastModifiedTime = lastModifiedTime,
-        extension = null,
-        aid = aidValue ?: aid,
-        lastRead = lastRead,
-    )
-}
+
+data class RawTopic(
+    val topic: Topic,
+    val content: TopicContent,
+    val commentCount: Long = 0,
+    val hasComment: Boolean = false,
+    val reactionCount: Long = 0,
+    val lastRead: PrimaryKey? = null,
+    val hasJoined: Boolean = false,
+    val favoriteId: PrimaryKey? = null,
+)
+
+fun RawTopic.toTopicInfo(extensions: TopicInfo.Extension? = null) = TopicInfo(
+    id = topic.id,
+    content = content,
+    author = topic.author,
+    rootId = topic.rootId,
+    rootType = topic.rootType,
+    parentId = topic.parentId,
+    parentType = topic.parentType,
+    hasJoined = false,
+    createdTime = topic.createdTime,
+    commentCount = commentCount,
+    reactionCount = reactionCount,
+    hasComment = hasComment,
+    isEncrypted = topic.isEncrypted,
+    level = topic.level,
+    isPin = topic.isPin,
+    lastModifiedTime = topic.lastModifiedTime,
+    extension = extensions,
+    aid = topic.aid,
+    lastRead = lastRead,
+    favoriteId = favoriteId,
+)

@@ -2,19 +2,52 @@ package com.storyteller_f.a.app.compose_app.pages.room
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.AddHome
+import androidx.compose.material.icons.filled.ArrowCircleDown
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.CardMembership
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.OpenInFull
+import androidx.compose.material.icons.filled.PermMedia
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,9 +56,15 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.storyteller_f.a.app.compose_app.*
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.common.AppNav
+import com.storyteller_f.a.app.compose_app.LocalToaster
+import com.storyteller_f.a.app.compose_app.LocalUiViewModel
+import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.all_members
+import com.storyteller_f.a.app.compose_app.common.AppNavFactory
+import com.storyteller_f.a.app.compose_app.common.IdRoomViewModel
 import com.storyteller_f.a.app.compose_app.common.OnRoomExited
 import com.storyteller_f.a.app.compose_app.common.OnRoomJoined
 import com.storyteller_f.a.app.compose_app.common.RoomKeysViewModel
@@ -36,13 +75,29 @@ import com.storyteller_f.a.app.compose_app.common.createRoomKeysViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomTopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
 import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
-import com.storyteller_f.a.app.compose_app.components.*
+import com.storyteller_f.a.app.compose_app.components.ButtonNav
+import com.storyteller_f.a.app.compose_app.components.CustomAlertDialog
+import com.storyteller_f.a.app.compose_app.components.CustomAlertDialogController
+import com.storyteller_f.a.app.compose_app.components.DialogContainer
+import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.components.RoomTopicList
+import com.storyteller_f.a.app.compose_app.components.imeAnimation
+import com.storyteller_f.a.app.compose_app.components.rememberAlertDialogController
+import com.storyteller_f.a.app.compose_app.components.rememberCommonDialogController
+import com.storyteller_f.a.app.compose_app.error
+import com.storyteller_f.a.app.compose_app.exit_room
+import com.storyteller_f.a.app.compose_app.input_is_empty
+import com.storyteller_f.a.app.compose_app.join_room
+import com.storyteller_f.a.app.compose_app.join_room_prompt
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.insertContent
+import com.storyteller_f.a.app.compose_app.permission_denied
+import com.storyteller_f.a.app.compose_app.private_room_pub_key_loading
+import com.storyteller_f.a.app.compose_app.send
+import com.storyteller_f.a.app.compose_app.success
 import com.storyteller_f.a.app.compose_app.utils.startCall
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.client.core.LoadingState
@@ -60,6 +115,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkContent
@@ -73,6 +129,15 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
     val room = createRoomViewModel(roomId)
+    RoomPageInternal(room, needShowDialog, roomId)
+}
+
+@Composable
+private fun RoomPageInternal(
+    room: IdRoomViewModel,
+    needShowDialog: Boolean,
+    roomId: PrimaryKey
+) {
     val snackBarHost = remember {
         SnackbarHostState()
     }
@@ -93,7 +158,12 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
             }
             val roomInfo by room.handler.data.collectAsState()
             CustomSearchBar(SearchScope.RoomTopic(roomId)) {
-                RoomIconWithDialog(roomInfo, showDialog = showDialog, size = 40.dp, setClickEvent = true) {
+                RoomIconWithDialog(
+                    roomInfo,
+                    showDialog = showDialog,
+                    size = 40.dp,
+                    setClickEvent = true
+                ) {
                     showDialog = it
                 }
             }
@@ -109,7 +179,7 @@ fun RoomPage(roomId: PrimaryKey, needShowDialog: Boolean) {
             }
             val scope = rememberCoroutineScope()
             roomInfo?.let {
-                RoomInputGroup(roomId, it, ObjectTuple(roomId, ObjectType.ROOM), snackBarHost, {
+                RoomInputGroup(roomId, it, roomId ob ObjectType.ROOM, snackBarHost, {
                     showDialog = true
                 }) {
                     scope.launch {
@@ -174,7 +244,7 @@ fun RoomInputGroup(
     startJoinRoom: () -> Unit,
     scrollToNew: () -> Unit
 ) {
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     var input by remember {
         mutableStateOf("")
     }
@@ -220,7 +290,7 @@ fun RoomInputGroup(
     CustomAlertDialog(controller, {
         controller.close()
     }) {
-        checkRoomRouteAndAlert(appNav, roomId, startJoinRoom)
+        checkRoomRouteAndAlert(appNavFactory, roomId, startJoinRoom)
     }
 }
 
@@ -242,14 +312,14 @@ private fun RoomInputGroupInternal(
         ObjectTuple(myInfo?.id ?: 0, ObjectType.USER)
     }
 
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     InputGroupInternal(
         mediaTarget,
         MaterialTheme.colorScheme.tertiaryContainer,
         input,
         updateInput,
         {
-            appNav.gotoTopicCompose(
+            appNavFactory.newAppNav().gotoTopicCompose(
                 roomInfo.communityId?.let {
                     TopicComposeData.PublicRoom(roomId, it, parentTarget)
                 } ?: TopicComposeData.PrivateRoom(roomId, parentTarget)
@@ -320,10 +390,11 @@ private fun sendRoomTopic(
 }
 
 private fun checkRoomRouteAndAlert(
-    appNav: AppNav,
+    appNavFactory: AppNavFactory,
     roomId: PrimaryKey,
     startJoinRoom: () -> Unit,
 ) {
+    val appNav = appNavFactory.newAppNav()
     val current = appNav.currentDestination
     if (current != null) {
         val currentDestination = current.destination
@@ -347,7 +418,9 @@ fun RoomSendButton(
 ) {
     val toasterState = LocalToaster.current
     val scope = rememberCoroutineScope()
-    val wsClient = LocalWsClient.current
+    val uiViewModel = LocalUiViewModel.current
+    val instance by uiViewModel.instance.collectAsState()
+    val wsClient = instance.sessionManager.webSocketClient
     val state by wsClient.connectionHandler.state.collectAsState()
     val sendState by wsClient.localState.collectAsState()
     val isSending = sendState is LoadingState.Loading
@@ -514,7 +587,7 @@ private fun InputGroupSuffix(
 
 @Composable
 fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     DialogContainer {
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -539,20 +612,17 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
         roomInfo.communityId?.let { communityId ->
             CommunityRefCell(communityId) {
                 dismiss()
-                appNav.gotoCommunity(communityId, false)
+                appNavFactory.newAppNav().gotoCommunity(communityId, false)
             }
         }
 
-        RoomDialogButtons(dismiss, appNav, roomInfo)
+        RoomDialogButtons(roomInfo, dismiss)
     }
 }
 
 @Composable
-private fun RoomDialogButtons(
-    dismiss: () -> Unit,
-    appNav: AppNav,
-    roomInfo: RoomInfo,
-) {
+private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
+    val appNavFactory = LocalAppNavFactory.current
     val userSessionManager = LocalSessionManager.current
     val myInfo by userSessionManager.model.userHandler.data.collectAsState()
     val me = myInfo
@@ -561,9 +631,9 @@ private fun RoomDialogButtons(
     Column {
         ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
             dismiss()
-            appNav.gotoMemberPage(roomInfo.id, ObjectType.ROOM)
+            appNavFactory.newAppNav().gotoMemberPage(roomInfo.id, ObjectType.ROOM)
         }
-        val isRoomPage by appNav.hasRouteFlow<RoomScreen>().collectAsState(false)
+        val isRoomPage by appNavFactory.hasRouteFlow<RoomScreen>()
         if (isRoomPage) {
             val scope = rememberCoroutineScope()
             val toasterState = LocalToaster.current
@@ -595,7 +665,7 @@ private fun RoomDialogButtons(
             if (roomInfo.creator == me?.id) {
                 ButtonNav(Icons.Default.Settings, "Settings") {
                     dismiss()
-                    appNav.gotoSettingPage(roomInfo.id, ObjectType.ROOM)
+                    appNavFactory.newAppNav().gotoSettingPage(roomInfo.id, ObjectType.ROOM)
                 }
             }
         }

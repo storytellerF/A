@@ -13,7 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.TopicViewModel
 import com.storyteller_f.a.app.compose_app.common.createTopicViewModel
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
@@ -40,7 +40,7 @@ fun TopicRefCell(topicAid: String) {
 @Composable
 fun TopicRefCellInternal(viewModel: TopicViewModel) {
     val topicInfo by viewModel.handler.data.collectAsState()
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val shape = RoundedCornerShape(4.dp)
     RefCellStateView(
         viewModel.handler,
@@ -50,7 +50,7 @@ fun TopicRefCellInternal(viewModel: TopicViewModel) {
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
             .clip(shape)
             .clickable {
-                topicInfo?.let { it1 -> appNav.gotoTopic(it1.id) }
+                topicInfo?.let { it1 -> appNavFactory.newAppNav().gotoTopic(it1.id) }
             }
             .padding(10.dp),
     ) {
@@ -59,16 +59,16 @@ fun TopicRefCellInternal(viewModel: TopicViewModel) {
 }
 
 @Composable
-private fun TopicRefCellContent(
-    it: TopicInfo,
+fun TopicRefCellContent(
+    topicInfo: TopicInfo,
 ) {
-    val authorInfo = it.extension?.authorInfo
+    val authorInfo = topicInfo.extension?.authorInfo
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         UserIconWithDialog(authorInfo)
-        val text = (it.content as? TopicContent.Plain)?.plain.toString()
-        val plain = remember {
+        val text = (topicInfo.content as? TopicContent.Plain)?.plain.toString()
+        val plain = remember(text) {
             extractMarkdownHeadline(text)
         }
         Text(

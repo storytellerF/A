@@ -15,8 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.itemKey
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.IdCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.RoomsViewModel
 import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
@@ -26,6 +25,7 @@ import com.storyteller_f.a.app.compose_app.components.rememberCommonDialogContro
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityIconWithDialog
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
+import com.storyteller_f.a.app.core.compontents.pagingItems
 import com.storyteller_f.a.app.core.compontents.topPrepend
 import com.storyteller_f.shared.model.RoomInfo
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -50,13 +50,10 @@ fun RoomList(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             topPrepend(items.loadState)
-            items(
-                count = items.itemSnapshotList.size,
-                key = items.itemKey {
-                    it.id.toString()
-                },
-            ) { index ->
-                PrimaryRoomCell(items[index], onClick)
+            pagingItems(items, {
+                it.id
+            }) {
+                PrimaryRoomCell(items[it], onClick)
             }
             bottomAppending(items.loadState)
         }
@@ -69,7 +66,7 @@ fun PrimaryRoomCell(
     @PreviewParameter(RoomCellPreviewProvider::class) roomInfo: RoomInfo?,
     onClick: ((RoomInfo) -> Unit)? = null
 ) {
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val shape = RoundedCornerShape(10.dp)
     RoomCellInternal(
         roomInfo,
@@ -77,7 +74,7 @@ fun PrimaryRoomCell(
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
             .clip(shape)
             .clickable {
-                roomInfo?.let { onClick ?: appNav.gotoRoom(it.id, false) }
+                roomInfo?.let { onClick ?: appNavFactory.newAppNav().gotoRoom(it.id, false) }
             }
             .padding(10.dp)
     )

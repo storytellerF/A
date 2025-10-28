@@ -21,34 +21,30 @@ import com.storyteller_f.shared.model.UserInfo
 @Composable
 fun UserCell(
     userInfo: UserInfo?,
-    iconClickable: Boolean = true,
-    cellClickable: Boolean = true,
     iconSize: Dp = 40.dp,
-    onClickCell: (UserInfo) -> Unit
+    onClickCell: (UserInfo) -> Unit = {}
 ) {
     val shape = RoundedCornerShape(8.dp)
     val modifier = Modifier.fillMaxWidth()
         .clip(shape)
-        .clickable(userInfo != null && cellClickable) {
+        .clickable(userInfo != null) {
             userInfo?.let {
                 onClickCell.invoke(it)
             }
         }.padding(8.dp)
-    UserCellInternal(modifier, userInfo, iconClickable, iconSize)
+    UserCellInternal(modifier, userInfo, iconSize)
 }
 
 @Composable
 fun UnboundedUserCell(
     userInfo: UserInfo?,
-    iconClickable: Boolean = true,
     iconSize: Dp = 40.dp
-) = UserCellInternal(Modifier.fillMaxWidth().padding(8.dp), userInfo, iconClickable, iconSize)
+) = UserCellInternal(Modifier.fillMaxWidth().padding(8.dp), userInfo, iconSize)
 
 @Composable
 fun UserCellInternal(
     modifier: Modifier,
     userInfo: UserInfo?,
-    iconClickable: Boolean,
     iconSize: Dp
 ) {
     Row(
@@ -58,7 +54,7 @@ fun UserCellInternal(
     ) {
         UserIconWithDialog(
             userInfo,
-            setClickEvent = iconClickable,
+            setClickEvent = true,
             size = iconSize
         )
         if (userInfo != null) {

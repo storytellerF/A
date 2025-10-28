@@ -9,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.itemKey
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.MemberViewModel
 import com.storyteller_f.a.app.compose_app.common.createMemberViewModel
 import com.storyteller_f.a.app.compose_app.components.UserCell
@@ -50,7 +50,7 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
 
 @Composable
 fun MemberList(memberViewModel: MemberViewModel, onClick: ((UserInfo) -> Unit)? = null) {
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     StateView(memberViewModel) { items ->
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
@@ -64,7 +64,7 @@ fun MemberList(memberViewModel: MemberViewModel, onClick: ((UserInfo) -> Unit)? 
                 },
             ) { index ->
                 UserCell(items[index], onClickCell = {
-                    onClick?.invoke(it) ?: appNav.gotoUser(it.id)
+                    onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
                 })
                 Spacer(modifier = Modifier.height(20.dp))
                 if (index != items.itemSnapshotList.size - 1) {

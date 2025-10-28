@@ -13,7 +13,7 @@ import com.storyteller_f.a.client.core.UserPass
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
-interface LoginHistoryManager {
+interface SessionHistoryManager {
     fun getSavedSession(): SavedSession
 
     suspend fun addSession(session: RawUserPassInfo): UserPass
@@ -32,20 +32,20 @@ interface LoginHistoryManager {
  * 如果退出登录current 会被删除
  */
 @Serializable
-data class LoginHistory(val last: String? = null, val current: String? = null)
+data class SessionHistory(val last: String? = null, val current: String? = null)
 
-class DefaultLoginHistoryManager(val settings: Settings) : LoginHistoryManager {
+class DefaultSessionHistoryManager(val settings: Settings) : SessionHistoryManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun getSavedSession(): SavedSession {
         val list = settings.keys.map {
             it.split(".")[0]
         }.distinct().filter {
-            it.startsWith("login_user")
+            it.startsWith("session_user")
         }.mapNotNull {
             settings.decodeValueOrNull<RawUserPassInfo>(it)?.address
         }
-        val loginHistory = settings.decodeValueOrNull<LoginHistory>("login_history")
-        return SavedSession(list, loginHistory)
+        val history = settings.decodeValueOrNull<SessionHistory>("session_history")
+        return SavedSession(list, history)
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
@@ -53,64 +53,58 @@ class DefaultLoginHistoryManager(val settings: Settings) : LoginHistoryManager {
         val address = session.address
         val rawUserPass =
             RawUserPassInfo(session.pemPrivateKey, session.derPublicKey, address)
-        settings.encodeValue("login_user_$address", rawUserPass)
-        settings.encodeValue("login_history", LoginHistory(address, address))
+        settings.encodeValue("session_user_$address", rawUserPass)
+        settings.encodeValue("session_history", SessionHistory(address, address))
         return RawUserPass(session)
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun buildSession(alias: String): UserPass? {
         val rawUserPass =
-            settings.decodeValueOrNull<RawUserPassInfo>("login_user_$alias") ?: return null
+            settings.decodeValueOrNull<RawUserPassInfo>("session_user_$alias") ?: return null
         return RawUserPass(rawUserPass)
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun removeSession(session: String) {
-        settings.removeValue<RawUserPassInfo>("login_user_$session")
-        val loginHistory = settings.decodeValueOrNull<LoginHistory>("login_history")
-        if (loginHistory != null && loginHistory.last == session) {
-            settings.removeValue<LoginHistory>("login_history")
+        settings.removeValue<RawUserPassInfo>("session_user_$session")
+        val sessionHistory = settings.decodeValueOrNull<SessionHistory>("session_history")
+        if (sessionHistory != null && sessionHistory.last == session) {
+            settings.removeValue<SessionHistory>("session_history")
         }
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun exitSession(alias: String) {
-        val loginHistory = settings.decodeValueOrNull<LoginHistory>("login_history")
-        if (loginHistory != null && loginHistory.current == alias) {
-            settings.encodeValue("login_history", loginHistory.copy(current = null))
+        val sessionHistory = settings.decodeValueOrNull<SessionHistory>("session_history")
+        if (sessionHistory != null && sessionHistory.current == alias) {
+            settings.encodeValue("session_history", sessionHistory.copy(current = null))
         }
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun logSession(alias: String) {
-        settings.encodeValue("login_history", LoginHistory(alias, alias))
+        settings.encodeValue("session_history", SessionHistory(alias, alias))
     }
 }
 
 data class SavedSession(
-    val list: List<String>,
-    val history: LoginHistory?
+    val alias: List<String>,
+    val history: SessionHistory?
 )
 
-expect fun buildLoginHistoryFactory(settings: Settings): LoginHistoryManager
+expect fun buildLoginHistoryFactory(settings: Settings): SessionHistoryManager
 
 expect fun createSettings(name: String = "a-default"): Settings
 
 fun <U> SessionManager<U>.restoreFromStorage(settings: Settings) {
     val sessionFactory = buildLoginHistoryFactory(settings)
-    val (list, history) = sessionFactory.getSavedSession()
-    val alias = history?.current
-    if (alias != null && list.contains(alias)) {
-        val session = sessionFactory.buildSession(alias)
+    val (alias, history) = sessionFactory.getSavedSession()
+    val current = history?.current
+    if (current != null && alias.contains(current)) {
+        val session = sessionFactory.buildSession(current)
         if (session != null) {
             model.updateState(ClientSessionState.Success(session))
         }
     }
-}
-
-suspend fun <U> SessionManager<U>.clearStorage(settings: Settings) {
-    val sessionFactory = buildLoginHistoryFactory(settings)
-    val alias = model.currentUserPass?.address()?.getOrThrow() ?: return
-    sessionFactory.exitSession(alias)
 }

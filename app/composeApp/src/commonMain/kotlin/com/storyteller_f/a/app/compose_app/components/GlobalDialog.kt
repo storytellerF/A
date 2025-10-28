@@ -46,6 +46,25 @@ interface GlobalDialogController {
     fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading)
 
     suspend fun emitEvent(any: Any)
+
+    companion object {
+        val EMPTY = object : GlobalDialogController {
+            override val state: MutableState<PersistentList<GlobalDialogState>>
+                get() = TODO("Not yet implemented")
+
+            override suspend fun <T> useResult(block: suspend GlobalDialogController.() -> Result<T>): Result<T> {
+                TODO("Not yet implemented")
+            }
+
+            override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
+                TODO("Not yet implemented")
+            }
+
+            override suspend fun emitEvent(any: Any) {
+                TODO("Not yet implemented")
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalUuidApi::class)
