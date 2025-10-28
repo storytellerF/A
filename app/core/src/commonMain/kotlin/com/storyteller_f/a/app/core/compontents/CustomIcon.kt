@@ -1,6 +1,8 @@
 package com.storyteller_f.a.app.core.compontents
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
@@ -9,12 +11,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import dev.tclement.fonticons.FontIcon
 import dev.tclement.fonticons.ProvideIconParameters
+
 sealed interface IconRes {
     data class Vector(val vector: ImageVector, val description: String = "") : IconRes
     data class Font(val char: Char, val description: String = "") : IconRes
+    data object Loading : IconRes
 }
 
-fun Modifier.clickableIfNeed(onClick: (() -> Unit)?): Modifier {
+fun Modifier.clickableIfNotNull(onClick: (() -> Unit)?): Modifier {
     if (onClick != null) {
         return clickable {
             onClick.invoke()
@@ -31,7 +35,11 @@ fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
                 size = 20.dp,
                 tintProvider = LocalContentColor
             ) {
-                FontIcon(icon.char, icon.description, modifier = Modifier.Companion.clickableIfNeed(onClick))
+                FontIcon(
+                    icon.char,
+                    icon.description,
+                    modifier = Modifier.clickableIfNotNull(onClick).size(20.dp)
+                )
             }
         }
 
@@ -39,9 +47,11 @@ fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
             Icon(
                 imageVector = icon.vector,
                 contentDescription = icon.description,
-                modifier = Modifier.Companion.clickableIfNeed(onClick)
+                modifier = Modifier.clickableIfNotNull(onClick).size(20.dp)
             )
         }
+
+        IconRes.Loading -> CircularProgressIndicator(modifier = Modifier.size(20.dp))
     }
 }
 

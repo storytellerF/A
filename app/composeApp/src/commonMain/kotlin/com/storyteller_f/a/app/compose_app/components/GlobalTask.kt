@@ -1,6 +1,7 @@
 package com.storyteller_f.a.app.compose_app.components
 
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import com.storyteller_f.a.client.core.LoadingState
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -12,11 +13,34 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-class GlobalTask(val scope: CoroutineScope, val events: MutableSharedFlow<Any>) {
-    val mutex = Mutex()
-    val stateMap = mutableStateMapOf<String, LoadingState?>()
+interface GlobalTask {
+    val stateMap: SnapshotStateMap<String, LoadingState?>
 
     fun use(
+        key: String,
+        block: suspend (MutableStateFlow<LoadingState?>, MutableSharedFlow<Any>) -> Unit
+    )
+
+    companion object {
+        val EMPTY = object : GlobalTask {
+            override val stateMap: SnapshotStateMap<String, LoadingState?>
+                get() = TODO("Not yet implemented")
+
+            override fun use(
+                key: String,
+                block: suspend (MutableStateFlow<LoadingState?>, MutableSharedFlow<Any>) -> Unit
+            ) {
+                TODO("Not yet implemented")
+            }
+        }
+    }
+}
+
+class CustomGlobalTask(val scope: CoroutineScope, val events: MutableSharedFlow<Any>) : GlobalTask {
+    val mutex = Mutex()
+    override val stateMap = mutableStateMapOf<String, LoadingState?>()
+
+    override fun use(
         key: String,
         block: suspend (MutableStateFlow<LoadingState?>, MutableSharedFlow<Any>) -> Unit
     ) {
@@ -63,7 +87,7 @@ class GlobalTask(val scope: CoroutineScope, val events: MutableSharedFlow<Any>) 
     }
 }
 
-suspend inline fun <T> MutableStateFlow<LoadingState?>.use(block: suspend () -> Result<T>) {
+suspend inline fun <T> MutableStateFlow<LoadingState?>.use(block: suspend () -> Result<T>): Result<T> {
     value = LoadingState.Loading
-    block()
+    return block()
 }

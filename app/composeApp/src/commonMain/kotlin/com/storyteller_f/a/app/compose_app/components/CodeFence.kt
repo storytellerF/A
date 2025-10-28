@@ -29,7 +29,7 @@ import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.utils.safeSink
@@ -284,7 +284,7 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, FileInfo
     ImageTransformer {
     @Composable
     override fun transform(link: String): ImageData {
-        val appNav = LocalAppNav.current
+        val appNavFactory = LocalAppNavFactory.current
         return if (link.startsWith("file:///")) {
             val model = link.substring(7)
             val painter = rememberAsyncImagePainter(model = model)
@@ -296,7 +296,7 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, FileInfo
             ImageData(
                 painter,
                 modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
-                    info?.let { it1 -> appNav.gotoMedia(info) }
+                    info?.let { it1 -> appNavFactory.newAppNav().gotoMedia(info) }
                 }
             )
         }

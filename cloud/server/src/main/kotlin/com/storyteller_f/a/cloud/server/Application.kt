@@ -28,7 +28,22 @@ import com.storyteller_f.a.backend.exposed.buildExposedDatabase
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.configureAuth
 import com.storyteller_f.a.cloud.server.auth.getRateLimitKey
-import com.storyteller_f.a.cloud.server.route.configureRoute
+import com.storyteller_f.a.cloud.server.route.bindAccountRoute
+import com.storyteller_f.a.cloud.server.route.bindCommunityRoute
+import com.storyteller_f.a.cloud.server.route.bindProtectedAccountRoute
+import com.storyteller_f.a.cloud.server.route.bindProtectedAdminRoute
+import com.storyteller_f.a.cloud.server.route.bindProtectedCommunityRoute
+import com.storyteller_f.a.cloud.server.route.bindProtectedMediaRoute
+import com.storyteller_f.a.cloud.server.route.bindProtectedRoomRoute
+import com.storyteller_f.a.cloud.server.route.bindProtectedTitleRoute
+import com.storyteller_f.a.cloud.server.route.bindProtectedTopicRoute
+import com.storyteller_f.a.cloud.server.route.bindProtectedUserRoute
+import com.storyteller_f.a.cloud.server.route.bindRoomRoute
+import com.storyteller_f.a.cloud.server.route.bindTopicRoute
+import com.storyteller_f.a.cloud.server.route.bindUnauthenticatedPanelRoute
+import com.storyteller_f.a.cloud.server.route.bindUnauthenticatedRoute
+import com.storyteller_f.a.cloud.server.route.bindUnprotectedAccountRoute
+import com.storyteller_f.a.cloud.server.route.bindUserRoute
 import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
@@ -42,6 +57,7 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
+import io.ktor.server.auth.authenticate
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.callid.callIdMdc
@@ -55,6 +71,7 @@ import io.ktor.server.request.header
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.queryString
 import io.ktor.server.request.uri
+import io.ktor.server.routing.routing
 import io.ktor.server.sessions.SessionTransportTransformerEncrypt
 import io.ktor.server.sessions.Sessions
 import io.ktor.server.sessions.SessionsConfig
@@ -62,6 +79,7 @@ import io.ktor.server.sessions.cookie
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
+import io.ktor.server.websocket.webSocket
 import io.ktor.util.toMap
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
@@ -104,9 +122,9 @@ fun main(args: Array<String>) {
             options.isDebug = false
         }
     }
-    Runtime.getRuntime().addShutdownHook(Thread({
+    Runtime.getRuntime().addShutdownHook(Thread {
         Napier.i("程序即将退出，执行清理操作...")
-    }))
+    })
     EngineMain.main(args + extraArgs)
 }
 
@@ -136,10 +154,11 @@ fun Application.module() {
         }
         throw e
     }
-    if (backend.customConfig.buildType == "test") {
-        runBlocking {
+    runBlocking {
+        if (backend.customConfig.buildType == "test") {
             backend.combinedDatabase.init()
         }
+        backend.combinedDatabase.init()
     }
     startNewMessageTask(backend)
     configurePlugin(reader, backend)
@@ -447,4 +466,32 @@ suspend fun ByteReadChannel.copyWithLimitAndClose(channel: ByteWriteChannel, lim
     }
 
     return result
+}
+
+fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
+    routing {
+        authenticate("user") {
+            bindProtectedRoomRoute(backend)
+            bindProtectedTopicRoute(backend)
+            bindProtectedCommunityRoute(backend)
+            bindProtectedUserRoute(backend)
+            webSocket("/link") {
+                webSocketContent(reader, backend)
+            }
+            bindProtectedMediaRoute(backend)
+            bindProtectedTitleRoute(backend)
+            bindProtectedAccountRoute(backend)
+        }
+        authenticate("user", optional = true) {
+            bindAccountRoute()
+            bindRoomRoute(backend)
+            bindTopicRoute(backend)
+            bindCommunityRoute(backend)
+            bindUserRoute(backend)
+        }
+        bindUnprotectedAccountRoute(backend)
+        bindUnauthenticatedRoute(backend)
+        bindProtectedAdminRoute(backend)
+        bindUnauthenticatedPanelRoute(backend)
+    }
 }

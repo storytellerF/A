@@ -10,11 +10,11 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
-import com.storyteller_f.a.app.compose_app.common.AppNav
 import com.storyteller_f.a.app.compose_app.common.createMemberSearchInCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.createMemberSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomSearchInCommunityViewModel
@@ -67,7 +67,7 @@ sealed interface SearchScope {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     var query by remember {
         mutableStateOf("")
     }
@@ -80,7 +80,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
     var showSheet by remember {
         mutableStateOf(false)
     }
-    CustomSearchBarInternal(appNav, scope, query, {
+    CustomSearchBarInternal(scope, query, {
         query = it
     }, searchQuery, {
         searchQuery = it
@@ -95,11 +95,11 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
     }) {
         showSheet = false
         when (it) {
-            ObjectType.COMMUNITY -> appNav.gotoCommunityCompose()
-            ObjectType.ROOM -> appNav.gotoRoomCompose()
+            ObjectType.COMMUNITY -> appNavFactory.newAppNav().gotoCommunityCompose()
+            ObjectType.ROOM -> appNavFactory.newAppNav().gotoRoomCompose()
             ObjectType.TOPIC -> TODO()
             ObjectType.USER -> TODO()
-            ObjectType.TITLE -> appNav.gotoTitleCompose()
+            ObjectType.TITLE -> appNavFactory.newAppNav().gotoTitleCompose()
             ObjectType.File -> TODO()
             ObjectType.PANEL_ACCOUNT -> TODO()
         }
@@ -109,7 +109,6 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun CustomSearchBarInternal(
-    appNav: AppNav,
     scope: SearchScope,
     query: String,
     updateQuery: (String) -> Unit,
@@ -130,17 +129,21 @@ private fun CustomSearchBarInternal(
                     expanded = active,
                     onExpandedChange = onActiveChange,
                     leadingIcon = {
-                        MergedLeadingIcon(leadingIcon, active, appNav)
+                        MergedLeadingIcon(leadingIcon, active) {
+                            onActiveChange(it)
+                        }
                     },
                     trailingIcon = {
                         val userSessionManager = LocalSessionManager.current
                         val myInfo by userSessionManager.model.userHandler.data.collectAsState()
                         val userInfo = myInfo
-                        UserIconWithDialog(
-                            userInfo,
-                            true,
-                            onClickCreate = clickCreate
-                        )
+                        Box(modifier = Modifier.testTag("me")) {
+                            UserIconWithDialog(
+                                userInfo,
+                                true,
+                                onClickCreate = clickCreate
+                            )
+                        }
                     },
                     placeholder = {
                         SearchPlaceholder(scope)
@@ -161,18 +164,18 @@ private fun CustomSearchBarInternal(
 private fun MergedLeadingIcon(
     leadingIcon: @Composable () -> Unit,
     active: Boolean,
-    appNav: AppNav
+    update: (Boolean) -> Unit
 ) {
-    var active1 = active
+    val appNavFactory = LocalAppNavFactory.current
     if (appPlatform.hasNativeBack) {
         leadingIcon()
     } else {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton({
-                if (active1) {
-                    active1 = false
+                if (active) {
+                    update(false)
                 } else {
-                    appNav.back()
+                    appNavFactory.newAppNav().back()
                 }
             }) {
                 Icon(Icons.AutoMirrored.Default.ArrowBack, "back")

@@ -19,7 +19,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.storyteller_f.a.app.core.compontents.StateView
-import com.storyteller_f.a.cloud.panel.LocalNav
+import com.storyteller_f.a.cloud.panel.LocalPanelNav
 import com.storyteller_f.a.cloud.panel.common.OverviewViewModel
 import com.storyteller_f.a.cloud.panel.common.createPanelOverviewViewModel
 import com.storyteller_f.shared.model.PanelOverview
@@ -86,9 +86,9 @@ private fun OverviewFlow(@PreviewParameter(OverviewFlowPreviewProvider::class) p
 
 @Composable
 fun UserCountOverviewCell(panelOverview: PanelOverview) {
-    val nav = LocalNav.current
+    val panelNav = LocalPanelNav.current
     Card(onClick = {
-        nav.gotoAllUsers()
+        panelNav.gotoAllUsers()
     }) {
         Box(modifier = Modifier.padding(16.dp)) {
             val text = remember(panelOverview.userCount) {

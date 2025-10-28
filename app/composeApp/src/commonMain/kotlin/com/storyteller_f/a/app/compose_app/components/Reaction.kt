@@ -4,16 +4,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Comment
 import androidx.compose.material.icons.outlined.AddReaction
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.SubcomposeMeasureScope
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.pages.topic.addReaction
+import com.storyteller_f.a.app.compose_app.pages.topic.deleteReaction
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
@@ -25,12 +27,7 @@ fun InteractionRow(
     startAddComment: () -> Unit
 ) {
     val reactions = topicInfo.extension?.reactions
-    InteractionRowInternal(
-        reactions.orEmpty(),
-        topicInfo,
-        startAddComment,
-        startAddReaction
-    )
+    InteractionRowInternal(reactions.orEmpty(), topicInfo, startAddComment, startAddReaction)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,23 +38,23 @@ fun InteractionRowInternal(
     startAddComment: () -> Unit,
     startAddReaction: () -> Unit
 ) {
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val hasComment = topicInfo.hasComment
     val commentCount = topicInfo.commentCount
-    val userSessionViewModel = LocalSessionManager.current
+    val userSessionManager = LocalSessionManager.current
     EmojiRow(
         data,
         {
             if (it < data.size) {
                 Pill(text = "+${data.size - it}") {
-                    appNav.gotoReactionListPage(topicInfo.id)
+                    appNavFactory.newAppNav().gotoReactionListPage(topicInfo.id)
                 }
             }
             Pill(icon = Icons.Outlined.AddReaction) {
-                if (userSessionViewModel.currentIsAlreadySignUp) {
+                if (userSessionManager.currentIsAlreadySignUp) {
                     startAddReaction()
                 } else {
-                    appNav.gotoLogin()
+                    appNavFactory.newAppNav().gotoLogin()
                 }
             }
         },
@@ -237,20 +234,9 @@ private fun EmojiCell(
         globalTask.use(key) { state, bus ->
             state.use {
                 if (hasReacted) {
-                    com.storyteller_f.a.app.compose_app.pages.topic.deleteReaction(
-                        topicInfo,
-                        emoji,
-                        info,
-                        bus,
-                        sessionManager
-                    )
+                    deleteReaction(topicInfo, emoji, info, bus, sessionManager)
                 } else {
-                    com.storyteller_f.a.app.compose_app.pages.topic.addReaction(
-                        topicInfo,
-                        emoji,
-                        bus,
-                        sessionManager
-                    )
+                    addReaction(topicInfo, emoji, bus, sessionManager)
                 }
             }
         }

@@ -10,6 +10,7 @@ import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.ChildAccountCollection
@@ -40,6 +41,8 @@ import com.storyteller_f.storage.UploadCollection
 import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UploadInfoStorage
 import com.storyteller_f.storage.UserCollection
+import com.storyteller_f.storage.UserFavoriteCollection
+import com.storyteller_f.storage.UserFavoriteStorage
 import com.storyteller_f.storage.UserInfoStorage
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
@@ -255,6 +258,10 @@ class CommonStorageImpl(val appDatabase: AppDatabase) {
         return source.map {
             it?.data?.let { string -> commonJson.decodeFromString(string) }
         }
+    }
+
+    suspend fun clean(collection: String) {
+        appDatabase.getCommonDao().clean(collection)
     }
 }
 
@@ -498,6 +505,30 @@ class OverviewRoomStorage(val appDatabase: AppDatabase) : OverviewStorage {
     }
 }
 
+class UserFavoriteRoomStorage(val appDatabase: AppDatabase) : UserFavoriteStorage {
+    val impl = CommonStorageImpl(appDatabase)
+
+    override suspend fun save(
+        collection: UserFavoriteCollection,
+        favoriteInfo: UserFavoriteInfo
+    ) {
+        val data = commonJson.encodeToString(favoriteInfo)
+        appDatabase.getCommonDao().insert(CommonEntity(favoriteInfo.id, collection.NAME, data))
+    }
+
+    override fun observeData(collection: UserFavoriteCollection): PagingSource<Int, UserFavoriteInfo> {
+        return impl.observeData(collection.NAME)
+    }
+
+    override fun observeDatum(id: String): Flow<UserFavoriteInfo?> {
+        return impl.observeDatum(UserFavoriteCollection.NAME, id)
+    }
+
+    override suspend fun clean(collection: UserFavoriteCollection) {
+        return impl.clean(collection.NAME)
+    }
+}
+
 class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val userInfoStorage: UserInfoStorage = UserRoomInfoStorage(appDatabase)
     override val communityInfoStorage: CommunityInfoStorage = CommunityRoomInfoStorage(appDatabase)
@@ -511,6 +542,7 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val downloadInfoStorage: DownloadInfoStorage = DownloadInfoRoomStorage(appDatabase)
     override val uploadInfoStorage: UploadInfoStorage = UploadInfoRoomStorage(appDatabase)
     override val overviewStorage: OverviewStorage = OverviewRoomStorage(appDatabase)
+    override val favoriteStorage: UserFavoriteStorage = UserFavoriteRoomStorage(appDatabase)
 }
 
 fun getRoomModelStorage(name: String) = RoomModelStorage(getRoomDatabase(name))

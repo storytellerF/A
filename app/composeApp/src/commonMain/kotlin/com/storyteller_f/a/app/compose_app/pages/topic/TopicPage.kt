@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
@@ -254,11 +254,11 @@ private fun TopicPageInputGroup(
         TopicInputGroup(scrollToNew, topic, snackBarHostState)
     }
 
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     CustomAlertDialog(alertDialogState, {
         alertDialogState.close()
     }) {
-        appNav.gotoTopic(topic.rootId)
+        appNavFactory.newAppNav().gotoTopic(topic.rootId)
     }
 }
 
@@ -271,7 +271,7 @@ private fun TopicInputGroup(
     var input by remember {
         mutableStateOf("")
     }
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val userSessionManager = LocalSessionManager.current
     val myInfo by userSessionManager.model.userHandler.data.collectAsState()
     val my = myInfo
@@ -307,7 +307,7 @@ private fun TopicInputGroup(
                     TopicComposeData.User(topic.rootId, parentTuple)
                 }
             }
-            appNav.gotoTopicCompose(data)
+            appNavFactory.newAppNav().gotoTopicCompose(data)
         },
         sendButton = {
             TopicSendButton(topic, input, {

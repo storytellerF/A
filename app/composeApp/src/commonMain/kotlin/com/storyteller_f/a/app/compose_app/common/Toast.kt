@@ -5,6 +5,14 @@ import kotlin.time.Duration.Companion.seconds
 
 interface Toast {
     fun showMessage(message: String)
+
+    companion object {
+        val EMPTY = object : Toast {
+            override fun showMessage(message: String) {
+                TODO("Not yet implemented")
+            }
+        }
+    }
 }
 
 class Sonner(val toasterState: ToasterState) : Toast {

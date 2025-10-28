@@ -1,5 +1,6 @@
 package com.storyteller_f.a.backend.core.types
 
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
@@ -24,18 +25,18 @@ data class RawRoom(
     val latestTopic: PrimaryKey? = null,
 )
 
-fun Room.toRoomInfo(
-    memberCount: Long = 0,
-    joinedTime: LocalDateTime? = null,
-    topicId: PrimaryKey? = null
-) = RoomInfo(
-    id,
-    createdTime,
-    name,
-    aid,
-    creator,
-    memberCount,
-    joinedTime = joinedTime,
-    communityId = communityId,
-    lastRead = topicId
-)
+fun RawRoom.toRoomInfo(icon: FileInfo? = null): RoomInfo {
+    return RoomInfo(
+        room.id,
+        room.createdTime,
+        room.name,
+        room.aid,
+        room.creator,
+        memberCount ?: 0,
+        icon = icon,
+        joinedTime = joinedTime,
+        communityId = room.communityId,
+        lastRead = lastRead,
+        latestTopic = latestTopic
+    )
+}

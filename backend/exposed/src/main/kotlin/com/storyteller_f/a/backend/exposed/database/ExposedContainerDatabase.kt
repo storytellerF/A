@@ -7,7 +7,6 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.MemberJoin
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.UserTopicRead
-import com.storyteller_f.a.backend.core.types.toQuotaInfo
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.first
@@ -187,7 +186,7 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
             }
         }
         first {
-            Quota.wrapRow(it).toQuotaInfo()
+            Quota.wrapRow(it)
         }
     }
 

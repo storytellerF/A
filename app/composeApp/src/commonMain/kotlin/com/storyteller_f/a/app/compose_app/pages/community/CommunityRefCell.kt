@@ -13,7 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.CommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
 import com.storyteller_f.a.app.core.compontents.RefCellStateView
@@ -39,7 +39,7 @@ private fun CommunityRefCellInternal(
 ) {
     val communityInfo by viewModel.handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     RefCellStateView(
         viewModel.handler,
         modifier = Modifier
@@ -48,7 +48,7 @@ private fun CommunityRefCellInternal(
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
             .clip(shape)
             .clickable {
-                communityInfo?.let { onClick?.invoke(it) ?: appNav.gotoCommunity(it.id, false) }
+                communityInfo?.let { onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoCommunity(it.id, false) }
             }
             .padding(10.dp)
     ) {

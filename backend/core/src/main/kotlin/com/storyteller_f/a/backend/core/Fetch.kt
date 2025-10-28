@@ -1,6 +1,5 @@
 package com.storyteller_f.a.backend.core
 
-import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.PrimaryKey
 
@@ -33,11 +32,12 @@ data class PrimaryKeyFetch(override val cursor: Cursor<PrimaryKey>?, override va
 data class ReactionFetch(override val cursor: Cursor<ReactionCursorKey>?, override val size: Int) :
     GenericFetch<ReactionCursorKey>
 
-fun<T : PrimaryKeyIdentifiable> fixedSort(
+fun<T> fixedSort(
     infos: List<T>,
-    ids: List<PrimaryKey>
+    ids: List<PrimaryKey>,
+    key: (T) -> PrimaryKey
 ): List<T> {
-    val groupBy = infos.associateBy { it.id }
+    val groupBy = infos.associateBy { key(it) }
     val processedTopics = ids.mapNotNull {
         groupBy[it]
     }

@@ -10,7 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnRoomCreated
@@ -29,7 +29,7 @@ fun RoomComposePage() {
         mutableStateOf("")
     }
     val sessionManager = LocalSessionManager.current
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     CommonComposePage({
@@ -38,7 +38,7 @@ fun RoomComposePage() {
                 sessionManager.createRoom(NewRoom(name, aid))
             }.onSuccess { roomInfo ->
                 globalDialogController.emitEvent(OnRoomCreated(roomInfo))
-                appNav.back()
+                appNavFactory.newAppNav().back()
             }
         }
     }) {

@@ -26,8 +26,7 @@ import com.dokar.sonner.rememberToasterState
 import com.kdroid.composenotification.builder.ExperimentalNotificationsApi
 import com.kdroid.composenotification.builder.Notification
 import com.kdroid.composenotification.builder.getNotificationProvider
-import com.russhwolf.settings.Settings
-import com.storyteller_f.a.app.compose_app.common.AppNav
+import com.storyteller_f.a.app.compose_app.common.AppNavFactory
 import com.storyteller_f.a.app.compose_app.common.Downloader
 import com.storyteller_f.a.app.compose_app.common.HomeScreen
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
@@ -42,6 +41,7 @@ import com.storyteller_f.a.app.compose_app.common.processEvent
 import com.storyteller_f.a.app.compose_app.common.toRoute
 import com.storyteller_f.a.app.compose_app.components.ConstPlayItem
 import com.storyteller_f.a.app.compose_app.components.CustomGlobalDialogController
+import com.storyteller_f.a.app.compose_app.components.CustomGlobalTask
 import com.storyteller_f.a.app.compose_app.components.CustomVideoSize
 import com.storyteller_f.a.app.compose_app.components.GlobalDialog
 import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
@@ -57,13 +57,18 @@ import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.compose_app.utils.createCustomDataStoreManager
 import com.storyteller_f.a.app.core.common.LocalClient
+import com.storyteller_f.a.app.core.utils.SavedSession
+import com.storyteller_f.a.app.core.utils.SessionHistoryManager
+import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
+import com.storyteller_f.a.client.core.RawUserPassInfo
+import com.storyteller_f.a.client.core.SessionModel
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.UserSessionModel
-import com.storyteller_f.a.client.core.WebSocketClient
+import com.storyteller_f.a.client.core.WebSocketClientImpl
 import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
@@ -74,9 +79,8 @@ import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
-import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.storage.ModelStorage
 import com.strabled.composepreferences.ProvideDataStoreManager
 import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.ProvideIconParameters
@@ -87,10 +91,12 @@ import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
@@ -108,51 +114,52 @@ fun getAsyncImageLoader(context: PlatformContext) =
 interface ClientFileProvider {
     fun getDownloader(): Downloader?
     fun getUploader(): Uploader?
+
+    companion object {
+        val EMPTY = object : ClientFileProvider {
+            override fun getDownloader(): Downloader? {
+                TODO("Not yet implemented")
+            }
+
+            override fun getUploader(): Uploader? {
+                TODO("Not yet implemented")
+            }
+        }
+    }
 }
 
-val LocalAppNav = compositionLocalOf {
-    AppNav.EMPTY
+val LocalAppNavFactory = compositionLocalOf {
+    AppNavFactory.EMPTY
 }
 
-val LocalWsClient = compositionLocalOf<WebSocketClient> {
-    error("no ws client")
+val LocalGlobalDialog = compositionLocalOf {
+    GlobalDialogController.EMPTY
 }
 
-val LocalGlobalDialog = compositionLocalOf<GlobalDialogController> {
-    error("no default dialog")
-}
-
-val LocalGlobalTask = compositionLocalOf<GlobalTask> {
-    error("no default task")
+val LocalGlobalTask = compositionLocalOf {
+    GlobalTask.EMPTY
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-val LocalToaster = compositionLocalOf<Toast> {
-    error("no default toast")
+val LocalToaster = compositionLocalOf {
+    Toast.EMPTY
 }
 
-val LocalDatabase = compositionLocalOf<ModelStorage> {
-    error("No database")
+val LocalSessionManager = compositionLocalOf {
+    CustomUserSessionManager.EMPTY
 }
 
-val LocalSessionManager = compositionLocalOf<CustomUserSessionManager> {
-    error("No user session")
+val LocalAccountSwitcher = compositionLocalOf {
+    AccountSwitcher()
 }
 
-val LocalMainSessionManager = compositionLocalOf<CustomUserSessionManager> {
-    error("No main user session")
+val LocalClientFileProvider = compositionLocalOf {
+    ClientFileProvider.EMPTY
 }
 
-val LocalAccountSwitcher = compositionLocalOf<AccountSwitcher> {
-    error("not found")
-}
-
-val LocalClientFileProvider = compositionLocalOf<ClientFileProvider> {
-    error("no file provider")
-}
-
-val LocalUiViewModel = compositionLocalOf<UIViewModel> {
-    error("no ui view model")
+@OptIn(DelicateCoroutinesApi::class)
+val LocalUiViewModel = compositionLocalOf {
+    UIViewModel(GlobalScope, "", "")
 }
 
 @Serializable
@@ -208,20 +215,17 @@ fun MainAppPage(
     val navigator = rememberNavController()
     val scope = rememberCoroutineScope()
     val appNav = remember {
-        newAppNav(navigator, scope)
+        object : AppNavFactory {
+            val appNav = newAppNav(navigator, scope)
+            override fun newAppNav() = appNav
+        }
     }
     if (isPip && player != null) {
         FileViewPage(player)
     } else {
-        ObserveMessage({
-            appNav.toRoute<RoomScreen>()?.roomId
-        }, {
-            appNav.toRoute<TopicScreen>()?.topicId
-        }) {
-            appNav.gotoTopic(it.id)
-        }
+        ObserveMessage()
         CompositionLocalProvider(
-            LocalAppNav provides appNav,
+            LocalAppNavFactory provides appNav,
         ) {
             NavHost(navigator, startDestination = HomeScreen, enterTransition = {
                 slideInHorizontally {
@@ -252,30 +256,19 @@ fun CommonEntry(content: @Composable () -> Unit) {
         setSingletonImageLoaderFactory {
             getAsyncImageLoader(it)
         }
-        val accountSwitcher = remember {
-            AccountSwitcher()
-        }
         val uiViewModel = LocalUiViewModel.current
-        val mainUserSessionManager = uiViewModel.mainInstance.sessionManager
         val instance by uiViewModel.instance.collectAsState()
         val currentUserSessionManager = instance.sessionManager
-        val database by instance.database.collectAsState()
-        val task = instance.task
-        val controller = instance.controller
 
         val toasterState = rememberToasterState()
         Toaster(toasterState, alignment = Alignment.TopCenter)
         GlobalDialog(instance.controller)
         CompositionLocalProvider(
             LocalSessionManager provides currentUserSessionManager,
-            LocalMainSessionManager provides mainUserSessionManager,
-            LocalAccountSwitcher provides accountSwitcher,
             LocalClient provides currentUserSessionManager.client,
-            LocalWsClient provides currentUserSessionManager.webSocketClient,
             LocalToaster provides Sonner(toasterState),
-            LocalDatabase provides database,
-            LocalGlobalDialog provides controller,
-            LocalGlobalTask provides task
+            LocalGlobalDialog provides instance.controller,
+            LocalGlobalTask provides instance.task
         ) {
             CommonEntryInternal(content)
         }
@@ -285,7 +278,7 @@ fun CommonEntry(content: @Composable () -> Unit) {
 class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, httpUrl: String) {
     val events = MutableSharedFlow<Any>()
     val controller = CustomGlobalDialogController(events)
-    val task = GlobalTask(scope, events)
+    val task = CustomGlobalTask(scope, events)
     val sessionManager = createCustomUserSessionManager(
         name,
         buildWebSocketUrl(wsServerUrl),
@@ -302,7 +295,7 @@ class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, 
         it
     }.map {
         if (it is ClientSessionState.Success) {
-            val address = it.session.address().getOrThrow()
+            val address = it.userPass.address().getOrThrow()
             getRoomModelStorage(address)
         } else {
             guestDatabase
@@ -352,24 +345,28 @@ class UIViewModel(viewModelScope: CoroutineScope, wsServerUrl: String, httpUrl: 
 }
 
 @Composable
-private fun CommonEntryInternal(
-    content: @Composable (() -> Unit)
-) {
-    val accountSwitcher = LocalAccountSwitcher.current
-    ProvideIconParameters(
-        iconFont = MaterialSymbolsOutlined.rememberIconFont(),
-        size = 20.dp,
-        tintProvider = LocalContentColor,
-        weight = FontWeight.Normal
-    ) {
+private fun CommonEntryInternal(content: @Composable (() -> Unit)) {
+    ProvideFontIcon {
         val dataStoreManager = createCustomDataStoreManager()
         ProvideDataStoreManager(dataStoreManager) {
             setPreferences {
                 "gpt_model" defaultValue ""
             }
             content()
-            AccountSwitch(accountSwitcher)
+            AccountSwitch()
         }
+    }
+}
+
+@Composable
+fun ProvideFontIcon(block: @Composable () -> Unit) {
+    ProvideIconParameters(
+        iconFont = MaterialSymbolsOutlined.rememberIconFont(),
+        size = 20.dp,
+        tintProvider = LocalContentColor,
+        weight = FontWeight.Normal
+    ) {
+        block()
     }
 }
 
@@ -386,11 +383,8 @@ fun buildHttpClient(
 }
 
 @Composable
-private fun ObserveMessage(
-    roomScreenId: () -> PrimaryKey?,
-    topicScreenId: () -> PrimaryKey?,
-    onClickTopic: (TopicInfo) -> Unit = {},
-) {
+private fun ObserveMessage() {
+    val appNavFactory = LocalAppNavFactory.current
     val sessionManager = LocalSessionManager.current
     val messageToasterState = rememberToasterState()
     Toaster(messageToasterState, alignment = Alignment.TopCenter)
@@ -413,8 +407,8 @@ private fun ObserveMessage(
                         "ws listener ${appPlatform.isActive} $hasPermission"
                     }
                     if (appPlatform.isActive) {
-                        val roomId = roomScreenId()
-                        val topicId = topicScreenId()
+                        val roomId = appNavFactory.newAppNav().toRoute<RoomScreen>()?.roomId
+                        val topicId = appNavFactory.newAppNav().toRoute<TopicScreen>()?.topicId
                         if (roomId != topicInfo.parentId &&
                             topicId != topicInfo.parentId
                         ) {
@@ -422,7 +416,9 @@ private fun ObserveMessage(
                             messageToasterState.show("$nickname: ${message.plain}")
                         }
                     } else if (hasPermission) {
-                        sendTopicNotification(message, topicInfo, onClickTopic)
+                        sendTopicNotification(message, topicInfo) {
+                            appNavFactory.newAppNav().gotoTopic(it.id)
+                        }
                     }
                 }
             }
@@ -466,8 +462,56 @@ private suspend fun sendTopicNotification(
 
 class CustomUserSessionManager(
     val proxy: UserSessionManager,
-    val settings: Settings,
-) : UserSessionManager by proxy
+    val sessionHistoryManager: SessionHistoryManager,
+) : UserSessionManager by proxy {
+    companion object {
+        val EMPTY = CustomUserSessionManager(object : UserSessionManager {
+            override val webSocketClient: WebSocketClientImpl
+                get() = TODO("Not yet implemented")
+            override val client: HttpClient
+                get() = TODO("Not yet implemented")
+            override val model: SessionModel<UserInfo>
+                get() = TODO("Not yet implemented")
+            override val isAlreadySignIn: StateFlow<Boolean> = MutableStateFlow(true)
+            override val address: StateFlow<String?>
+                get() = TODO("Not yet implemented")
+
+            override suspend fun updateAddress(clientSessionState: ClientSessionState) {
+                TODO("Not yet implemented")
+            }
+        }, object : SessionHistoryManager {
+            override fun getSavedSession(): SavedSession {
+                TODO("Not yet implemented")
+            }
+
+            override suspend fun addSession(session: RawUserPassInfo): UserPass {
+                TODO("Not yet implemented")
+            }
+
+            override fun buildSession(alias: String): UserPass? {
+                TODO("Not yet implemented")
+            }
+
+            override fun removeSession(session: String) {
+                TODO("Not yet implemented")
+            }
+
+            override fun exitSession(alias: String) {
+                TODO("Not yet implemented")
+            }
+
+            override fun logSession(alias: String) {
+                TODO("Not yet implemented")
+            }
+        })
+    }
+
+    fun clearSession() {
+        val alias = address.value ?: return
+        sessionHistoryManager.exitSession(alias)
+        model.clear()
+    }
+}
 
 fun createCustomUserSessionManager(
     settingsName: String,
@@ -476,7 +520,8 @@ fun createCustomUserSessionManager(
     onReceiveFrame: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
 ): CustomUserSessionManager {
     val settings = createSettings(settingsName)
+    val historyManager = buildLoginHistoryFactory(settings)
     val customSessionManager = createUserSessionManager(webSocketUrl, createClient, onReceiveFrame)
     customSessionManager.restoreFromStorage(settings)
-    return CustomUserSessionManager(customSessionManager, settings)
+    return CustomUserSessionManager(customSessionManager, historyManager)
 }

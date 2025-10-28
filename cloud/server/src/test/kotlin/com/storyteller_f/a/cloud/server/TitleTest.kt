@@ -16,17 +16,23 @@ class TitleTest {
         attachSession {
             val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
             val cId = c.id
-            assertListSize(0, userTitles(it.uid, null, 10, TitleSearchType.RECEIVER))
+            assertListSize(0, userTitles(it.uid, 10, TitleSearchType.RECEIVER))
             createTitle(
                 NewTitle("c KOL", TitleType.REGULAR, it.uid, cId, ObjectType.COMMUNITY, "hello")
             ).getOrThrow()
-            assertListTotalSize(1, userTitles(it.uid, null, 10, TitleSearchType.RECEIVER))
-            assertListSize(1, userTitles(it.uid, null, 10, TitleSearchType.RECEIVER))
-            assertListSize(1, userTitles(it.uid, null, 10, TitleSearchType.CREATOR))
-            assertListSize(1, userTitles(it.uid, null, 10, TitleSearchType.CREATOR, scopeId = cId))
+            assertListTotalSize(1, userTitles(it.uid, 10, TitleSearchType.RECEIVER))
+            assertListSize(1, userTitles(it.uid, 10, TitleSearchType.RECEIVER))
+            assertListSize(1, userTitles(it.uid, 10, TitleSearchType.CREATOR))
+            assertListSize(1, userTitles(it.uid, 10, TitleSearchType.CREATOR, scopeId = cId))
             assertListSize(
                 1,
-                userTitles(it.uid, null, 10, TitleSearchType.CREATOR, scopeId = cId, type = TitleType.REGULAR)
+                userTitles(
+                    it.uid,
+                    10,
+                    TitleSearchType.CREATOR,
+                    type = TitleType.REGULAR,
+                    scopeId = cId
+                )
             )
         }
     }

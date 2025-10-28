@@ -62,14 +62,13 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.add
 import com.storyteller_f.a.app.compose_app.all_members
-import com.storyteller_f.a.app.compose_app.common.AppNav
 import com.storyteller_f.a.app.compose_app.common.CommunityScreen
 import com.storyteller_f.a.app.compose_app.common.CommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.DownloadViewModel
@@ -267,12 +266,11 @@ private fun CommunityCompatPageInternal(
     }
     val searchScope = buildSearchScope(pagerState, communityId)
     val navRoutes = communityNavRoutes()
-    val appNav = LocalAppNav.current
     var showDialog by remember {
         mutableStateOf(false)
     }
     Scaffold(floatingActionButton = {
-        CommunityFloatingButton(community, appNav, communityId) {
+        CommunityFloatingButton(community, communityId) {
             showDialog = true
         }
     }, bottomBar = {
@@ -304,10 +302,10 @@ private fun CommunityCompatPageInternal(
 @Composable
 private fun CommunityFloatingButton(
     community: CommunityInfo?,
-    appNav: AppNav,
     communityId: PrimaryKey,
     onClickOk: () -> Unit,
 ) {
+    val appNavFactory = LocalAppNavFactory.current
     val alertDialogState = remember {
         CustomAlertDialogController()
     }
@@ -315,7 +313,7 @@ private fun CommunityFloatingButton(
     val message = stringResource(Res.string.join_community_prompt)
     FloatingActionButton(onClick = {
         if (community?.isJoined == true) {
-            appNav.gotoTopicCompose(
+            appNavFactory.newAppNav().gotoTopicCompose(
                 TopicComposeData.Community(
                     communityId,
                     communityId ob ObjectType.COMMUNITY
@@ -495,16 +493,16 @@ private fun CommunityMenus(
     communityInfo: CommunityInfo,
     dismiss: () -> Unit,
 ) {
-    val nav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val sessionViewModel = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     Column {
         ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
             dismiss()
-            nav.gotoMemberPage(communityId, ObjectType.COMMUNITY)
+            appNavFactory.newAppNav().gotoMemberPage(communityId, ObjectType.COMMUNITY)
         }
-        val appNav = LocalAppNav.current
-        val isCommunityPage by appNav.hasRouteFlow<CommunityScreen>().collectAsState(false)
+        val appNavFactory = LocalAppNavFactory.current
+        val isCommunityPage by appNavFactory.hasRouteFlow<CommunityScreen>()
         if (isCommunityPage) {
             val scope = rememberCoroutineScope()
             if (communityInfo.isJoined) {
@@ -530,7 +528,7 @@ private fun CommunityMenus(
             }
             ButtonNav(Icons.Default.Add, "Add") {
                 dismiss()
-                nav.gotoTopicCompose(
+                appNavFactory.newAppNav().gotoTopicCompose(
                     TopicComposeData.Community(
                         communityId,
                         communityId ob ObjectType.COMMUNITY
@@ -543,12 +541,12 @@ private fun CommunityMenus(
             if (my?.id == communityInfo.owner) {
                 ButtonNav(Icons.Default.Title, "Add Title") {
                     dismiss()
-                    nav.gotoTitleCompose()
+                    appNavFactory.newAppNav().gotoTitleCompose()
                 }
 
                 ButtonNav(Icons.Default.Settings, "Settings") {
                     dismiss()
-                    nav.gotoSettingPage(communityId, ObjectType.COMMUNITY)
+                    appNavFactory.newAppNav().gotoSettingPage(communityId, ObjectType.COMMUNITY)
                 }
             }
         }

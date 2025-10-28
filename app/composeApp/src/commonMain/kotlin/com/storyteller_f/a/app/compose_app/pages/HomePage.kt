@@ -28,8 +28,8 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.storyteller_f.a.app.compose_app.LocalAppNav
-import com.storyteller_f.a.app.compose_app.LocalMainSessionManager
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
+import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.createWorldViewModel
 import com.storyteller_f.a.app.compose_app.components.ButtonNav
@@ -251,15 +251,16 @@ private fun HomePager(
 
 @Composable
 private fun UserHost(content: @Composable () -> Unit) {
-    val session = LocalMainSessionManager.current
-    val appNav = LocalAppNav.current
+    val uiViewModel = LocalUiViewModel.current
+    val session = uiViewModel.mainInstance.sessionManager
+    val appNavFactory = LocalAppNavFactory.current
     val user by session.isAlreadySignIn.collectAsState()
     if (user) {
         content()
     } else {
         CenterBox {
             SignInButton {
-                appNav.gotoLogin()
+                appNavFactory.newAppNav().gotoLogin()
             }
         }
     }
@@ -273,7 +274,7 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val appNav = LocalAppNav.current
+            val appNavFactory = LocalAppNavFactory.current
             Column {
                 ButtonNav(
                     Icons.Default.DesignServices,
@@ -286,7 +287,7 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
                     "Open Source Libraries"
                 ) {
                     dismiss()
-                    appNav.gotoAbout()
+                    appNavFactory.newAppNav().gotoAbout()
                 }
                 ButtonNav(
                     Icons.Default.Download,

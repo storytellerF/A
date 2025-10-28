@@ -21,7 +21,6 @@ fun UserCell(userInfo: UserInfo?) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         UserIcon(
-            isMe = false,
             setClickEvent = false,
             avatarUrl = userInfo?.avatar?.url,
         ) {

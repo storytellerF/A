@@ -3,8 +3,14 @@ package com.storyteller_f.a.app.compose_app.common
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
@@ -32,6 +38,7 @@ import com.storyteller_f.a.app.compose_app.pages.topic.TopicComposePage
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicPage
 import com.storyteller_f.a.app.compose_app.pages.user.LoginPage
 import com.storyteller_f.a.app.compose_app.pages.user.MemberPage
+import com.storyteller_f.a.app.compose_app.pages.user.UserFavoritePage
 import com.storyteller_f.a.app.compose_app.pages.user.UserPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserSettingPage
 import com.storyteller_f.shared.commonJson
@@ -41,7 +48,6 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -165,15 +171,25 @@ data class RoomSettingScreen(val roomId: PrimaryKey)
 @Serializable
 data class ReactionListScreen(val topicId: PrimaryKey)
 
+@Serializable
+data object FavoriteScreen
+
 inline fun <reified T : Any> AppNav.toRoute(): T? {
     if (!hasRoute(T::class)) return null
     return currentDestination?.toRoute<T>()
 }
 
-inline fun <reified T : Any> AppNav.hasRouteFlow(crossinline block: (T) -> Boolean = { true }): Flow<Boolean> {
-    return currentDestinationFlow.filterNotNull().map {
-        it.destination.hasRoute<T>() && block(it.toRoute<T>())
+@Composable
+inline fun <reified T : Any> AppNavFactory.hasRouteFlow(crossinline block: (T) -> Boolean = { true }): State<Boolean> {
+    val inspectionMode = LocalInspectionMode.current
+    if (inspectionMode) {
+        return remember {
+            mutableStateOf(false)
+        }
     }
+    return newAppNav().currentDestinationFlow.filterNotNull().map {
+        it.destination.hasRoute<T>() && block(it.toRoute<T>())
+    }.collectAsState(false)
 }
 
 interface AppNav {
@@ -223,99 +239,16 @@ interface AppNav {
 
     fun gotoReactionListPage(topicId: PrimaryKey)
 
+    fun gotoFavoritePage()
+}
+
+interface AppNavFactory {
+    fun newAppNav(): AppNav
+
     companion object {
-        val EMPTY = object : AppNav {
-            override val currentDestination: NavBackStackEntry?
-                get() = TODO("Not yet implemented")
-            override val currentDestinationFlow: StateFlow<NavBackStackEntry?>
-                get() = TODO("Not yet implemented")
-
-            override fun gotoLogin() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoRoom(
-                roomId: PrimaryKey,
-                showDialog: Boolean
-            ) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoCommunity(
-                communityId: PrimaryKey,
-                showDialog: Boolean
-            ) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoTopic(topicId: PrimaryKey) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoHome() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoTopicCompose(data: TopicComposeData) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoMemberPage(
-                objectId: PrimaryKey,
-                objectType: ObjectType
-            ) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoAbout() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoUser(uid: PrimaryKey) {
-                TODO("Not yet implemented")
-            }
-
-            override fun back() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoUserSetting() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoPreference() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoMedia(info: FileInfo) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoLocalImage(url: String) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoTitleCompose() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoCommunityCompose() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoRoomCompose() {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoSettingPage(
-                objectId: PrimaryKey,
-                objectType: ObjectType
-            ) {
-                TODO("Not yet implemented")
-            }
-
-            override fun gotoReactionListPage(topicId: PrimaryKey) {
-                TODO("Not yet implemented")
+        val EMPTY = object : AppNavFactory {
+            override fun newAppNav(): AppNav {
+                error("no app nav")
             }
         }
     }
@@ -415,6 +348,10 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
     override fun gotoReactionListPage(topicId: PrimaryKey) {
         navigator.navigate(ReactionListScreen(topicId))
     }
+
+    override fun gotoFavoritePage() {
+        navigator.navigate(FavoriteScreen)
+    }
 }
 
 @OptIn(ExperimentalResourceApi::class)
@@ -492,6 +429,9 @@ private fun NavGraphBuilder.buildMainScreen() {
     composable<ReactionListScreen> {
         val topicId = it.toRoute<ReactionListScreen>().topicId
         ReactionListPage(topicId)
+    }
+    composable<FavoriteScreen> {
+        UserFavoritePage()
     }
 }
 

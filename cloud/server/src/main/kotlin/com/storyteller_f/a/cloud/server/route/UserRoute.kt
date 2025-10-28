@@ -4,7 +4,10 @@ import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.addDevice
+import com.storyteller_f.a.cloud.core.service.addFavorite
 import com.storyteller_f.a.cloud.core.service.addReadLog
+import com.storyteller_f.a.cloud.core.service.deleteFavorite
+import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
 import com.storyteller_f.a.cloud.core.service.getUserInfo
 import com.storyteller_f.a.cloud.core.service.getUserTitles
@@ -15,10 +18,12 @@ import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
+import com.storyteller_f.a.cloud.server.common.pagingGenerator
 import com.storyteller_f.route4k.ktor.server.invoke
 import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
-import io.ktor.server.routing.*
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingContext
 
 fun Route.bindProtectedUserRoute(backend: Backend) {
     CustomApi.Users.update(RoutingContext::handleResult) { api ->
@@ -35,6 +40,25 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
         usePrincipal { uid ->
             val newDevice = api.receiveBody()
             backend.addDevice(uid, newDevice)
+        }
+    }
+    CustomApi.Favorites.add(RoutingContext::handleResult) { api ->
+        usePrincipal { uid ->
+            backend.addFavorite(uid, api.receiveBody())
+        }
+    }
+    CustomApi.Favorites.delete(RoutingContext::handleResult) { path, api ->
+        usePrincipal { uid ->
+            backend.deleteFavorite(uid, path.id)
+        }
+    }
+    CustomApi.Favorites.get(RoutingContext::handleResult) { q ->
+        usePrincipal { uid ->
+            q.pagination(pagingGenerator {
+                it.id
+            }) { fetch ->
+                backend.getFavorites(uid, fetch)
+            }
         }
     }
 }

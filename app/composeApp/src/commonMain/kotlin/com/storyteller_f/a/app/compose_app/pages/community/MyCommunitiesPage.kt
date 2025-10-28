@@ -20,11 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.CommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.common.CommunityScreen
 import com.storyteller_f.a.app.compose_app.common.createJoinedCommunitiesViewModel
-import com.storyteller_f.a.app.compose_app.common.toRoute
+import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
 import com.storyteller_f.a.app.compose_app.components.CommunityPoster
 import com.storyteller_f.a.app.compose_app.components.rememberCommonDialogController
 import com.storyteller_f.a.app.core.compontents.StateView
@@ -149,7 +149,7 @@ fun CommunityGrid(
     padding: Dp,
     onClick: ((CommunityInfo) -> Unit)? = null
 ) {
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val hazeState = rememberHazeState()
     Box(modifier = Modifier.fillMaxWidth().padding(end = padding)) {
         val shape = RoundedCornerShape(14.dp)
@@ -159,7 +159,7 @@ fun CommunityGrid(
                 .aspectRatio(3f / 4)
                 .clip(shape)
                 .clickable {
-                    communityInfo?.let { onClick?.invoke(it) ?: appNav.gotoCommunity(it.id, false) }
+                    communityInfo?.let { onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoCommunity(it.id, false) }
                 }
         ) {
             Box(modifier = Modifier.hazeSource(hazeState)) {
@@ -201,8 +201,10 @@ fun CommunityCell(
     customBackground: Boolean = false,
     onClick: ((CommunityInfo) -> Unit)? = null
 ) {
-    val appNav = LocalAppNav.current
-    val isCommunityPage = appNav.toRoute<CommunityScreen>()?.communityId == communityInfo?.id
+    val appNavFactory = LocalAppNavFactory.current
+    val isCommunityPage by appNavFactory.hasRouteFlow<CommunityScreen> {
+        it.communityId == communityInfo?.id
+    }
     Row(
         modifier = when {
             customBackground -> Modifier
@@ -214,7 +216,7 @@ fun CommunityCell(
                     .clip(shape)
                     .clickable(!isCommunityPage) {
                         communityInfo?.let {
-                            onClick?.invoke(it) ?: appNav.gotoCommunity(
+                            onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoCommunity(
                                 it.id,
                                 false
                             )

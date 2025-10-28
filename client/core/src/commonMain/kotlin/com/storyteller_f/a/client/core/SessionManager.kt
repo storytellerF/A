@@ -44,7 +44,7 @@ class SimpleSessionModel<U : PrimaryKeyIdentifiable> : SessionModel<U> {
     // currentData 是本地使用的，但是还是需要依据server 的为准
     override var dataAndSignature: Pair<String, String?>? = null
     override val currentUserPass: UserPass?
-        get() = (state.value as? ClientSessionState.Success)?.session
+        get() = (state.value as? ClientSessionState.Success)?.userPass
     override val userHandler = FixedLoadingHandler<U?>()
 
     @OptIn(ExperimentalTime::class)
@@ -108,7 +108,7 @@ class SimpleUserSessionManager(
     override val address = MutableStateFlow<String?>(null)
     override suspend fun updateAddress(clientSessionState: ClientSessionState) {
         address.value =
-            (clientSessionState as? ClientSessionState.Success)?.session?.address()?.getOrNull()
+            (clientSessionState as? ClientSessionState.Success)?.userPass?.address()?.getOrNull()
         isAlreadySignIn.value = clientSessionState is ClientSessionState.Success
     }
 }
@@ -124,7 +124,7 @@ class SimplePanelSessionManager(
 
     override suspend fun updateAddress(clientSessionState: ClientSessionState) {
         address.value =
-            (clientSessionState as? ClientSessionState.Success)?.session?.address()?.getOrNull()
+            (clientSessionState as? ClientSessionState.Success)?.userPass?.address()?.getOrNull()
         isAlreadySignIn.value = clientSessionState is ClientSessionState.Success
     }
 }

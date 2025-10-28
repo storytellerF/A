@@ -26,7 +26,8 @@ interface PagingGenerator<in T, F : Any> {
     fun generate(list: List<T>, size: Int): Pair<String?, String?>
 }
 
-abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) : PagingGenerator<T, PrimaryKeyFetch> {
+abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) :
+    PagingGenerator<T, PrimaryKeyFetch> {
     override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): PrimaryKeyFetch {
         return PrimaryKeyFetch(
             when {
@@ -35,7 +36,10 @@ abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) : Pagi
                     nextPageToken
                 )?.let { Cursor.NextCursor(it) }
 
-                !prePageToken.isNullOrBlank() -> getPageToken(PrimaryKey::class, prePageToken)?.let {
+                !prePageToken.isNullOrBlank() -> getPageToken(
+                    PrimaryKey::class,
+                    prePageToken
+                )?.let {
                     Cursor.PreCursor(
                         it
                     )
@@ -62,7 +66,12 @@ abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) : Pagi
     }
 }
 
-object IdentifiablePagingGenerator : PrimaryKeyPagingGenerator<PrimaryKeyIdentifiable>(PrimaryKeyIdentifiable::id)
+object IdentifiablePagingGenerator :
+    PrimaryKeyPagingGenerator<PrimaryKeyIdentifiable>(PrimaryKeyIdentifiable::id)
+
+fun <T> pagingGenerator(block: (T) -> PrimaryKey): PrimaryKeyPagingGenerator<T> {
+    return object : PrimaryKeyPagingGenerator<T>(block) {}
+}
 
 suspend fun <T, F : Fetch> RoutingContext.pagination(
     generator: PagingGenerator<T, F>,
@@ -113,13 +122,15 @@ suspend fun <T, F : Fetch> PageableQuery.pagination(
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <R : Any> getPageToken(pageTokenType: KClass<R>, pageToken: String): R? = if (pageTokenType == ULong::class) {
-    pageToken.toULongOrNull() as? R
-} else {
-    DefaultConversionService.fromValue(pageToken, pageTokenType) as? R
-}
+fun <R : Any> getPageToken(pageTokenType: KClass<R>, pageToken: String): R? =
+    if (pageTokenType == ULong::class) {
+        pageToken.toULongOrNull() as? R
+    } else {
+        DefaultConversionService.fromValue(pageToken, pageTokenType) as? R
+    }
 
-class ReactionPaginationGenerator(val backend: Backend) : PagingGenerator<ReactionInfo, ReactionFetch> {
+class ReactionPaginationGenerator(val backend: Backend) :
+    PagingGenerator<ReactionInfo, ReactionFetch> {
     override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): ReactionFetch {
         return ReactionFetch(
             when {

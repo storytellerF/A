@@ -3,7 +3,13 @@ package com.storyteller_f.a.app.compose_app.components
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -11,12 +17,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnTopicChanged
@@ -30,6 +41,9 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import dev.tclement.fonticons.FontIcon
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,18 +82,24 @@ fun RoomTopicCell(
     }
 }
 
+class TopicPreviewProvider : PreviewParameterProvider<TopicInfo> {
+    override val values: Sequence<TopicInfo>
+        get() = sequenceOf(TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello")))
+}
+
 @OptIn(ExperimentalFoundationApi::class)
+@Preview
 @Composable
 fun TopicCellInternal(
-    topicInfo: TopicInfo?,
-    showAvatar: Boolean,
-    supportPin: Boolean,
-    startAddReaction: () -> Unit
+    @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicInfo?,
+    showAvatar: Boolean = false,
+    supportPin: Boolean = false,
+    startAddReaction: () -> Unit = {}
 ) {
     topicInfo ?: return
     val authorInfo = topicInfo.extension?.authorInfo
     val topicId = topicInfo.id
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     var expanded by remember { mutableStateOf(false) }
     Box {
         Column(
@@ -88,13 +108,11 @@ fun TopicCellInternal(
                     expanded = true
                 }
             }, onLongClickLabel = "topic menu") {
-                appNav.gotoTopic(topicId)
+                appNavFactory.newAppNav().gotoTopic(topicId)
             }
         ) {
             if (showAvatar) {
-                UserCell(authorInfo) {
-                    appNav.gotoUser(it.id)
-                }
+                UserCell(authorInfo)
             }
             Column(
                 Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp),
@@ -102,7 +120,7 @@ fun TopicCellInternal(
             ) {
                 TopicContentField(topicInfo, true)
                 InteractionRow(topicInfo, startAddReaction) {
-                    appNav.gotoTopic(topicId)
+                    appNavFactory.newAppNav().gotoTopic(topicId)
                 }
                 SubTopics(topicInfo)
             }
@@ -131,20 +149,18 @@ fun RoomTopicCellInternal(
     topicInfo ?: return
     val authorInfo = topicInfo.extension?.authorInfo
     val topicId = topicInfo.id
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     var expanded by remember { mutableStateOf(false) }
     Box {
         Column(
             modifier = Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {
                 expanded = true
             }, onLongClickLabel = "topic menu") {
-                appNav.gotoTopic(topicId)
+                appNavFactory.newAppNav().gotoTopic(topicId)
             }.padding(8.dp)
         ) {
             if (showAvatar) {
-                UserCell(authorInfo) {
-                    appNav.gotoUser(it.id)
-                }
+                UserCell(authorInfo)
             }
             Column(
                 Modifier.fillMaxWidth().padding(start = 48.dp, end = 8.dp)
@@ -158,7 +174,7 @@ fun RoomTopicCellInternal(
                 TopicContentField(topicInfo, true)
                 if (topicInfo.reactionCount > 0) {
                     InteractionRow(topicInfo, startAddReaction) {
-                        appNav.gotoTopic(topicId)
+                        appNavFactory.newAppNav().gotoTopic(topicId)
                     }
                 }
                 if (topicInfo.commentCount > 0) {

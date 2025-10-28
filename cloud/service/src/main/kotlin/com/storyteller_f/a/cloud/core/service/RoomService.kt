@@ -19,11 +19,24 @@ import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.toRoomInfo
-import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.*
+import com.storyteller_f.shared.model.Dimension
+import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TitleSearchType
+import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserLogType
+import com.storyteller_f.shared.obj.NewRoom
+import com.storyteller_f.shared.obj.UpdateRoomBody
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.*
+import com.storyteller_f.shared.utils.UNIT_RESULT
+import com.storyteller_f.shared.utils.errorIfFalse
+import com.storyteller_f.shared.utils.mapIfNotNull
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
 
 suspend fun Backend.getRoomPubKeys(
@@ -251,14 +264,7 @@ suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>) =
         processFileRecordToFileInfo(medias).map { mediaList ->
             val mediaInfoMap = mediaList.associateBy { it.id }
             list.map { rawRoom ->
-                rawRoom.room.toRoomInfo()
-                    .copy(
-                        icon = rawRoom.room.icon?.let { mediaInfoMap[it] },
-                        joinedTime = rawRoom.joinedTime,
-                        lastRead = rawRoom.lastRead,
-                        memberCount = rawRoom.memberCount ?: 0,
-                        latestTopic = rawRoom.latestTopic
-                    )
+                rawRoom.toRoomInfo(icon = rawRoom.room.icon?.let { mediaInfoMap[it] })
             }
         }
     }

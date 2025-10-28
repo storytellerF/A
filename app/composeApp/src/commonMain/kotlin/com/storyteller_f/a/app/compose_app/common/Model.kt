@@ -2,7 +2,12 @@ package com.storyteller_f.a.app.compose_app.common
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.*
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.map
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.components.DialogSaveState
@@ -17,17 +22,73 @@ import com.storyteller_f.a.app.core.common.SectionLoadParams
 import com.storyteller_f.a.app.core.common.SectionPagingSource
 import com.storyteller_f.a.app.core.common.SimpleViewModel
 import com.storyteller_f.a.app.core.utils.SavedSession
-import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
 import com.storyteller_f.a.app.core.utils.loadFontFromLocal
-import com.storyteller_f.a.client.core.*
-import com.storyteller_f.shared.model.*
+import com.storyteller_f.a.client.core.ClientSessionState
+import com.storyteller_f.a.client.core.LoadingHandler
+import com.storyteller_f.a.client.core.LoadingState
+import com.storyteller_f.a.client.core.SimpleLoadingHandler
+import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.a.client.core.getChildAccounts
+import com.storyteller_f.a.client.core.getCommunityInfo
+import com.storyteller_f.a.client.core.getCommunityInfoByAid
+import com.storyteller_f.a.client.core.getFavorites
+import com.storyteller_f.a.client.core.getMediaByName
+import com.storyteller_f.a.client.core.getMediaList
+import com.storyteller_f.a.client.core.getReactions
+import com.storyteller_f.a.client.core.getRecommendTopics
+import com.storyteller_f.a.client.core.getRoomInfo
+import com.storyteller_f.a.client.core.getRoomInfoByAid
+import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
+import com.storyteller_f.a.client.core.getTopicInfo
+import com.storyteller_f.a.client.core.getTopicInfoByAid
+import com.storyteller_f.a.client.core.getTopicList
+import com.storyteller_f.a.client.core.getUserInfo
+import com.storyteller_f.a.client.core.getUserInfoByAid
+import com.storyteller_f.a.client.core.processEncryptedTopic
+import com.storyteller_f.a.client.core.searchAllMembers
+import com.storyteller_f.a.client.core.searchCommunity
+import com.storyteller_f.a.client.core.searchCommunityMembers
+import com.storyteller_f.a.client.core.searchRoomMembers
+import com.storyteller_f.a.client.core.searchRooms
+import com.storyteller_f.a.client.core.searchTopics
+import com.storyteller_f.a.client.core.userTitles
+import com.storyteller_f.shared.model.ChildAccountInfo
+import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.PosterSearch
+import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleSearchType
+import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicPinSearch
+import com.storyteller_f.shared.model.UserFavoriteInfo
+import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
-import com.storyteller_f.storage.*
+import com.storyteller_f.storage.ChildAccountCollection
+import com.storyteller_f.storage.CommunityCollection
+import com.storyteller_f.storage.DownloadStatus
+import com.storyteller_f.storage.MediasCollection
+import com.storyteller_f.storage.ModelStorage
+import com.storyteller_f.storage.ReactionCollection
+import com.storyteller_f.storage.RoomCollection
+import com.storyteller_f.storage.TitleCollection
+import com.storyteller_f.storage.TopicCollection
+import com.storyteller_f.storage.UploadCollection
+import com.storyteller_f.storage.UploadInfo
+import com.storyteller_f.storage.UserCollection
+import com.storyteller_f.storage.UserFavoriteCollection
+import com.storyteller_f.storage.WrappedPagingSource
+import com.storyteller_f.storage.getName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -59,6 +120,9 @@ data class OnRoomExited(val info: RoomInfo)
 data class OnRoomUpdated(val info: RoomInfo)
 data class OnAddReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
 data class OnRemoveReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
+
+data class OnAddFavorite(val info: UserFavoriteInfo)
+data class OnRemoveFavorite(val objectTuple: ObjectTuple)
 
 abstract class CommunityViewModel :
     SimpleViewModel<CommunityInfo>() {
@@ -630,7 +694,7 @@ class TitlesViewModel(
             modelStorage,
             modelCollection.getName(),
             RegularPagingSource { key, size ->
-                sessionManager.userTitles(uid, key, size, searchType, status, type, scopeId)
+                sessionManager.userTitles(uid, size, searchType, key, status, type, scopeId)
             },
         ) { data, clean ->
             if (clean) {
@@ -763,9 +827,11 @@ class ChildAccountsViewModel(
     }.flow.cachedIn(viewModelScope)
 }
 
-class LoginHistoryViewModel(val sessionManager: CustomUserSessionManager) : SimpleViewModel<SavedSession>() {
+class SessionHistoryViewModel(val sessionManager: CustomUserSessionManager) :
+    SimpleViewModel<SavedSession>() {
 
-    val manager = buildLoginHistoryFactory(sessionManager.settings)
+    val manager = sessionManager.sessionHistoryManager
+
     override val handler: LoadingHandler<SavedSession>
         get() = SimpleLoadingHandler(viewModelScope) {
             runCatching {
@@ -783,4 +849,33 @@ class LoginHistoryViewModel(val sessionManager: CustomUserSessionManager) : Simp
         manager.logSession(alias)
         return true
     }
+}
+
+class FavoritesViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage) :
+    PagingViewModel<UserFavoriteInfo>() {
+    val modelCollection = UserFavoriteCollection
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<UserFavoriteInfo>> = Pager(
+        PagingConfig(pageSize = 20),
+        remoteMediator = CustomRemoteMediator(
+            modelStorage,
+            modelCollection.NAME,
+            RegularPagingSource { key, size ->
+                sessionManager.getFavorites(PaginationQuery(key, size = size))
+            },
+        ) { data, clean ->
+            if (clean) {
+                modelStorage.favoriteStorage.clean(modelCollection)
+            }
+            data.forEach {
+                modelStorage.favoriteStorage.save(modelCollection, it)
+            }
+        },
+    ) {
+        CompatPagingSource(
+            modelStorage.favoriteStorage.observeData(modelCollection),
+            IntKeyConverter
+        )
+    }.flow.cachedIn(viewModelScope)
 }

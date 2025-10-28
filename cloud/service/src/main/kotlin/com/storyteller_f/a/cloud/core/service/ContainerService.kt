@@ -105,14 +105,14 @@ suspend fun Backend.checkRootWritePermission(
 ): Result<RootWritePermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            combinedDatabase.topicDatabase.getTopicInfo(IdFetch(parentId), null)
+            combinedDatabase.topicDatabase.getRawTopic(IdFetch(parentId), null)
                 .mapResultIfNotNull { topicInfo ->
                     checkRootWritePermission(
-                        topicInfo.rootType,
-                        topicInfo.rootId,
+                        topicInfo.topic.rootType,
+                        topicInfo.topic.rootId,
                         uid
                     ).mapIfNotNull {
-                        it.copy(level = topicInfo.level)
+                        it.copy(level = topicInfo.topic.level)
                     }
                 }
         }
@@ -259,14 +259,13 @@ suspend fun <T> Backend.lockQuotaInfo(
 suspend fun Backend.getQuotaInfo(
     quotaType: QuotaType,
     objectTuple: ObjectTuple
-) =
-    combinedDatabase.containerDatabase.getQuotaInfo(objectTuple.objectId, quotaType).mapResult {
-        if (it == null) {
-            insertQuotaAndGet(quotaType, objectTuple)
-        } else {
-            Result.success(it)
-        }
+) = combinedDatabase.containerDatabase.getQuotaInfo(objectTuple.objectId, quotaType).mapResult {
+    if (it == null) {
+        insertQuotaAndGet(quotaType, objectTuple)
+    } else {
+        Result.success(it.toQuotaInfo())
     }
+}
 
 private suspend fun Backend.insertQuotaAndGet(
     quotaType: QuotaType,
@@ -281,21 +280,22 @@ private suspend fun Backend.insertQuotaAndGet(
         quotaType,
         false
     )
-    return combinedDatabase.containerDatabase.insertQuota(quota).mapResult {
-        Result.success(quota.toQuotaInfo())
+    return combinedDatabase.containerDatabase.insertQuota(quota).map {
+        quota
     }.recoverResult { throwable ->
         if (combinedDatabase.isDup(throwable)) {
-            combinedDatabase.containerDatabase.getQuotaInfo(ownerId, quotaType)
-                .mapResult {
-                    if (it == null) {
-                        Result.failure(Exception("get quota failed"))
-                    } else {
-                        Result.success(it)
-                    }
+            combinedDatabase.containerDatabase.getQuotaInfo(ownerId, quotaType).mapResult {
+                if (it == null) {
+                    Result.failure(Exception("get quota failed"))
+                } else {
+                    Result.success(it)
                 }
+            }
         } else {
             Result.failure(throwable)
         }
+    }.map {
+        it.toQuotaInfo()
     }
 }
 

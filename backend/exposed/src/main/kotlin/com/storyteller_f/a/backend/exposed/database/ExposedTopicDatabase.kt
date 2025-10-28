@@ -4,16 +4,18 @@ import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.FileDatabase
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.backend.core.TopicDatabase
 import com.storyteller_f.a.backend.core.types.EncryptedKey
+import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.Reaction
 import com.storyteller_f.a.backend.core.types.ReactionRecord
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
-import com.storyteller_f.a.backend.core.types.toTopicInfo
+import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.first
@@ -27,11 +29,11 @@ import com.storyteller_f.a.backend.exposed.tables.ReactionRecords
 import com.storyteller_f.a.backend.exposed.tables.Reactions
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.Topics
+import com.storyteller_f.a.backend.exposed.tables.UserFavorites
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
@@ -80,7 +82,7 @@ class ExposedTopicDatabase(
         }
     }
 
-    override suspend fun getTopicInfo(
+    override suspend fun getRawTopic(
         fetch: ObjectFetch,
         uid: PrimaryKey?,
     ) = databaseSession.dbSearch {
@@ -95,7 +97,7 @@ class ExposedTopicDatabase(
         }
         first(Topic::wrapRow)
     }.mapResultIfNotNull { topic ->
-        processTopicToTopicInfo(uid, listOf(topic)).map {
+        processTopicToRawTopic(uid, listOf(topic)).map {
             it.first()
         }
     }
@@ -111,10 +113,10 @@ class ExposedTopicDatabase(
         }
         map(Topic::wrapRow)
     }.mapResult {
-        processTopicToTopicInfo(uid, it)
+        processTopicToRawTopic(uid, it)
     }
 
-    override suspend fun getTopicInfoListByIds(
+    override suspend fun getRawTopicListByIds(
         uid: PrimaryKey?,
         ids: List<PrimaryKey>
     ) = getTopicInfoListByPredicate(uid) {
@@ -142,7 +144,7 @@ class ExposedTopicDatabase(
         PaginationResult(r1, r2)
     }
 
-    override suspend fun getSubTopicInfo(
+    override suspend fun getSubRawTopic(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         parentId: PrimaryKey,
@@ -169,7 +171,7 @@ class ExposedTopicDatabase(
         }
     }
 
-    override suspend fun getLatestTopicInfo(
+    override suspend fun getLatestRawTopic(
         uid: PrimaryKey?,
         parentId: PrimaryKey
     ) = getTopicInfoListByPredicate(uid) {
@@ -191,7 +193,7 @@ class ExposedTopicDatabase(
             this[EncryptedKeys.encryptedAes] =
                 ExposedBlob(content.encryptedKey[it]!!.hexToByteArray())
         }
-        topic.toTopicInfo(content = content)
+        Unit
     }
 
     override suspend fun savePlainTopic(
@@ -262,55 +264,76 @@ class ExposedTopicDatabase(
         }
     }
 
-    override suspend fun processTopicToTopicInfo(
+    suspend fun processTopicToRawTopic(
         uid: PrimaryKey?,
-        topics: List<Topic>,
-    ): Result<List<TopicInfo>> {
+        topics: List<Topic>
+    ): Result<List<RawTopic>> {
         val topicIds = topics.map {
             it.id
         }
         return runCatching {
-            val commented = if (uid != null) {
-                isUserCommented(uid, topicIds).map {
-                    it.toSet()
-                }
+            val commentedMap = getUserCommentMap(uid, topicIds)
+            val commentCountMap = getCommentCountMap(topicIds)
+            val reactionCountMap = getReactionCountMap(topicIds)
+            val lastReadMap = getLastReadMap(uid, topicIds)
+            val contentMap = processByteArrayToTopicContent(topics, uid).getOrThrow()
+            val favoriteMap = if (uid != null) {
+                getTopicHasFavorite(
+                    ObjectListFetch.IdListFetch(topicIds),
+                    uid
+                ).getOrThrow().associateBy { it.objectId }
             } else {
-                Result.success(emptySet())
-            }.getOrThrow()
-            val commentCountMap =
-                getTopicCommentCount(topicIds).map {
-                    it.associateByPair()
-                }.getOrThrow()
-            val reactionCountMap =
-                getReactionCount(topicIds).map {
-                    it.associateByPair()
-                }.getOrThrow()
-            val lastReadMap = if (uid != null) {
-                containerDatabase.getTopicReadList(topicIds, uid)
-                    .map {
-                        it.associateBy { userTopicRead ->
-                            userTopicRead.objectId
-                        }
-                    }
-            } else {
-                Result.success(emptyMap())
-            }.getOrThrow()
-            val contentMap = processByteArrayToTopicContent(
-                topics,
-                uid
-            ).getOrThrow()
+                emptyMap()
+            }
             topics.map { topic ->
                 val id = topic.id
-                topic.toTopicInfo(
+                RawTopic(
+                    topic,
+                    contentMap[id]!!,
                     commentCountMap[id] ?: 0,
-                    commented.contains(id),
+                    commentedMap.contains(id),
                     reactionCountMap[id] ?: 0,
-                    lastRead = lastReadMap[id]?.topicId,
-                    content = contentMap[id]!!
+                    lastReadMap[id]?.topicId,
+                    favoriteId = favoriteMap[id]?.id
                 )
             }
         }
     }
+
+    private suspend fun getReactionCountMap(topicIds: List<PrimaryKey>) =
+        getReactionCount(topicIds).map {
+            it.associateByPair()
+        }.getOrThrow()
+
+    private suspend fun getLastReadMap(
+        uid: PrimaryKey?,
+        topicIds: List<PrimaryKey>
+    ) = if (uid != null) {
+        containerDatabase.getTopicReadList(topicIds, uid)
+            .map {
+                it.associateBy { userTopicRead ->
+                    userTopicRead.objectId
+                }
+            }
+    } else {
+        Result.success(emptyMap())
+    }.getOrThrow()
+
+    private suspend fun getCommentCountMap(topicIds: List<PrimaryKey>) =
+        getTopicCommentCount(topicIds).map {
+            it.associateByPair()
+        }.getOrThrow()
+
+    private suspend fun getUserCommentMap(
+        uid: PrimaryKey?,
+        topicIds: List<PrimaryKey>
+    ) = if (uid != null) {
+        isUserCommented(uid, topicIds).map {
+            it.toSet()
+        }
+    } else {
+        Result.success(emptySet())
+    }.getOrThrow()
 
     override suspend fun processByteArrayToTopicContent(
         topics: List<Topic>,
@@ -619,6 +642,22 @@ class ExposedTopicDatabase(
             Topics.selectAll()
         }
         count()
+    }
+
+    suspend fun getTopicHasFavorite(
+        topicIdList: ObjectListFetch.IdListFetch,
+        uid: PrimaryKey
+    ): Result<List<UserFavorite>> {
+        return databaseSession.dbSearch {
+            search {
+                UserFavorites.selectAll().where {
+                    (UserFavorites.uid eq uid) and (UserFavorites.objectId inList topicIdList.idList)
+                }
+            }
+            map {
+                UserFavorite.wrapRow(it)
+            }
+        }
     }
 
     private suspend fun Topic.Companion.new(info: Topic) = check(Topics.insert {

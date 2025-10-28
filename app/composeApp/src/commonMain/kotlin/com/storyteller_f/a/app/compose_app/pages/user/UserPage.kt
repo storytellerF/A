@@ -7,7 +7,11 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.Diversity3
+import androidx.compose.material.icons.filled.Title
+import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -24,9 +28,9 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.storyteller_f.a.app.compose_app.*
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.common.AppNav
+import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.IdUserViewModel
 import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.createTargetUserJoinedCommunitiesViewModel
@@ -41,6 +45,8 @@ import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.title.TitleList
+import com.storyteller_f.a.app.compose_app.rooms
+import com.storyteller_f.a.app.compose_app.topics
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -65,10 +71,9 @@ private fun UserPageInternal(
     val pagerState = rememberPagerState {
         3
     }
-    val appNav = LocalAppNav.current
     val size = calculateWindowSizeClass()
     when (size.widthSizeClass) {
-        WindowWidthSizeClass.Compact -> UserCompatInternal(uid, user, my, appNav, pagerState)
+        WindowWidthSizeClass.Compact -> UserCompatInternal(uid, user, my, pagerState)
         else -> UserNonCompatInternal(uid, user)
     }
 }
@@ -129,11 +134,10 @@ private fun UserCompatInternal(
     uid: PrimaryKey,
     user: UserInfo?,
     my: UserInfo?,
-    appNav: AppNav,
     pagerState: PagerState,
 ) {
     Scaffold(floatingActionButton = {
-        UserComposeButton(user, my, appNav)
+        UserComposeButton(user, my)
     }, bottomBar = {
         UserPageBottomNavBar(pagerState)
     }, modifier = Modifier.testTag("user-page")) {
@@ -188,11 +192,11 @@ private fun UserCompatInternal(
 private fun UserComposeButton(
     user: UserInfo?,
     my: UserInfo?,
-    appNav: AppNav,
 ) {
+    val appNavFactory = LocalAppNavFactory.current
     if (user != null && my?.id == user.id) {
         FloatingActionButton({
-            appNav.gotoTopicCompose(TopicComposeData.User(user.id, user.tuple()))
+            appNavFactory.newAppNav().gotoTopicCompose(TopicComposeData.User(user.id, user.tuple()))
         }) {
             Icon(Icons.Default.Add, "add topic")
         }
@@ -202,7 +206,7 @@ private fun UserComposeButton(
 @Composable
 private fun UserPageBottomNavBar(pagerState: PagerState) {
     val scope = rememberCoroutineScope()
-    val navs = listOf(
+    val navRoutes = listOf(
         NavRoute(
             "/topics",
             Icons.Default.Topic,
@@ -216,11 +220,11 @@ private fun UserPageBottomNavBar(pagerState: PagerState) {
         NavRoute("/titles", Icons.Default.Title, "titles")
     )
     CustomBottomNav(
-        navs[pagerState.currentPage].path,
-        navs
+        navRoutes[pagerState.currentPage].path,
+        navRoutes
     ) { path ->
         scope.launch {
-            pagerState.animateScrollToPage(navs.indexOfFirst {
+            pagerState.animateScrollToPage(navRoutes.indexOfFirst {
                 it.path == path
             })
         }

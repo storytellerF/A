@@ -43,3 +43,6 @@ data class NewTopic(val parentType: ObjectType, val parentId: PrimaryKey, val co
 data class NewRoomTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: TopicContent) {
     val tuple = ObjectTuple(parentId, parentType)
 }
+
+@Serializable
+data class NewFavorite(val objectType: ObjectType, val objectId: PrimaryKey)

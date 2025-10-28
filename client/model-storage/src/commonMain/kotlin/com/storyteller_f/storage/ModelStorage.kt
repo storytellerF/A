@@ -13,6 +13,7 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleStatus
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
@@ -86,6 +87,10 @@ data object OverviewCollection {
     const val NAME = "overview"
 }
 
+data object UserFavoriteCollection {
+    const val NAME = "user-favorite"
+}
+
 fun UserCollection.getName(): String {
     return when (this) {
         is UserCollection.SearchUser -> "users_$word"
@@ -148,6 +153,7 @@ interface ModelStorage {
     val downloadInfoStorage: DownloadInfoStorage
     val uploadInfoStorage: UploadInfoStorage
     val overviewStorage: OverviewStorage
+    val favoriteStorage: UserFavoriteStorage
 }
 
 interface UserInfoStorage {
@@ -225,6 +231,13 @@ interface UploadInfoStorage {
 interface OverviewStorage {
     suspend fun save(collection: OverviewCollection, overviewInfo: PanelOverview)
     fun observeDatum(): Flow<PanelOverview?>
+}
+
+interface UserFavoriteStorage {
+    suspend fun save(collection: UserFavoriteCollection, favoriteInfo: UserFavoriteInfo)
+    fun observeData(collection: UserFavoriteCollection): PagingSource<Int, UserFavoriteInfo>
+    fun observeDatum(id: String): Flow<UserFavoriteInfo?>
+    suspend fun clean(collection: UserFavoriteCollection)
 }
 
 interface RemoteKeyStorage {

@@ -12,6 +12,7 @@ import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserDevice
+import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
@@ -20,17 +21,30 @@ import com.storyteller_f.a.backend.exposed.first
 import com.storyteller_f.a.backend.exposed.isEmpty
 import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
-import com.storyteller_f.a.backend.exposed.tables.*
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.AssetTransactions
+import com.storyteller_f.a.backend.exposed.tables.ChildAccounts
+import com.storyteller_f.a.backend.exposed.tables.TaskRecords
+import com.storyteller_f.a.backend.exposed.tables.UserDevices
+import com.storyteller_f.a.backend.exposed.tables.UserFavorites
+import com.storyteller_f.a.backend.exposed.tables.UserLogs
+import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
+import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
+import com.storyteller_f.a.backend.exposed.tables.find
+import com.storyteller_f.a.backend.exposed.tables.mapUserInfo
+import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.Op
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
@@ -357,7 +371,7 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
     }
 
     override suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch) = runCatching {
-        val r1 = databaseSession.dbSearch {
+        val rawUsers = databaseSession.dbSearch {
             search {
                 Users
                     .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
@@ -366,13 +380,13 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
             }
             map(::mapUserInfo)
         }.getOrThrow()
-        val r2 = databaseSession.dbSearch {
+        val total = databaseSession.dbSearch {
             search {
                 Users.selectAll()
             }
             count()
         }.getOrThrow()
-        PaginationResult(r1, r2)
+        PaginationResult(rawUsers, total)
     }
 
     override suspend fun getUserCount() = databaseSession.dbSearch {
@@ -380,5 +394,54 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
             Users.selectAll()
         }
         count()
+    }
+
+    override suspend fun getUserFavorites(uid: PrimaryKey, fetch: PrimaryKeyFetch) = runCatching {
+        val userFavorites = databaseSession.dbSearch {
+            search {
+                UserFavorites.selectAll().where {
+                    UserFavorites.uid eq uid
+                }.bindPaginationQuery(UserFavorites, fetch)
+            }
+            map {
+                UserFavorite.wrapRow(it)
+            }
+        }.getOrThrow()
+        val total = databaseSession.dbSearch {
+            search {
+                UserFavorites.selectAll()
+            }
+            count()
+        }.getOrThrow()
+        PaginationResult(userFavorites, total)
+    }
+
+    override suspend fun addFavorite(userFavorite: UserFavorite) = databaseSession.dbQuery {
+        check(UserFavorites.insert {
+            it[id] = userFavorite.id
+            it[uid] = userFavorite.uid
+            it[objectId] = userFavorite.objectId
+            it[objectType] = userFavorite.objectType
+            it[createdTime] = userFavorite.createdTime
+        }.insertedCount > 0) {
+            "Insert favorite failed"
+        }
+    }
+
+    override suspend fun removeFavorite(id: PrimaryKey) = databaseSession.dbQuery {
+        UserFavorites.deleteWhere {
+            UserFavorites.id eq id
+        }
+    }
+
+    override suspend fun getFavorite(id: PrimaryKey) = databaseSession.dbSearch {
+        search {
+            UserFavorites.selectAll().where {
+                UserFavorites.id eq id
+            }
+        }
+        first {
+            UserFavorite.wrapRow(it)
+        }
     }
 }

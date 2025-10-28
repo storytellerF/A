@@ -21,18 +21,21 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
+import com.storyteller_f.a.app.compose_app.LocalAccountSwitcher
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
-import com.storyteller_f.a.app.compose_app.LocalMainSessionManager
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.UIViewModel
@@ -61,19 +64,18 @@ class AccountSwitcher(val state: MutableState<Boolean> = mutableStateOf(false)) 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountSwitch(
-    accountSwitcher: AccountSwitcher
-) {
+fun AccountSwitch() {
+    val accountSwitcher = LocalAccountSwitcher.current
     var expand by accountSwitcher.state
     val sheetState = rememberModalBottomSheetState()
     BaseSheet(expand, sheetState, {
         expand = false
     }) {
         SheetContainer {
-            val (mainSessionManager, isSwitched) = isSwitched()
-            CompositionLocalProvider(LocalSessionManager provides mainSessionManager) {
+            val uiViewModel = LocalUiViewModel.current
+            val mainUserSessionManager = uiViewModel.mainInstance.sessionManager
+            CompositionLocalProvider(LocalSessionManager provides mainUserSessionManager) {
                 val viewModel = getChildAccountsViewModel()
-                AccountSwitchMenu(isSwitched, viewModel)
                 AccountSwitchInternal(viewModel)
             }
         }
@@ -82,9 +84,34 @@ fun AccountSwitch(
 
 @Composable
 private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
+    val isInChildAccount by isInChildAccount()
     val uiViewModel = LocalUiViewModel.current
-    val scope = rememberCoroutineScope()
+    val mainSessionManager = uiViewModel.mainInstance.sessionManager
     val globalDialogController = LocalGlobalDialog.current
+    val scope = rememberCoroutineScope()
+    Row(modifier = Modifier.padding(horizontal = 10.dp)) {
+        if (isInChildAccount) {
+            FilledIconButton({
+                val rawUserPass =
+                    mainSessionManager.model.currentUserPass as? RawUserPass
+                uiViewModel.childAccount.value = rawUserPass
+            }) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Switch to main account")
+            }
+        }
+        val pagingItems = viewModel.flow.collectAsLazyPagingItems()
+        FilledIconButton({
+            scope.launch {
+                globalDialogController.useResult {
+                    mainSessionManager.addChildAccount()
+                }.getOrNull()?.let {
+                    pagingItems.refresh()
+                }
+            }
+        }) {
+            Icon(Icons.Default.Add, "add")
+        }
+    }
     StateView(viewModel, modifier = Modifier.height(300.dp)) { pagingItems ->
         LazyColumn(
             contentPadding = PaddingValues(10.dp),
@@ -112,40 +139,6 @@ private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
     }
 }
 
-@Composable
-private fun AccountSwitchMenu(
-    isSwitched: Boolean,
-    viewModel: ChildAccountsViewModel
-) {
-    val uiViewModel = LocalUiViewModel.current
-    val mainSessionManager = LocalMainSessionManager.current
-    val globalDialogController = LocalGlobalDialog.current
-    val scope = rememberCoroutineScope()
-    Row(modifier = Modifier.padding(horizontal = 10.dp)) {
-        if (isSwitched) {
-            FilledIconButton({
-                val rawUserPass =
-                    mainSessionManager.model.currentUserPass as? RawUserPass
-                uiViewModel.childAccount.value = rawUserPass
-            }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Switch to main account")
-            }
-        }
-        val pagingItems = viewModel.flow.collectAsLazyPagingItems()
-        FilledIconButton({
-            scope.launch {
-                globalDialogController.useResult {
-                    mainSessionManager.addChildAccount()
-                }.getOrNull()?.let {
-                    pagingItems.refresh()
-                }
-            }
-        }) {
-            Icon(Icons.Default.Add, "add")
-        }
-    }
-}
-
 @Preview
 @Composable
 fun ChildAccountCell(userInfo: UserInfo?, onClick: () -> Unit) {
@@ -155,7 +148,6 @@ fun ChildAccountCell(userInfo: UserInfo?, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         UserIcon(
-            false,
             setClickEvent = false,
             avatarUrl = userInfo?.avatar?.url,
         ) {}
@@ -175,13 +167,20 @@ fun ChildAccountCell(userInfo: UserInfo?, onClick: () -> Unit) {
 }
 
 @Composable
-fun isSwitched(): Pair<CustomUserSessionManager, Boolean> {
-    val currentUserSessionManager = LocalSessionManager.current
-    val mainSessionManager = LocalMainSessionManager.current
-    val currentAddress by currentUserSessionManager.address.collectAsState()
-    val mainAddress by mainSessionManager.address.collectAsState()
-    val isSwitched = currentAddress != mainAddress
-    return Pair(mainSessionManager, isSwitched)
+fun isInChildAccount(): State<Boolean> {
+    val inspectionMode = LocalInspectionMode.current
+    if (inspectionMode) {
+        return remember {
+            mutableStateOf(false)
+        }
+    }
+    val uiViewModel = LocalUiViewModel.current
+    val childAccount by uiViewModel.childAccount.collectAsState()
+    return remember {
+        derivedStateOf {
+            childAccount != null
+        }
+    }
 }
 
 suspend fun GlobalDialogController.switchUser(

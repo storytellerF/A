@@ -85,7 +85,7 @@ class Nav2PanelNav(val navigator: NavHostController) : PanelNav {
     }
 }
 
-val LocalNav = compositionLocalOf<PanelNav> { error("no nav") }
+val LocalPanelNav = compositionLocalOf<PanelNav> { error("no nav") }
 
 @Composable
 fun App() {
@@ -95,7 +95,7 @@ fun App() {
     val nav = remember { Nav2PanelNav(navigator) }
     CompositionLocalProvider(
         LocalClient provides client,
-        LocalNav provides nav
+        LocalPanelNav provides nav
     ) {
         MaterialTheme {
             NavHost(navigator, "overview") {
@@ -120,7 +120,7 @@ fun App() {
 
 @Composable
 private fun PanelHost(content: @Composable () -> Unit) {
-    val nav = LocalNav.current
+    val panelNav = LocalPanelNav.current
     val session = panelAccountInstance.sessionManager
     val user by session.isAlreadySignIn.collectAsState()
     if (user) {
@@ -128,7 +128,7 @@ private fun PanelHost(content: @Composable () -> Unit) {
     } else {
         CenterBox {
             SignInButton {
-                nav.gotoLogin()
+                panelNav.gotoLogin()
             }
         }
     }
@@ -251,7 +251,7 @@ class PanelAccountInstance(scope: CoroutineScope) {
         it
     }.map {
         if (it is ClientSessionState.Success) {
-            val address = it.session.address().getOrThrow()
+            val address = it.userPass.address().getOrThrow()
             getRoomModelStorage(address)
         } else {
             guestDatabase

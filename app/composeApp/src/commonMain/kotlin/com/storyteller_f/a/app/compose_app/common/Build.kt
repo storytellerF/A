@@ -7,8 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
-import com.storyteller_f.a.app.compose_app.LocalDatabase
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -477,7 +477,12 @@ fun getChildAccountsViewModel(): ChildAccountsViewModel = customViewModel(
 
 @Composable
 fun getLoginHistoryViewModel() = customViewModel(listOf("login-history")) { sessionManager, _ ->
-    LoginHistoryViewModel(sessionManager)
+    SessionHistoryViewModel(sessionManager)
+}
+
+@Composable
+fun getFavoriteViewModel() = customViewModel(listOf("favorite")) { sessionManager, modelStorage ->
+    FavoritesViewModel(sessionManager, modelStorage)
 }
 
 @Composable
@@ -485,8 +490,10 @@ inline fun <reified VM : ViewModel> customViewModel(
     keys: List<Comparable<*>?>? = null,
     crossinline factory: (CustomUserSessionManager, ModelStorage) -> VM
 ): VM {
+    val uiViewModel = LocalUiViewModel.current
+    val instance by uiViewModel.instance.collectAsState()
+    val databaseSource by instance.database.collectAsState()
     val sessionManager = LocalSessionManager.current
-    val databaseSource = LocalDatabase.current
     SideEffect {
         Napier.i {
             "viewModel ${VM::class.simpleName}$keys composable"

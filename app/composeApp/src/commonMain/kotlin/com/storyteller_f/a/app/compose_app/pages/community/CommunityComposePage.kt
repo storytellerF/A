@@ -9,7 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnCommunityCreated
@@ -27,7 +27,7 @@ fun CommunityComposePage() {
         mutableStateOf("")
     }
     val sessionManager = LocalSessionManager.current
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     CommonComposePage({
@@ -40,7 +40,7 @@ fun CommunityComposePage() {
                         it
                     )
                 )
-                appNav.back()
+                appNavFactory.newAppNav().back()
             }
         }
     }) {

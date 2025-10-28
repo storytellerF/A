@@ -79,6 +79,10 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         ExposedDatabaseFactory.clean(databaseSession.database)
     }
 
+    override suspend fun migration() {
+        ExposedDatabaseFactory.migration(databaseSession.database)
+    }
+
     override fun isDup(throwable: Throwable): Boolean {
         return throwable.isDup()
     }

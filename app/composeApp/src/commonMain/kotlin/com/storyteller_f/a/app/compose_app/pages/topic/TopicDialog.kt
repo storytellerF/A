@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,17 +30,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.LocalAppNav
+import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.common.OnAddFavorite
+import com.storyteller_f.a.app.compose_app.common.OnRemoveFavorite
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.ButtonNav
 import com.storyteller_f.a.app.compose_app.components.DialogContainer
 import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.components.SheetContainer
 import com.storyteller_f.a.app.compose_app.components.TopicContentField
+import com.storyteller_f.a.app.compose_app.components.use
 import com.storyteller_f.a.app.compose_app.copy
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.room.RoomRefCell
@@ -50,13 +56,18 @@ import com.storyteller_f.a.app.compose_app.success
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.utils.setText
 import com.storyteller_f.a.app.core.compontents.ExceptionView
+import com.storyteller_f.a.app.core.compontents.IconRes
 import com.storyteller_f.a.app.core.utils.getCurrentLanguage
+import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.a.client.core.addFavorite
 import com.storyteller_f.a.client.core.getTopicSnapshot
 import com.storyteller_f.a.client.core.pinTopic
+import com.storyteller_f.a.client.core.removeFavorite
 import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.obj.NewFavorite
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.formatTime
 import com.strabled.composepreferences.getPreference
@@ -86,7 +97,7 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
 @OptIn(ExperimentalTime::class)
 @Composable
 fun TopicDialogInternal(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
-    val appNav = LocalAppNav.current
+    val appNavFactory = LocalAppNavFactory.current
     DialogContainer {
         Text("pub: ${topicInfo.createdTime.formatTime()}")
 
@@ -94,13 +105,13 @@ fun TopicDialogInternal(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
             ObjectType.COMMUNITY ->
                 CommunityRefCell(topicInfo.rootId) {
                     dismissDialog()
-                    appNav.gotoCommunity(topicInfo.rootId, false)
+                    appNavFactory.newAppNav().gotoCommunity(topicInfo.rootId, false)
                 }
 
             ObjectType.ROOM ->
                 RoomRefCell(topicInfo.rootId) {
                     dismissDialog()
-                    appNav.gotoRoom(topicInfo.rootId, false)
+                    appNavFactory.newAppNav().gotoRoom(topicInfo.rootId, false)
                 }
 
             else -> {}
@@ -111,48 +122,54 @@ fun TopicDialogInternal(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopicDialogMenuList(
-    topicInfo: TopicInfo,
-    dismissDialog: () -> Unit,
-) {
-    val toasterState = LocalToaster.current
+private fun TopicDialogMenuList(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
     val content = topicInfo.content
     Column {
-        TopicMenuList(
-            content,
-            topicInfo,
-            dismissDialog,
-        )
-        var showSheet by remember {
-            mutableStateOf(false)
-        }
-        val sheetState = rememberModalBottomSheetState()
-        ButtonNav(
-            MaterialSymbolsOutlined.Translate,
-            "Translate"
-        ) {
-            if (content is TopicContent.Plain) {
-                showSheet = true
-            } else {
-                toasterState.showMessage("can't translate")
+        CopyButton(content)
+        SnapshotButton(topicInfo)
+        TopicPinButton(topicInfo, dismissDialog)
+        TranslateButton(content, topicInfo)
+        FavoriteButton(topicInfo)
+    }
+}
+
+@Composable
+private fun FavoriteButton(topicInfo: TopicInfo) {
+    val sessionManager = LocalSessionManager.current
+    val dialogController = LocalGlobalTask.current
+    val scope = rememberCoroutineScope()
+    val favoriteId = topicInfo.favoriteId
+    val state = dialogController.stateMap["favorite-${topicInfo.id}"]
+    val icon = if (state is LoadingState.Loading) {
+        IconRes.Loading
+    } else if (favoriteId != null) {
+        IconRes.Vector(Icons.Default.Favorite)
+    } else {
+        IconRes.Vector(Icons.Default.FavoriteBorder)
+    }
+    ButtonNav(icon, "Favorite") {
+        scope.launch {
+            dialogController.use("favorite-${topicInfo.id}") { state, bus ->
+                state.use {
+                    if (favoriteId != null) {
+                        sessionManager.removeFavorite(favoriteId).onSuccess {
+                            bus.emit(OnRemoveFavorite(topicInfo.tuple()))
+                        }
+                    } else {
+                        sessionManager.addFavorite(NewFavorite(ObjectType.TOPIC, topicInfo.id)).onSuccess {
+                            bus.emit(OnAddFavorite(it))
+                        }
+                    }
+                }
             }
-        }
-        TopicTranslateSheet(showSheet, sheetState, topicInfo) {
-            showSheet = false
         }
     }
 }
 
 @Composable
-private fun TopicMenuList(
-    content: TopicContent,
-    topicInfo: TopicInfo,
-    dismissDialog: () -> Unit,
-) {
+private fun CopyButton(content: TopicContent) {
     val toast = LocalToaster.current
     val clipboardManager = LocalClipboard.current
-    val userSessionManager = LocalSessionManager.current
-    val alreadyLoginIn by userSessionManager.isAlreadySignIn.collectAsState()
     val scope = rememberCoroutineScope()
     ButtonNav(
         Icons.Default.ContentCopy,
@@ -167,22 +184,34 @@ private fun TopicMenuList(
             }
         }
     }
-    if (alreadyLoginIn) {
-        val globalDialogController = LocalGlobalDialog.current
-        ButtonNav(
-            Icons.Default.PictureAsPdf,
-            stringResource(Res.string.snapshot)
-        ) {
-            scope.launch {
-                globalDialogController.useResult {
-                    userSessionManager.getTopicSnapshot(topicInfo.id)
-                }.onSuccess {
-                    toast.showMessage(getString(Res.string.success))
-                }
+}
+
+@Composable
+private fun SnapshotButton(topicInfo: TopicInfo) {
+    val toast = LocalToaster.current
+    val scope = rememberCoroutineScope()
+    val userSessionManager = LocalSessionManager.current
+    val alreadyLoginIn by userSessionManager.isAlreadySignIn.collectAsState()
+    if (!alreadyLoginIn) return
+    val globalDialogController = LocalGlobalDialog.current
+    ButtonNav(
+        Icons.Default.PictureAsPdf,
+        stringResource(Res.string.snapshot)
+    ) {
+        scope.launch {
+            globalDialogController.useResult {
+                userSessionManager.getTopicSnapshot(topicInfo.id)
+            }.onSuccess {
+                toast.showMessage(getString(Res.string.success))
             }
         }
     }
+}
 
+@Composable
+private fun TopicPinButton(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val userSessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     ButtonNav(
         if (topicInfo.isPin) MaterialSymbolsOutlined.KeepOff else MaterialSymbolsOutlined.Keep,
@@ -193,6 +222,29 @@ private fun TopicMenuList(
                 dismissDialog()
             }
         }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun TranslateButton(content: TopicContent, topicInfo: TopicInfo) {
+    val toasterState = LocalToaster.current
+    var showSheet by remember {
+        mutableStateOf(false)
+    }
+    val sheetState = rememberModalBottomSheetState()
+    ButtonNav(
+        MaterialSymbolsOutlined.Translate,
+        "Translate"
+    ) {
+        if (content is TopicContent.Plain) {
+            showSheet = true
+        } else {
+            toasterState.showMessage("can't translate")
+        }
+    }
+    TopicTranslateSheet(showSheet, sheetState, topicInfo) {
+        showSheet = false
     }
 }
 

@@ -27,7 +27,7 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import kotlin.io.encoding.Base64
 
-actual fun buildLoginHistoryFactory(settings: Settings): LoginHistoryManager {
+actual fun buildLoginHistoryFactory(settings: Settings): SessionHistoryManager {
     if (runCatching {
             Cipher.getInstance("ECIES", "AndroidKeyStore")
         }.isSuccess && runCatching {
@@ -36,14 +36,14 @@ actual fun buildLoginHistoryFactory(settings: Settings): LoginHistoryManager {
         try {
             val keyStore = KeyStore.getInstance("AndroidKeyStore")
             keyStore.load(null)
-            return AndroidKeyStoreLoginHistoryManager(settings)
+            return AndroidKeyStoreSessionHistoryManager(settings)
         } catch (e: Exception) {
             Napier.e(e) {
                 "AndroidKeyStoreLoginHistoryManager failed"
             }
         }
     }
-    return DefaultLoginHistoryManager(settings)
+    return DefaultSessionHistoryManager(settings)
 }
 
 data class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
@@ -135,15 +135,15 @@ data class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
 }
 
 @Suppress("SameParameterValue")
-class AndroidKeyStoreLoginHistoryManager(val settings: Settings) : LoginHistoryManager {
+class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHistoryManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun getSavedSession(): SavedSession {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
 
-        val loginHistory = settings.decodeValueOrNull(LoginHistory.serializer(), "login_history")
+        val sessionHistory = settings.decodeValueOrNull(SessionHistory.serializer(), "session_history")
         val list = keyStore.aliases().toList()
-        return SavedSession(list, loginHistory)
+        return SavedSession(list, sessionHistory)
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
@@ -151,9 +151,9 @@ class AndroidKeyStoreLoginHistoryManager(val settings: Settings) : LoginHistoryM
         val current = "default"
         importEcdsaPrivateKey(current, session.pemPrivateKey)
         settings.encodeValue(
-            LoginHistory.serializer(),
-            "login_history",
-            LoginHistory(current)
+            SessionHistory.serializer(),
+            "session_history",
+            SessionHistory(current)
         )
         return AndroidKeyStoreUserPass(current)
     }

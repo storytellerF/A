@@ -354,6 +354,12 @@ object CustomApi {
             val add = mutationApi<ChildAccountInfo, Unit>("/accounts/child-accounts")
         }
     }
+
+    object Favorites {
+        val add = mutationApi<UserFavoriteInfo, NewFavorite>("/favorites")
+        val delete = mutationApiWithPath<Unit, Unit, CommonPath>("/favorites/{id}")
+        val get = safeApiWithQuery<ServerResponse<UserFavoriteInfo>, PaginationQuery>("/favorites")
+    }
 }
 
 object AdminApi {
