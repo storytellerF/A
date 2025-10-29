@@ -68,7 +68,6 @@ android {
     }
 }
 
-
 dependencies {
     add("kspCommonMainMetadata", "androidx.room:room-compiler:2.7.2")
     add("kspJvm", "androidx.room:room-compiler:2.7.2")

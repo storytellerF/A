@@ -1,3 +1,5 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import com.google.common.base.CaseFormat
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
@@ -7,11 +9,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.util.Base64
 import java.util.Properties
-import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
-import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -124,7 +122,7 @@ kotlin {
             implementation(projects.client.room)
             implementation(projects.app.core)
 
-            //no ui
+            // no ui
             implementation(libs.napier)
             implementation(libs.kotlinx.datetime)
             implementation(libs.bundles.ktor.client)
@@ -135,7 +133,7 @@ kotlin {
             implementation(libs.human.readable)
             implementation(libs.kfswatch)
             implementation(libs.kodio.core)
-            //ui
+            // ui
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.paging.common)
@@ -197,7 +195,6 @@ kotlin {
     }
 }
 
-
 composeCompiler {
     reportsDestination = layout.buildDirectory.dir("compose_compiler")
     metricsDestination = layout.buildDirectory.dir("compose_compiler")
@@ -246,9 +243,10 @@ buildkonfig {
     packageName = "com.storyteller_f.a.app.core"
     objectName = "PanelConfig"
     val properties = Properties().apply {
-        val file = layout.projectDirectory.file("../../${flavorStr}.env").asFile
-        if (file.exists())
+        val file = layout.projectDirectory.file("../../$flavorStr.env").asFile
+        if (file.exists()) {
             load(FileInputStream(file))
+        }
     }
     val serverUrl = properties["SERVER_URL"] as? String
     defaultConfigs {

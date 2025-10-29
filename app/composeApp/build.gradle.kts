@@ -98,8 +98,9 @@ kotlin {
             implementation(libs.androidx.core.splashscreen)
             implementation(libs.androidx.datastore.preferences.core)
 
-            if (isLlamaEnable)
+            if (isLlamaEnable) {
                 implementation(":android-llama-cpp")
+            }
 
             implementation(libs.connector) {
                 exclude(group = "com.google.protobuf", module = "protobuf-java")
@@ -133,7 +134,7 @@ kotlin {
             implementation(projects.client.room)
             implementation(projects.app.core)
 
-            //no ui
+            // no ui
             implementation(libs.napier)
             implementation(libs.kotlinx.datetime)
             implementation(libs.bundles.ktor.client)
@@ -144,7 +145,7 @@ kotlin {
             implementation(libs.human.readable)
             implementation(libs.kfswatch)
             implementation(libs.kodio.core)
-            //ui
+            // ui
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.paging.common)
@@ -261,9 +262,10 @@ buildkonfig {
     packageName = "com.storyteller_f.a.app.compose_app"
     objectName = "AppConfig"
     val properties = Properties().apply {
-        val file = layout.projectDirectory.file("../../${flavorStr}.env").asFile
-        if (file.exists())
+        val file = layout.projectDirectory.file("../../$flavorStr.env").asFile
+        if (file.exists()) {
             load(FileInputStream(file))
+        }
     }
     val serverUrl = properties["SERVER_URL"] as? String
     val wsServerUrl = properties["WS_SERVER_URL"] as? String
