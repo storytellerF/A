@@ -1,6 +1,7 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.api.core.NewDevice
 import com.storyteller_f.a.backend.core.AID_LENGTH
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
@@ -25,7 +26,6 @@ import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.model.checkMediaFileDimensionRatioMatch
-import com.storyteller_f.shared.obj.NewDevice
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.UpdateUserRead

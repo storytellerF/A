@@ -34,6 +34,7 @@ data class RawTopic(
     val lastRead: PrimaryKey? = null,
     val hasJoined: Boolean = false,
     val favoriteId: PrimaryKey? = null,
+    val subscriptionId: PrimaryKey? = null,
 )
 
 fun RawTopic.toTopicInfo(extensions: TopicInfo.Extension? = null) = TopicInfo(
@@ -57,4 +58,5 @@ fun RawTopic.toTopicInfo(extensions: TopicInfo.Extension? = null) = TopicInfo(
     aid = topic.aid,
     lastRead = lastRead,
     favoriteId = favoriteId,
+    subscriptionId = subscriptionId,
 )

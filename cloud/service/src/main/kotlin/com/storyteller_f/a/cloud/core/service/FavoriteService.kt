@@ -1,14 +1,16 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.api.core.NewFavorite
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.addIfNotExists
 import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.core.types.toUserFavoriteInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
-import com.storyteller_f.shared.obj.NewFavorite
+import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
@@ -19,7 +21,9 @@ import com.storyteller_f.shared.utils.now
 suspend fun Backend.addFavorite(
     uid: PrimaryKey,
     newFavorite: NewFavorite
-): Result<UserFavoriteInfo> {
+) = addIfNotExists({
+    combinedDatabase.userDatabase.getFavorite(uid, newFavorite.objectId)
+}) {
     val id = SnowflakeFactory.nextId()
     val userFavorite = UserFavorite(
         id,
@@ -28,21 +32,24 @@ suspend fun Backend.addFavorite(
         newFavorite.objectType,
         now()
     )
-    return combinedDatabase.userDatabase.addFavorite(userFavorite).mapResult {
-        processUserFavoriteToUserFavoriteInfo(uid, listOf(userFavorite))
-    }.map {
-        it.first()
+    combinedDatabase.userDatabase.addFavorite(userFavorite).onSuccess<UserFavorite> {
+        addUserLog(uid, UserLogType.ADD_FAVORITE, newFavorite.tuple())
     }
+}.mapResultIfNotNull {
+    processUserFavoriteToUserFavoriteInfo(uid, listOf(it))
+}.mapIfNotNull {
+    it.firstOrNull()
 }
 
 suspend fun Backend.deleteFavorite(uid: PrimaryKey, id: PrimaryKey) =
-    combinedDatabase.userDatabase.getFavorite(id).mapResultIfNotNull {
-        if (it.uid == uid) {
-            combinedDatabase.userDatabase.removeFavorite(id)
+    combinedDatabase.userDatabase.getFavorite(id).mapResultIfNotNull { userFavorite ->
+        if (userFavorite.uid == uid) {
+            combinedDatabase.userDatabase.removeFavorite(id).onSuccess {
+                addUserLog(uid, UserLogType.REMOVE_FAVORITE, userFavorite.objectTuple())
+            }
         } else {
             Result.failure(ForbiddenException())
         }
-    }.mapIfNotNull {
     }
 
 suspend fun Backend.getFavorites(uid: PrimaryKey, fetch: PrimaryKeyFetch) =

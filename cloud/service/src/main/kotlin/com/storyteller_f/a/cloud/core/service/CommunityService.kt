@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.api.core.NewCommunity
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.core.CustomBadRequestException
@@ -19,7 +20,6 @@ import com.storyteller_f.a.backend.core.types.toCommunityIfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.UserLogType
-import com.storyteller_f.shared.obj.NewCommunity
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
@@ -81,21 +81,16 @@ suspend fun Backend.doUserJoinCommunity(
 suspend fun Backend.exitCommunity(
     communityId: PrimaryKey,
     id: PrimaryKey
-) =
-    getCommunity(ObjectFetch.IdFetch(communityId), id, true).mapResultIfNotNull { info ->
-        if (info.joinedTime == null) {
-            Result.success(info)
-        } else {
-            combinedDatabase.containerDatabase.exitContainer(communityId, id).mapResult { i ->
-                if (i > 0) {
-                    addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
-                    Result.success(info.copy(joinedTime = null))
-                } else {
-                    Result.failure(CustomBadRequestException("exit failed"))
-                }
-            }
+) = getCommunity(ObjectFetch.IdFetch(communityId), id, true).mapResultIfNotNull { info ->
+    if (info.joinedTime == null) {
+        Result.success(info)
+    } else {
+        combinedDatabase.containerDatabase.exitContainer(communityId, id).mapResult { i ->
+            addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
+            Result.success(info.copy(joinedTime = null))
         }
     }
+}
 
 suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,

@@ -13,6 +13,8 @@ import com.storyteller_f.a.backend.core.service.TopicSearchServiceFactory
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchServiceFactory
 import com.storyteller_f.shared.model.Dimension
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -185,4 +187,23 @@ fun getSvgDimension(viewBox: String?, pair: Pair<String?, String?>): Dimension? 
         }
     }
     return null
+}
+
+suspend fun <T> Backend.addIfNotExists(
+    get: suspend () -> Result<T?>,
+    add: suspend () -> Result<T>
+): Result<T?> {
+    return get().mapResult {
+        if (it != null) {
+            Result.success(it)
+        } else {
+            add().recoverResult {
+                if (combinedDatabase.isDup(it)) {
+                    get()
+                } else {
+                    Result.failure(it)
+                }
+            }
+        }
+    }
 }

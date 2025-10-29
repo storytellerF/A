@@ -14,7 +14,14 @@ import com.storyteller_f.a.backend.exposed.isNotEmpty
 import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildSearchMembersQuery
-import com.storyteller_f.a.backend.exposed.tables.*
+import com.storyteller_f.a.backend.exposed.tables.MemberJoins
+import com.storyteller_f.a.backend.exposed.tables.Quotas
+import com.storyteller_f.a.backend.exposed.tables.Topics
+import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
+import com.storyteller_f.a.backend.exposed.tables.Users
+import com.storyteller_f.a.backend.exposed.tables.addJoinRaw
+import com.storyteller_f.a.backend.exposed.tables.mapUserInfo
+import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -63,8 +70,10 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         containerId: PrimaryKey,
         id: PrimaryKey,
     ) = databaseSession.dbQuery {
-        MemberJoins.deleteWhere {
+        check(MemberJoins.deleteWhere {
             objectId eq containerId and (uid eq id)
+        } > 0) {
+            "delete member failed"
         }
     }
 

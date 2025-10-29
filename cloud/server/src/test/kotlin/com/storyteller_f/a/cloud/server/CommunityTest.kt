@@ -1,5 +1,7 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.core.NewCommunity
+import com.storyteller_f.a.api.core.NewTopic
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createCommunity
@@ -13,8 +15,6 @@ import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.searchCommunityMembers
 import com.storyteller_f.a.client.core.searchTopics
-import com.storyteller_f.shared.obj.NewCommunity
-import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.client.request.*

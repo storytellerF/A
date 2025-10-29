@@ -24,6 +24,7 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserDevice
 import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.core.types.UserLog
+import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
@@ -139,9 +140,20 @@ interface UserDatabase {
         fetch: PrimaryKeyFetch
     ): Result<PaginationResult<UserFavorite>>
 
-    suspend fun addFavorite(userFavorite: UserFavorite): Result<Unit>
-    suspend fun removeFavorite(id: PrimaryKey): Result<Int>
+    suspend fun addFavorite(userFavorite: UserFavorite): Result<UserFavorite>
+    suspend fun removeFavorite(id: PrimaryKey): Result<Unit>
     suspend fun getFavorite(id: PrimaryKey): Result<UserFavorite?>
+    suspend fun getFavorite(uid: PrimaryKey, objectId: PrimaryKey): Result<UserFavorite?>
+
+    suspend fun getUserSubscriptions(
+        uid: PrimaryKey,
+        fetch: PrimaryKeyFetch
+    ): Result<PaginationResult<UserSubscription>>
+
+    suspend fun addSubscription(userSubscription: UserSubscription): Result<UserSubscription>
+    suspend fun removeSubscription(id: PrimaryKey): Result<Unit>
+    suspend fun getSubscription(id: PrimaryKey): Result<UserSubscription?>
+    suspend fun getSubscription(uid: PrimaryKey, objectId: PrimaryKey): Result<UserSubscription?>
 }
 
 interface TopicDatabase {
@@ -345,7 +357,7 @@ interface ContainerDatabase {
         objectType: ObjectType,
     ): Result<Unit>
 
-    suspend fun exitContainer(containerId: PrimaryKey, id: PrimaryKey): Result<Int>
+    suspend fun exitContainer(containerId: PrimaryKey, id: PrimaryKey): Result<Unit>
     suspend fun getJoinedUserList(roomId: PrimaryKey): Result<List<MemberJoin>>
     suspend fun getUserJoinedTime(
         parentIds: List<PrimaryKey>,

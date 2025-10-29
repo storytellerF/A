@@ -16,6 +16,7 @@ import com.storyteller_f.a.backend.core.types.ReactionRecord
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.UserFavorite
+import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.first
@@ -30,6 +31,7 @@ import com.storyteller_f.a.backend.exposed.tables.Reactions
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.UserFavorites
+import com.storyteller_f.a.backend.exposed.tables.UserSubscriptions
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
@@ -41,6 +43,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.groupByPair
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
@@ -97,9 +100,9 @@ class ExposedTopicDatabase(
         }
         first(Topic::wrapRow)
     }.mapResultIfNotNull { topic ->
-        processTopicToRawTopic(uid, listOf(topic)).map {
-            it.first()
-        }
+        processTopicToRawTopic(uid, listOf(topic))
+    }.mapIfNotNull {
+        it.first()
     }
 
     suspend fun getTopicInfoListByPredicate(
@@ -278,7 +281,15 @@ class ExposedTopicDatabase(
             val lastReadMap = getLastReadMap(uid, topicIds)
             val contentMap = processByteArrayToTopicContent(topics, uid).getOrThrow()
             val favoriteMap = if (uid != null) {
-                getTopicHasFavorite(
+                getHasFavorite(
+                    ObjectListFetch.IdListFetch(topicIds),
+                    uid
+                ).getOrThrow().associateBy { it.objectId }
+            } else {
+                emptyMap()
+            }
+            val subscriptionMap = if (uid != null) {
+                getHasSubscription(
                     ObjectListFetch.IdListFetch(topicIds),
                     uid
                 ).getOrThrow().associateBy { it.objectId }
@@ -294,7 +305,8 @@ class ExposedTopicDatabase(
                     commentedMap.contains(id),
                     reactionCountMap[id] ?: 0,
                     lastReadMap[id]?.topicId,
-                    favoriteId = favoriteMap[id]?.id
+                    favoriteId = favoriteMap[id]?.id,
+                    subscriptionId = subscriptionMap[id]?.id,
                 )
             }
         }
@@ -644,34 +656,45 @@ class ExposedTopicDatabase(
         count()
     }
 
-    suspend fun getTopicHasFavorite(
-        topicIdList: ObjectListFetch.IdListFetch,
+    suspend fun getHasFavorite(
+        idList: ObjectListFetch.IdListFetch,
         uid: PrimaryKey
-    ): Result<List<UserFavorite>> {
-        return databaseSession.dbSearch {
-            search {
-                UserFavorites.selectAll().where {
-                    (UserFavorites.uid eq uid) and (UserFavorites.objectId inList topicIdList.idList)
-                }
-            }
-            map {
-                UserFavorite.wrapRow(it)
+    ) = databaseSession.dbSearch {
+        search {
+            UserFavorites.selectAll().where {
+                (UserFavorites.uid eq uid) and (UserFavorites.objectId inList idList.idList)
             }
         }
+        map {
+            UserFavorite.wrapRow(it)
+        }
     }
+    suspend fun getHasSubscription(
+        idList: ObjectListFetch.IdListFetch,
+        uid: PrimaryKey
+    ) = databaseSession.dbSearch {
+        search {
+            UserSubscriptions.selectAll().where {
+                (UserSubscriptions.uid eq uid) and (UserSubscriptions.objectId inList idList.idList)
+            }
+        }
+        map {
+            UserSubscription.wrapRow(it)
+        }
+    }
+}
 
-    private suspend fun Topic.Companion.new(info: Topic) = check(Topics.insert {
-        it[id] = info.id
-        it[author] = info.author
-        it[createdTime] = now()
-        it[parentType] = info.parentType
-        it[parentId] = info.parentId
-        it[rootId] = info.rootId
-        it[rootType] = info.rootType
-        it[content] = ExposedBlob(info.content)
-        it[isEncrypted] = info.isEncrypted
-        it[level] = info.level
-    }.insertedCount > 0) {
-        "insert topic failed"
-    }
+private suspend fun Topic.Companion.new(info: Topic) = check(Topics.insert {
+    it[id] = info.id
+    it[author] = info.author
+    it[createdTime] = now()
+    it[parentType] = info.parentType
+    it[parentId] = info.parentId
+    it[rootId] = info.rootId
+    it[rootType] = info.rootType
+    it[content] = ExposedBlob(info.content)
+    it[isEncrypted] = info.isEncrypted
+    it[level] = info.level
+}.insertedCount > 0) {
+    "insert topic failed"
 }

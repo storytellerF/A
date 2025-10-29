@@ -2,11 +2,9 @@
 
 目的
 - 为 AI 助手与贡献者提供统一的模块职责、代码风格、开发与变更流程指引。
-- 内容与 .junie/guidelines.md 保持一致并补充“如何新增功能”的落地步骤。
 
 适用范围
 - 本仓库所有模块（Kotlin Multiplatform，Android/Compose Desktop/Backend/Panel/Bot 等）。
-- 若遇到冲突，以本文件与 .junie/guidelines.md 的最新内容为准。
 
 全局原则
 - JDK 21，全模块 Kotlin/JVM 目标 21。
@@ -18,19 +16,20 @@
 - 环境/密钥：app/composeApp 通过 BuildKonfig 从 {flavor}.env 注入；务必传入 -Pserver.flavor 与 -Pserver.buildType。
 - 提交信息：使用动词开头的英文/中文短语，标注模块与范围（例如：client/core: add getAllUsers request）。
 
-模块职责概览（路径见 settings.gradle.kts 与 .junie/guidelines.md 1.5）
-- api/core（api/src/.../CustomApi.kt）
+模块职责概览（路径见 settings.gradle.kts）
+- api（api/src/.../CustomApi.kt）
   - 定义 REST API 端点、查询/路径模型；包含管理员 AdminApi（/admin/*）。
   - 通过 route4k invoke 调用（示例：AdminApi.Users.get.invoke(query)）。
 - client/core
   - Session 管理（SessionManager.kt）：UserSessionManager/PanelSessionManager 及工厂；基于私钥的一键登录流程。
-  - 请求封装（Request.kt/PanelRequest.kt）：统一 serviceCatching，封装用户端与面板端请求，调用 api/core。
+  - 请求封装（AppRequest.kt/PanelRequest.kt）：统一 serviceCatching，封装用户端与面板端请求，调用 api/core。
 - client/model-storage
   - 抽象存储接口与集合标识（*Collection，*Storage，RemoteKeyStorage 等）。不含具体实现。
 - client/room
   - 基于 Room 的存储实现（*RoomInfoStorage，RemoteKeyRoomStorage）与聚合入口 RoomModelStorage。
 - shared
   - 跨端业务模型与工具（shared/src/commonMain/...）。
+    根据情况确定是否需要添加model，对于新增的model 是否需要添加ObjectType 取决这个对象是实体还是关联关系。示例：UserInfo 是实体，UserFavoriteInfo 是关联关系。
 - app/composeApp
   - Android/Compose Desktop UI，BuildKonfig 注入 SERVER_URL/WS_SERVER_URL/BUILD_TYPE/FLAVOR；打包配置、Proguard。
 - panel/composeApp
@@ -52,6 +51,7 @@
   - `cloud/worker`: 一个后台工作进程，用于执行数据库和服务相关的任务。
   - `cloud/openpdf`: 使用 OpenPDF 提供另一种 PDF 生成方案。
   - `cloud/service`: 核心服务模块，整合了 `backend` 中的多个模块，为 `cloud/server`、`cloud/worker` 和 `cloud/cli` 提供统一的服务接口。
+    如果返回的是分页的结果，返回PaginationResult对象，有pagination 扩展函数变成ServerResponse。
 - bot/*
   - 机器人模块。
 - android-llama-cpp（条件启用）
@@ -64,12 +64,12 @@
   - 命名：函数动宾结构，对象/文件名与职责一致；扩展函数以接收者类型为前缀命名（如 PanelSessionManager.getAllUsers）。
   - 错误处理：仅在调用边界捕获并转为 Result；业务分支返回明确错误类型或消息。
 - 架构
-  - UI → SessionManager 扩展请求 → api/core endpoint；可选落地本地存储与分页。
-  - 分页游标统一用 RemoteKeyStorage（PRE_COLLECTION/NEXT_COLLECTION）。
+  - UI → SessionManager 扩展请求 → api endpoint；可选落地本地存储与分页。
+  - 分页游标统一保存到 RemoteKeyStorage（PRE_COLLECTION/NEXT_COLLECTION）。
 - 日志
   - 对外网络请求使用 serviceCatching 打点；避免在热路径打印大量日志。
 - 测试
-  - 优先将测试写在 src/headlessTest/kotlin；桥接到 jvmTest/desktopTest/androidUnitTest（详见 .junie）。
+  - 优先将测试写在 src/headlessTest/kotlin；桥接到 jvmTest/desktopTest/androidUnitTest。
 
 新增功能指南（强制遵循）
 
@@ -77,19 +77,18 @@
 
 **A) 新增后端 API 功能**
 
-1.  **定义 API 接口 (`api/core`)**
+1.  **定义 API 接口 (`api`)**
     *   **位置**: `api/src/main/kotlin/com/storyteller_f/a/api/core/CustomApi.kt` (或 `AdminApi.kt`)
     *   **步骤**: 定义 `safeApi` 或 `mutationApi`，并为请求/响应创建数据类。
 
 2.  **定义和实现数据库操作 (`backend/core` & `backend/exposed`)**
     *   **说明**: 数据库操作遵循分层设计。`backend/core` 定义了通用的数据库事务函数，`backend/exposed` 负责具体的表结构定义和数据访问逻辑。
+    *   **接口 (DAO in `backend/core`)**:
+        *   **位置**: 在 `backend/core/src/.../Database.kt` 下。
     *   **表定义 (Table in `backend/exposed`)**:
         *   **位置**: 在 `backend/exposed/src/.../table/` 包下 (例如 `Users.kt`)。
         *   **步骤**: 创建继承自 `Table` 的 `object`，定义表结构。
         *   如果是包含Id 的使用BaseTable，否则使用Table
-    *   **接口 (DAO in `backend/core`)**:
-        *   **位置**: 在 `backend/core/src/.../Database.kt` 包下。
-        *   **步骤**: 创建接口，定义与特定表相关的抽象方法。这些方法不应是 `suspend`，因为它们将在 `dbQuery` 的事务上下文中被调用。
     *   **实现 (DAO Impl in `backend/exposed`)**:
         *   **位置**: 在 `backend/exposed/src/.../database` 包下 (例如 `ExposedUserDatabase.kt`)。
         *   **步骤**: 实现 DAO 接口。方法中只包含纯粹的 `Exposed` DSL 查询逻辑。
@@ -104,12 +103,12 @@
 
 **B) 客户端接入已有 API**
 
-1.  **同步 API 端点定义 (`api/core`)**
+1.  **同步 API 端点定义 (`api`)**
     *   **位置**: `api/src/main/kotlin/com/storyteller_f/a/api/core/CustomApi.kt`
     *   **说明**: 此步骤通常由后端开发人员完成。客户端开发人员需确认 `api/core` 模块中已包含需要接入的 API 定义。若未定义，请遵循 **A) 新增后端 API 功能** 的第一步。
 
 2.  **新增客户端请求 (`client/core`)**
-    *   **用户端**: 在 `client/core/Request.kt` 添加 `UserSessionManager` 的扩展函数。
+    *   **用户端**: 在 `client/core/AppRequest.kt` 添加 `UserSessionManager` 的扩展函数。
     *   **面板端**: 在 `client/core/PanelRequest.kt` 添加 `PanelSessionManager` 的扩展函数。
     *   **实现**: 统一调用 `serviceCatching { CustomApi.* 或 AdminApi.*.invoke(...) }` 返回 `Result<T>`。命名需规范（如 `getAllUsers`）。
 
@@ -144,13 +143,13 @@
 - Wasm（可选）：gradlew :shared:wasmJsBrowserTest -Ptarget.wasm=true
 
 与 AI 协作的额外规则
-- 仅在必要处最小改动，优先在 client/core 与 api/core 扩展，不随意改动公共模型。
+- 仅在必要处最小改动，优先在 client/core 与 api 扩展，不随意改动公共模型。
 - 不创建仓库外文件；敏感文件（*.env）已在 .aiexclude 中排除，不要泄露其内容。
 - 涉及配置缓存的改动避免在 Gradle 配置期读取外部环境；读取 env 统一交给 BuildKonfig 逻辑。
 - 对已有测试保持兼容，如需更新，给出迁移理由与步骤。
 
 故障排查速查
-- 网络异常：查看 client/core/Request.kt 的 serviceCatching 日志与 AdminApi/CustomApi 路由。
+- 网络异常：查看 client/core/*Request.kt 的 serviceCatching 日志与 AdminApi/CustomApi 路由。
 - 分页异常：检查 RemoteKeyStorage/RemoteKeyRoomStorage 的保存与读取；确认 PRE/NEXT 语义与后端对齐。
 - 数据未落地：检查 *RoomStorage.save/observeData 实现与 commonJson 序列化。
 

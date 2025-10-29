@@ -1,5 +1,7 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.core.NewCommunity
+import com.storyteller_f.a.api.core.NewRoom
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
@@ -7,8 +9,6 @@ import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getAllUsers
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.client.core.upload
-import com.storyteller_f.shared.obj.NewCommunity
-import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import kotlin.test.Test

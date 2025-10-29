@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 set -e
 cd ../android-in-docker && ./build-image.sh && cd ../A || exit
+mkdir -p app/config
 cd ./dev
 mkdir -p reports/cloud/service
 mkdir -p reports/cloud/server

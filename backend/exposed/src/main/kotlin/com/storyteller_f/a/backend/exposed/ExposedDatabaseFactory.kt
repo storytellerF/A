@@ -22,6 +22,7 @@ import com.storyteller_f.a.backend.exposed.tables.UploadRecords
 import com.storyteller_f.a.backend.exposed.tables.UserDevices
 import com.storyteller_f.a.backend.exposed.tables.UserFavorites
 import com.storyteller_f.a.backend.exposed.tables.UserLogs
+import com.storyteller_f.a.backend.exposed.tables.UserSubscriptions
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.shared.commonJson
@@ -36,7 +37,6 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.v1.core.ResultRow
-import org.jetbrains.exposed.v1.core.Slf4jSqlDebugLogger
 import org.jetbrains.exposed.v1.migration.r2dbc.MigrationUtils
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
@@ -247,6 +247,7 @@ object ExposedDatabaseFactory {
         UserDevices,
         UserTopicReads,
         UserFavorites,
+        UserSubscriptions,
         TaskRecords,
         Quotas,
         UploadRecords,
@@ -269,7 +270,6 @@ object ExposedDatabaseFactory {
             Napier.i(tag = "database") {
                 "create tables"
             }
-            addLogger(Slf4jSqlDebugLogger)
             SchemaUtils.create(*tables)
         }
     }

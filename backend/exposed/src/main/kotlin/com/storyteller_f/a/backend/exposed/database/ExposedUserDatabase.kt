@@ -14,6 +14,7 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserDevice
 import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.core.types.UserLog
+import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
@@ -28,6 +29,7 @@ import com.storyteller_f.a.backend.exposed.tables.TaskRecords
 import com.storyteller_f.a.backend.exposed.tables.UserDevices
 import com.storyteller_f.a.backend.exposed.tables.UserFavorites
 import com.storyteller_f.a.backend.exposed.tables.UserLogs
+import com.storyteller_f.a.backend.exposed.tables.UserSubscriptions
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
@@ -426,11 +428,14 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
         }.insertedCount > 0) {
             "Insert favorite failed"
         }
+        userFavorite
     }
 
     override suspend fun removeFavorite(id: PrimaryKey) = databaseSession.dbQuery {
-        UserFavorites.deleteWhere {
+        check(UserFavorites.deleteWhere {
             UserFavorites.id eq id
+        } > 0) {
+            "Remove favorite failed"
         }
     }
 
@@ -442,6 +447,96 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
         }
         first {
             UserFavorite.wrapRow(it)
+        }
+    }
+
+    override suspend fun getFavorite(
+        uid: PrimaryKey,
+        objectId: PrimaryKey
+    ): Result<UserFavorite?> {
+        return databaseSession.dbSearch {
+            search {
+                UserFavorites.selectAll().where {
+                    (UserFavorites.uid eq uid) and (UserFavorites.objectId eq objectId)
+                }
+            }
+            first {
+                UserFavorite.wrapRow(it)
+            }
+        }
+    }
+
+    override suspend fun getUserSubscriptions(
+        uid: PrimaryKey,
+        fetch: PrimaryKeyFetch
+    ) = runCatching {
+        val userSubscriptions = databaseSession.dbSearch {
+            search {
+                UserSubscriptions.selectAll().where {
+                    UserSubscriptions.uid eq uid
+                }.bindPaginationQuery(UserSubscriptions, fetch)
+            }
+            map {
+                UserSubscription.wrapRow(it)
+            }
+        }.getOrThrow()
+        val userSubscriptionCount = databaseSession.dbSearch {
+            search {
+                UserSubscriptions.selectAll().where {
+                    UserSubscriptions.uid eq uid
+                }
+            }
+            count()
+        }.getOrThrow()
+        PaginationResult(userSubscriptions, userSubscriptionCount)
+    }
+
+    override suspend fun addSubscription(userSubscription: UserSubscription) =
+        databaseSession.dbQuery {
+            check(UserSubscriptions.insert {
+                it[id] = userSubscription.id
+                it[uid] = userSubscription.uid
+                it[objectId] = userSubscription.objectId
+                it[objectType] = userSubscription.objectType
+                it[createdTime] = userSubscription.createdTime
+            }.insertedCount > 0) {
+                "Insert subscription failed"
+            }
+            userSubscription
+        }
+
+    override suspend fun removeSubscription(id: PrimaryKey) = databaseSession.dbQuery {
+        check(UserSubscriptions.deleteWhere {
+            UserSubscriptions.id eq id
+        } > 0) {
+            "Remove subscription failed"
+        }
+    }
+
+    override suspend fun getSubscription(id: PrimaryKey) = databaseSession.dbSearch {
+        search {
+            UserSubscriptions.selectAll().where {
+                UserSubscriptions.id eq id
+            }
+        }
+        first {
+            UserSubscription.wrapRow(it)
+        }
+    }
+
+    override suspend fun getSubscription(
+        uid: PrimaryKey,
+        objectId: PrimaryKey
+    ): Result<UserSubscription?> {
+        return databaseSession.dbSearch {
+            search {
+                UserSubscriptions.selectAll().where {
+                    (UserSubscriptions.uid eq uid) and (UserSubscriptions.objectId eq objectId)
+                }
+            }
+            first {
+                UserSubscription.wrapRow(it)
+            }
         }
     }
 }
