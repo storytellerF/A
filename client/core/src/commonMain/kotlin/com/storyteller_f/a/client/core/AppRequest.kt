@@ -2,6 +2,15 @@ package com.storyteller_f.a.client.core
 
 import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.api.core.DeleteReaction
+import com.storyteller_f.a.api.core.NewCommunity
+import com.storyteller_f.a.api.core.NewDevice
+import com.storyteller_f.a.api.core.NewFavorite
+import com.storyteller_f.a.api.core.NewReaction
+import com.storyteller_f.a.api.core.NewRoom
+import com.storyteller_f.a.api.core.NewSubscription
+import com.storyteller_f.a.api.core.NewTitle
+import com.storyteller_f.a.api.core.NewTopic
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.api.core.TopicQuery
 import com.storyteller_f.route4k.ktor.client.invoke
@@ -17,15 +26,7 @@ import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserPubKeyInfo
-import com.storyteller_f.shared.obj.DeleteReaction
-import com.storyteller_f.shared.obj.NewCommunity
-import com.storyteller_f.shared.obj.NewDevice
-import com.storyteller_f.shared.obj.NewFavorite
-import com.storyteller_f.shared.obj.NewReaction
-import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.obj.NewRoomTopic
-import com.storyteller_f.shared.obj.NewTitle
-import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ServerResponse
@@ -594,4 +595,19 @@ suspend fun UserSessionManager.removeFavorite(favoriteId: PrimaryKey) = serviceC
 
 suspend fun UserSessionManager.getFavorites(paginationQuery: PaginationQuery) = serviceCatching {
     CustomApi.Favorites.get.invoke(paginationQuery)
+}
+
+suspend fun UserSessionManager.addSubscription(newFavorite: NewSubscription) = serviceCatching {
+    CustomApi.Subscriptions.add.invoke(newFavorite) {
+        contentType(ContentType.Application.Json)
+    }
+}
+
+suspend fun UserSessionManager.removeSubscription(favoriteId: PrimaryKey) = serviceCatching {
+    CustomApi.Subscriptions.delete.invoke(CommonPath(favoriteId), Unit) {
+    }
+}
+
+suspend fun UserSessionManager.getSubscriptions(paginationQuery: PaginationQuery) = serviceCatching {
+    CustomApi.Subscriptions.get.invoke(paginationQuery)
 }

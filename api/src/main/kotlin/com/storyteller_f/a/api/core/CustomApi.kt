@@ -1,10 +1,39 @@
 package com.storyteller_f.a.api.core
 
-import com.storyteller_f.route4k.common.*
+import com.storyteller_f.route4k.common.MutationMethodType
+import com.storyteller_f.route4k.common.mutationApi
+import com.storyteller_f.route4k.common.mutationApiWithPath
+import com.storyteller_f.route4k.common.mutationApiWithQuery
+import com.storyteller_f.route4k.common.safeApi
+import com.storyteller_f.route4k.common.safeApiWithPath
+import com.storyteller_f.route4k.common.safeApiWithQuery
+import com.storyteller_f.route4k.common.safeApiWithQueryAndPath
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
-import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.*
+import com.storyteller_f.shared.model.ChildAccountInfo
+import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.PanelAccountInfo
+import com.storyteller_f.shared.model.PanelOverview
+import com.storyteller_f.shared.model.PosterSearch
+import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleSearchType
+import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicPinSearch
+import com.storyteller_f.shared.model.UserFavoriteInfo
+import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserPubKeyInfo
+import com.storyteller_f.shared.model.UserSubscriptionInfo
+import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.UpdateCommunityBody
+import com.storyteller_f.shared.obj.UpdateRoomBody
+import com.storyteller_f.shared.obj.UpdateUserBody
+import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -27,6 +56,59 @@ class PaginationQuery(
 
 @Serializable
 class CommonPath(val id: PrimaryKey)
+
+@Serializable
+data class NewSubscription(
+    val objectId: PrimaryKey,
+    val objectType: ObjectType
+) {
+    fun tuple() = ObjectTuple(objectId, objectType)
+}
+
+@Serializable
+data class NewCommunity(val name: String, val aid: String, val icon: PrimaryKey? = null)
+
+@Serializable
+data class NewDevice(val endpointUrl: String)
+
+@Serializable
+data class NewMedia(val noPrefixName: String)
+
+@Serializable
+data class NewReaction(val emoji: String)
+
+@Serializable
+data class DeleteReaction(val emoji: String)
+
+@Serializable
+data class NewRoom(
+    val name: String,
+    val aid: String,
+    val icon: PrimaryKey? = null,
+    val communityId: PrimaryKey? = null
+)
+
+@Serializable
+data class NewTitle(
+    val name: String,
+    val type: TitleType,
+    val receiver: PrimaryKey,
+    val scopeId: PrimaryKey,
+    val scopeType: ObjectType,
+    val description: String,
+)
+
+@Serializable
+data class NewTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: String) {
+    val tuple = ObjectTuple(parentId, parentType)
+}
+
+@Serializable
+data class NewFavorite(val objectType: ObjectType, val objectId: PrimaryKey) {
+    fun tuple(): ObjectTuple {
+        return ObjectTuple(objectId, objectType)
+    }
+}
 
 object CustomApi {
     object Topics {
@@ -355,6 +437,13 @@ object CustomApi {
         }
     }
 
+    object Subscriptions {
+        val add = mutationApi<UserSubscriptionInfo, NewSubscription>("/subscriptions")
+        val delete = mutationApiWithPath<Unit, Unit, CommonPath>("/subscriptions/{id}")
+        val get =
+            safeApiWithQuery<ServerResponse<UserSubscriptionInfo>, PaginationQuery>("/subscriptions")
+    }
+
     object Favorites {
         val add = mutationApi<UserFavoriteInfo, NewFavorite>("/favorites")
         val delete = mutationApiWithPath<Unit, Unit, CommonPath>("/favorites/{id}")
@@ -366,6 +455,7 @@ object AdminApi {
     object Users {
         val get = safeApiWithQuery<ServerResponse<UserInfo>, PaginationQuery>("/admin/users")
     }
+
     val signIn = mutationApi<PanelAccountInfo, SignInPack>("/admin/sign-in")
     val signOut = mutationApi<Unit, Unit>("/admin/sign-out")
     val signUp = mutationApi<PanelAccountInfo, SignUpPack>("/admin/sign-up")

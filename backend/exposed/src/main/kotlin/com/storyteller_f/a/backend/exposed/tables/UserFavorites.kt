@@ -12,7 +12,7 @@ object UserFavorites : BaseTable() {
     val objectType = objectType("object_type")
 
     init {
-        uniqueIndex("main", uid, objectId)
+        uniqueIndex("favorite-main", uid, objectId)
     }
 }
 

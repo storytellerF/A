@@ -1,18 +1,22 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.core.NewFavorite
+import com.storyteller_f.a.api.core.NewSubscription
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.addChildAccount
 import com.storyteller_f.a.client.core.addFavorite
+import com.storyteller_f.a.client.core.addSubscription
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getChildAccounts
 import com.storyteller_f.a.client.core.getFavorites
+import com.storyteller_f.a.client.core.getSubscriptions
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.removeFavorite
+import com.storyteller_f.a.client.core.removeSubscription
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.a.client.core.upload
-import com.storyteller_f.shared.obj.NewFavorite
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
@@ -94,13 +98,36 @@ class UserTest {
                 addFavorite(NewFavorite(ObjectType.TOPIC, topicId)).getOrThrow()
             assertEquals(topicId, userFavoriteInfo.objectId)
             assertNotNull(userFavoriteInfo.extensions?.topicInfo)
+            assertListTotalSize(1, getSubscriptions(PaginationQuery()))
 
             val topicInfo = getTopicInfo(topicId).getOrThrow()
-            assertEquals(true, topicInfo.hasFavorite)
+            assertNotNull(topicInfo.favoriteId)
 
             removeFavorite(userFavoriteInfo.id).getOrThrow()
 
             assertListTotalSize(0, getFavorites(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `test add subscription`() = test {
+        val outerTuple = attachSession {
+            createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+        }
+        attachSession {
+            val topicId = outerTuple.custom.id
+            val userSubscriptionInfo =
+                addSubscription(NewSubscription(topicId, ObjectType.TOPIC)).getOrThrow()
+            assertEquals(topicId, userSubscriptionInfo.objectId)
+            assertNotNull(userSubscriptionInfo.extensions?.topicInfo)
+            assertListTotalSize(1, getSubscriptions(PaginationQuery()))
+
+            val topicInfo = getTopicInfo(topicId).getOrThrow()
+            assertNotNull(topicInfo.subscriptionId)
+
+            removeSubscription(userSubscriptionInfo.id).getOrThrow()
+
+            assertListTotalSize(0, getSubscriptions(PaginationQuery()))
         }
     }
 }

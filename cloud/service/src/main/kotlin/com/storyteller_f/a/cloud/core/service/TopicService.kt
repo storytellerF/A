@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.api.core.NewTopic
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
@@ -30,7 +31,6 @@ import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.NewRoomTopic
-import com.storyteller_f.shared.obj.NewTopic
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey

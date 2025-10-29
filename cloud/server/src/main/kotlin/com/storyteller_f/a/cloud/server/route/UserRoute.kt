@@ -6,11 +6,14 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.addDevice
 import com.storyteller_f.a.cloud.core.service.addFavorite
 import com.storyteller_f.a.cloud.core.service.addReadLog
+import com.storyteller_f.a.cloud.core.service.addSubscription
 import com.storyteller_f.a.cloud.core.service.deleteFavorite
 import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
 import com.storyteller_f.a.cloud.core.service.getUserInfo
+import com.storyteller_f.a.cloud.core.service.getUserSubscriptions
 import com.storyteller_f.a.cloud.core.service.getUserTitles
+import com.storyteller_f.a.cloud.core.service.removeSubscription
 import com.storyteller_f.a.cloud.core.service.searchMembers
 import com.storyteller_f.a.cloud.core.service.updateUser
 import com.storyteller_f.a.cloud.server.auth.handleResult
@@ -58,6 +61,27 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
                 it.id
             }) { fetch ->
                 backend.getFavorites(uid, fetch)
+            }
+        }
+    }
+    CustomApi.Subscriptions.add(RoutingContext::handleResult) { api ->
+        usePrincipal { uid ->
+            backend.addSubscription(uid, api.receiveBody())
+        }
+    }
+
+    CustomApi.Subscriptions.delete(RoutingContext::handleResult) { path, api ->
+        usePrincipal { uid ->
+            backend.removeSubscription(uid, path.id)
+        }
+    }
+
+    CustomApi.Subscriptions.get(RoutingContext::handleResult) { q ->
+        usePrincipal { uid ->
+            q.pagination(pagingGenerator {
+                it.id
+            }) { fetch ->
+                backend.getUserSubscriptions(uid, fetch)
             }
         }
     }

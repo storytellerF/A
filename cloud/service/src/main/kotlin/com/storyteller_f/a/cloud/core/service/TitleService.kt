@@ -1,6 +1,7 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.api.core.NewTitle
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectListFetch
@@ -12,7 +13,6 @@ import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.toTitleInfo
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey

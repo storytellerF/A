@@ -1,7 +1,9 @@
 package com.storyteller_f.shared.obj
 
+import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.CustomImmutableMap
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.serialization.SerialName
@@ -97,3 +99,12 @@ data class CustomOffer(val sdp: String)
 
 @Serializable
 data class CustomAnswer(val sdp: String)
+
+@Serializable
+data class NewRoomTopic(
+    val parentType: ObjectType,
+    val parentId: PrimaryKey,
+    val content: TopicContent
+) {
+    val tuple = ObjectTuple(parentId, parentType)
+}

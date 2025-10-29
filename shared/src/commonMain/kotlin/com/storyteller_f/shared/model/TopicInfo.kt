@@ -30,7 +30,8 @@ data class TopicInfo(
     val extension: Extension?,
     val aid: String? = null,
     val lastRead: PrimaryKey? = null,
-    val favoriteId: PrimaryKey? = null
+    val favoriteId: PrimaryKey? = null,
+    val subscriptionId: PrimaryKey? = null,
 ) : PrimaryKeyIdentifiable {
     override val objectType: ObjectType
         get() = ObjectType.TOPIC

@@ -3,6 +3,7 @@ package com.storyteller_f.a.cloud.core.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CommonPath
 import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.api.core.NewRoom
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.core.CustomBadRequestException
@@ -25,7 +26,6 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
-import com.storyteller_f.shared.obj.NewRoom
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType

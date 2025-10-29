@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.core.CommonPath
+import com.storyteller_f.a.api.core.DeleteReaction
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.PaginationResult
@@ -9,7 +10,6 @@ import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.types.ReactionRecord
 import com.storyteller_f.shared.model.ReactionInfo
-import com.storyteller_f.shared.obj.DeleteReaction
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT

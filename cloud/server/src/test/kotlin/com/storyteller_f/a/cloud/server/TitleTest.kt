@@ -1,12 +1,12 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.core.NewCommunity
+import com.storyteller_f.a.api.core.NewTitle
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.userTitles
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
-import com.storyteller_f.shared.obj.NewCommunity
-import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.type.ObjectType
 import kotlin.test.Test
 

@@ -96,7 +96,7 @@ android {
 }
 
 fun getenv(key: String): String? {
-    return System.getenv(key) ?: System.getenv(key.uppercase())
+    return System.getenv(key) ?: System.getenv(key.lowercase()) ?: System.getenv(key.uppercase())
 }
 
 
