@@ -85,7 +85,6 @@ buildConfig {
     buildConfigField<String>("FLAVOR", flavor)
 }
 
-
 sentry {
     org = "acommunity"
     projectName = "kotlin"

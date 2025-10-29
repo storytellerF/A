@@ -1,7 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -92,7 +91,7 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.bundles.ktor.client)
             implementation(libs.tasks.genai)
-            //ui
+            // ui
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.paging.common)
@@ -171,7 +170,6 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
 }
-
 
 compose.resources {
     publicResClass = false
