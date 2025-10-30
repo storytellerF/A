@@ -8,9 +8,9 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Diversity3
-import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -84,7 +84,7 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
         listOf(
             NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
             NavRoute("/communities", Icons.Default.ChatBubble, "Communities"),
-            NavRoute("/titles", Icons.Default.Title, "Titles")
+            NavRoute("/titles", Icons.Default.Badge, "Titles")
         )
     val navigator = rememberNavController()
     val current by navigator.currentBackStackEntryFlow.collectAsState(null)
@@ -217,7 +217,7 @@ private fun UserPageBottomNavBar(pagerState: PagerState) {
             Icons.Default.Diversity3,
             stringResource(Res.string.rooms)
         ),
-        NavRoute("/titles", Icons.Default.Title, "titles")
+        NavRoute("/titles", Icons.Default.Badge, "titles")
     )
     CustomBottomNav(
         navRoutes[pagerState.currentPage].path,

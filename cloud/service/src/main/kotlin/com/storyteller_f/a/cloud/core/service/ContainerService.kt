@@ -4,7 +4,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
-import com.storyteller_f.a.backend.core.ObjectFetch.*
+import com.storyteller_f.a.backend.core.ObjectFetch.IdFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.UploadRecord
@@ -47,18 +47,18 @@ suspend fun Backend.checkRootReadPermission(
 ): Result<RootReadPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            combinedDatabase.topicDatabase.getTopicRootTuple(parentId)
+            database.topic.getTopicRootTuple(parentId)
                 .mapResultIfNotNull { (rootId, rootType) ->
                     checkRootReadPermission(rootType, rootId, uid)
                 }
         }
 
         ObjectType.ROOM -> {
-            combinedDatabase.roomDatabase.getRoomCommunityId(parentId).mapResult { communityId ->
+            database.room.getRoomCommunityId(parentId).mapResult { communityId ->
                 if (communityId == null && uid == null) {
                     Result.failure(UnauthorizedException())
                 } else {
-                    combinedDatabase.containerDatabase.isMemberJoined(parentId, uid)
+                    database.container.isMemberJoined(parentId, uid)
                         .map { hasJoined ->
                             RootReadPermission(
                                 hasJoined || communityId != null,
@@ -71,26 +71,19 @@ suspend fun Backend.checkRootReadPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            combinedDatabase.communityDatabase.getRawCommunity(IdFetch(parentId))
-                .mapResultIfNotNull {
-                    combinedDatabase.containerDatabase.isMemberJoined(parentId, uid)
-                        .map { hasJoined ->
-                            RootReadPermission(true, hasJoined, false)
-                        }
+            database.community.getRawCommunity(IdFetch(parentId)).mapResultIfNotNull {
+                database.container.isMemberJoined(parentId, uid).map { hasJoined ->
+                    RootReadPermission(true, hasJoined, false)
                 }
+            }
         }
 
-        ObjectType.USER -> combinedDatabase.userDatabase.getRawUser(IdFetch(parentId))
-            .mapIfNotNull {
-                RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
-            }
+        ObjectType.USER -> database.user.getRawUser(IdFetch(parentId)).mapIfNotNull {
+            RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
+        }
 
         ObjectType.TITLE -> Result.success(
-            RootReadPermission(
-                hasRead = true,
-                hasJoined = false,
-                isPrivate = false
-            )
+            RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         )
 
         ObjectType.File -> Result.failure(ForbiddenException())
@@ -105,51 +98,44 @@ suspend fun Backend.checkRootWritePermission(
 ): Result<RootWritePermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            combinedDatabase.topicDatabase.getRawTopic(IdFetch(parentId), null)
-                .mapResultIfNotNull { topicInfo ->
-                    checkRootWritePermission(
-                        topicInfo.topic.rootType,
-                        topicInfo.topic.rootId,
-                        uid
-                    ).mapIfNotNull {
-                        it.copy(level = topicInfo.topic.level)
-                    }
+            database.topic.getRawTopic(IdFetch(parentId), null).mapResultIfNotNull { topicInfo ->
+                checkRootWritePermission(
+                    topicInfo.topic.rootType,
+                    topicInfo.topic.rootId,
+                    uid
+                ).mapIfNotNull {
+                    it.copy(level = topicInfo.topic.level)
                 }
+            }
         }
 
         ObjectType.ROOM -> {
-            combinedDatabase.roomDatabase.getRoomCommunityId(parentId).mapResult {
-                combinedDatabase.containerDatabase.isMemberJoined(parentId, uid)
-                    .mapResult { hasJoined ->
-                        if (hasJoined) {
-                            Result.success(RootWritePermission(parentType, parentId))
-                        } else {
-                            Result.failure(ForbiddenException())
-                        }
-                    }
+            database.room.getRawRoom(IdFetch(parentId), true, uid).mapResultIfNotNull {
+                val hasJoined = it.joinedTime != null
+                if (hasJoined) {
+                    Result.success(RootWritePermission(parentType, parentId))
+                } else {
+                    Result.failure(ForbiddenException())
+                }
             }
         }
 
         ObjectType.COMMUNITY -> {
-            combinedDatabase.communityDatabase.getRawCommunity(IdFetch(parentId))
-                .mapResultIfNotNull {
-                    combinedDatabase.containerDatabase.isMemberJoined(parentId, uid)
-                        .mapResult { hasJoined ->
-                            if (hasJoined) {
-                                Result.success(RootWritePermission(parentType, parentId))
-                            } else {
-                                Result.failure(ForbiddenException())
-                            }
-                        }
+            database.community.getRawCommunity(IdFetch(parentId), true, uid).mapResultIfNotNull {
+                val hasJoined = it.joinedTime != null
+                if (hasJoined) {
+                    Result.success(RootWritePermission(parentType, parentId))
+                } else {
+                    Result.failure(ForbiddenException())
                 }
+            }
         }
 
         ObjectType.USER -> {
             if (uid == parentId) {
-                combinedDatabase.userDatabase.getRawUser(IdFetch(parentId))
-                    .mapIfNotNull {
-                        RootWritePermission(parentType, parentId)
-                    }
+                database.user.getRawUser(IdFetch(parentId)).mapIfNotNull {
+                    RootWritePermission(parentType, parentId)
+                }
             } else {
                 Result.failure(ForbiddenException())
             }
@@ -168,14 +154,14 @@ suspend fun Backend.checkRootAdminPermission(
 ): Result<RootAdminPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            combinedDatabase.topicDatabase.getTopicRootTuple(parentId)
+            database.topic.getTopicRootTuple(parentId)
                 .mapResultIfNotNull { (rootId, rootType) ->
                     checkRootAdminPermission(rootType, rootId, uid)
                 }
         }
 
         ObjectType.ROOM -> {
-            combinedDatabase.roomDatabase.getRawRoom(IdFetch(parentId), true, uid)
+            database.room.getRawRoom(IdFetch(parentId), true, uid)
                 .mapResultIfNotNull {
                     if (it.room.creator == uid) {
                         Result.success(
@@ -191,7 +177,7 @@ suspend fun Backend.checkRootAdminPermission(
         }
 
         ObjectType.COMMUNITY -> {
-            combinedDatabase.communityDatabase.getRawCommunity(IdFetch(parentId))
+            database.community.getRawCommunity(IdFetch(parentId))
                 .mapResultIfNotNull {
                     if (it.community.owner == uid) {
                         Result.success(
@@ -208,7 +194,7 @@ suspend fun Backend.checkRootAdminPermission(
 
         ObjectType.USER -> {
             if (parentId == uid) {
-                combinedDatabase.userDatabase.getRawUser(IdFetch(parentId))
+                database.user.getRawUser(IdFetch(parentId))
                     .mapIfNotNull {
                         RootAdminPermission(parentType, parentId)
                     }
@@ -236,7 +222,7 @@ suspend fun <T> Backend.lockQuotaInfo(
             throw CustomBadRequestException("quota is locking")
         }
         val id = SnowflakeFactory.nextId()
-        combinedDatabase.fileDatabase.insertUploadRecord(
+        database.file.insertUploadRecord(
             UploadRecord(
                 id,
                 now(),
@@ -249,7 +235,7 @@ suspend fun <T> Backend.lockQuotaInfo(
         ).getOrThrow()
         val t = block()
         quotaInfo.used
-        combinedDatabase.fileDatabase.deleteUploadRecord(id, quotaInfo, length).getOrThrow()
+        database.file.deleteUploadRecord(id, quotaInfo, length).getOrThrow()
         return t
     } catch (e: Exception) {
         return Result.failure(e)
@@ -259,7 +245,7 @@ suspend fun <T> Backend.lockQuotaInfo(
 suspend fun Backend.getQuotaInfo(
     quotaType: QuotaType,
     objectTuple: ObjectTuple
-) = combinedDatabase.containerDatabase.getQuotaInfo(objectTuple.objectId, quotaType).mapResult {
+) = database.container.getQuotaInfo(objectTuple.objectId, quotaType).mapResult {
     if (it == null) {
         insertQuotaAndGet(quotaType, objectTuple)
     } else {
@@ -280,11 +266,11 @@ private suspend fun Backend.insertQuotaAndGet(
         quotaType,
         false
     )
-    return combinedDatabase.containerDatabase.insertQuota(quota).map {
+    return database.container.insertQuota(quota).map {
         quota
     }.recoverResult { throwable ->
-        if (combinedDatabase.isDup(throwable)) {
-            combinedDatabase.containerDatabase.getQuotaInfo(ownerId, quotaType).mapResult {
+        if (database.isDup(throwable)) {
+            database.container.getQuotaInfo(ownerId, quotaType).mapResult {
                 if (it == null) {
                     Result.failure(Exception("get quota failed"))
                 } else {

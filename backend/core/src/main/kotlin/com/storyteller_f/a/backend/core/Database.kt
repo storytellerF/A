@@ -80,15 +80,15 @@ class InsertCommunityTuple(
 )
 
 interface CombinedDatabase {
-    val userDatabase: UserDatabase
-    val topicDatabase: TopicDatabase
-    val titleDatabase: TitleDatabase
-    val communityDatabase: CommunityDatabase
-    val roomDatabase: RoomDatabase
-    val fileDatabase: FileDatabase
-    val containerDatabase: ContainerDatabase
-    val cliDatabase: CliDatabase
-    val panelAccountDatabase: PanelAccountDatabase
+    val user: UserDatabase
+    val topic: TopicDatabase
+    val title: TitleDatabase
+    val community: CommunityDatabase
+    val room: RoomDatabase
+    val file: FileDatabase
+    val container: ContainerDatabase
+    val cli: CliDatabase
+    val panelAccount: PanelAccountDatabase
 
     suspend fun init()
     suspend fun clean()
@@ -164,7 +164,7 @@ interface TopicDatabase {
         ids: List<PrimaryKey>
     ): Result<List<RawTopic>>
 
-    suspend fun getSubRawTopic(
+    suspend fun getRawTopicByParentId(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         parentId: PrimaryKey,
@@ -262,7 +262,7 @@ interface CommunityDatabase {
     suspend fun getRawCommunity(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean? = null,
-        uid: PrimaryKey? = null,
+        uid: PrimaryKey? = null
     ): Result<RawCommunity?>
 
     suspend fun getJoinedCommunityIds(uid: PrimaryKey): Result<List<Long>>

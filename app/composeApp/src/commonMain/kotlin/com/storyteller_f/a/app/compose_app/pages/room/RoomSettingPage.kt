@@ -110,8 +110,9 @@ private fun RoomSettingInternal(
                     }
                 } else {
                     showDialog(
-                        SettingOption.Icon(
-                            roomInfo.icon?.fullName
+                        SettingOption.RoomIcon(
+                            roomInfo.icon?.fullName,
+                            roomInfo.id.takeIf { roomInfo.isPrivate }
                         )
                     )
                 }

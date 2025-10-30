@@ -10,6 +10,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.api.core.NewFavorite
+import com.storyteller_f.a.api.core.NewSubscription
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalGlobalTask
@@ -38,7 +41,9 @@ import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.OnAddFavorite
+import com.storyteller_f.a.app.compose_app.common.OnAddSubscription
 import com.storyteller_f.a.app.compose_app.common.OnRemoveFavorite
+import com.storyteller_f.a.app.compose_app.common.OnRemoveSubscription
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.ButtonNav
 import com.storyteller_f.a.app.compose_app.components.DialogContainer
@@ -62,9 +67,11 @@ import com.storyteller_f.a.app.core.utils.getCurrentLanguage
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.addFavorite
+import com.storyteller_f.a.client.core.addSubscription
 import com.storyteller_f.a.client.core.getTopicSnapshot
 import com.storyteller_f.a.client.core.pinTopic
 import com.storyteller_f.a.client.core.removeFavorite
+import com.storyteller_f.a.client.core.removeSubscription
 import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -130,6 +137,46 @@ private fun TopicDialogMenuList(topicInfo: TopicInfo, dismissDialog: () -> Unit)
         TopicPinButton(topicInfo, dismissDialog)
         TranslateButton(content, topicInfo)
         FavoriteButton(topicInfo)
+        SubscriptionButton(topicInfo)
+    }
+}
+
+@Composable
+fun SubscriptionButton(topicInfo: TopicInfo) {
+    val sessionManager = LocalSessionManager.current
+    val dialogController = LocalGlobalTask.current
+    val scope = rememberCoroutineScope()
+    val subscriptionId = topicInfo.subscriptionId
+    val taskId = "subscription-${topicInfo.id}"
+    val state = dialogController.stateMap[taskId]
+    val icon = if (state is LoadingState.Loading) {
+        IconRes.Loading
+    } else if (subscriptionId != null) {
+        IconRes.Vector(Icons.Default.NotificationsActive)
+    } else {
+        IconRes.Vector(Icons.Default.NotificationsOff)
+    }
+    ButtonNav(icon, "Subscription") {
+        scope.launch {
+            dialogController.use(taskId) { state, bus ->
+                state.use {
+                    if (subscriptionId != null) {
+                        sessionManager.removeSubscription(subscriptionId).onSuccess {
+                            bus.emit(OnRemoveSubscription(topicInfo.tuple()))
+                        }
+                    } else {
+                        sessionManager.addSubscription(
+                            NewSubscription(
+                                topicInfo.id,
+                                ObjectType.TOPIC
+                            )
+                        ).onSuccess {
+                            bus.emit(OnAddSubscription(it))
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -139,7 +186,8 @@ private fun FavoriteButton(topicInfo: TopicInfo) {
     val dialogController = LocalGlobalTask.current
     val scope = rememberCoroutineScope()
     val favoriteId = topicInfo.favoriteId
-    val state = dialogController.stateMap["favorite-${topicInfo.id}"]
+    val taskId = "favorite-${topicInfo.id}"
+    val state = dialogController.stateMap[taskId]
     val icon = if (state is LoadingState.Loading) {
         IconRes.Loading
     } else if (favoriteId != null) {
@@ -149,16 +197,17 @@ private fun FavoriteButton(topicInfo: TopicInfo) {
     }
     ButtonNav(icon, "Favorite") {
         scope.launch {
-            dialogController.use("favorite-${topicInfo.id}") { state, bus ->
+            dialogController.use(taskId) { state, bus ->
                 state.use {
                     if (favoriteId != null) {
                         sessionManager.removeFavorite(favoriteId).onSuccess {
                             bus.emit(OnRemoveFavorite(topicInfo.tuple()))
                         }
                     } else {
-                        sessionManager.addFavorite(NewFavorite(ObjectType.TOPIC, topicInfo.id)).onSuccess {
-                            bus.emit(OnAddFavorite(it))
-                        }
+                        sessionManager.addFavorite(NewFavorite(ObjectType.TOPIC, topicInfo.id))
+                            .onSuccess {
+                                bus.emit(OnAddFavorite(it))
+                            }
                     }
                 }
             }

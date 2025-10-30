@@ -121,7 +121,7 @@ class AddPreset : Subcommand("add", "add entry") {
         accounts.forEach {
             val id = SnowflakeFactory.nextId()
             val (derPublicKey, ad) = getPubKeyAndAddress(parentDir, it.privateKey)
-            combinedDatabase.panelAccountDatabase.addPanelAccount(
+            database.panelAccount.addPanelAccount(
                 PanelAccount(id, it.name, PassType.RAW, AlgoType.P256, derPublicKey, ad)
             ).getOrThrow()
         }
@@ -135,7 +135,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "titles count ${presetValue.titleData?.size}"
         }
         val userMap =
-            combinedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(titles.flatMap {
+            database.user.getRawUsers(ObjectListFetch.AidListFetch(titles.flatMap {
                 buildList {
                     addAll(listOf(it.creator, it.uid))
                     if (it.scopeType == ObjectType.USER) {
@@ -145,7 +145,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }.distinct())).getOrThrow().associate {
                 it.user.aid!! to it.user
             }
-        val communityMap = combinedDatabase.communityDatabase.getRawCommunities(
+        val communityMap = database.community.getRawCommunities(
             ObjectListFetch.AidListFetch(
                 titles.filter {
                     it.scopeType == ObjectType.COMMUNITY
@@ -156,7 +156,7 @@ class AddPreset : Subcommand("add", "add entry") {
         ).getOrThrow().associate {
             it.community.aid to it.community
         }
-        val roomMap = combinedDatabase.roomDatabase.getRawRooms(
+        val roomMap = database.room.getRawRooms(
             ObjectListFetch.AidListFetch(
                 titles.filter {
                     it.scopeType == ObjectType.ROOM
@@ -209,7 +209,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 false,
                 1
             )
-            combinedDatabase.topicDatabase.createTitle(title, topic).getOrThrow()
+            database.topic.createTitle(title, topic).getOrThrow()
         }
     }
 
@@ -219,7 +219,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "files count ${presetValue.fileData?.size}"
         }
         val userMap =
-            combinedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(files.map {
+            database.user.getRawUsers(ObjectListFetch.AidListFetch(files.map {
                 it.owner
             }.distinct())).getOrThrow().associate {
                 it.user.aid!! to it.user
@@ -279,7 +279,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "rooms count ${presetValue.roomData?.size}"
         }
         val (roomList, membersList) = getRoomsData(l, parentDir)
-        combinedDatabase.cliDatabase.batchAddRooms(roomList, membersList)
+        database.cli.batchAddRooms(roomList, membersList)
         roomSearchService.saveDocument(roomList.map {
             RoomDocument.fromRoom(it)
         })
@@ -291,7 +291,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val data = presetValue.topicData!!
         val userMap =
-            combinedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(data.map {
+            database.user.getRawUsers(ObjectListFetch.AidListFetch(data.map {
                 it.author
             }.distinct())).getOrThrow().associate {
                 it.user.aid!! to it.user
@@ -317,7 +317,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "users count ${presetValue.userData?.size}"
         }
         val users = getUserData(userList, parentDir)
-        combinedDatabase.cliDatabase.batchAddUser(users)
+        database.cli.batchAddUser(users)
         userSearchService.saveDocument(users.map {
             UserDocument.fromUser(it)
         })
@@ -345,7 +345,7 @@ class AddPreset : Subcommand("add", "add entry") {
             InsertCommunityTuple(it, iconMedia, id, fontMedia)
         }
         val userMap =
-            combinedDatabase.userDatabase.getRawUsers(ObjectListFetch.AidListFetch(data.flatMap {
+            database.user.getRawUsers(ObjectListFetch.AidListFetch(data.flatMap {
                 it.community.users.orEmpty() + (it.community.admin ?: "System")
             }.distinct())).getOrThrow().associate {
                 it.user.aid to it.user
@@ -361,7 +361,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 fontId = it.font,
             )
         }
-        combinedDatabase.cliDatabase.batchAddCommunities(communities, data.map {
+        database.cli.batchAddCommunities(communities, data.map {
             it.id to it.community.users?.map { s ->
                 userMap[s]!!.id
             }.orEmpty() + userMap["System"]!!.id
@@ -370,7 +370,7 @@ class AddPreset : Subcommand("add", "add entry") {
             CommunityDocument.fromCommunity(it)
         })
         communities.map {
-            combinedDatabase.communityDatabase.createCommunityRooms(getCommunityRoomsTemplateList(it))
+            database.community.createCommunityRooms(getCommunityRoomsTemplateList(it))
                 .getOrThrow()
         }
     }
@@ -382,7 +382,7 @@ class AddPreset : Subcommand("add", "add entry") {
         objectType: ObjectType,
     ) {
         val communityMap =
-            combinedDatabase.communityDatabase.getRawCommunities(ObjectListFetch.AidListFetch(list.mapNotNull {
+            database.community.getRawCommunities(ObjectListFetch.AidListFetch(list.mapNotNull {
                 it.community
             })).getOrThrow().associate {
                 it.community.aid to it.community.id
@@ -411,7 +411,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 rootId
             )
         }
-        combinedDatabase.cliDatabase.batchAddTopics(tuples, userMap, objectType)
+        database.cli.batchAddTopics(tuples, userMap, objectType)
         topicSearchService.saveDocument(
             tuples.mapIndexed { index, topicTuple ->
                 val level = topicTuple.level
@@ -496,7 +496,7 @@ class AddPreset : Subcommand("add", "add entry") {
             Triple(it, s, id)
         }
 
-        val userMap = combinedDatabase.userDatabase.getRawUsers(
+        val userMap = database.user.getRawUsers(
             ObjectListFetch.AidListFetch(l.flatMap {
                 it.users + it.admin
             }.distinct())
@@ -505,7 +505,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
 
         val communityMap =
-            combinedDatabase.communityDatabase.getRawCommunities(ObjectListFetch.AidListFetch(l.mapNotNull {
+            database.community.getRawCommunities(ObjectListFetch.AidListFetch(l.mapNotNull {
                 it.community
             }.distinct())).getOrThrow().associate {
                 it.community.aid to it.community
@@ -533,7 +533,7 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File,
     ) {
         val roomMap =
-            combinedDatabase.roomDatabase.getRoomList(ObjectListFetch.AidListFetch(list.mapNotNull {
+            database.room.getRoomList(ObjectListFetch.AidListFetch(list.mapNotNull {
                 it.room
             })).getOrThrow().associateBy { it.aid }
         insertEncryptedTopicToRoom(parentDir, roomMap, list.filter {
@@ -564,7 +564,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             InsertTopicTuple(addTopic.first, index, l, id, content, false, rootId)
         }
-        combinedDatabase.cliDatabase.batchAddTopics(tuples, userMap, ObjectType.ROOM)
+        database.cli.batchAddTopics(tuples, userMap, ObjectType.ROOM)
         topicSearchService.saveDocument(
             publicRoomList.mapIndexed { index, first ->
                 val level = first.level
@@ -599,7 +599,7 @@ class AddPreset : Subcommand("add", "add entry") {
         uploadFile(author, ObjectType.USER, parentDir, mediaLink.map {
             "medias/topics/$it"
         })
-        combinedDatabase.fileDatabase.insertFileRefs(topicId, ObjectType.TOPIC, mediaLink.map {
+        database.file.insertFileRefs(topicId, ObjectType.TOPIC, mediaLink.map {
             author to it
         })
     }
@@ -614,7 +614,7 @@ class AddPreset : Subcommand("add", "add entry") {
             it.room
         }.distinct()
         val roomMembers =
-            combinedDatabase.cliDatabase.getAllMembers(roomAids).getOrThrow().groupBy {
+            database.cli.getAllMembers(roomAids).getOrThrow().groupBy {
                 it.third
             }
         val encryptedContents = privateRoomList.map {
@@ -647,7 +647,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             InsertTopicTuple(tuple.presetTopic, index, level1, id, content, true, rootId)
         }
-        combinedDatabase.cliDatabase.batchAddEncryptTopics(tuples, userMap, roomMap, encryptedKeys)
+        database.cli.batchAddEncryptTopics(tuples, userMap, roomMap, encryptedKeys)
         privateRoomList.forEach { topic ->
             val room = roomMap[topic.room]
             if (room != null) {

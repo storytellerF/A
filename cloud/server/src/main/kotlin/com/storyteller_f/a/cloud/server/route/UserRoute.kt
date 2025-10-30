@@ -9,7 +9,7 @@ import com.storyteller_f.a.cloud.core.service.addReadLog
 import com.storyteller_f.a.cloud.core.service.addSubscription
 import com.storyteller_f.a.cloud.core.service.deleteFavorite
 import com.storyteller_f.a.cloud.core.service.getFavorites
-import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
+import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.getUserInfo
 import com.storyteller_f.a.cloud.core.service.getUserSubscriptions
 import com.storyteller_f.a.cloud.core.service.getUserTitles
@@ -98,7 +98,7 @@ fun Route.bindUserRoute(backend: Backend) {
     CustomApi.Users.Id.Topics.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
-                backend.getTopLevelTopicsInObject(
+                backend.getTopicsByParentId(
                     p.id,
                     ObjectType.USER,
                     uid,

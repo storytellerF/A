@@ -7,9 +7,9 @@ import com.storyteller_f.a.cloud.core.service.addReaction
 import com.storyteller_f.a.cloud.core.service.createPlainTopic
 import com.storyteller_f.a.cloud.core.service.createTopicSnapshot
 import com.storyteller_f.a.cloud.core.service.deleteReaction
-import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
 import com.storyteller_f.a.cloud.core.service.getTopic
 import com.storyteller_f.a.cloud.core.service.getTopicByAid
+import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.reactionList
 import com.storyteller_f.a.cloud.core.service.recommendTopics
 import com.storyteller_f.a.cloud.core.service.searchPublicTopics
@@ -62,7 +62,7 @@ fun Route.bindTopicRoute(backend: Backend) {
     CustomApi.Topics.Id.Topics.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
-                backend.getTopLevelTopicsInObject(
+                backend.getTopicsByParentId(
                     p.id,
                     ObjectType.TOPIC,
                     uid,

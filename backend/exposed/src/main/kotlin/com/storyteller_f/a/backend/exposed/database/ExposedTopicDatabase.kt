@@ -133,10 +133,10 @@ class ExposedTopicDatabase(
         primaryKeyFetch: PrimaryKeyFetch,
         extraQuery: Query.() -> Query,
     ) = runCatching {
-        val r1 = getTopicInfoListByPredicate(uid) {
+        val rawTopics = getTopicInfoListByPredicate(uid) {
             extraQuery().bindPaginationQuery(Topics, primaryKeyFetch)
         }.getOrThrow()
-        val r2 = databaseSession.dbSearch {
+        val total = databaseSession.dbSearch {
             search {
                 Topics
                     .selectAll()
@@ -144,18 +144,15 @@ class ExposedTopicDatabase(
             }
             count()
         }.getOrThrow()
-        PaginationResult(r1, r2)
+        PaginationResult(rawTopics, total)
     }
 
-    override suspend fun getSubRawTopic(
+    override suspend fun getRawTopicByParentId(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         parentId: PrimaryKey,
         pinType: TopicPinSearch?
-    ) = getTopicInfoPaginationByPredicate(
-        uid,
-        primaryKeyFetch
-    ) { ->
+    ) = getTopicInfoPaginationByPredicate(uid, primaryKeyFetch) { ->
         where {
             Topics.parentId eq parentId
         }
@@ -274,6 +271,7 @@ class ExposedTopicDatabase(
         val topicIds = topics.map {
             it.id
         }
+        if (topicIds.isEmpty()) return Result.success(emptyList())
         return runCatching {
             val commentedMap = getUserCommentMap(uid, topicIds)
             val commentCountMap = getCommentCountMap(topicIds)
@@ -669,6 +667,7 @@ class ExposedTopicDatabase(
             UserFavorite.wrapRow(it)
         }
     }
+
     suspend fun getHasSubscription(
         idList: ObjectListFetch.IdListFetch,
         uid: PrimaryKey

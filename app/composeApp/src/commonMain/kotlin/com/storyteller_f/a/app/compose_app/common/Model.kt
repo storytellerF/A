@@ -39,6 +39,7 @@ import com.storyteller_f.a.client.core.getRecommendTopics
 import com.storyteller_f.a.client.core.getRoomInfo
 import com.storyteller_f.a.client.core.getRoomInfoByAid
 import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
+import com.storyteller_f.a.client.core.getSubscriptions
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getTopicInfoByAid
 import com.storyteller_f.a.client.core.getTopicList
@@ -68,6 +69,7 @@ import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserPubKeyInfo
+import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
@@ -87,6 +89,7 @@ import com.storyteller_f.storage.UploadCollection
 import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.UserFavoriteCollection
+import com.storyteller_f.storage.UserSubscriptionCollection
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
 import kotlinx.coroutines.CoroutineScope
@@ -124,6 +127,9 @@ data class OnRemoveReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
 data class OnAddFavorite(val info: UserFavoriteInfo)
 data class OnRemoveFavorite(val objectTuple: ObjectTuple)
 
+data class OnAddSubscription(val info: UserSubscriptionInfo)
+data class OnRemoveSubscription(val objectTuple: ObjectTuple)
+
 abstract class CommunityViewModel :
     SimpleViewModel<CommunityInfo>() {
     val dialog = DialogSaveState()
@@ -138,10 +144,10 @@ class IdCommunityViewModel(
     val modelCollection = CommunityCollection.Communities
     override val handler: LoadingHandler<CommunityInfo> =
         CachedLoadingHandler(
-            modelStorage.communityInfoStorage.observeDatum(communityId),
+            modelStorage.community.observeDatum(communityId),
             viewModelScope,
             { t ->
-                modelStorage.communityInfoStorage.save(modelCollection, t)
+                modelStorage.community.save(modelCollection, t)
             }
         ) { sessionManager.getCommunityInfo(communityId) }
 }
@@ -155,10 +161,10 @@ class AidCommunityViewModel(
     val modelCollection = CommunityCollection.Communities
     override val handler: LoadingHandler<CommunityInfo> =
         CachedLoadingHandler(
-            modelStorage.communityInfoStorage.observeDatum(aid),
+            modelStorage.community.observeDatum(aid),
             viewModelScope,
             { t ->
-                modelStorage.communityInfoStorage.save(modelCollection, t)
+                modelStorage.community.save(modelCollection, t)
             }
         ) { sessionManager.getCommunityInfoByAid(aid) }
 }
@@ -208,15 +214,15 @@ class CommunitiesViewModel(
             ),
         ) { data, clean ->
             if (clean) {
-                modelStorage.communityInfoStorage.clean(modelCollection)
+                modelStorage.community.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.communityInfoStorage.save(modelCollection, it)
+                modelStorage.community.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.communityInfoStorage.observeData(modelCollection),
+            modelStorage.community.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -242,15 +248,15 @@ class RoomsViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.roomInfoStorage.clean(modelCollection)
+                modelStorage.room.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.roomInfoStorage.save(modelCollection, it)
+                modelStorage.room.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.roomInfoStorage.observeData(modelCollection),
+            modelStorage.room.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -282,15 +288,15 @@ class WorldViewModel(
             ),
         ) { data, clean ->
             if (clean) {
-                modelStorage.topicInfoStorage.clean(modelCollection)
+                modelStorage.topic.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.topicInfoStorage.save(modelCollection, it)
+                modelStorage.topic.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.topicInfoStorage.observeData(modelCollection),
+            modelStorage.topic.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.map {
@@ -340,17 +346,17 @@ class TopicsViewModel(
             ),
         ) { data, refresh ->
             if (refresh) {
-                modelStorage.topicInfoStorage.clean(modelCollection)
+                modelStorage.topic.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.topicInfoStorage.save(modelCollection, it)
+                modelStorage.topic.save(modelCollection, it)
             }
         },
     ) {
 
         WrappedPagingSource(
             CompatPagingSource(
-                modelStorage.topicInfoStorage.observeData(
+                modelStorage.topic.observeData(
                     modelCollection,
                 ),
                 IntKeyConverter
@@ -392,12 +398,12 @@ class IdRoomViewModel(
     val modelCollection = RoomCollection.Rooms
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
-            modelStorage.roomInfoStorage.observeDatum(
+            modelStorage.room.observeDatum(
                 communityId
             ),
             viewModelScope,
             { t ->
-                modelStorage.roomInfoStorage.save(modelCollection, t)
+                modelStorage.room.save(modelCollection, t)
             }
         ) {
             sessionManager.getRoomInfo(communityId)
@@ -412,10 +418,10 @@ class AidRoomViewModel(
     val modelCollection = RoomCollection.Rooms
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
-            modelStorage.roomInfoStorage.observeDatum(aid),
+            modelStorage.room.observeDatum(aid),
             viewModelScope,
             { t ->
-                modelStorage.roomInfoStorage.save(modelCollection, t)
+                modelStorage.room.save(modelCollection, t)
             }
         ) {
             sessionManager.getRoomInfoByAid(aid)
@@ -443,15 +449,15 @@ class TopicSearchViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.topicInfoStorage.clean(modelCollection)
+                modelStorage.topic.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.topicInfoStorage.save(modelCollection, it)
+                modelStorage.topic.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.topicInfoStorage.observeData(modelCollection),
+            modelStorage.topic.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -477,15 +483,15 @@ class MediaListViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.fileInfoStorage.clean(modelCollection)
+                modelStorage.fileInfo.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.fileInfoStorage.save(modelCollection, it)
+                modelStorage.fileInfo.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.fileInfoStorage.observeData(modelCollection),
+            modelStorage.fileInfo.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -503,10 +509,10 @@ class IdUserViewModel(
     val modelCollection = UserCollection.Users
     override val handler: LoadingHandler<UserInfo> =
         CachedLoadingHandler(
-            modelStorage.userInfoStorage.observeDatum(id),
+            modelStorage.user.observeDatum(id),
             viewModelScope,
             { t ->
-                modelStorage.userInfoStorage.save(modelCollection, t)
+                modelStorage.user.save(modelCollection, t)
             }
         ) {
             sessionManager.getUserInfo(id)
@@ -521,10 +527,10 @@ class AidUserViewModel(
     val modelCollection = UserCollection.Users
     override val handler: LoadingHandler<UserInfo> =
         CachedLoadingHandler(
-            modelStorage.userInfoStorage.observeDatum(aid),
+            modelStorage.user.observeDatum(aid),
             viewModelScope,
             { t ->
-                modelStorage.userInfoStorage.save(modelCollection, t)
+                modelStorage.user.save(modelCollection, t)
             }
         ) {
             sessionManager.getUserInfoByAid(aid)
@@ -558,15 +564,15 @@ class MemberViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.userInfoStorage.clean(modelCollection)
+                modelStorage.user.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.userInfoStorage.save(modelCollection, it)
+                modelStorage.user.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.userInfoStorage.observeData(modelCollection),
+            modelStorage.user.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -590,15 +596,15 @@ class ReactionsViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.reactionInfoStorage.clean(modelCollection)
+                modelStorage.reaction.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.reactionInfoStorage.save(modelCollection, it)
+                modelStorage.reaction.save(modelCollection, it)
             }
         }
     ) {
         CompatPagingSource(
-            modelStorage.reactionInfoStorage.observeData(modelCollection),
+            modelStorage.reaction.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -616,10 +622,10 @@ class IdTopicViewModel(
     val modelCollection = TopicCollection.Topics
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
-            modelStorage.topicInfoStorage.observeDatum(topicId),
+            modelStorage.topic.observeDatum(topicId),
             viewModelScope,
             { t ->
-                modelStorage.topicInfoStorage.save(modelCollection, t)
+                modelStorage.topic.save(modelCollection, t)
             }
         ) {
             sessionManager.getTopicInfo(topicId).map {
@@ -637,10 +643,10 @@ class AidTopicViewModel(
     val modelCollection = TopicCollection.Topics
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
-            modelStorage.topicInfoStorage.observeDatum(aid),
+            modelStorage.topic.observeDatum(aid),
             viewModelScope,
             { t ->
-                modelStorage.topicInfoStorage.save(modelCollection, t)
+                modelStorage.topic.save(modelCollection, t)
             }
         ) {
             sessionManager.getTopicInfoByAid(aid)
@@ -698,15 +704,15 @@ class TitlesViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.titleInfoStorage.clean(modelCollection)
+                modelStorage.title.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.titleInfoStorage.save(modelCollection, it)
+                modelStorage.title.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.titleInfoStorage.observeData(modelCollection),
+            modelStorage.title.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -734,7 +740,7 @@ class UploadViewModel(
     modelStorage: ModelStorage,
 ) : PagingViewModel<UploadInfo>() {
     override val flow = Pager(PagingConfig(10)) {
-        modelStorage.uploadInfoStorage.observeData(
+        modelStorage.upload.observeData(
             UploadCollection(myUid)
         )
     }.flow.cachedIn(viewModelScope)
@@ -766,7 +772,7 @@ class DownloadViewModel(
     fileId: PrimaryKey?,
 ) : ViewModel() {
     val data =
-        fileId?.let { modelStorage.downloadInfoStorage.observeDatum(it) } ?: MutableStateFlow(null)
+        fileId?.let { modelStorage.download.observeDatum(it) } ?: MutableStateFlow(null)
 
     val fontFamily = data.distinctUntilChanged { t1, t2 ->
         t1?.status == t2?.status
@@ -813,15 +819,15 @@ class ChildAccountsViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.childAccountStorage.clean(modelCollection)
+                modelStorage.childAccount.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.childAccountStorage.save(modelCollection, it)
+                modelStorage.childAccount.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.childAccountStorage.observeData(modelCollection),
+            modelStorage.childAccount.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -866,15 +872,44 @@ class FavoritesViewModel(sessionManager: UserSessionManager, modelStorage: Model
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.favoriteStorage.clean(modelCollection)
+                modelStorage.favorite.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.favoriteStorage.save(modelCollection, it)
+                modelStorage.favorite.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.favoriteStorage.observeData(modelCollection),
+            modelStorage.favorite.observeData(modelCollection),
+            IntKeyConverter
+        )
+    }.flow.cachedIn(viewModelScope)
+}
+
+class SubscriptionsViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage) :
+    PagingViewModel<UserSubscriptionInfo>() {
+    val modelCollection = UserSubscriptionCollection
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<UserSubscriptionInfo>> = Pager(
+        PagingConfig(pageSize = 20),
+        remoteMediator = CustomRemoteMediator(
+            modelStorage,
+            modelCollection.NAME,
+            RegularPagingSource { key, size ->
+                sessionManager.getSubscriptions(PaginationQuery(key, size = size))
+            },
+        ) { data, clean ->
+            if (clean) {
+                modelStorage.subscription.clean(modelCollection)
+            }
+            data.forEach {
+                modelStorage.subscription.save(modelCollection, it)
+            }
+        },
+    ) {
+        CompatPagingSource(
+            modelStorage.subscription.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)

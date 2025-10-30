@@ -12,6 +12,7 @@ import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.ChildAccountCollection
 import com.storyteller_f.storage.ChildAccountStorage
@@ -44,6 +45,8 @@ import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.UserFavoriteCollection
 import com.storyteller_f.storage.UserFavoriteStorage
 import com.storyteller_f.storage.UserInfoStorage
+import com.storyteller_f.storage.UserSubscriptionCollection
+import com.storyteller_f.storage.UserSubscriptionStorage
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
 import kotlinx.coroutines.flow.Flow
@@ -529,20 +532,45 @@ class UserFavoriteRoomStorage(val appDatabase: AppDatabase) : UserFavoriteStorag
     }
 }
 
+class UserSubscriptionRoomStorage(val appDatabase: AppDatabase) : UserSubscriptionStorage {
+    val impl = CommonStorageImpl(appDatabase)
+
+    override suspend fun save(
+        collection: UserSubscriptionCollection,
+        subscriptionInfo: UserSubscriptionInfo
+    ) {
+        val data = commonJson.encodeToString(subscriptionInfo)
+        appDatabase.getCommonDao().insert(CommonEntity(subscriptionInfo.id, collection.NAME, data))
+    }
+
+    override fun observeData(collection: UserSubscriptionCollection): PagingSource<Int, UserSubscriptionInfo> {
+        return impl.observeData(collection.NAME)
+    }
+
+    override fun observeDatum(id: String): Flow<UserSubscriptionInfo?> {
+        return impl.observeDatum(UserSubscriptionCollection.NAME, id)
+    }
+
+    override suspend fun clean(collection: UserSubscriptionCollection) {
+        return impl.clean(collection.NAME)
+    }
+}
+
 class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
-    override val userInfoStorage: UserInfoStorage = UserRoomInfoStorage(appDatabase)
-    override val communityInfoStorage: CommunityInfoStorage = CommunityRoomInfoStorage(appDatabase)
-    override val topicInfoStorage: TopicInfoStorage = TopicRoomInfoStorage(appDatabase)
-    override val titleInfoStorage: TitleInfoStorage = TitleRoomInfoStorage(appDatabase)
-    override val roomInfoStorage: RoomInfoStorage = RoomRoomInfoStorage(appDatabase)
-    override val remoteKeyStorage: RemoteKeyStorage = RemoteKeyRoomStorage(appDatabase)
-    override val reactionInfoStorage: ReactionInfoStorage = ReactionRoomInfoStorage(appDatabase)
-    override val childAccountStorage: ChildAccountStorage = ChildAccountRoomStorage(appDatabase)
-    override val fileInfoStorage: FileInfoStorage = FileInfoRoomStorage(appDatabase)
-    override val downloadInfoStorage: DownloadInfoStorage = DownloadInfoRoomStorage(appDatabase)
-    override val uploadInfoStorage: UploadInfoStorage = UploadInfoRoomStorage(appDatabase)
-    override val overviewStorage: OverviewStorage = OverviewRoomStorage(appDatabase)
-    override val favoriteStorage: UserFavoriteStorage = UserFavoriteRoomStorage(appDatabase)
+    override val user: UserInfoStorage = UserRoomInfoStorage(appDatabase)
+    override val community: CommunityInfoStorage = CommunityRoomInfoStorage(appDatabase)
+    override val topic: TopicInfoStorage = TopicRoomInfoStorage(appDatabase)
+    override val title: TitleInfoStorage = TitleRoomInfoStorage(appDatabase)
+    override val room: RoomInfoStorage = RoomRoomInfoStorage(appDatabase)
+    override val remoteKey: RemoteKeyStorage = RemoteKeyRoomStorage(appDatabase)
+    override val reaction: ReactionInfoStorage = ReactionRoomInfoStorage(appDatabase)
+    override val childAccount: ChildAccountStorage = ChildAccountRoomStorage(appDatabase)
+    override val fileInfo: FileInfoStorage = FileInfoRoomStorage(appDatabase)
+    override val download: DownloadInfoStorage = DownloadInfoRoomStorage(appDatabase)
+    override val upload: UploadInfoStorage = UploadInfoRoomStorage(appDatabase)
+    override val overview: OverviewStorage = OverviewRoomStorage(appDatabase)
+    override val favorite: UserFavoriteStorage = UserFavoriteRoomStorage(appDatabase)
+    override val subscription: UserSubscriptionStorage = UserSubscriptionRoomStorage(appDatabase)
 }
 
 fun getRoomModelStorage(name: String) = RoomModelStorage(getRoomDatabase(name))

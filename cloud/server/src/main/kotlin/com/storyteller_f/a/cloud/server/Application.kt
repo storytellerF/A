@@ -156,9 +156,9 @@ fun Application.module() {
     }
     runBlocking {
         if (backend.customConfig.buildType == "test") {
-            backend.combinedDatabase.init()
+            backend.database.init()
         }
-        backend.combinedDatabase.init()
+        backend.database.init()
     }
     startNewMessageTask(backend)
     configurePlugin(reader, backend)
@@ -397,7 +397,7 @@ class ServerBackend(
     override val userSearchService: UserSearchService,
     override val objectStorageService: ObjectStorageService,
     override val nameService: NameService,
-    override val combinedDatabase: CombinedDatabase
+    override val database: CombinedDatabase
 ) : Backend
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {

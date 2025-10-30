@@ -13,6 +13,7 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.ROOM_NAME_LENGTH
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
@@ -43,9 +44,9 @@ suspend fun Backend.getRoomPubKeys(
     roomId: PrimaryKey,
     userId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
-) = combinedDatabase.containerDatabase.isMemberJoined(roomId, userId).mapResult {
+) = database.container.isMemberJoined(roomId, userId).mapResult {
     if (it) {
-        combinedDatabase.roomDatabase.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
+        database.room.getRoomPubKeyPaginationResult(roomId, primaryKeyFetch)
     } else {
         Result.failure(ForbiddenException("Permission denied"))
     }
@@ -61,7 +62,7 @@ suspend fun Backend.joinRoom(
         val communityId = roomInfo.communityId
         if (communityId == null) {
             // 检查是否存在title
-            combinedDatabase.titleDatabase.getTitlePaginationResult(
+            database.title.getTitlePaginationResult(
                 PrimaryKeyFetch(null, 1),
                 uid,
                 TitleSearchType.RECEIVER,
@@ -75,7 +76,7 @@ suspend fun Backend.joinRoom(
                 }
             }
         } else {
-            combinedDatabase.containerDatabase.isMemberJoined(communityId, uid).errorIfFalse {
+            database.container.isMemberJoined(communityId, uid).errorIfFalse {
                 ForbiddenException("you should join community first.")
             }
         }
@@ -89,7 +90,7 @@ private suspend fun Backend.directJoinRoom(
     roomInfo: RoomInfo,
 ): Result<RoomInfo?> {
     val time = now()
-    return combinedDatabase.containerDatabase.joinContainer(
+    return database.container.joinContainer(
         roomInfo.id,
         uid,
         time,
@@ -98,7 +99,7 @@ private suspend fun Backend.directJoinRoom(
         addUserLog(uid, UserLogType.JOIN, roomInfo.tuple())
         Result.success(roomInfo.copy(joinedTime = time))
     }.recoverResult { exception ->
-        if (combinedDatabase.isDup(exception)) {
+        if (database.isDup(exception)) {
             getRoomInfo(ObjectFetch.IdFetch(roomInfo.id), uid, true)
         } else {
             Result.failure(exception)
@@ -111,7 +112,7 @@ suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            combinedDatabase.containerDatabase.exitContainer(roomId, uid).map {
+            database.container.exitContainer(roomId, uid).map {
                 addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
                 info.copy(joinedTime = null)
             }
@@ -122,7 +123,7 @@ suspend fun Backend.getRoomInfo(
     objectFetch: ObjectFetch,
     uid: PrimaryKey?,
     fillJoinInfo: Boolean?,
-) = combinedDatabase.roomDatabase.getRawRoom(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
+) = database.room.getRawRoom(objectFetch, fillJoinInfo, uid).mapResultIfNotNull {
     processRawRoomToRoomInfo(listOf(it)).mapIfNotNull(List<RoomInfo>::first)
 }
 
@@ -156,7 +157,7 @@ suspend fun Backend.createRoom(
         val roomId = SnowflakeFactory.nextId()
         val room =
             Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
-        combinedDatabase.roomDatabase.createRoom(room).map {
+        database.room.createRoom(room).map {
             roomSearchService.saveDocument(listOf(RoomDocument.fromRoom(room))).onFailure {
                 Napier.e(it) {
                     "save room document failed"
@@ -181,34 +182,38 @@ suspend fun Backend.updateRoom(
     val newRoom = old.copy(name = old.name?.trim(), icon = old.icon)
     return checkRootAdminPermission(ObjectType.ROOM, id, uid).mapResultIfNotNull { permission ->
         runCatching {
-            when (checkNickname(newRoom.name, 1..COMMUNITY_NAME_LENGTH)) {
-                StringCheckResult.RANGE_MISMATCH -> Result.failure(
-                    CustomBadRequestException("community name must be between in 1 and 20")
-                )
-
-                else -> UNIT_RESULT
-            }.getOrThrow()
-            checkIcon(newRoom.icon, Dimension(1, 1)).mapResult { checkResult ->
-                when (checkResult) {
-                    MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
-                    MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
-                        CustomBadRequestException("only support image")
-                    )
-
-                    MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
-                        CustomBadRequestException("dimension mismatch")
-                    )
-
-                    else -> UNIT_RESULT
-                }
-            }.getOrThrow()
+            checkRoomName(newRoom).getOrThrow()
+            checkRoomIcon(newRoom).getOrThrow()
         }
     }.mapResultIfNotNull {
-        combinedDatabase.roomDatabase.updateRoom(id, newRoom)
+        database.room.updateRoom(id, newRoom)
     }.mapResultIfNotNull {
         getRoomInfo(ObjectFetch.IdFetch(id), uid, true)
     }
 }
+
+private suspend fun Backend.checkRoomIcon(newRoom: UpdateRoomBody): Result<Unit> =
+    checkIcon(newRoom.icon, Dimension.ROOM_DIMENSION).mapResult { checkResult ->
+        when (checkResult) {
+            MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
+            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
+                CustomBadRequestException("only support image")
+            )
+
+            MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
+                CustomBadRequestException("dimension mismatch")
+            )
+
+            else -> UNIT_RESULT
+        }
+    }
+
+private fun checkRoomName(newRoom: UpdateRoomBody): Result<Unit> =
+    if (checkNickname(newRoom.name, 1..ROOM_NAME_LENGTH) == StringCheckResult.RANGE_MISMATCH) {
+        Result.failure(CustomBadRequestException("community name must be between in 1 and 20"))
+    } else {
+        UNIT_RESULT
+    }
 
 suspend fun searchRoomMembers(
     backend: Backend,
@@ -234,7 +239,7 @@ suspend fun Backend.searchRoomPaginationResult(
     val search = query.joinStatus.toJoinSearch(uid)
     val community = query.community
     return if (word.isNullOrBlank() || search !is JoinSearch.Unspecified) {
-        combinedDatabase.roomDatabase.getRoomPaginationResult(
+        database.room.getRoomPaginationResult(
             uid,
             word,
             community,
@@ -244,7 +249,7 @@ suspend fun Backend.searchRoomPaginationResult(
     } else {
         roomSearchService.searchDocument(RoomDocumentSearch.Keyword(listOf(word)), primaryKeyFetch)
             .mapResult { (list, total) ->
-                combinedDatabase.roomDatabase.getRawRooms(ObjectListFetch.IdListFetch(list.map {
+                database.room.getRawRooms(ObjectListFetch.IdListFetch(list.map {
                     it.id
                 })).map {
                     PaginationResult(it, total)
@@ -258,7 +263,7 @@ suspend fun Backend.searchRoomPaginationResult(
 }
 
 suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>) =
-    combinedDatabase.fileDatabase.getFileRecordByIds(list.mapNotNull {
+    database.file.getFileRecordByIds(list.mapNotNull {
         it.room.icon
     }).mapResult { medias ->
         processFileRecordToFileInfo(medias).map { mediaList ->
@@ -288,6 +293,6 @@ suspend fun getCommunityRoomsTemplateList(community: Community): List<Room> {
 }
 
 suspend fun Backend.getRoomInfoList(listFetch: ObjectListFetch.IdListFetch): Result<List<RoomInfo>> =
-    combinedDatabase.roomDatabase.getRawRooms(listFetch).mapResult {
+    database.room.getRawRooms(listFetch).mapResult {
         processRawRoomToRoomInfo(it)
     }

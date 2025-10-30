@@ -1,6 +1,7 @@
 package com.storyteller_f.a.app.compose_app.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -11,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.compontents.CommonImage
@@ -20,10 +22,11 @@ import com.storyteller_f.shared.utils.safeFirstUnicode
 @Composable
 fun RoomIcon(
     roomInfo: RoomInfo?,
-    size: Dp,
+    width: Dp,
     setClickEvent: Boolean,
     updateDialog: (Boolean) -> Unit
 ) {
+    val height = width * 3 / 4
     val iconUrl = roomInfo?.icon?.url
     val radius = 8.dp
     val shape = RoundedCornerShape(radius)
@@ -31,7 +34,7 @@ fun RoomIcon(
         CommonImage(
             iconUrl,
             contentDescription = "${roomInfo.name}'s icon",
-            modifier = Modifier.size(size).clip(shape).let {
+            modifier = Modifier.size(width, height).clip(shape).let {
                 if (setClickEvent) {
                     it.clickable {
                         updateDialog(true)
@@ -39,11 +42,11 @@ fun RoomIcon(
                 } else {
                     it
                 }
-            }
+            }.border(1.dp, Color.Gray, shape)
         )
     } else {
         Box(
-            modifier = Modifier.size(size)
+            modifier = Modifier.size(width, height)
                 .background(MaterialTheme.colorScheme.tertiaryContainer, shape)
                 .clip(shape)
                 .let {
@@ -54,7 +57,7 @@ fun RoomIcon(
                     } else {
                         it
                     }
-                },
+                }.border(1.dp, Color.Gray, shape),
             contentAlignment = Alignment.Center
         ) {
             Text(roomInfo?.name?.let { safeFirstUnicode(it) } ?: "")

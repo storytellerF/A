@@ -15,6 +15,7 @@ import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.flow.Flow
@@ -91,6 +92,10 @@ data object UserFavoriteCollection {
     const val NAME = "user-favorite"
 }
 
+data object UserSubscriptionCollection {
+    const val NAME = "user-subscription"
+}
+
 fun UserCollection.getName(): String {
     return when (this) {
         is UserCollection.SearchUser -> "users_$word"
@@ -141,19 +146,20 @@ fun TitleCollection.getName(): String {
 data class RemoteKeys(val collectionName: String, val key: String?)
 
 interface ModelStorage {
-    val userInfoStorage: UserInfoStorage
-    val communityInfoStorage: CommunityInfoStorage
-    val topicInfoStorage: TopicInfoStorage
-    val titleInfoStorage: TitleInfoStorage
-    val roomInfoStorage: RoomInfoStorage
-    val remoteKeyStorage: RemoteKeyStorage
-    val reactionInfoStorage: ReactionInfoStorage
-    val childAccountStorage: ChildAccountStorage
-    val fileInfoStorage: FileInfoStorage
-    val downloadInfoStorage: DownloadInfoStorage
-    val uploadInfoStorage: UploadInfoStorage
-    val overviewStorage: OverviewStorage
-    val favoriteStorage: UserFavoriteStorage
+    val user: UserInfoStorage
+    val community: CommunityInfoStorage
+    val topic: TopicInfoStorage
+    val title: TitleInfoStorage
+    val room: RoomInfoStorage
+    val remoteKey: RemoteKeyStorage
+    val reaction: ReactionInfoStorage
+    val childAccount: ChildAccountStorage
+    val fileInfo: FileInfoStorage
+    val download: DownloadInfoStorage
+    val upload: UploadInfoStorage
+    val overview: OverviewStorage
+    val favorite: UserFavoriteStorage
+    val subscription: UserSubscriptionStorage
 }
 
 interface UserInfoStorage {
@@ -238,6 +244,13 @@ interface UserFavoriteStorage {
     fun observeData(collection: UserFavoriteCollection): PagingSource<Int, UserFavoriteInfo>
     fun observeDatum(id: String): Flow<UserFavoriteInfo?>
     suspend fun clean(collection: UserFavoriteCollection)
+}
+
+interface UserSubscriptionStorage {
+    suspend fun save(collection: UserSubscriptionCollection, subscriptionInfo: UserSubscriptionInfo)
+    fun observeData(collection: UserSubscriptionCollection): PagingSource<Int, UserSubscriptionInfo>
+    fun observeDatum(id: String): Flow<UserSubscriptionInfo?>
+    suspend fun clean(collection: UserSubscriptionCollection)
 }
 
 interface RemoteKeyStorage {

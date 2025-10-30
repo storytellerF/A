@@ -486,6 +486,11 @@ fun getFavoriteViewModel() = customViewModel(listOf("favorite")) { sessionManage
 }
 
 @Composable
+fun getSubscriptionViewModel() = customViewModel(listOf("subscription")) { sessionManager, modelStorage ->
+    SubscriptionsViewModel(sessionManager, modelStorage)
+}
+
+@Composable
 inline fun <reified VM : ViewModel> customViewModel(
     keys: List<Comparable<*>?>? = null,
     crossinline factory: (CustomUserSessionManager, ModelStorage) -> VM

@@ -72,7 +72,7 @@ fun main() {
 
 private suspend fun Backend.doAcgTask() {
     getAcgTaskListFromTopics().mapResultIfNotNull { (acgList, userAcgMap, list) ->
-        combinedDatabase.userDatabase.addAcgForUser(
+        database.user.addAcgForUser(
             TaskRecord(
                 SnowflakeFactory.nextId(),
                 now(),
@@ -106,8 +106,8 @@ private suspend fun Backend.doAcgTask() {
 }
 
 private suspend fun Backend.getAcgTaskListFromTopics() =
-    combinedDatabase.userDatabase.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult { taskRecord ->
-        combinedDatabase.topicDatabase.getTopicList(PrimaryKeyFetch(taskRecord?.processedId?.let {
+    database.user.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult { taskRecord ->
+        database.topic.getTopicList(PrimaryKeyFetch(taskRecord?.processedId?.let {
             Cursor.PreCursor(it)
         }, 10))
     }.mapResult { list ->
@@ -120,7 +120,7 @@ private suspend fun Backend.getAcgTaskListFromTopics() =
             val uids = acgList.map {
                 it.first
             }
-            combinedDatabase.userDatabase.getUserAcgByIds(ObjectListFetch.IdListFetch(uids))
+            database.user.getUserAcgByIds(ObjectListFetch.IdListFetch(uids))
                 .map { list ->
                     list.associateByPair()
                 }.map { userAcgMap ->
@@ -139,7 +139,7 @@ class WorkerBackend(
     override val userSearchService: UserSearchService,
     override val objectStorageService: ObjectStorageService,
     override val nameService: NameService,
-    override val combinedDatabase: CombinedDatabase
+    override val database: CombinedDatabase
 ) : Backend
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {

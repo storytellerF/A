@@ -4,13 +4,13 @@ import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.shared.model.PanelOverview
 
 suspend fun Backend.getOverview() = runCatching {
-    val userCount = combinedDatabase.userDatabase.getUserCount().getOrThrow()
-    val topicCount = combinedDatabase.topicDatabase.getTopicCount().getOrThrow()
-    val communityCount = combinedDatabase.communityDatabase.getCommunityCount().getOrThrow()
-    val privateRoomCount = combinedDatabase.roomDatabase.getPrivateRoomCount().getOrThrow()
-    val publicRoomCount = combinedDatabase.roomDatabase.getPublicRoomCount().getOrThrow()
-    val fileCount = combinedDatabase.fileDatabase.getFileCount().getOrThrow()
-    val fileVolume = combinedDatabase.fileDatabase.getFileVolume().getOrThrow()
+    val userCount = database.user.getUserCount().getOrThrow()
+    val topicCount = database.topic.getTopicCount().getOrThrow()
+    val communityCount = database.community.getCommunityCount().getOrThrow()
+    val privateRoomCount = database.room.getPrivateRoomCount().getOrThrow()
+    val publicRoomCount = database.room.getPublicRoomCount().getOrThrow()
+    val fileCount = database.file.getFileCount().getOrThrow()
+    val fileVolume = database.file.getFileVolume().getOrThrow()
     PanelOverview(
         userCount,
         topicCount,

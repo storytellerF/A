@@ -25,7 +25,7 @@ suspend fun Backend.addReaction(
     topicId: PrimaryKey,
     emojiText: String
 ) = checkRootWritePermission(ObjectType.TOPIC, topicId, userId).mapResultIfNotNull {
-    combinedDatabase.topicDatabase.getReactionInfo(userId, topicId, emojiText)
+    database.topic.getReactionInfo(userId, topicId, emojiText)
         .mapResult { oldReaction ->
             if (oldReaction != null && oldReaction.hasReacted) {
                 Result.success(oldReaction)
@@ -40,8 +40,8 @@ suspend fun Backend.addReaction(
                     true,
                     reactionRecord.id
                 )
-                combinedDatabase.topicDatabase.insertReaction(reactionRecord).map {
-                    combinedDatabase.topicDatabase.statsReactionRecord(
+                database.topic.insertReaction(reactionRecord).map {
+                    database.topic.statsReactionRecord(
                         reactionRecord.objectId,
                         reactionRecord.emoji,
                         reactionRecord.objectType
@@ -52,7 +52,7 @@ suspend fun Backend.addReaction(
                     }
                     reactionInfo
                 }.recoverResult { throwable ->
-                    if (combinedDatabase.isDup(throwable)) {
+                    if (database.isDup(throwable)) {
                         Result.success(reactionInfo)
                     } else {
                         Result.failure(throwable)
@@ -69,7 +69,7 @@ suspend fun Backend.reactionList(
     reactionFetch: ReactionFetch,
 ): Result<PaginationResult<ReactionInfo>> {
     if (fillHasReacted == true && uid == null) return Result.failure(UnauthorizedException())
-    return combinedDatabase.topicDatabase.getReactionInfoPaginationResult(
+    return database.topic.getReactionInfoPaginationResult(
         listOf(objectId),
         uid,
         reactionFetch
@@ -95,9 +95,9 @@ suspend fun deleteReaction(
 ): Result<ReactionInfo?> {
     val emoji = deleteReaction.emoji
     return if (isEmoji(emoji)) {
-        backend.combinedDatabase.topicDatabase.deleteReaction(uid, emoji, p.id).mapResult {
+        backend.database.topic.deleteReaction(uid, emoji, p.id).mapResult {
             if (it) {
-                backend.combinedDatabase.topicDatabase.statsReactionRecord(
+                backend.database.topic.statsReactionRecord(
                     p.id,
                     emoji,
                     ObjectType.TOPIC
@@ -109,7 +109,7 @@ suspend fun deleteReaction(
     } else {
         Result.failure(CustomBadRequestException("invalid emoji"))
     }.mapResult {
-        backend.combinedDatabase.topicDatabase.getReactionInfo(uid, p.id, emoji)
+        backend.database.topic.getReactionInfo(uid, p.id, emoji)
             .map { reactionInfo ->
                 reactionInfo ?: ReactionInfo(emoji, p.id, 0, false, 0)
             }

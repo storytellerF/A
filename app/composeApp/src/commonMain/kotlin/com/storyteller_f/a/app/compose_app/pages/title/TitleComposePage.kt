@@ -2,13 +2,52 @@ package com.storyteller_f.a.app.compose_app.pages.title
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Diversity1
+import androidx.compose.material.icons.filled.Diversity3
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Topic
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,7 +75,13 @@ import com.storyteller_f.a.app.compose_app.pages.user.MemberList
 import com.storyteller_f.a.app.compose_app.pages.user.UserRefCell
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createTitle
-import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
@@ -479,7 +524,7 @@ fun ComposeMenu(
                 onCheck(ObjectType.ROOM)
             }
 
-            ComposeMenuItem(Icons.Default.Title, "create title") {
+            ComposeMenuItem(Icons.Default.Badge, "create title") {
                 onCheck(ObjectType.TITLE)
             }
         }
@@ -494,7 +539,8 @@ fun ComposeMenuItem(icon: ImageVector, title: String, onClick: () -> Unit) {
             .background(MaterialTheme.colorScheme.primaryContainer, shape).clip(shape)
             .clickable {
                 onClick()
-            }.padding(12.dp)
+            }.padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Icon(icon, title)
         Text(title)

@@ -31,7 +31,7 @@ suspend fun Backend.signUp(
         verify(pack.pk, pack.sig, f).errorIfFalse {
             CustomBadRequestException("Verify failed")
         }.mapResult {
-            combinedDatabase.userDatabase.isUserNotExistsByPublicKey(pack.pk).errorIfFalse {
+            database.user.isUserNotExistsByPublicKey(pack.pk).errorIfFalse {
                 CustomBadRequestException("User exists")
             }
         }.mapResult {
@@ -51,7 +51,7 @@ suspend fun Backend.signUp(
                 PassType.RAW,
                 AlgoType.P256
             )
-            combinedDatabase.userDatabase.createUser(user).map {
+            database.user.createUser(user).map {
                 user.toUserInfo()
             }
         }
@@ -63,7 +63,7 @@ suspend fun Backend.signIn(
     pack: SignInPack
 ): Result<UserInfo> {
     val f = finalData(data)
-    return combinedDatabase.userDatabase.getRawUserAndPublicKeyByAddress(pack.ad)
+    return database.user.getRawUserAndPublicKeyByAddress(pack.ad)
         .filterNotNull {
             CustomBadRequestException("user not found")
         }.mapResult { (rawUser, publicKey) ->
@@ -85,7 +85,7 @@ suspend fun Backend.signIn(
 
 suspend fun Backend.adminSignIn(data: String, pack: SignInPack): Result<PanelAccountInfo> {
     val f = finalData(data)
-    return combinedDatabase.panelAccountDatabase.getRawUserAndPublicKeyByAddress(pack.ad)
+    return database.panelAccount.getRawUserAndPublicKeyByAddress(pack.ad)
         .filterNotNull {
             CustomBadRequestException("user not found")
         }.mapResult { (rawPanelAccount, publicKey) ->
@@ -111,7 +111,7 @@ suspend fun Backend.adminSignUp(
         verify(pack.pk, pack.sig, f).errorIfFalse {
             CustomBadRequestException("Verify failed")
         }.mapResult {
-            combinedDatabase.panelAccountDatabase.isUserNotExistsByPublicKey(pack.pk).errorIfFalse {
+            database.panelAccount.isUserNotExistsByPublicKey(pack.pk).errorIfFalse {
                 CustomBadRequestException("User exists")
             }
         }.mapResult {
@@ -127,7 +127,7 @@ suspend fun Backend.adminSignUp(
                 pack.pk,
                 ad,
             )
-            combinedDatabase.panelAccountDatabase.addPanelAccount(user).map {
+            database.panelAccount.addPanelAccount(user).map {
                 PanelAccountInfo(newId, name)
             }
         }

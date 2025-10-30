@@ -41,6 +41,7 @@ import com.storyteller_f.a.app.compose_app.pages.user.MemberPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserFavoritePage
 import com.storyteller_f.a.app.compose_app.pages.user.UserPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserSettingPage
+import com.storyteller_f.a.app.compose_app.pages.user.UserSubscriptionPage
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -174,6 +175,9 @@ data class ReactionListScreen(val topicId: PrimaryKey)
 @Serializable
 data object FavoriteScreen
 
+@Serializable
+data object SubscriptionScreen
+
 inline fun <reified T : Any> AppNav.toRoute(): T? {
     if (!hasRoute(T::class)) return null
     return currentDestination?.toRoute<T>()
@@ -240,6 +244,8 @@ interface AppNav {
     fun gotoReactionListPage(topicId: PrimaryKey)
 
     fun gotoFavoritePage()
+
+    fun gotoSubscriptionPage()
 }
 
 interface AppNavFactory {
@@ -352,6 +358,10 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
     override fun gotoFavoritePage() {
         navigator.navigate(FavoriteScreen)
     }
+
+    override fun gotoSubscriptionPage() {
+        navigator.navigate(SubscriptionScreen)
+    }
 }
 
 @OptIn(ExperimentalResourceApi::class)
@@ -432,6 +442,9 @@ private fun NavGraphBuilder.buildMainScreen() {
     }
     composable<FavoriteScreen> {
         UserFavoritePage()
+    }
+    composable<SubscriptionScreen> {
+        UserSubscriptionPage()
     }
 }
 

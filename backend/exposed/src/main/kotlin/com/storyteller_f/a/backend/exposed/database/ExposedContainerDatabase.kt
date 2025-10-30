@@ -113,40 +113,43 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
     override suspend fun getContainerInfo(
         parentIds: List<PrimaryKey>,
         uid: PrimaryKey?,
-    ) = runCatching {
-        val joinMap = if (uid != null && parentIds.isNotEmpty()) {
-            getUserJoinedTime(parentIds, uid).map {
-                it.associateBy { memberJoin ->
-                    memberJoin.objectId
+    ): Result<Map<PrimaryKey, ContainerInfo>> {
+        if (parentIds.isEmpty()) return Result.success(emptyMap())
+        return runCatching {
+            val joinMap = if (uid != null && parentIds.isNotEmpty()) {
+                getUserJoinedTime(parentIds, uid).map {
+                    it.associateBy { memberJoin ->
+                        memberJoin.objectId
+                    }
                 }
-            }
-        } else {
-            Result.success(emptyMap())
-        }.getOrThrow()
-        val readMap = if (uid != null && parentIds.isNotEmpty()) {
-            getTopicReadList(parentIds, uid).map {
-                it.associateBy { userTopicRead ->
-                    userTopicRead.objectId
+            } else {
+                Result.success(emptyMap())
+            }.getOrThrow()
+            val readMap = if (uid != null && parentIds.isNotEmpty()) {
+                getTopicReadList(parentIds, uid).map {
+                    it.associateBy { userTopicRead ->
+                        userTopicRead.objectId
+                    }
                 }
+            } else {
+                Result.success(emptyMap())
+            }.getOrThrow()
+            val memberCountMap = if (parentIds.isNotEmpty()) {
+                getMemberCount(parentIds).map {
+                    it.associateByPair()
+                }
+            } else {
+                Result.success(emptyMap())
+            }.getOrThrow()
+            val latestMap = getLatestTopicInContainer(parentIds, uid).getOrThrow()
+            parentIds.associateWith {
+                ContainerInfo(
+                    joinMap[it],
+                    readMap[it],
+                    memberCountMap[it],
+                    latestMap[it]
+                )
             }
-        } else {
-            Result.success(emptyMap())
-        }.getOrThrow()
-        val memberCountMap = if (parentIds.isNotEmpty()) {
-            getMemberCount(parentIds).map {
-                it.associateByPair()
-            }
-        } else {
-            Result.success(emptyMap())
-        }.getOrThrow()
-        val latestMap = getLatestTopicInContainer(parentIds, uid).getOrThrow()
-        parentIds.associateWith {
-            ContainerInfo(
-                joinMap[it],
-                readMap[it],
-                memberCountMap[it],
-                latestMap[it]
-            )
         }
     }
 

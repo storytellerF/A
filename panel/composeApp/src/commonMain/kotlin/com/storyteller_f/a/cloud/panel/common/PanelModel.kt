@@ -43,15 +43,15 @@ class AllUsersViewModel(
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.userInfoStorage.clean(modelCollection)
+                modelStorage.user.clean(modelCollection)
             }
             data.forEach {
-                modelStorage.userInfoStorage.save(modelCollection, it)
+                modelStorage.user.save(modelCollection, it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.userInfoStorage.observeData(modelCollection),
+            modelStorage.user.observeData(modelCollection),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -60,10 +60,10 @@ class AllUsersViewModel(
 class OverviewViewModel(sessionManager: PanelSessionManager, modelStorage: ModelStorage) :
     SimpleViewModel<PanelOverview>() {
     override val handler: LoadingHandler<PanelOverview> = CachedLoadingHandler(
-        modelStorage.overviewStorage.observeDatum(),
+        modelStorage.overview.observeDatum(),
         viewModelScope,
         {
-            modelStorage.overviewStorage.save(OverviewCollection, it)
+            modelStorage.overview.save(OverviewCollection, it)
         }
     ) {
         sessionManager.overview()
