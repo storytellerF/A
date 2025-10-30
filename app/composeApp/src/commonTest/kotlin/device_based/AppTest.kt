@@ -1,7 +1,7 @@
 package device_based
 
-import androidx.compose.material3.Text
 import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -85,7 +85,6 @@ class AppTest {
                 }
             }
         }
-
     }
 
     @OptIn(ExperimentalTestApi::class)

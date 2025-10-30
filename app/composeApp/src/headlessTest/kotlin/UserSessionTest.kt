@@ -28,7 +28,6 @@ class LoginUserSessionTest : UsingContextTest() {
         }
     }
 
-
     @Test
     fun `test exit session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
         sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))

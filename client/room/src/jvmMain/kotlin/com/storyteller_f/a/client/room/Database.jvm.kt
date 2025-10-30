@@ -17,9 +17,8 @@ actual fun getRoomDatabase(scope: String): AppDatabase {
         .build()
 }
 
-
 fun getDatabaseBuilder(scope: String): RoomDatabase.Builder<AppDatabase> {
-    val dbFile = File(System.getProperty("java.io.tmpdir"), "${scope}.db")
+    val dbFile = File(System.getProperty("java.io.tmpdir"), "$scope.db")
     Napier.i {
         "database path: ${dbFile.absolutePath}"
     }

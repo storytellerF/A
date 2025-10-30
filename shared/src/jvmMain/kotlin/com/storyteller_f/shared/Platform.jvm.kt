@@ -11,7 +11,7 @@ class JVMPlatform : Platform {
 
 actual fun getPlatform(): Platform = JVMPlatform()
 
-class CustomAntilog() : Antilog() {
+class CustomAntilog : Antilog() {
 
     companion object {
         private const val CALL_STACK_INDEX = 8
@@ -46,7 +46,7 @@ class CustomAntilog() : Antilog() {
 
     private fun buildLog(tag: String?, message: String?): String {
         val customTag = tag ?: Thread.currentThread().stackTrace[CALL_STACK_INDEX].run {
-            "${createStackElementTag(className)}$${methodName}"
+            "${createStackElementTag(className)}$$methodName"
         }
         return "$customTag - $message - ${Thread.currentThread().stackTrace[CALL_STACK_INDEX]}"
     }
@@ -60,7 +60,6 @@ class CustomAntilog() : Antilog() {
         }
         return tag.substring(tag.lastIndexOf('.') + 1)
     }
-
 }
 
 actual val kmpLogger: Antilog = CustomAntilog()

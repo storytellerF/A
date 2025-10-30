@@ -98,7 +98,7 @@ class UserTest {
                 addFavorite(NewFavorite(ObjectType.TOPIC, topicId)).getOrThrow()
             assertEquals(topicId, userFavoriteInfo.objectId)
             assertNotNull(userFavoriteInfo.extensions?.topicInfo)
-            assertListTotalSize(1, getSubscriptions(PaginationQuery()))
+            assertListTotalSize(1, getFavorites(PaginationQuery()))
 
             val topicInfo = getTopicInfo(topicId).getOrThrow()
             assertNotNull(topicInfo.favoriteId)

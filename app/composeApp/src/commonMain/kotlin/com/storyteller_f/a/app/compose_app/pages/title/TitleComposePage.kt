@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.storyteller_f.a.api.core.NewTitle
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
@@ -36,7 +37,6 @@ import com.storyteller_f.a.app.compose_app.pages.user.UserRefCell
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.shared.model.*
-import com.storyteller_f.shared.obj.NewTitle
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
